@@ -9,8 +9,10 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 const nextConfig: NextConfig = {
   typescript: {
-    ignoreBuildErrors: true, // jouw keuze
+    ignoreBuildErrors: true,
   },
+
+  transpilePackages: ['lucide-react'],
 
   images: {
     remotePatterns: [

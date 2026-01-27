@@ -21,10 +21,11 @@ type Block = {
 };
 
 type BlockEditorProps = {
-  assignmentId: string;
-  subjectId: string;
-  chapterId: string;
-  paragraphId: string;
+  assignmentId?: string;
+  subjectId?: string;
+  chapterId?: string;
+  paragraphId?: string;
+  materialId?: string;
   initialBlocks?: Block[];
   onSave?: (blocks: Block[]) => void;
 };
@@ -46,9 +47,11 @@ export function BlockEditor({
   subjectId,
   chapterId,
   paragraphId,
+  materialId,
   initialBlocks = [],
   onSave
 }: BlockEditorProps) {
+  const blockKey = materialId || assignmentId || 'default';
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
   const [isLoading, setIsLoading] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -57,12 +60,14 @@ export function BlockEditor({
 
   // Load existing blocks on mount
   useEffect(() => {
-    loadBlocks();
-  }, [assignmentId]);
+    if (assignmentId && subjectId && chapterId && paragraphId) {
+      loadBlocks();
+    }
+  }, [assignmentId, materialId]);
 
   // Load from localStorage first for fast loading
   useEffect(() => {
-    const saved = localStorage.getItem(`blocks-${assignmentId}`);
+    const saved = localStorage.getItem(`blocks-${blockKey}`);
     if (saved) {
       try {
         const parsedBlocks = JSON.parse(saved);
@@ -71,11 +76,15 @@ export function BlockEditor({
         console.error('Error loading blocks from localStorage:', error);
       }
     }
-    // Then load from API
-    loadBlocks();
-  }, [assignmentId]);
+    // Then load from API if we have all the required IDs
+    if (assignmentId && subjectId && chapterId && paragraphId) {
+      loadBlocks();
+    }
+  }, [blockKey]);
 
   const loadBlocks = async () => {
+    if (!subjectId || !chapterId || !paragraphId || !assignmentId) return;
+    
     try {
       const response = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`);
       if (response.ok) {
@@ -146,14 +155,15 @@ export function BlockEditor({
     const updatedBlocks = [...blocks];
     updatedBlocks[index] = { ...updatedBlocks[index], data };
     setBlocks(updatedBlocks);
-    localStorage.setItem(`blocks-${assignmentId}`, JSON.stringify(updatedBlocks));
+    localStorage.setItem(`blocks-${blockKey}`, JSON.stringify(updatedBlocks));
   };
 
   const removeBlock = (index: number) => {
     const updatedBlocks = blocks.filter((_, i) => i !== index);
     setBlocks(updatedBlocks);
-    localStorage.setItem(`blocks-${assignmentId}`, JSON.stringify(updatedBlocks));
+    localStorage.setItem(`blocks-${blockKey}`, JSON.stringify(updatedBlocks));
   };
+
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
