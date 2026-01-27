@@ -12,12 +12,17 @@ import type { Dictionary, Locale } from '@/lib/get-dictionary';
 export type UserRole = 'student' | 'teacher';
 export type ThemeType = 'light' | 'dark' | 'pastel';
 export type ClassInfo = Tables<'classes'>;
-export type ClassAssignment = Tables<'assignments'>;
+export type ClassAssignment = Tables<'assignments'> & {
+  chapter_id?: string | null;
+  class_id?: string | null;
+  due_date?: string | null;
+};
 export type PersonalTask = {
   id: string;
   title: string;
   description?: string;
   date?: string;
+  due_date?: string;
   subject?: string;
   created_at: string;
   updated_at?: string;

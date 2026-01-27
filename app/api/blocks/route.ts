@@ -1,14 +1,23 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Create Supabase client
-const supabaseClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
-)
+// Create Supabase client with fallbacks to prevent build errors
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+// Only create client if we have valid credentials
+const supabaseClient = supabaseUrl && supabaseKey 
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
 
 export async function POST(req: Request) {
   try {
+    if (!supabaseClient) {
+      return NextResponse.json({
+        error: 'Supabase is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.'
+      }, { status: 503 })
+    }
+
     const json = await req.json()
     
     // Validate create request
@@ -47,6 +56,12 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
+    if (!supabaseClient) {
+      return NextResponse.json({
+        error: 'Supabase is not configured'
+      }, { status: 503 })
+    }
+
     const json = await req.json()
     
     // Validate update request
@@ -61,9 +76,8 @@ export async function PUT(req: Request) {
       .update({
         type: json.type,
         content: json.content
-      }, {
-        where: { id: json.id }
       })
+      .eq('id', json.id)
       .single()
     
     if (error) {
@@ -85,6 +99,12 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
+    if (!supabaseClient) {
+      return NextResponse.json({
+        error: 'Supabase is not configured'
+      }, { status: 503 })
+    }
+
     const json = await req.json()
     
     // Validate deletion request
@@ -97,7 +117,7 @@ export async function DELETE(req: Request) {
     // Delete the block from Supabase
     const { error } = await supabaseClient.from('blocks')
       .delete()
-      .match({ id: json.id })
+      .eq('id', json.id)
     
     if (error) {
       return NextResponse.json({
