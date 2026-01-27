@@ -12,8 +12,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ["var(--font-inter)", ...fontFamily.sans],
-        headline: ["var(--font-space-grotesk)", ...fontFamily.sans],
+        sans: ["Helvetica", "Arial", ...fontFamily.sans],
+        body: ["Helvetica", "Arial", ...fontFamily.sans],
+        headline: ["Helvetica", "Arial", ...fontFamily.sans],
         dyslexia: ["var(--font-atkinson-hyperlegible)", ...fontFamily.sans],
       },
       colors: {
