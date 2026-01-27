@@ -261,6 +261,9 @@ export default function AgendaPage() {
                 events={eventsForSelectedDay}
                 suggestion={aiSuggestion}
                 isGeneratingSuggestion={isGeneratingSuggestion}
+                personalTasks={personalTasks || []}
+                assignments={assignments || []}
+                classes={classes || []}
              />
            )}
            {!isStudent && (
