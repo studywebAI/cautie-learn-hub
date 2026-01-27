@@ -1,0 +1,123 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "subjects": "Vakken",
+    "classes": "Klassen",
+    "agenda": "Agenda",
+    "settings": "Instellingen",
+    "tools": {
+      "title": "Gereedschap",
+      "quizGenerator": "Quiz",
+      "flashcardMaker": "Flashcards",
+      "materialProcessor": "Materiaal Verwerken",
+      "notes": "Notities"
+    }
+  },
+  "header": {
+    "studentDashboard": "Studenten Dashboard",
+    "teacherDashboard": "Docenten Dashboard",
+    "roleSwitcher": "Rol Wisselaar"
+  },
+  "dashboard": {
+    "todayPlan": {
+      "title": "Jouw Studieplan voor Vandaag",
+      "description": "Deze taken zijn door de AI voor je voorbereid.",
+      "completed": "Voltooid"
+    },
+    "alerts": {
+      "title": "Belangrijke Meldingen",
+      "description": "Risico's en prioriteiten"
+    },
+    "upcomingDeadlines": {
+      "title": "Aankomende Deadlines",
+      "description": "Een overzicht van je aankomende opdrachten en toetsen.",
+      "due": "Nog",
+      "onTrack": "Op Schema",
+      "risk": "Risico",
+      "behind": "Achterstand",
+      "viewAgenda": "Volledige Agenda Zien"
+    },
+    "mySubjects": {
+      "title": "Jouw Vakken",
+      "description": "Een snel overzicht van je vakken."
+    },
+    "aiSuggestions": {
+      "title": "AI Suggesties",
+      "description": "Jouw persoonlijke assistent"
+    },
+    "quickAccess": {
+      "title": "Snelle Toegang",
+      "description": "Je recent gebruikte materialen."
+    },
+    "statistics": {
+      "title": "Statistieken",
+      "description": "Je studietijd van deze week.",
+      "weeklyActivity": "Wekelijkse Activiteit",
+      "lastSessionRecap": "Recap Laatste Sessie"
+    }
+  },
+  "tools": {
+    "title": "Gereedschap",
+    "description": "Jouw suite van intelligente hulpmiddelen om het leren te versnellen.",
+    "select": "Selecteer Tool",
+    "quiz": {
+      "description": "Creëer meerkeuzetoetsen van elke tekst. Test je kennis met verschillende uitdagende modi."
+    },
+    "flashcards": {
+      "description": "Genereer automatisch flashcards van je studiemateriaal om belangrijke concepten te versterken."
+    },
+    "material": {
+      "description": "Krijg een beknopte samenvatting van elk geüpload document of geplakte tekst om snel de hoofdpunten te begrijpen."
+    }
+  },
+  "material": {
+    "title": "Materiaal Verwerken",
+    "description": "Upload bestanden of plak tekst om samenvattingen, flashcards en meer te genereren.",
+    "importTitle": "Importeer Inhoud",
+    "importDescription": "Lever een bestand, plak tekst, of beide. De AI zal de tekst als context voor het bestand gebruiken.",
+    "clickToUpload": "Klik om te uploaden",
+    "dragAndDrop": "of sleep het hierheen",
+    "remove": "Verwijder",
+    "pasteText": "Of plak je tekst hier...",
+    "processing": "Verwerken...",
+    "processWithAi": "Verwerk met AI",
+    "summary": "Samenvatting",
+    "suggestedActions": "Voorgestelde Acties",
+    "done": "Klaar",
+    "select": "Selecteer"
+  },
+  "agenda": {
+    "title": "Agenda",
+    "description": "Jouw geconsolideerde kalender van deadlines, taken en persoonlijke afspraken.",
+    "eventsOn": "Gebeurtenissen op",
+    "noEvents": "Geen gebeurtenissen gepland voor deze dag.",
+    "addTask": "Taak Toevoegen"
+  },
+  "setup": {
+    "welcome": "Welkom bij Cautie",
+    "getStarted": "Laten we je instellen",
+    "step": "Stap",
+    "of": "van",
+    "next": "Volgende",
+    "back": "Terug",
+    "finish": "Installatie Voltooien",
+    "language": {
+      "title": "Kies je taal",
+      "description": "Selecteer de taal die je in de app wilt gebruiken."
+    },
+    "theme": {
+      "title": "Kies je thema",
+      "description": "Kies een kleurenschema dat bij je past."
+    },
+    "profile": {
+      "title": "Stel je profiel in",
+      "description": "Vertel ons een beetje over jezelf om je ervaring te personaliseren.",
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "role": "Ik ben een...",
+      "student": "Student",
+      "teacher": "Docent",
+      "saveProfile": "Profiel Opslaan"
+    }
+  }
+}

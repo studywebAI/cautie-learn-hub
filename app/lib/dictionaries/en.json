@@ -1,0 +1,96 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "subjects": "Subjects",
+    "classes": "Classes",
+    "agenda": "Agenda",
+    "settings": "Settings",
+    "tools": {
+      "title": "Tools",
+      "quizGenerator": "Quiz",
+      "flashcardMaker": "Flashcards",
+      "materialProcessor": "Process Material",
+      "notes": "Notes"
+    }
+  },
+  "header": {
+    "studentDashboard": "Student Dashboard",
+    "teacherDashboard": "Teacher Dashboard",
+    "roleSwitcher": "Role Switcher"
+  },
+  "dashboard": {
+    "todayPlan": {
+      "title": "Your Study Plan for Today",
+      "description": "These tasks have been prepared for you by the AI.",
+      "completed": "Completed"
+    },
+    "alerts": {
+      "title": "Important Alerts",
+      "description": "Risks and priorities"
+    },
+    "upcomingDeadlines": {
+      "title": "Upcoming Deadlines",
+      "description": "An overview of your upcoming assignments and tests.",
+      "due": "Due",
+      "onTrack": "On Track",
+      "risk": "Risk",
+      "behind": "Behind",
+      "viewAgenda": "View Full Agenda"
+    },
+    "mySubjects": {
+      "title": "Your Subjects",
+      "description": "A quick overview of your subjects."
+    },
+    "aiSuggestions": {
+      "title": "AI Suggestions",
+      "description": "Your personal assistant"
+    },
+    "quickAccess": {
+      "title": "Quick Access",
+      "description": "Your recently used materials."
+    },
+    "statistics": {
+      "title": "Statistics",
+      "description": "Your study time this week.",
+      "weeklyActivity": "Weekly Activity",
+      "lastSessionRecap": "Last Session Recap"
+    }
+  },
+  "tools": {
+    "title": "Tools",
+    "description": "Your suite of intelligent tools to accelerate learning.",
+    "select": "Select Tool",
+    "quiz": {
+      "description": "Create multiple-choice quizzes from any text. Test your knowledge with various challenging modes."
+    },
+    "flashcards": {
+      "description": "Automatically generate flashcards from your study materials to reinforce key concepts."
+    },
+    "material": {
+      "description": "Get a concise summary of any uploaded document or pasted text to quickly grasp the main points."
+    }
+  },
+  "material": {
+    "title": "Process Material",
+    "description": "Upload files or paste text to generate summaries, flashcards, and more.",
+    "importTitle": "Import Content",
+    "importDescription": "Provide a file, paste text, or both. The AI will use text as context for the file.",
+    "clickToUpload": "Click to upload",
+    "dragAndDrop": "or drag and drop",
+    "remove": "Remove",
+    "pasteText": "Or paste your text here...",
+    "processing": "Processing...",
+    "processWithAi": "Process with AI",
+    "summary": "Summary",
+    "suggestedActions": "Suggested Actions",
+    "done": "Done",
+    "select": "Select"
+  },
+  "agenda": {
+    "title": "Agenda",
+    "description": "Your consolidated calendar of deadlines, tasks, and personal appointments.",
+    "eventsOn": "Events on",
+    "noEvents": "No events scheduled for this day.",
+    "addTask": "Add Task"
+  }
+}

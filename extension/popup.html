@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>StudyWeb Capture</title>
+  <style>
+    body { width: 300px; padding: 20px; font-family: Arial, sans-serif; }
+    .button { background: #007bff; color: white; border: none; padding: 10px; width: 100%; margin: 5px 0; cursor: pointer; border-radius: 4px; }
+    .button:hover { background: #0056b3; }
+    .status { margin-top: 10px; padding: 10px; border-radius: 4px; display: none; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <h3>📚 StudyWeb Capture</h3>
+  <p>Capture this page for your study materials</p>
+
+  <button id="capture-page" class="button">📄 Save Page Content</button>
+  <button id="capture-selection" class="button">✂️ Save Selected Text</button>
+  <button id="add-to-agenda" class="button">📅 Add to Agenda</button>
+
+  <div id="status" class="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

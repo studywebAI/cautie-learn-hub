@@ -1,0 +1,42 @@
+{
+  "name": "Cautie - Interactive Study Platform",
+  "short_name": "Cautie",
+  "description": "Mobile companion for interactive learning with offline access, push notifications, and quick quizzes",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "portrait-primary",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "192x192",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "512x512",
+      "type": "image/x-icon"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Quick Quiz",
+      "short_name": "Quiz",
+      "description": "Take a quick quiz",
+      "url": "/tools/quiz-taker"
+    },
+    {
+      "name": "Upcoming Deadlines",
+      "short_name": "Deadlines",
+      "description": "View upcoming deadlines",
+      "url": "/dashboard"
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "sidebar": {
+    "dashboard": "仪表板",
+    "subjects": "科目",
+    "classes": "班级",
+    "agenda": "日程",
+    "settings": "设置",
+    "tools": {
+      "title": "工具",
+      "quizGenerator": "测验",
+      "flashcardMaker": "闪卡",
+      "materialProcessor": "处理材料",
+      "notes": "笔记"
+    }
+  },
+  "header": {
+    "studentDashboard": "学生仪表板",
+    "teacherDashboard": "教师仪表板",
+    "roleSwitcher": "角色切换器"
+  },
+  "dashboard": {
+    "todayPlan": {
+      "title": "你今天的学习计划",
+      "description": "这些任务是由AI为你准备的。",
+      "completed": "已完成"
+    },
+    "alerts": {
+      "title": "重要提醒",
+      "description": "风险和优先级"
+    },
+    "upcomingDeadlines": {
+      "title": "即将到期的截止日期",
+      "description": "你即将到来的作业和考试概览。",
+      "due": "到期",
+      "onTrack": "按计划",
+      "risk": "风险",
+      "behind": "落后",
+      "viewAgenda": "查看完整日程"
+    },
+    "mySubjects": {
+      "title": "你的科目",
+      "description": "你科目的快速概览。"
+    },
+    "aiSuggestions": {
+      "title": "AI建议",
+      "description": "你的个人助手"
+    },
+    "quickAccess": {
+      "title": "快速访问",
+      "description": "你最近使用的材料。"
+    },
+    "statistics": {
+      "title": "统计",
+      "description": "你本周的学习时间。",
+      "weeklyActivity": "每周活动",
+      "lastSessionRecap": "上次会话回顾"
+    }
+  },
+  "tools": {
+    "title": "工具",
+    "description": "你的智能工具套件，用于加速学习。",
+    "select": "选择工具",
+    "quiz": {
+      "description": "从任何文本创建多项选择测验。以各种具有挑战性的模式测试你的知识。"
+    },
+    "flashcards": {
+      "description": "从你的学习材料自动生成闪卡，以强化关键概念。"
+    },
+    "material": {
+      "description": "获取任何上传文档或粘贴文本的简明摘要，以快速掌握要点。"
+    }
+  },
+  "material": {
+    "title": "处理材料",
+    "description": "上传文件或粘贴文本以生成摘要、闪卡等。",
+    "importTitle": "导入内容",
+    "importDescription": "提供文件、粘贴文本，或两者兼有。AI将使用文本作为文件的上下文。",
+    "clickToUpload": "点击上传",
+    "dragAndDrop": "或拖拽到此处",
+    "remove": "删除",
+    "pasteText": "或在此处粘贴你的文本...",
+    "processing": "处理中...",
+    "processWithAi": "用AI处理",
+    "summary": "摘要",
+    "suggestedActions": "建议操作",
+    "done": "完成",
+    "select": "选择"
+  },
+  "agenda": {
+    "title": "日程",
+    "description": "你整合的截止日期、任务和个人约会的日历。",
+    "eventsOn": "事件在",
+    "noEvents": "这一天没有安排事件。",
+    "addTask": "添加任务"
+  },
+  "setup": {
+    "welcome": "欢迎来到Cautie",
+    "getStarted": "让我们设置你",
+    "step": "步骤",
+    "of": "的",
+    "next": "下一步",
+    "back": "返回",
+    "finish": "完成设置",
+    "language": {
+      "title": "选择你的语言",
+      "description": "选择你想在应用中使用的语言。"
+    },
+    "theme": {
+      "title": "选择你的主题",
+      "description": "选择适合你的配色方案。"
+    },
+    "profile": {
+      "title": "设置你的个人资料",
+      "description": "告诉我们一些关于你自己的信息，以个性化你的体验。",
+      "firstName": "名",
+      "lastName": "姓",
+      "role": "我是...",
+      "student": "学生",
+      "teacher": "教师",
+      "saveProfile": "保存个人资料"
+    }
+  }
+}

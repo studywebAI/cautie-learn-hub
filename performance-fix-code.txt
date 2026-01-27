@@ -1,0 +1,14 @@
+// Fetch all students for all classes owned by the teacher
+// OPTIMIZATION: Only fetch students if teacher has a reasonable number of classes to prevent API spam
+const ownedClassIds = (classesData as ClassInfo[] || []).filter((c: ClassInfo) => c.user_id === session.user.id).map((c: ClassInfo) => c.id);
+if (ownedClassIds.length > 0 && ownedClassIds.length <= 10) { // Limit to prevent spam
+   const studentPromises = ownedClassIds.map((id: string) => fetch(`/api/classes/${id}/members`).then(res => res.json()));
+   const studentsPerClass = await Promise.all(studentPromises);
+   const allStudents = studentsPerClass.flat();
+   // Remove duplicates
+   const uniqueStudents = Array.from(new Set(allStudents.map(s => s.id))).map(id => allStudents.find(s => s.id === id));
+   setStudents(uniqueStudents || []);
+} else if (ownedClassIds.length > 10) {
+   console.warn(`Teacher has ${ownedClassIds.length} classes. Skipping bulk student fetch to prevent performance issues. Students will be loaded per class page.`);
+   setStudents([]);
+}

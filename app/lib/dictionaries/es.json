@@ -1,0 +1,123 @@
+{
+  "sidebar": {
+    "dashboard": "Panel de Control",
+    "subjects": "Materias",
+    "classes": "Clases",
+    "agenda": "Agenda",
+    "settings": "Configuración",
+    "tools": {
+      "title": "Herramientas",
+      "quizGenerator": "Quiz",
+      "flashcardMaker": "Flashcards",
+      "materialProcessor": "Procesar Material",
+      "notes": "Notas"
+    }
+  },
+  "header": {
+    "studentDashboard": "Panel de Estudiante",
+    "teacherDashboard": "Panel de Profesor",
+    "roleSwitcher": "Cambiador de Rol"
+  },
+  "dashboard": {
+    "todayPlan": {
+      "title": "Tu Plan de Estudio para Hoy",
+      "description": "Estas tareas han sido preparadas para ti por la IA.",
+      "completed": "Completado"
+    },
+    "alerts": {
+      "title": "Alertas Importantes",
+      "description": "Riesgos y prioridades"
+    },
+    "upcomingDeadlines": {
+      "title": "Próximas Fechas Límite",
+      "description": "Una visión general de tus próximas tareas y exámenes.",
+      "due": "Pendiente",
+      "onTrack": "En Tiempo",
+      "risk": "Riesgo",
+      "behind": "Atrasado",
+      "viewAgenda": "Ver Agenda Completa"
+    },
+    "mySubjects": {
+      "title": "Tus Materias",
+      "description": "Una visión rápida de tus materias."
+    },
+    "aiSuggestions": {
+      "title": "Sugerencias de IA",
+      "description": "Tu asistente personal"
+    },
+    "quickAccess": {
+      "title": "Acceso Rápido",
+      "description": "Tus materiales usados recientemente."
+    },
+    "statistics": {
+      "title": "Estadísticas",
+      "description": "Tu tiempo de estudio de esta semana.",
+      "weeklyActivity": "Actividad Semanal",
+      "lastSessionRecap": "Resumen de la Última Sesión"
+    }
+  },
+  "tools": {
+    "title": "Herramientas",
+    "description": "Tu suite de herramientas inteligentes para acelerar el aprendizaje.",
+    "select": "Seleccionar Herramienta",
+    "quiz": {
+      "description": "Crea cuestionarios de opción múltiple de cualquier texto. Prueba tu conocimiento con varios modos desafiantes."
+    },
+    "flashcards": {
+      "description": "Genera automáticamente flashcards de tus materiales de estudio para reforzar conceptos clave."
+    },
+    "material": {
+      "description": "Obtén un resumen conciso de cualquier documento subido o texto pegado para comprender rápidamente los puntos principales."
+    }
+  },
+  "material": {
+    "title": "Procesar Material",
+    "description": "Sube archivos o pega texto para generar resúmenes, flashcards y más.",
+    "importTitle": "Importar Contenido",
+    "importDescription": "Proporciona un archivo, pega texto, o ambos. La IA usará el texto como contexto para el archivo.",
+    "clickToUpload": "Haz clic para subir",
+    "dragAndDrop": "o arrastra y suelta",
+    "remove": "Eliminar",
+    "pasteText": "O pega tu texto aquí...",
+    "processing": "Procesando...",
+    "processWithAi": "Procesar con IA",
+    "summary": "Resumen",
+    "suggestedActions": "Acciones Sugeridas",
+    "done": "Hecho",
+    "select": "Seleccionar"
+  },
+  "agenda": {
+    "title": "Agenda",
+    "description": "Tu calendario consolidado de fechas límite, tareas y citas personales.",
+    "eventsOn": "Eventos en",
+    "noEvents": "No hay eventos programados para este día.",
+    "addTask": "Agregar Tarea"
+  },
+  "setup": {
+    "welcome": "Bienvenido a Cautie",
+    "getStarted": "Vamos a configurarte",
+    "step": "Paso",
+    "of": "de",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "finish": "Finalizar Configuración",
+    "language": {
+      "title": "Elige tu idioma",
+      "description": "Selecciona el idioma que deseas usar en la aplicación."
+    },
+    "theme": {
+      "title": "Elige tu tema",
+      "description": "Elige un esquema de colores que te guste."
+    },
+    "profile": {
+      "title": "Configura tu perfil",
+      "description": "Cuéntanos un poco sobre ti para personalizar tu experiencia.",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "role": "Soy un...",
+      "student": "Estudiante",
+      "teacher": "Profesor",
+      "saveProfile": "Guardar Perfil"
+    }
+  }
+}
