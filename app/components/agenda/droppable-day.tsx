@@ -10,7 +10,7 @@ interface DroppableDayProps {
   id: string;
   date: Date;
   events: CalendarEvent[];
-  isSelected: boolean;
+  isSelected?: boolean;
   onClick: () => void;
 }
 

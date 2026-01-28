@@ -811,7 +811,8 @@ export function NoteViewer({ notes }: NoteViewerProps) {
                         })() ? (
                           (() => {
                             try {
-                              const data = JSON.parse(note.content);
+                              const contentStr = Array.isArray(note.content) ? note.content.join('\n') : note.content;
+                              const data = JSON.parse(contentStr);
                               switch (data.type) {
                                 case 'mindmap':
                                   return <ProfessionalMindmapRenderer data={data as MindmapData} title={note.title} />;
@@ -840,10 +841,10 @@ export function NoteViewer({ notes }: NoteViewerProps) {
                                 case 'piechart':
                                   return <PieChartRenderer data={data as PieChartData} />;
                                 default:
-                                  return <div dangerouslySetInnerHTML={{ __html: marked(note.content) as string }} />;
+                                  return <div dangerouslySetInnerHTML={{ __html: marked(Array.isArray(note.content) ? note.content.join('\n') : note.content) as string }} />;
                               }
                             } catch {
-                              return <div dangerouslySetInnerHTML={{ __html: marked(note.content) as string }} />;
+                              return <div dangerouslySetInnerHTML={{ __html: marked(Array.isArray(note.content) ? note.content.join('\n') : note.content) as string }} />;
                             }
                           })()
                         ) : (

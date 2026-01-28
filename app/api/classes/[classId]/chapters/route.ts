@@ -130,7 +130,7 @@ export async function POST(
 
     // Use database function to get next chapter number
     const { data: nextChapterNumber, error: funcError } = await supabase
-      .rpc('get_next_chapter_number', { subject_uuid: subject_id })
+      .rpc('get_next_chapter_number', { subject_id: subject_id })
 
     if (funcError) {
       console.error('Error getting next chapter number:', funcError)

@@ -16,11 +16,12 @@ import type { MaterialReference } from '@/lib/teacher-types';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const iconMap = {
+const iconMap: Record<string, typeof File> = {
   NOTE: FileSignature,
   QUIZ: BrainCircuit,
   FLASHCARDS: Copy,
   FILE: File,
+  BLOCK: File,
 };
 
 type SelectMaterialDialogProps = {

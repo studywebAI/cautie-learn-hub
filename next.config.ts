@@ -1,6 +1,9 @@
 // next.config.ts
+// @ts-ignore - next-pwa types not available  
 import type { NextConfig } from 'next';
+// @ts-ignore
 import withPWA from 'next-pwa';
+// @ts-ignore
 import withBundleAnalyzer from '@next/bundle-analyzer';
 
 const bundleAnalyzer = withBundleAnalyzer({

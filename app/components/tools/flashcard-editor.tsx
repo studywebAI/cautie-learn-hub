@@ -156,9 +156,16 @@ export function FlashcardEditor({ cards, sourceText, onStartStudy, onBack, isAss
         await createAssignment({
             title: materialTitle,
             class_id: classId,
+            paragraph_id: null,
+            assignment_index: 0,
+            content: null,
             due_date: null,
+            answers_enabled: false,
+            owner_type: 'user',
+            guest_id: null,
+            user_id: null,
             material_id: newMaterial.id,
-        });
+        } as any);
 
         toast({
             title: 'Assignment Created!',

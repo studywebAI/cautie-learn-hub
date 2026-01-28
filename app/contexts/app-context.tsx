@@ -16,6 +16,7 @@ export type ClassAssignment = Tables<'assignments'> & {
   chapter_id?: string | null;
   class_id?: string | null;
   due_date?: string | null;
+  material_id?: string | null;
 };
 export type PersonalTask = {
   id: string;
@@ -409,12 +410,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         return savedClass;
       } else {
         // Guest user: save to localStorage
-        const newClass: ClassInfo = {
+        const newClass = {
           id: `local-${Date.now()}`,
           name: newClassData.name,
           description: newClassData.description,
           created_at: new Date().toISOString(),
           owner_id: 'local-user',
+          user_id: null,
+          guest_id: null,
+          owner_type: null,
           join_code: null,
           status: null,
         };
