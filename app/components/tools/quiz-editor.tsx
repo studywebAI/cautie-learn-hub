@@ -272,9 +272,16 @@ export function QuizEditor({ quiz, sourceText, onStartQuiz, onBack, isAssignment
         await createAssignment({
             title: currentQuiz.title,
             class_id: classId,
+            paragraph_id: null,
+            assignment_index: 0,
+            content: null,
             due_date: null,
+            answers_enabled: false,
+            owner_type: 'user',
+            guest_id: null,
+            user_id: null,
             material_id: newMaterial.id,
-        });
+        } as any);
 
         toast({
             title: 'Assignment Created!',

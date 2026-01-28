@@ -11,13 +11,15 @@ export type BlockType =
   | 'drag_drop'
   | 'ordering'
   | 'media_embed'
+  | 'media'
   | 'divider'
   | 'list'
   | 'quote'
   | 'layout'
   | 'complex'
   | 'rich_text'
-  | 'executable_code';
+  | 'executable_code'
+  | 'paragraph';
 
 export interface BaseBlock {
   id: string;
@@ -116,12 +118,15 @@ export interface CodeBlockContent {
 }
 
 // 12. ListBlock
+export interface ListItem {
+  id: string;
+  text: string;
+  checked?: boolean;
+}
+
 export interface ListBlockContent {
   type: 'bulleted' | 'numbered';
-  items: Array<{
-    id: string;
-    text: string;
-  }>;
+  items: ListItem[];
 }
 
 // 13. QuoteBlock
@@ -138,9 +143,22 @@ export interface LayoutBlockContent {
 
 // 15. ComplexBlock (for advanced content like mindmaps)
 export interface ComplexBlockContent {
-  type: 'mindmap' | 'timeline' | 'diagram';
+  type: 'mindmap' | 'timeline' | 'diagram' | 'other';
   data: any; // JSON data for the complex content
   viewerType?: string;
+}
+
+// 16. ParagraphBlockContent
+export interface ParagraphBlockContent {
+  type: 'paragraph';
+  text: string;
+}
+
+// 17. ImageSimpleBlockContent
+export interface ImageSimpleBlockContent {
+  type: 'image';
+  url: string;
+  alt: string;
 }
 
 // 16. RichTextBlock (AI-powered rich text editor)
@@ -183,7 +201,9 @@ export type BlockContent =
   | LayoutBlockContent
   | ComplexBlockContent
   | RichTextBlockContent
-  | ExecutableCodeBlockContent;
+  | ExecutableCodeBlockContent
+  | ParagraphBlockContent
+  | ImageSimpleBlockContent;
 
 // Props for block components
 export interface BlockProps {
