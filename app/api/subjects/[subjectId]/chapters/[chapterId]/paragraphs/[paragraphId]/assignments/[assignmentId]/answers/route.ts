@@ -7,11 +7,12 @@ export const dynamic = 'force-dynamic'
 // GET student answers for an assignment
 export async function GET(
   request: Request,
-  { params }: { params: { subjectId: string; chapterId: string; paragraphId: string; assignmentId: string } }
+  { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string; assignmentId: string }> }
 ) {
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
+    const resolvedParams = await params
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -23,7 +24,7 @@ export async function GET(
       .from('student_answers')
       .select('*')
       .eq('student_id', user.id)
-      .eq('assignment_id', params.assignmentId)
+      .eq('assignment_id', resolvedParams.assignmentId)
       .order('submitted_at', { ascending: false })
 
     if (answersError) {

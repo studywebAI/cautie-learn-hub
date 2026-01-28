@@ -7,8 +7,12 @@ import type { Database } from '@/lib/supabase/database.types'
 export const dynamic = 'force-dynamic'
 
 // DELETE an assignment
-export async function DELETE(request: Request, { params }: { params: { assignmentId: string } }) {
-  const { assignmentId } = params;
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ assignmentId: string }> }
+) {
+  const resolvedParams = await params;
+  const { assignmentId } = resolvedParams;
   const { searchParams } = new URL(request.url);
   const guestId = searchParams.get('guestId');
 
@@ -73,8 +77,12 @@ export async function DELETE(request: Request, { params }: { params: { assignmen
 }
 
 // PUT to update an assignment
-export async function PUT(request: Request, { params }: { params: { assignmentId: string } }) {
-  const { assignmentId } = params;
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ assignmentId: string }> }
+) {
+  const resolvedParams = await params;
+  const { assignmentId } = resolvedParams;
   const { title, due_date, chapter_id, block_id, guestId, type, content, files } = await request.json();
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);

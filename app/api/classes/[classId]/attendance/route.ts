@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 
 export async function GET(
   request: Request,
-  { params }: { params: { classId: string } }
+  { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
     const cookieStore = cookies()
@@ -16,7 +16,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { classId } = params
+    const resolvedParams = await params
+    const { classId } = resolvedParams
 
     // Verify user has access to this class
     const { data: classData, error: classError } = await supabase
@@ -86,7 +87,7 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { classId: string } }
+  { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
     const cookieStore = cookies()
@@ -98,7 +99,8 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { classId } = params
+    const resolvedParams = await params
+    const { classId } = resolvedParams
     const { title, date, startTime, endTime } = await request.json()
 
     // Verify user owns the class

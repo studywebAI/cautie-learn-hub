@@ -9,9 +9,10 @@ export const dynamic = 'force-dynamic'
 // GET a specific class's public info
 export async function GET(
   request: Request,
-  { params }: { params: { classId: string } }
+  { params }: { params: Promise<{ classId: string }> }
 ) {
-  const classId = params.classId;
+  const resolvedParams = await params;
+  const classId = resolvedParams.classId;
   const cookieStore = await cookies()
   // No need for admin client here, public info is fine
   const supabase = createServerClient<Database>(
@@ -82,9 +83,10 @@ export async function GET(
 // DELETE - Archive a class (set status to 'archived')
 export async function DELETE(
   request: Request,
-  { params }: { params: { classId: string } }
+  { params }: { params: Promise<{ classId: string }> }
 ) {
-  const classId = params.classId;
+  const resolvedParams = await params;
+  const classId = resolvedParams.classId;
   const cookieStore = await cookies()
 
   const supabase = createServerClient<Database>(

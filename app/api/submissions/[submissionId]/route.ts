@@ -7,12 +7,13 @@ export const dynamic = 'force-dynamic'
 // GET /api/submissions/[submissionId] - Get a specific submission
 export async function GET(
   request: Request,
-  { params }: { params: { submissionId: string } }
+  { params }: { params: Promise<{ submissionId: string }> }
 ) {
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
-    const submissionId = params.submissionId
+    const resolvedParams = await params
+    const submissionId = resolvedParams.submissionId
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
@@ -63,12 +64,13 @@ export async function GET(
 // PUT /api/submissions/[submissionId] - Grade a submission (teachers only)
 export async function PUT(
   request: Request,
-  { params }: { params: { submissionId: string } }
+  { params }: { params: Promise<{ submissionId: string }> }
 ) {
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
-    const submissionId = params.submissionId
+    const resolvedParams = await params
+    const submissionId = resolvedParams.submissionId
     const { grade, feedback } = await request.json()
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()

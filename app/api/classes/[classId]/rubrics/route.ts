@@ -5,8 +5,12 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 // GET rubrics for a class
-export async function GET(request: Request, { params }: { params: { classId: string } }) {
-  const { classId } = params
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ classId: string }> }
+) {
+  const resolvedParams = await params
+  const { classId } = resolvedParams
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore)
 
@@ -44,8 +48,12 @@ export async function GET(request: Request, { params }: { params: { classId: str
 }
 
 // POST create rubric
-export async function POST(request: Request, { params }: { params: { classId: string } }) {
-  const { classId } = params
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ classId: string }> }
+) {
+  const resolvedParams = await params
+  const { classId } = resolvedParams
   const { name, description, items } = await request.json()
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore)

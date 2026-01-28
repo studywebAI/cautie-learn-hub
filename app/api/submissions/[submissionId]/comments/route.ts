@@ -9,24 +9,19 @@ export const dynamic = 'force-dynamic'
 // GET all comments for a submission
 export async function GET(
   request: Request,
-  { params }: { params: { submissionId: string } }
+  { params }: { params: Promise<{ submissionId: string }> }
 ) {
-  const submissionId = params.submissionId;
+  const resolvedParams = await params;
+  const submissionId = resolvedParams.submissionId;
   const cookieStore = await cookies()
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set(name, value, options)
-        },
-        remove(name: string, options: any) {
-          cookieStore.set(name, '', { ...options, maxAge: 0 })
-        }
+        get(name: string) { return cookieStore.get(name)?.value },
+        set(name: string, value: string, options: any) { cookieStore.set(name, value, options) },
+        remove(name: string, options: any) { cookieStore.set(name, '', { ...options, maxAge: 0 }) }
       }
     }
   )
@@ -36,7 +31,6 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Security check: Ensure the user can access this submission
   const { data: submissionData, error: submissionError } = await supabase
     .from('submissions')
     .select('user_id')
@@ -47,7 +41,6 @@ export async function GET(
     return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
   }
 
-  // Students can view comments on their own submissions, teachers can view comments on submissions for their classes
   const canAccess = submissionData.user_id === session.user.id ||
     await checkIfTeacherForSubmission(supabase, submissionId, session.user.id);
 
@@ -55,20 +48,9 @@ export async function GET(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Fetch comments
   const { data: comments, error: commentsError } = await (supabase as any)
     .from('submission_comments')
-    .select(`
-      id,
-      comment,
-      created_at,
-      user_id,
-      profiles!submission_comments_user_id_fkey (
-        full_name,
-        avatar_url,
-        role
-      )
-    `)
+    .select(`id, comment, created_at, user_id, profiles!submission_comments_user_id_fkey (full_name, avatar_url, role)`)
     .eq('submission_id', submissionId)
     .order('created_at', { ascending: false });
 
@@ -79,27 +61,21 @@ export async function GET(
   return NextResponse.json(comments);
 }
 
-// POST create a new comment on submission
 export async function POST(
   request: Request,
-  { params }: { params: { submissionId: string } }
+  { params }: { params: Promise<{ submissionId: string }> }
 ) {
-  const submissionId = params.submissionId;
+  const resolvedParams = await params;
+  const submissionId = resolvedParams.submissionId;
   const cookieStore = await cookies()
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set(name, value, options)
-        },
-        remove(name: string, options: any) {
-          cookieStore.set(name, '', { ...options, maxAge: 0 })
-        }
+        get(name: string) { return cookieStore.get(name)?.value },
+        set(name: string, value: string, options: any) { cookieStore.set(name, value, options) },
+        remove(name: string, options: any) { cookieStore.set(name, '', { ...options, maxAge: 0 }) }
       }
     }
   )
@@ -109,25 +85,19 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Security check: Only teachers for the class can add comments
   const isTeacher = await checkIfTeacherForSubmission(supabase, submissionId, session.user.id);
   if (!isTeacher) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   const { comment } = await request.json();
-
   if (!comment || comment.trim() === '') {
     return NextResponse.json({ error: 'Comment is required' }, { status: 400 });
   }
 
   const { data: newComment, error: insertError } = await (supabase as any)
     .from('submission_comments')
-    .insert({
-      submission_id: submissionId,
-      user_id: session.user.id,
-      comment: comment.trim()
-    })
+    .insert({ submission_id: submissionId, user_id: session.user.id, comment: comment.trim() })
     .select()
     .single();
 
@@ -141,18 +111,9 @@ export async function POST(
 async function checkIfTeacherForSubmission(supabase: any, submissionId: string, userId: string): Promise<boolean> {
   const { data, error } = await supabase
     .from('submissions')
-    .select(`
-      assignments!inner (
-        class_id,
-        classes!inner (
-          owner_id
-        )
-      )
-    `)
+    .select(`assignments!inner (class_id, classes!inner (owner_id))`)
     .eq('id', submissionId)
     .single();
-
   if (error || !data) return false;
-
   return data.assignments.classes.owner_id === userId;
 }
