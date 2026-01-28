@@ -17,12 +17,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, Loader2, FileText, Link as LinkIcon } from 'lucide-react';
+import { CalendarIcon, Loader2, FileText, BookOpen, X, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { LinkPickerDialog } from './link-picker-dialog';
 import type { ClassInfo } from '@/contexts/app-context';
 
 type DeadlineType = 'assignment' | 'test';
+
+type LinkedContent = {
+  type: 'material' | 'subject';
+  url: string;
+  title: string;
+};
 
 type TeacherDeadlineDialogProps = {
   isOpen: boolean;
@@ -34,8 +42,7 @@ type TeacherDeadlineDialogProps = {
     due_date: string;
     class_id: string;
     type: DeadlineType;
-    material_link?: string;
-    subject_link?: string;
+    linked_content?: LinkedContent[];
   }) => Promise<void>;
   initialDate?: Date;
 };
@@ -52,14 +59,25 @@ export function TeacherDeadlineDialog({
   const [date, setDate] = useState<Date | undefined>(initialDate);
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [deadlineType, setDeadlineType] = useState<DeadlineType>('assignment');
-  const [materialLink, setMaterialLink] = useState('');
-  const [subjectLink, setSubjectLink] = useState('');
+  const [linkedContent, setLinkedContent] = useState<LinkedContent[]>([]);
+  const [isLinkPickerOpen, setIsLinkPickerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     setDate(initialDate);
   }, [initialDate]);
+
+  const handleAddLink = (link: LinkedContent) => {
+    // Avoid duplicates
+    if (!linkedContent.find(l => l.url === link.url)) {
+      setLinkedContent([...linkedContent, link]);
+    }
+  };
+
+  const handleRemoveLink = (url: string) => {
+    setLinkedContent(linkedContent.filter(l => l.url !== url));
+  };
 
   const handleCreate = async () => {
     if (!title || !date || !selectedClassId) {
@@ -80,8 +98,7 @@ export function TeacherDeadlineDialog({
         due_date: format(date, 'yyyy-MM-dd'),
         class_id: selectedClassId,
         type: deadlineType,
-        material_link: materialLink || undefined,
-        subject_link: subjectLink || undefined,
+        linked_content: linkedContent.length > 0 ? linkedContent : undefined,
       });
 
       toast({
@@ -107,142 +124,165 @@ export function TeacherDeadlineDialog({
     setDate(initialDate);
     setSelectedClassId('');
     setDeadlineType('assignment');
-    setMaterialLink('');
-    setSubjectLink('');
+    setLinkedContent([]);
     setIsOpen(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-        if (!open) resetAndClose();
-        else setIsOpen(true);
-    }}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Create Deadline</DialogTitle>
-          <DialogDescription>
-            Add an assignment or schedule a test for your students.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-6 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="type">Type</Label>
-            <Select value={deadlineType} onValueChange={(v) => setDeadlineType(v as DeadlineType)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="assignment">Assignment (Homework)</SelectItem>
-                <SelectItem value="test">Test / Exam</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => {
+          if (!open) resetAndClose();
+          else setIsOpen(true);
+      }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create Deadline</DialogTitle>
+            <DialogDescription>
+              Add an assignment or schedule a test for your students.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="grid gap-2">
+              <Label htmlFor="type">Type</Label>
+              <Select value={deadlineType} onValueChange={(v) => setDeadlineType(v as DeadlineType)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="assignment">Assignment (Homework)</SelectItem>
+                  <SelectItem value="test">Test / Exam</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="class">Class</Label>
-            <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select class" />
-              </SelectTrigger>
-              <SelectContent>
-                {classes.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="grid gap-2">
+              <Label htmlFor="class">Class</Label>
+              <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {classes.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="title">Title</Label>
-            <Input 
-              id="title" 
-              value={title} 
-              onChange={e => setTitle(e.target.value)} 
-              placeholder={deadlineType === 'test' ? 'e.g., Chapter 5 Test' : 'e.g., Read pages 50-75'}
-            />
-          </div>
+            <div className="grid gap-2">
+              <Label htmlFor="title">Title</Label>
+              <Input 
+                id="title" 
+                value={title} 
+                onChange={e => setTitle(e.target.value)} 
+                placeholder={deadlineType === 'test' ? 'e.g., Chapter 5 Test' : 'e.g., Read pages 50-75'}
+              />
+            </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="date">Due Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "justify-start text-left",
-                    !date && "text-muted-foreground"
-                  )}
+            <div className="grid gap-2">
+              <Label htmlFor="date">Due Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "justify-start text-left",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description (Optional)</Label>
+              <Textarea 
+                id="description" 
+                value={description} 
+                onChange={e => setDescription(e.target.value)} 
+                placeholder="Add instructions or details for students"
+                rows={3}
+              />
+            </div>
+
+            {/* Linked Content Section */}
+            <div className="space-y-3 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Linked Content</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Students can click these links to go directly to the content
+                  </p>
+                </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsLinkPickerOpen(true)}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : <span>Pick a date</span>}
+                  <LinkIcon className="h-4 w-4 mr-2" />
+                  Add Link
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+              </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description (Optional)</Label>
-            <Textarea 
-              id="description" 
-              value={description} 
-              onChange={e => setDescription(e.target.value)} 
-              placeholder="Add instructions or details for students"
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-4 border-t pt-4">
-            <p className="text-sm text-muted-foreground">Optional links for students</p>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="material-link" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Link to Material
-              </Label>
-              <Input 
-                id="material-link" 
-                value={materialLink} 
-                onChange={e => setMaterialLink(e.target.value)} 
-                placeholder="e.g., /material/abc123"
-              />
-              <p className="text-xs text-muted-foreground">
-                Paste a link to materials students should use
-              </p>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="subject-link" className="flex items-center gap-2">
-                <LinkIcon className="h-4 w-4" />
-                Link to Subject
-              </Label>
-              <Input 
-                id="subject-link" 
-                value={subjectLink} 
-                onChange={e => setSubjectLink(e.target.value)} 
-                placeholder="e.g., /subjects/xyz/chapters/1/paragraphs/2"
-              />
-              <p className="text-xs text-muted-foreground">
-                Link directly to a paragraph or assignment in subjects
-              </p>
+              {linkedContent.length > 0 && (
+                <div className="space-y-2">
+                  {linkedContent.map((link) => (
+                    <div 
+                      key={link.url}
+                      className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border"
+                    >
+                      {link.type === 'material' ? (
+                        <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                      ) : (
+                        <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
+                      )}
+                      <span className="text-sm truncate flex-1">{link.title}</span>
+                      <Badge variant="outline" className="text-xs">
+                        {link.type}
+                      </Badge>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleRemoveLink(link.url)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
-          <Button onClick={handleCreate} disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {deadlineType === 'test' ? 'Schedule Test' : 'Create Assignment'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
+            <Button onClick={handleCreate} disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {deadlineType === 'test' ? 'Schedule Test' : 'Create Assignment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <LinkPickerDialog
+        isOpen={isLinkPickerOpen}
+        onClose={() => setIsLinkPickerOpen(false)}
+        onSelect={handleAddLink}
+        classId={selectedClassId}
+      />
+    </>
   );
 }
