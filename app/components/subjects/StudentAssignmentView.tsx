@@ -39,6 +39,7 @@ interface Assignment {
   letter_index: string;
   answers_enabled: boolean;
   paragraph_id: string;
+  instructions?: string; // Professor's instructions from agenda
 }
 
 interface StudentAssignmentViewProps {
@@ -46,6 +47,7 @@ interface StudentAssignmentViewProps {
   chapterId: string;
   paragraphId: string;
   assignmentId: string;
+  instructions?: string; // Professor's instructions passed from agenda link
   onNavigateBack?: () => void;
   onNavigateNext?: () => void;
   onNavigatePrev?: () => void;
@@ -57,6 +59,7 @@ export function StudentAssignmentView({
   chapterId,
   paragraphId,
   assignmentId,
+  instructions,
   onNavigateBack,
   onNavigateNext,
   onNavigatePrev,
@@ -236,6 +239,14 @@ export function StudentAssignmentView({
 
   return (
     <div className={className}>
+      {/* Professor's Instructions Banner */}
+      {instructions && (
+        <div className="mb-6 p-4 rounded-lg bg-muted border-l-4 border-primary">
+          <p className="text-sm text-muted-foreground mb-1">Instructions from your teacher:</p>
+          <p className="text-base">{instructions}</p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">

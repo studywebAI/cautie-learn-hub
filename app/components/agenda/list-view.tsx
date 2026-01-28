@@ -89,6 +89,20 @@ export function ListView({ events, onEventClick }: ListViewProps) {
 }
 
 function EventListItem({ event, isOverdue }: { event: CalendarEvent; isOverdue?: boolean }) {
+  // Build href with instructions if available
+  const buildHref = () => {
+    if (!event.href) return undefined;
+    
+    // If there are instructions (description from teacher), add as query param
+    if (event.description) {
+      const separator = event.href.includes('?') ? '&' : '?';
+      return `${event.href}${separator}instructions=${encodeURIComponent(event.description)}`;
+    }
+    return event.href;
+  };
+
+  const href = buildHref();
+
   const content = (
     <div className={`flex items-center gap-4 p-3 rounded-lg border transition-colors ${
       isOverdue ? 'border-destructive/30 bg-destructive/5' : 'hover:bg-muted/50'
@@ -108,11 +122,17 @@ function EventListItem({ event, isOverdue }: { event: CalendarEvent; isOverdue?:
           <span>{event.subject}</span>
           {event.chapter_title && (
             <>
-              <span>•</span>
+              <span>›</span>
               <span className="truncate">{event.chapter_title}</span>
             </>
           )}
         </div>
+        {/* Show linked path if available */}
+        {event.linked_path && (
+          <div className="text-xs text-primary mt-1 truncate">
+            → {event.linked_path}
+          </div>
+        )}
       </div>
       
       <div className="flex items-center gap-3 flex-shrink-0">
@@ -127,7 +147,7 @@ function EventListItem({ event, isOverdue }: { event: CalendarEvent; isOverdue?:
           <p className="text-sm">{format(event.date, 'EEE, MMM d')}</p>
           {event.priority && (
             <Badge variant="outline" className={`text-xs ${
-              event.priority === 'high' ? 'text-red-600' :
+              event.priority === 'high' ? 'text-destructive' :
               event.priority === 'medium' ? 'text-yellow-600' : 'text-green-600'
             }`}>
               {event.priority}
@@ -143,9 +163,9 @@ function EventListItem({ event, isOverdue }: { event: CalendarEvent; isOverdue?:
     </div>
   );
 
-  if (event.type === 'assignment' && event.href) {
+  if (event.type === 'assignment' && href) {
     return (
-      <Link href={event.href} className="block">
+      <Link href={href} className="block">
         {content}
       </Link>
     );
