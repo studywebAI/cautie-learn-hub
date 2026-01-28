@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { materialId: string } }
+  { params }: { params: Promise<{ materialId: string }> }
 ) {
   try {
     const cookieStore = cookies();
@@ -15,7 +15,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const materialId = params.materialId;
+    const resolvedParams = await params;
+    const materialId = resolvedParams.materialId;
 
     // Check if user has access to the material
     const { data: material, error: materialError } = await supabase
@@ -79,7 +80,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { materialId: string } }
+  { params }: { params: Promise<{ materialId: string }> }
 ) {
   try {
     const cookieStore = cookies();
@@ -90,7 +91,8 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const materialId = params.materialId;
+    const resolvedParams = await params;
+    const materialId = resolvedParams.materialId;
     const body = await request.json();
     const { content, type, order_index } = body;
 

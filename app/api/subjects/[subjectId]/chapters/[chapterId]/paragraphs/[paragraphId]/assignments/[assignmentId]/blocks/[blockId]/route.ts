@@ -8,11 +8,12 @@ export const dynamic = 'force-dynamic'
 // POST - Submit student answer for a block
 export async function POST(
   request: Request,
-  { params }: { params: { subjectId: string; chapterId: string; paragraphId: string; assignmentId: string; blockId: string } }
+  { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string; assignmentId: string; blockId: string }> }
 ) {
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
+    const resolvedParams = await params
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -25,14 +26,14 @@ export async function POST(
     const { data: block, error: blockError } = await supabase
       .from('blocks')
       .select('assignment_id, type, data')
-      .eq('id', params.blockId)
+      .eq('id', resolvedParams.blockId)
       .single()
 
     if (blockError || !block) {
       return NextResponse.json({ error: 'Block not found' }, { status: 404 })
     }
 
-    if (block.assignment_id !== params.assignmentId) {
+    if (block.assignment_id !== resolvedParams.assignmentId) {
       return NextResponse.json({ error: 'Block does not belong to this assignment' }, { status: 403 })
     }
 
@@ -49,8 +50,8 @@ export async function POST(
           )
         )
       `)
-      .eq('id', params.assignmentId)
-      .eq('paragraphs.chapter_id', params.chapterId)
+      .eq('id', resolvedParams.assignmentId)
+      .eq('paragraphs.chapter_id', resolvedParams.chapterId)
       .single()
 
     if (assignmentError || !assignment) {
@@ -80,7 +81,7 @@ export async function POST(
       .from('student_answers')
       .insert({
         student_id: user.id,
-        block_id: params.blockId,
+        block_id: resolvedParams.blockId,
         answer_data: answerData,
         is_correct: null, // Will be set by grading
         graded_by_ai: false
@@ -108,7 +109,7 @@ export async function POST(
     }
 
     // Update progress_snapshots
-    await updateProgressSnapshot(params.paragraphId, user.id)
+    await updateProgressSnapshot(resolvedParams.paragraphId, user.id)
 
     return NextResponse.json({
       message: 'Answer submitted successfully',
@@ -124,11 +125,12 @@ export async function POST(
 // PUT - Update a specific block
 export async function PUT(
   request: Request,
-  { params }: { params: { subjectId: string; chapterId: string; paragraphId: string; assignmentId: string; blockId: string } }
+  { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string; assignmentId: string; blockId: string }> }
 ) {
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
+    const resolvedParams = await params
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -141,14 +143,14 @@ export async function PUT(
     const { data: block, error: blockError } = await supabase
       .from('blocks')
       .select('assignment_id')
-      .eq('id', params.blockId)
+      .eq('id', resolvedParams.blockId)
       .single()
 
     if (blockError || !block) {
       return NextResponse.json({ error: 'Block not found' }, { status: 404 })
     }
 
-    if (block.assignment_id !== params.assignmentId) {
+    if (block.assignment_id !== resolvedParams.assignmentId) {
       return NextResponse.json({ error: 'Block does not belong to this assignment' }, { status: 403 })
     }
 
@@ -165,8 +167,8 @@ export async function PUT(
           )
         )
       `)
-      .eq('id', params.assignmentId)
-      .eq('paragraphs.chapter_id', params.chapterId)
+      .eq('id', resolvedParams.assignmentId)
+      .eq('paragraphs.chapter_id', resolvedParams.chapterId)
       .single()
 
     if (assignmentError || !assignment) {
@@ -204,7 +206,7 @@ export async function PUT(
     const { data: updatedBlock, error: updateError } = await supabase
       .from('blocks')
       .update({ data: newData })
-      .eq('id', params.blockId)
+      .eq('id', resolvedParams.blockId)
       .select()
       .single()
 
@@ -223,11 +225,12 @@ export async function PUT(
 // DELETE a specific block
 export async function DELETE(
   request: Request,
-  { params }: { params: { subjectId: string; chapterId: string; paragraphId: string; assignmentId: string; blockId: string } }
+  { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string; assignmentId: string; blockId: string }> }
 ) {
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
+    const resolvedParams = await params
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -238,14 +241,14 @@ export async function DELETE(
     const { data: block, error: blockError } = await supabase
       .from('blocks')
       .select('assignment_id')
-      .eq('id', params.blockId)
+      .eq('id', resolvedParams.blockId)
       .single()
 
     if (blockError || !block) {
       return NextResponse.json({ error: 'Block not found' }, { status: 404 })
     }
 
-    if (block.assignment_id !== params.assignmentId) {
+    if (block.assignment_id !== resolvedParams.assignmentId) {
       return NextResponse.json({ error: 'Block does not belong to this assignment' }, { status: 403 })
     }
 
@@ -262,8 +265,8 @@ export async function DELETE(
           )
         )
       `)
-      .eq('id', params.assignmentId)
-      .eq('paragraphs.chapter_id', params.chapterId)
+      .eq('id', resolvedParams.assignmentId)
+      .eq('paragraphs.chapter_id', resolvedParams.chapterId)
       .single()
 
     if (assignmentError || !assignment) {
@@ -301,7 +304,7 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from('blocks')
       .delete()
-      .eq('id', params.blockId)
+      .eq('id', resolvedParams.blockId)
 
     if (deleteError) {
       console.error('Error deleting block:', deleteError)

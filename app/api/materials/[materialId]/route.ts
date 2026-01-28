@@ -8,9 +8,10 @@ export const dynamic = 'force-dynamic'
 // GET a specific material with its content
 export async function GET(
   request: Request,
-  { params }: { params: { materialId: string } }
+  { params }: { params: Promise<{ materialId: string }> }
 ) {
-  const materialId = params.materialId;
+  const resolvedParams = await params;
+  const materialId = resolvedParams.materialId;
   const cookieStore = await cookies()
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -94,9 +95,10 @@ export async function GET(
 // DELETE a material
 export async function DELETE(
   request: Request,
-  { params }: { params: { materialId: string } }
+  { params }: { params: Promise<{ materialId: string }> }
 ) {
-  const materialId = params.materialId;
+  const resolvedParams = await params;
+  const materialId = resolvedParams.materialId;
   const cookieStore = await cookies()
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

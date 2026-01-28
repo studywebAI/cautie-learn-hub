@@ -9,9 +9,10 @@ export const dynamic = 'force-dynamic'
 // GET all announcements for a specific class
 export async function GET(
   request: Request,
-  { params }: { params: { classId: string } }
+  { params }: { params: Promise<{ classId: string }> }
 ) {
-  const classId = params.classId;
+  const resolvedParams = await params;
+  const classId = resolvedParams.classId;
   const cookieStore = await cookies()
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -92,9 +93,10 @@ export async function GET(
 // POST create a new announcement
 export async function POST(
   request: Request,
-  { params }: { params: { classId: string } }
+  { params }: { params: Promise<{ classId: string }> }
 ) {
-  const classId = params.classId;
+  const resolvedParams = await params;
+  const classId = resolvedParams.classId;
   const cookieStore = await cookies()
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

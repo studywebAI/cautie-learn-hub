@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 // GET /api/subjects/[subjectId]/progress - Get student progress for a subject
 export async function GET(
   request: Request,
-  { params }: { params: { subjectId: string } }
+  { params }: { params: Promise<{ subjectId: string }> }
 ) {
   try {
     const cookieStore = cookies()
@@ -18,11 +18,14 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const resolvedParams = await params
+    const subjectId = resolvedParams.subjectId
+
     // Verify subject exists and user has access
     const { data: subject, error: subjectError } = await supabase
       .from('subjects')
       .select('id, class_id, title')
-      .eq('id', params.subjectId)
+      .eq('id', subjectId)
       .single()
 
     if (subjectError || !subject) {
@@ -66,7 +69,7 @@ export async function GET(
           )
         )
       `)
-      .eq('subject_id', params.subjectId)
+      .eq('subject_id', subjectId)
       .order('chapter_number', { ascending: true })
 
     if (chaptersError) {
@@ -99,7 +102,7 @@ export async function GET(
       : 0
 
     return NextResponse.json({
-      subject_id: params.subjectId,
+      subject_id: subjectId,
       subject_title: subject.title,
       overall_progress: overallProgress,
       chapters: chapterProgress
@@ -113,7 +116,7 @@ export async function GET(
 // POST /api/subjects/[subjectId]/progress - Update student progress for a paragraph
 export async function POST(
   request: Request,
-  { params }: { params: { subjectId: string } }
+  { params }: { params: Promise<{ subjectId: string }> }
 ) {
   try {
     const cookieStore = cookies()
@@ -124,6 +127,8 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const resolvedParams = await params
+    const subjectId = resolvedParams.subjectId
     const { paragraph_id, completion_percent } = await request.json()
 
     if (!paragraph_id || typeof completion_percent !== 'number') {
@@ -156,7 +161,7 @@ export async function POST(
       return NextResponse.json({ error: 'Chapter not found' }, { status: 404 })
     }
 
-    if (chapterInfo.subject_id !== params.subjectId) {
+    if (chapterInfo.subject_id !== subjectId) {
       return NextResponse.json({ error: 'Paragraph does not belong to this subject' }, { status: 400 })
     }
 
@@ -164,7 +169,7 @@ export async function POST(
     const { data: subjectCheck, error: subjectCheckError } = await supabase
       .from('subjects')
       .select('class_id')
-      .eq('id', params.subjectId)
+      .eq('id', subjectId)
       .single()
 
     if (subjectCheckError || !subjectCheck) {

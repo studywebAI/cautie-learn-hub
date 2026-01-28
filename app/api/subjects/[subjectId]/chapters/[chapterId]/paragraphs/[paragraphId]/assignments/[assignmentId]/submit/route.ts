@@ -7,11 +7,12 @@ export const dynamic = 'force-dynamic'
 // POST submit assignment answers
 export async function POST(
   request: Request,
-  { params }: { params: { subjectId: string; chapterId: string; paragraphId: string; assignmentId: string } }
+  { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string; assignmentId: string }> }
 ) {
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
+    const resolvedParams = await params
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -38,7 +39,7 @@ export async function POST(
         .from('blocks')
         .select('type, data')
         .eq('id', block_id)
-        .eq('assignment_id', params.assignmentId)
+        .eq('assignment_id', resolvedParams.assignmentId)
         .single()
 
       let isCorrect = null
@@ -91,7 +92,7 @@ export async function POST(
       const answerRecord = {
         student_id: user.id,
         block_id: block_id,
-        assignment_id: params.assignmentId,
+        assignment_id: resolvedParams.assignmentId,
         answer_data: answer_data,
         is_correct: isCorrect,
         score: score,

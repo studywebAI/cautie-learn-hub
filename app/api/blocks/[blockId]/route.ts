@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { blockId: string } }
+  { params }: { params: Promise<{ blockId: string }> }
 ) {
   try {
     const cookieStore = cookies();
@@ -15,7 +15,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const blockId = params.blockId;
+    const resolvedParams = await params;
+    const blockId = resolvedParams.blockId;
     const body = await request.json();
     const { content, type, order_index } = body;
 
@@ -99,7 +100,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { blockId: string } }
+  { params }: { params: Promise<{ blockId: string }> }
 ) {
   try {
     const cookieStore = cookies();
@@ -110,7 +111,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const blockId = params.blockId;
+    const resolvedParams = await params;
+    const blockId = resolvedParams.blockId;
 
     // Get the block and check access
     const { data: block, error: blockError } = await supabase

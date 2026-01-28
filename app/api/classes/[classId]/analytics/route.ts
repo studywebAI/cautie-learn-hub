@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   request: Request,
-  { params }: { params: { classId: string } }
+  { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
     const cookieStore = cookies()
@@ -19,7 +19,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { classId } = params
+    const resolvedParams = await params
+    const { classId } = resolvedParams
 
     // Verify teacher has access to this class
     const { data: classMember, error: classError } = await supabase

@@ -7,9 +7,10 @@ export const dynamic = 'force-dynamic'
 // GET blocks for an assignment
 export async function GET(
   request: Request,
-  { params }: { params: { subjectId: string; chapterId: string; paragraphId: string; assignmentId: string } }
+  { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string; assignmentId: string }> }
 ) {
-  console.log(`GET /api/subjects/[subjectId]/chapters/[chapterId]/paragraphs/[paragraphId]/assignments/${params.assignmentId}/blocks - Called`);
+  const resolvedParams = await params
+  console.log(`GET /api/subjects/[subjectId]/chapters/[chapterId]/paragraphs/[paragraphId]/assignments/${resolvedParams.assignmentId}/blocks - Called`);
 
   try {
     const cookieStore = cookies()
@@ -26,10 +27,10 @@ export async function GET(
     const { data: simpleAssignment, error: simpleError } = await supabase
       .from('assignments')
       .select('id, paragraph_id')
-      .eq('id', params.assignmentId)
+      .eq('id', resolvedParams.assignmentId)
       .single()
 
-    console.log(`Simple assignment check: id=${params.assignmentId}, error=${simpleError?.message}, found=${!!simpleAssignment}`);
+    console.log(`Simple assignment check: id=${resolvedParams.assignmentId}, error=${simpleError?.message}, found=${!!simpleAssignment}`);
 
     if (simpleError || !simpleAssignment) {
       console.log(`Assignment not found in database`);
@@ -55,10 +56,10 @@ export async function GET(
           )
         )
       `)
-      .eq('id', params.assignmentId)
+      .eq('id', resolvedParams.assignmentId)
       .single()
 
-    console.log(`Complex assignment lookup: id=${params.assignmentId}, error=${assignmentError?.message}, found=${!!assignment}`);
+    console.log(`Complex assignment lookup: id=${resolvedParams.assignmentId}, error=${assignmentError?.message}, found=${!!assignment}`);
 
     if (assignmentError || !assignment) {
       console.log(`Complex assignment lookup failed, but assignment exists. This is the bug.`);
@@ -131,14 +132,14 @@ export async function GET(
       console.log(`Complex auth lookup failed - assuming access since assignment exists`);
     }
 
-    console.log(`Access granted for user ${user.id} to assignment ${params.assignmentId}`);
+    console.log(`Access granted for user ${user.id} to assignment ${resolvedParams.assignmentId}`);
 
     // Get blocks for this assignment
-    console.log(`Fetching blocks for assignment: ${params.assignmentId}`);
+    console.log(`Fetching blocks for assignment: ${resolvedParams.assignmentId}`);
     const { data: blocks, error: blocksError } = await supabase
       .from('blocks')
       .select('*')
-      .eq('assignment_id', params.assignmentId)
+      .eq('assignment_id', resolvedParams.assignmentId)
       .order('position', { ascending: true })
 
     console.log(`Blocks query result: count=${blocks?.length || 0}, error=${blocksError?.message}`);
@@ -159,9 +160,10 @@ export async function GET(
 // POST create a new block
 export async function POST(
   request: Request,
-  { params }: { params: { subjectId: string; chapterId: string; paragraphId: string; assignmentId: string } }
+  { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string; assignmentId: string }> }
 ) {
-  console.log(`POST /api/subjects/[subjectId]/chapters/[chapterId]/paragraphs/[paragraphId]/assignments/${params.assignmentId}/blocks - Called`);
+  const resolvedParams = await params
+  console.log(`POST /api/subjects/[subjectId]/chapters/[chapterId]/paragraphs/[paragraphId]/assignments/${resolvedParams.assignmentId}/blocks - Called`);
 
   try {
     const cookieStore = cookies()
@@ -185,10 +187,10 @@ export async function POST(
     const { data: simpleAssignment, error: simpleError } = await supabase
       .from('assignments')
       .select('id, paragraph_id')
-      .eq('id', params.assignmentId)
+      .eq('id', resolvedParams.assignmentId)
       .single()
 
-    console.log(`Simple assignment check: id=${params.assignmentId}, error=${simpleError?.message}, found=${!!simpleAssignment}`);
+    console.log(`Simple assignment check: id=${resolvedParams.assignmentId}, error=${simpleError?.message}, found=${!!simpleAssignment}`);
 
     if (simpleError || !simpleAssignment) {
       console.log(`Assignment not found in database`);
@@ -196,7 +198,7 @@ export async function POST(
     }
 
     // Skip complex auth for now - assume user has access if assignment exists
-    console.log(`Skipping complex auth checks - assuming user has access to assignment ${params.assignmentId}`);
+    console.log(`Skipping complex auth checks - assuming user has access to assignment ${resolvedParams.assignmentId}`);
     const isTeacher = true; // Assume teacher access for block management
 
     if (!isTeacher) {
@@ -204,13 +206,13 @@ export async function POST(
       return NextResponse.json({ error: 'Access denied - only teachers can create blocks' }, { status: 403 })
     }
 
-    console.log(`Teacher access granted for user ${user.id} to create blocks in assignment ${params.assignmentId}`);
+    console.log(`Teacher access granted for user ${user.id} to create blocks in assignment ${resolvedParams.assignmentId}`);
 
     // Insert the new block
     const { data: newBlock, error: insertError } = await supabase
       .from('blocks')
       .insert({
-        assignment_id: params.assignmentId,
+        assignment_id: resolvedParams.assignmentId,
         type,
         position,
         data: blockData
@@ -230,4 +232,3 @@ export async function POST(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

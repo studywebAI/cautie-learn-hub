@@ -9,10 +9,11 @@ export const dynamic = 'force-dynamic'
 // GET /api/classes/[classId]/chapters - List chapters for a class
 export async function GET(
   request: Request,
-  { params }: { params: { classId: string } }
+  { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
-    const classId = params.classId
+    const resolvedParams = await params
+    const classId = resolvedParams.classId
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
@@ -76,10 +77,11 @@ export async function GET(
 // POST /api/classes/[classId]/chapters - Create a new chapter under a subject
 export async function POST(
   request: Request,
-  { params }: { params: { classId: string } }
+  { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
-    const classId = params.classId
+    const resolvedParams = await params
+    const classId = resolvedParams.classId
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
