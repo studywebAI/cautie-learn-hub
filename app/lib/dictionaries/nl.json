@@ -4,21 +4,27 @@
     "subjects": "Vakken",
     "classes": "Klassen",
     "agenda": "Agenda",
+    "material": "Materiaal",
     "settings": "Instellingen",
     "tools": {
       "title": "Gereedschap",
       "quizGenerator": "Quiz",
       "flashcardMaker": "Flashcards",
       "materialProcessor": "Materiaal Verwerken",
-      "notes": "Notities"
+      "notes": "Notities",
+      "blocks": "Blokken"
     }
   },
   "header": {
     "studentDashboard": "Studenten Dashboard",
     "teacherDashboard": "Docenten Dashboard",
-    "roleSwitcher": "Rol Wisselaar"
+    "roleSwitcher": "Rol Wisselaar",
+    "myAccount": "Mijn Account",
+    "logOut": "Uitloggen",
+    "logIn": "Inloggen"
   },
   "dashboard": {
+    "title": "Dashboard",
     "todayPlan": {
       "title": "Jouw Studieplan voor Vandaag",
       "description": "Deze taken zijn door de AI voor je voorbereid.",
@@ -61,12 +67,27 @@
     "description": "Jouw suite van intelligente hulpmiddelen om het leren te versnellen.",
     "select": "Selecteer Tool",
     "quiz": {
+      "title": "Quiz",
       "description": "Creëer meerkeuzetoetsen van elke tekst. Test je kennis met verschillende uitdagende modi."
     },
     "flashcards": {
+      "title": "Flashcards",
       "description": "Genereer automatisch flashcards van je studiemateriaal om belangrijke concepten te versterken."
     },
+    "notes": {
+      "title": "Notities",
+      "description": "Maak en organiseer je studienotities op één plek."
+    },
+    "blocks": {
+      "title": "Blokken",
+      "description": "Bouw gestructureerde content met onze blokeditor."
+    },
+    "wordweb": {
+      "title": "Woordweb",
+      "description": "Visualiseer verbanden tussen concepten met interactieve woordwebben."
+    },
     "material": {
+      "title": "Materiaal Verwerken",
       "description": "Krijg een beknopte samenvatting van elk geüpload document of geplakte tekst om snel de hoofdpunten te begrijpen."
     }
   },
@@ -91,7 +112,135 @@
     "description": "Jouw geconsolideerde kalender van deadlines, taken en persoonlijke afspraken.",
     "eventsOn": "Gebeurtenissen op",
     "noEvents": "Geen gebeurtenissen gepland voor deze dag.",
-    "addTask": "Taak Toevoegen"
+    "addTask": "Taak Toevoegen",
+    "today": "Vandaag",
+    "week": "Week",
+    "month": "Maand"
+  },
+  "subjects": {
+    "title": "Vakken",
+    "description": "Al je vakken op één plek.",
+    "noSubjects": "Geen vakken gevonden.",
+    "addSubject": "Vak Toevoegen",
+    "chapters": "Hoofdstukken",
+    "paragraphs": "Paragrafen",
+    "assignments": "Opdrachten",
+    "progress": "Voortgang"
+  },
+  "classes": {
+    "title": "Klassen",
+    "description": "Beheer je klassen en studenten.",
+    "noClasses": "Geen klassen gevonden.",
+    "createClass": "Klas Aanmaken",
+    "joinClass": "Klas Joinen",
+    "joinCode": "Join Code",
+    "students": "Studenten",
+    "assignments": "Opdrachten",
+    "announcements": "Aankondigingen"
+  },
+  "settings": {
+    "title": "Instellingen",
+    "description": "Beheer je account en applicatie instellingen.",
+    "general": {
+      "title": "Algemeen",
+      "description": "Configureer je applicatie voorkeuren.",
+      "language": "Taal"
+    },
+    "personalization": {
+      "title": "Personalisatie",
+      "description": "Pas het uiterlijk en de kleuren van je app aan.",
+      "theme": "Thema",
+      "themeDescription": "Kies je favoriete kleurenschema.",
+      "light": "Licht",
+      "dark": "Donker",
+      "ocean": "Oceaan"
+    },
+    "accessibility": {
+      "title": "Toegankelijkheid",
+      "description": "Pas het uiterlijk en gedrag van de app aan jouw behoeften aan.",
+      "highContrast": "Hoog-Contrast Modus",
+      "highContrastDescription": "Verhoog tekst en achtergrond contrast.",
+      "dyslexiaFont": "Dyslexie-Vriendelijk Lettertype",
+      "dyslexiaFontDescription": "Gebruik een lettertype ontworpen voor gemakkelijker lezen.",
+      "reducedMotion": "Animaties Verminderen",
+      "reducedMotionDescription": "Schakel decoratieve animaties en overgangen uit."
+    },
+    "developer": {
+      "title": "Ontwikkelaar Instellingen",
+      "description": "Tijdelijke instellingen voor ontwikkeldoeleinden.",
+      "roleSwitch": "Rol Wisselen (Dev Only)",
+      "roleSwitchDescription": "Wissel tussen student en docent weergave. Dit is voor ontwikkeling en wordt verwijderd."
+    }
+  },
+  "common": {
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "add": "Toevoegen",
+    "create": "Aanmaken",
+    "update": "Bijwerken",
+    "submit": "Verzenden",
+    "close": "Sluiten",
+    "back": "Terug",
+    "next": "Volgende",
+    "previous": "Vorige",
+    "loading": "Laden...",
+    "error": "Fout",
+    "success": "Succes",
+    "confirm": "Bevestigen",
+    "yes": "Ja",
+    "no": "Nee",
+    "search": "Zoeken",
+    "filter": "Filteren",
+    "sort": "Sorteren",
+    "view": "Bekijken",
+    "download": "Downloaden",
+    "upload": "Uploaden",
+    "share": "Delen",
+    "copy": "Kopiëren",
+    "paste": "Plakken",
+    "undo": "Ongedaan maken",
+    "redo": "Opnieuw doen",
+    "reset": "Resetten",
+    "clear": "Wissen",
+    "refresh": "Vernieuwen",
+    "retry": "Opnieuw proberen",
+    "more": "Meer",
+    "less": "Minder",
+    "all": "Alles",
+    "none": "Geen",
+    "select": "Selecteren",
+    "selected": "Geselecteerd",
+    "optional": "Optioneel",
+    "required": "Verplicht"
+  },
+  "auth": {
+    "login": "Inloggen",
+    "logout": "Uitloggen",
+    "signup": "Registreren",
+    "email": "E-mail",
+    "password": "Wachtwoord",
+    "confirmPassword": "Wachtwoord Bevestigen",
+    "forgotPassword": "Wachtwoord Vergeten?",
+    "resetPassword": "Wachtwoord Resetten",
+    "dontHaveAccount": "Nog geen account?",
+    "alreadyHaveAccount": "Al een account?",
+    "orContinueWith": "Of doorgaan met"
+  },
+  "notifications": {
+    "title": "Meldingen",
+    "noNotifications": "Geen meldingen",
+    "markAsRead": "Markeer als gelezen",
+    "markAllAsRead": "Alles als gelezen markeren",
+    "clearAll": "Alles wissen"
+  },
+  "errors": {
+    "somethingWentWrong": "Er ging iets mis",
+    "pageNotFound": "Pagina niet gevonden",
+    "unauthorized": "Niet geautoriseerd",
+    "forbidden": "Verboden",
+    "tryAgain": "Opnieuw proberen"
   },
   "setup": {
     "welcome": "Welkom bij Cautie",
