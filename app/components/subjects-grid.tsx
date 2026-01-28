@@ -14,7 +14,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { InputWithTypingPlaceholder } from '@/components/ui/input-with-typing-placeholder';
 import { Label } from '@/components/ui/label';
 
 type RecentParagraph = {
@@ -269,9 +269,9 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="subject-title">Title</Label>
-              <Input
+              <InputWithTypingPlaceholder
                 id="subject-title"
-                placeholder="e.g., Nederlands, Mathematics"
+                placeholders={["Biology", "Mathematics", "Nederlands", "History", "Physics", "Chemistry"]}
                 value={newSubjectTitle}
                 onChange={(e) => setNewSubjectTitle(e.target.value)}
               />

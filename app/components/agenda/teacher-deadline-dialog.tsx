@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { InputWithTypingPlaceholder } from '@/components/ui/input-with-typing-placeholder';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -173,11 +174,17 @@ export function TeacherDeadlineDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="title">Title</Label>
-              <Input 
+              <InputWithTypingPlaceholder 
                 id="title" 
                 value={title} 
                 onChange={e => setTitle(e.target.value)} 
-                placeholder={deadlineType === 'test' ? 'e.g., Chapter 5 Test' : 'e.g., Read pages 50-75'}
+                placeholders={
+                  deadlineType === 'big_test' 
+                    ? ['Chapter 5 Final Exam', 'Midterm Test', 'Unit Assessment']
+                    : deadlineType === 'small_test'
+                    ? ['Quiz Week 3', 'Pop Quiz', 'Practice Test']
+                    : ['Read pages 50-75', 'Complete worksheet', 'Watch lecture video']
+                }
               />
             </div>
 
