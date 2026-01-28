@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     ] = await Promise.all([
       supabase.from('classes').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
       supabase.from('personal_tasks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('profiles').select('role').eq('id', user.id).single()
+      supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
     ])
 
     // For now, return empty assignments array - assignments are complex with hierarchy

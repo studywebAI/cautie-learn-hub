@@ -31,11 +31,16 @@ export async function PUT(
       return NextResponse.json({ error: 'Block not found' }, { status: 404 });
     }
 
+    const materialId = (block as any).material_id as string | null;
+    if (!materialId) {
+      return NextResponse.json({ error: 'Block is missing material_id' }, { status: 400 });
+    }
+
     // Check access to the material
     const { data: material, error: materialError } = await supabase
       .from('materials')
       .select('id, class_id, user_id')
-      .eq('id', block.material_id)
+      .eq('id', materialId)
       .single();
 
     if (materialError || !material) {
@@ -125,11 +130,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'Block not found' }, { status: 404 });
     }
 
+    const materialId = (block as any).material_id as string | null;
+    if (!materialId) {
+      return NextResponse.json({ error: 'Block is missing material_id' }, { status: 400 });
+    }
+
     // Check access to the material
     const { data: material, error: materialError } = await supabase
       .from('materials')
       .select('id, class_id, user_id')
-      .eq('id', block.material_id)
+      .eq('id', materialId)
       .single();
 
     if (materialError || !material) {

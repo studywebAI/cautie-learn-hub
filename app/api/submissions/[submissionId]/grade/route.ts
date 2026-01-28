@@ -14,8 +14,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ sub
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: submission, error: submissionError } = await supabase
-    .from('submissions' as any)
+  const { data: submission, error: submissionError } = await (supabase
+    .from('submissions' as any) as any)
     .select(`*, assignments (id, rubric_id, class_id)`)
     .eq('id', submissionId)
     .single()
@@ -35,8 +35,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ sub
     await supabase.from('submission_rubric_scores' as any).delete().eq('submission_id', submissionId)
     const scoresToInsert = rubricScores.map((score: any) => ({ submission_id: submissionId, rubric_item_id: score.rubric_item_id, score: score.score, feedback: score.feedback }))
     await supabase.from('submission_rubric_scores' as any).insert(scoresToInsert)
-    const { data: rubricItems } = await supabase.from('rubric_items' as any).select('id, max_score, weight').in('id', rubricScores.map((s: any) => s.rubric_item_id))
-    if (rubricItems) rubricItems.forEach(item => { const scoreData = rubricScores.find((s: any) => s.rubric_item_id === item.id); if (scoreData) calculatedScore += (scoreData.score / item.max_score) * item.max_score * item.weight })
+    const { data: rubricItems } = await (supabase
+      .from('rubric_items' as any) as any)
+      .select('id, max_score, weight')
+      .in('id', rubricScores.map((s: any) => s.rubric_item_id))
+    if (rubricItems) rubricItems.forEach((item: any) => { const scoreData = rubricScores.find((s: any) => s.rubric_item_id === item.id); if (scoreData) calculatedScore += (scoreData.score / item.max_score) * item.max_score * item.weight })
   }
 
   const updateData: any = { status: 'graded', graded_at: new Date().toISOString(), graded_by: user.id, calculated_grade: calculatedScore }
@@ -54,8 +57,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ subm
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: submission, error: submissionError } = await supabase
-    .from('submissions' as any)
+  const { data: submission, error: submissionError } = await (supabase
+    .from('submissions' as any) as any)
     .select(`*, assignments (id, rubric_id, class_id, rubrics (id, name, rubric_items (id, criterion, description, max_score, weight))), submission_rubric_scores (rubric_item_id, score, feedback)`)
     .eq('id', submissionId)
     .single()

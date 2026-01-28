@@ -46,33 +46,44 @@ export async function GET(
     return NextResponse.json({ error: 'Material not found' }, { status: 404 });
   }
 
-  // Security Check: User must be member or owner of the class
-  const { data: classData, error: classError } = await supabase
-    .from('classes')
-    .select('owner_id')
-    .eq('id', material.class_id)
-    .single();
-    
-  if (classError || !classData) {
+  // Security Check:
+  // - Class material: user must be class owner or member
+  // - Personal material (no class_id): user must be the owner
+  if (!material.class_id) {
+    const ownerId = (material as any).user_id as string | null | undefined;
+    if (!ownerId || ownerId !== session.user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+  } else {
+    const classId = material.class_id as string;
+
+    const { data: classData, error: classError } = await supabase
+      .from('classes')
+      .select('owner_id')
+      .eq('id', classId)
+      .single();
+
+    if (classError || !classData) {
       return NextResponse.json({ error: 'Class not found for material' }, { status: 404 });
-  }
+    }
 
-  let isMemberOrOwner = classData.owner_id === session.user.id;
+    let isMemberOrOwner = classData.owner_id === session.user.id;
 
-  if (!isMemberOrOwner) {
+    if (!isMemberOrOwner) {
       const { count } = await supabase
         .from('class_members')
         .select('*', { count: 'exact', head: true })
-        .eq('class_id', material.class_id)
+        .eq('class_id', classId)
         .eq('user_id', session.user.id);
-      
+
       if (count && count > 0) {
         isMemberOrOwner = true;
       }
-  }
+    }
 
-  if (!isMemberOrOwner) {
+    if (!isMemberOrOwner) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
   }
 
   let content = material.content;
@@ -125,7 +136,7 @@ export async function DELETE(
 
    const { data: material, error: fetchError } = await supabase
     .from('materials')
-    .select('class_id, content_id, type')
+     .select('class_id, user_id, content_id, type')
     .eq('id', materialId)
     .single();
 
@@ -133,15 +144,25 @@ export async function DELETE(
      return NextResponse.json({ error: 'Material not found' }, { status: 404 });
    }
 
-    // Security check: User must be owner
-    const { data: classData, error: classError } = await supabase
+    // Security check:
+    // - Class material: user must be class owner
+    // - Personal material (no class_id): user must be the owner
+    if (!material.class_id) {
+      const ownerId = (material as any).user_id as string | null | undefined;
+      if (!ownerId || ownerId !== user.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else {
+      const classId = material.class_id as string;
+      const { data: classData, error: classError } = await supabase
         .from('classes')
         .select('owner_id')
-        .eq('id', material.class_id)
+        .eq('id', classId)
         .single();
-    
-    if (classError || !classData || classData.owner_id !== user.id) {
+
+      if (classError || !classData || classData.owner_id !== user.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
    // Also delete the associated content (e.g., the note) before deleting the material
