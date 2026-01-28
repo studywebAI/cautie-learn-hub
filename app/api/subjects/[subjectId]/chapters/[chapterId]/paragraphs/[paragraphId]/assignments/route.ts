@@ -97,14 +97,16 @@ export async function POST(
     const nextIndex = (existingAssignments?.[0]?.assignment_index || 0) + 1
 
     // Create assignment
-    const { data: assignment, error: insertError } = await supabase
-      .from('assignments')
-      .insert({
-        paragraph_id: resolvedParams.paragraphId,
-        assignment_index: nextIndex,
-        title: title?.trim(),
-        answers_enabled
-      })
+    const { data: assignment, error: insertError } = await (supabase
+      .from('assignments') as any)
+      .insert([
+        {
+          paragraph_id: resolvedParams.paragraphId,
+          assignment_index: nextIndex,
+          title: title?.trim(),
+          answers_enabled,
+        },
+      ])
       .select()
       .single()
 

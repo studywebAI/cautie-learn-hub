@@ -75,8 +75,8 @@ export async function POST(
   }
 
   // Start transaction
-  const { data: rubric, error: rubricError } = await supabase
-    .from('rubrics' as any)
+  const { data: rubric, error: rubricError } = await (supabase
+    .from('rubrics' as any) as any)
     .insert({
       class_id: classId,
       name,
@@ -85,7 +85,9 @@ export async function POST(
     .select()
     .single()
 
-  if (rubricError || !rubric) {
+  const rubricId = (rubric as any)?.id as string | undefined
+
+  if (rubricError || !rubricId) {
     console.error('Error creating rubric:', rubricError)
     return NextResponse.json({ error: rubricError?.message || 'Failed to create rubric' }, { status: 500 })
   }
@@ -93,7 +95,7 @@ export async function POST(
   // Insert rubric items
   if (items && items.length > 0) {
     const rubricItems = items.map((item: any, index: number) => ({
-      rubric_id: rubric.id,
+      rubric_id: rubricId,
       criterion: item.criterion,
       description: item.description,
       max_score: item.max_score || 4,
@@ -108,19 +110,19 @@ export async function POST(
     if (itemsError) {
       console.error('Error creating rubric items:', itemsError)
       // Clean up rubric if items failed
-      await supabase.from('rubrics' as any).delete().eq('id', rubric.id)
+      await (supabase.from('rubrics' as any) as any).delete().eq('id', rubricId)
       return NextResponse.json({ error: itemsError.message }, { status: 500 })
     }
   }
 
   // Fetch complete rubric with items
-  const { data: completeRubric, error: fetchError } = await supabase
-    .from('rubrics' as any)
+  const { data: completeRubric, error: fetchError } = await (supabase
+    .from('rubrics' as any) as any)
     .select(`
       *,
       rubric_items (*)
     `)
-    .eq('id', rubric.id)
+    .eq('id', rubricId)
     .single()
 
   if (fetchError) {
