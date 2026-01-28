@@ -1,41 +1,40 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "Node16",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "incremental": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
     "lib": [
       "DOM",
+      "DOM.Iterable",
       "ES2022"
     ],
-    "strict": true,
-    "esModuleInterop": true,
-    "moduleResolution": "Node16",
-    "resolveJsonModule": true,
-    "jsx": "react-jsx",
-    "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
     "paths": {
       "@/*": [
         "./app/*"
       ]
     },
-    "allowJs": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "incremental": true,
-    "isolatedModules": true,
     "plugins": [
       {
         "name": "next"
       }
-    ]
+    ],
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2022",
+    "baseUrl": "."
   },
+  "exclude": [
+    "node_modules"
+  ],
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "**/supabase.ts",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
+    ".next/types/**/*.ts"
   ]
 }
