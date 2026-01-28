@@ -11,7 +11,7 @@ export async function POST() {
     const supabase = await createClient(cookieStore)
 
     // Get one pending grading job
-    const { data: job, error: jobError } = await supabase
+    const { data: job, error: jobError } = await (supabase as any)
       .from('ai_grading_queue')
       .select('*')
       .eq('status', 'pending')
@@ -24,7 +24,7 @@ export async function POST() {
     }
 
     // Mark as processing
-    await supabase
+    await (supabase as any)
       .from('ai_grading_queue')
       .update({ status: 'processing' })
       .eq('id', job.id)
@@ -46,7 +46,7 @@ export async function POST() {
       .single()
 
     if (answerError || !studentAnswer) {
-      await supabase
+      await (supabase as any)
         .from('ai_grading_queue')
         .update({
           status: 'failed',
@@ -59,7 +59,7 @@ export async function POST() {
 
     const blockData = studentAnswer.blocks as any
     if (blockData.type !== 'open_question') {
-      await supabase
+      await (supabase as any)
         .from('ai_grading_queue')
         .update({
           status: 'failed',
@@ -115,7 +115,7 @@ export async function POST() {
     }
 
     // Mark job as completed
-    await supabase
+    await (supabase as any)
       .from('ai_grading_queue')
       .update({
         status: 'completed',

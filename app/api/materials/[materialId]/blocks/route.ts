@@ -138,12 +138,13 @@ export async function POST(
     }
 
     // Create the block
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('blocks')
       .insert({
         material_id: materialId,
-        content,
+        data: content,
         type,
+        position: order_index || 0,
         order_index: order_index || 0,
       })
       .select()

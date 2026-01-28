@@ -69,10 +69,10 @@ export async function POST(request: NextRequest) {
         hasAccess = true;
       }
     } else if (firstBlock.chapter_id) {
-      // Chapter blocks
-      const { data: chapter, error: chapterError } = await supabase
-        .from('class_chapters')
-        .select('id, class_id')
+      // Chapter blocks - use chapters table with subjects join
+      const { data: chapter, error: chapterError } = await (supabase as any)
+        .from('chapters')
+        .select('id, subject_id, subjects(class_id)')
         .eq('id', firstBlock.chapter_id)
         .single();
 
@@ -81,10 +81,11 @@ export async function POST(request: NextRequest) {
       }
 
       // Authorization for chapter
+      const chapterClassId = chapter.subjects?.class_id;
       const { data: classData } = await supabase
         .from('classes')
         .select('owner_id')
-        .eq('id', chapter.class_id)
+        .eq('id', chapterClassId)
         .single();
 
       if (classData?.owner_id === user.id) {
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
         const { count } = await supabase
           .from('class_members')
           .select('*', { count: 'exact', head: true })
-          .eq('class_id', chapter.class_id)
+          .eq('class_id', chapterClassId)
           .eq('user_id', user.id);
 
         if (count && count > 0) {

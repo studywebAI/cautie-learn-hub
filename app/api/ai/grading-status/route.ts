@@ -16,7 +16,7 @@ export async function GET() {
     }
 
     // Get grading queue status
-    const { data: queueStatus, error: queueError } = await supabase
+    const { data: queueStatus, error: queueError } = await (supabase as any)
       .from('ai_grading_queue')
       .select('status')
       .order('created_at')
@@ -33,7 +33,7 @@ export async function GET() {
     }, {}) || {}
 
     // Get recent completed jobs for teacher overview
-    const { data: recentJobs, error: recentError } = await supabase
+    const { data: recentJobs, error: recentError } = await (supabase as any)
       .from('ai_grading_queue')
       .select(`
         *,

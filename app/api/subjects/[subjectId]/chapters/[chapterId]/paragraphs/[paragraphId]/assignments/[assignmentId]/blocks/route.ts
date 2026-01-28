@@ -38,7 +38,7 @@ export async function GET(
     }
 
     // Now get the full hierarchy info
-    const { data: assignment, error: assignmentError } = await supabase
+    const { data: assignment, error: assignmentError } = await (supabase as any)
       .from('assignments')
       .select(`
         id,

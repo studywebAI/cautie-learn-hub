@@ -98,12 +98,13 @@ export async function POST(
       .single();
     const nextOrderIndex = (lastBlock?.order_index || 0) + 1;
     // Add the block
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('blocks')
       .insert({
         chapter_id: chapterId,
-        content: content,
+        data: content,
         type: type,
+        position: nextOrderIndex,
         order_index: nextOrderIndex,
       })
       .select()

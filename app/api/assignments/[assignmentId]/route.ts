@@ -133,13 +133,13 @@ export async function PUT(
 
   // Validate chapter_id if provided
   if (chapter_id) {
-    const { data: chapter, error: chapterError } = await supabase
-      .from('class_chapters')
-      .select('class_id')
+    const { data: chapter, error: chapterError } = await (supabase as any)
+      .from('chapters')
+      .select('subject_id, subjects(class_id)')
       .eq('id', chapter_id)
       .single();
 
-    if (chapterError || !chapter || chapter.class_id !== classId) {
+    if (chapterError || !chapter || chapter.subjects?.class_id !== classId) {
       return NextResponse.json({ error: 'Invalid chapter_id' }, { status: 400 });
     }
   }
