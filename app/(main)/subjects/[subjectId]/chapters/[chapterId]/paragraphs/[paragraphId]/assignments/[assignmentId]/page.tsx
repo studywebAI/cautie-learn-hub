@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, FileText } from 'lucide-react';
@@ -29,24 +29,28 @@ type Block = {
 export default function AssignmentDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const subjectId = params.subjectId as string;
   const chapterId = params.chapterId as string;
   const paragraphId = params.paragraphId as string;
   const assignmentId = params.assignmentId as string;
+  
+  // Get instructions from URL query params (passed from agenda)
+  const instructions = searchParams.get('instructions') || undefined;
 
-  // Redirect if assignmentId is missing
-  if (!assignmentId || assignmentId === 'undefined') {
-    router.push(`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}`);
-    return null;
-  }
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const { toast } = useToast();
   const { role } = useContext(AppContext) as any;
   const isTeacher = role === 'teacher';
-  const isStudent = role === 'student';
 
   useEffect(() => {
+    // Redirect if assignmentId is missing
+    if (!assignmentId || assignmentId === 'undefined') {
+      router.push(`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}`);
+      return;
+    }
+
     const fetchData = async () => {
       try {
         // Fetch assignment
@@ -143,6 +147,7 @@ export default function AssignmentDetailPage() {
       chapterId={chapterId}
       paragraphId={paragraphId}
       assignmentId={assignmentId}
+      instructions={instructions}
       onNavigateBack={() => router.push(`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}`)}
       onNavigateNext={() => {
         // TODO: Implement navigation to next assignment

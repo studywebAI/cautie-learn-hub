@@ -143,6 +143,8 @@ export type CalendarEvent = {
   estimated_duration?: number;
   tags?: string[];
   status?: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  description?: string; // Teacher's instructions
+  linked_path?: string; // Display path for linked content
 };
 
 // Types for Analytics
