@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,21 +11,21 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { InputWithTypingPlaceholder } from '@/components/ui/input-with-typing-placeholder';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Loader2, Wand2, X } from 'lucide-react';
+import { CalendarIcon, Loader2, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { PersonalTask } from '@/contexts/app-context';
 import { Switch } from '../ui/switch';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Badge } from '../ui/badge';
-// import { generateStudyPlanFromTask } from '@/ai/flows/generate-study-plan-from-task'; // Removed direct import
 
+type TaskType = 'homework' | 'small_test' | 'big_test';
 
 type CreateTaskDialogProps = {
   isOpen: boolean;
@@ -39,7 +38,9 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<Date | undefined>(initialDate);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [subject, setSubject] = useState('');
+  const [taskType, setTaskType] = useState<TaskType>('homework');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [estimatedDuration, setEstimatedDuration] = useState(60);
   const [tags, setTags] = useState<string[]>([]);
@@ -48,26 +49,23 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  // Only show AI helper for tests, not homework
+  const showAiHelper = taskType === 'small_test' || taskType === 'big_test';
+
   useEffect(() => {
     setDate(initialDate);
   }, [initialDate]);
 
-  const addTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput('');
+  // Reset AI helper when task type changes to homework
+  useEffect(() => {
+    if (taskType === 'homework') {
+      setUseAiHelper(false);
     }
-  };
+  }, [taskType]);
 
-  const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addTag();
-    }
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    setDate(selectedDate);
+    setCalendarOpen(false); // Auto-close calendar
   };
 
   const handleCreateTask = async () => {
@@ -82,78 +80,88 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
     
     setIsLoading(true);
 
-    if (useAiHelper) {
+    try {
+      if (useAiHelper && showAiHelper) {
         try {
-            const response = await fetch('/api/ai/handle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    flowName: 'generateStudyPlanFromTask',
-                    input: {
-                        taskTitle: title,
-                        taskDueDate: format(date, 'yyyy-MM-dd'),
-                        todayDate: format(new Date(), 'yyyy-MM-dd'),
-                    },
-                }),
-            });
-            if (!response.ok) {
-                throw new Error(`API call failed: ${response.statusText}`);
-            }
-            const plan = await response.json();
+          const response = await fetch('/api/ai/handle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              flowName: 'generateStudyPlanFromTask',
+              input: {
+                taskTitle: title,
+                taskDueDate: format(date, 'yyyy-MM-dd'),
+                todayDate: format(new Date(), 'yyyy-MM-dd'),
+              },
+            }),
+          });
+          if (!response.ok) {
+            throw new Error(`API call failed: ${response.statusText}`);
+          }
+          const plan = await response.json();
 
-            for (const subTask of plan.subTasks) {
-                await onTaskCreated({
-                    title: subTask.title,
-                    description: `AI-generated step for "${title}"`,
-                    date: subTask.date,
-                    subject: subject,
-                    priority: priority,
-                    estimated_duration: estimatedDuration,
-                    tags: tags,
-                });
-            }
-
-            toast({
-                title: 'Study Plan Created!',
-                description: `AI has added ${plan.subTasks.length} tasks to your agenda.`,
-            });
-        } catch (error) {
-            console.error('AI study plan generation failed:', error);
-            toast({
-                variant: 'destructive',
-                title: 'AI Helper Failed',
-                description: 'Could not generate a study plan. The main task was added instead.',
-            });
-            // Fallback to creating the single main task
+          for (const subTask of plan.subTasks) {
             await onTaskCreated({
-              title,
-              description,
-              date: format(date, 'yyyy-MM-dd'),
-              subject,
-              priority,
+              title: subTask.title,
+              description: `AI-generated step for "${title}"`,
+              date: subTask.date,
+              subject: subject,
+              priority: priority,
               estimated_duration: estimatedDuration,
-              tags,
+              tags: tags,
             });
-        }
-    } else {
-      // Non-AI task creation
-      await onTaskCreated({
-        title,
-        description,
-        date: format(date, 'yyyy-MM-dd'),
-        subject,
-        priority,
-        estimated_duration: estimatedDuration,
-        tags,
-      });
-      toast({
-        title: 'Task Created',
-        description: `"${title}" has been added to your agenda.`,
-      });
-    }
+          }
 
-    resetAndClose();
-    setIsLoading(false);
+          toast({
+            title: 'Study Plan Created!',
+            description: `AI has added ${plan.subTasks.length} tasks to your agenda.`,
+          });
+        } catch (error) {
+          console.error('AI study plan generation failed:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Study Plan Failed',
+            description: 'Could not generate a study plan. The main task was added instead.',
+          });
+          // Fallback to creating the single main task
+          await onTaskCreated({
+            title,
+            description,
+            date: format(date, 'yyyy-MM-dd'),
+            subject,
+            priority,
+            estimated_duration: estimatedDuration,
+            tags,
+          });
+        }
+      } else {
+        // Non-AI task creation
+        await onTaskCreated({
+          title,
+          description,
+          date: format(date, 'yyyy-MM-dd'),
+          subject,
+          priority,
+          estimated_duration: estimatedDuration,
+          tags,
+        });
+        toast({
+          title: 'Task Created',
+          description: `"${title}" has been added to your agenda.`,
+        });
+      }
+
+      resetAndClose();
+    } catch (error) {
+      console.error('Task creation failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to create task. Please try again.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const resetAndClose = () => {
@@ -161,13 +169,14 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
     setDescription('');
     setDate(initialDate);
     setSubject('');
+    setTaskType('homework');
     setPriority('medium');
     setEstimatedDuration(60);
     setTags([]);
     setTagInput('');
     setUseAiHelper(false);
     setIsOpen(false);
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -182,14 +191,32 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
+          {/* Title */}
           <div className="grid gap-2">
             <Label htmlFor="title">Task Title</Label>
-            <Input id="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g., Prepare for History Exam" />
+            <Input 
+              id="title" 
+              value={title} 
+              onChange={e => setTitle(e.target.value)} 
+              placeholder="e.g., Prepare for History Exam" 
+            />
           </div>
 
+          {/* Description - now after title */}
+          <div className="grid gap-2">
+            <Label htmlFor="description">Description (Optional)</Label>
+            <Textarea 
+              id="description" 
+              value={description} 
+              onChange={e => setDescription(e.target.value)} 
+              placeholder="Add any extra details or notes." 
+            />
+          </div>
+
+          {/* Date - now after description */}
           <div className="grid gap-2">
             <Label htmlFor="date">Date / Deadline</Label>
-            <Popover>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
@@ -206,35 +233,56 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
                 <Calendar
                   mode="single"
                   selected={date}
-                  onSelect={setDate}
+                  onSelect={handleDateSelect}
                   initialFocus
+                  className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
           </div>
 
-          <Separator />
-          
-          <div className="flex items-center justify-between space-x-2 rounded-lg border p-4 bg-muted/30">
-            <div className="space-y-0.5">
-                <Label htmlFor="ai-helper" className="text-base flex items-center gap-2">
-                    <Wand2 className="h-5 w-5 text-primary" />
-                    AI Helper
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                    Automatically break this task into a study plan.
-                </p>
-            </div>
-            <Switch
-                id="ai-helper"
-                checked={useAiHelper}
-                onCheckedChange={setUseAiHelper}
-            />
+          {/* Task Type */}
+          <div className="grid gap-2">
+            <Label htmlFor="task-type">Type</Label>
+            <Select value={taskType} onValueChange={(v) => setTaskType(v as TaskType)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="homework">Huiswerk</SelectItem>
+                <SelectItem value="small_test">Kleine Toets</SelectItem>
+                <SelectItem value="big_test">Grote Toets</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
+          {/* AI Study Plan - only show for tests */}
+          {showAiHelper && (
+            <>
+              <Separator />
+              <div className="flex items-center justify-between space-x-2 rounded-lg border p-4 bg-muted/30">
+                <div className="space-y-0.5">
+                  <Label htmlFor="ai-helper" className="text-base flex items-center gap-2">
+                    <Wand2 className="h-5 w-5 text-primary" />
+                    Create a study plan
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically break this task into a study plan.
+                  </p>
+                </div>
+                <Switch
+                  id="ai-helper"
+                  checked={useAiHelper}
+                  onCheckedChange={setUseAiHelper}
+                />
+              </div>
+            </>
+          )}
+
           <Separator />
 
-           <div className="grid gap-2">
+          {/* Subject */}
+          <div className="grid gap-2">
             <Label htmlFor="subject">Subject (Optional)</Label>
             <InputWithTypingPlaceholder 
               id="subject" 
@@ -243,12 +291,6 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
               placeholders={["Biology", "Mathematics", "Nederlands", "History", "Physics"]}
             />
           </div>
-          
-           <div className="grid gap-2">
-            <Label htmlFor="description">Description (Optional)</Label>
-            <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} placeholder="Add any extra details or notes." />
-          </div>
-
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
