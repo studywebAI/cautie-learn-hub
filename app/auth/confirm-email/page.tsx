@@ -1,25 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
-export default function ConfirmEmailPage({
-  searchParams,
-}: {
-  searchParams: { message: string, email: string };
-}) {
+export default function ConfirmEmailPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+
+  const email = searchParams.get('email') || '';
+  const message = searchParams.get('message') || '';
 
   const verifyOtp = async (formData: FormData) => {
     setIsLoading(true);
     setError(null);
 
     const token = formData.get('token') as string;
-    const email = searchParams.email;
 
     if (!email || !token) {
       setError('Email and code are required.');
@@ -48,9 +47,9 @@ export default function ConfirmEmailPage({
       <div className="mx-auto max-w-md w-full space-y-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold">Check your email</h1>
-          <p className="text-muted-foreground mt-2">
-            We've sent an 8-digit verification code to <strong>{searchParams.email}</strong>. Please enter it below to confirm your email address.
-          </p>
+        <p className="text-muted-foreground mt-2">
+          We've sent an 8-digit verification code to <strong>{email}</strong>. Please enter it below to confirm your email address.
+        </p>
         </div>
         <form
           className="space-y-4"
@@ -77,9 +76,9 @@ export default function ConfirmEmailPage({
             {isLoading ? 'Verifying...' : 'Verify Email'}
           </button>
 
-          {(searchParams?.message || error) && (
+          {(message || error) && (
             <p className="p-4 bg-muted text-foreground text-center rounded-lg">
-              {error || searchParams.message}
+              {error || message}
             </p>
           )}
         </form>
