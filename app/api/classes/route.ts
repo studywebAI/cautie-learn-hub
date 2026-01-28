@@ -16,14 +16,34 @@ export async function GET(request: Request) {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
+    // Log environment check
+    console.log(`[${requestId}] GET /api/classes - Environment check:`, {
+      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasSecretKey: !!process.env.SUPABASE_SECRET_KEY,
+      supabaseUrlPrefix: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) || 'missing'
+    });
+
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError) {
       console.error(`[${requestId}] GET /api/classes - Auth error:`, {
         error: authError.message,
         status: authError.status,
-        timestamp: new Date().toISOString()
+        code: (authError as any).code,
+        timestamp: new Date().toISOString(),
+        hint: 'If "User from sub claim in JWT does not exist", the user needs to log out and log back in, or the user was deleted from Supabase'
       });
+      
+      // Special handling for "user doesn't exist" error
+      if (authError.message.includes('User from sub claim in JWT does not exist')) {
+        return NextResponse.json({ 
+          error: 'Session expired or invalid', 
+          details: 'Please log out and log back in. Your session may have become invalid.',
+          code: 'SESSION_INVALID',
+          requestId 
+        }, { status: 401 });
+      }
+      
       return NextResponse.json({ error: 'Authentication failed', details: authError.message }, { status: 401 });
     }
 
@@ -198,15 +218,35 @@ export async function POST(request: Request) {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
+    // Log environment check
+    console.log(`[${requestId}] POST /api/classes - Environment check:`, {
+      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasSecretKey: !!process.env.SUPABASE_SECRET_KEY,
+      supabaseUrlPrefix: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) || 'missing'
+    });
+
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError) {
       console.error(`[${requestId}] POST /api/classes - Auth error:`, {
         error: authError.message,
         status: authError.status,
+        code: (authError as any).code,
         name: authError.name,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        hint: 'If "User from sub claim in JWT does not exist", the user needs to log out and log back in'
       });
+      
+      // Special handling for "user doesn't exist" error
+      if (authError.message.includes('User from sub claim in JWT does not exist')) {
+        return NextResponse.json({
+          error: 'Session expired or invalid',
+          details: 'Please log out and log back in. Your session may have become invalid.',
+          code: 'SESSION_INVALID',
+          requestId
+        }, { status: 401 });
+      }
+      
       return NextResponse.json({
         error: 'Authentication failed',
         details: authError.message,
