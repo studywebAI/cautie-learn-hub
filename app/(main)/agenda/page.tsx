@@ -201,8 +201,8 @@ export default function AgendaPage() {
     description: string;
     due_date: string;
     class_id: string;
-    type: 'assignment' | 'test';
-    linked_content?: { type: 'material' | 'subject'; url: string; title: string }[];
+    type: 'homework' | 'small_test' | 'big_test';
+    linked_content?: { type: 'material' | 'subject' | 'assignment'; url: string; title: string; path?: string }[];
   }) => {
     try {
       // Create the assignment via API
@@ -223,8 +223,9 @@ export default function AgendaPage() {
         throw new Error('Failed to create assignment');
       }
 
+      const typeLabels = { homework: 'Homework', small_test: 'Small Test', big_test: 'Big Test' };
       toast({
-        title: deadline.type === 'test' ? 'Test Scheduled' : 'Assignment Created',
+        title: `${typeLabels[deadline.type]} Created`,
         description: `"${deadline.title}" has been added.`,
       });
 
