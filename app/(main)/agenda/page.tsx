@@ -3,7 +3,6 @@
 import { useState, useContext, useMemo, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { AppContext, AppContextType, PersonalTask, ClassAssignment, ClassInfo, useDictionary } from '@/contexts/app-context';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { CreateTaskDialog } from '@/components/agenda/create-task-dialog';
@@ -14,10 +13,8 @@ import { ViewToggle } from '@/components/agenda/view-toggle';
 import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dialog';
 import { TeacherDeadlinesPanel } from '@/components/agenda/teacher-deadlines-panel';
 import { PlusCircle, Sparkles } from 'lucide-react';
-import type { AiSuggestion } from '@/lib/types';
+import type { AiSuggestion, CalendarEvent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-
-import type { CalendarEvent } from '@/lib/types';
 
 type ViewMode = 'week' | 'list';
 
@@ -205,15 +202,37 @@ export default function AgendaPage() {
     due_date: string;
     class_id: string;
     type: 'assignment' | 'test';
-    material_link?: string;
-    subject_link?: string;
+    linked_content?: { type: 'material' | 'subject'; url: string; title: string }[];
   }) => {
-    // This would call an API to create the assignment
-    // For now, we'll just show a toast
-    toast({
-      title: 'Coming Soon',
-      description: 'Assignment creation will be connected to your backend.',
-    });
+    try {
+      // Create the assignment via API
+      const response = await fetch('/api/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          class_id: deadline.class_id,
+          title: deadline.title,
+          description: deadline.description,
+          due_date: deadline.due_date,
+          type: deadline.type,
+          linked_content: deadline.linked_content,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create assignment');
+      }
+
+      toast({
+        title: deadline.type === 'test' ? 'Test Scheduled' : 'Assignment Created',
+        description: `"${deadline.title}" has been added.`,
+      });
+
+      // No need to call createAssignment - we already created via API
+    } catch (error) {
+      console.error('Failed to create deadline:', error);
+      throw error;
+    }
   };
 
   const handleEventMove = async (eventId: string, newDate: Date) => {
