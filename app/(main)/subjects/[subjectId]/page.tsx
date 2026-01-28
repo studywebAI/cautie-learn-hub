@@ -40,6 +40,14 @@ type Subject = {
   description: string | null;
 };
 
+type LastActivity = {
+  chapterId: string;
+  chapterNumber: number;
+  paragraphId: string;
+  paragraphNumber: number;
+  paragraphTitle: string;
+};
+
 // Placeholder cover with emojis
 function ChapterCover({ chapterNumber }: { chapterNumber: number }) {
   return (
@@ -57,6 +65,7 @@ export default function SubjectDetailPage() {
   const subjectId = params.subjectId as string;
   const [subject, setSubject] = useState<Subject | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [lastActivity, setLastActivity] = useState<LastActivity | null>(null);
   const [isCreateChapterOpen, setIsCreateChapterOpen] = useState(false);
   const [isCreateParagraphOpen, setIsCreateParagraphOpen] = useState(false);
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
@@ -104,6 +113,15 @@ export default function SubjectDetailPage() {
           );
 
           setChapters(chaptersWithParagraphs);
+          
+          // Try to get last activity from localStorage
+          const storageKey = `lastActivity_${subjectId}`;
+          const stored = localStorage.getItem(storageKey);
+          if (stored) {
+            try {
+              setLastActivity(JSON.parse(stored));
+            } catch {}
+          }
         }
       } catch (error) {
         console.error('Error fetching subject data:', error);
@@ -204,8 +222,33 @@ export default function SubjectDetailPage() {
     return <div className="text-center py-8 text-muted-foreground">Subject not found</div>;
   }
 
+  // Track paragraph click for last activity
+  const handleParagraphClick = (chapter: Chapter, paragraph: Paragraph) => {
+    const activity: LastActivity = {
+      chapterId: chapter.id,
+      chapterNumber: chapter.chapter_number,
+      paragraphId: paragraph.id,
+      paragraphNumber: paragraph.paragraph_number,
+      paragraphTitle: paragraph.title,
+    };
+    localStorage.setItem(`lastActivity_${subjectId}`, JSON.stringify(activity));
+  };
+
   return (
     <div className="space-y-6">
+      {/* Last activity banner */}
+      {lastActivity && (
+        <Link
+          href={`/subjects/${subjectId}/chapters/${lastActivity.chapterId}/paragraphs/${lastActivity.paragraphId}`}
+          className="block p-3 bg-muted/50 rounded border hover:bg-muted transition-colors"
+        >
+          <p className="text-sm">
+            <span className="text-muted-foreground">Last active in </span>
+            <span>{lastActivity.chapterNumber}.{lastActivity.paragraphNumber} {lastActivity.paragraphTitle}</span>
+          </p>
+        </Link>
+      )}
+
       {/* Header - minimal */}
       <div className="flex justify-between items-start">
         <div>
@@ -267,6 +310,7 @@ export default function SubjectDetailPage() {
                             <Link
                               key={paragraph.id}
                               href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
+                              onClick={() => handleParagraphClick(chapter, paragraph)}
                               className="flex items-center gap-2 py-1.5 px-2 -mx-2 rounded hover:bg-muted transition-colors cursor-pointer"
                             >
                               {/* Paragraph number */}
