@@ -1,34 +1,7 @@
 -- COMPLETE SYSTEM SETUP (single file)
 -- Copy/paste this whole file into Supabase SQL Editor and run it.
--- This matches the tables your code is querying and fixes PGRST205 schema-cache misses.
 
--- 1) Drop existing policies and triggers
-DROP POLICY IF EXISTS "Allow authenticated insert" ON "public"."assignments";
-DROP POLICY IF EXISTS "Allow authenticated read" ON "public"."assignments";
-DROP POLICY IF EXISTS "Allow authenticated delete for owners" ON "public"."assignments";
-DROP POLICY IF EXISTS "Allow authenticated update for owners" ON "public"."assignments";
-DROP POLICY IF EXISTS "Allow authenticated read" ON "public"."class_members";
-DROP POLICY IF EXISTS "Allow authenticated insert" ON "public"."class_members";
-DROP POLICY IF EXISTS "Allow authenticated delete for owners" ON "public"."class_members";
-DROP POLICY IF EXISTS "Allow authenticated read" ON "public"."classes";
-DROP POLICY IF EXISTS "Allow authenticated insert" ON "public"."classes";
-DROP POLICY IF EXISTS "Allow authenticated update for owners" ON "public"."classes";
-DROP POLICY IF EXISTS "Allow authenticated delete for owners" ON "public"."classes";
-DROP POLICY IF EXISTS "Allow individual read access" ON "public"."profiles";
-DROP POLICY IF EXISTS "Allow individual insert access" ON "public"."profiles";
-DROP POLICY IF EXISTS "Allow individual update access" ON "public"."profiles";
-DROP POLICY IF EXISTS "Users can manage their own materials" ON "public"."materials";
-DROP POLICY IF EXISTS "Users can view public materials" ON "public"."materials";
-DROP POLICY IF EXISTS "Students can view their own submissions" ON "public"."submissions";
-DROP POLICY IF EXISTS "Students can insert their own submissions" ON "public"."submissions";
-DROP POLICY IF EXISTS "Students can update their own submissions" ON "public"."submissions";
-DROP POLICY IF EXISTS "Teachers can view submissions for their assignments" ON "public"."submissions";
-DROP POLICY IF EXISTS "Teachers can grade submissions for their assignments" ON "public"."submissions";
-
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP FUNCTION IF EXISTS public.handle_new_user();
-
--- 2) Drop tables (CASCADE handles dependencies)
+-- 1) Drop tables first (CASCADE removes policies, indexes, triggers automatically)
 DROP TABLE IF EXISTS "public"."submissions" CASCADE;
 DROP TABLE IF EXISTS "public"."student_answers" CASCADE;
 DROP TABLE IF EXISTS "public"."session_logs" CASCADE;
@@ -42,8 +15,15 @@ DROP TABLE IF EXISTS "public"."materials" CASCADE;
 DROP TABLE IF EXISTS "public"."class_members" CASCADE;
 DROP TABLE IF EXISTS "public"."classes" CASCADE;
 DROP TABLE IF EXISTS "public"."profiles" CASCADE;
+DROP TABLE IF EXISTS "public"."personal_tasks" CASCADE;
+DROP TABLE IF EXISTS "public"."rubrics" CASCADE;
+DROP TABLE IF EXISTS "public"."rubric_criteria" CASCADE;
 
--- 3) Create tables
+-- Drop trigger/function
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();
+
+-- 2) Create tables
 
 CREATE TABLE "public"."profiles" (
   "id" uuid NOT NULL,
@@ -140,14 +120,8 @@ CREATE TABLE "public"."assignments" (
   "created_at" timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT "assignments_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "assignments_class_id_fkey" FOREIGN KEY (class_id) REFERENCES classes (id) ON DELETE CASCADE,
+  CONSTRAINT "assignments_paragraph_id_fkey" FOREIGN KEY (paragraph_id) REFERENCES paragraphs (id) ON DELETE CASCADE,
   CONSTRAINT "assignments_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users (id) ON DELETE SET NULL
-);
-
-ALTER TABLE "public"."assignments" ADD CONSTRAINT "assignments_paragraph_id_fkey" FOREIGN KEY (paragraph_id) REFERENCES paragraphs (id) ON DELETE CASCADE;
-
-CREATE UNIQUE INDEX idx_assignments_unique ON public.assignments(
-  COALESCE(paragraph_id::text, 'class-' || class_id::text),
-  assignment_index
 );
 
 CREATE TABLE "public"."blocks" (
@@ -227,6 +201,7 @@ CREATE TABLE "public"."materials" (
   "title" text NOT NULL,
   "description" text,
   "content" jsonb,
+  "content_id" uuid,
   "source_text" text,
   "metadata" jsonb,
   "tags" text[],
@@ -238,7 +213,45 @@ CREATE TABLE "public"."materials" (
   CONSTRAINT "materials_class_id_fkey" FOREIGN KEY (class_id) REFERENCES classes (id) ON DELETE CASCADE
 );
 
--- 4) Auth trigger: create profile on sign-up
+CREATE TABLE "public"."personal_tasks" (
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "user_id" uuid NOT NULL,
+  "title" text NOT NULL,
+  "description" text,
+  "due_date" timestamp with time zone,
+  "completed" boolean DEFAULT false,
+  "priority" text DEFAULT 'medium',
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT "personal_tasks_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "personal_tasks_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users (id) ON DELETE CASCADE
+);
+
+CREATE TABLE "public"."rubrics" (
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "class_id" uuid NOT NULL,
+  "name" text NOT NULL,
+  "description" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT "rubrics_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "rubrics_class_id_fkey" FOREIGN KEY (class_id) REFERENCES classes (id) ON DELETE CASCADE
+);
+
+CREATE TABLE "public"."rubric_criteria" (
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "rubric_id" uuid NOT NULL,
+  "name" text NOT NULL,
+  "description" text,
+  "max_score" integer NOT NULL DEFAULT 10,
+  "weight" numeric DEFAULT 1,
+  "position" integer NOT NULL DEFAULT 0,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT "rubric_criteria_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "rubric_criteria_rubric_id_fkey" FOREIGN KEY (rubric_id) REFERENCES rubrics (id) ON DELETE CASCADE
+);
+
+-- 3) Auth trigger: create profile on sign-up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -255,7 +268,7 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
--- 5) Indexes (performance)
+-- 4) Indexes
 CREATE INDEX IF NOT EXISTS "idx_chapters_subject_id" ON "public"."chapters"("subject_id");
 CREATE INDEX IF NOT EXISTS "idx_paragraphs_chapter_id" ON "public"."paragraphs"("chapter_id");
 CREATE INDEX IF NOT EXISTS "idx_assignments_paragraph_id" ON "public"."assignments"("paragraph_id");
@@ -266,8 +279,11 @@ CREATE INDEX IF NOT EXISTS "idx_session_logs_student_paragraph" ON "public"."ses
 CREATE INDEX IF NOT EXISTS "idx_student_answers_student_block" ON "public"."student_answers"("student_id", "block_id");
 CREATE INDEX IF NOT EXISTS "submissions_assignment_id_idx" ON "public"."submissions"("assignment_id");
 CREATE INDEX IF NOT EXISTS "submissions_user_id_idx" ON "public"."submissions"("user_id");
+CREATE INDEX IF NOT EXISTS "idx_personal_tasks_user_id" ON "public"."personal_tasks"("user_id");
+CREATE INDEX IF NOT EXISTS "idx_rubrics_class_id" ON "public"."rubrics"("class_id");
+CREATE INDEX IF NOT EXISTS "idx_rubric_criteria_rubric_id" ON "public"."rubric_criteria"("rubric_id");
 
--- 6) Enable RLS
+-- 5) Enable RLS
 ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."classes" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."class_members" ENABLE ROW LEVEL SECURITY;
@@ -281,27 +297,34 @@ ALTER TABLE "public"."session_logs" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."student_answers" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."submissions" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."materials" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."personal_tasks" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."rubrics" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."rubric_criteria" ENABLE ROW LEVEL SECURITY;
 
--- 7) Policies (simplified; app logic enforces most access)
-CREATE POLICY "Allow individual read access" ON "public"."profiles" FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Allow individual insert access" ON "public"."profiles" FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY "Allow individual update access" ON "public"."profiles" FOR UPDATE USING (auth.uid() = id);
+-- 6) Policies
+CREATE POLICY "profiles_select" ON "public"."profiles" FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "profiles_insert" ON "public"."profiles" FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "profiles_update" ON "public"."profiles" FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Allow authenticated users for classes" ON "public"."classes" FOR ALL USING (auth.uid() IS NOT NULL);
-CREATE POLICY "Allow authenticated users for class_members" ON "public"."class_members" FOR ALL USING (auth.uid() IS NOT NULL);
-CREATE POLICY "Allow authenticated users for subjects" ON "public"."subjects" FOR ALL USING (auth.uid() IS NOT NULL);
-CREATE POLICY "Allow authenticated users for assignments" ON "public"."assignments" FOR ALL USING (auth.uid() IS NOT NULL);
-CREATE POLICY "Allow authenticated users for chapters" ON "public"."chapters" FOR ALL USING (auth.uid() IS NOT NULL);
-CREATE POLICY "Allow authenticated users for paragraphs" ON "public"."paragraphs" FOR ALL USING (auth.uid() IS NOT NULL);
-CREATE POLICY "Allow authenticated users for blocks" ON "public"."blocks" FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "classes_all" ON "public"."classes" FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "class_members_all" ON "public"."class_members" FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "subjects_all" ON "public"."subjects" FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "assignments_all" ON "public"."assignments" FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "chapters_all" ON "public"."chapters" FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "paragraphs_all" ON "public"."paragraphs" FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "blocks_all" ON "public"."blocks" FOR ALL USING (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Students can manage their progress" ON "public"."progress_snapshots" FOR ALL USING (auth.uid() = student_id);
-CREATE POLICY "Students can manage their sessions" ON "public"."session_logs" FOR ALL USING (auth.uid() = student_id);
-CREATE POLICY "Students can manage their answers" ON "public"."student_answers" FOR ALL USING (auth.uid() = student_id);
-CREATE POLICY "Allow authenticated users for submissions" ON "public"."submissions" FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "progress_snapshots_all" ON "public"."progress_snapshots" FOR ALL USING (auth.uid() = student_id);
+CREATE POLICY "session_logs_all" ON "public"."session_logs" FOR ALL USING (auth.uid() = student_id);
+CREATE POLICY "student_answers_all" ON "public"."student_answers" FOR ALL USING (auth.uid() = student_id);
+CREATE POLICY "submissions_all" ON "public"."submissions" FOR ALL USING (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Users can manage their own materials" ON "public"."materials" FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users can view public materials" ON "public"."materials" FOR SELECT USING (is_public = true);
+CREATE POLICY "materials_own" ON "public"."materials" FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "materials_public" ON "public"."materials" FOR SELECT USING (is_public = true);
 
--- Help PostgREST clear schema cache
+CREATE POLICY "personal_tasks_all" ON "public"."personal_tasks" FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "rubrics_all" ON "public"."rubrics" FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "rubric_criteria_all" ON "public"."rubric_criteria" FOR ALL USING (auth.uid() IS NOT NULL);
+
+-- Force PostgREST to reload schema
 SELECT pg_notify('pgrst', 'reload schema');
