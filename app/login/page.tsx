@@ -111,30 +111,41 @@ export default function Login({
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/confirm-email`,
+        },
+      });
 
-    if (error) {
-      if (error.message.includes('User already registered')) {
-        router.push('/login?message=Account already exists. Please sign in instead.&type=info');
+      if (error) {
+        console.error('Signup error:', error);
+        if (error.message.includes('User already registered')) {
+          router.push('/login?message=Account already exists. Please sign in instead.&type=info');
+          setIsLoading(false);
+          return;
+        }
+        router.push(`/login?message=${encodeURIComponent(error.message)}&type=error&email=${encodeURIComponent(email)}`);
         setIsLoading(false);
         return;
       }
-      router.push(`/login?message=${encodeURIComponent(error.message)}&email=${encodeURIComponent(email)}`);
-      setIsLoading(false);
-      return;
-    }
 
-    if (data.user && !data.session) {
-      router.push(`/auth/confirm-email?email=${encodeURIComponent(email)}&message=Please check your email for the 8-digit verification code.`);
-      setIsLoading(false);
-      return;
-    }
+      // User created, email confirmation required
+      if (data.user) {
+        router.push(`/auth/confirm-email?email=${encodeURIComponent(email)}&message=Please check your email for the 8-digit verification code.`);
+        setIsLoading(false);
+        return;
+      }
 
-    router.push('/login?message=An unexpected error occurred. Please try again.');
-    setIsLoading(false);
+      router.push('/login?message=An unexpected error occurred. Please try again.&type=error');
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Signup exception:', err);
+      router.push(`/login?message=${encodeURIComponent('Network error during signup. Please try again.')}&type=error&email=${encodeURIComponent(email)}`);
+      setIsLoading(false);
+    }
   };
 
   return (
