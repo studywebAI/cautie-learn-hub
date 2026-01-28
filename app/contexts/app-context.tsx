@@ -571,82 +571,31 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setDictionary(newDict);
   };
 
-  // Update role in Supabase profiles table (blocks until API returns)
-  const setRole = async (newRole: UserRole) => {
-    const requestId = Math.random().toString(36).substring(7);
-    const startTime = Date.now();
+  // Update role - optimistic update for immediate UI response
+  const setRole = (newRole: UserRole) => {
+    const previousRole = role;
+    
+    // Immediately update local state for responsive UI
+    setRoleState(newRole);
+    saveToLocalStorage('studyweb-role', newRole);
+    
+    console.log('Role switched:', { from: previousRole, to: newRole });
 
-    console.log(`[${requestId}] AppContext.setRole - Starting role update:`, {
-      newRole,
-      userId: session?.user?.id || 'none',
-      currentRole: role,
-      timestamp: new Date().toISOString()
-    });
-
-    try {
-      if (session?.user?.id) {
-        console.log(`[${requestId}] AppContext.setRole - Attempting Supabase update...`);
-
-        const { data, error } = await supabase
-          .from('profiles')
-          .update({ role: newRole })
-          .eq('id', session.user.id)
-          .select('role')
-          .single();
-
-        if (error) {
-          const duration = Date.now() - startTime;
-          console.error(`[${requestId}] AppContext.setRole - Supabase update failed:`, {
-            error: error.message,
-            code: error.code,
-            details: error.details,
-            hint: error.hint,
-            userId: session.user.id,
-            attemptedRole: newRole,
-            duration: `${duration}ms`,
-            timestamp: new Date().toISOString()
-          });
-          return;
-        }
-
-        console.log(`[${requestId}] AppContext.setRole - Supabase update successful:`, {
-          returnedData: data,
-          attemptedRole: newRole
+    // Persist to Supabase in background (don't block UI)
+    if (session?.user?.id) {
+      supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', session.user.id)
+        .then(({ error }) => {
+          if (error) {
+            console.error('Failed to persist role to Supabase:', error.message);
+            // Optionally revert on failure (commented out for better UX)
+            // setRoleState(previousRole);
+          } else {
+            console.log('Role persisted to Supabase successfully');
+          }
         });
-
-        // Update local state only after successful Supabase update
-        console.log(`[${requestId}] AppContext.setRole - Updating local state from ${role} to ${newRole}`);
-        setRoleState(newRole);
-
-        // Force a re-render check
-        console.log(`[${requestId}] AppContext.setRole - Current role state after update:`, role);
-
-        const duration = Date.now() - startTime;
-        console.log(`[${requestId}] AppContext.setRole - Role updated successfully:`, {
-          newRole,
-          previousRole: role,
-          userId: session.user.id,
-          duration: `${duration}ms`,
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        console.error(`[${requestId}] AppContext.setRole - No valid session for role update:`, {
-          hasSession: !!session,
-          hasUser: !!session?.user,
-          userId: session?.user?.id || 'none',
-          sessionKeys: session ? Object.keys(session) : 'no session'
-        });
-      }
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      console.error(`[${requestId}] AppContext.setRole - Unexpected error:`, {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : 'No stack trace',
-        attemptedRole: newRole,
-        userId: session?.user?.id || 'none',
-        duration: `${duration}ms`,
-        timestamp: new Date().toISOString()
-      });
     }
   };
 
