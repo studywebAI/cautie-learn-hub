@@ -12,7 +12,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { InputWithTypingPlaceholder } from '@/components/ui/input-with-typing-placeholder';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -236,7 +236,12 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
 
            <div className="grid gap-2">
             <Label htmlFor="subject">Subject (Optional)</Label>
-            <Input id="subject" value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g., Biology" />
+            <InputWithTypingPlaceholder 
+              id="subject" 
+              value={subject} 
+              onChange={e => setSubject(e.target.value)} 
+              placeholders={["Biology", "Mathematics", "Nederlands", "History", "Physics"]}
+            />
           </div>
           
            <div className="grid gap-2">
