@@ -34,7 +34,7 @@ export default function AgendaPage() {
   const isStudent = role === 'student';
   const isTeacher = role === 'teacher';
 
-  // Fetch chapter data for assignments with chapter_id.
+  // Fetch chapter data for assignments with chapter_id
   useEffect(() => {
     const fetchChapters = async () => {
       const classIdsWithChapters = new Set(
