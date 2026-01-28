@@ -10,7 +10,7 @@ import { getDictionary } from '@/lib/get-dictionary';
 import type { Dictionary, Locale } from '@/lib/get-dictionary';
 
 export type UserRole = 'student' | 'teacher';
-export type ThemeType = 'light' | 'dark' | 'pastel';
+export type ThemeType = 'light' | 'dark' | 'ocean';
 export type ClassInfo = Tables<'classes'>;
 export type ClassAssignment = Tables<'assignments'> & {
   chapter_id?: string | null;
@@ -123,7 +123,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [reducedMotion, setReducedMotionState] = useState(false);
 
   // Theme state
-  const [theme, setThemeState] = useState<ThemeType>('pastel');
+  const [theme, setThemeState] = useState<ThemeType>('light');
 
   const [sessionRecap, setSessionRecap] = useState<SessionRecapData | null>(null);
 
@@ -147,7 +147,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const root = document.documentElement;
 
     // Remove all theme classes
-    root.classList.remove('theme-light', 'theme-dark', 'theme-pastel');
+    root.classList.remove('theme-light', 'theme-dark', 'theme-ocean');
 
     // Apply theme class
     root.classList.add(`theme-${currentTheme}`);

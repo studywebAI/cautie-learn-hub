@@ -30,10 +30,10 @@ export default function ToolsPage() {
   ];
 
   return (
-    <div className="h-full bg-background p-6">
+    <div className="h-full bg-background">
       <div className="flex flex-col gap-8 h-full">
         <header>
-          <h1 className="text-3xl font-bold font-headline">{dictionary.tools.title}</h1>
+          <h1 className="text-3xl font-headline">{dictionary.tools.title}</h1>
           <p className="text-muted-foreground">
             {dictionary.tools.description}
           </p>

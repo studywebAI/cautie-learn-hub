@@ -4,21 +4,27 @@
     "subjects": "Subjects",
     "classes": "Classes",
     "agenda": "Agenda",
+    "material": "Material",
     "settings": "Settings",
     "tools": {
       "title": "Tools",
       "quizGenerator": "Quiz",
       "flashcardMaker": "Flashcards",
       "materialProcessor": "Process Material",
-      "notes": "Notes"
+      "notes": "Notes",
+      "blocks": "Blocks"
     }
   },
   "header": {
     "studentDashboard": "Student Dashboard",
     "teacherDashboard": "Teacher Dashboard",
-    "roleSwitcher": "Role Switcher"
+    "roleSwitcher": "Role Switcher",
+    "myAccount": "My Account",
+    "logOut": "Log out",
+    "logIn": "Log In"
   },
   "dashboard": {
+    "title": "Dashboard",
     "todayPlan": {
       "title": "Your Study Plan for Today",
       "description": "These tasks have been prepared for you by the AI.",
@@ -61,12 +67,27 @@
     "description": "Your suite of intelligent tools to accelerate learning.",
     "select": "Select Tool",
     "quiz": {
+      "title": "Quiz",
       "description": "Create multiple-choice quizzes from any text. Test your knowledge with various challenging modes."
     },
     "flashcards": {
+      "title": "Flashcards",
       "description": "Automatically generate flashcards from your study materials to reinforce key concepts."
     },
+    "notes": {
+      "title": "Notes",
+      "description": "Create and organize your study notes in one place."
+    },
+    "blocks": {
+      "title": "Blocks",
+      "description": "Build structured content with our block editor."
+    },
+    "wordweb": {
+      "title": "Word Web",
+      "description": "Visualize connections between concepts with interactive word webs."
+    },
     "material": {
+      "title": "Process Material",
       "description": "Get a concise summary of any uploaded document or pasted text to quickly grasp the main points."
     }
   },
@@ -91,6 +112,161 @@
     "description": "Your consolidated calendar of deadlines, tasks, and personal appointments.",
     "eventsOn": "Events on",
     "noEvents": "No events scheduled for this day.",
-    "addTask": "Add Task"
+    "addTask": "Add Task",
+    "today": "Today",
+    "week": "Week",
+    "month": "Month"
+  },
+  "subjects": {
+    "title": "Subjects",
+    "description": "All your subjects in one place.",
+    "noSubjects": "No subjects found.",
+    "addSubject": "Add Subject",
+    "chapters": "Chapters",
+    "paragraphs": "Paragraphs",
+    "assignments": "Assignments",
+    "progress": "Progress"
+  },
+  "classes": {
+    "title": "Classes",
+    "description": "Manage your classes and students.",
+    "noClasses": "No classes found.",
+    "createClass": "Create Class",
+    "joinClass": "Join Class",
+    "joinCode": "Join Code",
+    "students": "Students",
+    "assignments": "Assignments",
+    "announcements": "Announcements"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your account and application settings.",
+    "general": {
+      "title": "General",
+      "description": "Configure your application preferences.",
+      "language": "Language"
+    },
+    "personalization": {
+      "title": "Personalization",
+      "description": "Customize the appearance and colors of your app.",
+      "theme": "Theme",
+      "themeDescription": "Choose your preferred color scheme.",
+      "light": "Light",
+      "dark": "Dark",
+      "ocean": "Ocean"
+    },
+    "accessibility": {
+      "title": "Accessibility",
+      "description": "Customize the appearance and behavior of the app to suit your needs.",
+      "highContrast": "High-Contrast Mode",
+      "highContrastDescription": "Increase text and background contrast.",
+      "dyslexiaFont": "Dyslexia-Friendly Font",
+      "dyslexiaFontDescription": "Use a font designed for easier reading.",
+      "reducedMotion": "Reduce Animations",
+      "reducedMotionDescription": "Turn off decorative animations and transitions."
+    },
+    "developer": {
+      "title": "Developer Settings",
+      "description": "Temporary settings for development purposes.",
+      "roleSwitch": "Toggle Role (Dev Only)",
+      "roleSwitchDescription": "Switch between student and teacher view. This is for development and will be removed."
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "create": "Create",
+    "update": "Update",
+    "submit": "Submit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "view": "View",
+    "download": "Download",
+    "upload": "Upload",
+    "share": "Share",
+    "copy": "Copy",
+    "paste": "Paste",
+    "undo": "Undo",
+    "redo": "Redo",
+    "reset": "Reset",
+    "clear": "Clear",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "more": "More",
+    "less": "Less",
+    "all": "All",
+    "none": "None",
+    "select": "Select",
+    "selected": "Selected",
+    "optional": "Optional",
+    "required": "Required"
+  },
+  "auth": {
+    "login": "Log In",
+    "logout": "Log Out",
+    "signup": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "orContinueWith": "Or continue with"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "noNotifications": "No notifications",
+    "markAsRead": "Mark as read",
+    "markAllAsRead": "Mark all as read",
+    "clearAll": "Clear all"
+  },
+  "errors": {
+    "somethingWentWrong": "Something went wrong",
+    "pageNotFound": "Page not found",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Forbidden",
+    "tryAgain": "Try again"
+  },
+  "setup": {
+    "welcome": "Welcome to Cautie",
+    "getStarted": "Let's get you set up",
+    "step": "Step",
+    "of": "of",
+    "next": "Next",
+    "back": "Back",
+    "finish": "Finish Setup",
+    "language": {
+      "title": "Choose your language",
+      "description": "Select the language you want to use in the app."
+    },
+    "theme": {
+      "title": "Choose your theme",
+      "description": "Pick a color scheme that suits you."
+    },
+    "profile": {
+      "title": "Set up your profile",
+      "description": "Tell us a bit about yourself to personalize your experience.",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "role": "I am a...",
+      "student": "Student",
+      "teacher": "Teacher",
+      "saveProfile": "Save Profile"
+    }
   }
 }

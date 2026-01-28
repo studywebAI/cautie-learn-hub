@@ -10,10 +10,8 @@ import { AppContext, AppContextType, useDictionary } from '@/contexts/app-contex
 import { BookUser, User, LogOut } from 'lucide-react';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarFallback } from './ui/avatar';
 import { NotificationCenter } from './notifications/notification-center';
-
-
 
 export function AppHeader() {
   const { role, setRole, session } = useContext(AppContext) as AppContextType;
@@ -32,30 +30,46 @@ export function AppHeader() {
     }
   }
 
+  const getPageTitle = () => {
+    if (pathSegments.length === 0) return dictionary.dashboard.title || 'Dashboard';
+    
+    const lastSegment = pathSegments[pathSegments.length - 1];
+    
+    // Don't show UUIDs for class pages
+    if (pathSegments.length >= 2 && pathSegments[pathSegments.length - 2] === 'class') {
+      return dictionary.classes.title || 'Class Details';
+    }
+    
+    // Map segments to i18n keys
+    const segmentMap: Record<string, string> = {
+      'subjects': dictionary.subjects.title,
+      'classes': dictionary.classes.title,
+      'agenda': dictionary.agenda.title,
+      'material': dictionary.material.title,
+      'settings': dictionary.settings.title,
+      'tools': dictionary.tools.title,
+      'quiz': dictionary.tools.quiz.title,
+      'flashcards': dictionary.tools.flashcards.title,
+      'notes': dictionary.tools.notes.title,
+      'blocks': dictionary.tools.blocks.title,
+      'wordweb': dictionary.tools.wordweb.title,
+    };
+    
+    return segmentMap[lastSegment] || lastSegment?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Cautie';
+  };
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 bg-card/80 backdrop-blur-sm px-4 md:px-6">
 
       <div className="flex-1">
-        <h1 className="text-xl font-semibold font-headline">
-          {(() => {
-            if (pathSegments.length === 0) return 'Dashboard';
-
-            const lastSegment = pathSegments[pathSegments.length - 1];
-
-            // Don't show UUIDs for class pages
-            if (pathSegments.length >= 2 && pathSegments[pathSegments.length - 2] === 'class') {
-              return 'Class Details';
-            }
-
-            // Format other segments nicely
-            return lastSegment?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Cautie';
-          })()}
+        <h1 className="text-xl font-headline">
+          {getPageTitle()}
         </h1>
       </div>
       <div className="flex items-center gap-4">
         {session ? (
             <>
-                <div className="flex items-center justify-between p-2 rounded-md">
+                <div className="flex items-center justify-between p-2 rounded-full">
                     <Label htmlFor="role-switcher" className="flex items-center gap-2 cursor-pointer pr-3">
                       <User className={`h-5 w-5 transition-colors ${isStudent ? 'text-primary' : 'text-muted-foreground'}`} />
                     </Label>
@@ -86,21 +100,21 @@ export function AppHeader() {
                     <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuLabel className='font-normal'>
                             <div className='flex flex-col space-y-1'>
-                                <p className='text-sm font-medium leading-none'>My Account</p>
+                                <p className='text-sm leading-none'>{dictionary.header.myAccount}</p>
                                 <p className='text-xs leading-none text-muted-foreground'>{userEmail}</p>
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout}>
                             <LogOut className="mr-2 h-4 w-4" />
-                            <span>Log out</span>
+                            <span>{dictionary.header.logOut}</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </>
         ) : (
-             <Button asChild>
-                <Link href="/login">Log In</Link>
+             <Button asChild className="rounded-full">
+                <Link href="/login">{dictionary.header.logIn}</Link>
             </Button>
         )}
 
