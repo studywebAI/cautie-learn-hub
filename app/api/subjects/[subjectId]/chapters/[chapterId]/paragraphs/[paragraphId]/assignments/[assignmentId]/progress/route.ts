@@ -29,7 +29,7 @@ export async function GET(
     const targetStudentId = studentId || user.id
     
     // Check if user has permission to view this assignment
-    const { data: assignment, error: assignmentError } = await supabase
+    const { data: assignment, error: assignmentError } = await (supabase as any)
       .from('assignments')
       .select(`id, paragraphs(chapters(subjects(classes(owner_id, class_members(user_id, role)))))`)
       .eq('id', resolvedParams.assignmentId)

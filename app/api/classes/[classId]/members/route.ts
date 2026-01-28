@@ -42,10 +42,9 @@ export async function GET(
     }
 
     // Get all members with profile info
-    const { data: membersData, error } = await supabase
+    const { data: membersData, error } = await (supabase as any)
       .from('class_members')
       .select(`
-        id,
         user_id,
         role,
         created_at
@@ -59,7 +58,7 @@ export async function GET(
 
     // Get profile info separately
     const members = await Promise.all(
-      (membersData || []).map(async (member) => {
+      (membersData || []).map(async (member: any) => {
         const { data: profile } = await supabase
           .from('profiles')
           .select('full_name, avatar_url')

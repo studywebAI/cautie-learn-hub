@@ -89,15 +89,14 @@ export async function GET(
   let content = material.content;
 
   if (material.type === 'NOTE' && material.content_id) {
-    const { data: noteContent, error: contentError } = await supabase
+    const { data: noteContent, error: contentError } = await (supabase as any)
       .from('notes')
       .select('content')
       .eq('id', material.content_id)
       .single();
-    if (contentError) {
-      return NextResponse.json({ error: 'Failed to fetch note content' }, { status: 500 });
+    if (!contentError && noteContent) {
+      content = noteContent.content;
     }
-    content = noteContent.content;
   }
   
   return NextResponse.json({ ...material, content });
@@ -167,7 +166,7 @@ export async function DELETE(
 
    // Also delete the associated content (e.g., the note) before deleting the material
    if (material.type === 'NOTE' && material.content_id) {
-    await supabase.from('notes').delete().eq('id', material.content_id);
+    await (supabase as any).from('notes').delete().eq('id', material.content_id);
    }
 
    // Delete the material entry

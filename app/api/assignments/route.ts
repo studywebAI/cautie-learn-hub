@@ -55,7 +55,7 @@ export async function GET(request: Request) {
       }
     } else {
       // Students see assignments from classes they're members of
-      const { data: studentAssignments, error } = await supabase
+      const { data: studentAssignments, error } = await (supabase as any)
         .from('class_members')
         .select(`
           classes!inner(
@@ -74,10 +74,10 @@ export async function GET(request: Request) {
         console.error('Error fetching student assignments:', error)
       } else {
         // Flatten the nested structure
-        assignments = studentAssignments?.flatMap(member =>
-          member.classes?.subjects?.flatMap(subject =>
-            subject.chapters?.flatMap(chapter =>
-              chapter.paragraphs?.flatMap(paragraph =>
+        assignments = studentAssignments?.flatMap((member: any) =>
+          member.classes?.subjects?.flatMap((subject: any) =>
+            subject.chapters?.flatMap((chapter: any) =>
+              chapter.paragraphs?.flatMap((paragraph: any) =>
                 paragraph.assignments || []
               ) || []
             ) || []

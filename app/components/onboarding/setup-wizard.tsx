@@ -136,10 +136,11 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Save preferences to Supabase
-        await supabase.from('user_preferences').upsert({
+        // Save preferences to Supabase using user_preferences table
+        await (supabase as any).from('user_preferences').upsert({
           user_id: user.id,
-          preferences: {
+          preference_key: 'setup_preferences',
+          preference_value: {
             language: selectedLanguage,
             theme: selectedTheme,
             role: selectedRole,

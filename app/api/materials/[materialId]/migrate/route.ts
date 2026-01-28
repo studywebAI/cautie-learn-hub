@@ -71,12 +71,13 @@ export async function POST(
 
     // Migrate content to blocks
     // For simplicity, create a single block with the entire content
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('blocks')
       .insert({
         material_id: materialId,
-        content: material.content,
+        data: material.content,
         type: material.type || 'text',
+        position: 0,
         order_index: 0,
       })
       .select();

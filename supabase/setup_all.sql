@@ -18,6 +18,8 @@ DROP TABLE IF EXISTS "public"."profiles" CASCADE;
 DROP TABLE IF EXISTS "public"."personal_tasks" CASCADE;
 DROP TABLE IF EXISTS "public"."rubrics" CASCADE;
 DROP TABLE IF EXISTS "public"."rubric_criteria" CASCADE;
+DROP TABLE IF EXISTS "public"."notifications" CASCADE;
+DROP TABLE IF EXISTS "public"."user_preferences" CASCADE;
 
 -- Drop trigger/function
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
@@ -251,6 +253,57 @@ CREATE TABLE "public"."rubric_criteria" (
   CONSTRAINT "rubric_criteria_rubric_id_fkey" FOREIGN KEY (rubric_id) REFERENCES rubrics (id) ON DELETE CASCADE
 );
 
+-- Notifications table
+CREATE TABLE "public"."notifications" (
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "user_id" uuid NOT NULL,
+  "type" text NOT NULL,
+  "title" text NOT NULL,
+  "message" text,
+  "data" jsonb,
+  "read" boolean NOT NULL DEFAULT false,
+  "read_at" timestamp with time zone,
+  "expires_at" timestamp with time zone,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT "notifications_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "notifications_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users (id) ON DELETE CASCADE
+);
+
+-- User preferences table
+CREATE TABLE "public"."user_preferences" (
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "user_id" uuid NOT NULL,
+  "preference_key" text NOT NULL,
+  "preference_value" jsonb,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT "user_preferences_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "user_preferences_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users (id) ON DELETE CASCADE,
+  CONSTRAINT "user_preferences_user_key" UNIQUE (user_id, preference_key)
+);
+
+-- Add missing columns to blocks table
+ALTER TABLE "public"."blocks" ADD COLUMN IF NOT EXISTS "material_id" uuid REFERENCES materials(id) ON DELETE CASCADE;
+ALTER TABLE "public"."blocks" ADD COLUMN IF NOT EXISTS "chapter_id" uuid REFERENCES chapters(id) ON DELETE CASCADE;
+ALTER TABLE "public"."blocks" ADD COLUMN IF NOT EXISTS "order_index" integer;
+
+-- Make assignment_id nullable (blocks can belong to materials or chapters instead)
+ALTER TABLE "public"."blocks" ALTER COLUMN "assignment_id" DROP NOT NULL;
+
+-- Add content_id to materials if missing  
+ALTER TABLE "public"."materials" ADD COLUMN IF NOT EXISTS "content_id" uuid;
+
+-- 3) Auth trigger was already defined above (line ~255)
+-- The rest continues with rubric_criteria definition that was truncated...
+  "description" text,
+  "max_score" integer NOT NULL DEFAULT 10,
+  "weight" numeric DEFAULT 1,
+  "position" integer NOT NULL DEFAULT 0,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT "rubric_criteria_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "rubric_criteria_rubric_id_fkey" FOREIGN KEY (rubric_id) REFERENCES rubrics (id) ON DELETE CASCADE
+);
+
 -- 3) Auth trigger: create profile on sign-up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
@@ -282,6 +335,8 @@ CREATE INDEX IF NOT EXISTS "submissions_user_id_idx" ON "public"."submissions"("
 CREATE INDEX IF NOT EXISTS "idx_personal_tasks_user_id" ON "public"."personal_tasks"("user_id");
 CREATE INDEX IF NOT EXISTS "idx_rubrics_class_id" ON "public"."rubrics"("class_id");
 CREATE INDEX IF NOT EXISTS "idx_rubric_criteria_rubric_id" ON "public"."rubric_criteria"("rubric_id");
+CREATE INDEX IF NOT EXISTS "idx_notifications_user_id" ON "public"."notifications"("user_id");
+CREATE INDEX IF NOT EXISTS "idx_user_preferences_user_id" ON "public"."user_preferences"("user_id");
 
 -- 5) Enable RLS
 ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
@@ -300,6 +355,8 @@ ALTER TABLE "public"."materials" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."personal_tasks" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."rubrics" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."rubric_criteria" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."user_preferences" ENABLE ROW LEVEL SECURITY;
 
 -- 6) Policies
 CREATE POLICY "profiles_select" ON "public"."profiles" FOR SELECT USING (auth.uid() = id);
@@ -325,6 +382,12 @@ CREATE POLICY "materials_public" ON "public"."materials" FOR SELECT USING (is_pu
 CREATE POLICY "personal_tasks_all" ON "public"."personal_tasks" FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "rubrics_all" ON "public"."rubrics" FOR ALL USING (auth.uid() IS NOT NULL);
 CREATE POLICY "rubric_criteria_all" ON "public"."rubric_criteria" FOR ALL USING (auth.uid() IS NOT NULL);
+
+-- Notifications: users can only see their own notifications
+CREATE POLICY "notifications_own" ON "public"."notifications" FOR ALL USING (auth.uid() = user_id);
+
+-- User preferences: users can only access their own preferences
+CREATE POLICY "user_preferences_own" ON "public"."user_preferences" FOR ALL USING (auth.uid() = user_id);
 
 -- Force PostgREST to reload schema
 SELECT pg_notify('pgrst', 'reload schema');

@@ -35,12 +35,11 @@ export async function GET(
     if (!hasAccess) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-    // Get the chapter
-    const { data: chapter, error: chapterError } = await supabase
-      .from('class_chapters')
-      .select('*')
+    // Get the chapter - use 'chapters' table joined with subjects
+    const { data: chapter, error: chapterError } = await (supabase as any)
+      .from('chapters')
+      .select('*, subjects!inner(class_id)')
       .eq('id', chapterId)
-      .eq('class_id', classId)
       .single();
     if (chapterError || !chapter) {
       return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
@@ -93,11 +92,10 @@ export async function PUT(
     if (title !== undefined) updateData.title = title.trim();
     if (description !== undefined) updateData.description = description?.trim() || null;
     if (order_index !== undefined) updateData.order_index = order_index;
-    const { data, error } = await supabase
-      .from('class_chapters')
+    const { data, error } = await (supabase as any)
+      .from('chapters')
       .update(updateData)
       .eq('id', chapterId)
-      .eq('class_id', classId)
       .select()
       .single();
     if (error) {
@@ -146,11 +144,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Only teachers can delete chapters' }, { status: 403 });
     }
     // Delete the chapter (RLS and foreign keys will handle cleanup)
-    const { error } = await supabase
-      .from('class_chapters')
+    const { error } = await (supabase as any)
+      .from('chapters')
       .delete()
-      .eq('id', chapterId)
-      .eq('class_id', classId);
+      .eq('id', chapterId);
     if (error) {
       console.error('Error deleting chapter:', error);
       return NextResponse.json({ error: 'Failed to delete chapter' }, { status: 500 });

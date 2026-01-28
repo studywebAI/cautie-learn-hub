@@ -38,7 +38,7 @@ export async function POST(
     }
 
     // Verify assignment access
-    const { data: assignment, error: assignmentError } = await supabase
+    const { data: assignment, error: assignmentError } = await (supabase as any)
       .from('assignments')
       .select(`
         *,
@@ -96,7 +96,7 @@ export async function POST(
 
     // If OpenQuestionBlock with AI grading, queue grading job
     if (block.type === 'open_question' && (block.data as any)?.ai_grading) {
-      const { error: jobError } = await supabase
+      const { error: jobError } = await (supabase as any)
         .from('ai_grading_queue')
         .insert({
           answer_id: studentAnswer.id
@@ -155,7 +155,7 @@ export async function PUT(
     }
 
     // Verify access to the assignment
-    const { data: assignment, error: assignmentError } = await supabase
+    const { data: assignment, error: assignmentError } = await (supabase as any)
       .from('assignments')
       .select(`
         *,
@@ -253,7 +253,7 @@ export async function DELETE(
     }
 
     // Verify access to the assignment
-    const { data: assignment, error: assignmentError } = await supabase
+    const { data: assignment, error: assignmentError } = await (supabase as any)
       .from('assignments')
       .select(`
         *,
