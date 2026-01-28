@@ -24,12 +24,13 @@ import { Badge } from '@/components/ui/badge';
 import { LinkPickerDialog } from './link-picker-dialog';
 import type { ClassInfo } from '@/contexts/app-context';
 
-type DeadlineType = 'assignment' | 'test';
+type DeadlineType = 'homework' | 'small_test' | 'big_test';
 
 type LinkedContent = {
-  type: 'material' | 'subject';
+  type: 'material' | 'subject' | 'assignment';
   url: string;
   title: string;
+  path?: string; // Display path for assignments
 };
 
 type TeacherDeadlineDialogProps = {
@@ -58,7 +59,7 @@ export function TeacherDeadlineDialog({
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<Date | undefined>(initialDate);
   const [selectedClassId, setSelectedClassId] = useState<string>('');
-  const [deadlineType, setDeadlineType] = useState<DeadlineType>('assignment');
+  const [deadlineType, setDeadlineType] = useState<DeadlineType>('homework');
   const [linkedContent, setLinkedContent] = useState<LinkedContent[]>([]);
   const [isLinkPickerOpen, setIsLinkPickerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -102,7 +103,7 @@ export function TeacherDeadlineDialog({
       });
 
       toast({
-        title: deadlineType === 'test' ? 'Test Scheduled' : 'Assignment Created',
+        title: deadlineType === 'homework' ? 'Homework Created' : 'Test Scheduled',
         description: `"${title}" has been added to the class.`,
       });
 
@@ -123,7 +124,7 @@ export function TeacherDeadlineDialog({
     setDescription('');
     setDate(initialDate);
     setSelectedClassId('');
-    setDeadlineType('assignment');
+    setDeadlineType('homework');
     setLinkedContent([]);
     setIsOpen(false);
   };
@@ -149,8 +150,9 @@ export function TeacherDeadlineDialog({
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="assignment">Assignment (Homework)</SelectItem>
-                  <SelectItem value="test">Test / Exam</SelectItem>
+                  <SelectItem value="homework">Homework (Huiswerk)</SelectItem>
+                  <SelectItem value="small_test">Small Test (Kleine Toets)</SelectItem>
+                  <SelectItem value="big_test">Big Test (Grote Toets)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -271,7 +273,7 @@ export function TeacherDeadlineDialog({
             <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
             <Button onClick={handleCreate} disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {deadlineType === 'test' ? 'Schedule Test' : 'Create Assignment'}
+              {deadlineType === 'homework' ? 'Create Homework' : 'Schedule Test'}
             </Button>
           </DialogFooter>
         </DialogContent>
