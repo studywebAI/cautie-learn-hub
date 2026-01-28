@@ -43,9 +43,10 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove }: Week
     })
   );
 
+  // Only show weekdays (Monday to Friday) - skip Saturday and Sunday
   const weekDays = useMemo(() => {
     const days = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 5; i++) {
       const day = new Date(currentWeek);
       day.setDate(currentWeek.getDate() + i);
       days.push(day);
@@ -120,7 +121,7 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove }: Week
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-5 gap-2">
             {weekDays.map((day, index) => {
               const dateString = format(day, 'yyyy-MM-dd');
               const dayEvents = eventsByDay.get(dateString) || [];
