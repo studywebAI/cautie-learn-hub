@@ -14,7 +14,7 @@ export default function Login({
   const router = useRouter();
   const supabase = createClient();
 
-  // Redirect if already logged in
+  // Redirect if already logged in...........................................................................
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
