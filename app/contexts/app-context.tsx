@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useState, useEffect, ReactNode, useCallback, useContext, useMemo } from 'react';
+import { createContext, useState, useEffect, ReactNode, useCallback, useContext, useMemo, useRef } from 'react';
 import type { SessionRecapData } from '@/lib/types';
 import type { Tables } from '@/lib/supabase/database.types';
 import { Session } from '@supabase/supabase-js';
@@ -139,7 +139,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   // Track previous session state to detect login
   const [prevSession, setPrevSession] = useState<Session | null>(session);
 
-  const supabase = createClient();
+  // CRITICAL FIX: Memoize supabase client to prevent infinite re-renders
+  // Creating a new client on every render causes useEffect dependencies to change
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
 
   // Apply theme to document
   const applyTheme = useCallback((currentTheme: ThemeType) => {
@@ -585,15 +588,19 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     
     console.log('Role switched:', { from: previousRole, to: newRole });
 
-    // Persist to Supabase in background (don't block UI)
+    // Persist to Supabase in background using UPSERT (don't block UI)
+    // Using upsert ensures the profile is created if it doesn't exist
     if (session?.user?.id) {
       supabase
         .from('profiles')
-        .update({ role: newRole })
-        .eq('id', session.user.id)
+        .upsert({ 
+          id: session.user.id, 
+          role: newRole,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' })
         .then(({ error }) => {
           if (error) {
-            console.error('Failed to persist role to Supabase:', error.message);
+            console.error('Failed to persist role to Supabase:', error.message, error.details, error.hint);
             // Optionally revert on failure (commented out for better UX)
             // setRoleState(previousRole);
           } else {

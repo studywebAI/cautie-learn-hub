@@ -321,6 +321,30 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
+-- Generate unique join code for classes
+CREATE OR REPLACE FUNCTION public.generate_join_code()
+RETURNS text
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  new_code text;
+  code_exists boolean;
+BEGIN
+  LOOP
+    -- Generate a 6-character alphanumeric code
+    new_code := upper(substring(md5(random()::text) from 1 for 6));
+    
+    -- Check if code already exists
+    SELECT EXISTS(SELECT 1 FROM public.classes WHERE join_code = new_code) INTO code_exists;
+    
+    -- Exit loop if code is unique
+    EXIT WHEN NOT code_exists;
+  END LOOP;
+  
+  RETURN new_code;
+END;
+$$;
+
 -- 4) Indexes
 CREATE INDEX IF NOT EXISTS "idx_chapters_subject_id" ON "public"."chapters"("subject_id");
 CREATE INDEX IF NOT EXISTS "idx_paragraphs_chapter_id" ON "public"."paragraphs"("chapter_id");
