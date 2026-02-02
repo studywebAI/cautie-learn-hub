@@ -42,7 +42,6 @@ CREATE TABLE IF NOT EXISTS public.paragraphs (
 -- Assignments table (using numeric index, convert to letters in app)
 CREATE TABLE IF NOT EXISTS public.assignments (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    class_id UUID NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE,
     paragraph_id UUID REFERENCES public.paragraphs(id) ON DELETE CASCADE,
     assignment_index INTEGER NOT NULL, -- 0=a, 1=b, 26=aa, etc.
     title TEXT NOT NULL,
@@ -50,9 +49,9 @@ CREATE TABLE IF NOT EXISTS public.assignments (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Unique constraint for assignments (either by paragraph or class)
+-- Unique constraint for assignments by paragraph
 CREATE UNIQUE INDEX IF NOT EXISTS idx_assignments_unique ON public.assignments(
-    COALESCE(paragraph_id::text, 'class-' || class_id::text),
+    paragraph_id,
     assignment_index
 );
 
@@ -181,7 +180,6 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 CREATE INDEX IF NOT EXISTS idx_chapters_subject_id ON public.chapters(subject_id);
 CREATE INDEX IF NOT EXISTS idx_paragraphs_chapter_id ON public.paragraphs(chapter_id);
 CREATE INDEX IF NOT EXISTS idx_assignments_paragraph_id ON public.assignments(paragraph_id);
-CREATE INDEX IF NOT EXISTS idx_assignments_class_id ON public.assignments(class_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_assignment_id ON public.submissions(assignment_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_user_id ON public.submissions(user_id);
 CREATE INDEX IF NOT EXISTS idx_blocks_assignment_id ON public.blocks(assignment_id);
