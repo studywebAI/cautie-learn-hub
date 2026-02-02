@@ -10,11 +10,12 @@ type SubjectCreateRequest = {
   ai_icon_seed?: string
 }
 
-export async function GET(req: Request, { params }: { params: { classId: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ classId: string }> }) {
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
-    const { classId } = params
+    const resolvedParams = await params
+    const { classId } = resolvedParams
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -42,12 +43,13 @@ export async function GET(req: Request, { params }: { params: { classId: string 
   }
 }
 
-export async function POST(req: Request, { params }: { params: { classId: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ classId: string }> }) {
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
     const json = await req.json()
-    const { classId } = params
+    const resolvedParams = await params
+    const { classId } = resolvedParams
 
     // Validate create request
     if (!json.title) {

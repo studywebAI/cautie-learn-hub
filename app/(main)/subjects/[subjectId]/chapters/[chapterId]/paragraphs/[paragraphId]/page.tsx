@@ -125,8 +125,18 @@ export default function ParagraphDetailPage() {
         setNewAssignmentTitle('');
         setIsCreateAssignmentOpen(false);
         toast({ title: 'Assignment created' });
+      } else {
+        // Handle error response
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to create assignment:', errorData);
+        toast({ 
+          title: 'Error', 
+          description: errorData.error || 'Failed to create assignment', 
+          variant: 'destructive' 
+        });
       }
     } catch (error) {
+      console.error('Assignment creation error:', error);
       toast({ title: 'Error', description: 'Failed to create assignment', variant: 'destructive' });
     }
   };
