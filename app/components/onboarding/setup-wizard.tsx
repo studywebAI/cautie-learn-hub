@@ -11,7 +11,7 @@ import { getDictionary } from '@/lib/get-dictionary';
 
 type Language = 'nl' | 'en' | 'es' | 'ru' | 'zh';
 type Theme = 'system' | 'light' | 'dark' | 'pastel';
-type Role = 'student' | 'professor';
+type Role = 'student' | 'teacher';
 
 interface SetupWizardProps {
   onComplete: () => void;
@@ -58,7 +58,7 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
   const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [selectedTier, setSelectedTier] = useState<'free' | 'premium' | null>(null);
-  const [professorCode, setProfessorCode] = useState('');
+  const [teacherCode, setTeacherCode] = useState('');
   const [dictionary, setDictionary] = useState<any>(null);
 
   const supabase = createClient();
@@ -101,8 +101,8 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
   };
 
   const handleNext = () => {
-    if (step === 3 && selectedRole === 'professor' && !professorCode) {
-      // Professor needs code before tier selection
+    if (step === 3 && selectedRole === 'teacher' && !teacherCode) {
+      // Teacher needs code before tier selection
       return;
     }
     if (step < 4) {
@@ -145,7 +145,7 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
             theme: selectedTheme,
             role: selectedRole,
             tier: selectedTier,
-            professorCode: selectedRole === 'professor' ? professorCode : null,
+            teacherCode: selectedRole === 'teacher' ? teacherCode : null,
             setupCompleted: true
           }
         });
@@ -262,9 +262,9 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
           </button>
 
           <button
-            onClick={() => handleRoleSelect('professor')}
+            onClick={() => handleRoleSelect('teacher')}
             className={`p-6 rounded-lg border-2 text-center transition-all ${
-              selectedRole === 'professor'
+              selectedRole === 'teacher'
                 ? 'border-primary bg-primary/10'
                 : 'border-border hover:border-primary/50'
             }`}
@@ -275,14 +275,14 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
           </button>
         </div>
 
-        {selectedRole === 'professor' && (
+        {selectedRole === 'teacher' && (
           <div className="space-y-4 max-w-sm mx-auto">
-            <Label htmlFor="professor-code">Enter Professor Code</Label>
+            <Label htmlFor="teacher-code">Enter Teacher Code</Label>
             <Input
-              id="professor-code"
-              value={professorCode}
-              onChange={(e) => setProfessorCode(e.target.value)}
-              placeholder="Enter your professor code"
+              id="teacher-code"
+              value={teacherCode}
+              onChange={(e) => setTeacherCode(e.target.value)}
+              placeholder="Enter your teacher code"
             />
           </div>
         )}
@@ -398,7 +398,7 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
                 disabled={
                   (step === 1 && !selectedLanguage) ||
                   (step === 2 && !selectedTheme) ||
-                  (step === 3 && (!selectedRole || (selectedRole === 'professor' && !professorCode))) ||
+                  (step === 3 && (!selectedRole || (selectedRole === 'teacher' && !teacherCode))) ||
                   (step === 4 && !selectedTier)
                 }
               >
