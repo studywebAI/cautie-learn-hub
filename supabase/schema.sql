@@ -42,16 +42,16 @@ CREATE TABLE public.classes (
 COMMENT ON TABLE public.classes IS 'Represents a class created by a teacher.';
 
 -- Create the assignments table.
--- This table was the source of the previous errors. It is now guaranteed to exist before policies are applied.
+-- This table supports the hierarchical structure: classes → subjects → chapters → paragraphs → assignments
 CREATE TABLE public.assignments (
     id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    class_id uuid NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    paragraph_id uuid REFERENCES public.paragraphs(id) ON DELETE CASCADE,
+    assignment_index int NOT NULL DEFAULT 0,
     title text NOT NULL,
-    due_date timestamp with time zone,
-    content json
+    answers_enabled boolean NOT NULL DEFAULT false,
+    created_at timestamp with time zone NOT NULL DEFAULT now()
 );
-COMMENT ON TABLE public.assignments IS 'Assignments created by teachers for a class.';
+COMMENT ON TABLE public.assignments IS 'Assignments created for paragraphs in a subject.';
 
 -- Create a join table for class members.
 CREATE TABLE public.class_members (
@@ -114,28 +114,61 @@ CREATE POLICY "Class owners can delete their classes" ON public.classes FOR DELE
 
 -- Assignments Table RLS
 ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users can view assignments for their classes" ON public.assignments;
-CREATE POLICY "Users can view assignments for their classes" ON public.assignments FOR SELECT
+DROP POLICY IF EXISTS "Users can view assignments for their paragraphs" ON public.assignments;
+CREATE POLICY "Users can view assignments for their paragraphs" ON public.assignments FOR SELECT
   USING (EXISTS (
-    SELECT 1 FROM public.classes c
-    WHERE c.id = assignments.class_id AND (c.owner_id = auth.uid() OR EXISTS (
-      SELECT 1 FROM public.class_members cm WHERE cm.class_id = c.id AND cm.user_id = auth.uid()
-    ))
+    SELECT 1 FROM public.paragraphs p
+    JOIN public.chapters c ON p.chapter_id = c.id
+    JOIN public.subjects s ON c.subject_id = s.id
+    WHERE p.id = assignments.paragraph_id AND (
+      s.user_id = auth.uid() OR EXISTS (
+        SELECT 1 FROM public.classes cl
+        JOIN public.class_members cm ON cl.id = cm.class_id
+        WHERE cl.id = s.class_id AND cm.user_id = auth.uid()
+      ) OR EXISTS (
+        SELECT 1 FROM public.classes cl
+        WHERE cl.id = s.class_id AND cl.owner_id = auth.uid()
+      )
+    )
   ));
-DROP POLICY IF EXISTS "Class owners can create assignments" ON public.assignments;
-CREATE POLICY "Class owners can create assignments" ON public.assignments FOR INSERT
+DROP POLICY IF EXISTS "Users can create assignments for their paragraphs" ON public.assignments;
+CREATE POLICY "Users can create assignments for their paragraphs" ON public.assignments FOR INSERT
   WITH CHECK (EXISTS (
-    SELECT 1 FROM public.classes WHERE id = assignments.class_id AND owner_id = auth.uid()
+    SELECT 1 FROM public.paragraphs p
+    JOIN public.chapters c ON p.chapter_id = c.id
+    JOIN public.subjects s ON c.subject_id = s.id
+    WHERE p.id = assignments.paragraph_id AND (
+      s.user_id = auth.uid() OR EXISTS (
+        SELECT 1 FROM public.classes cl
+        WHERE cl.id = s.class_id AND cl.owner_id = auth.uid()
+      )
+    )
   ));
-DROP POLICY IF EXISTS "Class owners can update assignments" ON public.assignments;
-CREATE POLICY "Class owners can update assignments" ON public.assignments FOR UPDATE
+DROP POLICY IF EXISTS "Users can update assignments for their paragraphs" ON public.assignments;
+CREATE POLICY "Users can update assignments for their paragraphs" ON public.assignments FOR UPDATE
   USING (EXISTS (
-    SELECT 1 FROM public.classes WHERE id = assignments.class_id AND owner_id = auth.uid()
+    SELECT 1 FROM public.paragraphs p
+    JOIN public.chapters c ON p.chapter_id = c.id
+    JOIN public.subjects s ON c.subject_id = s.id
+    WHERE p.id = assignments.paragraph_id AND (
+      s.user_id = auth.uid() OR EXISTS (
+        SELECT 1 FROM public.classes cl
+        WHERE cl.id = s.class_id AND cl.owner_id = auth.uid()
+      )
+    )
   ));
-DROP POLICY IF EXISTS "Class owners can delete assignments" ON public.assignments;
-CREATE POLICY "Class owners can delete assignments" ON public.assignments FOR DELETE
+DROP POLICY IF EXISTS "Users can delete assignments for their paragraphs" ON public.assignments;
+CREATE POLICY "Users can delete assignments for their paragraphs" ON public.assignments FOR DELETE
   USING (EXISTS (
-    SELECT 1 FROM public.classes WHERE id = assignments.class_id AND owner_id = auth.uid()
+    SELECT 1 FROM public.paragraphs p
+    JOIN public.chapters c ON p.chapter_id = c.id
+    JOIN public.subjects s ON c.subject_id = s.id
+    WHERE p.id = assignments.paragraph_id AND (
+      s.user_id = auth.uid() OR EXISTS (
+        SELECT 1 FROM public.classes cl
+        WHERE cl.id = s.class_id AND cl.owner_id = auth.uid()
+      )
+    )
   ));
 
 -- Class Members Table RLS
