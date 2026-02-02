@@ -4,7 +4,7 @@
     "esModuleInterop": true,
     "incremental": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "lib": [
       "DOM",
       "DOM.Iterable",
@@ -35,6 +35,7 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ]
 }
