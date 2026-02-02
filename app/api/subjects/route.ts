@@ -19,6 +19,37 @@ type SubjectDeleteRequest = {
   id: string
 }
 
+export async function GET(req: Request) {
+  try {
+    const cookieStore = cookies()
+    const supabase = await createClient(cookieStore)
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Fetch subjects for the current user
+    const { data, error } = await supabase.from('subjects')
+      .select('*')
+      .eq('user_id', user.id)
+
+    if (error) {
+      return NextResponse.json({
+        error: `Supabase error fetching subjects: ${error.message}`
+      }, { status: 500 })
+    }
+
+    return NextResponse.json(data || [])
+  } catch (error) {
+    console.error('Error fetching subjects:', error)
+    return NextResponse.json({
+      error: 'Internal server error while fetching subjects'
+    }, { status: 500 })
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const cookieStore = cookies()
