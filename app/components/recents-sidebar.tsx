@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { AppContext, AppContextType } from '@/contexts/app-context';
+import { useSidebar } from '@/components/ui/sidebar';
 
 type RecentMaterial = {
   id: string;
@@ -41,10 +42,13 @@ export function RecentsSidebar() {
   const { session } = useContext(AppContext) as AppContextType;
   const [recents, setRecents] = useState<RecentMaterial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { state } = useSidebar();
+  
+  // Hide completely when sidebar is collapsed
+  const isCollapsed = state === 'collapsed';
 
   useEffect(() => {
     if (session) {
-      // Fetch recent materials from database
       fetch('/api/materials?limit=5')
         .then(response => response.json())
         .then(data => {
@@ -60,6 +64,11 @@ export function RecentsSidebar() {
       setIsLoading(false);
     }
   }, [session]);
+
+  // Don't render anything when collapsed
+  if (isCollapsed) {
+    return null;
+  }
 
   if (isLoading) {
     return (

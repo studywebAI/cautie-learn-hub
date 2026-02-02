@@ -25,7 +25,7 @@ export async function DELETE(
   }
 
   // Check ownership
-  let query = supabase
+  let query = (supabase as any)
     .from('assignments')
     .select('class_id')
     .eq('id', assignmentId)
@@ -36,7 +36,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
   }
 
-  const classId = assignment.class_id;
+  const classId = (assignment as any).class_id;
 
   // Check if user owns the class
   if (user) {
@@ -94,7 +94,7 @@ export async function PUT(
   }
 
   // Check ownership
-  let query = supabase
+  let query = (supabase as any)
     .from('assignments')
     .select('class_id')
     .eq('id', assignmentId)
@@ -105,7 +105,7 @@ export async function PUT(
     return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
   }
 
-  const classId = assignment.class_id;
+  const classId = (assignment as any).class_id;
 
   // Check if user owns the class
   if (user) {
