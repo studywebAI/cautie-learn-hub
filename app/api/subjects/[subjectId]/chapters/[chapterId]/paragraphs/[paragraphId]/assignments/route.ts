@@ -40,18 +40,15 @@ export async function GET(
 
     console.log(`Found ${assignments?.length || 0} assignments`);
 
-    // Transform assignments to include letter indexing
     const transformedAssignments = safeAssignments.map(assignment => {
-      const getLetterIndex = (index: number) => {
-        if (index === 0) return 'a';
-        let result = '';
-        let num = index;
-        while (num >= 0) {
-          result = String.fromCharCode(97 + (num % 26)) + result;
-          num = Math.floor(num / 26) - 1;
-          if (num < 0) break;
+      // Convert index to letter: 0='a', 1='b', ..., 25='z', 26='aa', etc.
+      const getLetterIndex = (index: number): string => {
+        if (index < 26) {
+          return String.fromCharCode(97 + index);
         }
-        return result;
+        const first = Math.floor(index / 26) - 1;
+        const second = index % 26;
+        return String.fromCharCode(97 + first) + String.fromCharCode(97 + second);
       };
 
       return {
@@ -94,19 +91,26 @@ export async function POST(
       .order('assignment_index', { ascending: false })
       .limit(1)
 
-    const nextIndex = (existingAssignments?.[0]?.assignment_index || 0) + 1
+    if (countError) {
+      console.log(`Error fetching existing assignments:`, countError);
+    }
+
+    // Start at 0 for first assignment (maps to 'a'), then increment
+    const nextIndex = existingAssignments && existingAssignments.length > 0 
+      ? (existingAssignments[0].assignment_index ?? -1) + 1 
+      : 0;
+
+    console.log(`Next assignment index:`, nextIndex);
 
     // Create assignment
     const { data: assignment, error: insertError } = await (supabase
       .from('assignments') as any)
-      .insert([
-        {
-          paragraph_id: resolvedParams.paragraphId,
-          assignment_index: nextIndex,
-          title: title?.trim(),
-          answers_enabled,
-        },
-      ])
+      .insert({
+        paragraph_id: resolvedParams.paragraphId,
+        assignment_index: nextIndex,
+        title: title?.trim() || 'Untitled Assignment',
+        answers_enabled: answers_enabled ?? false,
+      })
       .select()
       .single()
 
@@ -115,17 +119,14 @@ export async function POST(
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
-    // Calculate letter index
-    const getLetterIndex = (index: number) => {
-      if (index === 0) return 'a';
-      let result = '';
-      let num = index;
-      while (num >= 0) {
-        result = String.fromCharCode(97 + (num % 26)) + result;
-        num = Math.floor(num / 26) - 1;
-        if (num < 0) break;
+    // Convert index to letter: 0='a', 1='b', ..., 25='z', 26='aa', etc.
+    const getLetterIndex = (index: number): string => {
+      if (index < 26) {
+        return String.fromCharCode(97 + index);
       }
-      return result;
+      const first = Math.floor(index / 26) - 1;
+      const second = index % 26;
+      return String.fromCharCode(97 + first) + String.fromCharCode(97 + second);
     };
 
     console.log(`Assignment created:`, assignment);
