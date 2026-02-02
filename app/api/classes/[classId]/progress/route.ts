@@ -61,7 +61,7 @@ export async function GET(
     })) || []
 
     // Get all assignments for the class
-    const { data: assignments, error: assignmentsError } = await supabase
+    const { data: assignments, error: assignmentsError } = await (supabase as any)
       .from('assignments')
       .select('id, title, due_date, created_at')
       .eq('class_id', classId)
@@ -72,7 +72,7 @@ export async function GET(
     }
 
     // Get all submissions for the assignments
-    const assignmentIds = assignments?.map(a => a.id) || []
+    const assignmentIds = (assignments as any[])?.map((a: any) => a.id) || []
     const { data: submissions, error: submissionsError } = assignmentIds.length > 0
       ? await supabase
           .from('submissions')
@@ -93,16 +93,16 @@ export async function GET(
       const studentSubmissions = submissions?.filter(s => s.user_id === studentId) || []
 
       // Calculate assignment progress
-      const totalAssignments = assignments?.length || 0
+      const totalAssignments = (assignments as any[])?.length || 0
       const completedAssignments = studentSubmissions.filter(s => s.status === 'submitted' || s.grade !== null).length
       const gradedAssignments = studentSubmissions.filter(s => s.grade !== null).length
 
       // Calculate average grade
       const grades = studentSubmissions.filter(s => s.grade !== null).map(s => s.grade).filter(g => g !== null) as number[]
-      const averageGrade = grades.length > 0 ? grades.reduce((a, b) => a! + b!, 0) / grades.length : null
+      const averageGrade = grades.length > 0 ? grades.reduce((a: number, b: number) => a + b, 0) / grades.length : null
 
       // Assignment details
-      const assignmentDetails = assignments?.map(assignment => {
+      const assignmentDetails = (assignments as any[])?.map((assignment: any) => {
         const submission = studentSubmissions.find(s => s.assignment_id === assignment.id)
         return {
           assignmentId: assignment.id,
@@ -131,7 +131,7 @@ export async function GET(
     return NextResponse.json({
       className: classData.name,
       students: studentProgress,
-      assignments: assignments?.map(a => ({
+      assignments: (assignments as any[])?.map((a: any) => ({
         id: a.id,
         title: a.title,
         dueDate: a.due_date

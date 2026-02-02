@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the first block to determine the material_id or chapter_id
-    const { data: firstBlock, error: blockError } = await supabase
+    const { data: firstBlock, error: blockError } = await (supabase as any)
       .from('blocks')
       .select('material_id, chapter_id')
       .eq('id', blockIds[0])
@@ -110,17 +110,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Update order_index for each block
-    const updates = blockIds.map((blockId, index) => ({
+    const updates = blockIds.map((blockId: string, index: number) => ({
       id: blockId,
       order_index: index,
-      updated_at: new Date().toISOString(),
     }));
 
     // Use a transaction-like approach with individual updates
     for (const update of updates) {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('blocks')
-        .update({ order_index: update.order_index, updated_at: update.updated_at })
+        .update({ order_index: update.order_index })
         .eq('id', update.id);
 
       if (error) {

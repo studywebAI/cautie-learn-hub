@@ -146,7 +146,7 @@ export async function PUT(
 
   // Validate block_id if provided
   if (block_id) {
-    const { data: block, error: blockError } = await supabase
+    const { data: block, error: blockError } = await (supabase as any)
       .from('blocks')
       .select('chapter_id')
       .eq('id', block_id)
