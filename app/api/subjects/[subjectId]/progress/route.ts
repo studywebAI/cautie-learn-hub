@@ -32,7 +32,11 @@ export async function GET(
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
     }
 
-    // Check access
+    // Check access - subject.class_id could be null, handle that
+    if (!subject.class_id) {
+      return NextResponse.json({ error: 'Subject has no class association' }, { status: 400 })
+    }
+    
     const { data: classAccess, error: classError } = await supabase
       .from('classes')
       .select('id, owner_id, user_id')
@@ -174,6 +178,10 @@ export async function POST(
 
     if (subjectCheckError || !subjectCheck) {
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
+    }
+
+    if (!subjectCheck.class_id) {
+      return NextResponse.json({ error: 'Subject has no class association' }, { status: 400 })
     }
 
     // Check if user has access to the class

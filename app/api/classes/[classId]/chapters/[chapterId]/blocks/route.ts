@@ -36,7 +36,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     // Get blocks for this chapter
-    const { data: blocks, error: blocksError } = await supabase
+    const { data: blocks, error: blocksError } = await (supabase as any)
       .from('blocks')
       .select('*')
       .eq('chapter_id', chapterId)
@@ -89,14 +89,14 @@ export async function POST(
       return NextResponse.json({ error: 'Only teachers can add blocks' }, { status: 403 });
     }
     // Get the highest order_index for this chapter
-    const { data: lastBlock } = await supabase
+    const { data: lastBlock } = await (supabase as any)
       .from('blocks')
       .select('order_index')
       .eq('chapter_id', chapterId)
       .order('order_index', { ascending: false })
       .limit(1)
       .single();
-    const nextOrderIndex = (lastBlock?.order_index || 0) + 1;
+    const nextOrderIndex = ((lastBlock as any)?.order_index || 0) + 1;
     // Add the block
     const { data, error } = await (supabase as any)
       .from('blocks')
