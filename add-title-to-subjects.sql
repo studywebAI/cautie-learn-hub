@@ -2,6 +2,10 @@
 ALTER TABLE public.subjects
 ADD COLUMN IF NOT EXISTS title text NOT NULL DEFAULT '';
 
+-- Make class_id column nullable
+ALTER TABLE public.subjects
+ALTER COLUMN class_id DROP NOT NULL;
+
 -- Create index on title for better performance
 CREATE INDEX IF NOT EXISTS idx_subjects_title ON public.subjects(title);
 
