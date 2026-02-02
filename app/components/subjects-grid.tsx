@@ -118,7 +118,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
       const apiUrl = classId ? `/api/classes/${classId}/subjects` : '/api/subjects';
       const requestBody = classId
         ? { title: newSubjectTitle, class_label: newSubjectTitle, cover_type: 'ai_icons' }
-        : { title: newSubjectTitle, class_id: selectedCreateClassId || null, cover_type: 'ai_icons' };
+        : { title: newSubjectTitle, classId: selectedCreateClassId || null, cover_type: 'ai_icons' };
 
       const response = await fetch(apiUrl, {
         method: 'POST',

@@ -66,6 +66,7 @@ export async function GET(
 
     // Check access
     let hasAccess = false;
+    
     if (subject.class_id) {
       if (isTeacher) {
         // Check if teacher owns the class that contains this subject
@@ -85,6 +86,9 @@ export async function GET(
           .maybeSingle();
         hasAccess = !!membership;
       }
+    } else {
+      // If subject has no class_id, check if it belongs to the current user
+      hasAccess = subject.user_id === user.id;
     }
 
     if (!hasAccess) {
