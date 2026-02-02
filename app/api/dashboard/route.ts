@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     }
 
     // Fetch all dashboard data directly from database
-    const [
+    let [
       classesResult,
       personalTasksResult,
       profileResult
@@ -25,6 +25,31 @@ export async function GET(request: Request) {
       supabase.from('personal_tasks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
     ])
+
+    // Create profile if it doesn't exist
+    if (!profileResult.data) {
+      console.log('Profile not found, creating new profile');
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          role: 'student',
+          full_name: user.user_metadata?.full_name || '',
+          avatar_url: user.user_metadata?.avatar_url || null
+        });
+
+      if (insertError) {
+        console.error('Profile creation failed:', insertError);
+      } else {
+        // Fetch the newly created profile
+        const { data: newProfile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+        profileResult.data = newProfile;
+      }
+    }
 
     // For now, return empty assignments array - assignments are complex with hierarchy
     const assignmentsResult = { data: [], error: null }

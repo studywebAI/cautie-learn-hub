@@ -70,7 +70,7 @@ export async function GET(request: Request) {
     // Get GLOBAL user role. from profiles table (website-wide teacher/student mode)
     console.log(`[${requestId}] GET /api/classes - Fetching user profile for role determination`);
 
-    const { data: profile, error: profileError } = await supabase
+    let { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -85,7 +85,31 @@ export async function GET(request: Request) {
         userId: user.id,
         timestamp: new Date().toISOString()
       });
-      // Continue with default role but log the error
+    }
+
+    // Create profile if it doesn't exist
+    if (!profile) {
+      console.log(`[${requestId}] GET /api/classes - Profile not found, creating new profile`);
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          role: 'student',
+          full_name: user.user_metadata?.full_name || '',
+          avatar_url: user.user_metadata?.avatar_url || null
+        });
+
+      if (insertError) {
+        console.error(`[${requestId}] GET /api/classes - Profile creation failed:`, insertError);
+      } else {
+        // Fetch the newly created profile
+        const { data: newProfile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+        profile = newProfile;
+      }
     }
 
     const userRole = profile?.role || 'student'; // Default to student if no profile exists
