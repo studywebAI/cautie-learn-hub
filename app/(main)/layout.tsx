@@ -1,9 +1,9 @@
 "use client";
 
-import { AppHeader } from "@/components/header";
 import { AppSidebar } from "@/components/sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { TopBar } from "@/components/top-bar";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     const isMobile = useIsMobile();
@@ -11,12 +11,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return (
         <SidebarProvider>
             <AppSidebar />
-            <SidebarInset className={`bg-background h-screen flex flex-col ${isMobile ? 'ml-14' : ''}`}>
-                <AppHeader />
-                <div className="flex-1 overflow-auto">
-                  <div className="min-h-full p-4 md:p-6">
+            <SidebarInset className={`bg-background h-screen ${isMobile ? 'ml-14' : ''} relative`}>
+                <TopBar />
+                <div className="h-full overflow-auto p-2">
                     {children}
-                  </div>
                 </div>
             </SidebarInset>
         </SidebarProvider>

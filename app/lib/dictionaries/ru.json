@@ -16,7 +16,10 @@
   "header": {
     "studentDashboard": "Панель студента",
     "teacherDashboard": "Панель преподавателя",
-    "roleSwitcher": "Переключатель ролей"
+    "roleSwitcher": "Переключатель ролей",
+    "myAccount": "Мой аккаунт",
+    "logOut": "Выйти",
+    "logIn": "Войти"
   },
   "dashboard": {
     "todayPlan": {

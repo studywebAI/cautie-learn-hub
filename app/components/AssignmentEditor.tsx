@@ -24,10 +24,22 @@ import {
   ChevronRight,
   Download,
   Upload,
-  X
+  X,
+  Lock,
+  Unlock,
+  Check,
+  Settings,
+  Sparkles
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
+import { AIGradingPresets, GradingPreset, GradingPresetSettings } from '@/components/AIGradingPresets';
 
 interface BlockTemplate {
   id: string;
@@ -45,6 +57,9 @@ interface AssignmentBlock {
   column?: 'left' | 'right';
   rowId: string; // Group blocks in same row
   data: any;
+  locked?: boolean; // Whether this block's answer is locked as correct
+  showFeedback?: boolean; // Whether to show correct/incorrect feedback
+  aiGradingOverride?: Partial<GradingPresetSettings>; // Per-block AI grading settings
 }
 
 interface AssignmentEditorProps {
@@ -53,8 +68,12 @@ interface AssignmentEditorProps {
   chapterId: string;
   paragraphId: string;
   initialBlocks?: AssignmentBlock[];
+  answersEnabled?: boolean;
+  isVisible?: boolean;
   onSave?: (blocks: AssignmentBlock[]) => void;
   onPreview?: () => void;
+  onSettingsChange?: (settings: { answersEnabled: boolean; isVisible: boolean }) => void;
+  isTeacher?: boolean;
 }
 
 const BLOCK_TEMPLATES: BlockTemplate[] = [
@@ -89,6 +108,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     label: 'Open Question',
     defaultData: {
       question: '',
+      correct_answer: '',
       ai_grading: true,
       grading_criteria: '',
       max_score: 5
@@ -100,8 +120,8 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     icon: <FileText className="h-4 w-4" />,
     label: 'Fill Blank',
     defaultData: {
-      text: 'The answer is ___.',
-      answers: [''],
+      text: 'My shoes ___ 100 euros.',
+      answers: ['cost'],
       case_sensitive: false
     }
   },
@@ -150,20 +170,27 @@ export function AssignmentEditor({
   chapterId,
   paragraphId,
   initialBlocks = [],
+  answersEnabled = false,
+  isVisible = true,
   onSave,
-  onPreview
+  onPreview,
+  onSettingsChange,
+  isTeacher = true
 }: AssignmentEditorProps) {
   // Normalize initialBlocks to have rowId
   const normalizedInitialBlocks = initialBlocks.map((b, i) => ({
     ...b,
     rowId: b.rowId || generateRowId(),
     width: b.width || 'full' as const,
-    position: b.position ?? i
+    position: b.position ?? i,
+    locked: b.locked ?? false,
+    showFeedback: b.showFeedback ?? false,
   }));
 
   const [blocks, setBlocks] = useState<AssignmentBlock[]>(normalizedInitialBlocks);
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
+  const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -175,9 +202,74 @@ export function AssignmentEditor({
   const [dragSource, setDragSource] = useState<{ type: 'template' | 'block'; id: string } | null>(null);
   const [dropTarget, setDropTarget] = useState<{ rowIndex: number; column?: 'left' | 'right' } | null>(null);
   
+  // Settings state
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aiSettingsBlockId, setAiSettingsBlockId] = useState<string | null>(null);
+  const [localAnswersEnabled, setLocalAnswersEnabled] = useState(answersEnabled);
+  const [localIsVisible, setLocalIsVisible] = useState(isVisible);
+  
+  // AI Grading presets (stored locally for now - would come from API)
+  const [gradingPresets, setGradingPresets] = useState<GradingPreset[]>([
+    {
+      id: 'default',
+      name: 'Standard',
+      is_default: true,
+      settings: {
+        strictness: 5,
+        partial_credit: true,
+        spelling_matters: false,
+        grammar_matters: false,
+        case_sensitive: false,
+        custom_instructions: '',
+        ai_enabled: true,
+      }
+    }
+  ]);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('default');
+  
   const paperRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const router = useRouter();
+
+  // Toggle lock state for a block
+  const toggleBlockLock = (blockId: string) => {
+    setBlocks(prev => {
+      const newBlocks = prev.map(block =>
+        block.id === blockId ? { ...block, locked: !block.locked } : block
+      );
+      saveToHistory(newBlocks);
+      return newBlocks;
+    });
+  };
+
+  // Toggle feedback visibility for a block
+  const toggleBlockFeedback = (blockId: string) => {
+    setBlocks(prev => {
+      const newBlocks = prev.map(block =>
+        block.id === blockId ? { ...block, showFeedback: !block.showFeedback } : block
+      );
+      saveToHistory(newBlocks);
+      return newBlocks;
+    });
+  };
+
+  // Update AI grading override for a block
+  const updateBlockAiOverride = (blockId: string, override: Partial<GradingPresetSettings> | null) => {
+    setBlocks(prev => {
+      const newBlocks = prev.map(block =>
+        block.id === blockId ? { ...block, aiGradingOverride: override || undefined } : block
+      );
+      saveToHistory(newBlocks);
+      return newBlocks;
+    });
+  };
+
+  // Handle settings change
+  const handleSettingsChange = (newAnswers: boolean, newVisible: boolean) => {
+    setLocalAnswersEnabled(newAnswers);
+    setLocalIsVisible(newVisible);
+    onSettingsChange?.({ answersEnabled: newAnswers, isVisible: newVisible });
+  };
 
   // Group blocks by row
   const getRows = useCallback(() => {
@@ -705,6 +797,7 @@ export function AssignmentEditor({
             onChange={(e) => updateBlock(block.id, { ...block.data, content: e.target.value })}
             placeholder="Enter text..."
             className="min-h-[60px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent"
+            onClick={(e) => e.stopPropagation()}
           />
         );
 
@@ -716,6 +809,7 @@ export function AssignmentEditor({
               onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
               placeholder="Enter question..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
+              onClick={(e) => e.stopPropagation()}
             />
             <div className="space-y-1 pl-2">
               {block.data.options?.map((option: any, idx: number) => (
@@ -727,6 +821,7 @@ export function AssignmentEditor({
                       newOptions[idx] = { ...newOptions[idx], correct: checked };
                       updateBlock(block.id, { ...block.data, options: newOptions });
                     }}
+                    onClick={(e) => e.stopPropagation()}
                     className="h-3 w-3"
                   />
                   <span className="text-xs text-muted-foreground w-3">{String.fromCharCode(65 + idx)}.</span>
@@ -739,11 +834,12 @@ export function AssignmentEditor({
                     }}
                     placeholder={`Option ${String.fromCharCode(65 + idx)}`}
                     className="flex-1 border-0 shadow-none h-7 text-sm focus-visible:ring-0 bg-transparent"
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => removeOption(block.id, idx)}
+                    onClick={(e) => { e.stopPropagation(); removeOption(block.id, idx); }}
                     className="opacity-0 group-hover:opacity-100 h-5 w-5 p-0 text-muted-foreground"
                   >
                     <X className="h-3 w-3" />
@@ -753,7 +849,7 @@ export function AssignmentEditor({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => addOption(block.id)}
+                onClick={(e) => { e.stopPropagation(); addOption(block.id); }}
                 className="text-xs text-muted-foreground h-6"
               >
                 <Plus className="h-3 w-3 mr-1" /> Add
@@ -770,22 +866,77 @@ export function AssignmentEditor({
               onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
               placeholder="Enter question..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
+              onClick={(e) => e.stopPropagation()}
             />
-            <div className="border-b border-dashed border-border min-h-[40px] flex items-end pb-1">
+            <Textarea
+              value={block.data.correct_answer || ''}
+              onChange={(e) => updateBlock(block.id, { ...block.data, correct_answer: e.target.value })}
+              placeholder="Correct answer (for grading)..."
+              className="min-h-[40px] border-0 border-b border-dashed border-border rounded-none shadow-none resize-none focus-visible:ring-0 bg-transparent text-sm text-muted-foreground"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">({block.data.max_score} pts)</span>
             </div>
           </div>
         );
 
-      case 'fill_in_blank':
+      case 'fill_in_blank': {
+        // Parse text and count blanks (... becomes visual underline)
+        const parts = block.data.text.split('...');
+        const blankCount = parts.length - 1;
+        
         return (
-          <Textarea
-            value={block.data.text}
-            onChange={(e) => updateBlock(block.id, { ...block.data, text: e.target.value })}
-            placeholder="Use ___ for blanks"
-            className="min-h-[40px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent text-sm"
-          />
+          <div className="space-y-3">
+            {/* Rendered preview with clean underline inputs */}
+            <div className="text-sm leading-relaxed">
+              {parts.map((part: string, idx: number) => (
+                <React.Fragment key={idx}>
+                  <span>{part}</span>
+                  {idx < parts.length - 1 && (
+                    <span className="inline-flex items-center mx-1">
+                      <span className="relative inline-block min-w-[100px]">
+                        <Input
+                          value={block.data.answers?.[idx] || ''}
+                          onChange={(e) => {
+                            const newAnswers = [...(block.data.answers || Array(blankCount).fill(''))];
+                            newAnswers[idx] = e.target.value;
+                            updateBlock(block.id, { ...block.data, answers: newAnswers });
+                          }}
+                          placeholder=""
+                          className="h-6 px-1 text-sm border-0 border-b-2 border-foreground/40 rounded-none shadow-none focus-visible:ring-0 bg-transparent text-center"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground">
+                          ({idx + 1})
+                        </span>
+                      </span>
+                    </span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+            
+            {/* Raw text editor */}
+            <div className="border-t border-dashed border-border pt-2">
+              <Label className="text-xs text-muted-foreground">Edit (use ... for blanks)</Label>
+              <Textarea
+                value={block.data.text}
+                onChange={(e) => {
+                  const newText = e.target.value;
+                  const newBlankCount = (newText.match(/\.\.\./g) || []).length;
+                  const currentAnswers = block.data.answers || [];
+                  const newAnswers = Array(newBlankCount).fill('').map((_, i) => currentAnswers[i] || '');
+                  updateBlock(block.id, { ...block.data, text: newText, answers: newAnswers });
+                }}
+                placeholder="My shoes ... 100 euros."
+                className="min-h-[32px] mt-1 border-0 shadow-none resize-none focus-visible:ring-0 bg-muted/30 text-xs rounded px-2 py-1"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
         );
+      }
 
       case 'drag_drop':
         return (
@@ -815,11 +966,52 @@ export function AssignmentEditor({
               onChange={(e) => updateBlock(block.id, { ...block.data, prompt: e.target.value })}
               placeholder="Put in order..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium text-sm"
+              onClick={(e) => e.stopPropagation()}
             />
+            <p className="text-[10px] text-muted-foreground">Items are in correct order (A=first, B=second...)</p>
             <div className="space-y-1">
-              {block.data.items?.slice(0, 3).map((item: string, idx: number) => (
-                <div key={idx} className="text-xs text-muted-foreground">{idx + 1}. {item || '...'}</div>
+              {block.data.items?.map((item: string, idx: number) => (
+                <div key={idx} className="flex items-center gap-2 group">
+                  <span className="text-xs font-medium text-muted-foreground w-4">{String.fromCharCode(65 + idx)}.</span>
+                  <Input
+                    value={item}
+                    onChange={(e) => {
+                      const newItems = [...block.data.items];
+                      newItems[idx] = e.target.value;
+                      updateBlock(block.id, { ...block.data, items: newItems });
+                    }}
+                    placeholder={`Item ${String.fromCharCode(65 + idx)}`}
+                    className="flex-1 h-6 text-xs border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (block.data.items.length > 2) {
+                        const newItems = block.data.items.filter((_: string, i: number) => i !== idx);
+                        updateBlock(block.id, { ...block.data, items: newItems });
+                      }
+                    }}
+                    disabled={block.data.items.length <= 2}
+                    className="opacity-0 group-hover:opacity-100 h-5 w-5 p-0 text-muted-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
               ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateBlock(block.id, { ...block.data, items: [...block.data.items, ''] });
+                }}
+                className="text-xs text-muted-foreground h-5"
+              >
+                <Plus className="h-3 w-3 mr-1" /> Add
+              </Button>
             </div>
           </div>
         );
@@ -837,6 +1029,95 @@ export function AssignmentEditor({
       default:
         return <div className="text-sm text-muted-foreground">{block.type}</div>;
     }
+  };
+
+  // Render block action icons (lock, check, AI settings)
+  // Always visible for teachers on question blocks (hover or selected)
+  const renderBlockIcons = (block: AssignmentBlock, isHovered: boolean = false) => {
+    if (!isTeacher) return null;
+    
+    const isQuestionBlock = ['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'ordering'].includes(block.type);
+    if (!isQuestionBlock) return null;
+    
+    const isVisible = selectedBlock === block.id || isHovered;
+    
+    return (
+      <div className={`flex items-center gap-1 mt-2 justify-center transition-opacity ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+        {/* Lock icon */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => { e.stopPropagation(); toggleBlockLock(block.id); }}
+          className={`h-7 px-2 text-xs ${block.locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+          title={block.locked ? 'Unlock answer' : 'Lock as correct answer'}
+        >
+          {block.locked ? (
+            <Lock className="h-3 w-3 mr-1" />
+          ) : (
+            <Unlock className="h-3 w-3 mr-1" />
+          )}
+          {block.locked ? 'Locked' : 'Lock'}
+        </Button>
+        
+        {/* Check icon - only show when answers enabled */}
+        {localAnswersEnabled && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); toggleBlockFeedback(block.id); }}
+            className={`h-7 px-2 text-xs ${block.showFeedback ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+            title={block.showFeedback ? 'Hide feedback' : 'Show feedback'}
+          >
+            <Check className="h-3 w-3 mr-1" />
+            {block.showFeedback ? 'Feedback on' : 'Feedback'}
+          </Button>
+        )}
+        
+        {/* AI Settings icon - only for open questions */}
+        {block.type === 'open_question' && (
+          <Popover 
+            open={aiSettingsBlockId === block.id} 
+            onOpenChange={(open) => setAiSettingsBlockId(open ? block.id : null)}
+          >
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-7 px-2 text-xs ${block.aiGradingOverride ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                title="AI Grading Settings"
+              >
+                <Sparkles className="h-3 w-3 mr-1" />
+                AI
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="center" className="p-0 w-auto">
+              <AIGradingPresets
+                presets={gradingPresets}
+                selectedPresetId={selectedPresetId}
+                blockOverride={block.aiGradingOverride}
+                onSelectPreset={setSelectedPresetId}
+                onSavePreset={(preset) => {
+                  setGradingPresets(prev => {
+                    const exists = prev.find(p => p.id === preset.id);
+                    if (exists) {
+                      return prev.map(p => p.id === preset.id ? preset : p);
+                    }
+                    return [...prev, preset];
+                  });
+                }}
+                onDeletePreset={(id) => {
+                  setGradingPresets(prev => prev.filter(p => p.id !== id));
+                }}
+                onSetDefault={(id) => {
+                  setGradingPresets(prev => prev.map(p => ({ ...p, is_default: p.id === id })));
+                }}
+                onBlockOverrideChange={(override) => updateBlockAiOverride(block.id, override)}
+              />
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
+    );
   };
 
   const rows = getRows();
@@ -865,10 +1146,30 @@ export function AssignmentEditor({
           <Button variant="ghost" size="sm" onClick={handleImport} className="h-8 px-2" title="Import">
             <Upload className="h-4 w-4" />
           </Button>
+          {isTeacher && (
+            <>
+              <div className="w-px h-4 bg-border mx-1" />
+              <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 px-2" title="Assignment Settings">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="p-0 w-auto">
+                  <AssignmentSettingsOverlay
+                    isVisible={localIsVisible}
+                    answersEnabled={localAnswersEnabled}
+                    onVisibilityChange={(v) => handleSettingsChange(localAnswersEnabled, v)}
+                    onAnswersEnabledChange={(e) => handleSettingsChange(e, localIsVisible)}
+                  />
+                </PopoverContent>
+              </Popover>
+            </>
+          )}
         </div>
         
         <div className="flex items-center gap-2">
-          {hasUnsavedChanges && <span className="text-xs text-orange-500">Unsaved</span>}
+          {hasUnsavedChanges && <span className="text-xs text-amber-500">Unsaved</span>}
           <Button variant="default" size="sm" onClick={handleSave} disabled={isSaving} className="h-8">
             <Save className="h-4 w-4 mr-1" />
             {isSaving ? 'Saving...' : 'Save'}
@@ -964,13 +1265,36 @@ export function AssignmentEditor({
                           )}
                           
                           <div
-                            className={`p-3 border rounded transition-all ${
-                              selectedBlock === row.blocks[0].id 
-                                ? 'border-primary bg-primary/5' 
-                                : 'border-transparent hover:border-border'
-                            }`}
-                            onClick={() => setSelectedBlock(selectedBlock === row.blocks[0].id ? null : row.blocks[0].id)}
+                            className={`p-3 border rounded-lg transition-all ${
+                              row.blocks[0].locked 
+                                ? 'border-primary/50 bg-primary/5'
+                                : selectedBlock === row.blocks[0].id 
+                                  ? 'border-primary bg-primary/5' 
+                                  : 'border-border/50 hover:border-border'
+                            } ${!row.blocks[0].locked ? 'opacity-80' : ''}`}
+                            onClick={(e) => {
+                              // Only select if clicking near the edge (within 8px of border)
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const x = e.clientX - rect.left;
+                              const y = e.clientY - rect.top;
+                              const edgeThreshold = 12;
+                              const isNearEdge = x < edgeThreshold || x > rect.width - edgeThreshold || 
+                                                 y < edgeThreshold || y > rect.height - edgeThreshold;
+                              if (isNearEdge) {
+                                setSelectedBlock(selectedBlock === row.blocks[0].id ? null : row.blocks[0].id);
+                              }
+                            }}
+                            onMouseEnter={() => setHoveredBlock(row.blocks[0].id)}
+                            onMouseLeave={() => setHoveredBlock(null)}
                           >
+                            {/* Locked indicator */}
+                            {row.blocks[0].locked && (
+                              <div className="absolute -top-2 left-2 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                <Lock className="h-2.5 w-2.5" />
+                                <span>Locked</span>
+                              </div>
+                            )}
+                            
                             {/* Controls */}
                             <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
                               selectedBlock === row.blocks[0].id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
@@ -986,6 +1310,7 @@ export function AssignmentEditor({
                                 size="sm"
                                 onClick={(e) => { e.stopPropagation(); setEditingBlock(row.blocks[0].id); }}
                                 className="h-5 w-5 p-0"
+                                disabled={row.blocks[0].locked}
                               >
                                 <PenTool className="h-3 w-3" />
                               </Button>
@@ -1000,6 +1325,9 @@ export function AssignmentEditor({
                             </div>
                             
                             {renderBlockContent(row.blocks[0])}
+                            
+                            {/* Block action icons */}
+                            {renderBlockIcons(row.blocks[0], hoveredBlock === row.blocks[0].id)}
                           </div>
                         </div>
                       ) : (
@@ -1018,13 +1346,35 @@ export function AssignmentEditor({
                                 
                                 {block ? (
                                   <div
-                                    className={`h-full p-3 border rounded transition-all ${
-                                      selectedBlock === block.id 
-                                        ? 'border-primary bg-primary/5' 
-                                        : 'border-transparent hover:border-border'
-                                    }`}
-                                    onClick={() => setSelectedBlock(selectedBlock === block.id ? null : block.id)}
+                                    className={`h-full p-3 border rounded-lg transition-all ${
+                                      block.locked 
+                                        ? 'border-primary/50 bg-primary/5'
+                                        : selectedBlock === block.id 
+                                          ? 'border-primary bg-primary/5' 
+                                          : 'border-border/50 hover:border-border'
+                                    } ${!block.locked ? 'opacity-90' : ''}`}
+                                    onClick={(e) => {
+                                      const rect = e.currentTarget.getBoundingClientRect();
+                                      const x = e.clientX - rect.left;
+                                      const y = e.clientY - rect.top;
+                                      const edgeThreshold = 12;
+                                      const isNearEdge = x < edgeThreshold || x > rect.width - edgeThreshold || 
+                                                         y < edgeThreshold || y > rect.height - edgeThreshold;
+                                      if (isNearEdge) {
+                                        setSelectedBlock(selectedBlock === block.id ? null : block.id);
+                                      }
+                                    }}
+                                    onMouseEnter={() => setHoveredBlock(block.id)}
+                                    onMouseLeave={() => setHoveredBlock(null)}
                                   >
+                                    {/* Locked indicator */}
+                                    {block.locked && (
+                                      <div className="absolute -top-2 left-2 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                        <Lock className="h-2.5 w-2.5" />
+                                        <span>Locked</span>
+                                      </div>
+                                    )}
+                                    
                                     {/* Controls */}
                                     <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
                                       selectedBlock === block.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
@@ -1040,6 +1390,7 @@ export function AssignmentEditor({
                                         size="sm"
                                         onClick={(e) => { e.stopPropagation(); setEditingBlock(block.id); }}
                                         className="h-5 w-5 p-0"
+                                        disabled={block.locked}
                                       >
                                         <PenTool className="h-3 w-3" />
                                       </Button>
@@ -1054,6 +1405,9 @@ export function AssignmentEditor({
                                     </div>
                                     
                                     {renderBlockContent(block)}
+                                    
+                                    {/* Block action icons */}
+                                    {renderBlockIcons(block, hoveredBlock === block.id)}
                                   </div>
                                 ) : (
                                   <div className="h-full border border-dashed border-muted-foreground/30 rounded flex items-center justify-center text-xs text-muted-foreground">
@@ -1171,6 +1525,15 @@ export function AssignmentEditor({
                           />
                         </div>
                         <div className="space-y-2">
+                          <Label>Correct Answer (for grading reference)</Label>
+                          <Textarea
+                            value={block.data.correct_answer || ''}
+                            onChange={(e) => updateBlock(block.id, { ...block.data, correct_answer: e.target.value })}
+                            rows={3}
+                            placeholder="Enter the expected correct answer..."
+                          />
+                        </div>
+                        <div className="space-y-2">
                           <Label>Max Score</Label>
                           <Input
                             type="number"
@@ -1186,26 +1549,34 @@ export function AssignmentEditor({
                     return (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label>Text (use ___ for blanks)</Label>
+                          <Label>Text (type ... for blanks - auto converts to ___)</Label>
                           <Textarea
                             value={block.data.text}
-                            onChange={(e) => updateBlock(block.id, { ...block.data, text: e.target.value })}
+                            onChange={(e) => {
+                              const newText = e.target.value.replace(/\.\.\./g, '___');
+                              const blankCount = (newText.match(/___/g) || []).length;
+                              const currentAnswers = block.data.answers || [];
+                              const newAnswers = Array(blankCount).fill('').map((_, i) => currentAnswers[i] || '');
+                              updateBlock(block.id, { ...block.data, text: newText, answers: newAnswers });
+                            }}
                             rows={3}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Answers</Label>
+                          <Label>Correct Answers</Label>
                           {(block.data.text.match(/___/g) || []).map((_: string, idx: number) => (
-                            <Input
-                              key={idx}
-                              value={block.data.answers?.[idx] || ''}
-                              onChange={(e) => {
-                                const newAnswers = [...(block.data.answers || [])];
-                                newAnswers[idx] = e.target.value;
-                                updateBlock(block.id, { ...block.data, answers: newAnswers });
-                              }}
-                              placeholder={`Answer ${idx + 1}`}
-                            />
+                            <div key={idx} className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground w-16">Blank {idx + 1}:</span>
+                              <Input
+                                value={block.data.answers?.[idx] || ''}
+                                onChange={(e) => {
+                                  const newAnswers = [...(block.data.answers || [])];
+                                  newAnswers[idx] = e.target.value;
+                                  updateBlock(block.id, { ...block.data, answers: newAnswers });
+                                }}
+                                placeholder={`Answer ${idx + 1}`}
+                              />
+                            </div>
                           ))}
                         </div>
                       </div>
