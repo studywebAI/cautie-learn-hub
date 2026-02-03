@@ -14,9 +14,13 @@ export function TopBar() {
   const isStudent = role === 'student';
 
   return (
-    <div className="absolute top-2 right-2 z-30 flex items-center gap-3">
-      {session ? (
-        <div className="flex items-center justify-between p-1.5 rounded-full bg-card/80 backdrop-blur-sm">
+    <div className="absolute top-2 left-1/3 z-30 flex items-center gap-4">
+      <Button asChild size="sm" variant={session ? "outline" : "default"} className="rounded-full">
+        <Link href="/login">{session ? dictionary.header.myAccount || 'Account' : dictionary.header.logIn}</Link>
+      </Button>
+      
+      {session && (
+        <div className="flex items-center justify-between p-1.5 rounded-full bg-card/80 backdrop-blur-sm border">
           <Label htmlFor="role-switcher" className="flex items-center gap-1 cursor-pointer pr-2">
             <User className={`h-4 w-4 transition-colors ${isStudent ? 'text-primary' : 'text-muted-foreground'}`} />
           </Label>
@@ -30,10 +34,6 @@ export function TopBar() {
             <BookUser className={`h-4 w-4 transition-colors ${!isStudent ? 'text-primary' : 'text-muted-foreground'}`} />
           </Label>
         </div>
-      ) : (
-        <Button asChild size="sm" className="rounded-full">
-          <Link href="/login">{dictionary.header.logIn}</Link>
-        </Button>
       )}
     </div>
   );
