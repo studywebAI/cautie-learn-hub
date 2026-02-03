@@ -76,6 +76,43 @@ export async function DELETE(
   return NextResponse.json({ success: true });
 }
 
+// PATCH to update assignment visibility/answers settings
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ assignmentId: string }> }
+) {
+  const resolvedParams = await params;
+  const { assignmentId } = resolvedParams;
+  const body = await request.json();
+  const { is_visible, answers_enabled } = body;
+
+  const cookieStore = cookies();
+  const supabase = await createClient(cookieStore);
+
+  // Build update object with only provided fields
+  const updateData: Record<string, any> = {};
+  if (typeof is_visible === 'boolean') updateData.is_visible = is_visible;
+  if (typeof answers_enabled === 'boolean') updateData.answers_enabled = answers_enabled;
+
+  if (Object.keys(updateData).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
+  }
+
+  const { data, error } = await supabase
+    .from('assignments')
+    .update(updateData)
+    .eq('id', assignmentId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating assignment:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
 // PUT to update an assignment
 export async function PUT(
   request: Request,
@@ -83,7 +120,7 @@ export async function PUT(
 ) {
   const resolvedParams = await params;
   const { assignmentId } = resolvedParams;
-  const { title, due_date, chapter_id, block_id, guestId, type, content, files } = await request.json();
+  const { title, due_date, chapter_id, block_id, guestId, type, content, files, is_visible, answers_enabled } = await request.json();
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
 
@@ -167,6 +204,8 @@ export async function PUT(
       type,
       content,
       files,
+      is_visible,
+      answers_enabled,
     })
     .eq('id', assignmentId)
     .select()
