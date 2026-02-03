@@ -791,48 +791,58 @@ export function AssignmentEditor({
         );
 
       case 'fill_in_blank': {
-        // Auto-convert ... to ___ and track blank count
-        const displayText = block.data.text.replace(/\.\.\./g, '___');
-        const blanks = (displayText.match(/___/g) || []).length;
+        // Parse text and count blanks (... becomes visual underline)
+        const parts = block.data.text.split('...');
+        const blankCount = parts.length - 1;
         
         return (
           <div className="space-y-3">
-            <Textarea
-              value={block.data.text}
-              onChange={(e) => {
-                const newText = e.target.value;
-                // Auto-convert ... to ___ when typing
-                const converted = newText.replace(/\.\.\./g, '___');
-                const blankCount = (converted.match(/___/g) || []).length;
-                // Ensure answers array matches blank count
-                const currentAnswers = block.data.answers || [];
-                const newAnswers = Array(blankCount).fill('').map((_, i) => currentAnswers[i] || '');
-                updateBlock(block.id, { ...block.data, text: converted, answers: newAnswers });
-              }}
-              placeholder="Type ... for blanks (e.g., 'My shoes ... 100 euros')"
-              className="min-h-[40px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent text-sm"
-              onClick={(e) => e.stopPropagation()}
-            />
-            {blanks > 0 && (
-              <div className="space-y-1 pl-2 border-l-2 border-muted">
-                {Array.from({ length: blanks }).map((_, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground w-14">Blank {idx + 1} =</span>
-                    <Input
-                      value={block.data.answers?.[idx] || ''}
-                      onChange={(e) => {
-                        const newAnswers = [...(block.data.answers || [])];
-                        newAnswers[idx] = e.target.value;
-                        updateBlock(block.id, { ...block.data, answers: newAnswers });
-                      }}
-                      placeholder="correct answer"
-                      className="flex-1 h-7 text-sm border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Rendered preview with clean underline inputs */}
+            <div className="text-sm leading-relaxed">
+              {parts.map((part: string, idx: number) => (
+                <React.Fragment key={idx}>
+                  <span>{part}</span>
+                  {idx < parts.length - 1 && (
+                    <span className="inline-flex items-center mx-1">
+                      <span className="relative inline-block min-w-[100px]">
+                        <Input
+                          value={block.data.answers?.[idx] || ''}
+                          onChange={(e) => {
+                            const newAnswers = [...(block.data.answers || Array(blankCount).fill(''))];
+                            newAnswers[idx] = e.target.value;
+                            updateBlock(block.id, { ...block.data, answers: newAnswers });
+                          }}
+                          placeholder=""
+                          className="h-6 px-1 text-sm border-0 border-b-2 border-foreground/40 rounded-none shadow-none focus-visible:ring-0 bg-transparent text-center"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground">
+                          ({idx + 1})
+                        </span>
+                      </span>
+                    </span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+            
+            {/* Raw text editor */}
+            <div className="border-t border-dashed border-border pt-2">
+              <Label className="text-xs text-muted-foreground">Edit (use ... for blanks)</Label>
+              <Textarea
+                value={block.data.text}
+                onChange={(e) => {
+                  const newText = e.target.value;
+                  const newBlankCount = (newText.match(/\.\.\./g) || []).length;
+                  const currentAnswers = block.data.answers || [];
+                  const newAnswers = Array(newBlankCount).fill('').map((_, i) => currentAnswers[i] || '');
+                  updateBlock(block.id, { ...block.data, text: newText, answers: newAnswers });
+                }}
+                placeholder="My shoes ... 100 euros."
+                className="min-h-[32px] mt-1 border-0 shadow-none resize-none focus-visible:ring-0 bg-muted/30 text-xs rounded px-2 py-1"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
           </div>
         );
       }
@@ -867,9 +877,10 @@ export function AssignmentEditor({
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium text-sm"
               onClick={(e) => e.stopPropagation()}
             />
+            <p className="text-[10px] text-muted-foreground">Items are in correct order (A=first, B=second...)</p>
             <div className="space-y-1">
               {block.data.items?.map((item: string, idx: number) => (
-                <div key={idx} className="flex items-center gap-2">
+                <div key={idx} className="flex items-center gap-2 group">
                   <span className="text-xs font-medium text-muted-foreground w-4">{String.fromCharCode(65 + idx)}.</span>
                   <Input
                     value={item}
@@ -882,6 +893,21 @@ export function AssignmentEditor({
                     className="flex-1 h-6 text-xs border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
                     onClick={(e) => e.stopPropagation()}
                   />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (block.data.items.length > 2) {
+                        const newItems = block.data.items.filter((_: string, i: number) => i !== idx);
+                        updateBlock(block.id, { ...block.data, items: newItems });
+                      }
+                    }}
+                    disabled={block.data.items.length <= 2}
+                    className="opacity-0 group-hover:opacity-100 h-5 w-5 p-0 text-muted-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
                 </div>
               ))}
               <Button
