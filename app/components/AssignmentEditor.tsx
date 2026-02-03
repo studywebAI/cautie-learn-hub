@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -19,10 +19,7 @@ import {
   GripVertical,
   PenTool,
   ArrowLeft,
-  ArrowRight,
   Trash2,
-  Sparkles,
-  Send,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -30,7 +27,6 @@ import {
   X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { AppContext } from '@/contexts/app-context';
 import { useRouter } from 'next/navigation';
 
 interface BlockTemplate {
@@ -45,8 +41,9 @@ interface AssignmentBlock {
   id: string;
   type: string;
   position: number;
-  width?: 'full' | 'half';
+  width: 'full' | 'half';
   column?: 'left' | 'right';
+  rowId: string; // Group blocks in same row
   data: any;
 }
 
@@ -144,6 +141,9 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
   }
 ];
 
+const generateId = () => `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+const generateRowId = () => `row-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
 export function AssignmentEditor({
   assignmentId,
   subjectId,
@@ -153,20 +153,55 @@ export function AssignmentEditor({
   onSave,
   onPreview
 }: AssignmentEditorProps) {
-  const [blocks, setBlocks] = useState<AssignmentBlock[]>(initialBlocks);
+  // Normalize initialBlocks to have rowId
+  const normalizedInitialBlocks = initialBlocks.map((b, i) => ({
+    ...b,
+    rowId: b.rowId || generateRowId(),
+    width: b.width || 'full' as const,
+    position: b.position ?? i
+  }));
+
+  const [blocks, setBlocks] = useState<AssignmentBlock[]>(normalizedInitialBlocks);
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
-  const [draggedBlock, setDraggedBlock] = useState<string | null>(null);
-  const [draggedTemplate, setDraggedTemplate] = useState<BlockTemplate | null>(null);
-  const [dropIndicator, setDropIndicator] = useState<{ index: number; column?: 'left' | 'right' } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [history, setHistory] = useState<AssignmentBlock[][]>([initialBlocks]);
+  const [history, setHistory] = useState<AssignmentBlock[][]>([normalizedInitialBlocks]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  
+  // Drag state
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragSource, setDragSource] = useState<{ type: 'template' | 'block'; id: string } | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ rowIndex: number; column?: 'left' | 'right' } | null>(null);
+  
   const paperRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const router = useRouter();
+
+  // Group blocks by row
+  const getRows = useCallback(() => {
+    const rowMap = new Map<string, AssignmentBlock[]>();
+    const rowOrder: string[] = [];
+    
+    // Sort blocks by position first
+    const sortedBlocks = [...blocks].sort((a, b) => a.position - b.position);
+    
+    sortedBlocks.forEach(block => {
+      if (!rowMap.has(block.rowId)) {
+        rowMap.set(block.rowId, []);
+        rowOrder.push(block.rowId);
+      }
+      rowMap.get(block.rowId)!.push(block);
+    });
+    
+    return rowOrder.map(rowId => ({
+      rowId,
+      blocks: rowMap.get(rowId)!.sort((a, b) => 
+        a.column === 'left' ? -1 : b.column === 'left' ? 1 : 0
+      )
+    }));
+  }, [blocks]);
 
   // Save to history
   const saveToHistory = useCallback((newBlocks: AssignmentBlock[]) => {
@@ -242,33 +277,238 @@ export function AssignmentEditor({
 
   const deleteBlock = (blockId: string) => {
     setBlocks(prev => {
-      const newBlocks = prev.filter(block => block.id !== blockId)
-        .map((block, index) => ({ ...block, position: index }));
+      const blockToDelete = prev.find(b => b.id === blockId);
+      if (!blockToDelete) return prev;
+      
+      // If block is half-width, check if partner exists
+      const sameRowBlocks = prev.filter(b => b.rowId === blockToDelete.rowId);
+      let newBlocks = prev.filter(block => block.id !== blockId);
+      
+      // If partner exists, make it full width
+      if (sameRowBlocks.length === 2) {
+        newBlocks = newBlocks.map(b => 
+          b.rowId === blockToDelete.rowId 
+            ? { ...b, width: 'full' as const, column: undefined }
+            : b
+        );
+      }
+      
+      // Recalculate positions
+      newBlocks = newBlocks.map((block, index) => ({ ...block, position: index }));
       saveToHistory(newBlocks);
       return newBlocks;
     });
     setSelectedBlock(null);
   };
 
-  const addBlock = (template: BlockTemplate, insertIndex?: number, column?: 'left' | 'right') => {
-    const position = insertIndex !== undefined ? insertIndex : blocks.length;
-    const newBlock: AssignmentBlock = {
-      id: `block-${Date.now()}`,
-      type: template.type,
-      position,
-      width: column ? 'half' : 'full',
-      column,
-      data: { ...template.defaultData }
-    };
+  const addBlock = (template: BlockTemplate, rowIndex: number, column?: 'left' | 'right') => {
+    const rows = getRows();
     
     setBlocks(prev => {
       let newBlocks = [...prev];
-      if (insertIndex !== undefined) {
-        newBlocks.splice(insertIndex, 0, newBlock);
-        newBlocks = newBlocks.map((block, index) => ({ ...block, position: index }));
+      const newBlockId = generateId();
+      
+      if (column && rowIndex < rows.length) {
+        // Dropping onto a specific column in an existing row
+        const targetRow = rows[rowIndex];
+        const existingBlockInColumn = targetRow.blocks.find(b => b.column === column);
+        
+        if (existingBlockInColumn) {
+          // Replace side: existing block becomes new full-width row below
+          const replacedBlock = { 
+            ...existingBlockInColumn, 
+            rowId: generateRowId(), 
+            width: 'full' as const, 
+            column: undefined 
+          };
+          
+          // Remove the old block from its position
+          newBlocks = newBlocks.filter(b => b.id !== existingBlockInColumn.id);
+          
+          // Add new block to the column
+          const newBlock: AssignmentBlock = {
+            id: newBlockId,
+            type: template.type,
+            position: 0,
+            width: 'half',
+            column,
+            rowId: targetRow.rowId,
+            data: { ...template.defaultData }
+          };
+          
+          // Find insert position for replaced block (after current row)
+          const insertAfterIndex = newBlocks.findIndex(b => b.rowId === targetRow.rowId);
+          newBlocks.push(newBlock);
+          
+          // Insert replaced block after the row
+          if (insertAfterIndex !== -1) {
+            const rowBlocks = newBlocks.filter(b => b.rowId === targetRow.rowId);
+            const afterRowIndex = Math.max(...rowBlocks.map(b => newBlocks.indexOf(b))) + 1;
+            newBlocks.splice(afterRowIndex, 0, replacedBlock);
+          } else {
+            newBlocks.push(replacedBlock);
+          }
+        } else {
+          // No block in column - check if row has a full-width block
+          const fullWidthBlock = targetRow.blocks.find(b => b.width === 'full');
+          
+          if (fullWidthBlock) {
+            // Convert full-width to half, add new block
+            newBlocks = newBlocks.map(b => 
+              b.id === fullWidthBlock.id 
+                ? { ...b, width: 'half' as const, column: column === 'left' ? 'right' : 'left' as const }
+                : b
+            );
+            
+            const newBlock: AssignmentBlock = {
+              id: newBlockId,
+              type: template.type,
+              position: 0,
+              width: 'half',
+              column,
+              rowId: targetRow.rowId,
+              data: { ...template.defaultData }
+            };
+            newBlocks.push(newBlock);
+          } else {
+            // Has half-width block on other side, just add to this column
+            const newBlock: AssignmentBlock = {
+              id: newBlockId,
+              type: template.type,
+              position: 0,
+              width: 'half',
+              column,
+              rowId: targetRow.rowId,
+              data: { ...template.defaultData }
+            };
+            newBlocks.push(newBlock);
+          }
+        }
       } else {
-        newBlocks.push(newBlock);
+        // New full-width row
+        const newRowId = generateRowId();
+        const newBlock: AssignmentBlock = {
+          id: newBlockId,
+          type: template.type,
+          position: rowIndex,
+          width: 'full',
+          rowId: newRowId,
+          data: { ...template.defaultData }
+        };
+        
+        // Insert at correct position
+        const targetPosition = rowIndex < rows.length 
+          ? prev.findIndex(b => b.rowId === rows[rowIndex].rowId)
+          : prev.length;
+        
+        if (targetPosition === -1) {
+          newBlocks.push(newBlock);
+        } else {
+          newBlocks.splice(targetPosition, 0, newBlock);
+        }
       }
+      
+      // Recalculate positions
+      newBlocks = newBlocks.map((block, index) => ({ ...block, position: index }));
+      saveToHistory(newBlocks);
+      return newBlocks;
+    });
+  };
+
+  const moveBlock = (blockId: string, targetRowIndex: number, column?: 'left' | 'right') => {
+    const rows = getRows();
+    const sourceBlock = blocks.find(b => b.id === blockId);
+    if (!sourceBlock) return;
+    
+    setBlocks(prev => {
+      let newBlocks = [...prev];
+      
+      // First, handle the source row
+      const sourceRowBlocks = prev.filter(b => b.rowId === sourceBlock.rowId && b.id !== blockId);
+      if (sourceRowBlocks.length === 1) {
+        // Partner becomes full width
+        newBlocks = newBlocks.map(b => 
+          b.id === sourceRowBlocks[0].id 
+            ? { ...b, width: 'full' as const, column: undefined }
+            : b
+        );
+      }
+      
+      // Remove source block temporarily
+      newBlocks = newBlocks.filter(b => b.id !== blockId);
+      
+      if (column && targetRowIndex < rows.length) {
+        const targetRow = rows[targetRowIndex];
+        const existingBlockInColumn = targetRow.blocks.find(b => b.column === column && b.id !== blockId);
+        
+        if (existingBlockInColumn) {
+          // Replace: existing becomes new row below
+          const replacedBlock = { 
+            ...existingBlockInColumn, 
+            rowId: generateRowId(), 
+            width: 'full' as const, 
+            column: undefined 
+          };
+          
+          newBlocks = newBlocks.filter(b => b.id !== existingBlockInColumn.id);
+          
+          const movedBlock: AssignmentBlock = {
+            ...sourceBlock,
+            width: 'half',
+            column,
+            rowId: targetRow.rowId
+          };
+          
+          newBlocks.push(movedBlock);
+          
+          // Insert replaced after
+          const insertPos = newBlocks.filter(b => b.rowId === targetRow.rowId).length > 0
+            ? Math.max(...newBlocks.map((b, i) => b.rowId === targetRow.rowId ? i : -1)) + 1
+            : newBlocks.length;
+          newBlocks.splice(insertPos, 0, replacedBlock);
+        } else {
+          // Check for full-width block
+          const fullWidthBlock = targetRow.blocks.find(b => b.width === 'full' && b.id !== blockId);
+          
+          if (fullWidthBlock) {
+            newBlocks = newBlocks.map(b => 
+              b.id === fullWidthBlock.id 
+                ? { ...b, width: 'half' as const, column: column === 'left' ? 'right' : 'left' as const }
+                : b
+            );
+          }
+          
+          const movedBlock: AssignmentBlock = {
+            ...sourceBlock,
+            width: 'half',
+            column,
+            rowId: targetRow.rowId
+          };
+          newBlocks.push(movedBlock);
+        }
+      } else {
+        // New full-width row
+        const newRowId = generateRowId();
+        const movedBlock: AssignmentBlock = {
+          ...sourceBlock,
+          width: 'full',
+          column: undefined,
+          rowId: newRowId
+        };
+        
+        const targetPosition = targetRowIndex < rows.length 
+          ? newBlocks.findIndex(b => b.rowId === rows[targetRowIndex].rowId)
+          : newBlocks.length;
+        
+        if (targetPosition === -1) {
+          newBlocks.push(movedBlock);
+        } else {
+          newBlocks.splice(targetPosition, 0, movedBlock);
+        }
+      }
+      
+      // Recalculate positions
+      newBlocks = newBlocks.map((block, index) => ({ ...block, position: index }));
       saveToHistory(newBlocks);
       return newBlocks;
     });
@@ -291,55 +531,75 @@ export function AssignmentEditor({
     }
   };
 
-  const handleDragStart = (e: React.DragEvent, blockId?: string, template?: BlockTemplate) => {
-    if (blockId) {
-      setDraggedBlock(blockId);
-    } else if (template) {
-      setDraggedTemplate(template);
-    }
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number, column?: 'left' | 'right') => {
+  // Drag handlers for grip
+  const handleGripMouseDown = (e: React.MouseEvent, blockId: string) => {
     e.preventDefault();
-    setDropIndicator({ index, column });
+    setIsDragging(true);
+    setDragSource({ type: 'block', id: blockId });
   };
 
-  const handleDrop = (e: React.DragEvent, index: number, column?: 'left' | 'right') => {
+  const handleTemplateMouseDown = (e: React.MouseEvent, templateId: string) => {
     e.preventDefault();
+    setIsDragging(true);
+    setDragSource({ type: 'template', id: templateId });
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging && dragSource && dropTarget !== null) {
+      if (dragSource.type === 'template') {
+        const template = BLOCK_TEMPLATES.find(t => t.id === dragSource.id);
+        if (template) {
+          addBlock(template, dropTarget.rowIndex, dropTarget.column);
+        }
+      } else {
+        moveBlock(dragSource.id, dropTarget.rowIndex, dropTarget.column);
+      }
+    }
+    setIsDragging(false);
+    setDragSource(null);
+    setDropTarget(null);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !paperRef.current) return;
     
-    if (draggedTemplate) {
-      addBlock(draggedTemplate, index, column);
-    } else if (draggedBlock) {
-      // Move existing block
-      setBlocks(prev => {
-        const blockToMove = prev.find(b => b.id === draggedBlock);
-        if (!blockToMove) return prev;
-        
-        const filtered = prev.filter(b => b.id !== draggedBlock);
-        const updatedBlock = { 
-          ...blockToMove, 
-          width: column ? 'half' as const : 'full' as const,
-          column 
-        };
-        
-        filtered.splice(index, 0, updatedBlock);
-        const newBlocks = filtered.map((block, i) => ({ ...block, position: i }));
-        saveToHistory(newBlocks);
-        return newBlocks;
-      });
+    const paperRect = paperRef.current.getBoundingClientRect();
+    const y = e.clientY - paperRect.top;
+    const x = e.clientX - paperRect.left;
+    
+    const rows = getRows();
+    
+    // Calculate which row we're over
+    let rowIndex = 0;
+    let accumulatedHeight = 0;
+    const rowHeight = 80; // Approximate row height
+    
+    rowIndex = Math.floor(y / rowHeight);
+    rowIndex = Math.max(0, Math.min(rowIndex, rows.length));
+    
+    // Check if we're on left or right side
+    const paperWidth = paperRect.width;
+    let column: 'left' | 'right' | undefined = undefined;
+    
+    if (x < paperWidth * 0.4) {
+      column = 'left';
+    } else if (x > paperWidth * 0.6) {
+      column = 'right';
     }
     
-    setDraggedBlock(null);
-    setDraggedTemplate(null);
-    setDropIndicator(null);
+    setDropTarget({ rowIndex, column });
   };
 
-  const handleDragEnd = () => {
-    setDraggedBlock(null);
-    setDraggedTemplate(null);
-    setDropIndicator(null);
-  };
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isDragging) {
+        handleMouseUp();
+      }
+    };
+    
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, [isDragging, dragSource, dropTarget]);
 
   const handleSave = async () => {
     if (!assignmentId || assignmentId === 'undefined') {
@@ -362,7 +622,7 @@ export function AssignmentEditor({
             body: JSON.stringify({
               type: block.type,
               position: block.position,
-              data: block.data
+              data: { ...block.data, width: block.width, column: block.column, rowId: block.rowId }
             })
           }
         );
@@ -386,6 +646,7 @@ export function AssignmentEditor({
         type: b.type,
         width: b.width,
         column: b.column,
+        rowId: b.rowId,
         data: b.data
       }))
     };
@@ -414,12 +675,13 @@ export function AssignmentEditor({
         const data = JSON.parse(text);
         
         if (data.blocks && Array.isArray(data.blocks)) {
-          const importedBlocks = data.blocks.map((b: any, index: number) => ({
-            id: `block-${Date.now()}-${index}`,
+          const importedBlocks: AssignmentBlock[] = data.blocks.map((b: any, index: number) => ({
+            id: generateId(),
             type: b.type,
             position: index,
             width: b.width || 'full',
             column: b.column,
+            rowId: b.rowId || generateRowId(),
             data: b.data
           }));
           
@@ -442,20 +704,20 @@ export function AssignmentEditor({
             value={block.data.content}
             onChange={(e) => updateBlock(block.id, { ...block.data, content: e.target.value })}
             placeholder="Enter text..."
-            className="min-h-[80px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent"
+            className="min-h-[60px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent"
           />
         );
 
       case 'multiple_choice':
         return (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <Input
               value={block.data.question}
               onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
               placeholder="Enter question..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
             />
-            <div className="space-y-2 pl-2">
+            <div className="space-y-1 pl-2">
               {block.data.options?.map((option: any, idx: number) => (
                 <div key={option.id} className="flex items-center gap-2 group">
                   <Checkbox
@@ -465,9 +727,9 @@ export function AssignmentEditor({
                       newOptions[idx] = { ...newOptions[idx], correct: checked };
                       updateBlock(block.id, { ...block.data, options: newOptions });
                     }}
-                    className="h-4 w-4"
+                    className="h-3 w-3"
                   />
-                  <span className="text-sm text-muted-foreground w-4">{String.fromCharCode(65 + idx)}.</span>
+                  <span className="text-xs text-muted-foreground w-3">{String.fromCharCode(65 + idx)}.</span>
                   <Input
                     value={option.text}
                     onChange={(e) => {
@@ -476,13 +738,13 @@ export function AssignmentEditor({
                       updateBlock(block.id, { ...block.data, options: newOptions });
                     }}
                     placeholder={`Option ${String.fromCharCode(65 + idx)}`}
-                    className="flex-1 border-0 shadow-none h-8 focus-visible:ring-0 bg-transparent"
+                    className="flex-1 border-0 shadow-none h-7 text-sm focus-visible:ring-0 bg-transparent"
                   />
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removeOption(block.id, idx)}
-                    className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-muted-foreground"
+                    className="opacity-0 group-hover:opacity-100 h-5 w-5 p-0 text-muted-foreground"
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -492,9 +754,9 @@ export function AssignmentEditor({
                 variant="ghost"
                 size="sm"
                 onClick={() => addOption(block.id)}
-                className="text-xs text-muted-foreground h-7"
+                className="text-xs text-muted-foreground h-6"
               >
-                <Plus className="h-3 w-3 mr-1" /> Add option
+                <Plus className="h-3 w-3 mr-1" /> Add
               </Button>
             </div>
           </div>
@@ -502,82 +764,61 @@ export function AssignmentEditor({
 
       case 'open_question':
         return (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <Input
               value={block.data.question}
               onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
               placeholder="Enter question..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
             />
-            <div className="border-b border-dashed border-border min-h-[60px] flex items-end pb-1">
-              <span className="text-xs text-muted-foreground">Answer space ({block.data.max_score} pts)</span>
+            <div className="border-b border-dashed border-border min-h-[40px] flex items-end pb-1">
+              <span className="text-xs text-muted-foreground">({block.data.max_score} pts)</span>
             </div>
           </div>
         );
 
       case 'fill_in_blank':
         return (
-          <div className="space-y-2">
-            <Textarea
-              value={block.data.text}
-              onChange={(e) => updateBlock(block.id, { ...block.data, text: e.target.value })}
-              placeholder="Use ___ for blanks (e.g., The capital of France is ___.)"
-              className="min-h-[60px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent"
-            />
-            <div className="text-xs text-muted-foreground">
-              Answers: {block.data.answers?.join(', ') || 'Not set'}
-            </div>
-          </div>
+          <Textarea
+            value={block.data.text}
+            onChange={(e) => updateBlock(block.id, { ...block.data, text: e.target.value })}
+            placeholder="Use ___ for blanks"
+            className="min-h-[40px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent text-sm"
+          />
         );
 
       case 'drag_drop':
         return (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <Input
               value={block.data.prompt}
               onChange={(e) => updateBlock(block.id, { ...block.data, prompt: e.target.value })}
               placeholder="Match the items..."
-              className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
+              className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium text-sm"
             />
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="space-y-1">
-                {block.data.pairs?.map((pair: any, idx: number) => (
-                  <div key={idx} className="p-2 bg-muted/50 rounded">{pair.left || `Item ${idx + 1}`}</div>
-                ))}
-              </div>
-              <div className="space-y-1">
-                {block.data.pairs?.map((pair: any, idx: number) => (
-                  <div key={idx} className="p-2 bg-muted/50 rounded">{pair.right || `Match ${idx + 1}`}</div>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {block.data.pairs?.slice(0, 3).map((pair: any, idx: number) => (
+                <React.Fragment key={idx}>
+                  <div className="p-1 bg-muted/50 rounded text-center">{pair.left || '...'}</div>
+                  <div className="p-1 bg-muted/50 rounded text-center">{pair.right || '...'}</div>
+                </React.Fragment>
+              ))}
             </div>
           </div>
         );
 
       case 'ordering':
         return (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <Input
               value={block.data.prompt}
               onChange={(e) => updateBlock(block.id, { ...block.data, prompt: e.target.value })}
-              placeholder="Put these in order..."
-              className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
+              placeholder="Put in order..."
+              className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium text-sm"
             />
             <div className="space-y-1">
-              {block.data.items?.map((item: string, idx: number) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground w-4">{idx + 1}.</span>
-                  <Input
-                    value={item}
-                    onChange={(e) => {
-                      const newItems = [...block.data.items];
-                      newItems[idx] = e.target.value;
-                      updateBlock(block.id, { ...block.data, items: newItems });
-                    }}
-                    placeholder={`Item ${idx + 1}`}
-                    className="flex-1 border-0 shadow-none h-8 focus-visible:ring-0 bg-transparent"
-                  />
-                </div>
+              {block.data.items?.slice(0, 3).map((item: string, idx: number) => (
+                <div key={idx} className="text-xs text-muted-foreground">{idx + 1}. {item || '...'}</div>
               ))}
             </div>
           </div>
@@ -585,106 +826,60 @@ export function AssignmentEditor({
 
       case 'media_embed':
         return (
-          <div className="space-y-2">
-            <Input
-              value={block.data.embed_url}
-              onChange={(e) => updateBlock(block.id, { ...block.data, embed_url: e.target.value })}
-              placeholder="Enter video URL..."
-              className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
-            />
-            <Input
-              value={block.data.description}
-              onChange={(e) => updateBlock(block.id, { ...block.data, description: e.target.value })}
-              placeholder="Description..."
-              className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-sm"
-            />
-          </div>
+          <Input
+            value={block.data.embed_url}
+            onChange={(e) => updateBlock(block.id, { ...block.data, embed_url: e.target.value })}
+            placeholder="Enter media URL..."
+            className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-sm"
+          />
         );
 
       default:
-        return (
-          <div className="text-sm text-muted-foreground">
-            {block.type} block
-          </div>
-        );
+        return <div className="text-sm text-muted-foreground">{block.type}</div>;
     }
   };
 
+  const rows = getRows();
+
   return (
-    <div className="h-screen flex flex-col bg-background">
-      {/* Top toolbar - minimal */}
+    <div 
+      className="h-screen flex flex-col bg-background select-none"
+      onMouseMove={handleMouseMove}
+    >
+      {/* Top toolbar */}
       <div className="flex items-center justify-between px-4 py-2 border-b bg-background">
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="h-8 px-2"
-          >
+          <Button variant="ghost" size="sm" onClick={() => router.back()} className="h-8 px-2">
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={undo}
-            disabled={historyIndex === 0}
-            className="h-8 px-2"
-            title="Undo"
-          >
+          <Button variant="ghost" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-8 px-2" title="Undo">
             ↶
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={redo}
-            disabled={historyIndex >= history.length - 1}
-            className="h-8 px-2"
-            title="Redo"
-          >
+          <Button variant="ghost" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-8 px-2" title="Redo">
             ↷
           </Button>
           <div className="w-px h-4 bg-border mx-1" />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleExport}
-            className="h-8 px-2"
-            title="Export"
-          >
+          <Button variant="ghost" size="sm" onClick={handleExport} className="h-8 px-2" title="Export">
             <Download className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleImport}
-            className="h-8 px-2"
-            title="Import"
-          >
+          <Button variant="ghost" size="sm" onClick={handleImport} className="h-8 px-2" title="Import">
             <Upload className="h-4 w-4" />
           </Button>
         </div>
         
         <div className="flex items-center gap-2">
-          {hasUnsavedChanges && (
-            <span className="text-xs text-orange-500">Unsaved</span>
-          )}
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="h-8"
-          >
+          {hasUnsavedChanges && <span className="text-xs text-orange-500">Unsaved</span>}
+          <Button variant="default" size="sm" onClick={handleSave} disabled={isSaving} className="h-8">
             <Save className="h-4 w-4 mr-1" />
             {isSaving ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </div>
 
-      {/* Main content area */}
+      {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Block sidebar - collapsed by default */}
-        <div className={`border-r bg-muted/30 transition-all duration-200 flex flex-col ${isSidebarOpen ? 'w-48' : 'w-12'}`}>
+        {/* Block sidebar */}
+        <div className={`border-r bg-muted/30 transition-all duration-200 flex flex-col ${isSidebarOpen ? 'w-44' : 'w-12'}`}>
           <Button
             variant="ghost"
             size="sm"
@@ -702,9 +897,7 @@ export function AssignmentEditor({
                   <div
                     key={template.id}
                     className="flex items-center gap-2 p-2 rounded cursor-grab hover:bg-muted border border-transparent hover:border-border"
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, undefined, template)}
-                    onDragEnd={handleDragEnd}
+                    onMouseDown={(e) => handleTemplateMouseDown(e, template.id)}
                   >
                     {template.icon}
                     <span className="text-sm">{template.label}</span>
@@ -717,9 +910,7 @@ export function AssignmentEditor({
                   <div
                     key={template.id}
                     className="p-2 rounded cursor-grab hover:bg-muted"
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, undefined, template)}
-                    onDragEnd={handleDragEnd}
+                    onMouseDown={(e) => handleTemplateMouseDown(e, template.id)}
                     title={template.label}
                   >
                     {template.icon}
@@ -730,28 +921,13 @@ export function AssignmentEditor({
           </div>
         </div>
 
-        {/* Paper area - wide and left-aligned */}
+        {/* Paper area */}
         <div className="flex-1 overflow-auto p-4 bg-muted/20">
           <div
             ref={paperRef}
-            className="bg-background border border-border rounded shadow-sm min-h-[calc(100vh-120px)] max-w-5xl p-8"
-            onDragOver={(e) => {
-              e.preventDefault();
-              if (blocks.length === 0) {
-                setDropIndicator({ index: 0 });
-              }
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              if (blocks.length === 0 && (draggedTemplate || draggedBlock)) {
-                if (draggedTemplate) {
-                  addBlock(draggedTemplate, 0);
-                }
-              }
-              setDropIndicator(null);
-            }}
+            className="bg-background border border-border rounded shadow-sm min-h-[calc(100vh-120px)] max-w-5xl p-6 relative"
           >
-            {blocks.length === 0 ? (
+            {rows.length === 0 ? (
               <div className="flex items-center justify-center h-64 text-muted-foreground">
                 <div className="text-center">
                   <p className="mb-2">No content yet</p>
@@ -759,80 +935,153 @@ export function AssignmentEditor({
                 </div>
               </div>
             ) : (
-              <div className="space-y-0">
-                {blocks.map((block, index) => (
-                  <React.Fragment key={block.id}>
-                    {/* Drop indicator before block */}
-                    <div
-                      className={`h-1 -mx-2 transition-all ${
-                        dropIndicator?.index === index 
-                          ? 'bg-primary/50' 
-                          : 'bg-transparent hover:bg-muted'
-                      }`}
-                      onDragOver={(e) => handleDragOver(e, index)}
-                      onDrop={(e) => handleDrop(e, index)}
-                    />
-                    
-                    {/* Block */}
-                    <div
-                      className={`group relative p-4 border rounded transition-all ${
-                        selectedBlock === block.id 
-                          ? 'border-primary bg-primary/5' 
-                          : 'border-transparent hover:border-border'
-                      } ${draggedBlock === block.id ? 'opacity-50' : ''}`}
-                      onClick={() => setSelectedBlock(selectedBlock === block.id ? null : block.id)}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, block.id)}
-                      onDragEnd={handleDragEnd}
-                    >
-                      {/* Block controls */}
-                      <div className={`absolute -top-3 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
-                        selectedBlock === block.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                      }`}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 w-5 p-0"
-                          title="Move"
-                        >
-                          <GripVertical className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => { e.stopPropagation(); setEditingBlock(block.id); }}
-                          className="h-5 w-5 p-0"
-                          title="Edit"
-                        >
-                          <PenTool className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => { e.stopPropagation(); deleteBlock(block.id); }}
-                          className="h-5 w-5 p-0 text-destructive"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+              <div className="space-y-2">
+                {rows.map((row, rowIndex) => (
+                  <React.Fragment key={row.rowId}>
+                    {/* Drop indicator before row */}
+                    {isDragging && dropTarget?.rowIndex === rowIndex && !dropTarget.column && (
+                      <div className="h-2 flex items-center justify-center">
+                      <div className="w-4 h-4 bg-primary rounded-sm" />
                       </div>
-                      
-                      {/* Block content */}
-                      {renderBlockContent(block)}
+                    )}
+                    
+                    {/* Row */}
+                    <div className={`flex gap-2 ${row.blocks.some(b => b.width === 'half') ? '' : ''}`}>
+                      {row.blocks[0]?.width === 'full' ? (
+                        // Full width block
+                        <div className="flex-1 relative group">
+                          {/* Left drop zone */}
+                          {isDragging && dropTarget?.rowIndex === rowIndex && dropTarget.column === 'left' && (
+                            <div className="absolute left-0 top-0 bottom-0 w-1/2 flex items-center justify-center pointer-events-none z-10">
+                            <div className="w-4 h-4 bg-primary rounded-sm" />
+                            </div>
+                          )}
+                          {/* Right drop zone */}
+                          {isDragging && dropTarget?.rowIndex === rowIndex && dropTarget.column === 'right' && (
+                            <div className="absolute right-0 top-0 bottom-0 w-1/2 flex items-center justify-center pointer-events-none z-10">
+                            <div className="w-4 h-4 bg-primary rounded-sm" />
+                            </div>
+                          )}
+                          
+                          <div
+                            className={`p-3 border rounded transition-all ${
+                              selectedBlock === row.blocks[0].id 
+                                ? 'border-primary bg-primary/5' 
+                                : 'border-transparent hover:border-border'
+                            }`}
+                            onClick={() => setSelectedBlock(selectedBlock === row.blocks[0].id ? null : row.blocks[0].id)}
+                          >
+                            {/* Controls */}
+                            <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
+                              selectedBlock === row.blocks[0].id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}>
+                              <div 
+                                className="h-5 w-5 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
+                                onMouseDown={(e) => handleGripMouseDown(e, row.blocks[0].id)}
+                              >
+                                <GripVertical className="h-3 w-3" />
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); setEditingBlock(row.blocks[0].id); }}
+                                className="h-5 w-5 p-0"
+                              >
+                                <PenTool className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); deleteBlock(row.blocks[0].id); }}
+                                className="h-5 w-5 p-0 text-destructive"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            
+                            {renderBlockContent(row.blocks[0])}
+                          </div>
+                        </div>
+                      ) : (
+                        // Half width blocks
+                        <>
+                          {['left', 'right'].map((col) => {
+                            const block = row.blocks.find(b => b.column === col);
+                            return (
+                              <div key={col} className="flex-1 relative group min-h-[60px]">
+                                {/* Drop indicator */}
+                                {isDragging && dropTarget?.rowIndex === rowIndex && dropTarget.column === col && (
+                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                    <div className="w-4 h-4 bg-primary rounded-sm" />
+                                  </div>
+                                )}
+                                
+                                {block ? (
+                                  <div
+                                    className={`h-full p-3 border rounded transition-all ${
+                                      selectedBlock === block.id 
+                                        ? 'border-primary bg-primary/5' 
+                                        : 'border-transparent hover:border-border'
+                                    }`}
+                                    onClick={() => setSelectedBlock(selectedBlock === block.id ? null : block.id)}
+                                  >
+                                    {/* Controls */}
+                                    <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
+                                      selectedBlock === block.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                    }`}>
+                                      <div 
+                                        className="h-5 w-5 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
+                                        onMouseDown={(e) => handleGripMouseDown(e, block.id)}
+                                      >
+                                        <GripVertical className="h-3 w-3" />
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => { e.stopPropagation(); setEditingBlock(block.id); }}
+                                        className="h-5 w-5 p-0"
+                                      >
+                                        <PenTool className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => { e.stopPropagation(); deleteBlock(block.id); }}
+                                        className="h-5 w-5 p-0 text-destructive"
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                    
+                                    {renderBlockContent(block)}
+                                  </div>
+                                ) : (
+                                  <div className="h-full border border-dashed border-muted-foreground/30 rounded flex items-center justify-center text-xs text-muted-foreground">
+                                    Drop here
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </>
+                      )}
                     </div>
                   </React.Fragment>
                 ))}
                 
-                {/* Drop indicator after last block */}
-                <div
-                  className={`h-1 -mx-2 transition-all ${
-                    dropIndicator?.index === blocks.length 
-                      ? 'bg-primary/50' 
-                      : 'bg-transparent hover:bg-muted'
-                  }`}
-                  onDragOver={(e) => handleDragOver(e, blocks.length)}
-                  onDrop={(e) => handleDrop(e, blocks.length)}
-                />
+                {/* Drop indicator after last row */}
+                {isDragging && dropTarget?.rowIndex === rows.length && !dropTarget.column && (
+                  <div className="h-2 flex items-center justify-center">
+                    <div className="w-4 h-4 bg-primary rounded-sm" />
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Empty drop zone at bottom */}
+            {isDragging && rows.length > 0 && (
+              <div className="h-16 mt-4 border-2 border-dashed border-muted-foreground/30 rounded flex items-center justify-center text-sm text-muted-foreground">
+                Drop here for new row
               </div>
             )}
           </div>
@@ -878,7 +1127,7 @@ export function AssignmentEditor({
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Options (check correct answer)</Label>
+                          <Label>Options</Label>
                           {block.data.options?.map((option: any, idx: number) => (
                             <div key={idx} className="flex items-center gap-2">
                               <Checkbox
@@ -898,12 +1147,7 @@ export function AssignmentEditor({
                                 }}
                                 placeholder={`Option ${String.fromCharCode(65 + idx)}`}
                               />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeOption(block.id, idx)}
-                                className="h-8 w-8 p-0"
-                              >
+                              <Button variant="ghost" size="sm" onClick={() => removeOption(block.id, idx)} className="h-8 w-8 p-0">
                                 <X className="h-4 w-4" />
                               </Button>
                             </div>
@@ -935,15 +1179,6 @@ export function AssignmentEditor({
                             onChange={(e) => updateBlock(block.id, { ...block.data, max_score: parseInt(e.target.value) || 1 })}
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label>Grading Criteria</Label>
-                          <Textarea
-                            value={block.data.grading_criteria}
-                            onChange={(e) => updateBlock(block.id, { ...block.data, grading_criteria: e.target.value })}
-                            placeholder="What makes a good answer?"
-                            rows={2}
-                          />
-                        </div>
                       </div>
                     );
 
@@ -959,8 +1194,8 @@ export function AssignmentEditor({
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Correct Answers</Label>
-                          {block.data.text.split('___').slice(0, -1).map((_: string, idx: number) => (
+                          <Label>Answers</Label>
+                          {(block.data.text.match(/___/g) || []).map((_: string, idx: number) => (
                             <Input
                               key={idx}
                               value={block.data.answers?.[idx] || ''}
@@ -987,7 +1222,7 @@ export function AssignmentEditor({
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Matching Pairs</Label>
+                          <Label>Pairs</Label>
                           {block.data.pairs?.map((pair: any, idx: number) => (
                             <div key={idx} className="grid grid-cols-2 gap-2">
                               <Input
@@ -1013,10 +1248,7 @@ export function AssignmentEditor({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              const newPairs = [...(block.data.pairs || []), { left: '', right: '' }];
-                              updateBlock(block.id, { ...block.data, pairs: newPairs });
-                            }}
+                            onClick={() => updateBlock(block.id, { ...block.data, pairs: [...block.data.pairs, { left: '', right: '' }] })}
                           >
                             <Plus className="h-4 w-4 mr-1" /> Add Pair
                           </Button>
@@ -1052,10 +1284,7 @@ export function AssignmentEditor({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              const newItems = [...(block.data.items || []), ''];
-                              updateBlock(block.id, { ...block.data, items: newItems });
-                            }}
+                            onClick={() => updateBlock(block.id, { ...block.data, items: [...block.data.items, ''] })}
                           >
                             <Plus className="h-4 w-4 mr-1" /> Add Item
                           </Button>
@@ -1085,7 +1314,7 @@ export function AssignmentEditor({
                     );
 
                   default:
-                    return <p className="text-muted-foreground">No editor for this block type</p>;
+                    return <p className="text-muted-foreground">No editor available</p>;
                 }
               })()}
             </div>
