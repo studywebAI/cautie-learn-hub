@@ -89,6 +89,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     label: 'Open Question',
     defaultData: {
       question: '',
+      correct_answer: '',
       ai_grading: true,
       grading_criteria: '',
       max_score: 5
@@ -100,8 +101,8 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     icon: <FileText className="h-4 w-4" />,
     label: 'Fill Blank',
     defaultData: {
-      text: 'The answer is ___.',
-      answers: [''],
+      text: 'My shoes ___ 100 euros.',
+      answers: ['cost'],
       case_sensitive: false
     }
   },
@@ -705,6 +706,7 @@ export function AssignmentEditor({
             onChange={(e) => updateBlock(block.id, { ...block.data, content: e.target.value })}
             placeholder="Enter text..."
             className="min-h-[60px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent"
+            onClick={(e) => e.stopPropagation()}
           />
         );
 
@@ -716,6 +718,7 @@ export function AssignmentEditor({
               onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
               placeholder="Enter question..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
+              onClick={(e) => e.stopPropagation()}
             />
             <div className="space-y-1 pl-2">
               {block.data.options?.map((option: any, idx: number) => (
@@ -727,6 +730,7 @@ export function AssignmentEditor({
                       newOptions[idx] = { ...newOptions[idx], correct: checked };
                       updateBlock(block.id, { ...block.data, options: newOptions });
                     }}
+                    onClick={(e) => e.stopPropagation()}
                     className="h-3 w-3"
                   />
                   <span className="text-xs text-muted-foreground w-3">{String.fromCharCode(65 + idx)}.</span>
@@ -739,11 +743,12 @@ export function AssignmentEditor({
                     }}
                     placeholder={`Option ${String.fromCharCode(65 + idx)}`}
                     className="flex-1 border-0 shadow-none h-7 text-sm focus-visible:ring-0 bg-transparent"
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => removeOption(block.id, idx)}
+                    onClick={(e) => { e.stopPropagation(); removeOption(block.id, idx); }}
                     className="opacity-0 group-hover:opacity-100 h-5 w-5 p-0 text-muted-foreground"
                   >
                     <X className="h-3 w-3" />
@@ -753,7 +758,7 @@ export function AssignmentEditor({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => addOption(block.id)}
+                onClick={(e) => { e.stopPropagation(); addOption(block.id); }}
                 className="text-xs text-muted-foreground h-6"
               >
                 <Plus className="h-3 w-3 mr-1" /> Add
@@ -770,22 +775,67 @@ export function AssignmentEditor({
               onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
               placeholder="Enter question..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
+              onClick={(e) => e.stopPropagation()}
             />
-            <div className="border-b border-dashed border-border min-h-[40px] flex items-end pb-1">
+            <Textarea
+              value={block.data.correct_answer || ''}
+              onChange={(e) => updateBlock(block.id, { ...block.data, correct_answer: e.target.value })}
+              placeholder="Correct answer (for grading)..."
+              className="min-h-[40px] border-0 border-b border-dashed border-border rounded-none shadow-none resize-none focus-visible:ring-0 bg-transparent text-sm text-muted-foreground"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">({block.data.max_score} pts)</span>
             </div>
           </div>
         );
 
-      case 'fill_in_blank':
+      case 'fill_in_blank': {
+        // Auto-convert ... to ___ and track blank count
+        const displayText = block.data.text.replace(/\.\.\./g, '___');
+        const blanks = (displayText.match(/___/g) || []).length;
+        
         return (
-          <Textarea
-            value={block.data.text}
-            onChange={(e) => updateBlock(block.id, { ...block.data, text: e.target.value })}
-            placeholder="Use ___ for blanks"
-            className="min-h-[40px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent text-sm"
-          />
+          <div className="space-y-3">
+            <Textarea
+              value={block.data.text}
+              onChange={(e) => {
+                const newText = e.target.value;
+                // Auto-convert ... to ___ when typing
+                const converted = newText.replace(/\.\.\./g, '___');
+                const blankCount = (converted.match(/___/g) || []).length;
+                // Ensure answers array matches blank count
+                const currentAnswers = block.data.answers || [];
+                const newAnswers = Array(blankCount).fill('').map((_, i) => currentAnswers[i] || '');
+                updateBlock(block.id, { ...block.data, text: converted, answers: newAnswers });
+              }}
+              placeholder="Type ... for blanks (e.g., 'My shoes ... 100 euros')"
+              className="min-h-[40px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent text-sm"
+              onClick={(e) => e.stopPropagation()}
+            />
+            {blanks > 0 && (
+              <div className="space-y-1 pl-2 border-l-2 border-muted">
+                {Array.from({ length: blanks }).map((_, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-14">Blank {idx + 1} =</span>
+                    <Input
+                      value={block.data.answers?.[idx] || ''}
+                      onChange={(e) => {
+                        const newAnswers = [...(block.data.answers || [])];
+                        newAnswers[idx] = e.target.value;
+                        updateBlock(block.id, { ...block.data, answers: newAnswers });
+                      }}
+                      placeholder="correct answer"
+                      className="flex-1 h-7 text-sm border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         );
+      }
 
       case 'drag_drop':
         return (
@@ -815,11 +865,36 @@ export function AssignmentEditor({
               onChange={(e) => updateBlock(block.id, { ...block.data, prompt: e.target.value })}
               placeholder="Put in order..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium text-sm"
+              onClick={(e) => e.stopPropagation()}
             />
             <div className="space-y-1">
-              {block.data.items?.slice(0, 3).map((item: string, idx: number) => (
-                <div key={idx} className="text-xs text-muted-foreground">{idx + 1}. {item || '...'}</div>
+              {block.data.items?.map((item: string, idx: number) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground w-4">{String.fromCharCode(65 + idx)}.</span>
+                  <Input
+                    value={item}
+                    onChange={(e) => {
+                      const newItems = [...block.data.items];
+                      newItems[idx] = e.target.value;
+                      updateBlock(block.id, { ...block.data, items: newItems });
+                    }}
+                    placeholder={`Item ${String.fromCharCode(65 + idx)}`}
+                    className="flex-1 h-6 text-xs border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
               ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateBlock(block.id, { ...block.data, items: [...block.data.items, ''] });
+                }}
+                className="text-xs text-muted-foreground h-5"
+              >
+                <Plus className="h-3 w-3 mr-1" /> Add
+              </Button>
             </div>
           </div>
         );
@@ -964,12 +1039,23 @@ export function AssignmentEditor({
                           )}
                           
                           <div
-                            className={`p-3 border rounded transition-all ${
+                            className={`p-3 border rounded-lg transition-all ${
                               selectedBlock === row.blocks[0].id 
                                 ? 'border-primary bg-primary/5' 
-                                : 'border-transparent hover:border-border'
+                                : 'border-border/50 hover:border-border'
                             }`}
-                            onClick={() => setSelectedBlock(selectedBlock === row.blocks[0].id ? null : row.blocks[0].id)}
+                            onClick={(e) => {
+                              // Only select if clicking near the edge (within 8px of border)
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const x = e.clientX - rect.left;
+                              const y = e.clientY - rect.top;
+                              const edgeThreshold = 12;
+                              const isNearEdge = x < edgeThreshold || x > rect.width - edgeThreshold || 
+                                                 y < edgeThreshold || y > rect.height - edgeThreshold;
+                              if (isNearEdge) {
+                                setSelectedBlock(selectedBlock === row.blocks[0].id ? null : row.blocks[0].id);
+                              }
+                            }}
                           >
                             {/* Controls */}
                             <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
@@ -1018,12 +1104,22 @@ export function AssignmentEditor({
                                 
                                 {block ? (
                                   <div
-                                    className={`h-full p-3 border rounded transition-all ${
+                                    className={`h-full p-3 border rounded-lg transition-all ${
                                       selectedBlock === block.id 
                                         ? 'border-primary bg-primary/5' 
-                                        : 'border-transparent hover:border-border'
+                                        : 'border-border/50 hover:border-border'
                                     }`}
-                                    onClick={() => setSelectedBlock(selectedBlock === block.id ? null : block.id)}
+                                    onClick={(e) => {
+                                      const rect = e.currentTarget.getBoundingClientRect();
+                                      const x = e.clientX - rect.left;
+                                      const y = e.clientY - rect.top;
+                                      const edgeThreshold = 12;
+                                      const isNearEdge = x < edgeThreshold || x > rect.width - edgeThreshold || 
+                                                         y < edgeThreshold || y > rect.height - edgeThreshold;
+                                      if (isNearEdge) {
+                                        setSelectedBlock(selectedBlock === block.id ? null : block.id);
+                                      }
+                                    }}
                                   >
                                     {/* Controls */}
                                     <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
@@ -1171,6 +1267,15 @@ export function AssignmentEditor({
                           />
                         </div>
                         <div className="space-y-2">
+                          <Label>Correct Answer (for grading reference)</Label>
+                          <Textarea
+                            value={block.data.correct_answer || ''}
+                            onChange={(e) => updateBlock(block.id, { ...block.data, correct_answer: e.target.value })}
+                            rows={3}
+                            placeholder="Enter the expected correct answer..."
+                          />
+                        </div>
+                        <div className="space-y-2">
                           <Label>Max Score</Label>
                           <Input
                             type="number"
@@ -1186,26 +1291,34 @@ export function AssignmentEditor({
                     return (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label>Text (use ___ for blanks)</Label>
+                          <Label>Text (type ... for blanks - auto converts to ___)</Label>
                           <Textarea
                             value={block.data.text}
-                            onChange={(e) => updateBlock(block.id, { ...block.data, text: e.target.value })}
+                            onChange={(e) => {
+                              const newText = e.target.value.replace(/\.\.\./g, '___');
+                              const blankCount = (newText.match(/___/g) || []).length;
+                              const currentAnswers = block.data.answers || [];
+                              const newAnswers = Array(blankCount).fill('').map((_, i) => currentAnswers[i] || '');
+                              updateBlock(block.id, { ...block.data, text: newText, answers: newAnswers });
+                            }}
                             rows={3}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Answers</Label>
+                          <Label>Correct Answers</Label>
                           {(block.data.text.match(/___/g) || []).map((_: string, idx: number) => (
-                            <Input
-                              key={idx}
-                              value={block.data.answers?.[idx] || ''}
-                              onChange={(e) => {
-                                const newAnswers = [...(block.data.answers || [])];
-                                newAnswers[idx] = e.target.value;
-                                updateBlock(block.id, { ...block.data, answers: newAnswers });
-                              }}
-                              placeholder={`Answer ${idx + 1}`}
-                            />
+                            <div key={idx} className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground w-16">Blank {idx + 1}:</span>
+                              <Input
+                                value={block.data.answers?.[idx] || ''}
+                                onChange={(e) => {
+                                  const newAnswers = [...(block.data.answers || [])];
+                                  newAnswers[idx] = e.target.value;
+                                  updateBlock(block.id, { ...block.data, answers: newAnswers });
+                                }}
+                                placeholder={`Answer ${idx + 1}`}
+                              />
+                            </div>
                           ))}
                         </div>
                       </div>
