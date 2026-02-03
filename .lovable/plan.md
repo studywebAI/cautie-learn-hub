@@ -1,83 +1,153 @@
 
 
-# Plan: Fix Build Errors for Vercel Deployment
+# Assignment Editor Enhancement Plan
 
-## Overview
-Your Next.js project has two categories of issues preventing Vercel deployment:
+This plan addresses all requested features: fill-in-blank visual improvement, block icons (lock/checkmark), assignment settings overlay, visibility/answers controls, ordering block improvements, and AI grading presets.
 
-1. **Missing environment variables** - The code references `GEMINI_API_KEY` but no `.env.local` file exists
-2. **Missing AI flow modules** - 16 AI flow files are imported but don't exist in `ai/flows/`
+---
 
-## What I'll Create
+## Phase 1: Block Fixes and Visual Improvements
 
-### 1. Environment Variables File (`.env.local`)
-Create a `.env.local` file with all required environment variables:
+### 1.1 Fill-in-Blank Visual Enhancement
+**Current state**: Shows `___` which is converted from `...`
+**Change to**: A clean, long underscore visual using CSS styling
 
+- Replace `___` text display with a styled inline element
+- Use CSS border-bottom to create a single continuous underline input
+- Students type directly on the underline field
+- Show numbered blank indicators for teachers (1), (2), etc.
+
+```text
+Before: My shoes ___ 100 euros.
+After:  My shoes [_______________] 100 euros.
+                    (1)
+        Blank 1 = cost
 ```
-# Gemini AI
-GEMINI_API_KEY=AIzaSyD3QWViNg8XNS7va9Zt-OCCovSqn-7Q-TA
 
-# Supabase (add your values)
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+### 1.2 Block Selection Fix
+Already implemented edge-only selection (12px threshold) - verify this is working correctly.
 
-# Optional
-NEXTAUTH_URL=http://localhost:3000
+### 1.3 Ordering Block Improvements
+- Teachers input items in the correct order (A, B, C, D...)
+- The order they type them in = the correct order
+- Add drag handles or arrows to reorder items
+- Add delete button per item (like multiple choice has)
+
+---
+
+## Phase 2: Lock and Checkmark Icons per Block
+
+### 2.1 Icon Layout
+When a block is selected, show icons below the block outline:
+```text
++------------------------+
+|      Block Content     |
++------------------------+
+  [ Lock ]  [ Check ]  [ AI Settings ]
 ```
 
-> **Note**: After initial deployment, delete this key and add your real key through Vercel Dashboard → Settings → Environment Variables.
+### 2.2 Lock Icon Behavior
+- **Unlocked state**: Lighter text/outline, answer can be changed
+- **Locked state**: 
+  - Closed lock icon
+  - Normal text/outline color  
+  - Current answer becomes the "correct answer"
+  - Students can still change their answers (but score may change)
+  - Teachers cannot edit the question until unlocked
 
-### 2. Missing AI Flow Stub Files (16 files)
-Create stub files in `ai/flows/` so the build completes. Each stub exports a placeholder function that can be implemented later:
+### 2.3 Checkmark Icon Behavior
+- Only visible when `answers_enabled` is ON for the assignment
+- Clicking shows correct/incorrect feedback for that block
+- Green highlight for correct, red for incorrect
 
-| File | Export |
-|------|--------|
-| `suggest-answers.ts` | `suggestAnswers` |
-| `provide-ai-powered-analytics-teacher.ts` | `provideAiPoweredAnalyticsTeacher` |
-| `provide-ai-powered-analytics-student.ts` | `provideAiPoweredAnalytics` |
-| `process-material.ts` | `processMaterial` |
-| `generate-teacher-dashboard-data.ts` | `generateTeacherDashboardData` |
-| `generate-study-plan-from-task.ts` | `generateStudyPlanFromTask` |
-| `generate-daily-schedule-recommendations.ts` | `generateDailyScheduleRecommendations` |
-| `detect-schedule-conflicts.ts` | `detectScheduleConflicts` |
-| `generate-single-question.ts` | `generateSingleQuestion` |
-| `generate-single-flashcard.ts` | `generateSingleFlashcard` |
-| `generate-quiz.ts` | `generateQuiz` |
-| `generate-quiz-duel-data.ts` | `generateQuizDuelData` |
-| `generate-personalized-study-plan.ts` | `generatePersonalizedStudyPlan` |
-| `generate-notes.ts` | `generateNotes` |
-| `generate-multiple-choice-from-flashcard.ts` | `generateMultipleChoiceFromFlashcard` |
-| `generate-knowledge-graph.ts` | `generateKnowledgeGraph` |
-| `generate-flashcards.ts` | `generateFlashcards` |
-| `generate-class-ideas.ts` | `generateClassIdeas` |
-| `modify-content.ts` | `modifyContent` |
-| `explain-answer.ts` | `explainAnswer` |
+---
 
-Each stub will look like:
-```typescript
-'use server';
+## Phase 3: Assignment Settings Overlay
 
-export async function flowName(input: any) {
-  // TODO: Implement AI flow
-  throw new Error('Flow not implemented yet');
-}
+### 3.1 Settings Menu (Small Overlay)
+Accessible from:
+1. Gear icon in assignment list (paragraph page)
+2. Gear icon in assignment editor toolbar
+
+Settings include:
+- **Visible/Invisible toggle**: Controls if students can see the assignment
+- **Answers On/Off toggle**: Controls if students can check their answers
+
+### 3.2 Visual Indicators in Assignment List
+Each assignment shows:
+- Eye icon (visible) or Eye-off icon (hidden)
+- Check icon (answers on) or X icon (answers off)
+- Clicking either icon opens the settings overlay
+
+### 3.3 Database Change
+Need to add `is_visible` column to assignments table (boolean, default true).
+
+---
+
+## Phase 4: AI Grading Presets
+
+### 4.1 AI Grading Settings Icon (per block)
+Third icon shown for teachers - opens preset configuration panel.
+
+### 4.2 Preset System
+- Sliders and toggles for grading strictness
+- Text field to explain grading criteria
+- Save as preset (name it)
+- Edit/delete existing presets
+- Set a default preset for all blocks
+- Per-block override option
+
+### 4.3 Settings stored per account
+Presets saved to user's account (likely in user_preferences or new presets table).
+
+### 4.4 AI Grading Toggle
+- Default: ON
+- Can be turned off globally or per-block
+- Uses existing `ai-grading-assistant.tsx` infrastructure
+
+---
+
+## Technical Implementation Details
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `app/components/AssignmentEditor.tsx` | Fill-in-blank styling, lock/check icons, AI settings icon, toolbar gear icon |
+| `app/(main)/subjects/.../paragraphs/[paragraphId]/page.tsx` | Add visibility/answers icons per assignment, settings overlay |
+| `app/api/.../assignments/[assignmentId]/route.ts` | Add PATCH for updating visibility/answers_enabled |
+| `app/lib/supabase/database.types.ts` | Add is_visible type |
+| `app/components/grading/ai-grading-assistant.tsx` | Integrate with preset system |
+
+### New Files to Create
+
+| File | Purpose |
+|------|---------|
+| `app/components/AssignmentSettingsOverlay.tsx` | Reusable settings overlay component |
+| `app/components/AIGradingPresets.tsx` | Preset management UI |
+| `app/api/users/grading-presets/route.ts` | API for saving/loading presets |
+
+### Database Migration
+```sql
+ALTER TABLE assignments 
+ADD COLUMN is_visible boolean DEFAULT true;
 ```
 
 ---
 
-## Technical Notes
+## Implementation Order
 
-### About the lucide-react ESM Errors
-These errors (`TS1479`) appear in Lovable's preview because the preview environment treats files as CommonJS. However:
-- **Your Next.js project is ESM** (uses `"type": "module"` implicitly with Next.js 16)
-- **The `transpilePackages: ['lucide-react']` in next.config.ts** handles this correctly
-- **This will NOT cause issues** when building on Vercel or locally
+1. **Fill-in-blank styling** - Visual CSS change with inline editable underline
+2. **Ordering block delete buttons** - Add remove functionality like multiple choice
+3. **Lock/checkmark icons** - Add to block UI with state management
+4. **Assignment settings overlay** - Create reusable component
+5. **Visibility icons in list** - Add to paragraph page
+6. **Database migration** - Add is_visible column
+7. **AI grading presets** - Create preset management system
 
-### After This Plan
-Once I create these files:
-1. Pull the changes locally: `git pull`
-2. The build should complete successfully
-3. Deploy to Vercel
-4. Add your real API keys in Vercel Environment Variables
-5. Delete the temporary key from `.env.local` or just don't commit it
+---
+
+## Build Issue Note
+
+This is a **Next.js project**, not a Vite project. The warnings about missing `vite.config.ts`, `index.html`, and `build:dev` script are incorrect for this project type. The project uses `next.config.ts` and builds with `next build`. These warnings can be safely ignored for deployment on Vercel or similar Next.js hosting platforms.
 
