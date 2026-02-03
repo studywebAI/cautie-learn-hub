@@ -16,7 +16,10 @@
   "header": {
     "studentDashboard": "Panel de Estudiante",
     "teacherDashboard": "Panel de Profesor",
-    "roleSwitcher": "Cambiador de Rol"
+    "roleSwitcher": "Cambiador de Rol",
+    "myAccount": "Mi Cuenta",
+    "logOut": "Cerrar Sesión",
+    "logIn": "Iniciar Sesión"
   },
   "dashboard": {
     "todayPlan": {
