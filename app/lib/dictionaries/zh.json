@@ -16,7 +16,10 @@
   "header": {
     "studentDashboard": "学生仪表板",
     "teacherDashboard": "教师仪表板",
-    "roleSwitcher": "角色切换器"
+    "roleSwitcher": "角色切换器",
+    "myAccount": "我的账户",
+    "logOut": "退出登录",
+    "logIn": "登录"
   },
   "dashboard": {
     "todayPlan": {
