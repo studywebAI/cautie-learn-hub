@@ -190,6 +190,7 @@ export function AssignmentEditor({
   const [blocks, setBlocks] = useState<AssignmentBlock[]>(normalizedInitialBlocks);
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
+  const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -1031,20 +1032,23 @@ export function AssignmentEditor({
   };
 
   // Render block action icons (lock, check, AI settings)
-  const renderBlockIcons = (block: AssignmentBlock) => {
-    if (!isTeacher || selectedBlock !== block.id) return null;
+  // Always visible for teachers on question blocks (hover or selected)
+  const renderBlockIcons = (block: AssignmentBlock, isHovered: boolean = false) => {
+    if (!isTeacher) return null;
     
     const isQuestionBlock = ['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'ordering'].includes(block.type);
     if (!isQuestionBlock) return null;
     
+    const isVisible = selectedBlock === block.id || isHovered;
+    
     return (
-      <div className="flex items-center gap-1 mt-2 justify-center">
+      <div className={`flex items-center gap-1 mt-2 justify-center transition-opacity ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
         {/* Lock icon */}
         <Button
           variant="ghost"
           size="sm"
           onClick={(e) => { e.stopPropagation(); toggleBlockLock(block.id); }}
-          className={`h-7 px-2 text-xs ${block.locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+          className={`h-7 px-2 text-xs ${block.locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
           title={block.locked ? 'Unlock answer' : 'Lock as correct answer'}
         >
           {block.locked ? (
@@ -1061,7 +1065,7 @@ export function AssignmentEditor({
             variant="ghost"
             size="sm"
             onClick={(e) => { e.stopPropagation(); toggleBlockFeedback(block.id); }}
-            className={`h-7 px-2 text-xs ${block.showFeedback ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+            className={`h-7 px-2 text-xs ${block.showFeedback ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
             title={block.showFeedback ? 'Hide feedback' : 'Show feedback'}
           >
             <Check className="h-3 w-3 mr-1" />
@@ -1079,7 +1083,7 @@ export function AssignmentEditor({
               <Button
                 variant="ghost"
                 size="sm"
-                className={`h-7 px-2 text-xs ${block.aiGradingOverride ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+                className={`h-7 px-2 text-xs ${block.aiGradingOverride ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                 title="AI Grading Settings"
               >
                 <Sparkles className="h-3 w-3 mr-1" />
@@ -1280,6 +1284,8 @@ export function AssignmentEditor({
                                 setSelectedBlock(selectedBlock === row.blocks[0].id ? null : row.blocks[0].id);
                               }
                             }}
+                            onMouseEnter={() => setHoveredBlock(row.blocks[0].id)}
+                            onMouseLeave={() => setHoveredBlock(null)}
                           >
                             {/* Locked indicator */}
                             {row.blocks[0].locked && (
@@ -1321,7 +1327,7 @@ export function AssignmentEditor({
                             {renderBlockContent(row.blocks[0])}
                             
                             {/* Block action icons */}
-                            {renderBlockIcons(row.blocks[0])}
+                            {renderBlockIcons(row.blocks[0], hoveredBlock === row.blocks[0].id)}
                           </div>
                         </div>
                       ) : (
@@ -1358,6 +1364,8 @@ export function AssignmentEditor({
                                         setSelectedBlock(selectedBlock === block.id ? null : block.id);
                                       }
                                     }}
+                                    onMouseEnter={() => setHoveredBlock(block.id)}
+                                    onMouseLeave={() => setHoveredBlock(null)}
                                   >
                                     {/* Locked indicator */}
                                     {block.locked && (
@@ -1399,7 +1407,7 @@ export function AssignmentEditor({
                                     {renderBlockContent(block)}
                                     
                                     {/* Block action icons */}
-                                    {renderBlockIcons(block)}
+                                    {renderBlockIcons(block, hoveredBlock === block.id)}
                                   </div>
                                 ) : (
                                   <div className="h-full border border-dashed border-muted-foreground/30 rounded flex items-center justify-center text-xs text-muted-foreground">
