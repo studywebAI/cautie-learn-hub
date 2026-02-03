@@ -13,9 +13,16 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import Link from 'next/link';
+import { Eye, EyeOff, Check, X, Settings } from 'lucide-react';
+import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 
 type Assignment = {
   id: string;
@@ -24,6 +31,7 @@ type Assignment = {
   assignment_index: number;
   block_count: number;
   answers_enabled: boolean;
+  is_visible: boolean;
   progress_percent?: number;
 };
 
@@ -63,6 +71,8 @@ export default function ParagraphDetailPage() {
   const [isCreateAssignmentOpen, setIsCreateAssignmentOpen] = useState(false);
   const [newAssignmentTitle, setNewAssignmentTitle] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
@@ -94,7 +104,12 @@ export default function ParagraphDetailPage() {
         );
         if (assignmentsResponse.ok) {
           const assignmentsData = await assignmentsResponse.json();
-          setAssignments(assignmentsData || []);
+          // Ensure is_visible defaults to true if not present
+          const normalizedAssignments = (assignmentsData || []).map((a: Assignment) => ({
+            ...a,
+            is_visible: a.is_visible ?? true
+          }));
+          setAssignments(normalizedAssignments);
         }
       } catch (error) {
         console.error('Error fetching paragraph data:', error);
@@ -105,6 +120,32 @@ export default function ParagraphDetailPage() {
 
     fetchData();
   }, [subjectId, chapterId, paragraphId]);
+
+  const handleUpdateAssignment = async (assignmentId: string, updates: Partial<Assignment>) => {
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/assignments/${assignmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      if (response.ok) {
+        setAssignments(prev => prev.map(a => 
+          a.id === assignmentId ? { ...a, ...updates } : a
+        ));
+        toast({ title: 'Settings updated' });
+      } else {
+        throw new Error('Failed to update');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      toast({ title: 'Error', description: 'Failed to update settings', variant: 'destructive' });
+    } finally {
+      setIsUpdating(false);
+      setSettingsOpen(null);
+    }
+  };
 
   const handleCreateAssignment = async () => {
     if (!newAssignmentTitle.trim()) return;
@@ -192,42 +233,104 @@ export default function ParagraphDetailPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {assignments.map((assignment, index) => (
-            <Link
-              key={assignment.id}
-              href={`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignment.id}`}
-              className="flex items-center gap-3 py-3 px-4 rounded border hover:bg-muted transition-colors cursor-pointer"
-            >
-              {/* Letter index */}
-              <span className="text-sm bg-muted px-2 py-0.5 rounded text-muted-foreground shrink-0 w-8 text-center">
-                {assignment.letter_index || indexToLetter(assignment.assignment_index || index)}
-              </span>
-              
-              {/* Title */}
-              <span className="text-sm flex-1">{assignment.title}</span>
-              
-              {/* Progress and answers status */}
-              <div className="flex items-center gap-3 shrink-0">
-                {/* Progress */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground w-8 text-right">
-                    {assignment.progress_percent || 0}%
-                  </span>
-                  <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary rounded-full"
-                      style={{ width: `${assignment.progress_percent || 0}%` }}
-                    />
-                  </div>
-                </div>
-                
-                {/* Answers status */}
-                <span className="text-xs text-muted-foreground">
-                  {assignment.answers_enabled ? 'Answers on' : 'Answers off'}
+          {assignments.map((assignment, index) => {
+            // For students, hide invisible assignments
+            if (!isTeacher && !assignment.is_visible) return null;
+            
+            return (
+              <div
+                key={assignment.id}
+                className={`flex items-center gap-3 py-3 px-4 rounded border hover:bg-muted transition-colors ${
+                  !assignment.is_visible ? 'opacity-60 border-dashed' : ''
+                }`}
+              >
+                {/* Letter index */}
+                <span className="text-sm bg-muted px-2 py-0.5 rounded text-muted-foreground shrink-0 w-8 text-center">
+                  {assignment.letter_index || indexToLetter(assignment.assignment_index || index)}
                 </span>
+                
+                {/* Title - clickable link */}
+                <Link
+                  href={`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignment.id}`}
+                  className="text-sm flex-1 hover:underline"
+                >
+                  {assignment.title}
+                </Link>
+                
+                {/* Status icons and settings for teachers */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Progress */}
+                  <div className="flex items-center gap-2 mr-2">
+                    <span className="text-xs text-muted-foreground w-8 text-right">
+                      {assignment.progress_percent || 0}%
+                    </span>
+                    <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary rounded-full"
+                        style={{ width: `${assignment.progress_percent || 0}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Visibility icon */}
+                  {isTeacher && (
+                    <Popover 
+                      open={settingsOpen === assignment.id} 
+                      onOpenChange={(open) => setSettingsOpen(open ? assignment.id : null)}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          title={assignment.is_visible ? 'Visible' : 'Hidden'}
+                        >
+                          {assignment.is_visible ? (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="p-0 w-auto">
+                        <AssignmentSettingsOverlay
+                          isVisible={assignment.is_visible}
+                          answersEnabled={assignment.answers_enabled}
+                          onVisibilityChange={(visible) => handleUpdateAssignment(assignment.id, { is_visible: visible })}
+                          onAnswersEnabledChange={(enabled) => handleUpdateAssignment(assignment.id, { answers_enabled: enabled })}
+                          isLoading={isUpdating}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                  
+                  {/* Answers status icon */}
+                  {isTeacher && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      title={assignment.answers_enabled ? 'Answers on' : 'Answers off'}
+                      onClick={() => setSettingsOpen(assignment.id)}
+                    >
+                      {assignment.answers_enabled ? (
+                        <Check className="h-4 w-4 text-primary" />
+                      ) : (
+                        <X className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  )}
+                  
+                  {/* Text status for non-teachers */}
+                  {!isTeacher && (
+                    <span className="text-xs text-muted-foreground">
+                      {assignment.answers_enabled ? 'Answers on' : 'Answers off'}
+                    </span>
+                  )}
+                </div>
               </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       )}
 

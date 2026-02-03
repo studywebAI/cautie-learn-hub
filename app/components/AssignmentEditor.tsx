@@ -24,10 +24,22 @@ import {
   ChevronRight,
   Download,
   Upload,
-  X
+  X,
+  Lock,
+  Unlock,
+  Check,
+  Settings,
+  Sparkles
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
+import { AIGradingPresets, GradingPreset, GradingPresetSettings } from '@/components/AIGradingPresets';
 
 interface BlockTemplate {
   id: string;
@@ -45,6 +57,9 @@ interface AssignmentBlock {
   column?: 'left' | 'right';
   rowId: string; // Group blocks in same row
   data: any;
+  locked?: boolean; // Whether this block's answer is locked as correct
+  showFeedback?: boolean; // Whether to show correct/incorrect feedback
+  aiGradingOverride?: Partial<GradingPresetSettings>; // Per-block AI grading settings
 }
 
 interface AssignmentEditorProps {
@@ -53,8 +68,12 @@ interface AssignmentEditorProps {
   chapterId: string;
   paragraphId: string;
   initialBlocks?: AssignmentBlock[];
+  answersEnabled?: boolean;
+  isVisible?: boolean;
   onSave?: (blocks: AssignmentBlock[]) => void;
   onPreview?: () => void;
+  onSettingsChange?: (settings: { answersEnabled: boolean; isVisible: boolean }) => void;
+  isTeacher?: boolean;
 }
 
 const BLOCK_TEMPLATES: BlockTemplate[] = [
@@ -151,15 +170,21 @@ export function AssignmentEditor({
   chapterId,
   paragraphId,
   initialBlocks = [],
+  answersEnabled = false,
+  isVisible = true,
   onSave,
-  onPreview
+  onPreview,
+  onSettingsChange,
+  isTeacher = true
 }: AssignmentEditorProps) {
   // Normalize initialBlocks to have rowId
   const normalizedInitialBlocks = initialBlocks.map((b, i) => ({
     ...b,
     rowId: b.rowId || generateRowId(),
     width: b.width || 'full' as const,
-    position: b.position ?? i
+    position: b.position ?? i,
+    locked: b.locked ?? false,
+    showFeedback: b.showFeedback ?? false,
   }));
 
   const [blocks, setBlocks] = useState<AssignmentBlock[]>(normalizedInitialBlocks);
@@ -176,9 +201,74 @@ export function AssignmentEditor({
   const [dragSource, setDragSource] = useState<{ type: 'template' | 'block'; id: string } | null>(null);
   const [dropTarget, setDropTarget] = useState<{ rowIndex: number; column?: 'left' | 'right' } | null>(null);
   
+  // Settings state
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aiSettingsBlockId, setAiSettingsBlockId] = useState<string | null>(null);
+  const [localAnswersEnabled, setLocalAnswersEnabled] = useState(answersEnabled);
+  const [localIsVisible, setLocalIsVisible] = useState(isVisible);
+  
+  // AI Grading presets (stored locally for now - would come from API)
+  const [gradingPresets, setGradingPresets] = useState<GradingPreset[]>([
+    {
+      id: 'default',
+      name: 'Standard',
+      is_default: true,
+      settings: {
+        strictness: 5,
+        partial_credit: true,
+        spelling_matters: false,
+        grammar_matters: false,
+        case_sensitive: false,
+        custom_instructions: '',
+        ai_enabled: true,
+      }
+    }
+  ]);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('default');
+  
   const paperRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const router = useRouter();
+
+  // Toggle lock state for a block
+  const toggleBlockLock = (blockId: string) => {
+    setBlocks(prev => {
+      const newBlocks = prev.map(block =>
+        block.id === blockId ? { ...block, locked: !block.locked } : block
+      );
+      saveToHistory(newBlocks);
+      return newBlocks;
+    });
+  };
+
+  // Toggle feedback visibility for a block
+  const toggleBlockFeedback = (blockId: string) => {
+    setBlocks(prev => {
+      const newBlocks = prev.map(block =>
+        block.id === blockId ? { ...block, showFeedback: !block.showFeedback } : block
+      );
+      saveToHistory(newBlocks);
+      return newBlocks;
+    });
+  };
+
+  // Update AI grading override for a block
+  const updateBlockAiOverride = (blockId: string, override: Partial<GradingPresetSettings> | null) => {
+    setBlocks(prev => {
+      const newBlocks = prev.map(block =>
+        block.id === blockId ? { ...block, aiGradingOverride: override || undefined } : block
+      );
+      saveToHistory(newBlocks);
+      return newBlocks;
+    });
+  };
+
+  // Handle settings change
+  const handleSettingsChange = (newAnswers: boolean, newVisible: boolean) => {
+    setLocalAnswersEnabled(newAnswers);
+    setLocalIsVisible(newVisible);
+    onSettingsChange?.({ answersEnabled: newAnswers, isVisible: newVisible });
+  };
 
   // Group blocks by row
   const getRows = useCallback(() => {
@@ -940,6 +1030,92 @@ export function AssignmentEditor({
     }
   };
 
+  // Render block action icons (lock, check, AI settings)
+  const renderBlockIcons = (block: AssignmentBlock) => {
+    if (!isTeacher || selectedBlock !== block.id) return null;
+    
+    const isQuestionBlock = ['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'ordering'].includes(block.type);
+    if (!isQuestionBlock) return null;
+    
+    return (
+      <div className="flex items-center gap-1 mt-2 justify-center">
+        {/* Lock icon */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => { e.stopPropagation(); toggleBlockLock(block.id); }}
+          className={`h-7 px-2 text-xs ${block.locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+          title={block.locked ? 'Unlock answer' : 'Lock as correct answer'}
+        >
+          {block.locked ? (
+            <Lock className="h-3 w-3 mr-1" />
+          ) : (
+            <Unlock className="h-3 w-3 mr-1" />
+          )}
+          {block.locked ? 'Locked' : 'Lock'}
+        </Button>
+        
+        {/* Check icon - only show when answers enabled */}
+        {localAnswersEnabled && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); toggleBlockFeedback(block.id); }}
+            className={`h-7 px-2 text-xs ${block.showFeedback ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+            title={block.showFeedback ? 'Hide feedback' : 'Show feedback'}
+          >
+            <Check className="h-3 w-3 mr-1" />
+            {block.showFeedback ? 'Feedback on' : 'Feedback'}
+          </Button>
+        )}
+        
+        {/* AI Settings icon - only for open questions */}
+        {block.type === 'open_question' && (
+          <Popover 
+            open={aiSettingsBlockId === block.id} 
+            onOpenChange={(open) => setAiSettingsBlockId(open ? block.id : null)}
+          >
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-7 px-2 text-xs ${block.aiGradingOverride ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+                title="AI Grading Settings"
+              >
+                <Sparkles className="h-3 w-3 mr-1" />
+                AI
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="center" className="p-0 w-auto">
+              <AIGradingPresets
+                presets={gradingPresets}
+                selectedPresetId={selectedPresetId}
+                blockOverride={block.aiGradingOverride}
+                onSelectPreset={setSelectedPresetId}
+                onSavePreset={(preset) => {
+                  setGradingPresets(prev => {
+                    const exists = prev.find(p => p.id === preset.id);
+                    if (exists) {
+                      return prev.map(p => p.id === preset.id ? preset : p);
+                    }
+                    return [...prev, preset];
+                  });
+                }}
+                onDeletePreset={(id) => {
+                  setGradingPresets(prev => prev.filter(p => p.id !== id));
+                }}
+                onSetDefault={(id) => {
+                  setGradingPresets(prev => prev.map(p => ({ ...p, is_default: p.id === id })));
+                }}
+                onBlockOverrideChange={(override) => updateBlockAiOverride(block.id, override)}
+              />
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
+    );
+  };
+
   const rows = getRows();
 
   return (
@@ -966,10 +1142,30 @@ export function AssignmentEditor({
           <Button variant="ghost" size="sm" onClick={handleImport} className="h-8 px-2" title="Import">
             <Upload className="h-4 w-4" />
           </Button>
+          {isTeacher && (
+            <>
+              <div className="w-px h-4 bg-border mx-1" />
+              <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 px-2" title="Assignment Settings">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="p-0 w-auto">
+                  <AssignmentSettingsOverlay
+                    isVisible={localIsVisible}
+                    answersEnabled={localAnswersEnabled}
+                    onVisibilityChange={(v) => handleSettingsChange(localAnswersEnabled, v)}
+                    onAnswersEnabledChange={(e) => handleSettingsChange(e, localIsVisible)}
+                  />
+                </PopoverContent>
+              </Popover>
+            </>
+          )}
         </div>
         
         <div className="flex items-center gap-2">
-          {hasUnsavedChanges && <span className="text-xs text-orange-500">Unsaved</span>}
+          {hasUnsavedChanges && <span className="text-xs text-amber-500">Unsaved</span>}
           <Button variant="default" size="sm" onClick={handleSave} disabled={isSaving} className="h-8">
             <Save className="h-4 w-4 mr-1" />
             {isSaving ? 'Saving...' : 'Save'}
@@ -1066,10 +1262,12 @@ export function AssignmentEditor({
                           
                           <div
                             className={`p-3 border rounded-lg transition-all ${
-                              selectedBlock === row.blocks[0].id 
-                                ? 'border-primary bg-primary/5' 
-                                : 'border-border/50 hover:border-border'
-                            }`}
+                              row.blocks[0].locked 
+                                ? 'border-primary/50 bg-primary/5'
+                                : selectedBlock === row.blocks[0].id 
+                                  ? 'border-primary bg-primary/5' 
+                                  : 'border-border/50 hover:border-border'
+                            } ${!row.blocks[0].locked ? 'opacity-80' : ''}`}
                             onClick={(e) => {
                               // Only select if clicking near the edge (within 8px of border)
                               const rect = e.currentTarget.getBoundingClientRect();
@@ -1083,6 +1281,14 @@ export function AssignmentEditor({
                               }
                             }}
                           >
+                            {/* Locked indicator */}
+                            {row.blocks[0].locked && (
+                              <div className="absolute -top-2 left-2 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                <Lock className="h-2.5 w-2.5" />
+                                <span>Locked</span>
+                              </div>
+                            )}
+                            
                             {/* Controls */}
                             <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
                               selectedBlock === row.blocks[0].id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
@@ -1098,6 +1304,7 @@ export function AssignmentEditor({
                                 size="sm"
                                 onClick={(e) => { e.stopPropagation(); setEditingBlock(row.blocks[0].id); }}
                                 className="h-5 w-5 p-0"
+                                disabled={row.blocks[0].locked}
                               >
                                 <PenTool className="h-3 w-3" />
                               </Button>
@@ -1112,6 +1319,9 @@ export function AssignmentEditor({
                             </div>
                             
                             {renderBlockContent(row.blocks[0])}
+                            
+                            {/* Block action icons */}
+                            {renderBlockIcons(row.blocks[0])}
                           </div>
                         </div>
                       ) : (
@@ -1131,10 +1341,12 @@ export function AssignmentEditor({
                                 {block ? (
                                   <div
                                     className={`h-full p-3 border rounded-lg transition-all ${
-                                      selectedBlock === block.id 
-                                        ? 'border-primary bg-primary/5' 
-                                        : 'border-border/50 hover:border-border'
-                                    }`}
+                                      block.locked 
+                                        ? 'border-primary/50 bg-primary/5'
+                                        : selectedBlock === block.id 
+                                          ? 'border-primary bg-primary/5' 
+                                          : 'border-border/50 hover:border-border'
+                                    } ${!block.locked ? 'opacity-90' : ''}`}
                                     onClick={(e) => {
                                       const rect = e.currentTarget.getBoundingClientRect();
                                       const x = e.clientX - rect.left;
@@ -1147,6 +1359,14 @@ export function AssignmentEditor({
                                       }
                                     }}
                                   >
+                                    {/* Locked indicator */}
+                                    {block.locked && (
+                                      <div className="absolute -top-2 left-2 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                        <Lock className="h-2.5 w-2.5" />
+                                        <span>Locked</span>
+                                      </div>
+                                    )}
+                                    
                                     {/* Controls */}
                                     <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
                                       selectedBlock === block.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
@@ -1162,6 +1382,7 @@ export function AssignmentEditor({
                                         size="sm"
                                         onClick={(e) => { e.stopPropagation(); setEditingBlock(block.id); }}
                                         className="h-5 w-5 p-0"
+                                        disabled={block.locked}
                                       >
                                         <PenTool className="h-3 w-3" />
                                       </Button>
@@ -1176,6 +1397,9 @@ export function AssignmentEditor({
                                     </div>
                                     
                                     {renderBlockContent(block)}
+                                    
+                                    {/* Block action icons */}
+                                    {renderBlockIcons(block)}
                                   </div>
                                 ) : (
                                   <div className="h-full border border-dashed border-muted-foreground/30 rounded flex items-center justify-center text-xs text-muted-foreground">

@@ -9,7 +9,10 @@ ALTER TABLE public.blocks ADD COLUMN IF NOT EXISTS order_index integer DEFAULT 0
 -- 2) Add missing column to materials table
 ALTER TABLE public.materials ADD COLUMN IF NOT EXISTS content_id uuid;
 
--- 3) Create notes table if code expects it
+-- 3) Add is_visible column to assignments table
+ALTER TABLE public.assignments ADD COLUMN IF NOT EXISTS is_visible boolean DEFAULT true;
+
+-- 4) Create notes table if code expects it
 CREATE TABLE IF NOT EXISTS public.notes (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   content jsonb,
