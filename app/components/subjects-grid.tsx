@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useContext, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useContext, useCallback, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AppContext, AppContextType } from '@/contexts/app-context';
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { InputWithTypingPlaceholder } from '@/components/ui/input-with-typing-placeholder';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type RecentParagraph = {
   id: string;
@@ -25,12 +26,18 @@ type RecentParagraph = {
   progress: number;
 };
 
+type LinkedClass = {
+  id: string;
+  name: string;
+};
+
 type Subject = {
   id: string;
   title: string;
   class_label?: string;
   cover_image_url?: string;
   recentParagraphs?: RecentParagraph[];
+  classes?: LinkedClass[];
 };
 
 type SubjectsGridProps = {
@@ -78,10 +85,18 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newSubjectTitle, setNewSubjectTitle] = useState('');
-  const [selectedCreateClassId, setSelectedCreateClassId] = useState<string>('');
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
   const { classes, session } = useContext(AppContext) as AppContextType;
+
+  const toggleClassSelection = (classItemId: string) => {
+    setSelectedClassIds(prev =>
+      prev.includes(classItemId)
+        ? prev.filter(id => id !== classItemId)
+        : [...prev, classItemId]
+    );
+  };
 
   const fetchSubjects = useCallback(async () => {
     try {
@@ -118,7 +133,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
       const apiUrl = classId ? `/api/classes/${classId}/subjects` : '/api/subjects';
       const requestBody = classId
         ? { title: newSubjectTitle, class_label: newSubjectTitle, cover_type: 'ai_icons' }
-        : { title: newSubjectTitle, classId: selectedCreateClassId || null, cover_type: 'ai_icons' };
+        : { title: newSubjectTitle, classIds: selectedClassIds.length > 0 ? selectedClassIds : null, cover_type: 'ai_icons' };
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -133,7 +148,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
       fetchSubjects();
       setNewSubjectTitle('');
-      setSelectedCreateClassId('');
+      setSelectedClassIds([]);
       setIsCreateOpen(false);
 
       toast({
@@ -214,12 +229,19 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
                         </p>
                       </div>
                       
-                      {/* Class label - bottom left */}
-                      {subject.class_label && (
-                        <div className="absolute bottom-3 left-3">
-                          <p className="text-xs text-muted-foreground bg-background/80 px-2 py-0.5 rounded">
-                            {subject.class_label}
-                          </p>
+                      {/* Linked classes - bottom left */}
+                      {subject.classes && subject.classes.length > 0 && (
+                        <div className="absolute bottom-3 left-3 flex flex-wrap gap-1">
+                          {subject.classes.slice(0, 2).map((cls) => (
+                            <span key={cls.id} className="text-xs text-muted-foreground bg-background/80 px-2 py-0.5 rounded">
+                              {cls.name}
+                            </span>
+                          ))}
+                          {subject.classes.length > 2 && (
+                            <span className="text-xs text-muted-foreground bg-background/80 px-2 py-0.5 rounded">
+                              +{subject.classes.length - 2}
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -278,20 +300,29 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
             </div>
             {!classId && classes.length > 0 && (
               <div className="space-y-2">
-                <Label htmlFor="class-select">Class (optional)</Label>
-                <select
-                  id="class-select"
-                  value={selectedCreateClassId}
-                  onChange={(e) => setSelectedCreateClassId(e.target.value)}
-                  className="w-full p-2 border rounded bg-background"
-                >
-                  <option value="">No class</option>
+                <Label>Link to classes (optional)</Label>
+                <div className="space-y-2 max-h-40 overflow-y-auto border rounded p-2 bg-muted/30">
                   {classes.map((classItem) => (
-                    <option key={classItem.id} value={classItem.id}>
-                      {classItem.name}
-                    </option>
+                    <div key={classItem.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`class-${classItem.id}`}
+                        checked={selectedClassIds.includes(classItem.id)}
+                        onCheckedChange={() => toggleClassSelection(classItem.id)}
+                      />
+                      <label
+                        htmlFor={`class-${classItem.id}`}
+                        className="text-sm cursor-pointer flex-1"
+                      >
+                        {classItem.name}
+                      </label>
+                    </div>
                   ))}
-                </select>
+                </div>
+                {selectedClassIds.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {selectedClassIds.length} class{selectedClassIds.length !== 1 ? 'es' : ''} selected
+                  </p>
+                )}
               </div>
             )}
           </div>
