@@ -49,7 +49,7 @@ export async function GET(req: Request) {
     // Transform data to include classes array instead of nested structure
     const transformedData = (data as any[]).map(subject => ({
       ...subject,
-      classes: subject.class_subjects.map((cs: any) => cs.classes)
+      classes: subject.class_subjects ? subject.class_subjects.map((cs: any) => cs.classes) : []
     }))
 
     return NextResponse.json(transformedData || [])
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
         user_id: user.id,
         description: json.description
       }])
-      .single()
+      .select()
 
     if (subjectError) {
       return NextResponse.json({
@@ -95,11 +95,19 @@ export async function POST(req: Request) {
       }, { status: 500 })
     }
 
+    if (!subjectData || subjectData.length === 0) {
+      return NextResponse.json({
+        error: 'Failed to create subject: No data returned'
+      }, { status: 500 })
+    }
+
+    const newSubject = subjectData[0]
+
     // Link subject to classes if classIds are provided
     if (json.classIds && json.classIds.length > 0) {
       const classSubjects = json.classIds.map((classId: string) => ({
         class_id: classId,
-        subject_id: (subjectData as any).id
+        subject_id: newSubject.id
       }))
 
       const { error: linkError } = await (supabase as any).from('class_subjects')
@@ -121,7 +129,7 @@ export async function POST(req: Request) {
           classes:class_id(id, name)
         )
       `)
-      .eq('id', (subjectData as any).id)
+      .eq('id', newSubject.id)
       .single()
 
     if (fetchError) {
@@ -130,10 +138,10 @@ export async function POST(req: Request) {
       }, { status: 500 })
     }
 
-    // Transform the data
+    // Transform the data, handling cases where class_subjects might be null or undefined
     const transformedSubject = {
       ...subjectWithClasses,
-      classes: (subjectWithClasses as any).class_subjects.map((cs: any) => cs.classes)
+      classes: (subjectWithClasses as any).class_subjects ? (subjectWithClasses as any).class_subjects.map((cs: any) => cs.classes) : []
     }
 
     return NextResponse.json({
@@ -167,11 +175,17 @@ export async function PUT(req: Request) {
         description: json.description
       })
       .eq('id', json.id)
-      .single()
+      .select()
 
     if (subjectError) {
       return NextResponse.json({
         error: `Supabase error updating subject: ${subjectError.message}`
+      }, { status: 500 })
+    }
+
+    if (!subjectData || subjectData.length === 0) {
+      return NextResponse.json({
+        error: 'Failed to update subject: No data returned'
       }, { status: 500 })
     }
 
@@ -224,10 +238,10 @@ export async function PUT(req: Request) {
       }, { status: 500 })
     }
 
-    // Transform the data
+    // Transform the data, handling cases where class_subjects might be null or undefined
     const transformedSubject = {
       ...subjectWithClasses,
-      classes: (subjectWithClasses as any).class_subjects.map((cs: any) => cs.classes)
+      classes: (subjectWithClasses as any).class_subjects ? (subjectWithClasses as any).class_subjects.map((cs: any) => cs.classes) : []
     }
 
     return NextResponse.json({
