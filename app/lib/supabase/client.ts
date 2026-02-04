@@ -1,11 +1,9 @@
 // app/lib/supabase/client.ts
 import { createBrowserClient } from "@supabase/ssr";
-import type { Database } from "./database.types";
-import { v4 as uuidv4 } from "uuid"; // ADD THIS LINE
+import { v4 as uuidv4 } from "uuid";
 
-const GUEST_ID_KEY = "guest_id"; // ADD THIS LINE
+const GUEST_ID_KEY = "guest_id";
 
-// ADD THIS FUNCTION
 export function getOrCreateGuestId(): string {
   if (typeof window === "undefined") {
     return "";
@@ -19,7 +17,7 @@ export function getOrCreateGuestId(): string {
 }
 
 export function createClient() {
-  return createBrowserClient<Database>(
+  return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
