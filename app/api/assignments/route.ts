@@ -51,7 +51,7 @@ export async function GET(request: Request) {
                 title,
                 subjects!inner(
                   title,
-                  class_subjects!subjects_class_subjects_subject_id_fkey(
+                  class_subjects(
                     classes!inner(
                       name
                     )

@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     const { data, error } = await (supabase as any).from('subjects')
       .select(`
         *,
-        class_subjects!subjects_class_subjects_subject_id_fkey(
+        class_subjects(
           classes:class_id(id, name)
         )
       `)
@@ -125,7 +125,7 @@ export async function POST(req: Request) {
       .from('subjects')
       .select(`
         *,
-        class_subjects!subjects_class_subjects_subject_id_fkey(
+        class_subjects(
           classes:class_id(id, name)
         )
       `)
@@ -225,7 +225,7 @@ export async function PUT(req: Request) {
       .from('subjects')
       .select(`
         *,
-        class_subjects!subjects_class_subjects_subject_id_fkey(
+        class_subjects(
           classes:class_id(id, name)
         )
       `)
