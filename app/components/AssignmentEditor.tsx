@@ -14,7 +14,6 @@ import {
   Move,
   ListOrdered,
   Link,
-  Save,
   Plus,
   GripVertical,
   PenTool,
@@ -349,10 +348,10 @@ export function AssignmentEditor({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo]);
 
-  // Auto-save
+  // Auto-save silently (no toast)
   useEffect(() => {
     if (hasUnsavedChanges) {
-      const timer = setTimeout(() => handleSave(), 5000);
+      const timer = setTimeout(() => handleSilentSave(), 3000);
       return () => clearTimeout(timer);
     }
   }, [hasUnsavedChanges, blocks]);
@@ -693,15 +692,9 @@ export function AssignmentEditor({
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, [isDragging, dragSource, dropTarget]);
 
-  const handleSave = async () => {
-    if (!assignmentId || assignmentId === 'undefined') {
-      toast({
-        title: 'Cannot Save',
-        description: 'Assignment ID is missing.',
-        variant: 'destructive'
-      });
-      return;
-    }
+  const handleSilentSave = async () => {
+    if (!assignmentId || assignmentId === 'undefined') return;
+    if (isSaving) return;
 
     setIsSaving(true);
     try {
@@ -722,14 +715,16 @@ export function AssignmentEditor({
       }
 
       setHasUnsavedChanges(false);
-      toast({ title: 'Saved' });
       if (onSave) onSave(blocks);
     } catch (error) {
-      toast({ title: 'Save failed', variant: 'destructive' });
+      console.error('Auto-save failed:', error);
     } finally {
       setIsSaving(false);
     }
   };
+
+  // Keep handleSave for keyboard shortcut (Ctrl+S) - also silent
+  const handleSave = handleSilentSave;
 
   const handleExport = () => {
     const exportData = {
@@ -1169,11 +1164,7 @@ export function AssignmentEditor({
         </div>
         
         <div className="flex items-center gap-2">
-          {hasUnsavedChanges && <span className="text-xs text-amber-500">Unsaved</span>}
-          <Button variant="default" size="sm" onClick={handleSave} disabled={isSaving} className="h-8">
-            <Save className="h-4 w-4 mr-1" />
-            {isSaving ? 'Saving...' : 'Save'}
-          </Button>
+          {isSaving && <span className="text-xs text-muted-foreground animate-pulse">●</span>}
         </div>
       </div>
 
