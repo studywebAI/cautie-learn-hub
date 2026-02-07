@@ -79,8 +79,9 @@ export function StudentClasses() {
     }
   };
   
+  // For students, the /api/classes endpoint already returns only classes they're members of.
+  // No need to filter by user_id — just apply search filter.
   const enrolledClasses = classes
-    .filter(c => c.user_id !== session?.user?.id)
     .filter(cls =>
       cls.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (cls.description && cls.description.toLowerCase().includes(searchQuery.toLowerCase()))
