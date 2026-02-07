@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-import type { Database } from '@/lib/supabase/database.types'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,28 +29,44 @@ export async function GET(request: Request) {
 
     if (userRole === 'teacher') {
       // Teachers see assignments from their classes' subjects
-      const { data: teacherAssignments, error } = await supabase
-        .from('assignments')
-        .select(`
-          *,
-          paragraphs!inner(
-            title,
-            chapters!inner(
+      // Get all subjects that belong to the teacher's classes
+      const { data: teacherClasses, error: classesError } = await supabase
+        .from('classes')
+        .select('id')
+        .eq('owner_id', user.id)
+
+      if (classesError) {
+        console.error('Error fetching teacher classes:', classesError)
+      } else if (teacherClasses && teacherClasses.length > 0) {
+        const classIds = teacherClasses.map((c: any) => c.id)
+        
+        // Get assignments through class_subjects join table
+        const { data: teacherAssignments, error: assignmentsError } = await supabase
+          .from('assignments')
+          .select(`
+            *,
+            paragraphs!inner(
               title,
-              subjects!inner(
+              chapters!inner(
                 title,
-                class_id,
-                classes!inner(name)
+                subjects!inner(
+                  title,
+                  class_subjects!subjects_class_subjects_subject_id_fkey(
+                    classes!inner(
+                      name
+                    )
+                  )
+                )
               )
             )
-          )
-        `)
-        .eq('paragraphs.chapters.subjects.classes.owner_id', user.id)
+          `)
+          .in('paragraphs.chapters.subjects.class_subjects.classes.id', classIds)
 
-      if (error) {
-        console.error('Error fetching teacher assignments:', error)
-      } else {
-        assignments = teacherAssignments || []
+        if (assignmentsError) {
+          console.error('Error fetching teacher assignments:', assignmentsError)
+        } else {
+          assignments = teacherAssignments || []
+        }
       }
     } else {
       // Students see assignments from classes they're members of

@@ -36,7 +36,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ classId:
     }
 
     // Extract subjects from the response
-    const subjects = data.map(item => item.subjects)
+    const subjects = data.map((item: any) => item.subjects)
     return NextResponse.json(subjects || [])
   } catch (error) {
     console.error('Error fetching subjects:', error)
@@ -77,11 +77,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ classId
         ai_icon_seed: json.ai_icon_seed || null,
         user_id: user.id
       }])
+      .select()
       .single()
 
-    if (subjectError) {
+    if (subjectError || !subject) {
       return NextResponse.json({
-        error: `Supabase error creating subject: ${subjectError.message}`
+        error: `Supabase error creating subject: ${subjectError?.message || 'Unknown error'}`
       }, { status: 500 })
     }
 
