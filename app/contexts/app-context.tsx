@@ -37,6 +37,15 @@ export type PersonalTask = {
   recurrence?: any;
 };
 
+export type DashboardSubject = {
+  id: string;
+  title: string;
+  description?: string;
+  cover_type?: string;
+  cover_image_url?: string;
+  classes?: { id: string; name: string }[];
+};
+
 export type AppContextType = {
   session: Session | null;
   isLoading: boolean;
@@ -56,6 +65,7 @@ export type AppContextType = {
   sessionRecap: SessionRecapData | null;
   setSessionRecap: (data: SessionRecapData | null) => void;
   classes: ClassInfo[];
+  subjects: DashboardSubject[];
   createClass: (newClass: { name: string; description: string | null }) => Promise<ClassInfo | null>;
   isCreatingClass: boolean;
   refetchClasses: () => Promise<void>;
@@ -129,6 +139,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [sessionRecap, setSessionRecap] = useState<SessionRecapData | null>(null);
 
   const [classes, setClasses] = useState<ClassInfo[]>([]);
+  const [subjects, setSubjects] = useState<DashboardSubject[]>([]);
   const [assignments, setAssignments] = useState<ClassAssignment[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [personalTasks, setPersonalTasks] = useState<PersonalTask[]>([]);
@@ -320,6 +331,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               const dashboardData = await dashboardRes.json();
 
               setClasses(dashboardData.classes || []);
+              setSubjects(dashboardData.subjects || []);
               setAssignments(dashboardData.assignments || []);
               setPersonalTasks(dashboardData.personalTasks || []);
               setStudents(dashboardData.students || []);
@@ -328,10 +340,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           } catch (error) {
               console.error("Failed to fetch Supabase data:", error);
               setClasses([]);
+              setSubjects([]);
               setAssignments([]);
               setPersonalTasks([]);
               setStudents([]);
-              setRoleState('student'); // Default to student on overall fetch failure
+              setRoleState('student');
           }
       } else {
           // User is a guest, fetch from localStorage
@@ -661,6 +674,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     sessionRecap,
     setSessionRecap,
     classes,
+    subjects,
     createClass,
     isCreatingClass,
     refetchClasses,
@@ -687,6 +701,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     theme,
     sessionRecap,
     classes,
+    subjects,
     createClass,
     refetchClasses,
     assignments,

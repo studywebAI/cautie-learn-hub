@@ -46,8 +46,9 @@ export function MySubjectsGrid({ subjects }: MySubjectsGridProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {subjects.map((subject) => {
-            const Icon = subjectIcons[subject.name] || subjectIcons.Default;
-            const colorClass = subjectColors[subject.name] || subjectColors.Default;
+            const displayName = subject.name || subject.title || 'Untitled';
+            const Icon = subjectIcons[displayName] || subjectIcons.Default;
+            const colorClass = subjectColors[displayName] || subjectColors.Default;
 
             return (
               <Link key={subject.id} href={`/subjects/${subject.id}`} className="group">
@@ -56,7 +57,7 @@ export function MySubjectsGrid({ subjects }: MySubjectsGridProps) {
                      <div className={cn("w-16 h-16 rounded-lg flex items-center justify-center mb-4", colorClass)}>
                         <Icon className="w-8 h-8" />
                     </div>
-                    <CardTitle className="text-lg">{subject.name}</CardTitle>
+                    <CardTitle className="text-lg">{displayName}</CardTitle>
                   </CardHeader>
                   <CardContent className="p-4 pt-0 flex-grow">
                     <div className="flex items-center gap-2">

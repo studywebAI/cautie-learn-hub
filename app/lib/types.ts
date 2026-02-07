@@ -30,7 +30,12 @@ export type Deadline = {
 export type Subject = {
   id: string;
   name: string;
+  title?: string;
   progress: number;
+  classes?: { id: string; name: string }[];
+  cover_image_url?: string;
+  cover_type?: string;
+  description?: string;
 };
 
 export type AiSuggestion = {

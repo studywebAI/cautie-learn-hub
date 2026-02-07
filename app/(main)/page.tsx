@@ -17,7 +17,7 @@ import { TodaysAgenda } from "@/components/dashboard/todays-agenda";
 const AnalyticsDashboard = lazy(() => import("@/components/dashboard/analytics-dashboard").then(module => ({ default: module.AnalyticsDashboard })));
 
 function StudentDashboard() {
-  const { isLoading, session, assignments, classes, personalTasks } = useContext(AppContext) as AppContextType;
+  const { isLoading, session, assignments, classes, personalTasks, subjects: dashboardSubjects } = useContext(AppContext) as AppContextType;
 
   if (isLoading && !session) {
      return (
@@ -41,11 +41,15 @@ function StudentDashboard() {
     return <DashboardSkeleton />;
   }
 
-  const enrolledClasses = (Array.isArray(classes) ? classes : []).filter(c => c.owner_id !== session?.user?.id);
-  const subjects: Subject[] = enrolledClasses.map(c => ({
-    id: c.id,
-    name: c.name,
-    progress: 0 // Placeholder until progress is tracked
+  // Map dashboard subjects to the Subject type used by MySubjects component
+  const subjects: Subject[] = (dashboardSubjects || []).map(s => ({
+    id: s.id,
+    name: s.title,
+    title: s.title,
+    progress: 0, // Placeholder until progress tracking is implemented
+    classes: s.classes,
+    cover_image_url: s.cover_image_url,
+    description: s.description,
   }));
 
   const alerts: Alert[] = []; // Simplified - no due dates in current schema
