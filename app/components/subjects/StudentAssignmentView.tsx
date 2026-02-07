@@ -1,27 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppContext } from '@/contexts/app-context';
 import { StudentBlockRenderer } from '@/components/blocks/StudentBlockRenderer';
-import { BaseBlock } from '@/components/blocks/types';
 import {
   ChevronLeft,
   ChevronRight,
-  CheckCircle,
   AlertCircle,
-  Save,
-  Send
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useAutosave } from '@/hooks/use-autosave';
 
 interface Block {
   id: string;
@@ -39,7 +30,7 @@ interface Assignment {
   letter_index: string;
   answers_enabled: boolean;
   paragraph_id: string;
-  instructions?: string; // Professor's instructions from agenda
+  instructions?: string;
 }
 
 interface StudentAssignmentViewProps {
@@ -47,7 +38,7 @@ interface StudentAssignmentViewProps {
   chapterId: string;
   paragraphId: string;
   assignmentId: string;
-  instructions?: string; // Professor's instructions passed from agenda link
+  instructions?: string;
   onNavigateBack?: () => void;
   onNavigateNext?: () => void;
   onNavigatePrev?: () => void;
@@ -70,12 +61,64 @@ export function StudentAssignmentView({
   const [studentAnswers, setStudentAnswers] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [completionPercent, setCompletionPercent] = useState(0);
 
-  const { toast } = useToast();
   const { user } = useContext(AppContext) as any;
-  const { autosave } = useAutosave();
+
+  // Auto-save queue
+  const pendingSaves = useRef<Record<string, any>>({});
+  const saveTimer = useRef<NodeJS.Timeout>();
+
+  const flushSaves = useCallback(async () => {
+    const toSave = { ...pendingSaves.current };
+    pendingSaves.current = {};
+
+    const entries = Object.entries(toSave);
+    if (entries.length === 0) return;
+
+    await Promise.allSettled(
+      entries.map(async ([blockId, answerData]) => {
+        try {
+          await fetch(
+            `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${blockId}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ answer_data: answerData })
+            }
+          );
+        } catch (err) {
+          // Re-queue failed saves
+          pendingSaves.current[blockId] = answerData;
+          console.error('Auto-save failed for block', blockId, err);
+        }
+      })
+    );
+  }, [subjectId, chapterId, paragraphId, assignmentId]);
+
+  // Flush on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      // Fire-and-forget final flush
+      const toSave = { ...pendingSaves.current };
+      if (Object.keys(toSave).length > 0) {
+        const entries = Object.entries(toSave);
+        entries.forEach(async ([blockId, answerData]) => {
+          try {
+            await fetch(
+              `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${blockId}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answer_data: answerData })
+              }
+            );
+          } catch {}
+        });
+      }
+    };
+  }, [subjectId, chapterId, paragraphId, assignmentId]);
 
   useEffect(() => {
     const fetchAssignmentData = async () => {
@@ -147,65 +190,17 @@ export function StudentAssignmentView({
     };
     setStudentAnswers(newAnswers);
 
-    // Auto-save answers
-    autosave({ assignmentAnswers: newAnswers });
+    // Queue for auto-save
+    pendingSaves.current[blockId] = answer;
+
+    // Debounce the save
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => flushSaves(), 2000);
 
     // Update completion percentage
     const answeredBlocks = Object.keys(newAnswers).length;
     const totalBlocks = blocks.length;
     setCompletionPercent(totalBlocks > 0 ? Math.round((answeredBlocks / totalBlocks) * 100) : 0);
-  };
-
-  const handleSubmit = async () => {
-    if (!user || !assignment) return;
-
-    setIsSubmitting(true);
-    try {
-      // Submit all answers
-      const submitPromises = blocks.map(async (block) => {
-        const answer = studentAnswers[block.id];
-        if (answer !== undefined) {
-          const response = await fetch(
-            `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${block.id}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ answer_data: answer })
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(`Failed to submit answer for block ${block.id}`);
-          }
-        }
-      });
-
-      await Promise.all(submitPromises);
-
-      toast({
-        title: 'Assignment Submitted',
-        description: 'Your answers have been saved successfully.',
-      });
-
-      // Refresh progress
-      const progressResponse = await fetch(
-        `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/progress`
-      );
-      if (progressResponse.ok) {
-        const progressData = await progressResponse.json();
-        setCompletionPercent(progressData.completion_percent);
-      }
-
-    } catch (err) {
-      console.error('Error submitting assignment:', err);
-      toast({
-        title: 'Submission Failed',
-        description: err instanceof Error ? err.message : 'Failed to submit assignment.',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   if (isLoading) {
@@ -257,7 +252,7 @@ export function StudentAssignmentView({
             className="flex items-center gap-2"
           >
             <ChevronLeft className="h-4 w-4" />
-            Back to Paragraph
+            Back
           </Button>
 
           <div>
@@ -266,9 +261,8 @@ export function StudentAssignmentView({
             </h2>
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Progress:</span>
                 <Progress value={completionPercent} className="w-24 h-2" />
-                <span className="text-sm font-medium">{completionPercent}%</span>
+                <span className="text-sm text-muted-foreground">{completionPercent}%</span>
               </div>
             </div>
           </div>
@@ -277,24 +271,12 @@ export function StudentAssignmentView({
         <div className="flex gap-2">
           {onNavigatePrev && (
             <Button variant="outline" size="sm" onClick={onNavigatePrev}>
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
+              <ChevronLeft className="h-4 w-4" />
             </Button>
           )}
-
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || Object.keys(studentAnswers).length === 0}
-            className="flex items-center gap-2"
-          >
-            <Send className="h-4 w-4" />
-            {isSubmitting ? 'Submitting...' : 'Submit Answers'}
-          </Button>
-
           {onNavigateNext && (
             <Button variant="outline" size="sm" onClick={onNavigateNext}>
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -318,7 +300,7 @@ export function StudentAssignmentView({
             <Card key={block.id} className="relative">
               <CardContent className="pt-6">
                 {/* Block number */}
-                <div className="absolute -left-4 top-6 text-gray-400 font-medium">
+                <div className="absolute -left-4 top-6 text-muted-foreground font-medium text-sm">
                   {index + 1}.
                 </div>
 
@@ -346,20 +328,9 @@ export function StudentAssignmentView({
           Back to Assignments
         </Button>
 
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">
-            {Object.keys(studentAnswers).length} of {blocks.length} questions answered
-          </span>
-
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || Object.keys(studentAnswers).length === 0}
-            className="flex items-center gap-2"
-          >
-            <Send className="h-4 w-4" />
-            {isSubmitting ? 'Submitting...' : 'Submit Answers'}
-          </Button>
-        </div>
+        <span className="text-sm text-muted-foreground">
+          {Object.keys(studentAnswers).length} of {blocks.length} answered
+        </span>
       </div>
     </div>
   );
