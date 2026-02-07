@@ -19,7 +19,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: paragraph, error } = await supabase
+    const { data: paragraph, error } = await (supabase as any)
       .from('paragraphs')
       .select('*')
       .eq('id', resolvedParams.paragraphId)
@@ -27,7 +27,7 @@ export async function GET(
       .maybeSingle();
 
     if (error) {
-      console.log('Paragraph fetch error:', error);
+      console.log('Paragraph fetch error:', error.message);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -38,7 +38,7 @@ export async function GET(
     return NextResponse.json(paragraph);
 
   } catch (err) {
-    console.error('Unexpected error:', err);
+    console.error('Paragraph GET error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
