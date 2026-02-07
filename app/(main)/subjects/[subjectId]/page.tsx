@@ -237,7 +237,7 @@ export default function SubjectDetailPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Last activity banner */}
       {lastActivity && (
         <Link
@@ -277,7 +277,7 @@ export default function SubjectDetailPage() {
           )}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-0">
           {chapters.map((chapter) => {
             const isExpanded = expandedChapters.has(chapter.id);
 
@@ -286,7 +286,7 @@ export default function SubjectDetailPage() {
                 {/* Chapter title button */}
                 <button
                   onClick={() => toggleChapter(chapter.id)}
-                  className={`w-full flex items-center justify-between px-5 py-3 bg-foreground text-background text-base font-semibold hover:opacity-90 transition-opacity ${isExpanded ? 'rounded-t-lg' : 'rounded-lg'}`}
+                  className={`w-full flex items-center justify-between px-5 py-3 bg-foreground text-background text-base hover:opacity-90 transition-opacity ${isExpanded ? 'rounded-tr-lg' : 'rounded-r-lg'}`}
                 >
                   <span>{chapter.chapter_number}. {chapter.title}</span>
                   <div className="flex items-center gap-2">
@@ -312,7 +312,7 @@ export default function SubjectDetailPage() {
 
                 {/* Paragraphs - shown only when expanded */}
                 {isExpanded && (
-                  <div className="-mt-1 border-2 border-foreground rounded-b-lg overflow-hidden">
+                  <div className="-mt-1 border-2 border-foreground border-l-0 rounded-br-lg overflow-hidden">
                     {chapter.paragraphs && chapter.paragraphs.length > 0 ? (
                       <div>
                         {chapter.paragraphs.map((paragraph) => (
@@ -320,14 +320,28 @@ export default function SubjectDetailPage() {
                             key={paragraph.id}
                             href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
                             onClick={() => handleParagraphClick(chapter, paragraph)}
-                            className="block py-3 px-5 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0"
+                            className="flex items-center gap-3 py-3 px-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0"
                           >
-                            <span className="text-sm">{paragraph.title}</span>
+                            <span className="text-xs bg-muted px-1.5 py-0.5 rounded text-muted-foreground shrink-0 w-9 text-center">
+                              {chapter.chapter_number}.{paragraph.paragraph_number}
+                            </span>
+                            <span className="text-sm flex-1 truncate">{paragraph.title}</span>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-xs text-muted-foreground w-8 text-right">
+                                {paragraph.progress_percent || 0}%
+                              </span>
+                              <div className="w-14 h-1.5 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-foreground/30 rounded-full transition-all"
+                                  style={{ width: `${paragraph.progress_percent || 0}%` }}
+                                />
+                              </div>
+                            </div>
                           </Link>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground py-4 px-5 text-center">No paragraphs yet</p>
+                      <p className="text-xs text-muted-foreground py-4 px-4 text-center">No paragraphs yet</p>
                     )}
                   </div>
                 )}
