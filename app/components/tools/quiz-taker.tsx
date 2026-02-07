@@ -97,6 +97,34 @@ function FinalResults({ quiz, answers, onRestart, mode, timeTaken = 0, setSessio
             totalQuestions: totalQuestionsAnswered,
             timeTaken: timeTaken,
         });
+
+        // Persist quiz results to database
+        const saveQuizResult = async () => {
+            try {
+                await fetch('/api/activity', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        activity_type: 'quiz',
+                        score: scorePercentage,
+                        total_items: totalQuestionsAnswered,
+                        correct_items: correctCount,
+                        time_spent_seconds: timeTaken,
+                        metadata: {
+                            quiz_title: quiz.title,
+                            mode: mode,
+                            strikes: strikes,
+                            total_questions_in_quiz: totalQuestionsInQuiz,
+                        }
+                    })
+                });
+                console.log('Quiz result saved to database');
+            } catch (error) {
+                console.error('Failed to save quiz result:', error);
+            }
+        };
+        saveQuizResult();
+
         // Clear recap on unmount
         return () => setSessionRecap(null);
     }, [setSessionRecap, scorePercentage, correctCount, totalQuestionsAnswered, timeTaken]);

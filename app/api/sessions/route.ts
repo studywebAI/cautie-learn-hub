@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-// POST - Start a new session
+// POST - Start a new session or end a session (via sendBeacon)
 export async function POST(request: Request) {
   try {
     const cookieStore = cookies()
@@ -15,7 +15,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { paragraph_id, started_at } = await request.json()
+    const body = await request.json()
+
+    // If session_id is present, this is an end-session call (from sendBeacon)
+    if (body.session_id) {
+      const { data: session, error: updateError } = await supabase
+        .from('session_logs')
+        .update({
+          finished_at: body.finished_at || new Date().toISOString()
+        })
+        .eq('id', body.session_id)
+        .eq('student_id', user.id)
+        .select()
+        .single()
+
+      if (updateError) {
+        console.error('Error ending session via POST:', updateError)
+        return NextResponse.json({ error: 'Failed to end session' }, { status: 500 })
+      }
+
+      return NextResponse.json(session)
+    }
+
+    // Otherwise, start a new session
+    const { paragraph_id, started_at } = body
 
     // Verify access to paragraph
     const { data: paragraph, error: paraError } = await supabase

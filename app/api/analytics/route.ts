@@ -126,7 +126,7 @@ export async function GET(request: Request) {
       ? Math.round((completedAssignments / totalAssignments) * 100)
       : 0;
 
-    // Get quiz performance
+    // Get quiz performance from student_answers (assignment quizzes)
     const { data: quizAnswers, error: quizError } = await supabase
       .from('student_answers')
       .select('is_correct, score')
@@ -147,6 +147,48 @@ export async function GET(request: Request) {
         : 0;
     }
 
+    // Get activity logs (quiz, flashcard, etc.) from activity_logs table
+    const { data: activityLogs, error: activityError } = await (supabase as any)
+      .from('activity_logs')
+      .select('*')
+      .eq('student_id', userId)
+      .order('created_at', { ascending: false });
+
+    // Merge quiz performance from both assignment-based and solo quizzes
+    let soloQuizzes = { totalQuestions: 0, correctAnswers: 0, totalSessions: 0, totalTimeSeconds: 0 };
+    let flashcardStats = { totalSessions: 0, totalCardsReviewed: 0, totalTimeSeconds: 0 };
+
+    if (activityLogs && !activityError) {
+      activityLogs.forEach((log: any) => {
+        if (log.activity_type === 'quiz') {
+          soloQuizzes.totalQuestions += log.total_items || 0;
+          soloQuizzes.correctAnswers += log.correct_items || 0;
+          soloQuizzes.totalSessions++;
+          soloQuizzes.totalTimeSeconds += log.time_spent_seconds || 0;
+        } else if (log.activity_type === 'flashcard') {
+          flashcardStats.totalSessions++;
+          flashcardStats.totalCardsReviewed += log.total_items || 0;
+          flashcardStats.totalTimeSeconds += log.time_spent_seconds || 0;
+        }
+      });
+    }
+
+    // Combined quiz performance (assignments + solo quizzes)
+    const combinedQuizTotal = quizPerformance.totalQuestions + soloQuizzes.totalQuestions;
+    const combinedQuizCorrect = quizPerformance.correctAnswers + soloQuizzes.correctAnswers;
+    const combinedQuizScore = combinedQuizTotal > 0
+      ? Math.round((combinedQuizCorrect / combinedQuizTotal) * 100)
+      : 0;
+
+    quizPerformance = {
+      totalQuestions: combinedQuizTotal,
+      correctAnswers: combinedQuizCorrect,
+      averageScore: combinedQuizScore
+    };
+
+    // Add solo study time to total
+    const soloStudyTimeMinutes = Math.round((soloQuizzes.totalTimeSeconds + flashcardStats.totalTimeSeconds) / 60);
+
     // Generate recommendations based on data
     const recommendations: string[] = [];
 
@@ -154,7 +196,7 @@ export async function GET(request: Request) {
       recommendations.push("Focus on completing more material to improve your overall progress.");
     }
 
-    if (totalStudyTime < 300) { // Less than 5 hours/week
+    if ((totalStudyTime + soloStudyTimeMinutes) < 300) { // Less than 5 hours/week
       recommendations.push("Increase your study time to at least 5 hours per week for better retention.");
     }
 
@@ -166,6 +208,10 @@ export async function GET(request: Request) {
       recommendations.push("Review quiz questions you got wrong and focus on those topics.");
     }
 
+    if (flashcardStats.totalSessions > 0 && flashcardStats.totalCardsReviewed < 20) {
+      recommendations.push("Review more flashcards regularly to improve retention.");
+    }
+
     if (recommendations.length === 0) {
       recommendations.push("Great job! Keep up your current study habits.");
       recommendations.push("Consider challenging yourself with more advanced materials.");
@@ -173,13 +219,16 @@ export async function GET(request: Request) {
 
     const analytics = {
       weeklyStudyTime,
-      totalStudyTime,
+      totalStudyTime: totalStudyTime + soloStudyTimeMinutes,
       avgProgress,
       assignmentCompletionRate,
       completedAssignments,
       totalAssignments,
       quizPerformance,
+      soloQuizzes,
+      flashcardStats,
       recommendations,
+      recentActivities: (activityLogs || []).slice(0, 10),
       lastUpdated: new Date().toISOString()
     };
 
