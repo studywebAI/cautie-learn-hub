@@ -286,7 +286,7 @@ export default function SubjectDetailPage() {
                 {/* Chapter title button */}
                 <button
                   onClick={() => toggleChapter(chapter.id)}
-                  className="w-full flex items-center justify-between px-5 py-3 bg-foreground text-background rounded-lg text-base font-semibold hover:opacity-90 transition-opacity"
+                  className={`w-full flex items-center justify-between px-5 py-3 bg-foreground text-background text-base font-semibold hover:opacity-90 transition-opacity ${isExpanded ? 'rounded-t-lg' : 'rounded-lg'}`}
                 >
                   <span>{chapter.chapter_number}. {chapter.title}</span>
                   <div className="flex items-center gap-2">
@@ -312,48 +312,22 @@ export default function SubjectDetailPage() {
 
                 {/* Paragraphs - shown only when expanded */}
                 {isExpanded && (
-                  <div className="mt-1 border-2 border-foreground rounded-lg overflow-hidden">
+                  <div className="-mt-1 border-2 border-foreground rounded-b-lg overflow-hidden">
                     {chapter.paragraphs && chapter.paragraphs.length > 0 ? (
-                      <div className="divide-y divide-border">
-                        {chapter.paragraphs.slice(0, 10).map((paragraph) => (
+                      <div>
+                        {chapter.paragraphs.map((paragraph) => (
                           <Link
                             key={paragraph.id}
                             href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
                             onClick={() => handleParagraphClick(chapter, paragraph)}
-                            className="flex items-center gap-3 py-3 px-4 hover:bg-muted transition-colors"
+                            className="block py-3 px-5 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0"
                           >
-                            {/* Paragraph number */}
-                            <span className="text-xs bg-muted px-2 py-0.5 rounded text-muted-foreground shrink-0 w-10 text-center">
-                              {chapter.chapter_number}.{paragraph.paragraph_number}
-                            </span>
-                            
-                            {/* Title */}
-                            <span className="text-sm flex-1 truncate">
-                              {paragraph.title}
-                            </span>
-                            
-                            {/* Progress */}
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-xs text-muted-foreground w-8 text-right">
-                                {paragraph.progress_percent || 0}%
-                              </span>
-                              <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-primary rounded-full transition-all"
-                                  style={{ width: `${paragraph.progress_percent || 0}%` }}
-                                />
-                              </div>
-                            </div>
+                            <span className="text-sm">{paragraph.title}</span>
                           </Link>
                         ))}
-                        {chapter.paragraphs.length > 10 && (
-                          <p className="text-xs text-muted-foreground py-2 px-4">
-                            +{chapter.paragraphs.length - 10} more paragraphs
-                          </p>
-                        )}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground py-4 px-4 text-center">No paragraphs yet</p>
+                      <p className="text-xs text-muted-foreground py-4 px-5 text-center">No paragraphs yet</p>
                     )}
                   </div>
                 )}
