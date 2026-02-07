@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   // 1. Verify class exists with the join code
   const { data: classData, error: classError } = await supabase
     .from('classes')
-    .select('id, user_id, name, description')
+    .select('id, user_id, owner_id, name, description')
     .eq('join_code', class_code)
     .single();
   
@@ -54,7 +54,9 @@ export async function POST(request: Request) {
   }
 
   // 2. Check if user is the owner (can't join their own class as a student)
-  if (classData.user_id === user.id) {
+  // Check both owner_id and user_id since either could identify the owner
+  const isOwner = classData.user_id === user.id || (classData as any).owner_id === user.id;
+  if (isOwner) {
     return NextResponse.json({ error: 'You are the owner of this class and cannot join it as a student.' }, { status: 400 });
   }
 

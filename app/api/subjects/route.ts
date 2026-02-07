@@ -30,29 +30,97 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Fetch subjects for the current user with their linked classes
-    const { data, error } = await (supabase as any).from('subjects')
-      .select(`
-        *,
-        class_subjects(
-          classes:class_id(id, name)
-        )
-      `)
-      .eq('user_id', user.id)
+    // Get user role
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
 
-    if (error) {
-      return NextResponse.json({
-        error: `Supabase error fetching subjects: ${error.message}`
-      }, { status: 500 })
+    const isTeacher = profile?.role === 'teacher'
+
+    if (isTeacher) {
+      // Teachers: see subjects they own
+      const { data, error } = await (supabase as any).from('subjects')
+        .select(`
+          *,
+          class_subjects(
+            classes:class_id(id, name)
+          )
+        `)
+        .eq('user_id', user.id)
+
+      if (error) {
+        return NextResponse.json({
+          error: `Supabase error fetching subjects: ${error.message}`
+        }, { status: 500 })
+      }
+
+      const transformedData = (data as any[]).map(subject => ({
+        ...subject,
+        classes: subject.class_subjects ? subject.class_subjects.map((cs: any) => cs.classes).filter(Boolean) : []
+      }))
+
+      return NextResponse.json(transformedData || [])
+    } else {
+      // Students: see subjects linked to classes they are a member of
+      // Step 1: Get class IDs the student is a member of
+      const { data: memberships, error: memberError } = await supabase
+        .from('class_members')
+        .select('class_id')
+        .eq('user_id', user.id)
+
+      if (memberError) {
+        console.error('Error fetching memberships:', memberError)
+        return NextResponse.json({ error: memberError.message }, { status: 500 })
+      }
+
+      const classIds = (memberships || []).map((m: any) => m.class_id)
+
+      if (classIds.length === 0) {
+        return NextResponse.json([])
+      }
+
+      // Step 2: Get subject IDs linked to those classes via class_subjects
+      const { data: classSubjectLinks, error: csError } = await (supabase as any)
+        .from('class_subjects')
+        .select('subject_id')
+        .in('class_id', classIds)
+
+      if (csError) {
+        console.error('Error fetching class_subjects:', csError)
+        return NextResponse.json({ error: csError.message }, { status: 500 })
+      }
+
+      const subjectIds = [...new Set((classSubjectLinks || []).map((cs: any) => cs.subject_id))]
+
+      if (subjectIds.length === 0) {
+        return NextResponse.json([])
+      }
+
+      // Step 3: Fetch those subjects with their linked classes
+      const { data, error } = await (supabase as any).from('subjects')
+        .select(`
+          *,
+          class_subjects(
+            classes:class_id(id, name)
+          )
+        `)
+        .in('id', subjectIds)
+
+      if (error) {
+        return NextResponse.json({
+          error: `Supabase error fetching subjects: ${error.message}`
+        }, { status: 500 })
+      }
+
+      const transformedData = (data as any[]).map(subject => ({
+        ...subject,
+        classes: subject.class_subjects ? subject.class_subjects.map((cs: any) => cs.classes).filter(Boolean) : []
+      }))
+
+      return NextResponse.json(transformedData || [])
     }
-
-    // Transform data to include classes array instead of nested structure
-    const transformedData = (data as any[]).map(subject => ({
-      ...subject,
-      classes: subject.class_subjects ? subject.class_subjects.map((cs: any) => cs.classes) : []
-    }))
-
-    return NextResponse.json(transformedData || [])
   } catch (error) {
     console.error('Error fetching subjects:', error)
     return NextResponse.json({
