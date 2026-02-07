@@ -25,15 +25,19 @@ END $$;
 -- profiles: add email
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email text;
 
--- subjects: add description, updated_at
+-- subjects: add description, updated_at, class_id (legacy, nullable)
 ALTER TABLE public.subjects ADD COLUMN IF NOT EXISTS description text;
 ALTER TABLE public.subjects ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
+ALTER TABLE public.subjects ADD COLUMN IF NOT EXISTS class_id uuid REFERENCES public.classes(id) ON DELETE SET NULL;
 
--- Make subjects.class_id nullable (subjects are linked via class_subjects now)
-ALTER TABLE public.subjects ALTER COLUMN class_id DROP NOT NULL;
-
--- assignments: add is_visible
+-- assignments: add is_visible, class_id (if missing)
 ALTER TABLE public.assignments ADD COLUMN IF NOT EXISTS is_visible boolean DEFAULT true;
+ALTER TABLE public.assignments ADD COLUMN IF NOT EXISTS class_id uuid REFERENCES public.classes(id) ON DELETE CASCADE;
+ALTER TABLE public.assignments ADD COLUMN IF NOT EXISTS content json;
+ALTER TABLE public.assignments ADD COLUMN IF NOT EXISTS due_date timestamptz;
+ALTER TABLE public.assignments ADD COLUMN IF NOT EXISTS owner_type text DEFAULT 'user';
+ALTER TABLE public.assignments ADD COLUMN IF NOT EXISTS guest_id text;
+ALTER TABLE public.assignments ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL;
 
 -- notes: add title, user_id, guest_id, owner_type
 ALTER TABLE public.notes ADD COLUMN IF NOT EXISTS title text;
@@ -57,18 +61,33 @@ ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS status text DEFAULT '
 ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS completed_at timestamptz;
 ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS recurrence jsonb;
 
--- blocks: add material_id, chapter_id, order_index
+-- blocks: add material_id, chapter_id, order_index (safe, no FK constraint to avoid issues if referenced tables don't exist yet)
 ALTER TABLE public.blocks ADD COLUMN IF NOT EXISTS material_id uuid;
 ALTER TABLE public.blocks ADD COLUMN IF NOT EXISTS chapter_id uuid;
 ALTER TABLE public.blocks ADD COLUMN IF NOT EXISTS order_index integer DEFAULT 0;
 
--- materials: add content_id if missing
-ALTER TABLE public.materials ADD COLUMN IF NOT EXISTS content_id uuid;
+-- Make blocks.assignment_id nullable (blocks can belong to materials or chapters instead)
+DO $$ BEGIN
+  ALTER TABLE public.blocks ALTER COLUMN assignment_id DROP NOT NULL;
+EXCEPTION WHEN others THEN NULL;
+END $$;
 
 
 -- ============================================================
 -- 3. MISSING TABLES
 -- ============================================================
+
+-- materials: add content_id if missing
+ALTER TABLE public.materials ADD COLUMN IF NOT EXISTS content_id uuid;
+
+-- classes: add missing columns
+ALTER TABLE public.classes ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES auth.users(id);
+ALTER TABLE public.classes ADD COLUMN IF NOT EXISTS guest_id text;
+ALTER TABLE public.classes ADD COLUMN IF NOT EXISTS owner_type text DEFAULT 'user';
+ALTER TABLE public.classes ADD COLUMN IF NOT EXISTS status text;
+
+-- class_members: ensure ON DELETE CASCADE exists (safe re-add)
+-- Note: Can't easily alter FK constraints, but table creation already has them
 
 -- class_subjects (many-to-many join table) - CRITICAL for student subject visibility
 CREATE TABLE IF NOT EXISTS public.class_subjects (
