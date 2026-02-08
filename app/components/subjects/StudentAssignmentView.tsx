@@ -138,11 +138,13 @@ export function StudentAssignmentView({
 
         // Fetch blocks for this assignment
         const blocksResponse = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`);
-        if (!blocksResponse.ok) {
-          throw new Error('Failed to fetch assignment blocks');
+        let blocksData: Block[] = [];
+        if (blocksResponse.ok) {
+          blocksData = await blocksResponse.json();
+        } else {
+          console.warn('Blocks fetch returned non-OK status, using empty array');
         }
-        const blocksData = await blocksResponse.json();
-        const sortedBlocks = blocksData.sort((a: Block, b: Block) => a.position - b.position);
+        const sortedBlocks = (Array.isArray(blocksData) ? blocksData : []).sort((a: Block, b: Block) => a.position - b.position);
         setBlocks(sortedBlocks);
 
         // Fetch existing student answers

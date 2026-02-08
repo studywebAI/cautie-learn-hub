@@ -15,13 +15,13 @@ import {
 import {
   BookOpen,
   Home,
-  Settings,
   BrainCircuit,
   Copy,
   FileSignature,
   School,
   Calendar,
   Menu,
+  ArrowUpRight,
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useDictionary } from '@/contexts/app-context';
@@ -103,20 +103,15 @@ export function AppSidebar() {
             ))}
           </nav>
 
-          {/* Settings at bottom */}
+          {/* Upgrade at bottom */}
           <div className="px-2 mt-auto">
-            <Link
-              href="/settings"
-              className={cn(
-                "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
-                pathname === '/settings'
-                  ? "bg-primary text-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent"
-              )}
-              title={dictionary.sidebar.settings}
+            <button
+              className="flex items-center justify-center h-10 w-10 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent"
+              title="Upgrade"
+              onClick={() => {/* placeholder */}}
             >
-              <Settings className="h-5 w-5" />
-            </Link>
+              <ArrowUpRight className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
@@ -161,20 +156,6 @@ export function AppSidebar() {
             <RecentsSidebar />
             <div className="h-px bg-sidebar-border" />
             <SidebarProfile />
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  tooltip={dictionary.sidebar.settings}
-                  isActive={pathname === '/settings'}
-                >
-                  <Link href="/settings" onClick={() => setOpenMobile(false)}>
-                    <Settings className="h-5 w-5" />
-                    <span>{dictionary.sidebar.settings}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
       </>
@@ -226,20 +207,6 @@ export function AppSidebar() {
         <RecentsSidebar />
         <div className="h-px bg-sidebar-border" />
         <SidebarProfile />
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip={dictionary.sidebar.settings}
-              isActive={pathname === '/settings'}
-            >
-              <Link href="/settings">
-                <Settings className="h-5 w-5" />
-                <span>{dictionary.sidebar.settings}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );
