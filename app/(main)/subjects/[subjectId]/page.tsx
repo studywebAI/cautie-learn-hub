@@ -62,6 +62,7 @@ export default function SubjectDetailPage() {
   const [newParagraphTitle, setNewParagraphTitle] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
+  const [expandedParagraphs, setExpandedParagraphs] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
@@ -315,30 +316,55 @@ export default function SubjectDetailPage() {
                   <div className="-mt-1 border-2 border-foreground border-l-0 rounded-br-lg overflow-hidden">
                     {chapter.paragraphs && chapter.paragraphs.length > 0 ? (
                       <div>
-                        {chapter.paragraphs.map((paragraph) => (
-                          <Link
-                            key={paragraph.id}
-                            href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
-                            onClick={() => handleParagraphClick(chapter, paragraph)}
-                            className="flex items-center gap-3 py-3 px-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0"
-                          >
-                            <span className="text-xs bg-muted px-1.5 py-0.5 rounded text-muted-foreground shrink-0 w-9 text-center">
-                              {chapter.chapter_number}.{paragraph.paragraph_number}
-                            </span>
-                            <span className="text-sm flex-1 truncate">{paragraph.title}</span>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-xs text-muted-foreground w-8 text-right">
-                                {paragraph.progress_percent || 0}%
-                              </span>
-                              <div className="w-14 h-1.5 bg-muted rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-foreground/30 rounded-full transition-all"
-                                  style={{ width: `${paragraph.progress_percent || 0}%` }}
-                                />
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
+                        {(() => {
+                          const maxVisible = 10;
+                          const allParagraphs = chapter.paragraphs;
+                          const isFullyExpanded = expandedParagraphs.has(chapter.id);
+                          const visibleParagraphs = isFullyExpanded ? allParagraphs : allParagraphs.slice(0, maxVisible);
+                          const hasMore = allParagraphs.length > maxVisible && !isFullyExpanded;
+                          const remainingCount = allParagraphs.length - maxVisible;
+
+                          return (
+                            <>
+                              {visibleParagraphs.map((paragraph) => (
+                                <Link
+                                  key={paragraph.id}
+                                  href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
+                                  onClick={() => handleParagraphClick(chapter, paragraph)}
+                                  className="flex items-center gap-3 py-3 px-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0"
+                                >
+                                  <span className="text-xs bg-muted px-1.5 py-0.5 rounded text-muted-foreground shrink-0 w-9 text-center">
+                                    {chapter.chapter_number}.{paragraph.paragraph_number}
+                                  </span>
+                                  <span className="text-sm flex-1 truncate">{paragraph.title}</span>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-xs text-muted-foreground w-8 text-right">
+                                      {paragraph.progress_percent || 0}%
+                                    </span>
+                                    <div className="w-14 h-1.5 bg-muted rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full bg-foreground/30 rounded-full transition-all"
+                                        style={{ width: `${paragraph.progress_percent || 0}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                </Link>
+                              ))}
+                              {hasMore && (
+                                <button
+                                  onClick={() => setExpandedParagraphs(prev => {
+                                    const next = new Set(prev);
+                                    next.add(chapter.id);
+                                    return next;
+                                  })}
+                                  className="w-full py-3 px-4 text-sm text-muted-foreground hover:bg-muted/50 transition-colors border-t border-border flex items-center justify-center gap-1"
+                                >
+                                  <span>+{remainingCount} more paragraph{remainingCount > 1 ? 's' : ''}</span>
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     ) : (
                       <p className="text-xs text-muted-foreground py-4 px-4 text-center">No paragraphs yet</p>

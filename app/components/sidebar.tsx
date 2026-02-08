@@ -26,6 +26,7 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useDictionary } from '@/contexts/app-context';
 import { RecentsSidebar } from './recents-sidebar';
+import { SidebarProfile } from './sidebar-profile';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 
@@ -156,8 +157,10 @@ export function AppSidebar() {
               ))}
             </SidebarMenu>
           </SidebarContent>
-          <SidebarFooter className="p-3 flex flex-col gap-3">
+      <SidebarFooter className="p-3 flex flex-col gap-2">
             <RecentsSidebar />
+            <div className="h-px bg-sidebar-border" />
+            <SidebarProfile />
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -219,8 +222,10 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-3 flex flex-col gap-3">
+      <SidebarFooter className="p-3 flex flex-col gap-2">
         <RecentsSidebar />
+        <div className="h-px bg-sidebar-border" />
+        <SidebarProfile />
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

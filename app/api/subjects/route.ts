@@ -19,18 +19,124 @@ type SubjectDeleteRequest = {
   id: string
 }
 
+// Helper to get nearby paragraphs around last activity
+async function getSubjectParagraphContext(supabase: any, subjectIds: string[], userId: string) {
+  if (subjectIds.length === 0) return {}
+
+  // Get latest activity per subject
+  const { data: activities } = await supabase
+    .from('session_logs')
+    .select('subject_id, chapter_id, paragraph_id, started_at')
+    .eq('user_id', userId)
+    .in('subject_id', subjectIds)
+    .order('started_at', { ascending: false })
+
+  // Get the latest activity per subject
+  const latestPerSubject: Record<string, { chapter_id: string; paragraph_id: string }> = {}
+  for (const act of (activities || [])) {
+    if (!latestPerSubject[act.subject_id] && act.paragraph_id) {
+      latestPerSubject[act.subject_id] = {
+        chapter_id: act.chapter_id,
+        paragraph_id: act.paragraph_id
+      }
+    }
+  }
+
+  // Get all chapters and paragraphs for these subjects
+  const { data: chapters } = await supabase
+    .from('chapters')
+    .select('id, subject_id, chapter_number, title')
+    .in('subject_id', subjectIds)
+    .order('chapter_number', { ascending: true })
+
+  if (!chapters || chapters.length === 0) return {}
+
+  const chapterIds = chapters.map((c: any) => c.id)
+  const { data: paragraphs } = await supabase
+    .from('paragraphs')
+    .select('id, title, paragraph_number, chapter_id')
+    .in('chapter_id', chapterIds)
+    .order('paragraph_number', { ascending: true })
+
+  // Build a flattened list of paragraphs per subject with chapter context
+  const chapterMap: Record<string, any> = {}
+  for (const ch of chapters) {
+    chapterMap[ch.id] = ch
+  }
+
+  const subjectParagraphs: Record<string, any[]> = {}
+  for (const p of (paragraphs || [])) {
+    const ch = chapterMap[p.chapter_id]
+    if (!ch) continue
+    const subjectId = ch.subject_id
+    if (!subjectParagraphs[subjectId]) subjectParagraphs[subjectId] = []
+    subjectParagraphs[subjectId].push({
+      id: p.id,
+      title: p.title,
+      paragraph_number: p.paragraph_number,
+      chapter_id: p.chapter_id,
+      chapter_number: ch.chapter_number,
+      chapter_title: ch.title,
+    })
+  }
+
+  // For each subject, find the 3 paragraphs around the last activity
+  const result: Record<string, any> = {}
+
+  for (const subjectId of subjectIds) {
+    const allParagraphs = subjectParagraphs[subjectId] || []
+    if (allParagraphs.length === 0) {
+      result[subjectId] = { paragraphs: [], lastParagraphId: null }
+      continue
+    }
+
+    // Sort: by chapter_number, then paragraph_number
+    allParagraphs.sort((a: any, b: any) => {
+      if (a.chapter_number !== b.chapter_number) return a.chapter_number - b.chapter_number
+      return a.paragraph_number - b.paragraph_number
+    })
+
+    const lastActivity = latestPerSubject[subjectId]
+    let centerIndex = 0
+
+    if (lastActivity) {
+      const idx = allParagraphs.findIndex((p: any) => p.id === lastActivity.paragraph_id)
+      if (idx !== -1) centerIndex = idx
+    }
+
+    // Get 3 paragraphs: center and surrounding
+    let startIdx: number
+    if (allParagraphs.length <= 3) {
+      startIdx = 0
+    } else if (centerIndex === 0) {
+      startIdx = 0
+    } else if (centerIndex >= allParagraphs.length - 1) {
+      startIdx = allParagraphs.length - 3
+    } else {
+      startIdx = centerIndex - 1
+    }
+
+    const selectedParagraphs = allParagraphs.slice(startIdx, startIdx + 3)
+
+    result[subjectId] = {
+      paragraphs: selectedParagraphs,
+      lastParagraphId: lastActivity?.paragraph_id || null
+    }
+  }
+
+  return result
+}
+
 export async function GET(req: Request) {
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
-    // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user role
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
@@ -39,8 +145,9 @@ export async function GET(req: Request) {
 
     const isTeacher = profile?.role === 'teacher'
 
+    let subjects: any[] = []
+
     if (isTeacher) {
-      // Teachers: see subjects they own
       const { data, error } = await (supabase as any).from('subjects')
         .select(`
           *,
@@ -56,22 +163,17 @@ export async function GET(req: Request) {
         }, { status: 500 })
       }
 
-      const transformedData = (data as any[]).map(subject => ({
+      subjects = (data as any[]).map(subject => ({
         ...subject,
         classes: subject.class_subjects ? subject.class_subjects.map((cs: any) => cs.classes).filter(Boolean) : []
       }))
-
-      return NextResponse.json(transformedData || [])
     } else {
-      // Students: see subjects linked to classes they are a member of
-      // Step 1: Get class IDs the student is a member of
       const { data: memberships, error: memberError } = await supabase
         .from('class_members')
         .select('class_id')
         .eq('user_id', user.id)
 
       if (memberError) {
-        console.error('Error fetching memberships:', memberError)
         return NextResponse.json({ error: memberError.message }, { status: 500 })
       }
 
@@ -81,14 +183,12 @@ export async function GET(req: Request) {
         return NextResponse.json([])
       }
 
-      // Step 2: Get subject IDs linked to those classes via class_subjects
       const { data: classSubjectLinks, error: csError } = await (supabase as any)
         .from('class_subjects')
         .select('subject_id')
         .in('class_id', classIds)
 
       if (csError) {
-        console.error('Error fetching class_subjects:', csError)
         return NextResponse.json({ error: csError.message }, { status: 500 })
       }
 
@@ -98,7 +198,6 @@ export async function GET(req: Request) {
         return NextResponse.json([])
       }
 
-      // Step 3: Fetch those subjects with their linked classes
       const { data, error } = await (supabase as any).from('subjects')
         .select(`
           *,
@@ -114,13 +213,22 @@ export async function GET(req: Request) {
         }, { status: 500 })
       }
 
-      const transformedData = (data as any[]).map(subject => ({
+      subjects = (data as any[]).map(subject => ({
         ...subject,
         classes: subject.class_subjects ? subject.class_subjects.map((cs: any) => cs.classes).filter(Boolean) : []
       }))
-
-      return NextResponse.json(transformedData || [])
     }
+
+    // Enrich subjects with paragraph context
+    const subjectIds = subjects.map((s: any) => s.id)
+    const paragraphContext = await getSubjectParagraphContext(supabase, subjectIds, user.id)
+
+    const enrichedSubjects = subjects.map((subject: any) => ({
+      ...subject,
+      paragraphContext: paragraphContext[subject.id] || { paragraphs: [], lastParagraphId: null }
+    }))
+
+    return NextResponse.json(enrichedSubjects)
   } catch (error) {
     console.error('Error fetching subjects:', error)
     return NextResponse.json({
