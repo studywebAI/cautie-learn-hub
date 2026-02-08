@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useSessionTracking } from '@/lib/hooks/useSessionTracking';
 import {
   Dialog,
   DialogContent,
@@ -76,6 +77,9 @@ export default function ParagraphDetailPage() {
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
+
+  // Auto-track study session for students
+  useSessionTracking(paragraphId, !isTeacher);
 
   // Get adjacent paragraphs
   const currentIndex = allParagraphs.findIndex(p => p.id === paragraphId);

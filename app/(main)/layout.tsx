@@ -13,7 +13,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <AppSidebar />
             <SidebarInset className={`bg-background h-screen ${isMobile ? 'ml-14' : ''} relative`}>
                 <TopBar />
-                <div className="h-full overflow-auto p-2">
+                <div className="h-full overflow-auto pt-1 pl-1">
                     {children}
                 </div>
             </SidebarInset>

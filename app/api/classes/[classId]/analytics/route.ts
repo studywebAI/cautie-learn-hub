@@ -97,7 +97,7 @@ async function calculateEngagementMetrics(
 ): Promise<EngagementMetrics> {
   const weekStart = startOfWeek(new Date())
 
-  // Average study time for the last week
+  // Average study time for the last week (from session_logs)
   let totalStudyTime = 0
   let activeStudents = new Set<string>()
 
@@ -117,6 +117,22 @@ async function calculateEngagementMetrics(
         }
       })
     }
+
+    // Also add solo study time from activity_logs
+    const { data: activityLogs } = await supabase
+      .from('activity_logs')
+      .select('time_spent_seconds, activity_type')
+      .eq('student_id', studentId)
+      .gte('created_at', weekStart.toISOString())
+
+    if (activityLogs) {
+      activityLogs.forEach((log: any) => {
+        if (log.time_spent_seconds) {
+          totalStudyTime += Math.round(log.time_spent_seconds / 60)
+          activeStudents.add(studentId)
+        }
+      })
+    }
   }
 
   const averageStudyTime = studentIds.length > 0 ? totalStudyTime / studentIds.length : 0
@@ -130,13 +146,22 @@ async function calculateEngagementMetrics(
   const participatingStudents = new Set(submissions?.map((s: any) => s.user_id) || [])
   const assignmentParticipation = studentIds.length > 0 ? (participatingStudents.size / studentIds.length) * 100 : 0
 
-  // Quiz participation
+  // Quiz participation (from both student_answers and activity_logs)
   const { data: quizAnswers } = await supabase
     .from('student_answers')
     .select('student_id')
     .in('student_id', studentIds)
 
   const quizParticipatingStudents = new Set(quizAnswers?.map((a: any) => a.student_id) || [])
+
+  // Also check activity_logs for solo quiz participation
+  const { data: soloQuizLogs } = await supabase
+    .from('activity_logs')
+    .select('student_id')
+    .eq('activity_type', 'quiz')
+    .in('student_id', studentIds)
+
+  soloQuizLogs?.forEach((log: any) => quizParticipatingStudents.add(log.student_id))
   const quizParticipation = studentIds.length > 0 ? (quizParticipatingStudents.size / studentIds.length) * 100 : 0
 
   // Attendance rate (simplified - based on recent activity)

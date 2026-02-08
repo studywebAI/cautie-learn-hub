@@ -15,7 +15,7 @@ export async function GET(
   const classId = resolvedParams.classId;
   const cookieStore = await cookies()
   // No need for admin client here, public info is fine
-  const supabase = createServerClient<Database>(
+  const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -89,7 +89,7 @@ export async function DELETE(
   const classId = resolvedParams.classId;
   const cookieStore = await cookies()
 
-  const supabase = createServerClient<Database>(
+  const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {

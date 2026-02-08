@@ -11,99 +11,109 @@ export async function GET(
   const resolvedParams = await params;
   const subjectId = resolvedParams.subjectId;
 
-  console.log(`🔍 DETAIL API: GET /api/subjects/${subjectId}`);
-  console.log(`🔍 Params resolved:`, resolvedParams);
-  console.log(`🔍 SubjectId type:`, typeof subjectId);
-  console.log(`🔍 SubjectId length:`, subjectId?.length);
-
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
-    // First check if this subject ID exists at all
-    const { data: allSubjects, error: listError } = await supabase
-      .from('subjects')
-      .select('id, title')
-      .limit(10);
-
-    console.log(`🔍 All subjects in DB (first 10):`, allSubjects);
-    console.log(`🔍 Looking for ID: "${subjectId}"`);
-
-    // Check exact match
-    const exactMatch = allSubjects?.find(s => s.id === subjectId);
-    console.log(`🔍 Exact match found:`, exactMatch);
-
-    // Check case-insensitive match
-    const caseInsensitiveMatch = allSubjects?.find(s => s.id?.toLowerCase() === subjectId?.toLowerCase());
-    console.log(`🔍 Case-insensitive match:`, caseInsensitiveMatch);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    // Verify user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.log('Subject detail - auth failed:', authError?.message);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user role
+    // Get user role from profile
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .maybeSingle();
 
-    const userRole = profile?.role || 'student';
-    const isTeacher = userRole === 'teacher';
+    const isTeacher = profile?.role === 'teacher';
 
-    // First fetch the subject to check access
-    const { data: subject, error: fetchError } = await supabase
-      .from('subjects')
-      .select('*')
-      .eq('id', subjectId)
-      .single();
+    if (isTeacher) {
+      // Teachers: fetch subject they own
+      // Mirrors dashboard: supabase.from('subjects').select(...).eq('user_id', user.id)
+      const { data: subject, error: fetchError } = await (supabase as any)
+        .from('subjects')
+        .select('*')
+        .eq('id', subjectId)
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-    if (fetchError || !subject) {
-      console.log(`❌ Subject not found:`, fetchError);
-      return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
-    }
-
-    // Check access
-    let hasAccess = false;
-    
-    if (subject.class_id) {
-      if (isTeacher) {
-        // Check if teacher owns the class that contains this subject
-        const { data: classData } = await supabase
-          .from('classes')
-          .select('owner_id')
-          .eq('id', subject.class_id)
-          .maybeSingle();
-        hasAccess = classData?.owner_id === user.id;
-      } else {
-        // Check if student is member of the class
-        const { data: membership } = await supabase
-          .from('class_members')
-          .select('role')
-          .eq('class_id', subject.class_id)
-          .eq('user_id', user.id)
-          .maybeSingle();
-        hasAccess = !!membership;
+      if (fetchError) {
+        console.log('Teacher subject fetch error:', fetchError.message);
+        return NextResponse.json({ error: 'Failed to fetch subject' }, { status: 500 });
       }
+
+      if (!subject) {
+        console.log('Teacher does not own subject:', subjectId);
+        return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
+      }
+
+      return NextResponse.json(subject);
+
     } else {
-      // If subject has no class_id, check if it belongs to the current user
-      hasAccess = subject.user_id === user.id;
-    }
+      // Students: verify access through class_members → class_subjects → subjects
+      // This mirrors EXACTLY what the working dashboard API does
 
-    if (!hasAccess) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
+      // Step 1: Get class IDs the student is a member of
+      const { data: memberships, error: memberError } = await supabase
+        .from('class_members')
+        .select('class_id')
+        .eq('user_id', user.id);
 
-    console.log(`✅ Subject found and access granted:`, subject);
-    return NextResponse.json(subject);
+      if (memberError) {
+        console.log('Student memberships fetch error:', memberError.message);
+        return NextResponse.json({ error: 'Failed to verify access' }, { status: 500 });
+      }
+
+      const classIds = (memberships || []).map((m: any) => m.class_id);
+
+      if (classIds.length === 0) {
+        console.log('Student has no class memberships:', user.id);
+        return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
+      }
+
+      // Step 2: Get subject IDs linked to those classes
+      const { data: classSubjectLinks, error: csError } = await (supabase as any)
+        .from('class_subjects')
+        .select('subject_id')
+        .in('class_id', classIds);
+
+      if (csError) {
+        console.log('Class subjects fetch error:', csError.message);
+        return NextResponse.json({ error: 'Failed to verify access' }, { status: 500 });
+      }
+
+      const allowedSubjectIds = [...new Set((classSubjectLinks || []).map((cs: any) => cs.subject_id))];
+
+      if (!allowedSubjectIds.includes(subjectId)) {
+        console.log('Student does not have access to subject:', subjectId, 'allowed:', allowedSubjectIds);
+        return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
+      }
+
+      // Step 3: Fetch the subject - using same pattern as dashboard
+      const { data: subjectsData, error: subjectError } = await (supabase as any)
+        .from('subjects')
+        .select('*')
+        .in('id', [subjectId]);
+
+      if (subjectError) {
+        console.log('Student subject fetch error:', subjectError.message);
+        return NextResponse.json({ error: 'Failed to fetch subject' }, { status: 500 });
+      }
+
+      if (!subjectsData || subjectsData.length === 0) {
+        console.log('Subject not found in database:', subjectId);
+        return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
+      }
+
+      return NextResponse.json(subjectsData[0]);
+    }
 
   } catch (err) {
-    console.error(`💥 Unexpected error:`, err);
-    return NextResponse.json({
-      error: 'Internal server error',
-      subjectId: subjectId,
-      errorMessage: err instanceof Error ? err.message : String(err)
-    }, { status: 500 });
+    console.error('Subject detail - unexpected error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

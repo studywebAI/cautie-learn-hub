@@ -17,6 +17,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import Link from 'next/link';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 type Paragraph = {
   id: string;
@@ -48,18 +49,6 @@ type LastActivity = {
   paragraphTitle: string;
 };
 
-// Placeholder cover with emojis
-function ChapterCover({ chapterNumber }: { chapterNumber: number }) {
-  return (
-    <div className="w-20 h-20 bg-muted rounded flex items-center justify-center relative shrink-0">
-      <span className="text-2xl">📚</span>
-      <div className="absolute -top-1 -left-1 bg-foreground text-background rounded w-6 h-6 flex items-center justify-center text-xs">
-        {chapterNumber}
-      </div>
-    </div>
-  );
-}
-
 export default function SubjectDetailPage() {
   const params = useParams();
   const subjectId = params.subjectId as string;
@@ -72,9 +61,22 @@ export default function SubjectDetailPage() {
   const [newChapterTitle, setNewChapterTitle] = useState('');
   const [newParagraphTitle, setNewParagraphTitle] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
+
+  const toggleChapter = (chapterId: string) => {
+    setExpandedChapters(prev => {
+      const next = new Set(prev);
+      if (next.has(chapterId)) {
+        next.delete(chapterId);
+      } else {
+        next.add(chapterId);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const fetchSubjectData = async () => {
@@ -235,7 +237,7 @@ export default function SubjectDetailPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Last activity banner */}
       {lastActivity && (
         <Link
@@ -275,83 +277,77 @@ export default function SubjectDetailPage() {
           )}
         </div>
       ) : (
-        <div className="space-y-4">
-          {chapters.map((chapter) => (
-            <Card key={chapter.id}>
-              <CardContent className="p-4">
-                <div className="flex gap-4">
-                  {/* Chapter cover with number */}
-                  <ChapterCover chapterNumber={chapter.chapter_number} />
-                  
-                  {/* Right side - title and paragraphs */}
-                  <div className="flex-1 min-w-0">
-                    {/* Chapter title */}
-                    <div className="flex justify-between items-start mb-3">
-                      <h2 className="text-sm">{chapter.title}</h2>
-                      {isTeacher && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => {
-                            setSelectedChapterId(chapter.id);
-                            setIsCreateParagraphOpen(true);
-                          }}
-                        >
-                          + Paragraph
-                        </Button>
-                      )}
-                    </div>
-                    
-                    {/* Paragraphs list */}
-                    <div className="space-y-1">
-                      {chapter.paragraphs && chapter.paragraphs.length > 0 ? (
-                        <>
-                          {chapter.paragraphs.slice(0, 10).map((paragraph) => (
-                            <Link
-                              key={paragraph.id}
-                              href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
-                              onClick={() => handleParagraphClick(chapter, paragraph)}
-                              className="flex items-center gap-2 py-1.5 px-2 -mx-2 rounded hover:bg-muted transition-colors cursor-pointer"
-                            >
-                              {/* Paragraph number */}
-                              <span className="text-xs bg-muted px-1.5 py-0.5 rounded text-muted-foreground shrink-0 w-10 text-center">
-                                {chapter.chapter_number}.{paragraph.paragraph_number}
-                              </span>
-                              
-                              {/* Title */}
-                              <span className="text-sm flex-1 truncate">
-                                {paragraph.title}
-                              </span>
-                              
-                              {/* Progress */}
-                              <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-xs text-muted-foreground w-8 text-right">
-                                  {paragraph.progress_percent || 0}%
-                                </span>
-                                <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full bg-primary rounded-full transition-all"
-                                    style={{ width: `${paragraph.progress_percent || 0}%` }}
-                                  />
-                                </div>
-                              </div>
-                            </Link>
-                          ))}
-                          {chapter.paragraphs.length > 10 && (
-                            <p className="text-xs text-muted-foreground py-1">
-                              +{chapter.paragraphs.length - 10} more paragraphs
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <p className="text-xs text-muted-foreground py-2">No paragraphs yet</p>
-                      )}
-                    </div>
+        <div className="space-y-0">
+          {chapters.map((chapter) => {
+            const isExpanded = expandedChapters.has(chapter.id);
+
+            return (
+              <div key={chapter.id}>
+                {/* Chapter title button */}
+                <button
+                  onClick={() => toggleChapter(chapter.id)}
+                  className={`w-full flex items-center justify-between px-5 py-3 bg-foreground text-background text-base hover:opacity-90 transition-opacity ${isExpanded ? 'rounded-tr-lg' : 'rounded-r-lg'}`}
+                >
+                  <span>{chapter.chapter_number}. {chapter.title}</span>
+                  <div className="flex items-center gap-2">
+                    {isTeacher && (
+                      <span
+                        className="text-xs opacity-70 hover:opacity-100"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedChapterId(chapter.id);
+                          setIsCreateParagraphOpen(true);
+                        }}
+                      >
+                        + Paragraph
+                      </span>
+                    )}
+                    {isExpanded ? (
+                      <ChevronDown className="h-5 w-5" />
+                    ) : (
+                      <ChevronRight className="h-5 w-5" />
+                    )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </button>
+
+                {/* Paragraphs - shown only when expanded */}
+                {isExpanded && (
+                  <div className="-mt-1 border-2 border-foreground border-l-0 rounded-br-lg overflow-hidden">
+                    {chapter.paragraphs && chapter.paragraphs.length > 0 ? (
+                      <div>
+                        {chapter.paragraphs.map((paragraph) => (
+                          <Link
+                            key={paragraph.id}
+                            href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
+                            onClick={() => handleParagraphClick(chapter, paragraph)}
+                            className="flex items-center gap-3 py-3 px-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0"
+                          >
+                            <span className="text-xs bg-muted px-1.5 py-0.5 rounded text-muted-foreground shrink-0 w-9 text-center">
+                              {chapter.chapter_number}.{paragraph.paragraph_number}
+                            </span>
+                            <span className="text-sm flex-1 truncate">{paragraph.title}</span>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-xs text-muted-foreground w-8 text-right">
+                                {paragraph.progress_percent || 0}%
+                              </span>
+                              <div className="w-14 h-1.5 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-foreground/30 rounded-full transition-all"
+                                  style={{ width: `${paragraph.progress_percent || 0}%` }}
+                                />
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground py-4 px-4 text-center">No paragraphs yet</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

@@ -12,25 +12,33 @@ export async function GET(
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
-
     const resolvedParams = await params;
 
-    const { data: paragraph, error } = await supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data: paragraph, error } = await (supabase as any)
       .from('paragraphs')
       .select('*')
       .eq('id', resolvedParams.paragraphId)
       .eq('chapter_id', resolvedParams.chapterId)
-      .single()
+      .maybeSingle();
 
     if (error) {
-      console.log(`Paragraph fetch error:`, error);
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.log('Paragraph fetch error:', error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(paragraph)
+    if (!paragraph) {
+      return NextResponse.json({ error: 'Paragraph not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(paragraph);
 
   } catch (err) {
-    console.error(`Unexpected error:`, err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Paragraph GET error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

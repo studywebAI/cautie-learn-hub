@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { type Flashcard } from '@/lib/types';
@@ -68,10 +68,49 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
   const [isAnswered, setIsAnswered] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [isExplanationLoading, setIsExplanationLoading] = useState(false);
+  const [cardsReviewed, setCardsReviewed] = useState<Set<number>>(new Set());
+  const [correctCards, setCorrectCards] = useState(0);
+  const startTimeRef = React.useRef(Date.now());
   const { toast } = useToast();
 
+  // Track card as reviewed when moving forward
+  const markCurrentReviewed = useCallback(() => {
+    setCardsReviewed(prev => new Set(prev).add(currentIndex));
+  }, [currentIndex]);
+
+  // Save flashcard session to database
+  const saveFlashcardProgress = useCallback(async () => {
+    const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
+    try {
+      await fetch('/api/activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          activity_type: 'flashcard',
+          score: cards.length > 0 ? Math.round((cardsReviewed.size / cards.length) * 100) : 0,
+          total_items: cards.length,
+          correct_items: correctCards,
+          time_spent_seconds: timeSpent,
+          metadata: {
+            mode,
+            cards_reviewed: cardsReviewed.size,
+          }
+        })
+      });
+      console.log('Flashcard session saved to database');
+    } catch (error) {
+      console.error('Failed to save flashcard session:', error);
+    }
+  }, [cards.length, cardsReviewed.size, correctCards, mode]);
+
   const handleNext = () => {
-    if (currentIndex === cards.length - 1) return;
+    if (currentIndex === cards.length - 1) {
+      // Last card - save progress
+      markCurrentReviewed();
+      saveFlashcardProgress();
+      return;
+    }
+    markCurrentReviewed();
     setDirection(1);
     setIsFlipped(false);
     setIsAnswered(false);
@@ -171,14 +210,21 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
     }
   }
 
+  const handleCardAnswered = useCallback((isCorrect?: boolean) => {
+    setIsAnswered(true);
+    if (isCorrect) {
+      setCorrectCards(prev => prev + 1);
+    }
+  }, []);
+
   const renderCardContent = () => {
     switch(mode) {
         case 'flip':
             return <FlipView card={card} isFlipped={isFlipped} setIsFlipped={setIsFlipped} />;
         case 'type':
-            return <TypeView card={card} onAnswered={() => setIsAnswered(true)} />;
+            return <TypeView card={card} onAnswered={() => handleCardAnswered(true)} />;
         case 'multiple-choice':
-            return <MultipleChoiceView card={card} onAnswered={() => setIsAnswered(true)} />;
+            return <MultipleChoiceView card={card} onAnswered={() => handleCardAnswered(true)} />;
         default:
             return null;
     }
@@ -239,7 +285,7 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
         )}
       </CardContent>
       <CardFooter className="justify-between">
-        <Button variant="ghost" onClick={onRestart}>
+        <Button variant="ghost" onClick={() => { saveFlashcardProgress(); onRestart(); }}>
           <RefreshCw className="mr-2 h-4 w-4" />
           Start Over
         </Button>
