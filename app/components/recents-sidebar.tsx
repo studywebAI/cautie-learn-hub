@@ -1,50 +1,52 @@
 'use client';
 
 import { useState, useEffect, useContext } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   BrainCircuit,
   Copy,
   FileSignature,
+  BookOpen,
   Clock
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { useSidebar } from '@/components/ui/sidebar';
 
-type RecentMaterial = {
+type RecentItem = {
   id: string;
   title: string | null;
   type: string;
   updated_at: string;
 };
 
-const TYPE_ICONS = {
+const TYPE_ICONS: Record<string, typeof BrainCircuit> = {
   flashcards: Copy,
   notes: FileSignature,
   quiz: BrainCircuit,
   mindmap: BrainCircuit,
   wordweb: BrainCircuit,
   timeline: FileSignature,
+  subject: BookOpen,
+  assignment: FileSignature,
 };
 
-const TYPE_LABELS = {
+const TYPE_LABELS: Record<string, string> = {
   flashcards: 'Flashcards',
   notes: 'Notes',
   quiz: 'Quiz',
   mindmap: 'Mind Map',
   wordweb: 'Word Web',
   timeline: 'Timeline',
+  subject: 'Subject',
+  assignment: 'Assignment',
 };
 
 export function RecentsSidebar() {
   const { session } = useContext(AppContext) as AppContextType;
-  const [recents, setRecents] = useState<RecentMaterial[]>([]);
+  const [recents, setRecents] = useState<RecentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { state } = useSidebar();
   
-  // Hide completely when sidebar is collapsed
   const isCollapsed = state === 'collapsed';
 
   useEffect(() => {
@@ -65,87 +67,67 @@ export function RecentsSidebar() {
     }
   }, [session]);
 
-  // Don't render anything when collapsed
-  if (isCollapsed) {
-    return null;
-  }
+  if (isCollapsed) return null;
 
   if (isLoading) {
     return (
-      <Card className="w-full">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xs font-medium flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            Recents
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1">
+      <div className="px-2">
+        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-2 px-1">
+          <Clock className="h-3 w-3" />
+          Recents
+        </p>
+        <div className="space-y-1">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="h-3 bg-muted rounded w-3/4 mb-1"></div>
-              <div className="h-2 bg-muted rounded w-1/2"></div>
-            </div>
+            <div key={i} className="animate-pulse h-6 bg-muted rounded" />
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   if (recents.length === 0) {
     return (
-      <Card className="w-full">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xs font-medium flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            Recents
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground text-center py-2">
-            No recent materials
-          </p>
-        </CardContent>
-      </Card>
+      <div className="px-2">
+        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-2 px-1">
+          <Clock className="h-3 w-3" />
+          Recents
+        </p>
+        <p className="text-xs text-muted-foreground text-center py-2 bg-muted/30 rounded border border-border">
+          No recent activity
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xs font-medium flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          Recents
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-1">
+    <div className="px-2">
+      <p className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-2 px-1">
+        <Clock className="h-3 w-3" />
+        Recents
+      </p>
+      <div className="rounded border border-border bg-muted/20 divide-y divide-border">
         {recents.map((item) => {
-          const Icon = TYPE_ICONS[item.type as keyof typeof TYPE_ICONS] || FileSignature;
-          const typeLabel = TYPE_LABELS[item.type as keyof typeof TYPE_LABELS] || item.type;
+          const Icon = TYPE_ICONS[item.type] || FileSignature;
+          const typeLabel = TYPE_LABELS[item.type] || item.type;
+          const dateStr = format(new Date(item.updated_at), 'MMM d');
 
           return (
             <div
               key={item.id}
-              className="flex items-center gap-2 p-1.5 rounded-md border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-accent/50 transition-colors cursor-pointer"
               onClick={() => window.location.href = `/material/${item.id}`}
             >
-              <Icon className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate" title={item.title || 'Untitled'}>
-                  {item.title || 'Untitled'}
-                </p>
-                <div className="flex items-center gap-1">
-                  <Badge variant="outline" className="text-xs px-1 py-0 h-4">
-                    {typeLabel}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
-                  </span>
-                </div>
-              </div>
+              <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
+              <span className="text-xs flex-1 truncate">
+                {typeLabel}
+              </span>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {dateStr}
+              </span>
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

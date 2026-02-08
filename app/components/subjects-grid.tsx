@@ -17,74 +17,22 @@ import {
 import { InputWithTypingPlaceholder } from '@/components/ui/input-with-typing-placeholder';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-
-type RecentParagraph = {
-  id: string;
-  chapterNumber: number;
-  paragraphNumber: number;
-  title: string;
-  progress: number;
-};
-
-type LinkedClass = {
-  id: string;
-  name: string;
-};
-
-type Subject = {
-  id: string;
-  title: string;
-  class_label?: string;
-  cover_image_url?: string;
-  recentParagraphs?: RecentParagraph[];
-  classes?: LinkedClass[];
-};
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { SubjectCard } from './subject-card';
 
 type SubjectsGridProps = {
   classId?: string;
   isTeacher?: boolean;
 };
 
-// Simple placeholder icons using emojis in a scattered pattern
-function PlaceholderCover({ title }: { title: string }) {
-  // Generate deterministic emojis based on title
-  const getEmojis = (str: string) => {
-    const educationEmojis = ['📚', '📖', '✏️', '📝', '🎓', '💡', '🔬', '🌍', '📐', '🧮', '🎨', '🎵', '⚽', '🏛️', '🔢'];
-    const hash = str.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const selected = [];
-    for (let i = 0; i < 5; i++) {
-      selected.push(educationEmojis[(hash + i * 7) % educationEmojis.length]);
-    }
-    return selected;
-  };
-
-  const emojis = getEmojis(title);
-  
-  return (
-    <div className="w-full h-full bg-muted flex items-center justify-center relative overflow-hidden">
-      {/* Scattered emoji pattern */}
-      <div className="absolute inset-0 flex flex-wrap items-center justify-center gap-6 p-4 opacity-60">
-        {emojis.map((emoji, i) => (
-          <span 
-            key={i} 
-            className="text-3xl"
-            style={{
-              transform: `rotate(${(i * 15) - 30}deg)`,
-            }}
-          >
-            {emoji}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) {
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newSubjectTitle, setNewSubjectTitle] = useState('');
+  const [newSubjectDescription, setNewSubjectDescription] = useState('');
+  const [autoIcons, setAutoIcons] = useState(true);
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
@@ -132,8 +80,18 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
     try {
       const apiUrl = classId ? `/api/classes/${classId}/subjects` : '/api/subjects';
       const requestBody = classId
-        ? { title: newSubjectTitle, class_label: newSubjectTitle, cover_type: 'ai_icons' }
-        : { title: newSubjectTitle, classIds: selectedClassIds.length > 0 ? selectedClassIds : null, cover_type: 'ai_icons' };
+        ? {
+            title: newSubjectTitle,
+            description: newSubjectDescription || undefined,
+            class_label: newSubjectTitle,
+            cover_type: autoIcons ? 'ai_icons' : 'custom',
+          }
+        : {
+            title: newSubjectTitle,
+            description: newSubjectDescription || undefined,
+            classIds: selectedClassIds.length > 0 ? selectedClassIds : null,
+            cover_type: autoIcons ? 'ai_icons' : 'custom',
+          };
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -148,6 +106,8 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
       fetchSubjects();
       setNewSubjectTitle('');
+      setNewSubjectDescription('');
+      setAutoIcons(true);
       setSelectedClassIds([]);
       setIsCreateOpen(false);
 
@@ -189,7 +149,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
       <div className="space-y-6">
         {isTeacher && (
           <div className="flex justify-end">
-            <Button onClick={() => setIsCreateOpen(true)} size="sm">
+            <Button onClick={() => setIsCreateOpen(true)} size="sm" className="rounded-full">
               + Create Subject
             </Button>
           </div>
@@ -199,7 +159,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
           <div className="text-center py-16 text-muted-foreground">
             <p className="text-sm mb-4">No subjects yet</p>
             {isTeacher && (
-              <Button onClick={() => setIsCreateOpen(true)} size="sm">
+              <Button onClick={() => setIsCreateOpen(true)} size="sm" className="rounded-full">
                 Create First Subject
               </Button>
             )}
@@ -207,72 +167,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {subjects.map((subject) => (
-              <Link key={subject.id} href={`/subjects/${subject.id}`}>
-                <Card className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer h-full">
-                  <CardContent className="p-0">
-                    {/* Top half - Cover image or placeholder */}
-                    <div className="aspect-[4/3] relative">
-                      {subject.cover_image_url ? (
-                        <img
-                          src={subject.cover_image_url}
-                          alt={subject.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <PlaceholderCover title={subject.title} />
-                      )}
-                      
-                      {/* Title overlay - top left */}
-                      <div className="absolute top-3 left-3">
-                        <p className="text-sm text-foreground bg-background/80 px-2 py-1 rounded">
-                          {subject.title}
-                        </p>
-                      </div>
-                      
-                      {/* Linked classes - bottom left */}
-                      {subject.classes && subject.classes.length > 0 && (
-                        <div className="absolute bottom-3 left-3 flex flex-wrap gap-1">
-                          {subject.classes.slice(0, 2).map((cls) => (
-                            <span key={cls.id} className="text-xs text-muted-foreground bg-background/80 px-2 py-0.5 rounded">
-                              {cls.name}
-                            </span>
-                          ))}
-                          {subject.classes.length > 2 && (
-                            <span className="text-xs text-muted-foreground bg-background/80 px-2 py-0.5 rounded">
-                              +{subject.classes.length - 2}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Bottom half - Recent paragraphs */}
-                    <div className="p-3 space-y-2 bg-background">
-                      {subject.recentParagraphs && subject.recentParagraphs.length > 0 ? (
-                        subject.recentParagraphs.slice(0, 3).map((p) => (
-                          <div key={p.id} className="flex items-center gap-2 text-xs">
-                            <span className="bg-muted px-1.5 py-0.5 rounded text-muted-foreground shrink-0">
-                              {p.chapterNumber}.{p.paragraphNumber}
-                            </span>
-                            <span className="truncate flex-1">{p.title}</span>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <span className="text-muted-foreground w-8 text-right">{p.progress}%</span>
-                              <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-primary rounded-full"
-                                  style={{ width: `${p.progress}%` }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-muted-foreground text-center py-2">No progress yet</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <SubjectCard key={subject.id} subject={subject} />
             ))}
           </div>
         )}
@@ -284,7 +179,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
           <DialogHeader>
             <DialogTitle>Create Subject</DialogTitle>
             <DialogDescription>
-              Add a new subject. You can add a cover image later.
+              Add a new subject to your curriculum.
             </DialogDescription>
           </DialogHeader>
 
@@ -298,6 +193,43 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
                 onChange={(e) => setNewSubjectTitle(e.target.value)}
               />
             </div>
+
+            {/* Auto icons switch */}
+            <div className="flex items-center justify-between">
+              <Label htmlFor="auto-icons" className="text-sm">Auto-generated cover icons</Label>
+              <Switch
+                id="auto-icons"
+                checked={autoIcons}
+                onCheckedChange={setAutoIcons}
+              />
+            </div>
+
+            {autoIcons && (
+              <div className="space-y-2">
+                <Label htmlFor="subject-description">What is this subject about?</Label>
+                <Textarea
+                  id="subject-description"
+                  placeholder="e.g., Study of living organisms, cells, genetics, and ecosystems..."
+                  value={newSubjectDescription}
+                  onChange={(e) => setNewSubjectDescription(e.target.value)}
+                  rows={2}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This helps generate relevant cover icons for the subject card.
+                </p>
+              </div>
+            )}
+
+            {!autoIcons && (
+              <div className="space-y-2 p-3 border rounded bg-muted/30">
+                <p className="text-xs text-muted-foreground">
+                  Custom image upload will be available after creating the subject.
+                  You can upload a cover image from the subject settings.
+                </p>
+              </div>
+            )}
+
             {!classId && classes.length > 0 && (
               <div className="space-y-2">
                 <Label>Link to classes (optional)</Label>
@@ -328,10 +260,10 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="rounded-full">
               Cancel
             </Button>
-            <Button onClick={handleCreateSubject} disabled={isCreating || !newSubjectTitle.trim()}>
+            <Button onClick={handleCreateSubject} disabled={isCreating || !newSubjectTitle.trim()} className="rounded-full">
               {isCreating ? 'Creating...' : 'Create'}
             </Button>
           </DialogFooter>
