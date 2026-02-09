@@ -12,13 +12,9 @@ export async function GET(
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
-
     const resolvedParams = await params;
 
-    console.log(`GET /api/subjects/${resolvedParams.subjectId}/chapters/${resolvedParams.chapterId}/paragraphs/${resolvedParams.paragraphId}/assignments - Called`);
-
-    // Simple fetch - just get assignments
-    console.log(`Fetching assignments for paragraph: ${resolvedParams.paragraphId}`);
+    const { data: { user } } = await supabase.auth.getUser()
 
     const { data: assignments, error } = await supabase
       .from('assignments')
@@ -26,43 +22,62 @@ export async function GET(
       .eq('paragraph_id', resolvedParams.paragraphId)
       .order('assignment_index', { ascending: true })
 
-    console.log(`Assignments query result:`, { assignments, error });
-
     if (error) {
-      console.log(`Assignments fetch error:`, error);
-      // Return empty array instead of error to prevent infinite loading
-      console.log(`Returning empty assignments array to prevent infinite loading`);
+      console.error('Assignments fetch error:', error);
       return NextResponse.json([])
     }
 
-    // Ensure we have an array
     const safeAssignments = assignments || [];
 
-    console.log(`Found ${assignments?.length || 0} assignments`);
+    const getLetterIndex = (index: number): string => {
+      if (index < 26) return String.fromCharCode(97 + index);
+      const first = Math.floor(index / 26) - 1;
+      const second = index % 26;
+      return String.fromCharCode(97 + first) + String.fromCharCode(97 + second);
+    };
 
-    const transformedAssignments = safeAssignments.map(assignment => {
-      // Convert index to letter: 0='a', 1='b', ..., 25='z', 26='aa', etc.
-      const getLetterIndex = (index: number): string => {
-        if (index < 26) {
-          return String.fromCharCode(97 + index);
+    // Compute progress per assignment from student_answers if user is logged in
+    const transformedAssignments = await Promise.all(
+      safeAssignments.map(async (assignment) => {
+        let progress_percent = 0;
+        let correct_percent = 0;
+
+        // Get block count for this assignment
+        const { count: blockCount } = await supabase
+          .from('blocks')
+          .select('*', { count: 'exact', head: true })
+          .eq('assignment_id', assignment.id);
+
+        const totalBlocks = blockCount || 0;
+
+        if (user && totalBlocks > 0) {
+          // Get student answers for this assignment
+          const { data: answers } = await supabase
+            .from('student_answers')
+            .select('is_correct, score')
+            .eq('assignment_id', assignment.id)
+            .eq('student_id', user.id);
+
+          if (answers && answers.length > 0) {
+            progress_percent = Math.ceil((answers.length / totalBlocks) * 100);
+            const correctCount = answers.filter(a => a.is_correct === true).length;
+            correct_percent = Math.ceil((correctCount / totalBlocks) * 100);
+          }
         }
-        const first = Math.floor(index / 26) - 1;
-        const second = index % 26;
-        return String.fromCharCode(97 + first) + String.fromCharCode(97 + second);
-      };
 
-      return {
-        ...assignment,
-        letter_index: getLetterIndex(assignment.assignment_index),
-        block_count: 0 // Will be calculated separately if needed
-      };
-    })
+        return {
+          ...assignment,
+          letter_index: getLetterIndex(assignment.assignment_index),
+          block_count: totalBlocks,
+          progress_percent,
+          correct_percent,
+        };
+      })
+    );
 
-    console.log(`Assignments found:`, transformedAssignments?.length || 0);
     return NextResponse.json(transformedAssignments)
-
   } catch (err) {
-    console.error(`Unexpected error:`, err);
+    console.error('Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -75,34 +90,22 @@ export async function POST(
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
-
     const resolvedParams = await params;
 
-    console.log(`POST /api/subjects/${resolvedParams.subjectId}/chapters/${resolvedParams.chapterId}/paragraphs/${resolvedParams.paragraphId}/assignments - Called`);
     const { title, answers_enabled = false } = await request.json()
 
-    console.log(`Creating assignment for paragraph:`, resolvedParams.paragraphId, `title:`, title);
-
     // Get max assignment index for this paragraph
-    const { data: existingAssignments, error: countError } = await supabase
+    const { data: existingAssignments } = await supabase
       .from('assignments')
       .select('assignment_index')
       .eq('paragraph_id', resolvedParams.paragraphId)
       .order('assignment_index', { ascending: false })
       .limit(1)
 
-    if (countError) {
-      console.log(`Error fetching existing assignments:`, countError);
-    }
-
-    // Start at 0 for first assignment (maps to 'a'), then increment
     const nextIndex = existingAssignments && existingAssignments.length > 0 
       ? (existingAssignments[0].assignment_index ?? -1) + 1 
       : 0;
 
-    console.log(`Next assignment index:`, nextIndex);
-
-    // Create assignment
     const { data: assignment, error: insertError } = await (supabase
       .from('assignments') as any)
       .insert({
@@ -115,29 +118,25 @@ export async function POST(
       .single()
 
     if (insertError) {
-      console.log(`Assignment creation error:`, insertError);
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
-    // Convert index to letter: 0='a', 1='b', ..., 25='z', 26='aa', etc.
     const getLetterIndex = (index: number): string => {
-      if (index < 26) {
-        return String.fromCharCode(97 + index);
-      }
+      if (index < 26) return String.fromCharCode(97 + index);
       const first = Math.floor(index / 26) - 1;
       const second = index % 26;
       return String.fromCharCode(97 + first) + String.fromCharCode(97 + second);
     };
 
-    console.log(`Assignment created:`, assignment);
     return NextResponse.json({
       ...assignment,
       letter_index: getLetterIndex(assignment.assignment_index),
-      block_count: 0
+      block_count: 0,
+      progress_percent: 0,
+      correct_percent: 0,
     })
-
   } catch (err) {
-    console.error(`Unexpected error:`, err);
+    console.error('Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

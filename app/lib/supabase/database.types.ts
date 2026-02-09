@@ -147,6 +147,10 @@ export type Database = {
           paragraph_id: string | null
           assignment_index: string | null
           answers_enabled: boolean | null
+          is_visible: boolean
+          is_locked: boolean
+          answer_mode: string
+          ai_grading_enabled: boolean
           class_id: string | null
           chapter_id: string | null
           due_date: string | null
@@ -159,6 +163,10 @@ export type Database = {
           paragraph_id?: string | null
           assignment_index?: string | null
           answers_enabled?: boolean | null
+          is_visible?: boolean
+          is_locked?: boolean
+          answer_mode?: string
+          ai_grading_enabled?: boolean
           class_id?: string | null
           chapter_id?: string | null
           due_date?: string | null
@@ -170,6 +178,10 @@ export type Database = {
           paragraph_id?: string | null
           assignment_index?: string | null
           answers_enabled?: boolean | null
+          is_visible?: boolean
+          is_locked?: boolean
+          answer_mode?: string
+          ai_grading_enabled?: boolean
           due_date?: string | null
         }
       }

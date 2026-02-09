@@ -4,10 +4,9 @@ import React, { useState } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Eye,
   EyeOff,
@@ -21,7 +20,16 @@ import {
 
 interface TimerConfig {
   enabled: boolean;
-  datetime: string; // ISO string
+  datetime: string;
+}
+
+interface AiGradingConfig {
+  strictness: number;
+  partial_credit: boolean;
+  spelling_matters: boolean;
+  grammar_matters: boolean;
+  case_sensitive: boolean;
+  custom_instructions: string;
 }
 
 interface AssignmentSettingsOverlayProps {
@@ -33,6 +41,7 @@ interface AssignmentSettingsOverlayProps {
   answersTimer?: TimerConfig;
   lockTimer?: TimerConfig;
   aiGradingEnabled: boolean;
+  aiGradingConfig?: AiGradingConfig;
   onVisibilityChange: (visible: boolean) => void;
   onAnswersEnabledChange: (enabled: boolean) => void;
   onLockedChange: (locked: boolean) => void;
@@ -41,9 +50,19 @@ interface AssignmentSettingsOverlayProps {
   onAnswersTimerChange?: (timer: TimerConfig) => void;
   onLockTimerChange?: (timer: TimerConfig) => void;
   onAiGradingChange?: (enabled: boolean) => void;
+  onAiGradingConfigChange?: (config: AiGradingConfig) => void;
   isLoading?: boolean;
   isBulk?: boolean;
 }
+
+const DEFAULT_AI_CONFIG: AiGradingConfig = {
+  strictness: 5,
+  partial_credit: true,
+  spelling_matters: false,
+  grammar_matters: false,
+  case_sensitive: false,
+  custom_instructions: '',
+};
 
 function TimerRow({
   label,
@@ -94,6 +113,7 @@ export function AssignmentSettingsOverlay({
   answersTimer,
   lockTimer,
   aiGradingEnabled,
+  aiGradingConfig,
   onVisibilityChange,
   onAnswersEnabledChange,
   onLockedChange,
@@ -102,11 +122,18 @@ export function AssignmentSettingsOverlay({
   onAnswersTimerChange,
   onLockTimerChange,
   onAiGradingChange,
+  onAiGradingConfigChange,
   isLoading = false,
   isBulk = false,
 }: AssignmentSettingsOverlayProps) {
+  const config = aiGradingConfig || DEFAULT_AI_CONFIG;
+
+  const updateConfig = (key: keyof AiGradingConfig, value: any) => {
+    onAiGradingConfigChange?.({ ...config, [key]: value });
+  };
+
   return (
-    <div className="bg-popover border rounded-lg shadow-lg p-4 min-w-[280px] max-w-[320px] space-y-3">
+    <div className="bg-popover border rounded-lg shadow-lg p-4 min-w-[280px] max-w-[320px] space-y-3 max-h-[80vh] overflow-y-auto">
       <div className="text-sm font-medium text-foreground">
         {isBulk ? 'All Assignments Settings' : 'Assignment Settings'}
       </div>
@@ -171,7 +198,7 @@ export function AssignmentSettingsOverlay({
                 >
                   <input
                     type="radio"
-                    name="answer_mode"
+                    name={`answer_mode_${isBulk ? 'bulk' : 'single'}`}
                     value={mode.value}
                     checked={answerMode === mode.value}
                     onChange={() => onAnswerModeChange(mode.value)}
@@ -223,16 +250,95 @@ export function AssignmentSettingsOverlay({
       <Separator />
 
       {/* AI Grading */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-muted-foreground" />
-          <Label className="text-sm font-normal">AI grading (open questions)</Label>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            <Label className="text-sm font-normal">AI grading (open questions)</Label>
+          </div>
+          <Switch
+            checked={aiGradingEnabled}
+            onCheckedChange={onAiGradingChange}
+            disabled={isLoading}
+          />
         </div>
-        <Switch
-          checked={aiGradingEnabled}
-          onCheckedChange={onAiGradingChange}
-          disabled={isLoading}
-        />
+
+        {aiGradingEnabled && (
+          <div className="space-y-3 pl-2 border-l-2 border-muted">
+            {/* Strictness slider */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between">
+                <Label className="text-xs text-muted-foreground">Strictness</Label>
+                <span className="text-xs text-muted-foreground">{config.strictness}/10</span>
+              </div>
+              <Slider
+                value={[config.strictness]}
+                min={1}
+                max={10}
+                step={1}
+                onValueChange={([v]) => updateConfig('strictness', v)}
+                disabled={isLoading}
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>Lenient</span>
+                <span>Strict</span>
+              </div>
+            </div>
+
+            {/* Toggles */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-normal">Partial credit</Label>
+                <Switch
+                  checked={config.partial_credit}
+                  onCheckedChange={(v) => updateConfig('partial_credit', v)}
+                  disabled={isLoading}
+                  className="scale-75"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-normal">Spelling matters</Label>
+                <Switch
+                  checked={config.spelling_matters}
+                  onCheckedChange={(v) => updateConfig('spelling_matters', v)}
+                  disabled={isLoading}
+                  className="scale-75"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-normal">Grammar matters</Label>
+                <Switch
+                  checked={config.grammar_matters}
+                  onCheckedChange={(v) => updateConfig('grammar_matters', v)}
+                  disabled={isLoading}
+                  className="scale-75"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-normal">Case sensitive</Label>
+                <Switch
+                  checked={config.case_sensitive}
+                  onCheckedChange={(v) => updateConfig('case_sensitive', v)}
+                  disabled={isLoading}
+                  className="scale-75"
+                />
+              </div>
+            </div>
+
+            {/* Custom instructions */}
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Custom grading instructions</Label>
+              <Textarea
+                value={config.custom_instructions}
+                onChange={(e) => updateConfig('custom_instructions', e.target.value)}
+                placeholder="e.g., Accept synonyms, focus on key concepts..."
+                rows={2}
+                className="text-xs resize-none"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <p className="text-xs text-muted-foreground pt-2 border-t">
@@ -245,6 +351,7 @@ export function AssignmentSettingsOverlay({
               ? 'Students can view and edit answers.'
               : 'Students can view answers (locked).'
           : 'Self-check is disabled.'}
+        {aiGradingEnabled && ` AI grades open questions (strictness ${config.strictness}/10).`}
       </p>
     </div>
   );
