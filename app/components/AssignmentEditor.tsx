@@ -1154,8 +1154,14 @@ export function AssignmentEditor({
                   <AssignmentSettingsOverlay
                     isVisible={localIsVisible}
                     answersEnabled={localAnswersEnabled}
+                    isLocked={false}
+                    answerMode="view_only"
+                    aiGradingEnabled={false}
                     onVisibilityChange={(v) => handleSettingsChange(localAnswersEnabled, v)}
                     onAnswersEnabledChange={(e) => handleSettingsChange(e, localIsVisible)}
+                    onLockedChange={() => {}}
+                    onAnswerModeChange={() => {}}
+                    onAiGradingChange={() => {}}
                   />
                 </PopoverContent>
               </Popover>

@@ -84,7 +84,7 @@ export async function PATCH(
   const resolvedParams = await params;
   const { assignmentId } = resolvedParams;
   const body = await request.json();
-  const { is_visible, answers_enabled } = body;
+  const { is_visible, answers_enabled, is_locked, answer_mode, ai_grading_enabled } = body;
 
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
@@ -93,6 +93,9 @@ export async function PATCH(
   const updateData: Record<string, any> = {};
   if (typeof is_visible === 'boolean') updateData.is_visible = is_visible;
   if (typeof answers_enabled === 'boolean') updateData.answers_enabled = answers_enabled;
+  if (typeof is_locked === 'boolean') updateData.is_locked = is_locked;
+  if (typeof answer_mode === 'string') updateData.answer_mode = answer_mode;
+  if (typeof ai_grading_enabled === 'boolean') updateData.ai_grading_enabled = ai_grading_enabled;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
