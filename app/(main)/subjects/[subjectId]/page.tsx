@@ -17,7 +17,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import Link from 'next/link';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 
 type Paragraph = {
   id: string;
@@ -25,6 +25,7 @@ type Paragraph = {
   paragraph_number: number;
   assignment_count: number;
   progress_percent: number;
+  answers_enabled?: boolean;
 };
 
 type Chapter = {
@@ -61,30 +62,15 @@ export default function SubjectDetailPage() {
   const [newChapterTitle, setNewChapterTitle] = useState('');
   const [newParagraphTitle, setNewParagraphTitle] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [expandedParagraphs, setExpandedParagraphs] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
 
-  const toggleChapter = (chapterId: string) => {
-    setExpandedChapters(prev => {
-      const next = new Set(prev);
-      if (next.has(chapterId)) {
-        next.delete(chapterId);
-      } else {
-        next.add(chapterId);
-      }
-      return next;
-    });
-  };
-
   useEffect(() => {
     const fetchSubjectData = async () => {
       try {
         setIsLoading(true);
-        
-        // Fetch subject info
         const subjectResponse = await fetch(`/api/subjects/${subjectId}`);
         if (subjectResponse.ok) {
           const subjectData = await subjectResponse.json();
@@ -95,11 +81,9 @@ export default function SubjectDetailPage() {
           });
         }
 
-        // Fetch chapters with paragraphs
         const chaptersResponse = await fetch(`/api/subjects/${subjectId}/chapters`);
         if (chaptersResponse.ok) {
           const chaptersData = await chaptersResponse.json();
-
           const chaptersWithParagraphs = await Promise.all(
             chaptersData.map(async (chapter: any) => {
               try {
@@ -114,16 +98,12 @@ export default function SubjectDetailPage() {
               }
             })
           );
-
           setChapters(chaptersWithParagraphs);
-          
-          // Try to get last activity from localStorage
+
           const storageKey = `lastActivity_${subjectId}`;
           const stored = localStorage.getItem(storageKey);
           if (stored) {
-            try {
-              setLastActivity(JSON.parse(stored));
-            } catch {}
+            try { setLastActivity(JSON.parse(stored)); } catch {}
           }
         }
       } catch (error) {
@@ -132,20 +112,17 @@ export default function SubjectDetailPage() {
         setIsLoading(false);
       }
     };
-
     fetchSubjectData();
   }, [subjectId]);
 
   const handleCreateChapter = async () => {
     if (!newChapterTitle.trim()) return;
-
     try {
       const response = await fetch(`/api/subjects/${subjectId}/chapters`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newChapterTitle.trim() }),
       });
-
       if (response.ok) {
         const newChapter = await response.json();
         setChapters(prev => [...prev, { ...newChapter, paragraphs: [] }]);
@@ -160,16 +137,13 @@ export default function SubjectDetailPage() {
 
   const handleCreateParagraph = async () => {
     if (!newParagraphTitle.trim() || !selectedChapterId) return;
-
     try {
       const response = await fetch(`/api/subjects/${subjectId}/chapters/${selectedChapterId}/paragraphs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newParagraphTitle.trim() }),
       });
-
       if (response.ok) {
-        // Refresh chapters
         const chaptersResponse = await fetch(`/api/subjects/${subjectId}/chapters`);
         if (chaptersResponse.ok) {
           const chaptersData = await chaptersResponse.json();
@@ -189,7 +163,6 @@ export default function SubjectDetailPage() {
           );
           setChapters(chaptersWithParagraphs);
         }
-        
         setNewParagraphTitle('');
         setSelectedChapterId(null);
         setIsCreateParagraphOpen(false);
@@ -198,6 +171,17 @@ export default function SubjectDetailPage() {
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to create paragraph', variant: 'destructive' });
     }
+  };
+
+  const handleParagraphClick = (chapter: Chapter, paragraph: Paragraph) => {
+    const activity: LastActivity = {
+      chapterId: chapter.id,
+      chapterNumber: chapter.chapter_number,
+      paragraphId: paragraph.id,
+      paragraphNumber: paragraph.paragraph_number,
+      paragraphTitle: paragraph.title,
+    };
+    localStorage.setItem(`lastActivity_${subjectId}`, JSON.stringify(activity));
   };
 
   if (isLoading) {
@@ -210,7 +194,6 @@ export default function SubjectDetailPage() {
                 <div className="w-20 h-20 bg-muted rounded" />
                 <div className="flex-1 space-y-2">
                   <div className="h-4 bg-muted rounded w-1/3" />
-                  <div className="h-3 bg-muted rounded w-full" />
                   <div className="h-3 bg-muted rounded w-full" />
                 </div>
               </div>
@@ -225,25 +208,13 @@ export default function SubjectDetailPage() {
     return <div className="text-center py-8 text-muted-foreground">Subject not found</div>;
   }
 
-  // Track paragraph click for last activity
-  const handleParagraphClick = (chapter: Chapter, paragraph: Paragraph) => {
-    const activity: LastActivity = {
-      chapterId: chapter.id,
-      chapterNumber: chapter.chapter_number,
-      paragraphId: paragraph.id,
-      paragraphNumber: paragraph.paragraph_number,
-      paragraphTitle: paragraph.title,
-    };
-    localStorage.setItem(`lastActivity_${subjectId}`, JSON.stringify(activity));
-  };
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-0">
       {/* Last activity banner */}
       {lastActivity && (
         <Link
           href={`/subjects/${subjectId}/chapters/${lastActivity.chapterId}/paragraphs/${lastActivity.paragraphId}`}
-          className="block p-3 bg-muted/50 rounded border hover:bg-muted transition-colors"
+          className="block p-3 bg-muted/50 rounded-lg border hover:bg-muted transition-colors mb-4"
         >
           <p className="text-sm">
             <span className="text-muted-foreground">Last active in </span>
@@ -252,8 +223,8 @@ export default function SubjectDetailPage() {
         </Link>
       )}
 
-      {/* Header - minimal */}
-      <div className="flex justify-between items-start">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-4">
         <div>
           <h1 className="text-lg">{subject.name}</h1>
           {subject.description && (
@@ -267,7 +238,7 @@ export default function SubjectDetailPage() {
         )}
       </div>
 
-      {/* Chapters */}
+      {/* Flat chapter + paragraph list */}
       {chapters.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <p className="text-sm mb-4">No chapters yet</p>
@@ -280,97 +251,96 @@ export default function SubjectDetailPage() {
       ) : (
         <div className="space-y-0">
           {chapters.map((chapter) => {
-            const isExpanded = expandedChapters.has(chapter.id);
+            const maxVisible = 10;
+            const allParagraphs = chapter.paragraphs || [];
+            const isFullyExpanded = expandedParagraphs.has(chapter.id);
+            const visibleParagraphs = isFullyExpanded ? allParagraphs : allParagraphs.slice(0, maxVisible);
+            const hasMore = allParagraphs.length > maxVisible && !isFullyExpanded;
+            const remainingCount = allParagraphs.length - maxVisible;
 
             return (
               <div key={chapter.id}>
-                {/* Chapter title button */}
-                <button
-                  onClick={() => toggleChapter(chapter.id)}
-                  className={`w-full flex items-center justify-between px-5 py-3 bg-foreground text-background text-base hover:opacity-90 transition-opacity ${isExpanded ? 'rounded-tr-lg' : 'rounded-r-lg'}`}
-                >
-                  <span>{chapter.chapter_number}. {chapter.title}</span>
-                  <div className="flex items-center gap-2">
-                    {isTeacher && (
-                      <span
-                        className="text-xs opacity-70 hover:opacity-100"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedChapterId(chapter.id);
-                          setIsCreateParagraphOpen(true);
-                        }}
-                      >
-                        + Paragraph
-                      </span>
-                    )}
-                    {isExpanded ? (
-                      <ChevronDown className="h-5 w-5" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5" />
-                    )}
-                  </div>
-                </button>
+                {/* Chapter header - black bar, NOT collapsible */}
+                <div className="flex items-center justify-between px-5 py-3 bg-foreground text-background text-base rounded-r-xl">
+                  <span className="font-medium">{chapter.chapter_number}. {chapter.title}</span>
+                  {isTeacher && (
+                    <button
+                      className="text-xs text-background/70 hover:text-background transition-colors"
+                      onClick={() => {
+                        setSelectedChapterId(chapter.id);
+                        setIsCreateParagraphOpen(true);
+                      }}
+                    >
+                      + Paragraph
+                    </button>
+                  )}
+                </div>
 
-                {/* Paragraphs - shown only when expanded */}
-                {isExpanded && (
-                  <div className="-mt-1 border-2 border-foreground border-l-0 rounded-br-lg overflow-hidden">
-                    {chapter.paragraphs && chapter.paragraphs.length > 0 ? (
-                      <div>
-                        {(() => {
-                          const maxVisible = 10;
-                          const allParagraphs = chapter.paragraphs;
-                          const isFullyExpanded = expandedParagraphs.has(chapter.id);
-                          const visibleParagraphs = isFullyExpanded ? allParagraphs : allParagraphs.slice(0, maxVisible);
-                          const hasMore = allParagraphs.length > maxVisible && !isFullyExpanded;
-                          const remainingCount = allParagraphs.length - maxVisible;
+                {/* Paragraphs - always visible, no accordion */}
+                <div className="border-2 border-foreground border-l-0 border-t-0 rounded-br-xl overflow-hidden">
+                  {allParagraphs.length > 0 ? (
+                    <>
+                      {visibleParagraphs.map((paragraph) => {
+                        const progress = paragraph.progress_percent || 0;
+                        const roundedProgress = Math.ceil(progress);
+                        const answersOn = paragraph.answers_enabled ?? false;
 
-                          return (
-                            <>
-                              {visibleParagraphs.map((paragraph) => (
-                                <Link
-                                  key={paragraph.id}
-                                  href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
-                                  onClick={() => handleParagraphClick(chapter, paragraph)}
-                                  className="flex items-center gap-3 py-3 px-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0"
-                                >
-                                  <span className="text-xs bg-muted px-1.5 py-0.5 rounded text-muted-foreground shrink-0 w-9 text-center">
-                                    {chapter.chapter_number}.{paragraph.paragraph_number}
-                                  </span>
-                                  <span className="text-sm flex-1 truncate">{paragraph.title}</span>
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <span className="text-xs text-muted-foreground w-8 text-right">
-                                      {paragraph.progress_percent || 0}%
-                                    </span>
-                                    <div className="w-14 h-1.5 bg-muted rounded-full overflow-hidden">
-                                      <div
-                                        className="h-full bg-foreground/30 rounded-full transition-all"
-                                        style={{ width: `${paragraph.progress_percent || 0}%` }}
-                                      />
-                                    </div>
-                                  </div>
-                                </Link>
-                              ))}
-                              {hasMore && (
-                                <button
-                                  onClick={() => setExpandedParagraphs(prev => {
-                                    const next = new Set(prev);
-                                    next.add(chapter.id);
-                                    return next;
-                                  })}
-                                  className="w-full py-3 px-4 text-sm text-muted-foreground hover:bg-muted/50 transition-colors border-t border-border flex items-center justify-center gap-1"
-                                >
-                                  <span>+{remainingCount} more paragraph{remainingCount > 1 ? 's' : ''}</span>
-                                </button>
+                        return (
+                          <Link
+                            key={paragraph.id}
+                            href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
+                            onClick={() => handleParagraphClick(chapter, paragraph)}
+                            className="flex items-center gap-3 py-3 px-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0"
+                          >
+                            {/* Rounded number badge */}
+                            <span className="bg-foreground text-background px-2.5 py-1 rounded-full text-xs font-medium shrink-0 min-w-[2.5rem] text-center">
+                              {chapter.chapter_number}.{paragraph.paragraph_number}
+                            </span>
+
+                            {/* Title */}
+                            <span className="text-sm flex-1 truncate">{paragraph.title}</span>
+
+                            {/* Answers check/X */}
+                            <span className="shrink-0">
+                              {answersOn ? (
+                                <Check className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <X className="h-4 w-4 text-muted-foreground/40" />
                               )}
-                            </>
-                          );
-                        })()}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground py-4 px-4 text-center">No paragraphs yet</p>
-                    )}
-                  </div>
-                )}
+                            </span>
+
+                            {/* Progress bar + percentage */}
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
+                                {roundedProgress}%
+                              </span>
+                              <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-foreground/30 rounded-full transition-all"
+                                  style={{ width: `${roundedProgress}%` }}
+                                />
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                      {hasMore && (
+                        <button
+                          onClick={() => setExpandedParagraphs(prev => {
+                            const next = new Set(prev);
+                            next.add(chapter.id);
+                            return next;
+                          })}
+                          className="w-full py-3 px-4 text-sm text-muted-foreground hover:bg-muted/50 transition-colors border-t border-border flex items-center justify-center gap-1"
+                        >
+                          <span>+{remainingCount} more paragraph{remainingCount > 1 ? 's' : ''}</span>
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground py-4 px-4 text-center">No paragraphs yet</p>
+                  )}
+                </div>
               </div>
             );
           })}

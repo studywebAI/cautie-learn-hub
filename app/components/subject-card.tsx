@@ -11,6 +11,7 @@ type ParagraphContext = {
     chapter_id: string;
     chapter_number: number;
     chapter_title: string;
+    progress_percent?: number;
   }[];
   lastParagraphId: string | null;
 };
@@ -29,20 +30,15 @@ type SubjectCardProps = {
 
 // Keyword-to-emoji mapping for auto-generated covers
 const SUBJECT_EMOJI_MAP: Record<string, string[]> = {
-  // Sciences
   biology: ['🧬', '🔬', '🌿', '🦠', '🧫'],
   chemistry: ['⚗️', '🧪', '🔥', '💎', '🧫'],
   physics: ['⚛️', '🔭', '🌌', '⚡', '🧲'],
   science: ['🔬', '🧪', '🌍', '💡', '📊'],
-  
-  // Math
   math: ['🔢', '📐', '📏', '🧮', '➗'],
   mathematics: ['🔢', '📐', '📏', '🧮', '➗'],
   algebra: ['📐', '🔢', '✖️', '➕', '🧮'],
   geometry: ['📐', '📏', '🔺', '⬡', '🔵'],
   calculus: ['📈', '📐', '∞', '🔢', '📊'],
-  
-  // Languages
   english: ['📖', '✍️', '🗣️', '📚', '🇬🇧'],
   dutch: ['🇳🇱', '📖', '✍️', '🗣️', '📚'],
   nederlands: ['🇳🇱', '📖', '✍️', '🗣️', '📝'],
@@ -51,60 +47,38 @@ const SUBJECT_EMOJI_MAP: Record<string, string[]> = {
   french: ['🇫🇷', '📖', '✍️', '🗣️', '🥐'],
   spanish: ['🇪🇸', '📖', '✍️', '🗣️', '📚'],
   latin: ['🏛️', '📜', '✍️', '📖', '🗣️'],
-  
-  // Social studies
   history: ['🏛️', '📜', '⚔️', '🗺️', '👑'],
   geography: ['🌍', '🗺️', '🏔️', '🌊', '🧭'],
   economics: ['📈', '💰', '🏦', '📊', '💵'],
   politics: ['🏛️', '⚖️', '🗳️', '📜', '🤝'],
   sociology: ['👥', '🏙️', '📊', '🤝', '🌐'],
   philosophy: ['🤔', '📖', '💭', '⚖️', '🏛️'],
-  
-  // Arts
   art: ['🎨', '🖌️', '🖼️', '🎭', '✨'],
   music: ['🎵', '🎶', '🎹', '🎸', '🎤'],
   drama: ['🎭', '🎬', '🎤', '📽️', '🌟'],
-  
-  // Tech
   computer: ['💻', '⌨️', '🖥️', '🔧', '📡'],
   programming: ['💻', '⌨️', '🖥️', '🔧', '🤖'],
   informatica: ['💻', '⌨️', '🖥️', '🔧', '📡'],
   technology: ['💻', '⚙️', '🔧', '📱', '🤖'],
-  
-  // Sports & health
   sport: ['⚽', '🏃', '🏀', '🎯', '🏊'],
   gym: ['🏋️', '🏃', '💪', '⚽', '🤸'],
   health: ['❤️', '🏥', '🧘', '🍎', '💊'],
-  
-  // Other
   religion: ['🙏', '📖', '⛪', '☪️', '🕉️'],
   psychology: ['🧠', '💭', '🔍', '📊', '🤔'],
 };
 
 function getSubjectEmojis(title: string, description?: string | null): string[] {
   const searchText = `${title} ${description || ''}`.toLowerCase();
-  
-  // Try to find matching emojis from keyword map
   for (const [keyword, emojis] of Object.entries(SUBJECT_EMOJI_MAP)) {
-    if (searchText.includes(keyword)) {
-      return emojis;
-    }
+    if (searchText.includes(keyword)) return emojis;
   }
-  
-  // Fallback: generate from title hash
   const fallbackEmojis = ['📚', '📖', '✏️', '📝', '🎓', '💡', '🔬', '🌍', '📐', '🧮', '🎨', '🎵', '⚽', '🏛️', '🔢'];
   const hash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const selected = [];
-  for (let i = 0; i < 5; i++) {
-    selected.push(fallbackEmojis[(hash + i * 7) % fallbackEmojis.length]);
-  }
-  return selected;
+  return Array.from({ length: 5 }, (_, i) => fallbackEmojis[(hash + i * 7) % fallbackEmojis.length]);
 }
 
 function EmojiCover({ title, description }: { title: string; description?: string | null }) {
   const emojis = getSubjectEmojis(title, description);
-  
-  // Positions for scattered emoji placement
   const positions = [
     { top: '15%', left: '20%', rotate: -15, size: 'text-3xl' },
     { top: '25%', left: '65%', rotate: 12, size: 'text-4xl' },
@@ -114,7 +88,7 @@ function EmojiCover({ title, description }: { title: string; description?: strin
   ];
 
   return (
-    <div className="w-full h-full bg-muted relative overflow-hidden">
+    <div className="w-full h-full bg-foreground relative overflow-hidden">
       {emojis.map((emoji, i) => (
         <span
           key={i}
@@ -123,7 +97,7 @@ function EmojiCover({ title, description }: { title: string; description?: strin
             top: positions[i].top,
             left: positions[i].left,
             transform: `rotate(${positions[i].rotate}deg)`,
-            opacity: 0.7,
+            opacity: 0.85,
           }}
         >
           {emoji}
@@ -136,13 +110,22 @@ function EmojiCover({ title, description }: { title: string; description?: strin
 export function SubjectCard({ subject }: SubjectCardProps) {
   const paragraphs = subject.paragraphContext?.paragraphs || [];
   const lastParagraphId = subject.paragraphContext?.lastParagraphId;
+  const className = subject.classes?.[0]?.name;
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col rounded-xl">
       <CardContent className="p-0 flex flex-col h-full">
-        {/* Top half - Cover (clickable → chapter overview) */}
+        {/* Title + Class above cover */}
+        <div className="px-3 pt-3 pb-2">
+          <h3 className="text-sm font-semibold truncate">{subject.title}</h3>
+          {className && (
+            <p className="text-xs text-muted-foreground truncate">{className}</p>
+          )}
+        </div>
+
+        {/* Cover area (clickable → chapter overview) */}
         <Link href={`/subjects/${subject.id}`} className="block">
-          <div className="aspect-[4/3] relative cursor-pointer">
+          <div className="aspect-[16/9] relative cursor-pointer mx-3 rounded-lg overflow-hidden">
             {subject.cover_image_url ? (
               <img
                 src={subject.cover_image_url}
@@ -152,59 +135,35 @@ export function SubjectCard({ subject }: SubjectCardProps) {
             ) : (
               <EmojiCover title={subject.title} description={subject.description} />
             )}
-            
-            {/* Title overlay - top left */}
-            <div className="absolute top-3 left-3 right-3">
-              <p className="text-sm font-medium text-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded inline-block">
-                {subject.title}
-              </p>
-            </div>
-            
-            {/* Linked classes - bottom left */}
-            {subject.classes && subject.classes.length > 0 && (
-              <div className="absolute bottom-3 left-3 flex flex-wrap gap-1">
-                {subject.classes.slice(0, 2).map((cls) => (
-                  <span key={cls.id} className="text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded">
-                    {cls.name}
-                  </span>
-                ))}
-                {subject.classes.length > 2 && (
-                  <span className="text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded">
-                    +{subject.classes.length - 2}
-                  </span>
-                )}
-              </div>
-            )}
           </div>
         </Link>
 
-        {/* Bottom half - 3 Paragraphs with progress */}
-        <div className="p-3 space-y-1.5 bg-background flex-1">
+        {/* Paragraphs with progress */}
+        <div className="px-3 pt-2 pb-3 space-y-1 flex-1">
           {paragraphs.length > 0 ? (
             paragraphs.map((p) => {
               const isLast = p.id === lastParagraphId;
-              // TODO: Get actual progress from progress tracking
-              const progress = 0;
+              const progress = p.progress_percent || 0;
               const roundedProgress = Math.ceil(progress);
 
               return (
                 <Link
                   key={p.id}
                   href={`/subjects/${subject.id}/chapters/${p.chapter_id}/paragraphs/${p.id}`}
-                  className={`flex items-center gap-2 text-xs py-1 px-1.5 rounded transition-colors hover:bg-muted/50 ${
-                    isLast ? 'bg-muted/30' : ''
+                  className={`flex items-center gap-2 text-xs py-1.5 px-2 rounded-lg transition-colors hover:bg-muted/50 ${
+                    isLast ? 'bg-muted/40' : ''
                   }`}
                 >
-                  <span className="bg-foreground text-background px-1.5 py-0.5 rounded text-xs font-medium shrink-0 min-w-[2rem] text-center">
+                  <span className="bg-foreground text-background px-2 py-0.5 rounded-full text-xs font-medium shrink-0 min-w-[2.2rem] text-center">
                     {p.chapter_number}.{p.paragraph_number}
                   </span>
-                  <span className="truncate flex-1">{p.title}</span>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-muted-foreground w-7 text-right text-xs">
+                  <span className="truncate flex-1 text-xs">{p.title}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-muted-foreground text-xs tabular-nums w-7 text-right">
                       {roundedProgress}%
                     </span>
                     <div className="w-10 h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-primary rounded-full transition-all"
                         style={{ width: `${roundedProgress}%` }}
                       />
