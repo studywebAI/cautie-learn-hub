@@ -123,7 +123,7 @@ export async function PUT(
 ) {
   const resolvedParams = await params;
   const { assignmentId } = resolvedParams;
-  const { title, due_date, chapter_id, block_id, guestId, type, content, files, is_visible, answers_enabled } = await request.json();
+  const { title, due_date, chapter_id, block_id, guestId, type, content, files, is_visible, answers_enabled, is_locked, answer_mode, ai_grading_enabled } = await request.json();
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
 
@@ -209,6 +209,9 @@ export async function PUT(
       files,
       is_visible,
       answers_enabled,
+      is_locked,
+      answer_mode,
+      ai_grading_enabled,
     })
     .eq('id', assignmentId)
     .select()

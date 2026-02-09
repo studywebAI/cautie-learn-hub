@@ -206,6 +206,9 @@ export function AssignmentEditor({
   const [aiSettingsBlockId, setAiSettingsBlockId] = useState<string | null>(null);
   const [localAnswersEnabled, setLocalAnswersEnabled] = useState(answersEnabled);
   const [localIsVisible, setLocalIsVisible] = useState(isVisible);
+  const [localIsLocked, setLocalIsLocked] = useState(false);
+  const [localAnswerMode, setLocalAnswerMode] = useState<'view_only' | 'editable' | 'self_grade'>('view_only');
+  const [localAiGradingEnabled, setLocalAiGradingEnabled] = useState(false);
   
   // AI Grading presets (stored locally for now - would come from API)
   const [gradingPresets, setGradingPresets] = useState<GradingPreset[]>([
@@ -264,10 +267,22 @@ export function AssignmentEditor({
   };
 
   // Handle settings change
-  const handleSettingsChange = (newAnswers: boolean, newVisible: boolean) => {
-    setLocalAnswersEnabled(newAnswers);
-    setLocalIsVisible(newVisible);
-    onSettingsChange?.({ answersEnabled: newAnswers, isVisible: newVisible });
+  const handleSettingsChange = (updates: {
+    answersEnabled?: boolean;
+    isVisible?: boolean;
+    isLocked?: boolean;
+    answerMode?: 'view_only' | 'editable' | 'self_grade';
+    aiGradingEnabled?: boolean;
+  }) => {
+    if (updates.answersEnabled !== undefined) setLocalAnswersEnabled(updates.answersEnabled);
+    if (updates.isVisible !== undefined) setLocalIsVisible(updates.isVisible);
+    if (updates.isLocked !== undefined) setLocalIsLocked(updates.isLocked);
+    if (updates.answerMode !== undefined) setLocalAnswerMode(updates.answerMode);
+    if (updates.aiGradingEnabled !== undefined) setLocalAiGradingEnabled(updates.aiGradingEnabled);
+    onSettingsChange?.({
+      answersEnabled: updates.answersEnabled ?? localAnswersEnabled,
+      isVisible: updates.isVisible ?? localIsVisible,
+    });
   };
 
   // Group blocks by row
@@ -1154,14 +1169,14 @@ export function AssignmentEditor({
                   <AssignmentSettingsOverlay
                     isVisible={localIsVisible}
                     answersEnabled={localAnswersEnabled}
-                    isLocked={false}
-                    answerMode="view_only"
-                    aiGradingEnabled={false}
-                    onVisibilityChange={(v) => handleSettingsChange(localAnswersEnabled, v)}
-                    onAnswersEnabledChange={(e) => handleSettingsChange(e, localIsVisible)}
-                    onLockedChange={() => {}}
-                    onAnswerModeChange={() => {}}
-                    onAiGradingChange={() => {}}
+                    isLocked={localIsLocked}
+                    answerMode={localAnswerMode}
+                    aiGradingEnabled={localAiGradingEnabled}
+                    onVisibilityChange={(v) => handleSettingsChange({ isVisible: v })}
+                    onAnswersEnabledChange={(e) => handleSettingsChange({ answersEnabled: e })}
+                    onLockedChange={(v) => handleSettingsChange({ isLocked: v })}
+                    onAnswerModeChange={(m) => handleSettingsChange({ answerMode: m })}
+                    onAiGradingChange={(v) => handleSettingsChange({ aiGradingEnabled: v })}
                   />
                 </PopoverContent>
               </Popover>
