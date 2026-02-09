@@ -303,7 +303,7 @@ export default function SubjectDetailPage() {
                             {/* Answers check/X */}
                             <span className="shrink-0">
                               {answersOn ? (
-                                <Check className="h-4 w-4 text-green-600" />
+                                <Check className="h-4 w-4 text-primary" />
                               ) : (
                                 <X className="h-4 w-4 text-muted-foreground/40" />
                               )}
