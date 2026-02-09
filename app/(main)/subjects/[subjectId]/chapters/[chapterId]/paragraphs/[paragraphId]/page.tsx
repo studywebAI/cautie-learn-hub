@@ -343,7 +343,7 @@ export default function ParagraphDetailPage() {
                   {/* Answers check/X */}
                   <span className="shrink-0">
                     {assignment.answers_enabled ? (
-                      <Check className="h-4 w-4 text-green-600" />
+                      <Check className="h-4 w-4 text-primary" />
                     ) : (
                       <X className="h-4 w-4 text-muted-foreground/40" />
                     )}
@@ -357,7 +357,7 @@ export default function ParagraphDetailPage() {
                     <div className="w-20 h-2 bg-muted rounded-full overflow-hidden flex">
                   {correctPct > 0 && (
                         <div
-                          className="h-full bg-emerald-500/70 transition-all"
+                          className="h-full bg-success/70 transition-all"
                           style={{ width: `${(correctPct / 100) * 100}%` }}
                         />
                       )}
