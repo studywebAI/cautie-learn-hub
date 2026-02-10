@@ -10,7 +10,7 @@
       "title": "Herramientas",
       "quizGenerator": "Cuestionario",
       "flashcardMaker": "Flashcards",
-      "materialProcessor": "Material",
+      "materialProcessor": "Procesar Material",
       "notes": "Notas",
       "blocks": "Bloques"
     }
@@ -92,14 +92,20 @@
     }
   },
   "material": {
-    "title": "Material",
+    "title": "Procesar Material",
     "description": "Sube archivos o pega texto.",
+    "importTitle": "Importar Contenido",
+    "importDescription": "Proporciona un archivo, pega texto, o ambos.",
     "clickToUpload": "Clic para subir",
+    "dragAndDrop": "o arrastrar y soltar",
     "remove": "Eliminar",
+    "pasteText": "O pega tu texto aquí...",
     "processing": "Procesando...",
     "processWithAi": "Procesar con IA",
     "summary": "Resumen",
-    "done": "Hecho"
+    "suggestedActions": "Acciones Sugeridas",
+    "done": "Hecho",
+    "select": "Seleccionar"
   },
   "agenda": {
     "title": "Agenda",
@@ -137,20 +143,33 @@
     "description": "Gestiona tu cuenta.",
     "general": {
       "title": "General",
+      "description": "Configura tus preferencias.",
       "language": "Idioma"
     },
     "personalization": {
       "title": "Personalización",
+      "description": "Personaliza la apariencia.",
       "theme": "Tema",
+      "themeDescription": "Elige tu esquema de colores.",
       "light": "Claro",
       "dark": "Oscuro",
       "ocean": "Océano"
     },
     "accessibility": {
       "title": "Accesibilidad",
+      "description": "Personaliza la app para tus necesidades.",
       "highContrast": "Alto contraste",
+      "highContrastDescription": "Aumentar contraste.",
       "dyslexiaFont": "Fuente dyslexia",
-      "reducedMotion": "Reducir animaciones"
+      "dyslexiaFontDescription": "Usa una fuente diseñada para leer mejor.",
+      "reducedMotion": "Reducir animaciones",
+      "reducedMotionDescription": "Desactivar animaciones."
+    },
+    "developer": {
+      "title": "Configuración Desarrollador",
+      "description": "Ajustes temporales.",
+      "roleSwitch": "Cambiar rol",
+      "roleSwitchDescription": "Cambia entre vista estudiante y profesor."
     }
   },
   "common": {
@@ -165,6 +184,7 @@
     "close": "Cerrar",
     "back": "Atrás",
     "next": "Siguiente",
+    "previous": "Anterior",
     "loading": "Cargando...",
     "error": "Error",
     "success": "Éxito",
@@ -173,6 +193,7 @@
     "no": "No",
     "search": "Buscar",
     "filter": "Filtrar",
+    "sort": "Ordenar",
     "view": "Ver",
     "download": "Descargar",
     "upload": "Subir",
@@ -181,10 +202,16 @@
     "paste": "Pegar",
     "undo": "Deshacer",
     "redo": "Rehacer",
+    "reset": "Restablecer",
+    "clear": "Limpiar",
     "refresh": "Actualizar",
     "retry": "Reintentar",
+    "more": "Más",
+    "less": "Menos",
     "all": "Todos",
+    "none": "Ninguno",
     "select": "Seleccionar",
+    "selected": "Seleccionado",
     "optional": "Opcional",
     "required": "Requerido"
   },
@@ -193,44 +220,73 @@
     "logout": "Cerrar sesión",
     "signup": "Registrarse",
     "email": "Correo",
-    "password": "Contraseña"
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "resetPassword": "Restablecer contraseña",
+    "dontHaveAccount": "¿No tienes cuenta?",
+    "alreadyHaveAccount": "¿Ya tienes cuenta?",
+    "orContinueWith": "O continuar con"
   },
   "notifications": {
     "title": "Notificaciones",
-    "noNotifications": "Sin notificaciones"
+    "noNotifications": "Sin notificaciones",
+    "markAsRead": "Marcar como leído",
+    "markAllAsRead": "Marcar todos como leídos",
+    "clearAll": "Borrar todos"
   },
   "errors": {
     "somethingWentWrong": "Algo salió mal",
-    "pageNotFound": "Página no encontrada"
+    "pageNotFound": "Página no encontrada",
+    "unauthorized": "No autorizado",
+    "forbidden": "Prohibido",
+    "tryAgain": "Intentar de nuevo"
   },
   "setup": {
     "welcome": "Bienvenido a Cautie",
     "getStarted": "Comencemos",
     "step": "Paso",
+    "de": "de",
+    "next": "Siguiente",
+    "back": "Atrás",
     "finish": "Finalizar",
     "language": {
-      "title": "Elige tu idioma"
+      "title": "Elige tu idioma",
+      "description": "Selecciona el idioma que deseas usar."
+    },
+    "theme": {
+      "title": "Elige tu tema",
+      "description": "Elige un esquema de colores."
     },
     "profile": {
       "title": "Configura tu perfil",
+      "description": "Cuéntanos sobre ti.",
       "firstName": "Nombre",
       "lastName": "Apellido",
       "role": "Soy...",
       "student": "Estudiante",
-      "teacher": "Profesor"
+      "teacher": "Profesor",
+      "saveProfile": "Guardar perfil"
     }
   },
   "quiz": {
     "title": "Cuestionario",
     "answerAllQuestions": "Responde todas las preguntas.",
+    "askFollowUp": "Haz una pregunta de seguimiento...",
     "gradingCriteria": "Describe cómo calificar...",
+    "additionalCriteria": "Criterios adicionales...",
+    "aiGrading": "Configuración IA",
     "expectedAnswer": "Ingresa la respuesta esperada...",
     "export": "Exportar",
-    "import": "Importar"
+    "import": "Importar",
+    "undo": "Deshacer",
+    "redo": "Rehacer"
   },
   "flashcards": {
     "front": "Frente",
-    "back": "Reverso"
+    "back": "Reverso",
+    "termOrQuestion": "Término o pregunta",
+    "definitionOrAnswer": "Definición o respuesta"
   },
   "notes": {
     "createNotes": "Crea notas...",
@@ -240,38 +296,52 @@
     "enterText": "Ingresa texto...",
     "enterCode": "Ingresa código...",
     "yourAnswer": "Ingresa tu respuesta aquí...",
+    "followUpQuestion": "Haz una pregunta de seguimiento...",
     "nodeTitle": "Título del nodo",
+    "detailedDescription": "Descripción detallada",
+    "callOutText": "Ingresa texto de llamada...",
     "quoteText": "Ingresa la cita...",
     "authorName": "Nombre del autor...",
+    "source": "Libro, artículo, etc...",
     "caption": "Añadir descripción...",
     "mediaUrl": "Ingresa URL...",
+    "embedUrl": "Ingresa URL embed...",
     "matchItems": "Une los elementos...",
-    "putInOrder": "Ordena..."
+    "putInOrder": "Ordena...",
+    "acceptSynonyms": "ej., Aceptar sinónimos..."
   },
   "classes": {
     "searchClasses": "Buscar clases...",
     "className": "Nombre de la clase",
     "classDescription": "Descripción de la clase",
-    "chapterTitle": "Título del capítulo"
+    "briefSummary": "Breve resumen.",
+    "e.gHistory101": "ej., Historia 101",
+    "chapterTitle": "Título del capítulo",
+    "chapterDescription": "Descripción del capítulo"
   },
   "assignments": {
     "assignmentTitle": "Título de la tarea",
     "extraInstructions": "Añade instrucciones...",
+    "instructionsDetails": "Añadir detalles",
     "selectType": "Seleccionar tipo",
-    "selectClass": "Seleccionar clase"
+    "selectClass": "Seleccionar clase",
+    "weekLecture": "ej., Semana 1"
   },
   "submissions": {
     "writeSubmission": "Escribe tu respuesta aquí...",
+    "fileUploadComing": "Subida de archivos pronto...",
     "provideFeedback": "Dar feedback...",
     "addComment": "Añadir comentario...",
-    "grade": "Calificación"
+    "grade": "Calificación",
+    "e.g8.5": "ej., 8.5"
   },
   "announcements": {
     "announcementTitle": "Título del anuncio",
     "announcementMessage": "Mensaje del anuncio"
   },
   "verification": {
-    "enterCode": "Ingresa código de verificación"
+    "enterCode": "Ingresa código de verificación",
+    "verificationCode": "Código de verificación"
   },
   "subjectEditor": {
     "e.gStudyOfLiving": "Ej.: Estudio de organismos vivos...",
