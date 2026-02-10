@@ -9,6 +9,10 @@ const GradeOpenQuestionInputSchema = z.object({
   maxScore: z.number().describe('Maximum possible score'),
   language: z.string().describe('Language for feedback'),
   studentAnswer: z.string().describe('Student\'s answer to grade'),
+  strictness: z.number().optional().describe('Grading strictness (1-10)'),
+  checkSpelling: z.boolean().optional().describe('Whether to check spelling'),
+  checkGrammar: z.boolean().optional().describe('Whether to check grammar'),
+  keywords: z.string().optional().describe('Important keywords to check for'),
 });
 
 const GradeOpenQuestionOutputSchema = z.object({
@@ -93,6 +97,22 @@ LANGUAGE:
 
 STUDENT ANSWER:
 {{{studentAnswer}}}
+
+${`
+STRICTNESS: {{{strictness}}}
+`}
+
+${`
+CHECK SPELLING: {{{checkSpelling}}}
+`}
+
+${`
+CHECK GRAMMAR: {{{checkGrammar}}}
+`}
+
+${`
+IMPORTANT KEYWORDS: {{{keywords}}}
+`}
 
 🟣 VERPLICHT OUTPUT SCHEMA
 

@@ -1,6 +1,6 @@
 'use client';
 import { UpcomingDeadlines } from "@/components/dashboard/upcoming-deadlines";
-import { useContext, lazy, Suspense } from "react";
+import { useContext, lazy, Suspense, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AppContext, AppContextType, ClassInfo } from "@/contexts/app-context";
@@ -16,8 +16,25 @@ import { TodaysAgenda } from "@/components/dashboard/todays-agenda";
 // Lazy load heavy components
 const AnalyticsDashboard = lazy(() => import("@/components/dashboard/analytics-dashboard").then(module => ({ default: module.AnalyticsDashboard })));
 
+// Function to check scheduled assignments
+const checkScheduledAssignments = async () => {
+  try {
+    const response = await fetch('/api/scheduler');
+    if (response.ok) {
+      console.log('Scheduled assignments checked');
+    }
+  } catch (error) {
+    console.error('Error checking scheduled assignments:', error);
+  }
+};
+
 function StudentDashboard() {
   const { isLoading, session, assignments, classes, personalTasks, subjects: dashboardSubjects } = useContext(AppContext) as AppContextType;
+
+  // Check for scheduled assignments on load
+  useEffect(() => {
+    checkScheduledAssignments();
+  }, []);
 
   if (isLoading && !session) {
      return (
@@ -91,6 +108,11 @@ function StudentDashboard() {
 
 function TeacherSummaryDashboard() {
     const { classes, assignments, students, isLoading, session } = useContext(AppContext) as AppContextType;
+
+    // Check for scheduled assignments on load
+    useEffect(() => {
+        checkScheduledAssignments();
+    }, []);
 
     if (isLoading || !classes) {
         return <DashboardSkeleton />;
