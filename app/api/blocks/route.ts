@@ -1,137 +1,161 @@
+import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 
-// Create Supabase client with fallbacks to prevent build errors
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+export const dynamic = 'force-dynamic'
 
-// Only create client if we have valid credentials
-const supabaseClient = supabaseUrl && supabaseKey 
-  ? createClient(supabaseUrl, supabaseKey)
-  : null;
-
-export async function POST(req: Request) {
+// GET blocks for a user (standalone endpoint for browsing blocks)
+export async function GET(request: Request) {
   try {
-    if (!supabaseClient) {
-      return NextResponse.json({
-        error: 'Supabase is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.'
-      }, { status: 503 })
+    const cookieStore = cookies()
+    const supabase = await createClient(cookieStore)
+    const { searchParams } = new URL(request.url)
+    const paragraphId = searchParams.get('paragraph_id')
+    const assignmentId = searchParams.get('assignment_id')
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const json = await req.json()
-    
-    // Validate create request
-    if (!json.type || !json.content) {
-      return NextResponse.json({
-        error: 'Missing required fields: type and content'
-      }, { status: 400 })
+    let query = supabase
+      .from('blocks')
+      .select('*')
+      .order('position', { ascending: true })
+
+    if (paragraphId) {
+      query = query.eq('paragraph_id', paragraphId)
     }
-    
-    // Create the block in Supabase
-    const { data, error } = await supabaseClient.from('blocks')
-      .insert([{ 
-        type: json.type,
-        content: json.content,
-        chapter_id: json.chapterId || null,
-        paragraph_id: json.paragraphId || null
-      }])
-      .single()
-    
+    if (assignmentId) {
+      query = query.eq('assignment_id', assignmentId)
+    }
+
+    const { data: blocks, error } = await query
+
     if (error) {
-      return NextResponse.json({
-        error: `Supabase error creating block: ${error.message}`
-      }, { status: 500 })
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
-    
-    return NextResponse.json({
-      block: data
-    })
+
+    return NextResponse.json(blocks || [])
+  } catch (error) {
+    console.error('Error fetching blocks:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// POST create a new block (standalone endpoint - can link to paragraph or assignment)
+export async function POST(request: Request) {
+  try {
+    const cookieStore = cookies()
+    const supabase = await createClient(cookieStore)
+    const json = await request.json()
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { type, data: blockData, paragraph_id, assignment_id, position } = json
+
+    if (!type || !blockData) {
+      return NextResponse.json({ error: 'Missing required fields: type and data' }, { status: 400 })
+    }
+
+    // Get user role
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const userRole = profile?.role || 'student'
+
+    // Verify access if linking to paragraph or assignment
+    if (paragraph_id || assignment_id) {
+      if (userRole !== 'teacher') {
+        return NextResponse.json({ error: 'Only teachers can create blocks' }, { status: 403 })
+      }
+
+      // Verify the parent exists and user has access
+      if (paragraph_id) {
+        const { data: paragraph } = await (supabase as any)
+          .from('paragraphs')
+          .select('id, chapters!inner(id, subjects!inner(id, user_id))')
+          .eq('id', paragraph_id)
+          .single()
+
+        if (!paragraph) {
+          return NextResponse.json({ error: 'Paragraph not found' }, { status: 404 })
+        }
+
+        const chapter = paragraph.chapters
+        const subject = chapter?.subjects
+
+        if (subject?.user_id !== user.id) {
+          return NextResponse.json({ error: 'Access denied to this paragraph' }, { status: 403 })
+        }
+      }
+
+      if (assignment_id) {
+        const { data: assignment } = await (supabase as any)
+          .from('assignments')
+          .select('id, paragraphs!inner(id, chapters!inner(subjects!inner(id, user_id)))')
+          .eq('id', assignment_id)
+          .single()
+
+        if (!assignment) {
+          return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
+        }
+
+        const paragraph = assignment.paragraphs
+        const chapter = paragraph?.chapters
+        const subject = chapter?.subjects
+
+        if (subject?.user_id !== user.id) {
+          return NextResponse.json({ error: 'Access denied to this assignment' }, { status: 403 })
+        }
+      }
+    }
+
+    // Get max position if not provided
+    let maxPosition = position
+    if (maxPosition === undefined || maxPosition === null) {
+      let positionQuery = supabase
+        .from('blocks')
+        .select('position')
+        .order('position', { ascending: false })
+
+      if (paragraph_id) {
+        positionQuery = positionQuery.eq('paragraph_id', paragraph_id)
+      }
+      if (assignment_id) {
+        positionQuery = positionQuery.eq('assignment_id', assignment_id)
+      }
+
+      const { data: existingBlocks } = await positionQuery.limit(1)
+      maxPosition = (existingBlocks?.[0]?.position ?? -1) + 1
+    }
+
+    // Create the block
+    const { data: block, error: insertError } = await (supabase
+      .from('blocks') as any)
+      .insert({
+        type,
+        data: blockData,
+        paragraph_id: paragraph_id || null,
+        assignment_id: assignment_id || null,
+        position: maxPosition,
+      })
+      .select()
+      .single()
+
+    if (insertError) {
+      return NextResponse.json({ error: insertError.message }, { status: 500 })
+    }
+
+    return NextResponse.json(block)
   } catch (error) {
     console.error('Error creating block:', error)
-    return NextResponse.json({
-      error: 'Internal server error while creating block'
-    }, { status: 500 })
-  }
-}
-
-export async function PUT(req: Request) {
-  try {
-    if (!supabaseClient) {
-      return NextResponse.json({
-        error: 'Supabase is not configured'
-      }, { status: 503 })
-    }
-
-    const json = await req.json()
-    
-    // Validate update request
-    if (!json.id || !json.type || !json.content) {
-      return NextResponse.json({
-        error: 'Missing required fields: id, type, and content'
-      }, { status: 400 })
-    }
-    
-    // Update the block in Supabase
-    const { data, error } = await supabaseClient.from('blocks')
-      .update({
-        type: json.type,
-        content: json.content
-      })
-      .eq('id', json.id)
-      .single()
-    
-    if (error) {
-      return NextResponse.json({
-        error: `Supabase error updating block: ${error.message}`
-      }, { status: 500 })
-    }
-    
-    return NextResponse.json({
-      block: data
-    })
-  } catch (error) {
-    console.error('Error updating block:', error)
-    return NextResponse.json({
-      error: 'Internal server error while updating block'
-    }, { status: 500 })
-  }
-}
-
-export async function DELETE(req: Request) {
-  try {
-    if (!supabaseClient) {
-      return NextResponse.json({
-        error: 'Supabase is not configured'
-      }, { status: 503 })
-    }
-
-    const json = await req.json()
-    
-    // Validate deletion request
-    if (!json.id) {
-      return NextResponse.json({
-        error: 'Missing required field: id'
-      }, { status: 400 })
-    }
-    
-    // Delete the block from Supabase
-    const { error } = await supabaseClient.from('blocks')
-      .delete()
-      .eq('id', json.id)
-    
-    if (error) {
-      return NextResponse.json({
-        error: `Supabase error deleting block: ${error.message}`
-      }, { status: 500 })
-    }
-    
-    return NextResponse.json({
-      message: 'Block deleted successfully'
-    })
-  } catch (error) {
-    console.error('Error deleting block:', error)
-    return NextResponse.json({
-      error: 'Internal server error while deleting block'
-    }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
