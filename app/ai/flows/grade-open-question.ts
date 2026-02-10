@@ -28,12 +28,38 @@ export async function gradeOpenQuestion(
   return gradeOpenQuestionFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'gradeOpenQuestionPrompt',
-  model: getGoogleAIModel() as any,
-  input: { schema: GradeOpenQuestionInputSchema },
-  output: { schema: GradeOpenQuestionOutputSchema },
-  prompt: `🔴 AI GRADING SYSTEM PROMPT (COPY PASTE)
+const gradeOpenQuestionFlow = ai.defineFlow(
+  {
+    name: 'gradeOpenQuestionFlow',
+    inputSchema: GradeOpenQuestionInputSchema,
+    outputSchema: GradeOpenQuestionOutputSchema,
+  },
+  async (input) => {
+    try {
+      // Validate input
+      if (!input.question || !input.studentAnswer) {
+        return {
+          score: 0,
+          feedback: 'Invalid question or student answer',
+        };
+      }
+
+      // Check for empty or irrelevant answer
+      const normalizedAnswer = input.studentAnswer.trim().toLowerCase();
+      if (normalizedAnswer === '' || normalizedAnswer === 'i don\'t know' || normalizedAnswer === 'i dont know') {
+        return {
+          score: 0,
+          feedback: 'Answer is empty or irrelevant',
+        };
+      }
+
+      // Build dynamic prompt
+      const prompt = ai.definePrompt({
+        name: 'gradeOpenQuestionPrompt',
+        model: getGoogleAIModel() as any,
+        input: { schema: GradeOpenQuestionInputSchema },
+        output: { schema: GradeOpenQuestionOutputSchema },
+        prompt: `🔴 AI GRADING SYSTEM PROMPT (COPY PASTE)
 
 You are an automated grading engine for an educational platform.
 
@@ -98,21 +124,13 @@ LANGUAGE:
 STUDENT ANSWER:
 {{{studentAnswer}}}
 
-${`
-STRICTNESS: {{{strictness}}}
-`}
+${input.strictness ? `STRICTNESS: ${input.strictness}/10 (${input.strictness < 5 ? 'Lenient' : input.strictness < 8 ? 'Moderate' : 'Strict'})` : ''}
 
-${`
-CHECK SPELLING: {{{checkSpelling}}}
-`}
+${input.checkSpelling ? 'CHECK SPELLING: Yes' : 'CHECK SPELLING: No'}
 
-${`
-CHECK GRAMMAR: {{{checkGrammar}}}
-`}
+${input.checkGrammar ? 'CHECK GRAMMAR: Yes' : 'CHECK GRAMMAR: No'}
 
-${`
-IMPORTANT KEYWORDS: {{{keywords}}}
-`}
+${input.keywords ? `IMPORTANT KEYWORDS: ${input.keywords}` : ''}
 
 🟣 VERPLICHT OUTPUT SCHEMA
 
@@ -123,18 +141,17 @@ AI MOET exact dit teruggeven:
   "feedback": ""
 }
 `,
-});
+      });
 
-const gradeOpenQuestionFlow = ai.defineFlow(
-  {
-    name: 'gradeOpenQuestionFlow',
-    inputSchema: GradeOpenQuestionInputSchema,
-    outputSchema: GradeOpenQuestionOutputSchema,
-  },
-  async (input) => {
-    try {
       const { output } = await prompt(input);
-      return output!;
+      
+      // Ensure score is within valid range
+      const validScore = Math.max(0, Math.min(input.maxScore || 5, Math.round(output!.score)));
+      
+      return {
+        ...output!,
+        score: validScore,
+      };
     } catch (error) {
       console.error('AI grading flow error:', error);
       // Fallback

@@ -51,11 +51,23 @@ export async function POST(request: Request) {
 
     if (blocksError) {
       console.error('Error fetching blocks:', blocksError);
+      return NextResponse.json({ error: 'Failed to fetch assignment blocks' }, { status: 500 });
     }
 
     // Find open question blocks and grade them
     const openQuestionBlocks = blocks?.filter(block => block.type === 'open_question') || [];
     const gradingResults = [];
+
+    if (openQuestionBlocks.length === 0) {
+      return NextResponse.json({ 
+        success: true, 
+        message: 'No open questions to grade',
+        results: [],
+        totalScore: 0,
+        maxPossibleScore: 0,
+        percentage: 0,
+      });
+    }
 
     for (const block of openQuestionBlocks) {
       // Get student answer for this block
@@ -67,6 +79,7 @@ export async function POST(request: Request) {
         .single();
 
       if (answerError || !studentAnswer) {
+        console.log(`No answer found for block ${block.id} and student ${user.id}`);
         continue;
       }
 
@@ -84,7 +97,7 @@ export async function POST(request: Request) {
       });
 
       // Update student answer with grading result
-      await supabase
+      const { error: updateError } = await supabase
         .from('student_answers')
         .update({
           score: gradingResult.score,
@@ -94,6 +107,10 @@ export async function POST(request: Request) {
           is_correct: gradingResult.score >= (block.data?.max_score || 5) * 0.8,
         })
         .eq('id', studentAnswer.id);
+
+      if (updateError) {
+        console.error(`Error updating student answer ${studentAnswer.id}:`, updateError);
+      }
 
       gradingResults.push({
         blockId: block.id,
@@ -110,7 +127,7 @@ export async function POST(request: Request) {
     const percentage = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
 
     // Update submission with grade
-    await supabase
+    const { error: submissionUpdateError } = await supabase
       .from('submissions')
       .update({
         grade: percentage,
@@ -119,6 +136,10 @@ export async function POST(request: Request) {
         graded_by: user.id,
       })
       .eq('id', submissionId);
+
+    if (submissionUpdateError) {
+      console.error(`Error updating submission ${submissionId}:`, submissionUpdateError);
+    }
 
     return NextResponse.json({
       success: true,
