@@ -268,5 +268,112 @@
       "teacher": "Teacher",
       "saveProfile": "Save Profile"
     }
+  },
+  "quiz": {
+    "title": "Quiz",
+    "answerAllQuestions": "Answer all questions and submit at the end.",
+    "askFollowUp": "Ask a follow-up question...",
+    "gradingCriteria": "Describe how to grade this question...",
+    "additionalCriteria": "Additional grading criteria...",
+    "aiGrading": "AI Grading Settings",
+    "expectedAnswer": "Enter the expected correct answer...",
+    "export": "Export",
+    "import": "Import",
+    "undo": "Undo",
+    "redo": "Redo"
+  },
+  "flashcards": {
+    "front": "Front",
+    "back": "Back",
+    "termOrQuestion": "Term or question",
+    "definitionOrAnswer": "Definition or answer"
+  },
+  "notes": {
+    "createNotes": "Create notes from text, files, or previous projects.",
+    "enterText": "Start writing your rich text content..."
+  },
+  "blocks": {
+    "enterText": "Enter text content...",
+    "enterCode": "Enter your code...",
+    "yourAnswer": "Type your answer here...",
+    "followUpQuestion": "Ask a follow-up question...",
+    "nodeTitle": "Node title",
+    "detailedDescription": "Detailed description",
+    "calloutText": "Enter callout text...",
+    "quoteText": "Enter the quote...",
+    "authorName": "Author name...",
+    "source": "Book, article, etc...",
+    "caption": "Add a caption...",
+    "mediaUrl": "Enter media URL...",
+    "embedUrl": "Enter embedded content URL...",
+    "matchItems": "Match the items...",
+    "putInOrder": "Put in order...",
+    "acceptSynonyms": "e.g., Accept synonyms, focus on key concepts..."
+  },
+  "classes": {
+    "searchClasses": "Search classes...",
+    "className": "Class Name",
+    "classDescription": "Class Description",
+    "briefSummary": "A brief summary of what this class will cover.",
+    "e.gHistory101": "e.g., History 101, Advanced Physics",
+    "chapterTitle": "Chapter Title",
+    "chapterDescription": "Chapter Description"
+  },
+  "assignments": {
+    "assignmentTitle": "Assignment Title",
+    "extraInstructions": "Add any extra instructions or context for your students.",
+    "instructionsDetails": "Add instructions or details for students",
+    "selectType": "Select type",
+    "selectClass": "Select class",
+    "weekLecture": "e.g., Week 1 Lecture"
+  },
+  "submissions": {
+    "writeSubmission": "Write your assignment submission here...",
+    "fileUploadComing": "File upload coming soon...",
+    "provideFeedback": "Provide constructive feedback...",
+    "addComment": "Add a comment...",
+    "grade": "Grade",
+    "e.g8.5": "e.g., 8.5"
+  },
+  "announcements": {
+    "announcementTitle": "Enter announcement title",
+    "announcementMessage": "Enter your announcement message"
+  },
+  "material": {
+    "noteTitle": "Note Title",
+    "e.gChapter1": "e.g., Chapter 1: The Renaissance",
+    "sourceText": "Paste the text from your textbook, article, or other source material here...",
+    "fileTitle": "e.g., Chapter 5 Reading"
+  },
+  "verification": {
+    "enterCode": "Enter 8-digit verification code",
+    "verificationCode": "8-digit verification code"
+  },
+  "subjectEditor": {
+    "e.gStudyOfLiving": "e.g., Study of living organisms, cells, genetics, and ecosystems...",
+    "introduction": "e.g., Introduction"
+  },
+  "chapterEditor": {
+    "newChapterTitle": "e.g., Basic Concepts",
+    "newChapterDescription": "Chapter description"
+  },
+  "paragraphEditor": {
+    "newParagraphTitle": "e.g., Basic Concepts",
+    "newParagraphDescription": "Paragraph description"
+  },
+  "teacherCode": {
+    "enterCode": "Enter your teacher code"
+  },
+  "upgrade": {
+    "upgrade": "Upgrade"
+  },
+  "search": {
+    "search": "Search..."
+  },
+  "wordweb": {
+    "addNotes": "Add notes, annotations, or text here..."
+  },
+  "paragraphs": {
+    "newParagraph": "e.g., Exercise Set A"
   }
 }

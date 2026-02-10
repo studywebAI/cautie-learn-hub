@@ -2,6 +2,35 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
+import {
+  // Science
+  Microscope, FlaskConical, Atom, Beaker, TestTubes, Dna, Bug, Leaf, Feather,
+  // Math
+  Calculator, Square, Sigma, FunctionSquare, BarChart3, TrendingUp,
+  // Languages
+  BookOpen, Languages, PenTool, Pen, FileText, GraduationCap, Globe, MessageSquare,
+  // Humanities
+  Landmark, Map, Scale, Users, Heart, Brain, Building, Scroll, Shield, Cross,
+  // Arts
+  Palette, Music, Guitar, Piano, Mic, Film, Camera, Brush, Sparkles,
+  // Tech & IT
+  Code, Laptop, Smartphone, Cpu, Wifi, Database, Server, Terminal,
+  // Sports & Health
+  Dumbbell, Activity, HeartPulse, Utensils, Apple, Salad, Footprints,
+  Trophy,
+  // Education
+  School, Library, Book, BookMarked, FileQuestion, Award,
+  // Nature & Animals
+  Trees, Mountain, Cloud, Sun, Moon, Star, Zap, Waves,
+  // Business & Finance
+  Briefcase, Banknote, CreditCard, TrendingDown, PieChart, Building2,
+  // Food
+  UtensilsCrossed, ChefHat, Coffee, Wine, GlassWater,
+  // Tools
+  Wrench,
+  // Default
+  Sparkle, Lightbulb, Star as StarIcon, Gift, Crown, Diamond
+} from 'lucide-react';
 
 type ParagraphContext = {
   paragraphs: {
@@ -28,81 +57,103 @@ type SubjectCardProps = {
   };
 };
 
-// Keyword-to-emoji mapping for auto-generated covers
-const SUBJECT_EMOJI_MAP: Record<string, string[]> = {
-  biology: ['🧬', '🔬', '🌿', '🦠', '🧫'],
-  chemistry: ['⚗️', '🧪', '🔥', '💎', '🧫'],
-  physics: ['⚛️', '🔭', '🌌', '⚡', '🧲'],
-  science: ['🔬', '🧪', '🌍', '💡', '📊'],
-  math: ['🔢', '📐', '📏', '🧮', '➗'],
-  mathematics: ['🔢', '📐', '📏', '🧮', '➗'],
-  algebra: ['📐', '🔢', '✖️', '➕', '🧮'],
-  geometry: ['📐', '📏', '🔺', '⬡', '🔵'],
-  calculus: ['📈', '📐', '∞', '🔢', '📊'],
-  english: ['📖', '✍️', '🗣️', '📚', '🇬🇧'],
-  dutch: ['🇳🇱', '📖', '✍️', '🗣️', '📚'],
-  nederlands: ['🇳🇱', '📖', '✍️', '🗣️', '📝'],
-  german: ['🇩🇪', '📖', '✍️', '🗣️', '📚'],
-  deutsch: ['🇩🇪', '📖', '✍️', '🗣️', '📝'],
-  french: ['🇫🇷', '📖', '✍️', '🗣️', '🥐'],
-  spanish: ['🇪🇸', '📖', '✍️', '🗣️', '📚'],
-  latin: ['🏛️', '📜', '✍️', '📖', '🗣️'],
-  history: ['🏛️', '📜', '⚔️', '🗺️', '👑'],
-  geography: ['🌍', '🗺️', '🏔️', '🌊', '🧭'],
-  economics: ['📈', '💰', '🏦', '📊', '💵'],
-  politics: ['🏛️', '⚖️', '🗳️', '📜', '🤝'],
-  sociology: ['👥', '🏙️', '📊', '🤝', '🌐'],
-  philosophy: ['🤔', '📖', '💭', '⚖️', '🏛️'],
-  art: ['🎨', '🖌️', '🖼️', '🎭', '✨'],
-  music: ['🎵', '🎶', '🎹', '🎸', '🎤'],
-  drama: ['🎭', '🎬', '🎤', '📽️', '🌟'],
-  computer: ['💻', '⌨️', '🖥️', '🔧', '📡'],
-  programming: ['💻', '⌨️', '🖥️', '🔧', '🤖'],
-  informatica: ['💻', '⌨️', '🖥️', '🔧', '📡'],
-  technology: ['💻', '⚙️', '🔧', '📱', '🤖'],
-  sport: ['⚽', '🏃', '🏀', '🎯', '🏊'],
-  gym: ['🏋️', '🏃', '💪', '⚽', '🤸'],
-  health: ['❤️', '🏥', '🧘', '🍎', '💊'],
-  religion: ['🙏', '📖', '⛪', '☪️', '🕉️'],
-  psychology: ['🧠', '💭', '🔍', '📊', '🤔'],
-};
-
-function getSubjectEmojis(title: string, description?: string | null): string[] {
+// Comprehensive keyword-to-icon component mapping
+function getSubjectIcon(title: string, description?: string | null) {
   const searchText = `${title} ${description || ''}`.toLowerCase();
-  for (const [keyword, emojis] of Object.entries(SUBJECT_EMOJI_MAP)) {
-    if (searchText.includes(keyword)) return emojis;
-  }
-  const fallbackEmojis = ['📚', '📖', '✏️', '📝', '🎓', '💡', '🔬', '🌍', '📐', '🧮', '🎨', '🎵', '⚽', '🏛️', '🔢'];
+  
+  // Check keywords in order of specificity
+  if (searchText.includes('biology') || searchText.includes('biologie')) return Bug;
+  if (searchText.includes('chemistry') || searchText.includes('chemie')) return FlaskConical;
+  if (searchText.includes('physics') || searchText.includes('fysica')) return Atom;
+  if (searchText.includes('math') || searchText.includes('mathematics') || searchText.includes('wiskunde')) return Calculator;
+  if (searchText.includes('algebra')) return FunctionSquare;
+  if (searchText.includes('geometry')) return Square;
+  if (searchText.includes('calculus')) return Sigma;
+  if (searchText.includes('statistics')) return TrendingUp;
+  
+  if (searchText.includes('english')) return BookOpen;
+  if (searchText.includes('dutch') || searchText.includes('nederlands')) return Globe;
+  if (searchText.includes('german') || searchText.includes('duits')) return Globe;
+  if (searchText.includes('french') || searchText.includes('frans')) return Globe;
+  if (searchText.includes('spanish') || searchText.includes('spaans')) return Globe;
+  if (searchText.includes('latin')) return Scroll;
+  if (searchText.includes('language') || searchText.includes('taal')) return Languages;
+  
+  if (searchText.includes('history') || searchText.includes('geschiedenis')) return Landmark;
+  if (searchText.includes('geography') || searchText.includes('aardrijkskunde')) return Map;
+  if (searchText.includes('economics') || searchText.includes('economie')) return Banknote;
+  if (searchText.includes('politics') || searchText.includes('politiek')) return Scale;
+  if (searchText.includes('law') || searchText.includes('recht')) return Scale;
+  if (searchText.includes('philosophy') || searchText.includes('filosofie')) return Brain;
+  if (searchText.includes('psychology') || searchText.includes('psychologie')) return Heart;
+  if (searchText.includes('sociology')) return Users;
+  
+  if (searchText.includes('art') || searchText.includes('kunst')) return Palette;
+  if (searchText.includes('music') || searchText.includes('muziek')) return Music;
+  if (searchText.includes('drama') || searchText.includes('theater')) return Mic;
+  if (searchText.includes('film') || searchText.includes('film')) return Film;
+  if (searchText.includes('photography') || searchText.includes('fotografie')) return Camera;
+  if (searchText.includes('drawing') || searchText.includes('tekenen')) return Brush;
+  
+  if (searchText.includes('computer') || searchText.includes('computer')) return Laptop;
+  if (searchText.includes('programming') || searchText.includes('programmeren')) return Code;
+  if (searchText.includes('coding')) return Terminal;
+  if (searchText.includes('technology') || searchText.includes('techniek')) return Cpu;
+  if (searchText.includes('informatics') || searchText.includes('informatica')) return Database;
+  if (searchText.includes('web') || searchText.includes('web')) return Wifi;
+  
+  if (searchText.includes('sport') || searchText.includes('sport')) return Trophy;
+  if (searchText.includes('gym') || searchText.includes('turnen')) return Dumbbell;
+  if (searchText.includes('fitness')) return Activity;
+  if (searchText.includes('health') || searchText.includes('gezondheid')) return HeartPulse;
+  if (searchText.includes('medicine') || searchText.includes('geneeskunde')) return HeartPulse;
+  if (searchText.includes('yoga') || searchText.includes('meditatie')) return Activity;
+  if (searchText.includes('swimming') || searchText.includes('zwemmen')) return Waves;
+  if (searchText.includes('dance') || searchText.includes('dansen')) return Footprints;
+  if (searchText.includes('running') || searchText.includes('rennen')) return Footprints;
+  
+  if (searchText.includes('school') || searchText.includes('school')) return School;
+  if (searchText.includes('university') || searchText.includes('universiteit')) return GraduationCap;
+  if (searchText.includes('study') || searchText.includes('studeren')) return BookOpen;
+  if (searchText.includes('learning') || searchText.includes('leren')) return Lightbulb;
+  if (searchText.includes('exam') || searchText.includes('examen')) return FileQuestion;
+  
+  if (searchText.includes('nature') || searchText.includes('natuur')) return Trees;
+  if (searchText.includes('environmental') || searchText.includes('milieu')) return Leaf;
+  if (searchText.includes('animals') || searchText.includes('dieren')) return Feather;
+  if (searchText.includes('agriculture') || searchText.includes('landbouw')) return Leaf;
+  if (searchText.includes('ecology')) return Trees;
+  
+  if (searchText.includes('business') || searchText.includes('ondernemen')) return Briefcase;
+  if (searchText.includes('finance') || searchText.includes('financieel')) return CreditCard;
+  if (searchText.includes('accounting') || searchText.includes('administratie')) return Building2;
+  
+  if (searchText.includes('cooking') || searchText.includes('koken')) return ChefHat;
+  if (searchText.includes('food') || searchText.includes('eten')) return UtensilsCrossed;
+  if (searchText.includes('nutrition') || searchText.includes('voeding')) return Apple;
+  if (searchText.includes('bakery')) return ChefHat;
+  
+  if (searchText.includes('religion') || searchText.includes('godsdienst')) return Cross;
+  if (searchText.includes('ethics') || searchText.includes('ethiek')) return Scale;
+  
+  if (searchText.includes('engineering') || searchText.includes('engineering')) return Wrench;
+  if (searchText.includes('architecture') || searchText.includes('bouwkunde')) return Building;
+  if (searchText.includes('construction') || searchText.includes('bouw')) return Building;
+  if (searchText.includes('mechanic')) return Wrench;
+  if (searchText.includes('electrical')) return Zap;
+  
+  // Default icons based on title hash
+  const fallbackIcons = [Sparkle, Lightbulb, StarIcon, Gift, Crown, Diamond, Award, Book];
   const hash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return Array.from({ length: 5 }, (_, i) => fallbackEmojis[(hash + i * 7) % fallbackEmojis.length]);
+  return fallbackIcons[hash % fallbackIcons.length];
 }
 
-function EmojiCover({ title, description }: { title: string; description?: string | null }) {
-  const emojis = getSubjectEmojis(title, description);
-  const positions = [
-    { top: '15%', left: '20%', rotate: -15, size: 'text-3xl' },
-    { top: '25%', left: '65%', rotate: 12, size: 'text-4xl' },
-    { top: '55%', left: '35%', rotate: -8, size: 'text-4xl' },
-    { top: '45%', left: '75%', rotate: 20, size: 'text-2xl' },
-    { top: '70%', left: '15%', rotate: 5, size: 'text-3xl' },
-  ];
+function IconCover({ title, description }: { title: string; description?: string | null }) {
+  const IconComponent = getSubjectIcon(title, description);
 
   return (
-    <div className="w-full h-full bg-foreground relative overflow-hidden">
-      {emojis.map((emoji, i) => (
-        <span
-          key={i}
-          className={`absolute ${positions[i].size} select-none`}
-          style={{
-            top: positions[i].top,
-            left: positions[i].left,
-            transform: `rotate(${positions[i].rotate}deg)`,
-            opacity: 0.85,
-          }}
-        >
-          {emoji}
-        </span>
-      ))}
+    <div className="w-full h-full bg-primary/10 flex items-center justify-center relative overflow-hidden">
+      <IconComponent className="w-20 h-20 text-primary" strokeWidth={1.5} />
     </div>
   );
 }
@@ -133,7 +184,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <EmojiCover title={subject.title} description={subject.description} />
+              <IconCover title={subject.title} description={subject.description} />
             )}
           </div>
         </Link>

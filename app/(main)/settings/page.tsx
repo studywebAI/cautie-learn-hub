@@ -84,12 +84,23 @@ export default function SettingsPage() {
                     <div className="space-y-2">
                       <Label htmlFor="language">{dictionary.settings.general.language}</Label>
                       <Select value={language} onValueChange={setLanguage}>
-                        <SelectTrigger id="language" className="w-[280px]">
+                        <SelectTrigger id="language" className="w-[320px]">
                           <SelectValue placeholder="Select language" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="en">English</SelectItem>
-                          <SelectItem value="nl">Nederlands (Dutch)</SelectItem>
+                          <SelectItem value="en">🇺🇸 English</SelectItem>
+                          <SelectItem value="nl">🇳🇱 Nederlands (Dutch)</SelectItem>
+                          <SelectItem value="de">🇩🇪 Deutsch (German)</SelectItem>
+                          <SelectItem value="fr">🇫🇷 Français (French)</SelectItem>
+                          <SelectItem value="es">🇪🇸 Español (Spanish)</SelectItem>
+                          <SelectItem value="pt">🇧🇷 Português (Portuguese)</SelectItem>
+                          <SelectItem value="pl">🇵🇱 Polski (Polish)</SelectItem>
+                          <SelectItem value="ru">🇷🇺 Русский (Russian)</SelectItem>
+                          <SelectItem value="ar">🇸🇦 العربية (Arabic)</SelectItem>
+                          <SelectItem value="ur">🇵🇰 اردو (Urdu)</SelectItem>
+                          <SelectItem value="hi">🇮🇳 हिंदी (Hindi)</SelectItem>
+                          <SelectItem value="bn">🇧🇩 বাংলা (Bengali)</SelectItem>
+                          <SelectItem value="zh">🇨🇳 中文 (Chinese)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
