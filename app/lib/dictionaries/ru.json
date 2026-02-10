@@ -1,1 +1,379 @@
-{"sidebar":{"dashboard":"Панель","subjects":"Предметы","classes":"Классы","agenda":"Расписание","material":"Материал","settings":"Настройки","tools":{"title":"Инструменты","quizGenerator":"Тест","flashcardMaker":"Карточки","notes":"Заметки","blocks":"Блоки"}},"header":{"studentDashboard":"Панель ученика","teacherDashboard":"Панель учителя","roleSwitcher":"Смена роли","myAccount":"Мой аккаунт","logOut":"Выйти","logIn":"Войти"},"dashboard":{"title":"Панель","todayPlan":{"title":"Ваш план на сегодня","description":"Эти задания подготовлены ИИ.","completed":"Завершено"},"alerts":{"title":"Важные уведомления"},"upcomingDeadlines":{"title":"Предстоящие сроки","due":"Срок","onTrack":"В процессе","risk":"Риск","behind":"Отставание"},"mySubjects":{"title":"Ваши предметы"},"statistics":{"title":"Статистика","description":"Ваше время учебы на этой неделе."}},"tools":{"title":"Инструменты","description":"Набор интеллектуальных инструментов.","quiz":{"title":"Тест","description":"Создавайте тесты с выбором ответа."},"flashcards":{"title":"Карточки","description":"Создавайте карточки автоматически."},"notes":{"title":"Заметки","description":"Создавайте и организуйте заметки."},"blocks":{"title":"Блоки","description":"Создавайте структурированный контент."},"material":{"title":"Обработка материалов","description":"Получайте краткие резюме."}},"material":{"title":"Материал","description":"Загрузите файлы или вставьте текст.","clickToUpload":"Нажмите для загрузки","remove":"Удалить","processing":"Обработка...","processWithAi":"Обработать с ИИ","summary":"Резюме","done":"Готово"},"agenda":{"title":"Расписание","description":"Календарь заданий и дедлайнов.","eventsOn":"События","noEvents":"Нет событий.","addTask":"Добавить задание","today":"Сегодня","week":"Неделя","month":"Месяц"},"subjects":{"title":"Предметы","description":"Все ваши предметы в одном месте.","noSubjects":"Предметы не найдены.","addSubject":"Добавить предмет","chapters":"Главы","progress":"Прогресс"},"classes":{"title":"Классы","description":"Управляйте классами и учениками.","noClasses":"Классы не найдены.","createClass":"Создать класс","joinClass":"Присоединиться к классу","students":"Ученики"},"settings":{"title":"Настройки","description":"Управляйте аккаунтом.","general":{"title":"Общие","language":"Язык"},"personalization":{"title":"Персонализация","theme":"Тема","light":"Светлая","dark":"Темная","ocean":"Океан"},"accessibility":{"title":"Доступность","highContrast":"Высокий контраст","dyslexiaFont":"Шрифт для дислексии","reducedMotion":"Уменьшить анимацию"}},"common":{"save":"Сохранить","cancel":"Отмена","delete":"Удалить","edit":"Редактировать","add":"Добавить","create":"Создать","update":"Обновить","submit":"Отправить","close":"Закрыть","back":"Назад","next":"Далее","loading":"Загрузка...","error":"Ошибка","success":"Успех","confirm":"Подтвердить","yes":"Да","no":"Нет","search":"Поиск","filter":"Фильтр","view":"Просмотр","download":"Скачать","upload":"Загрузить","share":"Поделиться","copy":"Копировать","paste":"Вставить","undo":"Отменить","redo":"Повторить","all":"Все","select":"Выбрать","optional":"Необязательно","required":"Обязательно"},"auth":{"login":"Войти","logout":"Выйти","signup":"Регистрация","email":"Почта","password":"Пароль"},"notifications":{"title":"Уведомления","noNotifications":"Нет уведомлений"},"errors":{"somethingWentWrong":"Что-то пошло не так","pageNotFound":"Страница не найдена"},"setup":{"welcome":"Добро пожаловать в Cautie","getStarted":"Начнем","step":"Шаг","finish":"Завершить","language":{"title":"Выберите язык"},"profile":{"title":"Настройте профиль","firstName":"Имя","lastName":"Фамилия","role":"Я...","student":"Ученик","teacher":"Учитель"}},"quiz":{"title":"Тест","answerAllQuestions":"Ответьте на все вопросы.","gradingCriteria":"Опишите критерии оценки...","expectedAnswer":"Введите правильный ответ...","export":"Экспорт","import":"Импорт"},"flashcards":{"front":"Лицевая","back":"Обратная"},"notes":{"createNotes":"Создавайте заметки...","enterText":"Начните писать..."},"blocks":{"enterText":"Введите текст...","enterCode":"Введите код...","yourAnswer":"Введите ответ здесь...","nodeTitle":"Название узла","quoteText":"Введите цитату...","authorName":"Имя автора...","caption":"Добавить подпись..."},"classes":{"searchClasses":"Искать классы...","className":"Название класса","classDescription":"Описание класса","chapterTitle":"Название главы"},"assignments":{"assignmentTitle":"Название задания","extraInstructions":"Добавьте инструкции...","selectType":"Выберите тип","selectClass":"Выберите класс"},"submissions":{"writeSubmission":"Напишите ответ здесь...","provideFeedback":"Дайте обратную связь...","grade":"Оценка"},"announcements":{"announcementTitle":"Название объявления","announcementMessage":"Текст объявления"},"verification":{"enterCode":"Введите код подтверждения"},"subjectEditor":{"e.gStudyOfLiving":"Напр. Изучение живых организмов...","introduction":"Напр. Введение"},"chapterEditor":{"newChapterTitle":"Напр. Основные понятия","newChapterDescription":"Описание главы"},"paragraphEditor":{"newParagraphTitle":"Напр. Основные понятия","newParagraphDescription":"Описание параграфа"},"teacherCode":{"enterCode":"Введите код учителя"},"upgrade":{"upgrade":"Обновление"},"search":{"search":"Поиск..."},"wordweb":{"addNotes":"Добавьте заметки..."},"paragraphs":{"newParagraph":"Напр. Упражнение A"}}
+{
+  "sidebar": {
+    "dashboard": "Панель",
+    "subjects": "Предметы",
+    "classes": "Классы",
+    "agenda": "Расписание",
+    "material": "Материал",
+    "settings": "Настройки",
+    "tools": {
+      "title": "Инструменты",
+      "quizGenerator": "Тест",
+      "flashcardMaker": "Карточки",
+      "materialProcessor": "Материалы",
+      "notes": "Заметки",
+      "blocks": "Блоки"
+    }
+  },
+  "header": {
+    "studentDashboard": "Панель ученика",
+    "teacherDashboard": "Панель учителя",
+    "roleSwitcher": "Смена роли",
+    "myAccount": "Мой аккаунт",
+    "logOut": "Выйти",
+    "logIn": "Войти"
+  },
+  "dashboard": {
+    "title": "Панель",
+    "todayPlan": {
+      "title": "Ваш план на сегодня",
+      "description": "Эти задания подготовлены ИИ.",
+      "completed": "Завершено"
+    },
+    "alerts": {
+      "title": "Важные уведомления",
+      "description": "Риски и приоритеты"
+    },
+    "upcomingDeadlines": {
+      "title": "Предстоящие сроки",
+      "description": "Обзор ваших предстоящих заданий и тестов.",
+      "due": "Срок",
+      "onTrack": "В процессе",
+      "risk": "Риск",
+      "behind": "Отставание",
+      "viewAgenda": "Посмотреть полное расписание"
+    },
+    "mySubjects": {
+      "title": "Ваши предметы",
+      "description": "Быстрый обзор ваших предметов."
+    },
+    "aiSuggestions": {
+      "title": "Рекомендации ИИ",
+      "description": "Ваш личный ассистент"
+    },
+    "quickAccess": {
+      "title": "Быстрый доступ",
+      "description": "Недавно использованные материалы."
+    },
+    "statistics": {
+      "title": "Статистика",
+      "description": "Ваше время учебы на этой неделе.",
+      "weeklyActivity": "Еженедельная активность",
+      "lastSessionRecap": "Обзор последней сессии"
+    }
+  },
+  "tools": {
+    "title": "Инструменты",
+    "description": "Набор интеллектуальных инструментов для ускорения обучения.",
+    "select": "Выберите инструмент",
+    "quiz": {
+      "title": "Тест",
+      "description": "Создавайте тесты с выбором ответа из любого текста."
+    },
+    "flashcards": {
+      "title": "Карточки",
+      "description": "Автоматически создавайте карточки из учебных материалов."
+    },
+    "notes": {
+      "title": "Заметки",
+      "description": "Создавайте и организуйте заметки в одном месте."
+    },
+    "blocks": {
+      "title": "Блоки",
+      "description": "Создавайте структурированный контент с помощью блочного редактора."
+    },
+    "wordweb": {
+      "title": "Карта слов",
+      "description": "Визуализируйте связи между понятиями с помощью интерактивных карт."
+    },
+    "material": {
+      "title": "Обработка материалов",
+      "description": "Получайте краткие резюме загруженных документов или текста."
+    }
+  },
+  "material": {
+    "title": "Материал",
+    "description": "Загрузите файлы или вставьте текст для создания резюме и карточек.",
+    "importTitle": "Импорт содержимого",
+    "importDescription": "Загрузите файл, вставьте текст или и то, и другое.",
+    "clickToUpload": "Нажмите для загрузки",
+    "dragAndDrop": "или перетащите файл сюда",
+    "remove": "Удалить",
+    "pasteText": "Или вставьте текст здесь...",
+    "processing": "Обработка...",
+    "processWithAi": "Обработать с ИИ",
+    "summary": "Резюме",
+    "suggestedActions": "Рекомендуемые действия",
+    "done": "Готово",
+    "select": "Выбрать"
+  },
+  "agenda": {
+    "title": "Расписание",
+    "description": "Календарь заданий, дедлайнов и личных встреч.",
+    "eventsOn": "События",
+    "noEvents": "Нет событий на этот день.",
+    "addTask": "Добавить задание",
+    "today": "Сегодня",
+    "week": "Неделя",
+    "month": "Месяц"
+  },
+  "subjects": {
+    "title": "Предметы",
+    "description": "Все ваши предметы в одном месте.",
+    "noSubjects": "Предметы не найдены.",
+    "addSubject": "Добавить предмет",
+    "chapters": "Главы",
+    "paragraphs": "Параграфы",
+    "assignments": "Задания",
+    "progress": "Прогресс"
+  },
+  "classes": {
+    "title": "Классы",
+    "description": "Управляйте классами и учениками.",
+    "noClasses": "Классы не найдены.",
+    "createClass": "Создать класс",
+    "joinClass": "Присоединиться к классу",
+    "joinCode": "Код присоединения",
+    "students": "Ученики",
+    "assignments": "Задания",
+    "announcements": "Объявления"
+  },
+  "settings": {
+    "title": "Настройки",
+    "description": "Управляйте аккаунтом и настройками приложения.",
+    "general": {
+      "title": "Общие",
+      "description": "Настройте параметры приложения.",
+      "language": "Язык"
+    },
+    "personalization": {
+      "title": "Персонализация",
+      "description": "Настройте внешний вид приложения.",
+      "theme": "Тема",
+      "themeDescription": "Выберите предпочтительную цветовую схему.",
+      "light": "Светлая",
+      "dark": "Темная",
+      "ocean": "Океан"
+    },
+    "accessibility": {
+      "title": "Доступность",
+      "description": "Настройте внешний вид приложения под ваши потребности.",
+      "highContrast": "Высокий контраст",
+      "highContrastDescription": "Увеличьте контраст текста и фона.",
+      "dyslexiaFont": "Шрифт для дислексии",
+      "dyslexiaFontDescription": "Используйте шрифт, облегчающий чтение.",
+      "reducedMotion": "Уменьшить анимацию",
+      "reducedMotionDescription": "Отключите декоративные анимации и переходы."
+    },
+    "developer": {
+      "title": "Настройки разработчика",
+      "description": "Временные настройки для разработки.",
+      "roleSwitch": "Переключить роль",
+      "roleSwitchDescription": "Переключитесь между режимами ученика и учителя."
+    }
+  },
+  "common": {
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "add": "Добавить",
+    "create": "Создать",
+    "update": "Обновить",
+    "submit": "Отправить",
+    "close": "Закрыть",
+    "back": "Назад",
+    "next": "Далее",
+    "previous": "Предыдущее",
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успех",
+    "confirm": "Подтвердить",
+    "yes": "Да",
+    "no": "Нет",
+    "search": "Поиск",
+    "filter": "Фильтр",
+    "sort": "Сортировка",
+    "view": "Просмотр",
+    "download": "Скачать",
+    "upload": "Загрузить",
+    "share": "Поделиться",
+    "copy": "Копировать",
+    "paste": "Вставить",
+    "undo": "Отменить",
+    "redo": "Повторить",
+    "reset": "Сбросить",
+    "clear": "Очистить",
+    "refresh": "Обновить",
+    "retry": "Повторить",
+    "more": "Больше",
+    "less": "Меньше",
+    "all": "Все",
+    "none": "Нет",
+    "select": "Выбрать",
+    "selected": "Выбрано",
+    "optional": "Необязательно",
+    "required": "Обязательно"
+  },
+  "auth": {
+    "login": "Войти",
+    "logout": "Выйти",
+    "signup": "Регистрация",
+    "email": "Почта",
+    "password": "Пароль",
+    "confirmPassword": "Подтвердите пароль",
+    "forgotPassword": "Забыли пароль?",
+    "resetPassword": "Сбросить пароль",
+    "dontHaveAccount": "Нет аккаунта?",
+    "alreadyHaveAccount": "Уже есть аккаунт?",
+    "orContinueWith": "Или продолжить с"
+  },
+  "notifications": {
+    "title": "Уведомления",
+    "noNotifications": "Нет уведомлений",
+    "markAsRead": "Отметить как прочитанное",
+    "markAllAsRead": "Отметить все как прочитанные",
+    "clearAll": "Очистить все"
+  },
+  "errors": {
+    "somethingWentWrong": "Что-то пошло не так",
+    "pageNotFound": "Страница не найдена",
+    "unauthorized": "Не авторизован",
+    "forbidden": "Запрещено",
+    "tryAgain": "Попробовать снова"
+  },
+  "setup": {
+    "welcome": "Добро пожаловать в Cautie",
+    "getStarted": "Начнем настройку",
+    "step": "Шаг",
+    "of": "из",
+    "next": "Далее",
+    "back": "Назад",
+    "finish": "Завершить настройку",
+    "language": {
+      "title": "Выберите язык",
+      "description": "Выберите язык для использования в приложении."
+    },
+    "theme": {
+      "title": "Выберите тему",
+      "description": "Выберите цветовую схему."
+    },
+    "profile": {
+      "title": "Настройте профиль",
+      "description": "Расскажите о себе для персонализации.",
+      "firstName": "Имя",
+      "lastName": "Фамилия",
+      "role": "Я...",
+      "student": "Ученик",
+      "teacher": "Учитель",
+      "saveProfile": "Сохранить профиль"
+    }
+  },
+  "quiz": {
+    "title": "Тест",
+    "answerAllQuestions": "Ответьте на все вопросы и отправьте в конце.",
+    "askFollowUp": "Задайте дополнительный вопрос...",
+    "gradingCriteria": "Опишите критерии оценки...",
+    "additionalCriteria": "Дополнительные критерии оценки...",
+    "aiGrading": "Настройки ИИ-оценки",
+    "expectedAnswer": "Введите правильный ответ...",
+    "export": "Экспорт",
+    "import": "Импорт",
+    "undo": "Отменить",
+    "redo": "Повторить"
+  },
+  "flashcards": {
+    "front": "Лицевая",
+    "back": "Обратная",
+    "termOrQuestion": "Термин или вопрос",
+    "definitionOrAnswer": "Определение или ответ"
+  },
+  "notes": {
+    "createNotes": "Создавайте заметки из текста, файлов или проектов.",
+    "enterText": "Начните писать..."
+  },
+  "blocks": {
+    "enterText": "Введите текст...",
+    "enterCode": "Введите код...",
+    "yourAnswer": "Введите ответ здесь...",
+    "followUpQuestion": "Задайте дополнительный вопрос...",
+    "nodeTitle": "Название узла",
+    "detailedDescription": "Подробное описание",
+    "calloutText": "Введите текст выноски...",
+    "quoteText": "Введите цитату...",
+    "authorName": "Имя автора...",
+    "source": "Книга, статья и т.д...",
+    "caption": "Добавьте подпись...",
+    "mediaUrl": "Введите URL медиа...",
+    "embedUrl": "Введите URL для встраивания...",
+    "matchItems": "Сопоставьте элементы...",
+    "putInOrder": "Расставьте в порядке...",
+    "acceptSynonyms": "напр., Принимать синонимы..."
+  },
+  "classes": {
+    "searchClasses": "Поиск классов...",
+    "className": "Название класса",
+    "classDescription": "Описание класса",
+    "briefSummary": "Краткое описание содержания класса.",
+    "e.gHistory101": "напр., История 101",
+    "chapterTitle": "Название главы",
+    "chapterDescription": "Описание главы"
+  },
+  "assignments": {
+    "assignmentTitle": "Название задания",
+    "extraInstructions": "Добавьте инструкции для учеников...",
+    "instructionsDetails": "Добавьте инструкции или детали",
+    "selectType": "Выберите тип",
+    "selectClass": "Выберите класс",
+    "weekLecture": "напр., Лекция недели 1"
+  },
+  "submissions": {
+    "writeSubmission": "Напишите ваш ответ здесь...",
+    "fileUploadComing": "Загрузка файлов скоро появится...",
+    "provideFeedback": "Дайте обратную связь...",
+    "addComment": "Добавьте комментарий...",
+    "grade": "Оценка",
+    "e.g8.5": "напр., 8.5"
+  },
+  "announcements": {
+    "announcementTitle": "Введите название объявления",
+    "announcementMessage": "Введите текст объявления"
+  },
+  "material": {
+    "noteTitle": "Название заметки",
+    "e.gChapter1": "напр., Глава 1: Ренессанс",
+    "sourceText": "Вставьте текст из учебника...",
+    "fileTitle": "напр., Глава 5 Чтение"
+  },
+  "verification": {
+    "enterCode": "Введите код подтверждения",
+    "verificationCode": "Код подтверждения"
+  },
+  "subjectEditor": {
+    "e.gStudyOfLiving": "напр., Изучение живых организмов...",
+    "introduction": "напр., Введение"
+  },
+  "chapterEditor": {
+    "newChapterTitle": "напр., Основные понятия",
+    "newChapterDescription": "Описание главы"
+  },
+  "paragraphEditor": {
+    "newParagraphTitle": "напр., Основные понятия",
+    "newParagraphDescription": "Описание параграфа"
+  },
+  "teacherCode": {
+    "enterCode": "Введите код учителя"
+  },
+  "upgrade": {
+    "upgrade": "Обновление"
+  },
+  "search": {
+    "search": "Поиск..."
+  },
+  "wordweb": {
+    "addNotes": "Добавьте заметки или текст здесь..."
+  },
+  "paragraphs": {
+    "newParagraph": "напр., Упражнение A"
+  }
+}

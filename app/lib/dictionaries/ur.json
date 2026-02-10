@@ -1,1 +1,255 @@
-{"sidebar":{"dashboard":"ڈیش بورڈ","subjects":"مضامین","classes":"کلاسیں","agenda":"ایجیندا","material":"مواد","settings":"ترتیبات","tools":{"title":"اوزار"}},"header":{"studentDashboard":"طالب علم ڈیش","teacherDashboard":"استاد ڈیش"},"dashboard":{"title":"ڈیش"},"agenda":{"title":"ایجیندا","addTask":"کام شامل کریں"},"subjects":{"title":"مضامین","addSubject":"مضمون شامل کریں"},"classes":{"title":"کلاسیں","createClass":"کلاس بنائیں"},"settings":{"title":"ترتیبات"},"common":{"save":"محفوظ کریں","cancel":"منسوخ","delete":"حذف","add":"شامل","create":"بنائیں","submit":"جمع کرائیں","close":"بند","back":"واپس","next":"اگلا","loading":"لوڈ ہو رہا","error":"خرابی","search":"تلاش","view":"دیکھیں","download":"ڈاؤن لوڈ","upload":"اپ لوڈ","copy":"کاپی","paste":"پیسٹ"},"auth":{"login":"لاگ ان","logout":"لاگ آؤٹ"},"notifications":{"title":"اطلاعات"},"errors":{"somethingWentWrong":"کچھ غلط ہوا"},"setup":{"welcome":"Cautie میں خوش آمدید","profile":{"firstName":"پہلا نام","lastName":"آخری نام","student":"طالب علم","teacher":"استاد"}},"quiz":{"title":"کوئز"},"flashcards":{"title":"فلیش کارڈ"},"notes":{"title":"نوٹس"},"blocks":{"title":"بلاکس"},"paragraphs":{"title":"پیراگراف"}}
+{
+  "sidebar": {
+    "dashboard": "ڈیش بورڈ",
+    "subjects": "مضامین",
+    "classes": "کلاسیں",
+    "agenda": "ایجیندا",
+    "material": "مواد",
+    "settings": "ترتیبات",
+    "tools": {
+      "title": "اوزار",
+      "quizGenerator": "کوئز",
+      "flashcardMaker": "فلیش کارڈ",
+      "materialProcessor": "پروسیسر",
+      "notes": "نوٹس",
+      "blocks": "بلاکس"
+    }
+  },
+  "header": {
+    "studentDashboard": "طالب علم ڈیش",
+    "teacherDashboard": "استاد ڈیش",
+    "roleSwitcher": "کردار تبدیل",
+    "myAccount": "میرا اکاؤنٹ",
+    "logOut": "لاگ آؤٹ",
+    "logIn": "لاگ ان"
+  },
+  "dashboard": {
+    "title": "ڈیش بورڈ",
+    "todayPlan": {
+      "title": "آج کا پلان",
+      "description": "AI نے یہ کام بنائے ہیں۔",
+      "completed": "مکمل"
+    },
+    "alerts": {
+      "title": "الرٹ",
+      "description": "خطرے اور ترجیحات"
+    },
+    "upcomingDeadlines": {
+      "title": "آنے والی تواریخ",
+      "due": "ڈیو",
+      "onTrack": "ٹریک پر",
+      "risk": "خطرہ",
+      "behind": "پیچھے"
+    },
+    "mySubjects": {
+      "title": "آپ کے مضامین",
+      "description": "مضامین کا جائزہ"
+    },
+    "statistics": {
+      "title": "اعدادوشمار",
+      "description": "اس ہفتے کا مطالعہ وقت"
+    }
+  },
+  "tools": {
+    "title": "اوزار",
+    "description": "سیکھنے کے لیے ٹولز",
+    "select": "ٹول کا انتخاب کریں",
+    "quiz": {
+      "title": "کوئز",
+      "description": "کسی بھی متن سے کوئز بنائیں"
+    },
+    "flashcards": {
+      "title": "فلیش کارڈ",
+      "description": "خودکار فلیش کارڈ بنائیں"
+    },
+    "notes": {
+      "title": "نوٹس",
+      "description": "نوٹس بنائیں اور منظم کریں"
+    },
+    "blocks": {
+      "title": "بلاکس",
+      "description": "منظم مواد بنائیں"
+    },
+    "material": {
+      "title": "پروسیسر",
+      "description": "فائلوں سے خلاصہ حاصل کریں"
+    }
+  },
+  "material": {
+    "title": "مواد",
+    "description": "فائل اپلوڈ کریں یا ٹیکسٹ چسپا کریں",
+    "clickToUpload": "اپلوڈ کرنے کے لیے کلک کریں",
+    "remove": "حذف کریں",
+    "processing": "پروسیسنگ...",
+    "processWithAi": "AI سے پروسیس کریں",
+    "summary": "خلاصہ",
+    "done": "ہو گیا"
+  },
+  "agenda": {
+    "title": "ایجیندا",
+    "description": "کاموں اور تواریخ کا کیلنڈر",
+    "eventsOn": "تواریخ پر",
+    "noEvents": "کوئی ایونٹ نہیں",
+    "addTask": "کام شامل کریں",
+    "today": "آج",
+    "week": "ہفتہ",
+    "month": "مہینہ"
+  },
+  "subjects": {
+    "title": "مضامین",
+    "description": "آپ کے تمام مضامین",
+    "noSubjects": "کوئی مضمون نہیں ملا",
+    "addSubject": "مضمون شامل کریں",
+    "chapters": "باب",
+    "progress": "پیش رفت"
+  },
+  "classes": {
+    "title": "کلاسیں",
+    "description": "کلاسیں اور طلباء کا انتظام",
+    "noClasses": "کوئی کلاس نہیں",
+    "createClass": "کلاس بنائیں",
+    "joinClass": "کلاس میں شامل ہوں",
+    "students": "طلباء"
+  },
+  "settings": {
+    "title": "ترتیبات",
+    "description": "اکاؤنٹ کا انتظام",
+    "general": {
+      "title": "عام",
+      "language": "زبان"
+    },
+    "personalization": {
+      "title": "شخصی بنائیں",
+      "theme": "تھیم",
+      "light": "روشن",
+      "dark": "اندھیرا",
+      "ocean": "سمندر"
+    },
+    "accessibility": {
+      "title": "رسائی",
+      "highContrast": "زیادہ کنٹراسٹ",
+      "dyslexiaFont": "ڈس لیکسیا دوست فونٹ"
+    }
+  },
+  "common": {
+    "save": "محفوظ کریں",
+    "cancel": "منسوخ",
+    "delete": "حذف",
+    "edit": "ترمیم",
+    "add": "شامل",
+    "create": "بنائیں",
+    "update": "اپ ڈیٹ",
+    "submit": "جمع کرائیں",
+    "close": "بند",
+    "back": "واپس",
+    "next": "اگلا",
+    "loading": "لوڈ ہو رہا",
+    "error": "خرابی",
+    "success": "کامیابی",
+    "confirm": "تصدیق کریں",
+    "yes": "ہاں",
+    "no": "نہیں",
+    "search": "تلاش",
+    "view": "دیکھیں",
+    "download": "ڈاؤن لوڈ",
+    "upload": "اپ لوڈ",
+    "share": "شیئر",
+    "copy": "کاپی",
+    "paste": "پیسٹ",
+    "all": "سب",
+    "select": "انتخاب"
+  },
+  "auth": {
+    "login": "لاگ ان",
+    "logout": "لاگ آؤٹ",
+    "signup": "سائن اپ",
+    "email": "ای میل",
+    "password": "پاس ورڈ"
+  },
+  "notifications": {
+    "title": "اطلاعات",
+    "noNotifications": "کوئی اطلاع نہیں"
+  },
+  "errors": {
+    "somethingWentWrong": "کچھ غلط ہوا",
+    "pageNotFound": "صفحہ نہیں ملا"
+  },
+  "setup": {
+    "welcome": "Cautie میں خوش آمدید",
+    "getStarted": "شروع کریں",
+    "step": "قدم",
+    "finish": "سیٹ اپ ختم کریں",
+    "language": {
+      "title": "زبان چنیں"
+    },
+    "profile": {
+      "title": "پروفائل بنائیں",
+      "firstName": "پہلا نام",
+      "lastName": "آخری نام",
+      "role": "میں...",
+      "student": "طالب علم",
+      "teacher": "استاد"
+    }
+  },
+  "quiz": {
+    "title": "کوئز",
+    "export": "ایکسپورٹ",
+    "import": "ایمپورٹ"
+  },
+  "flashcards": {
+    "front": "سامنے",
+    "back": "پیچھے"
+  },
+  "notes": {
+    "createNotes": "نوٹس بنائیں",
+    "enterText": "لکھنا شروع کریں..."
+  },
+  "blocks": {
+    "enterText": "ٹیکسٹ درج کریں...",
+    "enterCode": "کوڈ درج کریں...",
+    "yourAnswer": "یہاں جواب لکھیں..."
+  },
+  "classes": {
+    "searchClasses": "کلاسیں تلاش کریں...",
+    "className": "کلاس کا نام",
+    "classDescription": "کلاس کی تفصیل",
+    "chapterTitle": "باب کا عنوان"
+  },
+  "assignments": {
+    "assignmentTitle": "اسائنمنٹ کا عنوان",
+    "selectType": "قسم چنیں",
+    "selectClass": "کلاس چنیں"
+  },
+  "submissions": {
+    "writeSubmission": "یہاں لکھیں...",
+    "provideFeedback": "رائے دیں...",
+    "grade": "گریڈ"
+  },
+  "announcements": {
+    "announcementTitle": "اعلان کا عنوان",
+    "announcementMessage": "اعلان کا پیغام"
+  },
+  "subjectEditor": {
+    "e.gStudyOfLiving": "مثلاً: جانداروں کا مطالعہ..."
+  },
+  "chapterEditor": {
+    "newChapterTitle": "مثلاً: بنیادی تصورات",
+    "newChapterDescription": "باب کی تفصیل"
+  },
+  "paragraphEditor": {
+    "newParagraphTitle": "مثلاً: مشق A",
+    "newParagraphDescription": "پیراگراف کی تفصیل"
+  },
+  "teacherCode": {
+    "enterCode": "استاد کا کوڈ درج کریں"
+  },
+  "upgrade": {
+    "upgrade": "اپ گریڈ"
+  },
+  "search": {
+    "search": "تلاش..."
+  },
+  "paragraphs": {
+    "newParagraph": "مثلاً: مشق A"
+  }
+}

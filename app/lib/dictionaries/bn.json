@@ -1,1 +1,199 @@
-{"sidebar":{"dashboard":"ড্যাশবোর্ড","subjects":"বিষয়","classes":"ক্লাস","agenda":"এজেন্ডা","material":"উপকরণ","settings":"সেটিংস","tools":{"title":"টুলস","quizGenerator":"কুইজ","flashcardMaker":"ফ্ল্যাশকার্ড","notes":"নোটস","blocks":"ব্লক"}},"header":{"studentDashboard":"ছাত্র ড্যাশবোর্ড","teacherDashboard":"শিক্ষক ড্যাশবোর্ড","roleSwitcher":"ভূমিকা পরিবর্তন","myAccount":"আমার অ্যাকাউন্ট","logOut":"লগআউট","logIn":"লগইন"},"dashboard":{"title":"ড্যাশবোর্ড","todayPlan":{"title":"আজকের জন্য অধ্যয়ন পরিকল্পনা","completed":"সম্পন্ন"},"alerts":{"title":"গুরুত্বপূর্ণ সতর্কতা"},"upcomingDeadlines":{"title":"আসন্ন সময়সীমা","due":"দেওয়ার তারিখ","onTrack":"ট্র্যাকে","risk":"ঝুঁকি","behind":"পিছনে"}},"tools":{"title":"টুলস","select":"টুল নির্বাচন করুন","quiz":{"title":"কুইজ"},"flashcards":{"title":"ফ্ল্যাশকার্ড"},"notes":{"title":"নোটস"}},"agenda":{"title":"এজেন্ডা","description":"সময়সীমা এবং কাজের ক্যালেন্ডার।","eventsOn":"ইভেন্ট","noEvents":"কোনো ইভেন্ট নেই।","addTask":"কাজ যোগ করুন","today":"আজ","week":"সপ্তাহ","month":"মাস"},"subjects":{"title":"বিষয়","description":"এক জায়গায় আপনার সব বিষয়।","addSubject":"বিষয় যোগ করুন","chapters":"অধ্যায়","progress":"প্রগতি"},"settings":{"title":"সেটিংস","general":{"title":"সাধারণ","language":"ভাষা"},"personalization":{"title":"ব্যক্তিগতকরণ","theme":"থিম","light":"হালকা","dark":"অন্ধকার","ocean":"মহাসাগর"},"accessibility":{"title":"প্রাপ্যতা","highContrast":"উচ্চ কনট্রাস্ট","dyslexiaFont":"ডিসলেক্সিয়া বন্ধুত্বপূর্ণ ফন্ট"}},"common":{"save":"সংরক্ষণ","cancel":"বাতিল","delete":"মুছুন","edit":"সম্পাদনা করুন","add":"যোগ করুন","create":"তৈরি করুন","update":"আপডেট করুন","submit":"জমা দিন","close":"বন্ধ করুন","back":"পেছনে","next":"পরবর্তী","loading":"লোড হচ্ছে...","error":"ত্রুটি","success":"সাফল্য","confirm":"নিশ্চিত করুন","yes":"হ্যাঁ","no":"না","search":"খুঁজুন","view":"দেখুন","download":"ডাউনলোড","upload":"আপলোড","share":"শেয়ার করুন","copy":"কপি","paste":"পেস্ট","refresh":"রিফ্রেশ","all":"সব","select":"নির্বাচন করুন"},"auth":{"login":"লগইন","logout":"লগআউট","signup":"সাইন আপ","email":"ইমেইল","password":"পাসওয়ার্ড"},"setup":{"welcome":"Cautie এ স্বাগতম","getStarted":"চলুন শুরু করি","step":"ধাপ","finish":"সেটআপ শেষ করুন","language":{"title":"আপনার ভাষা নির্বাচন করুন"},"profile":{"title":"আপনার প্রোফাইল সেট করুন","firstName":"প্রথম নাম","lastName":"শেষ নাম","role":"আমি একজন...","student":"ছাত্র","teacher":"শিক্ষক"}}}
+{
+  "sidebar": {
+    "dashboard": "ড্যাশবোর্ড",
+    "subjects": "বিষয়",
+    "classes": "ক্লাস",
+    "agenda": "এজেন্ডা",
+    "material": "উপকরণ",
+    "settings": "সেটিংস",
+    "tools": {
+      "title": "টুলস",
+      "quizGenerator": "কুইজ",
+      "flashcardMaker": "ফ্ল্যাশকার্ড",
+      "notes": "নোটস",
+      "blocks": "ব্লক"
+    }
+  },
+  "header": {
+    "studentDashboard": "ছাত্র ড্যাশবোর্ড",
+    "teacherDashboard": "শিক্ষক ড্যাশবোর্ড",
+    "roleSwitcher": "ভূমিকা পরিবর্তন",
+    "myAccount": "আমার অ্যাকাউন্ট",
+    "logOut": "লগআউট",
+    "logIn": "লগইন"
+  },
+  "dashboard": {
+    "title": "ড্যাশবোর্ড",
+    "todayPlan": {
+      "title": "আজকের অধ্যয়ন পরিকল্পনা",
+      "completed": "সম্পন্ন"
+    },
+    "alerts": {
+      "title": "গুরুত্বপূর্ণ সতর্কতা"
+    },
+    "upcomingDeadlines": {
+      "title": "আসন্ন সময়সীমা",
+      "due": "দেওয়ার তারিখ",
+      "onTrack": "ট্র্যাকে",
+      "risk": "ঝুঁকি",
+      "behind": "পিছনে"
+    },
+    "mySubjects": {
+      "title": "আপনার বিষয়গুলি"
+    },
+    "statistics": {
+      "title": "পরিসংখ্যান",
+      "description": "এই সপ্তাহে আপনার অধ্যয়ন সময়।"
+    }
+  },
+  "tools": {
+    "title": "টুলস",
+    "select": "টুল নির্বাচন করুন",
+    "quiz": {
+      "title": "কুইজ",
+      "description": "যেকোনো টেক্সট থেকে MCQ তৈরি করুন।"
+    },
+    "flashcards": {
+      "title": "ফ্ল্যাশকার্ড",
+      "description": "স্বয়ংক্রিয়ভাবে ফ্ল্যাশকার্ড তৈরি করুন।"
+    },
+    "notes": {
+      "title": "নোটস",
+      "description": "আপনার নোটস তৈরি এবং সংগঠিত করুন।"
+    },
+    "blocks": {
+      "title": "ব্লক",
+      "description": "ব্লক এডিটর দিয়ে সামগ্রী তৈরি করুন।"
+    }
+  },
+  "agenda": {
+    "title": "এজেন্ডা",
+    "description": "সময়সীমা এবং কাজের ক্যালেন্ডার।",
+    "eventsOn": "ইভেন্ট",
+    "noEvents": "কোনো ইভেন্ট নেই।",
+    "addTask": "কাজ যোগ করুন",
+    "today": "আজ",
+    "week": "সপ্তাহ",
+    "month": "মাস"
+  },
+  "subjects": {
+    "title": "বিষয়",
+    "description": "এক জায়গায় আপনার সব বিষয়।",
+    "addSubject": "বিষয় যোগ করুন",
+    "chapters": "অধ্যায়",
+    "progress": "প্রগতি"
+  },
+  "classes": {
+    "title": "ক্লাস",
+    "description": "আপনার ক্লাস এবং ছাত্রদের পরিচালনা করুন।",
+    "createClass": "ক্লাস তৈরি করুন",
+    "joinClass": "ক্লাসে যোগ দিন",
+    "students": "ছাত্র"
+  },
+  "settings": {
+    "title": "সেটিংস",
+    "general": {
+      "title": "সাধারণ",
+      "language": "ভাষা"
+    },
+    "personalization": {
+      "title": "ব্যক্তিগতকরণ",
+      "theme": "থিম",
+      "light": "হালকা",
+      "dark": "অন্ধকার",
+      "ocean": "মহাসাগর"
+    },
+    "accessibility": {
+      "title": "প্রাপ্যতা",
+      "highContrast": "উচ্চ কনট্রাস্ট"
+    }
+  },
+  "common": {
+    "save": "সংরক্ষণ",
+    "cancel": "বাতিল",
+    "delete": "মুছুন",
+    "edit": "সম্পাদনা করুন",
+    "add": "যোগ করুন",
+    "create": "তৈরি করুন",
+    "update": "আপডেট করুন",
+    "submit": "জমা দিন",
+    "close": "বন্ধ করুন",
+    "back": "পেছনে",
+    "next": "পরবর্তী",
+    "loading": "লোড হচ্ছে...",
+    "error": "ত্রুটি",
+    "success": "সাফল্য",
+    "confirm": "নিশ্চিত করুন",
+    "yes": "হ্যাঁ",
+    "no": "না",
+    "search": "খুঁজুন",
+    "view": "দেখুন",
+    "download": "ডাউনলোড",
+    "upload": "আপলোড",
+    "share": "শেয়ার করুন",
+    "copy": "কপি",
+    "paste": "পেস্ট",
+    "all": "সব",
+    "select": "নির্বাচন করুন"
+  },
+  "auth": {
+    "login": "লগইন",
+    "logout": "লগআউট",
+    "signup": "সাইন আপ",
+    "email": "ইমেইল",
+    "password": "পাসওয়ার্ড"
+  },
+  "setup": {
+    "welcome": "Cautie এ স্বাগতম",
+    "getStarted": "চলুন শুরু করি",
+    "step": "ধাপ",
+    "finish": "সেটআপ শেষ করুন",
+    "language": {
+      "title": "আপনার ভাষা নির্বাচন করুন"
+    },
+    "profile": {
+      "title": "আপনার প্রোফাইল সেট করুন",
+      "firstName": "প্রথম নাম",
+      "lastName": "শেষ নাম",
+      "role": "আমি একজন...",
+      "student": "ছাত্র",
+      "teacher": "শিক্ষক"
+    }
+  },
+  "quiz": {
+    "title": "কুইজ",
+    "export": "রপ্তানি",
+    "import": "আমদানি"
+  },
+  "flashcards": {
+    "front": "সামনে",
+    "back": "পেছনে"
+  },
+  "notes": {
+    "createNotes": "নোটস তৈরি করুন",
+    "enterText": "লিখতে শুরু করুন..."
+  },
+  "blocks": {
+    "enterText": "টেক্সট লিখুন...",
+    "enterCode": "কোড লিখুন...",
+    "yourAnswer": "এখানে উত্তর লিখুন..."
+  },
+  "classes": {
+    "searchClasses": "ক্লাস খুঁজুন...",
+    "className": "ক্লাসের নাম",
+    "classDescription": "ক্লাসের বিবরণ"
+  },
+  "assignments": {
+    "assignmentTitle": "অ্যাসাইনমেন্ট শিরোনাম",
+    "selectType": "প্রকার নির্বাচন করুন",
+    "selectClass": "ক্লাস নির্বাচন করুন"
+  },
+  "submissions": {
+    "writeSubmission": "এখানে লিখুন...",
+    "provideFeedback": "মতামত দিন...",
+    "grade": "গ্রেড"
+  },
+  "paragraphs": {
+    "newParagraph": "যেমন: অনুশীলন A"
+  }
+}

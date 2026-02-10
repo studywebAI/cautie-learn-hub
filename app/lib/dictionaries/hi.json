@@ -6,15 +6,250 @@
     "agenda": "कार्यक्रम",
     "material": "सामग्री",
     "settings": "सेटिंग्स",
-    "tools": { "title": "उपकरण", "quizGenerator": "प्रश्नोत्तरी", "flashcardMaker": "फ्लैशकार्ड", "materialProcessor": "सामग्री प्रोसेसर", "notes": "नोट्स", "blocks": "ब्लॉक" }
+    "tools": {
+      "title": "उपकरण",
+      "quizGenerator": "प्रश्नोत्तरी",
+      "flashcardMaker": "फ्लैशकार्ड",
+      "materialProcessor": "सामग्री प्रोसेसर",
+      "notes": "नोट्स",
+      "blocks": "ब्लॉक"
+    }
   },
-  "header": { "studentDashboard": "छात्र डैशबोर्ड", "teacherDashboard": "शिक्षक डैशबोर्ड", "roleSwitcher": "भूमिका स्विचर", "myAccount": "मेरा खाता", "logOut": "लॉग आउट", "logIn": "लॉग इन" },
-  "dashboard": { "title": "डैशबोर्ड", "todayPlan": { "title": "आज का अध्ययन प्लान", "description": "ये कार्य AI द्वारा तैयार किए गए हैं।", "completed": "पूर्ण" }, "alerts": { "title": "महत्वपूर्ण अलर्ट", "description": "जोखिम और प्राथमिकताएं" }, "upcomingDeadlines": { "title": "आगामी समय सीमा", "due": "देय", "onTrack": "ट्रैक पर", "risk": "जोखिम", "behind": "पीछे", "viewAgenda": "पूर्ण कार्यक्रम देखें" } },
-  "tools": { "title": "उपकरण", "select": "उपकरण चुनें", "quiz": { "title": "प्रश्नोत्तरी", "description": "किसी भी टेक्स्ट से MCQs बनाएं।" }, "flashcards": { "title": "फ्लैशकार्ड", "description": "स्वचालित रूप से फ्लैशकार्ड बनाएं।" }, "notes": { "title": "नोट्स", "description": "अपने नोट्स बनाएं और व्यवस्थित करें।" } },
-  "agenda": { "title": "कार्यक्रम", "description": "समय सीमा और कार्यों की कैलेंडर।", "eventsOn": "घटनाएं", "noEvents": "कोई कार्य निर्धारित नहीं।", "addTask": "कार्य जोड़ें", "today": "आज", "week": "सप्ताह", "month": "महीना" },
-  "subjects": { "title": "विषय", "description": "एक ही जगह पर आपके सभी विषय।", "noSubjects": "कोई विषय नहीं मिला।", "addSubject": "विषय जोड़ें", "chapters": "अध्याय", "paragraphs": "पैराग्राफ", "assignments": "कार्य", "progress": "प्रगति" },
-  "settings": { "title": "सेटिंग्स", "description": "अपने खाते और ऐप सेटिंग्स प्रबंधित करें।", "general": { "title": "सामान्य", "language": "भाषा" }, "personalization": { "title": "व्यक्तिगतकरण", "theme": "थीम", "light": "लाइट", "dark": "डार्क", "ocean": "ओशन" }, "accessibility": { "title": "सुगम्यता", "highContrast": "हाई कंट्रास्ट", "dyslexiaFont": "डिस्लेक्सिया फ्रेंडली फ़ॉन्ट", "reducedMotion": "एनिमेशन कम करें" } },
-  "common": { "save": "सहेजें", "cancel": "रद्द करें", "delete": "हटाएं", "edit": "संपादित करें", "add": "जोड़ें", "create": "बनाएं", "update": "अपडेट करें", "submit": "सबमिट करें", "close": "बंद करें", "back": "वापस", "next": "अगला", "previous": "पिछला", "loading": "लोड हो रहा है...", "error": "त्रुटि", "success": "सफलता", "confirm": "पुष्टि करें", "yes": "हाँ", "no": "नहीं", "search": "खोजें", "filter": "फ़िल्टर करें", "view": "देखें", "download": "डाउनलोड", "upload": "अपलोड", "share": "साझा करें", "copy": "कॉपी", "paste": "पेस्ट", "refresh": "ताज़ा करें", "retry": "पुनः प्रयास करें", "all": "सभी", "select": "चुनें", "optional": "वैकल्पिक", "required": "आवश्यक" },
-  "auth": { "login": "लॉग इन", "logout": "लॉग आउट", "signup": "साइन अप", "email": "ईमेल", "password": "पासवर्ड", "confirmPassword": "पासवर्ड की पुष्टि करें", "forgotPassword": "पासवर्ड भूल गए?" },
-  "setup": { "welcome": "Cautie में आपका स्वागत है", "getStarted": "चलिए शुरू करते हैं", "step": "चरण", "of": "का", "finish": "सेटअप पूरा करें", "language": { "title": "अपनी भाषा चुनें", "description": "वह भाषा चुनें जिसका आप उपयोग करना चाहते हैं।" }, "profile": { "title": "अपनी प्रोफ़ाइल सेट करें", "firstName": "पहला नाम", "lastName": "अंतिम नाम", "role": "मैं हूं...", "student": "छात्र", "teacher": "शिक्षक" } }
+  "header": {
+    "studentDashboard": "छात्र डैशबोर्ड",
+    "teacherDashboard": "शिक्षक डैशबोर्ड",
+    "roleSwitcher": "भूमिका स्विचर",
+    "myAccount": "मेरा खाता",
+    "logOut": "लॉग आउट",
+    "logIn": "लॉग इन"
+  },
+  "dashboard": {
+    "title": "डैशबोर्ड",
+    "todayPlan": {
+      "title": "आज का अध्ययन प्लान",
+      "description": "ये कार्य AI द्वारा तैयार किए गए हैं।",
+      "completed": "पूर्ण"
+    },
+    "alerts": {
+      "title": "महत्वपूर्ण अलर्ट",
+      "description": "जोखिम और प्राथमिकताएं"
+    },
+    "upcomingDeadlines": {
+      "title": "आगामी समय सीमा",
+      "due": "देय",
+      "onTrack": "ट्रैक पर",
+      "risk": "जोखिम",
+      "behind": "पीछे"
+    },
+    "mySubjects": {
+      "title": "आपके विषय",
+      "description": "आपके विषयों का त्वरित अवलोकन।"
+    },
+    "statistics": {
+      "title": "आँकड़े",
+      "description": "इस सप्ताह आपका अध्ययन समय।"
+    }
+  },
+  "tools": {
+    "title": "उपकरण",
+    "description": "सीखने को तेज करने के लिए आपके स्मार्ट टूल्स।",
+    "select": "उपकरण चुनें",
+    "quiz": {
+      "title": "प्रश्नोत्तरी",
+      "description": "किसी भी टेक्स्ट से MCQs बनाएं।"
+    },
+    "flashcards": {
+      "title": "फ्लैशकार्ड",
+      "description": "अपने अध्ययन सामग्री से फ्लैशकार्ड बनाएं।"
+    },
+    "notes": {
+      "title": "नोट्स",
+      "description": "अपने नोट्स बनाएं और व्यवस्थित करें।"
+    },
+    "blocks": {
+      "title": "ब्लॉक",
+      "description": "ब्लॉक एडिटर के साथ सामग्री बनाएं।"
+    },
+    "material": {
+      "title": "सामग्री प्रोसेसर",
+      "description": "दस्तावेज़ से संक्षिप्त सारांश प्राप्त करें।"
+    }
+  },
+  "material": {
+    "title": "सामग्री",
+    "description": "फ़ाइलें अपलोड करें या टेक्स्ट पेस्ट करें।",
+    "importTitle": "सामग्री आयात करें",
+    "clickToUpload": "अपलोड करने के लिए क्लिक करें",
+    "remove": "हटाएं",
+    "processing": "प्रोसेसिंग...",
+    "processWithAi": "AI से प्रोसेस करें",
+    "summary": "सारांश",
+    "done": "पूर्ण"
+  },
+  "agenda": {
+    "title": "कार्यक्रम",
+    "description": "समय सीमा और कार्यों का कैलेंडर।",
+    "eventsOn": "इवेंट",
+    "noEvents": "इस दिन कोई इवेंट नहीं।",
+    "addTask": "कार्य जोड़ें",
+    "today": "आज",
+    "week": "सप्ताह",
+    "month": "महीना"
+  },
+  "subjects": {
+    "title": "विषय",
+    "description": "एक ही जगह पर आपके सभी विषय।",
+    "noSubjects": "कोई विषय नहीं मिला।",
+    "addSubject": "विषय जोड़ें",
+    "chapters": "अध्याय",
+    "progress": "प्रगति"
+  },
+  "classes": {
+    "title": "कक्षाएं",
+    "description": "अपनी कक्षाओं और छात्रों का प्रबंधन करें।",
+    "noClasses": "कोई कक्षा नहीं मिली।",
+    "createClass": "कक्षा बनाएं",
+    "joinClass": "कक्षा में शामिल हों",
+    "students": "छात्र"
+  },
+  "settings": {
+    "title": "सेटिंग्स",
+    "description": "अपने खाते और ऐप सेटिंग्स प्रबंधित करें।",
+    "general": {
+      "title": "सामान्य",
+      "language": "भाषा"
+    },
+    "personalization": {
+      "title": "व्यक्तिगतकरण",
+      "theme": "थीम",
+      "light": "लाइट",
+      "dark": "डार्क",
+      "ocean": "ओशन"
+    },
+    "accessibility": {
+      "title": "सुगम्यता",
+      "highContrast": "हाई कंट्रास्ट",
+      "dyslexiaFont": "डिस्लेक्सिया फ्रेंडली फ़ॉन्ट"
+    }
+  },
+  "common": {
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "add": "जोड़ें",
+    "create": "बनाएं",
+    "update": "अपडेट करें",
+    "submit": "सबमिट करें",
+    "close": "बंद करें",
+    "back": "वापस",
+    "next": "अगला",
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफलता",
+    "confirm": "पुष्टि करें",
+    "yes": "हाँ",
+    "no": "नहीं",
+    "search": "खोजें",
+    "view": "देखें",
+    "download": "डाउनलोड",
+    "upload": "अपलोड",
+    "share": "साझा करें",
+    "copy": "कॉपी",
+    "paste": "पेस्ट",
+    "all": "सभी",
+    "select": "चुनें"
+  },
+  "auth": {
+    "login": "लॉग इन",
+    "logout": "लॉग आउट",
+    "signup": "साइन अप",
+    "email": "ईमेल",
+    "password": "पासवर्ड"
+  },
+  "notifications": {
+    "title": "सूचनाएं",
+    "noNotifications": "कोई सूचना नहीं"
+  },
+  "errors": {
+    "somethingWentWrong": "कुछ गलत हो गया",
+    "pageNotFound": "पृष्ठ नहीं मिला"
+  },
+  "setup": {
+    "welcome": "Cautie में आपका स्वागत है",
+    "getStarted": "चलिए शुरू करते हैं",
+    "step": "चरण",
+    "finish": "सेटअप पूरा करें",
+    "language": {
+      "title": "अपनी भाषा चुनें"
+    },
+    "profile": {
+      "title": "अपनी प्रोफ़ाइल सेट करें",
+      "firstName": "पहला नाम",
+      "lastName": "अंतिम नाम",
+      "role": "मैं हूं...",
+      "student": "छात्र",
+      "teacher": "शिक्षक"
+    }
+  },
+  "quiz": {
+    "title": "प्रश्नोत्तरी",
+    "export": "एक्सपोर्ट",
+    "import": "इम्पोर्ट"
+  },
+  "flashcards": {
+    "front": "सामने",
+    "back": "पीछे"
+  },
+  "notes": {
+    "createNotes": "नोट्स बनाएं",
+    "enterText": "लिखना शुरू करें..."
+  },
+  "blocks": {
+    "enterText": "टेक्स्ट दर्ज करें...",
+    "enterCode": "कोड दर्ज करें...",
+    "yourAnswer": "यहाँ उत्तर लिखें..."
+  },
+  "classes": {
+    "searchClasses": "कक्षाएं खोजें...",
+    "className": "कक्षा का नाम",
+    "classDescription": "कक्षा का विवरण"
+  },
+  "assignments": {
+    "assignmentTitle": "असाइनमेंट का शीर्षक",
+    "selectType": "प्रकार चुनें",
+    "selectClass": "कक्षा चुनें"
+  },
+  "submissions": {
+    "writeSubmission": "यहाँ लिखें...",
+    "provideFeedback": "राय दें...",
+    "grade": "ग्रेड"
+  },
+  "announcements": {
+    "announcementTitle": "शीर्षक",
+    "announcementMessage": "संदेश"
+  },
+  "subjectEditor": {
+    "e.gStudyOfLiving": "जैसे: जीवों का अध्ययन..."
+  },
+  "chapterEditor": {
+    "newChapterTitle": "जैसे: मूल अवधारणाएं",
+    "newChapterDescription": "अध्याय का विवरण"
+  },
+  "paragraphEditor": {
+    "newParagraphTitle": "जैसे: मूल अवधारणाएं",
+    "newParagraphDescription": "पैराग्राफ का विवरण"
+  },
+  "teacherCode": {
+    "enterCode": "शिक्षक कोड दर्ज करें"
+  },
+  "upgrade": {
+    "upgrade": "अपग्रेड"
+  },
+  "search": {
+    "search": "खोज..."
+  },
+  "paragraphs": {
+    "newParagraph": "जैसे: अभ्यास A"
+  }
 }

@@ -1,1 +1,303 @@
-{"sidebar":{"dashboard":"Panel","subjects":"Asignaturas","classes":"Clases","agenda":"Agenda","material":"Material","settings":"Configuración","tools":{"title":"Herramientas","quizGenerator":"Cuestionario","flashcardMaker":"Flashcards","notes":"Notas","blocks":"Bloques"}},"header":{"studentDashboard":"Panel del Estudiante","teacherDashboard":"Panel del Profesor","myAccount":"Mi cuenta","logOut":"Cerrar sesión","logIn":"Iniciar sesión"},"dashboard":{"title":"Panel","todayPlan":{"title":"Tu plan de estudio para hoy","description":"Estas tareas han sido preparadas por la IA.","completed":"Completado"},"alerts":{"title":"Alertas importantes"},"upcomingDeadlines":{"title":"Próximos plazos","due":"Fecha límite","onTrack":"En camino","risk":"Riesgo","behind":"Atrás"},"mySubjects":{"title":"Tus asignaturas"},"statistics":{"title":"Estadísticas","description":"Tu tiempo de estudio esta semana."}},"tools":{"title":"Herramientas","description":"Suite de herramientas inteligentes.","quiz":{"title":"Cuestionario","description":"Crea cuestionarios de opción múltiple."},"flashcards":{"title":"Flashcards","description":"Genera tarjetas automáticamente."},"notes":{"title":"Notas","description":"Crea y organiza notas."},"blocks":{"title":"Bloques","description":"Crea contenido estructurado."},"wordweb":{"title":"Mapa conceptual"},"material":{"title":"Procesar material","description":"Obtén un resumen de documentos."}},"material":{"title":"Material","description":"Sube archivos o pega texto.","clickToUpload":"Clic para subir","remove":"Eliminar","processing":"Procesando...","processWithAi":"Procesar con IA","summary":"Resumen","done":"Hecho"},"agenda":{"title":"Agenda","description":"Calendario de plazos y tareas.","eventsOn":"Eventos","noEvents":"Sin eventos.","addTask":"Añadir tarea","today":"Hoy","week":"Semana","month":"Mes"},"subjects":{"title":"Asignaturas","description":"Todas tus asignaturas en un lugar.","noSubjects":"No se encontraron asignaturas.","addSubject":"Añadir asignatura","chapters":"Capítulos","progress":"Progreso"},"classes":{"title":"Clases","description":"Gestiona tus clases y estudiantes.","noClasses":"No se encontraron clases.","createClass":"Crear clase","joinClass":"Unirse a clase","students":"Estudiantes"},"settings":{"title":"Configuración","description":"Gestiona tu cuenta.","general":{"title":"General","language":"Idioma"},"personalization":{"title":"Personalización","theme":"Tema","light":"Claro","dark":"Oscuro","ocean":"Océano"},"accessibility":{"title":"Accesibilidad","highContrast":"Alto contraste","dyslexiaFont":"Fuente dyslexia","reducedMotion":"Reducir animaciones"}},"common":{"save":"Guardar","cancel":"Cancelar","delete":"Eliminar","edit":"Editar","add":"Añadir","create":"Crear","update":"Actualizar","submit":"Enviar","close":"Cerrar","back":"Atrás","next":"Siguiente","loading":"Cargando...","error":"Error","success":"Éxito","confirm":"Confirmar","yes":"Sí","no":"No","search":"Buscar","filter":"Filtrar","view":"Ver","download":"Descargar","upload":"Subir","share":"Compartir","copy":"Copiar","paste":"Pegar","undo":"Deshacer","redo":"Rehacer","refresh":"Actualizar","retry":"Reintentar","all":"Todos","select":"Seleccionar","optional":"Opcional","required":"Requerido"},"auth":{"login":"Iniciar sesión","logout":"Cerrar sesión","signup":"Registrarse","email":"Correo","password":"Contraseña"},"notifications":{"title":"Notificaciones","noNotifications":"Sin notificaciones"},"errors":{"somethingWentWrong":"Algo salió mal","pageNotFound":"Página no encontrada"},"setup":{"welcome":"Bienvenido a Cautie","getStarted":"Comencemos","step":"Paso","finish":"Finalizar","language":{"title":"Elige tu idioma"},"profile":{"title":"Configura tu perfil","firstName":"Nombre","lastName":"Apellido","role":"Soy...","student":"Estudiante","teacher":"Profesor"}},"quiz":{"title":"Cuestionario","answerAllQuestions":"Responde todas las preguntas.","gradingCriteria":"Describe cómo calificar...","expectedAnswer":"Ingresa la respuesta esperada...","export":"Exportar","import":"Importar"},"flashcards":{"front":"Frente","back":"Reverso"},"notes":{"createNotes":"Crea notas...","enterText":"Empieza a escribir..."},"blocks":{"enterText":"Ingresa texto...","enterCode":"Ingresa código...","yourAnswer":"Ingresa tu respuesta aquí...","nodeTitle":"Título del nodo","quoteText":"Ingresa la cita...","authorName":"Nombre del autor...","caption":"Añadir descripción...","mediaUrl":"Ingresa URL...","matchItems":"Une los elementos...","putInOrder":"Ordena..."},"classes":{"searchClasses":"Buscar clases...","className":"Nombre de la clase","classDescription":"Descripción de la clase","chapterTitle":"Título del capítulo"},"assignments":{"assignmentTitle":"Título de la tarea","extraInstructions":"Añade instrucciones...","selectType":"Seleccionar tipo","selectClass":"Seleccionar clase"},"submissions":{"writeSubmission":"Escribe tu respuesta aquí...","provideFeedback":"Dar feedback...","addComment":"Añadir comentario...","grade":"Calificación"},"announcements":{"announcementTitle":"Título del anuncio","announcementMessage":"Mensaje del anuncio"},"verification":{"enterCode":"Ingresa código de verificación"},"subjectEditor":{"e.gStudyOfLiving":"Ej.: Estudio de organismos vivos...","introduction":"Ej.: Introducción"},"chapterEditor":{"newChapterTitle":"Ej.: Conceptos básicos","newChapterDescription":"Descripción del capítulo"},"paragraphEditor":{"newParagraphTitle":"Ej.: Conceptos básicos","newParagraphDescription":"Descripción del párrafo"},"teacherCode":{"enterCode":"Ingresa código del profesor"},"upgrade":{"upgrade":"Actualizar"},"search":{"search":"Buscar..."},"wordweb":{"addNotes":"Añadir notas..."},"paragraphs":{"newParagraph":"Ej.: Ejercicio A"}}
+{
+  "sidebar": {
+    "dashboard": "Panel",
+    "subjects": "Asignaturas",
+    "classes": "Clases",
+    "agenda": "Agenda",
+    "material": "Material",
+    "settings": "Configuración",
+    "tools": {
+      "title": "Herramientas",
+      "quizGenerator": "Cuestionario",
+      "flashcardMaker": "Flashcards",
+      "materialProcessor": "Material",
+      "notes": "Notas",
+      "blocks": "Bloques"
+    }
+  },
+  "header": {
+    "studentDashboard": "Panel del Estudiante",
+    "teacherDashboard": "Panel del Profesor",
+    "roleSwitcher": "Cambiar rol",
+    "myAccount": "Mi cuenta",
+    "logOut": "Cerrar sesión",
+    "logIn": "Iniciar sesión"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "todayPlan": {
+      "title": "Tu plan de estudio para hoy",
+      "description": "Estas tareas han sido preparadas por la IA.",
+      "completed": "Completado"
+    },
+    "alerts": {
+      "title": "Alertas importantes",
+      "description": "Riesgos y prioridades"
+    },
+    "upcomingDeadlines": {
+      "title": "Próximos plazos",
+      "description": "Un resumen de tus tareas y exámenes próximos.",
+      "due": "Fecha límite",
+      "onTrack": "En camino",
+      "risk": "Riesgo",
+      "behind": "Atrás",
+      "viewAgenda": "Ver agenda completa"
+    },
+    "mySubjects": {
+      "title": "Tus asignaturas",
+      "description": "Una vista rápida de tus asignaturas."
+    },
+    "aiSuggestions": {
+      "title": "Sugerencias IA",
+      "description": "Tu asistente personal"
+    },
+    "quickAccess": {
+      "title": "Acceso rápido",
+      "description": "Tus materiales usados recientemente."
+    },
+    "statistics": {
+      "title": "Estadísticas",
+      "description": "Tu tiempo de estudio esta semana.",
+      "weeklyActivity": "Actividad semanal",
+      "lastSessionRecap": "Resumen de la última sesión"
+    }
+  },
+  "tools": {
+    "title": "Herramientas",
+    "description": "Suite de herramientas inteligentes para acelerar el aprendizaje.",
+    "select": "Seleccionar herramienta",
+    "quiz": {
+      "title": "Cuestionario",
+      "description": "Crea cuestionarios de opción múltiple."
+    },
+    "flashcards": {
+      "title": "Flashcards",
+      "description": "Genera tarjetas automáticamente."
+    },
+    "notes": {
+      "title": "Notas",
+      "description": "Crea y organiza notas."
+    },
+    "blocks": {
+      "title": "Bloques",
+      "description": "Crea contenido estructurado."
+    },
+    "wordweb": {
+      "title": "Mapa conceptual",
+      "description": "Visualiza las conexiones entre conceptos."
+    },
+    "material": {
+      "title": "Procesar material",
+      "description": "Obtén resúmenes concisos."
+    }
+  },
+  "material": {
+    "title": "Material",
+    "description": "Sube archivos o pega texto.",
+    "clickToUpload": "Clic para subir",
+    "remove": "Eliminar",
+    "processing": "Procesando...",
+    "processWithAi": "Procesar con IA",
+    "summary": "Resumen",
+    "done": "Hecho"
+  },
+  "agenda": {
+    "title": "Agenda",
+    "description": "Calendario de plazos y tareas.",
+    "eventsOn": "Eventos",
+    "noEvents": "Sin eventos.",
+    "addTask": "Añadir tarea",
+    "today": "Hoy",
+    "week": "Semana",
+    "month": "Mes"
+  },
+  "subjects": {
+    "title": "Asignaturas",
+    "description": "Todas tus asignaturas en un lugar.",
+    "noSubjects": "No se encontraron asignaturas.",
+    "addSubject": "Añadir asignatura",
+    "chapters": "Capítulos",
+    "paragraphs": "Párrafos",
+    "assignments": "Tareas",
+    "progress": "Progreso"
+  },
+  "classes": {
+    "title": "Clases",
+    "description": "Gestiona tus clases y estudiantes.",
+    "noClasses": "No se encontraron clases.",
+    "createClass": "Crear clase",
+    "joinClass": "Unirse a clase",
+    "joinCode": "Código de unión",
+    "students": "Estudiantes",
+    "assignments": "Tareas",
+    "announcements": "Anuncios"
+  },
+  "settings": {
+    "title": "Configuración",
+    "description": "Gestiona tu cuenta.",
+    "general": {
+      "title": "General",
+      "language": "Idioma"
+    },
+    "personalization": {
+      "title": "Personalización",
+      "theme": "Tema",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "ocean": "Océano"
+    },
+    "accessibility": {
+      "title": "Accesibilidad",
+      "highContrast": "Alto contraste",
+      "dyslexiaFont": "Fuente dyslexia",
+      "reducedMotion": "Reducir animaciones"
+    }
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "add": "Añadir",
+    "create": "Crear",
+    "update": "Actualizar",
+    "submit": "Enviar",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "view": "Ver",
+    "download": "Descargar",
+    "upload": "Subir",
+    "share": "Compartir",
+    "copy": "Copiar",
+    "paste": "Pegar",
+    "undo": "Deshacer",
+    "redo": "Rehacer",
+    "refresh": "Actualizar",
+    "retry": "Reintentar",
+    "all": "Todos",
+    "select": "Seleccionar",
+    "optional": "Opcional",
+    "required": "Requerido"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "signup": "Registrarse",
+    "email": "Correo",
+    "password": "Contraseña"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "noNotifications": "Sin notificaciones"
+  },
+  "errors": {
+    "somethingWentWrong": "Algo salió mal",
+    "pageNotFound": "Página no encontrada"
+  },
+  "setup": {
+    "welcome": "Bienvenido a Cautie",
+    "getStarted": "Comencemos",
+    "step": "Paso",
+    "finish": "Finalizar",
+    "language": {
+      "title": "Elige tu idioma"
+    },
+    "profile": {
+      "title": "Configura tu perfil",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "role": "Soy...",
+      "student": "Estudiante",
+      "teacher": "Profesor"
+    }
+  },
+  "quiz": {
+    "title": "Cuestionario",
+    "answerAllQuestions": "Responde todas las preguntas.",
+    "gradingCriteria": "Describe cómo calificar...",
+    "expectedAnswer": "Ingresa la respuesta esperada...",
+    "export": "Exportar",
+    "import": "Importar"
+  },
+  "flashcards": {
+    "front": "Frente",
+    "back": "Reverso"
+  },
+  "notes": {
+    "createNotes": "Crea notas...",
+    "enterText": "Empieza a escribir..."
+  },
+  "blocks": {
+    "enterText": "Ingresa texto...",
+    "enterCode": "Ingresa código...",
+    "yourAnswer": "Ingresa tu respuesta aquí...",
+    "nodeTitle": "Título del nodo",
+    "quoteText": "Ingresa la cita...",
+    "authorName": "Nombre del autor...",
+    "caption": "Añadir descripción...",
+    "mediaUrl": "Ingresa URL...",
+    "matchItems": "Une los elementos...",
+    "putInOrder": "Ordena..."
+  },
+  "classes": {
+    "searchClasses": "Buscar clases...",
+    "className": "Nombre de la clase",
+    "classDescription": "Descripción de la clase",
+    "chapterTitle": "Título del capítulo"
+  },
+  "assignments": {
+    "assignmentTitle": "Título de la tarea",
+    "extraInstructions": "Añade instrucciones...",
+    "selectType": "Seleccionar tipo",
+    "selectClass": "Seleccionar clase"
+  },
+  "submissions": {
+    "writeSubmission": "Escribe tu respuesta aquí...",
+    "provideFeedback": "Dar feedback...",
+    "addComment": "Añadir comentario...",
+    "grade": "Calificación"
+  },
+  "announcements": {
+    "announcementTitle": "Título del anuncio",
+    "announcementMessage": "Mensaje del anuncio"
+  },
+  "verification": {
+    "enterCode": "Ingresa código de verificación"
+  },
+  "subjectEditor": {
+    "e.gStudyOfLiving": "Ej.: Estudio de organismos vivos...",
+    "introduction": "Ej.: Introducción"
+  },
+  "chapterEditor": {
+    "newChapterTitle": "Ej.: Conceptos básicos",
+    "newChapterDescription": "Descripción del capítulo"
+  },
+  "paragraphEditor": {
+    "newParagraphTitle": "Ej.: Conceptos básicos",
+    "newParagraphDescription": "Descripción del párrafo"
+  },
+  "teacherCode": {
+    "enterCode": "Ingresa código del profesor"
+  },
+  "upgrade": {
+    "upgrade": "Actualizar"
+  },
+  "search": {
+    "search": "Buscar..."
+  },
+  "wordweb": {
+    "addNotes": "Añadir notas..."
+  },
+  "paragraphs": {
+    "newParagraph": "Ej.: Ejercicio A"
+  }
+}

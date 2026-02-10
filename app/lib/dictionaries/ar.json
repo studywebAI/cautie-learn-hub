@@ -1,1 +1,379 @@
-{"sidebar":{"dashboard":"لوحة التحكم","subjects":"المواد","classes":"الفصول","agenda":"الأجندة","material":"المواد","settings":"الإعدادات","tools":{"title":"الأدوات","quizGenerator":"اختبار","flashcardMaker":"بطاقات","notes":"ملاحظات","blocks":"كتل"}},"header":{"studentDashboard":"لوحة الطالب","teacherDashboard":"لوحة المعلم","roleSwitcher":"تبديل الدور","myAccount":"حسابي","logOut":"تسجيل خروج","logIn":"تسجيل دخول"},"dashboard":{"title":"لوحة التحكم","todayPlan":{"title":"خطة اليوم","description":"تم إعداد هذه المهام بواسطة الذكاء الاصطناعي.","completed":"مكتمل"},"alerts":{"title":"التنبيهات"},"upcomingDeadlines":{"title":"المواعيد","due":"الموعد","onTrack":"في المسار","risk":"خطر","behind":"متأخر"},"mySubjects":{"title":"موادك"},"statistics":{"title":"الإحصائيات","description":"وقت دراستك هذا الأسبوع."}},"tools":{"title":"الأدوات","description":"أدوات ذكية للتعلم.","quiz":{"title":"اختبار","description":"أنشئ اختبارات من أي نص."},"flashcards":{"title":"بطاقات","description":"أنشئ بطاقات تلقائياً."},"notes":{"title":"ملاحظات","description":"أنشئ وحسن ملاحظاتك."},"blocks":{"title":"كتل","description":"أنشئ محتوى منظماً."},"material":{"title":"معالجة المواد","description":"احصل على ملخصات."}},"material":{"title":"معالجة المواد","description":"ارفع ملفات أو الصق نصاً.","clickToUpload":"انقر للرفع","remove":"إزالة","processing":"جاري المعالجة...","processWithAi":"معالجة بالذكاء الاصطناعي","summary":"ملخص","done":"تم"},"agenda":{"title":"الأجندة","description":"تقويم المهام والمواعيد.","eventsOn":"الأحداث","noEvents":"لا أحداث.","addTask":"إضافة مهمة","today":"اليوم","week":"أسبوع","month":"شهر"},"subjects":{"title":"المواد","description":"جميع موادك في مكان واحد.","noSubjects":"لا مواد.","addSubject":"إضافة مادة","chapters":"فصول","progress":"تقدم"},"classes":{"title":"الفصول","description":"إدارة الفصول والطلاب.","noClasses":"لا فصول.","createClass":"إنشاء فصل","joinClass":"انضمام لفصل","students":"الطلاب"},"settings":{"title":"الإعدادات","description":"إدارة حسابك.","general":{"title":"عام","language":"اللغة"},"personalization":{"title":"المظهر","theme":"السمة","light":"فاتح","dark":"مظلم","ocean":"محيط"},"accessibility":{"title":"إمكانية الوصول","highContrast":"تباين عالٍ","dyslexiaFont":"خط صديق لعيون"}},"common":{"save":"حفظ","cancel":"إلغاء","delete":"حذف","edit":"تعديل","add":"إضافة","create":"إنشاء","update":"تحديث","submit":"إرسال","close":"إغلاق","back":"رجوع","next":"التالي","loading":"جاري التحميل...","error":"خطأ","success":"نجاح","confirm":"تأكيد","yes":"نعم","no":"لا","search":"بحث","view":"عرض","download":"تحميل","upload":"رفع","share":"مشاركة","copy":"نسخ","paste":"لصق","all":"الكل","select":"اختيار"},"auth":{"login":"دخول","logout":"خروج","signup":"تسجيل","email":"بريد إلكتروني","password":"كلمة مرور"},"notifications":{"title":"الإشعارات","noNotifications":"لا إشعارات"},"errors":{"somethingWentWrong":"حدث خطأ","pageNotFound":"الصفحة غير موجودة"},"setup":{"welcome":"مرحباً في Cautie","getStarted":"هيا بنا نبدأ","step":"خطوة","finish":"إنهاء","language":{"title":"اختر لغتك"},"profile":{"title":"إعداد الملف","firstName":"الاسم الأول","lastName":"الاسم الأخير","role":"أنا...","student":"طالب","teacher":"معلم"}},"quiz":{"title":"اختبار","answerAllQuestions":"أجب عن كل الأسئلة.","gradingCriteria":"صف كيفية التقييم...","expectedAnswer":"أدخل الإجابة المتوقعة...","export":"تصدير","import":"استيراد"},"flashcards":{"front":"الوجه","back":"الظهر"},"notes":{"createNotes":"أنشئ ملاحظات...","enterText":"ابدأ بالكتابة..."},"blocks":{"enterText":"أدخل النص...","enterCode":"أدخل الكود...","yourAnswer":"أدخل إجابتك هنا...","nodeTitle":"عنوان العقدة","quoteText":"أدخل الاقتباس...","authorName":"اسم المؤلف...","caption":"أدخل الوصف..."},"classes":{"searchClasses":"بحث عن فصول...","className":"اسم الفصل","classDescription":"وصف الفصل","chapterTitle":"عنوان الفصل"},"assignments":{"assignmentTitle":"عنوان المهمة","extraInstructions":"أضف تعليمات...","selectType":"اختر النوع","selectClass":"اختر الفصل"},"submissions":{"writeSubmission":"اكتب إجابتك هنا...","provideFeedback":"أعطِ تغذية راجعة...","addComment":"أضف تعليقاً...","grade":"الدرجة"},"announcements":{"announcementTitle":"عنوان الإعلان","announcementMessage":"نص الإعلان"},"verification":{"enterCode":"أدخل رمز التحقق"},"subjectEditor":{"e.gStudyOfLiving":"مثل: دراسة الكائنات الحية...","introduction":"مثل: مقدمة"},"chapterEditor":{"newChapterTitle":"مثل: المفاهيم الأساسية","newChapterDescription":"وصف الفصل"},"paragraphEditor":{"newParagraphTitle":"مثل: المفاهيم الأساسية","newParagraphDescription":"وصف الفقرة"},"teacherCode":{"enterCode":"أدخل رمز المعلم"},"upgrade":{"upgrade":"ترقية"},"search":{"search":"بحث..."},"wordweb":{"addNotes":"أضف ملاحظات..."},"paragraphs":{"newParagraph":"مثل: تمرين A"}}
+{
+  "sidebar": {
+    "dashboard": "لوحة التحكم",
+    "subjects": "المواد",
+    "classes": "الفصول",
+    "agenda": "الأجندة",
+    "material": "المواد",
+    "settings": "الإعدادات",
+    "tools": {
+      "title": "الأدوات",
+      "quizGenerator": "اختبار",
+      "flashcardMaker": "بطاقات",
+      "materialProcessor": "معالجة المواد",
+      "notes": "ملاحظات",
+      "blocks": "كتل"
+    }
+  },
+  "header": {
+    "studentDashboard": "لوحة الطالب",
+    "teacherDashboard": "لوحة المعلم",
+    "roleSwitcher": "تبديل الدور",
+    "myAccount": "حسابي",
+    "logOut": "تسجيل خروج",
+    "logIn": "تسجيل دخول"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "todayPlan": {
+      "title": "خطة اليوم",
+      "description": "تم إعداد هذه المهام بواسطة الذكاء الاصطناعي.",
+      "completed": "مكتمل"
+    },
+    "alerts": {
+      "title": "التنبيهات",
+      "description": "المخاطر والأولويات"
+    },
+    "upcomingDeadlines": {
+      "title": "المواعيد",
+      "description": "نظرة عامة على الواجبات والاختبارات القادمة.",
+      "due": "الموعد",
+      "onTrack": "في المسار",
+      "risk": "خطر",
+      "behind": "متأخر",
+      "viewAgenda": "عرض الأجندة الكاملة"
+    },
+    "mySubjects": {
+      "title": "موادك",
+      "description": "نظرة سريعة على موادك."
+    },
+    "aiSuggestions": {
+      "title": "اقتراحات الذكاء الاصطناعي",
+      "description": "مساعدك الشخصي"
+    },
+    "quickAccess": {
+      "title": "الوصول السريع",
+      "description": "المواد المستخدمة مؤخراً."
+    },
+    "statistics": {
+      "title": "الإحصائيات",
+      "description": "وقت دراستك هذا الأسبوع.",
+      "weeklyActivity": "النشاط الأسبوعي",
+      "lastSessionRecap": "ملخص الجلسة الأخيرة"
+    }
+  },
+  "tools": {
+    "title": "الأدوات",
+    "description": "مجموعتك من الأدوات الذكية لتسريع التعلم.",
+    "select": "اختر أداة",
+    "quiz": {
+      "title": "اختبار",
+      "description": "أنشئ اختبارات من أي نص."
+    },
+    "flashcards": {
+      "title": "بطاقات",
+      "description": "أنشئ بطاقات تلقائياً من موادك الدراسية."
+    },
+    "notes": {
+      "title": "ملاحظات",
+      "description": "أنشئ وحسن ملاحظاتك في مكان واحد."
+    },
+    "blocks": {
+      "title": "كتل",
+      "description": "أنشئ محتوى منظماً."
+    },
+    "wordweb": {
+      "title": "شبكة الكلمات",
+      "description": "تصور الروابط بين المفاهيم."
+    },
+    "material": {
+      "title": "معالجة المواد",
+      "description": "احصل على ملخصات للمواد."
+    }
+  },
+  "material": {
+    "title": "معالجة المواد",
+    "description": "ارفع ملفات أو الصق نصاً.",
+    "importTitle": "استيراد المحتوى",
+    "importDescription": "وفر ملفاً أو الصق نصاً أو كلاهما.",
+    "clickToUpload": "انقر للرفع",
+    "dragAndDrop": "أو اسحب وأفلت",
+    "remove": "إزالة",
+    "pasteText": "أو الصق النص هنا...",
+    "processing": "جاري المعالجة...",
+    "processWithAi": "معالجة بالذكاء الاصطناعي",
+    "summary": "ملخص",
+    "suggestedActions": "الإجراءات المقترحة",
+    "done": "تم",
+    "select": "اختيار"
+  },
+  "agenda": {
+    "title": "الأجندة",
+    "description": "تقويم المهام والمواعيد.",
+    "eventsOn": "الأحداث",
+    "noEvents": "لا أحداث.",
+    "addTask": "إضافة مهمة",
+    "today": "اليوم",
+    "week": "أسبوع",
+    "month": "شهر"
+  },
+  "subjects": {
+    "title": "المواد",
+    "description": "جميع موادك في مكان واحد.",
+    "noSubjects": "لا مواد.",
+    "addSubject": "إضافة مادة",
+    "chapters": "فصول",
+    "paragraphs": "فقرة",
+    "assignments": "واجبات",
+    "progress": "تقدم"
+  },
+  "classes": {
+    "title": "الفصول",
+    "description": "إدارة الفصول والطلاب.",
+    "noClasses": "لا فصول.",
+    "createClass": "إنشاء فصل",
+    "joinClass": "انضمام لفصل",
+    "joinCode": "رمز الانضمام",
+    "students": "الطلاب",
+    "assignments": "الواجبات",
+    "announcements": "الإعلانات"
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "description": "إدارة حسابك وإعدادات التطبيق.",
+    "general": {
+      "title": "عام",
+      "description": "تهيئة تفضيلاتك.",
+      "language": "اللغة"
+    },
+    "personalization": {
+      "title": "التخصيص",
+      "description": "تخصيص مظهر التطبيق.",
+      "theme": "السمة",
+      "themeDescription": "اختر المخطط اللوني.",
+      "light": "فاتح",
+      "dark": "مظلم",
+      "ocean": "محيط"
+    },
+    "accessibility": {
+      "title": "إمكانية الوصول",
+      "description": "تخصيص مظهر التطبيق.",
+      "highContrast": "تباين عالٍ",
+      "highContrastDescription": "زيادة تباين النص والخلفية.",
+      "dyslexiaFont": "خط صديق لعيون",
+      "dyslexiaFontDescription": "استخدم خطاً مصمماً للقراءة.",
+      "reducedMotion": "تقليل الرسوم",
+      "reducedMotionDescription": "إيقاف الرسوم الزخرفية."
+    },
+    "developer": {
+      "title": "إعدادات المطور",
+      "description": "إعدادات مؤقتة للتطوير.",
+      "roleSwitch": "تبديل الدور",
+      "roleSwitchDescription": "التبديل بين وضع الطالب والمعلم."
+    }
+  },
+  "common": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة",
+    "create": "إنشاء",
+    "update": "تحديث",
+    "submit": "إرسال",
+    "close": "إغلاق",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "نجاح",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sort": "ترتيب",
+    "view": "عرض",
+    "download": "تحميل",
+    "upload": "رفع",
+    "share": "مشاركة",
+    "copy": "نسخ",
+    "paste": "لصق",
+    "undo": "تراجع",
+    "redo": "إعادة",
+    "reset": "إعادة تعيين",
+    "clear": "مسح",
+    "refresh": "تحديث",
+    "retry": "إعادة المحاولة",
+    "more": "المزيد",
+    "less": "أقل",
+    "all": "الكل",
+    "none": "لا شيء",
+    "select": "اختيار",
+    "selected": "مختار",
+    "optional": "اختياري",
+    "required": "مطلوب"
+  },
+  "auth": {
+    "login": "دخول",
+    "logout": "خروج",
+    "signup": "تسجيل",
+    "email": "بريد إلكتروني",
+    "password": "كلمة مرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "dontHaveAccount": "ليس لديك حساب؟",
+    "alreadyHaveAccount": "لديك حساب بالفعل؟",
+    "orContinueWith": "أو تابع باستخدام"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "noNotifications": "لا إشعارات",
+    "markAsRead": "القراءة",
+    "markAllAsRead": "قراءة الكل",
+    "clearAll": "مسح الكل"
+  },
+  "errors": {
+    "somethingWentWrong": "حدث خطأ",
+    "pageNotFound": "الصفحة غير موجودة",
+    "unauthorized": "غير مصرح",
+    "forbidden": "محظور",
+    "tryAgain": "حاول مجدداً"
+  },
+  "setup": {
+    "welcome": "مرحباً في Cautie",
+    "getStarted": "هيا بنا نبدأ",
+    "step": "خطوة",
+    "of": "من",
+    "next": "التالي",
+    "back": "رجوع",
+    "finish": "إنهاء",
+    "language": {
+      "title": "اختر لغتك",
+      "description": "اختر اللغة التي تريد استخدامها."
+    },
+    "theme": {
+      "title": "اختر سمة",
+      "description": "اختر المخطط اللوني."
+    },
+    "profile": {
+      "title": "إعداد الملف",
+      "description": "أخبرنا عن نفسك.",
+      "firstName": "الاسم الأول",
+      "lastName": "الاسم الأخير",
+      "role": "أنا...",
+      "student": "طالب",
+      "teacher": "معلم",
+      "saveProfile": "حفظ الملف"
+    }
+  },
+  "quiz": {
+    "title": "اختبار",
+    "answerAllQuestions": "أجب عن كل الأسئلة.",
+    "askFollowUp": "اسأل سؤال متابعة...",
+    "gradingCriteria": "صف معايير التقييم...",
+    "additionalCriteria": "معايير إضافية للتقييم...",
+    "aiGrading": "إعدادات التقييم بالذكاء الاصطناعي",
+    "expectedAnswer": "أدخل الإجابة المتوقعة...",
+    "export": "تصدير",
+    "import": "استيراد",
+    "undo": "تراجع",
+    "redo": "إعادة"
+  },
+  "flashcards": {
+    "front": "الوجه",
+    "back": "الظهر",
+    "termOrQuestion": "مصطلح أو سؤال",
+    "definitionOrAnswer": "تعريف أو إجابة"
+  },
+  "notes": {
+    "createNotes": "أنشئ ملاحظات من النص أو الملفات.",
+    "enterText": "ابدأ بالكتابة..."
+  },
+  "blocks": {
+    "enterText": "أدخل النص...",
+    "enterCode": "أدخل الكود...",
+    "yourAnswer": "أدخل إجابتك هنا...",
+    "followUpQuestion": "اسأل سؤال متابعة...",
+    "nodeTitle": "عنوان العقدة",
+    "detailedDescription": "وصف تفصيلي",
+    "calloutText": "أدخل نص الإشارة...",
+    "quoteText": "أدخل الاقتباس...",
+    "authorName": "اسم المؤلف...",
+    "source": "كتاب، مقال، إلخ...",
+    "caption": "أضف تعليقاً...",
+    "mediaUrl": "أدخل رابط الوسائط...",
+    "embedUrl": "أدخل رابط التضمين...",
+    "matchItems": "طابق العناصر...",
+    "putInOrder": "رتّب في ترتيب...",
+    "acceptSynonyms": "مثلاً، تقبل المرادفات..."
+  },
+  "classes": {
+    "searchClasses": "بحث عن فصول...",
+    "className": "اسم الفصل",
+    "classDescription": "وصف الفصل",
+    "briefSummary": "ملخص موجز لما سيغطيه هذا الفصل.",
+    "e.gHistory101": "مثلاً، التاريخ 101، الفيزياء المتقدمة",
+    "chapterTitle": "عنوان الفصل",
+    "chapterDescription": "وصف الفصل"
+  },
+  "assignments": {
+    "assignmentTitle": "عنوان المهمة",
+    "extraInstructions": "أضف أي تعليمات إضافية...",
+    "instructionsDetails": "أضف تعليمات أو تفاصيل للطلاب",
+    "selectType": "اختر نوع",
+    "selectClass": "اختر فصل",
+    "weekLecture": "مثلاً، محاضرة الأسبوع 1"
+  },
+  "submissions": {
+    "writeSubmission": "اكتب إجابتك هنا...",
+    "fileUploadComing": "قريباً... رفع الملفات...",
+    "provideFeedback": "قدم تعليقات بناءة...",
+    "addComment": "أضف تعليقاً...",
+    "grade": "الدرجة",
+    "e.g8.5": "مثلاً، 8.5"
+  },
+  "announcements": {
+    "announcementTitle": "أدخل عنوان الإعلان",
+    "announcementMessage": "أدخل رسالة الإعلان"
+  },
+  "material": {
+    "noteTitle": "عنوان الملاحظة",
+    "e.gChapter1": "مثلاً، الفصل 1: النهضة",
+    "sourceText": "الصق النص من كتابك أو مقالك...",
+    "fileTitle": "مثلاً، قراءة الفصل 5"
+  },
+  "verification": {
+    "enterCode": "أدخل رمز التحقق المكون من 8 أرقام",
+    "verificationCode": "رمز تحقق من 8 أرقام"
+  },
+  "subjectEditor": {
+    "e.gStudyOfLiving": "مثلاً، دراسة الكائنات الحية...",
+    "introduction": "مثلاً، مقدمة"
+  },
+  "chapterEditor": {
+    "newChapterTitle": "مثلاً، المفاهيم الأساسية",
+    "newChapterDescription": "وصف الفصل"
+  },
+  "paragraphEditor": {
+    "newParagraphTitle": "مثلاً، المفاهيم الأساسية",
+    "newParagraphDescription": "وصف الفقرة"
+  },
+  "teacherCode": {
+    "enterCode": "أدخل رمز المعلم"
+  },
+  "upgrade": {
+    "upgrade": "ترقية"
+  },
+  "search": {
+    "search": "بحث..."
+  },
+  "wordweb": {
+    "addNotes": "أضف ملاحظات أو تعليقات هنا..."
+  },
+  "paragraphs": {
+    "newParagraph": "مثلاً، مجموعة التمارين A"
+  }
+}
