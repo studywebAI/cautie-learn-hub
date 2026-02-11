@@ -56,6 +56,7 @@ export function BlockEditor({
   const [isLoading, setIsLoading] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [touchDragItem, setTouchDragItem] = useState<{ index: number; startX: number; startY: number; currentX: number; currentY: number } | null>(null);
   const { toast } = useToast();
 
   // Load existing blocks on mount
@@ -183,6 +184,39 @@ export function BlockEditor({
       }
     }
     setDraggedIndex(null);
+  };
+
+  // Touch event handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent, index: number) => {
+    const touch = e.touches[0];
+    setTouchDragItem({
+      index,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      currentX: touch.clientX,
+      currentY: touch.clientY
+    });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchDragItem) return;
+    const touch = e.touches[0];
+    setTouchDragItem({ ...touchDragItem, currentX: touch.clientX, currentY: touch.clientY });
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent, index: number) => {
+    if (!touchDragItem || touchDragItem.index !== index) return;
+    
+    const canvas = e.currentTarget.closest('.flex-1');
+    const rect = canvas?.getBoundingClientRect();
+    if (rect) {
+      const x = touchDragItem.currentX - rect.left;
+      const y = touchDragItem.currentY - rect.top;
+      const updatedBlocks = [...blocks];
+      updatedBlocks[index] = { ...updatedBlocks[index], x: Math.max(0, x), y: Math.max(0, y) };
+      setBlocks(updatedBlocks);
+    }
+    setTouchDragItem(null);
   };
 
   const getDefaultDataForType = (type: string) => {
@@ -368,7 +402,7 @@ export function BlockEditor({
           {blocks.map((block, index) => (
             <div
               key={index}
-              className="absolute cursor-move select-none"
+              className="absolute cursor-move select-none touch-none"
               style={{
                 left: block.x || (50 + (index % 3) * 250),
                 top: block.y || (50 + Math.floor(index / 3) * 200)
@@ -376,6 +410,9 @@ export function BlockEditor({
               draggable
               onDragStart={(e) => handleDragStart(e, index)}
               onDragEnd={(e) => handleDragEnd(e, index)}
+              onTouchStart={(e) => handleTouchStart(e, index)}
+              onTouchMove={(e) => handleTouchMove(e)}
+              onTouchEnd={(e) => handleTouchEnd(e, index)}
             >
               <Card className="shadow-md">
                 <CardHeader className="pb-2">
