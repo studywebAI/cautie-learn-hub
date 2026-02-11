@@ -188,7 +188,6 @@ export function BlockEditor({
 
   // Touch event handlers for mobile
   const handleTouchStart = (e: React.TouchEvent, index: number) => {
-    e.preventDefault();
     const touch = e.touches[0];
     setTouchDragItem({
       index,
@@ -201,7 +200,6 @@ export function BlockEditor({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!touchDragItem) return;
-    e.preventDefault();
     const touch = e.touches[0];
     setTouchDragItem({ ...touchDragItem, currentX: touch.clientX, currentY: touch.clientY });
   };
@@ -213,7 +211,7 @@ export function BlockEditor({
     }
     
     try {
-      const canvas = e.currentTarget.closest('.flex-1');
+      const canvas = e.currentTarget.closest('.flex-1') as HTMLElement;
       const rect = canvas?.getBoundingClientRect();
       if (rect) {
         const x = touchDragItem.currentX - rect.left;
@@ -222,8 +220,8 @@ export function BlockEditor({
         updatedBlocks[index] = { ...updatedBlocks[index], x: Math.max(0, x), y: Math.max(0, y) };
         setBlocks(updatedBlocks);
       }
-    } catch (error) {
-      console.error('Touch drag error:', error);
+    } catch (err) {
+      console.error('Touch drag error:', err);
     }
     setTouchDragItem(null);
   };
