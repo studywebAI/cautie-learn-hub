@@ -188,6 +188,7 @@ export function BlockEditor({
 
   // Touch event handlers for mobile
   const handleTouchStart = (e: React.TouchEvent, index: number) => {
+    e.preventDefault();
     const touch = e.touches[0];
     setTouchDragItem({
       index,
@@ -200,21 +201,29 @@ export function BlockEditor({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!touchDragItem) return;
+    e.preventDefault();
     const touch = e.touches[0];
     setTouchDragItem({ ...touchDragItem, currentX: touch.clientX, currentY: touch.clientY });
   };
 
   const handleTouchEnd = (e: React.TouchEvent, index: number) => {
-    if (!touchDragItem || touchDragItem.index !== index) return;
+    if (!touchDragItem || touchDragItem.index !== index) {
+      setTouchDragItem(null);
+      return;
+    }
     
-    const canvas = e.currentTarget.closest('.flex-1');
-    const rect = canvas?.getBoundingClientRect();
-    if (rect) {
-      const x = touchDragItem.currentX - rect.left;
-      const y = touchDragItem.currentY - rect.top;
-      const updatedBlocks = [...blocks];
-      updatedBlocks[index] = { ...updatedBlocks[index], x: Math.max(0, x), y: Math.max(0, y) };
-      setBlocks(updatedBlocks);
+    try {
+      const canvas = e.currentTarget.closest('.flex-1');
+      const rect = canvas?.getBoundingClientRect();
+      if (rect) {
+        const x = touchDragItem.currentX - rect.left;
+        const y = touchDragItem.currentY - rect.top;
+        const updatedBlocks = [...blocks];
+        updatedBlocks[index] = { ...updatedBlocks[index], x: Math.max(0, x), y: Math.max(0, y) };
+        setBlocks(updatedBlocks);
+      }
+    } catch (error) {
+      console.error('Touch drag error:', error);
     }
     setTouchDragItem(null);
   };
