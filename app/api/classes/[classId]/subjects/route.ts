@@ -10,10 +10,10 @@ type SubjectCreateRequest = {
   ai_icon_seed?: string;
 }
 
-export async function GET(req: Request, { params }: { params: Promise<{ classId: string }>) {
+export async function GET(req: Request, { params }: { params: { classId: string } }) {
   try {
     const cookieStore = cookies();
-    const supabase = createClient(cookieStore);
+    const supabase = await createClient(cookieStore);
     const resolvedParams = await params;
     const { classId } = resolvedParams;
 
@@ -56,7 +56,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ classId:
         .from('paragraphs')
         .select('id, title, paragraph_number, chapter_id')
         .in('chapter_id', chapterIds)
-        .order('paragraph_number', { true });
+        .order('paragraph_number', { ascending: true });
 
       // Fetch assignments for all paragraphs
       const paragraphIds = (paragraphs || []).map((p: any) => p.id);
