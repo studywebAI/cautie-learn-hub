@@ -17,6 +17,9 @@ export type ClassAssignment = Tables<'assignments'> & {
   class_id?: string | null;
   due_date?: string | null;
   material_id?: string | null;
+  scheduled_start_at?: string | null;
+  scheduled_end_at?: string | null;
+  scheduled_answer_release_at?: string | null;
 };
 export type PersonalTask = {
   id: string;

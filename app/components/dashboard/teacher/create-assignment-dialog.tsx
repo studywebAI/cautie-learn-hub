@@ -117,7 +117,9 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
     try {
         await createAssignment({
             title,
-            due_date: format(dueDate, 'yyyy-MM-dd'),
+            scheduled_start_at: format(dueDate, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+            scheduled_end_at: format(dueDate, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+            scheduled_answer_release_at: format(dueDate, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
             class_id: classId,
             material_id: selectedMaterial?.id || null,
             chapter_id: selectedChapter || null,

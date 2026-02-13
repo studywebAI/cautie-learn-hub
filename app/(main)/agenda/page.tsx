@@ -75,7 +75,7 @@ export default function AgendaPage() {
     let allEvents: CalendarEvent[] = [];
 
     const assignmentEvents = (assignments || [])
-      .filter((assignment: ClassAssignment) => assignment.due_date)
+      .filter((assignment: ClassAssignment) => assignment.scheduled_start_at)
       .map((assignment: ClassAssignment) => {
         const className = (classes || []).find((c: ClassInfo) => c.id === assignment.class_id)?.name || 'Class';
         const href = `/class/${assignment.class_id}`;
@@ -84,7 +84,7 @@ export default function AgendaPage() {
           id: assignment.id,
           title: assignment.title,
           subject: className,
-          date: parseISO(assignment.due_date!),
+          date: parseISO(assignment.scheduled_start_at!),
           type: 'assignment' as const,
           href: href,
           chapter_id: assignment.chapter_id || undefined,
@@ -213,7 +213,9 @@ export default function AgendaPage() {
           class_id: deadline.class_id,
           title: deadline.title,
           description: deadline.description,
-          due_date: deadline.due_date,
+          scheduled_start_at: deadline.due_date,
+          scheduled_end_at: deadline.due_date,
+          scheduled_answer_release_at: deadline.due_date,
           type: deadline.type,
           linked_content: deadline.linked_content,
         }),
@@ -323,7 +325,7 @@ export default function AgendaPage() {
             )}
             {isTeacher && (
               <TeacherDeadlinesPanel
-                events={events}
+                events={events || []}
                 selectedDay={selectedDay}
               />
             )}
