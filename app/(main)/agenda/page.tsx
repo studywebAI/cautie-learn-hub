@@ -202,7 +202,7 @@ export default function AgendaPage() {
     due_date: string;
     class_id: string;
     type: 'homework' | 'small_test' | 'big_test';
-    linked_content?: { type: 'material' | 'subject' | 'assignment'; url: string; title: string; path?: string }[];
+    linked_content?: { type: 'material' | 'subject' | 'chapter' | 'paragraph' | 'assignment'; url: string; title: string; path?: string }[];
   }) => {
     try {
       // Create the assignment via API

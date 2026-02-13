@@ -22,16 +22,16 @@ import { CalendarIcon, Loader2, FileText, BookOpen, X, Link as LinkIcon } from '
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { LinkPickerDialog } from './link-picker-dialog';
+import { HierarchicalLinkPickerV2 } from './hierarchical-link-picker-v2';
 import type { ClassInfo } from '@/contexts/app-context';
 
 type DeadlineType = 'homework' | 'small_test' | 'big_test';
 
 type LinkedContent = {
-  type: 'material' | 'subject' | 'assignment';
+  type: 'material' | 'subject' | 'chapter' | 'paragraph' | 'assignment';
   url: string;
   title: string;
-  path?: string; // Display path for assignments
+  path?: string; // Display path for hierarchical content
 };
 
 type TeacherDeadlineDialogProps = {
@@ -70,10 +70,22 @@ export function TeacherDeadlineDialog({
     setDate(initialDate);
   }, [initialDate]);
 
-  const handleAddLink = (link: LinkedContent) => {
+  const handleAddLink = (link: {
+    type: 'subject' | 'chapter' | 'paragraph' | 'assignment';
+    url: string;
+    title: string;
+    path?: string
+  }) => {
+    // Convert to LinkedContent format
+    const linkedLink: LinkedContent = {
+      type: link.type as any,
+      url: link.url,
+      title: link.title,
+      path: link.path,
+    };
     // Avoid duplicates
-    if (!linkedContent.find(l => l.url === link.url)) {
-      setLinkedContent([...linkedContent, link]);
+    if (!linkedContent.find(l => l.url === linkedLink.url)) {
+      setLinkedContent([...linkedContent, linkedLink]);
     }
   };
 
@@ -286,7 +298,7 @@ export function TeacherDeadlineDialog({
         </DialogContent>
       </Dialog>
 
-      <LinkPickerDialog
+      <HierarchicalLinkPickerV2
         isOpen={isLinkPickerOpen}
         onClose={() => setIsLinkPickerOpen(false)}
         onSelect={handleAddLink}
