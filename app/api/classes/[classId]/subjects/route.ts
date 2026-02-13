@@ -23,28 +23,58 @@ export async function GET(req: Request, { params }: { params: { classId: string 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch subjects for the class through class_subjects join table
-    const { data, error } = await (supabase as any)
-      .from('class_subjects')
-      .select('subjects(*)')
+    // Check if user has access to this class (owner or member)
+    const { data: classData, error: classError } = await supabase
+      .from('classes')
+      .select('id, owner_id')
+      .eq('id', classId)
+      .maybeSingle();
+
+    if (classError || !classData) {
+      return NextResponse.json({ error: 'Class not found' }, { status: 404 });
+    }
+
+    const isOwner = classData.owner_id === user.id;
+    
+    // If not owner, check if user is a member
+    let isMember = false;
+    if (!isOwner) {
+      const { data: memberData } = await supabase
+        .from('class_members')
+        .select('id')
+        .eq('class_id', classId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      isMember = !!memberData;
+    }
+
+    if (!isOwner && !isMember) {
+      return NextResponse.json({ error: 'Forbidden - you do not have access to this class' }, { status: 403 });
+    }
+
+    // Fetch subjects for the class directly (subjects have class_id column)
+    const { data, error } = await supabase
+      .from('subjects')
+      .select('*')
       .eq('class_id', classId)
       .order('created_at');
 
     if (error) {
+      console.error(`Failed to fetch subjects for class ${classId}:`, error);
       return NextResponse.json({ error: `Supabase error fetching subjects: ${error.message}` }, { status: 500 });
     }
 
-    // Extract subjects
-    const subjects = (data || []).map((item: any) => item.subjects).filter(Boolean);
+    const subjects = data || [];
+    console.log(`Found ${subjects.length} subjects for class ${classId}`);
     
     // Enrich subjects with chapters, paragraphs, and assignments
     const enrichedSubjects = await Promise.all(subjects.map(async (subject: any) => {
       // Fetch chapters
       const { data: chapters } = await supabase
         .from('chapters')
-        .select('id, title, order_index')
+        .select('id, title, chapter_number')
         .eq('subject_id', subject.id)
-        .order('order_index', { ascending: true });
+        .order('chapter_number', { ascending: true });
 
       if (!chapters || chapters.length === 0) {
         return { ...subject, chapters: [] };

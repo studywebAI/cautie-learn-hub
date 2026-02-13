@@ -65,12 +65,28 @@ export function HierarchicalLinkPickerV2({
   const fetchHierarchy = async () => {
     setIsLoading(true);
     try {
+      if (!classId) {
+        console.warn('No classId provided');
+        setHierarchy([]);
+        setCurrentItems([]);
+        return;
+      }
+
       const response = await fetch(`/api/classes/${classId}/subjects`);
       if (response.ok) {
         const data = await response.json();
         const subjects: LinkItem[] = [];
         
-        for (const subject of data || []) {
+        // The API returns an array directly, not { subjects: [...] }
+        const subjectsArray = Array.isArray(data) ? data : (data.subjects || []);
+        
+        console.log('Fetched subjects array:', subjectsArray); // Debug
+        
+        if (subjectsArray.length === 0) {
+          console.warn('No subjects returned for class:', classId);
+        }
+        
+        for (const subject of subjectsArray) {
           const subjectItem: LinkItem = {
             id: subject.id,
             title: subject.title || subject.name,
@@ -133,9 +149,16 @@ export function HierarchicalLinkPickerV2({
         
         setHierarchy(subjects);
         setCurrentItems(subjects);
+        console.log('Hierarchy built:', subjects); // Debug
+      } else {
+        console.error('Failed to fetch subjects:', response.status, response.statusText);
+        setHierarchy([]);
+        setCurrentItems([]);
       }
     } catch (error) {
       console.error('Failed to fetch hierarchy:', error);
+      setHierarchy([]);
+      setCurrentItems([]);
     } finally {
       setIsLoading(false);
     }
@@ -207,6 +230,11 @@ export function HierarchicalLinkPickerV2({
   const filteredItems = (currentItems || []).filter(item =>
     item.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  // Debug
+  if (searchQuery === '') {
+    console.log('Current items:', currentItems?.length, 'Filtered:', filteredItems.length);
+  }
 
   const getItemIcon = (type: LinkItem['type']) => {
     switch (type) {
