@@ -180,6 +180,8 @@ export async function POST(request: Request) {
         scheduled_start_at: json.scheduled_start_at,
         scheduled_end_at: json.scheduled_end_at,
         scheduled_answer_release_at: json.scheduled_answer_release_at,
+        description: json.description,
+        linked_content: json.linked_content,
       })
       .select()
       .single()

@@ -89,7 +89,10 @@ export function LinkPickerDialog({ isOpen, onClose, onSelect, classId }: LinkPic
         const subjectLinks: SubjectLink[] = [];
         const assignmentLinks: AssignmentLink[] = [];
         
-        for (const subject of data.subjects || data || []) {
+        // The API returns an array directly, not { subjects: [...] }
+        const subjectsArray = Array.isArray(data) ? data : (data.subjects || []);
+        
+        for (const subject of subjectsArray) {
           // Add chapters and paragraphs
           if (subject.chapters) {
             for (const chapter of subject.chapters) {
@@ -142,16 +145,16 @@ export function LinkPickerDialog({ isOpen, onClose, onSelect, classId }: LinkPic
     }
   };
 
-  const filteredMaterials = materials.filter(m => 
+  const filteredMaterials = (materials || []).filter(m =>
     m.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredAssignments = assignments.filter(a => 
+  const filteredAssignments = (assignments || []).filter(a =>
     a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     a.displayPath.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredSubjects = subjects.filter(s => 
+  const filteredSubjects = (subjects || []).filter(s =>
     s.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 

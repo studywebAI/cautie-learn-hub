@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { AppContext } from '@/contexts/app-context';
 import { StudentBlockRenderer } from '@/components/blocks/StudentBlockRenderer';
 import {
   ChevronLeft,
   ChevronRight,
   AlertCircle,
+  FileText,
+  BookOpen,
 } from 'lucide-react';
 
 interface Block {
@@ -31,6 +34,13 @@ interface Assignment {
   answers_enabled: boolean;
   paragraph_id: string;
   instructions?: string;
+  description?: string;
+  linked_content?: Array<{
+    type: 'material' | 'subject' | 'assignment';
+    url: string;
+    title: string;
+    path?: string;
+  }>;
 }
 
 interface StudentAssignmentViewProps {
@@ -236,11 +246,39 @@ export function StudentAssignmentView({
 
   return (
     <div className={className}>
-      {/* Professor's Instructions Banner */}
-      {instructions && (
+      {/* Deadline Context Banner - shows when coming from a deadline link */}
+      {assignment?.description && (
         <div className="mb-6 p-4 rounded-lg bg-muted border-l-4 border-primary">
-          <p className="text-sm text-muted-foreground mb-1">Instructions from your teacher:</p>
-          <p className="text-base">{instructions}</p>
+          <p className="text-sm text-muted-foreground mb-1">Assignment Instructions:</p>
+          <p className="text-base">{assignment.description}</p>
+        </div>
+      )}
+
+      {/* Linked Content - quick access to related materials */}
+      {assignment?.linked_content && Array.isArray(assignment.linked_content) && assignment.linked_content.length > 0 && (
+        <div className="mb-6 p-4 rounded-lg bg-muted/50 border">
+          <p className="text-sm font-medium mb-3">Quick Links:</p>
+          <div className="space-y-2">
+            {assignment.linked_content.map((link: any, idx: number) => (
+              <a
+                key={idx}
+                href={link.url}
+                className="flex items-center gap-2 p-2 rounded-md bg-background border hover:bg-muted transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {link.type === 'material' ? (
+                  <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                ) : (
+                  <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
+                )}
+                <span className="text-sm truncate flex-1">{link.title}</span>
+                <Badge variant="outline" className="text-xs">
+                  {link.type}
+                </Badge>
+              </a>
+            ))}
+          </div>
         </div>
       )}
 
