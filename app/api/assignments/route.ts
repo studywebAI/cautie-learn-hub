@@ -113,7 +113,7 @@ export async function POST(request: Request) {
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
-    const json = await req.json()
+    const json = await request.json()
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -165,11 +165,11 @@ export async function POST(request: Request) {
       .order('assignment_index', { ascending: false })
       .limit(1)
 
-    const nextIndex = existingAssignments && existingAssignments.length > 0 
-      ? (existingAssignments[0].assignment_index ?? -1) + 1 
+    const nextIndex = existingAssignments && existingAssignments.length > 0
+      ? (existingAssignments[0].assignment_index ?? -1) + 1
       : 0
 
-    // Create the assignment
+    // Create the assignment with scheduling information
     const { data: assignment, error: insertError } = await (supabase
       .from('assignments') as any)
       .insert({
@@ -177,6 +177,9 @@ export async function POST(request: Request) {
         assignment_index: nextIndex,
         title: json.title?.trim() || 'Untitled Assignment',
         answers_enabled: json.answers_enabled ?? false,
+        scheduled_start_at: json.scheduled_start_at,
+        scheduled_end_at: json.scheduled_end_at,
+        scheduled_answer_release_at: json.scheduled_answer_release_at,
       })
       .select()
       .single()
