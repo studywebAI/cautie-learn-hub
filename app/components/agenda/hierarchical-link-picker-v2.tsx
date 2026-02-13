@@ -57,6 +57,7 @@ export function HierarchicalLinkPickerV2({
   const [currentItems, setCurrentItems] = useState<LinkItem[]>([]);
 
   useEffect(() => {
+    console.log('HierarchicalLinkPickerV2: isOpen:', isOpen, 'classId:', classId);
     if (isOpen && classId) {
       fetchHierarchy();
     }
@@ -72,89 +73,96 @@ export function HierarchicalLinkPickerV2({
         return;
       }
 
+      console.log('Fetching hierarchy for classId:', classId);
       const response = await fetch(`/api/classes/${classId}/subjects`);
-      if (response.ok) {
-        const data = await response.json();
-        const subjects: LinkItem[] = [];
-        
-        // The API returns an array directly, not { subjects: [...] }
-        const subjectsArray = Array.isArray(data) ? data : (data.subjects || []);
-        
-        console.log('Fetched subjects array:', subjectsArray); // Debug
-        
-        if (subjectsArray.length === 0) {
-          console.warn('No subjects returned for class:', classId);
-        }
-        
-        for (const subject of subjectsArray) {
-          const subjectItem: LinkItem = {
-            id: subject.id,
-            title: subject.title || subject.name,
-            type: 'subject',
-            path: `/subjects/${subject.id}`,
-            children: [],
-          };
-          
-          if (subject.chapters) {
-            for (const chapter of subject.chapters) {
-              const chapterItem: LinkItem = {
-                id: chapter.id,
-                title: chapter.title,
-                type: 'chapter',
-                path: `/subjects/${subject.id}/chapters/${chapter.id}`,
-                children: [],
-                subjectName: subjectItem.title,
-              };
-              
-              if (chapter.paragraphs) {
-                for (const paragraph of chapter.paragraphs) {
-                  const paragraphNum = `${chapter.order_index}.${paragraph.order_index}`;
-                  const paragraphItem: LinkItem = {
-                    id: paragraph.id,
-                    title: `${paragraphNum}: ${paragraph.title}`,
-                    type: 'paragraph',
-                    path: `/subjects/${subject.id}/chapters/${chapter.id}/paragraphs/${paragraph.id}`,
-                    children: [],
-                    subjectName: subjectItem.title,
-                    chapterTitle: chapter.title,
-                  };
-                  
-                  if (paragraph.assignments) {
-                    for (const assignment of paragraph.assignments) {
-                      const assignmentLetter = String.fromCharCode(97 + (assignment.assignment_index || 0));
-                      const assignmentItem: LinkItem = {
-                        id: assignment.id,
-                        title: assignment.title || `Assignment ${assignmentLetter}`,
-                        type: 'assignment',
-                        path: `/subjects/${subject.id}/chapters/${chapter.id}/paragraphs/${paragraph.id}/assignments/${assignment.id}`,
-                        subjectName: subjectItem.title,
-                        chapterTitle: chapter.title,
-                        paragraphTitle: paragraph.title,
-                        assignmentIndex: assignmentLetter,
-                      };
-                      paragraphItem.children?.push(assignmentItem);
-                    }
-                  }
-                  
-                  chapterItem.children?.push(paragraphItem);
-                }
-              }
-              
-              subjectItem.children?.push(chapterItem);
-            }
-          }
-          
-          subjects.push(subjectItem);
-        }
-        
-        setHierarchy(subjects);
-        setCurrentItems(subjects);
-        console.log('Hierarchy built:', subjects); // Debug
-      } else {
-        console.error('Failed to fetch subjects:', response.status, response.statusText);
+      console.log('Response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API error response:', errorData);
         setHierarchy([]);
         setCurrentItems([]);
+        return;
       }
+      
+      const data = await response.json();
+      console.log('API response data:', data);
+      
+      const subjects: LinkItem[] = [];
+      
+      // The API returns an array directly, not { subjects: [...] }
+      const subjectsArray = Array.isArray(data) ? data : (data.subjects || []);
+      
+      console.log('Fetched subjects array:', subjectsArray); // Debug
+      
+      if (subjectsArray.length === 0) {
+        console.warn('No subjects returned for class:', classId);
+      }
+      
+      for (const subject of subjectsArray) {
+        const subjectItem: LinkItem = {
+          id: subject.id,
+          title: subject.title || subject.name,
+          type: 'subject',
+          path: `/subjects/${subject.id}`,
+          children: [],
+        };
+        
+        if (subject.chapters) {
+          for (const chapter of subject.chapters) {
+            const chapterItem: LinkItem = {
+              id: chapter.id,
+              title: chapter.title,
+              type: 'chapter',
+              path: `/subjects/${subject.id}/chapters/${chapter.id}`,
+              children: [],
+              subjectName: subjectItem.title,
+            };
+            
+            if (chapter.paragraphs) {
+              for (const paragraph of chapter.paragraphs) {
+                const paragraphNum = `${chapter.chapter_number}.${paragraph.paragraph_number}`;
+                const paragraphItem: LinkItem = {
+                  id: paragraph.id,
+                  title: `${paragraphNum}: ${paragraph.title}`,
+                  type: 'paragraph',
+                  path: `/subjects/${subject.id}/chapters/${chapter.id}/paragraphs/${paragraph.id}`,
+                  children: [],
+                  subjectName: subjectItem.title,
+                  chapterTitle: chapter.title,
+                };
+                
+                if (paragraph.assignments) {
+                  for (const assignment of paragraph.assignments) {
+                    const assignmentLetter = String.fromCharCode(97 + (assignment.assignment_index || 0));
+                    const assignmentItem: LinkItem = {
+                      id: assignment.id,
+                      title: assignment.title || `Assignment ${assignmentLetter}`,
+                      type: 'assignment',
+                      path: `/subjects/${subject.id}/chapters/${chapter.id}/paragraphs/${paragraph.id}/assignments/${assignment.id}`,
+                      subjectName: subjectItem.title,
+                      chapterTitle: chapter.title,
+                      paragraphTitle: paragraph.title,
+                      assignmentIndex: assignmentLetter,
+                    };
+                    paragraphItem.children?.push(assignmentItem);
+                  }
+                }
+                
+                chapterItem.children?.push(paragraphItem);
+              }
+            }
+            
+            subjectItem.children?.push(chapterItem);
+          }
+        }
+        
+        subjects.push(subjectItem);
+      }
+      
+      setHierarchy(subjects);
+      setCurrentItems(subjects);
+      console.log('Hierarchy built:', subjects); // Debug
     } catch (error) {
       console.error('Failed to fetch hierarchy:', error);
       setHierarchy([]);
