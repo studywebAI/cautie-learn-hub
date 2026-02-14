@@ -30,19 +30,35 @@ export async function GET(req: Request, { params }: { params: { classId: string 
     console.log(`[DEBUG] Authenticated user: ${user.id}`);
     console.log(`[DEBUG] Supabase URL: ${process.env.NEXT_PUBLIC_SUPABASE_URL}`);
 
-    // Fetch subjects directly using class_id (subjects have direct class_id foreign key)
-    const { data: subjects, error: subjectsError } = await supabase
-      .from('subjects')
-      .select('*')
-      .eq('class_id', classId)
-      .order('created_at');
+    // Strategy: Get subjects via BOTH direct class_id AND class_subjects join table
+    // to support both linking methods that may exist in the database
+    const [directSubjectsResult, joinSubjectsResult] = await Promise.all([
+      // 1. Direct query: subjects with class_id = classId
+      supabase.from('subjects').select('*').eq('class_id', classId).order('created_at'),
+      
+      // 2. Join query: subjects linked via class_subjects
+      (supabase as any).from('class_subjects')
+        .select('subjects(*)')
+        .eq('class_id', classId)
+    ]);
 
-    if (subjectsError) {
-      console.error(`Failed to fetch subjects for class ${classId}:`, subjectsError);
-      return NextResponse.json({ error: `Supabase error fetching subjects: ${subjectsError.message}` }, { status: 500 });
-    }
-
-    console.log(`Found ${subjects?.length || 0} subjects for class ${classId} via direct class_id`);
+    const directSubjects = directSubjectsResult.data || [];
+    const joinSubjects = (joinSubjectsResult.data || []).map((item: any) => item.subjects).filter(Boolean);
+    
+    // Combine and deduplicate by subject ID
+    const subjectMap = new Map<string, any>();
+    directSubjects.forEach((s: any) => subjectMap.set(s.id, s));
+    joinSubjects.forEach((s: any) => {
+      if (!subjectMap.has(s.id)) {
+        subjectMap.set(s.id, s);
+      }
+    });
+    
+    const subjects = Array.from(subjectMap.values());
+    
+    console.log(`Found ${directSubjects.length} subjects via direct class_id`);
+    console.log(`Found ${joinSubjects.length} subjects via class_subjects join`);
+    console.log(`Total unique subjects: ${subjects.length}`);
     
     // Enrich subjects with chapters, paragraphs, and assignments
     const enrichedSubjects = await Promise.all(subjects.map(async (subject: any) => {
@@ -95,5 +111,97 @@ export async function GET(req: Request, { params }: { params: { classId: string 
   } catch (error) {
     console.error('Error fetching subjects:', error);
     return NextResponse.json({ error: 'Internal server error while fetching subjects' }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request, { params }: { params: { classId: string } }) {
+  try {
+    const cookieStore = cookies();
+    const supabase = await createClient(cookieStore);
+    const resolvedParams = await params;
+    const { classId } = resolvedParams;
+
+    console.log(`[DEBUG] POST creating subject for classId: ${classId}`);
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      console.log(`[DEBUG] Unauthorized: ${userError?.message || 'no user'}`);
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify the class exists and user has permission
+    const { data: classData, error: classError } = await supabase
+      .from('classes')
+      .select('id, owner_id')
+      .eq('id', classId)
+      .maybeSingle();
+
+    if (classError || !classData) {
+      console.log(`[DEBUG] Class not found or error: ${classError?.message}`);
+      return NextResponse.json({ error: 'Class not found or access denied' }, { status: 404 });
+    }
+
+    // Check if user is the class owner or a member
+    const isOwner = classData.owner_id === user.id;
+    const { data: membership } = await supabase
+      .from('class_members')
+      .select('class_id')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const isMember = !!membership;
+
+    if (!isOwner && !isMember) {
+      console.log(`[DEBUG] User ${user.id} not authorized for class ${classId}`);
+      return NextResponse.json({ error: 'Forbidden: You must be the class owner or a member' }, { status: 403 });
+    }
+
+    const json = await req.json();
+
+    if (!json.title) {
+      return NextResponse.json({
+        error: 'Missing required field: title'
+      }, { status: 400 });
+    }
+
+    // Create the subject with class_id directly set
+    const { data: subjectData, error: subjectError } = await supabase
+      .from('subjects')
+      .insert([{
+        title: json.title,
+        description: json.description || null,
+        class_id: classId,
+        user_id: user.id,
+        class_label: json.class_label || json.title,
+        cover_type: json.cover_type || 'ai_icons',
+        cover_image_url: json.cover_image_url || null,
+        ai_icon_seed: json.ai_icon_seed || null,
+      }])
+      .select();
+
+    if (subjectError) {
+      console.error(`[DEBUG] Subject creation error:`, subjectError);
+      return NextResponse.json({
+        error: `Failed to create subject: ${subjectError.message}`
+      }, { status: 500 });
+    }
+
+    if (!subjectData || subjectData.length === 0) {
+      return NextResponse.json({
+        error: 'Failed to create subject: No data returned'
+      }, { status: 500 });
+    }
+
+    const newSubject = subjectData[0];
+
+    console.log(`[DEBUG] Created subject ${newSubject.id} for class ${classId}`);
+
+    // Return the created subject (without needing to link via class_subjects since class_id is already set)
+    return NextResponse.json(newSubject, { status: 201 });
+  } catch (error) {
+    console.error('Error creating subject for class:', error);
+    return NextResponse.json({ error: 'Internal server error while creating subject' }, { status: 500 });
   }
 }
