@@ -2,7 +2,7 @@
 
 import { format, isPast, isToday } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BookCheck, AlertTriangle, Calendar } from 'lucide-react';
+import { AlertTriangle, Calendar, Home, Circle, Square, BookCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { CalendarEvent } from '@/lib/types';
 import Link from 'next/link';
@@ -20,7 +20,7 @@ export function TeacherDeadlinesPanel({ events, selectedDay }: TeacherDeadlinesP
   const overdueCount = deadlines.filter(e => isPast(e.date) && !isToday(e.date)).length;
   
   // Events for selected day
-  const selectedDayEvents = selectedDay 
+  const selectedDayEvents = selectedDay
     ? deadlines.filter(e => format(e.date, 'yyyy-MM-dd') === format(selectedDay, 'yyyy-MM-dd'))
     : [];
 
@@ -29,6 +29,49 @@ export function TeacherDeadlinesPanel({ events, selectedDay }: TeacherDeadlinesP
     .filter(e => !isPast(e.date) || isToday(e.date))
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, 5);
+
+  const getDeadlineStyle = (event: CalendarEvent) => {
+    const assignmentType = (event as any).assignment_type || 'homework';
+    
+    switch (assignmentType) {
+      case 'homework':
+        return {
+          borderColor: 'rgb(59, 130, 246)', // blue-500
+          bgColor: 'rgba(59, 130, 246, 0.1)',
+          icon: Home,
+          iconColor: 'text-blue-500',
+          iconBg: 'bg-blue-100',
+          label: 'H'
+        };
+      case 'small_test':
+        return {
+          borderColor: 'rgb(249, 115, 22)', // orange-500
+          bgColor: 'rgba(249, 115, 22, 0.1)',
+          icon: Circle,
+          iconColor: 'text-orange-500',
+          iconBg: 'bg-orange-100',
+          label: 't'
+        };
+      case 'big_test':
+        return {
+          borderColor: 'rgb(239, 68, 68)', // red-500
+          bgColor: 'rgba(239, 68, 68, 0.1)',
+          icon: Square,
+          iconColor: 'text-red-500',
+          iconBg: 'bg-red-100',
+          label: 'T'
+        };
+      default:
+        return {
+          borderColor: 'hsl(var(--destructive))',
+          bgColor: 'hsl(var(--destructive) / 0.1)',
+          icon: BookCheck,
+          iconColor: 'text-destructive',
+          iconBg: 'bg-destructive/10',
+          label: '!'
+        };
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -51,7 +94,7 @@ export function TeacherDeadlinesPanel({ events, selectedDay }: TeacherDeadlinesP
             {selectedDay ? format(selectedDay, 'MMMM d') : 'Upcoming Deadlines'}
           </CardTitle>
           <CardDescription>
-            {selectedDay 
+            {selectedDay
               ? `${selectedDayEvents.length} deadline${selectedDayEvents.length !== 1 ? 's' : ''} on this day`
               : 'All upcoming assignments and tests'
             }
@@ -59,31 +102,41 @@ export function TeacherDeadlinesPanel({ events, selectedDay }: TeacherDeadlinesP
         </CardHeader>
         <CardContent className="space-y-3">
           {(selectedDay ? selectedDayEvents : upcomingEvents).length > 0 ? (
-            (selectedDay ? selectedDayEvents : upcomingEvents).map(event => (
-              <Link 
-                key={event.id} 
-                href={event.href}
-                className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate">{event.title}</p>
-                    <p className="text-sm text-muted-foreground">{event.subject}</p>
-                    {event.chapter_title && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {event.chapter_title}
-                      </p>
-                    )}
+            (selectedDay ? selectedDayEvents : upcomingEvents).map(event => {
+              const style = getDeadlineStyle(event);
+              const IconComponent = style.icon;
+              
+              return (
+                <Link
+                  key={event.id}
+                  href={event.href}
+                  className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                  style={{ borderLeftColor: style.borderColor, borderLeftWidth: '4px' }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className={`flex-shrink-0 w-8 h-8 rounded ${style.iconBg} flex items-center justify-center`}>
+                        <span className={`text-xs font-bold ${style.iconColor}`}>{style.label}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{event.title}</p>
+                        <p className="text-sm text-muted-foreground">{event.subject}</p>
+                        {event.chapter_title && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {event.chapter_title}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant="outline" className="text-xs">
+                        {format(event.date, 'MMM d')}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <Badge variant="outline" className="text-xs">
-                      {format(event.date, 'MMM d')}
-                    </Badge>
-                    <BookCheck className="h-4 w-4 text-destructive" />
-                  </div>
-                </div>
-              </Link>
-            ))
+                </Link>
+              );
+            })
           ) : (
             <p className="text-sm text-muted-foreground text-center py-4">
               {selectedDay ? 'No deadlines on this day' : 'No upcoming deadlines'}
