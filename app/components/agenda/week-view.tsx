@@ -40,8 +40,8 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove }: Week
     })
   );
 
-  // Generate multiple weeks to display (current week + next 1 week)
-  const weeksToShow = 2; // Show 2 weeks at a time
+  // Generate weeks for a full year (52 weeks)
+  const weeksToShow = 52; // Show 52 weeks for infinite scroll feel
   
   const weeks = useMemo(() => {
     const weeksArray = [];
