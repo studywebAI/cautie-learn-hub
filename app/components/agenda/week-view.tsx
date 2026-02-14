@@ -119,6 +119,17 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove }: Week
 
   return (
     <div className="space-y-6">
+      {/* Sticky day name header at top */}
+      <div className="sticky top-16 z-10 bg-background/95 backdrop-blur-sm border-b mb-6">
+        <div className="grid grid-cols-5 gap-0">
+          {dayNames.map((name, idx) => (
+            <div key={idx} className="text-center text-sm font-medium text-muted-foreground py-2">
+              {name}
+            </div>
+          ))}
+        </div>
+      </div>
+      
       {weeks.map((week, weekIndex) => (
         <div key={weekIndex}>
           <DndContext
@@ -126,14 +137,6 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove }: Week
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            {/* Day name headers */}
-            <div className="grid grid-cols-5 gap-0 mb-2">
-              {dayNames.map((name, idx) => (
-                <div key={idx} className="text-center text-sm font-medium text-muted-foreground py-1">
-                  {name}
-                </div>
-              ))}
-            </div>
             <div className="grid grid-cols-5 gap-0">
               {week.days.map((day) => {
                 const dateString = format(day, 'yyyy-MM-dd');

@@ -53,6 +53,7 @@ export async function GET(request: Request) {
     let classes: any[] = []
     let subjects: any[] = []
     let students: any[] = []
+    let assignments: any[] = []
 
     if (isTeacher) {
       // Teachers: get classes they own + subjects they created
@@ -89,10 +90,27 @@ export async function GET(request: Request) {
         }
       }
 
+      // Fetch assignments for all owned classes
+      let assignments: any[] = []
+      if (classes.length > 0) {
+        const { data: assignmentsData } = await supabase
+          .from('assignments')
+          .select(`
+            *,
+            class:classes(id, name),
+            chapter:chapters(id, title, subject_id),
+            subject:subjects(id, title)
+          `)
+          .in('class_id', classes.map((c: any) => c.id))
+          .order('scheduled_start_at', { ascending: true })
+
+        assignments = assignmentsData || []
+      }
+
       return NextResponse.json({
         classes,
         subjects,
-        assignments: [],
+        assignments,
         personalTasks: personalTasksResult.data || [],
         students,
         role,
@@ -128,12 +146,26 @@ export async function GET(request: Request) {
             classes: s.class_subjects ? s.class_subjects.map((cs: any) => cs.classes).filter(Boolean) : []
           }))
         }
+
+        // Fetch assignments for all classes the student is a member of
+        const { data: assignmentsData } = await supabase
+          .from('assignments')
+          .select(`
+            *,
+            class:classes(id, name),
+            chapter:chapters(id, title, subject_id),
+            subject:subjects(id, title)
+          `)
+          .in('class_id', classIds)
+          .order('scheduled_start_at', { ascending: true })
+
+        assignments = assignmentsData || []
       }
 
       return NextResponse.json({
         classes,
         subjects,
-        assignments: [],
+        assignments,
         personalTasks: personalTasksResult.data || [],
         students: [],
         role,

@@ -32,7 +32,7 @@ export function DroppableDay({ id, date, events, isSelected, onClick }: Droppabl
       }`}
     >
       <div className="mb-3">
-        <div className="text-2xl font-bold text-left">{format(date, 'd')}</div>
+        <div className="text-sm font-medium text-left">{format(date, 'd')}</div>
       </div>
 
       <SortableContext items={events.map(e => e.id)} strategy={verticalListSortingStrategy}>
