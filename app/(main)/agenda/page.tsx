@@ -89,6 +89,8 @@ export default function AgendaPage() {
           href: href,
           chapter_id: assignment.chapter_id || undefined,
           chapter_title: chapter?.title,
+          assignment_type: assignment.type || 'homework',
+          completed: assignment.completed || false,
         };
       });
 
@@ -205,6 +207,10 @@ export default function AgendaPage() {
     linked_content?: { type: 'material' | 'subject' | 'chapter' | 'paragraph' | 'assignment'; url: string; title: string; path?: string }[];
   }) => {
     try {
+      // Convert date string to ISO datetime (noon on the due date)
+      const dueDate = new Date(deadline.due_date);
+      const isoDateTime = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate(), 12, 0, 0).toISOString();
+
       // Create the assignment via API
       const response = await fetch('/api/assignments', {
         method: 'POST',
@@ -213,9 +219,9 @@ export default function AgendaPage() {
           class_id: deadline.class_id,
           title: deadline.title,
           description: deadline.description,
-          scheduled_start_at: deadline.due_date,
-          scheduled_end_at: deadline.due_date,
-          scheduled_answer_release_at: deadline.due_date,
+          scheduled_start_at: isoDateTime,
+          scheduled_end_at: isoDateTime,
+          scheduled_answer_release_at: isoDateTime,
           type: deadline.type,
           linked_content: deadline.linked_content,
         }),

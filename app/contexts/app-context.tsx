@@ -20,6 +20,8 @@ export type ClassAssignment = Tables<'assignments'> & {
   scheduled_start_at?: string | null;
   scheduled_end_at?: string | null;
   scheduled_answer_release_at?: string | null;
+  type?: 'homework' | 'small_test' | 'big_test' | null;
+  completed?: boolean | null;
 };
 export type PersonalTask = {
   id: string;
