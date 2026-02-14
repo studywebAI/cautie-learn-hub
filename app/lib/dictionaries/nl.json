@@ -115,7 +115,12 @@
     "addTask": "Taak toevoegen",
     "today": "Vandaag",
     "week": "Week",
-    "month": "Maand"
+    "month": "Maand",
+    "monday": "Ma",
+    "tuesday": "Di",
+    "wednesday": "Wo",
+    "thursday": "Do",
+    "friday": "Vr"
   },
   "subjects": {
     "title": "Vakken",

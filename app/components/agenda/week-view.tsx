@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { format, startOfWeek, addWeeks, isSameDay, parseISO } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { CalendarEvent } from '@/lib/types';
+import { useDictionary } from '@/contexts/app-context';
 import {
   DndContext,
   DragEndEvent,
@@ -30,6 +30,7 @@ interface WeekViewProps {
 
 export function WeekView({ events, selectedDay, onDaySelect, onEventMove }: WeekViewProps) {
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
+  const { dictionary } = useDictionary();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -39,8 +40,8 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove }: Week
     })
   );
 
-  // Generate multiple weeks to display (current week + next 3 weeks)
-  const weeksToShow = 4; // Show 4 weeks at a time
+  // Generate multiple weeks to display (current week + next 1 week)
+  const weeksToShow = 2; // Show 2 weeks at a time
   
   const weeks = useMemo(() => {
     const weeksArray = [];
@@ -107,19 +108,32 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove }: Week
     }
   };
 
+  // Day names for Monday-Friday
+  const dayNames = [
+    dictionary.agenda.monday || 'Mon',
+    dictionary.agenda.tuesday || 'Tue',
+    dictionary.agenda.wednesday || 'Wed',
+    dictionary.agenda.thursday || 'Thu',
+    dictionary.agenda.friday || 'Fri'
+  ];
+
   return (
-    <div className="space-y-0">
+    <div className="space-y-6">
       {weeks.map((week, weekIndex) => (
-        <div key={weekIndex} className="mb-8">
-          {/* Week label - smaller and less prominent */}
-          <div className="text-xs text-muted-foreground mb-2 px-1">
-            Week of {format(week.startDate, 'MMMM d, yyyy')}
-          </div>
+        <div key={weekIndex}>
           <DndContext
             sensors={sensors}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
+            {/* Day name headers */}
+            <div className="grid grid-cols-5 gap-0 mb-2">
+              {dayNames.map((name, idx) => (
+                <div key={idx} className="text-center text-sm font-medium text-muted-foreground py-1">
+                  {name}
+                </div>
+              ))}
+            </div>
             <div className="grid grid-cols-5 gap-0">
               {week.days.map((day) => {
                 const dateString = format(day, 'yyyy-MM-dd');

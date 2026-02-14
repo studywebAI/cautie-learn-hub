@@ -115,7 +115,12 @@
     "addTask": "Add Task",
     "today": "Today",
     "week": "Week",
-    "month": "Month"
+    "month": "Month",
+    "monday": "Mon",
+    "tuesday": "Tue",
+    "wednesday": "Wed",
+    "thursday": "Thu",
+    "friday": "Fri"
   },
   "subjects": {
     "title": "Subjects",
