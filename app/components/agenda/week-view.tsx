@@ -108,49 +108,46 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove }: Week
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-0">
       {weeks.map((week, weekIndex) => (
-        <Card key={weekIndex}>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-semibold">
-              Week of {format(week.startDate, 'MMMM d, yyyy')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DndContext
-              sensors={sensors}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              <div className="grid grid-cols-5 gap-3">
-                {week.days.map((day) => {
-                  const dateString = format(day, 'yyyy-MM-dd');
-                  const dayEvents = eventsByDate.get(dateString) || [];
-                  const isSelected = selectedDay && isSameDay(day, selectedDay);
+        <div key={weekIndex} className="mb-8">
+          {/* Week label - smaller and less prominent */}
+          <div className="text-xs text-muted-foreground mb-2 px-1">
+            Week of {format(week.startDate, 'MMMM d, yyyy')}
+          </div>
+          <DndContext
+            sensors={sensors}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="grid grid-cols-5 gap-0">
+              {week.days.map((day) => {
+                const dateString = format(day, 'yyyy-MM-dd');
+                const dayEvents = eventsByDate.get(dateString) || [];
+                const isSelected = selectedDay && isSameDay(day, selectedDay);
 
-                  return (
-                    <DroppableDay
-                      key={dateString}
-                      id={`day-${dateString}`}
-                      date={day}
-                      events={dayEvents}
-                      isSelected={isSelected}
-                      onClick={() => onDaySelect(day)}
-                    />
-                  );
-                })}
-              </div>
-              <DragOverlay>
-                {activeEvent ? (
-                  <div className="bg-background border rounded-md p-2 shadow-lg opacity-90">
-                    <div className="text-sm font-medium">{activeEvent.title}</div>
-                    <div className="text-xs text-muted-foreground">{activeEvent.subject}</div>
-                  </div>
-                ) : null}
+                return (
+                  <DroppableDay
+                    key={dateString}
+                    id={`day-${dateString}`}
+                    date={day}
+                    events={dayEvents}
+                    isSelected={isSelected}
+                    onClick={() => onDaySelect(day)}
+                  />
+                );
+              })}
+            </div>
+            <DragOverlay>
+              {activeEvent ? (
+                <div className="bg-background border rounded-md p-2 shadow-lg opacity-90">
+                  <div className="text-sm font-medium">{activeEvent.title}</div>
+                  <div className="text-xs text-muted-foreground">{activeEvent.subject}</div>
+                </div>
+              ) : null}
               </DragOverlay>
-            </DndContext>
-          </CardContent>
-        </Card>
+          </DndContext>
+        </div>
       ))}
     </div>
   );

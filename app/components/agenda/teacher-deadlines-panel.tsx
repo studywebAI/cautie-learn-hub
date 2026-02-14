@@ -4,8 +4,10 @@ import { format, isPast, isToday } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle, Calendar, Home, Circle, Square, BookCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { CalendarEvent } from '@/lib/types';
 import Link from 'next/link';
+import { toast } from '@/hooks/use-toast';
 
 interface TeacherDeadlinesPanelProps {
   events: CalendarEvent[];
@@ -29,6 +31,22 @@ export function TeacherDeadlinesPanel({ events, selectedDay }: TeacherDeadlinesP
     .filter(e => !isPast(e.date) || isToday(e.date))
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, 5);
+
+  const handleToggleComplete = async (event: CalendarEvent) => {
+    try {
+      const response = await fetch(`/api/assignments/${event.id}/toggle-completed`, {
+        method: 'POST',
+      });
+      if (!response.ok) throw new Error('Failed to toggle completion');
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update completion status',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const getDeadlineStyle = (event: CalendarEvent) => {
     const assignmentType = (event as any).assignment_type || 'homework';
@@ -105,6 +123,7 @@ export function TeacherDeadlinesPanel({ events, selectedDay }: TeacherDeadlinesP
             (selectedDay ? selectedDayEvents : upcomingEvents).map(event => {
               const style = getDeadlineStyle(event);
               const IconComponent = style.icon;
+              const isCompleted = (event as any).completed || false;
               
               return (
                 <Link
@@ -115,14 +134,22 @@ export function TeacherDeadlinesPanel({ events, selectedDay }: TeacherDeadlinesP
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-3 flex-1">
+                      <Checkbox
+                        checked={isCompleted}
+                        onCheckedChange={() => handleToggleComplete(event)}
+                        className="mt-0.5"
+                        onClick={(e) => e.preventDefault()}
+                      />
                       <div className={`flex-shrink-0 w-8 h-8 rounded ${style.iconBg} flex items-center justify-center`}>
                         <span className={`text-xs font-bold ${style.iconColor}`}>{style.label}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{event.title}</p>
+                        <p className={`font-medium truncate ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+                          {event.title}
+                        </p>
                         <p className="text-sm text-muted-foreground">{event.subject}</p>
                         {event.chapter_title && (
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className={`text-xs text-muted-foreground mt-1 ${isCompleted ? 'line-through' : ''}`}>
                             {event.chapter_title}
                           </p>
                         )}

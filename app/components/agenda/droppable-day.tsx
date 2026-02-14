@@ -1,6 +1,6 @@
 'use client';
 
-import { format, isToday } from 'date-fns';
+import { format } from 'date-fns';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { DraggableEvent } from './draggable-event';
@@ -23,34 +23,26 @@ export function DroppableDay({ id, date, events, isSelected, onClick }: Droppabl
     <div
       ref={setNodeRef}
       onClick={onClick}
-      className={`min-h-[120px] p-2 border rounded-lg cursor-pointer transition-colors ${
+      className={`min-h-[140px] p-3 border-x border-t border-b border-border/50 cursor-pointer transition-colors ${
         isSelected
-          ? 'bg-primary/10 border-primary'
+          ? 'bg-primary/5 border-primary/30'
           : isOver
-          ? 'bg-muted border-dashed'
-          : 'bg-background hover:bg-muted/50'
-      } ${isToday(date) ? 'ring-2 ring-accent' : ''}`}
+          ? 'bg-muted/30 border-dashed'
+          : 'bg-card/50 hover:bg-muted/20'
+      }`}
     >
-      <div className="text-center mb-2">
-        <div className="text-sm font-medium">{format(date, 'EEE')}</div>
-        <div className={`text-lg font-bold ${isToday(date) ? 'text-accent-foreground' : ''}`}>
-          {format(date, 'd')}
-        </div>
+      <div className="text-center mb-3">
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{format(date, 'EEE')}</div>
+        <div className="text-2xl font-bold">{format(date, 'd')}</div>
       </div>
 
       <SortableContext items={events.map(e => e.id)} strategy={verticalListSortingStrategy}>
-        <div className="space-y-1">
+        <div className="space-y-2">
           {events.map((event) => (
             <DraggableEvent key={event.id} event={event} />
           ))}
         </div>
       </SortableContext>
-
-      {events.length === 0 && (
-        <div className="text-xs text-muted-foreground text-center mt-4">
-          No events
-        </div>
-      )}
     </div>
   );
 }
