@@ -53,6 +53,7 @@ export async function GET(request: Request) {
                   title,
                   class_subjects(
                     classes!inner(
+                      id,
                       name
                     )
                   )
@@ -68,6 +69,7 @@ export async function GET(request: Request) {
           .select(`
             *,
             classes!inner(
+              id,
               name
             )
           `)
@@ -81,7 +83,31 @@ export async function GET(request: Request) {
           console.error('Error fetching direct assignments:', directError)
         }
         
-        assignments = [...(hierarchicalAssignments || []), ...(directAssignments || [])]
+        // Process hierarchical assignments to extract class_id and chapter_id
+        const processedHierarchical = (hierarchicalAssignments || []).map((assignment: any) => {
+          // Extract class_id from the nested structure
+          const classSubject = assignment.paragraphs?.chapters?.subjects?.class_subjects?.[0];
+          const classInfo = classSubject?.classes;
+          const chapterId = assignment.paragraphs?.chapters?.id;
+          if (classInfo) {
+            return {
+              ...assignment,
+              class_id: classInfo.id,
+              class_name: classInfo.name,
+              chapter_id: chapterId,
+            };
+          }
+          return assignment;
+        });
+        
+        // Process direct assignments to add class_id and class_name
+        const processedDirect = (directAssignments || []).map((assignment: any) => ({
+          ...assignment,
+          class_id: assignment.classes?.id,
+          class_name: assignment.classes?.name,
+        }));
+        
+        assignments = [...processedHierarchical, ...processedDirect]
       }
     } else {
       // Students see assignments from classes they're members of
@@ -101,6 +127,8 @@ export async function GET(request: Request) {
           .from('class_members')
           .select(`
             classes!inner(
+              id,
+              name,
               subjects(
                 chapters(
                   paragraphs(
@@ -115,12 +143,17 @@ export async function GET(request: Request) {
         if (error) {
           console.error('Error fetching student assignments:', error)
         } else {
-          // Flatten the nested structure
+          // Flatten the nested structure and extract class_id
           assignments = studentAssignments?.flatMap((member: any) =>
             member.classes?.subjects?.flatMap((subject: any) =>
               subject.chapters?.flatMap((chapter: any) =>
                 chapter.paragraphs?.flatMap((paragraph: any) =>
-                  paragraph.assignments || []
+                  (paragraph.assignments || []).map((assignment: any) => ({
+                    ...assignment,
+                    class_id: member.classes.id,
+                    class_name: member.classes.name,
+                    chapter_id: chapter.id,
+                  }))
                 ) || []
               ) || []
             ) || []
@@ -133,6 +166,7 @@ export async function GET(request: Request) {
           .select(`
             *,
             classes!inner(
+              id,
               name
             )
           `)
@@ -142,7 +176,13 @@ export async function GET(request: Request) {
         if (directError) {
           console.error('Error fetching direct class assignments:', directError)
         } else {
-          assignments = [...assignments, ...(directAssignments || [])]
+          // Add class_id and class_name to direct assignments
+          const processedDirect = (directAssignments || []).map((assignment: any) => ({
+            ...assignment,
+            class_id: assignment.classes?.id,
+            class_name: assignment.classes?.name,
+          }));
+          assignments = [...assignments, ...processedDirect]
         }
       }
     }
