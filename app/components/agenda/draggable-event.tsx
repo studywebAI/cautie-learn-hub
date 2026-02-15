@@ -11,9 +11,10 @@ import { useRouter } from 'next/navigation';
 
 interface DraggableEventProps {
   event: CalendarEvent;
+  onEventClick?: (event: CalendarEvent) => void;
 }
 
-export function DraggableEvent({ event }: DraggableEventProps) {
+export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
   const router = useRouter();
   const [isCompleted, setIsCompleted] = useState((event as any).completed || false);
   
@@ -104,7 +105,9 @@ export function DraggableEvent({ event }: DraggableEventProps) {
   };
 
   const handleClick = () => {
-    if (event.type === 'assignment') {
+    if (onEventClick) {
+      onEventClick(event);
+    } else if (event.type === 'assignment') {
       router.push(event.href);
     }
   };

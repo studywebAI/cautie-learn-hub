@@ -19,9 +19,10 @@ type TodayPanelProps = {
   personalTasks: any[];
   assignments: any[];
   classes: any[];
+  onEventClick?: (event: CalendarEvent) => void;
 };
 
-export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSuggestion }: TodayPanelProps) {
+export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSuggestion, onEventClick }: TodayPanelProps) {
   const { dictionary } = useDictionary();
 
   const handleToggleComplete = async (event: CalendarEvent) => {
@@ -100,15 +101,23 @@ export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSugges
     const isCompleted = (event as any).completed;
     
     const content = (
-      <div className="p-3 rounded-lg border-l-4"
-           style={{borderColor: style.borderColor, backgroundColor: isCompleted ? 'rgba(0,0,0,0.05)' : style.bgColor}}>
-        <div className='flex justify-between items-start gap-2'>
+      <div
+        className="p-3 rounded-lg border-l-4 cursor-pointer hover:bg-muted/50 transition-colors"
+        style={{borderColor: style.borderColor, backgroundColor: isCompleted ? 'rgba(0,0,0,0.05)' : style.bgColor}}
+        onClick={() => {
+          if (event.type === 'assignment' && onEventClick) {
+            onEventClick(event);
+          }
+        }}
+      >
+        <div className='flex justify-between items-start gap-3'>
           <div className="flex items-start gap-3 flex-1">
             {event.type === 'assignment' && (
               <Checkbox
                 checked={isCompleted}
                 onCheckedChange={() => handleToggleComplete(event)}
                 className="mt-1"
+                onClick={(e) => e.stopPropagation()}
               />
             )}
             <div className={`flex-shrink-0 w-8 h-8 rounded ${style.iconBg} flex items-center justify-center ${isCompleted ? 'opacity-50' : ''}`}>
@@ -128,14 +137,6 @@ export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSugges
       </div>
     );
     
-    if (event.type === 'assignment') {
-      return (
-        <Link key={event.id} href={event.href} className="block hover:bg-muted/50 transition-colors rounded-lg">
-          {content}
-        </Link>
-      );
-    }
-
     return <div key={event.id}>{content}</div>;
   };
 

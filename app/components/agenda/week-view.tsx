@@ -26,9 +26,10 @@ interface WeekViewProps {
   selectedDay?: Date;
   onDaySelect: (day: Date) => void;
   onEventMove: (eventId: string, newDate: Date, newOrder?: number) => void;
+  onEventClick?: (event: CalendarEvent) => void;
 }
 
-export function WeekView({ events, selectedDay, onDaySelect, onEventMove }: WeekViewProps) {
+export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEventClick }: WeekViewProps) {
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
   const { dictionary } = useDictionary();
 
@@ -151,6 +152,7 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove }: Week
                     events={dayEvents}
                     isSelected={isSelected}
                     onClick={() => onDaySelect(day)}
+                    onEventClick={onEventClick}
                   />
                 );
               })}

@@ -12,6 +12,7 @@ import { ListView } from '@/components/agenda/list-view';
 import { ViewToggle } from '@/components/agenda/view-toggle';
 import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dialog';
 import { TeacherDeadlinesPanel } from '@/components/agenda/teacher-deadlines-panel';
+import { TaskOverviewModal } from '@/components/agenda/task-overview-modal';
 import { PlusCircle, Sparkles } from 'lucide-react';
 import type { AiSuggestion, CalendarEvent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -30,6 +31,8 @@ export default function AgendaPage() {
   const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
   const [chapters, setChapters] = useState<Map<string, { id: string; title: string }>>(new Map());
   const { toast } = useToast();
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [isTaskOverviewOpen, setIsTaskOverviewOpen] = useState(false);
 
   const isStudent = role === 'student';
   const isTeacher = role === 'teacher';
@@ -198,6 +201,18 @@ export default function AgendaPage() {
     await createPersonalTask(newTask);
   };
 
+  const handleEventClick = (event: CalendarEvent) => {
+    if (event.type === 'assignment') {
+      setSelectedEvent(event);
+      setIsTaskOverviewOpen(true);
+    }
+  };
+
+  const handleCompletionToggle = async (eventId: string, completed: boolean) => {
+    // The toggle is already handled in the modal, but we could add additional logic here if needed
+    console.log(`Assignment ${eventId} marked as ${completed ? 'complete' : 'incomplete'}`);
+  };
+
   const handleTeacherDeadlineCreated = async (deadline: {
     title: string;
     description: string;
@@ -315,15 +330,19 @@ export default function AgendaPage() {
                 selectedDay={selectedDay}
                 onDaySelect={setSelectedDay}
                 onEventMove={handleEventMove}
+                onEventClick={handleEventClick}
               />
             ) : (
-              <ListView events={events} />
+              <ListView
+                events={events}
+                onEventClick={handleEventClick}
+              />
             )}
           </div>
 
           <div className="md:col-span-4 lg:col-span-3">
             {isStudent && (
-              <TodayPanel 
+              <TodayPanel
                 selectedDay={selectedDay}
                 events={eventsForSelectedDay}
                 suggestion={showAiPanel ? aiSuggestion : null}
@@ -331,6 +350,7 @@ export default function AgendaPage() {
                 personalTasks={personalTasks || []}
                 assignments={assignments || []}
                 classes={classes || []}
+                onEventClick={handleEventClick}
               />
             )}
             {isTeacher && (
@@ -361,6 +381,16 @@ export default function AgendaPage() {
           initialDate={selectedDay}
         />
       )}
+
+      <TaskOverviewModal
+        event={selectedEvent}
+        isOpen={isTaskOverviewOpen}
+        onClose={() => {
+          setIsTaskOverviewOpen(false);
+          setSelectedEvent(null);
+        }}
+        onCompletionToggle={handleCompletionToggle}
+      />
     </>
   );
 }

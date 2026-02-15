@@ -74,10 +74,11 @@ export function ListView({ events, onEventClick }: ListViewProps) {
               {groupEvents
                 .sort((a, b) => a.date.getTime() - b.date.getTime())
                 .map(event => (
-                  <EventListItem 
-                    key={event.id} 
-                    event={event} 
+                  <EventListItem
+                    key={event.id}
+                    event={event}
                     isOverdue={groupKey === 'overdue'}
+                    onEventClick={onEventClick}
                   />
                 ))}
             </div>
@@ -88,7 +89,7 @@ export function ListView({ events, onEventClick }: ListViewProps) {
   );
 }
 
-function EventListItem({ event, isOverdue }: { event: CalendarEvent; isOverdue?: boolean }) {
+function EventListItem({ event, isOverdue, onEventClick }: { event: CalendarEvent; isOverdue?: boolean; onEventClick?: (event: CalendarEvent) => void }) {
   // Build href with instructions if available
   const buildHref = () => {
     if (!event.href) return undefined;
@@ -164,6 +165,16 @@ function EventListItem({ event, isOverdue }: { event: CalendarEvent; isOverdue?:
   );
 
   if (event.type === 'assignment' && href) {
+    if (onEventClick) {
+      return (
+        <div
+          className="block cursor-pointer"
+          onClick={() => onEventClick(event)}
+        >
+          {content}
+        </div>
+      );
+    }
     return (
       <Link href={href} className="block">
         {content}

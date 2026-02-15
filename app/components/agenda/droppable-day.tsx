@@ -12,9 +12,10 @@ interface DroppableDayProps {
   events: CalendarEvent[];
   isSelected?: boolean;
   onClick: () => void;
+  onEventClick?: (event: CalendarEvent) => void;
 }
 
-export function DroppableDay({ id, date, events, isSelected, onClick }: DroppableDayProps) {
+export function DroppableDay({ id, date, events, isSelected, onClick, onEventClick }: DroppableDayProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
   });
@@ -38,7 +39,7 @@ export function DroppableDay({ id, date, events, isSelected, onClick }: Droppabl
       <SortableContext items={events.map(e => e.id)} strategy={verticalListSortingStrategy}>
         <div className="space-y-2">
           {events.map((event) => (
-            <DraggableEvent key={event.id} event={event} />
+            <DraggableEvent key={event.id} event={event} onEventClick={onEventClick} />
           ))}
         </div>
       </SortableContext>
