@@ -40,8 +40,8 @@ export async function GET(request: Request) {
       } else if (teacherClasses && teacherClasses.length > 0) {
         const classIds = teacherClasses.map((c: any) => c.id)
         
-        // Get assignments through class_subjects join table
-        const { data: teacherAssignments, error: assignmentsError } = await supabase
+        // Fetch assignments with paragraphs (through hierarchical structure)
+        const { data: hierarchicalAssignments, error: hierarchicalError } = await supabase
           .from('assignments')
           .select(`
             *,
@@ -62,42 +62,88 @@ export async function GET(request: Request) {
           `)
           .in('paragraphs.chapters.subjects.class_subjects.classes.id', classIds)
 
-        if (assignmentsError) {
-          console.error('Error fetching teacher assignments:', assignmentsError)
-        } else {
-          assignments = teacherAssignments || []
+        // Also fetch assignments that are directly linked to a class (paragraph_id is null)
+        const { data: directAssignments, error: directError } = await supabase
+          .from('assignments')
+          .select(`
+            *,
+            classes!inner(
+              name
+            )
+          `)
+          .in('class_id', classIds)
+          .is('paragraph_id', null)
+
+        if (hierarchicalError) {
+          console.error('Error fetching hierarchical assignments:', hierarchicalError)
         }
+        if (directError) {
+          console.error('Error fetching direct assignments:', directError)
+        }
+        
+        assignments = [...(hierarchicalAssignments || []), ...(directAssignments || [])]
       }
     } else {
       // Students see assignments from classes they're members of
-      const { data: studentAssignments, error } = await (supabase as any)
+      // First get the classes the student is a member of
+      const { data: classMembers, error: membersError } = await supabase
         .from('class_members')
-        .select(`
-          classes!inner(
-            subjects(
-              chapters(
-                paragraphs(
-                  assignments(*)
+        .select('class_id')
+        .eq('user_id', user.id)
+
+      if (membersError) {
+        console.error('Error fetching student class members:', membersError)
+      } else if (classMembers && classMembers.length > 0) {
+        const studentClassIds = classMembers.map((cm: any) => cm.class_id)
+        
+        // Fetch hierarchical assignments (through subjects/chapters/paragraphs)
+        const { data: studentAssignments, error } = await (supabase as any)
+          .from('class_members')
+          .select(`
+            classes!inner(
+              subjects(
+                chapters(
+                  paragraphs(
+                    assignments(*)
+                  )
                 )
               )
             )
-          )
-        `)
-        .eq('user_id', user.id)
+          `)
+          .eq('user_id', user.id)
 
-      if (error) {
-        console.error('Error fetching student assignments:', error)
-      } else {
-        // Flatten the nested structure
-        assignments = studentAssignments?.flatMap((member: any) =>
-          member.classes?.subjects?.flatMap((subject: any) =>
-            subject.chapters?.flatMap((chapter: any) =>
-              chapter.paragraphs?.flatMap((paragraph: any) =>
-                paragraph.assignments || []
+        if (error) {
+          console.error('Error fetching student assignments:', error)
+        } else {
+          // Flatten the nested structure
+          assignments = studentAssignments?.flatMap((member: any) =>
+            member.classes?.subjects?.flatMap((subject: any) =>
+              subject.chapters?.flatMap((chapter: any) =>
+                chapter.paragraphs?.flatMap((paragraph: any) =>
+                  paragraph.assignments || []
+                ) || []
               ) || []
             ) || []
           ) || []
-        ) || []
+        }
+
+        // Also fetch direct class assignments (paragraph_id is null)
+        const { data: directAssignments, error: directError } = await supabase
+          .from('assignments')
+          .select(`
+            *,
+            classes!inner(
+              name
+            )
+          `)
+          .in('class_id', studentClassIds)
+          .is('paragraph_id', null)
+
+        if (directError) {
+          console.error('Error fetching direct class assignments:', directError)
+        } else {
+          assignments = [...assignments, ...(directAssignments || [])]
+        }
       }
     }
 

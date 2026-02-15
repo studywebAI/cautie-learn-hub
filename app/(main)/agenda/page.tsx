@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 type ViewMode = 'week' | 'list';
 
 export default function AgendaPage() {
-  const { assignments, classes, isLoading, role, personalTasks, createPersonalTask, updatePersonalTask } = useContext(AppContext) as AppContextType;
+  const { assignments, classes, isLoading, role, personalTasks, createPersonalTask, updatePersonalTask, refetchAssignments } = useContext(AppContext) as AppContextType;
   const { dictionary } = useDictionary();
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('week');
@@ -211,7 +211,7 @@ export default function AgendaPage() {
       const dueDate = new Date(deadline.due_date);
       const isoDateTime = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate(), 12, 0, 0).toISOString();
 
-      // Create the assignment via API
+      // Create the assignment via API directly
       const response = await fetch('/api/assignments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -224,6 +224,9 @@ export default function AgendaPage() {
           scheduled_answer_release_at: isoDateTime,
           type: deadline.type,
           linked_content: deadline.linked_content,
+          paragraph_id: null,
+          assignment_index: 0,
+          answers_enabled: false,
         }),
       });
 
@@ -231,13 +234,14 @@ export default function AgendaPage() {
         throw new Error('Failed to create assignment');
       }
 
+      // Refetch assignments to update the UI
+      await refetchAssignments();
+
       const typeLabels = { homework: 'Homework', small_test: 'Small Test', big_test: 'Big Test' };
       toast({
         title: `${typeLabels[deadline.type]} Created`,
         description: `"${deadline.title}" has been added.`,
       });
-
-      // No need to call createAssignment - we already created via API
     } catch (error) {
       console.error('Failed to create deadline:', error);
       throw error;
