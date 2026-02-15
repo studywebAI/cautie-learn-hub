@@ -283,6 +283,7 @@ export async function POST(request: Request) {
         description: json.description,
         linked_content: json.linked_content,
         type: json.type || 'homework', // Store the assignment type
+        class_id: json.class_id, // Include class_id for direct class assignments
       })
       .select()
       .single()
