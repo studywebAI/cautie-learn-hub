@@ -108,6 +108,12 @@ export async function GET(request: Request) {
         }));
         
         assignments = [...processedHierarchical, ...processedDirect]
+        
+        // DEBUG: Log teacher assignments
+        console.log(`[Assignments API] Teacher: Returning ${assignments.length} assignments`);
+        assignments.forEach((a, i) => {
+          console.log(`  ${i}: ${a.title} - class_id: ${a.class_id}, scheduled_start_at: ${a.scheduled_start_at}`);
+        });
       }
     } else {
       // Students see assignments from classes they're members of
@@ -184,8 +190,16 @@ export async function GET(request: Request) {
           }));
           assignments = [...assignments, ...processedDirect]
         }
+      } else {
+        console.log('Student is not a member of any classes')
       }
     }
+
+    // DEBUG: Log assignments before returning
+    console.log(`[Assignments API] Returning ${assignments.length} assignments for user ${user.id} (role: ${userRole})`);
+    assignments.forEach((a, i) => {
+      console.log(`  ${i}: ${a.title} - class_id: ${a.class_id}, scheduled_start_at: ${a.scheduled_start_at}`);
+    });
 
     return NextResponse.json(assignments)
   } catch (error) {
