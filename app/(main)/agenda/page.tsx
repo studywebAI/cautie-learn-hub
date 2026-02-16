@@ -343,7 +343,6 @@ export default function AgendaPage() {
                 classes={classes || []}
                 isTeacher={isTeacher}
                 isStudent={isStudent}
-                onEdit={() => {}}
               />
             ) : isStudent && (
               <TodayPanel

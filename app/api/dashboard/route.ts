@@ -104,7 +104,7 @@ export async function GET(request: Request) {
           .select(`
             id,
             name,
-            subjects(
+            subjects!inner(
               chapters(
                 paragraphs(
                   assignments(*)

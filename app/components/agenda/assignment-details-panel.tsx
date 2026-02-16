@@ -89,7 +89,7 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
   // Build breadcrumb navigation
   const breadcrumbs = [
     { label: event.subject, href: event.href, icon: BookOpen },
-    ...(event.chapter_title ? [{ label: event.chapter_title, href: '#' }] : []),
+    ...(event.chapter_title ? [{ label: event.chapter_title, href: `/subjects/${event.subject_id}/chapters/${event.chapter_id}` }] : []),
   ];
 
   const handleEdit = () => {
