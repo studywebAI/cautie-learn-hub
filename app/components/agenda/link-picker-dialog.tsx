@@ -105,7 +105,7 @@ export function LinkPickerDialog({ isOpen, onClose, onSelect, classId }: LinkPic
               
               if (chapter.paragraphs) {
                 for (const paragraph of chapter.paragraphs) {
-                  const paragraphNum = `${chapter.chapter_number}.${paragraph.order_index}`;
+                  const paragraphNum = `${chapter.chapter_number}.${paragraph.position}`;
                   
                   subjectLinks.push({
                     id: paragraph.id,
