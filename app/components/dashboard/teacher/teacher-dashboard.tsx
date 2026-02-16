@@ -132,13 +132,6 @@ export function TeacherDashboard() {
   if (isLoading || !classes) {
       return (
         <div className="flex flex-col gap-8">
-            <header className="flex justify-between items-center">
-                 <div>
-                    <Skeleton className="h-10 w-64" />
-                    <Skeleton className="h-4 w-96 mt-2" />
-                </div>
-                <Skeleton className="h-10 w-36" />
-            </header>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-64" />)}
             </div>
@@ -156,24 +149,19 @@ export function TeacherDashboard() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold font-headline">Your Classes</h1>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant={isBulkMode ? "default" : "outline"}
-            onClick={toggleBulkMode}
-          >
-            {isBulkMode ? <Square className="mr-2 h-4 w-4" /> : <CheckSquare className="mr-2 h-4 w-4" />}
-            {isBulkMode ? 'Exit Bulk Mode' : 'Bulk Actions'}
-          </Button>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create New Class
-          </Button>
-        </div>
-      </header>
+      <div className="flex justify-end gap-2">
+        <Button
+          variant={isBulkMode ? "default" : "outline"}
+          onClick={toggleBulkMode}
+        >
+          {isBulkMode ? <Square className="mr-2 h-4 w-4" /> : <CheckSquare className="mr-2 h-4 w-4" />}
+          {isBulkMode ? 'Exit Bulk Mode' : 'Bulk Actions'}
+        </Button>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Create New Class
+        </Button>
+      </div>
 
       {/* Search Bar and Bulk Actions */}
       <div className="flex items-center justify-between gap-4">

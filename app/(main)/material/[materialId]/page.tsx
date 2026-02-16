@@ -141,29 +141,31 @@ function MaterialPageContent() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <Button variant="ghost" asChild className="mb-4 -ml-4">
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" asChild className="-ml-4">
           <Link href={`/class/${material.class_id}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Class
           </Link>
         </Button>
-        <Badge variant="outline" className="mb-2">{material.type}</Badge>
-        <h1 className="text-3xl font-bold font-headline">{material.title}</h1>
-        <p className="text-sm text-muted-foreground">
-          Created on {format(new Date(material.created_at), 'MMMM d, yyyy')}
-        </p>
         {userRole === 'teacher' && (material?.type === 'BLOCK' || blocks.length > 0) && (
           <Button
             variant="outline"
             onClick={() => setIsEditing(!isEditing)}
-            className="mt-2"
           >
             <Edit className="mr-2 h-4 w-4" />
             {isEditing ? 'View Mode' : 'Edit Mode'}
           </Button>
         )}
-      </header>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Badge variant="outline">{material.type}</Badge>
+        <h1 className="text-3xl font-bold font-headline">{material.title}</h1>
+        <p className="text-sm text-muted-foreground">
+          Created on {format(new Date(material.created_at), 'MMMM d, yyyy')}
+        </p>
+      </div>
 
       <div className="flex flex-wrap gap-2">
         {material.concepts?.map(concept => (

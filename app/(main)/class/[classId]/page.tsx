@@ -78,10 +78,6 @@ export default function ClassDetailsPage() {
   if (isLoading && !classInfo) {
     return (
       <div className="flex flex-col gap-8">
-        <header>
-          <Skeleton className="h-10 w-3/4" />
-          <Skeleton className="h-4 w-1/2 mt-2" />
-        </header>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Skeleton className="h-96 w-full" />
@@ -105,11 +101,6 @@ export default function ClassDetailsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-3xl font-bold font-headline">{classInfo.name}</h1>
-        <p className="text-muted-foreground">{classInfo.description || 'Manage assignments, students, and settings for this class.'}</p>
-      </header>
-
       <Tabs defaultValue={searchParams.get('tab') || "assignments"} className="w-full">
         <TabsList className={`grid w-full ${isTeacher ? 'grid-cols-6' : 'grid-cols-4'}`}>
           <TabsTrigger value="assignments"><FileText className="mr-2 h-4 w-4" /> Assignments</TabsTrigger>

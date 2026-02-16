@@ -114,13 +114,6 @@ function MaterialPageContent() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-3xl font-bold font-headline">{dictionary.material.title}</h1>
-        <p className="text-muted-foreground">
-          {dictionary.material.description}
-        </p>
-      </header>
-
       <Card>
         <CardHeader>
           <CardTitle>{dictionary.material.importTitle}</CardTitle>

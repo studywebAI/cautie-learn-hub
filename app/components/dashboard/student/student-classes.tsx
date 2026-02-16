@@ -90,13 +90,6 @@ export function StudentClasses() {
   if (isLoading || !classes) {
       return (
          <div className="flex flex-col gap-8">
-            <header className="flex justify-between items-center">
-                 <div>
-                    <Skeleton className="h-10 w-64" />
-                    <Skeleton className="h-4 w-96 mt-2" />
-                </div>
-                <Skeleton className="h-10 w-36" />
-            </header>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-64" />)}
             </div>
@@ -106,13 +99,7 @@ export function StudentClasses() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold font-headline">Your Classes</h1>
-          <p className="text-muted-foreground">
-            All the classes you are enrolled in.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <Button onClick={() => {
             setInitialCode(undefined);
             setIsJoinDialogOpen(true);
@@ -120,7 +107,7 @@ export function StudentClasses() {
           <PlusCircle className="mr-2 h-4 w-4" />
           Join a Class
         </Button>
-      </header>
+      </div>
 
       {/* Search Bar */}
       <div className="relative max-w-sm">

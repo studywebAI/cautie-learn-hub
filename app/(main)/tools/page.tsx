@@ -32,13 +32,6 @@ export default function ToolsPage() {
   return (
     <div className="h-full bg-background">
       <div className="flex flex-col gap-8 h-full">
-        <header>
-          <h1 className="text-3xl font-headline">{dictionary.tools.title}</h1>
-          <p className="text-muted-foreground">
-            {dictionary.tools.description}
-          </p>
-        </header>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-1">
           {tools.map((tool) => {
               const Icon = tool.icon;

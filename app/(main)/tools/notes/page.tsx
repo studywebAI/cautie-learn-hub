@@ -174,22 +174,6 @@ function NotesPageContent() {
   }
 
   if (generatedNotes) {
-    return (
-      <div className="flex flex-col gap-8">
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold font-headline">Notes</h1>
-            <p className="text-muted-foreground">
-              Your automatically generated notes.
-            </p>
-          </div>
-          <Button onClick={handleRestart} variant="outline">
-            Generate New Notes
-          </Button>
-        </header>
-        <NoteViewer notes={generatedNotes} />
-      </div>
-    );
   }
 
   return (

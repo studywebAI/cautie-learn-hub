@@ -286,10 +286,8 @@ export default function AgendaPage() {
   return (
     <>
       <div className="flex flex-col gap-8 h-full">
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl">{dictionary.agenda.title}</h1>
-          </div>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div></div>
           <div className="flex items-center gap-3">
             <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
             
@@ -318,7 +316,7 @@ export default function AgendaPage() {
               </Button>
             )}
           </div>
-        </header>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start flex-1">
           <div className="md:col-span-8 lg:col-span-9">

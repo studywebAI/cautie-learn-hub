@@ -121,76 +121,61 @@ function TeacherSummaryDashboard() {
 
     return (
         <div className="flex flex-col gap-8">
-            <header>
-                <h1 className="text-3xl font-bold font-headline">Welcome Back, Teacher</h1>
-                <p className="text-muted-foreground">
-                    Here's a high-level summary of your classes.
-                </p>
-            </header>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
+                    <School className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{teacherClasses.length}</div>
+                    <p className="text-xs text-muted-foreground">classes managed</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+                     <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{totalStudents}</div>
+                    <p className="text-xs text-muted-foreground">students across all classes</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Active Assignments</CardTitle>
+                     <FileText className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{activeAssignments}</div>
+                    <p className="text-xs text-muted-foreground">upcoming assignments</p>
+                </CardContent>
+              </Card>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
-                        <School className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{teacherClasses.length}</div>
-                        <p className="text-xs text-muted-foreground">classes managed</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                         <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{totalStudents}</div>
-                        <p className="text-xs text-muted-foreground">students across all classes</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Assignments</CardTitle>
-                         <FileText className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{activeAssignments}</div>
-                        <p className="text-xs text-muted-foreground">upcoming assignments</p>
-                    </CardContent>
-                </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
-                         <Activity className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{lowProgressAlerts}</div>
-                        <p className="text-xs text-muted-foreground">students need attention</p>
-                    </CardContent>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
+                       <Activity className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                      <div className="text-2xl font-bold">{lowProgressAlerts}</div>
+                      <p className="text-xs text-muted-foreground">students need attention</p>
+                  </CardContent>
                 </Card>
             </div>
 
              <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <CardTitle className="font-headline">Your Classes</CardTitle>
-                            <CardDescription>A quick look at your most recent classes.</CardDescription>
-                        </div>
-                        <Button asChild variant="outline">
-                            <Link href="/classes">
-                                Manage All Classes
-                                <ArrowRight className="ml-2 h-4 w-4" />
-                            </Link>
-                        </Button>
-                    </div>
-                </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {teacherClasses.slice(0, 2).map(classInfo => (
                          <ClassCard key={classInfo.id} classInfo={classInfo} isArchived={false} />
                     ))}
                      {teacherClasses.length === 0 && (
-                        <p className="text-muted-foreground col-span-2 text-center p-8">You haven't created any classes yet. <Link href="/classes" className="text-primary hover:underline">Create one now</Link> to get started.</p>
+                        <div className="col-span-2 text-center p-8">
+                            <p className="text-muted-foreground">You haven't created any classes yet.</p>
+                            <Button asChild className="mt-4">
+                                <Link href="/classes">Create one now</Link>
+                            </Button>
+                        </div>
                     )}
                 </CardContent>
              </Card>

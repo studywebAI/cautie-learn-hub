@@ -30,13 +30,6 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-8 h-full">
-      <header>
-        <h1 className="text-3xl font-headline">{dictionary.settings.title}</h1>
-        <p className="text-muted-foreground">
-          {dictionary.settings.description}
-        </p>
-      </header>
-
       <div className="flex-1 overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           <div className="flex h-full">
