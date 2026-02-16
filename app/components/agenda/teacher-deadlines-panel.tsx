@@ -12,9 +12,10 @@ import { toast } from '@/hooks/use-toast';
 interface TeacherDeadlinesPanelProps {
   events: CalendarEvent[];
   selectedDay?: Date;
+  onEventClick?: (event: CalendarEvent) => void;
 }
 
-export function TeacherDeadlinesPanel({ events, selectedDay }: TeacherDeadlinesPanelProps) {
+export function TeacherDeadlinesPanel({ events, selectedDay, onEventClick }: TeacherDeadlinesPanelProps) {
   // Filter only assignments (not personal tasks)
   const deadlines = events.filter(e => e.type === 'assignment');
   
@@ -126,11 +127,11 @@ export function TeacherDeadlinesPanel({ events, selectedDay }: TeacherDeadlinesP
               const isCompleted = (event as any).completed || false;
               
               return (
-                <Link
+                <div
                   key={event.id}
-                  href={event.href}
-                  className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                  className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
                   style={{ borderLeftColor: style.borderColor, borderLeftWidth: '4px' }}
+                  onClick={() => onEventClick?.(event)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-3 flex-1">
@@ -161,7 +162,7 @@ export function TeacherDeadlinesPanel({ events, selectedDay }: TeacherDeadlinesP
                       </Badge>
                     </div>
                   </div>
-                </Link>
+                </div>
               );
             })
           ) : (

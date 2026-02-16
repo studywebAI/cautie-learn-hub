@@ -12,7 +12,7 @@ import { ListView } from '@/components/agenda/list-view';
 import { ViewToggle } from '@/components/agenda/view-toggle';
 import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dialog';
 import { TeacherDeadlinesPanel } from '@/components/agenda/teacher-deadlines-panel';
-import { TaskOverviewModal } from '@/components/agenda/task-overview-modal';
+import { AssignmentDetailsPanel } from '@/components/agenda/assignment-details-panel';
 import { PlusCircle, Sparkles } from 'lucide-react';
 import type { AiSuggestion, CalendarEvent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -32,7 +32,6 @@ export default function AgendaPage() {
   const [chapters, setChapters] = useState<Map<string, { id: string; title: string }>>(new Map());
   const { toast } = useToast();
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [isTaskOverviewOpen, setIsTaskOverviewOpen] = useState(false);
 
   const isStudent = role === 'student';
   const isTeacher = role === 'teacher';
@@ -206,13 +205,11 @@ export default function AgendaPage() {
   const handleEventClick = (event: CalendarEvent) => {
     if (event.type === 'assignment') {
       setSelectedEvent(event);
-      setIsTaskOverviewOpen(true);
     }
   };
 
   const handleCompletionToggle = async (eventId: string, completed: boolean) => {
     // The toggle is already handled in the modal, but we could add additional logic here if needed
-    console.log(`Assignment ${eventId} marked as ${completed ? 'complete' : 'incomplete'}`);
   };
 
   const handleTeacherDeadlineCreated = async (deadline: {
@@ -343,7 +340,14 @@ export default function AgendaPage() {
           </div>
 
           <div className="md:col-span-4 lg:col-span-3">
-            {isStudent && (
+            {selectedEvent ? (
+              <AssignmentDetailsPanel
+                event={selectedEvent}
+                classes={classes || []}
+                isTeacher={isTeacher}
+                onEdit={() => {}}
+              />
+            ) : isStudent && (
               <TodayPanel
                 selectedDay={selectedDay}
                 events={eventsForSelectedDay}
@@ -355,10 +359,21 @@ export default function AgendaPage() {
                 onEventClick={handleEventClick}
               />
             )}
-            {isTeacher && (
+            {selectedEvent && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2 w-full"
+                onClick={() => setSelectedEvent(null)}
+              >
+                Back to {isTeacher ? 'Deadlines' : 'Today'}
+              </Button>
+            )}
+            {!selectedEvent && isTeacher && (
               <TeacherDeadlinesPanel
                 events={events || []}
                 selectedDay={selectedDay}
+                onEventClick={handleEventClick}
               />
             )}
           </div>
@@ -383,16 +398,6 @@ export default function AgendaPage() {
           initialDate={selectedDay}
         />
       )}
-
-      <TaskOverviewModal
-        event={selectedEvent}
-        isOpen={isTaskOverviewOpen}
-        onClose={() => {
-          setIsTaskOverviewOpen(false);
-          setSelectedEvent(null);
-        }}
-        onCompletionToggle={handleCompletionToggle}
-      />
     </>
   );
 }

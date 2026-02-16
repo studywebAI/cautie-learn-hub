@@ -107,11 +107,7 @@ export async function GET(request: Request) {
           return dateA - dateB;
         });
 
-        // DEBUG: Log teacher assignments
-        console.log(`[Assignments API] Teacher: Returning ${assignments.length} assignments`);
-        assignments.forEach((a, i) => {
-          console.log(`  ${i}: ${a.title} - class_id: ${a.class_id}, scheduled_start_at: ${a.scheduled_start_at}`);
-        });
+        // Removed debug logs
       }
     } else {
       // Students see assignments from classes they're members of
@@ -197,11 +193,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // DEBUG: Log assignments before returning
-    console.log(`[Assignments API] Returning ${assignments.length} assignments for user ${user.id} (role: ${userRole})`);
-    assignments.forEach((a, i) => {
-      console.log(`  ${i}: ${a.title} - class_id: ${a.class_id}, scheduled_start_at: ${a.scheduled_start_at}`);
-    });
+    // Removed debug logs
 
     return NextResponse.json(assignments)
   } catch (error) {
