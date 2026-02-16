@@ -29,10 +29,10 @@ export async function GET(request: Request) {
 
     if (userRole === 'teacher') {
       // Teachers see assignments from their classes' subjects
-      // Get all subjects that belong to the teacher's classes
+      // Get all classes owned by the teacher
       const { data: teacherClasses, error: classesError } = await supabase
         .from('classes')
-        .select('id')
+        .select('id, name')
         .eq('owner_id', user.id)
 
       if (classesError) {
@@ -40,30 +40,43 @@ export async function GET(request: Request) {
       } else if (teacherClasses && teacherClasses.length > 0) {
         const classIds = teacherClasses.map((c: any) => c.id)
         
-        // Fetch assignments with paragraphs (through hierarchical structure)
-        const { data: hierarchicalAssignments, error: hierarchicalError } = await supabase
-          .from('assignments')
+        // Fetch hierarchical assignments through classes -> subjects -> chapters -> paragraphs -> assignments
+        const { data: classesWithAssignments, error: hierarchicalError } = await supabase
+          .from('classes')
           .select(`
-            *,
-            paragraphs!inner(
-              title,
-              chapters!inner(
-                title,
-                subjects!inner(
-                  title,
-                  class_subjects(
-                    classes!inner(
-                      id,
-                      name
-                    )
-                  )
+            id,
+            name,
+            subjects(
+              chapters(
+                paragraphs(
+                  assignments(*)
                 )
               )
             )
           `)
-          .in('paragraphs.chapters.subjects.class_subjects.classes.id', classIds)
+          .in('id', classIds);
 
-        // Also fetch assignments that are directly linked to a class (paragraph_id is null)
+        if (hierarchicalError) {
+          console.error('Error fetching hierarchical assignments for teacher:', hierarchicalError);
+        } else {
+          const hierarchical = (classesWithAssignments || []).flatMap((cls: any) =>
+            (cls.subjects || []).flatMap((subject: any) =>
+              (subject.chapters || []).flatMap((chapter: any) =>
+                (chapter.paragraphs || []).flatMap((paragraph: any) =>
+                  (paragraph.assignments || []).map((assignment: any) => ({
+                    ...assignment,
+                    class_id: cls.id,
+                    class_name: cls.name,
+                    chapter_id: chapter.id,
+                  }))
+                ) || []
+              ) || []
+            ) || []
+          );
+          assignments = [...assignments, ...hierarchical];
+        }
+
+        // Fetch direct class assignments (paragraph_id is null)
         const { data: directAssignments, error: directError } = await supabase
           .from('assignments')
           .select(`
@@ -74,41 +87,26 @@ export async function GET(request: Request) {
             )
           `)
           .in('class_id', classIds)
-          .is('paragraph_id', null)
+          .is('paragraph_id', null);
 
-        if (hierarchicalError) {
-          console.error('Error fetching hierarchical assignments:', hierarchicalError)
-        }
         if (directError) {
-          console.error('Error fetching direct assignments:', directError)
+          console.error('Error fetching direct assignments for teacher:', directError);
+        } else {
+          const processedDirect = (directAssignments || []).map((assignment: any) => ({
+            ...assignment,
+            class_id: assignment.classes?.id,
+            class_name: assignment.classes?.name,
+          }));
+          assignments = [...assignments, ...processedDirect];
         }
-        
-        // Process hierarchical assignments to extract class_id and chapter_id
-        const processedHierarchical = (hierarchicalAssignments || []).map((assignment: any) => {
-          // Extract class_id from the nested structure
-          const classSubject = assignment.paragraphs?.chapters?.subjects?.class_subjects?.[0];
-          const classInfo = classSubject?.classes;
-          const chapterId = assignment.paragraphs?.chapters?.id;
-          if (classInfo) {
-            return {
-              ...assignment,
-              class_id: classInfo.id,
-              class_name: classInfo.name,
-              chapter_id: chapterId,
-            };
-          }
-          return assignment;
+
+        // Sort combined assignments by scheduled_start_at
+        assignments.sort((a, b) => {
+          const dateA = a.scheduled_start_at ? new Date(a.scheduled_start_at).getTime() : Infinity;
+          const dateB = b.scheduled_start_at ? new Date(b.scheduled_start_at).getTime() : Infinity;
+          return dateA - dateB;
         });
-        
-        // Process direct assignments to add class_id and class_name
-        const processedDirect = (directAssignments || []).map((assignment: any) => ({
-          ...assignment,
-          class_id: assignment.classes?.id,
-          class_name: assignment.classes?.name,
-        }));
-        
-        assignments = [...processedHierarchical, ...processedDirect]
-        
+
         // DEBUG: Log teacher assignments
         console.log(`[Assignments API] Teacher: Returning ${assignments.length} assignments`);
         assignments.forEach((a, i) => {
@@ -128,45 +126,43 @@ export async function GET(request: Request) {
       } else if (classMembers && classMembers.length > 0) {
         const studentClassIds = classMembers.map((cm: any) => cm.class_id)
         
-        // Fetch hierarchical assignments (through subjects/chapters/paragraphs)
-        const { data: studentAssignments, error } = await (supabase as any)
-          .from('class_members')
+        // Fetch classes with full details including subjects, chapters, paragraphs, and assignments
+        const { data: classesWithAssignments, error: hierarchicalError } = await supabase
+          .from('classes')
           .select(`
-            classes!inner(
-              id,
-              name,
-              subjects(
-                chapters(
-                  paragraphs(
-                    assignments(*)
-                  )
+            id,
+            name,
+            subjects(
+              chapters(
+                paragraphs(
+                  assignments(*)
                 )
               )
             )
           `)
-          .eq('user_id', user.id)
+          .in('id', studentClassIds);
 
-        if (error) {
-          console.error('Error fetching student assignments:', error)
+        if (hierarchicalError) {
+          console.error('Error fetching hierarchical assignments for student:', hierarchicalError);
         } else {
-          // Flatten the nested structure and extract class_id
-          assignments = studentAssignments?.flatMap((member: any) =>
-            member.classes?.subjects?.flatMap((subject: any) =>
-              subject.chapters?.flatMap((chapter: any) =>
-                chapter.paragraphs?.flatMap((paragraph: any) =>
+          const hierarchical = (classesWithAssignments || []).flatMap((cls: any) =>
+            (cls.subjects || []).flatMap((subject: any) =>
+              (subject.chapters || []).flatMap((chapter: any) =>
+                (chapter.paragraphs || []).flatMap((paragraph: any) =>
                   (paragraph.assignments || []).map((assignment: any) => ({
                     ...assignment,
-                    class_id: member.classes.id,
-                    class_name: member.classes.name,
+                    class_id: cls.id,
+                    class_name: cls.name,
                     chapter_id: chapter.id,
                   }))
                 ) || []
               ) || []
             ) || []
-          ) || []
+          );
+          assignments = [...assignments, ...hierarchical];
         }
 
-        // Also fetch direct class assignments (paragraph_id is null)
+        // Fetch direct class assignments (paragraph_id is null)
         const { data: directAssignments, error: directError } = await supabase
           .from('assignments')
           .select(`
@@ -177,19 +173,25 @@ export async function GET(request: Request) {
             )
           `)
           .in('class_id', studentClassIds)
-          .is('paragraph_id', null)
+          .is('paragraph_id', null);
 
         if (directError) {
-          console.error('Error fetching direct class assignments:', directError)
+          console.error('Error fetching direct class assignments for student:', directError);
         } else {
-          // Add class_id and class_name to direct assignments
           const processedDirect = (directAssignments || []).map((assignment: any) => ({
             ...assignment,
             class_id: assignment.classes?.id,
             class_name: assignment.classes?.name,
           }));
-          assignments = [...assignments, ...processedDirect]
+          assignments = [...assignments, ...processedDirect];
         }
+
+        // Sort combined assignments by scheduled_start_at
+        assignments.sort((a, b) => {
+          const dateA = a.scheduled_start_at ? new Date(a.scheduled_start_at).getTime() : Infinity;
+          const dateB = b.scheduled_start_at ? new Date(b.scheduled_start_at).getTime() : Infinity;
+          return dateA - dateB;
+        });
       } else {
         console.log('Student is not a member of any classes')
       }

@@ -22,6 +22,8 @@ export type ClassAssignment = Tables<'assignments'> & {
   scheduled_answer_release_at?: string | null;
   type?: 'homework' | 'small_test' | 'big_test' | null;
   completed?: boolean | null;
+  description?: string | null;
+  linked_content?: any | null;
 };
 export type PersonalTask = {
   id: string;
@@ -323,35 +325,41 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }, [isSyncingData]);
 
   const fetchData = useCallback(async () => {
-      setIsLoading(true);
-      if (session) {
-          // User is logged in, fetch from Supabase
+     setIsLoading(true);
+     if (session) {
+         // User is logged in, fetch from Supabase
 
-          // Fetch all dashboard data from single endpoint
-          try {
-              const dashboardRes = await fetch('/api/dashboard');
-              if (!dashboardRes.ok) {
-                throw new Error('Failed to fetch dashboard data');
-              }
-              const dashboardData = await dashboardRes.json();
+         // Fetch all dashboard data from single endpoint
+         try {
+             const dashboardRes = await fetch('/api/dashboard');
+             if (!dashboardRes.ok) {
+               throw new Error('Failed to fetch dashboard data');
+             }
+             const dashboardData = await dashboardRes.json();
 
-              setClasses(dashboardData.classes || []);
-              setSubjects(dashboardData.subjects || []);
-              setAssignments(dashboardData.assignments || []);
-              setPersonalTasks(dashboardData.personalTasks || []);
-              setStudents(dashboardData.students || []);
-              setRoleState(dashboardData.role || 'student');
+             setClasses(dashboardData.classes || []);
+             setSubjects(dashboardData.subjects || []);
+             setAssignments(dashboardData.assignments || []);
+             setPersonalTasks(dashboardData.personalTasks || []);
+             setStudents(dashboardData.students || []);
+             setRoleState(dashboardData.role || 'student');
+             
+             // Load language preference from Supabase profile
+             if (dashboardData.preferences?.language) {
+               setLanguageState(dashboardData.preferences.language);
+               setDictionary(getDictionary(dashboardData.preferences.language));
+             }
 
-          } catch (error) {
-              console.error("Failed to fetch Supabase data:", error);
-              setClasses([]);
-              setSubjects([]);
-              setAssignments([]);
-              setPersonalTasks([]);
-              setStudents([]);
-              setRoleState('student');
-          }
-      } else {
+         } catch (error) {
+             console.error("Failed to fetch Supabase data:", error);
+             setClasses([]);
+             setSubjects([]);
+             setAssignments([]);
+             setPersonalTasks([]);
+             setStudents([]);
+             setRoleState('student');
+         }
+     } else {
           // User is a guest, fetch from localStorage
            try {
                const [localClasses, localAssignments, localPersonalTasks] = await Promise.all([
@@ -594,6 +602,19 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     saveToLocalStorage('studyweb-language', newLanguage);
     const newDict = getDictionary(newLanguage);
     setDictionary(newDict);
+    
+    // Persist to Supabase if user is logged in
+    if (session?.user?.id) {
+      supabase
+        .from('profiles')
+        .update({ language: newLanguage, updated_at: new Date().toISOString() })
+        .eq('id', session.user.id)
+        .then(({ error }) => {
+          if (error) {
+            console.error('Failed to persist language to Supabase:', error.message);
+          }
+        });
+    }
   };
 
   // Update role - optimistic update for immediate UI response

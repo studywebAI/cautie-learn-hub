@@ -15,10 +15,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Fetch profile first to determine role
+    // Fetch profile first to determine role and get preferences
     let { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, language, theme, high_contrast, dyslexia_font, reduced_motion')
       .eq('id', user.id)
       .maybeSingle()
 
@@ -31,7 +31,12 @@ export async function GET(request: Request) {
           id: user.id,
           role: 'student',
           full_name: user.user_metadata?.full_name || '',
-          avatar_url: user.user_metadata?.avatar_url || null
+          avatar_url: user.user_metadata?.avatar_url || null,
+          language: 'en',
+          theme: 'light',
+          high_contrast: false,
+          dyslexia_font: false,
+          reduced_motion: false
         })
 
       if (insertError) {
@@ -39,10 +44,10 @@ export async function GET(request: Request) {
       } else {
         const { data: newProfile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, language, theme, high_contrast, dyslexia_font, reduced_motion')
           .eq('id', user.id)
           .maybeSingle()
-        profileData = newProfile
+        profileData = newProfile as any
       }
     }
 
@@ -90,21 +95,76 @@ export async function GET(request: Request) {
         }
       }
 
-      // Fetch assignments for all owned classes
+      // Fetch assignments for all owned classes (including hierarchical and direct)
       let assignments: any[] = []
       if (classes.length > 0) {
-        const { data: assignmentsData } = await supabase
+        // Fetch hierarchical assignments through classes -> subjects -> chapters -> paragraphs -> assignments
+        const { data: classesWithAssignments, error: hierarchicalError } = await supabase
+          .from('classes')
+          .select(`
+            id,
+            name,
+            subjects(
+              chapters(
+                paragraphs(
+                  assignments(*)
+                )
+              )
+            )
+          `)
+          .in('id', classes.map((c: any) => c.id));
+
+        if (hierarchicalError) {
+          console.error('Error fetching hierarchical assignments for teacher:', hierarchicalError);
+        } else {
+          const hierarchical = (classesWithAssignments || []).flatMap((cls: any) =>
+            (cls.subjects || []).flatMap((subject: any) =>
+              (subject.chapters || []).flatMap((chapter: any) =>
+                (chapter.paragraphs || []).flatMap((paragraph: any) =>
+                  (paragraph.assignments || []).map((assignment: any) => ({
+                    ...assignment,
+                    class_id: cls.id,
+                    class_name: cls.name,
+                    chapter_id: chapter.id,
+                  }))
+                ) || []
+              ) || []
+            ) || []
+          );
+          assignments = [...assignments, ...hierarchical];
+        }
+
+        // Fetch direct class assignments (paragraph_id is null)
+        const { data: directAssignments, error: directError } = await supabase
           .from('assignments')
           .select(`
             *,
-            class:classes(id, name),
-            chapter:chapters(id, title, subject_id),
-            subject:subjects(id, title)
+            classes!inner(
+              id,
+              name
+            )
           `)
           .in('class_id', classes.map((c: any) => c.id))
-          .order('scheduled_start_at', { ascending: true })
+          .is('paragraph_id', null)
+          .order('scheduled_start_at', { ascending: true });
 
-        assignments = assignmentsData || []
+        if (directError) {
+          console.error('Error fetching direct assignments for teacher:', directError);
+        } else {
+          const processedDirect = (directAssignments || []).map((assignment: any) => ({
+            ...assignment,
+            class_id: assignment.classes?.id,
+            class_name: assignment.classes?.name,
+          }));
+          assignments = [...assignments, ...processedDirect];
+        }
+
+        // Sort combined assignments by scheduled_start_at
+        assignments.sort((a, b) => {
+          const dateA = a.scheduled_start_at ? new Date(a.scheduled_start_at).getTime() : Infinity;
+          const dateB = b.scheduled_start_at ? new Date(b.scheduled_start_at).getTime() : Infinity;
+          return dateA - dateB;
+        });
       }
 
       return NextResponse.json({
@@ -114,6 +174,13 @@ export async function GET(request: Request) {
         personalTasks: personalTasksResult.data || [],
         students,
         role,
+        preferences: {
+          language: profileData?.language || 'en',
+          theme: profileData?.theme || 'light',
+          high_contrast: profileData?.high_contrast || false,
+          dyslexia_font: profileData?.dyslexia_font || false,
+          reduced_motion: profileData?.reduced_motion || false,
+        }
       })
     } else {
       // Students: get classes they are a MEMBER of + subjects linked to those classes
@@ -147,19 +214,74 @@ export async function GET(request: Request) {
           }))
         }
 
-        // Fetch assignments for all classes the student is a member of
-        const { data: assignmentsData } = await supabase
+        // Fetch assignments for all classes the student is a member of (including hierarchical and direct)
+        // Fetch hierarchical assignments through classes -> subjects -> chapters -> paragraphs -> assignments
+        const { data: classesWithAssignments, error: hierarchicalError } = await supabase
+          .from('classes')
+          .select(`
+            id,
+            name,
+            subjects(
+              chapters(
+                paragraphs(
+                  assignments(*)
+                )
+              )
+            )
+          `)
+          .in('id', classIds);
+
+        if (hierarchicalError) {
+          console.error('Error fetching hierarchical assignments for student:', hierarchicalError);
+        } else {
+          const hierarchical = (classesWithAssignments || []).flatMap((cls: any) =>
+            (cls.subjects || []).flatMap((subject: any) =>
+              (subject.chapters || []).flatMap((chapter: any) =>
+                (chapter.paragraphs || []).flatMap((paragraph: any) =>
+                  (paragraph.assignments || []).map((assignment: any) => ({
+                    ...assignment,
+                    class_id: cls.id,
+                    class_name: cls.name,
+                    chapter_id: chapter.id,
+                  }))
+                ) || []
+              ) || []
+            ) || []
+          );
+          assignments = [...assignments, ...hierarchical];
+        }
+
+        // Fetch direct class assignments (paragraph_id is null)
+        const { data: directAssignments, error: directError } = await supabase
           .from('assignments')
           .select(`
             *,
-            class:classes(id, name),
-            chapter:chapters(id, title, subject_id),
-            subject:subjects(id, title)
+            classes!inner(
+              id,
+              name
+            )
           `)
           .in('class_id', classIds)
-          .order('scheduled_start_at', { ascending: true })
+          .is('paragraph_id', null)
+          .order('scheduled_start_at', { ascending: true });
 
-        assignments = assignmentsData || []
+        if (directError) {
+          console.error('Error fetching direct assignments for student:', directError);
+        } else {
+          const processedDirect = (directAssignments || []).map((assignment: any) => ({
+            ...assignment,
+            class_id: assignment.classes?.id,
+            class_name: assignment.classes?.name,
+          }));
+          assignments = [...assignments, ...processedDirect];
+        }
+
+        // Sort combined assignments by scheduled_start_at
+        assignments.sort((a, b) => {
+          const dateA = a.scheduled_start_at ? new Date(a.scheduled_start_at).getTime() : Infinity;
+          const dateB = b.scheduled_start_at ? new Date(b.scheduled_start_at).getTime() : Infinity;
+          return dateA - dateB;
+        });
       }
 
       return NextResponse.json({
@@ -169,6 +291,13 @@ export async function GET(request: Request) {
         personalTasks: personalTasksResult.data || [],
         students: [],
         role,
+        preferences: {
+          language: profileData?.language || 'en',
+          theme: profileData?.theme || 'light',
+          high_contrast: profileData?.high_contrast || false,
+          dyslexia_font: profileData?.dyslexia_font || false,
+          reduced_motion: profileData?.reduced_motion || false,
+        }
       })
     }
 

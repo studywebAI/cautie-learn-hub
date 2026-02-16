@@ -94,6 +94,8 @@ export default function AgendaPage() {
           chapter_title: chapter?.title,
           assignment_type: assignment.type || 'homework',
           completed: assignment.completed || false,
+          description: assignment.description || undefined,
+          linked_content: assignment.linked_content || undefined,
         };
       });
 
