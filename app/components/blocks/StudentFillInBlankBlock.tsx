@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 interface StudentFillInBlankBlockProps {
-  block: BaseBlock & { content: FillInBlankContent };
+  block: BaseBlock & { data: FillInBlankContent };
   onSubmit: (answerData: any) => void;
 }
 
@@ -17,7 +17,7 @@ export const StudentFillInBlankBlock: React.FC<StudentFillInBlankBlockProps> = (
   const [answers, setAnswers] = useState<string[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const blanks = block.content.text.split('___');
+  const blanks = block.data.text.split('___');
 
   const handleAnswerChange = (index: number, value: string) => {
     const newAnswers = [...answers];
@@ -28,7 +28,7 @@ export const StudentFillInBlankBlock: React.FC<StudentFillInBlankBlockProps> = (
   const handleSubmit = () => {
     const answerData = {
       answers: answers,
-      case_sensitive: block.content.case_sensitive,
+      case_sensitive: block.data.case_sensitive,
     };
     onSubmit(answerData);
     setIsSubmitted(true);

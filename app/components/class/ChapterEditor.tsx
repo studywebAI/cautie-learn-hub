@@ -16,7 +16,7 @@ interface Chapter {
   id: string;
   title: string;
   description?: string;
-  order_index: number;
+  chapter_number: number;
 }
 
 interface Block extends BaseBlock {
@@ -98,7 +98,7 @@ export function ChapterEditor({
         body: JSON.stringify({
           title: newChapterTitle.trim(),
           description: newChapterDescription.trim() || null,
-          order_index: 0,
+          chapter_number: 0,
         }),
       });
 
@@ -161,7 +161,7 @@ export function ChapterEditor({
         body: JSON.stringify({
           type,
           content: defaultContent,
-          order_index: blocks.length,
+          position: blocks.length,
         }),
       });
 

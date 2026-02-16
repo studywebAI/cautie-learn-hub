@@ -77,7 +77,7 @@ function MaterialPageContent() {
         return (
           <div className="space-y-4">
             {blocks
-              .sort((a, b) => a.order_index - b.order_index)
+              .sort((a, b) => (a.position || 0) - (b.position || 0))
               .map((block) => (
                 <BlockRenderer key={block.id} block={block} isEditing={false} />
               ))}

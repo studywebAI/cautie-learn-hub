@@ -17,7 +17,7 @@ export async function PUT(
 
     const { classId, chapterId, blockId } = await params;
     const body = await request.json();
-    const { content, type, order_index } = body;
+    const { data: content, type, position, locked, show_feedback, ai_grading_override } = body;
 
     // Check if user is teacher
     const { data: classData, error: classError } = await supabase
@@ -48,9 +48,12 @@ export async function PUT(
 
     // Update the block
     const updateData: any = {};
-    if (content !== undefined) updateData.content = content;
+    if (content !== undefined) updateData.data = content;
     if (type !== undefined) updateData.type = type;
-    if (order_index !== undefined) updateData.order_index = order_index;
+    if (position !== undefined) updateData.position = position;
+    if (locked !== undefined) updateData.locked = locked;
+    if (show_feedback !== undefined) updateData.show_feedback = show_feedback;
+    if (ai_grading_override !== undefined) updateData.ai_grading_override = ai_grading_override;
 
     const { data, error } = await supabase
       .from('blocks')

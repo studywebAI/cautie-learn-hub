@@ -24,8 +24,11 @@ export type BlockType =
 export interface BaseBlock {
   id: string;
   type: BlockType;
-  content: any; // JSON content specific to each block type
-  order_index: number;
+  data: any; // JSON data specific to each block type
+  position: number;
+  locked?: boolean;
+  show_feedback?: boolean;
+  ai_grading_override?: any;
   created_at: string;
   updated_at: string;
 }

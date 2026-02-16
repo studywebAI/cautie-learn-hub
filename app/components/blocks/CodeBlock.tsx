@@ -43,14 +43,14 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
   className,
 }) => {
   const [isEditingState, setIsEditingState] = useState(isEditing);
-  const [code, setCode] = useState(block.content.code || '');
-  const [language, setLanguage] = useState(block.content.language || 'plaintext');
-  const [showLineNumbers, setShowLineNumbers] = useState(block.content.showLineNumbers || false);
+  const [code, setCode] = useState(block.data.code || '');
+  const [language, setLanguage] = useState(block.data.language || 'plaintext');
+  const [showLineNumbers, setShowLineNumbers] = useState(block.data.showLineNumbers || false);
 
   const handleSave = () => {
     if (onUpdate) {
       onUpdate({
-        ...block.content,
+        ...block.data,
         code,
         language,
         showLineNumbers,
@@ -61,9 +61,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      setCode(block.content.code || '');
-      setLanguage(block.content.language || 'plaintext');
-      setShowLineNumbers(block.content.showLineNumbers || false);
+      setCode(block.data.code || '');
+      setLanguage(block.data.language || 'plaintext');
+      setShowLineNumbers(block.data.showLineNumbers || false);
       setIsEditingState(false);
     }
   };

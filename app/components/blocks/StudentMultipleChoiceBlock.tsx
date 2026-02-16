@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface StudentMultipleChoiceBlockProps {
-  block: BaseBlock & { content: MultipleChoiceContent };
+  block: BaseBlock & { data: MultipleChoiceContent };
   onSubmit: (answerData: any) => void;
 }
 
@@ -20,7 +20,7 @@ export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProp
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleAnswerChange = (value: string, checked: boolean) => {
-    if (block.content.multiple_correct) {
+    if (block.data.multiple_correct) {
       // Multiple selection
       if (checked) {
         setSelectedAnswers(prev => [...prev, value]);
@@ -36,7 +36,7 @@ export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProp
   const handleSubmit = () => {
     const answerData = {
       selected_answers: selectedAnswers,
-      multiple_correct: block.content.multiple_correct,
+      multiple_correct: block.data.multiple_correct,
     };
     onSubmit(answerData);
     setIsSubmitted(true);
@@ -44,12 +44,12 @@ export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProp
 
   return (
     <div className="space-y-4">
-      <div className="font-medium">{block.content.question}</div>
+      <div className="font-medium">{block.data.question}</div>
 
-      {block.content.multiple_correct ? (
+      {block.data.multiple_correct ? (
         // Multiple choice with checkboxes
         <div className="space-y-2">
-          {(block.content.options as Array<{id: string, text: string, correct: boolean}>).map((option) => (
+          {(block.data.options as Array<{id: string, text: string, correct: boolean}>).map((option) => (
             <div key={option.id} className="flex items-center space-x-2">
               <Checkbox
                 id={option.id}
@@ -70,7 +70,7 @@ export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProp
           onValueChange={(value) => setSelectedAnswers([value])}
           disabled={isSubmitted}
         >
-          {(block.content.options as Array<{id: string, text: string, correct: boolean}>).map((option) => (
+          {(block.data.options as Array<{id: string, text: string, correct: boolean}>).map((option) => (
             <div key={option.id} className="flex items-center space-x-2">
               <RadioGroupItem value={option.id} id={option.id} />
               <Label htmlFor={option.id} className="cursor-pointer">

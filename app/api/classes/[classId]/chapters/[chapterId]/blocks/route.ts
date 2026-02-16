@@ -41,7 +41,7 @@ export async function GET(
       .from('blocks')
       .select('*')
       .eq('chapter_id', chapterId)
-      .order('order_index', { ascending: true });
+      .order('position', { ascending: true });
     if (blocksError) {
       console.error('Error fetching blocks:', blocksError);
       return NextResponse.json({ error: 'Failed to fetch blocks' }, { status: 500 });
@@ -71,7 +71,7 @@ export async function POST(
     if ('error' in validation) {
       return validation.error
     }
-    const { content, type } = validation.data;
+    const { data: content, type, locked, show_feedback, ai_grading_override } = validation.data;
     // Check if user is teacher
     const { data: classData, error: classError } = await supabase
       .from('classes')
@@ -94,15 +94,15 @@ export async function POST(
     if (!isTeacher) {
       return NextResponse.json({ error: 'Only teachers can add blocks' }, { status: 403 });
     }
-    // Get the highest order_index for this chapter
+    // Get the highest position for this chapter
     const { data: lastBlock } = await (supabase as any)
       .from('blocks')
-      .select('order_index')
+      .select('position')
       .eq('chapter_id', chapterId)
-      .order('order_index', { ascending: false })
+      .order('position', { ascending: false })
       .limit(1)
       .single();
-    const nextOrderIndex = ((lastBlock as any)?.order_index || 0) + 1;
+    const nextPosition = ((lastBlock as any)?.position || 0) + 1;
     // Add the block
     const { data, error } = await (supabase as any)
       .from('blocks')
@@ -110,8 +110,10 @@ export async function POST(
         chapter_id: chapterId,
         data: content,
         type: type,
-        position: nextOrderIndex,
-        order_index: nextOrderIndex,
+        position: nextPosition,
+        locked: locked || false,
+        show_feedback: show_feedback || false,
+        ai_grading_override: ai_grading_override || null,
       })
       .select()
       .single();

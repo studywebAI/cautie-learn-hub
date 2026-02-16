@@ -31,17 +31,17 @@ export const ExecutableCodeBlock: React.FC<ExecutableCodeBlockProps> = ({
   className,
 }) => {
   const [isEditingState, setIsEditingState] = useState(isEditing);
-  const [code, setCode] = useState(block.content.code || '');
-  const [language, setLanguage] = useState(block.content.language || 'javascript');
-  const [output, setOutput] = useState(block.content.output || '');
-  const [error, setError] = useState(block.content.error || '');
+  const [code, setCode] = useState(block.data.code || '');
+  const [language, setLanguage] = useState(block.data.language || 'javascript');
+  const [output, setOutput] = useState(block.data.output || '');
+  const [error, setError] = useState(block.data.error || '');
   const [isRunning, setIsRunning] = useState(false);
-  const [canExecute, setCanExecute] = useState(block.content.canExecute ?? true);
+  const [canExecute, setCanExecute] = useState(block.data.canExecute ?? true);
 
   const handleSave = () => {
     if (onUpdate) {
       onUpdate({
-        ...block.content,
+        ...block.data,
         code,
         language,
         output,
@@ -75,7 +75,7 @@ export const ExecutableCodeBlock: React.FC<ExecutableCodeBlockProps> = ({
         setOutput(result.output || 'Code executed successfully');
         if (onUpdate) {
           onUpdate({
-            ...block.content,
+            ...block.data,
             code,
             language,
             output: result.output,
@@ -87,7 +87,7 @@ export const ExecutableCodeBlock: React.FC<ExecutableCodeBlockProps> = ({
         setError(result.error || 'Execution failed');
         if (onUpdate) {
           onUpdate({
-            ...block.content,
+            ...block.data,
             code,
             language,
             output: '',
@@ -101,7 +101,7 @@ export const ExecutableCodeBlock: React.FC<ExecutableCodeBlockProps> = ({
       setError(errorMessage);
       if (onUpdate) {
         onUpdate({
-          ...block.content,
+          ...block.data,
           code,
           language,
           output: '',
@@ -118,7 +118,7 @@ export const ExecutableCodeBlock: React.FC<ExecutableCodeBlockProps> = ({
     setError('');
     if (onUpdate) {
       onUpdate({
-        ...block.content,
+        ...block.data,
         code,
         language,
         output: '',
@@ -135,10 +135,10 @@ export const ExecutableCodeBlock: React.FC<ExecutableCodeBlockProps> = ({
         <div className="bg-muted px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{currentLang?.label || language}</span>
-            {block.content.executionTime && (
+            {block.data.executionTime && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {block.content.executionTime}ms
+                {block.data.executionTime}ms
               </span>
             )}
           </div>

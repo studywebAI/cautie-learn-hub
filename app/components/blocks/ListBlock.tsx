@@ -17,12 +17,12 @@ export const ListBlock: React.FC<ListBlockProps> = ({
   className,
 }) => {
   const [isEditingState, setIsEditingState] = useState(isEditing);
-  const [items, setItems] = useState<ListItem[]>(block.content.items || []);
+  const [items, setItems] = useState<ListItem[]>(block.data.items || []);
 
   const handleSave = () => {
     if (onUpdate) {
       onUpdate({
-        ...block.content,
+        ...block.data,
         items,
       });
     }
@@ -41,7 +41,7 @@ export const ListBlock: React.FC<ListBlockProps> = ({
     setItems(newItems);
     if (onUpdate) {
       onUpdate({
-        ...block.content,
+        ...block.data,
         items: newItems,
       });
     }
@@ -70,7 +70,7 @@ export const ListBlock: React.FC<ListBlockProps> = ({
   };
 
   const renderDisplay = () => {
-    const { type } = block.content;
+    const { type } = block.data;
 
     return (
       <div className="mb-4">
@@ -123,19 +123,19 @@ export const ListBlock: React.FC<ListBlockProps> = ({
       <div className="mb-4">
         {items.map((item, index) => (
           <div key={item.id} className="flex items-center gap-2 mb-2">
-            {block.content.type === 'todo' && (
+            {block.data.type === 'todo' && (
               <Checkbox
                 checked={item.checked || false}
                 onCheckedChange={(checked) => handleItemCheck(index, checked as boolean)}
                 className="mt-0.5"
               />
             )}
-            {block.content.type === 'numbered' && (
+            {block.data.type === 'numbered' && (
               <span className="text-base font-medium text-muted-foreground min-w-[24px]">
                 {index + 1}.
               </span>
             )}
-            {block.content.type === 'bulleted' && (
+            {block.data.type === 'bulleted' && (
               <span className="text-base text-muted-foreground">•</span>
             )}
             <Textarea

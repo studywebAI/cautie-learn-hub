@@ -11,7 +11,7 @@ interface Chapter {
   id: string;
   title: string;
   description?: string;
-  order_index: number;
+  chapter_number: number;
 }
 
 interface ChapterNavigationProps {

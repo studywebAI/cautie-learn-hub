@@ -101,12 +101,35 @@ export const createAssignmentSchema = z.object({
 // BLOCKS
 // ============================================
 
+export const blockTypeEnum = z.enum([
+  'text', 'image', 'video', 'multiple_choice', 'open_question',
+  'fill_in_blank', 'drag_drop', 'ordering', 'media_embed',
+  'divider', 'rich_text', 'executable_code', 'code', 'list',
+  'quote', 'layout', 'complex'
+]);
+
 export const createBlockSchema = z.object({
-  type: nonEmptyStringSchema,
-  content: z.any().refine(val => val !== null && val !== undefined, "Block content is required"),
+  type: blockTypeEnum,
+  data: z.any().refine(val => val !== null && val !== undefined, "Block data is required"),
   paragraph_id: uuidSchema.optional().nullable(),
   assignment_id: uuidSchema.optional().nullable(),
-  position: z.number().int().nonnegative().optional()
+  position: z.number().int().nonnegative().optional(),
+  locked: z.boolean().optional(),
+  show_feedback: z.boolean().optional(),
+  ai_grading_override: z.any().optional().nullable()
+});
+
+export const updateBlockSchema = z.object({
+  type: blockTypeEnum.optional(),
+  data: z.any().optional(),
+  position: z.number().int().nonnegative().optional(),
+  locked: z.boolean().optional(),
+  show_feedback: z.boolean().optional(),
+  ai_grading_override: z.any().optional().nullable()
+});
+
+export const reorderBlocksSchema = z.object({
+  block_ids: z.array(uuidSchema)
 });
 
 // ============================================
@@ -147,17 +170,6 @@ export const updateAssignmentSchema = z.object({
 
 export const toggleAssignmentCompletedSchema = z.object({
   completed: z.boolean()
-});
-
-
-export const updateBlockSchema = z.object({
-  type: z.enum(['multiple_choice', 'true_false', 'short_answer', 'essay', 'matching', 'fill_blank']).optional(),
-  position: z.number().nonnegative().optional(),
-  data: z.record(z.any()).optional()
-});
-
-export const reorderBlocksSchema = z.object({
-  block_ids: z.array(uuidSchema)
 });
 
 // ============================================

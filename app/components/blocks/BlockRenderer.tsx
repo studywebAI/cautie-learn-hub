@@ -65,7 +65,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
           <div className={`p-4 border ${className || ''}`}>
             <div className="text-sm text-muted-foreground">{block.type.replace('_', ' ').toUpperCase()} Block</div>
             <pre className="whitespace-pre-wrap font-mono text-xs mt-2">
-              {JSON.stringify(block.content, null, 2)}
+              {JSON.stringify(block.data, null, 2)}
             </pre>
           </div>
         );
@@ -77,7 +77,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
           <div className={`p-4 border ${className || ''}`}>
             <div className="text-sm text-muted-foreground">{block.type.replace('_', ' ').toUpperCase()} Block</div>
             <pre className="whitespace-pre-wrap font-mono text-xs mt-2">
-              {JSON.stringify(block.content, null, 2)}
+              {JSON.stringify(block.data, null, 2)}
             </pre>
           </div>
         );
@@ -92,3 +92,4 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
 
   return renderBlock();
 };
+

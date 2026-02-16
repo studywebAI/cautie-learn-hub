@@ -64,7 +64,7 @@ export async function GET(
       .from('blocks')
       .select('*')
       .eq('material_id', materialId)
-      .order('order_index', { ascending: true });
+      .order('position', { ascending: true });
 
     if (blocksError) {
       console.error('Error fetching blocks:', blocksError);
@@ -94,7 +94,7 @@ export async function POST(
     const resolvedParams = await params;
     const materialId = resolvedParams.materialId;
     const body = await request.json();
-    const { content, type, order_index } = body;
+    const { data: content, type, position, locked, show_feedback, ai_grading_override } = body;
 
     // Check if user has access to the material
     const { data: material, error: materialError } = await supabase
@@ -144,8 +144,10 @@ export async function POST(
         material_id: materialId,
         data: content,
         type,
-        position: order_index || 0,
-        order_index: order_index || 0,
+        position: position || 0,
+        locked: locked || false,
+        show_feedback: show_feedback || false,
+        ai_grading_override: ai_grading_override || null,
       })
       .select()
       .single();

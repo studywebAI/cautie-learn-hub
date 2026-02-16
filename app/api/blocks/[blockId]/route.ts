@@ -18,7 +18,7 @@ export async function PUT(
     const resolvedParams = await params;
     const blockId = resolvedParams.blockId;
     const body = await request.json();
-    const { content, type, order_index } = body;
+    const { data, type, position, locked, show_feedback, ai_grading_override } = body;
 
     // Get the block and check access
     const { data: block, error: blockError } = await supabase
@@ -79,9 +79,12 @@ export async function PUT(
 
     // Update the block
     const updateData: any = {};
-    if (content !== undefined) updateData.content = content;
+    if (data !== undefined) updateData.data = data;
     if (type !== undefined) updateData.type = type;
-    if (order_index !== undefined) updateData.order_index = order_index;
+    if (position !== undefined) updateData.position = position;
+    if (locked !== undefined) updateData.locked = locked;
+    if (show_feedback !== undefined) updateData.show_feedback = show_feedback;
+    if (ai_grading_override !== undefined) updateData.ai_grading_override = ai_grading_override;
     updateData.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase

@@ -78,7 +78,9 @@ export async function POST(
         data: material.content,
         type: material.type || 'text',
         position: 0,
-        order_index: 0,
+        locked: false,
+        show_feedback: false,
+        ai_grading_override: null,
       })
       .select();
 

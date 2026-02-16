@@ -59,8 +59,8 @@ export default function BlockEditorPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               type: block.type,
-              content: block.content,
-              order_index: index
+              data: block.data,
+              position: index
             }),
           })
         )

@@ -16,7 +16,7 @@ interface GradingResult {
 }
 
 interface StudentOpenQuestionBlockProps {
-  block: BaseBlock & { content: OpenQuestionContent };
+  block: BaseBlock & { data: OpenQuestionContent };
   onSubmit: (answerData: any) => void;
   gradingResult?: GradingResult;
   isSubmitted?: boolean;
@@ -33,16 +33,16 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
   const handleSubmit = () => {
     const answerData = {
       text: answer,
-      ai_grading: block.content.ai_grading,
+      ai_grading: block.data.ai_grading,
     };
     onSubmit(answerData);
   };
 
   return (
     <div className="space-y-4">
-      <div className="font-medium">{block.content.question}</div>
+      <div className="font-medium">{block.data.question}</div>
 
-      {block.content.ai_grading && (
+      {block.data.ai_grading && (
         <div className="text-sm text-muted-foreground">
           This question will be graded automatically using AI.
         </div>
@@ -57,7 +57,7 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
           onChange={(e) => setAnswer(e.target.value)}
           disabled={isSubmitted}
           rows={6}
-          maxLength={block.content.max_score ? undefined : 1000}
+          maxLength={block.data.max_score ? undefined : 1000}
         />
         <div className="text-sm text-muted-foreground">
           {answer.length} characters
@@ -77,7 +77,7 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
       {isSubmitted && !gradingResult && (
         <div className="flex items-center gap-2 text-sm text-blue-600 mt-4">
           <Clock className="h-4 w-4" />
-          <span>Answer submitted successfully! {block.content.ai_grading ? 'AI grading in progress...' : ''}</span>
+          <span>Answer submitted successfully! {block.data.ai_grading ? 'AI grading in progress...' : ''}</span>
         </div>
       )}
 
@@ -93,7 +93,7 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
               {gradingResult.graded_by_ai ? 'AI Graded' : 'Teacher Graded'}
             </span>
             <Badge variant="outline">
-              {gradingResult.score}/{block.content.max_score || 5} points
+              {gradingResult.score}/{block.data.max_score || 5} points
             </Badge>
           </div>
 

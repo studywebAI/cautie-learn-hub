@@ -138,6 +138,8 @@ export async function PUT(
     }
 
     const { data: newData } = await request.json()
+    // Extract new fields if present
+    const { locked, show_feedback, ai_grading_override } = newData;
 
     // Verify the block belongs to this assignment and user has access
     const { data: block, error: blockError } = await supabase
@@ -203,9 +205,14 @@ export async function PUT(
     }
 
     // Update the block
+    const updatePayload: any = { data: newData };
+    if (locked !== undefined) updatePayload.locked = locked;
+    if (show_feedback !== undefined) updatePayload.show_feedback = show_feedback;
+    if (ai_grading_override !== undefined) updatePayload.ai_grading_override = ai_grading_override;
+    
     const { data: updatedBlock, error: updateError } = await supabase
       .from('blocks')
-      .update({ data: newData })
+      .update(updatePayload)
       .eq('id', resolvedParams.blockId)
       .select()
       .single()

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { BaseBlock, BlockType, BlockContent } from './types';
+import { BaseBlock, BlockType } from './types';
 import { BlockRenderer } from './BlockRenderer';
 import { Button } from '@/components/ui/button';
 import { Plus, Type, List, Image, Code, Quote, Layout, Zap } from 'lucide-react';
@@ -25,27 +25,30 @@ export const StandaloneBlockEditor: React.FC<StandaloneBlockEditorProps> = ({
   const generateId = () => `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   const createBlock = useCallback((type: BlockType, afterIndex?: number): BaseBlock => {
-    const orderIndex = afterIndex !== undefined ? afterIndex + 1 : blocks.length;
-    const defaultContent = getDefaultContent(type);
+    const position = afterIndex !== undefined ? afterIndex + 1 : blocks.length;
+    const defaultData = getDefaultData(type);
     const newBlock: BaseBlock = {
       id: generateId(),
       type,
-      content: defaultContent,
-      order_index: orderIndex,
+      data: defaultData,
+      position,
+      locked: false,
+      show_feedback: false,
+      ai_grading_override: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
     return newBlock;
   }, [blocks.length]);
 
-  const getDefaultContent = (type: BlockType): BlockContent => {
+  const getDefaultData = (type: BlockType): any => {
     switch (type) {
       case 'text':
-        return { type: 'paragraph', text: '' };
+        return { text: '' };
       case 'list':
-        return { type: 'bulleted', items: [{ id: '1', text: '' }] };
-      case 'media':
-        return { type: 'image', url: '', alt: '' };
+        return { items: [{ id: '1', text: '' }] };
+      case 'image':
+        return { url: '', alt: '' };
       case 'code':
         return { language: 'javascript', code: '' };
       case 'quote':
@@ -68,10 +71,10 @@ export const StandaloneBlockEditor: React.FC<StandaloneBlockEditorProps> = ({
     setEditingBlockId(newBlock.id);
   };
 
-  const handleBlockUpdate = (blockId: string, content: BlockContent) => {
+  const handleBlockUpdate = (blockId: string, data: any) => {
     const updatedBlocks = blocks.map(block =>
       block.id === blockId
-        ? { ...block, content, updated_at: new Date().toISOString() }
+        ? { ...block, data, updated_at: new Date().toISOString() }
         : block
     );
     onBlocksChange(updatedBlocks);
@@ -85,10 +88,10 @@ export const StandaloneBlockEditor: React.FC<StandaloneBlockEditorProps> = ({
   const handleBlockTypeChange = (blockId: string, newType: BlockType) => {
     const block = blocks.find(b => b.id === blockId);
     if (block) {
-      const newContent = getDefaultContent(newType);
+      const newData = getDefaultData(newType);
       const updatedBlocks = blocks.map(b =>
         b.id === blockId
-          ? { ...b, type: newType, content: newContent, updated_at: new Date().toISOString() }
+          ? { ...b, type: newType, data: newData, updated_at: new Date().toISOString() }
           : b
       );
       onBlocksChange(updatedBlocks);
@@ -149,7 +152,7 @@ export const StandaloneBlockEditor: React.FC<StandaloneBlockEditorProps> = ({
         >
           <BlockRenderer
             block={block}
-            onUpdate={(content) => handleBlockUpdate(block.id, content)}
+            onUpdate={(data) => handleBlockUpdate(block.id, data)}
             onDelete={() => handleBlockDelete(block.id)}
             isEditing={editingBlockId === block.id}
           />

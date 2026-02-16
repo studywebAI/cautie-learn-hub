@@ -17,13 +17,13 @@ export const LayoutBlock: React.FC<LayoutBlockProps> = ({
   className,
 }) => {
   const [isEditingState, setIsEditingState] = useState(isEditing);
-  const [text, setText] = useState(block.content.text || '');
-  const [icon, setIcon] = useState(block.content.icon || '');
+  const [text, setText] = useState(block.data.text || '');
+  const [icon, setIcon] = useState(block.data.icon || '');
 
   const handleSave = () => {
     if (onUpdate) {
       onUpdate({
-        ...block.content,
+        ...block.data,
         text,
         icon,
       });
@@ -37,8 +37,8 @@ export const LayoutBlock: React.FC<LayoutBlockProps> = ({
       handleSave();
     }
     if (e.key === 'Escape') {
-      setText(block.content.text || '');
-      setIcon(block.content.icon || '');
+      setText(block.data.text || '');
+      setIcon(block.data.icon || '');
       setIsEditingState(false);
     }
   };
@@ -67,7 +67,7 @@ export const LayoutBlock: React.FC<LayoutBlockProps> = ({
   };
 
   const renderDisplay = () => {
-    const { type } = block.content;
+    const { type } = block.data;
 
     if (type === 'divider') {
       return renderDivider();
@@ -77,7 +77,7 @@ export const LayoutBlock: React.FC<LayoutBlockProps> = ({
   };
 
   const renderEditor = () => {
-    const { type } = block.content;
+    const { type } = block.data;
 
     return (
       <div className="space-y-4 p-4 border rounded-lg bg-muted/50 mb-4">
@@ -132,7 +132,7 @@ export const LayoutBlock: React.FC<LayoutBlockProps> = ({
   return (
     <div
       className={cn('w-full', className)}
-      onClick={() => !isEditingState && block.content.type === 'callout' && setIsEditingState(true)}
+      onClick={() => !isEditingState && block.data.type === 'callout' && setIsEditingState(true)}
     >
       {isEditingState ? renderEditor() : renderDisplay()}
     </div>

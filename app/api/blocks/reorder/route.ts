@@ -109,17 +109,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Update order_index for each block
+    // Update position for each block
     const updates = blockIds.map((blockId: string, index: number) => ({
       id: blockId,
-      order_index: index,
+      position: index,
     }));
 
     // Use a transaction-like approach with individual updates
     for (const update of updates) {
       const { error } = await (supabase as any)
         .from('blocks')
-        .update({ order_index: update.order_index })
+        .update({ position: update.position })
         .eq('id', update.id);
 
       if (error) {

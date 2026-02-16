@@ -1,23 +1,24 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, X, GripVertical, Save, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Sparkles, ChevronRight as ArrowRight } from 'lucide-react';
+import { X, Save, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type Block = {
   id?: string;
-  type: string;
+  type: 'text' | 'image' | 'video' | 'multiple_choice' | 'open_question' | 'fill_in_blank' | 'drag_drop' | 'ordering' | 'media_embed' | 'divider' | 'rich_text' | 'executable_code' | 'code' | 'list' | 'quote' | 'layout' | 'complex';
   position: number;
-  x?: number;
-  y?: number;
   data: any;
+  locked?: boolean;
+  show_feedback?: boolean;
+  ai_grading_override?: any;
 };
 
 type BlockEditorProps = {
@@ -31,15 +32,23 @@ type BlockEditorProps = {
 };
 
 const BLOCK_TYPES = [
-  { value: 'TextBlock', label: 'Text', icon: '📝' },
-  { value: 'ImageBlock', label: 'Image', icon: '🖼️' },
-  { value: 'VideoBlock', label: 'Video', icon: '🎥' },
-  { value: 'MultipleChoiceBlock', label: 'Multiple Choice', icon: '☑️' },
-  { value: 'OpenQuestionBlock', label: 'Open Question', icon: '❓' },
-  { value: 'FillInBlankBlock', label: 'Fill in Blank', icon: '📝' },
-  { value: 'DragDropBlock', label: 'Drag & Drop', icon: '🎯' },
-  { value: 'OrderingBlock', label: 'Ordering', icon: '🔢' },
-  { value: 'MediaEmbedBlock', label: 'Media Embed', icon: '🔗' },
+  { value: 'text', label: 'Text', icon: '📝' },
+  { value: 'image', label: 'Image', icon: '🖼️' },
+  { value: 'video', label: 'Video', icon: '🎥' },
+  { value: 'multiple_choice', label: 'Multiple Choice', icon: '☑️' },
+  { value: 'open_question', label: 'Open Question', icon: '❓' },
+  { value: 'fill_in_blank', label: 'Fill in Blank', icon: '📝' },
+  { value: 'drag_drop', label: 'Drag & Drop', icon: '🎯' },
+  { value: 'ordering', label: 'Ordering', icon: '🔢' },
+  { value: 'media_embed', label: 'Media Embed', icon: '🔗' },
+  { value: 'divider', label: 'Divider', icon: '➖' },
+  { value: 'rich_text', label: 'Rich Text', icon: '📄' },
+  { value: 'executable_code', label: 'Executable Code', icon: '💻' },
+  { value: 'code', label: 'Code', icon: '📝' },
+  { value: 'list', label: 'List', icon: '📋' },
+  { value: 'quote', label: 'Quote', icon: '💬' },
+  { value: 'layout', label: 'Layout', icon: '⊞' },
+  { value: 'complex', label: 'Complex', icon: '⚡' },
 ];
 
 export function BlockEditor({
@@ -51,37 +60,17 @@ export function BlockEditor({
   initialBlocks = [],
   onSave
 }: BlockEditorProps) {
-  const blockKey = materialId || assignmentId || 'default';
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
   const [isLoading, setIsLoading] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const [touchDragItem, setTouchDragItem] = useState<{ index: number; startX: number; startY: number; currentX: number; currentY: number } | null>(null);
   const { toast } = useToast();
 
-  // Load existing blocks on mount
+  // Load blocks on mount if assignment context is provided
   useEffect(() => {
     if (assignmentId && subjectId && chapterId && paragraphId) {
       loadBlocks();
     }
-  }, [assignmentId, materialId]);
-
-  // Load from localStorage first for fast loading
-  useEffect(() => {
-    const saved = localStorage.getItem(`blocks-${blockKey}`);
-    if (saved) {
-      try {
-        const parsedBlocks = JSON.parse(saved);
-        setBlocks(parsedBlocks);
-      } catch (error) {
-        console.error('Error loading blocks from localStorage:', error);
-      }
-    }
-    // Then load from API if we have all the required IDs
-    if (assignmentId && subjectId && chapterId && paragraphId) {
-      loadBlocks();
-    }
-  }, [blockKey]);
+  }, [assignmentId, subjectId, chapterId, paragraphId]);
 
   const loadBlocks = async () => {
     if (!subjectId || !chapterId || !paragraphId || !assignmentId) return;
@@ -98,30 +87,63 @@ export function BlockEditor({
   };
 
   const saveBlocks = async () => {
+    if (!assignmentId || !subjectId || !chapterId || !paragraphId) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Missing required IDs for saving',
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // First, clear existing blocks and then save new ones
-      // This is a simplified approach - in production you'd want to do proper updates
-
-      // Delete existing blocks
+      // Get existing blocks to determine which to update vs create
       const existingResponse = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`);
-      if (existingResponse.ok) {
-        const existingBlocks = await existingResponse.json();
-        // In a real implementation, you'd delete blocks that are no longer present
-      }
+      const existingBlocks = existingResponse.ok ? await existingResponse.json() : [];
+      
+      const existingMap = new Map(existingBlocks.map((b: Block) => [b.id, b]));
+      const currentIds = new Set(blocks.map(b => b.id).filter(id => id !== undefined));
 
-      // Save new blocks
-      for (const block of blocks) {
-        await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+      // Delete blocks that are no longer present
+      const blocksToDelete = existingBlocks.filter((b: Block) => !currentIds.has(b.id));
+      await Promise.all(
+        blocksToDelete.map((b: Block) =>
+          fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${b.id}`, {
+            method: 'DELETE',
+          })
+        )
+      );
+
+      // Create or update blocks
+      await Promise.all(
+        blocks.map(async (block) => {
+          const payload = {
             type: block.type,
             data: block.data,
-            position: block.position
-          })
-        });
-      }
+            position: block.position,
+            locked: block.locked || false,
+            show_feedback: block.show_feedback || false,
+            ai_grading_override: block.ai_grading_override || null,
+          };
+
+          if (block.id) {
+            // Update existing block
+            await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${block.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+          } else {
+            // Create new block
+            await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+          }
+        })
+      );
 
       toast({
         title: 'Success',
@@ -129,6 +151,9 @@ export function BlockEditor({
       });
 
       onSave?.(blocks);
+      
+      // Reload blocks to get IDs and updated positions
+      await loadBlocks();
     } catch (error) {
       console.error('Error saving blocks:', error);
       toast({
@@ -141,112 +166,65 @@ export function BlockEditor({
     }
   };
 
-  const addBlock = (type: string, x = 100, y = 100) => {
+  const addBlock = (type: string) => {
     const newBlock: Block = {
-      type,
+      id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type: type as any,
       position: blocks.length,
-      x,
-      y,
       data: getDefaultDataForType(type)
     };
     setBlocks([...blocks, newBlock]);
   };
 
-  const updateBlock = (index: number, data: any) => {
+  const updateBlock = (index: number, updates: Partial<Block>) => {
     const updatedBlocks = [...blocks];
-    updatedBlocks[index] = { ...updatedBlocks[index], data };
+    updatedBlocks[index] = { ...updatedBlocks[index], ...updates };
     setBlocks(updatedBlocks);
-    localStorage.setItem(`blocks-${blockKey}`, JSON.stringify(updatedBlocks));
   };
 
   const removeBlock = (index: number) => {
     const updatedBlocks = blocks.filter((_, i) => i !== index);
-    setBlocks(updatedBlocks);
-    localStorage.setItem(`blocks-${blockKey}`, JSON.stringify(updatedBlocks));
+    // Re-normalize positions
+    const renormalized = updatedBlocks.map((block, idx) => ({
+      ...block,
+      position: idx
+    }));
+    setBlocks(renormalized);
   };
 
-
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragEnd = (e: React.DragEvent, index: number) => {
-    if (draggedIndex !== null) {
-      const canvas = e.currentTarget.closest('.flex-1');
-      const rect = canvas?.getBoundingClientRect();
-      if (rect) {
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const updatedBlocks = [...blocks];
-        updatedBlocks[index] = { ...updatedBlocks[index], x: Math.max(0, x), y: Math.max(0, y) };
-        setBlocks(updatedBlocks);
-      }
-    }
-    setDraggedIndex(null);
-  };
-
-  // Touch event handlers for mobile
-  const handleTouchStart = (e: React.TouchEvent, index: number) => {
-    const touch = e.touches[0];
-    setTouchDragItem({
-      index,
-      startX: touch.clientX,
-      startY: touch.clientY,
-      currentX: touch.clientX,
-      currentY: touch.clientY
-    });
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchDragItem) return;
-    const touch = e.touches[0];
-    setTouchDragItem({ ...touchDragItem, currentX: touch.clientX, currentY: touch.clientY });
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent, index: number) => {
-    if (!touchDragItem || touchDragItem.index !== index) {
-      setTouchDragItem(null);
-      return;
-    }
-    
-    try {
-      const canvas = e.currentTarget.closest('.flex-1') as HTMLElement;
-      const rect = canvas?.getBoundingClientRect();
-      if (rect) {
-        const x = touchDragItem.currentX - rect.left;
-        const y = touchDragItem.currentY - rect.top;
-        const updatedBlocks = [...blocks];
-        updatedBlocks[index] = { ...updatedBlocks[index], x: Math.max(0, x), y: Math.max(0, y) };
-        setBlocks(updatedBlocks);
-      }
-    } catch (err) {
-      console.error('Touch drag error:', err);
-    }
-    setTouchDragItem(null);
+  const moveBlock = (fromIndex: number, toIndex: number) => {
+    const updatedBlocks = [...blocks];
+    const [movedBlock] = updatedBlocks.splice(fromIndex, 1)[0];
+    updatedBlocks.splice(toIndex, 0, movedBlock);
+    // Re-normalize positions
+    const renormalized = updatedBlocks.map((block, idx) => ({
+      ...block,
+      position: idx
+    }));
+    setBlocks(renormalized);
   };
 
   const getDefaultDataForType = (type: string) => {
     switch (type) {
-      case 'TextBlock':
+      case 'text':
         return { content: '', style: 'normal' };
-      case 'ImageBlock':
-        return { url: '', caption: '', transform: { x: 0, y: 0, scale: 1, rotation: 0 } };
-      case 'VideoBlock':
+      case 'image':
+        return { url: '', caption: '' };
+      case 'video':
         return { url: '', provider: 'youtube', start_seconds: 0, end_seconds: null };
-      case 'MultipleChoiceBlock':
+      case 'multiple_choice':
         return { question: '', options: [{ id: 'a', text: '', correct: false }], multiple_correct: false, shuffle: true };
-      case 'OpenQuestionBlock':
+      case 'open_question':
         return { question: '', ai_grading: true, grading_criteria: '', max_length: 1000 };
-      case 'FillInBlankBlock':
-        return { text: '', answers: [''], case_sensitive: false };
-      case 'DragDropBlock':
+      case 'fill_in_blank':
+        return { text: 'My shoes ___ 100 euros.', answers: [''], case_sensitive: false };
+      case 'drag_drop':
         return { prompt: '', pairs: [{ left: '', right: '' }] };
-      case 'OrderingBlock':
+      case 'ordering':
         return { prompt: '', items: ['', '', ''], correct_order: [0, 1, 2] };
-      case 'MediaEmbedBlock':
+      case 'media_embed':
         return { embed_url: '', description: '' };
-      case 'DividerBlock':
+      case 'divider':
         return { style: 'line' };
       default:
         return {};
@@ -254,15 +232,17 @@ export function BlockEditor({
   };
 
   const renderBlockEditor = (block: Block, index: number) => {
+    const updateData = (data: any) => updateBlock(index, { data });
+
     switch (block.type) {
-      case 'TextBlock':
+      case 'text':
         return (
           <div className="space-y-4">
             <div>
               <Label>Content</Label>
               <Textarea
-                value={block.data.content}
-                onChange={(e) => updateBlock(index, { ...block.data, content: e.target.value })}
+                value={block.data.content || ''}
+                onChange={(e) => updateData({ ...block.data, content: e.target.value })}
                 placeholder="Enter text content..."
                 rows={4}
               />
@@ -270,8 +250,8 @@ export function BlockEditor({
             <div>
               <Label>Style</Label>
               <Select
-                value={block.data.style}
-                onValueChange={(value) => updateBlock(index, { ...block.data, style: value })}
+                value={block.data.style || 'normal'}
+                onValueChange={(value) => updateData({ ...block.data, style: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -289,37 +269,37 @@ export function BlockEditor({
           </div>
         );
 
-      case 'MultipleChoiceBlock':
+      case 'multiple_choice':
         return (
           <div className="space-y-4">
             <div>
               <Label>Question</Label>
               <Input
-                value={block.data.question}
-                onChange={(e) => updateBlock(index, { ...block.data, question: e.target.value })}
+                value={block.data.question || ''}
+                onChange={(e) => updateData({ ...block.data, question: e.target.value })}
                 placeholder="Enter your question..."
               />
             </div>
             <div>
               <Label>Options</Label>
               <div className="space-y-2">
-                {block.data.options?.map((option: any, optIndex: number) => (
+                {(block.data.options || []).map((option: any, optIndex: number) => (
                   <div key={optIndex} className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      checked={option.correct}
+                      checked={option.correct || false}
                       onChange={(e) => {
-                        const newOptions = [...block.data.options];
+                        const newOptions = [...(block.data.options || [])];
                         newOptions[optIndex] = { ...option, correct: e.target.checked };
-                        updateBlock(index, { ...block.data, options: newOptions });
+                        updateData({ ...block.data, options: newOptions });
                       }}
                     />
                     <Input
-                      value={option.text}
+                      value={option.text || ''}
                       onChange={(e) => {
-                        const newOptions = [...block.data.options];
+                        const newOptions = [...(block.data.options || [])];
                         newOptions[optIndex] = { ...option, text: e.target.value };
-                        updateBlock(index, { ...block.data, options: newOptions });
+                        updateData({ ...block.data, options: newOptions });
                       }}
                       placeholder={`Option ${optIndex + 1}`}
                     />
@@ -331,7 +311,7 @@ export function BlockEditor({
                   size="sm"
                   onClick={() => {
                     const newOptions = [...(block.data.options || []), { id: `opt${Date.now()}`, text: '', correct: false }];
-                    updateBlock(index, { ...block.data, options: newOptions });
+                    updateData({ ...block.data, options: newOptions });
                   }}
                 >
                   Add Option
@@ -341,14 +321,14 @@ export function BlockEditor({
           </div>
         );
 
-      case 'OpenQuestionBlock':
+      case 'open_question':
         return (
           <div className="space-y-4">
             <div>
               <Label>Question</Label>
               <Textarea
-                value={block.data.question}
-                onChange={(e) => updateBlock(index, { ...block.data, question: e.target.value })}
+                value={block.data.question || ''}
+                onChange={(e) => updateData({ ...block.data, question: e.target.value })}
                 placeholder="Enter your question..."
                 rows={3}
               />
@@ -356,8 +336,8 @@ export function BlockEditor({
             <div>
               <Label>Grading Criteria</Label>
               <Textarea
-                value={block.data.grading_criteria}
-                onChange={(e) => updateBlock(index, { ...block.data, grading_criteria: e.target.value })}
+                value={block.data.grading_criteria || ''}
+                onChange={(e) => updateData({ ...block.data, grading_criteria: e.target.value })}
                 placeholder="Describe how to grade this question..."
                 rows={2}
               />
@@ -366,8 +346,8 @@ export function BlockEditor({
               <Label>Max Length</Label>
               <Input
                 type="number"
-                value={block.data.max_length}
-                onChange={(e) => updateBlock(index, { ...block.data, max_length: parseInt(e.target.value) })}
+                value={block.data.max_length || 1000}
+                onChange={(e) => updateData({ ...block.data, max_length: parseInt(e.target.value) || 1000 })}
               />
             </div>
           </div>
@@ -388,45 +368,34 @@ export function BlockEditor({
   return (
     <div className="flex h-screen">
       {/* Canvas */}
-      <div
-        className="flex-1 relative bg-gray-50 overflow-hidden"
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'copy';
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          const blockType = e.dataTransfer.getData('blockType');
-          if (blockType) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            addBlock(blockType, x, y);
-          }
-        }}
-      >
-        <div className="absolute inset-0">
+      <div className="flex-1 relative bg-gray-50 overflow-y-auto p-4">
+        <div className="space-y-4">
           {blocks.map((block, index) => (
-            <div
-              key={index}
-              className="absolute cursor-move select-none touch-none"
-              style={{
-                left: block.x || (50 + (index % 3) * 250),
-                top: block.y || (50 + Math.floor(index / 3) * 200)
-              }}
-              draggable
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragEnd={(e) => handleDragEnd(e, index)}
-              onTouchStart={(e) => handleTouchStart(e, index)}
-              onTouchMove={(e) => handleTouchMove(e)}
-              onTouchEnd={(e) => handleTouchEnd(e, index)}
-            >
-              <Card className="shadow-md">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="text-xs">
-                      {BLOCK_TYPES.find(bt => bt.value === block.type)?.label}
-                    </Badge>
+            <Card key={block.id || index} className="relative">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="text-xs">
+                    {BLOCK_TYPES.find(bt => bt.value === block.type)?.label}
+                  </Badge>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => moveBlock(index, index - 1)}
+                      disabled={index === 0}
+                      className="h-6 w-6 p-0"
+                    >
+                      ↑
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => moveBlock(index, index + 1)}
+                      disabled={index === blocks.length - 1}
+                      className="h-6 w-6 p-0"
+                    >
+                      ↓
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -436,19 +405,23 @@ export function BlockEditor({
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {renderBlockEditor(block, index)}
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {renderBlockEditor(block, index)}
+              </CardContent>
+            </Card>
           ))}
         </div>
 
-
+        {blocks.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No blocks yet. Add blocks from the palette on the right.</p>
+          </div>
+        )}
       </div>
 
-      {/* Collapsible Block Palette */}
+      {/* Block Palette */}
       <div className={`bg-white border-l shadow-lg transition-all duration-300 ${isPaletteOpen ? 'w-64' : 'w-12'}`}>
         <Button
           variant="ghost"
@@ -474,6 +447,12 @@ export function BlockEditor({
                   <div className="text-xs">{blockType.label}</div>
                 </div>
               ))}
+            </div>
+            <div className="mt-4 pt-4 border-t">
+              <Button onClick={saveBlocks} disabled={isLoading} className="w-full">
+                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? 'Saving...' : 'Save'}
+              </Button>
             </div>
           </div>
         )}

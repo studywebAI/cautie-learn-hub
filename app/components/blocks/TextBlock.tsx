@@ -16,13 +16,13 @@ export const TextBlock: React.FC<TextBlockProps> = ({
   className,
 }) => {
   const [isEditingState, setIsEditingState] = useState(isEditing);
-  const [content, setContent] = useState(block.content.content || '');
-  const [style, setStyle] = useState(block.content.style || 'normal');
+  const [content, setContent] = useState(block.data.content || '');
+  const [style, setStyle] = useState(block.data.style || 'normal');
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
-    const text = block.content.content || '';
+    const text = block.data.content || '';
     if (style === 'normal' && text && !isEditingState) {
       setIsTyping(true);
       setDisplayedText('');
@@ -41,12 +41,12 @@ export const TextBlock: React.FC<TextBlockProps> = ({
       setDisplayedText(text);
       setIsTyping(false);
     }
-  }, [block.content.content, style, isEditingState]);
+  }, [block.data.content, style, isEditingState]);
 
   const handleSave = () => {
     if (onUpdate) {
       onUpdate({
-        ...block.content,
+        ...block.data,
         content,
         style,
       });
@@ -60,14 +60,14 @@ export const TextBlock: React.FC<TextBlockProps> = ({
       handleSave();
     }
     if (e.key === 'Escape') {
-      setContent(block.content.content || '');
-      setStyle(block.content.style || 'normal');
+      setContent(block.data.content || '');
+      setStyle(block.data.style || 'normal');
       setIsEditingState(false);
     }
   };
 
   const renderDisplay = () => {
-    const { content: displayContent, style } = block.content;
+    const { content: displayContent, style } = block.data;
 
     switch (style) {
       case 'heading':

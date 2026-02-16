@@ -98,14 +98,14 @@ export function LinkPickerDialog({ isOpen, onClose, onSelect, classId }: LinkPic
             for (const chapter of subject.chapters) {
               subjectLinks.push({
                 id: chapter.id,
-                title: `${subject.name} › Chapter ${chapter.order_index}: ${chapter.title}`,
+                title: `${subject.name} › Chapter ${chapter.chapter_number}: ${chapter.title}`,
                 path: `/subjects/${subject.id}/chapters/${chapter.id}`,
                 type: 'chapter',
               });
               
               if (chapter.paragraphs) {
                 for (const paragraph of chapter.paragraphs) {
-                  const paragraphNum = `${chapter.order_index}.${paragraph.order_index}`;
+                  const paragraphNum = `${chapter.chapter_number}.${paragraph.order_index}`;
                   
                   subjectLinks.push({
                     id: paragraph.id,

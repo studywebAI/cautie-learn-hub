@@ -21,7 +21,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import { BlockRenderer } from './BlockRenderer';
-import { BaseBlock, BlockType, BlockContent } from './types';
+import { BaseBlock, BlockType } from './types';
 
 interface WordStyleEditorProps {
   assignmentId: string;
@@ -130,21 +130,24 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
     }
   };
 
-  const createBlock = async (type: BlockType, content: BlockContent, orderIndex: number) => {
+  const createBlock = async (type: BlockType, data: any, position: number) => {
     try {
       // Simulate API call
       const newBlock: BaseBlock = {
         id: `block-${Date.now()}`,
         type,
-        content,
-        order_index: orderIndex,
+        data,
+        position,
+        locked: false,
+        show_feedback: false,
+        ai_grading_override: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
       setBlocks(prev => {
         const newBlocks = [...prev];
-        newBlocks.splice(orderIndex, 0, newBlock);
+        newBlocks.splice(position, 0, newBlock);
         return newBlocks;
       });
 
@@ -184,7 +187,7 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
     }
   };
 
-  const getDefaultContent = (type: BlockType): BlockContent => {
+  const getDefaultData = (type: BlockType): any => {
     switch (type) {
       case 'multiple_choice':
         return {
@@ -233,17 +236,17 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
         };
       case 'text':
         return {
-          content: 'Click here to start typing...',
+          text: 'Click here to start typing...',
           style: 'normal'
         };
       default:
-        return { content: '', style: 'normal' };
+        return { text: '', style: 'normal' };
     }
   };
 
   const handleTemplateSelect = (templateId: TemplateType, insertIndex: number) => {
-    const content = getDefaultContent(templateId);
-    createBlock(templateId, content, insertIndex);
+    const data = getDefaultData(templateId);
+    createBlock(templateId, data, insertIndex);
     setShowTemplateMenu(false);
     setTemplateInsertIndex(null);
   };
@@ -454,7 +457,7 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
                     <CardContent className="p-4">
                       <BlockRenderer
                         block={block}
-                        onUpdate={(content) => updateBlock(block.id, { content })}
+                        onUpdate={(data) => updateBlock(block.id, { data })}
                         onDelete={() => deleteBlock(block.id)}
                         isEditing={true}
                       />

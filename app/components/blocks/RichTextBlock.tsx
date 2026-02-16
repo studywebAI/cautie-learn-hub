@@ -19,16 +19,16 @@ export const RichTextBlock: React.FC<RichTextBlockProps> = ({
   className,
 }) => {
   const [isEditingState, setIsEditingState] = useState(isEditing);
-  const [html, setHtml] = useState(block.content.html || '');
-  const [plainText, setPlainText] = useState(block.content.plainText || '');
-  const [aiSuggestions, setAiSuggestions] = useState<NonNullable<RichTextBlockContent['aiSuggestions']>>(block.content.aiSuggestions || []);
+  const [html, setHtml] = useState(block.data.html || '');
+  const [plainText, setPlainText] = useState(block.data.plainText || '');
+  const [aiSuggestions, setAiSuggestions] = useState<NonNullable<RichTextBlockContent['aiSuggestions']>>(block.data.aiSuggestions || []);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSave = () => {
     if (onUpdate) {
       onUpdate({
-        ...block.content,
+        ...block.data,
         html,
         plainText,
         aiSuggestions,

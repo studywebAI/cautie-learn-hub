@@ -53,14 +53,14 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
       case 'divider':
         return <StudentDividerBlock {...commonProps} />;
       default:
-        // For blocks that don't have student interaction, just display content
+        // For blocks that don't have student interaction, just display data
         return (
           <div className="p-4 border rounded-lg bg-muted/50">
             <div className="text-sm text-muted-foreground mb-2">
               {block.type.replace('_', ' ').toUpperCase()}
             </div>
             <pre className="whitespace-pre-wrap font-mono text-xs">
-              {JSON.stringify(block.content, null, 2)}
+              {JSON.stringify(block.data, null, 2)}
             </pre>
           </div>
         );

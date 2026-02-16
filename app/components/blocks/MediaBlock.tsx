@@ -17,14 +17,14 @@ export const MediaBlock: React.FC<MediaBlockProps> = ({
   className,
 }) => {
   const [isEditingState, setIsEditingState] = useState(isEditing);
-  const [url, setUrl] = useState((block.content as any).url || (block.content as any).embed_url || '');
-  const [alt, setAlt] = useState((block.content as any).alt || '');
-  const [caption, setCaption] = useState((block.content as any).caption || (block.content as any).description || '');
+  const [url, setUrl] = useState((block.data as any).url || (block.data as any).embed_url || '');
+  const [alt, setAlt] = useState((block.data as any).alt || '');
+  const [caption, setCaption] = useState((block.data as any).caption || (block.data as any).description || '');
 
   const handleSave = () => {
     if (onUpdate) {
       onUpdate({
-        ...block.content,
+        ...block.data,
         url,
         alt,
         caption,
@@ -39,9 +39,9 @@ export const MediaBlock: React.FC<MediaBlockProps> = ({
       handleSave();
     }
     if (e.key === 'Escape') {
-      setUrl((block.content as any).url || (block.content as any).embed_url || '');
-      setAlt((block.content as any).alt || '');
-      setCaption((block.content as any).caption || (block.content as any).description || '');
+      setUrl((block.data as any).url || (block.data as any).embed_url || '');
+      setAlt((block.data as any).alt || '');
+      setCaption((block.data as any).caption || (block.data as any).description || '');
       setIsEditingState(false);
     }
   };
@@ -190,7 +190,7 @@ export const MediaBlock: React.FC<MediaBlockProps> = ({
   };
 
   const renderDisplay = () => {
-    const { type } = block.content;
+    const { type } = block.data;
 
     if (type === 'image') {
       return renderImage();
@@ -213,7 +213,7 @@ export const MediaBlock: React.FC<MediaBlockProps> = ({
             autoFocus
           />
         </div>
-        {block.content.type === 'image' && (
+        {block.data.type === 'image' && (
           <div>
             <label className="text-sm font-medium">Alt Text</label>
             <Input

@@ -14,7 +14,7 @@ export const StudentMediaBlock: React.FC<StudentMediaBlockProps> = ({
   const renderContent = () => {
     switch (block.type) {
       case 'image':
-        const imageContent = block.content as ImageBlockContent;
+        const imageContent = block.data as ImageBlockContent;
         return (
           <div className="space-y-2">
             <img
@@ -34,7 +34,7 @@ export const StudentMediaBlock: React.FC<StudentMediaBlockProps> = ({
         );
 
       case 'video':
-        const videoContent = block.content as VideoBlockContent;
+        const videoContent = block.data as VideoBlockContent;
         if (videoContent.provider === 'youtube') {
           const videoId = videoContent.url.split('v=')[1]?.split('&')[0];
           return (
@@ -56,7 +56,7 @@ export const StudentMediaBlock: React.FC<StudentMediaBlockProps> = ({
         );
 
       case 'media_embed':
-        const embedContent = block.content as MediaEmbedContent;
+        const embedContent = block.data as MediaEmbedContent;
         return (
           <div className="space-y-2">
             <div className="aspect-video">

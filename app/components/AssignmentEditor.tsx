@@ -713,21 +713,53 @@ export function AssignmentEditor({
 
     setIsSaving(true);
     try {
-      for (const block of blocks) {
-        const response = await fetch(
-          `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: block.type,
-              position: block.position,
-              data: { ...block.data, width: block.width, column: block.column, rowId: block.rowId }
-            })
+      // Get existing blocks to determine which to update vs delete
+      const existingResponse = await fetch(
+        `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`
+      );
+      const existingBlocks = existingResponse.ok ? await existingResponse.json() : [];
+      const existingMap = new Map(existingBlocks.map((b: any) => [b.id, b]));
+      const currentIds = new Set(blocks.map(b => b.id).filter(id => id !== undefined));
+
+      // Delete blocks that are no longer present
+      const blocksToDelete = existingBlocks.filter((b: any) => !currentIds.has(b.id));
+      await Promise.all(
+        blocksToDelete.map((b: any) =>
+          fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${b.id}`, {
+            method: 'DELETE',
+          })
+        )
+      );
+
+      // Create or update blocks
+      await Promise.all(
+        blocks.map(async (block) => {
+          const payload = {
+            type: block.type,
+            position: block.position,
+            data: block.data,
+            locked: block.locked || false,
+            show_feedback: block.showFeedback || false,
+            ai_grading_override: block.aiGradingOverride || null,
+          };
+
+          if (block.id) {
+            // Update existing block
+            await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${block.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+          } else {
+            // Create new block
+            await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
           }
-        );
-        if (!response.ok) throw new Error(`Failed to save block ${block.id}`);
-      }
+        })
+      );
 
       setHasUnsavedChanges(false);
       if (onSave) onSave(blocks);

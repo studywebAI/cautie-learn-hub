@@ -19,16 +19,16 @@ export const MultipleChoiceBlock: React.FC<MultipleChoiceBlockProps> = ({
   className,
 }) => {
   const [isEditingState, setIsEditingState] = useState(isEditing);
-  const [question, setQuestion] = useState(block.content.question || '');
-  const [options, setOptions] = useState<MultipleChoiceContent['options']>(block.content.options || [{ id: '1', text: '', correct: false }]);
-  const [multipleCorrect, setMultipleCorrect] = useState(block.content.multiple_correct || false);
-  const [shuffle, setShuffle] = useState(block.content.shuffle || false);
+  const [question, setQuestion] = useState(block.data.question || '');
+  const [options, setOptions] = useState<MultipleChoiceContent['options']>(block.data.options || [{ id: '1', text: '', correct: false }]);
+  const [multipleCorrect, setMultipleCorrect] = useState(block.data.multiple_correct || false);
+  const [shuffle, setShuffle] = useState(block.data.shuffle || false);
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
 
   const handleSave = () => {
     if (onUpdate) {
       onUpdate({
-        ...block.content,
+        ...block.data,
         question,
         options,
         multiple_correct: multipleCorrect,

@@ -195,7 +195,7 @@ export function ChapterContentViewer({
       ) : (
         <div className="space-y-6">
           {blocks
-            .sort((a, b) => a.order_index - b.order_index)
+            .sort((a, b) => (a.position || 0) - (b.position || 0))
             .map(renderBlockWithAssignment)
           }
         </div>

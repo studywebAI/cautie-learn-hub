@@ -64,7 +64,7 @@ export async function PUT(
     }
     const { classId, chapterId } = await params;
     const body = await request.json();
-    const { title, description, order_index } = body;
+    const { title, description, chapter_number } = body;
     // Check if user is teacher
     const { data: classData, error: classError } = await supabase
       .from('classes')
@@ -91,7 +91,7 @@ export async function PUT(
     const updateData: any = {};
     if (title !== undefined) updateData.title = title.trim();
     if (description !== undefined) updateData.description = description?.trim() || null;
-    if (order_index !== undefined) updateData.order_index = order_index;
+    if (chapter_number !== undefined) updateData.chapter_number = chapter_number;
     const { data, error } = await (supabase as any)
       .from('chapters')
       .update(updateData)

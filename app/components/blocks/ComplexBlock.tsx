@@ -17,7 +17,7 @@ export const ComplexBlock: React.FC<ComplexBlockProps> = ({
   const [isEditingState, setIsEditingState] = useState(isEditing);
 
   const renderViewer = () => {
-    const { viewerType, data } = block.content;
+    const { viewerType, data } = block.data;
 
     // For now, render a placeholder. In a real implementation, you'd have a component registry
     switch (viewerType) {
@@ -60,7 +60,7 @@ export const ComplexBlock: React.FC<ComplexBlockProps> = ({
       <div className="border rounded-lg p-4 bg-background">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm font-medium text-muted-foreground capitalize">
-            {block.content.type} Viewer
+            {block.data.type} Viewer
           </span>
           <button
             onClick={() => setIsEditingState(!isEditingState)}

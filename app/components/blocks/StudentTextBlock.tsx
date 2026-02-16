@@ -4,7 +4,7 @@ import React from 'react';
 import { BaseBlock, TextBlockContent } from './types';
 
 interface StudentTextBlockProps {
-  block: BaseBlock & { content: TextBlockContent };
+  block: BaseBlock & { data: TextBlockContent };
   onSubmit: (answerData: any) => void;
 }
 
@@ -29,8 +29,8 @@ export const StudentTextBlock: React.FC<StudentTextBlockProps> = ({
   };
 
   return (
-    <div className={getStyleClasses(block.content.style)}>
-      {block.content.content}
+    <div className={getStyleClasses(block.data.style)}>
+      {block.data.content}
     </div>
   );
 };

@@ -71,7 +71,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { type, position, data: blockData } = body
+    const { type, position, data: blockData, locked, show_feedback, ai_grading_override } = body
 
     if (!type || position === undefined || !blockData) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -109,7 +109,10 @@ export async function POST(
         assignment_id: resolvedParams.assignmentId,
         type,
         position,
-        data: blockData
+        data: blockData,
+        locked: locked || false,
+        show_feedback: show_feedback || false,
+        ai_grading_override: ai_grading_override || null
       })
       .select()
       .single()

@@ -4,7 +4,7 @@ import React from 'react';
 import { BaseBlock, DividerContent } from './types';
 
 interface StudentDividerBlockProps {
-  block: BaseBlock & { content: DividerContent };
+  block: BaseBlock & { data: DividerContent };
   onSubmit: (answerData: any) => void;
 }
 
@@ -12,7 +12,7 @@ export const StudentDividerBlock: React.FC<StudentDividerBlockProps> = ({
   block,
 }) => {
   const renderDivider = () => {
-    switch (block.content.style) {
+    switch (block.data.style) {
       case 'line':
         return <hr className="my-4 border-t border-border" />;
       case 'space':

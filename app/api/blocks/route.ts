@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     if ('error' in validation) {
       return validation.error;
     }
-    const { type, data: blockData, paragraph_id, assignment_id, position } = validation.data;
+    const { type, data: blockData, paragraph_id, assignment_id, position, locked, show_feedback, ai_grading_override } = validation.data;
 
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
@@ -153,6 +153,9 @@ export async function POST(request: NextRequest) {
         paragraph_id: paragraph_id || null,
         assignment_id: assignment_id || null,
         position: maxPosition,
+        locked: locked || false,
+        show_feedback: show_feedback || false,
+        ai_grading_override: ai_grading_override || null,
       })
       .select()
       .single()

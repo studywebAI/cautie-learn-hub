@@ -17,14 +17,14 @@ export const QuoteBlock: React.FC<QuoteBlockProps> = ({
   className,
 }) => {
   const [isEditingState, setIsEditingState] = useState(isEditing);
-  const [text, setText] = useState(block.content.text || '');
-  const [author, setAuthor] = useState(block.content.author || '');
-  const [source, setSource] = useState(block.content.source || '');
+  const [text, setText] = useState(block.data.text || '');
+  const [author, setAuthor] = useState(block.data.author || '');
+  const [source, setSource] = useState(block.data.source || '');
 
   const handleSave = () => {
     if (onUpdate) {
       onUpdate({
-        ...block.content,
+        ...block.data,
         text,
         author,
         source,
@@ -39,9 +39,9 @@ export const QuoteBlock: React.FC<QuoteBlockProps> = ({
       handleSave();
     }
     if (e.key === 'Escape') {
-      setText(block.content.text || '');
-      setAuthor(block.content.author || '');
-      setSource(block.content.source || '');
+      setText(block.data.text || '');
+      setAuthor(block.data.author || '');
+      setSource(block.data.source || '');
       setIsEditingState(false);
     }
   };
