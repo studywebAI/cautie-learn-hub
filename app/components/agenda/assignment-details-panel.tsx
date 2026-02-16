@@ -26,10 +26,11 @@ interface AssignmentDetailsPanelProps {
   event: CalendarEvent | null;
   classes: ClassInfo[];
   isTeacher: boolean;
+  isStudent: boolean;
   onEdit?: (assignmentId: string) => void;
 }
 
-export function AssignmentDetailsPanel({ event, classes, isTeacher, onEdit }: AssignmentDetailsPanelProps) {
+export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, onEdit }: AssignmentDetailsPanelProps) {
   const { dictionary } = useDictionary();
   const { toast } = useToast();
   const router = useRouter();

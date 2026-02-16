@@ -344,11 +344,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
              setStudents(dashboardData.students || []);
              setRoleState(dashboardData.role || 'student');
              
-             // Load language preference from Supabase profile
-             if (dashboardData.preferences?.language) {
-               setLanguageState(dashboardData.preferences.language);
-               setDictionary(getDictionary(dashboardData.preferences.language));
-             }
+             // Don't override localStorage language with profile language
+             // The localStorage already set the language in the useEffect above
+             // Only use profile language if there's no localStorage setting
+             // (But localStorage always has a value due to default 'en', so we skip this)
 
          } catch (error) {
              console.error("Failed to fetch Supabase data:", error);
@@ -573,7 +572,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   // ---- Settings and Preferences ----
   useEffect(() => {
-    setLanguageState(getFromLocalStorage('studyweb-language', 'en'));
+    const savedLanguage = getFromLocalStorage('studyweb-language', 'en');
+    setLanguageState(savedLanguage);
+    setDictionary(getDictionary(savedLanguage));
+
     // Removed initial setRoleState from localStorage here as it will be set from Supabase profile on login
 
     const hc = getFromLocalStorage('studyweb-high-contrast', false);

@@ -345,6 +345,7 @@ export default function AgendaPage() {
                 event={selectedEvent}
                 classes={classes || []}
                 isTeacher={isTeacher}
+                isStudent={isStudent}
                 onEdit={() => {}}
               />
             ) : isStudent && (
