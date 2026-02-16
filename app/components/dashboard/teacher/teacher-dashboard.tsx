@@ -159,9 +159,6 @@ export function TeacherDashboard() {
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold font-headline">Your Classes</h1>
-          <p className="text-muted-foreground">
-            An overview of all your classes, assignments, and student progress.
-          </p>
         </div>
         <div className="flex gap-2">
           <Button

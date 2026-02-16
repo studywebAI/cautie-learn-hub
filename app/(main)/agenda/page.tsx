@@ -289,7 +289,6 @@ export default function AgendaPage() {
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl">{dictionary.agenda.title}</h1>
-            <p className="text-muted-foreground">{dictionary.agenda.description}</p>
           </div>
           <div className="flex items-center gap-3">
             <ViewToggle currentView={viewMode} onViewChange={setViewMode} />

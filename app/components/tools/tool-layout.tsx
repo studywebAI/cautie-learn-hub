@@ -130,11 +130,6 @@ export function ToolLayout({
       {/* Main content area - scrollable */}
       <div className="flex-1 overflow-auto">
         <div className="flex flex-col gap-8 p-6">
-          <header>
-            <h1 className="text-3xl font-bold font-headline">{title}</h1>
-            <p className="text-muted-foreground">{description}</p>
-          </header>
-
           {/* Subject cards - shown after file upload */}
           {subjectCards.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
