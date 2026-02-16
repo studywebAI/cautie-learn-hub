@@ -1,13 +1,22 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
+
+import { gradeSubmissionSchema } from '@/lib/validation/schemas'
+import { validateBody } from '@/lib/validation/validate'
 
 export const dynamic = 'force-dynamic'
 
-export async function POST(request: Request, { params }: { params: Promise<{ submissionId: string }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ submissionId: string }> }) {
   const resolvedParams = await params
   const { submissionId } = resolvedParams
-  const { rubricScores, feedback } = await request.json()
+
+  // Validate request body
+  const validation = await validateBody(request, gradeSubmissionSchema);
+  if ('error' in validation) {
+    return validation.error;
+  }
+  const { rubricScores, feedback } = validation.data;
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore)
 

@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
+
+import { createAssignmentSchema } from '@/lib/validation/schemas'
+import { validateBody } from '@/lib/validation/validate'
 
 
 export const dynamic = 'force-dynamic'
@@ -203,11 +206,17 @@ export async function GET(request: Request) {
 }
 
 // POST create a new assignment (also supports linking to existing paragraphs/blocks)
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Validate request body
+    const validation = await validateBody(request, createAssignmentSchema);
+    if ('error' in validation) {
+      return validation.error;
+    }
+    const { title, paragraph_id, class_id, assignment_index, type, scheduled_start_at, scheduled_end_at, answers_enabled, description, linked_content } = validation.data;
+
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
-    const json = await request.json()
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -232,11 +241,11 @@ export async function POST(request: Request) {
     }
 
     // Verify paragraph exists and user has access
-    if (json.paragraph_id) {
+    if (paragraph_id) {
       const { data: paragraph } = await (supabase as any)
         .from('paragraphs')
         .select('id, chapters!inner(id, subjects!inner(id, user_id, class_id))')
-        .eq('id', json.paragraph_id)
+        .eq('id', paragraph_id)
         .single()
 
       if (!paragraph) {
@@ -255,7 +264,7 @@ export async function POST(request: Request) {
     const { data: existingAssignments } = await supabase
       .from('assignments')
       .select('assignment_index')
-      .eq('paragraph_id', json.paragraph_id)
+      .eq('paragraph_id', paragraph_id)
       .order('assignment_index', { ascending: false })
       .limit(1)
 
@@ -267,17 +276,17 @@ export async function POST(request: Request) {
     const { data: assignment, error: insertError } = await (supabase
       .from('assignments') as any)
       .insert({
-        paragraph_id: json.paragraph_id,
+        paragraph_id: paragraph_id,
         assignment_index: nextIndex,
-        title: json.title?.trim() || 'Untitled Assignment',
-        answers_enabled: json.answers_enabled ?? false,
-        scheduled_start_at: json.scheduled_start_at,
-        scheduled_end_at: json.scheduled_end_at,
-        scheduled_answer_release_at: json.scheduled_answer_release_at,
-        description: json.description,
-        linked_content: json.linked_content,
-        type: json.type || 'homework', // Store the assignment type
-        class_id: json.class_id, // Include class_id for direct class assignments
+        title: title?.trim() || 'Untitled Assignment',
+        answers_enabled: answers_enabled ?? false,
+        scheduled_start_at: scheduled_start_at,
+        scheduled_end_at: scheduled_end_at,
+        scheduled_answer_release_at: scheduled_end_at, // Use end_at for release
+        description: description,
+        linked_content: linked_content,
+        type: type || 'homework', // Store the assignment type
+        class_id: class_id, // Include class_id for direct class assignments
       })
       .select()
       .single()

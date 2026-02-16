@@ -1,6 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
+
+import { createParagraphSchema } from '@/lib/validation/schemas'
+import { validateBody } from '@/lib/validation/validate'
+
 
 export const dynamic = 'force-dynamic'
 
@@ -89,10 +93,17 @@ export async function GET(
 
 // POST create new paragraph (teachers only)
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ subjectId: string; chapterId: string }> }
 ) {
   try {
+    // Validate request body
+    const validation = await validateBody(request, createParagraphSchema);
+    if ('error' in validation) {
+      return validation.error;
+    }
+    const { title } = validation.data;
+
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params;
@@ -101,8 +112,6 @@ export async function POST(
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { title } = await request.json();
 
     // Get max paragraph number
     const { data: existingParagraphs } = await (supabase as any)

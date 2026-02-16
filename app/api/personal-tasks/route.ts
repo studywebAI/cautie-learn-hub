@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
+import { createPersonalTaskSchema, validateBody } from '@/lib/validation'
 
 import type { Database } from '@/lib/supabase/database.types'
 
@@ -31,8 +32,7 @@ export async function GET(request: Request) {
 }
 
 // POST a new personal task
-export async function POST(request: Request) {
-  const { title, description, due_date, subject } = await request.json();
+export async function POST(request: NextRequest) {
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore)
   
@@ -41,6 +41,13 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  // Validate request body
+  const validation = await validateBody(request, createPersonalTaskSchema)
+  if ('error' in validation) {
+    return validation.error
+  }
+  const { title, description, due_date, subject } = validation.data
 
   const { data, error } = await supabase
     .from('personal_tasks')

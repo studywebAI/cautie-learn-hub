@@ -1,6 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
+
+import { createSubjectSchema, updateSubjectSchema, deleteSubjectSchema } from '@/lib/validation/schemas'
+import { validateBody } from '@/lib/validation/validate'
 
 type SubjectCreateRequest = {
   title: string
@@ -237,18 +240,17 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Validate request body
+    const validation = await validateBody(request, createSubjectSchema);
+    if ('error' in validation) {
+      return validation.error;
+    }
+    const { title, description, class_ids: classIds } = validation.data;
+
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
-    const json = await req.json()
-
-    // Validate create request
-    if (!json.title) {
-      return NextResponse.json({
-        error: 'Missing required field: title'
-      }, { status: 400 })
-    }
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -259,9 +261,9 @@ export async function POST(req: Request) {
     // Create the subject in Supabase
     const { data: subjectData, error: subjectError } = await supabase.from('subjects')
       .insert([{
-        title: json.title,
+        title: title,
         user_id: user.id,
-        description: json.description
+        description: description
       }])
       .select()
 
@@ -280,8 +282,8 @@ export async function POST(req: Request) {
     const newSubject = subjectData[0]
 
     // Link subject to classes if classIds are provided
-    if (json.classIds && json.classIds.length > 0) {
-      const classSubjects = json.classIds.map((classId: string) => ({
+    if (classIds && classIds.length > 0) {
+      const classSubjects = classIds.map((classId: string) => ({
         class_id: classId,
         subject_id: newSubject.id
       }))
@@ -331,26 +333,25 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PUT(req: Request) {
+export async function PUT(request: NextRequest) {
   try {
+    // Validate request body
+    const validation = await validateBody(request, updateSubjectSchema);
+    if ('error' in validation) {
+      return validation.error;
+    }
+    const { id, title, description, class_ids: classIds } = validation.data;
+
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
-    const json = await req.json()
-
-    // Validate update request
-    if (!json.id) {
-      return NextResponse.json({
-        error: 'Missing required field: id'
-      }, { status: 400 })
-    }
 
     // Update the subject in Supabase
     const { data: subjectData, error: subjectError } = await supabase.from('subjects')
       .update({
-        title: json.title,
-        description: json.description
+        title: title,
+        description: description
       })
-      .eq('id', json.id)
+      .eq('id', id)
       .select()
 
     if (subjectError) {
@@ -366,11 +367,11 @@ export async function PUT(req: Request) {
     }
 
     // Update class-subject links
-    if (json.classIds !== undefined) {
+    if (classIds !== undefined) {
       // Delete existing links
       const { error: deleteError } = await (supabase as any).from('class_subjects')
         .delete()
-        .eq('subject_id', json.id)
+        .eq('subject_id', id)
 
       if (deleteError) {
         return NextResponse.json({
@@ -379,10 +380,10 @@ export async function PUT(req: Request) {
       }
 
       // Add new links
-      if (json.classIds && json.classIds.length > 0) {
-        const classSubjects = json.classIds.map((classId: string) => ({
+      if (classIds && classIds.length > 0) {
+        const classSubjects = classIds.map((classId: string) => ({
           class_id: classId,
-          subject_id: json.id
+          subject_id: id
         }))
 
         const { error: linkError } = await (supabase as any).from('class_subjects')
@@ -405,7 +406,7 @@ export async function PUT(req: Request) {
           classes:class_id(id, name)
         )
       `)
-      .eq('id', json.id)
+      .eq('id', id)
       .single()
 
     if (fetchError) {
@@ -431,23 +432,22 @@ export async function PUT(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
+export async function DELETE(request: NextRequest) {
   try {
+    // Validate request body
+    const validation = await validateBody(request, deleteSubjectSchema);
+    if ('error' in validation) {
+      return validation.error;
+    }
+    const { id } = validation.data;
+
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
-    const json = await req.json()
-
-    // Validate deletion request
-    if (!json.id) {
-      return NextResponse.json({
-        error: 'Missing required field: id'
-      }, { status: 400 })
-    }
 
     // Delete class-subject links first
     const { error: linkError } = await (supabase as any).from('class_subjects')
       .delete()
-      .eq('subject_id', json.id)
+      .eq('subject_id', id)
 
     if (linkError) {
       return NextResponse.json({
@@ -458,7 +458,7 @@ export async function DELETE(req: Request) {
     // Delete the subject from Supabase
     const { error } = await supabase.from('subjects')
       .delete()
-      .eq('id', json.id)
+      .eq('id', id)
     
     if (error) {
       return NextResponse.json({

@@ -37,8 +37,14 @@ export const createSubjectSchema = z.object({
 });
 
 export const updateSubjectSchema = z.object({
+  id: uuidSchema,
   title: nonEmptyStringSchema.optional(),
-  description: z.string().optional().nullable()
+  description: z.string().optional().nullable(),
+  class_ids: z.array(uuidSchema).optional()
+});
+
+export const deleteSubjectSchema = z.object({
+  id: uuidSchema
 });
 
 // ============================================
@@ -48,7 +54,8 @@ export const updateSubjectSchema = z.object({
 export const createChapterSchema = z.object({
   title: nonEmptyStringSchema,
   description: z.string().optional().nullable(),
-  chapter_number: z.number().int().positive("Chapter number must be positive")
+  chapter_number: z.number().int().positive("Chapter number must be positive"),
+  subject_id: uuidSchema
 });
 
 export const updateChapterSchema = z.object({
@@ -86,7 +93,44 @@ export const createAssignmentSchema = z.object({
   scheduled_start_at: z.string().datetime().optional().nullable(),
   scheduled_end_at: z.string().datetime().optional().nullable(),
   answers_enabled: z.boolean().default(false),
-  description: z.string().optional().nullable()
+  description: z.string().optional().nullable(),
+  linked_content: z.any().optional().nullable()
+});
+
+// ============================================
+// BLOCKS
+// ============================================
+
+export const createBlockSchema = z.object({
+  type: nonEmptyStringSchema,
+  content: z.any().refine(val => val !== null && val !== undefined, "Block content is required"),
+  paragraph_id: uuidSchema.optional().nullable(),
+  assignment_id: uuidSchema.optional().nullable(),
+  position: z.number().int().nonnegative().optional()
+});
+
+// ============================================
+// GRADING
+// ============================================
+
+export const gradeSubmissionSchema = z.object({
+  rubricScores: z.array(z.object({
+    rubric_item_id: uuidSchema,
+    score: z.number(),
+    feedback: z.string().optional().nullable()
+  })).optional().nullable(),
+  feedback: z.string().optional().nullable()
+});
+
+// ============================================
+// ATTENDANCE
+// ============================================
+
+export const markAttendanceSchema = z.object({
+  sessionId: uuidSchema,
+  studentId: uuidSchema,
+  status: z.enum(['present', 'absent', 'late', 'excused']),
+  notes: z.string().optional().nullable()
 });
 
 export const updateAssignmentSchema = z.object({
@@ -105,17 +149,6 @@ export const toggleAssignmentCompletedSchema = z.object({
   completed: z.boolean()
 });
 
-// ============================================
-// BLOCKS
-// ============================================
-
-export const createBlockSchema = z.object({
-  assignment_id: uuidSchema,
-  paragraph_id: uuidSchema.optional().nullable(),
-  type: z.enum(['multiple_choice', 'true_false', 'short_answer', 'essay', 'matching', 'fill_blank']),
-  position: z.number().nonnegative(),
-  data: z.record(z.any()), // Block-specific data (questions, options, etc.)
-});
 
 export const updateBlockSchema = z.object({
   type: z.enum(['multiple_choice', 'true_false', 'short_answer', 'essay', 'matching', 'fill_blank']).optional(),
@@ -140,11 +173,6 @@ export const createSubmissionSchema = z.object({
   }))
 });
 
-export const gradeSubmissionSchema = z.object({
-  grade: z.number().min(0).max(100).optional().nullable(),
-  feedback: z.string().optional().nullable(),
-  status: z.enum(['draft', 'submitted', 'graded']).optional()
-});
 
 // ============================================
 // CLASS MEMBERS
@@ -153,6 +181,46 @@ export const gradeSubmissionSchema = z.object({
 export const addClassMemberSchema = z.object({
   user_id: uuidSchema,
   role: z.enum(['student', 'ta']).default('student')
+});
+
+// ============================================
+// CLASS JOIN
+// ============================================
+
+export const joinClassSchema = z.object({
+  class_code: nonEmptyStringSchema
+});
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+export const createNotificationSchema = z.object({
+  type: z.string().min(1, "Notification type is required"),
+  title: nonEmptyStringSchema,
+  message: nonEmptyStringSchema,
+  data: z.record(z.any()).optional().default({}),
+  user_id: uuidSchema.optional().nullable(),
+  expires_at: z.string().datetime().optional().nullable()
+});
+
+export const markNotificationReadSchema = z.object({
+  notification_ids: z.array(uuidSchema).optional().default([]),
+  mark_all: z.boolean().default(false)
+});
+
+export const notificationPreferencesSchema = z.object({
+  announcement: z.boolean().default(true),
+  submission_graded: z.boolean().default(true),
+  assignment_due: z.boolean().default(true),
+  assignment_created: z.boolean().default(true),
+  class_invitation: z.boolean().default(true),
+  ai_content_generated: z.boolean().default(true),
+  ai_grading_completed: z.boolean().default(true),
+  comment_added: z.boolean().default(true),
+  deadline_reminder: z.boolean().default(true),
+  email_enabled: z.boolean().default(true),
+  push_enabled: z.boolean().default(true)
 });
 
 // ============================================
@@ -172,6 +240,27 @@ export const updatePersonalTaskSchema = z.object({
   due_date: z.string().datetime().optional().nullable(),
   subject: z.string().optional().nullable(),
   completed: z.boolean().optional()
+});
+
+export const bulkClassesSchema = z.object({
+  action: z.enum([
+    'archive',
+    'unarchive',
+    'delete',
+    'update',
+    'duplicate'
+  ]),
+  class_ids: z.array(uuidSchema).min(1, "At least one class ID is required"),
+  data: z.record(z.any()).optional().nullable()
+});
+
+export const createClassSubjectSchema = z.object({
+  title: nonEmptyStringSchema,
+  description: z.string().optional().nullable(),
+  class_label: z.string().optional().nullable(),
+  cover_type: z.string().optional().nullable(),
+  cover_image_url: z.string().url().optional().nullable(),
+  ai_icon_seed: z.string().optional().nullable()
 });
 
 // ============================================

@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
+
+import { createChapterSchema } from '@/lib/validation/schemas'
+import { validateBody } from '@/lib/validation/validate'
 
 import type { Database } from '@/lib/supabase/database.types'
 
@@ -89,12 +92,20 @@ export async function GET(
 
 // POST /api/classes/[classId]/chapters - Create a new chapter under a subject
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
     const resolvedParams = await params
     const classId = resolvedParams.classId
+
+    // Validate request body
+    const validation = await validateBody(request, createChapterSchema);
+    if ('error' in validation) {
+      return validation.error;
+    }
+    const { title, subject_id } = validation.data;
+
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
@@ -118,8 +129,6 @@ export async function POST(
     if (classCheck.user_id !== user.id) {
       return NextResponse.json({ error: 'Only class owners can create chapters' }, { status: 403 })
     }
-
-    const { title, subject_id } = await request.json()
 
     if (!title || !title.trim()) {
       return NextResponse.json({ error: 'Chapter title is required' }, { status: 400 })

@@ -1,9 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 
-export async function POST(request: Request) {
+import { markAttendanceSchema } from '@/lib/validation/schemas'
+import { validateBody } from '@/lib/validation/validate'
+
+export async function POST(request: NextRequest) {
   try {
+    // Validate request body
+    const validation = await validateBody(request, markAttendanceSchema);
+    if ('error' in validation) {
+      return validation.error;
+    }
+    const { sessionId, studentId, status, notes } = validation.data;
+
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
@@ -12,8 +22,6 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const { sessionId, studentId, status, notes } = await request.json()
 
     // For students marking their own attendance, verify the session is active
     // For teachers, allow marking any student's attendance

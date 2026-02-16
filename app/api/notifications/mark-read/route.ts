@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
+import { markNotificationReadSchema, validateBody } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 

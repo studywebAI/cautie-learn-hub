@@ -1,6 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
+
+import { createBlockSchema } from '@/lib/validation/schemas'
+import { validateBody } from '@/lib/validation/validate'
+
 
 export const dynamic = 'force-dynamic'
 
@@ -44,18 +48,22 @@ export async function GET(request: Request) {
 }
 
 // POST create a new block (standalone endpoint - can link to paragraph or assignment)
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Validate request body
+    const validation = await validateBody(request, createBlockSchema);
+    if ('error' in validation) {
+      return validation.error;
+    }
+    const { type, data: blockData, paragraph_id, assignment_id, position } = validation.data;
+
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
-    const json = await request.json()
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const { type, data: blockData, paragraph_id, assignment_id, position } = json
 
     if (!type || !blockData) {
       return NextResponse.json({ error: 'Missing required fields: type and data' }, { status: 400 })

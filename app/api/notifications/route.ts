@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
+import { createNotificationSchema, validateBody } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,7 +45,7 @@ export async function GET(request: Request) {
 }
 
 // POST create notification (admin/system use)
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore)
 
@@ -53,7 +54,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { type, title, message, data, user_id, expires_at } = await request.json()
+  // Validate request body
+  const validation = await validateBody(request, createNotificationSchema)
+  if ('error' in validation) {
+    return validation.error
+  }
+  const { type, title, message, data, user_id, expires_at } = validation.data
 
   // Only allow creating notifications for the current user or if admin
   // For now, allow self-notifications

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
+import { notificationPreferencesSchema, validateBody } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
 }
 
 // POST/PUT update user notification preferences
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore)
 
@@ -55,7 +56,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const preferences = await request.json()
+  // Validate request body
+  const validation = await validateBody(request, notificationPreferencesSchema)
+  if ('error' in validation) {
+    return validation.error
+  }
+  const preferences = validation.data
 
   // Try to update existing preferences
   const { data: existing, error: selectError } = await (supabase as any)

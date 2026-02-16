@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
+import { createClassSubjectSchema, validateBody } from '@/lib/validation';
 
 type SubjectCreateRequest = {
   title: string;
@@ -158,8 +159,13 @@ export async function POST(req: Request, { params }: { params: { classId: string
       return NextResponse.json({ error: 'Forbidden: You must be the class owner or a member' }, { status: 403 });
     }
 
-    const json = await req.json();
-
+    // Validate request body
+    const validation = await validateBody(req, createClassSubjectSchema)
+    if ('error' in validation) {
+      return validation.error
+    }
+    const json = validation.data
+    
     if (!json.title) {
       return NextResponse.json({
         error: 'Missing required field: title'

@@ -3,12 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Middleware helper to validate request body in API routes
- * @param request - The NextRequest object
+ * @param request - The NextRequest or Request object
  * @param schema - Zod schema to validate against
  * @returns Validated data or NextResponse with error
  */
 export async function validateBody<T>(
-  request: NextRequest,
+  request: NextRequest | Request,
   schema: import('zod').ZodSchema<T>
 ): Promise<{ data: T } | { error: NextResponse }> {
   try {
@@ -18,10 +18,10 @@ export async function validateBody<T>(
     if (!result.success) {
       return {
         error: NextResponse.json(
-          { 
-            success: false, 
-            error: 'Validation failed', 
-            details: formatValidationErrors(result.errors) 
+          {
+            success: false,
+            error: 'Validation failed',
+            details: formatValidationErrors(result.errors)
           },
           { status: 400 }
         )
@@ -32,9 +32,9 @@ export async function validateBody<T>(
   } catch (error) {
     return {
       error: NextResponse.json(
-        { 
-          success: false, 
-          error: 'Invalid JSON body' 
+        {
+          success: false,
+          error: 'Invalid JSON body'
         },
         { status: 400 }
       )

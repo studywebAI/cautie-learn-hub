@@ -1,10 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
+import { bulkClassesSchema, validateBody } from '@/lib/validation'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { action, classIds, data } = await request.json()
+    // Validate request body
+    const validation = await validateBody(request, bulkClassesSchema)
+    if ('error' in validation) {
+      return validation.error
+    }
+    const { action, class_ids: classIds, data } = validation.data
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 

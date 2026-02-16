@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
+
+import { joinClassSchema } from '@/lib/validation/schemas'
+import { validateBody } from '@/lib/validation/validate'
 
 import type { Database } from '@/lib/supabase/database.types'
 
@@ -31,8 +34,13 @@ export async function GET(request: Request) {
 }
 
 // POST to join a class
-export async function POST(request: Request) {
-  const { class_code } = await request.json();
+export async function POST(request: NextRequest) {
+  // Validate request body
+  const validation = await validateBody(request, joinClassSchema);
+  if ('error' in validation) {
+    return validation.error;
+  }
+  const { class_code } = validation.data;
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
   
