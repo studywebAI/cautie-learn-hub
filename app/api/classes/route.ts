@@ -1,12 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+
+import { createClassSchema } from '@/lib/validation/schemas'
+import { validateBody } from '@/lib/validation/validate'
 
 import type { Database } from '@/lib/supabase/database.types'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const startTime = Date.now();
   const requestId = Math.random().toString(36).substring(7);
 
@@ -223,14 +226,20 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const startTime = Date.now();
   const requestId = Math.random().toString(36).substring(7);
 
   console.log(`[${requestId}] POST /api/classes - Started at ${new Date().toISOString()}`);
 
   try {
-    const { name, description, guestId } = await request.json();
+    // Validate request body
+    const validation = await validateBody(request, createClassSchema);
+    if ('error' in validation) {
+      return validation.error;
+    }
+    const { name, description } = validation.data;
+    const guestId = undefined; // Not used in schema, but kept for backward compatibility
 
     console.log(`[${requestId}] POST /api/classes - Request payload:`, {
       name: name?.substring(0, 50) || 'undefined',

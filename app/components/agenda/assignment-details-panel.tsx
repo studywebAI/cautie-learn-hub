@@ -119,27 +119,19 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
       {/* Assignment Header */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3 flex-1">
-              <div className={`flex-shrink-0 w-10 h-10 rounded-lg ${typeStyle.bgColor} flex items-center justify-center border-2`} style={{ borderColor: typeStyle.borderColor }}>
-                <IconComponent className={`h-5 w-5 ${typeStyle.iconColor}`} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <CardTitle className="text-lg truncate">{event.title}</CardTitle>
-                <CardDescription className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline">{typeStyle.label}</Badge>
-                  <span className="text-xs">
-                    Due: {format(event.date, 'PPP')}
-                  </span>
-                </CardDescription>
-              </div>
+          <div className="flex items-start gap-3">
+            <div className={`flex-shrink-0 w-10 h-10 rounded-lg ${typeStyle.bgColor} flex items-center justify-center border-2`} style={{ borderColor: typeStyle.borderColor }}>
+              <IconComponent className={`h-5 w-5 ${typeStyle.iconColor}`} />
             </div>
-            {isTeacher && (
-              <Button variant="outline" size="sm" onClick={handleEdit}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            )}
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-lg truncate">{event.title}</CardTitle>
+              <CardDescription className="flex items-center gap-2 mt-1">
+                <Badge variant="outline">{typeStyle.label}</Badge>
+                <span className="text-xs">
+                  Due: {format(event.date, 'PPP')}
+                </span>
+              </CardDescription>
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -185,11 +177,11 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
                   <Pencil className="h-4 w-4 mr-2" />
                   Edit Assignment
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => router.push(`/class/${event.href.replace('/class/', '')}/assignments/${event.id}/submissions`)}>
                   <FileText className="h-4 w-4 mr-2" />
                   View Submissions
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => router.push(`/class/${event.href.replace('/class/', '')}/assignments/${event.id}/link-content`)}>
                   <BookOpen className="h-4 w-4 mr-2" />
                   Link Content
                 </Button>

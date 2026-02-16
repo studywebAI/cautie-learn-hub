@@ -104,7 +104,7 @@ export async function GET(request: Request) {
           .select(`
             id,
             name,
-            subjects!inner(
+            subjects!subjects_class_id_fkey(
               chapters(
                 paragraphs(
                   assignments(*)
@@ -221,7 +221,7 @@ export async function GET(request: Request) {
           .select(`
             id,
             name,
-            subjects(
+            subjects!subjects_class_id_fkey(
               chapters(
                 paragraphs(
                   assignments(*)

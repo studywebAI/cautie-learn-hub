@@ -51,12 +51,19 @@ export async function GET(
     }
 
     // Get chapters that belong to subjects in this class (hierarchical schema)
+    // Include paragraphs in the same query to avoid N+1 problem
     const { data: chapters, error } = await supabase
       .from('chapters')
       .select(`
         *,
         subjects!inner(
           class_id
+        ),
+        paragraphs(
+          id,
+          title,
+          paragraph_number,
+          content
         )
       `)
       .eq('subjects.class_id', classId)
@@ -67,7 +74,13 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch chapters' }, { status: 500 })
     }
 
-    return NextResponse.json({ chapters: chapters || [] })
+    // Transform data to include paragraphs array directly on each chapter
+    const chaptersWithParagraphs = (chapters || []).map((chapter: any) => ({
+      ...chapter,
+      paragraphs: chapter.paragraphs || []
+    }))
+
+    return NextResponse.json({ chapters: chaptersWithParagraphs })
   } catch (err) {
     console.error('Unexpected error in chapters GET:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
