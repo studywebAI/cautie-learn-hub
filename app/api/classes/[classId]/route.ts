@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import type { Database } from '@/lib/supabase/database.types'
+import { getClassPermission, logAuditEntry } from '@/lib/auth/class-permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,55 +15,30 @@ export async function GET(
   const resolvedParams = await params;
   const classId = resolvedParams.classId;
   const cookieStore = await cookies()
-  // No need for admin client here, public info is fine
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set(name, value, options)
-        },
-        remove(name: string, options: any) {
-          cookieStore.set(name, '', { ...options, maxAge: 0 })
-        }
+        get(name: string) { return cookieStore.get(name)?.value },
+        set(name: string, value: string, options: any) { cookieStore.set(name, value, options) },
+        remove(name: string, options: any) { cookieStore.set(name, '', { ...options, maxAge: 0 }) }
       }
     }
   );
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   let selectFields = 'id, name, description';
 
-  // If user is authenticated, check if they're the owner or member and include join_code
   if (user) {
-    const { data: ownershipData } = await supabase
-      .from('classes')
-      .select('owner_id')
-      .eq('id', classId)
-      .single();
-
-    const isOwner = ownershipData?.owner_id === user.id;
-
-    if (!isOwner) {
-      // Check if user is a member
-      const { data: memberData } = await supabase
-        .from('class_members')
-        .select()
-        .eq('class_id', classId)
-        .eq('user_id', user.id)
-        .single();
-
-      if (memberData) {
-        // User is a member, include join_code
-        selectFields += ', join_code';
-      }
-    } else {
-      // User is owner, include join_code
+    const perm = await getClassPermission(supabase, classId, user.id);
+    if (perm.isMember) {
       selectFields += ', join_code';
+      // Teachers can also see the teacher_join_code
+      if (perm.isTeacher) {
+        selectFields += ', teacher_join_code';
+      }
     }
   }
 
@@ -73,14 +49,13 @@ export async function GET(
     .single();
 
   if (error) {
-    console.error(`Error fetching class ${classId}:`, error);
     return NextResponse.json({ error: 'Class not found.' }, { status: 404 });
   }
 
   return NextResponse.json({ class: classData });
 }
 
-// DELETE - Archive a class (set status to 'archived')
+// DELETE - Archive a class (any teacher can do this)
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
@@ -94,15 +69,9 @@ export async function DELETE(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set(name, value, options)
-        },
-        remove(name: string, options: any) {
-          cookieStore.set(name, '', { ...options, maxAge: 0 })
-        }
+        get(name: string) { return cookieStore.get(name)?.value },
+        set(name: string, value: string, options: any) { cookieStore.set(name, value, options) },
+        remove(name: string, options: any) { cookieStore.set(name, '', { ...options, maxAge: 0 }) }
       }
     }
   );
@@ -113,31 +82,28 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Check if user is the owner of the class
-  const { data: classData, error: classError } = await supabase
-    .from('classes')
-    .select('owner_id')
-    .eq('id', classId)
-    .single();
-
-  if (classError || !classData) {
-    return NextResponse.json({ error: 'Class not found' }, { status: 404 });
+  // Any teacher in the class can archive it
+  const perm = await getClassPermission(supabase, classId, user.id);
+  if (!perm.isTeacher) {
+    return NextResponse.json({ error: 'Only teachers can archive this class' }, { status: 403 });
   }
 
-  if (classData.owner_id !== user.id) {
-    return NextResponse.json({ error: 'Only the class owner can archive this class' }, { status: 403 });
-  }
-
-  // Archive the class by setting status to 'archived'
   const { error: updateError } = await supabase
     .from('classes')
     .update({ status: 'archived' })
     .eq('id', classId);
 
   if (updateError) {
-    console.error('Error archiving class:', updateError);
     return NextResponse.json({ error: 'Failed to archive class' }, { status: 500 });
   }
+
+  await logAuditEntry(supabase, {
+    userId: user.id,
+    classId,
+    action: 'archive',
+    entityType: 'class',
+    entityId: classId
+  });
 
   return NextResponse.json({ message: 'Class archived successfully' });
 }

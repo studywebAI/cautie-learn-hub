@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
+import { getClassPermission } from '@/lib/auth/class-permissions';
 
 export async function GET(
   request: NextRequest,
@@ -10,67 +11,33 @@ export async function GET(
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { materialId } = await params;
 
-    const resolvedParams = await params;
-    const materialId = resolvedParams.materialId;
-
-    // Check if user has access to the material
     const { data: material, error: materialError } = await supabase
       .from('materials')
       .select('id, class_id, user_id')
       .eq('id', materialId)
       .single();
 
-    if (materialError || !material) {
-      return NextResponse.json({ error: 'Material not found' }, { status: 404 });
-    }
+    if (materialError || !material) return NextResponse.json({ error: 'Material not found' }, { status: 404 });
 
-    // Authorization: check if user is member of the class or owner
-    let hasAccess = false;
+    // Auth: class material = any member, personal = owner only
     if (material.class_id) {
-      const { data: classData } = await supabase
-        .from('classes')
-        .select('owner_id')
-        .eq('id', material.class_id)
-        .single();
-
-      if (classData?.owner_id === user.id) {
-        hasAccess = true;
-      } else {
-        const { count } = await supabase
-          .from('class_members')
-          .select('*', { count: 'exact', head: true })
-          .eq('class_id', material.class_id)
-          .eq('user_id', user.id);
-
-        if (count && count > 0) {
-          hasAccess = true;
-        }
-      }
-    } else if (material.user_id === user.id) {
-      hasAccess = true;
-    }
-
-    if (!hasAccess) {
+      const perm = await getClassPermission(supabase, material.class_id as string, user.id);
+      if (!perm.isMember) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    } else if ((material as any).user_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Get blocks for the material
     const { data: blocks, error: blocksError } = await supabase
       .from('blocks')
       .select('*')
       .eq('material_id', materialId)
       .order('position', { ascending: true });
 
-    if (blocksError) {
-      console.error('Error fetching blocks:', blocksError);
-      return NextResponse.json({ error: 'Failed to fetch blocks' }, { status: 500 });
-    }
-
+    if (blocksError) return NextResponse.json({ error: 'Failed to fetch blocks' }, { status: 500 });
     return NextResponse.json({ blocks });
   } catch (error) {
     console.error('Blocks GET error:', error);
@@ -86,58 +53,28 @@ export async function POST(
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const resolvedParams = await params;
-    const materialId = resolvedParams.materialId;
+    const { materialId } = await params;
     const body = await request.json();
     const { data: content, type, position, locked, show_feedback, ai_grading_override } = body;
 
-    // Check if user has access to the material
     const { data: material, error: materialError } = await supabase
       .from('materials')
       .select('id, class_id, user_id')
       .eq('id', materialId)
       .single();
 
-    if (materialError || !material) {
-      return NextResponse.json({ error: 'Material not found' }, { status: 404 });
-    }
+    if (materialError || !material) return NextResponse.json({ error: 'Material not found' }, { status: 404 });
 
-    // Authorization: check if user is member of the class or owner
-    let hasAccess = false;
+    // Auth: class material = any teacher, personal = owner only
     if (material.class_id) {
-      const { data: classData } = await supabase
-        .from('classes')
-        .select('owner_id')
-        .eq('id', material.class_id)
-        .single();
-
-      if (classData?.owner_id === user.id) {
-        hasAccess = true;
-      } else {
-        const { count } = await supabase
-          .from('class_members')
-          .select('*', { count: 'exact', head: true })
-          .eq('class_id', material.class_id)
-          .eq('user_id', user.id);
-
-        if (count && count > 0) {
-          hasAccess = true;
-        }
-      }
-    } else if (material.user_id === user.id) {
-      hasAccess = true;
-    }
-
-    if (!hasAccess) {
+      const perm = await getClassPermission(supabase, material.class_id as string, user.id);
+      if (!perm.isTeacher) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    } else if ((material as any).user_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Create the block
     const { data, error } = await (supabase as any)
       .from('blocks')
       .insert({
@@ -152,11 +89,7 @@ export async function POST(
       .select()
       .single();
 
-    if (error) {
-      console.error('Error creating block:', error);
-      return NextResponse.json({ error: 'Failed to create block' }, { status: 500 });
-    }
-
+    if (error) return NextResponse.json({ error: 'Failed to create block' }, { status: 500 });
     return NextResponse.json({ block: data });
   } catch (error) {
     console.error('Blocks POST error:', error);

@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import type { Database } from '@/lib/supabase/database.types'
+import { getClassPermission, logAuditEntry } from '@/lib/auth/class-permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,23 +19,15 @@ export async function GET(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set(name, value, options)
-        },
-        remove(name: string, options: any) {
-          cookieStore.set(name, '', { ...options, maxAge: 0 })
-        }
+        get(name: string) { return cookieStore.get(name)?.value },
+        set(name: string, value: string, options: any) { cookieStore.set(name, value, options) },
+        remove(name: string, options: any) { cookieStore.set(name, '', { ...options, maxAge: 0 }) }
       }
     }
   )
 
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: material, error } = await supabase
     .from('materials')
@@ -42,67 +35,29 @@ export async function GET(
     .eq('id', materialId)
     .single();
 
-  if (error || !material) {
-    return NextResponse.json({ error: 'Material not found' }, { status: 404 });
-  }
+  if (error || !material) return NextResponse.json({ error: 'Material not found' }, { status: 404 });
 
-  // Security Check:
-  // - Class material: user must be class owner or member
-  // - Personal material (no class_id): user must be the owner
+  // Security Check
   if (!material.class_id) {
-    const ownerId = (material as any).user_id as string | null | undefined;
-    if (!ownerId || ownerId !== session.user.id) {
+    if ((material as any).user_id !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
   } else {
-    const classId = material.class_id as string;
-
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('owner_id')
-      .eq('id', classId)
-      .single();
-
-    if (classError || !classData) {
-      return NextResponse.json({ error: 'Class not found for material' }, { status: 404 });
-    }
-
-    let isMemberOrOwner = classData.owner_id === session.user.id;
-
-    if (!isMemberOrOwner) {
-      const { count } = await supabase
-        .from('class_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('class_id', classId)
-        .eq('user_id', session.user.id);
-
-      if (count && count > 0) {
-        isMemberOrOwner = true;
-      }
-    }
-
-    if (!isMemberOrOwner) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const perm = await getClassPermission(supabase, material.class_id as string, session.user.id);
+    if (!perm.isMember) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   let content = material.content;
-
   if (material.type === 'NOTE' && material.content_id) {
-    const { data: noteContent, error: contentError } = await (supabase as any)
-      .from('notes')
-      .select('content')
-      .eq('id', material.content_id)
-      .single();
-    if (!contentError && noteContent) {
-      content = noteContent.content;
-    }
+    const { data: noteContent } = await (supabase as any)
+      .from('notes').select('content').eq('id', material.content_id).single();
+    if (noteContent) content = noteContent.content;
   }
   
   return NextResponse.json({ ...material, content });
 }
 
-// DELETE a material
+// DELETE a material (any teacher in the class can delete)
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ materialId: string }> }
@@ -115,69 +70,52 @@ export async function DELETE(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set(name, value, options)
-        },
-        remove(name: string, options: any) {
-          cookieStore.set(name, '', { ...options, maxAge: 0 })
-        }
+        get(name: string) { return cookieStore.get(name)?.value },
+        set(name: string, value: string, options: any) { cookieStore.set(name, value, options) },
+        remove(name: string, options: any) { cookieStore.set(name, '', { ...options, maxAge: 0 }) }
       }
     }
   )
 
-   const { data: { user } } = await supabase.auth.getUser();
-   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-   }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-   const { data: material, error: fetchError } = await supabase
+  const { data: material, error: fetchError } = await supabase
     .from('materials')
-     .select('class_id, user_id, content_id, type')
+    .select('class_id, user_id, content_id, type')
     .eq('id', materialId)
     .single();
 
-   if (fetchError || !material) {
-     return NextResponse.json({ error: 'Material not found' }, { status: 404 });
-   }
+  if (fetchError || !material) return NextResponse.json({ error: 'Material not found' }, { status: 404 });
 
-    // Security check:
-    // - Class material: user must be class owner
-    // - Personal material (no class_id): user must be the owner
-    if (!material.class_id) {
-      const ownerId = (material as any).user_id as string | null | undefined;
-      if (!ownerId || ownerId !== user.id) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    } else {
-      const classId = material.class_id as string;
-      const { data: classData, error: classError } = await supabase
-        .from('classes')
-        .select('owner_id')
-        .eq('id', classId)
-        .single();
-
-      if (classError || !classData || classData.owner_id !== user.id) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
+  // Security: personal material = owner only, class material = any teacher
+  if (!material.class_id) {
+    if ((material as any).user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+  } else {
+    const perm = await getClassPermission(supabase, material.class_id as string, user.id);
+    if (!perm.isTeacher) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
-   // Also delete the associated content (e.g., the note) before deleting the material
-   if (material.type === 'NOTE' && material.content_id) {
+  if (material.type === 'NOTE' && material.content_id) {
     await (supabase as any).from('notes').delete().eq('id', material.content_id);
-   }
+  }
 
-   // Delete the material entry
-   const { error: deleteMaterialError } = await supabase
-    .from('materials')
-    .delete()
-    .eq('id', materialId);
-    
-   if (deleteMaterialError) {
-    return NextResponse.json({ error: deleteMaterialError.message }, { status: 500 });
-   }
+  const { error: deleteMaterialError } = await supabase
+    .from('materials').delete().eq('id', materialId);
 
-   return NextResponse.json({ message: 'Material deleted successfully' });
+  if (deleteMaterialError) return NextResponse.json({ error: deleteMaterialError.message }, { status: 500 });
+
+  if (material.class_id) {
+    await logAuditEntry(supabase, {
+      userId: user.id,
+      classId: material.class_id as string,
+      action: 'delete',
+      entityType: 'material',
+      entityId: materialId
+    });
+  }
+
+  return NextResponse.json({ message: 'Material deleted successfully' });
 }
