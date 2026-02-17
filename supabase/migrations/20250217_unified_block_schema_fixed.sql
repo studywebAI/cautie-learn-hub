@@ -78,33 +78,39 @@ END $$;
 -- ============================================
 -- 5. ADD UNIQUE CONSTRAINT ON (assignment_id, position)
 -- ============================================
--- First, fix any duplicate positions within the same assignment
-WITH duplicates AS (
-  SELECT assignment_id, position, COUNT(*) as cnt
+-- First, ensure all blocks have a position (set default if NULL)
+UPDATE public.blocks
+SET position = 0
+WHERE position IS NULL;
+
+-- Fix duplicate positions by renumbering sequentially within each assignment
+-- This creates a unique position for every block within the same assignment
+WITH numbered_blocks AS (
+  SELECT
+    id,
+    assignment_id,
+    position,
+    ROW_NUMBER() OVER (PARTITION BY assignment_id ORDER BY created_at, id) as row_num
   FROM public.blocks
   WHERE assignment_id IS NOT NULL
-  GROUP BY assignment_id, position
-  HAVING COUNT(*) > 1
 )
 UPDATE public.blocks b
-SET position = b.position + (d.cnt - 1) * 1000
-FROM duplicates d
-WHERE b.assignment_id = d.assignment_id
-  AND b.position = d.position
-  AND b.id IN (
-    SELECT id FROM public.blocks b2
-    WHERE b2.assignment_id = d.assignment_id
-      AND b2.position = d.position
-    ORDER BY b2.created_at
-    OFFSET 1
+SET position = nb.row_num - 1
+FROM numbered_blocks nb
+WHERE b.id = nb.id
+  AND EXISTS (
+    SELECT 1 FROM public.blocks b2
+    WHERE b2.assignment_id = b.assignment_id
+      AND b2.position = b.position
+      AND b2.id <> b.id
   );
 
 -- Now add the unique constraint
-ALTER TABLE public.blocks 
+ALTER TABLE public.blocks
 DROP CONSTRAINT IF EXISTS blocks_assignment_id_position_key;
 
-ALTER TABLE public.blocks 
-ADD CONSTRAINT blocks_assignment_id_position_key 
+ALTER TABLE public.blocks
+ADD CONSTRAINT blocks_assignment_id_position_key
 UNIQUE (assignment_id, position);
 
 -- ============================================
