@@ -6,6 +6,7 @@ import { joinClassSchema } from '@/lib/validation/schemas'
 import { validateBody } from '@/lib/validation/validate'
 
 import type { Database } from '@/lib/supabase/database.types'
+import { logAuditEntry } from '@/lib/auth/class-permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,10 +21,11 @@ export async function GET(request: Request) {
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
 
+  // Check both student join_code and teacher join_code
   const { data: classData, error: classError } = await supabase
     .from('classes')
-    .select('id, name, description, user_id')
-    .eq('join_code', code)
+    .select('id, name, description')
+    .or(`join_code.eq.${code},teacher_join_code.eq.${code}`)
     .single();
 
   if (classError || !classData) {
@@ -35,7 +37,6 @@ export async function GET(request: Request) {
 
 // POST to join a class
 export async function POST(request: NextRequest) {
-  // Validate request body
   const validation = await validateBody(request, joinClassSchema);
   if ('error' in validation) {
     return validation.error;
@@ -50,26 +51,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // 1. Verify class exists with the join code
+  // Check if code matches student join_code or teacher join_code
   const { data: classData, error: classError } = await supabase
     .from('classes')
-    .select('id, user_id, owner_id, name, description')
-    .eq('join_code', class_code)
+    .select('id, name, description, join_code, teacher_join_code')
+    .or(`join_code.eq.${class_code},teacher_join_code.eq.${class_code}`)
     .single();
   
   if (classError || !classData) {
     return NextResponse.json({ error: 'Class not found. Please check the code and try again.' }, { status: 404 });
   }
 
-  // 2. Check if user is the owner (can't join their own class as a student)
-  // Check both owner_id and user_id since either could identify the owner
-  const isOwner = classData.user_id === user.id || (classData as any).owner_id === user.id;
-  if (isOwner) {
-    return NextResponse.json({ error: 'You are the owner of this class and cannot join it as a student.' }, { status: 400 });
-  }
+  // Determine role based on which code was used
+  const isTeacherCode = classData.teacher_join_code === class_code;
+  const role = isTeacherCode ? 'teacher' : 'student';
 
-  // 3. Check if user is already a member
-  const { data: memberData, error: memberError } = await supabase
+  // Check if user is already a member
+  const { data: memberData } = await supabase
     .from('class_members')
     .select()
     .eq('class_id', classData.id)
@@ -80,17 +78,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'You are already a member of this class.' }, { status: 400 });
   }
 
-  // 4. Insert into class_members table
+  // Insert into class_members with the determined role
   const { error: insertError } = await supabase
     .from('class_members')
-    .insert([
-      { class_id: classData.id, user_id: user.id, role: 'student' },
-    ]);
+    .insert([{ class_id: classData.id, user_id: user.id, role }]);
 
   if (insertError) {
     console.error('Error joining class:', insertError);
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ message: 'Successfully joined class', class: classData });
+  // Log audit
+  await logAuditEntry(supabase, {
+    userId: user.id,
+    classId: classData.id,
+    action: 'join',
+    entityType: 'member',
+    metadata: { role, joinMethod: isTeacherCode ? 'teacher_code' : 'student_code' }
+  });
+
+  return NextResponse.json({ 
+    message: `Successfully joined class as ${role}`, 
+    class: { id: classData.id, name: classData.name, description: classData.description },
+    role 
+  });
 }

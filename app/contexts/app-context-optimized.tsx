@@ -325,6 +325,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         user_id: null,
         guest_id: null,
         join_code: null,
+        teacher_join_code: null,
         owner_type: 'guest',
         status: null,
       };

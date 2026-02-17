@@ -448,6 +448,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           guest_id: null,
           owner_type: null,
           join_code: null,
+          teacher_join_code: null,
           status: null,
         };
         const updatedClasses = [...classes, newClass];
