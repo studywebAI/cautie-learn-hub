@@ -87,7 +87,7 @@ export async function PUT(
     if (ai_grading_override !== undefined) updateData.ai_grading_override = ai_grading_override;
     updateData.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
+    const { data: updatedBlock, error } = await supabase
       .from('blocks')
       .update(updateData)
       .eq('id', blockId)
@@ -99,7 +99,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Failed to update block' }, { status: 500 });
     }
 
-    return NextResponse.json({ block: data });
+    return NextResponse.json({ block: updatedBlock });
   } catch (error) {
     console.error('Blocks PUT error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
