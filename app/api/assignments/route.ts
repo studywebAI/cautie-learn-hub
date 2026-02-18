@@ -31,20 +31,28 @@ export async function GET(request: Request) {
     let assignments: any[] = []
 
     if (userRole === 'teacher') {
-      // Teachers see assignments from their classes' subjects
-      // Get all classes owned by the teacher
-      const { data: teacherClasses, error: classesError } = await supabase
+      // Teachers see assignments from ALL their classes (owned OR member)
+      // Get classes owned by teacher
+      const { data: ownedClasses } = await supabase
         .from('classes')
         .select('id, name')
         .eq('owner_id', user.id)
 
-      if (classesError) {
-        console.error('Error fetching teacher classes:', classesError)
-      } else if (teacherClasses && teacherClasses.length > 0) {
-        const classIds = teacherClasses.map((c: any) => c.id)
-        
-        // Fetch hierarchical assignments through classes -> subjects -> chapters -> paragraphs -> assignments
-        const { data: classesWithAssignments, error: hierarchicalError } = await supabase
+      // Get classes where teacher is a member
+      const { data: memberClasses } = await supabase
+        .from('class_members')
+        .select('class_id, classes!inner(id, name)')
+        .eq('user_id', user.id)
+        .in('role', ['teacher', 'management'])
+
+      // Combine all class IDs
+      const ownedIds = (ownedClasses || []).map((c: any) => c.id);
+      const memberIds = (memberClasses || []).map((m: any) => m.classes?.id).filter(Boolean);
+      const allClassIds = [...new Set([...ownedIds, ...memberIds])];
+
+      if (allClassIds.length > 0) {
+        // Fetch hierarchical assignments
+        const { data: classesWithAssignments } = await supabase
           .from('classes')
           .select(`
             id,
@@ -57,76 +65,50 @@ export async function GET(request: Request) {
               )
             )
           `)
-          .in('id', classIds);
+          .in('id', allClassIds);
 
-        if (hierarchicalError) {
-          console.error('Error fetching hierarchical assignments for teacher:', hierarchicalError);
-        } else {
-          const hierarchical = (classesWithAssignments || []).flatMap((cls: any) =>
-            (cls.subjects || []).flatMap((subject: any) =>
-              (subject.chapters || []).flatMap((chapter: any) =>
-                (chapter.paragraphs || []).flatMap((paragraph: any) =>
-                  (paragraph.assignments || []).map((assignment: any) => ({
-                    ...assignment,
-                    class_id: cls.id,
-                    class_name: cls.name,
-                    chapter_id: chapter.id,
-                  }))
-                ) || []
+        const hierarchical = (classesWithAssignments || []).flatMap((cls: any) =>
+          (cls.subjects || []).flatMap((subject: any) =>
+            (subject.chapters || []).flatMap((chapter: any) =>
+              (chapter.paragraphs || []).flatMap((paragraph: any) =>
+                (paragraph.assignments || []).map((assignment: any) => ({
+                  ...assignment,
+                  class_id: cls.id,
+                  class_name: cls.name,
+                  chapter_id: chapter.id,
+                }))
               ) || []
             ) || []
-          );
-          assignments = [...assignments, ...hierarchical];
-        }
+          ) || []
+        );
+        assignments = [...assignments, ...hierarchical];
 
-        // Fetch direct class assignments (paragraph_id is null)
-        const { data: directAssignments, error: directError } = await supabase
+        // Fetch direct class assignments
+        const { data: directAssignments } = await supabase
           .from('assignments')
-          .select(`
-            *,
-            classes!inner(
-              id,
-              name
-            )
-          `)
-          .in('class_id', classIds)
+          .select(`*, classes!inner(id, name)`)
+          .in('class_id', allClassIds)
           .is('paragraph_id', null);
 
-        if (directError) {
-          console.error('Error fetching direct assignments for teacher:', directError);
-        } else {
-          const processedDirect = (directAssignments || []).map((assignment: any) => ({
-            ...assignment,
-            class_id: assignment.classes?.id,
-            class_name: assignment.classes?.name,
-          }));
-          assignments = [...assignments, ...processedDirect];
-        }
-
-        // Sort combined assignments by scheduled_start_at
-        assignments.sort((a, b) => {
-          const dateA = a.scheduled_start_at ? new Date(a.scheduled_start_at).getTime() : Infinity;
-          const dateB = b.scheduled_start_at ? new Date(b.scheduled_start_at).getTime() : Infinity;
-          return dateA - dateB;
-        });
-
-        // Removed debug logs
+        const processedDirect = (directAssignments || []).map((a: any) => ({
+          ...a,
+          class_id: a.classes?.id,
+          class_name: a.classes?.name,
+        }));
+        assignments = [...assignments, ...processedDirect];
       }
     } else {
       // Students see assignments from classes they're members of
-      // First get the classes the student is a member of
-      const { data: classMembers, error: membersError } = await supabase
+      const { data: classMembers } = await supabase
         .from('class_members')
         .select('class_id')
         .eq('user_id', user.id)
 
-      if (membersError) {
-        console.error('Error fetching student class members:', membersError)
-      } else if (classMembers && classMembers.length > 0) {
-        const studentClassIds = classMembers.map((cm: any) => cm.class_id)
-        
-        // Fetch classes with full details including subjects, chapters, paragraphs, and assignments
-        const { data: classesWithAssignments, error: hierarchicalError } = await supabase
+      const studentClassIds = (classMembers || []).map((cm: any) => cm.class_id)
+
+      if (studentClassIds.length > 0) {
+        // Fetch hierarchical assignments
+        const { data: classesWithAssignments } = await supabase
           .from('classes')
           .select(`
             id,
@@ -141,62 +123,44 @@ export async function GET(request: Request) {
           `)
           .in('id', studentClassIds);
 
-        if (hierarchicalError) {
-          console.error('Error fetching hierarchical assignments for student:', hierarchicalError);
-        } else {
-          const hierarchical = (classesWithAssignments || []).flatMap((cls: any) =>
-            (cls.subjects || []).flatMap((subject: any) =>
-              (subject.chapters || []).flatMap((chapter: any) =>
-                (chapter.paragraphs || []).flatMap((paragraph: any) =>
-                  (paragraph.assignments || []).map((assignment: any) => ({
-                    ...assignment,
-                    class_id: cls.id,
-                    class_name: cls.name,
-                    chapter_id: chapter.id,
-                  }))
-                ) || []
+        const hierarchical = (classesWithAssignments || []).flatMap((cls: any) =>
+          (cls.subjects || []).flatMap((subject: any) =>
+            (subject.chapters || []).flatMap((chapter: any) =>
+              (chapter.paragraphs || []).flatMap((paragraph: any) =>
+                (paragraph.assignments || []).map((assignment: any) => ({
+                  ...assignment,
+                  class_id: cls.id,
+                  class_name: cls.name,
+                  chapter_id: chapter.id,
+                }))
               ) || []
             ) || []
-          );
-          assignments = [...assignments, ...hierarchical];
-        }
+          ) || []
+        );
+        assignments = [...assignments, ...hierarchical];
 
-        // Fetch direct class assignments (paragraph_id is null)
-        const { data: directAssignments, error: directError } = await supabase
+        // Fetch direct class assignments
+        const { data: directAssignments } = await supabase
           .from('assignments')
-          .select(`
-            *,
-            classes!inner(
-              id,
-              name
-            )
-          `)
+          .select(`*, classes!inner(id, name)`)
           .in('class_id', studentClassIds)
           .is('paragraph_id', null);
 
-        if (directError) {
-          console.error('Error fetching direct class assignments for student:', directError);
-        } else {
-          const processedDirect = (directAssignments || []).map((assignment: any) => ({
-            ...assignment,
-            class_id: assignment.classes?.id,
-            class_name: assignment.classes?.name,
-          }));
-          assignments = [...assignments, ...processedDirect];
-        }
-
-        // Sort combined assignments by scheduled_start_at
-        assignments.sort((a, b) => {
-          const dateA = a.scheduled_start_at ? new Date(a.scheduled_start_at).getTime() : Infinity;
-          const dateB = b.scheduled_start_at ? new Date(b.scheduled_start_at).getTime() : Infinity;
-          return dateA - dateB;
-        });
-      } else {
-        console.log('Student is not a member of any classes')
+        const processedDirect = (directAssignments || []).map((a: any) => ({
+          ...a,
+          class_id: a.classes?.id,
+          class_name: a.classes?.name,
+        }));
+        assignments = [...assignments, ...processedDirect];
       }
     }
 
-    // Removed debug logs
+    // Sort by scheduled_start_at
+    assignments.sort((a, b) => {
+      const dateA = a.scheduled_start_at ? new Date(a.scheduled_start_at).getTime() : Infinity;
+      const dateB = b.scheduled_start_at ? new Date(b.scheduled_start_at).getTime() : Infinity;
+      return dateA - dateB;
+    });
 
     return NextResponse.json(assignments)
   } catch (error) {
@@ -205,10 +169,9 @@ export async function GET(request: Request) {
   }
 }
 
-// POST create a new assignment (also supports linking to existing paragraphs/blocks)
+// POST create a new assignment
 export async function POST(request: NextRequest) {
   try {
-    // Validate request body
     const validation = await validateBody(request, createAssignmentSchema);
     if ('error' in validation) {
       return validation.error;
@@ -218,13 +181,11 @@ export async function POST(request: NextRequest) {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
-    // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user role
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
@@ -233,14 +194,10 @@ export async function POST(request: NextRequest) {
 
     const userRole = profile?.role || 'student'
 
-    // Allow assignment creation if:
-    // 1. User is a teacher and creating for their own content
-    // 2. User provides paragraph_id and has access through class membership
     if (userRole !== 'teacher') {
       return NextResponse.json({ error: 'Only teachers can create assignments' }, { status: 403 })
     }
 
-    // Verify paragraph exists and user has access
     if (paragraph_id) {
       const { data: paragraph } = await (supabase as any)
         .from('paragraphs')
@@ -272,7 +229,6 @@ export async function POST(request: NextRequest) {
       ? (existingAssignments[0].assignment_index ?? -1) + 1
       : 0
 
-    // Create the assignment with scheduling information
     const { data: assignment, error: insertError } = await (supabase
       .from('assignments') as any)
       .insert({
@@ -282,11 +238,11 @@ export async function POST(request: NextRequest) {
         answers_enabled: answers_enabled ?? false,
         scheduled_start_at: scheduled_start_at,
         scheduled_end_at: scheduled_end_at,
-        scheduled_answer_release_at: scheduled_end_at, // Use end_at for release
+        scheduled_answer_release_at: scheduled_end_at,
         description: description,
         linked_content: linked_content,
-        type: type || 'homework', // Store the assignment type
-        class_id: class_id, // Include class_id for direct class assignments
+        type: type || 'homework',
+        class_id: class_id,
       })
       .select()
       .single()
@@ -295,7 +251,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
-    // Helper to get letter index
     const getLetterIndex = (index: number): string => {
       if (index < 26) return String.fromCharCode(97 + index);
       const first = Math.floor(index / 26) - 1;
@@ -315,4 +270,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

@@ -90,33 +90,15 @@ export type AppContextType = {
 
 export const AppContext = createContext<AppContextType | null>(null);
 
-// Helper functions for local storage..
+// Local storage helpers
 const getFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
     if (typeof window === 'undefined') return defaultValue;
     try {
         const item = window.localStorage.getItem(key);
         if (item === null) return defaultValue;
-        // For non-string types, parse JSON. For strings, just return the item.
-        if (typeof defaultValue === 'string') {
-            return item as T;
-        }
-        const parsed = JSON.parse(item) as T;
-        // Ensure arrays are arrays
-        if (Array.isArray(defaultValue) && !Array.isArray(parsed)) {
-            console.warn(`Corrupted localStorage data for key "${key}", resetting to default`);
-            return defaultValue;
-        }
-        return parsed;
-    } catch (error) {
-        // If parsing fails, it's likely a plain string that shouldn't have been parsed.
-        // This is a recovery mechanism from the previous bug.a
-        const item = window.localStorage.getItem(key);
-        if (item) {
-          return item as T;
-        }
-        console.error(`Error reading from localStorage key "${key}":`, error);
-        return defaultValue;
-    }
+        if (typeof defaultValue === 'string') return item as T;
+        return JSON.parse(item) as T;
+    } catch { return defaultValue; }
 };
 
 const saveToLocalStorage = <T,>(key: string, value: T) => {
@@ -124,27 +106,20 @@ const saveToLocalStorage = <T,>(key: string, value: T) => {
     try {
         const itemToSave = typeof value === 'string' ? value : JSON.stringify(value);
         window.localStorage.setItem(key, itemToSave);
-    } catch (error) {
-        console.error(`Error saving to localStorage key "${key}":`, error);
-    }
+    } catch {}
 };
 
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
   const [language, setLanguageState] = useState<Locale>('en');
   const [dictionary, setDictionary] = useState<Dictionary>(() => getDictionary(language));
   const [role, setRoleState] = useState<UserRole>('student');
   const [highContrast, setHighContrastState] = useState(false);
   const [dyslexiaFont, setDyslexiaFontState] = useState(false);
   const [reducedMotion, setReducedMotionState] = useState(false);
-
-  // Theme state
   const [theme, setThemeState] = useState<ThemeType>('light');
-
   const [sessionRecap, setSessionRecap] = useState<SessionRecapData | null>(null);
-
   const [classes, setClasses] = useState<ClassInfo[]>([]);
   const [subjects, setSubjects] = useState<DashboardSubject[]>([]);
   const [assignments, setAssignments] = useState<ClassAssignment[]>([]);
@@ -153,605 +128,246 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [materials, setMaterials] = useState<MaterialReference[]>([]);
   const [isCreatingClass, setIsCreatingClass] = useState(false);
   const [isSyncingData, setIsSyncingData] = useState(false);
-
-  // Track previous session state to detect login
-  const [prevSession, setPrevSession] = useState<Session | null>(session);
-
-  // CRITICAL FIX: Memoize supabase client to prevent infinite re-renders
-  // Creating a new client on every render causes useEffect dependencies to change
+  const [prevSession, setPrevSession] = useState<Session | null>(null);
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
 
-  // Apply theme to document
   const applyTheme = useCallback((currentTheme: ThemeType) => {
     if (typeof window === 'undefined') return;
-
     const root = document.documentElement;
-
-    // Remove all theme classes
     root.classList.remove('theme-light', 'theme-dark', 'theme-ocean');
-
-    // Apply theme class
     root.classList.add(`theme-${currentTheme}`);
   }, []);
 
-  // Initialize session on mount
+  // Initialize session
   useEffect(() => {
     const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setIsLoading(false);
     };
-
     getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setIsLoading(false);
-      }
-    );
-
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setIsLoading(false);
+    });
     return () => subscription.unsubscribe();
   }, []);
 
-  const syncLocalDataToSupabase = useCallback(async () => {
-    // Prevent multiple simultaneous sync operations
-    if (isSyncingData) {
-      console.warn('Data sync already in progress, ignoring duplicate request');
-      return;
-    }
-
-    console.log("Starting data sync to Supabase...");
-    setIsSyncingData(true);
-
-    const localClasses = getFromLocalStorage<ClassInfo[]>('studyweb-local-classes', []);
-    const localAssignments = getFromLocalStorage<ClassAssignment[]>('studyweb-local-assignments', []);
-    const localPersonalTasks = getFromLocalStorage<PersonalTask[]>('studyweb-local-personal-tasks', []);
-
-    if (localClasses.length === 0 && localAssignments.length === 0 && localPersonalTasks.length === 0) {
-      console.log("No local data to sync.");
-      setIsSyncingData(false);
-      return; // Nothing to sync
-    }
-
-    try {
-      // Get user role before syncing
-      let userRole: UserRole = 'student';
-      if (session?.user?.id) {
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profile?.role) {
-            userRole = profile.role as UserRole;
-          }
-        } catch (roleError) {
-          console.error('Error fetching user role for sync:', roleError);
-          userRole = 'student'; // Default to student
-        }
-      }
-
-      // Sync classes - only for teachers (students join classes instead of creating them)
-      let syncedClasses: { localId: string; remoteId: string }[] = [];
-      if (userRole === 'teacher' && localClasses.length > 0) {
-        syncedClasses = await Promise.all(localClasses.map(async (cls: ClassInfo) => {
-          const response = await fetch('/api/classes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: cls.name, description: cls.description }),
-          });
-          if (!response.ok) throw new Error(`Failed to sync class: ${cls.name}`);
-          const savedClass = await response.json();
-          // Return a map from old local ID to new remote ID
-          return { localId: cls.id, remoteId: savedClass.id };
-        }));
-        console.log("Synced classes for teacher:", syncedClasses);
-      } else if (userRole === 'student' && localClasses.length > 0) {
-        console.log("Skipping class sync for student - students should join classes instead of creating them");
-      }
-
-      // Create a mapping from old local class IDs to new Supabase class IDs
-      const classIdMap = new Map(syncedClasses.map(c => [c.localId, c.remoteId]));
-
-      // Sync assignments, using the new class IDs
-      if (userRole === 'teacher' && localAssignments.length > 0) {
-        await Promise.all(localAssignments.map(async (asn: ClassAssignment) => {
-          const remoteClassId = asn.class_id ? classIdMap.get(asn.class_id) : null;
-          if (!remoteClassId) {
-            console.warn(`Skipping assignment "${asn.title}" because its class was not synced or has no class_id.`);
-            return;
-          }
-          const response = await fetch('/api/assignments', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title: asn.title,
-                class_id: remoteClassId,
-                paragraph_id: asn.paragraph_id,
-                assignment_index: asn.assignment_index,
-                answers_enabled: asn.answers_enabled,
-            }),
-          });
-          if (!response.ok) throw new Error(`Failed to sync assignment: ${asn.title}`);
-        }));
-        console.log("Synced assignments for teacher.");
-      } else if (userRole === 'student' && localAssignments.length > 0) {
-        console.log("Skipping assignment sync for student - assignments are managed by teachers");
-      }
-      console.log("Synced assignments.");
-
-      // Sync personal tasks
-      await Promise.all(localPersonalTasks.map(async (task: PersonalTask) => {
-        const response = await fetch('/api/personal-tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: task.title,
-            description: task.description,
-            // date and subject not supported in current schema
-          }),
-        });
-        if (!response.ok) throw new Error(`Failed to sync personal task: ${task.title}`);
-      }));
-      console.log("Synced personal tasks.");
-
-      // Clear local storage after sync attempt
-      // Clear classes (whether synced or skipped)
-      if (localClasses.length > 0) {
-        saveToLocalStorage('studyweb-local-classes', []);
-        console.log("Cleared local classes from storage");
-      }
-      // Clear assignments (whether synced or skipped)
-      if (localAssignments.length > 0) {
-        saveToLocalStorage('studyweb-local-assignments', []);
-        console.log("Cleared local assignments from storage");
-      }
-      // Clear personal tasks
-      if (localPersonalTasks.length > 0) {
-        saveToLocalStorage('studyweb-local-personal-tasks', []);
-        console.log("Cleared local personal tasks from storage");
-      }
-    } catch (error) {
-      console.error("Data synchronization failed:", error);
-      // Optionally, notify the user that sync failed
-    } finally {
-      setIsSyncingData(false);
-    }
-  }, [isSyncingData]);
-
+  // Fetch data with cache
   const fetchData = useCallback(async () => {
-     setIsLoading(true);
-     if (session) {
-         // User is logged in, fetch from Supabase
-
-         // Fetch all dashboard data from single endpoint
-         try {
-             const dashboardRes = await fetch('/api/dashboard');
-             if (!dashboardRes.ok) {
-               throw new Error('Failed to fetch dashboard data');
-             }
-             const dashboardData = await dashboardRes.json();
-
-             setClasses(dashboardData.classes || []);
-             setSubjects(dashboardData.subjects || []);
-             setAssignments(dashboardData.assignments || []);
-             setPersonalTasks(dashboardData.personalTasks || []);
-             setStudents(dashboardData.students || []);
-             setRoleState(dashboardData.role || 'student');
-             
-             // Don't override localStorage language with profile language
-             // The localStorage already set the language in the useEffect above
-             // Only use profile language if there's no localStorage setting
-             // (But localStorage always has a value due to default 'en', so we skip this)
-
-         } catch (error) {
-             console.error("Failed to fetch Supabase data:", error);
-             setClasses([]);
-             setSubjects([]);
-             setAssignments([]);
-             setPersonalTasks([]);
-             setStudents([]);
-             setRoleState('student');
-         }
-     } else {
-          // User is a guest, fetch from localStorage
-           try {
-               const [localClasses, localAssignments, localPersonalTasks] = await Promise.all([
-                   Promise.resolve(getFromLocalStorage<ClassInfo[]>('studyweb-local-classes', [])),
-                   Promise.resolve(getFromLocalStorage<ClassAssignment[]>('studyweb-local-assignments', [])),
-
-
-                   Promise.resolve(getFromLocalStorage<PersonalTask[]>('studyweb-local-personal-tasks', [])),
-               ]);
-               setClasses(localClasses);
-               setAssignments(localAssignments);
-               setPersonalTasks(localPersonalTasks);
-               // For guests, always use localStorage role
-               setRoleState(getFromLocalStorage('studyweb-role', 'student'));
-           } catch (error) {
-               console.error("Failed to fetch guest data:", error);
-               setRoleState('student'); // Default to student on guest data fetch failure
-           }
+    setIsLoading(true);
+    if (session) {
+      // Try cache first for instant load
+      const cached = getFromLocalStorage('studyweb-cached-dashboard', null as any);
+      if (cached) {
+        setClasses(cached.classes || []);
+        setSubjects(cached.subjects || []);
+        setAssignments(cached.assignments || []);
+        setPersonalTasks(cached.personalTasks || []);
+        setStudents(cached.students || []);
+        setRoleState(cached.role || 'student');
+        setIsLoading(false);
+        // Update cache in background
+        try {
+          const dashboardRes = await fetch('/api/dashboard');
+          if (dashboardRes.ok) {
+            const d = await dashboardRes.json();
+            setClasses(d.classes || []);
+            setSubjects(d.subjects || []);
+            setAssignments(d.assignments || []);
+            setPersonalTasks(d.personalTasks || []);
+            setStudents(d.students || []);
+            setRoleState(d.role || 'student');
+            saveToLocalStorage('studyweb-cached-dashboard', d);
+          }
+        } catch {}
+        return;
       }
-      setIsLoading(false);
-  }, [session, supabase]);
-
-  // Role sync disabled - roles managed directly in setRole and fetchData
+      // No cache - fetch fresh
+      try {
+        const dashboardRes = await fetch('/api/dashboard');
+        if (dashboardRes.ok) {
+          const d = await dashboardRes.json();
+          setClasses(d.classes || []);
+          setSubjects(d.subjects || []);
+          setAssignments(d.assignments || []);
+          setPersonalTasks(d.personalTasks || []);
+          setStudents(d.students || []);
+          setRoleState(d.role || 'student');
+          saveToLocalStorage('studyweb-cached-dashboard', d);
+        }
+      } catch {}
+    }
+    setIsLoading(false);
+  }, [session]);
 
   useEffect(() => {
-    const wasGuest = !prevSession;
-    const isLoggedInNow = !!session;
-
-    if (wasGuest && isLoggedInNow) {
-      // User has just logged in, start sync
-      syncLocalDataToSupabase().then(() => {
-        // After sync, fetch the authoritative data from Supabase
-        fetchData();
-      });
-    } else {
-      // Regular data fetch on load or session change (e.g., logout)
-      fetchData();
-    }
-
-    // Update previous session state for next render
+    fetchData();
     setPrevSession(session);
-  }, [session, prevSession, fetchData, syncLocalDataToSupabase]);
+  }, [session, fetchData]);
 
-
-  // ---- Data Creation ----
-  const createClass = useCallback(async (newClassData: { name: string; description: string | null }): Promise<ClassInfo | null> => {
-    // Prevent multiple simultaneous class creation requests
-    if (isCreatingClass) {
-      console.warn('Class creation already in progress, ignoring duplicate request');
-      return null;
-    }
-
-    setIsCreatingClass(true);
-
-    try {
-      if (session) {
-        // Check if user is a teacher before allowing class creation
-        if (role !== 'teacher') {
-          throw new Error('Only teachers can create classes. Students should join existing classes instead.');
-        }
-
-        // Logged-in teacher: save to Supabase
-        const response = await fetch('/api/classes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newClassData),
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create class in Supabase');
-        }
-        const savedClass = await response.json();
-
-        // Optimistic update: Add to local state immediately (PERFORMANCE FIX #3)
-        setClasses(prev => [...prev, savedClass]);
-
-        return savedClass;
-      } else {
-        // Guest user: save to localStorage
-        const newClass = {
-          id: `local-${Date.now()}`,
-          name: newClassData.name,
-          description: newClassData.description,
-          created_at: new Date().toISOString(),
-          owner_id: 'local-user',
-          user_id: null,
-          guest_id: null,
-          owner_type: null,
-          join_code: null,
-          teacher_join_code: null,
-          status: null,
-        };
-        const updatedClasses = [...classes, newClass];
-        setClasses(updatedClasses);
-        saveToLocalStorage('studyweb-local-classes', updatedClasses);
-        return newClass;
-      }
-    } finally {
-      setIsCreatingClass(false);
-    }
-  }, [session, classes, isCreatingClass]);
-
-  const createAssignment = useCallback(async (newAssignmentData: Omit<ClassAssignment, 'id' | 'created_at'>) => {
-     if (session) {
-        // Logged-in user: save to Supabase
-        const response = await fetch('/api/assignments', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newAssignmentData),
-        });
-        if (!response.ok) throw new Error('Failed to create assignment in Supabase');
-        await refetchAssignments();
-    } else {
-        // Guest user: save to localStorage
-        const newAssignment: ClassAssignment = {
-            id: `local-assign-${Date.now()}`,
-            created_at: new Date().toISOString(),
-            ...newAssignmentData
-        };
-        const updatedAssignments = [...assignments, newAssignment];
-        setAssignments(updatedAssignments);
-        saveToLocalStorage('studyweb-local-assignments', updatedAssignments);
-    }
-  }, [session, assignments]);
-
-  const deleteAssignment = useCallback(async (assignmentId: string) => {
-    if (session) {
-      // Logged-in user: delete from Supabase
-      const response = await fetch(`/api/assignments/${assignmentId}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Failed to delete assignment in Supabase');
-      await refetchAssignments();
-    } else {
-      // Guest user: remove from localStorage
-      const updatedAssignments = assignments.filter(a => a.id !== assignmentId);
-      setAssignments(updatedAssignments);
-      saveToLocalStorage('studyweb-local-assignments', updatedAssignments);
-    }
-  }, [session, assignments]);
-
-   const createPersonalTask = useCallback(async (newTaskData: Omit<PersonalTask, 'id' | 'created_at' | 'user_id'>) => {
-     if (session) {
-        const response = await fetch('/api/personal-tasks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newTaskData),
-        });
-        if (!response.ok) throw new Error('Failed to create personal task in Supabase');
-        const newTask = await response.json();
-        setPersonalTasks(prev => [...prev, newTask]);
-     } else {
-        const newTask: PersonalTask = {
-            id: `local-task-${Date.now()}`,
-            created_at: new Date().toISOString(),
-            user_id: 'local-user',
-            ...newTaskData
-        };
-        const updatedTasks = [...personalTasks, newTask];
-        setPersonalTasks(updatedTasks);
-        saveToLocalStorage('studyweb-local-personal-tasks', updatedTasks);
-     }
-  }, [session, personalTasks]);
-
-  const updatePersonalTask = useCallback(async (id: string, updates: Partial<PersonalTask>) => {
-     if (session) {
-        const response = await fetch(`/api/personal-tasks/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updates),
-        });
-        if (!response.ok) throw new Error('Failed to update personal task in Supabase');
-        // Update local state
-        setPersonalTasks(prev => (prev as PersonalTask[]).map((task: PersonalTask) => task.id === id ? { ...task, ...updates } as PersonalTask : task));
-     } else {
-        // Guest: update localStorage
-        const updatedTasks = personalTasks.map(task => task.id === id ? { ...task, ...updates } : task);
-        setPersonalTasks(updatedTasks);
-        saveToLocalStorage('studyweb-local-personal-tasks', updatedTasks);
-     }
-  }, [session, personalTasks]);
-
-  const refetchClasses = useCallback(async () => {
-    if (session) {
-        const res = await fetch('/api/classes');
-        if (res.ok) {
-            const data = await res.json();
-            setClasses(data || []);
-        }
-    }
-  }, [session]);
-
-  const refetchAssignments = useCallback(async () => {
-     if (session) {
-        const res = await fetch('/api/assignments');
-        if (res.ok) {
-            const data = await res.json();
-            setAssignments(data || []);
-        }
-     }
-  }, [session]);
-
-  const refetchMaterials = useCallback(async (classId: string) => {
-    if (session) {
-        const res = await fetch(`/api/materials?classId=${classId}`);
-        if (res.ok) {
-            const data = await res.json();
-            setMaterials(data || []);
-        }
-    }
-  }, [session]);
-
-  // ---- Settings and Preferences ----
+  // Settings
   useEffect(() => {
     const savedLanguage = getFromLocalStorage('studyweb-language', 'en');
     setLanguageState(savedLanguage);
     setDictionary(getDictionary(savedLanguage));
-
-    // Removed initial setRoleState from localStorage here as it will be set from Supabase profile on login
-
     const hc = getFromLocalStorage('studyweb-high-contrast', false);
     setHighContrastState(hc);
     if(hc) document.documentElement.classList.add('high-contrast');
-
     const df = getFromLocalStorage('studyweb-dyslexia-font', false);
     setDyslexiaFontState(df);
-     if(df) document.body.classList.add('font-dyslexia');
-
+    if(df) document.body.classList.add('font-dyslexia');
     const rm = getFromLocalStorage('studyweb-reduced-motion', false);
     setReducedMotionState(rm);
     if(rm) document.body.setAttribute('data-reduced-motion', 'true');
-
-    // Load theme settings
     const savedTheme = getFromLocalStorage('studyweb-theme', 'light');
-
     setThemeState(savedTheme);
-
-    // Apply theme
     applyTheme(savedTheme);
   }, [applyTheme]);
 
   const setLanguage = (newLanguage: Locale) => {
     setLanguageState(newLanguage);
     saveToLocalStorage('studyweb-language', newLanguage);
-    const newDict = getDictionary(newLanguage);
-    setDictionary(newDict);
-    
-    // Persist to Supabase if user is logged in
+    setDictionary(getDictionary(newLanguage));
     if (session?.user?.id) {
-      supabase
-        .from('profiles')
-        .update({ language: newLanguage, updated_at: new Date().toISOString() })
-        .eq('id', session.user.id)
-        .then(({ error }) => {
-          if (error) {
-            console.error('Failed to persist language to Supabase:', error.message);
-          }
-        });
+      supabase.from('profiles').update({ language: newLanguage }).eq('id', session.user.id).then(() => {});
     }
   };
 
-  // Update role - optimistic update for immediate UI response
   const setRole = (newRole: UserRole) => {
-    const previousRole = role;
-    
-    // Immediately update local state for responsive UI
     setRoleState(newRole);
     saveToLocalStorage('studyweb-role', newRole);
-    
-    console.log('Role switched:', { from: previousRole, to: newRole });
-
-    // Persist to Supabase in background using UPSERT (don't block UI)
-    // Using upsert ensures the profile is created if it doesn't exist
     if (session?.user?.id) {
-      supabase
-        .from('profiles')
-        .upsert({ 
-          id: session.user.id, 
-          role: newRole,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'id' })
-        .then(({ error }) => {
-          if (error) {
-            console.error('Failed to persist role to Supabase:', error.message, error.details, error.hint);
-            // Optionally revert on failure (commented out for better UX)
-            // setRoleState(previousRole);
-          } else {
-            console.log('Role persisted to Supabase successfully');
-          }
-        });
+      supabase.from('profiles').upsert({ id: session.user.id, role: newRole }, { onConflict: 'id' }).then(() => {});
     }
   };
 
   const setHighContrast = (enabled: boolean) => {
     setHighContrastState(enabled);
     saveToLocalStorage('studyweb-high-contrast', enabled);
-     const html = document.documentElement;
-    if (enabled) html.classList.add('high-contrast');
-    else html.classList.remove('high-contrast');
+    enabled ? document.documentElement.classList.add('high-contrast') : document.documentElement.classList.remove('high-contrast');
   };
 
   const setDyslexiaFont = (enabled: boolean) => {
     setDyslexiaFontState(enabled);
     saveToLocalStorage('studyweb-dyslexia-font', enabled);
-    const body = document.body;
-    if (enabled) body.classList.add('font-dyslexia');
-    else body.classList.remove('font-dyslexia');
+    enabled ? document.body.classList.add('font-dyslexia') : document.body.classList.remove('font-dyslexia');
   };
 
   const setReducedMotion = (enabled: boolean) => {
     setReducedMotionState(enabled);
     saveToLocalStorage('studyweb-reduced-motion', enabled);
-     const body = document.body;
-    if (enabled) body.setAttribute('data-reduced-motion', 'true');
-    else body.removeAttribute('data-reduced-motion');
+    enabled ? document.body.setAttribute('data-reduced-motion', 'true') : document.body.removeAttribute('data-reduced-motion');
   };
 
-  // Theme setters
   const setTheme = (newTheme: ThemeType) => {
     setThemeState(newTheme);
     saveToLocalStorage('studyweb-theme', newTheme);
     applyTheme(newTheme);
   };
 
+  const refetchClasses = useCallback(async () => {
+    if (session) {
+      const res = await fetch('/api/classes');
+      if (res.ok) {
+        const data = await res.json();
+        setClasses(data || []);
+      }
+    }
+  }, [session]);
 
-  const contextValue = useMemo<AppContextType>(() => ({
-    session,
-    isLoading,
-    language,
-    setLanguage,
-    dictionary,
-    role,
-    setRole,
-    highContrast,
-    setHighContrast,
-    dyslexiaFont,
-    setDyslexiaFont,
-    reducedMotion,
-    setReducedMotion,
-    theme,
-    setTheme,
-    sessionRecap,
-    setSessionRecap,
-    classes,
-    subjects,
-    createClass,
-    isCreatingClass,
-    refetchClasses,
-    assignments,
-    createAssignment,
-    deleteAssignment,
-    refetchAssignments,
-    students,
-    personalTasks,
-    createPersonalTask,
-    updatePersonalTask,
-    materials,
-    refetchMaterials,
-  }), [
-    session,
-    isLoading,
-    language,
-    dictionary,
-    role,
-    isCreatingClass,
-    highContrast,
-    dyslexiaFont,
-    reducedMotion,
-    theme,
-    sessionRecap,
-    classes,
-    subjects,
-    createClass,
-    refetchClasses,
-    assignments,
-    createAssignment,
-    deleteAssignment,
-    refetchAssignments,
-    students,
-    personalTasks,
-    createPersonalTask,
-    updatePersonalTask,
-    materials,
-    refetchMaterials,
-    setLanguage,
-    setRole,
-    setHighContrast,
-    setDyslexiaFont,
-    setReducedMotion,
-    setTheme,
-    setSessionRecap
-  ]);
+  const refetchAssignments = useCallback(async () => {
+    if (session) {
+      const res = await fetch('/api/assignments');
+      if (res.ok) {
+        const data = await res.json();
+        setAssignments(data || []);
+      }
+    }
+  }, [session]);
 
+  const createAssignment = useCallback(async (newAssignmentData: Omit<ClassAssignment, 'id' | 'created_at'>) => {
+    if (session) {
+      const response = await fetch('/api/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newAssignmentData),
+      });
+      if (!response.ok) throw new Error('Failed');
+      await refetchAssignments();
+    }
+  }, [session, refetchAssignments]);
+
+  const deleteAssignment = useCallback(async (assignmentId: string) => {
+    if (session) {
+      await fetch(`/api/assignments/${assignmentId}`, { method: 'DELETE' });
+      await refetchAssignments();
+    }
+  }, [session, refetchAssignments]);
+
+  const createPersonalTask = useCallback(async (newTaskData: Omit<PersonalTask, 'id' | 'created_at' | 'user_id'>) => {
+    if (session) {
+      const response = await fetch('/api/personal-tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTaskData),
+      });
+      if (response.ok) {
+        const newTask = await response.json();
+        setPersonalTasks(prev => [...prev, newTask]);
+      }
+    }
+  }, [session]);
+
+  const updatePersonalTask = useCallback(async (id: string, updates: Partial<PersonalTask>) => {
+    if (session) {
+      await fetch(`/api/personal-tasks/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      setPersonalTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+    }
+  }, [session]);
+
+  const createClass = useCallback(async (newClassData: { name: string; description: string | null }): Promise<ClassInfo | null> => {
+    if (isCreatingClass) return null;
+    setIsCreatingClass(true);
+    try {
+      if (session && role === 'teacher') {
+        const response = await fetch('/api/classes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newClassData),
+        });
+        if (!response.ok) throw new Error('Failed');
+        const savedClass = await response.json();
+        setClasses(prev => [...prev, savedClass]);
+        return savedClass;
+      }
+      return null;
+    } finally {
+      setIsCreatingClass(false);
+    }
+  }, [session, role, isCreatingClass]);
+
+  const refetchMaterials = useCallback(async (classId: string) => {
+    if (session) {
+      const res = await fetch(`/api/materials?classId=${classId}`);
+      if (res.ok) setMaterials(await res.json());
+    }
+  }, [session]);
+
+  const contextValue = useMemo(() => ({
+    session, isLoading, language, setLanguage, dictionary, role, setRole,
+    highContrast, setHighContrast, dyslexiaFont, setDyslexiaFont,
+    reducedMotion, setReducedMotion, theme, setTheme, sessionRecap, setSessionRecap,
+    classes, subjects, createClass, isCreatingClass, refetchClasses,
+    assignments, createAssignment, deleteAssignment, refetchAssignments,
+    students, personalTasks, createPersonalTask, updatePersonalTask,
+    materials, refetchMaterials,
+  }), [session, isLoading, language, dictionary, role, highContrast, dyslexiaFont, reducedMotion, theme, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials]);
 
   return (
     <AppContext.Provider value={contextValue}>
@@ -762,8 +378,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
 export const useDictionary = () => {
   const context = useContext(AppContext);
-  if (!context) {
-    throw new Error('useDictionary must be used within an AppContextProvider');
-  }
+  if (!context) throw new Error('useDictionary must be used within AppContextProvider');
   return { dictionary: context.dictionary };
 };
