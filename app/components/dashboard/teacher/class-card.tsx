@@ -1,10 +1,9 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Users, BookCheck, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Users, BookCheck, AlertTriangle, ArrowRight, Crown } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -21,7 +20,7 @@ type ClassCardProps = {
   isBulkMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (classId: string) => void;
-  priority?: boolean; // Whether to load student data immediately
+  priority?: boolean;
 };
 
 export function ClassCard({
@@ -39,11 +38,12 @@ export function ClassCard({
   const [isLoading, setIsLoading] = useState(true);
   const hasFetchedRef = useRef(false);
 
-  // Fetch student count for this specific class
   const [studentCount, setStudentCount] = useState(0);
+  const [teacherCount, setTeacherCount] = useState(0);
+  const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
-    if (hasFetchedRef.current) return; // Prevent multiple fetches
+    if (hasFetchedRef.current) return;
 
     const fetchData = async () => {
         hasFetchedRef.current = true;
@@ -53,35 +53,34 @@ export function ClassCard({
         }
 
         try {
-            // Fetch assignments
             const assignmentsRes = await fetch(`/api/assignments`);
             const allAssignments = await assignmentsRes.json();
             setAssignments(allAssignments.filter((a: ClassAssignment) => a.class_id === classInfo.id));
 
-            // Fetch student count for this class
             const membersRes = await fetch(`/api/classes/${classInfo.id}/members`);
             if (membersRes.ok) {
                 const members = await membersRes.json();
-                setStudentCount(members.length);
-            } else {
-                console.warn(`Failed to fetch members for class ${classInfo.id}`);
-                setStudentCount(0);
+                const students = members.filter((m: any) => m.role === 'student');
+                const teachers = members.filter((m: any) => m.role === 'teacher' || m.role === 'owner' || m.role === 'management');
+                setStudentCount(students.length);
+                setTeacherCount(teachers.length);
+                
+                // Check if current user is owner
+                const currentUserId = (await fetch('/api/auth/user').then(r => r.json()))?.id;
+                const ownerMember = members.find((m: any) => m.role === 'owner');
+                setIsOwner(ownerMember?.user_id === currentUserId);
             }
         } catch (error) {
             console.error(`Failed to fetch data for class ${classInfo.id}`, error);
-            setAssignments([]);
-            setStudentCount(0);
         } finally {
             setIsLoading(false);
         }
     };
 
     if (priority) {
-      // Load immediately for priority cards
       fetchData();
     } else {
-      // Delay loading for non-priority cards to prevent overwhelming the server
-      const timer = setTimeout(fetchData, 1000); // Reduced delay
+      const timer = setTimeout(fetchData, 1000);
       return () => {
         if (!hasFetchedRef.current) {
           clearTimeout(timer);
@@ -90,14 +89,12 @@ export function ClassCard({
     }
   }, [classInfo.id, isArchived, priority]);
 
-
   const assignmentsDue = assignments.filter(a => {
     if (!a.due_date) return false;
     const dueDate = parseISO(a.due_date);
     return isFuture(dueDate) && differenceInDays(dueDate, new Date()) <= 7;
   }).length;
 
-  // Calculate actual average progress from submissions
   const [averageProgress, setAverageProgress] = useState(0);
 
   useEffect(() => {
@@ -108,7 +105,6 @@ export function ClassCard({
       }
 
       try {
-        // Get all submissions for this class's assignments
         const assignmentIds = assignments.map(a => a.id);
         if (assignmentIds.length === 0) {
           setAverageProgress(0);
@@ -127,7 +123,6 @@ export function ClassCard({
             return;
           }
 
-          // Calculate completion rate
           const totalPossible = studentCount * assignments.length;
           const completed = classSubmissions.filter((s: any) =>
             s.status === 'submitted' || s.grade !== null
@@ -138,7 +133,6 @@ export function ClassCard({
         }
       } catch (error) {
         console.error('Failed to calculate progress:', error);
-        setAverageProgress(0);
       }
     };
 
@@ -186,6 +180,12 @@ export function ClassCard({
                 <Users className="h-4 w-4" />
                 <span>{studentCount} Student{studentCount !== 1 ? 's' : ''}</span>
               </div>
+              {teacherCount > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Crown className="h-4 w-4 text-yellow-500" />
+                  <span>{teacherCount} Teacher{teacherCount !== 1 ? 's' : ''}</span>
+                </div>
+              )}
               <div
                 className="flex items-center gap-1.5 cursor-pointer hover:text-primary"
                 onClick={(e) => {
