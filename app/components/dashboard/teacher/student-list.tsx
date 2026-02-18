@@ -1,11 +1,10 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
-import { MoreVertical, User, Copy, QrCode, Link as LinkIcon } from 'lucide-react';
+import { MoreVertical, User, Copy, QrCode, Link as LinkIcon, Users } from 'lucide-react';
 import type { Student } from '@/lib/teacher-types';
 import {
   DropdownMenu,
@@ -20,26 +19,29 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type InviteDialogProps = {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  classInfo: { id: string; name: string; join_code: string | null };
+  classInfo: { id: string; name: string; join_code: string | null; teacher_join_code: string | null };
 };
 
 function InviteDialog({ isOpen, setIsOpen, classInfo }: InviteDialogProps) {
     const { toast } = useToast();
     const [joinCode, setJoinCode] = useState(classInfo.join_code || '');
-    const [isLoadingCode, setIsLoadingCode] = useState(!classInfo.join_code);
+    const [teacherJoinCode, setTeacherJoinCode] = useState(classInfo.teacher_join_code || '');
+    const [isLoadingCode, setIsLoadingCode] = useState(true);
 
     useEffect(() => {
-        if (isOpen && !classInfo.join_code && classInfo.id) {
+        if (isOpen && classInfo.id) {
             setIsLoadingCode(true);
             fetch(`/api/classes/${classInfo.id}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.class?.join_code) {
-                        setJoinCode(data.class.join_code);
+                    if (data.class) {
+                        setJoinCode(data.class.join_code || '');
+                        setTeacherJoinCode(data.class.teacher_join_code || '');
                     }
                 })
                 .catch(error => {
@@ -49,16 +51,17 @@ function InviteDialog({ isOpen, setIsOpen, classInfo }: InviteDialogProps) {
                     setIsLoadingCode(false);
                 });
         }
-    }, [isOpen, classInfo.id, classInfo.join_code]);
+    }, [isOpen, classInfo.id]);
 
-    const inviteLink = joinCode ? `${window.location.origin}/classes?join_code=${joinCode}` : '';
-    const qrCodeUrl = inviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(inviteLink)}&format=png` : '';
+    const studentInviteLink = joinCode ? `${window.location.origin}/classes?join_code=${joinCode}` : '';
+    const teacherInviteLink = teacherJoinCode ? `${window.location.origin}/classes/join/${teacherJoinCode}` : '';
+    const studentQrCodeUrl = studentInviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(studentInviteLink)}&format=png` : '';
 
-    const copyToClipboard = (text: string, type: 'link' | 'code') => {
+    const copyToClipboard = (text: string, type: string) => {
         navigator.clipboard.writeText(text);
         toast({
             title: "Copied to Clipboard!",
-            description: `The class join ${type} has been copied.`,
+            description: `The ${type} has been copied.`,
         });
     }
 
@@ -66,37 +69,85 @@ function InviteDialog({ isOpen, setIsOpen, classInfo }: InviteDialogProps) {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Invite Students to Your Class</DialogTitle>
+                    <DialogTitle>Invite to Class</DialogTitle>
                     <DialogDescription>
-                        Students can join by scanning the QR code, using the invite link, or entering the join code.
+                        Share student code for students, or teacher code for other teachers to collaborate.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex flex-col items-center gap-6 py-4">
-                    {inviteLink && !isLoadingCode && <div className="p-4 bg-white rounded-lg border">
-                        <img src={qrCodeUrl} alt="Class Invite QR Code" width={200} height={200} className="rounded" />
-                    </div>}
-                    {isLoadingCode && <div className="flex items-center justify-center p-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>}
-                    <div className='w-full space-y-2'>
-                        <p className='text-sm font-medium text-muted-foreground'>Join Code</p>
-                        <div className="flex w-full items-center space-x-2">
-                           <Input type="text" value={joinCode || 'Loading...'} readOnly disabled={isLoadingCode} />
-                           <Button type="submit" size="icon" onClick={() => copyToClipboard(joinCode, 'code')} disabled={isLoadingCode || !joinCode}>
-                             <Copy className="h-4 w-4" />
-                           </Button>
+                
+                <Tabs defaultValue="students" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="students" className="flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            Students
+                        </TabsTrigger>
+                        <TabsTrigger value="teachers" className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            Teachers
+                        </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="students" className="space-y-4">
+                        <div className="flex flex-col items-center gap-4">
+                            {studentInviteLink && !isLoadingCode && (
+                                <div className="p-4 bg-white rounded-lg border">
+                                    <img src={studentQrCodeUrl} alt="Student Invite QR Code" width={200} height={200} className="rounded" />
+                                </div>
+                            )}
+                            {isLoadingCode && (
+                                <div className="flex items-center justify-center p-8">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                </div>
+                            )}
+                            <div className='w-full space-y-2'>
+                                <p className='text-sm font-medium text-muted-foreground'>Student Join Code</p>
+                                <div className="flex w-full items-center space-x-2">
+                                   <Input type="text" value={joinCode || 'Loading...'} readOnly disabled={isLoadingCode} />
+                                   <Button type="submit" size="icon" onClick={() => copyToClipboard(joinCode, 'student code')} disabled={isLoadingCode || !joinCode}>
+                                     <Copy className="h-4 w-4" />
+                                   </Button>
+                                </div>
+                            </div>
+                            {studentInviteLink && (
+                                <div className='w-full space-y-2'>
+                                    <p className='text-sm font-medium text-muted-foreground'>Invite Link</p>
+                                    <div className="flex w-full items-center space-x-2">
+                                       <Input type="text" value={studentInviteLink} readOnly />
+                                       <Button type="submit" size="icon" onClick={() => copyToClipboard(studentInviteLink, 'student invite link')}>
+                                         <LinkIcon className="h-4 w-4" />
+                                       </Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    </div>
-                     {inviteLink && <div className='w-full space-y-2'>
-                        <p className='text-sm font-medium text-muted-foreground'>Invite Link</p>
-                        <div className="flex w-full items-center space-x-2">
-                           <Input type="text" value={inviteLink} readOnly />
-                           <Button type="submit" size="icon" onClick={() => copyToClipboard(inviteLink, 'link')}>
-                             <LinkIcon className="h-4 w-4" />
-                           </Button>
+                    </TabsContent>
+                    
+                    <TabsContent value="teachers" className="space-y-4">
+                        <div className="flex flex-col items-center gap-4">
+                            <div className='w-full space-y-2'>
+                                <p className='text-sm font-medium text-muted-foreground'>Teacher Join Code</p>
+                                <p className="text-xs text-muted-foreground">Share this code with other teachers to invite them to collaborate</p>
+                                <div className="flex w-full items-center space-x-2">
+                                   <Input type="text" value={teacherJoinCode || 'No code generated yet'} readOnly disabled={!teacherJoinCode} />
+                                   <Button type="submit" size="icon" onClick={() => copyToClipboard(teacherJoinCode, 'teacher code')} disabled={!teacherJoinCode}>
+                                     <Copy className="h-4 w-4" />
+                                   </Button>
+                                </div>
+                            </div>
+                            {teacherInviteLink && (
+                                <div className='w-full space-y-2'>
+                                    <p className='text-sm font-medium text-muted-foreground'>Teacher Invite Link</p>
+                                    <div className="flex w-full items-center space-x-2">
+                                       <Input type="text" value={teacherInviteLink} readOnly />
+                                       <Button type="submit" size="icon" onClick={() => copyToClipboard(teacherInviteLink, 'teacher invite link')}>
+                                         <LinkIcon className="h-4 w-4" />
+                                       </Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    </div>}
-                </div>
+                    </TabsContent>
+                </Tabs>
             </DialogContent>
         </Dialog>
     );
@@ -106,7 +157,7 @@ function InviteDialog({ isOpen, setIsOpen, classInfo }: InviteDialogProps) {
 type StudentListProps = {
   students: Student[];
   isLoading: boolean;
-  classInfo?: { id: string; name: string; join_code: string | null };
+  classInfo?: { id: string; name: string; join_code: string | null; teacher_join_code: string | null };
 };
 
 export function StudentList({ students, isLoading, classInfo }: StudentListProps) {
@@ -122,7 +173,7 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
         </div>
          <Button variant="outline" onClick={() => setIsInviteOpen(true)}>
           <QrCode className="mr-2 h-4 w-4" />
-          Invite Students
+          Invite
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
