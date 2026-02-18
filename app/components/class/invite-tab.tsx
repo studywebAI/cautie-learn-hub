@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, X, Clock, Users, BookUser, Eye, EyeOff, Send, Copy, Check, Loader2 } from 'lucide-react';
+import { Plus, X, Clock, Users, BookUser, Eye, EyeOff, Copy, Check, Loader2, Link as LinkIcon, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -27,9 +27,12 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
   const [showTeacherSection, setShowTeacherSection] = useState(false);
   const [copiedStudent, setCopiedStudent] = useState(false);
   const [copiedTeacher, setCopiedTeacher] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  // Load from localStorage on mount
+  const studentInviteLink = joinCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes?join_code=${joinCode}` : '';
+  const studentQrCodeUrl = studentInviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(studentInviteLink)}&format=png` : '';
+
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -48,7 +51,6 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
     }
   }, [classId]);
 
-  // Save to localStorage when emails change
   const saveDraft = () => {
     const saved = localStorage.getItem(STORAGE_KEY);
     let drafts: InviteDraft[] = saved ? JSON.parse(saved) : [];
@@ -71,70 +73,44 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
     localStorage.setItem(STORAGE_KEY, JSON.stringify(drafts));
   };
 
-  // Auto-save on changes
   useEffect(() => {
     const timeout = setTimeout(saveDraft, 500);
     return () => clearTimeout(timeout);
   }, [studentEmails, teacherEmails, scheduledTime, showTeacherSection, classId]);
 
-  const addStudentEmail = () => {
-    setStudentEmails([...studentEmails, '']);
-  };
-
+  const addStudentEmail = () => setStudentEmails([...studentEmails, '']);
   const removeStudentEmail = (index: number) => {
-    if (studentEmails.length > 1) {
-      setStudentEmails(studentEmails.filter((_, i) => i !== index));
-    }
+    if (studentEmails.length > 1) setStudentEmails(studentEmails.filter((_, i) => i !== index));
   };
-
   const updateStudentEmail = (index: number, value: string) => {
     const updated = [...studentEmails];
     updated[index] = value;
     setStudentEmails(updated);
   };
 
-  const addTeacherEmail = () => {
-    setTeacherEmails([...teacherEmails, '']);
-  };
-
+  const addTeacherEmail = () => setTeacherEmails([...teacherEmails, '']);
   const removeTeacherEmail = (index: number) => {
-    if (teacherEmails.length > 1) {
-      setTeacherEmails(teacherEmails.filter((_, i) => i !== index));
-    }
+    if (teacherEmails.length > 1) setTeacherEmails(teacherEmails.filter((_, i) => i !== index));
   };
-
   const updateTeacherEmail = (index: number, value: string) => {
     const updated = [...teacherEmails];
     updated[index] = value;
     setTeacherEmails(updated);
   };
 
-  const copyToClipboard = async (text: string, type: 'student' | 'teacher') => {
+  const copyToClipboard = async (text: string, type: 'code' | 'link' | 'teacher') => {
     try {
       await navigator.clipboard.writeText(text);
-      if (type === 'student') {
-        setCopiedStudent(true);
-        setTimeout(() => setCopiedStudent(false), 2000);
-      } else {
-        setCopiedTeacher(true);
-        setTimeout(() => setCopiedTeacher(false), 2000);
-      }
+      if (type === 'code') { setCopiedStudent(true); setTimeout(() => setCopiedStudent(false), 2000); }
+      else if (type === 'link') { setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); }
+      else { setCopiedTeacher(true); setTimeout(() => setCopiedTeacher(false), 2000); }
       toast({ title: 'Copied to clipboard!' });
-    } catch (e) {
-      toast({ title: 'Failed to copy', variant: 'destructive' });
-    }
+    } catch (e) { toast({ title: 'Failed to copy', variant: 'destructive' }); }
   };
 
   const sendInvites = async () => {
-    const validStudentEmails = studentEmails.filter(e => e.trim() !== '').filter(e => {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(e.trim());
-    });
-    
-    const validTeacherEmails = teacherEmails.filter(e => e.trim() !== '').filter(e => {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(e.trim());
-    });
+    const validStudentEmails = studentEmails.filter(e => e.trim() !== '').filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim()));
+    const validTeacherEmails = teacherEmails.filter(e => e.trim() !== '').filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim()));
 
     if (validStudentEmails.length === 0 && validTeacherEmails.length === 0) {
       toast({ title: 'No valid emails to send', variant: 'destructive' });
@@ -145,219 +121,157 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
     try {
       const response = await fetch(`/api/classes/${classId}/invite`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          studentEmails: validStudentEmails,
-          teacherEmails: validTeacherEmails,
-          scheduledTime: scheduledTime || undefined,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentEmails: validStudentEmails, teacherEmails: validTeacherEmails, scheduledTime: scheduledTime || undefined }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send invites');
-      }
+      if (!response.ok) throw new Error(data.error || 'Failed to send invites');
 
       toast({ 
         title: data.message || 'Invites sent!',
-        description: scheduledTime 
-          ? `Will be sent at ${format(new Date(scheduledTime), 'PPp')}`
-          : `${data.results?.students?.invited?.length || 0} student invites, ${data.results?.teachers?.invited?.length || 0} teacher invites sent`
+        description: scheduledTime ? `Will be sent at ${format(new Date(scheduledTime), 'PPp')}` : `${data.results?.students?.invited?.length || 0} student, ${data.results?.teachers?.invited?.length || 0} teacher invites`
       });
-
-      // Clear the form after sending
-      setStudentEmails(['']);
-      setTeacherEmails(['']);
-      setScheduledTime('');
-      saveDraft();
+      setStudentEmails(['']); setTeacherEmails(['']); setScheduledTime(''); saveDraft();
     } catch (e: any) {
-      console.error('Failed to send invites:', e);
       toast({ title: e.message || 'Failed to send invites', variant: 'destructive' });
-    } finally {
-      setIsSending(false);
-    }
+    } finally { setIsSending(false); }
   };
 
   const validStudentEmails = studentEmails.filter(e => e.trim() !== '');
 
   return (
     <div className="space-y-6">
-      {/* Student Invite Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      {/* Student Invite Section - Black border box */}
+      <Card className="border-2 border-black/20 bg-card">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />
             Invite Students
           </CardTitle>
-          <CardDescription>
-            Add student emails to invite them to your class. Emails are saved locally until you send.
+          <CardDescription className="text-sm">
+            Share the join code, QR code, or invite link with students to join your class.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Join code display */}
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-            <span className="text-sm text-muted-foreground">Join code:</span>
-            <code className="font-mono text-lg font-bold">{joinCode}</code>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => copyToClipboard(joinCode, 'student')}
-            >
-              {copiedStudent ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            </Button>
+        <CardContent className="space-y-5">
+          {/* QR Code and Join Code Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/30 rounded-lg">
+            {/* QR Code */}
+            {studentQrCodeUrl && (
+              <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-lg border-2 border-black/10">
+                <img src={studentQrCodeUrl} alt="QR Code" width={140} height={140} className="rounded" />
+                <p className="text-xs text-muted-foreground">Scan to join</p>
+              </div>
+            )}
+
+            {/* Join Code & Link */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Join Code</Label>
+                <div className="flex gap-2">
+                  <Input type="text" value={joinCode || 'Loading...'} readOnly className="font-mono text-lg font-bold bg-white border-2 border-black/20" />
+                  <Button variant="outline" size="icon" onClick={() => copyToClipboard(joinCode || '', 'code')}>
+                    {copiedStudent ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+              {studentInviteLink && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Invite Link</Label>
+                  <div className="flex gap-2">
+                    <Input type="text" value={studentInviteLink} readOnly className="text-sm bg-white border-2 border-black/20" />
+                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(studentInviteLink, 'link')}>
+                      {copiedLink ? <Check className="h-4 w-4 text-green-600" /> : <LinkIcon className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-black/20" />
+            <span className="text-xs font-medium uppercase text-muted-foreground">Or send by email</span>
+            <div className="h-px flex-1 bg-black/20" />
           </div>
 
           {/* Email inputs */}
-          <div className="space-y-2">
-            <Label>Student Emails</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">Email Invites (optional)</Label>
             {studentEmails.map((email, index) => (
               <div key={index} className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="student@example.com"
-                  value={email}
-                  onChange={(e) => updateStudentEmail(index, e.target.value)}
-                  className="flex-1"
-                />
-                {studentEmails.length > 1 && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => removeStudentEmail(index)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
+                <Input type="email" placeholder="student@example.com" value={email} onChange={(e) => updateStudentEmail(index, e.target.value)} className="flex-1 bg-white border-2 border-black/20" />
+                {studentEmails.length > 1 && <Button variant="ghost" size="icon" onClick={() => removeStudentEmail(index)}><X className="h-4 w-4" /></Button>}
               </div>
             ))}
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={addStudentEmail}
-              className="gap-1"
-            >
-              <Plus className="h-4 w-4" />
-              Add Another Email
+            <Button variant="outline" size="sm" onClick={addStudentEmail} className="gap-1 border-2 border-black/20">
+              <Plus className="h-4 w-4" /> Add Another Email
             </Button>
           </div>
 
           {/* Scheduled time */}
           <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Schedule Invite (optional)
-            </Label>
-            <Input
-              type="datetime-local"
-              value={scheduledTime}
-              onChange={(e) => setScheduledTime(e.target.value)}
-            />
-            {scheduledTime && (
-              <p className="text-xs text-muted-foreground">
-                Will be sent at {format(new Date(scheduledTime), 'PPp')}
-              </p>
-            )}
+            <Label className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4" /> Schedule (optional)</Label>
+            <Input type="datetime-local" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="bg-white border-2 border-black/20" />
+            {scheduledTime && <p className="text-xs text-muted-foreground">Will be sent at {format(new Date(scheduledTime), 'PPp')}</p>}
           </div>
 
           {/* Send button */}
           {validStudentEmails.length > 0 && (
-            <Button 
-              onClick={sendInvites}
-              disabled={isSending}
-              className="w-full gap-2"
-            >
-              {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            <Button onClick={sendInvites} disabled={isSending} className="w-full gap-2 bg-black hover:bg-black/80">
+              {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
               {isSending ? 'Sending...' : `Send ${validStudentEmails.length} Invite${validStudentEmails.length > 1 ? 's' : ''}`}
             </Button>
           )}
         </CardContent>
       </Card>
 
-      {/* Teacher Invite Section - Hidden by default */}
-      <Card>
-        <CardHeader>
+      {/* Teacher Invite Section - Black border box, hidden by default */}
+      <Card className="border-2 border-black/20 bg-card">
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <BookUser className="h-5 w-5" />
               Invite Teachers
             </CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowTeacherSection(!showTeacherSection)}
-              className="gap-1"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setShowTeacherSection(!showTeacherSection)} className="gap-1">
               {showTeacherSection ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               {showTeacherSection ? 'Hide' : 'Show'}
             </Button>
           </div>
-          <CardDescription>
-            Invite other teachers to collaborate. Hidden by default.
-          </CardDescription>
+          <CardDescription className="text-sm">Invite other teachers to collaborate. Only class owners can invite teachers.</CardDescription>
         </CardHeader>
         
         {showTeacherSection && (
           <CardContent className="space-y-4">
-            {/* Teacher join code */}
             {teacherJoinCode && (
-              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                <span className="text-sm text-muted-foreground">Teacher join code:</span>
-                <code className="font-mono text-lg font-bold">{teacherJoinCode}</code>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => copyToClipboard(teacherJoinCode, 'teacher')}
-                >
-                  {copiedTeacher ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
+              <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
+                <Label className="text-sm font-semibold">Teacher Join Code</Label>
+                <div className="flex gap-2">
+                  <Input type="text" value={teacherJoinCode} readOnly className="font-mono text-lg font-bold bg-white border-2 border-black/20" />
+                  <Button variant="outline" size="icon" onClick={() => copyToClipboard(teacherJoinCode, 'teacher')}>
+                    {copiedTeacher ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
             )}
 
-            {/* Teacher email inputs */}
-            <div className="space-y-2">
-              <Label>Teacher Emails</Label>
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Email Invites</Label>
               {teacherEmails.map((email, index) => (
                 <div key={index} className="flex gap-2">
-                  <Input
-                    type="email"
-                    placeholder="teacher@example.com"
-                    value={email}
-                    onChange={(e) => updateTeacherEmail(index, e.target.value)}
-                    className="flex-1"
-                  />
-                  {teacherEmails.length > 1 && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => removeTeacherEmail(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Input type="email" placeholder="teacher@example.com" value={email} onChange={(e) => updateTeacherEmail(index, e.target.value)} className="flex-1 bg-white border-2 border-black/20" />
+                  {teacherEmails.length > 1 && <Button variant="ghost" size="icon" onClick={() => removeTeacherEmail(index)}><X className="h-4 w-4" /></Button>}
                 </div>
               ))}
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={addTeacherEmail}
-                className="gap-1"
-              >
-                <Plus className="h-4 w-4" />
-                Add Another Teacher
+              <Button variant="outline" size="sm" onClick={addTeacherEmail} className="gap-1 border-2 border-black/20">
+                <Plus className="h-4 w-4" /> Add Another Teacher
               </Button>
             </div>
 
-            {/* Send button for teachers */}
             {teacherEmails.filter(e => e.trim() !== '').length > 0 && (
-              <Button 
-                onClick={sendInvites}
-                disabled={isSending}
-                className="w-full gap-2"
-              >
-                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              <Button onClick={sendInvites} disabled={isSending} className="w-full gap-2 bg-black hover:bg-black/80">
+                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
                 {isSending ? 'Sending...' : `Send Teacher Invite${teacherEmails.filter(e => e.trim() !== '').length > 1 ? 's' : ''}`}
               </Button>
             )}
