@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
-import { MoreVertical, User, Copy, QrCode, Link as LinkIcon, Users, GraduationCap, UserPlus } from 'lucide-react';
+import { MoreVertical, User, Copy, QrCode, Link as LinkIcon, Users, GraduationCap, UserPlus, CheckSquare, Trash2, Mail, Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { Student } from '@/lib/teacher-types';
 import {
   DropdownMenu,
@@ -193,12 +194,62 @@ function TeacherInviteDialog({ isOpen, setIsOpen, classInfo }: TeacherInviteDial
 type StudentListProps = {
   students: Student[];
   isLoading: boolean;
-  classInfo?: { id: string; name: string; join_code: string | null; teacher_join_code: string | null };
+  classInfo?: { id: string; name: string; join_code?: string | null; teacher_join_code?: string | null };
 };
 
 export function StudentList({ students, isLoading, classInfo }: StudentListProps) {
     const [isStudentInviteOpen, setIsStudentInviteOpen] = useState(false);
     const [isTeacherInviteOpen, setIsTeacherInviteOpen] = useState(false);
+    const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+    const [isBulkMode, setIsBulkMode] = useState(false);
+    const [isRemoving, setIsRemoving] = useState(false);
+    const { toast } = useToast();
+
+    const toggleSelectAll = () => {
+        if (selectedStudents.size === students.length) {
+            setSelectedStudents(new Set());
+        } else {
+            setSelectedStudents(new Set(students.map(s => s.id)));
+        }
+    };
+
+    const toggleStudent = (studentId: string) => {
+        const newSelected = new Set(selectedStudents);
+        if (newSelected.has(studentId)) {
+            newSelected.delete(studentId);
+        } else {
+            newSelected.add(studentId);
+        }
+        setSelectedStudents(newSelected);
+    };
+
+    const removeSelectedStudents = async () => {
+        if (!classInfo?.id || selectedStudents.size === 0) return;
+        
+        setIsRemoving(true);
+        try {
+            const response = await fetch(`/api/classes/${classInfo.id}/members/bulk`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_ids: Array.from(selectedStudents) })
+            });
+
+            if (response.ok) {
+                toast({ title: `Removed ${selectedStudents.size} student(s) successfully` });
+                setSelectedStudents(new Set());
+                setIsBulkMode(false);
+                window.location.reload();
+            } else {
+                const data = await response.json();
+                toast({ title: 'Failed to remove students', description: data.error, variant: 'destructive' });
+            }
+        } catch (error) {
+            console.error('Failed to remove students:', error);
+            toast({ title: 'Failed to remove students', variant: 'destructive' });
+        } finally {
+            setIsRemoving(false);
+        }
+    };
 
   return (
     <>
@@ -209,6 +260,23 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
           <CardDescription>All students enrolled in this class.</CardDescription>
         </div>
         <div className="flex gap-2">
+            {isBulkMode && selectedStudents.size > 0 && (
+                <Button variant="destructive" size="sm" onClick={removeSelectedStudents} disabled={isRemoving}>
+                    {isRemoving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                    Remove ({selectedStudents.size})
+                </Button>
+            )}
+            <Button 
+                variant={isBulkMode ? "default" : "outline"} 
+                size="sm" 
+                onClick={() => {
+                    setIsBulkMode(!isBulkMode);
+                    if (!isBulkMode) setSelectedStudents(new Set());
+                }}
+            >
+                <CheckSquare className="mr-2 h-4 w-4" />
+                {isBulkMode ? 'Done' : 'Select'}
+            </Button>
             <Button variant="outline" onClick={() => setIsTeacherInviteOpen(true)}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Add Teacher
@@ -235,9 +303,25 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
         ) : students.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">No students have joined this class yet. Share the class code to invite them.</p>
         ) : (
-          students.map((student) => (
+          <>
+            {isBulkMode && (
+                <div className="flex items-center gap-2 pb-2 border-b">
+                    <Checkbox 
+                        checked={selectedStudents.size === students.length && students.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                    />
+                    <span className="text-sm text-muted-foreground">Select all ({students.length})</span>
+                </div>
+            )}
+            {students.map((student) => (
             <div key={student.id} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
+                {isBulkMode && (
+                    <Checkbox 
+                        checked={selectedStudents.has(student.id)}
+                        onCheckedChange={() => toggleStudent(student.id)}
+                    />
+                )}
                 <Avatar>
                   <AvatarImage src={student.avatarUrl || undefined} alt={student.name || 'Student'} />
                   <AvatarFallback>{student.name ? student.name.split(' ').map(n => n[0]).join('') : <User />}</AvatarFallback>
@@ -250,6 +334,7 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
                   </div>
                 </div>
               </div>
+              {!isBulkMode && (
                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
@@ -263,8 +348,10 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
                       <DropdownMenuItem className="text-destructive">Remove from Class</DropdownMenuItem>
                   </DropdownMenuContent>
                </DropdownMenu>
+              )}
             </div>
-          ))
+          ))}
+          </>
         )}
       </CardContent>
     </Card>
