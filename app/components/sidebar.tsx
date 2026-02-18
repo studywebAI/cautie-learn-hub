@@ -22,6 +22,7 @@ import {
   Calendar,
   Menu,
   ArrowUpRight,
+  Settings,
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useDictionary } from '@/contexts/app-context';
@@ -39,7 +40,7 @@ export function AppSidebar() {
   const menuItems = [
     { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
     { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
-    { href: '/classes', label: dictionary.sidebar.classes, icon: School },
+    { href: '/classes', label: 'Manage', icon: School },
     { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
     { href: '/material', label: dictionary.sidebar.material || 'Material', icon: FileSignature },
   ];
