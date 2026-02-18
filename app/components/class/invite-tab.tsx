@@ -27,11 +27,14 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
   const [showTeacherSection, setShowTeacherSection] = useState(false);
   const [copiedStudent, setCopiedStudent] = useState(false);
   const [copiedTeacher, setCopiedTeacher] = useState(false);
+  const [copiedTeacherLink, setCopiedTeacherLink] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
   const studentInviteLink = joinCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes?join_code=${joinCode}` : '';
+  const teacherInviteLink = teacherJoinCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes/join/${teacherJoinCode}` : '';
   const studentQrCodeUrl = studentInviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(studentInviteLink)}&format=png` : '';
+  const teacherQrCodeUrl = teacherInviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(teacherInviteLink)}&format=png` : '';
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -98,12 +101,13 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
     setTeacherEmails(updated);
   };
 
-  const copyToClipboard = async (text: string, type: 'code' | 'link' | 'teacher') => {
+  const copyToClipboard = async (text: string, type: 'code' | 'link' | 'teacher' | 'teacherLink') => {
     try {
       await navigator.clipboard.writeText(text);
       if (type === 'code') { setCopiedStudent(true); setTimeout(() => setCopiedStudent(false), 2000); }
       else if (type === 'link') { setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); }
-      else { setCopiedTeacher(true); setTimeout(() => setCopiedTeacher(false), 2000); }
+      else if (type === 'teacher') { setCopiedTeacher(true); setTimeout(() => setCopiedTeacher(false), 2000); }
+      else { setCopiedTeacherLink(true); setTimeout(() => setCopiedTeacherLink(false), 2000); }
       toast({ title: 'Copied to clipboard!' });
     } catch (e) { toast({ title: 'Failed to copy', variant: 'destructive' }); }
   };
@@ -157,7 +161,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/30 rounded-lg">
             {/* QR Code */}
             {studentQrCodeUrl && (
-              <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-lg border-2 border-black/10">
+              <div className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-black/10">
                 <img src={studentQrCodeUrl} alt="QR Code" width={140} height={140} className="rounded" />
                 <p className="text-xs text-muted-foreground">Scan to join</p>
               </div>
@@ -168,7 +172,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">Join Code</Label>
                 <div className="flex gap-2">
-                  <Input type="text" value={joinCode || 'Loading...'} readOnly className="font-mono text-lg font-bold bg-white border-2 border-black/20" />
+                  <Input type="text" value={joinCode || 'Loading...'} readOnly className="font-mono text-lg font-bold border-2 border-black/20 text-foreground" />
                   <Button variant="outline" size="icon" onClick={() => copyToClipboard(joinCode || '', 'code')}>
                     {copiedStudent ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                   </Button>
@@ -178,7 +182,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Invite Link</Label>
                   <div className="flex gap-2">
-                    <Input type="text" value={studentInviteLink} readOnly className="text-sm bg-white border-2 border-black/20" />
+                    <Input type="text" value={studentInviteLink} readOnly className="text-sm border-2 border-black/20 text-foreground" />
                     <Button variant="outline" size="icon" onClick={() => copyToClipboard(studentInviteLink, 'link')}>
                       {copiedLink ? <Check className="h-4 w-4 text-green-600" /> : <LinkIcon className="h-4 w-4" />}
                     </Button>
@@ -200,7 +204,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
             <Label className="text-sm font-semibold">Email Invites (optional)</Label>
             {studentEmails.map((email, index) => (
               <div key={index} className="flex gap-2">
-                <Input type="email" placeholder="student@example.com" value={email} onChange={(e) => updateStudentEmail(index, e.target.value)} className="flex-1 bg-white border-2 border-black/20" />
+                <Input type="email" placeholder="student@example.com" value={email} onChange={(e) => updateStudentEmail(index, e.target.value)} className="flex-1 border-2 border-black/20 text-foreground" />
                 {studentEmails.length > 1 && <Button variant="ghost" size="icon" onClick={() => removeStudentEmail(index)}><X className="h-4 w-4" /></Button>}
               </div>
             ))}
@@ -212,7 +216,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
           {/* Scheduled time */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4" /> Schedule (optional)</Label>
-            <Input type="datetime-local" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="bg-white border-2 border-black/20" />
+            <Input type="datetime-local" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="border-2 border-black/20 text-foreground" />
             {scheduledTime && <p className="text-xs text-muted-foreground">Will be sent at {format(new Date(scheduledTime), 'PPp')}</p>}
           </div>
 
@@ -226,7 +230,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
         </CardContent>
       </Card>
 
-      {/* Teacher Invite Section - Black border box, hidden by default */}
+      {/* Teacher Invite Section - Same as student */}
       <Card className="border-2 border-black/20 bg-card">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
@@ -243,24 +247,55 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
         </CardHeader>
         
         {showTeacherSection && (
-          <CardContent className="space-y-4">
-            {teacherJoinCode && (
-              <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
-                <Label className="text-sm font-semibold">Teacher Join Code</Label>
-                <div className="flex gap-2">
-                  <Input type="text" value={teacherJoinCode} readOnly className="font-mono text-lg font-bold bg-white border-2 border-black/20" />
-                  <Button variant="outline" size="icon" onClick={() => copyToClipboard(teacherJoinCode, 'teacher')}>
-                    {copiedTeacher ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                  </Button>
+          <CardContent className="space-y-5">
+            {/* QR Code and Join Code Row - Same as student */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/30 rounded-lg">
+              {/* QR Code */}
+              {teacherQrCodeUrl && (
+                <div className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-black/10">
+                  <img src={teacherQrCodeUrl} alt="Teacher QR Code" width={140} height={140} className="rounded" />
+                  <p className="text-xs text-muted-foreground">Scan to join as teacher</p>
                 </div>
-              </div>
-            )}
+              )}
 
+              {/* Join Code & Link */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Teacher Join Code</Label>
+                  <div className="flex gap-2">
+                    <Input type="text" value={teacherJoinCode || 'Loading...'} readOnly className="font-mono text-lg font-bold border-2 border-black/20 text-foreground" />
+                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(teacherJoinCode || '', 'teacher')}>
+                      {copiedTeacher ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+                {teacherInviteLink && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Teacher Invite Link</Label>
+                    <div className="flex gap-2">
+                      <Input type="text" value={teacherInviteLink} readOnly className="text-sm border-2 border-black/20 text-foreground" />
+                      <Button variant="outline" size="icon" onClick={() => copyToClipboard(teacherInviteLink, 'teacherLink')}>
+                        {copiedTeacherLink ? <Check className="h-4 w-4 text-green-600" /> : <LinkIcon className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4">
+              <div className="h-px flex-1 bg-black/20" />
+              <span className="text-xs font-medium uppercase text-muted-foreground">Or send by email</span>
+              <div className="h-px flex-1 bg-black/20" />
+            </div>
+
+            {/* Email inputs */}
             <div className="space-y-3">
               <Label className="text-sm font-semibold">Email Invites</Label>
               {teacherEmails.map((email, index) => (
                 <div key={index} className="flex gap-2">
-                  <Input type="email" placeholder="teacher@example.com" value={email} onChange={(e) => updateTeacherEmail(index, e.target.value)} className="flex-1 bg-white border-2 border-black/20" />
+                  <Input type="email" placeholder="teacher@example.com" value={email} onChange={(e) => updateTeacherEmail(index, e.target.value)} className="flex-1 border-2 border-black/20 text-foreground" />
                   {teacherEmails.length > 1 && <Button variant="ghost" size="icon" onClick={() => removeTeacherEmail(index)}><X className="h-4 w-4" /></Button>}
                 </div>
               ))}
