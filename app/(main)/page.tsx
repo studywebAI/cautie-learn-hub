@@ -162,8 +162,9 @@ function DashboardSkeleton() {
 export default function DashboardPage() {
   const { role, isLoading, session } = useContext(AppContext) as AppContextType;
 
-  // Loading is handled by splash screen
-  if (isLoading) return null;
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
 
   if (!session) return <StudentDashboard />;
 

@@ -4,7 +4,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { Inter, Space_Grotesk, Atkinson_Hyperlegible } from 'next/font/google';
 import { cn } from "@/lib/utils";
 import { AppContextProvider } from "@/contexts/app-context";
-import { LoadingSplash } from "@/components/loading-splash";
 
 const fontInter = Inter({
   subsets: ['latin'],
@@ -44,11 +43,9 @@ export default function RootLayout({
         fontSpaceGrotesk.variable,
         fontAtkinsonHyperlegible.variable
       )}>
-        <LoadingSplash>
-          <AppContextProvider>
-              {children}
-          </AppContextProvider>
-        </LoadingSplash>
+        <AppContextProvider>
+            {children}
+        </AppContextProvider>
         <Toaster />
       </body>
     </html>
