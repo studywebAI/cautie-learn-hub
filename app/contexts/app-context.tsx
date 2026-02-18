@@ -90,7 +90,7 @@ export type AppContextType = {
 
 export const AppContext = createContext<AppContextType | null>(null);
 
-// Local storage helpers
+// Fast localStorage helpers - synchronous, instant
 const getFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
     if (typeof window === 'undefined') return defaultValue;
     try {
@@ -127,8 +127,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [personalTasks, setPersonalTasks] = useState<PersonalTask[]>([]);
   const [materials, setMaterials] = useState<MaterialReference[]>([]);
   const [isCreatingClass, setIsCreatingClass] = useState(false);
-  const [isSyncingData, setIsSyncingData] = useState(false);
-  const [prevSession, setPrevSession] = useState<Session | null>(null);
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
 
@@ -139,76 +137,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     root.classList.add(`theme-${currentTheme}`);
   }, []);
 
-  // Initialize session
+  // OPTIMIZED: Load cache first (instant), then fetch in parallel
   useEffect(() => {
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setIsLoading(false);
-    };
-    getInitialSession();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-      setIsLoading(false);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Fetch data with cache
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    if (session) {
-      // Try cache first for instant load
-      const cached = getFromLocalStorage('studyweb-cached-dashboard', null as any);
-      if (cached) {
-        setClasses(cached.classes || []);
-        setSubjects(cached.subjects || []);
-        setAssignments(cached.assignments || []);
-        setPersonalTasks(cached.personalTasks || []);
-        setStudents(cached.students || []);
-        setRoleState(cached.role || 'student');
-        setIsLoading(false);
-        // Update cache in background
-        try {
-          const dashboardRes = await fetch('/api/dashboard');
-          if (dashboardRes.ok) {
-            const d = await dashboardRes.json();
-            setClasses(d.classes || []);
-            setSubjects(d.subjects || []);
-            setAssignments(d.assignments || []);
-            setPersonalTasks(d.personalTasks || []);
-            setStudents(d.students || []);
-            setRoleState(d.role || 'student');
-            saveToLocalStorage('studyweb-cached-dashboard', d);
-          }
-        } catch {}
-        return;
-      }
-      // No cache - fetch fresh
-      try {
-        const dashboardRes = await fetch('/api/dashboard');
-        if (dashboardRes.ok) {
-          const d = await dashboardRes.json();
-          setClasses(d.classes || []);
-          setSubjects(d.subjects || []);
-          setAssignments(d.assignments || []);
-          setPersonalTasks(d.personalTasks || []);
-          setStudents(d.students || []);
-          setRoleState(d.role || 'student');
-          saveToLocalStorage('studyweb-cached-dashboard', d);
-        }
-      } catch {}
+    // STEP 1: Load from cache IMMEDIATELY (synchronous, instant)
+    const cached = getFromLocalStorage('studyweb-cached-dashboard', null as any);
+    if (cached) {
+      setClasses(cached.classes || []);
+      setSubjects(cached.subjects || []);
+      setAssignments(cached.assignments || []);
+      setPersonalTasks(cached.personalTasks || []);
+      setStudents(cached.students || []);
+      setRoleState(cached.role || 'student');
     }
-    setIsLoading(false);
-  }, [session]);
 
-  useEffect(() => {
-    fetchData();
-    setPrevSession(session);
-  }, [session, fetchData]);
-
-  // Settings
-  useEffect(() => {
+    // STEP 2: Load settings from cache (instant)
     const savedLanguage = getFromLocalStorage('studyweb-language', 'en');
     setLanguageState(savedLanguage);
     setDictionary(getDictionary(savedLanguage));
@@ -224,6 +166,62 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const savedTheme = getFromLocalStorage('studyweb-theme', 'light');
     setThemeState(savedTheme);
     applyTheme(savedTheme);
+
+    // STEP 3: Fetch session + dashboard data in PARALLEL
+    const init = async () => {
+      try {
+        // Run both in parallel - no waiting!
+        const [sessionResult, dashboardData] = await Promise.all([
+          supabase.auth.getSession(),
+          fetch('/api/dashboard', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null)
+        ]);
+
+        const newSession = sessionResult.data.session;
+        setSession(newSession);
+
+        // Update with fresh data if available
+        if (dashboardData) {
+          setClasses(dashboardData.classes || []);
+          setSubjects(dashboardData.subjects || []);
+          setAssignments(dashboardData.assignments || []);
+          setPersonalTasks(dashboardData.personalTasks || []);
+          setStudents(dashboardData.students || []);
+          setRoleState(dashboardData.role || 'student');
+          
+          // Save to cache for next visit
+          saveToLocalStorage('studyweb-cached-dashboard', dashboardData);
+        }
+      } catch (e) {
+        console.error('Init error:', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    init();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      // Optionally refetch data on auth change
+      if (session) {
+        fetch('/api/dashboard', { credentials: 'include' })
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (data) {
+              setClasses(data.classes || []);
+              setSubjects(data.subjects || []);
+              setAssignments(data.assignments || []);
+              setPersonalTasks(data.personalTasks || []);
+              setStudents(data.students || []);
+              setRoleState(data.role || 'student');
+              saveToLocalStorage('studyweb-cached-dashboard', data);
+            }
+          });
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [applyTheme]);
 
   const setLanguage = (newLanguage: Locale) => {
