@@ -3,7 +3,7 @@
 import { format, isToday, isTomorrow, isThisWeek } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BookCheck, BrainCircuit, Clock, CheckCircle2 } from 'lucide-react';
+import { BookCheck, BrainCircuit, Clock } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
 import Link from 'next/link';
 
@@ -13,7 +13,7 @@ interface ListViewProps {
 }
 
 export function ListView({ events, onEventClick }: ListViewProps) {
-  // Simple grouping by time - no overdue
+  // Simple grouping by time - no overdue, no checkboxes in list
   const groupedEvents = events.reduce((groups, event) => {
     const eventDate = event.date;
     let groupKey: string;
@@ -96,18 +96,9 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
 
   const href = buildHref();
 
-  // Checkbox shows completion status but no color - just subtle gray check
-  const isCompleted = event.status === 'completed';
-
+  // No checkbox in list - only when clicking on the event
   const content = (
     <div className="flex items-center gap-4 p-3 rounded-lg border transition-colors hover:bg-muted/50">
-      {/* Subtle checkbox - gray, no color */}
-      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-        isCompleted ? 'border-muted-foreground bg-muted-foreground' : 'border-muted-foreground'
-      }`}>
-        {isCompleted && <CheckCircle2 className="h-3 w-3 text-background" />}
-      </div>
-      
       <div className="w-1 h-12 rounded-full flex-shrink-0" style={{
         backgroundColor: event.type === 'assignment' ? '#3b82f6' : undefined
       }} />
@@ -158,7 +149,7 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
     </div>
   );
 
-  if (event.type === 'assignment' && href) {
+  if (href) {
     if (onEventClick) {
       return (
         <div

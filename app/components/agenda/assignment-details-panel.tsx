@@ -4,7 +4,6 @@ import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useDictionary } from '@/contexts/app-context';
 import Link from 'next/link';
@@ -14,7 +13,6 @@ import {
   Circle,
   Square,
   BookCheck,
-  Pencil,
   ChevronRight,
   BookOpen,
   FileText
@@ -38,13 +36,12 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
   if (!event) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground">
-        <p className="text-sm">Select a deadline to view details</p>
+        <p className="text-sm">Select an item to view details</p>
       </div>
     );
   }
 
   const assignmentType = (event as any).assignment_type || 'homework';
-  const isCompleted = (event as any).completed || false;
 
   const getTypeStyle = () => {
     switch (assignmentType) {
@@ -74,10 +71,10 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
         };
       default:
         return {
-          borderColor: 'hsl(var(--destructive))',
-          bgColor: 'hsl(var(--destructive) / 0.1)',
+          borderColor: 'hsl(var(--muted))',
+          bgColor: 'hsl(var(--muted) / 0.1)',
           icon: BookCheck,
-          iconColor: 'text-destructive',
+          iconColor: 'text-muted-foreground',
           label: 'Assignment'
         };
     }
@@ -86,17 +83,15 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
   const typeStyle = getTypeStyle();
   const IconComponent = typeStyle.icon;
 
-  // Build breadcrumb navigation
+  // Simple breadcrumb
   const breadcrumbs = [
     { label: event.subject, href: event.href, icon: BookOpen },
-    ...(event.chapter_title ? [{ label: event.chapter_title, href: `/subjects/${event.subject_id}/chapters/${event.chapter_id}` }] : []),
   ];
 
   const handleEdit = () => {
     if (onEdit) {
       onEdit(event.id);
     } else {
-      // Navigate to assignment edit page
       router.push(`/class/${event.href.replace('/class/', '')}/assignments/${event.id}/edit`);
     }
   };
@@ -116,7 +111,7 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
         ))}
       </nav>
 
-      {/* Assignment Header */}
+      {/* Header */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-start gap-3">
@@ -128,7 +123,7 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
               <CardDescription className="flex items-center gap-2 mt-1">
                 <Badge variant="outline">{typeStyle.label}</Badge>
                 <span className="text-xs">
-                  Due: {format(event.date, 'PPP')}
+                  {format(event.date, 'PPP')}
                 </span>
               </CardDescription>
             </div>
@@ -136,7 +131,7 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
         </CardHeader>
       </Card>
 
-      {/* Assignment Details */}
+      {/* Details */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Details</CardTitle>
@@ -155,10 +150,8 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
               <p className="text-muted-foreground">{event.subject}</p>
             </div>
             <div>
-              <h4 className="font-medium mb-1">Status</h4>
-              <Badge variant={isCompleted ? 'default' : 'secondary'}>
-                {isCompleted ? 'Completed' : 'Pending'}
-              </Badge>
+              <h4 className="font-medium mb-1">Date</h4>
+              <p className="text-muted-foreground">{format(event.date, 'MMM d, yyyy')}</p>
             </div>
           </div>
 
@@ -171,33 +164,13 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
 
           {isTeacher && (
             <div className="pt-4 border-t">
-              <h4 className="text-sm font-medium mb-3">Teacher Actions</h4>
+              <h4 className="text-sm font-medium mb-3">Actions</h4>
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={handleEdit}>
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Edit Assignment
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => router.push(`/class/${event.href.replace('/class/', '')}/assignments/${event.id}/submissions`)}>
                   <FileText className="h-4 w-4 mr-2" />
-                  View Submissions
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => router.push(`/class/${event.href.replace('/class/', '')}/assignments/${event.id}/link-content`)}>
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Link Content
+                  Edit
                 </Button>
               </div>
-            </div>
-          )}
-
-          {isStudent && !isCompleted && (
-            <div className="pt-4 border-t">
-              <Button className="w-full">Start Assignment</Button>
-            </div>
-          )}
-
-          {isStudent && isCompleted && (
-            <div className="pt-4 border-t">
-              <p className="text-sm text-muted-foreground">You have completed this assignment.</p>
             </div>
           )}
         </CardContent>
@@ -207,7 +180,7 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
       {(event as any).linked_content && (event as any).linked_content.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Linked Resources</CardTitle>
+            <CardTitle className="text-base">Resources</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
