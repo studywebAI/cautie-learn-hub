@@ -13,10 +13,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Helvetica", "Arial", ...fontFamily.sans],
-        body: ["Helvetica", "Arial", ...fontFamily.sans],
-        headline: ["Helvetica", "Arial", ...fontFamily.sans],
-        dyslexia: ["var(--font-atkinson-hyperlegible)", ...fontFamily.sans],
+        sans: ["var(--font-baskerville)", "Georgia", "Times New Roman", "serif"],
+        body: ["var(--font-baskerville)", "Georgia", "Times New Roman", "serif"],
+        headline: ["var(--font-baskerville)", "Georgia", "Times New Roman", "serif"],
+        dyslexia: ["var(--font-atkinson-hyperlegible)", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -106,4 +106,4 @@ export default {
     },
   },
   plugins: [require('tailwindcss-animate')],
-} satisfies Config;
+} satisfies Config

@@ -1,18 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { Inter, Space_Grotesk, Atkinson_Hyperlegible } from 'next/font/google';
+import { Libre_Baskerville, Atkinson_Hyperlegible } from 'next/font/google';
 import { cn } from "@/lib/utils";
 import { AppContextProvider } from "@/contexts/app-context";
 
-const fontInter = Inter({
+const fontBaskerville = Libre_Baskerville({
   subsets: ['latin'],
-  variable: '--font-inter',
-});
-
-const fontSpaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-space-grotesk',
+  variable: '--font-baskerville',
+  weight: ['400', '700'],
+  display: 'swap',
 });
 
 const fontAtkinsonHyperlegible = Atkinson_Hyperlegible({
@@ -20,7 +17,6 @@ const fontAtkinsonHyperlegible = Atkinson_Hyperlegible({
   variable: '--font-atkinson-hyperlegible',
   weight: ['400', '700'],
 });
-
 
 export const metadata: Metadata = {
   title: "cautie",
@@ -38,9 +34,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn(
-        "font-body antialiased",
-        fontInter.variable,
-        fontSpaceGrotesk.variable,
+        "font-sans antialiased",
+        fontBaskerville.variable,
         fontAtkinsonHyperlegible.variable
       )}>
         <AppContextProvider>
