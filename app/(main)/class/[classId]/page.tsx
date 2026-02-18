@@ -14,9 +14,14 @@ import { ClassAnalyticsDashboard } from '@/components/dashboard/teacher/class-an
 import { ChapterNavigation } from '@/components/class/ChapterNavigation';
 import { ChapterContentViewer } from '@/components/class/ChapterContentViewer';
 import { ChapterEditor } from '@/components/class/ChapterEditor';
+import { QuickGrader } from '@/components/dashboard/teacher/quick-grader';
+import { AttendancePanel } from '@/components/dashboard/teacher/attendance-panel';
+import { AuditLogsPanel } from '@/components/dashboard/teacher/audit-logs-panel';
+import { SubjectOverview } from '@/components/dashboard/teacher/subject-overview';
+import { StudentProgressPanel } from '@/components/dashboard/teacher/student-progress';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Users, FileText, Settings, GraduationCap, Bell, BarChart3, Library } from 'lucide-react';
+import { BookOpen, Users, FileText, Settings, GraduationCap, Bell, BarChart3, Library, Calendar, History, Search, TrendingUp } from 'lucide-react';
 
 
 export default function ClassDetailsPage() {
@@ -25,22 +30,18 @@ export default function ClassDetailsPage() {
   const { classId } = params as { classId: string };
   const { classes, assignments, isLoading: isAppLoading, materials, refetchMaterials, role, students: allStudents } = useContext(AppContext) as AppContextType;
 
-  // Use students from app context instead of individual fetching
   const students = allStudents || [];
-
   const [directClassInfo, setDirectClassInfo] = useState<ClassInfo | null>(null);
   const [selectedChapterId, setSelectedChapterId] = useState<string | undefined>(undefined);
+  const [isQuickGraderOpen, setIsQuickGraderOpen] = useState(false);
 
   const classInfo: ClassInfo | undefined = useMemo(() => {
-    // First try to find in context
     const contextClass = classes.find(c => c.id === classId);
     if (contextClass) return contextClass;
-
-    // If not found in context, use directly fetched class
     return directClassInfo || undefined;
   }, [classes, classId, directClassInfo]);
+  
   const classAssignments = useMemo(() => assignments.filter(a => a.class_id === classId), [assignments, classId]);
-
 
   useEffect(() => {
     if (classId && !classId.startsWith('local-')) {
@@ -48,12 +49,10 @@ export default function ClassDetailsPage() {
     }
   }, [classId, refetchMaterials]);
 
-  // Fetch class info directly if not found in context (for archived classes)
   useEffect(() => {
     if (!classId || classId.startsWith('local-')) return;
-
     const contextClass = classes.find(c => c.id === classId);
-    if (contextClass || directClassInfo) return; // Already have the class info
+    if (contextClass || directClassInfo) return;
 
     const fetchClassInfo = async () => {
       try {
@@ -66,13 +65,10 @@ export default function ClassDetailsPage() {
         console.error('Failed to fetch class info:', error);
       }
     };
-
     fetchClassInfo();
   }, [classId, classes, directClassInfo]);
 
   const isLoading = !!isAppLoading;
-
-  // Check if user is a teacher (global role)
   const isTeacher = role === 'teacher';
 
   if (isLoading && !classInfo) {
@@ -101,83 +97,121 @@ export default function ClassDetailsPage() {
 
   return (
     <div className="flex flex-col gap-8">
+      {/* Quick Grader Dialog */}
+      {isTeacher && (
+        <QuickGrader 
+          classId={classId} 
+          isOpen={isQuickGraderOpen} 
+          onClose={() => setIsQuickGraderOpen(false)} 
+        />
+      )}
+
       <Tabs defaultValue={searchParams.get('tab') || "assignments"} className="w-full">
-        <TabsList className={`grid w-full ${isTeacher ? 'grid-cols-6' : 'grid-cols-4'}`}>
+        <TabsList className={`grid w-full ${isTeacher ? 'grid-cols-8' : 'grid-cols-4'}`}>
           <TabsTrigger value="assignments"><FileText className="mr-2 h-4 w-4" /> Assignments</TabsTrigger>
           <TabsTrigger value="materials"><BookOpen className="mr-2 h-4 w-4" /> Materials</TabsTrigger>
           <TabsTrigger value="announcements"><Bell className="mr-2 h-4 w-4" /> Announcements</TabsTrigger>
           {isTeacher && (
             <>
+              <TabsTrigger value="progress"><TrendingUp className="mr-2 h-4 w-4" /> Progress</TabsTrigger>
+              <TabsTrigger value="subjects"><Library className="mr-2 h-4 w-4" /> Subjects</TabsTrigger>
               <TabsTrigger value="analytics"><BarChart3 className="mr-2 h-4 w-4" /> Analytics</TabsTrigger>
-              <TabsTrigger value="students"><Users className="mr-2 h-4 w-4" /> Students</TabsTrigger>
+              <TabsTrigger value="attendance"><Calendar className="mr-2 h-4 w-4" /> Attendance</TabsTrigger>
               <TabsTrigger value="settings"><Settings className="mr-2 h-4 w-4" /> Settings</TabsTrigger>
             </>
           )}
         </TabsList>
+
         <TabsContent value="assignments">
+          {isTeacher && (
+            <div className="mb-4">
+              <button 
+                onClick={() => setIsQuickGraderOpen(true)}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              >
+                Quick Grade
+              </button>
+            </div>
+          )}
           <AssignmentList assignments={classAssignments} classId={classId} isTeacher={isTeacher} />
         </TabsContent>
+
         <TabsContent value="announcements">
           <AnnouncementManager classId={classId} isTeacher={isTeacher} />
         </TabsContent>
+
         {isTeacher && (
-          <TabsContent value="analytics">
-            <ClassAnalyticsDashboard classId={classId} />
-          </TabsContent>
-        )}
-           <TabsContent value="materials">
-            <MaterialList materials={materials} classId={classId} isLoading={!!isLoading} isTeacher={isTeacher} />
-          </TabsContent>
-          <TabsContent value="chapters">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              <div className="lg:col-span-1">
-                <ChapterNavigation
-                  classId={classId}
-                  selectedChapterId={selectedChapterId}
-                  onChapterSelect={setSelectedChapterId}
-                  onCreateChapter={() => setSelectedChapterId('new')}
-                  isTeacher={isTeacher}
-                />
-              </div>
-              <div className="lg:col-span-3">
-                {isTeacher ? (
-                  <ChapterEditor
+          <>
+            <TabsContent value="progress">
+              <StudentProgressPanel classId={classId} />
+            </TabsContent>
+
+            <TabsContent value="subjects">
+              <SubjectOverview classId={classId} />
+            </TabsContent>
+
+            <TabsContent value="analytics">
+              <ClassAnalyticsDashboard classId={classId} />
+            </TabsContent>
+
+            <TabsContent value="attendance">
+              <AttendancePanel classId={classId} />
+            </TabsContent>
+
+            <TabsContent value="chapters">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="lg:col-span-1">
+                  <ChapterNavigation
                     classId={classId}
-                    chapterId={selectedChapterId || 'new'}
-                    onChapterUpdated={() => {
-                      // Could refresh navigation here
-                      setSelectedChapterId(undefined);
-                    }}
-                  />
-                ) : selectedChapterId ? (
-                  <ChapterContentViewer
-                    classId={classId}
-                    chapterId={selectedChapterId}
+                    selectedChapterId={selectedChapterId}
+                    onChapterSelect={setSelectedChapterId}
+                    onCreateChapter={() => setSelectedChapterId('new')}
                     isTeacher={isTeacher}
                   />
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <GraduationCap className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <p>Select a chapter from the sidebar to view its content.</p>
-                  </div>
-                )}
+                </div>
+                <div className="lg:col-span-3">
+                  {isTeacher ? (
+                    <ChapterEditor
+                      classId={classId}
+                      chapterId={selectedChapterId || 'new'}
+                      onChapterUpdated={() => setSelectedChapterId(undefined)}
+                    />
+                  ) : selectedChapterId ? (
+                    <ChapterContentViewer
+                      classId={classId}
+                      chapterId={selectedChapterId}
+                      isTeacher={isTeacher}
+                    />
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <GraduationCap className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                      <p>Select a chapter from the sidebar to view its content.</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </TabsContent>
-          {isTeacher && (
-            <>
-              <TabsContent value="students">
-                 <StudentList students={students} isLoading={!!isLoading} classInfo={classInfo as { id: string; name: string; join_code: string | null }} />
-              </TabsContent>
-              <TabsContent value="settings">
+            </TabsContent>
+
+            <TabsContent value="students">
+               <StudentList students={students} isLoading={!!isLoading} classInfo={classInfo as { id: string; name: string; join_code: string | null; teacher_join_code: string | null }} />
+            </TabsContent>
+
+            <TabsContent value="settings">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ClassSettings
                    classId={classId}
                    className={classInfo.name}
                    isArchived={classInfo.status === 'archived'}
                    onArchive={() => window.location.href = '/classes'} />
-              </TabsContent>
-            </>
-          )}
+                <AuditLogsPanel classId={classId} />
+              </div>
+            </TabsContent>
+          </>
+        )}
+        
+        <TabsContent value="materials">
+          <MaterialList materials={materials} classId={classId} isLoading={!!isLoading} isTeacher={isTeacher} />
+        </TabsContent>
       </Tabs>
     </div>
   );

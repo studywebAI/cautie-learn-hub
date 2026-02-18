@@ -1,7 +1,7 @@
 'use client';
 
-import { format, isToday, isTomorrow, isThisWeek, isPast, parseISO } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { format, isToday, isTomorrow, isThisWeek } from 'date-fns';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookCheck, BrainCircuit, Clock, CheckCircle2 } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
@@ -13,14 +13,12 @@ interface ListViewProps {
 }
 
 export function ListView({ events, onEventClick }: ListViewProps) {
-  // Group events by time period
+  // Simple grouping by time - no overdue
   const groupedEvents = events.reduce((groups, event) => {
     const eventDate = event.date;
     let groupKey: string;
     
-    if (isPast(eventDate) && !isToday(eventDate)) {
-      groupKey = 'overdue';
-    } else if (isToday(eventDate)) {
+    if (isToday(eventDate)) {
       groupKey = 'today';
     } else if (isTomorrow(eventDate)) {
       groupKey = 'tomorrow';
@@ -38,14 +36,13 @@ export function ListView({ events, onEventClick }: ListViewProps) {
   }, {} as Record<string, CalendarEvent[]>);
 
   const groupLabels: Record<string, string> = {
-    overdue: 'Overdue',
     today: 'Today',
     tomorrow: 'Tomorrow',
     thisWeek: 'This Week',
     upcoming: 'Upcoming',
   };
 
-  const groupOrder = ['overdue', 'today', 'tomorrow', 'thisWeek', 'upcoming'];
+  const groupOrder = ['today', 'tomorrow', 'thisWeek', 'upcoming'];
 
   if (events.length === 0) {
     return (
@@ -65,9 +62,7 @@ export function ListView({ events, onEventClick }: ListViewProps) {
 
         return (
           <div key={groupKey}>
-            <h3 className={`text-sm mb-3 ${
-              groupKey === 'overdue' ? 'text-destructive' : 'text-muted-foreground'
-            }`}>
+            <h3 className="text-sm mb-3 text-muted-foreground">
               {groupLabels[groupKey]}
             </h3>
             <div className="space-y-2">
@@ -77,7 +72,6 @@ export function ListView({ events, onEventClick }: ListViewProps) {
                   <EventListItem
                     key={event.id}
                     event={event}
-                    isOverdue={groupKey === 'overdue'}
                     onEventClick={onEventClick}
                   />
                 ))}
@@ -89,12 +83,10 @@ export function ListView({ events, onEventClick }: ListViewProps) {
   );
 }
 
-function EventListItem({ event, isOverdue, onEventClick }: { event: CalendarEvent; isOverdue?: boolean; onEventClick?: (event: CalendarEvent) => void }) {
-  // Build href with instructions if available
+function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventClick?: (event: CalendarEvent) => void }) {
   const buildHref = () => {
     if (!event.href) return undefined;
     
-    // If there are instructions (description from teacher), add as query param
     if (event.description) {
       const separator = event.href.includes('?') ? '&' : '?';
       return `${event.href}${separator}instructions=${encodeURIComponent(event.description)}`;
@@ -104,21 +96,24 @@ function EventListItem({ event, isOverdue, onEventClick }: { event: CalendarEven
 
   const href = buildHref();
 
+  // Checkbox shows completion status but no color - just subtle gray check
+  const isCompleted = event.status === 'completed';
+
   const content = (
-    <div className={`flex items-center gap-4 p-3 rounded-lg border transition-colors ${
-      isOverdue ? 'border-destructive/30 bg-destructive/5' : 'hover:bg-muted/50'
-    }`}>
-      <div className={`w-1 h-12 rounded-full ${
-        event.type === 'assignment' ? 'bg-destructive' : 'bg-primary'
-      }`} />
+    <div className="flex items-center gap-4 p-3 rounded-lg border transition-colors hover:bg-muted/50">
+      {/* Subtle checkbox - gray, no color */}
+      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+        isCompleted ? 'border-muted-foreground bg-muted-foreground' : 'border-muted-foreground'
+      }`}>
+        {isCompleted && <CheckCircle2 className="h-3 w-3 text-background" />}
+      </div>
+      
+      <div className="w-1 h-12 rounded-full flex-shrink-0" style={{
+        backgroundColor: event.type === 'assignment' ? '#3b82f6' : undefined
+      }} />
       
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="truncate">{event.title}</p>
-          {event.status === 'completed' && (
-            <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-          )}
-        </div>
+        <p className="truncate">{event.title}</p>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>{event.subject}</span>
           {event.chapter_title && (
@@ -128,7 +123,6 @@ function EventListItem({ event, isOverdue, onEventClick }: { event: CalendarEven
             </>
           )}
         </div>
-        {/* Show linked path if available */}
         {event.linked_path && (
           <div className="text-xs text-primary mt-1 truncate">
             → {event.linked_path}
@@ -157,7 +151,7 @@ function EventListItem({ event, isOverdue, onEventClick }: { event: CalendarEven
         </div>
         
         {event.type === 'assignment' 
-          ? <BookCheck className="h-4 w-4 text-destructive" />
+          ? <BookCheck className="h-4 w-4 text-blue-500" />
           : <BrainCircuit className="h-4 w-4 text-primary" />
         }
       </div>
