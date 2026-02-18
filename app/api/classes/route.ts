@@ -54,13 +54,13 @@ export async function GET(request: NextRequest) {
       const isTeacher = userRole === 'teacher';
 
       if (isTeacher) {
-        // TEACHERS: See ALL classes they are a member of (as teacher role)
-        // No more owner_id check - teachers are equal members
+        // TEACHERS: See ALL classes they're members of (teacher OR management role)
+        // Also include legacy owned classes (backward compatibility)
         const { data: memberClasses, error: memberError } = await supabase
           .from('class_members')
           .select('classes(*)')
           .eq('user_id', user.id)
-          .eq('role', 'teacher');
+          .in('role', ['teacher', 'management']);
 
         if (memberError) {
           return NextResponse.json({ error: memberError.message }, { status: 500 });
