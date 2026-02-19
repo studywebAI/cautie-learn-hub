@@ -21,6 +21,7 @@ import { SubjectOverview } from '@/components/dashboard/teacher/subject-overview
 import { StudentProgressPanel } from '@/components/dashboard/teacher/student-progress';
 import { InviteTab } from '@/components/class/invite-tab';
 import { GroupTab } from '@/components/class/group-tab';
+import { AttendanceTab } from '@/components/class/attendance-tab';
 import { GraduationCap } from 'lucide-react';
 
 export default function ClassDetailsPage() {
@@ -122,7 +123,7 @@ export default function ClassDetailsPage() {
       case 'analytics':
         return isTeacher ? <ClassAnalyticsDashboard classId={classId} /> : null;
       case 'attendance':
-        return isTeacher ? <AttendancePanel classId={classId} /> : null;
+        return isTeacher ? <AttendanceTab classId={classId} /> : null;
       case 'settings':
         return isTeacher ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

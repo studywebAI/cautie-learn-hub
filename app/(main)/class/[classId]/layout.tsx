@@ -12,13 +12,11 @@ import Link from 'next/link';
 const tabs = [
   { id: 'invite', label: 'Invite', icon: UserPlus, href: '?tab=invite' },
   { id: 'group', label: 'Group', icon: Users, href: '?tab=group' },
-  { id: 'assignments', label: 'Assignments', icon: FileText, href: '?tab=assignments' },
-  { id: 'materials', label: 'Materials', icon: BookOpen, href: '?tab=materials' },
+  { id: 'attendance', label: 'Attendance', icon: Calendar, href: '?tab=attendance' },
   { id: 'announcements', label: 'Announcements', icon: Bell, href: '?tab=announcements' },
   { id: 'progress', label: 'Progress', icon: BarChart3, href: '?tab=progress' },
   { id: 'subjects', label: 'Subjects', icon: Library, href: '?tab=subjects' },
   { id: 'analytics', label: 'Analytics', icon: Layers, href: '?tab=analytics' },
-  { id: 'attendance', label: 'Attendance', icon: Calendar, href: '?tab=attendance' },
   { id: 'settings', label: 'Settings', icon: Settings, href: '?tab=settings' },
 ];
 

@@ -1,14 +1,25 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+// GET - Fetch all students with their attendance records for a class
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
-    const cookieStore = cookies()
-    const supabase = await createClient(cookieStore)
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) { return cookieStore.get(name)?.value },
+          set(name: string, value: string, options: any) { cookieStore.set(name, value, options) },
+          remove(name: string, options: any) { cookieStore.set(name, '', { ...options, maxAge: 0 }) }
+        }
+      }
+    )
 
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -19,53 +30,49 @@ export async function GET(
     const resolvedParams = await params
     const { classId } = resolvedParams
 
-    // Verify user has access to this class
+    // Check if user is owner or teacher
     const { data: classData, error: classError } = await supabase
       .from('classes')
-      .select('id, name')
+      .select('owner_id')
       .eq('id', classId)
-      .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
       .single()
 
     if (classError || !classData) {
-      return NextResponse.json({ error: 'Class not found or access denied' }, { status: 404 })
+      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
     }
 
-    // Get attendance sessions
-    const { data: sessions, error: sessionsError } = await (supabase as any)
-      .from('attendance_sessions')
-      .select(`
-        *,
-        attendance_records (
-          id,
-          user_id,
-          status,
-          marked_at,
-          notes,
-          profiles:user_id (
-            full_name,
-            avatar_url
-          )
-        )
-      `)
-      .eq('class_id', classId)
-      .order('date', { ascending: false })
-
-    if (sessionsError) {
-      return NextResponse.json({ error: sessionsError.message }, { status: 500 })
+    const isOwner = classData.owner_id === user.id
+    
+    let classMember = null
+    let memberError = false
+    
+    try {
+      const result = await supabase
+        .from('class_members')
+        .select('role')
+        .eq('class_id', classId)
+        .eq('user_id', user.id)
+        .single()
+      
+      if (!result.error) {
+        classMember = result.data
+      }
+    } catch (e) {
+      // Ignore - user might not be in class_members
     }
 
-    // Get class members for reference
-    const { data: members, error: membersError } = await supabase
+    // Owner can always view/update, teachers can view/update
+    // Also check if user is owner of the class OR has teacher/owner role in class_members
+    const canAccess = isOwner || classMember?.role === 'teacher' || classMember?.role === 'owner'
+    
+    if (!canAccess) {
+      return NextResponse.json({ error: 'Only teachers can view attendance' }, { status: 403 })
+    }
+
+    // Get all students in the class
+    const { data: classMembers, error: membersError } = await supabase
       .from('class_members')
-      .select(`
-        user_id,
-        role,
-        profiles:user_id (
-          full_name,
-          avatar_url
-        )
-      `)
+      .select('user_id, role, joined_at')
       .eq('class_id', classId)
       .eq('role', 'student')
 
@@ -73,25 +80,101 @@ export async function GET(
       return NextResponse.json({ error: membersError.message }, { status: 500 })
     }
 
+    const studentIds = classMembers?.map(m => m.user_id) || []
+
+    // Get profiles for students
+    let students = []
+    if (studentIds.length > 0) {
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', studentIds)
+      
+      if (profilesError) {
+        return NextResponse.json({ error: profilesError.message }, { status: 500 })
+      }
+      students = profilesData || []
+    }
+
+    // Get attendance records for all students
+    let attendanceRecords = []
+    if (studentIds.length > 0) {
+      const { data: attendanceData, error: attendanceError } = await supabase
+        .from('student_attendance')
+        .select('*')
+        .eq('class_id', classId)
+        .in('student_id', studentIds)
+      
+      if (attendanceError) {
+        return NextResponse.json({ error: attendanceError.message }, { status: 500 })
+      }
+      attendanceRecords = attendanceData || []
+    }
+
+    // Calculate stats per student
+    const studentsWithAttendance = students.map((student: any) => {
+      const studentRecords = attendanceRecords.filter((r: any) => r.student_id === student.id)
+      
+      const absentCount = studentRecords.filter((r: any) => r.is_present === false).length
+      const homeworkIncompleteCount = studentRecords.filter((r: any) => r.has_homework_incomplete === true).length
+      const sentOutCount = studentRecords.filter((r: any) => r.was_sent_out === true).length
+      const tooLateCount = studentRecords.filter((r: any) => r.was_too_late === true).length
+      
+      // Get the latest record
+      const latestRecord = studentRecords.sort((a: any, b: any) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )[0]
+
+      return {
+        id: student.id,
+        name: student.full_name || 'Unknown Student',
+        avatarUrl: student.avatar_url,
+        isPresent: latestRecord?.is_present ?? null,
+        hasHomeworkIncomplete: latestRecord?.has_homework_incomplete ?? false,
+        wasSentOut: latestRecord?.was_sent_out ?? false,
+        wasTooLate: latestRecord?.was_too_late ?? false,
+        note: latestRecord?.note,
+        noteCreatedAt: latestRecord?.created_at,
+        notedBy: latestRecord?.noted_by,
+        stats: {
+          totalAbsent: absentCount,
+          totalHomeworkIncomplete: homeworkIncompleteCount,
+          totalSentOut: sentOutCount,
+          totalTooLate: tooLateCount
+        }
+      }
+    })
+
     return NextResponse.json({
-      className: classData.name,
-      sessions: sessions || [],
-      students: members || []
+      classId,
+      students: studentsWithAttendance,
+      totalStudents: studentsWithAttendance.length
     })
 
   } catch (error) {
     console.error('Error fetching attendance:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error: ' + String(error) }, { status: 500 })
   }
 }
 
+// POST - Update attendance for a student
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
-    const cookieStore = cookies()
-    const supabase = await createClient(cookieStore)
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) { return cookieStore.get(name)?.value },
+          set(name: string, value: string, options: any) { cookieStore.set(name, value, options) },
+          remove(name: string, options: any) { cookieStore.set(name, '', { ...options, maxAge: 0 }) }
+        }
+      }
+    )
 
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -101,42 +184,79 @@ export async function POST(
 
     const resolvedParams = await params
     const { classId } = resolvedParams
-    const { title, date, startTime, endTime } = await request.json()
 
-    // Verify user owns the class
+    // Check if user is owner or teacher
     const { data: classData, error: classError } = await supabase
       .from('classes')
-      .select('id')
+      .select('owner_id')
       .eq('id', classId)
-      .eq('owner_id', user.id)
       .single()
 
     if (classError || !classData) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
     }
 
-    // Create attendance session
-    const { data: session, error: sessionError } = await (supabase as any)
-      .from('attendance_sessions')
+    const isOwner = classData.owner_id === user.id
+    
+    let classMember = null
+    
+    try {
+      const result = await supabase
+        .from('class_members')
+        .select('role')
+        .eq('class_id', classId)
+        .eq('user_id', user.id)
+        .single()
+      
+      if (!result.error) {
+        classMember = result.data
+      }
+    } catch (e) {
+      // Ignore - user might not be in class_members
+    }
+
+    // Owner can always view/update, teachers can view/update
+    const canAccess = isOwner || classMember?.role === 'teacher' || classMember?.role === 'owner'
+    
+    if (!canAccess) {
+      return NextResponse.json({ error: 'Only teachers can update attendance' }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const { 
+      studentId, 
+      isPresent, 
+      hasHomeworkIncomplete, 
+      wasSentOut, 
+      wasTooLate,
+      note 
+    } = body
+
+    // Create new attendance record
+    const { data: attendance, error: attendanceError } = await supabase
+      .from('student_attendance')
       .insert({
+        student_id: studentId,
         class_id: classId,
-        title,
-        date,
-        start_time: startTime,
-        end_time: endTime,
-        is_active: true
+        is_present: isPresent,
+        has_homework_incomplete: hasHomeworkIncomplete || false,
+        was_sent_out: wasSentOut || false,
+        was_too_late: wasTooLate || false,
+        note: note || null,
+        noted_by: note ? user.id : null,
+        created_by: user.id
       })
       .select()
       .single()
 
-    if (sessionError) {
-      return NextResponse.json({ error: sessionError.message }, { status: 500 })
+    if (attendanceError) {
+      return NextResponse.json({ error: attendanceError.message }, { status: 500 })
     }
 
-    return NextResponse.json(session)
+    return NextResponse.json({ success: true, attendance })
 
   } catch (error) {
-    console.error('Error creating attendance session:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error updating attendance:', error)
+    return NextResponse.json({ error: 'Internal server error: ' + String(error) }, { status: 500 })
   }
 }
