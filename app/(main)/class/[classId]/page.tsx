@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
-import { useContext, useEffect, useState, useMemo } from 'react';
+import { useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AssignmentList } from '@/components/dashboard/teacher/assignment-list';
@@ -24,6 +24,10 @@ import { GroupTab } from '@/components/class/group-tab';
 import { AttendanceTab } from '@/components/class/attendance-tab';
 import { GraduationCap } from 'lucide-react';
 
+// Cache for tab data - persists across tab switches
+const tabDataCache: Record<string, { data: any; timestamp: number }> = {};
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
 export default function ClassDetailsPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -35,6 +39,10 @@ export default function ClassDetailsPage() {
   const [directClassInfo, setDirectClassInfo] = useState<ClassInfo | null>(null);
   const [selectedChapterId, setSelectedChapterId] = useState<string | undefined>(undefined);
   const [isQuickGraderOpen, setIsQuickGraderOpen] = useState(false);
+  
+  // Centralized tab data cache
+  const [cachedTabData, setCachedTabData] = useState<Record<string, any>>({});
+  const [loadingTabs, setLoadingTabs] = useState<Record<string, boolean>>({});
 
   const classInfo: ClassInfo | undefined = useMemo(() => {
     const contextClass = classes.find(c => c.id === classId);
@@ -68,6 +76,79 @@ export default function ClassDetailsPage() {
     };
     fetchClassInfo();
   }, [classId, classes, directClassInfo]);
+
+  // Load and cache tab data - only fetches if not cached or cache expired
+  const loadTabData = useCallback(async (tabName: string) => {
+    const cacheKey = `${classId}-${tabName}`;
+    const cached = tabDataCache[cacheKey];
+    
+    // Return cached data if valid
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      setCachedTabData(prev => ({ ...prev, [tabName]: cached.data }));
+      return cached.data;
+    }
+
+    // Don't refetch if already loading
+    if (loadingTabs[tabName]) return null;
+
+    setLoadingTabs(prev => ({ ...prev, [tabName]: true }));
+
+    try {
+      let url = '';
+      switch (tabName) {
+        case 'group':
+          url = `/api/classes/${classId}/group`;
+          break;
+        case 'attendance':
+          url = `/api/classes/${classId}/attendance`;
+          break;
+        case 'announcements':
+          url = `/api/classes/${classId}/announcements`;
+          break;
+        case 'progress':
+          url = `/api/classes/${classId}/progress`;
+          break;
+        case 'subjects':
+          url = `/api/classes/${classId}/subjects`;
+          break;
+        case 'analytics':
+          url = `/api/classes/${classId}/analytics`;
+          break;
+        default:
+          return null;
+      }
+
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        tabDataCache[cacheKey] = { data, timestamp: Date.now() };
+        setCachedTabData(prev => ({ ...prev, [tabName]: data }));
+        return data;
+      }
+    } catch (error) {
+      console.error(`Failed to load ${tabName} data:`, error);
+    } finally {
+      setLoadingTabs(prev => ({ ...prev, [tabName]: false }));
+    }
+    return null;
+  }, [classId, loadingTabs]);
+
+  // Preload all tab data when class loads (background)
+  useEffect(() => {
+    if (classId && !isAppLoading) {
+      // Preload tabs in background - won't block UI
+      ['group', 'attendance', 'announcements', 'progress', 'subjects', 'analytics'].forEach(tabName => {
+        loadTabData(tabName);
+      });
+    }
+  }, [classId, isAppLoading, loadTabData]);
+
+  // Force refresh specific tab data (for pull-to-refresh or manual refresh)
+  const refreshTabData = useCallback((tabName: string) => {
+    const cacheKey = `${classId}-${tabName}`;
+    delete tabDataCache[cacheKey]; // Clear cache
+    return loadTabData(tabName);
+  }, [classId, loadTabData]);
 
   const isLoading = !!isAppLoading;
   const isTeacher = role === 'teacher';

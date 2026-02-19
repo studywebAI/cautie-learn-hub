@@ -1,7 +1,7 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { 
   BookOpen, Users, FileText, Settings, GraduationCap, Bell, 
@@ -22,8 +22,13 @@ const tabs = [
 
 export default function ClassLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
+  const searchParams = useSearchParams();
   const classId = params.classId as string;
   const [className, setClassName] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Use useSearchParams properly - this will re-render when URL changes
+  const currentTab = searchParams?.get('tab') || 'invite';
 
   useEffect(() => {
     const fetchClass = async () => {
@@ -38,11 +43,12 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
     if (classId) fetchClass();
   }, [classId]);
 
-  // Get current tab from URL
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const currentTab = searchParams?.get('tab') || 'invite';
+  // Track navigation state
+  useEffect(() => {
+    // Reset loading state when tab changes
+    setIsLoading(false);
+  }, [currentTab]);
 
-  // Filter tabs for different roles (simplified - show all for now)
   const visibleTabs = tabs;
 
   return (
@@ -71,6 +77,8 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
               <Link
                 key={tab.id}
                 href={tab.href}
+                replace
+                prefetch={true}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md text-sm mb-1 transition-colors",
                   isActive 

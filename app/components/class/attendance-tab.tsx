@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -48,11 +48,14 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
   } | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchAttendance();
-  }, [classId]);
-
-  const fetchAttendance = async () => {
+  // Check if data was passed via props (from cache) or fetch it
+  const fetchAttendance = async (forceRefresh = false) => {
+    // If we already have students and not forcing refresh, skip
+    if (!forceRefresh && students.length > 0) {
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     try {
       const response = await fetch(`/api/classes/${classId}/attendance`);
@@ -66,6 +69,15 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchAttendance();
+  }, [classId]);
+
+  // Method to refresh data after making changes
+  const refreshData = useCallback(() => {
+    fetchAttendance(true);
+  }, []);
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
