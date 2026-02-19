@@ -20,6 +20,7 @@ import { AuditLogsPanel } from '@/components/dashboard/teacher/audit-logs-panel'
 import { SubjectOverview } from '@/components/dashboard/teacher/subject-overview';
 import { StudentProgressPanel } from '@/components/dashboard/teacher/student-progress';
 import { InviteTab } from '@/components/class/invite-tab';
+import { GroupTab } from '@/components/class/group-tab';
 import { GraduationCap } from 'lucide-react';
 
 export default function ClassDetailsPage() {
@@ -97,6 +98,8 @@ export default function ClassDetailsPage() {
             teacherJoinCode={(classInfo as any).teacher_join_code}
           />
         );
+      case 'group':
+        return <GroupTab classId={classId} isTeacher={isTeacher} />;
       case 'assignments':
         return (
           <>

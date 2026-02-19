@@ -220,12 +220,27 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
             {scheduledTime && <p className="text-xs text-muted-foreground">Will be sent at {format(new Date(scheduledTime), 'PPp')}</p>}
           </div>
 
-          {/* Send button */}
+          {/* Send buttons - both options */}
           {validStudentEmails.length > 0 && (
-            <Button onClick={sendInvites} disabled={isSending} className="w-full gap-2 bg-black hover:bg-black/80">
-              {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-              {isSending ? 'Sending...' : `Send ${validStudentEmails.length} Invite${validStudentEmails.length > 1 ? 's' : ''}`}
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={sendInvites} disabled={isSending} className="flex-1 gap-2 bg-black hover:bg-black/80">
+                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                {isSending ? 'Sending...' : 'Send Now'}
+              </Button>
+              {scheduledTime && (
+                <Button onClick={sendInvites} disabled={isSending} variant="outline" className="flex-1 gap-2 border-2 border-black/20">
+                  {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+                  {isSending ? 'Scheduling...' : `Schedule for ${format(new Date(scheduledTime), 'PPp')}`}
+                </Button>
+              )}
+            </div>
+          )}
+          
+          {/* Always show Send button even without schedule if emails exist */}
+          {validStudentEmails.length > 0 && !scheduledTime && (
+            <p className="text-xs text-muted-foreground text-center">
+              Click "Send Now" to send invites immediately, or set a schedule to send later.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -304,11 +319,26 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
               </Button>
             </div>
 
+            {/* Teacher send buttons - both options */}
             {teacherEmails.filter(e => e.trim() !== '').length > 0 && (
-              <Button onClick={sendInvites} disabled={isSending} className="w-full gap-2 bg-black hover:bg-black/80">
-                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-                {isSending ? 'Sending...' : `Send Teacher Invite${teacherEmails.filter(e => e.trim() !== '').length > 1 ? 's' : ''}`}
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={sendInvites} disabled={isSending} className="flex-1 gap-2 bg-black hover:bg-black/80">
+                  {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                  {isSending ? 'Sending...' : 'Send Now'}
+                </Button>
+                {scheduledTime && (
+                  <Button onClick={sendInvites} disabled={isSending} variant="outline" className="flex-1 gap-2 border-2 border-black/20">
+                    {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+                    {isSending ? 'Scheduling...' : `Schedule for ${format(new Date(scheduledTime), 'PPp')}`}
+                  </Button>
+                )}
+              </div>
+            )}
+            
+            {teacherEmails.filter(e => e.trim() !== '').length > 0 && !scheduledTime && (
+              <p className="text-xs text-muted-foreground text-center">
+                Click "Send Now" to send invites immediately, or set a schedule to send later.
+              </p>
             )}
           </CardContent>
         )}

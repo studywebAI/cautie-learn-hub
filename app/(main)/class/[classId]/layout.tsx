@@ -11,6 +11,7 @@ import Link from 'next/link';
 
 const tabs = [
   { id: 'invite', label: 'Invite', icon: UserPlus, href: '?tab=invite' },
+  { id: 'group', label: 'Group', icon: Users, href: '?tab=group' },
   { id: 'assignments', label: 'Assignments', icon: FileText, href: '?tab=assignments' },
   { id: 'materials', label: 'Materials', icon: BookOpen, href: '?tab=materials' },
   { id: 'announcements', label: 'Announcements', icon: Bell, href: '?tab=announcements' },

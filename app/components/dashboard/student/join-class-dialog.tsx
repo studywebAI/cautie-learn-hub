@@ -24,7 +24,7 @@ import type { ClassInfo } from '@/contexts/app-context';
 type JoinClassDialogProps = {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onClassJoined: (classCode: string) => Promise<boolean>;
+  onClassJoined: (classCode: string) => Promise<boolean | { success?: boolean; alreadyJoined?: boolean; message?: string }>;
   initialCode?: string;
 };
 
@@ -75,10 +75,20 @@ export function JoinClassDialog({ isOpen, setIsOpen, onClassJoined, initialCode 
     if (!classCode) return;
     
     setIsJoining(true);
-    const success = await onClassJoined(classCode);
+    const result = await onClassJoined(classCode);
     setIsJoining(false);
 
-    if (success) {
+    // Handle result - could be boolean or object with alreadyJoined flag
+    const success = typeof result === 'boolean' ? result : result?.success;
+    const alreadyJoined = typeof result === 'object' && result?.alreadyJoined;
+    
+    if (alreadyJoined) {
+      toast({
+        title: 'Already a member',
+        description: result.message || 'You are already a member of this class.',
+      });
+      resetAndClose();
+    } else if (success) {
       toast({
         title: 'Successfully joined class!',
         description: `You are now enrolled in "${classToJoin?.name}".`

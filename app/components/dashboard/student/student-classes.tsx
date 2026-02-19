@@ -45,7 +45,7 @@ export function StudentClasses() {
   }, [searchParams, router, toast, session]);
 
 
-  const handleClassJoined = async (classCode: string): Promise<boolean> => {
+  const handleClassJoined = async (classCode: string): Promise<boolean | { success?: boolean; alreadyJoined?: boolean; message?: string }> => {
     if (!session) {
         toast({
             variant: 'destructive',
@@ -62,9 +62,16 @@ export function StudentClasses() {
         body: JSON.stringify({ class_code: classCode }),
       });
 
+      const data = await response.json();
+
+      // Check if already a member (API returns 200 with alreadyJoined flag)
+      if (response.ok && data.alreadyJoined) {
+        await refetchClasses();
+        return { success: true, alreadyJoined: true, message: data.message };
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to join class.');
+        throw new Error(data.error || 'Failed to join class.');
       }
 
       await refetchClasses();

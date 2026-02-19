@@ -66,16 +66,25 @@ export async function POST(request: NextRequest) {
   const isTeacherCode = classData.teacher_join_code === class_code;
   const role = isTeacherCode ? 'teacher' : 'student';
 
-  // Check if user is already a member
-  const { data: memberData } = await supabase
+  // Check if user is already a member (use maybeSingle to handle null case)
+  const { data: existingMember, error: checkError } = await supabase
     .from('class_members')
-    .select()
+    .select('id, role')
     .eq('class_id', classData.id)
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
     
-  if (memberData) {
-    return NextResponse.json({ error: 'You are already a member of this class.' }, { status: 400 });
+  if (checkError) {
+    console.error('Error checking membership:', checkError);
+  }
+    
+  if (existingMember) {
+    return NextResponse.json({ 
+      message: 'You are already a member of this class.',
+      alreadyJoined: true,
+      role: existingMember.role,
+      class: { id: classData.id, name: classData.name, description: classData.description }
+    }, { status: 200 });
   }
 
   // Insert into class_members with the determined role
@@ -84,6 +93,14 @@ export async function POST(request: NextRequest) {
     .insert([{ class_id: classData.id, user_id: user.id, role }]);
 
   if (insertError) {
+    // Handle duplicate key error (already a member)
+    if (insertError.code === '23505' || insertError.message.includes('duplicate key')) {
+      return NextResponse.json({ 
+        message: 'You are already a member of this class.',
+        alreadyJoined: true,
+        class: { id: classData.id, name: classData.name, description: classData.description }
+      }, { status: 200 });
+    }
     console.error('Error joining class:', insertError);
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }

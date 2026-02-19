@@ -36,13 +36,18 @@ function ClassesPageContent() {
             body: JSON.stringify({ class_code: joinCode }),
           });
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to join class.');
+          const data = await response.json();
+
+          // Handle already joined case
+          if (response.ok && data.alreadyJoined) {
+            toast({ title: data.message || 'You are already a member of this class.' });
+            await refetchClasses();
+          } else if (response.ok) {
+            toast({ title: 'Successfully joined class!' });
+            await refetchClasses();
+          } else {
+            throw new Error(data.error || 'Failed to join class.');
           }
-          
-          toast({ title: 'Successfully joined class!' });
-          await refetchClasses();
 
         } catch (error: any) {
           toast({
