@@ -144,8 +144,10 @@ export function TeacherDashboard() {
     (cls.description && cls.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const activeClasses = filteredClasses.filter(cls => cls.status !== 'archived');
-  const archivedClasses = filteredClasses.filter(cls => cls.status === 'archived');
+  // Sort classes alphabetically for consistent ordering
+  const sortedFilteredClasses = [...filteredClasses].sort((a, b) => a.name.localeCompare(b.name));
+  const activeClasses = sortedFilteredClasses.filter(cls => cls.status !== 'archived');
+  const archivedClasses = sortedFilteredClasses.filter(cls => cls.status === 'archived');
 
   return (
     <div className="flex flex-col gap-8">

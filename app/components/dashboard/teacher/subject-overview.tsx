@@ -19,15 +19,23 @@ type Subject = {
 
 type SubjectOverviewProps = {
   classId: string;
+  cachedSubjects?: Subject[]; // Accept cached data from parent
 };
 
-export function SubjectOverview({ classId }: SubjectOverviewProps) {
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [loading, setLoading] = useState(true);
+export function SubjectOverview({ classId, cachedSubjects }: SubjectOverviewProps) {
+  const [subjects, setSubjects] = useState<Subject[]>(cachedSubjects || []);
+  const [loading, setLoading] = useState(!cachedSubjects);
 
   useEffect(() => {
+    // Use cached data if available
+    if (cachedSubjects && cachedSubjects.length > 0) {
+      setSubjects(cachedSubjects);
+      setLoading(false);
+      return;
+    }
+    
     fetchSubjects();
-  }, [classId]);
+  }, [classId, cachedSubjects]);
 
   const fetchSubjects = async () => {
     setLoading(true);
@@ -71,7 +79,8 @@ export function SubjectOverview({ classId }: SubjectOverviewProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {subjects.map(subject => (
+            {/* Sort alphabetically for consistent ordering */}
+            {([...subjects] as Subject[]).sort((a, b) => a.name.localeCompare(b.name)).map(subject => (
               <Link 
                 key={subject.id} 
                 href={`/subjects/${subject.id}`}

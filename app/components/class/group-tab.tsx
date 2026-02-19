@@ -81,17 +81,25 @@ type GroupData = {
 type GroupTabProps = {
   classId: string;
   isTeacher: boolean;
+  cachedData?: GroupData; // Accept cached data from parent
 };
 
-export function GroupTab({ classId, isTeacher }: GroupTabProps) {
-  const [data, setData] = useState<GroupData | null>(null);
-  const [loading, setLoading] = useState(true);
+export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
+  const [data, setData] = useState<GroupData | null>(cachedData || null);
+  const [loading, setLoading] = useState(!cachedData);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [filter, setFilter] = useState<'all' | 'online' | 'offline'>('all');
 
   useEffect(() => {
+    // Use cached data if available
+    if (cachedData) {
+      setData(cachedData);
+      setLoading(false);
+      return;
+    }
+    
     fetchGroupData();
-  }, [classId]);
+  }, [classId, cachedData]);
 
   const fetchGroupData = async () => {
     setLoading(true);
@@ -130,11 +138,13 @@ export function GroupTab({ classId, isTeacher }: GroupTabProps) {
     return date.toLocaleDateString();
   };
 
-  const filteredStudents = data?.students.filter(student => {
-    if (filter === 'online') return student.onlineStatus === 'online';
-    if (filter === 'offline') return student.onlineStatus === 'offline';
-    return true;
-  }) || [];
+  const filteredStudents = (data?.students || [])
+    .filter(student => {
+      if (filter === 'online') return student.onlineStatus === 'online';
+      if (filter === 'offline') return student.onlineStatus === 'offline';
+      return true;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically for consistency
 
   const getActionIcon = (action: string) => {
     if (action.includes('create')) return <CheckCircle className="h-3 w-3 text-green-500" />;

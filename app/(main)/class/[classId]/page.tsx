@@ -45,12 +45,12 @@ export default function ClassDetailsPage() {
   const [loadingTabs, setLoadingTabs] = useState<Record<string, boolean>>({});
 
   const classInfo: ClassInfo | undefined = useMemo(() => {
-    const contextClass = classes.find(c => c.id === classId);
+    const contextClass = classes.find((c: any) => c.id === classId);
     if (contextClass) return contextClass;
     return directClassInfo || undefined;
   }, [classes, classId, directClassInfo]);
   
-  const classAssignments = useMemo(() => assignments.filter(a => a.class_id === classId), [assignments, classId]);
+  const classAssignments = useMemo(() => assignments.filter((a: any) => a.class_id === classId), [assignments, classId]);
 
   useEffect(() => {
     if (classId && !classId.startsWith('local-')) {
@@ -60,7 +60,7 @@ export default function ClassDetailsPage() {
 
   useEffect(() => {
     if (!classId || classId.startsWith('local-')) return;
-    const contextClass = classes.find(c => c.id === classId);
+    const contextClass = classes.find((c: any) => c.id === classId);
     if (contextClass || directClassInfo) return;
 
     const fetchClassInfo = async () => {
@@ -84,14 +84,14 @@ export default function ClassDetailsPage() {
     
     // Return cached data if valid
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      setCachedTabData(prev => ({ ...prev, [tabName]: cached.data }));
+      setCachedTabData((prev: any) => ({ ...prev, [tabName]: cached.data }));
       return cached.data;
     }
 
     // Don't refetch if already loading
     if (loadingTabs[tabName]) return null;
 
-    setLoadingTabs(prev => ({ ...prev, [tabName]: true }));
+    setLoadingTabs((prev: any) => ({ ...prev, [tabName]: true }));
 
     try {
       let url = '';
@@ -122,13 +122,13 @@ export default function ClassDetailsPage() {
       if (response.ok) {
         const data = await response.json();
         tabDataCache[cacheKey] = { data, timestamp: Date.now() };
-        setCachedTabData(prev => ({ ...prev, [tabName]: data }));
+        setCachedTabData((prev: any) => ({ ...prev, [tabName]: data }));
         return data;
       }
     } catch (error) {
       console.error(`Failed to load ${tabName} data:`, error);
     } finally {
-      setLoadingTabs(prev => ({ ...prev, [tabName]: false }));
+      setLoadingTabs((prev: any) => ({ ...prev, [tabName]: false }));
     }
     return null;
   }, [classId, loadingTabs]);
@@ -137,16 +137,16 @@ export default function ClassDetailsPage() {
   useEffect(() => {
     if (classId && !isAppLoading) {
       // Preload tabs in background - won't block UI
-      ['group', 'attendance', 'announcements', 'progress', 'subjects', 'analytics'].forEach(tabName => {
+      ['group', 'attendance', 'announcements', 'progress', 'subjects', 'analytics'].forEach((tabName: string) => {
         loadTabData(tabName);
       });
     }
   }, [classId, isAppLoading, loadTabData]);
 
-  // Force refresh specific tab data (for pull-to-refresh or manual refresh)
+  // Force refresh specific tab data
   const refreshTabData = useCallback((tabName: string) => {
     const cacheKey = `${classId}-${tabName}`;
-    delete tabDataCache[cacheKey]; // Clear cache
+    delete tabDataCache[cacheKey];
     return loadTabData(tabName);
   }, [classId, loadTabData]);
 
@@ -181,7 +181,7 @@ export default function ClassDetailsPage() {
           />
         );
       case 'group':
-        return <GroupTab classId={classId} isTeacher={isTeacher} />;
+        return <GroupTab classId={classId} isTeacher={isTeacher} cachedData={cachedTabData['group']} />;
       case 'assignments':
         return (
           <>
@@ -200,7 +200,12 @@ export default function ClassDetailsPage() {
       case 'progress':
         return isTeacher ? <StudentProgressPanel classId={classId} /> : null;
       case 'subjects':
-        return isTeacher ? <SubjectOverview classId={classId} /> : null;
+        return isTeacher ? (
+          <SubjectOverview 
+            classId={classId} 
+            cachedSubjects={cachedTabData['subjects']?.subjects}
+          />
+        ) : null;
       case 'analytics':
         return isTeacher ? <ClassAnalyticsDashboard classId={classId} /> : null;
       case 'attendance':
@@ -235,7 +240,7 @@ export default function ClassDetailsPage() {
       case 'materials':
         return <MaterialList materials={materials} classId={classId} isLoading={!!isLoading} isTeacher={isTeacher} />;
       case 'students':
-        return <StudentList students={students} isLoading={!!isLoading} classInfo={classInfo as { id: string; name: string; join_code: string | null; teacher_join_code: string | null }} />;
+        return <StudentList students={students} isLoading={!!isLoading} classInfo={classInfo as any} />;
       default:
         return (
           <InviteTab 
