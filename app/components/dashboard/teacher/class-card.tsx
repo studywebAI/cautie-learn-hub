@@ -3,14 +3,10 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Users, BookCheck, AlertTriangle, ArrowRight, Crown } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import type { ClassInfo, ClassAssignment } from '@/contexts/app-context';
-import { differenceInDays, parseISO, isFuture } from 'date-fns';
-import { useState, useEffect, useRef, useContext } from 'react';
-import type { Student } from '@/lib/teacher-types';
+import { useState, useEffect, useContext } from 'react';
 import { AppContext } from '@/contexts/app-context';
 
 type ClassCardProps = {
@@ -32,117 +28,54 @@ export function ClassCard({
   onToggleSelect,
   priority = false
 }: ClassCardProps) {
-  const router = useRouter();
   const { students: allStudents } = useContext(AppContext) as any;
-  const [assignments, setAssignments] = useState<ClassAssignment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const hasFetchedRef = useRef(false);
-
-  const [studentCount, setStudentCount] = useState(0);
-  const [teacherCount, setTeacherCount] = useState(0);
-  const [isOwner, setIsOwner] = useState(false);
-
-  useEffect(() => {
-    if (hasFetchedRef.current) return;
-
-    const fetchData = async () => {
-        hasFetchedRef.current = true;
-        if (!classInfo.id || classInfo.id.startsWith('local-') || isArchived) {
-            setIsLoading(false);
-            return;
-        }
-
-        try {
-            const assignmentsRes = await fetch(`/api/assignments`);
-            const allAssignments = await assignmentsRes.json();
-            setAssignments(allAssignments.filter((a: ClassAssignment) => a.class_id === classInfo.id));
-
-            const membersRes = await fetch(`/api/classes/${classInfo.id}/members`);
-            if (membersRes.ok) {
-                const members = await membersRes.json();
-                const students = members.filter((m: any) => m.role === 'student');
-                const teachers = members.filter((m: any) => m.role === 'teacher' || m.role === 'owner' || m.role === 'management');
-                setStudentCount(students.length);
-                setTeacherCount(teachers.length);
-                
-                // Check if current user is owner
-                const currentUserId = (await fetch('/api/auth/user').then(r => r.json()))?.id;
-                const ownerMember = members.find((m: any) => m.role === 'owner');
-                setIsOwner(ownerMember?.user_id === currentUserId);
-            }
-        } catch (error) {
-            console.error(`Failed to fetch data for class ${classInfo.id}`, error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    if (priority) {
-      fetchData();
-    } else {
-      const timer = setTimeout(fetchData, 1000);
-      return () => {
-        if (!hasFetchedRef.current) {
-          clearTimeout(timer);
-        }
-      };
-    }
-  }, [classInfo.id, isArchived, priority]);
-
-  const assignmentsDue = assignments.filter(a => {
-    if (!a.due_date) return false;
-    const dueDate = parseISO(a.due_date);
-    return isFuture(dueDate) && differenceInDays(dueDate, new Date()) <= 7;
-  }).length;
-
   const [averageProgress, setAverageProgress] = useState(0);
-
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // No delayed fetching - just show class name
   useEffect(() => {
-    const calculateProgress = async () => {
-      if (!classInfo.id || classInfo.id.startsWith('local-') || isArchived) {
-        setAverageProgress(0);
-        return;
-      }
-
+    if (!classInfo.id || classInfo.id.startsWith('local-') || isArchived) {
+      setIsLoading(false);
+      return;
+    }
+    
+    const fetchData = async () => {
       try {
-        const assignmentIds = assignments.map(a => a.id);
-        if (assignmentIds.length === 0) {
-          setAverageProgress(0);
-          return;
-        }
-
-        const submissionsRes = await fetch('/api/submissions?assignmentIds=' + assignmentIds.join(','));
-        if (submissionsRes.ok) {
-          const allSubmissions = await submissionsRes.json();
-          const classSubmissions = allSubmissions.filter((s: any) =>
-            assignments.some(a => a.id === s.assignment_id)
-          );
-
-          if (studentCount === 0 || assignments.length === 0) {
-            setAverageProgress(0);
-            return;
-          }
-
-          const totalPossible = studentCount * assignments.length;
+        // Fetch assignments and submissions for progress
+        const [assignmentsRes, submissionsRes] = await Promise.all([
+          fetch(`/api/assignments`),
+          fetch(`/api/submissions`)
+        ]);
+        
+        const allAssignments = await assignmentsRes.json();
+        const allSubmissions = await submissionsRes.json();
+        
+        const classAssignments = allAssignments.filter((a: ClassAssignment) => a.class_id === classInfo.id);
+        const classSubmissions = allSubmissions.filter((s: any) => 
+          classAssignments.some((a: any) => a.id === s.assignment_id)
+        );
+        
+        // Get unique student count from submissions
+        const uniqueStudents = new Set(classSubmissions.map((s: any) => s.user_id));
+        const studentCount = uniqueStudents.size;
+        
+        if (studentCount > 0 && classAssignments.length > 0) {
+          const totalPossible = studentCount * classAssignments.length;
           const completed = classSubmissions.filter((s: any) =>
             s.status === 'submitted' || s.grade !== null
           ).length;
-
-          const progress = totalPossible > 0 ? (completed / totalPossible) * 100 : 0;
+          const progress = (completed / totalPossible) * 100;
           setAverageProgress(Math.round(progress));
         }
       } catch (error) {
         console.error('Failed to calculate progress:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
-
-    calculateProgress();
-  }, [classInfo.id, assignments, studentCount, isArchived]);
-  
-  const alerts: string[] = [];
-  if (assignmentsDue > 0) {
-    alerts.push(`${assignmentsDue} assignment${assignmentsDue > 1 ? 's are' : ' is'} due this week.`);
-  }
+    
+    fetchData();
+  }, [classInfo.id, isArchived]);
 
   const card = (
     <Card className={`h-full flex flex-col hover:border-primary transition-all ${isArchived ? 'opacity-75' : ''} ${isBulkMode ? 'cursor-default' : ''}`}>
@@ -164,40 +97,9 @@ export function ClassCard({
         </CardTitle>
         <div className="flex items-center text-sm text-muted-foreground pt-1 gap-4">
           {isArchived ? (
-            <div className="flex items-center gap-1.5">
-              <span className="text-muted-foreground italic">Archived class - data not available</span>
-            </div>
+            <span className="text-muted-foreground italic">Archived</span>
           ) : (
-            <>
-              <div
-                className="flex items-center gap-1.5 cursor-pointer hover:text-primary"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  router.push(`/class/${classInfo.id}?tab=students`);
-                }}
-              >
-                <Users className="h-4 w-4" />
-                <span>{studentCount} Student{studentCount !== 1 ? 's' : ''}</span>
-              </div>
-              {teacherCount > 0 && (
-                <div className="flex items-center gap-1.5">
-                  <Crown className="h-4 w-4 text-yellow-500" />
-                  <span>{teacherCount} Teacher{teacherCount !== 1 ? 's' : ''}</span>
-                </div>
-              )}
-              <div
-                className="flex items-center gap-1.5 cursor-pointer hover:text-primary"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  router.push(`/class/${classInfo.id}?tab=assignments`);
-                }}
-              >
-                <BookCheck className="h-4 w-4" />
-                <span>{assignmentsDue} Due Soon</span>
-              </div>
-            </>
+            <span className="text-muted-foreground">Click to view</span>
           )}
         </div>
       </CardHeader>
@@ -209,19 +111,6 @@ export function ClassCard({
           </div>
           <Progress value={averageProgress} className="h-2" />
         </div>
-        {alerts.length > 0 && (
-          <div>
-            <Separator className="my-3" />
-            <div className="space-y-2">
-              {alerts.map((alert, index) => (
-                <div key={index} className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-500">
-                  <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <p>{alert}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
       <CardFooter className="justify-end">
         <div className={`flex items-center text-sm font-medium text-primary transition-opacity ${isBulkMode ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}`}>

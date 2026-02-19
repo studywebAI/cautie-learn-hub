@@ -1,13 +1,14 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { 
   BookOpen, Users, FileText, Settings, GraduationCap, Bell, 
   BarChart3, Library, Calendar, UserPlus, ChevronLeft, Layers
 } from 'lucide-react';
 import Link from 'next/link';
+import { AppContext } from '@/contexts/app-context';
 
 const tabs = [
   { id: 'invite', label: 'Invite', icon: UserPlus, href: '?tab=invite' },
@@ -23,14 +24,23 @@ const tabs = [
 export default function ClassLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const searchParams = useSearchParams();
+  const { classes } = useContext(AppContext) as any;
   const classId = params.classId as string;
-  const [className, setClassName] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
+  
+  // Get class name from context first (instant), fallback to API only if needed
+  const contextClass = classes?.find((c: any) => c.id === classId);
+  const [className, setClassName] = useState<string>(contextClass?.name || '');
 
   // Use useSearchParams properly - this will re-render when URL changes
   const currentTab = searchParams?.get('tab') || 'invite';
 
+  // Only fetch from API if not in context
   useEffect(() => {
+    if (contextClass?.name) {
+      setClassName(contextClass.name);
+      return;
+    }
+    
     const fetchClass = async () => {
       try {
         const res = await fetch(`/api/classes/${classId}`);
@@ -40,14 +50,8 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
         }
       } catch (e) { console.error(e); }
     };
-    if (classId) fetchClass();
-  }, [classId]);
-
-  // Track navigation state
-  useEffect(() => {
-    // Reset loading state when tab changes
-    setIsLoading(false);
-  }, [currentTab]);
+    if (classId && !contextClass) fetchClass();
+  }, [classId, contextClass]);
 
   const visibleTabs = tabs;
 
