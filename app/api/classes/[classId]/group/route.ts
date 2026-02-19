@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -7,8 +7,18 @@ export async function GET(
   { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
-    const cookieStore = cookies()
-    const supabase = await createClient(cookieStore)
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) { return cookieStore.get(name)?.value },
+          set(name: string, value: string, options: any) { cookieStore.set(name, value, options) },
+          remove(name: string, options: any) { cookieStore.set(name, '', { ...options, maxAge: 0 }) }
+        }
+      }
+    )
 
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -58,7 +68,7 @@ export async function GET(
     }
 
     // Get all assignments for the class
-    const { data: assignments, error: assignmentsError } = await (supabase as any)
+    const { data: assignments, error: assignmentsError } = await supabase
       .from('assignments')
       .select('id, title, due_date, created_at, class_id')
       .eq('class_id', classId)
@@ -68,7 +78,7 @@ export async function GET(
       return NextResponse.json({ error: assignmentsError.message }, { status: 500 })
     }
 
-    const assignmentIds = (assignments as any[])?.map((a: any) => a.id) || []
+    const assignmentIds = assignments?.map(a => a.id) || []
 
     // Get submissions for these assignments
     const { data: submissions, error: submissionsError } = assignmentIds.length > 0 && studentIds.length > 0
@@ -116,7 +126,7 @@ export async function GET(
       const studentLogs = auditLogs?.filter(l => l.user_id === studentId) || []
 
       // Calculate assignment stats
-      const totalAssignments = (assignments as any[])?.length || 0
+      const totalAssignments = assignments?.length || 0
       const completedAssignments = studentSubmissions.filter(s => s.status === 'submitted').length
       const gradedAssignments = studentSubmissions.filter(s => s.grade !== null).length
       
@@ -141,7 +151,7 @@ export async function GET(
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 5)
         .map(sub => {
-          const assignment = (assignments as any[])?.find(a => a.id === sub.assignment_id)
+          const assignment = assignments?.find(a => a.id === sub.assignment_id)
           return {
             id: sub.id,
             assignmentId: sub.assignment_id,
@@ -204,7 +214,7 @@ export async function GET(
       classId,
       students,
       teachers,
-      assignments: (assignments as any[])?.map(a => ({
+      assignments: assignments?.map(a => ({
         id: a.id,
         title: a.title,
         dueDate: a.due_date
