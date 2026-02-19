@@ -161,8 +161,15 @@ function DashboardSkeleton() {
 
 export default function DashboardPage() {
   const { role, isLoading, session } = useContext(AppContext) as AppContextType;
+  
+  // Check for cached data directly to avoid skeleton flash
+  const cached = typeof window !== 'undefined' 
+    ? JSON.parse(window.localStorage.getItem('studyweb-cached-dashboard') || 'null')
+    : null;
+  const hasCachedData = cached && cached.classes && cached.classes.length > 0;
 
-  if (isLoading) {
+  // Show skeleton ONLY if truly loading AND no cached data available
+  if (isLoading && !hasCachedData) {
     return <DashboardSkeleton />;
   }
 
