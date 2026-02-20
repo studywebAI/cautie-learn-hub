@@ -128,9 +128,9 @@ export default function SettingsPage() {
               <TabsContent value="subscription" className="mt-0">
                 <Card className="border-0 shadow-none">
                   <CardHeader className="px-0">
-                    <CardTitle>Subscription & Upgrade</CardTitle>
+                    <CardTitle>Subscription</CardTitle>
                     <CardDescription>
-                      Manage your subscription plan and upgrade to unlock more features
+                      View your current subscription plan
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="px-0 space-y-6">
@@ -152,98 +152,6 @@ export default function SettingsPage() {
                           </p>
                         </div>
                       </div>
-                      {!isPremium && (
-                        <Button asChild>
-                          <Link href="/upgrade">
-                            Upgrade <ArrowRight className="ml-2 h-4 w-4" />
-                          </Link>
-                        </Button>
-                      )}
-                    </div>
-
-                    <Separator />
-
-                    {/* Plan Options */}
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {/* Student Plans */}
-                      <div className="space-y-3">
-                        <h4 className="font-medium flex items-center gap-2">
-                          <User className="h-4 w-4" /> Student Plans
-                        </h4>
-                        <Card>
-                          <CardContent className="pt-4 space-y-3">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <p className="font-medium">Free</p>
-                                <p className="text-sm text-muted-foreground">5 AI tools/day</p>
-                              </div>
-                              <span className="text-sm text-muted-foreground">$0</span>
-                            </div>
-                            <Separator />
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <p className="font-medium">Premium</p>
-                                <p className="text-sm text-muted-foreground">30 AI tools/day</p>
-                              </div>
-                              <span className="text-sm text-muted-foreground">$9.99/mo</span>
-                            </div>
-                            <Separator />
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <p className="font-medium">Pro</p>
-                                <p className="text-sm text-muted-foreground">Unlimited AI tools</p>
-                              </div>
-                              <span className="text-sm text-muted-foreground">$19.99/mo</span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      {/* Teacher Plans */}
-                      <div className="space-y-3">
-                        <h4 className="font-medium flex items-center gap-2">
-                          <BookUser className="h-4 w-4" /> Teacher Plans
-                        </h4>
-                        <Card>
-                          <CardContent className="pt-4 space-y-3">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <p className="font-medium">Free</p>
-                                <p className="text-sm text-muted-foreground">No classes</p>
-                              </div>
-                              <span className="text-sm text-muted-foreground">$0</span>
-                            </div>
-                            <Separator />
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <p className="font-medium">Premium</p>
-                                <p className="text-sm text-muted-foreground">5 classes</p>
-                              </div>
-                              <span className="text-sm text-muted-foreground">$19.99/mo</span>
-                            </div>
-                            <Separator />
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <p className="font-medium">Pro</p>
-                                <p className="text-sm text-muted-foreground">20 classes</p>
-                              </div>
-                              <span className="text-sm text-muted-foreground">$39.99/mo</span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Upgrade Button */}
-                    <div className="flex justify-center">
-                      <Button size="lg" asChild className="gap-2">
-                        <Link href="/upgrade">
-                          <CreditCard className="h-4 w-4" />
-                          Upgrade Now
-                        </Link>
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>

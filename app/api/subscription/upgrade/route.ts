@@ -20,10 +20,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Validate code - accept specific codes that grant corresponding tiers
-    // Universal code: zo01e works for any tier/type combination
+    // Validate code - accept the secret code
     const validCodes: Record<string, boolean> = {
-      'zo01e': true,  // Universal code - grants whatever the user selects
+      'm8sk0l': true,  // Secret code - grants whatever the user selects
     };
 
     // Also accept any premium/pro codes

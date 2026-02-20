@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
-import { LogOut, Crown } from 'lucide-react';
+import { LogOut, Crown, Settings, HelpCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -110,6 +110,25 @@ export function AppHeader() {
                                 <p className='text-xs leading-none text-muted-foreground'>{userEmail}</p>
                             </div>
                         </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                            <Link href="/settings">
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Settings</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href="https://cautie-learn-hub.vercel.app/help" target="_blank" rel="noopener noreferrer">
+                                <HelpCircle className="mr-2 h-4 w-4" />
+                                <span>Help & FAQ</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href="/upgrade">
+                                <Crown className="mr-2 h-4 w-4" />
+                                <span>Subscription</span>
+                            </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout}>
                             <LogOut className="mr-2 h-4 w-4" />
