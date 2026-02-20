@@ -1,38 +1,21 @@
 "use client";
 
-import { useContext, useState, useEffect } from 'react';
+import { useContext } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
-import { LogOut, Crown, Settings, HelpCircle } from 'lucide-react';
+import { LogOut, Settings, HelpCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { NotificationCenter } from './notifications/notification-center';
 
 export function AppHeader() {
-  const { role, session } = useContext(AppContext) as AppContextType;
+  const { session } = useContext(AppContext) as AppContextType;
   const { dictionary } = useDictionary();
   const pathname = usePathname();
   const pathSegments = pathname.split('/').filter(Boolean);
-  const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
-
-  // Fetch subscription status on mount
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      try {
-        const res = await fetch('/api/subscription/upgrade');
-        if (res.ok) {
-          const data = await res.json();
-          setSubscriptionTier(data.tier || 'free');
-        }
-      } catch (e) {
-        console.error('Failed to fetch subscription:', e);
-      }
-    };
-    if (session) fetchSubscription();
-  }, [session]);
 
   const userEmail = session?.user?.email;
   const userInitial = userEmail ? userEmail.charAt(0).toUpperCase() : '?';
@@ -72,9 +55,6 @@ export function AppHeader() {
     return segmentMap[lastSegment] || lastSegment?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Cautie';
   };
 
-  // Show tier badge for premium/pro users
-  const showTierBadge = subscriptionTier === 'premium' || subscriptionTier === 'pro';
-
   return (
     <header className="Sticky top-0 z-30 flex h-16 items-center gap-4 bg-card/80 backdrop-blur-sm px-4 md:px-6">
 
@@ -86,18 +66,6 @@ export function AppHeader() {
       <div className="flex items-center gap-4">
         {session ? (
             <>
-                <Link 
-                  href="/upgrade" 
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    showTierBadge 
-                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50' 
-                      : 'bg-amber-500 text-white hover:bg-amber-600'
-                  }`}
-                >
-                  <Crown className="h-3.5 w-3.5" />
-                  <span className="capitalize">{showTierBadge ? subscriptionTier : 'Upgrade'}</span>
-                </Link>
-
                 <NotificationCenter />
 
                 <DropdownMenu>

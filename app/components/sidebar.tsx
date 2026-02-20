@@ -106,13 +106,13 @@ export function AppSidebar() {
 
           {/* Upgrade at bottom */}
           <div className="px-2 mt-auto">
-            <button
+            <Link
+              href="/upgrade"
               className="flex items-center justify-center h-10 w-10 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent"
               title="Upgrade"
-              onClick={() => {/* placeholder */}}
             >
               <ArrowUpRight className="h-5 w-5" />
-            </button>
+            </Link>
           </div>
         </div>
 

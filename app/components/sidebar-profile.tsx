@@ -2,6 +2,7 @@
 
 import { useContext } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { useSidebar } from '@/components/ui/sidebar';
 import {
@@ -50,10 +51,12 @@ export function SidebarProfile() {
         variant="outline"
         size="sm"
         className="w-full h-8 text-xs rounded-full border-primary/30 hover:bg-primary/10"
-        onClick={() => {/* placeholder */}}
+        asChild
       >
-        <ArrowUpRight className="h-3 w-3 mr-1.5" />
-        Upgrade
+        <Link href="/upgrade">
+          <ArrowUpRight className="h-3 w-3 mr-1.5" />
+          Upgrade
+        </Link>
       </Button>
 
       {/* Username dropdown - ChatGPT style */}
@@ -84,7 +87,7 @@ export function SidebarProfile() {
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => {/* placeholder */}}>
+          <DropdownMenuItem onClick={() => window.open('https://cautie-learn-hub.vercel.app/help', '_blank')}>
             <HelpCircle className="h-4 w-4 mr-2" />
             Help & FAQ
           </DropdownMenuItem>
