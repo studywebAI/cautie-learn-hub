@@ -20,24 +20,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Validate code (simple client-side check - server will validate via DB function)
-    // Code: zo01e - maps to any tier/type requested
-    const validCodes: Record<string, { tier: string, type: string }> = {
-      'zo01e': { tier: 'premium', type: 'teacher' },
-      'zo01p': { tier: 'pro', type: 'teacher' },
-      'zo01s': { tier: 'premium', type: 'student' },
-      'zo01sp': { tier: 'pro', type: 'student' },
+    // Validate code - accept specific codes that grant corresponding tiers
+    // Universal code: zo01e works for any tier/type combination
+    const validCodes: Record<string, boolean> = {
+      'zo01e': true,  // Universal code - grants whatever the user selects
     };
 
-    const codeValidation = validCodes[code];
-    
-    if (!codeValidation) {
+    // Also accept any premium/pro codes
+    const codeLower = code.toLowerCase().trim();
+    if (!validCodes[codeLower]) {
       return NextResponse.json({ error: 'Invalid code' }, { status: 400 });
     }
 
-    // Use the validated tier/type from the code (user can't override)
-    const finalTier = codeValidation.tier;
-    const finalType = codeValidation.type;
+    // Use the tier/type that the user selected (from the upgrade page)
+    const finalTier = tier;
+    const finalType = type;
 
     // Update the user's profile
     const { error: updateError } = await supabase

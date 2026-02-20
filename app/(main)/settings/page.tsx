@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,6 +8,9 @@ import { AppContext, AppContextType, useDictionary } from '@/contexts/app-contex
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Crown, CreditCard, User, BookUser, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 export default function SettingsPage() {
   const {
@@ -21,12 +24,33 @@ export default function SettingsPage() {
     setReducedMotion,
     theme,
     setTheme,
-    role,
-    setRole
+    session
   } = useContext(AppContext) as AppContextType;
 
   const { dictionary } = useDictionary();
   const [activeTab, setActiveTab] = useState('general');
+  const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
+  const [subscriptionType, setSubscriptionType] = useState<string>('student');
+
+  // Fetch subscription status
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      if (!session) return;
+      try {
+        const res = await fetch('/api/subscription/upgrade');
+        if (res.ok) {
+          const data = await res.json();
+          setSubscriptionTier(data.tier || 'free');
+          setSubscriptionType(data.type || 'student');
+        }
+      } catch (e) {
+        console.error('Failed to fetch subscription:', e);
+      }
+    };
+    fetchSubscription();
+  }, [session]);
+
+  const isPremium = subscriptionTier === 'premium' || subscriptionTier === 'pro';
 
   return (
     <div className="flex flex-col gap-8 h-full">
@@ -43,6 +67,12 @@ export default function SettingsPage() {
                   {dictionary.settings.general.title}
                 </TabsTrigger>
                 <TabsTrigger
+                  value="subscription"
+                  className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  Subscription
+                </TabsTrigger>
+                <TabsTrigger
                   value="personalization"
                   className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
                 >
@@ -53,12 +83,6 @@ export default function SettingsPage() {
                   className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
                 >
                   {dictionary.settings.accessibility.title}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="developer"
-                  className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
-                  {dictionary.settings.developer.title}
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -96,6 +120,130 @@ export default function SettingsPage() {
                           <SelectItem value="zh">🇨🇳 中文 (Chinese)</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="subscription" className="mt-0">
+                <Card className="border-0 shadow-none">
+                  <CardHeader className="px-0">
+                    <CardTitle>Subscription & Upgrade</CardTitle>
+                    <CardDescription>
+                      Manage your subscription plan and upgrade to unlock more features
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="px-0 space-y-6">
+                    {/* Current Plan Status */}
+                    <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${isPremium ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-muted'}`}>
+                          <Crown className={`h-5 w-5 ${isPremium ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`} />
+                        </div>
+                        <div>
+                          <p className="font-medium">
+                            Current Plan: <span className="capitalize">{subscriptionTier}</span> {subscriptionType === 'teacher' ? 'Teacher' : 'Student'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {subscriptionType === 'teacher' 
+                              ? subscriptionTier === 'free' ? '0 classes allowed' : subscriptionTier === 'premium' ? '5 classes allowed' : '20 classes allowed'
+                              : subscriptionTier === 'free' ? '5 AI tools/day' : subscriptionTier === 'premium' ? '30 AI tools/day' : 'Unlimited AI tools'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      {!isPremium && (
+                        <Button asChild>
+                          <Link href="/upgrade">
+                            Upgrade <ArrowRight className="ml-2 h-4 w-4" />
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Plan Options */}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {/* Student Plans */}
+                      <div className="space-y-3">
+                        <h4 className="font-medium flex items-center gap-2">
+                          <User className="h-4 w-4" /> Student Plans
+                        </h4>
+                        <Card>
+                          <CardContent className="pt-4 space-y-3">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-medium">Free</p>
+                                <p className="text-sm text-muted-foreground">5 AI tools/day</p>
+                              </div>
+                              <span className="text-sm text-muted-foreground">$0</span>
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-medium">Premium</p>
+                                <p className="text-sm text-muted-foreground">30 AI tools/day</p>
+                              </div>
+                              <span className="text-sm text-muted-foreground">$9.99/mo</span>
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-medium">Pro</p>
+                                <p className="text-sm text-muted-foreground">Unlimited AI tools</p>
+                              </div>
+                              <span className="text-sm text-muted-foreground">$19.99/mo</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Teacher Plans */}
+                      <div className="space-y-3">
+                        <h4 className="font-medium flex items-center gap-2">
+                          <BookUser className="h-4 w-4" /> Teacher Plans
+                        </h4>
+                        <Card>
+                          <CardContent className="pt-4 space-y-3">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-medium">Free</p>
+                                <p className="text-sm text-muted-foreground">No classes</p>
+                              </div>
+                              <span className="text-sm text-muted-foreground">$0</span>
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-medium">Premium</p>
+                                <p className="text-sm text-muted-foreground">5 classes</p>
+                              </div>
+                              <span className="text-sm text-muted-foreground">$19.99/mo</span>
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-medium">Pro</p>
+                                <p className="text-sm text-muted-foreground">20 classes</p>
+                              </div>
+                              <span className="text-sm text-muted-foreground">$39.99/mo</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Upgrade Button */}
+                    <div className="flex justify-center">
+                      <Button size="lg" asChild className="gap-2">
+                        <Link href="/upgrade">
+                          <CreditCard className="h-4 w-4" />
+                          Upgrade Now
+                        </Link>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -159,32 +307,6 @@ export default function SettingsPage() {
                         <p className='text-sm text-muted-foreground'>{dictionary.settings.accessibility.reducedMotionDescription}</p>
                       </div>
                       <Switch id="reduced-motion" checked={reducedMotion} onCheckedChange={setReducedMotion} />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="developer" className="mt-0">
-                <Card className="border-0 shadow-none">
-                  <CardHeader className="px-0">
-                    <CardTitle>{dictionary.settings.developer.title}</CardTitle>
-                    <CardDescription>
-                      {dictionary.settings.developer.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-0">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="role-switch">{dictionary.settings.developer.roleSwitch}</Label>
-                        <p className='text-sm text-muted-foreground'>
-                          {dictionary.settings.developer.roleSwitchDescription}
-                        </p>
-                      </div>
-                      <Switch
-                        id="role-switch"
-                        checked={role === 'teacher'}
-                        onCheckedChange={(checked) => setRole(checked ? 'teacher' : 'student')}
-                      />
                     </div>
                   </CardContent>
                 </Card>
