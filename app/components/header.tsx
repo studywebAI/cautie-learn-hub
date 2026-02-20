@@ -86,12 +86,17 @@ export function AppHeader() {
       <div className="flex items-center gap-4">
         {session ? (
             <>
-                {showTierBadge && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-medium">
-                    <Crown className="h-3 w-3" />
-                    <span className="capitalize">{subscriptionTier}</span>
-                  </div>
-                )}
+                <Link 
+                  href="/upgrade" 
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    showTierBadge 
+                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50' 
+                      : 'bg-amber-500 text-white hover:bg-amber-600'
+                  }`}
+                >
+                  <Crown className="h-3.5 w-3.5" />
+                  <span className="capitalize">{showTierBadge ? subscriptionTier : 'Upgrade'}</span>
+                </Link>
 
                 <NotificationCenter />
 
@@ -110,13 +115,6 @@ export function AppHeader() {
                                 <p className='text-xs leading-none text-muted-foreground'>{userEmail}</p>
                             </div>
                         </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild className="cursor-pointer">
-                            <Link href="/upgrade" className="flex items-center">
-                                <Crown className="mr-2 h-4 w-4 text-amber-500" />
-                                <span className="font-medium">Subscriptions</span>
-                            </Link>
-                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                             <Link href="/settings" className="flex items-center">
