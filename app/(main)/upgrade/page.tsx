@@ -189,15 +189,12 @@ export default function UpgradePage() {
               <label className="text-sm font-medium mb-2 block">Enter your code:</label>
               <Input
                 type="text"
-                placeholder="e.g. zo01e"
+                placeholder="Enter your code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                className="text-center tracking-widest uppercase"
+                className="text-center tracking-widest"
                 disabled={loading}
               />
-              <p className="text-xs text-muted-foreground text-center mt-2">
-                Got your code? Enter it above to upgrade to {selectedTier} {selectedType}
-              </p>
             </div>
             
             {error && (
