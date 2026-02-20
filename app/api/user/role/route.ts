@@ -52,58 +52,10 @@ export async function GET() {
   return NextResponse.json({ role: profile.role });
 }
 
+// PUT is DISABLED - role changes now only through subscription codes
+// Use /api/subscription/upgrade instead
 export async function PUT(req: NextRequest) {
-  const cookieStore = cookies()
-  const supabase = await createClient(cookieStore)
-
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { newRole } = await req.json();
-
-  if (!newRole) {
-    return NextResponse.json({ error: "New role is required" }, { status: 400 });
-  }
-
-  // Validate role is either student or teacher
-  if (!['student', 'teacher'].includes(newRole)) {
-    return NextResponse.json({ error: "Invalid role" }, { status: 400 });
-  }
-
-  // Check if profile exists
-  const { data: existingProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  let data, error;
-
-  if (existingProfile) {
-    // Update existing profile
-    ({ data, error } = await supabase
-      .from("profiles")
-      .update({ role: newRole, updated_at: new Date().toISOString() })
-      .eq("id", user.id));
-  } else {
-    // Create new profile
-    ({ data, error } = await supabase
-      .from("profiles")
-      .insert({
-        id: user.id,
-        role: newRole,
-        full_name: user.user_metadata?.full_name || '',
-        avatar_url: user.user_metadata?.avatar_url || null,
-        updated_at: new Date().toISOString()
-      }));
-  }
-
-  if (error) {
-    console.error("Error updating user role:", error);
-    return NextResponse.json({ error: "Failed to update user role" }, { status: 500 });
-  }
-
-  return NextResponse.json({ message: "User role updated successfully", role: newRole }, { status: 200 });
+  return NextResponse.json({ 
+    error: "Role switching is disabled. Please use the subscription upgrade page." 
+  }, { status: 403 });
 }

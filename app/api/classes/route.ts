@@ -175,10 +175,10 @@ export async function POST(request: NextRequest) {
 
     console.log('[CLASSES_POST] User:', user.id);
 
-    // Check if user is a teacher
+    // Check if user is a teacher with subscription that allows class creation
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, subscription_type, subscription_tier, classes_created')
       .eq('id', user.id)
       .maybeSingle();
 
@@ -187,6 +187,24 @@ export async function POST(request: NextRequest) {
     if (!profile || profile.role !== 'teacher') {
       console.log('[CLASSES_POST] Not a teacher, role:', profile?.role);
       return NextResponse.json({ error: 'Only teachers can create classes' }, { status: 403 });
+    }
+
+    // Check subscription limits for class creation
+    const subscriptionType = profile.subscription_type || profile.role;
+    const subscriptionTier = profile.subscription_tier || 'free';
+    const classesCreated = profile.classes_created || 0;
+    
+    const classLimit = subscriptionTier === 'pro' ? 20 : subscriptionTier === 'premium' ? 5 : 0;
+    
+    if (classesCreated >= classLimit) {
+      console.log('[CLASSES_POST] Class limit reached:', { classesCreated, classLimit, tier: subscriptionTier });
+      return NextResponse.json({ 
+        error: 'Class limit reached',
+        code: 'CLASS_LIMIT_REACHED',
+        limit: classLimit,
+        current: classesCreated,
+        upgradeUrl: '/upgrade'
+      }, { status: 403 });
     }
 
     // Generate join codes
@@ -239,6 +257,10 @@ export async function POST(request: NextRequest) {
       entityId: data.id,
       changes: { name, description }
     });
+
+    // Increment classes_created counter
+    console.log('[CLASSES_POST] Incrementing classes_created counter...')
+    await supabase.rpc('increment_classes_created', { user_id: user.id });
 
     return NextResponse.json(data);
   } catch (err: any) {

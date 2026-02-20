@@ -15,20 +15,22 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Fetch profile first to determine role and get preferences
+    // Fetch profile first to determine subscription type/tier and get preferences
     let { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('role, language, theme, high_contrast, dyslexia_font, reduced_motion')
+      .select('subscription_type, subscription_tier, role, language, theme, high_contrast, dyslexia_font, reduced_motion, quiz_usage_today, quiz_usage_date, classes_created')
       .eq('id', user.id)
       .maybeSingle()
 
-    // Create profile if it doesn't exist
+    // Create profile if it doesn't exist (defaults to free student)
     if (!profileData) {
       console.log('Profile not found, creating new profile')
       const { error: insertError } = await supabase
         .from('profiles')
         .insert({
           id: user.id,
+          subscription_type: 'student',
+          subscription_tier: 'free',
           role: 'student',
           full_name: user.user_metadata?.full_name || '',
           avatar_url: user.user_metadata?.avatar_url || null,
@@ -36,7 +38,10 @@ export async function GET(request: Request) {
           theme: 'light',
           high_contrast: false,
           dyslexia_font: false,
-          reduced_motion: false
+          reduced_motion: false,
+          quiz_usage_today: 0,
+          quiz_usage_date: new Date().toISOString().split('T')[0],
+          classes_created: 0
         })
 
       if (insertError) {
@@ -44,15 +49,28 @@ export async function GET(request: Request) {
       } else {
         const { data: newProfile } = await supabase
           .from('profiles')
-          .select('role, language, theme, high_contrast, dyslexia_font, reduced_motion')
+          .select('subscription_type, subscription_tier, role, language, theme, high_contrast, dyslexia_font, reduced_motion, quiz_usage_today, quiz_usage_date, classes_created')
           .eq('id', user.id)
           .maybeSingle()
         profileData = newProfile as any
       }
     }
 
-    const role = profileData?.role || 'student'
-    const isTeacher = role === 'teacher'
+    // Use new subscription system - fallback to old role for backward compatibility
+    const subscriptionType = profileData?.subscription_type || profileData?.role || 'student';
+    const subscriptionTier = profileData?.subscription_tier || 'free';
+    const role = subscriptionType; // Keep for API response compatibility
+    const isTeacher = subscriptionType === 'teacher';
+    
+    // Get usage data for limits
+    const quizUsage = profileData?.quiz_usage_today || 0;
+    const quizDate = profileData?.quiz_usage_date;
+    const classesCreated = profileData?.classes_created || 0;
+    
+    // Check if quiz usage should be reset (new day)
+    const today = new Date().toISOString().split('T')[0];
+    const isNewQuizDay = quizDate !== today;
+    const currentQuizUsage = isNewQuizDay ? 0 : quizUsage;
 
     // Fetch data based on role
     let classes: any[] = []
@@ -167,6 +185,10 @@ export async function GET(request: Request) {
         });
       }
 
+      // Calculate class limits for teachers
+      const classLimit = subscriptionTier === 'pro' ? 20 : subscriptionTier === 'premium' ? 5 : 0;
+      const canCreateClass = classesCreated < classLimit;
+
       return NextResponse.json({
         classes,
         subjects,
@@ -174,6 +196,15 @@ export async function GET(request: Request) {
         personalTasks: personalTasksResult.data || [],
         students,
         role,
+        subscription: {
+          type: subscriptionType,
+          tier: subscriptionTier,
+          quizUsage: currentQuizUsage,
+          quizLimit: subscriptionType === 'student' ? (subscriptionTier === 'pro' ? 999999 : subscriptionTier === 'premium' ? 30 : 5) : 999999,
+          classesCreated: classesCreated,
+          classLimit: classLimit,
+          canCreateClass: canCreateClass
+        },
         preferences: {
           language: profileData?.language || 'en',
           theme: profileData?.theme || 'light',
@@ -284,6 +315,9 @@ export async function GET(request: Request) {
         });
       }
 
+      // Calculate quiz limits for students
+      const quizLimit = subscriptionTier === 'pro' ? 999999 : subscriptionTier === 'premium' ? 30 : 5;
+
       return NextResponse.json({
         classes,
         subjects,
@@ -291,6 +325,15 @@ export async function GET(request: Request) {
         personalTasks: personalTasksResult.data || [],
         students: [],
         role,
+        subscription: {
+          type: subscriptionType,
+          tier: subscriptionTier,
+          quizUsage: currentQuizUsage,
+          quizLimit: quizLimit,
+          classesCreated: classesCreated,
+          classLimit: 0,
+          canCreateClass: false
+        },
         preferences: {
           language: profileData?.language || 'en',
           theme: profileData?.theme || 'light',
