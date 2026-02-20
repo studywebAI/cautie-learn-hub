@@ -111,26 +111,27 @@ export function AppHeader() {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild className="cursor-pointer">
+                            <Link href="/upgrade" className="flex items-center">
+                                <Crown className="mr-2 h-4 w-4 text-amber-500" />
+                                <span className="font-medium">Subscriptions</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                            <Link href="/settings">
+                            <Link href="/settings" className="flex items-center">
                                 <Settings className="mr-2 h-4 w-4" />
                                 <span>Settings</span>
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                            <Link href="https://cautie-learn-hub.vercel.app/help" target="_blank" rel="noopener noreferrer">
+                            <Link href="https://cautie-learn-hub.vercel.app/help" target="_blank" rel="noopener noreferrer" className="flex items-center">
                                 <HelpCircle className="mr-2 h-4 w-4" />
                                 <span>Help & FAQ</span>
                             </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link href="/upgrade">
-                                <Crown className="mr-2 h-4 w-4" />
-                                <span>Subscription</span>
-                            </Link>
-                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout}>
+                        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                             <LogOut className="mr-2 h-4 w-4" />
                             <span>{dictionary.header.logOut}</span>
                         </DropdownMenuItem>
