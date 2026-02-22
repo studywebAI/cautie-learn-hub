@@ -46,8 +46,40 @@ export function SidebarProfile() {
     if (session) fetchSubscription();
   }, [session]);
 
-  if (!session || isCollapsed) return null;
+  // Not logged in - show guest state with sign up button
+  if (!session) {
+    if (isCollapsed) return null;
+    
+    return (
+      <div className="px-2 py-2 space-y-2">
+        {/* Sign Up button for guest users */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full h-8 text-xs rounded-full border-primary/30 hover:bg-primary/10"
+          asChild
+        >
+          <Link href="/auth">
+            <ArrowUpRight className="h-3 w-3 mr-1.5" />
+            Sign Up
+          </Link>
+        </Button>
 
+        {/* Guest username */}
+        <div className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-left">
+          <div className="flex items-center justify-center h-7 w-7 rounded-full shrink-0 bg-primary/10 text-primary">
+            <User className="h-3.5 w-3.5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">Guest</p>
+            <p className="text-[11px] text-muted-foreground leading-tight">Free</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Logged in - show user info
   // Extract email prefix (before @)
   const email = session.user?.email || '';
   const emailPrefix = email.split('@')[0] || 'User';
