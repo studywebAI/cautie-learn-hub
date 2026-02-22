@@ -65,20 +65,18 @@ export function SidebarProfile() {
 
   return (
     <div className="px-2 py-2 space-y-2">
-      {/* Upgrade button - only show if not premium */}
-      {!isPremium && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full h-8 text-xs rounded-full border-primary/30 hover:bg-primary/10"
-          asChild
-        >
-          <Link href="/upgrade">
-            <ArrowUpRight className="h-3 w-3 mr-1.5" />
-            Upgrade
-          </Link>
-        </Button>
-      )}
+      {/* Upgrade button - always show for testing purposes */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full h-8 text-xs rounded-full border-primary/30 hover:bg-primary/10"
+        asChild
+      >
+        <Link href="/upgrade">
+          <ArrowUpRight className="h-3 w-3 mr-1.5" />
+          Upgrade
+        </Link>
+      </Button>
 
       {/* Username dropdown - ChatGPT style */}
       <DropdownMenu>

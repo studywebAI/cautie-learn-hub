@@ -148,7 +148,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setAssignments(cached.assignments || []);
       setPersonalTasks(cached.personalTasks || []);
       setStudents(cached.students || []);
-      setRoleState(cached.role || 'student');
+      // Don't set role from cache - always fetch fresh from API
     }
 
     // STEP 2: Load settings from cache (instant)
@@ -235,11 +235,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Role is now determined by subscription_type from the database
-  // setRole only updates local state (for temp UI switching), does NOT persist to DB
+  // setRole only updates local state (does nothing - kept for API compatibility)
   const setRole = (newRole: UserRole) => {
-    setRoleState(newRole);
-    saveToLocalStorage('studyweb-role', newRole);
-    // NO longer saving to database - role is controlled by subscription_type only
+    // Role is controlled by subscription_type - this function is kept for backward compatibility but does nothing
   };
 
   const setHighContrast = (enabled: boolean) => {
