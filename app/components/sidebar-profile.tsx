@@ -59,7 +59,7 @@ export function SidebarProfile() {
           className="w-full h-8 text-xs rounded-full border-primary/30 hover:bg-primary/10"
           asChild
         >
-          <Link href="/auth">
+          <Link href="/login">
             <ArrowUpRight className="h-3 w-3 mr-1.5" />
             Sign Up
           </Link>
@@ -92,12 +92,12 @@ export function SidebarProfile() {
     if (signOut) {
       await signOut();
     }
-    router.push('/auth');
+    router.push('/login');
   };
 
   return (
     <div className="px-2 py-2 space-y-2">
-      {/* Upgrade button - always show for testing purposes */}
+      {/* Upgrade button for logged in users */}
       <Button
         variant="outline"
         size="sm"
