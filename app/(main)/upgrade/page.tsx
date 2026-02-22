@@ -49,7 +49,8 @@ export default function UpgradePage() {
       } else {
         setSuccess(true);
         setTimeout(() => {
-          router.push('/settings');
+          // Redirect to home/dashboard to refresh role and subscription data
+          router.push('/');
         }, 2000);
       }
     } catch (err) {
@@ -76,7 +77,7 @@ export default function UpgradePage() {
               You're now a {selectedTier} {selectedType}!
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Redirecting to settings...
+              Redirecting to dashboard...
             </p>
           </CardContent>
         </Card>

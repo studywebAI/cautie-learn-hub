@@ -234,12 +234,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Role is now determined by subscription_type from the database
+  // setRole only updates local state (for temp UI switching), does NOT persist to DB
   const setRole = (newRole: UserRole) => {
     setRoleState(newRole);
     saveToLocalStorage('studyweb-role', newRole);
-    if (session?.user?.id) {
-      supabase.from('profiles').upsert({ id: session.user.id, role: newRole }, { onConflict: 'id' }).then(() => {});
-    }
+    // NO longer saving to database - role is controlled by subscription_type only
   };
 
   const setHighContrast = (enabled: boolean) => {
