@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export function SidebarProfile() {
-  const { session, signOut } = useContext(AppContext) as AppContextType & { signOut?: () => void };
+  const { session } = useContext(AppContext) as AppContextType;
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
   const router = useRouter();
@@ -89,10 +89,13 @@ export function SidebarProfile() {
   const isPremium = subscriptionTier === 'premium' || subscriptionTier === 'pro';
 
   const handleLogout = async () => {
-    if (signOut) {
-      await signOut();
-    }
+    // Import supabase client and sign out directly
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+    await supabase.auth.signOut();
     router.push('/login');
+    // Force page reload to update context
+    window.location.reload();
   };
 
   return (
