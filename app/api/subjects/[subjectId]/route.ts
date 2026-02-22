@@ -22,14 +22,14 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user role from profile
+    // Use subscription_type as the single source of truth (role column removed)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('subscription_type')
       .eq('id', user.id)
       .maybeSingle();
 
-    const isTeacher = profile?.role === 'teacher';
+    const isTeacher = profile?.subscription_type === 'teacher';
 
     if (isTeacher) {
       // Teachers: fetch subject they own

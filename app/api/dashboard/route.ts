@@ -16,9 +16,10 @@ export async function GET(request: Request) {
     }
 
     // Fetch profile first to determine subscription type/tier and get preferences
+    // Use ONLY subscription_type - role column has been removed
     let { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('subscription_type, subscription_tier, role, language, theme, high_contrast, dyslexia_font, reduced_motion, quiz_usage_today, quiz_usage_date, classes_created')
+      .select('subscription_type, subscription_tier, language, theme, high_contrast, dyslexia_font, reduced_motion, quiz_usage_today, quiz_usage_date, classes_created')
       .eq('id', user.id)
       .maybeSingle()
 
@@ -31,7 +32,6 @@ export async function GET(request: Request) {
           id: user.id,
           subscription_type: 'student',
           subscription_tier: 'free',
-          role: 'student',
           full_name: user.user_metadata?.full_name || '',
           avatar_url: user.user_metadata?.avatar_url || null,
           language: 'en',
@@ -49,17 +49,17 @@ export async function GET(request: Request) {
       } else {
         const { data: newProfile } = await supabase
           .from('profiles')
-          .select('subscription_type, subscription_tier, role, language, theme, high_contrast, dyslexia_font, reduced_motion, quiz_usage_today, quiz_usage_date, classes_created')
+          .select('subscription_type, subscription_tier, language, theme, high_contrast, dyslexia_font, reduced_motion, quiz_usage_today, quiz_usage_date, classes_created')
           .eq('id', user.id)
           .maybeSingle()
         profileData = newProfile as any
       }
     }
 
-    // Use new subscription system - fallback to old role for backward compatibility
-    const subscriptionType = profileData?.subscription_type || profileData?.role || 'student';
+    // Use subscription_type as the single source of truth
+    const subscriptionType = profileData?.subscription_type || 'student';
     const subscriptionTier = profileData?.subscription_tier || 'free';
-    const role = subscriptionType; // Keep for API response compatibility
+    const role = subscriptionType; // Keep for API response compatibility (alias)
     const isTeacher = subscriptionType === 'teacher';
     
     // Get usage data for limits

@@ -140,13 +140,14 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Use subscription_type as the single source of truth (role column removed)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('subscription_type')
       .eq('id', user.id)
       .maybeSingle()
 
-    const isTeacher = profile?.role === 'teacher'
+    const isTeacher = profile?.subscription_type === 'teacher'
 
     let subjects: any[] = []
 

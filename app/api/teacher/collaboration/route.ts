@@ -11,14 +11,14 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Get user profile to verify teacher role
+  // Use subscription_type as the single source of truth (role column removed)
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('subscription_type')
     .eq('id', user.id)
     .maybeSingle()
 
-  if (profile?.role !== 'teacher') {
+  if (profile?.subscription_type !== 'teacher') {
     return NextResponse.json({ error: 'Only teachers can access collaboration features' }, { status: 403 })
   }
 
@@ -84,14 +84,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Get user profile to verify teacher role
+  // Use subscription_type as the single source of truth (role column removed)
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('subscription_type')
     .eq('id', user.id)
     .maybeSingle()
 
-  if (profile?.role !== 'teacher') {
+  if (profile?.subscription_type !== 'teacher') {
     return NextResponse.json({ error: 'Only teachers can share subjects' }, { status: 403 })
   }
 
@@ -119,18 +119,94 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Only subject owner can share' }, { status: 403 })
   }
 
-  // Get teacher ID from email
-  const { data: teacherUser, error: teacherError } = await supabase
+  // Look up teacher by email using auth.users
+  // Since we can't directly query auth.users, we'll check if there's a profile with this email
+  // by using a case-insensitive search on the email stored in profiles
+  const { data: teacherProfiles, error: lookupError } = await supabase
     .from('profiles')
-    .select('id')
-    .eq('id', (await supabase.rpc('get_user_id_by_email', { email: teacher_email })).data)
+    .select('id, email, full_name')
+    .ilike('email', teacher_email)
 
-  // Alternative: query auth.users directly (requires admin rights)
-  // For now, we'll use a simpler approach - ask for teacher user ID directly
-  // Or we can create a function to get user ID by email
-  
+  if (lookupError) {
+    console.error('Error looking up teacher:', lookupError)
+    return NextResponse.json({ error: 'Failed to look up teacher' }, { status: 500 })
+  }
+
+  if (!teacherProfiles || teacherProfiles.length === 0) {
+    return NextResponse.json({ 
+      error: 'Teacher not found. They may not have an account yet.' 
+    }, { status: 404 })
+  }
+
+  const teacherUser = teacherProfiles[0]
+
+  // Verify the teacher has subscription_type = 'teacher'
+  const { data: teacherProfile, error: teacherProfileError } = await supabase
+    .from('profiles')
+    .select('subscription_type, full_name')
+    .eq('id', teacherUser.id)
+    .single()
+
+  if (teacherProfileError || teacherProfile.subscription_type !== 'teacher') {
+    return NextResponse.json({ 
+      error: 'The user must be a teacher to be added as a collaborator' 
+    }, { status: 400 })
+  }
+
+  // Check if already a collaborator
+  const { data: existing } = await supabase
+    .from('subject_teachers')
+    .select('id')
+    .eq('subject_id', subject_id)
+    .eq('teacher_id', teacherUser.id)
+    .maybeSingle()
+
+  if (existing) {
+    return NextResponse.json({ 
+      error: 'This teacher is already a collaborator on this subject' 
+    }, { status: 400 })
+  }
+
+  // Add the teacher as a collaborator
+  const { data: collaborator, error: insertError } = await supabase
+    .from('subject_teachers')
+    .insert({
+      subject_id,
+      teacher_id: teacherUser.id,
+      role: role || 'collaborator',
+      permissions: permissions || { can_edit: true, can_view: true, can_manage_assignments: false }
+    })
+    .select()
+    .single()
+
+  if (insertError) {
+    console.error('Error adding collaborator:', insertError)
+    return NextResponse.json({ error: 'Failed to add collaborator' }, { status: 500 })
+  }
+
+  // Create a notification for the invited teacher
+  await supabase.from('notifications').insert({
+    user_id: teacherUser.id,
+    type: 'collaboration_invite',
+    title: 'New Collaboration Invitation',
+    message: `You have been invited to collaborate on "${subject_id}" by ${teacherProfile.full_name || 'a teacher'}`,
+    data: {
+      subjectId: subject_id,
+      role: role || 'collaborator',
+      permissions: permissions || { can_edit: true, can_view: true, can_manage_assignments: false }
+    }
+  })
+
   return NextResponse.json({
-    success: false,
-    message: 'Teacher email lookup requires additional setup. Please provide teacher user ID instead.'
-  }, { status: 501 })
+    success: true,
+    message: `Successfully added ${teacherProfile.full_name || teacher_email} as a collaborator`,
+    collaborator: {
+      ...collaborator,
+      teacher: {
+        id: teacherUser.id,
+        full_name: teacherProfile.full_name,
+        email: teacherUser.email
+      }
+    }
+  })
 }

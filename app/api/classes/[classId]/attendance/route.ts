@@ -43,47 +43,49 @@ export async function GET(
 
     const isOwner = classData.owner_id === user.id
     
-    let classMember = null
-    let memberError = false
-    
-    try {
-      const result = await supabase
-        .from('class_members')
-        .select('role')
-        .eq('class_id', classId)
-        .eq('user_id', user.id)
-        .single()
-      
-      if (!result.error) {
-        classMember = result.data
-      }
-    } catch (e) {
-      // Ignore - user might not be in class_members
-    }
+    // Get user's subscription_type to check if they're a teacher
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single()
 
+    const isTeacher = userProfile?.subscription_type === 'teacher'
+    
     // Owner can always view/update, teachers can view/update
-    // Also check if user is owner of the class OR has teacher/owner role in class_members
-    const canAccess = isOwner || classMember?.role === 'teacher' || classMember?.role === 'owner'
+    const canAccess = isOwner || isTeacher
     
     if (!canAccess) {
       return NextResponse.json({ error: 'Only teachers can view attendance' }, { status: 403 })
     }
 
-    // Get all students in the class
+    // Get all students in the class using profiles.subscription_type
+    // First get all class member user IDs
     const { data: classMembers, error: membersError } = await supabase
       .from('class_members')
-      .select('user_id, role, joined_at')
+      .select('user_id, joined_at')
       .eq('class_id', classId)
-      .eq('role', 'student')
+
+    const memberUserIds = (classMembers || []).map(m => m.user_id)
+    
+    // Then filter by subscription_type = 'student'
+    let studentIds: string[] = []
+    if (memberUserIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('id', memberUserIds)
+        .eq('subscription_type', 'student')
+      
+      studentIds = (profiles || []).map(p => p.id)
+    }
 
     if (membersError) {
       return NextResponse.json({ error: membersError.message }, { status: 500 })
     }
 
-    const studentIds = classMembers?.map(m => m.user_id) || []
-
     // Get profiles for students
-    let students = []
+    let students: any[] = []
     if (studentIds.length > 0) {
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
@@ -198,25 +200,17 @@ export async function POST(
 
     const isOwner = classData.owner_id === user.id
     
-    let classMember = null
-    
-    try {
-      const result = await supabase
-        .from('class_members')
-        .select('role')
-        .eq('class_id', classId)
-        .eq('user_id', user.id)
-        .single()
-      
-      if (!result.error) {
-        classMember = result.data
-      }
-    } catch (e) {
-      // Ignore - user might not be in class_members
-    }
+    // Get user's subscription_type to check if they're a teacher
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single()
 
+    const isTeacher = userProfile?.subscription_type === 'teacher'
+    
     // Owner can always view/update, teachers can view/update
-    const canAccess = isOwner || classMember?.role === 'teacher' || classMember?.role === 'owner'
+    const canAccess = isOwner || isTeacher
     
     if (!canAccess) {
       return NextResponse.json({ error: 'Only teachers can update attendance' }, { status: 403 })

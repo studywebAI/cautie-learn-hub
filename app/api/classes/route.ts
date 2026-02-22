@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClassSchema } from '@/lib/validation/schemas'
 import { validateBody } from '@/lib/validation/validate'
 
-import type { Database } from '@/lib/supabase/database.types'
 import { logAuditEntry } from '@/lib/auth/class-permissions'
 
 export const dynamic = 'force-dynamic'
@@ -17,7 +16,6 @@ export async function GET(request: NextRequest) {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
-    console.log('[CLASSES_GET] Getting authenticated user...')
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError) {
@@ -33,39 +31,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    console.log('[CLASSES_GET] User ID:', user.id);
-
-    const { searchParams } = new URL(request.url);
-    const guestId = searchParams.get('guestId');
-    const includeArchived = searchParams.get('includeArchived') === 'true';
-
-    console.log('[CLASSES_GET] GuestId:', guestId, 'IncludeArchived:', includeArchived);
-
-    // Get user profile
-    console.log('[CLASSES_GET] Fetching user profile...')
+    // Use subscription_type as the single source of truth (role column removed)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('role')
+      .select('subscription_type')
       .eq('id', user.id)
       .maybeSingle();
 
     if (profileError) {
       console.error('[CLASSES_GET] Profile fetch error:', profileError);
     }
-    console.log('[CLASSES_GET] Profile:', profile);
 
     // Create profile if doesn't exist
     if (!profile) {
       console.log('[CLASSES_GET] Creating missing profile...')
       await supabase.from('profiles').insert({
         id: user.id,
-        role: 'student',
+        subscription_type: 'student',
+        subscription_tier: 'free',
         full_name: user.user_metadata?.full_name || '',
         avatar_url: user.user_metadata?.avatar_url || null
       });
     }
 
-    const userRole = profile?.role || 'student';
+    // subscription_type is the source of truth (not role)
+    const userRole = profile?.subscription_type || 'student';
     const isTeacher = userRole === 'teacher';
     
     console.log('[CLASSES_GET] User role:', userRole, 'Is teacher:', isTeacher);
@@ -111,6 +101,7 @@ export async function GET(request: NextRequest) {
 
       console.log('[CLASSES_GET] Total teacher classes after merge:', allClasses.length);
 
+      const includeArchived = request.nextUrl.searchParams.get('includeArchived') === 'true';
       if (!includeArchived) {
         allClasses = allClasses.filter(c => !c.status || c.status !== 'archived');
       }
@@ -142,11 +133,9 @@ export async function GET(request: NextRequest) {
     
   } catch (err: any) {
     console.error('[CLASSES_GET] Unexpected error:', err);
-    console.error('[CLASSES_GET] Error stack:', err?.stack);
     return NextResponse.json({ 
       error: 'Internal server error',
-      details: err?.message || 'Unknown error',
-      stack: process.env.NODE_ENV === 'development' ? err?.stack : undefined
+      details: err?.message || 'Unknown error'
     }, { status: 500 });
   }
 }
@@ -175,26 +164,38 @@ export async function POST(request: NextRequest) {
 
     console.log('[CLASSES_POST] User:', user.id);
 
-    // Check if user is a teacher with subscription that allows class creation
+    // Use subscription_type as the single source of truth (role column removed)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role, subscription_type, subscription_tier, classes_created')
+      .select('subscription_type, subscription_tier, classes_created')
       .eq('id', user.id)
       .maybeSingle();
 
     console.log('[CLASSES_POST] Profile:', profile);
 
-    if (!profile || profile.role !== 'teacher') {
-      console.log('[CLASSES_POST] Not a teacher, role:', profile?.role);
+    // subscription_type is the source of truth
+    const subscriptionType = profile?.subscription_type || 'student';
+    const subscriptionTier = profile?.subscription_tier || 'free';
+    const classesCreated = profile?.classes_created || 0;
+    
+    if (subscriptionType !== 'teacher') {
+      console.log('[CLASSES_POST] Not a teacher, type:', subscriptionType);
       return NextResponse.json({ error: 'Only teachers can create classes' }, { status: 403 });
     }
 
     // Check subscription limits for class creation
-    const subscriptionType = profile.subscription_type || profile.role;
-    const subscriptionTier = profile.subscription_tier || 'free';
-    const classesCreated = profile.classes_created || 0;
-    
     const classLimit = subscriptionTier === 'pro' ? 20 : subscriptionTier === 'premium' ? 5 : 0;
+    
+    if (classLimit === 0) {
+      console.log('[CLASSES_POST] Free tier cannot create classes');
+      return NextResponse.json({ 
+        error: 'Class creation requires a premium subscription',
+        code: 'CLASS_LIMIT_REACHED',
+        limit: classLimit,
+        current: classesCreated,
+        upgradeUrl: '/upgrade'
+      }, { status: 403 });
+    }
     
     if (classesCreated >= classLimit) {
       console.log('[CLASSES_POST] Class limit reached:', { classesCreated, classLimit, tier: subscriptionTier });
@@ -265,11 +266,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data);
   } catch (err: any) {
     console.error('[CLASSES_POST] Unexpected error:', err);
-    console.error('[CLASSES_POST] Error stack:', err?.stack);
     return NextResponse.json({ 
       error: 'Internal server error',
-      details: err?.message || 'Unknown error',
-      stack: process.env.NODE_ENV === 'development' ? err?.stack : undefined
+      details: err?.message || 'Unknown error'
     }, { status: 500 });
   }
 }

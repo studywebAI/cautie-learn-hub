@@ -19,14 +19,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user role
+    // Use subscription_type as the single source of truth (role column removed)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('subscription_type')
       .eq('id', user.id)
       .maybeSingle()
 
-    const userRole = profile?.role || 'student'
+    const userRole = profile?.subscription_type || 'student'
 
     let assignments: any[] = []
 
@@ -186,13 +186,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Use subscription_type as the single source of truth (role column removed)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('subscription_type')
       .eq('id', user.id)
       .maybeSingle()
 
-    const userRole = profile?.role || 'student'
+    const userRole = profile?.subscription_type || 'student'
 
     if (userRole !== 'teacher') {
       return NextResponse.json({ error: 'Only teachers can create assignments' }, { status: 403 })

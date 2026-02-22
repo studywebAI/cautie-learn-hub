@@ -69,14 +69,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields: type and data' }, { status: 400 })
     }
 
-    // Get user role
+    // Use subscription_type as the single source of truth (role column removed)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('subscription_type')
       .eq('id', user.id)
       .maybeSingle()
 
-    const userRole = profile?.role || 'student'
+    const userRole = profile?.subscription_type || 'student'
 
     // Verify access if linking to paragraph or assignment
     if (paragraph_id || assignment_id) {

@@ -48,6 +48,10 @@ export default function UpgradePage() {
         setError(data.error || 'Invalid code');
       } else {
         setSuccess(true);
+        // Clear cached dashboard data to force refresh with new role
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem('studyweb-cached-dashboard');
+        }
         setTimeout(() => {
           // Redirect to home/dashboard to refresh role and subscription data
           router.push('/');

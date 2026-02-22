@@ -54,29 +54,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Class not found' }, { status: 404 })
   }
 
-  // Check if user is owner or teacher
-  const { data: memberData } = await supabase
-    .from('class_members')
-    .select('role')
-    .eq('class_id', classId)
-    .eq('user_id', user.id)
+  // Check if user is owner or teacher (using global subscription_type)
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('subscription_type, full_name')
+    .eq('id', user.id)
     .single()
 
   const isOwner = classData.owner_id === user.id
-  const isTeacher = memberData?.role === 'teacher'
+  const isTeacher = userProfile?.subscription_type === 'teacher'
 
   if (!isOwner && !isTeacher) {
     return NextResponse.json({ error: 'Only class owners and teachers can send invites' }, { status: 403 })
   }
 
-  // Get user profile for notifications
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user.id)
-    .single()
-
-  const inviterName = profile?.full_name || 'A teacher'
+  const inviterName = userProfile?.full_name || 'A teacher'
 
   // Results tracking
   const results = {
@@ -223,11 +215,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Class not found' }, { status: 404 })
   }
 
-  // Check if user is owner or member
+  // Check if user is owner (global subscription_type check)
   const isOwner = classData.owner_id === user.id
+  
+  // Check if user is member of this class
   const { data: memberData } = await supabase
     .from('class_members')
-    .select('role')
+    .select('user_id')
     .eq('class_id', classId)
     .eq('user_id', user.id)
     .single()
@@ -239,27 +233,45 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Access denied' }, { status: 403 })
   }
 
-  // Get invite statistics
-  const { count: studentCount } = await supabase
-    .from('class_members')
-    .select('*', { count: 'exact', head: true })
-    .eq('class_id', classId)
-    .eq('role', 'student')
+  // Get user's subscription_type to check if they're a teacher
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('subscription_type')
+    .eq('id', user.id)
+    .single()
 
-  const { count: teacherCount } = await supabase
+  const isTeacher = userProfile?.subscription_type === 'teacher'
+
+  // Get all class member user IDs
+  const { data: classMembers } = await supabase
     .from('class_members')
-    .select('*', { count: 'exact', head: true })
+    .select('user_id')
     .eq('class_id', classId)
-    .eq('role', 'teacher')
+
+  const memberUserIds = (classMembers || []).map(m => m.user_id)
+
+  // Count students and teachers using profiles.subscription_type
+  let studentCount = 0
+  let teacherCount = 0
+  
+  if (memberUserIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, subscription_type')
+      .in('id', memberUserIds)
+
+    studentCount = (profiles || []).filter(p => p.subscription_type === 'student').length
+    teacherCount = (profiles || []).filter(p => p.subscription_type === 'teacher').length
+  }
 
   return NextResponse.json({
     classId: classData.id,
     className: classData.name,
     joinCode: classData.join_code,
-    teacherJoinCode: isOwner || memberData?.role === 'teacher' ? classData.teacher_join_code : null,
+    teacherJoinCode: isOwner || isTeacher ? classData.teacher_join_code : null,
     memberCount: {
-      students: studentCount || 0,
-      teachers: teacherCount || 0,
+      students: studentCount,
+      teachers: teacherCount,
     },
     canInviteTeachers: isOwner,
   })
