@@ -9,10 +9,14 @@ export async function GET(
 ) {
   try {
     const { classId } = await params
+    console.log('[GRADES] GET - classId:', classId)
+    
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
+    console.log('[GRADES] GET - user:', user?.id, 'error:', userError)
+    
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -28,8 +32,11 @@ export async function GET(
       .eq('class_id', classId)
       .order('created_at', { ascending: false })
 
+    console.log('[GRADES] GET - gradeSets query result:', { error, count: gradeSets?.length })
+    
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('[GRADES] GET - error:', error)
+      return NextResponse.json({ error: error.message, details: 'Failed to query grade_sets table' }, { status: 500 })
     }
 
     // Calculate stats for each grade set
@@ -69,7 +76,11 @@ export async function POST(
 ) {
   try {
     const { classId } = await params
+    console.log('[GRADES] POST - classId:', classId)
+    
     const body = await req.json()
+    console.log('[GRADES] POST - body:', body)
+    
     const { title, description, category, weight, subject_id } = body
 
     if (!title || title.trim() === '') {
@@ -80,6 +91,8 @@ export async function POST(
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
+    console.log('[GRADES] POST - user:', user?.id, 'error:', userError)
+    
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -92,6 +105,8 @@ export async function POST(
       .eq('owner_id', user.id)
       .single()
 
+    console.log('[GRADES] POST - class check:', { classData, classError })
+    
     if (classError || !classData) {
       return NextResponse.json({ error: 'Class not found or unauthorized' }, { status: 403 })
     }
@@ -112,7 +127,10 @@ export async function POST(
       .select()
       .single()
 
+    console.log('[GRADES] POST - gradeSet created:', { gradeSet, error })
+    
     if (error) {
+      console.error('[GRADES] POST - error creating grade set:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -126,8 +144,10 @@ export async function POST(
       .eq('class_id', classId)
       .eq('role', 'student')
 
+    console.log('[GRADES] POST - students:', { students, studentsError })
+
     if (studentsError) {
-      console.error('Error fetching students:', studentsError)
+      console.error('[GRADES] POST - Error fetching students:', studentsError)
     }
 
     // Create empty grade entries for each student
@@ -144,7 +164,7 @@ export async function POST(
         .insert(gradeEntries)
 
       if (gradesError) {
-        console.error('Error creating student grades:', gradesError)
+        console.error('[GRADES] POST - Error creating student grades:', gradesError)
       }
     }
 
@@ -153,7 +173,7 @@ export async function POST(
       students_count: students?.length || 0
     })
   } catch (error) {
-    console.error('Error creating grade set:', error)
+    console.error('[GRADES] POST - Error creating grade set:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
