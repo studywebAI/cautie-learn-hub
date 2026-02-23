@@ -8,6 +8,10 @@ export async function GET(
   { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
+    const resolvedParams = await params
+    const { classId } = resolvedParams
+    console.log(`\n🌐 [ATTENDANCE_GET] Fetching attendance for class: ${classId}`)
+    
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,13 +26,12 @@ export async function GET(
     )
 
     const { data: { user } } = await supabase.auth.getUser()
+    console.log('[ATTENDANCE_GET] User:', user?.id)
 
     if (!user) {
+      console.log('[ATTENDANCE_GET] ❌ No user')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const resolvedParams = await params
-    const { classId } = resolvedParams
 
     // Check if user is owner or teacher
     const { data: classData, error: classError } = await supabase

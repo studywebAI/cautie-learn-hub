@@ -11,14 +11,18 @@ export async function GET(
   { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
+    const { classId } = await params
+    console.log(`\n🌐 [MEMBERS_GET] Fetching members for class: ${classId}`)
+    
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()
+    console.log('[MEMBERS_GET] User:', user?.id)
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { classId } = await params
     const perm = await getClassPermission(supabase, classId, user.id)
+    console.log('[MEMBERS_GET] Permission:', perm)
     if (!perm.isMember) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
 
     // Get all members
@@ -27,7 +31,11 @@ export async function GET(
       .select('user_id, role, created_at')
       .eq('class_id', classId)
 
-    if (error) return NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 })
+    console.log('[MEMBERS_GET] Members query result:', { count: membersData?.length, error })
+    if (error) {
+      console.error('[MEMBERS_GET] Error fetching members:', error)
+      return NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 })
+    }
 
     // Get profile info separately
     const members = await Promise.all(
@@ -40,14 +48,15 @@ export async function GET(
 
         return {
           ...member,
-          profiles: profile || { full_name: null, avatar_url: null }
+          profiles: profile || { full_name: null, email: null, avatar_url: null }
         }
       })
     )
 
+    console.log('[MEMBERS_GET] Returning members:', members.length)
     return NextResponse.json(members || [])
   } catch (error) {
-    console.error('Unexpected error in class members GET:', error)
+    console.error('❌ [MEMBERS_GET] Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

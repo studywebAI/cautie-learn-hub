@@ -9,18 +9,20 @@ export async function GET(
 ) {
   try {
     const { classId } = await params
-    console.log('[GRADES] GET - classId:', classId)
+    console.log(`\n🌐 [GRADES_GET] Fetching grades for class: ${classId}`)
     
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    console.log('[GRADES] GET - user:', user?.id, 'error:', userError)
+    console.log('[GRADES_GET] User:', user?.id, 'Auth error:', userError?.message)
     
     if (userError || !user) {
+      console.log('[GRADES_GET] ❌ Unauthorized - no user')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    console.log('[GRADES_GET] Querying grade_sets table...')
     // Get grade sets for this class
     const { data: gradeSets, error } = await (supabase as any)
       .from('grade_sets')
@@ -32,10 +34,10 @@ export async function GET(
       .eq('class_id', classId)
       .order('created_at', { ascending: false })
 
-    console.log('[GRADES] GET - gradeSets query result:', { error, count: gradeSets?.length })
+    console.log('[GRADES_GET] Query result:', { count: gradeSets?.length, error: error?.message })
     
     if (error) {
-      console.error('[GRADES] GET - error:', error)
+      console.error('[GRADES_GET] ❌ Query error:', error)
       return NextResponse.json({ error: error.message, details: 'Failed to query grade_sets table' }, { status: 500 })
     }
 
