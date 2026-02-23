@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { InputWithTypingPlaceholder } from '@/components/ui/input-with-typing-placeholder';
 
 type GradeSet = {
   id: string;
@@ -221,11 +222,17 @@ export function GradesTab({ classId }: { classId: string }) {
   );
 }
 
+// Grade examples for typing animation - randomized
+const gradeExamples = [
+  '7.5', '8', '9', '10', '6.5', '5.5', '4', '9.5', '7', '8.5',
+  'A', 'B', 'C', 'A+', 'B-', 'D', 'F', 'A-', 'B+', 'C+'
+];
+
 // =============================================
 // NEW GRADES WIZARD (MULTI-STEP)
 // =============================================
 
-function NewGradesWizard({ 
+function NewGradesWizard({
   classId, 
   onComplete, 
   onCancel 
@@ -241,8 +248,7 @@ function NewGradesWizard({
   // Step 1: Title
   const [title, setTitle] = useState('');
   
-  // Step 2: Weight & Category
-  const [category, setCategory] = useState('test');
+  // Step 2: Weight
   const [weight, setWeight] = useState(1);
   
   // Step 3: Students & Grades
@@ -293,7 +299,6 @@ function NewGradesWizard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
-          category,
           weight,
           subject_id: selectedSubjectId || null
         })
@@ -401,23 +406,7 @@ function NewGradesWizard({
           )}
 
           {step === 2 && (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">Category</Label>
-                <div className="grid grid-cols-3 gap-3">
-                  {['test', 'quiz', 'homework', 'exam'].map((cat) => (
-                    <Button
-                      key={cat}
-                      variant={category === cat ? 'default' : 'outline'}
-                      onClick={() => setCategory(cat)}
-                      className="capitalize"
-                    >
-                      {cat}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-base font-semibold">Weight (how much it counts)</Label>
                 <div className="flex gap-3 items-center">
@@ -477,10 +466,10 @@ function NewGradesWizard({
                   Everyone
                 </Label>
                 <div className="flex gap-2">
-                  <Input
+                  <InputWithTypingPlaceholder
+                    placeholders={gradeExamples}
                     value={everyoneGrade}
                     onChange={(e) => setEveryoneGrade(e.target.value)}
-                    placeholder="Apply to all students"
                     className="border-2 border-black/20"
                   />
                   <Button onClick={applyToAll} variant="outline">
@@ -495,20 +484,19 @@ function NewGradesWizard({
                 <div className="border rounded-lg divide-y max-h-96 overflow-auto">
                   {students.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground">
-                      <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>Loading students...</p>
+                      <Loader2 className="h-6 w-6 mx-auto mb-2 animate-spin" />
+                      <p>Loading...</p>
                     </div>
                   ) : (
                     students.map((student) => (
                       <div key={student.student_id} className="flex items-center gap-3 p-3">
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{student.student.full_name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{student.student.email}</p>
+                          <p className="font-medium truncate">{student.student.email}</p>
                         </div>
-                        <Input
+                        <InputWithTypingPlaceholder
+                          placeholders={gradeExamples}
                           value={student.grade_value || ''}
                           onChange={(e) => updateStudentGrade(student.student_id, e.target.value)}
-                          placeholder="Grade"
                           className="w-24 text-center"
                         />
                       </div>
@@ -563,7 +551,6 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             title: '_temp_grade_set_', 
-            category: 'test', 
             weight: 1 
           })
         });
@@ -905,10 +892,10 @@ function EditGradesDetail({
               Everyone
             </Label>
             <div className="flex gap-2">
-              <Input
+              <InputWithTypingPlaceholder
+                placeholders={gradeExamples}
                 value={everyoneGrade}
                 onChange={(e) => setEveryoneGrade(e.target.value)}
-                placeholder="Apply to all students"
                 className="border-2 border-black/20"
               />
               <Button onClick={applyToAll} variant="outline">
@@ -922,13 +909,12 @@ function EditGradesDetail({
             {students.map((student) => (
               <div key={student.student_id} className="flex items-center gap-3 p-3">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{student.student?.full_name || 'Unknown'}</p>
-                  <p className="text-xs text-muted-foreground truncate">{student.student?.email || ''}</p>
+                  <p className="font-medium truncate">{student.student?.email || 'Unknown'}</p>
                 </div>
-                <Input
+                <InputWithTypingPlaceholder
+                  placeholders={gradeExamples}
                   value={student.grade_value || ''}
                   onChange={(e) => updateStudentGrade(student.student_id, e.target.value)}
-                  placeholder="Grade"
                   className="w-24 text-center"
                 />
               </div>
