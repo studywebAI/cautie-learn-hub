@@ -539,39 +539,62 @@ function NewGradesWizard({
   );
 }
 
-// Helper component to load students
+// Helper component to load students - directly from class_members
 function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStudentsLoaded: (students: StudentGrade[]) => void }) {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadStudents = async () => {
       try {
-        const response = await fetch(`/api/classes/${classId}/grades`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            title: '_temp_grade_set_', 
-            weight: 1 
-          })
-        });
+        // Directly fetch class members (students) from the API
+        const response = await fetch(`/api/classes/${classId}/members`);
         
         if (response.ok) {
-          const data = await response.json();
+          const members = await response.json(); // Returns array directly
           
-          // Now fetch the grade set with students
-          const gradeSetResponse = await fetch(`/api/classes/${classId}/grades/${data.grade_set.id}`);
-          if (gradeSetResponse.ok) {
-            const gradeSetData = await gradeSetResponse.json();
-            onStudentsLoaded(gradeSetData.grade_set.student_grades || []);
-            
-            // Delete the temp grade set
-            await fetch(`/api/classes/${classId}/grades/${data.grade_set.id}`, {
-              method: 'DELETE'
-            });
+          // Transform class members to student grades format
+          const studentGrades: StudentGrade[] = members
+            .filter((m: any) => m.role === 'student')
+            .map((m: any) => ({
+              id: m.id || crypto.randomUUID(),
+              student_id: m.user_id || m.id,
+              grade_value: null,
+              status: 'draft',
+              student: {
+                id: m.user_id || m.id,
+                full_name: m.profile?.full_name || '',
+                email: m.profile?.email || m.email || 'Unknown'
+              }
+            }));
+          
+          onStudentsLoaded(studentGrades);
+        } else {
+          // Fallback: try to use grades API to create temp set
+          const gradesResponse = await fetch(`/api/classes/${classId}/grades`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              title: '_temp_grade_set_', 
+              weight: 1 
+            })
+          });
+          
+          if (gradesResponse.ok) {
+            const gradeData = await gradesResponse.json();
+            const gradeSetResp = await fetch(`/api/classes/${classId}/grades/${gradeData.grade_set.id}`);
+            if (gradeSetResp.ok) {
+              const gradeSetData = await gradeSetResp.json();
+              onStudentsLoaded(gradeSetData.grade_set.student_grades || []);
+              await fetch(`/api/classes/${classId}/grades/${gradeData.grade_set.id}`, { method: 'DELETE' });
+            }
+          } else {
+            setError('Could not load students. Database tables may not be set up.');
           }
         }
-      } catch (error) {
-        console.error('Failed to load students:', error);
+      } catch (err) {
+        console.error('Failed to load students:', err);
+        setError('Failed to load students');
       } finally {
         setLoading(false);
       }
@@ -580,14 +603,24 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
     loadStudents();
   }, [classId]);
 
-  if (!loading) return null;
-  
-  return (
-    <div className="flex items-center justify-center py-4">
-      <Loader2 className="h-5 w-5 animate-spin mr-2" />
-      <span>Loading students...</span>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+        <span>Loading students...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-center">
+        {error}
+      </div>
+    );
+  }
+
+  return null;
 }
 
 // =============================================

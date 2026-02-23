@@ -34,7 +34,7 @@ export async function GET(
       (membersData || []).map(async (member: any) => {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, avatar_url')
+          .select('full_name, email, avatar_url')
           .eq('id', member.user_id)
           .single()
 
