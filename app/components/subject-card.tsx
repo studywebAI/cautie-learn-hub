@@ -3,33 +3,56 @@
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 import {
-  // Science
-  Microscope, FlaskConical, Atom, Beaker, TestTubes, Dna, Bug, Leaf, Feather,
+  // Science - Biology
+  Microscope, FlaskConical, Atom, Beaker, TestTubes, Dna, Bug, Leaf, Feather, 
+  // Science - Medical
+  Stethoscope, Pill, Bandage, Thermometer, Syringe, Clipboard,
   // Math
-  Calculator, Square, Sigma, FunctionSquare, BarChart3, TrendingUp,
+  Calculator, Square, Sigma, FunctionSquare, BarChart3, TrendingUp, Hash, Percent, Divide, Plus, Minus, X, Equal, Pi,
   // Languages
-  BookOpen, Languages, PenTool, Pen, FileText, GraduationCap, Globe, MessageSquare,
-  // Humanities
-  Landmark, Map, Scale, Users, Heart, Brain, Building, Scroll, Shield, Cross,
-  // Arts
+  BookOpen, Languages, PenTool, Pen, Pencil, FileText, GraduationCap, Globe, MessageSquare, Mail, Bookmark,
+  // Humanities - History & Social
+  Landmark, Map, Scale, Users, Heart, Brain, Building2, Scroll, Shield, Cross, Flag,
+  // Humanities - Social Sciences
+  UserCheck, UserPlus, UserMinus, UsersRound,
+  // Arts - Visual
   Palette, Music, Guitar, Piano, Mic, Film, Camera, Brush, Sparkles,
-  // Tech & IT
-  Code, Laptop, Smartphone, Cpu, Wifi, Database, Server, Terminal,
-  // Sports & Health
-  Dumbbell, Activity, HeartPulse, Utensils, Apple, Salad, Footprints,
-  Trophy,
+  // Arts - Creative
+  Theater, Clapperboard, Radio, Volume2, VolumeX, Headphones, Drum,
+  // Tech & IT - General
+  Code, Laptop, Smartphone, Cpu, Wifi, Database, Server, Terminal, HardDrive, Monitor, Keyboard, Mouse, Printer,
+  // Tech & AI & Data
+  Bot, Binary, Brackets, Code2, FileCode, FileJson, Variable,
+  // Tech - Web & Internet
+  Link2, Signal, Tablet, Watch, Router, Cloud, CloudLightning,
+  // Sports & Health - Fitness
+  Dumbbell, Activity, HeartPulse, Utensils, Apple, Salad, Footprints, Trophy, Medal,
+  // Health - Medical
+  Accessibility, HeartHandshake,
   // Education
-  School, Library, Book, BookMarked, FileQuestion, Award,
-  // Nature & Animals
-  Trees, Mountain, Cloud, Sun, Moon, Star, Zap, Waves,
+  School, Library, Book, FileQuestion, Award,
+  // Nature - Landscape
+  Trees, Mountain, Sun, Moon, Star, Zap, Waves, CloudRain, CloudSnow, Wind, Flame, Droplets,
+  // Nature - Animals
+  Bird, Fish, Cat, Dog, Rabbit, PawPrint,
   // Business & Finance
-  Briefcase, Banknote, CreditCard, TrendingDown, PieChart, Building2,
-  // Food
-  UtensilsCrossed, ChefHat, Coffee, Wine, GlassWater,
-  // Tools
-  Wrench,
-  // Default
-  Sparkle, Lightbulb, Star as StarIcon, Gift, Crown, Diamond
+  Briefcase, Banknote, CreditCard, TrendingDown, PieChart, Building2 as FinanceBuilding, Wallet, PiggyBank, DollarSign, Euro,
+  // Food & Drink
+  UtensilsCrossed, ChefHat, Coffee, Wine, GlassWater, Beer, IceCream, Cake, Cookie,
+  // Travel & Places
+  Plane, Car, Bus, Train, Ship, MapPin, Compass, Tent, Hotel, Store, ShoppingBag, Home,
+  // Time & Calendar
+  Clock, Calendar, Timer, Hourglass, AlarmClock, CalendarDays, CalendarRange,
+  // Communication
+  MessageCircle, Phone, PhoneCall, Video, VideoIcon,
+  // Security & Safety
+  Lock, Unlock, EyeOff, ShieldCheck, ShieldAlert, Fingerprint, Key, KeyRound,
+  // Tools & Work
+  Wrench, Hammer, Paintbrush, Ruler, Scissors, Paperclip,
+  // Office & Business
+  Folder, FolderOpen, File, Files, FileCheck, FileClock, Archive, Inbox,
+  // Default/Fallback
+  Sparkle, Lightbulb, Star as StarIcon, Gift, Diamond, Hexagon, Circle, Square as SquareIcon
 } from 'lucide-react';
 
 type ParagraphContext = {
@@ -136,14 +159,140 @@ function getSubjectIcon(title: string, description?: string | null) {
   if (searchText.includes('religion') || searchText.includes('godsdienst')) return Cross;
   if (searchText.includes('ethics') || searchText.includes('ethiek')) return Scale;
   
+  // Additional tech keywords
+  if (searchText.includes('ai') || searchText.includes('artificial intelligence')) return Bot;
+  if (searchText.includes('data') || searchText.includes('data science')) return Database;
+  if (searchText.includes('robot') || searchText.includes('robotics')) return Bot;
+  if (searchText.includes('digital')) return Cpu;
+  if (searchText.includes('software')) return Code2;
+  
+  // Medical & Health
+  if (searchText.includes('nursing')) return Stethoscope;
+  if (searchText.includes('pharmacy') || searchText.includes('farmacie')) return Pill;
+  if (searchText.includes('first aid')) return Bandage;
+  if (searchText.includes('anatomy')) return Stethoscope;
+  if (searchText.includes('physiology')) return HeartPulse;
+  
+  // Law & Politics
+  if (searchText.includes('legal') || searchText.includes('juridisch')) return Scale;
+  if (searchText.includes('government') || searchText.includes('overheid')) return Landmark;
+  if (searchText.includes('sociology') || searchText.includes('social')) return Users;
+  if (searchText.includes('anthropology')) return UsersRound;
+  
+  // Sports
+  if (searchText.includes('athletics') || searchText.includes('atletiek')) return Trophy;
+  if (searchText.includes('football') || searchText.includes('voetbal')) return Trophy;
+  if (searchText.includes('tennis')) return Trophy;
+  if (searchText.includes('basketball')) return Trophy;
+  if (searchText.includes('baseball')) return Trophy;
+  if (searchText.includes('hockey')) return Trophy;
+  
+  // Music & Arts
+  if (searchText.includes('song') || searchText.includes('zang')) return Music;
+  if (searchText.includes('instrument')) return Guitar;
+  if (searchText.includes('piano')) return Music;
+  if (searchText.includes('guitar')) return Guitar;
+  if (searchText.includes('violin')) return Music;
+  if (searchText.includes('drum')) return Drum;
+  if (searchText.includes('band')) return Headphones;
+  if (searchText.includes('orchestra')) return Headphones;
+  if (searchText.includes('sculpture')) return Palette;
+  
+  // Travel & Tourism
+  if (searchText.includes('tourism') || searchText.includes('toerisme')) return Plane;
+  if (searchText.includes('hotel')) return Hotel;
+  if (searchText.includes('travel') || searchText.includes('reizen')) return Plane;
+  if (searchText.includes('transport')) return Train;
+  if (searchText.includes('logistics')) return Ship;
+  
+  // Environment
+  if (searchText.includes('climate') || searchText.includes('klimaat')) return Cloud;
+  if (searchText.includes('weather') || searchText.includes('weer')) return CloudRain;
+  if (searchText.includes('astronomy') || searchText.includes('sterrenkunde')) return Star;
+  if (searchText.includes('space')) return Star;
+  if (searchText.includes('ocean') || searchText.includes('zee')) return Waves;
+  if (searchText.includes('geology')) return Mountain;
+  
+  // Religion
+  if (searchText.includes('islam')) return Cross;
+  if (searchText.includes('jewish') || searchText.includes('jodendom')) return Cross;
+  if (searchText.includes('christian') || searchText.includes('christelijk')) return Cross;
+  if (searchText.includes('buddhist')) return Cross;
+  if (searchText.includes('hindu')) return Cross;
+  
+  // Additional subjects
+  if (searchText.includes('marketing')) return Briefcase;
+  if (searchText.includes('management')) return Briefcase;
+  if (searchText.includes('entrepreneurship')) return Wallet;
+  if (searchText.includes('investment')) return TrendingUp;
+  if (searchText.includes('tax')) return Banknote;
+  if (searchText.includes('real estate')) return Building2;
+  
+  // More tech
+  if (searchText.includes('network') || searchText.includes('netwerk')) return Wifi;
+  if (searchText.includes('security') || searchText.includes('beveiliging')) return ShieldCheck;
+  if (searchText.includes('cyber')) return ShieldAlert;
+  if (searchText.includes('game') || searchText.includes('gaming')) return Monitor;
+  if (searchText.includes('design')) return Palette;
+  
+  // Languages - more specific
+  if (searchText.includes('italian') || searchText.includes('italiaans')) return Globe;
+  if (searchText.includes('portuguese') || searchText.includes('portugees')) return Globe;
+  if (searchText.includes('chinese') || searchText.includes('chinees')) return Globe;
+  if (searchText.includes('japanese') || searchText.includes('japans')) return Globe;
+  if (searchText.includes('korean')) return Globe;
+  if (searchText.includes('arabic') || searchText.includes('arabisch')) return Globe;
+  if (searchText.includes('writing') || searchText.includes('schrijven')) return PenTool;
+  if (searchText.includes('reading') || searchText.includes('lezen')) return BookOpen;
+  if (searchText.includes('speaking') || searchText.includes('spreken')) return MessageSquare;
+  if (searchText.includes('listening')) return Headphones;
+  if (searchText.includes('grammar')) return FileText;
+  if (searchText.includes('vocabulary')) return Book;
+  
+  // STEM
+  if (searchText.includes('science') || searchText.includes('wetenschap')) return FlaskConical;
+  if (searchText.includes('lab') || searchText.includes('practicum')) return Microscope;
+  if (searchText.includes('research')) return Clipboard;
+  
+  // Math - more specific
+  if (searchText.includes('arithmetic')) return Calculator;
+  if (searchText.includes('trigonometry')) return Pi;
+  if (searchText.includes('probability')) return Hash;
+  if (searchText.includes('accounting')) return Calculator;
+  
+  // Social
+  if (searchText.includes('communication')) return MessageCircle;
+  if (searchText.includes('journalism')) return FileText;
+  if (searchText.includes('media')) return Film;
+  if (searchText.includes('journal')) return FileText;
+  
+  // Engineering - more specific
+  if (searchText.includes('mechanical')) return Wrench;
+  if (searchText.includes('civil')) return Building2;
+  if (searchText.includes('electrical engineering')) return Zap;
+  if (searchText.includes('electronic')) return Cpu;
+  if (searchText.includes('automotive')) return Car;
+  
+  // Agriculture
+  if (searchText.includes('farming')) return Leaf;
+  if (searchText.includes('horticulture')) return Trees;
+  if (searchText.includes('forestry')) return Trees;
+  
+  // Home Economics
+  if (searchText.includes('sewing')) return Scissors;
+  if (searchText.includes('textile')) return Scissors;
+  if (searchText.includes('interior')) return Home;
+  if (searchText.includes('design')) return Ruler;
+  
+  // Engineering
   if (searchText.includes('engineering') || searchText.includes('engineering')) return Wrench;
-  if (searchText.includes('architecture') || searchText.includes('bouwkunde')) return Building;
-  if (searchText.includes('construction') || searchText.includes('bouw')) return Building;
+  if (searchText.includes('architecture') || searchText.includes('bouwkunde')) return Building2;
+  if (searchText.includes('construction') || searchText.includes('bouw')) return Building2;
   if (searchText.includes('mechanic')) return Wrench;
   if (searchText.includes('electrical')) return Zap;
   
   // Default icons based on title hash
-  const fallbackIcons = [Sparkle, Lightbulb, StarIcon, Gift, Crown, Diamond, Award, Book];
+  const fallbackIcons = [Sparkle, Lightbulb, StarIcon, Gift, Trophy, Diamond, Award, Book];
   const hash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return fallbackIcons[hash % fallbackIcons.length];
 }

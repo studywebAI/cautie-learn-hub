@@ -22,6 +22,7 @@ import { StudentProgressPanel } from '@/components/dashboard/teacher/student-pro
 import { InviteTab } from '@/components/class/invite-tab';
 import { GroupTab } from '@/components/class/group-tab';
 import { AttendanceTab } from '@/components/class/attendance-tab';
+import { GradesTab } from '@/components/class/grades-tab';
 import { GraduationCap } from 'lucide-react';
 
 // Cache for tab data - persists across tab switches
@@ -197,6 +198,8 @@ export default function ClassDetailsPage() {
         );
       case 'announcements':
         return <AnnouncementManager classId={classId} isTeacher={isTeacher} />;
+      case 'grades':
+        return isTeacher ? <GradesTab classId={classId} /> : null;
       case 'progress':
         return isTeacher ? <StudentProgressPanel classId={classId} /> : null;
       case 'subjects':
