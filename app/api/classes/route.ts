@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
     console.log('[CLASSES_POST] Adding creator to class_members...')
     await supabase
       .from('class_members')
-      .insert({ class_id: data.id, user_id: user.id });
+      .insert({ class_id: data.id, user_id: user.id, role: 'teacher' });
 
     // Log audit entry
     await logAuditEntry(supabase, {
