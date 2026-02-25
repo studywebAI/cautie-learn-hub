@@ -43,10 +43,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Get class info to verify ownership
+  // Get class info to verify membership (owner_id column removed)
   const { data: classData, error: classError } = await supabase
     .from('classes')
-    .select('id, name, join_code, teacher_join_code, owner_id')
+    .select('id, name, join_code, teacher_join_code')
     .eq('id', classId)
     .single()
 
@@ -54,18 +54,28 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Class not found' }, { status: 404 })
   }
 
-  // Check if user is owner or teacher (using global subscription_type)
+  // Check if user is teacher via subscription_type + class_members
   const { data: userProfile } = await supabase
     .from('profiles')
     .select('subscription_type, full_name')
     .eq('id', user.id)
     .single()
 
-  const isOwner = classData.owner_id === user.id
   const isTeacher = userProfile?.subscription_type === 'teacher'
 
-  if (!isOwner && !isTeacher) {
-    return NextResponse.json({ error: 'Only class owners and teachers can send invites' }, { status: 403 })
+  // Check if user is a member of this class
+  const { data: classMember } = await supabase
+    .from('class_members')
+    .select('user_id')
+    .eq('class_id', classId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  const isMember = !!classMember
+
+  // Teachers who are members can send invites
+  if (!isTeacher || !isMember) {
+    return NextResponse.json({ error: 'Only class teachers can send invites' }, { status: 403 })
   }
 
   const inviterName = userProfile?.full_name || 'A teacher'
@@ -117,8 +127,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (teacherEmails && teacherEmails.length > 0) {
     for (const email of teacherEmails) {
       try {
-        // Teachers can only be invited by owners
-        if (!isOwner) {
+        // Only teachers can invite other teachers
+        if (!isTeacher) {
           results.teachers.failed.push(email)
           continue
         }
@@ -207,7 +217,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   // Get class info
   const { data: classData, error: classError } = await supabase
     .from('classes')
-    .select('id, name, join_code, teacher_join_code, owner_id')
+    .select('id, name, join_code, teacher_join_code')
     .eq('id', classId)
     .single()
 
@@ -215,23 +225,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Class not found' }, { status: 404 })
   }
 
-  // Check if user is owner (global subscription_type check)
-  const isOwner = classData.owner_id === user.id
-  
   // Check if user is member of this class
   const { data: memberData } = await supabase
     .from('class_members')
     .select('user_id')
     .eq('class_id', classId)
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   const isMember = !!memberData
-
-  // Only owners and members can view invite info
-  if (!isOwner && !isMember) {
-    return NextResponse.json({ error: 'Access denied' }, { status: 403 })
-  }
 
   // Get user's subscription_type to check if they're a teacher
   const { data: userProfile } = await supabase
@@ -241,6 +243,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .single()
 
   const isTeacher = userProfile?.subscription_type === 'teacher'
+
+  // Only members can view invite info
+  if (!isMember) {
+    return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+  }
 
   // Get all class member user IDs
   const { data: classMembers } = await supabase
@@ -268,11 +275,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     classId: classData.id,
     className: classData.name,
     joinCode: classData.join_code,
-    teacherJoinCode: isOwner || isTeacher ? classData.teacher_join_code : null,
+    teacherJoinCode: isTeacher ? classData.teacher_join_code : null,
     memberCount: {
       students: studentCount,
       teachers: teacherCount,
     },
-    canInviteTeachers: isOwner,
+    canInviteTeachers: isTeacher,
   })
 }

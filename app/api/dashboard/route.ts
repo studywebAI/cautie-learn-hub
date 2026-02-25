@@ -79,44 +79,58 @@ export async function GET(request: Request) {
     let assignments: any[] = []
 
     if (isTeacher) {
-      // Teachers: get classes they own + subjects they created
-      const [classesResult, subjectsResult, personalTasksResult] = await Promise.all([
-        supabase.from('classes').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
-        (supabase as any).from('subjects')
-          .select(`*, class_subjects(classes:class_id(id, name))`)
-          .eq('user_id', user.id),
-        supabase.from('personal_tasks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      ])
+      const { data: membershipData } = await supabase
+        .from('class_members')
+        .select('class_id')
+        .eq('user_id', user.id)
+        .eq('role', 'teacher');
 
-      classes = classesResult.data || []
-      
-      // Transform subjects to include classes array
+      const teacherClassIds = Array.from(new Set((membershipData || []).map((m: any) => m.class_id)));
+
+      const classesPromise = teacherClassIds.length > 0
+        ? supabase.from('classes').select('*').in('id', teacherClassIds).order('created_at', { ascending: false })
+        : Promise.resolve({ data: [] as any[], error: null });
+
+      const subjectsPromise = (supabase as any).from('subjects')
+        .select(`*, class_subjects(classes:class_id(id, name))`)
+        .or(`owner_id.eq.${user.id},id.in.(SELECT subject_id FROM subject_teachers WHERE teacher_id = '${user.id}')`)
+        .order('created_at', { ascending: false });
+
+      const personalTasksPromise = supabase
+        .from('personal_tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      const [classesResult, subjectsResult, personalTasksResult] = await Promise.all([
+        classesPromise,
+        subjectsPromise,
+        personalTasksPromise,
+      ]);
+
+      classes = classesResult?.data || [];
+
       subjects = (subjectsResult.data || []).map((s: any) => ({
         ...s,
         classes: s.class_subjects ? s.class_subjects.map((cs: any) => cs.classes).filter(Boolean) : []
-      }))
+      }));
 
-      // Get students across all owned classes
-      if (classes.length > 0) {
-        const ownedClassIds = classes.map((c: any) => c.id)
-        if (ownedClassIds.length <= 50) {
-          const { data: studentsData } = await supabase
-            .from('class_members')
-            .select('user_id, profiles(*)')
-            .in('class_id', ownedClassIds)
+      if (teacherClassIds.length > 0 && teacherClassIds.length <= 50) {
+        const { data: studentsData } = await supabase
+          .from('class_members')
+          .select('user_id, profiles(*)')
+          .in('class_id', teacherClassIds)
+          .eq('role', 'student');
 
-          if (studentsData) {
-            students = Array.from(new Set(studentsData.map((s: any) => s.user_id)))
-              .map(id => studentsData.find((s: any) => s.user_id === id))
-              .filter(Boolean)
-          }
+        if (studentsData) {
+          students = Array.from(new Set(studentsData.map((s: any) => s.user_id)))
+            .map(id => studentsData.find((s: any) => s.user_id === id))
+            .filter(Boolean)
         }
       }
 
-      // Fetch assignments for all owned classes (including hierarchical and direct)
-      let assignments: any[] = []
-      if (classes.length > 0) {
-        // Fetch hierarchical assignments through classes -> subjects -> chapters -> paragraphs -> assignments
+      assignments = [];
+      if (teacherClassIds.length > 0) {
         const { data: classesWithAssignments, error: hierarchicalError } = await supabase
           .from('classes')
           .select(`
@@ -130,7 +144,7 @@ export async function GET(request: Request) {
               )
             )
           `)
-          .in('id', classes.map((c: any) => c.id));
+          .in('id', teacherClassIds);
 
         if (hierarchicalError) {
           console.error('Error fetching hierarchical assignments for teacher:', hierarchicalError);
@@ -152,7 +166,6 @@ export async function GET(request: Request) {
           assignments = [...assignments, ...hierarchical];
         }
 
-        // Fetch direct class assignments (paragraph_id is null)
         const { data: directAssignments, error: directError } = await supabase
           .from('assignments')
           .select(`
@@ -162,7 +175,7 @@ export async function GET(request: Request) {
               name
             )
           `)
-          .in('class_id', classes.map((c: any) => c.id))
+          .in('class_id', teacherClassIds)
           .is('paragraph_id', null)
           .order('scheduled_start_at', { ascending: true });
 
@@ -177,7 +190,6 @@ export async function GET(request: Request) {
           assignments = [...assignments, ...processedDirect];
         }
 
-        // Sort combined assignments by scheduled_start_at
         assignments.sort((a, b) => {
           const dateA = a.scheduled_start_at ? new Date(a.scheduled_start_at).getTime() : Infinity;
           const dateB = b.scheduled_start_at ? new Date(b.scheduled_start_at).getTime() : Infinity;
@@ -185,7 +197,6 @@ export async function GET(request: Request) {
         });
       }
 
-      // Calculate class limits for teachers
       const classLimit = subscriptionTier === 'pro' ? 20 : subscriptionTier === 'premium' ? 5 : 0;
       const canCreateClass = classesCreated < classLimit;
 

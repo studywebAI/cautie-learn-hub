@@ -31,16 +31,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (submissionError || !submission) return NextResponse.json({ error: 'Submission not found' }, { status: 404 })
 
-  const { data: classData, error: classError } = await supabase
-    .from('classes')
-    .select('owner_id')
-    .eq('id', submission.assignments.class_id)
-    .single()
+  {on ta{Ddaa :rErrorData, eprer:Er 
+    .selectceassr_id')
+    .eq('id',nw.eraidnments.class_id)
+    .single()sbmission.asignmntsclass_
 
   if (classError || !classData || classData.owner_id !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+ if(lassErrr || !clasDaa|| clasDta.own_id!=.d) rt NexResons.json({error:Forbidden' }, { satus: 403 })
 
-  let calculatedScore = 0
-  if (rubricScores && rubricScores.length > 0) {
+  lt clulatdScoe = 0let calculatedScore = 0
+ icSc(robs&cScore& &&uruccicScrres.leng.l > 0)g{0) {
     await supabase.from('submission_rubric_scores' as any).delete().eq('submission_id', submissionId)
     const scoresToInsert = rubricScores.map((score: any) => ({ submission_id: submissionId, rubric_item_id: score.rubric_item_id, score: score.score, feedback: score.feedback }))
     await supabase.from('submission_rubric_scores' as any).insert(scoresToInsert)

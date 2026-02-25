@@ -33,20 +33,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is owner or teacher
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('owner_id')
-      .eq('id', classId)
-      .single()
-
-    if (classError || !classData) {
-      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
-    }
-
-    const isOwner = classData.owner_id === user.id
-    
-    // Get user's subscription_type to check if they're a teacher
+    // Check if user is a teacher via class_members + subscription_type
+    // (owner_id column was removed - all teachers are now equal via class_members)
     const { data: userProfile } = await supabase
       .from('profiles')
       .select('subscription_type')
@@ -55,8 +43,16 @@ export async function GET(
 
     const isTeacher = userProfile?.subscription_type === 'teacher'
     
-    // Owner can always view/update, teachers can view/update
-    const canAccess = isOwner || isTeacher
+    // Also check if user is a member of this class
+    const { data: classMember } = await supabase
+      .from('class_members')
+      .select('user_id')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    // Teachers who are members of the class can access
+    const canAccess = isTeacher && classMember
     
     if (!canAccess) {
       return NextResponse.json({ error: 'Only teachers can view attendance' }, { status: 403 })
@@ -193,20 +189,8 @@ export async function POST(
     const resolvedParams = await params
     const { classId } = resolvedParams
 
-    // Check if user is owner or teacher
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('owner_id')
-      .eq('id', classId)
-      .single()
-
-    if (classError || !classData) {
-      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
-    }
-
-    const isOwner = classData.owner_id === user.id
-    
-    // Get user's subscription_type to check if they're a teacher
+    // Check if user is a teacher via class_members + subscription_type
+    // (owner_id column was removed - all teachers are now equal via class_members)
     const { data: userProfile } = await supabase
       .from('profiles')
       .select('subscription_type')
@@ -215,8 +199,16 @@ export async function POST(
 
     const isTeacher = userProfile?.subscription_type === 'teacher'
     
-    // Owner can always view/update, teachers can view/update
-    const canAccess = isOwner || isTeacher
+    // Also check if user is a member of this class
+    const { data: classMember } = await supabase
+      .from('class_members')
+      .select('user_id')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    // Teachers who are members of the class can access
+    const canAccess = isTeacher && classMember
     
     if (!canAccess) {
       return NextResponse.json({ error: 'Only teachers can update attendance' }, { status: 403 })
