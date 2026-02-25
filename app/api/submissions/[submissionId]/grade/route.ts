@@ -32,6 +32,10 @@ async function requireTeacherAccess(supabase: ReturnType<typeof createClient>, c
   return null
 }
 
+function log(...args: any[]) {
+  console.log('[submission-grade]', ...args)
+}
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ submissionId: string }> }) {
   const resolvedParams = await params
   const { submissionId } = resolvedParams
@@ -47,6 +51,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  log('Loading submission', submissionId)
   const { data: submission, error: submissionError } = await (supabase
     .from('submissions' as any) as any)
     .select(`*, assignments (id, rubric_id, class_id)`)
@@ -62,12 +67,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Submission is missing a class reference' }, { status: 400 })
   }
 
+  log('Checking teacher access for class', classId, 'user', user.id)
   const accessError = await requireTeacherAccess(supabase, classId, user.id)
   if (accessError) return accessError
 
   let calculatedScore = 0
 
   if (rubricScores && rubricScores.length > 0) {
+    log('Resetting existing rubric scores')
     await supabase.from('submission_rubric_scores' as any).delete().eq('submission_id', submissionId)
 
     const scoresToInsert = rubricScores.map((score: any) => ({
@@ -77,6 +84,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       feedback: score.feedback || null
     }))
 
+    log('Inserting rubric scores', scoresToInsert.length)
     await supabase.from('submission_rubric_scores' as any).insert(scoresToInsert)
 
     const { data: rubricItems } = await (supabase
@@ -90,6 +98,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         if (!scoreData || !item.max_score) return
         calculatedScore += (scoreData.score / item.max_score) * item.weight
       })
+      log('Calculated score', calculatedScore)
     }
   }
 
@@ -102,6 +111,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (feedback) updateData.feedback = feedback
 
+  log('Updating submission', submissionId, 'with', updateData)
   await supabase.from('submissions' as any).update(updateData).eq('id', submissionId)
 
   return NextResponse.json({ success: true })
@@ -117,6 +127,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ subm
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  log('GET submission', submissionId)
   const { data: submission, error: submissionError } = await (supabase
     .from('submissions' as any) as any)
     .select(`*, assignments (id, rubric_id, class_id, rubrics (id, name, rubric_items (id, criterion, description, max_score, weight))), submission_rubric_scores (rubric_item_id, score, feedback)`)
@@ -132,6 +143,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ subm
     return NextResponse.json({ error: 'Submission is missing a class reference' }, { status: 400 })
   }
 
+  log('Checking teacher access for GET for class', classId)
   const accessError = await requireTeacherAccess(supabase, classId, user.id)
   if (accessError) return accessError
 
