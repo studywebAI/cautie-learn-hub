@@ -62,14 +62,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Class not found. Please check the code and try again.' }, { status: 404 });
   }
 
-  // Determine role based on which code was used
-  const isTeacherCode = classData.teacher_join_code === class_code;
-  const role = isTeacherCode ? 'teacher' : 'student';
+  // Get user's subscription_type to determine role (global role)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('subscription_type')
+    .eq('id', user.id)
+    .single();
+
+  // Use subscription_type as the role
+  const subscriptionType = profile?.subscription_type || 'student';
+  
+  console.log('[JOIN] User subscription_type:', subscriptionType);
 
   // Check if user is already a member (use maybeSingle to handle null case)
   const { data: existingMember, error: checkError } = await supabase
     .from('class_members')
-    .select('id, role')
+    .select('id')
     .eq('class_id', classData.id)
     .eq('user_id', user.id)
     .maybeSingle();
@@ -82,15 +90,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       message: 'You are already a member of this class.',
       alreadyJoined: true,
-      role: existingMember.role,
+      role: subscriptionType,
       class: { id: classData.id, name: classData.name, description: classData.description }
     }, { status: 200 });
   }
 
-  // Insert into class_members with the determined role
+  // Insert into class_members (no role column - role is global via subscription_type)
   const { error: insertError } = await supabase
     .from('class_members')
-    .insert([{ class_id: classData.id, user_id: user.id, role }]);
+    .insert([{ class_id: classData.id, user_id: user.id }]);
 
   if (insertError) {
     // Handle duplicate key error (already a member)
@@ -111,12 +119,12 @@ export async function POST(request: NextRequest) {
     classId: classData.id,
     action: 'join',
     entityType: 'member',
-    metadata: { role, joinMethod: isTeacherCode ? 'teacher_code' : 'student_code' }
+    metadata: { role: subscriptionType }
   });
 
   return NextResponse.json({ 
-    message: `Successfully joined class as ${role}`, 
+    message: `Successfully joined class as ${subscriptionType}`, 
     class: { id: classData.id, name: classData.name, description: classData.description },
-    role 
+    role: subscriptionType
   });
 }

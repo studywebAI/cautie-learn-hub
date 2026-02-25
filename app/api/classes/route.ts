@@ -63,17 +63,17 @@ export async function GET(request: NextRequest) {
     let allClasses: any[] = [];
 
     if (isTeacher) {
-      // TEACHERS: See ALL classes they're members of (teacher OR management role)
+      // TEACHERS: See ALL classes they're members of
+      // (role is now global via subscription_type)
       console.log('[CLASSES_GET] Fetching teacher classes from class_members...')
       
       const { data: memberClasses, error: memberError } = await supabase
         .from('class_members')
-        .select('classes(*)')
-        .eq('user_id', user.id)
-        .in('role', ['teacher', 'management']);
+        .select('class_id')
+        .eq('user_id', user.id);
 
-      console.log('[CLASSES_GET] Member classes query result:', { 
-        count: memberClasses?.length, 
+      console.log('[CLASSES_GET] Member classes raw:', { 
+        data: memberClasses, 
         error: memberError 
       });
 
@@ -82,24 +82,21 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: memberError.message }, { status: 500 });
       }
 
-      let teacherClasses = memberClasses?.map((m: any) => m.classes).filter(Boolean) || [];
-      console.log('[CLASSES_GET] Teacher classes from members:', teacherClasses.length);
+      // Get the actual class details
+      const classIds = (memberClasses || []).map(m => m.class_id);
+      console.log('[CLASSES_GET] Teacher class IDs:', classIds);
 
-      // Also include legacy owned classes (backward compatibility)
-      console.log('[CLASSES_GET] Fetching legacy owned classes...')
-      const { data: ownedClasses, error: ownedError } = await supabase
-        .from('classes')
-        .select('*')
-        .eq('owner_id', user.id);
+      if (classIds.length > 0) {
+        const { data: classesData, error: classesError } = await supabase
+          .from('classes')
+          .select('*')
+          .in('id', classIds);
 
-      console.log('[CLASSES_GET] Owned classes:', { count: ownedClasses?.length, error: ownedError });
+        console.log('[CLASSES_GET] Classes data:', { count: classesData?.length, error: classesError });
+        allClasses = classesData || [];
+      }
 
-      // Merge and deduplicate
-      const allTeacherClasses = [...teacherClasses, ...(ownedClasses || [])];
-      const uniqueMap = new Map(allTeacherClasses.map(c => [c.id, c]));
-      allClasses = Array.from(uniqueMap.values());
-
-      console.log('[CLASSES_GET] Total teacher classes after merge:', allClasses.length);
+      console.log('[CLASSES_GET] Total teacher classes:', allClasses.length);
 
       const includeArchived = request.nextUrl.searchParams.get('includeArchived') === 'true';
       if (!includeArchived) {
@@ -219,13 +216,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to generate join code' }, { status: 500 });
     }
 
-    // Create class
+    // Create class (no owner_id - all teachers are equal)
     const insertData = {
       name,
       description,
       join_code: joinCode,
-      teacher_join_code: teacherJoinCode || null,
-      owner_id: user.id
+      teacher_join_code: teacherJoinCode || null
     };
 
     console.log('[CLASSES_POST] Inserting class:', insertData);
@@ -243,11 +239,11 @@ export async function POST(request: NextRequest) {
 
     console.log('[CLASSES_POST] Class created:', data);
 
-    // Auto-add the creator as a teacher member
+    // Auto-add the creator as a member (no role column - use subscription_type)
     console.log('[CLASSES_POST] Adding creator to class_members...')
     await supabase
       .from('class_members')
-      .insert({ class_id: data.id, user_id: user.id, role: 'teacher' });
+      .insert({ class_id: data.id, user_id: user.id });
 
     // Log audit entry
     await logAuditEntry(supabase, {
