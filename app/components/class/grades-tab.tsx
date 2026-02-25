@@ -547,11 +547,15 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
   useEffect(() => {
     const loadStudents = async () => {
       try {
+        console.log('[StudentGrader] Loading students for class:', classId);
+        
         // Directly fetch class members (students) from the API
         const response = await fetch(`/api/classes/${classId}/members`);
+        console.log('[StudentGrader] Members API response:', response.status, response.ok);
         
         if (response.ok) {
           const members = await response.json(); // Returns array directly
+          console.log('[StudentGrader] Members received:', members.length, members);
           
           // Transform class members to student grades format
           const studentGrades: StudentGrade[] = members
@@ -563,13 +567,17 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
               status: 'draft',
               student: {
                 id: m.user_id || m.id,
-                full_name: m.profile?.full_name || '',
-                email: m.profile?.email || m.email || 'Unknown'
+                full_name: m.profile?.full_name || m.profiles?.full_name || '',
+                email: m.profile?.email || m.profiles?.email || m.email || 'Unknown'
               }
             }));
           
+          console.log('[StudentGrader] Student grades:', studentGrades.length, studentGrades);
           onStudentsLoaded(studentGrades);
         } else {
+          const errorText = await response.text();
+          console.log('[StudentGrader] ❌ Members API error:', response.status, errorText);
+          
           // Fallback: try to use grades API to create temp set
           const gradesResponse = await fetch(`/api/classes/${classId}/grades`, {
             method: 'POST',
@@ -580,6 +588,8 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
             })
           });
           
+          console.log('[StudentGrader] Grades API response:', gradesResponse.status, gradesResponse.ok);
+          
           if (gradesResponse.ok) {
             const gradeData = await gradesResponse.json();
             const gradeSetResp = await fetch(`/api/classes/${classId}/grades/${gradeData.grade_set.id}`);
@@ -589,12 +599,12 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
               await fetch(`/api/classes/${classId}/grades/${gradeData.grade_set.id}`, { method: 'DELETE' });
             }
           } else {
-            setError('Could not load students. Database tables may not be set up.');
+            setError('Could not load students. API error: ' + response.status);
           }
         }
-      } catch (err) {
-        console.error('Failed to load students:', err);
-        setError('Failed to load students');
+      } catch (err: any) {
+        console.error('[StudentGrader] ❌ Failed to load students:', err);
+        setError('Failed to load students: ' + err.message);
       } finally {
         setLoading(false);
       }
