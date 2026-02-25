@@ -2,7 +2,13 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+function logPresence(...args: any[]) {
+  console.log('[USER_PRESENCE]', ...args)
+}
+
 export async function POST(request: Request) {
+  logPresence('POST - Updating presence')
+
   try {
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -20,24 +26,29 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
+      logPresence('POST - Unauthorized user')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    logPresence('POST - Authenticated user', user.id)
+
     // Update the user's last_seen in profiles
+    const timestamp = new Date().toISOString()
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ last_seen: new Date().toISOString() })
+      .update({ last_seen: timestamp })
       .eq('id', user.id)
 
     if (updateError) {
-      console.error('Failed to update presence:', updateError)
+      logPresence('POST - Failed to update presence:', updateError.message)
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, timestamp: new Date().toISOString() })
+    logPresence('POST - Presence updated', { userId: user.id, timestamp })
+    return NextResponse.json({ success: true, timestamp })
 
   } catch (error) {
-    console.error('Error updating presence:', error)
+    logPresence('POST - Error updating presence', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

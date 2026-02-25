@@ -10,6 +10,10 @@ import { logAuditEntry } from '@/lib/auth/class-permissions'
 
 export const dynamic = 'force-dynamic'
 
+function logJoin(...args: any[]) {
+  console.log('[CLASSES_JOIN]', ...args)
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
@@ -37,8 +41,10 @@ export async function GET(request: Request) {
 
 // POST to join a class
 export async function POST(request: NextRequest) {
+  logJoin('POST - Starting join process')
   const validation = await validateBody(request, joinClassSchema);
   if ('error' in validation) {
+    logJoin('POST - Validation failed', validation.error)
     return validation.error;
   }
   const { class_code } = validation.data;
@@ -72,7 +78,7 @@ export async function POST(request: NextRequest) {
   // Use subscription_type as the role
   const subscriptionType = profile?.subscription_type || 'student';
   
-  console.log('[JOIN] User subscription_type:', subscriptionType);
+  logJoin('POST - User subscription_type:', subscriptionType);
 
   // Check if user is already a member (use maybeSingle to handle null case)
   const { data: existingMember, error: checkError } = await supabase
@@ -83,7 +89,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
     
   if (checkError) {
-    console.error('Error checking membership:', checkError);
+    logJoin('POST - Membership check error:', checkError);
   }
     
   if (existingMember) {
@@ -99,6 +105,8 @@ export async function POST(request: NextRequest) {
   const { error: insertError } = await supabase
     .from('class_members')
     .insert([{ class_id: classData.id, user_id: user.id }]);
+
+  logJoin('POST - Inserted class_members', { class_id: classData.id, user_id: user.id, error: insertError?.message })
 
   if (insertError) {
     // Handle duplicate key error (already a member)
@@ -121,6 +129,8 @@ export async function POST(request: NextRequest) {
     entityType: 'member',
     metadata: { role: subscriptionType }
   });
+
+  logJoin('POST - Join completed', { classId: classData.id, userId: user.id, role: subscriptionType });
 
   return NextResponse.json({ 
     message: `Successfully joined class as ${subscriptionType}`, 

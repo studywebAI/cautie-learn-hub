@@ -5,12 +5,18 @@ import { NextRequest, NextResponse } from 'next/server'
 // NOTE: This endpoint now returns subscription_type as the source of truth
 // The old 'role' column has been consolidated into 'subscription_type'
 
+function logRole(...args: any[]) {
+  console.log('[USER_ROLE]', ...args)
+}
+
 export async function GET() {
+  logRole('GET - Starting role lookup')
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore)
 
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
+    logRole('GET - Auth failed', userError?.message)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -22,13 +28,13 @@ export async function GET() {
     .maybeSingle();
 
   if (error) {
-    console.error("Error fetching user subscription:", error);
+    logRole('GET - Profile fetch error', error.message);
     return NextResponse.json({ error: "Failed to fetch user subscription" }, { status: 500 });
   }
 
   // Create profile if it doesn't exist (defaults to free student)
   if (!profile) {
-    console.log('Profile not found, creating new profile');
+    logRole('GET - Profile missing, creating default');
     const { error: insertError } = await supabase
       .from('profiles')
       .insert({
@@ -40,7 +46,7 @@ export async function GET() {
       });
 
     if (insertError) {
-      console.error('Profile creation failed:', insertError);
+      logRole('GET - Profile creation failed', insertError.message);
       return NextResponse.json({ error: "Failed to create user profile" }, { status: 500 });
     }
 
@@ -51,6 +57,8 @@ export async function GET() {
       .eq('id', user.id)
       .maybeSingle();
 
+    logRole('GET - Created new profile', newProfile);
+
     return NextResponse.json({ 
       role: newProfile?.subscription_type || 'student',
       subscription_type: newProfile?.subscription_type || 'student',
@@ -59,6 +67,7 @@ export async function GET() {
   }
 
   // Return both for backward compatibility, but subscription_type is the source of truth
+  logRole('GET - Returning profile metadata', profile);
   return NextResponse.json({ 
     role: profile.subscription_type,
     subscription_type: profile.subscription_type,

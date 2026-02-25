@@ -9,8 +9,12 @@ import { logAuditEntry } from '@/lib/auth/class-permissions'
 
 export const dynamic = 'force-dynamic'
 
+function log(...args: any[]) {
+  console.log('[CLASSES]', ...args)
+}
+
 export async function GET(request: NextRequest) {
-  console.log('[CLASSES_GET] Starting request...')
+  log('GET - Starting request...')
   
   try {
     const cookieStore = cookies()
@@ -19,7 +23,7 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError) {
-      console.error('[CLASSES_GET] Auth error:', authError.message);
+      log('GET - Auth error', authError.message);
       if (authError.message.includes('User from sub claim in JWT does not exist')) {
         return NextResponse.json({ error: 'Session expired or invalid', code: 'SESSION_INVALID' }, { status: 401 });
       }
@@ -27,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!user) {
-      console.log('[CLASSES_GET] No user found, returning empty array');
+      log('GET - No user found, returning empty array');
       return NextResponse.json([]);
     }
 
@@ -39,7 +43,7 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     if (profileError) {
-      console.error('[CLASSES_GET] Profile fetch error:', profileError);
+      log('GET - Profile fetch error:', profileError);
     }
 
     // Create profile if doesn't exist
@@ -58,33 +62,33 @@ export async function GET(request: NextRequest) {
     const userRole = profile?.subscription_type || 'student';
     const isTeacher = userRole === 'teacher';
     
-    console.log('[CLASSES_GET] User role:', userRole, 'Is teacher:', isTeacher);
-
+    log('User role:', userRole, 'Is teacher:', isTeacher);
     let allClasses: any[] = [];
 
     if (isTeacher) {
       // TEACHERS: See ALL classes they're members of
       // (role is now global via subscription_type)
-      console.log('[CLASSES_GET] Fetching teacher classes from class_members...')
+      log('Fetching teacher classes from class_members...')
       
       const { data: memberClasses, error: memberError } = await supabase
         .from('class_members')
         .select('class_id')
         .eq('user_id', user.id);
 
-      console.log('[CLASSES_GET] Member classes raw:', { 
-        data: memberClasses, 
-        error: memberError 
+      log('Member classes raw:', {
+        total: memberClasses?.length,
+        sample: memberClasses?.slice(0, 3).map(m => m.class_id),
+        error: memberError
       });
 
       if (memberError) {
-        console.error('[CLASSES_GET] Member classes error:', memberError);
+        log('GET - Member classes error:', memberError);
         return NextResponse.json({ error: memberError.message }, { status: 500 });
       }
 
       // Get the actual class details
       const classIds = (memberClasses || []).map(m => m.class_id);
-      console.log('[CLASSES_GET] Teacher class IDs:', classIds);
+      log('Teacher class IDs:', classIds);
 
       if (classIds.length > 0) {
         const { data: classesData, error: classesError } = await supabase
@@ -92,11 +96,11 @@ export async function GET(request: NextRequest) {
           .select('*')
           .in('id', classIds);
 
-        console.log('[CLASSES_GET] Classes data:', { count: classesData?.length, error: classesError });
+        log('Classes data:', { count: classesData?.length, error: classesError });
         allClasses = classesData || [];
       }
 
-      console.log('[CLASSES_GET] Total teacher classes:', allClasses.length);
+      log('Total teacher classes (pre-filter):', allClasses.length);
 
       const includeArchived = request.nextUrl.searchParams.get('includeArchived') === 'true';
       if (!includeArchived) {
@@ -104,32 +108,33 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // STUDENTS: Only see classes they're members of
-      console.log('[CLASSES_GET] Fetching student classes...')
+      log('Student branch - fetching classes...')
       
       const { data: memberClassesData, error: memberError } = await supabase
         .from('class_members')
         .select('classes(*)')
         .eq('user_id', user.id);
 
-      console.log('[CLASSES_GET] Student member classes:', { 
-        count: memberClassesData?.length, 
-        error: memberError 
+      log('Student member classes:', {
+        count: memberClassesData?.length,
+        sample: memberClassesData?.slice(0, 3).map((m: any) => m.classes?.id || m.class_id),
+        error: memberError
       });
 
       if (memberError) {
-        console.error('[CLASSES_GET] Student classes error:', memberError);
+        log('GET - Student classes error:', memberError);
         return NextResponse.json({ error: memberError.message }, { status: 500 });
       }
 
       allClasses = memberClassesData?.map((member: any) => member.classes).filter(Boolean) || [];
-      console.log('[CLASSES_GET] Total student classes:', allClasses.length);
+      log('Total student classes (final):', allClasses.length);
     }
 
-    console.log('[CLASSES_GET] Returning classes:', allClasses.length);
+    log('Returning classes:', allClasses.length, 'includeArchived:', request.nextUrl.searchParams.get('includeArchived') === 'true');
     return NextResponse.json(allClasses);
     
   } catch (err: any) {
-    console.error('[CLASSES_GET] Unexpected error:', err);
+    log('GET - Unexpected error', err);
     return NextResponse.json({ 
       error: 'Internal server error',
       details: err?.message || 'Unknown error'
@@ -138,16 +143,16 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('[CLASSES_POST] Starting class creation...')
+  log('POST - Starting class creation...')
   
   try {
     const validation = await validateBody(request, createClassSchema);
     if ('error' in validation) {
-      console.log('[CLASSES_POST] Validation failed:', validation.error);
+      log('POST - Validation failed:', validation.error);
       return validation.error;
     }
     const { name, description } = validation.data;
-    console.log('[CLASSES_POST] Validated data:', { name, description });
+    log('POST - Validated data:', { name, description });
 
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
@@ -155,11 +160,11 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.log('[CLASSES_POST] Auth failed:', authError);
+      log('POST - Auth failed', authError?.message)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('[CLASSES_POST] User:', user.id);
+    log('POST - Authenticated user', user.id);
 
     // Use subscription_type as the single source of truth (role column removed)
     const { data: profile } = await supabase
@@ -168,7 +173,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .maybeSingle();
 
-    console.log('[CLASSES_POST] Profile:', profile);
+    log('POST - Profile snapshot:', profile);
 
     // subscription_type is the source of truth
     const subscriptionType = profile?.subscription_type || 'student';
@@ -176,7 +181,7 @@ export async function POST(request: NextRequest) {
     const classesCreated = profile?.classes_created || 0;
     
     if (subscriptionType !== 'teacher') {
-      console.log('[CLASSES_POST] Not a teacher, type:', subscriptionType);
+      log('POST - Rejected: not teacher', subscriptionType);
       return NextResponse.json({ error: 'Only teachers can create classes' }, { status: 403 });
     }
 
@@ -184,7 +189,7 @@ export async function POST(request: NextRequest) {
     const classLimit = subscriptionTier === 'pro' ? 20 : subscriptionTier === 'premium' ? 5 : 0;
     
     if (classLimit === 0) {
-      console.log('[CLASSES_POST] Free tier cannot create classes');
+      log('POST - Free tier creator blocked', { subscriptionTier });
       return NextResponse.json({ 
         error: 'Class creation requires a premium subscription',
         code: 'CLASS_LIMIT_REACHED',
@@ -195,7 +200,7 @@ export async function POST(request: NextRequest) {
     }
     
     if (classesCreated >= classLimit) {
-      console.log('[CLASSES_POST] Class limit reached:', { classesCreated, classLimit, tier: subscriptionTier });
+      log('POST - Class limit reached', { classesCreated, classLimit, tier: subscriptionTier });
       return NextResponse.json({ 
         error: 'Class limit reached',
         code: 'CLASS_LIMIT_REACHED',
@@ -206,11 +211,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate join codes
-    console.log('[CLASSES_POST] Generating join codes...')
+    log('POST - Generating join codes...')
     const { data: joinCode } = await supabase.rpc('generate_join_code');
     const { data: teacherJoinCode } = await supabase.rpc('generate_teacher_join_code');
 
-    console.log('[CLASSES_POST] Generated codes:', { joinCode, teacherJoinCode });
+    log('POST - Generated join codes', { joinCode, teacherJoinCode });
 
     if (!joinCode) {
       return NextResponse.json({ error: 'Failed to generate join code' }, { status: 500 });
@@ -224,7 +229,7 @@ export async function POST(request: NextRequest) {
       teacher_join_code: teacherJoinCode || null
     };
 
-    console.log('[CLASSES_POST] Inserting class:', insertData);
+    log('POST - Inserting class', insertData);
 
     const { data, error } = await supabase
       .from('classes')
@@ -233,17 +238,17 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[CLASSES_POST] Class creation failed:', error);
+      log('POST - Class creation failed', error.message);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    console.log('[CLASSES_POST] Class created:', data);
+    log('POST - Class created:', data);
 
     // Auto-add the creator as a member (no role column - use subscription_type)
-    console.log('[CLASSES_POST] Adding creator to class_members...')
+    log('POST - Adding creator to class_members', { class_id: data.id, user_id: user.id });
     await supabase
       .from('class_members')
-      .insert({ class_id: data.id, user_id: user.id, role: 'teacher' });
+      .insert({ class_id: data.id, user_id: user.id });
 
     // Log audit entry
     await logAuditEntry(supabase, {
@@ -256,7 +261,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Increment classes_created counter
-    console.log('[CLASSES_POST] Incrementing classes_created counter...')
+    log('POST - Incrementing classes_created counter')
     await supabase.rpc('increment_classes_created', { user_id: user.id });
 
     return NextResponse.json(data);
