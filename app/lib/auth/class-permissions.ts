@@ -2,82 +2,59 @@
  * Shared class permission helpers.
  * 
  * PHILOSOPHY: All teachers in a class are EQUAL. There is no "owner" hierarchy.
- * The `owner_id` on classes is kept as `created_by` for reference only.
- * Management role exists for oversight but has the same editing powers.
+ * Role is GLOBAL - determined by profiles.subscription_type across the entire website.
+ * A teacher is a teacher everywhere, a student is a student everywhere.
  * 
- * Role hierarchy (all equal editing power):
- *   - management: can do everything teachers can + view audit logs
- *   - teacher: full edit access to all subjects, grades, content in the class
- *   - student: read-only access to content, submit answers
+ * Teachers have their own dedicated subjects within a class.
+ * Students can see all subjects but only submit to their own.
  */
 
 import { SupabaseClient } from '@supabase/supabase-js'
 
-export type ClassRole = 'teacher' | 'student' | 'management'
-
 export interface ClassPermission {
   isMember: boolean
-  isTeacher: boolean   // true for teacher OR management
-  isManagement: boolean
-  isStudent: boolean
-  role: ClassRole | null
+  isTeacher: boolean   // true if subscription_type = 'teacher'
+  isStudent: boolean  // true if subscription_type = 'student'
 }
 
 /**
- * Check if a user is a teacher (or management) in a class.
- * This replaces all `owner_id === user.id` checks.
- * Teachers are identified by their role in class_members.
+ * Check if a user is a member of a class and what their global role is.
+ * Role is determined by profiles.subscription_type (global, not per-class).
  */
 export async function getClassPermission(
   supabase: SupabaseClient,
   classId: string,
   userId: string
 ): Promise<ClassPermission> {
-  // Check class_members for the user's role
+  // Check if user is a member of this class
   const { data: member, error } = await supabase
     .from('class_members')
-    .select('role')
+    .select('user_id')
     .eq('class_id', classId)
     .eq('user_id', userId)
     .single()
 
   if (error || !member) {
-    // Fallback: check if user is the legacy owner_id (treat as teacher)
-    const { data: classData } = await supabase
-      .from('classes')
-      .select('owner_id')
-      .eq('id', classId)
-      .single()
-
-    if (classData?.owner_id === userId) {
-      return {
-        isMember: true,
-        isTeacher: true,
-        isManagement: false,
-        isStudent: false,
-        role: 'teacher'
-      }
-    }
-
     return {
       isMember: false,
       isTeacher: false,
-      isManagement: false,
-      isStudent: false,
-      role: null
+      isStudent: false
     }
   }
 
-  const role = member.role as ClassRole
-  const isTeacher = role === 'teacher' || role === 'management'
-  const isManagement = role === 'management'
+  // Get global role from profiles
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('subscription_type')
+    .eq('id', userId)
+    .single()
+
+  const subscriptionType = profile?.subscription_type
 
   return {
     isMember: true,
-    isTeacher,
-    isManagement,
-    isStudent: role === 'student',
-    role
+    isTeacher: subscriptionType === 'teacher',
+    isStudent: subscriptionType === 'student'
   }
 }
 

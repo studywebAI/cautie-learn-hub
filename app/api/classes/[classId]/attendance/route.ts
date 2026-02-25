@@ -62,12 +62,14 @@ export async function GET(
       return NextResponse.json({ error: 'Only teachers can view attendance' }, { status: 403 })
     }
 
-    // Get all students in the class using profiles.subscription_type
-    // First get all class member user IDs
+    // Get all students in the class - use subscription_type from profiles (global role)
+    // First get all class members
     const { data: classMembers, error: membersError } = await supabase
       .from('class_members')
       .select('user_id, joined_at')
       .eq('class_id', classId)
+
+    console.log('[ATTENDANCE_GET] All members:', { count: classMembers?.length, error: membersError })
 
     const memberUserIds = (classMembers || []).map(m => m.user_id)
     
@@ -84,6 +86,7 @@ export async function GET(
     }
 
     if (membersError) {
+      console.error('[ATTENDANCE_GET] Error fetching students:', membersError)
       return NextResponse.json({ error: membersError.message }, { status: 500 })
     }
 

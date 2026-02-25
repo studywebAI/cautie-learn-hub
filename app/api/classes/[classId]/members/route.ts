@@ -23,12 +23,17 @@ export async function GET(
 
     const perm = await getClassPermission(supabase, classId, user.id)
     console.log('[MEMBERS_GET] Permission:', perm)
-    if (!perm.isMember) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+    
+    // Allow if user is a member of the class
+    if (!perm.isMember) {
+      console.log('[MEMBERS_GET] ❌ Access denied - not a member')
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+    }
 
     // Get all members
-    const { data: membersData, error } = await (supabase as any)
+    const { data: membersData, error } = await supabase
       .from('class_members')
-      .select('user_id, role, created_at')
+      .select('user_id, created_at')
       .eq('class_id', classId)
 
     console.log('[MEMBERS_GET] Members query result:', { count: membersData?.length, error })

@@ -21,7 +21,39 @@ export function TeacherDashboard() {
   const [archivedClassesCount, setArchivedClassesCount] = useState(0);
   const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
   const [isBulkMode, setIsBulkMode] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
   const { toast } = useToast();
+
+  const handleJoinClass = async () => {
+    if (!joinCode.trim()) {
+      toast({ variant: 'destructive', title: 'Please enter a join code' });
+      return;
+    }
+
+    setIsJoining(true);
+    try {
+      const response = await fetch('/api/classes/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ class_code: joinCode.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({ title: data.message || 'Successfully joined class!' });
+        setJoinCode('');
+        await refetchClasses();
+      } else {
+        throw new Error(data.error || 'Failed to join class');
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Could not join class', description: error.message });
+    } finally {
+      setIsJoining(false);
+    }
+  };
 
   // Fetch all classes including archived when toggling
   const fetchAllClasses = async (includeArchived = false) => {
@@ -151,18 +183,37 @@ export function TeacherDashboard() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex justify-end gap-2">
-        <Button
-          variant={isBulkMode ? "default" : "outline"}
-          onClick={toggleBulkMode}
-        >
-          {isBulkMode ? <Square className="mr-2 h-4 w-4" /> : <CheckSquare className="mr-2 h-4 w-4" />}
-          {isBulkMode ? 'Exit Bulk Mode' : 'Bulk Actions'}
-        </Button>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Create New Class
-        </Button>
+      <div className="flex justify-between items-center gap-2">
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Enter teacher join code..."
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value)}
+            className="w-48 h-9"
+            onKeyDown={(e) => e.key === 'Enter' && handleJoinClass()}
+          />
+          <Button 
+            variant="outline" 
+            onClick={handleJoinClass} 
+            disabled={isJoining || !joinCode.trim()}
+            size="sm"
+          >
+            {isJoining ? 'Joining...' : 'Join Class'}
+          </Button>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant={isBulkMode ? "default" : "outline"}
+            onClick={toggleBulkMode}
+          >
+            {isBulkMode ? <Square className="mr-2 h-4 w-4" /> : <CheckSquare className="mr-2 h-4 w-4" />}
+            {isBulkMode ? 'Exit Bulk Mode' : 'Bulk Actions'}
+          </Button>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create New Class
+          </Button>
+        </div>
       </div>
 
       {/* Search Bar and Bulk Actions */}

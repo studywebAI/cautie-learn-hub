@@ -22,6 +22,33 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Check if user is a class member
+    const { data: memberData } = await supabase
+      .from('class_members')
+      .select('user_id')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+      .single()
+    
+    if (!memberData) {
+      console.log('[GRADES_GET] ❌ Access denied - not a member')
+      return NextResponse.json({ error: 'Only class members can view grades' }, { status: 403 })
+    }
+    
+    // Get user's subscription_type to check if they're a teacher
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single()
+    
+    const isTeacher = userProfile?.subscription_type === 'teacher'
+    
+    if (!isTeacher) {
+      console.log('[GRADES_GET] ❌ Access denied - not a teacher')
+      return NextResponse.json({ error: 'Only teachers can view grades' }, { status: 403 })
+    }
+
     console.log('[GRADES_GET] Querying grade_sets table...')
     // Get grade sets for this class
     const { data: gradeSets, error } = await (supabase as any)
@@ -99,18 +126,27 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify user owns the class
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('id')
-      .eq('id', classId)
-      .eq('owner_id', user.id)
+    // Check if user is a member and is a teacher
+    const { data: memberData } = await supabase
+      .from('class_members')
+      .select('user_id')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
       .single()
-
-    console.log('[GRADES] POST - class check:', { classData, classError })
     
-    if (classError || !classData) {
+    if (!memberData) {
       return NextResponse.json({ error: 'Class not found or unauthorized' }, { status: 403 })
+    }
+    
+    // Check subscription_type
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single()
+    
+    if (userProfile?.subscription_type !== 'teacher') {
+      return NextResponse.json({ error: 'Only teachers can create grade sets' }, { status: 403 })
     }
 
     // Create the grade set
@@ -136,21 +172,41 @@ export async function POST(
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Get students for this class
-    const { data: students, error: studentsError } = await (supabase as any)
+    // Get all class members first
+    const { data: classMembers, error: membersError } = await supabase
       .from('class_members')
-      .select(`
-        user_id,
-        profiles:user_id(id, full_name, email)
-      `)
+      .select('user_id')
       .eq('class_id', classId)
-      .eq('role', 'student')
 
-    console.log('[GRADES] POST - students:', { students, studentsError })
-
-    if (studentsError) {
-      console.error('[GRADES] POST - Error fetching students:', studentsError)
+    const memberUserIds = (classMembers || []).map(m => m.user_id)
+    
+    // Then filter by subscription_type = 'student'
+    let studentIds: string[] = []
+    if (memberUserIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('id', memberUserIds)
+        .eq('subscription_type', 'student')
+      
+      studentIds = (profiles || []).map(p => p.id)
     }
+
+    // Get student profiles
+    let students: any[] = []
+    if (studentIds.length > 0) {
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', studentIds)
+      
+      if (profilesError) {
+        console.error('[GRADES] POST - Error fetching students:', profilesError)
+      }
+      students = profilesData || []
+    }
+
+    console.log('[GRADES] POST - students:', { count: students.length })
 
     // Create empty grade entries for each student
     if (students && students.length > 0) {
