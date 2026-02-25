@@ -225,6 +225,7 @@ export async function POST(request: NextRequest) {
     const insertData = {
       name,
       description,
+      owner_id: user.id,
       join_code: joinCode,
       teacher_join_code: teacherJoinCode || null
     };
