@@ -247,9 +247,16 @@ export async function POST(request: NextRequest) {
 
     // Auto-add the creator as a member (no role column - use subscription_type)
     log('POST - Adding creator to class_members', { class_id: data.id, user_id: user.id });
-    await supabase
+    const { error: memberError } = await supabase
       .from('class_members')
       .insert({ class_id: data.id, user_id: user.id });
+
+    if (memberError) {
+      log('POST - class_members insert failed', memberError.message);
+      return NextResponse.json({ error: 'Failed to add creator to class_members' }, { status: 500 });
+    }
+
+    log('POST - class_members insert succeeded', { class_id: data.id });
 
     // Log audit entry
     await logAuditEntry(supabase, {
