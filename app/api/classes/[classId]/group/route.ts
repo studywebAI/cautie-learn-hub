@@ -29,16 +29,8 @@ export async function GET(
     const resolvedParams = await params
     const { classId } = resolvedParams
 
-    // First check if user is the class owner
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('id, owner_id')
-      .eq('id', classId)
-      .single()
-
-    // Check if user is owner or member
-    const isOwner = classData?.owner_id === user.id
-    
+    // Check if user is a member of the class
+    // (owner_id column was removed - all teachers are equal via class_members)
     const { data: classMember, error: memberError } = await supabase
       .from('class_members')
       .select('role')
@@ -46,16 +38,23 @@ export async function GET(
       .eq('user_id', user.id)
       .single()
 
+    // Also check if class exists
+    const { data: classData, error: classError } = await supabase
+      .from('classes')
+      .select('id')
+      .eq('id', classId)
+      .single()
+
     if (classError || !classData) {
       return NextResponse.json({ error: 'Class not found' }, { status: 404 })
     }
 
-    // Allow access if owner or member
-    if (!isOwner && (memberError || !classMember)) {
+    // Allow access if member
+    if (memberError || !classMember) {
       return NextResponse.json({ error: 'Not a member of this class' }, { status: 403 })
     }
 
-    const userRole = isOwner ? 'owner' : classMember?.role
+    const userRole = classMember?.role
 
     // Get all class members (students and teachers)
     const { data: classMembers, error: membersError } = await supabase

@@ -31,22 +31,28 @@ export async function POST(
 
     // Check if user has access to this assignment
     // Students can only complete assignments from their classes
+    // Teachers can complete assignments from their classes
+    
+    // Get user's subscription_type to check if they're a teacher
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single();
+
+    const isTeacher = userProfile?.subscription_type === 'teacher';
+
+    // Also check if user is a member of this class
     const { data: classMember } = await supabase
       .from('class_members')
-      .select('class_id')
+      .select('user_id')
       .eq('class_id', assignment.class_id)
       .eq('user_id', user.id)
       .maybeSingle();
 
-    const { data: classOwner } = await supabase
-      .from('classes')
-      .select('owner_id')
-      .eq('id', assignment.class_id)
-      .maybeSingle();
-
     const isStudent = !!classMember;
-    const isTeacher = classOwner?.owner_id === user.id;
 
+    // Teachers who are members of the class, or students who are members
     if (!isStudent && !isTeacher) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

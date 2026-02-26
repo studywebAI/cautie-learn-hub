@@ -19,24 +19,45 @@ export async function GET(
     const resolvedParams = await params
     const { classId } = resolvedParams
 
-    // Verify user owns the class
+    // Check if user is a teacher member of the class
+    // (owner_id column was removed - all teachers are equal via class_members)
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single()
+
+    const isTeacher = userProfile?.subscription_type === 'teacher'
+
+    // Also check if user is a member of this class
+    const { data: classMember } = await supabase
+      .from('class_members')
+      .select('user_id')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    // Teachers who are members of the class can view progress
+    if (!isTeacher || !classMember) {
+      return NextResponse.json({ error: 'Forbidden: Only class teachers can view progress' }, { status: 403 })
+    }
+
+    // Get class name for response
     const { data: classData, error: classError } = await supabase
       .from('classes')
       .select('id, name')
       .eq('id', classId)
-      .eq('owner_id', user.id)
       .single()
 
     if (classError || !classData) {
-      return NextResponse.json({ error: 'Class not found or access denied' }, { status: 404 })
+      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
     }
 
-    // Get all students in the class
+    // Get all class members
     const { data: classMembers, error: membersError } = await supabase
       .from('class_members')
       .select('user_id')
       .eq('class_id', classId)
-      .eq('role', 'student')
 
     if (membersError) {
       return NextResponse.json({ error: membersError.message }, { status: 500 })

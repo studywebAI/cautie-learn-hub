@@ -38,16 +38,28 @@ export async function DELETE(
 
   const classId = (assignment as any).class_id;
 
-  // Check if user owns the class
+  // Check if user is a teacher member of the class
+  // (owner_id column was removed - all teachers are equal via class_members)
   if (user) {
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('user_id, owner_id')
-      .eq('id', classId)
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
       .single();
 
-    if (classError || !classData || (classData.user_id !== user.id && classData.owner_id !== user.id)) {
-      return NextResponse.json({ error: 'Forbidden. You are not the owner of this class.' }, { status: 403 });
+    const isTeacher = userProfile?.subscription_type === 'teacher';
+
+    // Also check if user is a member of this class
+    const { data: classMember } = await supabase
+      .from('class_members')
+      .select('user_id')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    // Teachers who are members of the class can manage assignments
+    if (!isTeacher || !classMember) {
+      return NextResponse.json({ error: 'Forbidden. You are not authorized to manage this assignment.' }, { status: 403 });
     }
   } else if (guestId) {
     const { data: classData, error: classError } = await supabase
@@ -147,16 +159,28 @@ export async function PUT(
 
   const classId = (assignment as any).class_id;
 
-  // Check if user owns the class
+  // Check if user is a teacher member of the class
+  // (owner_id column was removed - all teachers are equal via class_members)
   if (user) {
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('user_id, owner_id')
-      .eq('id', classId)
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
       .single();
 
-    if (classError || !classData || (classData.user_id !== user.id && classData.owner_id !== user.id)) {
-      return NextResponse.json({ error: 'Forbidden. You are not the owner of this class.' }, { status: 403 });
+    const isTeacher = userProfile?.subscription_type === 'teacher';
+
+    // Also check if user is a member of this class
+    const { data: classMember } = await supabase
+      .from('class_members')
+      .select('user_id')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    // Teachers who are members of the class can manage assignments
+    if (!isTeacher || !classMember) {
+      return NextResponse.json({ error: 'Forbidden. You are not authorized to manage this assignment.' }, { status: 403 });
     }
   } else if (guestId) {
     const { data: classData, error: classError } = await supabase

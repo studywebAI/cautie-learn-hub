@@ -131,10 +131,10 @@ export async function POST(req: Request, { params }: { params: { classId: string
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify the class exists and user has permission
+    // Verify the class exists
     const { data: classData, error: classError } = await supabase
       .from('classes')
-      .select('id, owner_id')
+      .select('id')
       .eq('id', classId)
       .maybeSingle();
 
@@ -143,20 +143,30 @@ export async function POST(req: Request, { params }: { params: { classId: string
       return NextResponse.json({ error: 'Class not found or access denied' }, { status: 404 });
     }
 
-    // Check if user is the class owner or a member
-    const isOwner = classData.owner_id === user.id;
-    const { data: membership } = await supabase
+    // Check if user is a teacher member of the class
+    // (owner_id column was removed - all teachers are equal via class_members)
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single();
+
+    const isTeacher = userProfile?.subscription_type === 'teacher';
+
+    // Also check if user is a member of this class
+    const { data: classMember } = await supabase
       .from('class_members')
-      .select('class_id')
+      .select('user_id')
       .eq('class_id', classId)
       .eq('user_id', user.id)
       .maybeSingle();
 
-    const isMember = !!membership;
+    const isMember = !!classMember;
 
-    if (!isOwner && !isMember) {
+    // Teachers who are members can create subjects
+    if (!isTeacher || !isMember) {
       console.log(`[DEBUG] User ${user.id} not authorized for class ${classId}`);
-      return NextResponse.json({ error: 'Forbidden: You must be the class owner or a member' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden: Only class teachers can create subjects' }, { status: 403 });
     }
 
     // Validate request body

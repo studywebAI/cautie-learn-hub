@@ -126,8 +126,27 @@ export async function POST(
       return NextResponse.json({ error: 'Class not found' }, { status: 404 })
     }
 
-    if (classCheck.user_id !== user.id) {
-      return NextResponse.json({ error: 'Only class owners can create chapters' }, { status: 403 })
+    // Check if user is a teacher member of the class
+    // (owner_id column was removed - all teachers are equal via class_members)
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single()
+
+    const isTeacher = userProfile?.subscription_type === 'teacher'
+
+    // Also check if user is a member of this class
+    const { data: classMember } = await supabase
+      .from('class_members')
+      .select('user_id')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    // Teachers who are members of the class can create chapters
+    if (!isTeacher || !classMember) {
+      return NextResponse.json({ error: 'Only class teachers can create chapters' }, { status: 403 })
     }
 
     if (!title || !title.trim()) {

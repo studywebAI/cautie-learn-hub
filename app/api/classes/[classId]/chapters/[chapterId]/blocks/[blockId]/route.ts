@@ -19,27 +19,29 @@ export async function PUT(
     const body = await request.json();
     const { data: content, type, position, locked, show_feedback, ai_grading_override } = body;
 
-    // Check if user is teacher
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('id, owner_id')
-      .eq('id', classId)
-      .single();
+    // Check if user is a teacher for this class
+    // (owner_id column was removed - all teachers are equal via class_members)
+    
+    // First check global subscription_type
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single()
 
-    if (classError || !classData) {
-      return NextResponse.json({ error: 'Class not found' }, { status: 404 });
-    }
+    let isTeacher = userProfile?.subscription_type === 'teacher'
 
-    let isTeacher = classData.owner_id === user.id;
-    if (!isTeacher) {
-      const { data: memberData } = await supabase
-        .from('class_members')
-        .select('role')
-        .eq('class_id', classId)
-        .eq('user_id', user.id)
-        .single();
+    // Also check if user is a member of this class
+    const { data: classMember } = await supabase
+      .from('class_members')
+      .select('role')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+      .maybeSingle()
 
-      isTeacher = memberData?.role === 'teacher';
+    // Override with class-specific role if present
+    if (classMember?.role === 'teacher') {
+      isTeacher = true
     }
 
     if (!isTeacher) {
@@ -90,27 +92,29 @@ export async function DELETE(
 
     const { classId, chapterId, blockId } = await params;
 
-    // Check if user is teacher
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('id, owner_id')
-      .eq('id', classId)
-      .single();
+    // Check if user is a teacher for this class
+    // (owner_id column was removed - all teachers are equal via class_members)
+    
+    // First check global subscription_type
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single()
 
-    if (classError || !classData) {
-      return NextResponse.json({ error: 'Class not found' }, { status: 404 });
-    }
+    let isTeacher = userProfile?.subscription_type === 'teacher'
 
-    let isTeacher = classData.owner_id === user.id;
-    if (!isTeacher) {
-      const { data: memberData } = await supabase
-        .from('class_members')
-        .select('role')
-        .eq('class_id', classId)
-        .eq('user_id', user.id)
-        .single();
+    // Also check if user is a member of this class
+    const { data: classMember } = await supabase
+      .from('class_members')
+      .select('role')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+      .maybeSingle()
 
-      isTeacher = memberData?.role === 'teacher';
+    // Override with class-specific role if present
+    if (classMember?.role === 'teacher') {
+      isTeacher = true
     }
 
     if (!isTeacher) {

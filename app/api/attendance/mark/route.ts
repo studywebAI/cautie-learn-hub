@@ -37,6 +37,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is a teacher for this class or the student themselves
+    // (owner_id column was removed - all teachers are equal via class_members)
+    
+    // First check global subscription_type
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single()
+
+    let isTeacher = userProfile?.subscription_type === 'teacher'
+
+    // Also check if user is a member of this class (for class-specific teacher role)
     const { data: membership, error: membershipError } = await supabase
       .from('class_members')
       .select('role')
@@ -44,17 +56,9 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .single()
 
-    let isTeacher = membership?.role === 'teacher'
-
-    if (!isTeacher) {
-      const { data: classOwner } = await supabase
-        .from('classes')
-        .select('owner_id')
-        .eq('id', session.class_id)
-        .eq('owner_id', user.id)
-        .maybeSingle()
-
-      isTeacher = !!classOwner
+    // Override with class-specific role if present
+    if (membership?.role === 'teacher') {
+      isTeacher = true
     }
 
     const isSelf = user.id === studentId

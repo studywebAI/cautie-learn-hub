@@ -37,32 +37,30 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Security check: Ensure the requesting user is the owner of the class or a member
-  const { data: classData, error: classError } = await supabase
-    .from('classes')
-    .select('owner_id')
-    .eq('id', classId)
+  // Security check: Ensure the requesting user is a member of the class
+  // (owner_id column was removed - all teachers are equal via class_members)
+  
+  // Get user's subscription_type to check if they're a teacher
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('subscription_type')
+    .eq('id', session.user.id)
     .single();
 
-  if (classError || !classData) {
-    return NextResponse.json({ error: 'Class not found' }, { status: 404 });
-  }
+  const isTeacher = userProfile?.subscription_type === 'teacher';
 
-  let isMemberOrOwner = classData.owner_id === session.user.id;
+  // Also check if user is a member of this class
+  const { data: memberData } = await supabase
+    .from('class_members')
+    .select('user_id')
+    .eq('class_id', classId)
+    .eq('user_id', session.user.id)
+    .maybeSingle();
 
-  if (!isMemberOrOwner) {
-    const { data: memberData, error: memberError } = await supabase
-        .from('class_members')
-        .select()
-        .eq('class_id', classId)
-        .eq('user_id', session.user.id)
-        .single();
-    if (!memberError && memberData) {
-        isMemberOrOwner = true;
-    }
-  }
+  const isMember = !!memberData;
 
-  if (!isMemberOrOwner) {
+  // Teachers who are members of the class can view announcements
+  if (!isMember || !isTeacher) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -121,18 +119,30 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Security check: Ensure the requesting user is the owner of the class
-  const { data: classData, error: classError } = await supabase
-    .from('classes')
-    .select('owner_id')
-    .eq('id', classId)
+  // Security check: Ensure the requesting user is a teacher who is a member of the class
+  // (owner_id column was removed - all teachers are equal via class_members)
+  
+  // Get user's subscription_type to check if they're a teacher
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('subscription_type')
+    .eq('id', session.user.id)
     .single();
 
-  if (classError || !classData) {
-    return NextResponse.json({ error: 'Class not found' }, { status: 404 });
-  }
+  const isTeacher = userProfile?.subscription_type === 'teacher';
 
-  if (classData.owner_id !== session.user.id) {
+  // Also check if user is a member of this class
+  const { data: memberData } = await supabase
+    .from('class_members')
+    .select('user_id')
+    .eq('class_id', classId)
+    .eq('user_id', session.user.id)
+    .maybeSingle();
+
+  const isMember = !!memberData;
+
+  // Teachers who are members of the class can create announcements
+  if (!isMember || !isTeacher) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

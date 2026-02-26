@@ -15,26 +15,19 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { classId, chapterId } = await params;
-    // Check if user has access to the class
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('id, owner_id')
-      .eq('id', classId)
-      .single();
-    if (classError || !classData) {
-      return NextResponse.json({ error: 'Class not found' }, { status: 404 });
-    }
-    let hasAccess = classData.owner_id === user.id;
-    if (!hasAccess) {
-      const { count } = await supabase
-        .from('class_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('class_id', classId)
-        .eq('user_id', user.id);
-      hasAccess = (count || 0) > 0;
-    }
-    if (!hasAccess) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // Check if user is a teacher member of the class
+    // (owner_id column was removed - all teachers are equal via class_members)
+    
+    // Check if user is a member of the class
+    const { data: classMember } = await supabase
+      .from('class_members')
+      .select('user_id')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!classMember) {
+      return NextResponse.json({ error: 'Forbidden - not a member' }, { status: 403 });
     }
     // Get blocks for this chapter
     const { data: blocks, error: blocksError } = await (supabase as any)
@@ -72,25 +65,31 @@ export async function POST(
       return validation.error
     }
     const { data: content, type, locked, show_feedback, ai_grading_override } = validation.data;
-    // Check if user is teacher
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('id, owner_id')
-      .eq('id', classId)
-      .single();
-    if (classError || !classData) {
-      return NextResponse.json({ error: 'Class not found' }, { status: 404 });
+    // Check if user is a teacher for this class
+    // (owner_id column was removed - all teachers are equal via class_members)
+    
+    // First check global subscription_type
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single()
+
+    let isTeacher = userProfile?.subscription_type === 'teacher'
+
+    // Also check if user is a member of this class
+    const { data: classMember } = await supabase
+      .from('class_members')
+      .select('role')
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    // Override with class-specific role if present
+    if (classMember?.role === 'teacher') {
+      isTeacher = true
     }
-    let isTeacher = classData.owner_id === user.id;
-    if (!isTeacher) {
-      const { data: memberData } = await supabase
-        .from('class_members')
-        .select('role')
-        .eq('class_id', classId)
-        .eq('user_id', user.id)
-        .single();
-      isTeacher = memberData?.role === 'teacher';
-    }
+
     if (!isTeacher) {
       return NextResponse.json({ error: 'Only teachers can add blocks' }, { status: 403 });
     }

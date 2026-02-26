@@ -24,19 +24,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'classIds must be a non-empty array' }, { status: 400 })
     }
 
-    // Verify user owns all the classes
-    const { data: ownedClasses, error: ownershipCheck } = await supabase
-      .from('classes')
-      .select('id')
-      .in('id', classIds)
-      .eq('owner_id', user.id)
+    // Verify user is a teacher member of all the classes
+    // (owner_id column was removed - all teachers are equal via class_members)
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .single()
 
-    if (ownershipCheck) {
-      return NextResponse.json({ error: ownershipCheck.message }, { status: 500 })
+    const isTeacher = userProfile?.subscription_type === 'teacher'
+
+    if (!isTeacher) {
+      return NextResponse.json({ error: 'Access denied: Only teachers can perform bulk operations' }, { status: 403 })
     }
 
-    if (ownedClasses?.length !== classIds.length) {
-      return NextResponse.json({ error: 'Access denied: You do not own all specified classes' }, { status: 403 })
+    // Check if user is a member of each class
+    const { data: classMemberships, error: membershipCheck } = await supabase
+      .from('class_members')
+      .select('class_id')
+      .in('class_id', classIds)
+      .eq('user_id', user.id)
+
+    if (membershipCheck) {
+      return NextResponse.json({ error: membershipCheck.message }, { status: 500 })
+    }
+
+    const membershipClassIds = (classMemberships || []).map(m => m.class_id)
+    const missingClasses = classIds.filter(id => !membershipClassIds.includes(id))
+    
+    if (missingClasses.length > 0) {
+      return NextResponse.json({ error: 'Access denied: You are not a member of all specified classes' }, { status: 403 })
     }
 
     let result
