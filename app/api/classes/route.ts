@@ -35,6 +35,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([]);
     }
 
+    log('GET - Authenticated user details:', {
+      id: user.id,
+      email: user.email,
+      user_metadata: user.user_metadata,
+      created_at: user.created_at
+    });
+
     // Use subscription_type as the single source of truth (role column removed)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
@@ -72,12 +79,12 @@ export async function GET(request: NextRequest) {
       
       const { data: memberClasses, error: memberError } = await supabase
         .from('class_members')
-        .select('class_id')
+        .select('class_id, role')
         .eq('user_id', user.id);
 
       log('Member classes raw:', {
         total: memberClasses?.length,
-        sample: memberClasses?.slice(0, 3).map(m => m.class_id),
+        sample: memberClasses?.slice(0, 3).map(m => ({ class_id: m.class_id, role: m.role })),
         error: memberError
       });
 
@@ -96,8 +103,14 @@ export async function GET(request: NextRequest) {
           .select('*')
           .in('id', classIds);
 
-        log('Classes data:', { count: classesData?.length, error: classesError });
+        log('Classes data:', { 
+          count: classesData?.length, 
+          error: classesError,
+          sample: classesData?.slice(0, 3).map(c => ({ id: c.id, name: c.name, status: c.status }))
+        });
         allClasses = classesData || [];
+      } else {
+        log('No class memberships found for teacher');
       }
 
       log('Total teacher classes (pre-filter):', allClasses.length);

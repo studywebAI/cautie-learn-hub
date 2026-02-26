@@ -50,12 +50,19 @@ export async function POST(request: NextRequest) {
   const { class_code } = validation.data;
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
-  
+
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  logJoin('POST - Authenticated user details:', {
+    id: user.id,
+    email: user.email,
+    user_metadata: user.user_metadata,
+    created_at: user.created_at
+  });
 
   // Check if code matches student join_code or teacher join_code
   const { data: classData, error: classError } = await supabase

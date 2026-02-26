@@ -15,6 +15,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    console.log('[DASHBOARD] GET - Authenticated user details:', {
+      id: user.id,
+      email: user.email,
+      user_metadata: user.user_metadata,
+      created_at: user.created_at
+    });
+
     // Fetch profile first to determine subscription type/tier and get preferences
     // Use ONLY subscription_type - role column has been removed
     let { data: profileData, error: profileError } = await supabase

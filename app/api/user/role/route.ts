@@ -20,6 +20,13 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  logRole('GET - Authenticated user details:', {
+    id: user.id,
+    email: user.email,
+    user_metadata: user.user_metadata,
+    created_at: user.created_at
+  });
+
   // Use subscription_type as the single source of truth
   const { data: profile, error } = await supabase
     .from("profiles")
