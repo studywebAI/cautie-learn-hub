@@ -25,12 +25,12 @@ export async function GET(
     // Verify teacher has access to this class
     const { data: classMember, error: classError } = await supabase
       .from('class_members')
-      .select('role')
+      .select('user_id')
       .eq('class_id', classId)
       .eq('user_id', user.id)
       .single()
 
-    if (classError || classMember?.role !== 'teacher') {
+    if (classError || !classMember) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -39,7 +39,6 @@ export async function GET(
       .from('class_members')
       .select('user_id, profiles!inner(id, full_name)')
       .eq('class_id', classId)
-      .eq('role', 'student')
 
     if (studentsError) {
       console.error('Students error:', studentsError)
@@ -315,7 +314,6 @@ async function calculateComparativeAnalysis(
     .from('class_members')
     .select('class_id, classes!inner(id, name)')
     .eq('user_id', teacherId)
-    .eq('role', 'teacher')
 
   const comparativeData: ComparativeData[] = []
 
@@ -328,7 +326,6 @@ async function calculateComparativeAnalysis(
       .from('class_members')
       .select('user_id')
       .eq('class_id', classId)
-      .eq('role', 'student')
 
     const studentIds = classStudents?.map((s: any) => s.user_id) || []
 

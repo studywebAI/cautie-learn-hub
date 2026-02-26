@@ -187,7 +187,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           setAssignments(dashboardData.assignments || []);
           setPersonalTasks(dashboardData.personalTasks || []);
           setStudents(dashboardData.students || []);
-          setRoleState(dashboardData.role || 'student');
+          // Use subscription_type to determine role for frontend compatibility
+          const subscriptionType = dashboardData.subscription?.type || 'student';
+          setRoleState(subscriptionType as UserRole);
           
           // Save to cache for next visit
           saveToLocalStorage('studyweb-cached-dashboard', dashboardData);
@@ -215,7 +217,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               setAssignments(data.assignments || []);
               setPersonalTasks(data.personalTasks || []);
               setStudents(data.students || []);
-              setRoleState(data.role || 'student');
+              // Use subscription_type to determine role for frontend compatibility
+              const subscriptionType = data.subscription?.type || 'student';
+              setRoleState(subscriptionType as UserRole);
               saveToLocalStorage('studyweb-cached-dashboard', data);
             }
           });

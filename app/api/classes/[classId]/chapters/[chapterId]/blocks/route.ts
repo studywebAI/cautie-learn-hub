@@ -80,13 +80,13 @@ export async function POST(
     // Also check if user is a member of this class
     const { data: classMember } = await supabase
       .from('class_members')
-      .select('role')
+      .select('user_id')
       .eq('class_id', classId)
       .eq('user_id', user.id)
       .maybeSingle()
 
     // Override with class-specific role if present
-    if (classMember?.role === 'teacher') {
+    if (classMember) {
       isTeacher = true
     }
 

@@ -89,8 +89,7 @@ export async function GET(request: Request) {
       const { data: membershipData } = await supabase
         .from('class_members')
         .select('class_id')
-        .eq('user_id', user.id)
-        .eq('role', 'teacher');
+        .eq('user_id', user.id);
 
       const teacherClassIds = Array.from(new Set((membershipData || []).map((m: any) => m.class_id)));
 
@@ -126,8 +125,7 @@ export async function GET(request: Request) {
         const { data: studentsData } = await supabase
           .from('class_members')
           .select('user_id, profiles(*)')
-          .in('class_id', teacherClassIds)
-          .eq('role', 'student');
+          .in('class_id', teacherClassIds);
 
         if (studentsData) {
           students = Array.from(new Set(studentsData.map((s: any) => s.user_id)))

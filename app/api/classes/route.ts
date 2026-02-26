@@ -79,12 +79,12 @@ export async function GET(request: NextRequest) {
       
       const { data: memberClasses, error: memberError } = await supabase
         .from('class_members')
-        .select('class_id, role')
+        .select('class_id')
         .eq('user_id', user.id);
 
       log('Member classes raw:', {
         total: memberClasses?.length,
-        sample: memberClasses?.slice(0, 3).map(m => ({ class_id: m.class_id, role: m.role })),
+        sample: memberClasses?.slice(0, 3).map(m => ({ class_id: m.class_id })),
         error: memberError
       });
 

@@ -43,7 +43,7 @@ export async function GET(
     // Check permissions
     const isOwner = assignment.paragraphs?.chapters?.subjects?.classes?.owner_id === user.id
     const isTeacher = assignment.paragraphs?.chapters?.subjects?.classes?.class_members?.some(
-      (member: any) => member.user_id === user.id && member.role === 'teacher'
+      (member: any) => member.user_id === user.id
     )
     const isStudentViewingOwn = !studentId && targetStudentId === user.id
     

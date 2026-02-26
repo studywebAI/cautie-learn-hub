@@ -51,13 +51,13 @@ export async function POST(request: NextRequest) {
     // Also check if user is a member of this class (for class-specific teacher role)
     const { data: membership, error: membershipError } = await supabase
       .from('class_members')
-      .select('role')
+      .select('user_id')
       .eq('class_id', session.class_id)
       .eq('user_id', user.id)
       .single()
 
     // Override with class-specific role if present
-    if (membership?.role === 'teacher') {
+    if (membership) {
       isTeacher = true
     }
 
