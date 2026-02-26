@@ -42,18 +42,19 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 })
     }
 
-    // Get profile info separately
+    // Get profile info separately (including subscription_type to determine teacher/student role)
     const members = await Promise.all(
       (membersData || []).map(async (member: any) => {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, email, avatar_url')
+          .select('full_name, email, avatar_url, subscription_type')
           .eq('id', member.user_id)
           .single()
 
         return {
           ...member,
-          profiles: profile || { full_name: null, email: null, avatar_url: null }
+          role: profile?.subscription_type || 'student', // Use global subscription_type as role
+          profiles: profile || { full_name: null, email: null, avatar_url: null, subscription_type: null }
         }
       })
     )

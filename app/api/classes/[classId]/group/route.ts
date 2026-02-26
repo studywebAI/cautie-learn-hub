@@ -30,13 +30,13 @@ export async function GET(
     const { classId } = resolvedParams
 
     // Check if user is a member of the class
-    // (owner_id column was removed - all teachers are equal via class_members)
+    // (role column was removed - use subscription_type from profiles instead)
     const { data: classMember, error: memberError } = await supabase
       .from('class_members')
-      .select('role')
+      .select('user_id')
       .eq('class_id', classId)
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     // Also check if class exists
     const { data: classData, error: classError } = await supabase
@@ -50,39 +50,47 @@ export async function GET(
     }
 
     // Allow access if member
-    if (memberError || !classMember) {
+    if (!classMember) {
       return NextResponse.json({ error: 'Not a member of this class' }, { status: 403 })
     }
 
-    const userRole = classMember?.role
-
     // Get all class members (students and teachers)
+    // (role column was removed - use subscription_type from profiles instead)
     const { data: classMembers, error: membersError } = await supabase
       .from('class_members')
-      .select('user_id, role, joined_at')
+      .select('user_id, joined_at')
       .eq('class_id', classId)
 
     if (membersError) {
       return NextResponse.json({ error: membersError.message }, { status: 500 })
     }
 
-    const studentIds = classMembers?.filter(m => m.role === 'student').map(m => m.user_id) || []
-    const teacherIds = classMembers?.filter(m => m.role === 'teacher').map(m => m.user_id) || []
-
-    // Get profiles for all members
-    const allUserIds = [...studentIds, ...teacherIds]
-    let profiles = []
+    const allUserIds = classMembers?.map(m => m.user_id) || []
+    
+    // Get profiles for all members to determine their subscription_type (teacher/student)
+    let profiles: any[] = []
+    let subscriptionTypes: Record<string, string> = {}
+    
     if (allUserIds.length > 0) {
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, last_seen')
+        .select('id, full_name, avatar_url, last_seen, subscription_type')
         .in('id', allUserIds)
       
       if (profilesError) {
         return NextResponse.json({ error: profilesError.message }, { status: 500 })
       }
       profiles = profilesData || []
+      
+      // Build subscription_type lookup
+      profiles.forEach(p => {
+        subscriptionTypes[p.id] = p.subscription_type || 'student'
+      })
     }
+
+    // Filter students and teachers based on subscription_type (global role)
+    const studentIds = allUserIds.filter(uid => subscriptionTypes[uid] === 'student')
+    const teacherIds = allUserIds.filter(uid => subscriptionTypes[uid] === 'teacher')
 
     // Get all assignments for the class
     const { data: assignments, error: assignmentsError } = await supabase
@@ -98,7 +106,7 @@ export async function GET(
     const assignmentIds = assignments?.map(a => a.id) || []
 
     // Get submissions for these assignments
-    let submissions = []
+    let submissions: any[] = []
     if (assignmentIds.length > 0 && studentIds.length > 0) {
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('submissions')
@@ -113,7 +121,7 @@ export async function GET(
     }
 
     // Get recent audit logs for students in this class
-    let auditLogs = []
+    let auditLogs: any[] = []
     if (studentIds.length > 0) {
       const { data: logsData, error: logsError } = await supabase
         .from('audit_logs')
