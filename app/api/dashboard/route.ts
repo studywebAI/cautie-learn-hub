@@ -121,7 +121,7 @@ export async function GET(request: Request) {
 
       const subjectsPromise = (supabase as any).from('subjects')
         .select(`*, class_subjects(classes:class_id(id, name))`)
-        .or(`owner_id.eq.${user.id},id.in.(SELECT subject_id FROM subject_teachers WHERE teacher_id = '${user.id}')`)
+        .or(`user_id.eq.${user.id},id.in.(SELECT subject_id FROM subject_teachers WHERE teacher_id = '${user.id}')`)
         .order('created_at', { ascending: false });
 
       const personalTasksPromise = supabase
