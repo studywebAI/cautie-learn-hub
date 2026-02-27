@@ -142,24 +142,39 @@ export async function GET(req: Request) {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
-      logSubjects('GET - Unauthorized attempt', userError?.message)
+      logSubjects('GET - Unauthorized attempt', {
+        message: userError?.message,
+        status: userError?.status,
+        name: userError?.name
+      })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    logSubjects('GET - Authenticated user details:', {
+      id: user.id,
+      email: user.email,
+      user_metadata: user.user_metadata,
+      created_at: user.created_at
+    });
 
     // Use subscription_type as the single source of truth (role column removed)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('subscription_type')
+      .select('subscription_type, subscription_tier')
       .eq('id', user.id)
       .maybeSingle()
 
     const isTeacher = profile?.subscription_type === 'teacher'
-    logSubjects('GET - User subscription_type', profile?.subscription_type)
+    logSubjects('GET - User subscription profile', {
+      subscription_type: profile?.subscription_type,
+      subscription_tier: profile?.subscription_tier,
+      isTeacher
+    })
 
     let subjects: any[] = []
 
     if (isTeacher) {
-      logSubjects('GET - Teacher branch', { userId: user.id })
+      logSubjects('GET - Teacher branch - loading subjects for owner/collaborator', { userId: user.id })
       const { data, error } = await (supabase as any).from('subjects')
         .select(`
           *,
@@ -170,7 +185,12 @@ export async function GET(req: Request) {
         .eq('user_id', user.id)
 
       if (error) {
-        logSubjects('GET - Supabase error fetching teacher subjects', error.message)
+        logSubjects('GET - Supabase error fetching teacher subjects', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        })
         return NextResponse.json({
           error: `Supabase error fetching subjects: ${error.message}`
         }, { status: 500 })
@@ -180,23 +200,31 @@ export async function GET(req: Request) {
         ...subject,
         classes: subject.class_subjects ? subject.class_subjects.map((cs: any) => cs.classes).filter(Boolean) : []
       }))
-      logSubjects('GET - Teacher subjects loaded', { count: subjects.length })
+      logSubjects('GET - Teacher subjects loaded', { 
+        count: subjects.length,
+        subjectIds: subjects.slice(0, 10).map((s: any) => s.id)
+      })
     } else {
-      logSubjects('GET - Student branch', { userId: user.id })
+      logSubjects('GET - Student branch - loading subjects via class memberships', { userId: user.id })
       const { data: memberships, error: memberError } = await supabase
         .from('class_members')
         .select('class_id')
         .eq('user_id', user.id)
 
       if (memberError) {
-        logSubjects('GET - Failed to load memberships', memberError.message)
+        logSubjects('GET - Failed to load memberships', {
+          message: memberError.message,
+          code: memberError.code,
+          details: memberError.details,
+          hint: memberError.hint
+        })
         return NextResponse.json({ error: memberError.message }, { status: 500 })
       }
 
       const classIds = (memberships || []).map((m: any) => m.class_id)
 
       if (classIds.length === 0) {
-        logSubjects('GET - No class memberships', classIds)
+        logSubjects('GET - No class memberships', { userId: user.id })
         return NextResponse.json([])
       }
 
@@ -206,7 +234,12 @@ export async function GET(req: Request) {
         .in('class_id', classIds)
 
       if (csError) {
-        logSubjects('GET - Failed to load class_subject links', csError.message)
+        logSubjects('GET - Failed to load class_subject links', {
+          message: csError.message,
+          code: csError.code,
+          details: csError.details,
+          hint: csError.hint
+        })
         return NextResponse.json({ error: csError.message }, { status: 500 })
       }
 
@@ -227,7 +260,12 @@ export async function GET(req: Request) {
         .in('id', subjectIds)
 
       if (error) {
-        logSubjects('GET - Error fetching student subjects', error.message)
+        logSubjects('GET - Error fetching student subjects', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        })
         return NextResponse.json({
           error: `Supabase error fetching subjects: ${error.message}`
         }, { status: 500 })
@@ -237,7 +275,10 @@ export async function GET(req: Request) {
         ...subject,
         classes: subject.class_subjects ? subject.class_subjects.map((cs: any) => cs.classes).filter(Boolean) : []
       }))
-      logSubjects('GET - Student subjects loaded', { count: subjects.length })
+      logSubjects('GET - Student subjects loaded', { 
+        count: subjects.length,
+        subjectIds: subjects.slice(0, 10).map((s: any) => s.id)
+      })
     }
 
     // Enrich subjects with paragraph context
@@ -248,7 +289,14 @@ export async function GET(req: Request) {
       ...subject,
       paragraphContext: paragraphContext[subject.id] || { paragraphs: [], lastParagraphId: null }
     }))
-    logSubjects('GET - Returning enriched subjects', { count: enrichedSubjects.length })
+    logSubjects('GET - Returning enriched subjects', { 
+      count: enrichedSubjects.length,
+      withContextExamples: enrichedSubjects.slice(0, 3).map((s: any) => ({
+        id: s.id,
+        paragraphs: s.paragraphContext?.paragraphs?.length ?? 0,
+        lastParagraphId: s.paragraphContext?.lastParagraphId ?? null
+      }))
+    })
     return NextResponse.json(enrichedSubjects)
   } catch (error) {
     logSubjects('GET - Unexpected error', error)

@@ -11,12 +11,24 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
+      console.log('[SUBSCRIPTION] POST - Auth failed', {
+        message: authError?.message,
+        status: authError?.status,
+        name: authError?.name
+      });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { code, tier, type } = await request.json();
+    console.log('[SUBSCRIPTION] POST - Incoming upgrade request', {
+      userId: user.id,
+      code: code ? '***redacted***' : null,
+      requested_tier: tier,
+      requested_type: type
+    });
 
     if (!code || !tier || !type) {
+      console.log('[SUBSCRIPTION] POST - Missing fields', { hasCode: !!code, tier, type });
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -28,6 +40,7 @@ export async function POST(request: NextRequest) {
     // Also accept any premium/pro codes
     const codeLower = code.toLowerCase().trim();
     if (!validCodes[codeLower]) {
+      console.log('[SUBSCRIPTION] POST - Invalid code', { codeLower });
       return NextResponse.json({ error: 'Invalid code' }, { status: 400 });
     }
 
@@ -48,16 +61,26 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (updateError) {
-      console.error('Subscription update error:', updateError);
-      console.error('User ID:', user.id);
-      console.error('Final tier/type:', finalTier, finalType);
+      console.error('[SUBSCRIPTION] POST - Subscription update error:', {
+        message: updateError.message,
+        code: updateError.code,
+        details: updateError.details,
+        hint: updateError.hint,
+        userId: user.id,
+        finalTier,
+        finalType
+      });
       return NextResponse.json({ 
         error: 'Failed to update subscription',
         details: updateError.message 
       }, { status: 500 });
     }
 
-    console.log('Subscription updated successfully:', data);
+    console.log('[SUBSCRIPTION] POST - Subscription updated successfully:', {
+      userId: user.id,
+      subscription_type: data?.subscription_type,
+      subscription_tier: data?.subscription_tier
+    });
     
     return NextResponse.json({ 
       success: true, 

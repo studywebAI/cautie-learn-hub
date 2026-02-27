@@ -12,6 +12,7 @@ export async function GET(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
+      console.log('[DASHBOARD] GET - No user in auth.getUser() result')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -30,9 +31,18 @@ export async function GET(request: Request) {
       .eq('id', user.id)
       .maybeSingle()
 
+    if (profileError) {
+      console.error('[DASHBOARD] GET - Profile fetch error:', {
+        message: profileError.message,
+        code: profileError.code,
+        details: profileError.details,
+        hint: profileError.hint
+      });
+    }
+
     // Create profile if it doesn't exist (defaults to free student)
     if (!profileData) {
-      console.log('Profile not found, creating new profile')
+      console.log('[DASHBOARD] GET - Profile not found, creating new profile with defaults')
       const { error: insertError } = await supabase
         .from('profiles')
         .insert({
@@ -52,7 +62,12 @@ export async function GET(request: Request) {
         })
 
       if (insertError) {
-        console.error('Profile creation failed:', insertError)
+        console.error('[DASHBOARD] GET - Profile creation failed:', {
+          message: insertError.message,
+          code: insertError.code,
+          details: insertError.details,
+          hint: insertError.hint
+        })
       } else {
         const { data: newProfile } = await supabase
           .from('profiles')

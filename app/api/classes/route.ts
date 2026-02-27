@@ -23,7 +23,11 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError) {
-      log('GET - Auth error', authError.message);
+      log('GET - Auth error', {
+        message: authError.message,
+        status: authError.status,
+        name: authError.name
+      });
       if (authError.message.includes('User from sub claim in JWT does not exist')) {
         return NextResponse.json({ error: 'Session expired or invalid', code: 'SESSION_INVALID' }, { status: 401 });
       }
@@ -45,17 +49,22 @@ export async function GET(request: NextRequest) {
     // Use subscription_type as the single source of truth (role column removed)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('subscription_type')
+      .select('subscription_type, subscription_tier, classes_created')
       .eq('id', user.id)
       .maybeSingle();
 
     if (profileError) {
-      log('GET - Profile fetch error:', profileError);
+      log('GET - Profile fetch error:', {
+        message: profileError.message,
+        code: profileError.code,
+        details: profileError.details,
+        hint: profileError.hint
+      });
     }
 
     // Create profile if doesn't exist
     if (!profile) {
-      console.log('[CLASSES_GET] Creating missing profile...')
+      console.log('[CLASSES_GET] Creating missing profile for user', user.id)
       await supabase.from('profiles').insert({
         id: user.id,
         subscription_type: 'student',
@@ -63,28 +72,44 @@ export async function GET(request: NextRequest) {
         full_name: user.user_metadata?.full_name || '',
         avatar_url: user.user_metadata?.avatar_url || null
       });
+      const { data: createdProfile, error: createdProfileError } = await supabase
+        .from('profiles')
+        .select('subscription_type, subscription_tier, classes_created')
+        .eq('id', user.id)
+        .maybeSingle();
+      log('GET - Created profile result:', {
+        createdProfile,
+        createdProfileError
+      });
     }
 
     // subscription_type is the source of truth (not role)
     const userRole = profile?.subscription_type || 'student';
+    const userTier = profile?.subscription_tier || 'free';
+    const classesCreated = profile?.classes_created ?? 0;
     const isTeacher = userRole === 'teacher';
     
-    log('User role:', userRole, 'Is teacher:', isTeacher);
+    log('GET - Profile summary:', {
+      subscription_type: userRole,
+      subscription_tier: userTier,
+      classes_created: classesCreated,
+      isTeacher
+    });
     let allClasses: any[] = [];
 
     if (isTeacher) {
       // TEACHERS: See ALL classes they're members of
       // (role is now global via subscription_type)
-      log('Fetching teacher classes from class_members...')
+      log('GET - Teacher branch: fetching class memberships from class_members...');
       
       const { data: memberClasses, error: memberError } = await supabase
         .from('class_members')
         .select('class_id')
         .eq('user_id', user.id);
 
-      log('Member classes raw:', {
+      log('GET - Member classes raw:', {
         total: memberClasses?.length,
-        sample: memberClasses?.slice(0, 3).map(m => ({ class_id: m.class_id })),
+        sample: memberClasses?.slice(0, 5).map(m => ({ class_id: m.class_id })),
         error: memberError
       });
 
@@ -121,14 +146,14 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // STUDENTS: Only see classes they're members of
-      log('Student branch - fetching classes...')
+      log('GET - Student branch - fetching classes via class_members + join', { userId: user.id })
       
       const { data: memberClassesData, error: memberError } = await supabase
         .from('class_members')
         .select('classes(*)')
         .eq('user_id', user.id);
 
-      log('Student member classes:', {
+      log('GET - Student member classes:', {
         count: memberClassesData?.length,
         sample: memberClassesData?.slice(0, 3).map((m: any) => m.classes?.id || m.class_id),
         error: memberError
