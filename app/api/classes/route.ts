@@ -201,6 +201,14 @@ export async function POST(request: NextRequest) {
     // Check subscription limits for class creation
     const classLimit = subscriptionTier === 'pro' ? 20 : subscriptionTier === 'premium' ? 5 : 0;
     
+    log('POST - Class creation check:', {
+      subscriptionType,
+      subscriptionTier,
+      classLimit,
+      classesCreated,
+      canCreate: classesCreated < classLimit
+    });
+    
     if (classLimit === 0) {
       log('POST - Free tier creator blocked', { subscriptionTier });
       return NextResponse.json({ 

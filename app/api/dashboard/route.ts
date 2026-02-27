@@ -69,6 +69,13 @@ export async function GET(request: Request) {
     const role = subscriptionType; // Keep for API response compatibility (alias)
     const isTeacher = subscriptionType === 'teacher';
     
+    console.log('[DASHBOARD] User subscription details:', {
+      subscriptionType,
+      subscriptionTier,
+      isTeacher,
+      classesCreated: profileData?.classes_created || 0
+    });
+    
     // Get usage data for limits
     const quizUsage = profileData?.quiz_usage_today || 0;
     const quizDate = profileData?.quiz_usage_date;

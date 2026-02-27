@@ -152,6 +152,45 @@ export default function SettingsPage() {
                           </p>
                         </div>
                       </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch('/api/subscription/upgrade');
+                            if (res.ok) {
+                              const data = await res.json();
+                              setSubscriptionTier(data.tier || 'free');
+                              setSubscriptionType(data.type || 'student');
+                            }
+                          } catch (e) {
+                            console.error('Failed to refresh subscription:', e);
+                          }
+                        }}
+                      >
+                        Refresh
+                      </Button>
+                    </div>
+
+                    {/* Upgrade Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Upgrade Your Plan</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Link href="/upgrade" className="block">
+                          <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <CreditCard className="h-5 w-5 text-amber-600" />
+                                <span className="font-medium">Upgrade to Premium</span>
+                              </div>
+                              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Get access to premium features and advanced tools
+                            </p>
+                          </div>
+                        </Link>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

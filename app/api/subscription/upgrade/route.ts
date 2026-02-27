@@ -35,21 +35,30 @@ export async function POST(request: NextRequest) {
     const finalTier = tier;
     const finalType = type;
 
-    // Update the user's profile
-    const { error: updateError } = await supabase
+    // Update the user's profile with detailed error handling
+    const { data, error: updateError } = await supabase
       .from('profiles')
       .update({
         subscription_tier: finalTier,
         subscription_type: finalType,
         subscription_code_used: code
       })
-      .eq('id', user.id);
+      .eq('id', user.id)
+      .select()
+      .single();
 
     if (updateError) {
       console.error('Subscription update error:', updateError);
-      return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 });
+      console.error('User ID:', user.id);
+      console.error('Final tier/type:', finalTier, finalType);
+      return NextResponse.json({ 
+        error: 'Failed to update subscription',
+        details: updateError.message 
+      }, { status: 500 });
     }
 
+    console.log('Subscription updated successfully:', data);
+    
     return NextResponse.json({ 
       success: true, 
       tier: finalTier,
