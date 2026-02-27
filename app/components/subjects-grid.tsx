@@ -89,7 +89,8 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
         : {
             title: newSubjectTitle,
             description: newSubjectDescription || undefined,
-            classIds: selectedClassIds.length > 0 ? selectedClassIds : null,
+            // API expects `class_ids` (snake_case) to match validation schema
+            class_ids: selectedClassIds.length > 0 ? selectedClassIds : null,
             cover_type: autoIcons ? 'ai_icons' : 'custom',
           };
 

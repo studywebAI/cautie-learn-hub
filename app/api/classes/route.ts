@@ -242,12 +242,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to generate join code' }, { status: 500 });
     }
 
-    // Create class (no owner_id - all teachers are equal)
+    // Create class - set owner_id/user_id for RLS while still using class_members for actual membership
     const insertData = {
       name,
       description,
       join_code: joinCode,
-      teacher_join_code: teacherJoinCode || null
+      teacher_join_code: teacherJoinCode || null,
+      owner_id: user.id,
+      user_id: user.id
     };
 
     log('POST - Inserting class', insertData);
