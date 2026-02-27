@@ -7,10 +7,16 @@ FROM pg_policy
 WHERE polrelid = 'classes'::regclass;
 
 -- Update existing policies to work with current system
--- If policies don't exist, they'll be created
+-- Drop existing policies first, then create new ones
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "classes_select" ON public.classes;
+DROP POLICY IF EXISTS "classes_insert" ON public.classes;
+DROP POLICY IF EXISTS "classes_update" ON public.classes;
+DROP POLICY IF EXISTS "classes_delete" ON public.classes;
 
 -- SELECT policy: Allow class creator OR teacher members to view
-CREATE OR REPLACE POLICY "classes_select" ON public.classes FOR SELECT
+CREATE POLICY "classes_select" ON public.classes FOR SELECT
   USING (
     user_id = auth.uid()  -- Class creator
     OR EXISTS (
@@ -21,11 +27,11 @@ CREATE OR REPLACE POLICY "classes_select" ON public.classes FOR SELECT
   );
 
 -- INSERT policy: Allow any authenticated user to create (API validates teacher status)
-CREATE OR REPLACE POLICY "classes_insert" ON public.classes FOR INSERT
+CREATE POLICY "classes_insert" ON public.classes FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL);
 
 -- UPDATE policy: Allow class creator OR teacher members to update
-CREATE OR REPLACE POLICY "classes_update" ON public.classes FOR UPDATE
+CREATE POLICY "classes_update" ON public.classes FOR UPDATE
   USING (
     user_id = auth.uid()  -- Class creator
     OR EXISTS (
@@ -36,7 +42,7 @@ CREATE OR REPLACE POLICY "classes_update" ON public.classes FOR UPDATE
   );
 
 -- DELETE policy: Only class creator can delete
-CREATE OR REPLACE POLICY "classes_delete" ON public.classes FOR DELETE
+CREATE POLICY "classes_delete" ON public.classes FOR DELETE
   USING (user_id = auth.uid());
 
 -- Verify the policies are working
