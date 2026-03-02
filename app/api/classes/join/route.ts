@@ -35,11 +35,36 @@ async function findClassByCode(
   classCode: string,
 ): Promise<ClassLookupResult> {
   const lookupErrors: ClassLookupResult['lookupErrors'] = []
+  const normalizedCode = classCode.trim()
+
+  // Preferred path: SECURITY DEFINER RPC that bypasses fragile RLS visibility for join-code lookup.
+  const { data: rpcData, error: rpcError } = await supabase.rpc('get_class_by_join_code', {
+    p_code: normalizedCode
+  })
+
+  if (rpcError) {
+    lookupErrors.push({
+      step: 'rpc_get_class_by_join_code',
+      message: rpcError.message,
+      code: rpcError.code,
+      details: rpcError.details,
+      hint: rpcError.hint
+    })
+  } else if (rpcData) {
+    const row = Array.isArray(rpcData) ? rpcData[0] : rpcData
+    if (row) {
+      const matchedBy =
+        row.join_code && String(row.join_code).toUpperCase() === normalizedCode.toUpperCase()
+          ? 'join_code'
+          : 'teacher_join_code'
+      return { classData: row, matchedBy, lookupErrors }
+    }
+  }
 
   const { data: byStudentCode, error: byStudentCodeError } = await supabase
     .from('classes')
     .select('id, name, description, join_code, teacher_join_code')
-    .eq('join_code', classCode)
+    .eq('join_code', normalizedCode)
     .maybeSingle()
 
   if (byStudentCodeError) {
@@ -59,7 +84,7 @@ async function findClassByCode(
   const { data: byTeacherCode, error: byTeacherCodeError } = await supabase
     .from('classes')
     .select('id, name, description, join_code, teacher_join_code')
-    .eq('teacher_join_code', classCode)
+    .eq('teacher_join_code', normalizedCode)
     .maybeSingle()
 
   if (byTeacherCodeError) {
