@@ -29,11 +29,17 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
   isSubmitted = false,
 }) => {
   const [answer, setAnswer] = useState('');
+  const [pasteCount, setPasteCount] = useState(0);
+  const [pasteChars, setPasteChars] = useState(0);
+  const [typedChars, setTypedChars] = useState(0);
 
   const handleSubmit = () => {
     const answerData = {
       text: answer,
       ai_grading: block.data.ai_grading,
+      paste_count: pasteCount,
+      paste_chars: pasteChars,
+      typed_chars: typedChars,
     };
     onSubmit(answerData);
   };
@@ -55,6 +61,16 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
           placeholder="Type your answer here..."
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+              setTypedChars((prev) => prev + 1);
+            }
+          }}
+          onPaste={(e) => {
+            const pasted = e.clipboardData?.getData('text') || '';
+            setPasteCount((prev) => prev + 1);
+            setPasteChars((prev) => prev + pasted.length);
+          }}
           disabled={isSubmitted}
           rows={6}
           maxLength={block.data.max_score ? undefined : 1000}

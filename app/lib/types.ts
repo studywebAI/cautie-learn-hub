@@ -205,11 +205,73 @@ export type ComparativeData = {
   studentCount: number;
 };
 
+export type AnalyticsWarningSeverity = 'low' | 'medium' | 'high';
+export type AnalyticsWarningType = 'speed' | 'paste' | 'plagiarism' | 'ai_plagiarism';
+
+export type AnalyticsWarning = {
+  id: string;
+  studentId: string;
+  studentName: string;
+  severity: AnalyticsWarningSeverity;
+  type: AnalyticsWarningType;
+  assignmentId?: string;
+  assignmentTitle?: string;
+  subjectId?: string;
+  subjectTitle?: string;
+  message: string;
+  ratio?: number;
+  studentSeconds?: number;
+  classAverageSeconds?: number;
+  createdAt?: string;
+};
+
+export type ClassAnalyticsSubject = {
+  subjectId: string;
+  subjectTitle: string;
+  submissionsCount: number;
+  activeStudents: number;
+  totalStudyMinutes: number;
+};
+
+export type ClassAnalyticsAssignmentSpeed = {
+  assignmentId: string;
+  assignmentTitle: string;
+  subjectId?: string;
+  subjectTitle?: string;
+  averageSeconds: number;
+  submissionCount: number;
+};
+
+export type ClassAnalyticsStudentRow = {
+  studentId: string;
+  studentName: string;
+  subjectsWorked: string[];
+  submissionsCount: number;
+  totalStudyMinutes: number;
+  averageSubmissionSeconds: number | null;
+  warningCount: number;
+  lastActivityAt: string | null;
+  recentTool: {
+    toolType: string;
+    title: string | null;
+    usedAt: string | null;
+  } | null;
+};
+
 export type ClassAnalytics = {
   engagementMetrics: EngagementMetrics;
   performanceTrends: PerformanceTrend[];
   atRiskStudents: AtRiskStudent[];
   comparativeAnalysis: ComparativeData[];
+  subjects: ClassAnalyticsSubject[];
+  assignmentSpeeds: ClassAnalyticsAssignmentSpeed[];
+  studentRows: ClassAnalyticsStudentRow[];
+  warnings: AnalyticsWarning[];
+  plagiarismIntegration: {
+    provider: string;
+    configured: boolean;
+    note?: string;
+  };
   classOverview: {
     totalStudents: number;
     activeStudents: number;

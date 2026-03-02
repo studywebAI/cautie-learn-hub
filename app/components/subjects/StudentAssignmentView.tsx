@@ -72,6 +72,7 @@ export function StudentAssignmentView({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [completionPercent, setCompletionPercent] = useState(0);
+  const assignmentOpenedAtRef = useRef<number>(Date.now());
 
   const { user } = useContext(AppContext) as any;
 
@@ -145,6 +146,26 @@ export function StudentAssignmentView({
         }
         const assignmentData = await assignmentResponse.json();
         setAssignment(assignmentData);
+        assignmentOpenedAtRef.current = Date.now();
+        void fetch('/api/activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            activity_type: 'assignment',
+            paragraph_id: paragraphId,
+            subject_id: subjectId,
+            time_spent_seconds: 1,
+            metadata: {
+              event: 'assignment_opened',
+              assignment_id: assignmentId,
+              assignment_title: assignmentData?.title || null,
+              class_id: assignmentData?.class_id || null,
+              chapter_id: chapterId,
+              paragraph_id: paragraphId,
+              subject_id: subjectId,
+            },
+          }),
+        }).catch(() => {});
 
         // Fetch blocks for this assignment
         const blocksResponse = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`);
@@ -208,6 +229,31 @@ export function StudentAssignmentView({
     // Debounce the save
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => flushSaves(), 2000);
+
+    // Track assignment interaction for analytics and warning signals.
+    void fetch('/api/activity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        activity_type: 'assignment',
+        paragraph_id: paragraphId,
+        subject_id: subjectId,
+        time_spent_seconds: Math.max(1, Math.round((Date.now() - assignmentOpenedAtRef.current) / 1000)),
+        metadata: {
+          event: 'assignment_block_submit',
+          block_id: blockId,
+          assignment_id: assignmentId,
+          assignment_title: assignment?.title || null,
+          class_id: (assignment as any)?.class_id || null,
+          chapter_id: chapterId,
+          paragraph_id: paragraphId,
+          subject_id: subjectId,
+          paste_count: Number(answer?.paste_count || 0),
+          paste_chars: Number(answer?.paste_chars || 0),
+          typed_chars: Number(answer?.typed_chars || 0),
+        },
+      }),
+    }).catch(() => {});
 
     // Update completion percentage
     const answeredBlocks = Object.keys(newAnswers).length;
