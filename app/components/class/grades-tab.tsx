@@ -22,6 +22,7 @@ type GradeSet = {
   weight: number;
   status: string;
   subject?: { id: string; title: string };
+  grading_preset?: { id: string; name: string; kind: string; config?: any; is_default?: boolean };
   total_students: number;
   graded_count: number;
   average: number | null;
@@ -34,7 +35,6 @@ type StudentGrade = {
   student_id: string;
   grade_value: string | null;
   grade_numeric?: number | null;
-  max_points?: number | null;
   feedback_text?: string;
   status: string;
   tag?: string;
@@ -62,6 +62,15 @@ type GradeHistoryEvent = {
   change_type: string;
   change_reason: string | null;
   created_at: string;
+};
+
+type GradePreset = {
+  id: string;
+  class_id: string;
+  name: string;
+  kind: 'freeform' | 'numeric_range' | 'letter_scale';
+  config: any;
+  is_default: boolean;
 };
 
 // =============================================
@@ -501,22 +510,11 @@ function GradesReportsView({
   );
 }
 
-const DEFAULT_MAX_POINTS = 100;
-const GRADE_STATUSES = ['draft', 'missing', 'excused', 'final'] as const;
-type GradeStatus = (typeof GRADE_STATUSES)[number];
-
 const toNumeric = (value: string): number | null => {
   if (!value.trim()) return null;
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return null;
   return parsed;
-};
-
-const getStatusBadgeVariant = (status: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
-  if (status === 'final') return 'default';
-  if (status === 'excused') return 'secondary';
-  if (status === 'missing') return 'destructive';
-  return 'outline';
 };
 
 // =============================================
@@ -545,14 +543,19 @@ function NewGradesWizard({
   // Step 3: Students & Grades
   const [students, setStudents] = useState<StudentGrade[]>([]);
   const [everyoneGrade, setEveryoneGrade] = useState('');
-  const [maxPoints, setMaxPoints] = useState(DEFAULT_MAX_POINTS);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [presets, setPresets] = useState<GradePreset[]>([]);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('');
+  const [newPresetName, setNewPresetName] = useState('');
+  const [newPresetKind, setNewPresetKind] = useState<'freeform' | 'numeric_range' | 'letter_scale'>('freeform');
+  const [newPresetValues, setNewPresetValues] = useState('');
 
   useEffect(() => {
     if (step >= 3) {
       loadSubjects();
+      loadPresets();
     }
   }, [step]);
 
@@ -565,6 +568,24 @@ function NewGradesWizard({
       }
     } catch (error) {
       console.error('Failed to load subjects:', error);
+    }
+  };
+
+  const loadPresets = async () => {
+    try {
+      const response = await fetch(`/api/classes/${classId}/grading-presets`);
+      if (!response.ok) return;
+      const data = await response.json();
+      const incoming: GradePreset[] = data.presets || [];
+      setPresets(incoming);
+      const defaultPreset = incoming.find((p) => p.is_default);
+      if (defaultPreset) {
+        setSelectedPresetId(defaultPreset.id);
+      } else if (incoming.length > 0 && !selectedPresetId) {
+        setSelectedPresetId(incoming[0].id);
+      }
+    } catch (error) {
+      console.error('Failed to load grading presets:', error);
     }
   };
 
@@ -594,7 +615,8 @@ function NewGradesWizard({
         body: JSON.stringify({
           title,
           weight,
-          subject_id: selectedSubjectId || null
+          subject_id: selectedSubjectId || null,
+          grading_preset_id: selectedPresetId || null
         })
       });
 
@@ -607,24 +629,10 @@ function NewGradesWizard({
       
       // If we have grades, update them
       if (students.length > 0) {
-        const invalidScore = students.find((s) =>
-          typeof s.grade_numeric === 'number' &&
-          typeof (s.max_points ?? maxPoints) === 'number' &&
-          s.grade_numeric > (s.max_points ?? maxPoints)
-        );
-
-        if (invalidScore) {
-          setValidationError(
-            `Score cannot be higher than max points for ${invalidScore.student.full_name || invalidScore.student.email || 'a student'}.`
-          );
-          setLoading(false);
-          return;
-        }
-
         const gradesWithValues = students.filter(s => {
           const hasNumeric = typeof s.grade_numeric === 'number' && !Number.isNaN(s.grade_numeric);
           const hasText = !!(s.grade_value && s.grade_value.trim() !== '');
-          return hasNumeric || hasText || s.status === 'excused';
+          return hasNumeric || hasText;
         });
         
         if (gradesWithValues.length > 0) {
@@ -636,9 +644,7 @@ function NewGradesWizard({
               student_grades: gradesWithValues.map(s => ({
                 id: s.id,
                 grade_numeric: s.grade_numeric ?? null,
-                grade_value: s.grade_value,
-                max_points: s.max_points ?? maxPoints,
-                status: s.status || 'draft'
+                grade_value: s.grade_value
               }))
             })
           });
@@ -666,39 +672,58 @@ function NewGradesWizard({
         ? {
             ...s,
             grade_value: value.trim() ? value : null,
-            grade_numeric: numeric,
-            status: numeric === null && !value.trim() ? (s.status === 'excused' ? 'excused' : 'missing') : 'draft'
+            grade_numeric: numeric
           }
         : s
     ));
   };
 
-  const updateStudentStatus = (studentId: string, status: GradeStatus) => {
-    setValidationError(null);
-    setStudents(students.map(s => {
-      if (s.student_id !== studentId) return s;
-      if (status === 'missing') {
-        return { ...s, status, grade_value: null, grade_numeric: null };
-      }
-      if (status === 'excused') {
-        return { ...s, status, grade_value: null, grade_numeric: null };
-      }
-      return { ...s, status };
-    }));
+  const createPreset = async () => {
+    if (!newPresetName.trim()) {
+      toast({ title: 'Preset name is required', variant: 'destructive' });
+      return;
+    }
+
+    const config =
+      newPresetKind === 'letter_scale'
+        ? { values: newPresetValues.split(',').map(v => v.trim()).filter(Boolean) }
+        : {};
+
+    const response = await fetch(`/api/classes/${classId}/grading-presets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: newPresetName.trim(),
+        kind: newPresetKind,
+        config,
+        is_default: presets.length === 0
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      toast({ title: error.error || 'Failed to create preset', variant: 'destructive' });
+      return;
+    }
+
+    const data = await response.json();
+    const created = data.preset as GradePreset;
+    setPresets((prev) => [...prev, created]);
+    setSelectedPresetId(created.id);
+    setNewPresetName('');
+    setNewPresetKind('freeform');
+    setNewPresetValues('');
   };
 
-  // Apply "everyone" grade to all students (except excused)
+  // Apply "everyone" grade to all students
   const applyToAll = () => {
     setValidationError(null);
     const numeric = toNumeric(everyoneGrade);
     setStudents(students.map(s => {
-      if (s.status === 'excused') return s;
       return {
         ...s,
         grade_value: everyoneGrade.trim() ? everyoneGrade : null,
-        grade_numeric: numeric,
-        max_points: maxPoints,
-        status: numeric === null && !everyoneGrade.trim() ? 'missing' : 'draft'
+        grade_numeric: numeric
       };
     }));
   };
@@ -782,6 +807,45 @@ function NewGradesWizard({
                   For example: 3x for a big test, 1x for a small quiz
                 </p>
               </div>
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Grading Preset</Label>
+                <select
+                  value={selectedPresetId}
+                  onChange={(e) => setSelectedPresetId(e.target.value)}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">No preset (free score)</option>
+                  {presets.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {preset.name} ({preset.kind})
+                    </option>
+                  ))}
+                </select>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <Input
+                    value={newPresetName}
+                    onChange={(e) => setNewPresetName(e.target.value)}
+                    placeholder="New preset name"
+                  />
+                  <select
+                    value={newPresetKind}
+                    onChange={(e) => setNewPresetKind(e.target.value as 'freeform' | 'numeric_range' | 'letter_scale')}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="freeform">Freeform</option>
+                    <option value="numeric_range">Numeric Range</option>
+                    <option value="letter_scale">Letter Scale</option>
+                  </select>
+                  <Button type="button" variant="outline" onClick={createPreset}>Save Preset</Button>
+                </div>
+                {newPresetKind === 'letter_scale' && (
+                  <Input
+                    value={newPresetValues}
+                    onChange={(e) => setNewPresetValues(e.target.value)}
+                    placeholder="Comma-separated values (e.g. A,B,C,D,E,F)"
+                  />
+                )}
+              </div>
             </div>
           )}
 
@@ -811,25 +875,14 @@ function NewGradesWizard({
               <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
                 <Label className="text-base font-semibold flex items-center gap-2">
                   <Users className="h-4 w-4" />
-                  Everyone (Numeric)
+                  Everyone
                 </Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <Input
-                    type="number"
-                    step="0.1"
                     value={everyoneGrade}
                     onChange={(e) => setEveryoneGrade(e.target.value)}
                     className="border-2 border-black/20"
-                    placeholder="e.g. 82.5"
-                  />
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="1"
-                    value={maxPoints}
-                    onChange={(e) => setMaxPoints(Number(e.target.value) || DEFAULT_MAX_POINTS)}
-                    className="border-2 border-black/20"
-                    placeholder="Max points"
+                    placeholder="Example: 8.7 or B+"
                   />
                   <Button onClick={applyToAll} variant="outline">
                     Apply
@@ -844,10 +897,8 @@ function NewGradesWizard({
                   <p className="text-sm text-red-600">{validationError}</p>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 px-3 text-xs text-muted-foreground">
-                  <div className="md:col-span-6">Student</div>
-                  <div className="md:col-span-2 text-center">Score</div>
-                  <div className="md:col-span-2 text-center">Max</div>
-                  <div className="md:col-span-2 text-center">Status</div>
+                  <div className="md:col-span-8">Student</div>
+                  <div className="md:col-span-4 text-center">Score</div>
                 </div>
                 <div className="border rounded-lg divide-y max-h-96 overflow-auto">
                   {students.length === 0 ? (
@@ -863,41 +914,11 @@ function NewGradesWizard({
                           <p className="text-xs text-muted-foreground truncate">{student.student.email || 'No email available'}</p>
                         </div>
                         <Input
-                          type="number"
-                          step="0.1"
-                          value={student.grade_numeric ?? ''}
+                          value={student.grade_value ?? ''}
                           onChange={(e) => updateStudentGrade(student.student_id, e.target.value)}
-                          className="md:col-span-2 text-center"
+                          className="md:col-span-4 text-center"
                           placeholder="Score"
                         />
-                        <Input
-                          type="number"
-                          step="0.1"
-                          min="1"
-                          value={student.max_points ?? maxPoints}
-                          onChange={(e) => {
-                            const next = Number(e.target.value) || DEFAULT_MAX_POINTS;
-                            setStudents(students.map(s => s.student_id === student.student_id ? { ...s, max_points: next } : s));
-                          }}
-                          className="md:col-span-2 text-center"
-                          placeholder="Max"
-                        />
-                        <select
-                          value={student.status || 'draft'}
-                          onChange={(e) => updateStudentStatus(student.student_id, e.target.value as GradeStatus)}
-                          className="md:col-span-2 border rounded-md p-2 text-sm"
-                        >
-                          {GRADE_STATUSES.map((status) => (
-                            <option key={status} value={status}>{status}</option>
-                          ))}
-                        </select>
-                        {typeof student.grade_numeric === 'number' &&
-                          typeof (student.max_points ?? maxPoints) === 'number' &&
-                          student.grade_numeric > (student.max_points ?? maxPoints) && (
-                            <p className="md:col-span-12 text-xs text-red-600">
-                              Score cannot exceed max points.
-                            </p>
-                          )}
                       </div>
                     ))
                   )}
@@ -969,7 +990,6 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
               student_id: m.user_id || m.id,
               grade_numeric: null,
               grade_value: null,
-              max_points: DEFAULT_MAX_POINTS,
               status: 'draft',
               student: {
                 id: m.user_id || m.id,
@@ -1119,12 +1139,25 @@ function EditGradesDetail({
   const [saving, setSaving] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
   const [everyoneGrade, setEveryoneGrade] = useState('');
-  const [maxPoints, setMaxPoints] = useState(DEFAULT_MAX_POINTS);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [presets, setPresets] = useState<GradePreset[]>([]);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('');
 
   useEffect(() => {
     loadGradeSet();
+    loadPresets();
   }, [gradeSetId]);
+
+  const loadPresets = async () => {
+    try {
+      const response = await fetch(`/api/classes/${classId}/grading-presets`);
+      if (!response.ok) return;
+      const data = await response.json();
+      setPresets(data.presets || []);
+    } catch (error) {
+      console.error('Failed to load grading presets:', error);
+    }
+  };
 
   const loadGradeSet = async () => {
     setLoading(true);
@@ -1133,14 +1166,8 @@ function EditGradesDetail({
       if (response.ok) {
         const data = await response.json();
         setGradeSet(data.grade_set);
-        const hydratedStudents = (data.grade_set.student_grades || []).map((s: any) => ({
-          ...s,
-          max_points: s.max_points ?? DEFAULT_MAX_POINTS
-        }));
-        setStudents(hydratedStudents);
-        if (hydratedStudents.length > 0) {
-          setMaxPoints(hydratedStudents[0].max_points ?? DEFAULT_MAX_POINTS);
-        }
+        setStudents(data.grade_set.student_grades || []);
+        setSelectedPresetId(data.grade_set.grading_preset?.id || '');
       }
     } catch (error) {
       console.error('Failed to load grade set:', error);
@@ -1157,56 +1184,42 @@ function EditGradesDetail({
         ? {
             ...s,
             grade_value: value.trim() ? value : null,
-            grade_numeric: numeric,
-            status: numeric === null && !value.trim() ? (s.status === 'excused' ? 'excused' : 'missing') : 'draft'
+            grade_numeric: numeric
           }
         : s
     ));
-  };
-
-  const updateStudentStatus = (studentId: string, status: GradeStatus) => {
-    setValidationError(null);
-    setStudents(students.map(s => {
-      if (s.student_id !== studentId) return s;
-      if (status === 'missing' || status === 'excused') {
-        return { ...s, status, grade_value: null, grade_numeric: null };
-      }
-      return { ...s, status };
-    }));
   };
 
   const applyToAll = () => {
     setValidationError(null);
     const numeric = toNumeric(everyoneGrade);
     setStudents(students.map(s => {
-      if (s.status === 'excused') return s;
       return {
         ...s,
         grade_value: everyoneGrade.trim() ? everyoneGrade : null,
-        grade_numeric: numeric,
-        max_points: maxPoints,
-        status: numeric === null && !everyoneGrade.trim() ? 'missing' : 'draft'
+        grade_numeric: numeric
       };
     }));
   };
 
   const saveGrades = async () => {
     setValidationError(null);
-    const invalidScore = students.find((s: any) =>
-      typeof s.grade_numeric === 'number' &&
-      typeof (s.max_points ?? maxPoints) === 'number' &&
-      s.grade_numeric > (s.max_points ?? maxPoints)
-    );
-
-    if (invalidScore) {
-      setValidationError(
-        `Score cannot be higher than max points for ${invalidScore.student?.full_name || invalidScore.student?.email || 'a student'}.`
-      );
-      return;
-    }
-
     setSaving(true);
     try {
+      if ((gradeSet?.grading_preset?.id || '') !== selectedPresetId) {
+        const presetResp = await fetch(`/api/classes/${classId}/grades/${gradeSetId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update_grade_set',
+            grading_preset_id: selectedPresetId || null
+          })
+        });
+        if (!presetResp.ok) {
+          throw new Error('Failed to update grading preset');
+        }
+      }
+
       const response = await fetch(`/api/classes/${classId}/grades/${gradeSetId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -1215,9 +1228,7 @@ function EditGradesDetail({
           student_grades: students.map(s => ({
             id: s.id,
             grade_numeric: s.grade_numeric ?? null,
-            grade_value: s.grade_value,
-            max_points: s.max_points ?? maxPoints,
-            status: s.status || 'draft'
+            grade_value: s.grade_value
           }))
         })
       });
@@ -1236,19 +1247,6 @@ function EditGradesDetail({
 
   const publishGrades = async () => {
     setValidationError(null);
-    const invalidScore = students.find((s: any) =>
-      typeof s.grade_numeric === 'number' &&
-      typeof (s.max_points ?? maxPoints) === 'number' &&
-      s.grade_numeric > (s.max_points ?? maxPoints)
-    );
-
-    if (invalidScore) {
-      setValidationError(
-        `Fix invalid score before publishing (${invalidScore.student?.full_name || invalidScore.student?.email}).`
-      );
-      return;
-    }
-
     setSaving(true);
     try {
       const response = await fetch(`/api/classes/${classId}/grades/${gradeSetId}`, {
@@ -1311,13 +1309,7 @@ function EditGradesDetail({
     );
   }
 
-  const incompleteCount = students.filter((s: any) => {
-    if (s.status === 'excused') return false;
-    const hasNumeric = typeof s.grade_numeric === 'number' && !Number.isNaN(s.grade_numeric);
-    const hasText = !!(s.grade_value && String(s.grade_value).trim() !== '');
-    return !(hasNumeric || hasText);
-  }).length;
-  const canPublish = gradeSet.status === 'draft' && incompleteCount === 0 && !saving;
+  const canPublish = gradeSet.status === 'draft' && !saving;
 
   return (
     <div className="space-y-6">
@@ -1391,13 +1383,23 @@ function EditGradesDetail({
           <CardTitle className="text-base">Student Grades</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label className="font-semibold">Grading Preset</Label>
+            <select
+              value={selectedPresetId}
+              onChange={(e) => setSelectedPresetId(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            >
+              <option value="">No preset (free score)</option>
+              {presets.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.name} ({preset.kind})
+                </option>
+              ))}
+            </select>
+          </div>
           {validationError && (
             <p className="text-sm text-red-600">{validationError}</p>
-          )}
-          {gradeSet.status === 'draft' && incompleteCount > 0 && (
-            <p className="text-sm text-amber-600">
-              Publish is disabled until all non-excused students have a grade. Missing: {incompleteCount}
-            </p>
           )}
           {/* Everyone grade */}
           <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
@@ -1407,21 +1409,10 @@ function EditGradesDetail({
             </Label>
             <div className="flex gap-2">
               <Input
-                type="number"
-                step="0.1"
                 value={everyoneGrade}
                 onChange={(e) => setEveryoneGrade(e.target.value)}
                 className="border-2 border-black/20"
-                placeholder="e.g. 82.5"
-              />
-              <Input
-                type="number"
-                step="0.1"
-                min="1"
-                value={maxPoints}
-                onChange={(e) => setMaxPoints(Number(e.target.value) || DEFAULT_MAX_POINTS)}
-                className="w-28 text-center"
-                placeholder="Max"
+                placeholder="Example: 8.7 or B+"
               />
               <Button onClick={applyToAll} variant="outline">
                 Apply
@@ -1431,10 +1422,8 @@ function EditGradesDetail({
 
           {/* Students list */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3 px-3 text-xs text-muted-foreground">
-            <div className="md:col-span-6">Student</div>
-            <div className="md:col-span-2 text-center">Score</div>
-            <div className="md:col-span-2 text-center">Max</div>
-            <div className="md:col-span-2 text-center">Status</div>
+            <div className="md:col-span-8">Student</div>
+            <div className="md:col-span-4 text-center">Score</div>
           </div>
           <div className="border rounded-lg divide-y">
             {students.map((student) => (
@@ -1442,48 +1431,13 @@ function EditGradesDetail({
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{student.student?.full_name || student.student?.email || 'Unknown Student'}</p>
                   <p className="text-xs text-muted-foreground truncate">{student.student?.email || 'No email available'}</p>
-                  <div className="mt-1">
-                    <Badge variant={getStatusBadgeVariant(student.status || 'draft')}>
-                      {student.status || 'draft'}
-                    </Badge>
-                  </div>
                 </div>
                 <Input
-                  type="number"
-                  step="0.1"
-                  value={student.grade_numeric ?? ''}
+                  value={student.grade_value ?? ''}
                   onChange={(e) => updateStudentGrade(student.student_id, e.target.value)}
-                  className="md:col-span-2 text-center"
+                  className="md:col-span-4 text-center"
                   placeholder="Score"
                 />
-                <Input
-                  type="number"
-                  step="0.1"
-                  min="1"
-                  value={student.max_points ?? maxPoints}
-                  onChange={(e) => {
-                    const next = Number(e.target.value) || DEFAULT_MAX_POINTS;
-                    setStudents(students.map(s => s.student_id === student.student_id ? { ...s, max_points: next } : s));
-                  }}
-                  className="md:col-span-2 text-center"
-                  placeholder="Max"
-                />
-                <select
-                  value={student.status || 'draft'}
-                  onChange={(e) => updateStudentStatus(student.student_id, e.target.value as GradeStatus)}
-                  className="md:col-span-2 border rounded-md p-2 text-sm"
-                >
-                  {GRADE_STATUSES.map((status) => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-                {typeof student.grade_numeric === 'number' &&
-                  typeof (student.max_points ?? maxPoints) === 'number' &&
-                  student.grade_numeric > (student.max_points ?? maxPoints) && (
-                    <p className="md:col-span-12 text-xs text-red-600">
-                      Score cannot exceed max points.
-                    </p>
-                  )}
               </div>
             ))}
           </div>

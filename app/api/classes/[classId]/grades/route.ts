@@ -56,6 +56,7 @@ export async function GET(
       .select(`
         *,
         subject:subjects(id, title),
+        grading_preset:class_grading_presets(id, name, kind, config, is_default),
         student_grades(id, student_id, grade_value, grade_numeric, max_points, status, tag)
       `)
       .eq('class_id', classId)
@@ -122,7 +123,7 @@ export async function POST(
     const body = await req.json()
     console.log('[GRADES] POST - body:', body)
     
-    const { title, description, category, weight, subject_id } = body
+    const { title, description, category, weight, subject_id, grading_preset_id } = body
     const allowedCategories = new Set(['test', 'quiz', 'homework', 'project', 'exam', 'assignment', 'other'])
 
     if (!title || title.trim() === '') {
@@ -191,6 +192,23 @@ export async function POST(
       }
     }
 
+    if (grading_preset_id) {
+      const { data: presetRow, error: presetErr } = await supabase
+        .from('class_grading_presets')
+        .select('id')
+        .eq('id', grading_preset_id)
+        .eq('class_id', classId)
+        .maybeSingle()
+
+      if (presetErr) {
+        return NextResponse.json({ error: presetErr.message }, { status: 500 })
+      }
+
+      if (!presetRow) {
+        return NextResponse.json({ error: 'Invalid grading preset for this class' }, { status: 400 })
+      }
+    }
+
     // Create the grade set
     const { data: gradeSet, error } = await supabase
       .from('grade_sets')
@@ -201,6 +219,7 @@ export async function POST(
         description: description || null,
         category: normalizedCategory,
         weight: parsedWeight,
+        grading_preset_id: grading_preset_id || null,
         status: 'draft',
         created_by: user.id
       }])
@@ -257,7 +276,6 @@ export async function POST(
         student_id: s.id,
         grade_numeric: null,
         grade_value: null,
-        max_points: 100,
         status: 'draft'
       }))
 

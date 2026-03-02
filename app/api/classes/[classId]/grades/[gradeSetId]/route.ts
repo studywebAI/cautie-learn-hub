@@ -23,6 +23,7 @@ export async function GET(
       .select(`
         *,
         subject:subjects(id, title),
+        grading_preset:class_grading_presets(id, name, kind, config, is_default),
         student_grades(
           id,
           student_id,
@@ -135,7 +136,7 @@ export async function PUT(
   try {
     const { classId, gradeSetId } = await params
     const body = await req.json()
-    const { action, title, description, category, weight, status, release_date, student_grades } = body
+    const { action, title, description, category, weight, status, release_date, student_grades, grading_preset_id } = body
 
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
@@ -191,6 +192,21 @@ export async function PUT(
           return NextResponse.json({ error: 'Weight must be a number between 0 and 100' }, { status: 400 })
         }
       }
+      if (grading_preset_id !== undefined && grading_preset_id !== null) {
+        const { data: presetRow, error: presetErr } = await supabase
+          .from('class_grading_presets')
+          .select('id')
+          .eq('id', grading_preset_id)
+          .eq('class_id', classId)
+          .maybeSingle()
+
+        if (presetErr) {
+          return NextResponse.json({ error: presetErr.message }, { status: 500 })
+        }
+        if (!presetRow) {
+          return NextResponse.json({ error: 'Invalid grading preset for this class' }, { status: 400 })
+        }
+      }
 
       // Update grade set metadata
       const updateData: any = {
@@ -203,6 +219,7 @@ export async function PUT(
       if (weight !== undefined) updateData.weight = weight
       if (status !== undefined) updateData.status = status
       if (release_date !== undefined) updateData.release_date = release_date
+      if (grading_preset_id !== undefined) updateData.grading_preset_id = grading_preset_id
 
       const { data: updatedGradeSet, error } = await supabase
         .from('grade_sets')
@@ -224,7 +241,6 @@ export async function PUT(
         return NextResponse.json({ error: 'student_grades must be an array' }, { status: 400 })
       }
 
-      const allowedStatuses = new Set(['draft', 'final', 'missing', 'excused'])
       const ids = student_grades
         .map((sg: any) => sg?.id)
         .filter((id: any) => typeof id === 'string')
@@ -254,40 +270,20 @@ export async function PUT(
           const parsedNumeric = sg.grade_numeric === null || sg.grade_numeric === undefined || sg.grade_numeric === ''
             ? null
             : Number(sg.grade_numeric)
-          if (parsedNumeric !== null && (!Number.isFinite(parsedNumeric) || parsedNumeric < 0 || parsedNumeric > 1000)) {
+          if (parsedNumeric !== null && !Number.isFinite(parsedNumeric)) {
             throw new Error(`Invalid grade_numeric for row ${sg.id}`)
           }
 
-          const parsedMaxPoints = sg.max_points === null || sg.max_points === undefined || sg.max_points === ''
-            ? 100
-            : Number(sg.max_points)
-          if (!Number.isFinite(parsedMaxPoints) || parsedMaxPoints <= 0 || parsedMaxPoints > 1000) {
-            throw new Error(`Invalid max_points for row ${sg.id}`)
-          }
-
-          const hasGrade = parsedNumeric !== null || (sg.grade_value !== null && sg.grade_value !== undefined && String(sg.grade_value).trim() !== '')
-          let normalizedStatus = allowedStatuses.has(sg.status) ? sg.status : undefined
-
-          if (!normalizedStatus) {
-            normalizedStatus = hasGrade ? 'draft' : 'missing'
-          }
-
-          if (normalizedStatus === 'final' && !hasGrade) {
-            throw new Error(`Cannot set status 'final' without a grade for row ${sg.id}`)
-          }
-
-          const normalizedGradeValue =
-            normalizedStatus === 'missing'
-              ? null
-              : (sg.grade_value ?? (parsedNumeric !== null ? String(parsedNumeric) : null))
+          const normalizedGradeValue = (sg.grade_value ?? (parsedNumeric !== null ? String(parsedNumeric) : null))
+          const normalizedValue = normalizedGradeValue === null || normalizedGradeValue === undefined || String(normalizedGradeValue).trim() === ''
+            ? null
+            : String(normalizedGradeValue).trim()
 
           return {
             id: sg.id,
-            grade_numeric: normalizedStatus === 'missing' ? null : parsedNumeric,
-            max_points: parsedMaxPoints,
-            grade_value: normalizedGradeValue,
+            grade_numeric: normalizedValue === null ? null : parsedNumeric,
+            grade_value: normalizedValue,
             feedback_text: sg.feedback_text,
-            status: normalizedStatus,
             tag: sg.tag,
             updated_at: new Date().toISOString()
           }
@@ -303,10 +299,8 @@ export async function PUT(
           .from('student_grades')
           .update({
             grade_numeric: row.grade_numeric,
-            max_points: row.max_points,
             grade_value: row.grade_value,
             feedback_text: row.feedback_text,
-            status: row.status,
             tag: row.tag,
             updated_at: row.updated_at
           })
@@ -344,23 +338,6 @@ export async function PUT(
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 })
       }
-
-      // Mark graded rows as final (except excused rows).
-      await supabase
-        .from('student_grades')
-        .update({ status: 'final' })
-        .eq('grade_set_id', gradeSetId)
-        .neq('status', 'excused')
-        .or('grade_numeric.not.is.null,grade_value.not.is.null')
-
-      // Mark ungraded non-excused rows as missing.
-      await supabase
-        .from('student_grades')
-        .update({ status: 'missing' })
-        .eq('grade_set_id', gradeSetId)
-        .neq('status', 'excused')
-        .is('grade_numeric', null)
-        .is('grade_value', null)
 
       return NextResponse.json({ grade_set: updatedGradeSet })
     }
