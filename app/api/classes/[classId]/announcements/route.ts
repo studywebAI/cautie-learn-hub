@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -6,62 +6,73 @@ import type { Database } from '@/lib/supabase/database.types'
 
 export const dynamic = 'force-dynamic'
 
+function logAnnouncements(...args: any[]) {
+  console.log('[CLASS_ANNOUNCEMENTS]', ...args)
+}
+
+function formatDbError(error: any) {
+  if (!error) return null
+  return {
+    message: error.message,
+    code: error.code,
+    details: error.details,
+    hint: error.hint
+  }
+}
+
 // GET all announcements for a specific class
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
 ) {
-  const resolvedParams = await params;
-  const classId = resolvedParams.classId;
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set(name, value, options)
-        },
-        remove(name: string, options: any) {
-          cookieStore.set(name, '', { ...options, maxAge: 0 })
-        }
-      }
-    }
-  )
+  const resolvedParams = await params
+  const classId = resolvedParams.classId
+  const requestId = crypto.randomUUID()
+  const cookieStore = cookies()
+  const supabase = await createClient(cookieStore)
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    logAnnouncements('GET - Auth failed', { requestId, classId, authError: formatDbError(authError) })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // Security check: Ensure the requesting user is a member of the class
   // (owner_id column was removed - all teachers are equal via class_members)
   
   // Get user's subscription_type to check if they're a teacher
-  const { data: userProfile } = await supabase
+  const { data: userProfile, error: profileError } = await supabase
     .from('profiles')
     .select('subscription_type')
-    .eq('id', session.user.id)
-    .single();
+    .eq('id', user.id)
+    .single()
 
-  const isTeacher = userProfile?.subscription_type === 'teacher';
+  if (profileError) {
+    logAnnouncements('GET - Profile lookup failed', { requestId, classId, userId: user.id, profileError: formatDbError(profileError) })
+    return NextResponse.json({ error: 'Failed to resolve user role' }, { status: 500 })
+  }
+
+  const isTeacher = userProfile?.subscription_type === 'teacher'
 
   // Also check if user is a member of this class
-  const { data: memberData } = await supabase
+  const { data: memberData, error: memberError } = await supabase
     .from('class_members')
     .select('user_id')
     .eq('class_id', classId)
-    .eq('user_id', session.user.id)
-    .maybeSingle();
+    .eq('user_id', user.id)
+    .maybeSingle()
 
-  const isMember = !!memberData;
+  if (memberError) {
+    logAnnouncements('GET - Membership lookup failed', { requestId, classId, userId: user.id, memberError: formatDbError(memberError) })
+    return NextResponse.json({ error: 'Failed to validate class membership' }, { status: 500 })
+  }
+
+  const isMember = !!memberData
 
   // Teachers who are members of the class can view announcements
   if (!isMember || !isTeacher) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    logAnnouncements('GET - Forbidden', { requestId, classId, userId: user.id, isTeacher, isMember })
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   // Fetch announcements
@@ -79,13 +90,20 @@ export async function GET(
       )
     `)
     .eq('class_id', classId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
 
   if (announcementsError) {
-    return NextResponse.json({ error: announcementsError.message }, { status: 500 });
+    logAnnouncements('GET - Fetch announcements failed', {
+      requestId,
+      classId,
+      userId: user.id,
+      announcementsError: formatDbError(announcementsError)
+    })
+    return NextResponse.json({ error: 'Failed to load announcements' }, { status: 500 })
   }
 
-  return NextResponse.json(announcements);
+  logAnnouncements('GET - Success', { requestId, classId, userId: user.id, count: announcements?.length || 0 })
+  return NextResponse.json(announcements)
 }
 
 // POST create a new announcement
@@ -93,63 +111,60 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
 ) {
-  const resolvedParams = await params;
-  const classId = resolvedParams.classId;
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set(name, value, options)
-        },
-        remove(name: string, options: any) {
-          cookieStore.set(name, '', { ...options, maxAge: 0 })
-        }
-      }
-    }
-  )
+  const resolvedParams = await params
+  const classId = resolvedParams.classId
+  const requestId = crypto.randomUUID()
+  const cookieStore = cookies()
+  const supabase = await createClient(cookieStore)
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    logAnnouncements('POST - Auth failed', { requestId, classId, authError: formatDbError(authError) })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // Security check: Ensure the requesting user is a teacher who is a member of the class
   // (owner_id column was removed - all teachers are equal via class_members)
   
   // Get user's subscription_type to check if they're a teacher
-  const { data: userProfile } = await supabase
+  const { data: userProfile, error: profileError } = await supabase
     .from('profiles')
     .select('subscription_type')
-    .eq('id', session.user.id)
-    .single();
+    .eq('id', user.id)
+    .single()
 
-  const isTeacher = userProfile?.subscription_type === 'teacher';
+  if (profileError) {
+    logAnnouncements('POST - Profile lookup failed', { requestId, classId, userId: user.id, profileError: formatDbError(profileError) })
+    return NextResponse.json({ error: 'Failed to resolve user role' }, { status: 500 })
+  }
+
+  const isTeacher = userProfile?.subscription_type === 'teacher'
 
   // Also check if user is a member of this class
-  const { data: memberData } = await supabase
+  const { data: memberData, error: memberError } = await supabase
     .from('class_members')
     .select('user_id')
     .eq('class_id', classId)
-    .eq('user_id', session.user.id)
-    .maybeSingle();
+    .eq('user_id', user.id)
+    .maybeSingle()
 
-  const isMember = !!memberData;
+  if (memberError) {
+    logAnnouncements('POST - Membership lookup failed', { requestId, classId, userId: user.id, memberError: formatDbError(memberError) })
+    return NextResponse.json({ error: 'Failed to validate class membership' }, { status: 500 })
+  }
+
+  const isMember = !!memberData
 
   // Teachers who are members of the class can create announcements
   if (!isMember || !isTeacher) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    logAnnouncements('POST - Forbidden', { requestId, classId, userId: user.id, isTeacher, isMember })
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const { title, content } = await request.json();
+  const { title, content } = await request.json()
 
   if (!title) {
-    return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    return NextResponse.json({ error: 'Title is required' }, { status: 400 })
   }
 
   const { data: announcement, error: insertError } = await (supabase as any)
@@ -158,14 +173,21 @@ export async function POST(
       class_id: classId,
       title,
       content,
-      created_by: session.user.id
+      created_by: user.id
     })
     .select()
-    .single();
+    .single()
 
   if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 500 });
+    logAnnouncements('POST - Insert failed', {
+      requestId,
+      classId,
+      userId: user.id,
+      insertError: formatDbError(insertError)
+    })
+    return NextResponse.json({ error: 'Failed to create announcement' }, { status: 500 })
   }
 
-  return NextResponse.json(announcement);
+  logAnnouncements('POST - Success', { requestId, classId, userId: user.id, announcementId: announcement?.id })
+  return NextResponse.json(announcement)
 }

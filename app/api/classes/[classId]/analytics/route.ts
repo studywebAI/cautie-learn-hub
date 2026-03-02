@@ -6,16 +6,32 @@ import type { ClassAnalytics, EngagementMetrics, PerformanceTrend, AtRiskStudent
 
 export const dynamic = 'force-dynamic'
 
+function logAnalytics(...args: any[]) {
+  console.log('[CLASS_ANALYTICS]', ...args)
+}
+
+function formatDbError(error: any) {
+  if (!error) return null
+  return {
+    message: error.message,
+    code: error.code,
+    details: error.details,
+    hint: error.hint
+  }
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
 ) {
+  const requestId = crypto.randomUUID()
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      logAnalytics('GET - Auth failed', { requestId, authError: formatDbError(authError) })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -31,6 +47,7 @@ export async function GET(
       .single()
 
     if (classError || !classMember) {
+      logAnalytics('GET - Access denied', { requestId, classId, userId: user.id, classError: formatDbError(classError) })
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -41,11 +58,11 @@ export async function GET(
       .eq('class_id', classId)
 
     if (studentsError) {
-      console.error('Students error:', studentsError)
+      logAnalytics('GET - Students fetch failed', { requestId, classId, userId: user.id, studentsError: formatDbError(studentsError) })
       return NextResponse.json({ error: studentsError.message }, { status: 500 })
     }
 
-    const studentIds = students.map(s => s.user_id)
+    const studentIds = (students || []).map(s => s.user_id)
     const totalStudents = studentIds.length
 
     // Calculate engagement metrics
@@ -82,10 +99,19 @@ export async function GET(
       lastUpdated: new Date().toISOString()
     }
 
+    logAnalytics('GET - Success', {
+      requestId,
+      classId,
+      userId: user.id,
+      totalStudents,
+      atRiskCount: atRiskStudents.length,
+      trendsCount: performanceTrends.length
+    })
+
     return NextResponse.json(analytics)
   } catch (err) {
-    console.error('Unexpected error in class analytics GET:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logAnalytics('GET - Unexpected error', { requestId, error: err instanceof Error ? err.message : String(err) })
+    return NextResponse.json({ error: 'Internal server error', requestId }, { status: 500 })
   }
 }
 
@@ -95,6 +121,16 @@ async function calculateEngagementMetrics(
   studentIds: string[]
 ): Promise<EngagementMetrics> {
   const weekStart = startOfWeek(new Date())
+
+  if (studentIds.length === 0) {
+    return {
+      averageStudyTime: 0,
+      attendanceRate: 0,
+      assignmentParticipation: 0,
+      quizParticipation: 0,
+      activeStudentsCount: 0
+    }
+  }
 
   // Average study time for the last week (from session_logs)
   let totalStudyTime = 0
@@ -182,6 +218,19 @@ async function calculatePerformanceTrends(
 ): Promise<PerformanceTrend[]> {
   const trends: PerformanceTrend[] = []
   const days = 30
+
+  if (studentIds.length === 0) {
+    for (let i = days - 1; i >= 0; i--) {
+      const date = subDays(new Date(), i)
+      trends.push({
+        date: format(date, 'yyyy-MM-dd'),
+        averageScore: 0,
+        completionRate: 0,
+        submissionsCount: 0
+      })
+    }
+    return trends
+  }
 
   for (let i = days - 1; i >= 0; i--) {
     const date = subDays(new Date(), i)
@@ -328,6 +377,17 @@ async function calculateComparativeAnalysis(
       .eq('class_id', classId)
 
     const studentIds = classStudents?.map((s: any) => s.user_id) || []
+
+    if (studentIds.length === 0) {
+      comparativeData.push({
+        className,
+        averageScore: 0,
+        completionRate: 0,
+        engagementRate: 0,
+        studentCount: 0
+      })
+      continue
+    }
 
     // Calculate metrics (simplified version)
     const { data: submissions } = await supabase
