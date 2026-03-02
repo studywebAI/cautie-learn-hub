@@ -56,10 +56,10 @@ export async function GET(
         .in('id', studentIds)
 
       if (profilesError) {
-        return NextResponse.json({ error: profilesError.message }, { status: 500 })
+        console.warn('[GRADES_GET_DETAIL] profiles lookup failed, falling back to unknown names/emails', profilesError.message)
+      } else {
+        profileById = new Map((profiles || []).map((p: any) => [p.id, p]))
       }
-
-      profileById = new Map((profiles || []).map((p: any) => [p.id, p]))
     }
 
     const hydratedGrades = rawStudentGrades.map((g: any) => {

@@ -61,7 +61,7 @@ export async function GET(
     // First get all class members
     const { data: classMembers, error: membersError } = await supabase
       .from('class_members')
-      .select('user_id, joined_at')
+      .select('user_id')
       .eq('class_id', classId)
 
     logAttendance('GET - Class members', { classId, count: classMembers?.length, membersError: membersError?.message })

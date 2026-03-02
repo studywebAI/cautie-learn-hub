@@ -55,7 +55,7 @@ export async function GET(
     // (role column was removed - use subscription_type from profiles instead)
     const { data: classMembers, error: membersError } = await supabase
       .from('class_members')
-      .select('user_id, created_at')
+      .select('user_id')
       .eq('class_id', classId)
 
     if (membersError) {
@@ -203,7 +203,7 @@ export async function GET(
         email: profile?.email || null,
         avatarUrl: profile?.avatar_url,
         role: 'student',
-        joinedAt: member?.created_at,
+        joinedAt: null,
         lastSeen: profile?.last_seen,
         onlineStatus: getOnlineStatus(profile?.last_seen),
         stats: {
@@ -235,7 +235,7 @@ export async function GET(
         email: profile?.email || null,
         avatarUrl: profile?.avatar_url,
         role: 'teacher',
-        joinedAt: member?.created_at,
+        joinedAt: null,
         lastSeen: profile?.last_seen,
         onlineStatus: getOnlineStatus(profile?.last_seen)
       }

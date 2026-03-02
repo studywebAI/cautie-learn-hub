@@ -35,7 +35,7 @@ export async function GET(
     const supabaseClient = await supabase;
     const { data: members, error: membersError } = await supabaseClient
       .from('class_members')
-      .select('user_id, created_at')
+      .select('user_id')
       .eq('class_id', params.classId)
  
     if (membersError) {
@@ -64,7 +64,7 @@ export async function GET(
         const member = (members || []).find((m: any) => m.user_id === userId);
         return {
           user_id: userId,
-          created_at: member?.created_at || null,
+          created_at: null,
           profiles: {
             id: userId,
             full_name: profile?.full_name || 'Unknown Student',
