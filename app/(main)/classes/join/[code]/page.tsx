@@ -23,7 +23,11 @@ export default function JoinClassPage() {
       if (!code) return;
 
       try {
-        const response = await fetch(`/api/classes/join?code=${code}`);
+        const normalizedCode = String(code).trim();
+        if (!normalizedCode) {
+          throw new Error('Join code is empty');
+        }
+        const response = await fetch(`/api/classes/join?code=${encodeURIComponent(normalizedCode)}`);
         if (!response.ok) {
           throw new Error('Class not found');
         }
@@ -50,12 +54,22 @@ export default function JoinClassPage() {
       return;
     }
 
+    const normalizedCode = String(code || '').trim();
+    if (!normalizedCode) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not join class',
+        description: 'Join code is empty.',
+      });
+      return;
+    }
+
     setJoining(true);
     try {
       const response = await fetch('/api/classes/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ class_code: code }),
+        body: JSON.stringify({ class_code: normalizedCode }),
       });
 
       if (!response.ok) {

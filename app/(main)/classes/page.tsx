@@ -18,6 +18,16 @@ function ClassesPageContent() {
     const joinCode = searchParams.get('join_code');
     if (joinCode) {
       const joinClass = async () => {
+        const normalizedCode = joinCode.trim();
+        if (!normalizedCode) {
+          toast({
+            variant: 'destructive',
+            title: 'Could not join class',
+            description: 'Join code is empty.',
+          });
+          return;
+        }
+
         if (!session) {
           toast({
             variant: 'destructive',
@@ -25,7 +35,7 @@ function ClassesPageContent() {
             description: 'Please log in to join a class.',
           });
           // Redirect to login but keep the join_code in the URL
-          router.push(`/login?redirect=/classes?join_code=${joinCode}`);
+          router.push(`/login?redirect=/classes?join_code=${encodeURIComponent(normalizedCode)}`);
           return;
         }
 
@@ -33,7 +43,7 @@ function ClassesPageContent() {
           const response = await fetch('/api/classes/join', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ class_code: joinCode }),
+            body: JSON.stringify({ class_code: normalizedCode }),
           });
 
           const data = await response.json();

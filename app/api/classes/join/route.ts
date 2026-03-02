@@ -14,9 +14,74 @@ function logJoin(...args: any[]) {
   console.log('[CLASSES_JOIN]', ...args)
 }
 
+function sanitizeCode(input: string | null | undefined): string {
+  return (input || '').trim()
+}
+
+function maskCode(code: string): string {
+  if (!code) return '<empty>'
+  if (code.length <= 4) return '*'.repeat(code.length)
+  return `${code.slice(0, 2)}***${code.slice(-2)}`
+}
+
+type ClassLookupResult = {
+  classData: Pick<Database['public']['Tables']['classes']['Row'], 'id' | 'name' | 'description' | 'join_code' | 'teacher_join_code'> | null
+  matchedBy: 'join_code' | 'teacher_join_code' | null
+  lookupErrors: Array<{ step: string; message: string; code?: string; details?: string | null; hint?: string | null }>
+}
+
+async function findClassByCode(
+  supabase: any,
+  classCode: string,
+): Promise<ClassLookupResult> {
+  const lookupErrors: ClassLookupResult['lookupErrors'] = []
+
+  const { data: byStudentCode, error: byStudentCodeError } = await supabase
+    .from('classes')
+    .select('id, name, description, join_code, teacher_join_code')
+    .eq('join_code', classCode)
+    .maybeSingle()
+
+  if (byStudentCodeError) {
+    lookupErrors.push({
+      step: 'lookup_join_code',
+      message: byStudentCodeError.message,
+      code: byStudentCodeError.code,
+      details: byStudentCodeError.details,
+      hint: byStudentCodeError.hint
+    })
+  }
+
+  if (byStudentCode) {
+    return { classData: byStudentCode, matchedBy: 'join_code', lookupErrors }
+  }
+
+  const { data: byTeacherCode, error: byTeacherCodeError } = await supabase
+    .from('classes')
+    .select('id, name, description, join_code, teacher_join_code')
+    .eq('teacher_join_code', classCode)
+    .maybeSingle()
+
+  if (byTeacherCodeError) {
+    lookupErrors.push({
+      step: 'lookup_teacher_join_code',
+      message: byTeacherCodeError.message,
+      code: byTeacherCodeError.code,
+      details: byTeacherCodeError.details,
+      hint: byTeacherCodeError.hint
+    })
+  }
+
+  if (byTeacherCode) {
+    return { classData: byTeacherCode, matchedBy: 'teacher_join_code', lookupErrors }
+  }
+
+  return { classData: null, matchedBy: null, lookupErrors }
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const code = searchParams.get('code');
+  const code = sanitizeCode(searchParams.get('code'));
 
   if (!code) {
     return NextResponse.json({ error: 'Join code is required' }, { status: 400 });
@@ -25,18 +90,24 @@ export async function GET(request: Request) {
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
 
-  // Check both student join_code and teacher join_code
-  const { data: classData, error: classError } = await supabase
-    .from('classes')
-    .select('id, name, description')
-    .or(`join_code.eq.${code},teacher_join_code.eq.${code}`)
-    .single();
+  const { classData, matchedBy, lookupErrors } = await findClassByCode(supabase, code)
+  logJoin('GET - Lookup result', {
+    codeMask: maskCode(code),
+    codeLength: code.length,
+    found: Boolean(classData),
+    matchedBy,
+    lookupErrors
+  })
 
-  if (classError || !classData) {
+  if (!classData) {
     return NextResponse.json({ error: 'Class not found' }, { status: 404 });
   }
 
-  return NextResponse.json(classData);
+  return NextResponse.json({
+    id: classData.id,
+    name: classData.name,
+    description: classData.description
+  });
 }
 
 // POST to join a class
@@ -47,7 +118,7 @@ export async function POST(request: NextRequest) {
     logJoin('POST - Validation failed', validation.error)
     return validation.error;
   }
-  const { class_code } = validation.data;
+  const classCode = sanitizeCode(validation.data.class_code);
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
 
@@ -64,15 +135,28 @@ export async function POST(request: NextRequest) {
     created_at: user.created_at
   });
 
-  // Check if code matches student join_code or teacher join_code
-  const { data: classData, error: classError } = await supabase
-    .from('classes')
-    .select('id, name, description, join_code, teacher_join_code')
-    .or(`join_code.eq.${class_code},teacher_join_code.eq.${class_code}`)
-    .single();
-  
-  if (classError || !classData) {
-    return NextResponse.json({ error: 'Class not found. Please check the code and try again.' }, { status: 404 });
+  if (!classCode) {
+    return NextResponse.json({ error: 'Join code is required' }, { status: 400 });
+  }
+
+  const { classData, matchedBy, lookupErrors } = await findClassByCode(supabase, classCode)
+  logJoin('POST - Class lookup result', {
+    userId: user.id,
+    codeMask: maskCode(classCode),
+    codeLength: classCode.length,
+    found: Boolean(classData),
+    matchedBy,
+    lookupErrors
+  })
+
+  if (!classData) {
+    return NextResponse.json(
+      {
+        error: 'Class not found. Please check the code and try again.',
+        reason: lookupErrors.length > 0 ? 'lookup_failed' : 'no_match'
+      },
+      { status: 404 }
+    );
   }
 
   // Get user's subscription_type to determine role (global role)
@@ -113,7 +197,16 @@ export async function POST(request: NextRequest) {
     .from('class_members')
     .insert([{ class_id: classData.id, user_id: user.id }]);
 
-  logJoin('POST - Inserted class_members', { class_id: classData.id, user_id: user.id, error: insertError?.message })
+  logJoin('POST - Inserted class_members', {
+    class_id: classData.id,
+    user_id: user.id,
+    error: insertError ? {
+      message: insertError.message,
+      code: insertError.code,
+      details: insertError.details,
+      hint: insertError.hint
+    } : null
+  })
 
   if (insertError) {
     // Handle duplicate key error (already a member)

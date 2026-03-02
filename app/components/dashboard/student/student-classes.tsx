@@ -54,11 +54,21 @@ export function StudentClasses() {
         return false;
     }
     
+    const normalizedCode = classCode.trim();
+    if (!normalizedCode) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not join class',
+        description: 'Please enter a valid class code.',
+      });
+      return false;
+    }
+
     try {
       const response = await fetch('/api/classes/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ class_code: classCode }),
+        body: JSON.stringify({ class_code: normalizedCode }),
       });
 
       const data = await response.json();

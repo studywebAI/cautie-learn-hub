@@ -47,12 +47,13 @@ export function JoinClassDialog({ isOpen, setIsOpen, onClassJoined, initialCode 
   }, [initialCode])
 
   const checkCode = async (codeToCheck: string) => {
-    if (!codeToCheck.trim()) return;
+    const normalizedCode = codeToCheck.trim();
+    if (!normalizedCode) return;
 
     setIsCheckingCode(true);
     setClassToJoin(null);
     try {
-        const response = await fetch(`/api/classes/join?code=${codeToCheck}`);
+        const response = await fetch(`/api/classes/join?code=${encodeURIComponent(normalizedCode)}`);
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Failed to find class.');
@@ -72,10 +73,11 @@ export function JoinClassDialog({ isOpen, setIsOpen, onClassJoined, initialCode 
 
 
   const handleJoin = async () => {
-    if (!classCode) return;
+    const normalizedCode = classCode.trim();
+    if (!normalizedCode) return;
     
     setIsJoining(true);
-    const result = await onClassJoined(classCode);
+    const result = await onClassJoined(normalizedCode);
     setIsJoining(false);
 
     // Handle result - could be boolean or object with alreadyJoined flag
