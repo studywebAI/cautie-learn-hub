@@ -79,7 +79,7 @@ export async function GET(
           created_at: null,
           profiles: {
             id: userId,
-            full_name: profile?.full_name || 'Unknown Student',
+            full_name: profile?.full_name || (profile?.email ? profile.email.split('@')[0] : 'Unknown Student'),
             avatar_url: profile?.avatar_url || null,
             email: profile?.email || null
           }

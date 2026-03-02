@@ -64,12 +64,16 @@ export async function GET(
 
     const hydratedGrades = rawStudentGrades.map((g: any) => {
       const profile = profileById.get(g.student_id)
+      const email = profile?.email || null
+      const fullName = profile?.full_name && profile.full_name.trim()
+        ? profile.full_name
+        : (email && email.includes('@') ? email.split('@')[0] : `user-${String(g.student_id).slice(0, 8)}`)
       return {
         ...g,
         student: {
           id: g.student_id,
-          full_name: profile?.full_name || 'Unknown Student',
-          email: profile?.email || null
+          full_name: fullName,
+          email
         }
       }
     })

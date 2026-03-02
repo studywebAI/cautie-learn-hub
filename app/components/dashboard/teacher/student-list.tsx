@@ -251,6 +251,31 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
         }
     };
 
+    const editDisplayName = async (userId: string, currentName: string | null | undefined) => {
+        if (!classInfo?.id) return;
+        const nextName = prompt('Enter new display name', currentName || '');
+        if (nextName === null) return;
+
+        try {
+            const response = await fetch(`/api/classes/${classInfo.id}/members`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, display_name: nextName.trim() })
+            });
+
+            if (response.ok) {
+                toast({ title: 'Name updated' });
+                window.location.reload();
+            } else {
+                const data = await response.json();
+                toast({ title: 'Failed to update name', description: data.error, variant: 'destructive' });
+            }
+        } catch (error) {
+            console.error('Failed to update name:', error);
+            toast({ title: 'Failed to update name', variant: 'destructive' });
+        }
+    };
+
   return (
     <>
     <Card>
@@ -328,6 +353,7 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
                 </Avatar>
                 <div>
                   <p className="font-medium">{student.name || student.email}</p>
+                  <p className="text-xs text-muted-foreground">{student.email || 'No email'}</p>
                   <div className="flex items-center gap-2">
                       <Progress value={0} className="h-1.5 w-24" />
                       <span className="text-xs text-muted-foreground">0%</span>
@@ -343,6 +369,9 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
                       </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => editDisplayName(student.id, student.name)}>
+                        Edit name
+                      </DropdownMenuItem>
                       <DropdownMenuItem>View Progress</DropdownMenuItem>
                       <DropdownMenuItem>Send Message</DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive">Remove from Class</DropdownMenuItem>

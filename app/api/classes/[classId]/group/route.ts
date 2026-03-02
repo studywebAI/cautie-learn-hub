@@ -6,6 +6,12 @@ function logGroup(...args: any[]) {
   console.log('[CLASS_GROUP]', ...args)
 }
 
+function displayName(fullName: string | null | undefined, email: string | null | undefined, userId: string) {
+  if (fullName && fullName.trim()) return fullName
+  if (email && email.includes('@')) return email.split('@')[0]
+  return `user-${userId.slice(0, 8)}`
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
@@ -199,7 +205,7 @@ export async function GET(
 
       return {
         id: studentId,
-        name: profile?.full_name || 'Unknown Student',
+        name: displayName(profile?.full_name, profile?.email, studentId),
         email: profile?.email || null,
         avatarUrl: profile?.avatar_url,
         role: 'student',
@@ -231,7 +237,7 @@ export async function GET(
       
       return {
         id: teacherId,
-        name: profile?.full_name || 'Unknown Teacher',
+        name: displayName(profile?.full_name, profile?.email, teacherId),
         email: profile?.email || null,
         avatarUrl: profile?.avatar_url,
         role: 'teacher',

@@ -6,6 +6,12 @@ function logAttendance(...args: any[]) {
   console.log('[CLASS_ATTENDANCE]', ...args)
 }
 
+function displayName(fullName: string | null | undefined, email: string | null | undefined, userId: string) {
+  if (fullName && fullName.trim()) return fullName
+  if (email && email.includes('@')) return email.split('@')[0]
+  return `user-${userId.slice(0, 8)}`
+}
+
 // GET - Fetch all students with their attendance records for a class
 export async function GET(
   request: Request,
@@ -123,7 +129,7 @@ export async function GET(
 
       return {
         id: studentId,
-        name: student?.full_name || 'Unknown Student',
+        name: displayName(student?.full_name, student?.email, studentId),
         email: student?.email || null,
         avatarUrl: student?.avatar_url || null,
         isPresent: latestRecord?.is_present ?? null,

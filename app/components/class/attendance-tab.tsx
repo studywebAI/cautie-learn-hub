@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 type StudentAttendance = {
   id: string;
   name: string;
+  email: string | null;
   avatarUrl: string | null;
   isPresent: boolean | null;
   hasHomeworkIncomplete: boolean;
@@ -176,6 +177,7 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
                 {/* Name */}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{student.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{student.email || 'No email'}</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     {student.note && (
                       <span className="flex items-center gap-1">

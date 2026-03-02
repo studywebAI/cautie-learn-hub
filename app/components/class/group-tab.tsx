@@ -18,6 +18,7 @@ import Link from 'next/link';
 type Student = {
   id: string;
   name: string;
+  email: string | null;
   avatarUrl: string | null;
   role: string;
   joinedAt: string | null;
@@ -58,6 +59,7 @@ type Student = {
 type Teacher = {
   id: string;
   name: string;
+  email: string | null;
   avatarUrl: string | null;
   role: string;
   joinedAt: string | null;
@@ -91,13 +93,11 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
   const [filter, setFilter] = useState<'all' | 'online' | 'offline'>('all');
 
   useEffect(() => {
-    // Use cached data if available
+    // Show cached data immediately, but always refresh in background
     if (cachedData) {
       setData(cachedData);
       setLoading(false);
-      return;
     }
-    
     fetchGroupData();
   }, [classId, cachedData]);
 
@@ -294,6 +294,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                       </Badge>
                     )}
                   </div>
+                  <p className="text-xs text-muted-foreground truncate">{student.email || 'No email'}</p>
                   
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center justify-between text-sm">
@@ -360,7 +361,8 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                   )}
                 </DialogTitle>
               </DialogHeader>
-              
+              <p className="text-sm text-muted-foreground">{selectedStudent.email || 'No email'}</p>
+               
               <div className="space-y-6 mt-4">
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

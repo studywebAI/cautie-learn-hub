@@ -21,6 +21,7 @@ type Teacher = {
   created_at: string;
   profile?: {
     full_name: string | null;
+    email?: string | null;
     avatar_url: string | null;
   };
 };
@@ -80,6 +81,30 @@ export function TeacherList({ classId, currentUserId, isLoading, classOwnerId }:
         }
     };
 
+    const editDisplayName = async (teacherId: string, currentName: string | null | undefined) => {
+        const nextName = prompt('Enter new display name', currentName || '');
+        if (nextName === null) return;
+
+        try {
+            const response = await fetch(`/api/classes/${classId}/members`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: teacherId, display_name: nextName.trim() })
+            });
+
+            if (response.ok) {
+                toast({ title: 'Name updated' });
+                fetchTeachers();
+            } else {
+                const data = await response.json();
+                toast({ title: 'Failed to update name', description: data.error, variant: 'destructive' });
+            }
+        } catch (error) {
+            console.error('Failed to update name:', error);
+            toast({ title: 'Failed to update name', variant: 'destructive' });
+        }
+    };
+
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -116,34 +141,40 @@ export function TeacherList({ classId, currentUserId, isLoading, classOwnerId }:
                                     </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <div className="flex items-center gap-2">
-                                        <p className="font-medium">{teacher.profile?.full_name || 'Unknown Teacher'}</p>
-                                        {teacher.role === 'owner' && (
-                                            <Crown className="h-4 w-4 text-yellow-500" />
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground capitalize">{teacher.role}</p>
-                                </div>
-                            </div>
-                            {isOwner && teacher.role !== 'owner' && teacher.user_id !== currentUserId && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon">
+                                     <div className="flex items-center gap-2">
+                                        <p className="font-medium">{teacher.profile?.full_name || (teacher.profile?.email ? teacher.profile.email.split('@')[0] : 'Unknown Teacher')}</p>
+                                         {teacher.role === 'owner' && (
+                                             <Crown className="h-4 w-4 text-yellow-500" />
+                                         )}
+                                     </div>
+                                     <p className="text-xs text-muted-foreground">{teacher.profile?.email || 'No email'}</p>
+                                     <p className="text-xs text-muted-foreground capitalize">{teacher.role}</p>
+                                 </div>
+                             </div>
+                            {(teacher.user_id !== currentUserId) && (
+                                 <DropdownMenu>
+                                     <DropdownMenuTrigger asChild>
+                                         <Button variant="ghost" size="icon">
                                             <MoreVertical className="h-4 w-4" />
                                             <span className="sr-only">Teacher options</span>
                                         </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem 
-                                            className="text-destructive"
-                                            onClick={() => removeTeacher(teacher.user_id)}
-                                        >
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Remove from class
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            )}
+                                     </DropdownMenuTrigger>
+                                     <DropdownMenuContent align="end">
+                                         <DropdownMenuItem onClick={() => editDisplayName(teacher.user_id, teacher.profile?.full_name)}>
+                                             Edit name
+                                         </DropdownMenuItem>
+                                         {isOwner && teacher.role !== 'owner' && (
+                                         <DropdownMenuItem 
+                                             className="text-destructive"
+                                             onClick={() => removeTeacher(teacher.user_id)}
+                                         >
+                                             <Trash2 className="mr-2 h-4 w-4" />
+                                             Remove from class
+                                         </DropdownMenuItem>
+                                         )}
+                                     </DropdownMenuContent>
+                                 </DropdownMenu>
+                             )}
                         </div>
                     ))
                 )}
