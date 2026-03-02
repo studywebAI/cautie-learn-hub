@@ -33,12 +33,47 @@ export async function GET(
     
     // Fetch fresh student data from database
     const supabaseClient = await supabase;
-    const { data: students } = await supabaseClient
+    const { data: members, error: membersError } = await supabaseClient
       .from('class_members')
-      .select('user_id, profiles(id, full_name, avatar_url, email), created_at')
+      .select('user_id, created_at')
       .eq('class_id', params.classId)
-      .eq('role', 'student')
-      .order('profiles.full_name', { ascending: true });
+ 
+    if (membersError) {
+      throw new Error(membersError.message);
+    }
+
+    const memberUserIds = (members || []).map((m: any) => m.user_id);
+    let profiles: any[] = [];
+    if (memberUserIds.length > 0) {
+      const { data: profileRows, error: profilesError } = await supabaseClient
+        .from('profiles')
+        .select('id, full_name, avatar_url, email, subscription_type')
+        .in('id', memberUserIds);
+
+      if (profilesError) {
+        throw new Error(profilesError.message);
+      }
+      profiles = (profileRows || []).filter((p: any) => p.subscription_type !== 'teacher');
+    }
+
+    const profileById = new Map(profiles.map((p: any) => [p.id, p]));
+    const students = memberUserIds
+      .filter((id: string) => (profileById.get(id)?.subscription_type || 'student') !== 'teacher')
+      .map((userId: string) => {
+        const profile = profileById.get(userId);
+        const member = (members || []).find((m: any) => m.user_id === userId);
+        return {
+          user_id: userId,
+          created_at: member?.created_at || null,
+          profiles: {
+            id: userId,
+            full_name: profile?.full_name || 'Unknown Student',
+            avatar_url: profile?.avatar_url || null,
+            email: profile?.email || null
+          }
+        };
+      })
+      .sort((a: any, b: any) => (a.profiles.full_name || '').localeCompare(b.profiles.full_name || ''));
     
     const freshData = {
       data: students || [],

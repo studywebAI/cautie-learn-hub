@@ -212,7 +212,7 @@ export async function POST(
     if (students && students.length > 0) {
       const gradeEntries = students.map((s: any) => ({
         grade_set_id: gradeSet.id,
-        student_id: s.user_id,
+        student_id: s.id,
         grade_value: null,
         status: 'draft'
       }))

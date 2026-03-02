@@ -1,28 +1,23 @@
-import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+
+function logGroup(...args: any[]) {
+  console.log('[CLASS_GROUP]', ...args)
+}
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) { return cookieStore.get(name)?.value },
-          set(name: string, value: string, options: any) { cookieStore.set(name, value, options) },
-          remove(name: string, options: any) { cookieStore.set(name, '', { ...options, maxAge: 0 }) }
-        }
-      }
-    )
+    const cookieStore = cookies()
+    const supabase = await createClient(cookieStore)
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!user) {
+    if (authError || !user) {
+      logGroup('GET - Auth failed', { authError: authError?.message })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -46,11 +41,13 @@ export async function GET(
       .single()
 
     if (classError || !classData) {
+      logGroup('GET - Class not found', { classId, classError: classError?.message })
       return NextResponse.json({ error: 'Class not found' }, { status: 404 })
     }
 
     // Allow access if member
     if (!classMember) {
+      logGroup('GET - Member denied', { classId, userId: user.id, memberError: memberError?.message })
       return NextResponse.json({ error: 'Not a member of this class' }, { status: 403 })
     }
 
@@ -58,10 +55,11 @@ export async function GET(
     // (role column was removed - use subscription_type from profiles instead)
     const { data: classMembers, error: membersError } = await supabase
       .from('class_members')
-      .select('user_id, joined_at')
+      .select('user_id, created_at')
       .eq('class_id', classId)
 
     if (membersError) {
+      logGroup('GET - class_members failed', { classId, membersError: membersError.message })
       return NextResponse.json({ error: membersError.message }, { status: 500 })
     }
 
@@ -74,10 +72,11 @@ export async function GET(
     if (allUserIds.length > 0) {
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, last_seen, subscription_type')
+        .select('id, full_name, avatar_url, email, last_seen, subscription_type')
         .in('id', allUserIds)
       
       if (profilesError) {
+        logGroup('GET - profiles failed', { classId, profilesError: profilesError.message })
         return NextResponse.json({ error: profilesError.message }, { status: 500 })
       }
       profiles = profilesData || []
@@ -89,7 +88,8 @@ export async function GET(
     }
 
     // Filter students and teachers based on subscription_type (global role)
-    const studentIds = allUserIds.filter(uid => subscriptionTypes[uid] === 'student')
+    // Treat unknown profile role as student so members without a profile don't disappear.
+    const studentIds = allUserIds.filter(uid => subscriptionTypes[uid] !== 'teacher')
     const teacherIds = allUserIds.filter(uid => subscriptionTypes[uid] === 'teacher')
 
     // Get all assignments for the class
@@ -200,9 +200,10 @@ export async function GET(
       return {
         id: studentId,
         name: profile?.full_name || 'Unknown Student',
+        email: profile?.email || null,
         avatarUrl: profile?.avatar_url,
         role: 'student',
-        joinedAt: member?.joined_at,
+        joinedAt: member?.created_at,
         lastSeen: profile?.last_seen,
         onlineStatus: getOnlineStatus(profile?.last_seen),
         stats: {
@@ -231,9 +232,10 @@ export async function GET(
       return {
         id: teacherId,
         name: profile?.full_name || 'Unknown Teacher',
+        email: profile?.email || null,
         avatarUrl: profile?.avatar_url,
         role: 'teacher',
-        joinedAt: member?.joined_at,
+        joinedAt: member?.created_at,
         lastSeen: profile?.last_seen,
         onlineStatus: getOnlineStatus(profile?.last_seen)
       }
@@ -257,7 +259,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Error fetching group data:', error)
+    logGroup('GET - Unexpected error', { error: String(error) })
     return NextResponse.json({ error: 'Internal server error: ' + String(error) }, { status: 500 })
   }
 }

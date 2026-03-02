@@ -33,7 +33,7 @@ export async function GET(
     
     // Fetch fresh data from database
     const supabaseClient = await supabase;
-    const [classData, students, analytics] = await Promise.all([
+    const [classData, members, analytics] = await Promise.all([
       supabaseClient
         .from('classes')
         .select('*')
@@ -41,10 +41,9 @@ export async function GET(
         .single(),
       supabaseClient
         .from('class_members')
-        .select('user_id, profiles(id, full_name, avatar_url, email), created_at')
+        .select('user_id, created_at')
         .eq('class_id', params.classId)
-        .eq('role', 'student')
-        .order('profiles.full_name', { ascending: true }),
+        .order('created_at', { ascending: true }),
       supabaseClient
         .from('analytics')
         .select('*')
@@ -59,9 +58,38 @@ export async function GET(
       );
     }
     
+    const memberUserIds = (members.data || []).map((m: any) => m.user_id);
+    let profiles: any[] = [];
+    if (memberUserIds.length > 0) {
+      const { data: profileRows } = await supabaseClient
+        .from('profiles')
+        .select('id, full_name, avatar_url, email, subscription_type')
+        .in('id', memberUserIds);
+      profiles = profileRows || [];
+    }
+
+    const profileById = new Map(profiles.map((p: any) => [p.id, p]));
+    const students = memberUserIds
+      .filter((id: string) => (profileById.get(id)?.subscription_type || 'student') !== 'teacher')
+      .map((userId: string) => {
+        const profile = profileById.get(userId);
+        const member = (members.data || []).find((m: any) => m.user_id === userId);
+        return {
+          user_id: userId,
+          created_at: member?.created_at || null,
+          profiles: {
+            id: userId,
+            full_name: profile?.full_name || 'Unknown Student',
+            avatar_url: profile?.avatar_url || null,
+            email: profile?.email || null
+          }
+        };
+      })
+      .sort((a: any, b: any) => (a.profiles.full_name || '').localeCompare(b.profiles.full_name || ''));
+
     const freshData = {
       class: classData.data,
-      students: students.data || [],
+      students,
       analytics: analytics.data || null,
       lastUpdated: new Date().toISOString()
     };

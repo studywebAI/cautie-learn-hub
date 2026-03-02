@@ -30,8 +30,7 @@ export async function GET(
           feedback_text,
           status,
           tag,
-          updated_at,
-          student:student_id(id, full_name, email)
+          updated_at
         )
       `)
       .eq('id', gradeSetId)
@@ -46,8 +45,37 @@ export async function GET(
       return NextResponse.json({ error: 'Grade set not found' }, { status: 404 })
     }
 
-    // Sort student grades by name
-    const sortedGrades = (gradeSet.student_grades || []).sort((a: any, b: any) => {
+    const rawStudentGrades = gradeSet.student_grades || []
+    const studentIds = Array.from(new Set(rawStudentGrades.map((g: any) => g.student_id).filter(Boolean)))
+
+    let profileById = new Map<string, { id: string; full_name: string | null; email: string | null }>()
+    if (studentIds.length > 0) {
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', studentIds)
+
+      if (profilesError) {
+        return NextResponse.json({ error: profilesError.message }, { status: 500 })
+      }
+
+      profileById = new Map((profiles || []).map((p: any) => [p.id, p]))
+    }
+
+    const hydratedGrades = rawStudentGrades.map((g: any) => {
+      const profile = profileById.get(g.student_id)
+      return {
+        ...g,
+        student: {
+          id: g.student_id,
+          full_name: profile?.full_name || 'Unknown Student',
+          email: profile?.email || null
+        }
+      }
+    })
+
+    // Sort student grades by display name
+    const sortedGrades = hydratedGrades.sort((a: any, b: any) => {
       const nameA = a.student?.full_name || ''
       const nameB = b.student?.full_name || ''
       return nameA.localeCompare(nameB)

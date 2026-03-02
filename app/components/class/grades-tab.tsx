@@ -491,7 +491,8 @@ function NewGradesWizard({
                     students.map((student) => (
                       <div key={student.student_id} className="flex items-center gap-3 p-3">
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{student.student.email}</p>
+                          <p className="font-medium truncate">{student.student.full_name || student.student.email || 'Unknown Student'}</p>
+                          <p className="text-xs text-muted-foreground truncate">{student.student.email || 'No email available'}</p>
                         </div>
                         <InputWithTypingPlaceholder
                           placeholders={gradeExamples}
@@ -952,7 +953,8 @@ function EditGradesDetail({
             {students.map((student) => (
               <div key={student.student_id} className="flex items-center gap-3 p-3">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{student.student?.email || 'Unknown'}</p>
+                  <p className="font-medium truncate">{student.student?.full_name || student.student?.email || 'Unknown Student'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{student.student?.email || 'No email available'}</p>
                 </div>
                 <InputWithTypingPlaceholder
                   placeholders={gradeExamples}

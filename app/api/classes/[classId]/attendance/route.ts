@@ -1,6 +1,10 @@
-import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+
+function logAttendance(...args: any[]) {
+  console.log('[CLASS_ATTENDANCE]', ...args)
+}
 
 // GET - Fetch all students with their attendance records for a class
 export async function GET(
@@ -10,41 +14,35 @@ export async function GET(
   try {
     const resolvedParams = await params
     const { classId } = resolvedParams
-    console.log(`\n🌐 [ATTENDANCE_GET] Fetching attendance for class: ${classId}`)
+    logAttendance('GET - Start', { classId })
     
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) { return cookieStore.get(name)?.value },
-          set(name: string, value: string, options: any) { cookieStore.set(name, value, options) },
-          remove(name: string, options: any) { cookieStore.set(name, '', { ...options, maxAge: 0 }) }
-        }
-      }
-    )
+    const cookieStore = cookies()
+    const supabase = await createClient(cookieStore)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    console.log('[ATTENDANCE_GET] User:', user?.id)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    logAttendance('GET - User', { userId: user?.id, authError: authError?.message })
 
-    if (!user) {
-      console.log('[ATTENDANCE_GET] ❌ No user')
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Check if user is a teacher via class_members + subscription_type
     // (owner_id column was removed - all teachers are now equal via class_members)
-    const { data: userProfile } = await supabase
+    const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
       .select('subscription_type')
       .eq('id', user.id)
       .single()
 
+    if (profileError) {
+      logAttendance('GET - User profile failed', { classId, userId: user.id, profileError: profileError.message })
+      return NextResponse.json({ error: profileError.message }, { status: 500 })
+    }
+
     const isTeacher = userProfile?.subscription_type === 'teacher'
     
     // Also check if user is a member of this class
-    const { data: classMember } = await supabase
+    const { data: classMember, error: memberCheckError } = await supabase
       .from('class_members')
       .select('user_id')
       .eq('class_id', classId)
@@ -55,6 +53,7 @@ export async function GET(
     const canAccess = isTeacher && classMember
     
     if (!canAccess) {
+      logAttendance('GET - Forbidden', { classId, userId: user.id, memberCheckError: memberCheckError?.message })
       return NextResponse.json({ error: 'Only teachers can view attendance' }, { status: 403 })
     }
 
@@ -65,40 +64,31 @@ export async function GET(
       .select('user_id, joined_at')
       .eq('class_id', classId)
 
-    console.log('[ATTENDANCE_GET] All members:', { count: classMembers?.length, error: membersError })
+    logAttendance('GET - Class members', { classId, count: classMembers?.length, membersError: membersError?.message })
 
     const memberUserIds = (classMembers || []).map(m => m.user_id)
-    
-    // Then filter by subscription_type = 'student'
-    let studentIds: string[] = []
+    let profilesData: any[] = []
     if (memberUserIds.length > 0) {
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesFetchError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, full_name, avatar_url, email, subscription_type')
         .in('id', memberUserIds)
-        .eq('subscription_type', 'student')
-      
-      studentIds = (profiles || []).map(p => p.id)
+
+      if (profilesFetchError) {
+        logAttendance('GET - Members profile fetch failed', { classId, profilesFetchError: profilesFetchError.message })
+        return NextResponse.json({ error: profilesFetchError.message }, { status: 500 })
+      }
+      profilesData = profiles || []
     }
 
     if (membersError) {
-      console.error('[ATTENDANCE_GET] Error fetching students:', membersError)
+      logAttendance('GET - Error fetching class members', { classId, membersError: membersError.message })
       return NextResponse.json({ error: membersError.message }, { status: 500 })
     }
 
-    // Get profiles for students
-    let students: any[] = []
-    if (studentIds.length > 0) {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .in('id', studentIds)
-      
-      if (profilesError) {
-        return NextResponse.json({ error: profilesError.message }, { status: 500 })
-      }
-      students = profilesData || []
-    }
+    const profileById = new Map(profilesData.map((p: any) => [p.id, p]))
+    // Treat unknown profile role as student so missing profiles don't hide members.
+    const studentIds = memberUserIds.filter((id: string) => profileById.get(id)?.subscription_type !== 'teacher')
 
     // Get attendance records for all students
     let attendanceRecords = []
@@ -110,14 +100,16 @@ export async function GET(
         .in('student_id', studentIds)
       
       if (attendanceError) {
+        logAttendance('GET - Attendance records failed', { classId, attendanceError: attendanceError.message })
         return NextResponse.json({ error: attendanceError.message }, { status: 500 })
       }
       attendanceRecords = attendanceData || []
     }
 
     // Calculate stats per student
-    const studentsWithAttendance = students.map((student: any) => {
-      const studentRecords = attendanceRecords.filter((r: any) => r.student_id === student.id)
+    const studentsWithAttendance = studentIds.map((studentId: string) => {
+      const student = profileById.get(studentId)
+      const studentRecords = attendanceRecords.filter((r: any) => r.student_id === studentId)
       
       const absentCount = studentRecords.filter((r: any) => r.is_present === false).length
       const homeworkIncompleteCount = studentRecords.filter((r: any) => r.has_homework_incomplete === true).length
@@ -130,9 +122,10 @@ export async function GET(
       )[0]
 
       return {
-        id: student.id,
-        name: student.full_name || 'Unknown Student',
-        avatarUrl: student.avatar_url,
+        id: studentId,
+        name: student?.full_name || 'Unknown Student',
+        email: student?.email || null,
+        avatarUrl: student?.avatar_url || null,
         isPresent: latestRecord?.is_present ?? null,
         hasHomeworkIncomplete: latestRecord?.has_homework_incomplete ?? false,
         wasSentOut: latestRecord?.was_sent_out ?? false,
@@ -147,7 +140,7 @@ export async function GET(
           totalTooLate: tooLateCount
         }
       }
-    })
+    }).sort((a: any, b: any) => a.name.localeCompare(b.name))
 
     return NextResponse.json({
       classId,
@@ -156,7 +149,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Error fetching attendance:', error)
+    logAttendance('GET - Unexpected error', { error: String(error) })
     return NextResponse.json({ error: 'Internal server error: ' + String(error) }, { status: 500 })
   }
 }
@@ -167,18 +160,8 @@ export async function POST(
   { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) { return cookieStore.get(name)?.value },
-          set(name: string, value: string, options: any) { cookieStore.set(name, value, options) },
-          remove(name: string, options: any) { cookieStore.set(name, '', { ...options, maxAge: 0 }) }
-        }
-      }
-    )
+    const cookieStore = cookies()
+    const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()
 
