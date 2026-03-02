@@ -1,4 +1,4 @@
-  e client';
+'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ChevronRight, Search, Loader2, BookOpen, Check, Keyboard } from 'lucide-react';

@@ -512,6 +512,13 @@ const toNumeric = (value: string): number | null => {
   return parsed;
 };
 
+const getStatusBadgeVariant = (status: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
+  if (status === 'final') return 'default';
+  if (status === 'excused') return 'secondary';
+  if (status === 'missing') return 'destructive';
+  return 'outline';
+};
+
 // =============================================
 // NEW GRADES WIZARD (MULTI-STEP)
 // =============================================
@@ -541,6 +548,7 @@ function NewGradesWizard({
   const [maxPoints, setMaxPoints] = useState(DEFAULT_MAX_POINTS);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (step >= 3) {
@@ -576,6 +584,7 @@ function NewGradesWizard({
   };
 
   const createGradeSet = async () => {
+    setValidationError(null);
     setLoading(true);
     try {
       // Create grade set first
@@ -598,6 +607,20 @@ function NewGradesWizard({
       
       // If we have grades, update them
       if (students.length > 0) {
+        const invalidScore = students.find((s) =>
+          typeof s.grade_numeric === 'number' &&
+          typeof (s.max_points ?? maxPoints) === 'number' &&
+          s.grade_numeric > (s.max_points ?? maxPoints)
+        );
+
+        if (invalidScore) {
+          setValidationError(
+            `Score cannot be higher than max points for ${invalidScore.student.full_name || invalidScore.student.email || 'a student'}.`
+          );
+          setLoading(false);
+          return;
+        }
+
         const gradesWithValues = students.filter(s => {
           const hasNumeric = typeof s.grade_numeric === 'number' && !Number.isNaN(s.grade_numeric);
           const hasText = !!(s.grade_value && s.grade_value.trim() !== '');
@@ -636,6 +659,7 @@ function NewGradesWizard({
   };
 
   const updateStudentGrade = (studentId: string, value: string) => {
+    setValidationError(null);
     const numeric = toNumeric(value);
     setStudents(students.map(s => 
       s.student_id === studentId
@@ -650,6 +674,7 @@ function NewGradesWizard({
   };
 
   const updateStudentStatus = (studentId: string, status: GradeStatus) => {
+    setValidationError(null);
     setStudents(students.map(s => {
       if (s.student_id !== studentId) return s;
       if (status === 'missing') {
@@ -664,6 +689,7 @@ function NewGradesWizard({
 
   // Apply "everyone" grade to all students (except excused)
   const applyToAll = () => {
+    setValidationError(null);
     const numeric = toNumeric(everyoneGrade);
     setStudents(students.map(s => {
       if (s.status === 'excused') return s;
@@ -814,6 +840,15 @@ function NewGradesWizard({
               {/* Students list */}
               <div className="space-y-2">
                 <Label className="text-base font-semibold">Students</Label>
+                {validationError && (
+                  <p className="text-sm text-red-600">{validationError}</p>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 px-3 text-xs text-muted-foreground">
+                  <div className="md:col-span-6">Student</div>
+                  <div className="md:col-span-2 text-center">Score</div>
+                  <div className="md:col-span-2 text-center">Max</div>
+                  <div className="md:col-span-2 text-center">Status</div>
+                </div>
                 <div className="border rounded-lg divide-y max-h-96 overflow-auto">
                   {students.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground">
@@ -856,6 +891,13 @@ function NewGradesWizard({
                             <option key={status} value={status}>{status}</option>
                           ))}
                         </select>
+                        {typeof student.grade_numeric === 'number' &&
+                          typeof (student.max_points ?? maxPoints) === 'number' &&
+                          student.grade_numeric > (student.max_points ?? maxPoints) && (
+                            <p className="md:col-span-12 text-xs text-red-600">
+                              Score cannot exceed max points.
+                            </p>
+                          )}
                       </div>
                     ))
                   )}
@@ -1078,6 +1120,7 @@ function EditGradesDetail({
   const [students, setStudents] = useState<any[]>([]);
   const [everyoneGrade, setEveryoneGrade] = useState('');
   const [maxPoints, setMaxPoints] = useState(DEFAULT_MAX_POINTS);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     loadGradeSet();
@@ -1107,6 +1150,7 @@ function EditGradesDetail({
   };
 
   const updateStudentGrade = (studentId: string, value: string) => {
+    setValidationError(null);
     const numeric = toNumeric(value);
     setStudents(students.map(s => 
       s.student_id === studentId
@@ -1121,6 +1165,7 @@ function EditGradesDetail({
   };
 
   const updateStudentStatus = (studentId: string, status: GradeStatus) => {
+    setValidationError(null);
     setStudents(students.map(s => {
       if (s.student_id !== studentId) return s;
       if (status === 'missing' || status === 'excused') {
@@ -1131,6 +1176,7 @@ function EditGradesDetail({
   };
 
   const applyToAll = () => {
+    setValidationError(null);
     const numeric = toNumeric(everyoneGrade);
     setStudents(students.map(s => {
       if (s.status === 'excused') return s;
@@ -1145,6 +1191,20 @@ function EditGradesDetail({
   };
 
   const saveGrades = async () => {
+    setValidationError(null);
+    const invalidScore = students.find((s: any) =>
+      typeof s.grade_numeric === 'number' &&
+      typeof (s.max_points ?? maxPoints) === 'number' &&
+      s.grade_numeric > (s.max_points ?? maxPoints)
+    );
+
+    if (invalidScore) {
+      setValidationError(
+        `Score cannot be higher than max points for ${invalidScore.student?.full_name || invalidScore.student?.email || 'a student'}.`
+      );
+      return;
+    }
+
     setSaving(true);
     try {
       const response = await fetch(`/api/classes/${classId}/grades/${gradeSetId}`, {
@@ -1175,6 +1235,20 @@ function EditGradesDetail({
   };
 
   const publishGrades = async () => {
+    setValidationError(null);
+    const invalidScore = students.find((s: any) =>
+      typeof s.grade_numeric === 'number' &&
+      typeof (s.max_points ?? maxPoints) === 'number' &&
+      s.grade_numeric > (s.max_points ?? maxPoints)
+    );
+
+    if (invalidScore) {
+      setValidationError(
+        `Fix invalid score before publishing (${invalidScore.student?.full_name || invalidScore.student?.email}).`
+      );
+      return;
+    }
+
     setSaving(true);
     try {
       const response = await fetch(`/api/classes/${classId}/grades/${gradeSetId}`, {
@@ -1237,6 +1311,14 @@ function EditGradesDetail({
     );
   }
 
+  const incompleteCount = students.filter((s: any) => {
+    if (s.status === 'excused') return false;
+    const hasNumeric = typeof s.grade_numeric === 'number' && !Number.isNaN(s.grade_numeric);
+    const hasText = !!(s.grade_value && String(s.grade_value).trim() !== '');
+    return !(hasNumeric || hasText);
+  }).length;
+  const canPublish = gradeSet.status === 'draft' && incompleteCount === 0 && !saving;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -1250,6 +1332,7 @@ function EditGradesDetail({
             <Badge variant={gradeSet.status === 'published' ? 'default' : 'secondary'}>
               {gradeSet.status}
             </Badge>
+            <Badge variant="outline">Professional Mode</Badge>
           </div>
           <p className="text-muted-foreground">
             {gradeSet.category} • {gradeSet.weight}x weight • {gradeSet.graded_count}/{gradeSet.total_students} graded
@@ -1262,7 +1345,7 @@ function EditGradesDetail({
             Delete
           </Button>
           {gradeSet.status === 'draft' && (
-            <Button onClick={publishGrades} disabled={saving}>
+            <Button onClick={publishGrades} disabled={!canPublish}>
               <Send className="h-4 w-4 mr-1" />
               Publish
             </Button>
@@ -1308,6 +1391,14 @@ function EditGradesDetail({
           <CardTitle className="text-base">Student Grades</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {validationError && (
+            <p className="text-sm text-red-600">{validationError}</p>
+          )}
+          {gradeSet.status === 'draft' && incompleteCount > 0 && (
+            <p className="text-sm text-amber-600">
+              Publish is disabled until all non-excused students have a grade. Missing: {incompleteCount}
+            </p>
+          )}
           {/* Everyone grade */}
           <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
             <Label className="font-semibold flex items-center gap-2">
@@ -1339,12 +1430,23 @@ function EditGradesDetail({
           </div>
 
           {/* Students list */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 px-3 text-xs text-muted-foreground">
+            <div className="md:col-span-6">Student</div>
+            <div className="md:col-span-2 text-center">Score</div>
+            <div className="md:col-span-2 text-center">Max</div>
+            <div className="md:col-span-2 text-center">Status</div>
+          </div>
           <div className="border rounded-lg divide-y">
             {students.map((student) => (
               <div key={student.student_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-3 items-center">
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{student.student?.full_name || student.student?.email || 'Unknown Student'}</p>
                   <p className="text-xs text-muted-foreground truncate">{student.student?.email || 'No email available'}</p>
+                  <div className="mt-1">
+                    <Badge variant={getStatusBadgeVariant(student.status || 'draft')}>
+                      {student.status || 'draft'}
+                    </Badge>
+                  </div>
                 </div>
                 <Input
                   type="number"
@@ -1375,6 +1477,13 @@ function EditGradesDetail({
                     <option key={status} value={status}>{status}</option>
                   ))}
                 </select>
+                {typeof student.grade_numeric === 'number' &&
+                  typeof (student.max_points ?? maxPoints) === 'number' &&
+                  student.grade_numeric > (student.max_points ?? maxPoints) && (
+                    <p className="md:col-span-12 text-xs text-red-600">
+                      Score cannot exceed max points.
+                    </p>
+                  )}
               </div>
             ))}
           </div>
