@@ -9,11 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Plus, ChevronRight, ChevronLeft, ArrowLeft, Trash2, 
   Edit, Eye, Loader2, Save, Send, X, Check, ClipboardList,
-  BarChart3, Users, BookOpen, Target
+  BarChart3, Users, BookOpen, Target, History, FileText
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { InputWithTypingPlaceholder } from '@/components/ui/input-with-typing-placeholder';
 
 type GradeSet = {
   id: string;
@@ -34,6 +33,8 @@ type StudentGrade = {
   id: string;
   student_id: string;
   grade_value: string | null;
+  grade_numeric?: number | null;
+  max_points?: number | null;
   feedback_text?: string;
   status: string;
   tag?: string;
@@ -45,12 +46,30 @@ type Subject = {
   title: string;
 };
 
+type GradeHistoryEvent = {
+  id: string;
+  grade_set_id: string;
+  grade_set_title: string;
+  student_id: string;
+  student_name: string;
+  student_email: string | null;
+  changed_by: string;
+  changed_by_name: string;
+  old_value: string | null;
+  new_value: string | null;
+  old_status: string | null;
+  new_status: string | null;
+  change_type: string;
+  change_reason: string | null;
+  created_at: string;
+};
+
 // =============================================
 // MAIN GRADES TAB COMPONENT
 // =============================================
 
 export function GradesTab({ classId }: { classId: string }) {
-  const [view, setView] = useState<'menu' | 'new' | 'edit' | 'edit-detail'>('menu');
+  const [view, setView] = useState<'menu' | 'new' | 'edit' | 'edit-detail' | 'history' | 'reports'>('menu');
   const [gradeSets, setGradeSets] = useState<GradeSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGradeSetId, setSelectedGradeSetId] = useState<string | null>(null);
@@ -105,6 +124,24 @@ export function GradesTab({ classId }: { classId: string }) {
     );
   }
 
+  if (view === 'history') {
+    return (
+      <GradesHistoryView
+        classId={classId}
+        onBack={() => setView('menu')}
+      />
+    );
+  }
+
+  if (view === 'reports') {
+    return (
+      <GradesReportsView
+        gradeSets={gradeSets}
+        onBack={() => setView('menu')}
+      />
+    );
+  }
+
   if (view === 'edit') {
     return (
       <EditGradesList
@@ -136,7 +173,7 @@ export function GradesTab({ classId }: { classId: string }) {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           {/* New Grades Card */}
           <Card className="border-2 border-black/20 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => setView('new')}>
             <CardHeader className="pb-4">
@@ -177,6 +214,52 @@ export function GradesTab({ classId }: { classId: string }) {
               <p className="text-sm text-muted-foreground">
                 {gradeSets.length} grade set{gradeSets.length !== 1 ? 's' : ''} available. 
                 Click to view and manage.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* History Card */}
+          <Card
+            className="border-2 border-black/20 hover:border-primary/50 transition-colors cursor-pointer"
+            onClick={() => setView('history')}
+          >
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-lg">
+                <div className="p-2 rounded-lg bg-muted">
+                  <History className="h-6 w-6" />
+                </div>
+                History
+              </CardTitle>
+              <CardDescription>
+                Track every grade update with who changed what and when
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Audit timeline for compliance, transparency, and quick troubleshooting.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Reports Card */}
+          <Card
+            className="border-2 border-black/20 hover:border-primary/50 transition-colors cursor-pointer"
+            onClick={() => setView('reports')}
+          >
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-lg">
+                <div className="p-2 rounded-lg bg-muted">
+                  <FileText className="h-6 w-6" />
+                </div>
+                Reports
+              </CardTitle>
+              <CardDescription>
+                Get class-level performance insights from your grade sets
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Class averages, pass-rate signals, and top/bottom performers.
               </p>
             </CardContent>
           </Card>
@@ -222,11 +305,212 @@ export function GradesTab({ classId }: { classId: string }) {
   );
 }
 
-// Grade examples for typing animation - randomized
-const gradeExamples = [
-  '7.5', '8', '9', '10', '6.5', '5.5', '4', '9.5', '7', '8.5',
-  'A', 'B', 'C', 'A+', 'B-', 'D', 'F', 'A-', 'B+', 'C+'
-];
+function GradesHistoryView({
+  classId,
+  onBack
+}: {
+  classId: string;
+  onBack: () => void;
+}) {
+  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<GradeHistoryEvent[]>([]);
+  const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/classes/${classId}/grades/history`);
+        if (!response.ok) throw new Error('Failed to load grade history');
+        const data = await response.json();
+        setEvents(data.events || []);
+      } catch (error) {
+        console.error('Failed to load grade history:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadHistory();
+  }, [classId]);
+
+  const filtered = events.filter((event) => {
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    return (
+      event.grade_set_title.toLowerCase().includes(q) ||
+      event.student_name.toLowerCase().includes(q) ||
+      event.changed_by_name.toLowerCase().includes(q) ||
+      (event.change_reason || '').toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={onBack}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold">Grade History</h1>
+          <p className="text-muted-foreground">Audit timeline of grade changes</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="pt-6">
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by student, grade set, teacher, or reason..."
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Events</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No grade history found.</p>
+          ) : (
+            <div className="space-y-3">
+              {filtered.map((event) => (
+                <div key={event.id} className="rounded-lg border p-3">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <Badge variant="outline">{event.change_type}</Badge>
+                    <p className="font-medium">{event.student_name}</p>
+                    <span className="text-muted-foreground text-sm">in</span>
+                    <p className="text-sm">{event.grade_set_title}</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {event.old_value ?? '-'} {'->'} {event.new_value ?? '-'} · by {event.changed_by_name} · {format(new Date(event.created_at), 'PPp')}
+                  </p>
+                  {event.change_reason && (
+                    <p className="text-sm mt-1">Reason: {event.change_reason}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function GradesReportsView({
+  gradeSets,
+  onBack
+}: {
+  gradeSets: GradeSet[];
+  onBack: () => void;
+}) {
+  const withAverage = gradeSets.filter((g) => g.average !== null);
+  const classAverage = withAverage.length > 0
+    ? withAverage.reduce((sum, g) => sum + (g.average || 0), 0) / withAverage.length
+    : null;
+  const publishedCount = gradeSets.filter((g) => g.status === 'published').length;
+  const draftCount = gradeSets.filter((g) => g.status === 'draft').length;
+  const sortedByAverage = [...withAverage].sort((a, b) => (b.average || 0) - (a.average || 0));
+  const topSet = sortedByAverage[0];
+  const lowSet = sortedByAverage[sortedByAverage.length - 1];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={onBack}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold">Grade Reports</h1>
+          <p className="text-muted-foreground">Class-level performance overview</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Grade Sets</p>
+            <p className="text-2xl font-bold mt-1">{gradeSets.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Published</p>
+            <p className="text-2xl font-bold mt-1">{publishedCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Drafts</p>
+            <p className="text-2xl font-bold mt-1">{draftCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Overall Average</p>
+            <p className="text-2xl font-bold mt-1">{classAverage !== null ? classAverage.toFixed(1) : '-'}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Top Performing Grade Set</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topSet ? (
+              <div>
+                <p className="font-semibold">{topSet.title}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Average: {topSet.average?.toFixed(1)} · {topSet.graded_count}/{topSet.total_students} graded
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No numeric grade data yet.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Needs Attention</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {lowSet ? (
+              <div>
+                <p className="font-semibold">{lowSet.title}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Average: {lowSet.average?.toFixed(1)} · {lowSet.graded_count}/{lowSet.total_students} graded
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No numeric grade data yet.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+const DEFAULT_MAX_POINTS = 100;
+const GRADE_STATUSES = ['draft', 'missing', 'excused', 'final'] as const;
+type GradeStatus = (typeof GRADE_STATUSES)[number];
+
+const toNumeric = (value: string): number | null => {
+  if (!value.trim()) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  return parsed;
+};
 
 // =============================================
 // NEW GRADES WIZARD (MULTI-STEP)
@@ -254,6 +538,7 @@ function NewGradesWizard({
   // Step 3: Students & Grades
   const [students, setStudents] = useState<StudentGrade[]>([]);
   const [everyoneGrade, setEveryoneGrade] = useState('');
+  const [maxPoints, setMaxPoints] = useState(DEFAULT_MAX_POINTS);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
 
@@ -313,7 +598,11 @@ function NewGradesWizard({
       
       // If we have grades, update them
       if (students.length > 0) {
-        const gradesWithValues = students.filter(s => s.grade_value && s.grade_value.trim() !== '');
+        const gradesWithValues = students.filter(s => {
+          const hasNumeric = typeof s.grade_numeric === 'number' && !Number.isNaN(s.grade_numeric);
+          const hasText = !!(s.grade_value && s.grade_value.trim() !== '');
+          return hasNumeric || hasText || s.status === 'excused';
+        });
         
         if (gradesWithValues.length > 0) {
           const updateResponse = await fetch(`/api/classes/${classId}/grades/${data.grade_set.id}`, {
@@ -323,8 +612,10 @@ function NewGradesWizard({
               action: 'update_student_grades',
               student_grades: gradesWithValues.map(s => ({
                 id: s.id,
+                grade_numeric: s.grade_numeric ?? null,
                 grade_value: s.grade_value,
-                status: 'draft'
+                max_points: s.max_points ?? maxPoints,
+                status: s.status || 'draft'
               }))
             })
           });
@@ -345,14 +636,45 @@ function NewGradesWizard({
   };
 
   const updateStudentGrade = (studentId: string, value: string) => {
+    const numeric = toNumeric(value);
     setStudents(students.map(s => 
-      s.student_id === studentId ? { ...s, grade_value: value } : s
+      s.student_id === studentId
+        ? {
+            ...s,
+            grade_value: value.trim() ? value : null,
+            grade_numeric: numeric,
+            status: numeric === null && !value.trim() ? (s.status === 'excused' ? 'excused' : 'missing') : 'draft'
+          }
+        : s
     ));
   };
 
-  // Apply "everyone" grade to all students
+  const updateStudentStatus = (studentId: string, status: GradeStatus) => {
+    setStudents(students.map(s => {
+      if (s.student_id !== studentId) return s;
+      if (status === 'missing') {
+        return { ...s, status, grade_value: null, grade_numeric: null };
+      }
+      if (status === 'excused') {
+        return { ...s, status, grade_value: null, grade_numeric: null };
+      }
+      return { ...s, status };
+    }));
+  };
+
+  // Apply "everyone" grade to all students (except excused)
   const applyToAll = () => {
-    setStudents(students.map(s => ({ ...s, grade_value: everyoneGrade })));
+    const numeric = toNumeric(everyoneGrade);
+    setStudents(students.map(s => {
+      if (s.status === 'excused') return s;
+      return {
+        ...s,
+        grade_value: everyoneGrade.trim() ? everyoneGrade : null,
+        grade_numeric: numeric,
+        max_points: maxPoints,
+        status: numeric === null && !everyoneGrade.trim() ? 'missing' : 'draft'
+      };
+    }));
   };
 
   return (
@@ -463,14 +785,25 @@ function NewGradesWizard({
               <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
                 <Label className="text-base font-semibold flex items-center gap-2">
                   <Users className="h-4 w-4" />
-                  Everyone
+                  Everyone (Numeric)
                 </Label>
-                <div className="flex gap-2">
-                  <InputWithTypingPlaceholder
-                    placeholders={gradeExamples}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <Input
+                    type="number"
+                    step="0.1"
                     value={everyoneGrade}
                     onChange={(e) => setEveryoneGrade(e.target.value)}
                     className="border-2 border-black/20"
+                    placeholder="e.g. 82.5"
+                  />
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    value={maxPoints}
+                    onChange={(e) => setMaxPoints(Number(e.target.value) || DEFAULT_MAX_POINTS)}
+                    className="border-2 border-black/20"
+                    placeholder="Max points"
                   />
                   <Button onClick={applyToAll} variant="outline">
                     Apply
@@ -489,17 +822,40 @@ function NewGradesWizard({
                     </div>
                   ) : (
                     students.map((student) => (
-                      <div key={student.student_id} className="flex items-center gap-3 p-3">
+                      <div key={student.student_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-3 items-center">
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{student.student.full_name || student.student.email || 'Unknown Student'}</p>
                           <p className="text-xs text-muted-foreground truncate">{student.student.email || 'No email available'}</p>
                         </div>
-                        <InputWithTypingPlaceholder
-                          placeholders={gradeExamples}
-                          value={student.grade_value || ''}
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={student.grade_numeric ?? ''}
                           onChange={(e) => updateStudentGrade(student.student_id, e.target.value)}
-                          className="w-24 text-center"
+                          className="md:col-span-2 text-center"
+                          placeholder="Score"
                         />
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="1"
+                          value={student.max_points ?? maxPoints}
+                          onChange={(e) => {
+                            const next = Number(e.target.value) || DEFAULT_MAX_POINTS;
+                            setStudents(students.map(s => s.student_id === student.student_id ? { ...s, max_points: next } : s));
+                          }}
+                          className="md:col-span-2 text-center"
+                          placeholder="Max"
+                        />
+                        <select
+                          value={student.status || 'draft'}
+                          onChange={(e) => updateStudentStatus(student.student_id, e.target.value as GradeStatus)}
+                          className="md:col-span-2 border rounded-md p-2 text-sm"
+                        >
+                          {GRADE_STATUSES.map((status) => (
+                            <option key={status} value={status}>{status}</option>
+                          ))}
+                        </select>
                       </div>
                     ))
                   )}
@@ -560,11 +916,18 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
           
           // Transform class members to student grades format
           const studentGrades: StudentGrade[] = members
-            .filter((m: any) => m.role === 'student')
+            .filter((m: any) => (
+              m.role === 'student' ||
+              m.subscription_type === 'student' ||
+              m.profile?.subscription_type === 'student' ||
+              m.profiles?.subscription_type === 'student'
+            ))
             .map((m: any) => ({
               id: m.id || crypto.randomUUID(),
               student_id: m.user_id || m.id,
+              grade_numeric: null,
               grade_value: null,
+              max_points: DEFAULT_MAX_POINTS,
               status: 'draft',
               student: {
                 id: m.user_id || m.id,
@@ -579,29 +942,7 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
           const errorText = await response.text();
           console.log('[StudentGrader] ❌ Members API error:', response.status, errorText);
           
-          // Fallback: try to use grades API to create temp set
-          const gradesResponse = await fetch(`/api/classes/${classId}/grades`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              title: '_temp_grade_set_', 
-              weight: 1 
-            })
-          });
-          
-          console.log('[StudentGrader] Grades API response:', gradesResponse.status, gradesResponse.ok);
-          
-          if (gradesResponse.ok) {
-            const gradeData = await gradesResponse.json();
-            const gradeSetResp = await fetch(`/api/classes/${classId}/grades/${gradeData.grade_set.id}`);
-            if (gradeSetResp.ok) {
-              const gradeSetData = await gradeSetResp.json();
-              onStudentsLoaded(gradeSetData.grade_set.student_grades || []);
-              await fetch(`/api/classes/${classId}/grades/${gradeData.grade_set.id}`, { method: 'DELETE' });
-            }
-          } else {
-            setError('Could not load students. API error: ' + response.status);
-          }
+          setError('Could not load students. API error: ' + response.status);
         }
       } catch (err: any) {
         console.error('[StudentGrader] ❌ Failed to load students:', err);
@@ -736,6 +1077,7 @@ function EditGradesDetail({
   const [saving, setSaving] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
   const [everyoneGrade, setEveryoneGrade] = useState('');
+  const [maxPoints, setMaxPoints] = useState(DEFAULT_MAX_POINTS);
 
   useEffect(() => {
     loadGradeSet();
@@ -748,7 +1090,14 @@ function EditGradesDetail({
       if (response.ok) {
         const data = await response.json();
         setGradeSet(data.grade_set);
-        setStudents(data.grade_set.student_grades || []);
+        const hydratedStudents = (data.grade_set.student_grades || []).map((s: any) => ({
+          ...s,
+          max_points: s.max_points ?? DEFAULT_MAX_POINTS
+        }));
+        setStudents(hydratedStudents);
+        if (hydratedStudents.length > 0) {
+          setMaxPoints(hydratedStudents[0].max_points ?? DEFAULT_MAX_POINTS);
+        }
       }
     } catch (error) {
       console.error('Failed to load grade set:', error);
@@ -758,13 +1107,41 @@ function EditGradesDetail({
   };
 
   const updateStudentGrade = (studentId: string, value: string) => {
+    const numeric = toNumeric(value);
     setStudents(students.map(s => 
-      s.student_id === studentId ? { ...s, grade_value: value } : s
+      s.student_id === studentId
+        ? {
+            ...s,
+            grade_value: value.trim() ? value : null,
+            grade_numeric: numeric,
+            status: numeric === null && !value.trim() ? (s.status === 'excused' ? 'excused' : 'missing') : 'draft'
+          }
+        : s
     ));
   };
 
+  const updateStudentStatus = (studentId: string, status: GradeStatus) => {
+    setStudents(students.map(s => {
+      if (s.student_id !== studentId) return s;
+      if (status === 'missing' || status === 'excused') {
+        return { ...s, status, grade_value: null, grade_numeric: null };
+      }
+      return { ...s, status };
+    }));
+  };
+
   const applyToAll = () => {
-    setStudents(students.map(s => ({ ...s, grade_value: everyoneGrade })));
+    const numeric = toNumeric(everyoneGrade);
+    setStudents(students.map(s => {
+      if (s.status === 'excused') return s;
+      return {
+        ...s,
+        grade_value: everyoneGrade.trim() ? everyoneGrade : null,
+        grade_numeric: numeric,
+        max_points: maxPoints,
+        status: numeric === null && !everyoneGrade.trim() ? 'missing' : 'draft'
+      };
+    }));
   };
 
   const saveGrades = async () => {
@@ -777,8 +1154,10 @@ function EditGradesDetail({
           action: 'update_student_grades',
           student_grades: students.map(s => ({
             id: s.id,
+            grade_numeric: s.grade_numeric ?? null,
             grade_value: s.grade_value,
-            status: 'draft'
+            max_points: s.max_points ?? maxPoints,
+            status: s.status || 'draft'
           }))
         })
       });
@@ -936,11 +1315,22 @@ function EditGradesDetail({
               Everyone
             </Label>
             <div className="flex gap-2">
-              <InputWithTypingPlaceholder
-                placeholders={gradeExamples}
+              <Input
+                type="number"
+                step="0.1"
                 value={everyoneGrade}
                 onChange={(e) => setEveryoneGrade(e.target.value)}
                 className="border-2 border-black/20"
+                placeholder="e.g. 82.5"
+              />
+              <Input
+                type="number"
+                step="0.1"
+                min="1"
+                value={maxPoints}
+                onChange={(e) => setMaxPoints(Number(e.target.value) || DEFAULT_MAX_POINTS)}
+                className="w-28 text-center"
+                placeholder="Max"
               />
               <Button onClick={applyToAll} variant="outline">
                 Apply
@@ -951,17 +1341,40 @@ function EditGradesDetail({
           {/* Students list */}
           <div className="border rounded-lg divide-y">
             {students.map((student) => (
-              <div key={student.student_id} className="flex items-center gap-3 p-3">
+              <div key={student.student_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-3 items-center">
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{student.student?.full_name || student.student?.email || 'Unknown Student'}</p>
                   <p className="text-xs text-muted-foreground truncate">{student.student?.email || 'No email available'}</p>
                 </div>
-                <InputWithTypingPlaceholder
-                  placeholders={gradeExamples}
-                  value={student.grade_value || ''}
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={student.grade_numeric ?? ''}
                   onChange={(e) => updateStudentGrade(student.student_id, e.target.value)}
-                  className="w-24 text-center"
+                  className="md:col-span-2 text-center"
+                  placeholder="Score"
                 />
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="1"
+                  value={student.max_points ?? maxPoints}
+                  onChange={(e) => {
+                    const next = Number(e.target.value) || DEFAULT_MAX_POINTS;
+                    setStudents(students.map(s => s.student_id === student.student_id ? { ...s, max_points: next } : s));
+                  }}
+                  className="md:col-span-2 text-center"
+                  placeholder="Max"
+                />
+                <select
+                  value={student.status || 'draft'}
+                  onChange={(e) => updateStudentStatus(student.student_id, e.target.value as GradeStatus)}
+                  className="md:col-span-2 border rounded-md p-2 text-sm"
+                >
+                  {GRADE_STATUSES.map((status) => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
               </div>
             ))}
           </div>

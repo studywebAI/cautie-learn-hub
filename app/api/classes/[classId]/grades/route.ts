@@ -56,7 +56,7 @@ export async function GET(
       .select(`
         *,
         subject:subjects(id, title),
-        student_grades(id, student_id, grade_value, status, tag)
+        student_grades(id, student_id, grade_value, grade_numeric, max_points, status, tag)
       `)
       .eq('class_id', classId)
       .order('created_at', { ascending: false })
@@ -71,16 +71,28 @@ export async function GET(
     // Calculate stats for each grade set
     const enrichedGradeSets = (gradeSets || []).map((gs: any) => {
       const grades = gs.student_grades || []
-      const gradedCount = grades.filter((g: any) => g.grade_value !== null && g.grade_value !== '').length
+      const gradedCount = grades.filter((g: any) => {
+        const hasNumeric = typeof g.grade_numeric === 'number' && !Number.isNaN(g.grade_numeric)
+        const hasText = g.grade_value !== null && g.grade_value !== ''
+        return hasNumeric || hasText || g.status === 'final' || g.status === 'excused'
+      }).length
       
       // Calculate average if numeric
       let average: number | null = null
       const numericGrades = grades
-        .filter((g: any) => g.grade_value && !isNaN(parseFloat(g.grade_value)))
-        .map((g: any) => parseFloat(g.grade_value))
+        .map((g: any) => {
+          if (typeof g.grade_numeric === 'number' && !Number.isNaN(g.grade_numeric)) {
+            return g.grade_numeric
+          }
+          if (g.grade_value && !Number.isNaN(parseFloat(g.grade_value))) {
+            return parseFloat(g.grade_value)
+          }
+          return null
+        })
+        .filter((v: number | null) => v !== null)
       
       if (numericGrades.length > 0) {
-        average = numericGrades.reduce((a: number, b: number) => a + b, 0) / numericGrades.length
+        average = numericGrades.reduce((a: number, b: number) => a + (b as number), 0) / numericGrades.length
       }
 
       return {
@@ -111,10 +123,22 @@ export async function POST(
     console.log('[GRADES] POST - body:', body)
     
     const { title, description, category, weight, subject_id } = body
+    const allowedCategories = new Set(['test', 'quiz', 'homework', 'project', 'exam', 'assignment', 'other'])
 
     if (!title || title.trim() === '') {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
+
+    if (title.trim().length > 200) {
+      return NextResponse.json({ error: 'Title is too long (max 200 chars)' }, { status: 400 })
+    }
+
+    const parsedWeight = Number(weight ?? 1)
+    if (!Number.isFinite(parsedWeight) || parsedWeight <= 0 || parsedWeight > 100) {
+      return NextResponse.json({ error: 'Weight must be a number between 0 and 100' }, { status: 400 })
+    }
+
+    const normalizedCategory = allowedCategories.has(category) ? category : 'test'
 
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
@@ -149,6 +173,24 @@ export async function POST(
       return NextResponse.json({ error: 'Only teachers can create grade sets' }, { status: 403 })
     }
 
+    // Optional subject guard: if provided, it must belong to this class.
+    if (subject_id) {
+      const { data: subjectRow, error: subjectErr } = await supabase
+        .from('subjects')
+        .select('id')
+        .eq('id', subject_id)
+        .eq('class_id', classId)
+        .maybeSingle()
+
+      if (subjectErr) {
+        return NextResponse.json({ error: subjectErr.message }, { status: 500 })
+      }
+
+      if (!subjectRow) {
+        return NextResponse.json({ error: 'Invalid subject for this class' }, { status: 400 })
+      }
+    }
+
     // Create the grade set
     const { data: gradeSet, error } = await supabase
       .from('grade_sets')
@@ -157,8 +199,8 @@ export async function POST(
         subject_id: subject_id || null,
         title: title.trim(),
         description: description || null,
-        category: category || 'test',
-        weight: weight || 1,
+        category: normalizedCategory,
+        weight: parsedWeight,
         status: 'draft',
         created_by: user.id
       }])
@@ -213,7 +255,9 @@ export async function POST(
       const gradeEntries = students.map((s: any) => ({
         grade_set_id: gradeSet.id,
         student_id: s.id,
+        grade_numeric: null,
         grade_value: null,
+        max_points: 100,
         status: 'draft'
       }))
 

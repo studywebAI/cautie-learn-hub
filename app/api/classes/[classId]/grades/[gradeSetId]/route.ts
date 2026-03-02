@@ -27,6 +27,8 @@ export async function GET(
           id,
           student_id,
           grade_value,
+          grade_numeric,
+          max_points,
           feedback_text,
           status,
           tag,
@@ -87,15 +89,27 @@ export async function GET(
 
     // Calculate stats
     const grades = sortedGrades
-    const gradedCount = grades.filter((g: any) => g.grade_value !== null && g.grade_value !== '').length
+    const gradedCount = grades.filter((g: any) => {
+      const hasNumeric = typeof g.grade_numeric === 'number' && !Number.isNaN(g.grade_numeric)
+      const hasText = g.grade_value !== null && g.grade_value !== ''
+      return hasNumeric || hasText || g.status === 'final' || g.status === 'excused'
+    }).length
     
     let average: number | null = null
     const numericGrades = grades
-      .filter((g: any) => g.grade_value && !isNaN(parseFloat(g.grade_value)))
-      .map((g: any) => parseFloat(g.grade_value))
+      .map((g: any) => {
+        if (typeof g.grade_numeric === 'number' && !Number.isNaN(g.grade_numeric)) {
+          return g.grade_numeric
+        }
+        if (g.grade_value && !Number.isNaN(parseFloat(g.grade_value))) {
+          return parseFloat(g.grade_value)
+        }
+        return null
+      })
+      .filter((v: number | null) => v !== null)
     
     if (numericGrades.length > 0) {
-      average = numericGrades.reduce((a: number, b: number) => a + b, 0) / numericGrades.length
+      average = numericGrades.reduce((a: number, b: number) => a + (b as number), 0) / numericGrades.length
     }
 
     return NextResponse.json({ 
@@ -156,12 +170,34 @@ export async function PUT(
 
     // Handle different actions
     if (action === 'update_grade_set') {
+      const allowedCategories = new Set(['test', 'quiz', 'homework', 'project', 'exam', 'assignment', 'other'])
+      const allowedStatuses = new Set(['draft', 'published', 'archived'])
+
+      if (title !== undefined && (typeof title !== 'string' || title.trim().length === 0 || title.trim().length > 200)) {
+        return NextResponse.json({ error: 'Title must be between 1 and 200 characters' }, { status: 400 })
+      }
+
+      if (category !== undefined && !allowedCategories.has(category)) {
+        return NextResponse.json({ error: 'Invalid category' }, { status: 400 })
+      }
+
+      if (status !== undefined && !allowedStatuses.has(status)) {
+        return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+      }
+
+      if (weight !== undefined) {
+        const parsedWeight = Number(weight)
+        if (!Number.isFinite(parsedWeight) || parsedWeight <= 0 || parsedWeight > 100) {
+          return NextResponse.json({ error: 'Weight must be a number between 0 and 100' }, { status: 400 })
+        }
+      }
+
       // Update grade set metadata
       const updateData: any = {
         updated_at: new Date().toISOString()
       }
       
-      if (title !== undefined) updateData.title = title
+      if (title !== undefined) updateData.title = title.trim()
       if (description !== undefined) updateData.description = description
       if (category !== undefined) updateData.category = category
       if (weight !== undefined) updateData.weight = weight
@@ -172,6 +208,7 @@ export async function PUT(
         .from('grade_sets')
         .update(updateData)
         .eq('id', gradeSetId)
+        .eq('class_id', classId)
         .select()
         .single()
 
@@ -183,27 +220,111 @@ export async function PUT(
     }
 
     if (action === 'update_student_grades' && student_grades) {
-      // Bulk update student grades
-      const updates = student_grades.map((sg: any) => ({
-        id: sg.id,
-        grade_value: sg.grade_value,
-        feedback_text: sg.feedback_text,
-        status: sg.status || 'draft',
-        tag: sg.tag,
-        updated_at: new Date().toISOString()
-      }))
-
-      // Use upsert to handle updates
-      const { data: updatedGrades, error } = await supabase
-        .from('student_grades')
-        .upsert(updates, { onConflict: 'id' })
-        .select()
-
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+      if (!Array.isArray(student_grades)) {
+        return NextResponse.json({ error: 'student_grades must be an array' }, { status: 400 })
       }
 
-      return NextResponse.json({ student_grades: updatedGrades })
+      const allowedStatuses = new Set(['draft', 'final', 'missing', 'excused'])
+      const ids = student_grades
+        .map((sg: any) => sg?.id)
+        .filter((id: any) => typeof id === 'string')
+
+      if (ids.length !== student_grades.length || ids.length === 0) {
+        return NextResponse.json({ error: 'Each student grade update must include a valid id' }, { status: 400 })
+      }
+
+      // Ensure every incoming row belongs to this grade set.
+      const { data: existingRows, error: existingError } = await supabase
+        .from('student_grades')
+        .select('id, grade_set_id')
+        .in('id', ids)
+        .eq('grade_set_id', gradeSetId)
+
+      if (existingError) {
+        return NextResponse.json({ error: existingError.message }, { status: 500 })
+      }
+
+      if (!existingRows || existingRows.length !== ids.length) {
+        return NextResponse.json({ error: 'One or more grade rows are invalid for this grade set' }, { status: 400 })
+      }
+
+      let updates: any[] = []
+      try {
+        updates = student_grades.map((sg: any) => {
+          const parsedNumeric = sg.grade_numeric === null || sg.grade_numeric === undefined || sg.grade_numeric === ''
+            ? null
+            : Number(sg.grade_numeric)
+          if (parsedNumeric !== null && (!Number.isFinite(parsedNumeric) || parsedNumeric < 0 || parsedNumeric > 1000)) {
+            throw new Error(`Invalid grade_numeric for row ${sg.id}`)
+          }
+
+          const parsedMaxPoints = sg.max_points === null || sg.max_points === undefined || sg.max_points === ''
+            ? 100
+            : Number(sg.max_points)
+          if (!Number.isFinite(parsedMaxPoints) || parsedMaxPoints <= 0 || parsedMaxPoints > 1000) {
+            throw new Error(`Invalid max_points for row ${sg.id}`)
+          }
+
+          const hasGrade = parsedNumeric !== null || (sg.grade_value !== null && sg.grade_value !== undefined && String(sg.grade_value).trim() !== '')
+          let normalizedStatus = allowedStatuses.has(sg.status) ? sg.status : undefined
+
+          if (!normalizedStatus) {
+            normalizedStatus = hasGrade ? 'draft' : 'missing'
+          }
+
+          if (normalizedStatus === 'final' && !hasGrade) {
+            throw new Error(`Cannot set status 'final' without a grade for row ${sg.id}`)
+          }
+
+          const normalizedGradeValue =
+            normalizedStatus === 'missing'
+              ? null
+              : (sg.grade_value ?? (parsedNumeric !== null ? String(parsedNumeric) : null))
+
+          return {
+            id: sg.id,
+            grade_numeric: normalizedStatus === 'missing' ? null : parsedNumeric,
+            max_points: parsedMaxPoints,
+            grade_value: normalizedGradeValue,
+            feedback_text: sg.feedback_text,
+            status: normalizedStatus,
+            tag: sg.tag,
+            updated_at: new Date().toISOString()
+          }
+        })
+      } catch (normalizeError: any) {
+        return NextResponse.json({ error: normalizeError.message || 'Invalid student grade payload' }, { status: 400 })
+      }
+
+      // Update row-by-row with strict scope to this grade set.
+      const updatedRows: any[] = []
+      for (const row of updates) {
+        const { data: updated, error: updateError } = await supabase
+          .from('student_grades')
+          .update({
+            grade_numeric: row.grade_numeric,
+            max_points: row.max_points,
+            grade_value: row.grade_value,
+            feedback_text: row.feedback_text,
+            status: row.status,
+            tag: row.tag,
+            updated_at: row.updated_at
+          })
+          .eq('id', row.id)
+          .eq('grade_set_id', gradeSetId)
+          .select()
+          .single()
+
+        if (updateError) {
+          return NextResponse.json({ error: updateError.message }, { status: 500 })
+        }
+
+        if (updated) {
+          updatedRows.push(updated)
+        }
+      }
+
+      return NextResponse.json({ student_grades: updatedRows })
     }
 
     if (action === 'publish') {
@@ -216,6 +337,7 @@ export async function PUT(
           updated_at: new Date().toISOString()
         })
         .eq('id', gradeSetId)
+        .eq('class_id', classId)
         .select()
         .single()
 
@@ -223,11 +345,22 @@ export async function PUT(
         return NextResponse.json({ error: error.message }, { status: 500 })
       }
 
-      // Also mark all student grades as final
+      // Mark graded rows as final (except excused rows).
       await supabase
         .from('student_grades')
         .update({ status: 'final' })
         .eq('grade_set_id', gradeSetId)
+        .neq('status', 'excused')
+        .or('grade_numeric.not.is.null,grade_value.not.is.null')
+
+      // Mark ungraded non-excused rows as missing.
+      await supabase
+        .from('student_grades')
+        .update({ status: 'missing' })
+        .eq('grade_set_id', gradeSetId)
+        .neq('status', 'excused')
+        .is('grade_numeric', null)
+        .is('grade_value', null)
 
       return NextResponse.json({ grade_set: updatedGradeSet })
     }
@@ -283,6 +416,7 @@ export async function DELETE(
       .from('grade_sets')
       .delete()
       .eq('id', gradeSetId)
+      .eq('class_id', classId)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
