@@ -57,6 +57,7 @@ export function AppSidebar() {
   const [joinClassOpen, setJoinClassOpen] = useState(false);
   const [className, setClassName] = useState('');
   const [subjectTitle, setSubjectTitle] = useState('');
+  const [selectedSubjectClassId, setSelectedSubjectClassId] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -130,6 +131,7 @@ export function AppSidebar() {
     setJoinClassOpen(false);
     setClassName('');
     setSubjectTitle('');
+    setSelectedSubjectClassId('');
     setJoinCode('');
   };
 
@@ -181,6 +183,9 @@ export function AppSidebar() {
     const top = Math.min(Math.max(8, rect.top), window.innerHeight - estimatedPanelHeight - 8);
     resetInlinePanels();
     void loadDropdownData(kind);
+    if (kind === 'subjects' && isTeacher) {
+      void loadDropdownData('classes');
+    }
     setDropdown({ kind, left, top });
   };
 
@@ -221,12 +226,20 @@ export function AppSidebar() {
 
     const submitCreateSubject = async () => {
       if (!subjectTitle.trim()) return;
+      if (!selectedSubjectClassId) {
+        toast({ variant: 'destructive', title: 'Select a class first' });
+        return;
+      }
       setSubmitting(true);
       try {
         const response = await fetch('/api/subjects', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: subjectTitle.trim(), description: undefined, class_ids: null }),
+          body: JSON.stringify({
+            title: subjectTitle.trim(),
+            description: undefined,
+            class_ids: [selectedSubjectClassId]
+          }),
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Failed to create subject');
@@ -329,6 +342,18 @@ export function AppSidebar() {
 
           {createSubjectOpen && (
             <div className="mb-1 space-y-1 rounded border border-border p-2">
+              <select
+                value={selectedSubjectClassId}
+                onChange={(e) => setSelectedSubjectClassId(e.target.value)}
+                className="h-8 w-full rounded border border-border bg-background px-2 text-sm"
+              >
+                <option value="">Select class</option>
+                {classDropdownItems.map((classItem) => (
+                  <option key={classItem.id} value={classItem.id}>
+                    {classItem.label}
+                  </option>
+                ))}
+              </select>
               <Input
                 placeholder="Subject title"
                 value={subjectTitle}
@@ -336,7 +361,12 @@ export function AppSidebar() {
                 className="h-8 text-sm"
               />
               <div className="flex justify-end">
-                <Button size="sm" className="h-7 text-xs" onClick={submitCreateSubject} disabled={submitting || !subjectTitle.trim()}>
+                <Button
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={submitCreateSubject}
+                  disabled={submitting || !subjectTitle.trim() || !selectedSubjectClassId}
+                >
                   Create
                 </Button>
               </div>

@@ -33,7 +33,7 @@ export const updateClassSchema = z.object({
 export const createSubjectSchema = z.object({
   title: nonEmptyStringSchema,
   description: z.string().optional().nullable(),
-  class_ids: z.array(uuidSchema).optional().nullable()
+  class_ids: z.array(uuidSchema).min(1, "At least one class must be selected")
 });
 
 export const updateSubjectSchema = z.object({
