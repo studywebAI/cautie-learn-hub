@@ -313,7 +313,18 @@ export async function POST(request: NextRequest) {
     // Validate request body
     const validation = await validateBody(request, createSubjectSchema);
     if ('error' in validation) {
-      logSubjects('POST - Validation error', { opId, validationError: validation.error })
+      let validationBody: any = null
+      try {
+        validationBody = await validation.error.clone().json()
+      } catch {
+        validationBody = null
+      }
+      logSubjects('POST - Validation error', {
+        opId,
+        status: validation.error.status,
+        statusText: validation.error.statusText,
+        validationBody
+      })
       return validation.error;
     }
     const { title, description, class_ids: classIds } = validation.data;
