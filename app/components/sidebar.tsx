@@ -31,16 +31,18 @@ import { SidebarProfile } from './sidebar-profile';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 
+type DropdownKind = 'classes' | 'subjects';
+type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
+
 export function AppSidebar() {
   const pathname = usePathname();
   const { dictionary } = useDictionary();
   const context = useContext(AppContext) as AppContextType | null;
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
-  const [openDropdown, setOpenDropdown] = useState<'classes' | 'subjects' | null>(null);
-  const miniDropdownRef = useRef<HTMLDivElement | null>(null);
-  const drawerDropdownRef = useRef<HTMLDivElement | null>(null);
-  const desktopDropdownRef = useRef<HTMLDivElement | null>(null);
+  const [dropdown, setDropdown] = useState<DropdownState>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const floatingRef = useRef<HTMLDivElement | null>(null);
 
   const menuItems = [
     { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
@@ -87,25 +89,24 @@ export function AppSidebar() {
   );
 
   useEffect(() => {
-    setOpenDropdown(null);
+    setDropdown(null);
   }, [pathname]);
 
   useEffect(() => {
-    if (!openDropdown) return;
+    if (!dropdown) return;
 
     const onPointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
-      const insideMini = !!miniDropdownRef.current?.contains(target);
-      const insideDrawer = !!drawerDropdownRef.current?.contains(target);
-      const insideDesktop = !!desktopDropdownRef.current?.contains(target);
-      if (!insideMini && !insideDrawer && !insideDesktop) {
-        setOpenDropdown(null);
+      const insideFloating = !!floatingRef.current?.contains(target);
+      const triggerNode = (target as HTMLElement).closest('[data-nav-dropdown-trigger="true"]');
+      if (!insideFloating && !triggerNode) {
+        setDropdown(null);
       }
     };
 
     window.addEventListener('mousedown', onPointerDown);
     return () => window.removeEventListener('mousedown', onPointerDown);
-  }, [openDropdown]);
+  }, [dropdown]);
 
   const isDropdownTrigger = (href: string) => href === '/classes' || href === '/subjects';
   const canUseDropdownFor = (href: string) => {
@@ -115,6 +116,28 @@ export function AppSidebar() {
   };
   const getDropdownKind = (href: string) => (href === '/classes' ? 'classes' : 'subjects') as 'classes' | 'subjects';
 
+  const clearCloseTimer = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+
+  const scheduleClose = () => {
+    clearCloseTimer();
+    closeTimerRef.current = setTimeout(() => setDropdown(null), 150);
+  };
+
+  const openDropdownFor = (kind: DropdownKind, element: HTMLElement) => {
+    clearCloseTimer();
+    const rect = element.getBoundingClientRect();
+    const estimatedPanelWidth = 320;
+    const estimatedPanelHeight = 360;
+    const left = Math.min(rect.right + 8, window.innerWidth - estimatedPanelWidth - 8);
+    const top = Math.min(Math.max(8, rect.top), window.innerHeight - estimatedPanelHeight - 8);
+    setDropdown({ kind, left, top });
+  };
+
   const isMenuItemActive = (href: string) => {
     if (href === '/classes') return pathname === '/classes' || pathname.startsWith('/class/');
     if (href === '/subjects') return pathname === '/subjects' || pathname.startsWith('/subjects/');
@@ -122,17 +145,20 @@ export function AppSidebar() {
     return pathname === href;
   };
 
-  const renderSelectionDropdown = (kind: 'classes' | 'subjects') => {
-    const isClasses = kind === 'classes';
-    const canShowClasses = isTeacher;
-    if (isClasses && !canShowClasses) return null;
-
-    const items = isClasses ? classDropdownItems : subjectDropdownItems;
-    const emptyText = isClasses ? 'No classes found' : 'No subjects found';
+  const renderFloatingDropdown = () => {
+    if (!dropdown) return null;
+    const items = dropdown.kind === 'classes' ? classDropdownItems : subjectDropdownItems;
+    const emptyText = dropdown.kind === 'classes' ? 'No classes found' : 'No subjects found';
 
     return (
-      <div className="absolute left-full top-0 ml-2 z-[70] rounded-md border border-border bg-background shadow-lg">
-        <div className="w-max min-w-[10rem] max-w-[22rem] p-1">
+      <div
+        ref={floatingRef}
+        className="fixed z-[120] rounded-md border border-border bg-background shadow-lg"
+        style={{ left: dropdown.left, top: dropdown.top }}
+        onMouseEnter={clearCloseTimer}
+        onMouseLeave={scheduleClose}
+      >
+        <div className="w-max min-w-[10rem] max-w-[22rem] max-h-[60vh] overflow-auto p-1">
           {items.length === 0 ? (
             <p className="px-2 py-1.5 text-xs text-muted-foreground">{emptyText}</p>
           ) : (
@@ -142,7 +168,7 @@ export function AppSidebar() {
                 href={entry.href}
                 className="block truncate rounded px-2 py-1.5 text-sm hover:bg-muted"
                 onClick={() => {
-                  setOpenDropdown(null);
+                  setDropdown(null);
                   setOpenMobile(false);
                 }}
               >
@@ -173,17 +199,20 @@ export function AppSidebar() {
           </Button>
 
           {/* Mini icon navigation */}
-          <nav className="flex-1 flex flex-col gap-1 px-2" ref={miniDropdownRef}>
+          <nav className="flex-1 flex flex-col gap-1 px-2">
             {menuItems.map((item) => (
               <div key={item.href} className="relative">
                 {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
                   <>
                     <button
                       type="button"
-                      onClick={() => setOpenDropdown((prev) => (prev === getDropdownKind(item.href) ? null : getDropdownKind(item.href)))}
+                      data-nav-dropdown-trigger="true"
+                      onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                      onMouseLeave={scheduleClose}
+                      onClick={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
                       className={cn(
                         "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
-                        isMenuItemActive(item.href) || openDropdown === getDropdownKind(item.href)
+                        isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)
                           ? "bg-primary text-primary-foreground"
                           : "text-sidebar-foreground hover:bg-sidebar-accent"
                       )}
@@ -191,7 +220,6 @@ export function AppSidebar() {
                     >
                       <item.icon className="h-5 w-5" />
                     </button>
-                    {openDropdown === getDropdownKind(item.href) && renderSelectionDropdown(getDropdownKind(item.href))}
                   </>
                 ) : (
                   <Link
@@ -241,21 +269,23 @@ export function AppSidebar() {
 
         {/* Full drawer sidebar (when hamburger is clicked) */}
         <Sidebar className="w-64">
-          <SidebarContent className="px-3 py-3 flex-1" ref={drawerDropdownRef}>
+          <SidebarContent className="px-3 py-3 flex-1">
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
                   {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
                     <>
                       <SidebarMenuButton
-                        onClick={() => setOpenDropdown((prev) => (prev === getDropdownKind(item.href) ? null : getDropdownKind(item.href)))}
-                        isActive={isMenuItemActive(item.href) || openDropdown === getDropdownKind(item.href)}
+                        data-nav-dropdown-trigger="true"
+                        onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                        onMouseLeave={scheduleClose}
+                        onClick={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                        isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
                         tooltip={item.label}
                       >
                         <item.icon className="h-5 w-5" />
                         <span>{item.label}</span>
                       </SidebarMenuButton>
-                      {openDropdown === getDropdownKind(item.href) && renderSelectionDropdown(getDropdownKind(item.href))}
                     </>
                   ) : (
                     <SidebarMenuButton
@@ -296,31 +326,34 @@ export function AppSidebar() {
             <SidebarProfile />
           </SidebarFooter>
         </Sidebar>
+        {renderFloatingDropdown()}
       </>
     );
   }
 
   // Desktop: Regular sidebar with trigger
   return (
-    <Sidebar className="w-48" collapsible="icon">
+        <Sidebar className="w-48" collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
-      <SidebarContent className="px-3 py-3 flex-1" ref={desktopDropdownRef}>
+      <SidebarContent className="px-3 py-3 flex-1">
         <SidebarMenu>
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.label} className="relative">
               {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
                 <>
                   <SidebarMenuButton
-                    onClick={() => setOpenDropdown((prev) => (prev === getDropdownKind(item.href) ? null : getDropdownKind(item.href)))}
-                    isActive={isMenuItemActive(item.href) || openDropdown === getDropdownKind(item.href)}
+                    data-nav-dropdown-trigger="true"
+                    onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                    onMouseLeave={scheduleClose}
+                    onClick={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                    isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
                     tooltip={item.label}
                   >
                     <item.icon className="h-5 w-5" />
                     <span>{item.label}</span>
                   </SidebarMenuButton>
-                  {openDropdown === getDropdownKind(item.href) && renderSelectionDropdown(getDropdownKind(item.href))}
                 </>
               ) : (
                 <SidebarMenuButton
@@ -360,6 +393,7 @@ export function AppSidebar() {
         <div className="h-px bg-sidebar-border" />
         <SidebarProfile />
       </SidebarFooter>
+      {renderFloatingDropdown()}
     </Sidebar>
   );
 }
