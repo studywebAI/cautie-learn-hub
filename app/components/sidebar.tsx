@@ -29,20 +29,36 @@ import { AppContext, AppContextType, useDictionary } from '@/contexts/app-contex
 import { RecentsSidebar } from './recents-sidebar';
 import { SidebarProfile } from './sidebar-profile';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 type DropdownKind = 'classes' | 'subjects';
 type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
+type DropdownClassItem = { id: string; name: string; status?: string | null };
+type DropdownSubjectItem = { id: string; title: string };
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { dictionary } = useDictionary();
   const context = useContext(AppContext) as AppContextType | null;
+  const { toast } = useToast();
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
   const [dropdown, setDropdown] = useState<DropdownState>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const floatingRef = useRef<HTMLDivElement | null>(null);
+  const [classesLoading, setClassesLoading] = useState(false);
+  const [subjectsLoading, setSubjectsLoading] = useState(false);
+  const [classItems, setClassItems] = useState<DropdownClassItem[]>([]);
+  const [subjectItems, setSubjectItems] = useState<DropdownSubjectItem[]>([]);
+  const [createClassOpen, setCreateClassOpen] = useState(false);
+  const [createSubjectOpen, setCreateSubjectOpen] = useState(false);
+  const [joinClassOpen, setJoinClassOpen] = useState(false);
+  const [className, setClassName] = useState('');
+  const [subjectTitle, setSubjectTitle] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const menuItems = [
     { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
@@ -60,32 +76,28 @@ export function AppSidebar() {
   ];
 
   const isTeacher = context?.role === 'teacher';
-  const classes = context?.classes || [];
-  const subjects = context?.subjects || [];
 
-  const classDropdownItems = useMemo(
-    () =>
-      classes
-        .filter((classItem) => classItem.status !== 'archived')
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map((classItem) => ({
-          id: classItem.id,
-          label: classItem.name,
-          href: `/class/${classItem.id}`,
-        })),
-    [classes]
-  );
+  const classDropdownItems = useMemo(() => {
+    return [...classItems]
+      .filter((classItem) => classItem.status !== 'archived')
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((classItem) => ({
+        id: classItem.id,
+        label: classItem.name,
+        href: `/class/${classItem.id}`,
+      }));
+  }, [classItems]);
 
   const subjectDropdownItems = useMemo(
     () =>
-      [...subjects]
+      [...subjectItems]
         .sort((a, b) => a.title.localeCompare(b.title))
         .map((subject) => ({
           id: subject.id,
           label: subject.title,
           href: `/subjects/${subject.id}`,
         })),
-    [subjects]
+    [subjectItems]
   );
 
   useEffect(() => {
@@ -109,12 +121,44 @@ export function AppSidebar() {
   }, [dropdown]);
 
   const isDropdownTrigger = (href: string) => href === '/classes' || href === '/subjects';
-  const canUseDropdownFor = (href: string) => {
-    if (href === '/classes') return isTeacher;
-    if (href === '/subjects') return true;
-    return false;
-  };
+  const canUseDropdownFor = (href: string) => href === '/classes' || href === '/subjects';
   const getDropdownKind = (href: string) => (href === '/classes' ? 'classes' : 'subjects') as 'classes' | 'subjects';
+
+  const resetInlinePanels = () => {
+    setCreateClassOpen(false);
+    setCreateSubjectOpen(false);
+    setJoinClassOpen(false);
+    setClassName('');
+    setSubjectTitle('');
+    setJoinCode('');
+  };
+
+  const loadDropdownData = async (kind: DropdownKind) => {
+    try {
+      if (kind === 'classes') {
+        setClassesLoading(true);
+        const response = await fetch('/api/classes', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Failed to load classes');
+        const data = await response.json();
+        setClassItems(Array.isArray(data) ? data : []);
+      } else {
+        setSubjectsLoading(true);
+        const response = await fetch('/api/subjects', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Failed to load subjects');
+        const data = await response.json();
+        setSubjectItems(Array.isArray(data) ? data : []);
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: kind === 'classes' ? 'Could not load classes' : 'Could not load subjects',
+        description: error?.message || 'Try again.',
+      });
+    } finally {
+      if (kind === 'classes') setClassesLoading(false);
+      else setSubjectsLoading(false);
+    }
+  };
 
   const clearCloseTimer = () => {
     if (closeTimerRef.current) {
@@ -135,6 +179,8 @@ export function AppSidebar() {
     const estimatedPanelHeight = 360;
     const left = Math.min(rect.right + 8, window.innerWidth - estimatedPanelWidth - 8);
     const top = Math.min(Math.max(8, rect.top), window.innerHeight - estimatedPanelHeight - 8);
+    resetInlinePanels();
+    void loadDropdownData(kind);
     setDropdown({ kind, left, top });
   };
 
@@ -149,6 +195,73 @@ export function AppSidebar() {
     if (!dropdown) return null;
     const items = dropdown.kind === 'classes' ? classDropdownItems : subjectDropdownItems;
     const emptyText = dropdown.kind === 'classes' ? 'No classes found' : 'No subjects found';
+    const loading = dropdown.kind === 'classes' ? classesLoading : subjectsLoading;
+
+    const submitCreateClass = async () => {
+      if (!className.trim()) return;
+      setSubmitting(true);
+      try {
+        const response = await fetch('/api/classes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: className.trim(), description: null }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error || 'Failed to create class');
+        toast({ title: 'Class created' });
+        setClassName('');
+        setCreateClassOpen(false);
+        await loadDropdownData('classes');
+      } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Could not create class', description: error?.message || 'Try again.' });
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
+    const submitCreateSubject = async () => {
+      if (!subjectTitle.trim()) return;
+      setSubmitting(true);
+      try {
+        const response = await fetch('/api/subjects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: subjectTitle.trim(), description: undefined, class_ids: null }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error || 'Failed to create subject');
+        toast({ title: 'Subject created' });
+        setSubjectTitle('');
+        setCreateSubjectOpen(false);
+        await loadDropdownData('subjects');
+      } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Could not create subject', description: error?.message || 'Try again.' });
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
+    const submitJoinClass = async () => {
+      if (!joinCode.trim()) return;
+      setSubmitting(true);
+      try {
+        const response = await fetch('/api/classes/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ class_code: joinCode.trim() }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error || 'Failed to join class');
+        toast({ title: data?.message || 'Joined class' });
+        setJoinCode('');
+        setJoinClassOpen(false);
+        await loadDropdownData('classes');
+      } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Could not join class', description: error?.message || 'Try again.' });
+      } finally {
+        setSubmitting(false);
+      }
+    };
 
     return (
       <div
@@ -159,7 +272,96 @@ export function AppSidebar() {
         onMouseLeave={scheduleClose}
       >
         <div className="w-max min-w-[10rem] max-w-[22rem] max-h-[60vh] overflow-auto p-1">
-          {items.length === 0 ? (
+          <div className="mb-1 flex gap-1 border-b border-border pb-1">
+            {dropdown.kind === 'classes' && isTeacher && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => {
+                  setCreateClassOpen((v) => !v);
+                  setJoinClassOpen(false);
+                }}
+              >
+                + Create class
+              </Button>
+            )}
+            {dropdown.kind === 'classes' && !isTeacher && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => {
+                  setJoinClassOpen((v) => !v);
+                  setCreateClassOpen(false);
+                }}
+              >
+                Join class
+              </Button>
+            )}
+            {dropdown.kind === 'subjects' && isTeacher && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => setCreateSubjectOpen((v) => !v)}
+              >
+                + Create subject
+              </Button>
+            )}
+          </div>
+
+          {createClassOpen && (
+            <div className="mb-1 space-y-1 rounded border border-border p-2">
+              <Input
+                placeholder="Class name"
+                value={className}
+                onChange={(e) => setClassName(e.target.value)}
+                className="h-8 text-sm"
+              />
+              <div className="flex justify-end">
+                <Button size="sm" className="h-7 text-xs" onClick={submitCreateClass} disabled={submitting || !className.trim()}>
+                  Create
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {createSubjectOpen && (
+            <div className="mb-1 space-y-1 rounded border border-border p-2">
+              <Input
+                placeholder="Subject title"
+                value={subjectTitle}
+                onChange={(e) => setSubjectTitle(e.target.value)}
+                className="h-8 text-sm"
+              />
+              <div className="flex justify-end">
+                <Button size="sm" className="h-7 text-xs" onClick={submitCreateSubject} disabled={submitting || !subjectTitle.trim()}>
+                  Create
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {joinClassOpen && (
+            <div className="mb-1 space-y-1 rounded border border-border p-2">
+              <Input
+                placeholder="Enter join code"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value)}
+                className="h-8 text-sm"
+              />
+              <div className="flex justify-end">
+                <Button size="sm" className="h-7 text-xs" onClick={submitJoinClass} disabled={submitting || !joinCode.trim()}>
+                  Join
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {loading ? (
+            <p className="px-2 py-1.5 text-xs text-muted-foreground">Loading...</p>
+          ) : items.length === 0 ? (
             <p className="px-2 py-1.5 text-xs text-muted-foreground">{emptyText}</p>
           ) : (
             items.map((entry) => (
@@ -168,6 +370,7 @@ export function AppSidebar() {
                 href={entry.href}
                 className="block truncate rounded px-2 py-1.5 text-sm hover:bg-muted"
                 onClick={() => {
+                  resetInlinePanels();
                   setDropdown(null);
                   setOpenMobile(false);
                 }}
