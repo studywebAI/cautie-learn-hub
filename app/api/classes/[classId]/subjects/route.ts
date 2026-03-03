@@ -214,7 +214,18 @@ export async function POST(req: Request, { params }: { params: { classId: string
 
     console.log(`[DEBUG] Created subject ${newSubject.id} for class ${classId}`);
 
-    // Return the created subject (without needing to link via class_subjects since class_id is already set)
+    // Also mirror link into class_subjects so student subject queries that rely on join table remain consistent.
+    const { error: linkError } = await (supabase as any)
+      .from('class_subjects')
+      .insert([{ class_id: classId, subject_id: newSubject.id }]);
+
+    if (linkError) {
+      console.error(`[DEBUG] Failed to mirror subject link into class_subjects:`, linkError);
+      return NextResponse.json({
+        error: `Subject created but linking failed: ${linkError.message}`
+      }, { status: 500 });
+    }
+
     return NextResponse.json(newSubject, { status: 201 });
   } catch (error) {
     console.error('Error creating subject for class:', error);

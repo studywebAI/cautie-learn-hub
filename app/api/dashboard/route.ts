@@ -261,16 +261,20 @@ export async function GET(request: Request) {
       const classIds = (membershipsResult.data || []).map((m: any) => m.class_id)
 
       if (classIds.length > 0) {
-        // Fetch the actual class details + linked subjects in parallel
-        const [classesResult, classSubjectsResult] = await Promise.all([
+        // Fetch class details + subjects linked via join table and direct class_id
+        const [classesResult, classSubjectsResult, directSubjectsResult] = await Promise.all([
           supabase.from('classes').select('*').in('id', classIds).order('created_at', { ascending: false }),
           (supabase as any).from('class_subjects').select('subject_id').in('class_id', classIds),
+          (supabase as any).from('subjects').select('id').in('class_id', classIds),
         ])
 
         classes = classesResult.data || []
 
-        // Get unique subject IDs
-        const subjectIds = [...new Set((classSubjectsResult.data || []).map((cs: any) => cs.subject_id))]
+        // Get unique subject IDs from both linking strategies
+        const subjectIds = [...new Set([
+          ...((classSubjectsResult.data || []).map((cs: any) => cs.subject_id)),
+          ...((directSubjectsResult.data || []).map((s: any) => s.id))
+        ])]
 
         if (subjectIds.length > 0) {
           const { data: subjectsData } = await (supabase as any).from('subjects')

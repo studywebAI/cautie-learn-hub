@@ -228,12 +228,19 @@ export async function GET(req: Request) {
         return NextResponse.json([])
       }
 
-      const { data: classSubjectLinks, error: csError } = await (supabase as any)
-        .from('class_subjects')
-        .select('subject_id')
-        .in('class_id', classIds)
+      const [classSubjectLinksResult, directSubjectsResult] = await Promise.all([
+        (supabase as any)
+          .from('class_subjects')
+          .select('subject_id')
+          .in('class_id', classIds),
+        (supabase as any)
+          .from('subjects')
+          .select('id')
+          .in('class_id', classIds)
+      ])
 
-      if (csError) {
+      if (classSubjectLinksResult.error) {
+        const csError = classSubjectLinksResult.error
         logSubjects('GET - Failed to load class_subject links', {
           message: csError.message,
           code: csError.code,
@@ -243,7 +250,21 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: csError.message }, { status: 500 })
       }
 
-      const subjectIds = [...new Set((classSubjectLinks || []).map((cs: any) => cs.subject_id))]
+      if (directSubjectsResult.error) {
+        const directError = directSubjectsResult.error
+        logSubjects('GET - Failed to load direct class subjects', {
+          message: directError.message,
+          code: directError.code,
+          details: directError.details,
+          hint: directError.hint
+        })
+        return NextResponse.json({ error: directError.message }, { status: 500 })
+      }
+
+      const subjectIds = [...new Set([
+        ...(classSubjectLinksResult.data || []).map((cs: any) => cs.subject_id),
+        ...(directSubjectsResult.data || []).map((s: any) => s.id)
+      ])]
 
       if (subjectIds.length === 0) {
         logSubjects('GET - No subjects for joined classes', { classIds })
