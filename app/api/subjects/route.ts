@@ -307,15 +307,24 @@ export async function GET(req: Request) {
 }
 
 export async function POST(request: NextRequest) {
+  const opId = `subject_create_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
   try {
-    logSubjects('POST - Creating subject', { url: request.url })
+    logSubjects('POST - Creating subject', { opId, url: request.url, method: request.method })
     // Validate request body
     const validation = await validateBody(request, createSubjectSchema);
     if ('error' in validation) {
-      logSubjects('POST - Validation error', validation.error)
+      logSubjects('POST - Validation error', { opId, validationError: validation.error })
       return validation.error;
     }
     const { title, description, class_ids: classIds } = validation.data;
+    logSubjects('POST - Validated payload', {
+      opId,
+      titleLength: title?.length ?? 0,
+      hasDescription: Boolean(description),
+      descriptionLength: description?.length ?? 0,
+      classIdsCount: classIds?.length ?? 0,
+      classIdsPreview: Array.isArray(classIds) ? classIds.slice(0, 5) : []
+    })
 
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
@@ -323,12 +332,23 @@ export async function POST(request: NextRequest) {
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
-      logSubjects('POST - Auth failed', userError?.message)
+      logSubjects('POST - Auth failed', {
+        opId,
+        message: userError?.message,
+        code: (userError as any)?.code,
+        details: (userError as any)?.details,
+        hint: (userError as any)?.hint
+      })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    logSubjects('POST - Authenticated user', user.id)
+    logSubjects('POST - Authenticated user', {
+      opId,
+      userId: user.id,
+      email: user.email
+    })
 
     // Create the subject in Supabase
+    logSubjects('POST - Inserting subject row', { opId, userId: user.id, title })
     const { data: subjectData, error: subjectError } = await supabase.from('subjects')
       .insert([{
         title: title,
@@ -338,19 +358,32 @@ export async function POST(request: NextRequest) {
       .select()
 
     if (subjectError) {
-      logSubjects('POST - Subject insert error', subjectError.message)
+      logSubjects('POST - Subject insert error', {
+        opId,
+        message: subjectError.message,
+        code: subjectError.code,
+        details: subjectError.details,
+        hint: subjectError.hint
+      })
       return NextResponse.json({
         error: `Supabase error creating subject: ${subjectError.message}`
       }, { status: 500 })
     }
 
     if (!subjectData || subjectData.length === 0) {
+      logSubjects('POST - Subject insert returned no rows', { opId })
       return NextResponse.json({
         error: 'Failed to create subject: No data returned'
       }, { status: 500 })
     }
 
     const newSubject = subjectData[0]
+    logSubjects('POST - Subject row created', {
+      opId,
+      subjectId: newSubject.id,
+      title: newSubject.title,
+      createdAt: (newSubject as any).created_at
+    })
 
     // Link subject to classes if classIds are provided
     if (classIds && classIds.length > 0) {
@@ -358,20 +391,35 @@ export async function POST(request: NextRequest) {
         class_id: classId,
         subject_id: newSubject.id
       }))
+      logSubjects('POST - Linking subject to classes', {
+        opId,
+        subjectId: newSubject.id,
+        classIdsCount: classIds.length,
+        classIds
+      })
 
       const { error: linkError } = await (supabase as any).from('class_subjects')
         .insert(classSubjects)
 
     if (linkError) {
-      logSubjects('POST - Failed to link classes', linkError.message)
+      logSubjects('POST - Failed to link classes', {
+        opId,
+        message: linkError.message,
+        code: linkError.code,
+        details: linkError.details,
+        hint: linkError.hint,
+        subjectId: newSubject.id,
+        classIds
+      })
       return NextResponse.json({
         error: `Supabase error linking subject to classes: ${linkError.message}`
       }, { status: 500 })
     }
-    logSubjects('POST - Linked subject to classes', { subjectId: newSubject.id, classIds })
+    logSubjects('POST - Linked subject to classes', { opId, subjectId: newSubject.id, classIds })
     }
 
     // Fetch the subject with its classes
+    logSubjects('POST - Fetching subject with class links', { opId, subjectId: newSubject.id })
     const { data: subjectWithClasses, error: fetchError } = await (supabase as any)
       .from('subjects')
       .select(`
@@ -384,7 +432,14 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (fetchError) {
-      logSubjects('POST - Failed to fetch subject with classes', fetchError.message)
+      logSubjects('POST - Failed to fetch subject with classes', {
+        opId,
+        message: fetchError.message,
+        code: fetchError.code,
+        details: fetchError.details,
+        hint: fetchError.hint,
+        subjectId: newSubject.id
+      })
       return NextResponse.json({
         error: `Supabase error fetching subject with classes: ${fetchError.message}`
       }, { status: 500 })
@@ -396,12 +451,20 @@ export async function POST(request: NextRequest) {
       classes: (subjectWithClasses as any).class_subjects ? (subjectWithClasses as any).class_subjects.map((cs: any) => cs.classes) : []
     }
 
-    logSubjects('POST - Returning new subject', { subjectId: transformedSubject.id })
+    logSubjects('POST - Returning new subject', {
+      opId,
+      subjectId: transformedSubject.id,
+      linkedClassesCount: transformedSubject.classes?.length ?? 0
+    })
     return NextResponse.json({
       subject: transformedSubject
     })
   } catch (error) {
-    console.error('Error creating subject:', error)
+    logSubjects('POST - Unexpected error', {
+      opId,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined
+    })
     return NextResponse.json({
       error: 'Internal server error while creating subject'
     }, { status: 500 })
