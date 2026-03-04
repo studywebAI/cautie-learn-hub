@@ -101,16 +101,11 @@ export async function GET(request: Request) {
       ? Math.round(progressSnapshots.reduce((sum, snap) => sum + snap.completion_percent, 0) / progressSnapshots.length)
       : 0;
 
-    // Get assignment completion data
+    // Get assignment completion data.
+    // Keep this query relation-free so analytics does not depend on FK schema cache state.
     const { data: submissions, error: submissionsError } = await supabase
       .from('submissions')
-      .select(`
-        id,
-        assignments!inner(
-          title,
-          due_date
-        )
-      `)
+      .select('id')
       .eq('user_id', userId);
 
     if (submissionsError) {
