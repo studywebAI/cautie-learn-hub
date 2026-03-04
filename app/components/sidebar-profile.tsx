@@ -51,12 +51,12 @@ export function SidebarProfile() {
     if (isCollapsed) return null;
     
     return (
-      <div className="px-2 py-2 space-y-2">
+      <div className="px-2 py-1.5 space-y-1.5">
         {/* Sign Up button for guest users */}
         <Button
           variant="outline"
           size="sm"
-          className="w-full h-8 text-xs rounded-md border-border/70 bg-transparent hover:bg-sidebar-accent/60"
+          className="w-full h-8 text-xs rounded-md border-border/55 bg-transparent hover:bg-sidebar-accent/45"
           asChild
         >
           <Link href="/login">
@@ -66,7 +66,7 @@ export function SidebarProfile() {
         </Button>
 
         {/* Guest username */}
-        <div className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-left">
+        <div className="flex items-center gap-2 w-full rounded-md px-2 py-1 text-left">
           <div className="flex items-center justify-center h-7 w-7 rounded-full shrink-0 bg-primary/10 text-primary">
             <User className="h-3.5 w-3.5" />
           </div>
@@ -99,12 +99,12 @@ export function SidebarProfile() {
   };
 
   return (
-    <div className="px-2 py-2 space-y-2">
+    <div className="px-2 py-1.5 space-y-1.5">
       {/* Upgrade button for logged in users */}
       <Button
         variant="outline"
         size="sm"
-        className="w-full h-8 text-xs rounded-md border-border/70 bg-transparent hover:bg-sidebar-accent/60"
+        className="w-full h-8 text-xs rounded-md border-border/55 bg-transparent hover:bg-sidebar-accent/45"
         asChild
       >
         <Link href="/upgrade">
@@ -116,7 +116,7 @@ export function SidebarProfile() {
       {/* Username dropdown - ChatGPT style */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-left hover:bg-sidebar-accent/60 transition-colors group">
+          <button className="flex items-center gap-2 w-full rounded-md px-2 py-1 text-left hover:bg-sidebar-accent/45 transition-colors group">
             <div className={`flex items-center justify-center h-7 w-7 rounded-full shrink-0 ${isPremium ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-primary/10 text-primary'}`}>
               {isPremium ? <Crown className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" /> : <User className="h-3.5 w-3.5" />}
             </div>

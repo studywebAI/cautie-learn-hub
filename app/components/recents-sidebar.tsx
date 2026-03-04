@@ -78,7 +78,7 @@ export function RecentsSidebar() {
         </p>
         <div className="space-y-1">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="animate-pulse h-6 bg-muted rounded" />
+            <div key={i} className="animate-pulse h-5 bg-muted/55 rounded-md" />
           ))}
         </div>
       </div>
@@ -105,7 +105,7 @@ export function RecentsSidebar() {
         <Clock className="h-3 w-3" />
         recents
       </p>
-      <div className="rounded-md bg-transparent divide-y divide-border/70">
+      <div className="rounded-md bg-transparent divide-y divide-border/50">
         {recents.map((item) => {
           const Icon = TYPE_ICONS[item.type] || FileSignature;
           const typeLabel = TYPE_LABELS[item.type] || item.type;
@@ -114,7 +114,7 @@ export function RecentsSidebar() {
           return (
             <div
               key={item.id}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent/60 transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent/45 transition-colors cursor-pointer"
               onClick={() => window.location.href = `/material/${item.id}`}
             >
               <Icon className="h-3 w-3 text-muted-foreground shrink-0" />

@@ -517,8 +517,8 @@ export function AppSidebar() {
                         isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
                         tooltip={item.label}
                       >
-                        <item.icon className="h-5 w-5" />
-                        <span className="lowercase text-[14px] leading-5">{item.label}</span>
+                        <item.icon className="h-4 w-4" />
+                        <span className="lowercase text-[13px] leading-5">{item.label}</span>
                       </SidebarMenuButton>
                     </>
                   ) : (
@@ -528,8 +528,8 @@ export function AppSidebar() {
                       tooltip={item.label}
                     >
                       <Link href={item.href} onClick={() => setOpenMobile(false)}>
-                        <item.icon className="h-5 w-5" />
-                        <span className="lowercase text-[14px] leading-5">{item.label}</span>
+                        <item.icon className="h-4 w-4" />
+                        <span className="lowercase text-[13px] leading-5">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   )}
@@ -549,8 +549,8 @@ export function AppSidebar() {
                     tooltip={item.label}
                   >
                     <Link href={item.href} onClick={() => setOpenMobile(false)}>
-                      <item.icon className="h-5 w-5" />
-                      <span className="lowercase text-[14px] leading-5">{item.label}</span>
+                      <item.icon className="h-4 w-4" />
+                      <span className="lowercase text-[13px] leading-5">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -589,8 +589,8 @@ export function AppSidebar() {
                     isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
                     tooltip={item.label}
                   >
-                    <item.icon className="h-5 w-5" />
-                    <span className="lowercase text-[14px] leading-5">{item.label}</span>
+                    <item.icon className="h-4 w-4" />
+                    <span className="lowercase text-[13px] leading-5">{item.label}</span>
                   </SidebarMenuButton>
                 </>
               ) : (
@@ -600,8 +600,8 @@ export function AppSidebar() {
                   tooltip={item.label}
                 >
                   <Link href={item.href}>
-                    <item.icon className="h-5 w-5" />
-                    <span className="lowercase text-[14px] leading-5">{item.label}</span>
+                    <item.icon className="h-4 w-4" />
+                    <span className="lowercase text-[13px] leading-5">{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
               )}
@@ -620,8 +620,8 @@ export function AppSidebar() {
                 tooltip={item.label}
               >
                 <Link href={item.href}>
-                  <item.icon className="h-5 w-5" />
-                  <span className="lowercase text-[14px] leading-5">{item.label}</span>
+                  <item.icon className="h-4 w-4" />
+                  <span className="lowercase text-[13px] leading-5">{item.label}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
