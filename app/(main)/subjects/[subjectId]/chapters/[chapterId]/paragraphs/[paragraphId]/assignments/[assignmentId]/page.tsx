@@ -2,13 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AppContext } from '@/contexts/app-context';
 import { useContext } from 'react';
-import Link from 'next/link';
 import { AssignmentEditor } from '@/components/AssignmentEditor';
 import { StudentAssignmentView } from '@/components/subjects/StudentAssignmentView';
 
@@ -39,6 +35,7 @@ export default function AssignmentDetailPage() {
   const instructions = searchParams.get('instructions') || undefined;
 
   const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [assignmentList, setAssignmentList] = useState<Assignment[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const { toast } = useToast();
   const { role } = useContext(AppContext) as any;
@@ -62,6 +59,18 @@ export default function AssignmentDetailPage() {
           setAssignment(assignmentData);
         }
 
+        // Fetch paragraph assignments for prev/next navigation
+        const listResponse = await fetch(
+          `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments`
+        );
+        if (listResponse.ok) {
+          const listData = await listResponse.json();
+          const sorted = (Array.isArray(listData) ? listData : []).sort(
+            (a: Assignment, b: Assignment) => a.assignment_index - b.assignment_index
+          );
+          setAssignmentList(sorted);
+        }
+
         // Fetch blocks
         const blocksResponse = await fetch(
           `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`
@@ -83,39 +92,18 @@ export default function AssignmentDetailPage() {
     fetchData();
   }, [subjectId, chapterId, paragraphId, assignmentId, toast]);
 
-  const handleBlockSubmit = async (blockId: string, answerData: any) => {
-    try {
-      const response = await fetch(
-        `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${blockId}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answerData })
-        }
-      );
-
-      if (response.ok) {
-        toast({
-          title: 'Answer Submitted',
-          description: 'Your answer has been saved.',
-        });
-      } else {
-        throw new Error('Failed to submit answer');
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to submit answer.',
-        variant: 'destructive'
-      });
-    }
-  };
+  const currentAssignmentIndex = assignmentList.findIndex((item) => item.id === assignmentId);
+  const prevAssignment = currentAssignmentIndex > 0 ? assignmentList[currentAssignmentIndex - 1] : null;
+  const nextAssignment =
+    currentAssignmentIndex >= 0 && currentAssignmentIndex < assignmentList.length - 1
+      ? assignmentList[currentAssignmentIndex + 1]
+      : null;
 
   if (!assignment) {
     return <div className="flex items-center justify-center h-screen">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-muted-foreground">Loading assignment...</p>
+        <p className="text-muted-foreground">loading assignment...</p>
       </div>
     </div>;
   }
@@ -150,10 +138,16 @@ export default function AssignmentDetailPage() {
       instructions={instructions}
       onNavigateBack={() => router.push(`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}`)}
       onNavigateNext={() => {
-        // TODO: Implement navigation to next assignment
+        if (!nextAssignment) return;
+        router.push(
+          `/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${nextAssignment.id}`
+        );
       }}
       onNavigatePrev={() => {
-        // TODO: Implement navigation to previous assignment
+        if (!prevAssignment) return;
+        router.push(
+          `/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${prevAssignment.id}`
+        );
       }}
     />
   );

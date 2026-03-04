@@ -80,14 +80,14 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     id: 'text',
     type: 'text',
     icon: <Type className="h-4 w-4" />,
-    label: 'Text',
+    label: 'text',
     defaultData: { content: '', style: 'normal' }
   },
   {
     id: 'multiple_choice',
     type: 'multiple_choice',
     icon: <CheckSquare className="h-4 w-4" />,
-    label: 'Multiple Choice',
+    label: 'multiple choice',
     defaultData: {
       question: '',
       options: [
@@ -104,7 +104,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     id: 'open_question',
     type: 'open_question',
     icon: <MessageSquare className="h-4 w-4" />,
-    label: 'Open Question',
+    label: 'open question',
     defaultData: {
       question: '',
       correct_answer: '',
@@ -117,7 +117,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     id: 'fill_in_blank',
     type: 'fill_in_blank',
     icon: <FileText className="h-4 w-4" />,
-    label: 'Fill Blank',
+    label: 'fill blank',
     defaultData: {
       text: 'My shoes ___ 100 euros.',
       answers: ['cost'],
@@ -128,7 +128,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     id: 'drag_drop',
     type: 'drag_drop',
     icon: <Move className="h-4 w-4" />,
-    label: 'Drag & Drop',
+    label: 'drag & drop',
     defaultData: {
       prompt: '',
       pairs: [
@@ -141,7 +141,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     id: 'ordering',
     type: 'ordering',
     icon: <ListOrdered className="h-4 w-4" />,
-    label: 'Ordering',
+    label: 'ordering',
     defaultData: {
       prompt: '',
       items: ['', '', ''],
@@ -152,7 +152,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     id: 'media_embed',
     type: 'media_embed',
     icon: <Link className="h-4 w-4" />,
-    label: 'Media',
+    label: 'media',
     defaultData: {
       embed_url: '',
       description: ''
@@ -1091,14 +1091,14 @@ export function AssignmentEditor({
           size="sm"
           onClick={(e) => { e.stopPropagation(); toggleBlockLock(block.id); }}
           className={`h-7 px-2 text-xs ${block.locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-          title={block.locked ? 'Unlock answer' : 'Lock as correct answer'}
+          title={block.locked ? 'unlock answer' : 'lock as correct answer'}
         >
           {block.locked ? (
             <Lock className="h-3 w-3 mr-1" />
           ) : (
             <Unlock className="h-3 w-3 mr-1" />
           )}
-          {block.locked ? 'Locked' : 'Lock'}
+          {block.locked ? 'locked' : 'lock'}
         </Button>
         
         {/* Check icon - only show when answers enabled */}
@@ -1108,10 +1108,10 @@ export function AssignmentEditor({
             size="sm"
             onClick={(e) => { e.stopPropagation(); toggleBlockFeedback(block.id); }}
             className={`h-7 px-2 text-xs ${block.showFeedback ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-            title={block.showFeedback ? 'Hide feedback' : 'Show feedback'}
+            title={block.showFeedback ? 'hide feedback' : 'show feedback'}
           >
             <Check className="h-3 w-3 mr-1" />
-            {block.showFeedback ? 'Feedback on' : 'Feedback'}
+            {block.showFeedback ? 'feedback on' : 'feedback'}
           </Button>
         )}
         
@@ -1126,10 +1126,10 @@ export function AssignmentEditor({
                 variant="ghost"
                 size="sm"
                 className={`h-7 px-2 text-xs ${block.aiGradingOverride ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                title="AI Grading Settings"
+                title="ai grading settings"
               >
                 <Sparkles className="h-3 w-3 mr-1" />
-                AI
+                ai
               </Button>
             </PopoverTrigger>
             <PopoverContent align="center" className="p-0 w-auto">
@@ -1175,17 +1175,17 @@ export function AssignmentEditor({
           <Button variant="ghost" size="sm" onClick={() => router.back()} className="h-8 px-2">
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-8 px-2" title="Undo">
+          <Button variant="ghost" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-8 px-2" title="undo">
             ↶
           </Button>
-          <Button variant="ghost" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-8 px-2" title="Redo">
+          <Button variant="ghost" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-8 px-2" title="redo">
             ↷
           </Button>
           <div className="w-px h-4 bg-border mx-1" />
-          <Button variant="ghost" size="sm" onClick={handleExport} className="h-8 px-2" title="Export">
+          <Button variant="ghost" size="sm" onClick={handleExport} className="h-8 px-2" title="export">
             <Download className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleImport} className="h-8 px-2" title="Import">
+          <Button variant="ghost" size="sm" onClick={handleImport} className="h-8 px-2" title="import">
             <Upload className="h-4 w-4" />
           </Button>
           {isTeacher && (
@@ -1193,7 +1193,7 @@ export function AssignmentEditor({
               <div className="w-px h-4 bg-border mx-1" />
               <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 px-2" title="Assignment Settings">
+                  <Button variant="ghost" size="sm" className="h-8 px-2" title="assignment settings">
                     <Settings className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
@@ -1237,7 +1237,7 @@ export function AssignmentEditor({
           <div className="flex-1 overflow-y-auto p-2">
             {isSidebarOpen ? (
               <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground px-2 py-1">Blocks</div>
+                <div className="text-xs font-medium text-muted-foreground px-2 py-1">blocks</div>
                 {BLOCK_TEMPLATES.map((template) => (
                   <div
                     key={template.id}
@@ -1275,8 +1275,8 @@ export function AssignmentEditor({
             {rows.length === 0 ? (
               <div className="flex items-center justify-center h-64 text-muted-foreground">
                 <div className="text-center">
-                  <p className="mb-2">No content yet</p>
-                  <p className="text-sm">Drag blocks from the sidebar</p>
+                  <p className="mb-2">no content yet</p>
+                  <p className="text-sm">drag blocks from the sidebar</p>
                 </div>
               </div>
             ) : (
@@ -1335,7 +1335,7 @@ export function AssignmentEditor({
                             {row.blocks[0].locked && (
                               <div className="absolute -top-2 left-2 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                                 <Lock className="h-2.5 w-2.5" />
-                                <span>Locked</span>
+                                <span>locked</span>
                               </div>
                             )}
                             
@@ -1415,7 +1415,7 @@ export function AssignmentEditor({
                                     {block.locked && (
                                       <div className="absolute -top-2 left-2 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                                         <Lock className="h-2.5 w-2.5" />
-                                        <span>Locked</span>
+                                        <span>locked</span>
                                       </div>
                                     )}
                                     
@@ -1455,7 +1455,7 @@ export function AssignmentEditor({
                                   </div>
                                 ) : (
                                   <div className="h-full border border-dashed border-muted-foreground/30 rounded flex items-center justify-center text-xs text-muted-foreground">
-                                    Drop here
+                                    drop here
                                   </div>
                                 )}
                               </div>
@@ -1479,7 +1479,7 @@ export function AssignmentEditor({
             {/* Empty drop zone at bottom */}
             {isDragging && rows.length > 0 && (
               <div className="h-16 mt-4 border-2 border-dashed border-muted-foreground/30 rounded flex items-center justify-center text-sm text-muted-foreground">
-                Drop here for new row
+                drop here for new row
               </div>
             )}
           </div>
@@ -1491,7 +1491,7 @@ export function AssignmentEditor({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setEditingBlock(null)}>
           <div className="bg-background rounded-lg shadow-xl border max-w-xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="font-medium">Edit Block</h3>
+              <h3 className="font-medium">edit block</h3>
               <Button variant="ghost" size="sm" onClick={() => setEditingBlock(null)}>
                 <X className="h-4 w-4" />
               </Button>
@@ -1505,7 +1505,7 @@ export function AssignmentEditor({
                   case 'text':
                     return (
                       <div className="space-y-3">
-                        <Label>Content</Label>
+                        <Label>content</Label>
                         <Textarea
                           value={block.data.content}
                           onChange={(e) => updateBlock(block.id, { ...block.data, content: e.target.value })}
@@ -1518,14 +1518,14 @@ export function AssignmentEditor({
                     return (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label>Question</Label>
+                          <Label>question</Label>
                           <Input
                             value={block.data.question}
                             onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Options</Label>
+                          <Label>options</Label>
                           {block.data.options?.map((option: any, idx: number) => (
                             <div key={idx} className="flex items-center gap-2">
                               <Checkbox
@@ -1551,7 +1551,7 @@ export function AssignmentEditor({
                             </div>
                           ))}
                           <Button variant="outline" size="sm" onClick={() => addOption(block.id)}>
-                            <Plus className="h-4 w-4 mr-1" /> Add Option
+                            <Plus className="h-4 w-4 mr-1" /> add option
                           </Button>
                         </div>
                       </div>
@@ -1561,7 +1561,7 @@ export function AssignmentEditor({
                     return (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label>Question</Label>
+                          <Label>question</Label>
                           <Textarea
                             value={block.data.question}
                             onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
@@ -1569,16 +1569,16 @@ export function AssignmentEditor({
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Correct Answer (for grading reference)</Label>
+                          <Label>correct answer (for grading reference)</Label>
                           <Textarea
                             value={block.data.correct_answer || ''}
                             onChange={(e) => updateBlock(block.id, { ...block.data, correct_answer: e.target.value })}
                             rows={3}
-                            placeholder="Enter the expected correct answer..."
+                            placeholder="enter the expected correct answer..."
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Max Score</Label>
+                          <Label>max score</Label>
                           <Input
                             type="number"
                             min="1"
@@ -1593,7 +1593,7 @@ export function AssignmentEditor({
                     return (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label>Text (type ... for blanks - auto converts to ___)</Label>
+                          <Label>text (type ... for blanks - auto converts to ___)</Label>
                           <Textarea
                             value={block.data.text}
                             onChange={(e) => {
@@ -1607,10 +1607,10 @@ export function AssignmentEditor({
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Correct Answers</Label>
+                          <Label>correct answers</Label>
                           {(block.data.text.match(/___/g) || []).map((_: string, idx: number) => (
                             <div key={idx} className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground w-16">Blank {idx + 1}:</span>
+                              <span className="text-sm text-muted-foreground w-16">blank {idx + 1}:</span>
                               <Input
                                 value={block.data.answers?.[idx] || ''}
                                 onChange={(e) => {
@@ -1630,14 +1630,14 @@ export function AssignmentEditor({
                     return (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label>Prompt</Label>
+                          <Label>prompt</Label>
                           <Input
                             value={block.data.prompt}
                             onChange={(e) => updateBlock(block.id, { ...block.data, prompt: e.target.value })}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Pairs</Label>
+                          <Label>pairs</Label>
                           {block.data.pairs?.map((pair: any, idx: number) => (
                             <div key={idx} className="grid grid-cols-2 gap-2">
                               <Input
@@ -1665,7 +1665,7 @@ export function AssignmentEditor({
                             size="sm"
                             onClick={() => updateBlock(block.id, { ...block.data, pairs: [...block.data.pairs, { left: '', right: '' }] })}
                           >
-                            <Plus className="h-4 w-4 mr-1" /> Add Pair
+                            <Plus className="h-4 w-4 mr-1" /> add pair
                           </Button>
                         </div>
                       </div>
@@ -1675,14 +1675,14 @@ export function AssignmentEditor({
                     return (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label>Prompt</Label>
+                          <Label>prompt</Label>
                           <Input
                             value={block.data.prompt}
                             onChange={(e) => updateBlock(block.id, { ...block.data, prompt: e.target.value })}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Items (in correct order)</Label>
+                          <Label>items (in correct order)</Label>
                           {block.data.items?.map((item: string, idx: number) => (
                             <div key={idx} className="flex items-center gap-2">
                               <span className="text-sm text-muted-foreground w-6">{idx + 1}.</span>
@@ -1701,7 +1701,7 @@ export function AssignmentEditor({
                             size="sm"
                             onClick={() => updateBlock(block.id, { ...block.data, items: [...block.data.items, ''] })}
                           >
-                            <Plus className="h-4 w-4 mr-1" /> Add Item
+                            <Plus className="h-4 w-4 mr-1" /> add item
                           </Button>
                         </div>
                       </div>
@@ -1711,7 +1711,7 @@ export function AssignmentEditor({
                     return (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label>URL</Label>
+                          <Label>url</Label>
                           <Input
                             value={block.data.embed_url}
                             onChange={(e) => updateBlock(block.id, { ...block.data, embed_url: e.target.value })}
@@ -1719,7 +1719,7 @@ export function AssignmentEditor({
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Description</Label>
+                          <Label>description</Label>
                           <Input
                             value={block.data.description}
                             onChange={(e) => updateBlock(block.id, { ...block.data, description: e.target.value })}
@@ -1729,12 +1729,12 @@ export function AssignmentEditor({
                     );
 
                   default:
-                    return <p className="text-muted-foreground">No editor available</p>;
+                    return <p className="text-muted-foreground">no editor available</p>;
                 }
               })()}
             </div>
             <div className="p-4 border-t flex justify-end">
-              <Button onClick={() => setEditingBlock(null)}>Done</Button>
+              <Button onClick={() => setEditingBlock(null)}>done</Button>
             </div>
           </div>
         </div>

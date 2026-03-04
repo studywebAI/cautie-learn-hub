@@ -293,17 +293,17 @@ export function StudentAssignmentView({
   return (
     <div className={className}>
       {/* Deadline Context Banner - shows when coming from a deadline link */}
-      {assignment?.description && (
+      {(assignment?.description || instructions) && (
         <div className="mb-6 p-4 rounded-lg bg-muted border-l-4 border-primary">
-          <p className="text-sm text-muted-foreground mb-1">Assignment Instructions:</p>
-          <p className="text-base">{assignment.description}</p>
+          <p className="text-sm text-muted-foreground mb-1">assignment instructions:</p>
+          <p className="text-base">{assignment?.description || instructions}</p>
         </div>
       )}
 
       {/* Linked Content - quick access to related materials */}
       {assignment?.linked_content && Array.isArray(assignment.linked_content) && assignment.linked_content.length > 0 && (
         <div className="mb-6 p-4 rounded-lg bg-muted/50 border">
-          <p className="text-sm font-medium mb-3">Quick Links:</p>
+          <p className="text-sm font-medium mb-3">quick links:</p>
           <div className="space-y-2">
             {assignment.linked_content.map((link: any, idx: number) => (
               <a
@@ -338,7 +338,7 @@ export function StudentAssignmentView({
             className="flex items-center gap-2"
           >
             <ChevronLeft className="h-4 w-4" />
-            Back
+            back
           </Button>
 
           <div>
@@ -374,9 +374,9 @@ export function StudentAssignmentView({
           <Card>
             <CardContent className="pt-6">
               <div className="text-center py-12">
-                <h3 className="mb-2">No content yet</h3>
+                <h3 className="mb-2">no content yet</h3>
                 <p className="text-sm text-muted-foreground">
-                  This assignment doesn't have any content blocks.
+                  this assignment has no content blocks.
                 </p>
               </div>
             </CardContent>
@@ -411,7 +411,7 @@ export function StudentAssignmentView({
           className="flex items-center gap-2"
         >
           <ChevronLeft className="h-4 w-4" />
-          Back to Assignments
+          back to assignments
         </Button>
 
         <span className="text-sm text-muted-foreground">
