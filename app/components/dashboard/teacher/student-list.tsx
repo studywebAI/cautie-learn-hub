@@ -389,12 +389,12 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
             <StudentInviteDialog 
                 isOpen={isStudentInviteOpen} 
                 setIsOpen={setIsStudentInviteOpen} 
-                classInfo={{ id: classInfo.id, name: classInfo.name, join_code: classInfo.join_code }} 
+                classInfo={{ id: classInfo.id, name: classInfo.name, join_code: classInfo.join_code ?? null }} 
             />
             <TeacherInviteDialog 
                 isOpen={isTeacherInviteOpen} 
                 setIsOpen={setIsTeacherInviteOpen} 
-                classInfo={{ id: classInfo.id, name: classInfo.name, teacher_join_code: classInfo.teacher_join_code }} 
+                classInfo={{ id: classInfo.id, name: classInfo.name, teacher_join_code: classInfo.teacher_join_code ?? null }} 
             />
         </>
     )}

@@ -7,7 +7,7 @@ import { validateBody } from '@/lib/validation/validate'
 
 export const dynamic = 'force-dynamic'
 
-async function requireTeacherAccess(supabase: ReturnType<typeof createClient>, classId: string, userId: string) {
+async function requireTeacherAccess(supabase: Awaited<ReturnType<typeof createClient>>, classId: string, userId: string) {
   const { data: profile } = await supabase
     .from('profiles')
     .select('subscription_type')

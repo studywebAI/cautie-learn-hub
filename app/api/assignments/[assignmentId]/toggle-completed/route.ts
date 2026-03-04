@@ -1,16 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 
 export async function POST(
-  req: Request,
-  { params }: { params: { assignmentId: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ assignmentId: string }> }
 ) {
   try {
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
-    const resolvedParams = await params;
-    const { assignmentId } = resolvedParams;
+    const { assignmentId } = await params;
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();

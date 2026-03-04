@@ -11,12 +11,11 @@ type SubjectCreateRequest = {
   ai_icon_seed?: string;
 }
 
-export async function GET(req: Request, { params }: { params: { classId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ classId: string }> }) {
   try {
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
-    const resolvedParams = await params;
-    const { classId } = resolvedParams;
+    const { classId } = await params;
 
     console.log(`[DEBUG] API called with classId: ${classId}`);
     console.log(`[DEBUG] Full URL: ${req.url}`);
@@ -115,12 +114,11 @@ export async function GET(req: Request, { params }: { params: { classId: string 
   }
 }
 
-export async function POST(req: Request, { params }: { params: { classId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ classId: string }> }) {
   try {
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
-    const resolvedParams = await params;
-    const { classId } = resolvedParams;
+    const { classId } = await params;
 
     console.log(`[DEBUG] POST creating subject for classId: ${classId}`);
 

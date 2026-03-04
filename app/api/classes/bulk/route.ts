@@ -131,12 +131,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: insertError.message }, { status: 500 })
           }
 
-          await supabase
-            .from('class_members')
-            .insert({ class_id: newClass.id, user_id: user.id })
-            .catch((err: any) => {
-              console.warn('Failed to insert class_members for duplicated class', newClass.id, err.message)
-            })
+          try {
+            await supabase
+              .from('class_members')
+              .insert({ class_id: newClass.id, user_id: user.id })
+          } catch (err: any) {
+            console.warn('Failed to insert class_members for duplicated class', newClass.id, err?.message || err)
+          }
 
           duplicatedClasses.push(newClass)
         }

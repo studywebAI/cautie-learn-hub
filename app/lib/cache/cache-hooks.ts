@@ -17,10 +17,9 @@ export function useCachedClassData(classId: string) {
 
     setLoading(true);
     setError(null);
+    const startTime = performance.now();
 
     try {
-      const startTime = performance.now();
-      
       // Try to get cached data first
       const cachedData = await getCachedClassData(classId);
       
@@ -96,10 +95,9 @@ export function useCachedStudents(classId: string) {
 
     setLoading(true);
     setError(null);
+    const startTime = performance.now();
 
     try {
-      const startTime = performance.now();
-      
       // Try to get cached data first
       const cachedStudents = await getCachedStudents(classId);
       

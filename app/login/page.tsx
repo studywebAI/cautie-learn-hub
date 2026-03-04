@@ -1,18 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { AuthForm } from '@/components/auth-form';
 
-export default function Login({
-  searchParams,
-}: {
-  searchParams: { message: string; type: string; email: string }
-}) {
+export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+  const authSearchParams = {
+    message: searchParams.get('message') || '',
+    type: searchParams.get('type') || '',
+    email: searchParams.get('email') || '',
+  };
 
   // Redirect if already logged in...........................................................................
   useEffect(() => {
@@ -152,7 +154,7 @@ export default function Login({
     <AuthForm
       signIn={signIn}
       signUp={signUp}
-      searchParams={searchParams}
+      searchParams={authSearchParams}
 
     />
   );

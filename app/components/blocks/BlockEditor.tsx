@@ -106,7 +106,7 @@ export function BlockEditor({
       const currentIds = new Set(blocks.map(b => b.id).filter(id => id !== undefined));
 
       // Delete blocks that are no longer present
-      const blocksToDelete = existingBlocks.filter((b: Block) => !currentIds.has(b.id));
+      const blocksToDelete = existingBlocks.filter((b: Block) => !b.id || !currentIds.has(b.id));
       await Promise.all(
         blocksToDelete.map((b: Block) =>
           fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${b.id}`, {
@@ -194,7 +194,8 @@ export function BlockEditor({
 
   const moveBlock = (fromIndex: number, toIndex: number) => {
     const updatedBlocks = [...blocks];
-    const [movedBlock] = updatedBlocks.splice(fromIndex, 1)[0];
+    const [movedBlock] = updatedBlocks.splice(fromIndex, 1);
+    if (!movedBlock) return;
     updatedBlocks.splice(toIndex, 0, movedBlock);
     // Re-normalize positions
     const renormalized = updatedBlocks.map((block, idx) => ({

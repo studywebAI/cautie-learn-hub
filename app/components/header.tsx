@@ -34,7 +34,7 @@ export function AppHeader() {
     
     // Don't show UUIDs for class pages
     if (pathSegments.length >= 2 && pathSegments[pathSegments.length - 2] === 'class') {
-      return dictionary.classes?.title || 'Class Details';
+      return (dictionary as any).classes?.title || dictionary.sidebar.classes || 'Class Details';
     }
     
     // Map segments to i18n keys (use fallback for any missing keys)

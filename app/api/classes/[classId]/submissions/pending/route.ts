@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 
 export async function GET(
   request: Request,
@@ -7,7 +8,8 @@ export async function GET(
 ) {
   try {
     const { classId } = await params;
-    const supabase = await createClient();
+    const cookieStore = cookies();
+    const supabase = await createClient(cookieStore);
 
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
