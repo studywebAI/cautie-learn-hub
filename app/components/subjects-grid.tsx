@@ -151,17 +151,17 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
         {isTeacher && (
           <div className="flex justify-end">
             <Button onClick={() => setIsCreateOpen(true)} size="sm" className="rounded-full">
-              + Create Subject
+              + create subject
             </Button>
           </div>
         )}
 
         {subjects.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
-            <p className="text-sm mb-4">No subjects yet</p>
+            <p className="text-sm mb-4 lowercase">no subjects yet</p>
             {isTeacher && (
               <Button onClick={() => setIsCreateOpen(true)} size="sm" className="rounded-full">
-                Create First Subject
+                create first subject
               </Button>
             )}
           </div>
@@ -178,7 +178,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Subject</DialogTitle>
+            <DialogTitle className="lowercase">create subject</DialogTitle>
             <DialogDescription>
               Add a new subject to your curriculum.
             </DialogDescription>
@@ -186,7 +186,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="subject-title">Title</Label>
+              <Label htmlFor="subject-title" className="lowercase">title</Label>
               <InputWithTypingPlaceholder
                 id="subject-title"
                 placeholders={["Biology", "Mathematics", "Nederlands", "History", "Physics", "Chemistry"]}
@@ -197,7 +197,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
             {/* Auto icons switch */}
             <div className="flex items-center justify-between">
-              <Label htmlFor="auto-icons" className="text-sm">Auto-generated cover icons</Label>
+              <Label htmlFor="auto-icons" className="text-sm lowercase">auto-generated cover icons</Label>
               <Switch
                 id="auto-icons"
                 checked={autoIcons}
@@ -207,7 +207,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
             {autoIcons && (
               <div className="space-y-2">
-                <Label htmlFor="subject-description">What is this subject about?</Label>
+                <Label htmlFor="subject-description" className="lowercase">what is this subject about?</Label>
                 <Textarea
                   id="subject-description"
                   placeholder="e.g., Study of living organisms, cells, genetics, and ecosystems..."
@@ -233,7 +233,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
             {!classId && classes.length > 0 && (
               <div className="space-y-2">
-                <Label>Link to classes (optional)</Label>
+                <Label className="lowercase">link to classes (optional)</Label>
                 <div className="space-y-2 max-h-40 overflow-y-auto border rounded p-2 bg-muted/30">
                   {classes.map((classItem) => (
                     <div key={classItem.id} className="flex items-center gap-2">
@@ -262,10 +262,10 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="rounded-full">
-              Cancel
+              cancel
             </Button>
             <Button onClick={handleCreateSubject} disabled={isCreating || !newSubjectTitle.trim()} className="rounded-full">
-              {isCreating ? 'Creating...' : 'Create'}
+              {isCreating ? 'creating...' : 'create'}
             </Button>
           </DialogFooter>
         </DialogContent>

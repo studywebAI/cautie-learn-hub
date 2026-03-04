@@ -22,7 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import Link from 'next/link';
-import { Settings, Check, X, Eye, EyeOff, Lock } from 'lucide-react';
+import { Settings, EyeOff, Lock } from 'lucide-react';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 
 type Assignment = {
@@ -257,7 +257,7 @@ export default function ParagraphDetailPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="h-8 gap-1.5">
                   <Settings className="h-3.5 w-3.5" />
-                  <span className="text-xs">All Settings</span>
+                  <span className="text-xs lowercase">all settings</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" className="p-0 w-auto">
@@ -280,7 +280,7 @@ export default function ParagraphDetailPage() {
           )}
           {isTeacher && (
             <Button onClick={() => setIsCreateAssignmentOpen(true)} size="sm" className="h-8">
-              + Add Assignment
+              + add assignment
             </Button>
           )}
         </div>
@@ -289,10 +289,10 @@ export default function ParagraphDetailPage() {
       {/* Assignments list */}
       {assignments.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <p className="text-sm mb-4">No assignments yet</p>
+          <p className="text-sm mb-4 lowercase">no assignments yet</p>
           {isTeacher && (
             <Button onClick={() => setIsCreateAssignmentOpen(true)} size="sm">
-              Create First Assignment
+                create first assignment
             </Button>
           )}
         </div>
@@ -330,8 +330,7 @@ export default function ParagraphDetailPage() {
 
                 {/* Status indicators */}
                 <div className="flex items-center gap-2 shrink-0">
-                  {/* Lock indicator */}
-                  {assignment.is_locked && (
+                  {isTeacher && assignment.is_locked && (
                     <Lock className="h-3.5 w-3.5 text-muted-foreground/60" />
                   )}
 
@@ -340,16 +339,6 @@ export default function ParagraphDetailPage() {
                     <EyeOff className="h-3.5 w-3.5 text-muted-foreground/40" />
                   )}
 
-                  {/* Answers check/X */}
-                  <span className="shrink-0">
-                    {assignment.answers_enabled ? (
-                      <Check className="h-4 w-4 text-primary" />
-                    ) : (
-                      <X className="h-4 w-4 text-muted-foreground/40" />
-                    )}
-                  </span>
-
-                  {/* Progress bar with green/red coloring */}
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
                       {roundedProgress}%
@@ -438,11 +427,11 @@ export default function ParagraphDetailPage() {
       <Dialog open={isCreateAssignmentOpen} onOpenChange={setIsCreateAssignmentOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Assignment</DialogTitle>
-            <DialogDescription>Create a new assignment for this paragraph.</DialogDescription>
+            <DialogTitle className="lowercase">add assignment</DialogTitle>
+            <DialogDescription className="lowercase">create a new assignment for this paragraph.</DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Label htmlFor="assignment-title">Title</Label>
+              <Label htmlFor="assignment-title" className="lowercase">title</Label>
             <Input
               id="assignment-title"
               placeholder="e.g., Exercise Set A"
@@ -452,8 +441,8 @@ export default function ParagraphDetailPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateAssignmentOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateAssignment} disabled={!newAssignmentTitle.trim()}>Create</Button>
+            <Button variant="outline" onClick={() => setIsCreateAssignmentOpen(false)} className="lowercase">cancel</Button>
+            <Button onClick={handleCreateAssignment} disabled={!newAssignmentTitle.trim()} className="lowercase">create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -341,7 +341,23 @@ export function SubjectCard({ subject }: SubjectCardProps) {
         {/* Paragraphs with progress */}
         <div className="px-3 pt-2 pb-3 space-y-1 flex-1">
           {paragraphs.length > 0 ? (
-            paragraphs.map((p) => {
+            [...paragraphs, ...Array(Math.max(0, 3 - paragraphs.length)).fill(null)].slice(0, 3).map((p, idx) => {
+              if (!p) {
+                return (
+                  <div
+                    key={`placeholder-${idx}`}
+                    className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-lg opacity-40"
+                  >
+                    <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-xs font-medium shrink-0 min-w-[2.2rem] text-center">
+                      --
+                    </span>
+                    <span className="flex-1" />
+                    <span className="text-muted-foreground text-xs tabular-nums w-7 text-right">0%</span>
+                    <div className="w-10 h-1.5 bg-muted rounded-full overflow-hidden" />
+                  </div>
+                );
+              }
+
               const isLast = p.id === lastParagraphId;
               const progress = p.progress_percent || 0;
               const roundedProgress = Math.ceil(progress);
@@ -373,7 +389,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
               );
             })
           ) : (
-            <p className="text-xs text-muted-foreground text-center py-3">No paragraphs yet</p>
+            <p className="text-xs text-muted-foreground text-center py-3">no paragraphs yet</p>
           )}
         </div>
       </CardContent>

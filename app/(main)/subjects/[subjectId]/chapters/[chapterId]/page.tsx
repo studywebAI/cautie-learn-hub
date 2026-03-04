@@ -4,7 +4,6 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppContext } from '@/contexts/app-context';
-import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 interface Chapter {
@@ -33,7 +32,6 @@ export default function ChapterOverviewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [adjacentChapters, setAdjacentChapters] = useState<{prev?: Chapter, next?: Chapter}>({});
 
-  const { toast } = useToast();
   const { user } = useContext(AppContext) as any;
 
   useEffect(() => {
@@ -151,7 +149,7 @@ export default function ChapterOverviewPage() {
             href={`/subjects/${subjectId}`}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            ← {subject?.title || 'Back'}
+            {'<-'} {subject?.title || 'subjects'}
           </Link>
           <p className="text-sm mt-1">
             {chapter.chapter_number}. {chapter.title}
@@ -165,7 +163,7 @@ export default function ChapterOverviewPage() {
               href={`/subjects/${subjectId}/chapters/${adjacentChapters.prev.id}`}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← {adjacentChapters.prev.chapter_number}
+              {'<-'} {adjacentChapters.prev.chapter_number}
             </Link>
           )}
           {adjacentChapters.next && (
@@ -173,7 +171,7 @@ export default function ChapterOverviewPage() {
               href={`/subjects/${subjectId}/chapters/${adjacentChapters.next.id}`}
               className="text-muted-foreground hover:text-foreground"
             >
-              {adjacentChapters.next.chapter_number} →
+              {adjacentChapters.next.chapter_number} {'->'}
             </Link>
           )}
         </div>
@@ -192,13 +190,13 @@ export default function ChapterOverviewPage() {
               className="flex items-center justify-between py-2 px-3 -mx-3 rounded hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground w-8">
+                <span className="text-sm text-muted-foreground w-14 tabular-nums">
                   {chapter.chapter_number}.{paragraph.paragraph_number}
                 </span>
                 <span className="text-sm">{paragraph.title}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground w-10 text-right">
+                <span className="text-sm text-muted-foreground w-10 text-right tabular-nums">
                   {paragraph.completion_percent}%
                 </span>
                 <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
