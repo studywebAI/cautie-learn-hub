@@ -72,9 +72,9 @@ export function RecentsSidebar() {
   if (isLoading) {
     return (
       <div className="px-2">
-        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-2 px-1">
+        <p className="text-[11px] tracking-[0.06em] text-muted-foreground/70 flex items-center gap-1 mb-2 px-1 lowercase">
           <Clock className="h-3 w-3" />
-          Recents
+          recents
         </p>
         <div className="space-y-1">
           {[...Array(3)].map((_, i) => (
@@ -88,12 +88,12 @@ export function RecentsSidebar() {
   if (recents.length === 0) {
     return (
       <div className="px-2">
-        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-2 px-1">
+        <p className="text-[11px] tracking-[0.06em] text-muted-foreground/70 flex items-center gap-1 mb-2 px-1 lowercase">
           <Clock className="h-3 w-3" />
-          Recents
+          recents
         </p>
-        <p className="text-xs text-muted-foreground text-center py-2 bg-muted/30 rounded border border-border">
-          No recent activity
+        <p className="text-xs text-muted-foreground text-center py-1.5 rounded-md bg-muted/30">
+          no recent activity
         </p>
       </div>
     );
@@ -101,11 +101,11 @@ export function RecentsSidebar() {
 
   return (
     <div className="px-2">
-      <p className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-2 px-1">
+      <p className="text-[11px] tracking-[0.06em] text-muted-foreground/70 flex items-center gap-1 mb-2 px-1 lowercase">
         <Clock className="h-3 w-3" />
-        Recents
+        recents
       </p>
-      <div className="rounded border border-border bg-muted/20 divide-y divide-border">
+      <div className="rounded-md bg-transparent divide-y divide-border/70">
         {recents.map((item) => {
           const Icon = TYPE_ICONS[item.type] || FileSignature;
           const typeLabel = TYPE_LABELS[item.type] || item.type;
@@ -114,7 +114,7 @@ export function RecentsSidebar() {
           return (
             <div
               key={item.id}
-              className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-accent/50 transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent/60 transition-colors cursor-pointer"
               onClick={() => window.location.href = `/material/${item.id}`}
             >
               <Icon className="h-3 w-3 text-muted-foreground shrink-0" />

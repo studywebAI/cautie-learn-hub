@@ -503,7 +503,7 @@ export function AppSidebar() {
         {/* Full drawer sidebar (when hamburger is clicked) */}
         <Sidebar className="w-[19rem]">
           <SidebarContent className="px-3 py-3 flex-1">
-            <p className="px-2 pb-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/55 lowercase">main</p>
+            <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">main</p>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
@@ -518,7 +518,7 @@ export function AppSidebar() {
                         tooltip={item.label}
                       >
                         <item.icon className="h-5 w-5" />
-                        <span className="lowercase text-[14px]">{item.label}</span>
+                        <span className="lowercase text-[14px] leading-5">{item.label}</span>
                       </SidebarMenuButton>
                     </>
                   ) : (
@@ -529,7 +529,7 @@ export function AppSidebar() {
                     >
                       <Link href={item.href} onClick={() => setOpenMobile(false)}>
                         <item.icon className="h-5 w-5" />
-                        <span className="lowercase text-[14px]">{item.label}</span>
+                        <span className="lowercase text-[14px] leading-5">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   )}
@@ -538,8 +538,8 @@ export function AppSidebar() {
 
             </SidebarMenu>
 
-            <div className="h-3" />
-            <p className="px-2 pb-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/55 lowercase">tools</p>
+            <div className="h-5" />
+            <p className="px-2 pb-1.5 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">tools</p>
             <SidebarMenu>
               {toolsMenuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -557,7 +557,7 @@ export function AppSidebar() {
               ))}
             </SidebarMenu>
           </SidebarContent>
-          <SidebarFooter className="p-3 flex flex-col gap-2">
+          <SidebarFooter className="px-3 pt-2 pb-3 flex flex-col gap-2">
             <RecentsSidebar />
             <div className="h-px bg-sidebar-border" />
             <SidebarProfile />
@@ -575,7 +575,7 @@ export function AppSidebar() {
         <SidebarTrigger />
       </div>
       <SidebarContent className="px-3 py-3 flex-1">
-        <p className="px-2 pb-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/55 lowercase">main</p>
+        <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">main</p>
         <SidebarMenu>
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.label} className="relative">
@@ -609,8 +609,8 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
 
-        <div className="h-3" />
-        <p className="px-2 pb-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/55 lowercase">tools</p>
+        <div className="h-5" />
+        <p className="px-2 pb-1.5 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">tools</p>
         <SidebarMenu>
           {toolsMenuItems.map((item) => (
             <SidebarMenuItem key={item.label}>
@@ -628,7 +628,7 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-3 flex flex-col gap-2">
+      <SidebarFooter className="px-3 pt-2 pb-3 flex flex-col gap-2">
         <RecentsSidebar />
         <div className="h-px bg-sidebar-border" />
         <SidebarProfile />

@@ -56,12 +56,12 @@ export function SidebarProfile() {
         <Button
           variant="outline"
           size="sm"
-          className="w-full h-8 text-xs rounded-full border-primary/30 hover:bg-primary/10"
+          className="w-full h-8 text-xs rounded-md border-border/70 bg-transparent hover:bg-sidebar-accent/60"
           asChild
         >
           <Link href="/login">
             <ArrowUpRight className="h-3 w-3 mr-1.5" />
-            Sign Up
+            sign up
           </Link>
         </Button>
 
@@ -71,8 +71,8 @@ export function SidebarProfile() {
             <User className="h-3.5 w-3.5" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">Guest</p>
-            <p className="text-[11px] text-muted-foreground leading-tight">Free</p>
+              <p className="text-sm truncate">guest</p>
+              <p className="text-[11px] text-muted-foreground leading-tight">free</p>
           </div>
         </div>
       </div>
@@ -104,19 +104,19 @@ export function SidebarProfile() {
       <Button
         variant="outline"
         size="sm"
-        className="w-full h-8 text-xs rounded-full border-primary/30 hover:bg-primary/10"
+        className="w-full h-8 text-xs rounded-md border-border/70 bg-transparent hover:bg-sidebar-accent/60"
         asChild
       >
         <Link href="/upgrade">
           <ArrowUpRight className="h-3 w-3 mr-1.5" />
-          Upgrade
+          upgrade
         </Link>
       </Button>
 
       {/* Username dropdown - ChatGPT style */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-left hover:bg-sidebar-accent transition-colors group">
+          <button className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-left hover:bg-sidebar-accent/60 transition-colors group">
             <div className={`flex items-center justify-center h-7 w-7 rounded-full shrink-0 ${isPremium ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-primary/10 text-primary'}`}>
               {isPremium ? <Crown className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" /> : <User className="h-3.5 w-3.5" />}
             </div>
@@ -139,11 +139,11 @@ export function SidebarProfile() {
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => router.push('/settings')}>
             <Settings className="h-4 w-4 mr-2" />
-            Settings
+            settings
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => window.open('https://cautie-learn-hub.vercel.app/help', '_blank')}>
             <HelpCircle className="h-4 w-4 mr-2" />
-            Help & FAQ
+            help & faq
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
