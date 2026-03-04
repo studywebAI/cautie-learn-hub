@@ -279,7 +279,7 @@ export function AppSidebar() {
     return (
       <div
         ref={floatingRef}
-        className="fixed z-[120] rounded-md border border-border bg-background shadow-lg"
+        className="fixed z-[120] rounded-xl border border-border/70 bg-[hsl(var(--surface-1))] shadow-[0_16px_34px_-20px_hsl(var(--foreground)/0.4)]"
         style={{ left: dropdown.left, top: dropdown.top }}
         onMouseEnter={clearCloseTimer}
         onMouseLeave={scheduleClose}
@@ -290,7 +290,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-xs"
+                className="h-7 text-xs rounded-lg"
                 onClick={() => {
                   setCreateClassOpen((v) => !v);
                   setJoinClassOpen(false);
@@ -303,7 +303,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-xs"
+                className="h-7 text-xs rounded-lg"
                 onClick={() => {
                   setJoinClassOpen((v) => !v);
                   setCreateClassOpen(false);
@@ -316,7 +316,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-xs"
+                className="h-7 text-xs rounded-lg"
                 onClick={() => setCreateSubjectOpen((v) => !v)}
               >
                 + Create subject
@@ -325,7 +325,7 @@ export function AppSidebar() {
           </div>
 
           {createClassOpen && (
-            <div className="mb-1 space-y-1 rounded border border-border p-2">
+            <div className="mb-1 space-y-1 rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
               <Input
                 placeholder="Class name"
                 value={className}
@@ -341,7 +341,7 @@ export function AppSidebar() {
           )}
 
           {createSubjectOpen && (
-            <div className="mb-1 space-y-1 rounded border border-border p-2">
+            <div className="mb-1 space-y-1 rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
               <select
                 value={selectedSubjectClassId}
                 onChange={(e) => setSelectedSubjectClassId(e.target.value)}
@@ -374,7 +374,7 @@ export function AppSidebar() {
           )}
 
           {joinClassOpen && (
-            <div className="mb-1 space-y-1 rounded border border-border p-2">
+            <div className="mb-1 space-y-1 rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
               <Input
                 placeholder="Enter join code"
                 value={joinCode}
@@ -398,7 +398,7 @@ export function AppSidebar() {
               <Link
                 key={entry.id}
                 href={entry.href}
-                className="block truncate rounded px-2 py-1.5 text-sm hover:bg-muted"
+                className="block truncate rounded-lg px-2 py-1.5 text-sm hover:bg-[hsl(var(--surface-2))]"
                 onClick={() => {
                   resetInlinePanels();
                   setDropdown(null);
@@ -503,6 +503,7 @@ export function AppSidebar() {
         {/* Full drawer sidebar (when hamburger is clicked) */}
         <Sidebar className="w-[19rem]">
           <SidebarContent className="px-3 py-3 flex-1">
+            <p className="px-2 pb-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/55 lowercase">main</p>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
@@ -535,8 +536,11 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               ))}
 
-              <div className="h-px bg-sidebar-border my-2" />
+            </SidebarMenu>
 
+            <div className="h-3" />
+            <p className="px-2 pb-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/55 lowercase">tools</p>
+            <SidebarMenu>
               {toolsMenuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton
@@ -546,14 +550,14 @@ export function AppSidebar() {
                   >
                     <Link href={item.href} onClick={() => setOpenMobile(false)}>
                       <item.icon className="h-5 w-5" />
-                      <span className="lowercase text-[14px]">{item.label}</span>
+                      <span className="lowercase text-[14px] leading-5">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarContent>
-      <SidebarFooter className="p-3 flex flex-col gap-2">
+          <SidebarFooter className="p-3 flex flex-col gap-2">
             <RecentsSidebar />
             <div className="h-px bg-sidebar-border" />
             <SidebarProfile />
@@ -566,11 +570,12 @@ export function AppSidebar() {
 
   // Desktop: Regular sidebar with trigger
   return (
-        <Sidebar className="w-64" collapsible="icon">
+    <Sidebar className="w-64" collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
       <SidebarContent className="px-3 py-3 flex-1">
+        <p className="px-2 pb-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/55 lowercase">main</p>
         <SidebarMenu>
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.label} className="relative">
@@ -585,7 +590,7 @@ export function AppSidebar() {
                     tooltip={item.label}
                   >
                     <item.icon className="h-5 w-5" />
-                    <span className="lowercase text-[14px]">{item.label}</span>
+                    <span className="lowercase text-[14px] leading-5">{item.label}</span>
                   </SidebarMenuButton>
                 </>
               ) : (
@@ -596,15 +601,17 @@ export function AppSidebar() {
                 >
                   <Link href={item.href}>
                     <item.icon className="h-5 w-5" />
-                    <span className="lowercase text-[14px]">{item.label}</span>
+                    <span className="lowercase text-[14px] leading-5">{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
               )}
             </SidebarMenuItem>
           ))}
+        </SidebarMenu>
 
-          <div className="h-px bg-sidebar-border my-2" />
-
+        <div className="h-3" />
+        <p className="px-2 pb-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/55 lowercase">tools</p>
+        <SidebarMenu>
           {toolsMenuItems.map((item) => (
             <SidebarMenuItem key={item.label}>
               <SidebarMenuButton
@@ -614,7 +621,7 @@ export function AppSidebar() {
               >
                 <Link href={item.href}>
                   <item.icon className="h-5 w-5" />
-                  <span className="lowercase text-[14px]">{item.label}</span>
+                  <span className="lowercase text-[14px] leading-5">{item.label}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

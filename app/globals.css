@@ -26,7 +26,13 @@
     --border: 0 0% 90%;
     --input: 0 0% 90%;
     --ring: 0 0% 15%;
-    --radius: 0.5rem;
+    --radius: 0.875rem;
+    --surface-1: 0 0% 100%;
+    --surface-2: 0 0% 98%;
+    --surface-3: 0 0% 95%;
+    --interactive-hover: 0 0% 92%;
+    --interactive-active: 0 0% 88%;
+    --focus-ring: 0 0% 18%;
     --chart-1: 0 0% 20%;
     --chart-2: 0 0% 35%;
     --chart-3: 0 0% 50%;
@@ -73,6 +79,12 @@
     --chart-4: 0 0% 35%;
     --chart-5: 0 0% 20%;
 
+    --surface-1: 0 0% 8%;
+    --surface-2: 0 0% 10%;
+    --surface-3: 0 0% 13%;
+    --interactive-hover: 0 0% 16%;
+    --interactive-active: 0 0% 20%;
+    --focus-ring: 0 0% 84%;
     --sidebar-background: 0 0% 5%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 90%;
@@ -136,6 +148,12 @@
     --chart-4: 0 0% 65%;
     --chart-5: 0 0% 80%;
 
+    --surface-1: 0 0% 100%;
+    --surface-2: 0 0% 98%;
+    --surface-3: 0 0% 95%;
+    --interactive-hover: 0 0% 92%;
+    --interactive-active: 0 0% 88%;
+    --focus-ring: 0 0% 18%;
     --sidebar-background: 0 0% 94%;
     --sidebar-foreground: 0 0% 0%;
     --sidebar-primary: 0 0% 15%;
@@ -175,6 +193,12 @@
     --chart-4: 0 0% 35%;
     --chart-5: 0 0% 20%;
 
+    --surface-1: 0 0% 8%;
+    --surface-2: 0 0% 10%;
+    --surface-3: 0 0% 14%;
+    --interactive-hover: 0 0% 18%;
+    --interactive-active: 0 0% 22%;
+    --focus-ring: 0 0% 84%;
     --sidebar-background: 0 0% 8%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 90%;
