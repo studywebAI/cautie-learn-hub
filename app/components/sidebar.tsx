@@ -501,7 +501,7 @@ export function AppSidebar() {
         </div>
 
         {/* Full drawer sidebar (when hamburger is clicked) */}
-        <Sidebar className="w-72">
+        <Sidebar className="w-[19rem]">
           <SidebarContent className="px-3 py-3 flex-1">
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -517,7 +517,7 @@ export function AppSidebar() {
                         tooltip={item.label}
                       >
                         <item.icon className="h-5 w-5" />
-                        <span className="lowercase text-[13px]">{item.label}</span>
+                        <span className="lowercase text-[14px]">{item.label}</span>
                       </SidebarMenuButton>
                     </>
                   ) : (
@@ -528,7 +528,7 @@ export function AppSidebar() {
                     >
                       <Link href={item.href} onClick={() => setOpenMobile(false)}>
                         <item.icon className="h-5 w-5" />
-                        <span className="lowercase text-[13px]">{item.label}</span>
+                        <span className="lowercase text-[14px]">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   )}
@@ -546,7 +546,7 @@ export function AppSidebar() {
                   >
                     <Link href={item.href} onClick={() => setOpenMobile(false)}>
                       <item.icon className="h-5 w-5" />
-                      <span className="lowercase text-[13px]">{item.label}</span>
+                      <span className="lowercase text-[14px]">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -566,7 +566,7 @@ export function AppSidebar() {
 
   // Desktop: Regular sidebar with trigger
   return (
-        <Sidebar className="w-56" collapsible="icon">
+        <Sidebar className="w-64" collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
@@ -585,7 +585,7 @@ export function AppSidebar() {
                     tooltip={item.label}
                   >
                     <item.icon className="h-5 w-5" />
-                    <span className="lowercase text-[13px]">{item.label}</span>
+                    <span className="lowercase text-[14px]">{item.label}</span>
                   </SidebarMenuButton>
                 </>
               ) : (
@@ -596,7 +596,7 @@ export function AppSidebar() {
                 >
                   <Link href={item.href}>
                     <item.icon className="h-5 w-5" />
-                    <span className="lowercase text-[13px]">{item.label}</span>
+                    <span className="lowercase text-[14px]">{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
               )}
@@ -614,7 +614,7 @@ export function AppSidebar() {
               >
                 <Link href={item.href}>
                   <item.icon className="h-5 w-5" />
-                  <span className="lowercase text-[13px]">{item.label}</span>
+                  <span className="lowercase text-[14px]">{item.label}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
