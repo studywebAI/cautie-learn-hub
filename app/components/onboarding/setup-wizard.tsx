@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 import { getDictionary } from '@/lib/get-dictionary';
 
 type Language = 'nl' | 'en' | 'es' | 'ru' | 'zh';
-type Theme = 'system' | 'light' | 'dark' | 'pastel';
+type Theme = 'light' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
 type Role = 'student' | 'teacher';
 
 interface SetupWizardProps {
@@ -27,12 +27,6 @@ const LANGUAGES = [
 
 const THEMES = [
   {
-    id: 'system' as Theme,
-    nameKey: 'systemDefault',
-    colors: 'bg-gradient-to-br from-white to-black',
-    description: 'Follow system setting'
-  },
-  {
     id: 'light' as Theme,
     nameKey: 'light',
     colors: 'bg-white border-gray-200',
@@ -45,10 +39,28 @@ const THEMES = [
     description: 'Easy on the eyes'
   },
   {
-    id: 'pastel' as Theme,
-    nameKey: 'pastel',
-    colors: 'bg-gradient-to-br from-blue-50 via-green-50 to-white',
-    description: 'Soft and retro'
+    id: 'ocean' as Theme,
+    nameKey: 'ocean',
+    colors: 'bg-gradient-to-br from-sky-100 to-cyan-200 border-cyan-300',
+    description: 'coastal and clean'
+  },
+  {
+    id: 'forest' as Theme,
+    nameKey: 'forest',
+    colors: 'bg-gradient-to-br from-lime-100 to-emerald-200 border-emerald-300',
+    description: 'grounded and calm'
+  },
+  {
+    id: 'sunset' as Theme,
+    nameKey: 'sunset',
+    colors: 'bg-gradient-to-br from-orange-100 to-rose-200 border-rose-300',
+    description: 'warm and vivid'
+  },
+  {
+    id: 'rose' as Theme,
+    nameKey: 'rose',
+    colors: 'bg-gradient-to-br from-fuchsia-100 to-pink-200 border-pink-300',
+    description: 'soft and bold'
   },
 ];
 

@@ -10,7 +10,8 @@ import { getDictionary } from '@/lib/get-dictionary';
 import type { Dictionary, Locale } from '@/lib/get-dictionary';
 
 export type UserRole = 'student' | 'teacher';
-export type ThemeType = 'light' | 'dark' | 'ocean';
+export type ThemeType = 'light' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
+export type AccentColor = 'none' | 'sky' | 'mint' | 'coral' | 'violet' | 'amber';
 export type ClassInfo = Tables<'classes'>;
 export type ClassAssignment = Tables<'assignments'> & {
   chapter_id?: string | null;
@@ -69,6 +70,8 @@ export type AppContextType = {
   setReducedMotion: (enabled: boolean) => void;
   theme: ThemeType;
   setTheme: (theme: ThemeType) => void;
+  accentColor: AccentColor;
+  setAccentColor: (accentColor: AccentColor) => void;
   sessionRecap: SessionRecapData | null;
   setSessionRecap: (data: SessionRecapData | null) => void;
   classes: ClassInfo[];
@@ -120,6 +123,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [dyslexiaFont, setDyslexiaFontState] = useState(false);
   const [reducedMotion, setReducedMotionState] = useState(false);
   const [theme, setThemeState] = useState<ThemeType>('light');
+  const [accentColor, setAccentColorState] = useState<AccentColor>('none');
   const [sessionRecap, setSessionRecap] = useState<SessionRecapData | null>(null);
   const [classes, setClasses] = useState<ClassInfo[]>([]);
   const [subjects, setSubjects] = useState<DashboardSubject[]>([]);
@@ -131,11 +135,27 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
 
-  const applyTheme = useCallback((currentTheme: ThemeType) => {
+  const applyAppearance = useCallback((currentTheme: ThemeType, currentAccent: AccentColor) => {
     if (typeof window === 'undefined') return;
     const root = document.documentElement;
-    root.classList.remove('theme-light', 'theme-dark', 'theme-ocean');
+    root.classList.remove(
+      'theme-light',
+      'theme-dark',
+      'theme-ocean',
+      'theme-forest',
+      'theme-sunset',
+      'theme-rose',
+      'accent-sky',
+      'accent-mint',
+      'accent-coral',
+      'accent-violet',
+      'accent-amber',
+      'has-accent'
+    );
     root.classList.add(`theme-${currentTheme}`);
+    if (currentAccent !== 'none') {
+      root.classList.add('has-accent', `accent-${currentAccent}`);
+    }
   }, []);
 
   // OPTIMIZED: Load cache first (instant), then fetch in parallel
@@ -164,9 +184,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const rm = getFromLocalStorage('studyweb-reduced-motion', false);
     setReducedMotionState(rm);
     if(rm) document.body.setAttribute('data-reduced-motion', 'true');
-    const savedTheme = getFromLocalStorage('studyweb-theme', 'light');
+    const savedTheme = getFromLocalStorage<ThemeType>('studyweb-theme', 'light');
+    const savedAccent = getFromLocalStorage<AccentColor>('studyweb-accent-color', 'none');
     setThemeState(savedTheme);
-    applyTheme(savedTheme);
+    setAccentColorState(savedAccent);
+    applyAppearance(savedTheme, savedAccent);
 
     // STEP 3: Fetch session + dashboard data in PARALLEL
     const init = async () => {
@@ -227,7 +249,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [applyTheme]);
+  }, [applyAppearance]);
 
   const setLanguage = (newLanguage: Locale) => {
     setLanguageState(newLanguage);
@@ -265,7 +287,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const setTheme = (newTheme: ThemeType) => {
     setThemeState(newTheme);
     saveToLocalStorage('studyweb-theme', newTheme);
-    applyTheme(newTheme);
+    applyAppearance(newTheme, accentColor);
+  };
+
+  const setAccentColor = (newAccentColor: AccentColor) => {
+    setAccentColorState(newAccentColor);
+    saveToLocalStorage('studyweb-accent-color', newAccentColor);
+    applyAppearance(theme, newAccentColor);
   };
 
   const refetchClasses = useCallback(async () => {
@@ -363,12 +391,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const contextValue = useMemo(() => ({
     session, isLoading, language, setLanguage, dictionary, role, setRole,
     highContrast, setHighContrast, dyslexiaFont, setDyslexiaFont,
-    reducedMotion, setReducedMotion, theme, setTheme, sessionRecap, setSessionRecap,
+    reducedMotion, setReducedMotion, theme, setTheme, accentColor, setAccentColor, sessionRecap, setSessionRecap,
     classes, subjects, createClass, isCreatingClass, refetchClasses,
     assignments, createAssignment, deleteAssignment, refetchAssignments,
     students, personalTasks, createPersonalTask, updatePersonalTask,
     materials, refetchMaterials,
-  }), [session, isLoading, language, dictionary, role, highContrast, dyslexiaFont, reducedMotion, theme, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials]);
+  }), [session, isLoading, language, dictionary, role, highContrast, dyslexiaFont, reducedMotion, theme, accentColor, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials]);
 
   return (
     <AppContext.Provider value={contextValue}>

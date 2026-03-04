@@ -24,6 +24,8 @@ export default function SettingsPage() {
     setReducedMotion,
     theme,
     setTheme,
+    accentColor,
+    setAccentColor,
     session
   } = useContext(AppContext) as AppContextType;
 
@@ -62,25 +64,25 @@ export default function SettingsPage() {
               <TabsList className="flex flex-col h-full w-full bg-transparent p-2 gap-1">
                 <TabsTrigger
                   value="general"
-                  className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  className="w-full justify-start lowercase text-[13px] data-[state=active]:bg-background data-[state=active]:shadow-sm"
                 >
                   {dictionary.settings.general.title}
                 </TabsTrigger>
                 <TabsTrigger
                   value="subscription"
-                  className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  className="w-full justify-start lowercase text-[13px] data-[state=active]:bg-background data-[state=active]:shadow-sm"
                 >
-                  Subscription
+                  subscription
                 </TabsTrigger>
                 <TabsTrigger
                   value="personalization"
-                  className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  className="w-full justify-start lowercase text-[13px] data-[state=active]:bg-background data-[state=active]:shadow-sm"
                 >
                   {dictionary.settings.personalization.title}
                 </TabsTrigger>
                 <TabsTrigger
                   value="accessibility"
-                  className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  className="w-full justify-start lowercase text-[13px] data-[state=active]:bg-background data-[state=active]:shadow-sm"
                 >
                   {dictionary.settings.accessibility.title}
                 </TabsTrigger>
@@ -206,18 +208,38 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent className="px-0 space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="theme">{dictionary.settings.personalization.theme}</Label>
+                      <Label htmlFor="theme" className="lowercase">{dictionary.settings.personalization.theme}</Label>
                       <Select value={theme} onValueChange={setTheme}>
                         <SelectTrigger id="theme" className="w-[280px]">
                           <SelectValue placeholder="Select theme" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="light">{dictionary.settings.personalization.light}</SelectItem>
-                          <SelectItem value="dark">{dictionary.settings.personalization.dark}</SelectItem>
-                          <SelectItem value="ocean">{dictionary.settings.personalization.ocean}</SelectItem>
+                          <SelectItem value="light" className="lowercase">{dictionary.settings.personalization.light}</SelectItem>
+                          <SelectItem value="dark" className="lowercase">{dictionary.settings.personalization.dark}</SelectItem>
+                          <SelectItem value="ocean" className="lowercase">{dictionary.settings.personalization.ocean}</SelectItem>
+                          <SelectItem value="forest" className="lowercase">forest</SelectItem>
+                          <SelectItem value="sunset" className="lowercase">sunset</SelectItem>
+                          <SelectItem value="rose" className="lowercase">rose</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className='text-sm text-muted-foreground'>{dictionary.settings.personalization.themeDescription}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="accent-color" className="lowercase">accent color</Label>
+                      <Select value={accentColor} onValueChange={(value) => setAccentColor(value as 'none' | 'sky' | 'mint' | 'coral' | 'violet' | 'amber')}>
+                        <SelectTrigger id="accent-color" className="w-[280px]">
+                          <SelectValue placeholder="Select accent color" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none" className="lowercase">none</SelectItem>
+                          <SelectItem value="sky" className="lowercase">sky</SelectItem>
+                          <SelectItem value="mint" className="lowercase">mint</SelectItem>
+                          <SelectItem value="coral" className="lowercase">coral</SelectItem>
+                          <SelectItem value="violet" className="lowercase">violet</SelectItem>
+                          <SelectItem value="amber" className="lowercase">amber</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className='text-sm text-muted-foreground'>choose an optional accent for selected items.</p>
                     </div>
                   </CardContent>
                 </Card>

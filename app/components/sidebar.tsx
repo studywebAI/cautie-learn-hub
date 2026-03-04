@@ -64,16 +64,16 @@ export function AppSidebar() {
   const menuItems = [
     { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
     { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
-    { href: '/classes', label: 'Manage', icon: School },
+    { href: '/classes', label: 'manage', icon: School },
     { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
-    { href: '/material', label: dictionary.sidebar.material || 'Material', icon: FileSignature },
+    { href: '/material', label: dictionary.sidebar.material || 'material', icon: FileSignature },
   ];
 
   const toolsMenuItems = [
     { href: '/tools/quiz', label: dictionary.sidebar.tools.quizGenerator, icon: BrainCircuit },
     { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: Copy },
     { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: FileSignature },
-    { href: '/tools/blocks', label: dictionary.sidebar.tools.blocks || 'Blocks', icon: FileSignature },
+    { href: '/tools/blocks', label: dictionary.sidebar.tools.blocks || 'blocks', icon: FileSignature },
   ];
 
   const isTeacher = context?.role === 'teacher';
@@ -446,7 +446,7 @@ export function AppSidebar() {
                       className={cn(
                         "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
                         isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]"
                           : "text-sidebar-foreground hover:bg-sidebar-accent"
                       )}
                       title={item.label}
@@ -460,7 +460,7 @@ export function AppSidebar() {
                     className={cn(
                       "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
                       isMenuItemActive(item.href)
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]"
                         : "text-sidebar-foreground hover:bg-sidebar-accent"
                     )}
                     title={item.label}
@@ -478,7 +478,7 @@ export function AppSidebar() {
                 className={cn(
                   "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
                   isMenuItemActive(item.href)
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]"
                     : "text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
                 title={item.label}
@@ -501,7 +501,7 @@ export function AppSidebar() {
         </div>
 
         {/* Full drawer sidebar (when hamburger is clicked) */}
-        <Sidebar className="w-64">
+        <Sidebar className="w-72">
           <SidebarContent className="px-3 py-3 flex-1">
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -517,7 +517,7 @@ export function AppSidebar() {
                         tooltip={item.label}
                       >
                         <item.icon className="h-5 w-5" />
-                        <span>{item.label}</span>
+                        <span className="lowercase text-[13px]">{item.label}</span>
                       </SidebarMenuButton>
                     </>
                   ) : (
@@ -528,7 +528,7 @@ export function AppSidebar() {
                     >
                       <Link href={item.href} onClick={() => setOpenMobile(false)}>
                         <item.icon className="h-5 w-5" />
-                        <span>{item.label}</span>
+                        <span className="lowercase text-[13px]">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   )}
@@ -546,7 +546,7 @@ export function AppSidebar() {
                   >
                     <Link href={item.href} onClick={() => setOpenMobile(false)}>
                       <item.icon className="h-5 w-5" />
-                      <span>{item.label}</span>
+                      <span className="lowercase text-[13px]">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -566,7 +566,7 @@ export function AppSidebar() {
 
   // Desktop: Regular sidebar with trigger
   return (
-        <Sidebar className="w-48" collapsible="icon">
+        <Sidebar className="w-56" collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
@@ -585,7 +585,7 @@ export function AppSidebar() {
                     tooltip={item.label}
                   >
                     <item.icon className="h-5 w-5" />
-                    <span>{item.label}</span>
+                    <span className="lowercase text-[13px]">{item.label}</span>
                   </SidebarMenuButton>
                 </>
               ) : (
@@ -596,7 +596,7 @@ export function AppSidebar() {
                 >
                   <Link href={item.href}>
                     <item.icon className="h-5 w-5" />
-                    <span>{item.label}</span>
+                    <span className="lowercase text-[13px]">{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
               )}
@@ -614,7 +614,7 @@ export function AppSidebar() {
               >
                 <Link href={item.href}>
                   <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
+                  <span className="lowercase text-[13px]">{item.label}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
