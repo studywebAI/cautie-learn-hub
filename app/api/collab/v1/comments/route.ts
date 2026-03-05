@@ -59,3 +59,44 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function GET(request: NextRequest) {
+  try {
+    const { supabase, user } = await getAuthedToolboxContext();
+    const artifactId = request.nextUrl.searchParams.get("artifactId");
+    if (!artifactId) {
+      return NextResponse.json({ error: "artifactId is required" }, { status: 400 });
+    }
+
+    const { data: artifact } = await supabase
+      .from("artifacts")
+      .select("id,user_id")
+      .eq("id", artifactId)
+      .maybeSingle();
+
+    if (!artifact) {
+      return NextResponse.json({ error: "Artifact not found" }, { status: 404 });
+    }
+
+    if (artifact.user_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { data, error } = await supabase
+      .from("comments")
+      .select("*")
+      .eq("artifact_id", artifactId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(data || []);
+  } catch (error: any) {
+    if (error?.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.json({ error: error?.message || "Failed to load comments" }, { status: 500 });
+  }
+}

@@ -12,6 +12,20 @@ import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { NoteViewer } from '@/components/material-viewers/note-viewer';
 import type { GenerateNotesOutput } from '@/ai/flows/generate-notes';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+type ArtifactVersion = {
+  id: string;
+  version_number: number;
+  content: any;
+  created_at: string;
+};
+
+type CollabComment = {
+  id: string;
+  content: string;
+  created_at: string;
+};
 
 type ToolRun = {
   id: string;
@@ -30,6 +44,9 @@ export default function NotesPage() {
   const [generatedNotes, setGeneratedNotes] = useState<GenerateNotesOutput['notes'] | null>(null);
   const [history, setHistory] = useState<ToolRun[]>([]);
   const [latestArtifactId, setLatestArtifactId] = useState<string | null>(null);
+  const [artifactVersions, setArtifactVersions] = useState<ArtifactVersion[]>([]);
+  const [comments, setComments] = useState<CollabComment[]>([]);
+  const [commentDraft, setCommentDraft] = useState('');
   const { toast } = useToast();
 
   const canGenerate = sourceText.trim().length > 0 && !isLoading;
@@ -52,6 +69,31 @@ export default function NotesPage() {
     };
     loadMeta();
   }, []);
+
+  useEffect(() => {
+    const loadArtifactData = async () => {
+      if (!latestArtifactId) {
+        setArtifactVersions([]);
+        setComments([]);
+        return;
+      }
+
+      const [historyRes, commentsRes] = await Promise.all([
+        fetch(`/api/tools/v2/artifacts/${latestArtifactId}/history`),
+        fetch(`/api/collab/v1/comments?artifactId=${latestArtifactId}`),
+      ]);
+
+      if (historyRes.ok) {
+        const historyData = await historyRes.json();
+        setArtifactVersions(historyData.versions || []);
+      }
+      if (commentsRes.ok) {
+        const commentData = await commentsRes.json();
+        setComments(commentData || []);
+      }
+    };
+    loadArtifactData();
+  }, [latestArtifactId]);
 
   const handleGenerate = async () => {
     if (!sourceText.trim()) {
@@ -162,9 +204,16 @@ export default function NotesPage() {
         Generate Notes
       </Button>
 
-      <div className="space-y-2">
-        <Label>Cross-tool Actions</Label>
-        <Button
+      <Tabs defaultValue="actions" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="actions">Actions</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="comments">Comments</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="actions" className="space-y-2">
+          <Label>Cross-tool Actions</Label>
+          <Button
           variant="outline"
           className="w-full"
           disabled={!latestArtifactId || isLoading}
@@ -188,10 +237,10 @@ export default function NotesPage() {
               toast({ variant: 'destructive', title: 'Transform failed', description: error?.message || 'Unable to transform artifact' });
             }
           }}
-        >
-          Transform to Quiz
-        </Button>
-        <Button
+          >
+            Transform to Quiz
+          </Button>
+          <Button
           variant="outline"
           className="w-full"
           disabled={!latestArtifactId || isLoading}
@@ -215,10 +264,71 @@ export default function NotesPage() {
               toast({ variant: 'destructive', title: 'Transform failed', description: error?.message || 'Unable to transform artifact' });
             }
           }}
-        >
-          Transform to Flashcards
-        </Button>
-      </div>
+          >
+            Transform to Flashcards
+          </Button>
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-2">
+          {artifactVersions.length === 0 && <p className="text-xs text-muted-foreground">No artifact versions yet.</p>}
+          {artifactVersions.map((version) => (
+            <div key={version.id} className="rounded-md border p-2">
+              <p className="text-xs font-medium">Version {version.version_number}</p>
+              <p className="text-[11px] text-muted-foreground">{new Date(version.created_at).toLocaleString()}</p>
+            </div>
+          ))}
+          {artifactVersions.length >= 2 && (
+            <div className="rounded-md border border-dashed p-2">
+              <p className="text-xs font-medium">Latest Diff Preview</p>
+              <p className="text-[11px] text-muted-foreground">
+                Size change: {JSON.stringify(artifactVersions[0].content).length - JSON.stringify(artifactVersions[1].content).length} chars
+              </p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="comments" className="space-y-2">
+          <Textarea
+            value={commentDraft}
+            onChange={(e) => setCommentDraft(e.target.value)}
+            placeholder="Add collaboration comment..."
+            className="min-h-[90px]"
+          />
+          <Button
+            className="w-full"
+            disabled={!latestArtifactId || !commentDraft.trim()}
+            onClick={async () => {
+              if (!latestArtifactId || !commentDraft.trim()) return;
+              try {
+                const res = await fetch('/api/collab/v1/comments', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    artifactId: latestArtifactId,
+                    content: commentDraft.trim(),
+                  }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data?.error || 'Comment failed');
+                setCommentDraft('');
+                const commentsRes = await fetch(`/api/collab/v1/comments?artifactId=${latestArtifactId}`);
+                if (commentsRes.ok) setComments(await commentsRes.json());
+              } catch (error: any) {
+                toast({ variant: 'destructive', title: 'Comment failed', description: error?.message || 'Unable to add comment' });
+              }
+            }}
+          >
+            Add Comment
+          </Button>
+          {comments.length === 0 && <p className="text-xs text-muted-foreground">No comments yet.</p>}
+          {comments.map((comment) => (
+            <div key={comment.id} className="rounded-md border p-2">
+              <p className="text-xs">{comment.content}</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{new Date(comment.created_at).toLocaleString()}</p>
+            </div>
+          ))}
+        </TabsContent>
+      </Tabs>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">

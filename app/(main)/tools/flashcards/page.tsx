@@ -3,13 +3,16 @@
 import React, { useState, useEffect, Suspense, useContext, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Loader2, Sparkles, BookCheck } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { FlashcardViewer, StudyMode } from '@/components/tools/flashcard-viewer';
 import { AppContext } from '@/contexts/app-context';
 import { FlashcardEditor } from '@/components/tools/flashcard-editor';
 import type { Flashcard } from '@/lib/types';
-import { ToolLayout } from '@/components/tools/tool-layout';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
+import { WorkbenchShell } from '@/components/tools/workbench-shell';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 
 
 function FlashcardsPageContent() {
@@ -33,7 +36,8 @@ function FlashcardsPageContent() {
   const [currentView, setCurrentView] = useState<'setup' | 'edit' | 'study'>('setup');
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [fileType, setFileType] = useState<'image' | 'file' | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [plan, setPlan] = useState<string>('free');
 
   const handleGenerate = useCallback(async (text: string) => {
     if (!text.trim()) {
@@ -71,6 +75,24 @@ function FlashcardsPageContent() {
       handleGenerate(sourceTextFromParams);
     }
   }, [sourceTextFromParams, handleGenerate]);
+
+  useEffect(() => {
+    const loadMeta = async () => {
+      const [usageRes, runsRes] = await Promise.all([
+        fetch('/api/billing/v1/usage-summary'),
+        fetch('/api/tools/v2/runs'),
+      ]);
+      if (usageRes.ok) {
+        const usage = await usageRes.json();
+        setPlan(usage.plan || 'free');
+      }
+      if (runsRes.ok) {
+        const runs = await runsRes.json();
+        setHistory((runs || []).filter((r: any) => r.tool_id === 'flashcards').slice(0, 8));
+      }
+    };
+    loadMeta();
+  }, []);
 
   // Add to recents when flashcards are generated
   useEffect(() => {
@@ -118,34 +140,7 @@ function FlashcardsPageContent() {
     }
   };
 
-  const totalLoading = isLoading || isProcessingFile;
-  const mainButtonIcon = isAssignmentContext ? <BookCheck className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />;
-  const mainButtonText = isAssignmentContext ? 'Create & Attach to Assignment' : 'Generate with AI';
-
-  const studyModeOptions = [
-    { value: 'flip', label: 'Classic Flip' },
-    { value: 'type', label: 'Active Recall' },
-    { value: 'multiple-choice', label: 'Multiple Choice' },
-  ];
-
-  // Generate subject cards based on uploaded content
-  const subjectCards = uploadedFile ? [
-    { title: `${uploadedFile.name.split('.')[0]} Flashcards`, type: 'Flashcards' },
-    { title: `${uploadedFile.name.split('.')[0]} Study`, type: 'Study Set' },
-    { title: `${uploadedFile.name.split('.')[0]} Review`, type: 'Review' },
-  ] : [];
-
-  const additionalSettings = [
-    {
-      label: 'Edit Mode',
-      value: isEditMode,
-      onChange: setIsEditMode,
-      options: [
-        { value: false, label: 'Direct Start' },
-        { value: true, label: 'Review & Edit' },
-      ]
-    }
-  ];
+  const studyModeOptions = ['flip', 'type', 'multiple-choice'];
 
   if (isLoading) {
      return (
@@ -171,29 +166,103 @@ function FlashcardsPageContent() {
     return <FlashcardViewer cards={generatedCards} mode={studyMode} onRestart={handleRestart} />;
   }
 
+  const leftPanel = (
+    <div className="space-y-3 pt-1">
+      <Label>Source Text</Label>
+      <Textarea
+        value={sourceText}
+        onChange={(e) => setSourceText(e.target.value)}
+        placeholder="Paste material to generate flashcards..."
+        className="min-h-[360px]"
+      />
+    </div>
+  );
+
+  const centerPanel = (
+    <div className="space-y-3 pt-1">
+      {!generatedCards && (
+        <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+          Flashcard preview appears after generation.
+        </div>
+      )}
+      {generatedCards && (
+        <div className="space-y-2">
+          {generatedCards.slice(0, 6).map((card) => (
+            <div key={card.id} className="rounded-md border p-3">
+              <p className="text-sm font-medium">{card.front}</p>
+              <p className="text-xs text-muted-foreground mt-1">{card.back}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const rightPanel = (
+    <div className="space-y-4 pt-1">
+      <div className="space-y-2">
+        <Label>Study Mode</Label>
+        <select
+          value={studyMode}
+          onChange={(e) => setStudyMode(e.target.value as StudyMode)}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        >
+          {studyModeOptions.map((mode) => (
+            <option key={mode} value={mode}>{mode}</option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-2">
+        <Label>Cards</Label>
+        <input
+          type="number"
+          min={1}
+          max={100}
+          value={flashcardCount}
+          onChange={(e) => setFlashcardCount(parseInt(e.target.value) || 1)}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Edit Mode</Label>
+        <select
+          value={isEditMode ? 'edit' : 'direct'}
+          onChange={(e) => setIsEditMode(e.target.value === 'edit')}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="direct">Direct Start</option>
+          <option value="edit">Review & Edit</option>
+        </select>
+      </div>
+      <Button onClick={handleFormSubmit} disabled={isLoading || !sourceText.trim()} className="w-full">
+        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+        Generate Flashcards
+      </Button>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Recent Runs</Label>
+          <Badge variant="outline">{plan.toUpperCase()}</Badge>
+        </div>
+        {history.length === 0 && <p className="text-xs text-muted-foreground">No runs yet.</p>}
+        {history.map((run: any) => (
+          <div key={run.id} className="rounded-md border p-2">
+            <p className="text-xs font-medium">{run.status}</p>
+            <p className="text-[11px] text-muted-foreground">{new Date(run.created_at).toLocaleString()}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
-    <ToolLayout
-      title={isAssignmentContext ? 'Create New Flashcard Set' : 'Flashcards'}
-      description={isAssignmentContext ? `Create a new set of flashcards to attach to your assignment.` : `Create flashcards from text, files, or previous projects.`}
-      sourceText={sourceText}
-      setSourceText={setSourceText}
-      onGenerate={handleFormSubmit}
-      isLoading={totalLoading}
-      isProcessingFile={isProcessingFile}
-      uploadedFile={uploadedFile}
-      setUploadedFile={setUploadedFile}
-      fileType={fileType}
-      setFileType={setFileType}
-      modeOptions={studyModeOptions}
-      selectedMode={studyMode}
-      onModeChange={(mode) => setStudyMode(mode as StudyMode)}
-      modeButtonText="Study Mode"
-      countValue={flashcardCount}
-      onCountChange={setFlashcardCount}
-      countLabel="Cards"
-      additionalSettings={additionalSettings}
-      subjectCards={subjectCards}
-      isAssignmentContext={isAssignmentContext}
+    <WorkbenchShell
+      title={isAssignmentContext ? 'Create New Flashcard Set' : 'Flashcards Studio'}
+      description={isAssignmentContext ? 'Create flashcards for assignment context.' : 'Generate, preview, and study flashcards in a unified workbench.'}
+      plan={plan}
+      left={leftPanel}
+      center={centerPanel}
+      right={rightPanel}
     />
   );
 }

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, Suspense, useCallback, useContext } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Loader2, Swords, BookCheck, Shield, Sparkles } from 'lucide-react';
 import { QuizTaker, QuizMode } from '@/components/tools/quiz-taker';
 import { AppContext } from '@/contexts/app-context';
@@ -10,8 +9,12 @@ import { AppContext } from '@/contexts/app-context';
 import type { Quiz } from '@/lib/types';
 import { QuizDuel } from '@/components/tools/quiz-duel';
 import { QuizEditor } from '@/components/tools/quiz-editor';
-import { ToolLayout } from '@/components/tools/tool-layout';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
+import { WorkbenchShell } from '@/components/tools/workbench-shell';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 
 function QuizPageContent() {
@@ -36,6 +39,9 @@ function QuizPageContent() {
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState<'image' | 'file' | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [plan, setPlan] = useState<string>('free');
+  const [latestArtifactId, setLatestArtifactId] = useState<string | null>(null);
 
   const handleGenerate = useCallback(async (text: string) => {
     if (!text.trim()) {
@@ -59,6 +65,7 @@ function QuizPageContent() {
         });
         const response = run?.output_payload || run;
         setGeneratedQuiz(response as Quiz);
+        setLatestArtifactId(run?.output_artifact_id || null);
         if (isEditMode) {
           setCurrentView('edit');
         } else {
@@ -78,6 +85,24 @@ function QuizPageContent() {
       handleGenerate(sourceTextFromParams);
     }
   }, [sourceTextFromParams, handleGenerate]);
+
+  useEffect(() => {
+    const loadMeta = async () => {
+      const [usageRes, runsRes] = await Promise.all([
+        fetch('/api/billing/v1/usage-summary'),
+        fetch('/api/tools/v2/runs'),
+      ]);
+      if (usageRes.ok) {
+        const usage = await usageRes.json();
+        setPlan(usage.plan || 'free');
+      }
+      if (runsRes.ok) {
+        const runs = await runsRes.json();
+        setHistory((runs || []).filter((r: any) => r.tool_id === 'quiz').slice(0, 8));
+      }
+    };
+    loadMeta();
+  }, []);
 
   // Add to recents when quiz is generated
   useEffect(() => {
@@ -125,58 +150,7 @@ function QuizPageContent() {
     }
   }
 
-  const totalLoading = isLoading || isProcessingFile;
-  const mainButtonAction = isAssignmentContext ? () => handleGenerate(sourceText) : handleFormSubmit;
-
-  const mainButtonText = isAssignmentContext
-    ? 'Create & Attach to Assignment'
-    : 'Generate with AI';
-
-  let mainButtonIcon;
-    switch(quizMode) {
-        case 'duel':
-            mainButtonIcon = <Swords className="mr-2 h-4 w-4" />;
-            break;
-        case 'boss-fight':
-            mainButtonIcon = <Shield className="mr-2 h-4 w-4" />;
-            break;
-        default:
-            mainButtonIcon = isAssignmentContext ? <BookCheck className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />;
-    }
-
-  const finalButtonText = quizMode === 'duel'
-    ? 'Start Duel'
-    : (quizMode === 'boss-fight' ? 'Start Boss Fight' : (isAssignmentContext ? 'Create & Attach' : 'Generate with AI'));
-
-  const quizModeOptions = [
-    { value: 'practice', label: 'Practice' },
-    { value: 'normal', label: 'Normal' },
-    { value: 'exam', label: 'Exam' },
-    { value: 'survival', label: 'Survival' },
-    { value: 'speedrun', label: 'Speedrun' },
-    { value: 'adaptive', label: 'Adaptive' },
-    { value: 'boss-fight', label: 'Boss Fight' },
-    { value: 'duel', label: 'Duel (1v1)' },
-  ];
-
-  // Generate subject cards based on uploaded content
-  const subjectCards = uploadedFile ? [
-    { title: `${uploadedFile.name.split('.')[0]} Quiz`, type: 'Quiz' },
-    { title: `${uploadedFile.name.split('.')[0]} Test`, type: 'Test' },
-    { title: `${uploadedFile.name.split('.')[0]} Review`, type: 'Review' },
-  ] : [];
-
-  const additionalSettings = [
-    {
-      label: 'Edit Mode',
-      value: isEditMode,
-      onChange: setIsEditMode,
-      options: [
-        { value: false, label: 'Direct Start' },
-        { value: true, label: 'Review & Edit' },
-      ]
-    }
-  ];
+  const quizModeOptions = ['practice', 'normal', 'exam', 'survival', 'speedrun', 'adaptive', 'boss-fight', 'duel'];
 
   if (isLoading) {
      return (
@@ -204,29 +178,114 @@ function QuizPageContent() {
     return <QuizDuel sourceText={sourceText} onRestart={handleRestart} />
   }
 
+  const leftPanel = (
+    <div className="space-y-3 pt-1">
+      <Label>Source Text</Label>
+      <Textarea
+        value={sourceText}
+        onChange={(e) => setSourceText(e.target.value)}
+        placeholder="Paste material to generate quiz questions..."
+        className="min-h-[360px]"
+      />
+    </div>
+  );
+
+  const centerPanel = (
+    <div className="space-y-3 pt-1">
+      {!generatedQuiz && (
+        <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+          Quiz preview appears after generation.
+        </div>
+      )}
+      {generatedQuiz && (
+        <div className="space-y-2">
+          <h3 className="font-semibold">{generatedQuiz.title}</h3>
+          <p className="text-sm text-muted-foreground">{generatedQuiz.description}</p>
+          <div className="space-y-2">
+            {generatedQuiz.questions.slice(0, 5).map((q, idx) => (
+              <div key={q.id} className="rounded-md border p-3">
+                <p className="text-sm font-medium">{idx + 1}. {q.question}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const rightPanel = (
+    <div className="space-y-4 pt-1">
+      <div className="space-y-2">
+        <Label>Quiz Mode</Label>
+        <select
+          value={quizMode}
+          onChange={(e) => setQuizMode(e.target.value as QuizMode)}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        >
+          {quizModeOptions.map((mode) => (
+            <option key={mode} value={mode}>{mode}</option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-2">
+        <Label>Questions</Label>
+        <input
+          type="number"
+          min={1}
+          max={100}
+          value={questionCount}
+          onChange={(e) => setQuestionCount(parseInt(e.target.value) || 1)}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Edit Mode</Label>
+        <select
+          value={isEditMode ? 'edit' : 'direct'}
+          onChange={(e) => setIsEditMode(e.target.value === 'edit')}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="direct">Direct Start</option>
+          <option value="edit">Review & Edit</option>
+        </select>
+      </div>
+      <Button onClick={handleFormSubmit} disabled={isLoading || !sourceText.trim()} className="w-full">
+        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+        Generate Quiz
+      </Button>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Recent Runs</Label>
+          <Badge variant="outline">{plan.toUpperCase()}</Badge>
+        </div>
+        {history.length === 0 && <p className="text-xs text-muted-foreground">No runs yet.</p>}
+        {history.map((run: any) => (
+          <div key={run.id} className="rounded-md border p-2">
+            <p className="text-xs font-medium">{run.status}</p>
+            <p className="text-[11px] text-muted-foreground">{new Date(run.created_at).toLocaleString()}</p>
+          </div>
+        ))}
+      </div>
+      {latestArtifactId && (
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => router.push('/material')}
+        >
+          Open Saved Artifact
+        </Button>
+      )}
+    </div>
+  );
+
   return (
-    <ToolLayout
-      title={isAssignmentContext ? 'Create New Quiz' : 'Quiz'}
-      description={isAssignmentContext ? `Create a new quiz from text or a file to attach to your assignment.` : `Create quizzes from text, files, or previous projects.`}
-      sourceText={sourceText}
-      setSourceText={setSourceText}
-      onGenerate={handleFormSubmit}
-      isLoading={totalLoading}
-      isProcessingFile={isProcessingFile}
-      uploadedFile={uploadedFile}
-      setUploadedFile={setUploadedFile}
-      fileType={fileType}
-      setFileType={setFileType}
-      modeOptions={quizModeOptions}
-      selectedMode={quizMode}
-      onModeChange={(mode) => setQuizMode(mode as QuizMode)}
-      modeButtonText="Quiz Mode"
-      countValue={questionCount}
-      onCountChange={setQuestionCount}
-      countLabel="Questions"
-      additionalSettings={additionalSettings}
-      subjectCards={subjectCards}
-      isAssignmentContext={isAssignmentContext}
+    <WorkbenchShell
+      title={isAssignmentContext ? 'Create New Quiz' : 'Quiz Studio'}
+      description={isAssignmentContext ? 'Create quiz content to attach to an assignment.' : 'Generate, review, and run quizzes in a unified workbench.'}
+      plan={plan}
+      left={leftPanel}
+      center={centerPanel}
+      right={rightPanel}
     />
   );
 }
