@@ -11,6 +11,7 @@ import type { Quiz } from '@/lib/types';
 import { QuizDuel } from '@/components/tools/quiz-duel';
 import { QuizEditor } from '@/components/tools/quiz-editor';
 import { ToolLayout } from '@/components/tools/tool-layout';
+import { runToolFlowV2 } from '@/lib/toolbox/client';
 
 
 function QuizPageContent() {
@@ -47,24 +48,17 @@ function QuizPageContent() {
         setCurrentView('duel');
       } else {
         const count = (quizMode === 'survival' || quizMode === 'adaptive' || quizMode === 'boss-fight') ? 1 : questionCount;
-        const apiResponse = await fetch('/api/ai/handle', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            flowName: 'generateQuiz',
-            input: { sourceText: text, questionCount: count, language },
-          }),
+        const run = await runToolFlowV2({
+          toolId: 'quiz',
+          flowName: 'generateQuiz',
+          mode: quizMode,
+          artifactType: 'quiz',
+          artifactTitle: 'Generated Quiz',
+          input: { sourceText: text, questionCount: count, language },
+          computeClass: count > 20 ? 'heavy' : 'standard',
         });
-        if (!apiResponse.ok) {
-          let errorMessage = apiResponse.statusText;
-          try {
-              const errorData = await apiResponse.json();
-              if (errorData.detail) errorMessage = errorData.detail;
-          } catch (e) { /* ignore */ }
-          throw new Error(errorMessage);
-        }
-        const response = await apiResponse.json();
-        setGeneratedQuiz(response);
+        const response = run?.output_payload || run;
+        setGeneratedQuiz(response as Quiz);
         if (isEditMode) {
           setCurrentView('edit');
         } else {

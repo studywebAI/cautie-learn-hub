@@ -6,23 +6,24 @@ import { cookies } from 'next/headers';
 
 export async function GET(
   request: Request,
-  { params }: { params: { classId: string } }
+  { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const cookieStore = cookies();
     const supabase = createClient(cookieStore);
     const cacheService = new CacheService();
     const changeDetection = new ChangeDetectionService();
     
-    const cacheKey = `students_${params.classId}`;
+    const cacheKey = `students_${resolvedParams.classId}`;
     
     // Check if we have cached data
     const cached = await cacheService.get(cacheKey);
     
     if (cached) {
       // Check if data has changed since last cache
-      const hasChanged = await changeDetection.hasStudentsChanged(
-        params.classId, 
+        const hasChanged = await changeDetection.hasStudentsChanged(
+        resolvedParams.classId, 
         cached.lastUpdated
       );
       
@@ -36,7 +37,7 @@ export async function GET(
     const { data: members, error: membersError } = await supabaseClient
       .from('class_members')
       .select('user_id')
-      .eq('class_id', params.classId)
+      .eq('class_id', resolvedParams.classId)
  
     if (membersError) {
       throw new Error(membersError.message);

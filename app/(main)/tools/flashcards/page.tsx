@@ -9,6 +9,7 @@ import { AppContext } from '@/contexts/app-context';
 import { FlashcardEditor } from '@/components/tools/flashcard-editor';
 import type { Flashcard } from '@/lib/types';
 import { ToolLayout } from '@/components/tools/tool-layout';
+import { runToolFlowV2 } from '@/lib/toolbox/client';
 
 
 function FlashcardsPageContent() {
@@ -41,23 +42,16 @@ function FlashcardsPageContent() {
     setIsLoading(true);
     setGeneratedCards(null);
     try {
-      const apiResponse = await fetch('/api/ai/handle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          flowName: 'generateFlashcards',
-          input: { sourceText: text, count: flashcardCount, language },
-        }),
+      const run = await runToolFlowV2({
+        toolId: 'flashcards',
+        flowName: 'generateFlashcards',
+        mode: studyMode,
+        artifactType: 'flashcards',
+        artifactTitle: 'Generated Flashcards',
+        input: { sourceText: text, count: flashcardCount, language },
+        computeClass: flashcardCount > 20 ? 'heavy' : 'standard',
       });
-      if (!apiResponse.ok) {
-        let errorMessage = apiResponse.statusText;
-        try {
-            const errorData = await apiResponse.json();
-            if (errorData.detail) errorMessage = errorData.detail;
-        } catch (e) { /* ignore */ }
-        throw new Error(errorMessage);
-      }
-      const response = await apiResponse.json();
+      const response = run?.output_payload || run;
       setGeneratedCards(response.flashcards);
       if (isEditMode) {
         setCurrentView('edit');

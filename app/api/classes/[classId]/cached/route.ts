@@ -6,23 +6,24 @@ import { cookies } from 'next/headers';
 
 export async function GET(
   request: Request,
-  { params }: { params: { classId: string } }
+  { params }: { params: Promise<{ classId: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const cookieStore = cookies();
     const supabase = createClient(cookieStore);
     const cacheService = new CacheService();
     const changeDetection = new ChangeDetectionService();
     
-    const cacheKey = `class_${params.classId}`;
+    const cacheKey = `class_${resolvedParams.classId}`;
     
     // Check if we have cached data
     const cached = await cacheService.get(cacheKey);
     
     if (cached) {
       // Check if data has changed since last cache
-      const hasChanged = await changeDetection.hasClassChanged(
-        params.classId, 
+        const hasChanged = await changeDetection.hasClassChanged(
+        resolvedParams.classId, 
         cached.lastUpdated
       );
       
@@ -37,17 +38,17 @@ export async function GET(
       supabaseClient
         .from('classes')
         .select('*')
-        .eq('id', params.classId)
+        .eq('id', resolvedParams.classId)
         .single(),
       supabaseClient
         .from('class_members')
         .select('user_id')
-        .eq('class_id', params.classId)
+        .eq('class_id', resolvedParams.classId)
         .order('user_id', { ascending: true }),
       supabaseClient
         .from('analytics')
         .select('*')
-        .eq('class_id', params.classId)
+        .eq('class_id', resolvedParams.classId)
         .single()
     ]);
     

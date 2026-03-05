@@ -1,208 +1,251 @@
 'use client';
 
-import React, { useState, useContext, Suspense, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
-import { AppContext } from '@/contexts/app-context';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { NoteViewer } from '@/components/material-viewers/note-viewer';
 import type { GenerateNotesOutput } from '@/ai/flows/generate-notes';
-import { ToolLayout } from '@/components/tools/tool-layout';
-import { useToast } from '@/hooks/use-toast';
+import { runToolFlowV2 } from '@/lib/toolbox/client';
 
-function NotesPageContent() {
-  const searchParams = useSearchParams();
-  const sourceTextFromParams = searchParams.get('sourceText');
+type ToolRun = {
+  id: string;
+  status: string;
+  created_at: string;
+  error_message?: string | null;
+};
 
-  const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isProcessingFile, setIsProcessingFile] = useState(false);
-  const [generatedNotes, setGeneratedNotes] = useState<GenerateNotesOutput['notes'] | null>(null);
-
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [fileType, setFileType] = useState<'image' | 'file' | null>(null);
+export default function NotesPage() {
+  const [sourceText, setSourceText] = useState('');
   const [topic, setTopic] = useState('');
   const [length, setLength] = useState<'short' | 'medium' | 'long'>('medium');
-  const [mode, setMode] = useState('structured');
-  const [highlightTitles, setHighlightTitles] = useState(false);
-  const [fontFamily, setFontFamily] = useState<'default' | 'serif' | 'sans-serif' | 'monospace'>('default');
-
+  const [style, setStyle] = useState('structured');
+  const [isLoading, setIsLoading] = useState(false);
+  const [plan, setPlan] = useState<string>('free');
+  const [generatedNotes, setGeneratedNotes] = useState<GenerateNotesOutput['notes'] | null>(null);
+  const [history, setHistory] = useState<ToolRun[]>([]);
+  const [latestArtifactId, setLatestArtifactId] = useState<string | null>(null);
   const { toast } = useToast();
-  const appContext = useContext(AppContext);
 
-  const handleGenerate = async (text: string) => {
-    if (!text.trim()) {
+  const canGenerate = sourceText.trim().length > 0 && !isLoading;
+
+  const loadHistory = async () => {
+    const res = await fetch('/api/tools/v2/runs');
+    if (!res.ok) return;
+    const data = (await res.json()) as ToolRun[];
+    setHistory(data.filter((r: any) => r.tool_id === 'notes').slice(0, 8));
+  };
+
+  useEffect(() => {
+    const loadMeta = async () => {
+      const usageRes = await fetch('/api/billing/v1/usage-summary');
+      if (usageRes.ok) {
+        const usage = await usageRes.json();
+        setPlan(usage.plan || 'free');
+      }
+      await loadHistory();
+    };
+    loadMeta();
+  }, []);
+
+  const handleGenerate = async () => {
+    if (!sourceText.trim()) {
       toast({
         variant: 'destructive',
-        title: 'Source text is empty',
-        description: 'Please paste some text or upload a file to generate notes from.',
+        title: 'Source text is required',
+        description: 'Paste text before generating notes.',
       });
       return;
     }
 
     setIsLoading(true);
-    setGeneratedNotes(null);
-
     try {
-      const apiResponse = await fetch('/api/ai/handle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          flowName: 'generateNotes',
-          input: { sourceText: text, topic: topic || undefined, length, style: mode, highlightTitles, fontFamily },
-        }),
+      const run = await runToolFlowV2({
+        toolId: 'notes',
+        flowName: 'generateNotes',
+        mode: style,
+        artifactType: 'notes',
+        artifactTitle: topic ? `${topic} Notes` : 'Generated Notes',
+        input: {
+          sourceText,
+          topic: topic || undefined,
+          length,
+          style,
+          highlightTitles: false,
+          fontFamily: 'default',
+        },
       });
 
-      if (!apiResponse.ok) {
-        let errorMessage = apiResponse.statusText;
-        try {
-          const errorData = await apiResponse.json();
-          if (errorData.detail) errorMessage = errorData.detail;
-          if (errorData.code === "MISSING_API_KEY") {
-            errorMessage = "AI is not configured (Missing API Key). Please check server logs.";
-          }
-        } catch (e) { /* ignore */ }
-        throw new Error(errorMessage);
-      }
-
-      const response = await apiResponse.json();
-      setGeneratedNotes(response.notes);
-    } catch (error) {
-      console.error('Error generating notes:', error);
+      setGeneratedNotes((run?.output_payload?.notes || run?.notes || null) as GenerateNotesOutput['notes'] | null);
+      setLatestArtifactId(run?.output_artifact_id || null);
+      await loadHistory();
+    } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Something went wrong',
-        description: 'The AI could not generate notes. Please try again.',
+        title: 'Generation failed',
+        description: error?.message || 'Unable to generate notes',
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleFormSubmit = () => {
-    handleGenerate(sourceText);
-  };
-
-  // Add to recents when notes are generated
-  useEffect(() => {
-    if (generatedNotes) {
-      const title = uploadedFile
-        ? `${uploadedFile.name.split('.')[0]} Notes`
-        : `Notes from "${sourceText.slice(0, 30)}${sourceText.length > 30 ? '...' : ''}"`;
-
-      if ((window as any).recentsManager) {
-        (window as any).recentsManager.addRecent({
-          title,
-          type: 'notes'
-        });
-      }
-    }
-  }, [generatedNotes, uploadedFile, sourceText]);
-
-  const handleRestart = () => {
-    setGeneratedNotes(null);
-  };
-
-  const totalLoading = isLoading || isProcessingFile;
-
-  const modeOptions = [
-    { value: 'structured', label: 'Structured' },
-    { value: 'bullet-points', label: 'Bullet Points' },
-    { value: 'standard', label: 'Standard' },
-    { value: 'mindmap', label: 'Mindmap' },
-    { value: 'timeline', label: 'Timeline' },
-    { value: 'chart', label: 'Chart' },
-    { value: 'venndiagram', label: 'Venn Diagram' },
-    { value: 'vocabulary', label: 'Vocabulary' },
-    { value: 'flowchart', label: 'Flowchart' },
-  ];
-
-  // Generate subject cards based on uploaded content
-  const subjectCards = uploadedFile ? [
-    { title: `${uploadedFile.name.split('.')[0]} Notes`, type: 'Notes' },
-    { title: `${uploadedFile.name.split('.')[0]} Summary`, type: 'Summary' },
-    { title: `${uploadedFile.name.split('.')[0]} Study Guide`, type: 'Study Guide' },
-  ] : [];
-
-  const additionalSettings = [
-    {
-      label: 'Length',
-      value: length,
-      onChange: setLength,
-      options: [
-        { value: 'short', label: 'Short' },
-        { value: 'medium', label: 'Medium' },
-        { value: 'long', label: 'Long' },
-      ]
-    },
-    {
-      label: 'Font',
-      value: fontFamily,
-      onChange: setFontFamily,
-      options: [
-        { value: 'default', label: 'Default' },
-        { value: 'serif', label: 'Serif' },
-        { value: 'sans-serif', label: 'Sans Serif' },
-        { value: 'monospace', label: 'Monospace' },
-      ]
-    },
-    {
-      label: 'Titles',
-      value: highlightTitles,
-      onChange: setHighlightTitles,
-      options: [
-        { value: false, label: 'Normal' },
-        { value: true, label: 'Highlighted' },
-      ]
-    }
-  ];
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm p-8">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <h3 className="text-2xl font-bold tracking-tight mt-4">
-            Generating Your Notes
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            The AI is analyzing the text. Please wait a moment...
-          </p>
+  const leftPanel = useMemo(
+    () => (
+      <div className="space-y-4 pt-1">
+        <div className="space-y-2">
+          <Label htmlFor="topic">Topic (optional)</Label>
+          <Input id="topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. French Revolution" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="source">Source Text</Label>
+          <Textarea
+            id="source"
+            value={sourceText}
+            onChange={(e) => setSourceText(e.target.value)}
+            placeholder="Paste your source content here..."
+            className="min-h-[320px]"
+          />
         </div>
       </div>
-    );
-  }
-
-  if (generatedNotes) {
-  }
-
-  return (
-    <ToolLayout
-      title="Notes"
-      description="Create notes from text, files, or previous projects."
-      sourceText={sourceText}
-      setSourceText={setSourceText}
-      onGenerate={handleFormSubmit}
-      isLoading={totalLoading}
-      isProcessingFile={isProcessingFile}
-      uploadedFile={uploadedFile}
-      setUploadedFile={setUploadedFile}
-      fileType={fileType}
-      setFileType={setFileType}
-      modeOptions={modeOptions}
-      selectedMode={mode}
-      onModeChange={setMode}
-      modeButtonText="Note Style"
-      additionalSettings={additionalSettings}
-      subjectCards={subjectCards}
-    />
+    ),
+    [sourceText, topic]
   );
-}
 
-export default function NotesPage() {
+  const centerPanel = (
+    <div className="space-y-3 pt-1">
+      {!generatedNotes && (
+        <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+          Generated notes will appear here after you run the tool.
+        </div>
+      )}
+      {generatedNotes && <NoteViewer notes={generatedNotes} />}
+    </div>
+  );
+
+  const rightPanel = (
+    <div className="space-y-4 pt-1">
+      <div className="space-y-2">
+        <Label>Style</Label>
+        <select
+          value={style}
+          onChange={(e) => setStyle(e.target.value)}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="structured">Structured</option>
+          <option value="bullet-points">Bullet Points</option>
+          <option value="standard">Standard</option>
+          <option value="timeline">Timeline</option>
+          <option value="mindmap">Mindmap</option>
+          <option value="vocabulary">Vocabulary</option>
+        </select>
+      </div>
+      <div className="space-y-2">
+        <Label>Length</Label>
+        <select
+          value={length}
+          onChange={(e) => setLength(e.target.value as 'short' | 'medium' | 'long')}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="short">Short</option>
+          <option value="medium">Medium</option>
+          <option value="long">Long</option>
+        </select>
+      </div>
+      <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full">
+        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+        Generate Notes
+      </Button>
+
+      <div className="space-y-2">
+        <Label>Cross-tool Actions</Label>
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={!latestArtifactId || isLoading}
+          onClick={async () => {
+            if (!latestArtifactId) return;
+            try {
+              const res = await fetch(`/api/tools/v2/artifacts/${latestArtifactId}/transform`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  targetToolId: 'quiz',
+                  targetFlowName: 'generateQuiz',
+                  transformInput: { sourceText, questionCount: 10 },
+                  title: 'Quiz from Notes',
+                }),
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data?.error || 'Transform failed');
+              toast({ title: 'Quiz artifact created', description: 'Transformed from current notes.' });
+            } catch (error: any) {
+              toast({ variant: 'destructive', title: 'Transform failed', description: error?.message || 'Unable to transform artifact' });
+            }
+          }}
+        >
+          Transform to Quiz
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={!latestArtifactId || isLoading}
+          onClick={async () => {
+            if (!latestArtifactId) return;
+            try {
+              const res = await fetch(`/api/tools/v2/artifacts/${latestArtifactId}/transform`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  targetToolId: 'flashcards',
+                  targetFlowName: 'generateFlashcards',
+                  transformInput: { sourceText, count: 12 },
+                  title: 'Flashcards from Notes',
+                }),
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data?.error || 'Transform failed');
+              toast({ title: 'Flashcard artifact created', description: 'Transformed from current notes.' });
+            } catch (error: any) {
+              toast({ variant: 'destructive', title: 'Transform failed', description: error?.message || 'Unable to transform artifact' });
+            }
+          }}
+        >
+          Transform to Flashcards
+        </Button>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Recent Runs</Label>
+          <Badge variant="outline">{plan.toUpperCase()}</Badge>
+        </div>
+        <div className="space-y-2">
+          {history.length === 0 && <p className="text-xs text-muted-foreground">No runs yet.</p>}
+          {history.map((run) => (
+            <div key={run.id} className="rounded-md border p-2">
+              <p className="text-xs font-medium">{run.status}</p>
+              <p className="text-[11px] text-muted-foreground">{new Date(run.created_at).toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <NotesPageContent />
-    </Suspense>
+    <WorkbenchShell
+      title="Notes Studio"
+      description="Generate structured notes and keep every run/version in the shared toolbox pipeline."
+      plan={plan}
+      left={leftPanel}
+      center={centerPanel}
+      right={rightPanel}
+    />
   );
 }
