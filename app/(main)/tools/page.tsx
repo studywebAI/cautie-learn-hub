@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { ArrowRight, BrainCircuit, Copy, FileSignature, Blocks, Sparkles, Clock3, Wand2, Network } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,8 +55,7 @@ function extractRecommendedTool(input: string) {
 }
 
 export default function ToolsPage() {
-  const searchParams = useSearchParams();
-  const selectedClassId = searchParams.get('classId');
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const { dictionary } = useDictionary();
   const sidebarTools = dictionary.sidebar.tools as Record<string, string | undefined>;
   const [usage, setUsage] = useState<UsageSummary | null>(null);
@@ -70,6 +68,17 @@ export default function ToolsPage() {
   const [recommendedToolDraft, setRecommendedToolDraft] = useState('quiz');
   const [publishingRecommendation, setPublishingRecommendation] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const readClassId = () => {
+      const params = new URLSearchParams(window.location.search);
+      setSelectedClassId(params.get('classId'));
+    };
+    readClassId();
+    window.addEventListener('popstate', readClassId);
+    return () => window.removeEventListener('popstate', readClassId);
+  }, []);
 
   const tools = useMemo(
     () => [
