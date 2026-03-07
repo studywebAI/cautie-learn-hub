@@ -69,8 +69,8 @@ export async function GET(
 
   const isMember = !!memberData
 
-  // Teachers who are members of the class can view announcements
-  if (!isMember || !isTeacher) {
+  // Any class member can view announcements.
+  if (!isMember) {
     logAnnouncements('GET - Forbidden', { requestId, classId, userId: user.id, isTeacher, isMember })
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }

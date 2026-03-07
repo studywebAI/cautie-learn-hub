@@ -28,6 +28,12 @@ type CardSRSState = {
   lastReviewedAt: string | null;
 };
 
+type ReviewEvent = {
+  cardId: string;
+  quality: 0 | 1 | 2 | 3;
+  ts: string;
+};
+
 const cardVariants = {
   enter: (direction: number) => ({
     x: direction > 0 ? 50 : -50,
@@ -58,6 +64,7 @@ const defaultSRSState = (): CardSRSState => ({
 });
 
 const deckStorageKey = (cards: Flashcard[]) => `tools.flashcards.srs.${cards.map((c) => c.id).join('.')}`;
+const deckEventsStorageKey = (cards: Flashcard[]) => `${deckStorageKey(cards)}.events`;
 
 const isDueNow = (dueAt: string) => new Date(dueAt).getTime() <= Date.now();
 const isBuriedNow = (buriedUntil: string | null) => !!buriedUntil && new Date(buriedUntil).getTime() > Date.now();
@@ -101,6 +108,7 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
   const [cardsReviewed, setCardsReviewed] = useState<Set<string>>(new Set());
   const [correctCards, setCorrectCards] = useState(0);
   const [srsState, setSrsState] = useState<Record<string, CardSRSState>>({});
+  const [reviewEvents, setReviewEvents] = useState<ReviewEvent[]>([]);
   const startTimeRef = React.useRef(Date.now());
   const { toast } = useToast();
 
@@ -138,9 +146,25 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
   }, [cards]);
 
   useEffect(() => {
+    const key = deckEventsStorageKey(cards);
+    try {
+      const raw = localStorage.getItem(key);
+      const parsed = raw ? (JSON.parse(raw) as ReviewEvent[]) : [];
+      setReviewEvents(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setReviewEvents([]);
+    }
+  }, [cards]);
+
+  useEffect(() => {
     if (!cards.length || !Object.keys(srsState).length) return;
     localStorage.setItem(deckStorageKey(cards), JSON.stringify(srsState));
   }, [cards, srsState]);
+
+  useEffect(() => {
+    if (!cards.length) return;
+    localStorage.setItem(deckEventsStorageKey(cards), JSON.stringify(reviewEvents.slice(-2000)));
+  }, [cards, reviewEvents]);
 
   useEffect(() => {
     if (currentIndex >= queue.length) {
@@ -243,6 +267,14 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
         lastReviewedAt: now.toISOString(),
       },
     }));
+    setReviewEvents((prevEvents) => [
+      ...prevEvents,
+      {
+        cardId: card.id,
+        quality,
+        ts: now.toISOString(),
+      },
+    ]);
 
     setCardsReviewed((prevSet) => new Set(prevSet).add(card.id));
     if (quality >= 2) {
@@ -401,6 +433,47 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
     }
   }
 
+  const trendData = React.useMemo(() => {
+    const formatDay = (date: Date) => date.toISOString().slice(0, 10);
+    const now = new Date();
+    const dayMap: Record<string, { day: string; reviews: number; difficult: number }> = {};
+    for (let i = 29; i >= 0; i -= 1) {
+      const date = new Date(now);
+      date.setDate(now.getDate() - i);
+      const key = formatDay(date);
+      dayMap[key] = { day: key.slice(5), reviews: 0, difficult: 0 };
+    }
+    for (const event of reviewEvents) {
+      const dayKey = event.ts.slice(0, 10);
+      if (!dayMap[dayKey]) continue;
+      dayMap[dayKey].reviews += 1;
+      if (event.quality <= 1) dayMap[dayKey].difficult += 1;
+    }
+    const all = Object.values(dayMap);
+    return {
+      last7: all.slice(-7),
+      last30: all,
+    };
+  }, [reviewEvents]);
+
+  const weakestCards = React.useMemo(() => {
+    return cards
+      .map((cardItem) => {
+        const state = srsState[cardItem.id] || defaultSRSState();
+        const weakness = (state.lapses * 2) + (isDueNow(state.dueAt) ? 1 : 0) + Math.max(0, 2.5 - state.ease);
+        return {
+          id: cardItem.id,
+          front: cardItem.front,
+          weakness,
+          lapses: state.lapses,
+          ease: state.ease,
+          due: isDueNow(state.dueAt),
+        };
+      })
+      .sort((a, b) => b.weakness - a.weakness)
+      .slice(0, 5);
+  }, [cards, srsState]);
+
   const handleCardAnswered = useCallback((isCorrect?: boolean) => {
     setIsAnswered(true);
     if (isCorrect) {
@@ -511,6 +584,51 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
             </div>
           </div>
         )}
+        <div className="w-full space-y-3 rounded-md border p-3">
+          <div className="flex items-center gap-2">
+            <Clock3 className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm font-medium">Deck Analytics</p>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">7-day review trend</p>
+            <div className="grid grid-cols-7 gap-1">
+              {trendData.last7.map((point) => (
+                <div key={point.day} className="rounded border p-1 text-center">
+                  <div className="mx-auto mb-1 h-12 w-full rounded bg-muted/50">
+                    <div
+                      className="h-full rounded bg-primary/70"
+                      style={{ width: '100%', height: `${Math.min(100, point.reviews * 10)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">{point.day}</p>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="rounded border p-2">
+                <p className="text-muted-foreground">Last 7 days</p>
+                <p className="font-medium">{trendData.last7.reduce((acc, p) => acc + p.reviews, 0)} reviews</p>
+              </div>
+              <div className="rounded border p-2">
+                <p className="text-muted-foreground">Last 30 days</p>
+                <p className="font-medium">{trendData.last30.reduce((acc, p) => acc + p.reviews, 0)} reviews</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Weakest cards</p>
+            {weakestCards.length === 0 && <p className="text-xs text-muted-foreground">No weak cards yet.</p>}
+            {weakestCards.map((item) => (
+              <div key={item.id} className="flex items-center justify-between rounded border p-2">
+                <p className="truncate pr-2 text-xs">{item.front}</p>
+                <div className="flex items-center gap-1">
+                  {item.due && <Badge variant="outline" className="text-[10px]">Due</Badge>}
+                  <Badge variant="secondary" className="text-[10px]">Lapses {item.lapses}</Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </CardContent>
       <CardFooter className="justify-between">
         <Button variant="ghost" onClick={() => { saveFlashcardProgress(); onRestart(); }}>

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ArrowRight, BrainCircuit, Copy, FileSignature, Blocks, Sparkles, Clock3, Wand2, Network } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,12 +33,42 @@ type Artifact = {
   updated_at: string;
 };
 
+type AnnouncementLite = {
+  id: string;
+  title?: string | null;
+  content?: string | null;
+};
+
+const TOOL_LABELS: Record<string, string> = {
+  quiz: 'Quiz',
+  flashcards: 'Flashcards',
+  notes: 'Notes',
+  blocks: 'Blocks',
+  wordweb: 'Wordweb',
+};
+
+function extractRecommendedTool(input: string) {
+  const marker = input.match(/\[TOOL_REC:(quiz|flashcards|notes|blocks|wordweb)\]/i);
+  if (marker?.[1]) return marker[1].toLowerCase();
+  const urlHint = input.match(/\/tools\/(quiz|flashcards|notes|blocks|wordweb)\b/i);
+  if (urlHint?.[1]) return urlHint[1].toLowerCase();
+  return null;
+}
+
 export default function ToolsPage() {
+  const searchParams = useSearchParams();
+  const selectedClassId = searchParams.get('classId');
   const { dictionary } = useDictionary();
   const sidebarTools = dictionary.sidebar.tools as Record<string, string | undefined>;
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [runs, setRuns] = useState<ToolRun[]>([]);
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
+  const [teacherRecommendationCount, setTeacherRecommendationCount] = useState(0);
+  const [teacherRecommendationHref, setTeacherRecommendationHref] = useState<string | null>(null);
+  const [teacherRecommendedTools, setTeacherRecommendedTools] = useState<string[]>([]);
+  const [recommendedToolDraft, setRecommendedToolDraft] = useState('quiz');
+  const [publishingRecommendation, setPublishingRecommendation] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const tools = useMemo(
@@ -84,10 +115,11 @@ export default function ToolsPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [usageRes, runsRes, artifactsRes] = await Promise.all([
+        const [usageRes, runsRes, artifactsRes, roleRes] = await Promise.all([
           fetch('/api/billing/v1/usage-summary'),
           fetch('/api/tools/v2/runs'),
           fetch('/api/tools/v2/artifacts'),
+          fetch('/api/user/role'),
         ]);
 
         if (usageRes.ok) {
@@ -99,12 +131,69 @@ export default function ToolsPage() {
         if (artifactsRes.ok) {
           setArtifacts(await artifactsRes.json());
         }
+        if (roleRes.ok) {
+          const roleJson = await roleRes.json();
+          setRole(roleJson?.subscription_type === 'teacher' ? 'teacher' : 'student');
+        }
+
+        // Tiny recommendation chip:
+        // only render when explicit recommendation records exist for the selected class.
+        if (selectedClassId) {
+          const announcementsRes = await fetch(`/api/classes/${encodeURIComponent(selectedClassId)}/announcements`);
+          if (announcementsRes.ok) {
+            const announcements = (await announcementsRes.json()) as AnnouncementLite[];
+            const recommendations = (Array.isArray(announcements) ? announcements : [])
+              .map((announcement) =>
+                extractRecommendedTool(`${announcement.title || ''}\n${announcement.content || ''}`)
+              )
+              .filter(Boolean) as string[];
+            setTeacherRecommendationCount(recommendations.length);
+            setTeacherRecommendedTools(recommendations);
+            setTeacherRecommendationHref(
+              recommendations.length > 0
+                ? `/tools/${recommendations[0]}?classId=${encodeURIComponent(selectedClassId)}`
+                : null
+            );
+          } else {
+            setTeacherRecommendationCount(0);
+            setTeacherRecommendationHref(null);
+            setTeacherRecommendedTools([]);
+          }
+        } else {
+          setTeacherRecommendationCount(0);
+          setTeacherRecommendationHref(null);
+          setTeacherRecommendedTools([]);
+        }
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, [selectedClassId]);
+
+  const publishToolRecommendation = async () => {
+    if (!selectedClassId || role !== 'teacher' || publishingRecommendation) return;
+    setPublishingRecommendation(true);
+    try {
+      const tool = recommendedToolDraft;
+      const toolLabel = TOOL_LABELS[tool] || 'Tool';
+      const recommendationHref = `/tools/${tool}?classId=${encodeURIComponent(selectedClassId)}`;
+      const response = await fetch(`/api/classes/${encodeURIComponent(selectedClassId)}/announcements`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `[TOOL_REC:${tool}] ${toolLabel} recommended`,
+          content: `Use this in toolbox: ${recommendationHref}`,
+        }),
+      });
+      if (!response.ok) return;
+      setTeacherRecommendationCount((value) => value + 1);
+      setTeacherRecommendationHref(recommendationHref);
+      setTeacherRecommendedTools((value) => [tool, ...value]);
+    } finally {
+      setPublishingRecommendation(false);
+    }
+  };
 
   const recentArtifacts = artifacts.slice(0, 5);
   const recentRuns = runs.slice(0, 6);
@@ -119,6 +208,13 @@ export default function ToolsPage() {
     acc[run.tool_id] = (acc[run.tool_id] || 0) + 1;
     return acc;
   }, {});
+  const recommendationCounts = teacherRecommendedTools.reduce<Record<string, number>>((acc, tool) => {
+    acc[tool] = (acc[tool] || 0) + 1;
+    return acc;
+  }, {});
+  const topTeacherPicks = Object.entries(recommendationCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
 
   const recommendedTool = Object.entries(runByTool).sort((a, b) => b[1] - a[1])[0]?.[0] || 'quiz';
 
@@ -142,10 +238,59 @@ export default function ToolsPage() {
                     {usage.usage.dailyRuns}/{usage.limits.dailyRuns} runs today
                   </Badge>
                 )}
+                {role === 'teacher' && selectedClassId && (
+                  <div className="flex items-center gap-1 rounded-md border px-1 py-0.5">
+                    <select
+                      aria-label="Recommend tool"
+                      value={recommendedToolDraft}
+                      onChange={(event) => setRecommendedToolDraft(event.target.value)}
+                      className="h-5 border-0 bg-transparent px-0 text-[10px] text-muted-foreground focus:outline-none"
+                    >
+                      <option value="quiz">quiz</option>
+                      <option value="flashcards">flashcards</option>
+                      <option value="notes">notes</option>
+                      <option value="blocks">blocks</option>
+                      <option value="wordweb">wordweb</option>
+                    </select>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={publishingRecommendation}
+                      className="h-5 px-1.5 text-[10px]"
+                      onClick={publishToolRecommendation}
+                    >
+                      recommend
+                    </Button>
+                  </div>
+                )}
+                {teacherRecommendationCount > 0 && teacherRecommendationHref && (
+                  <Button asChild variant="ghost" size="sm" className="h-5 px-1.5 text-[10px] text-muted-foreground">
+                    <Link href={teacherRecommendationHref}>teacher picks {teacherRecommendationCount}</Link>
+                  </Button>
+                )}
               </div>
             </div>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            {role === 'student' && selectedClassId && topTeacherPicks.length > 0 && (
+              <div className="md:col-span-3 flex flex-wrap items-center gap-2 rounded-md border border-dashed px-2 py-1.5">
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Teacher picks</span>
+                {topTeacherPicks.map(([tool, count]) => (
+                  <Button
+                    key={tool}
+                    asChild
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 px-1.5 text-[10px]"
+                  >
+                    <Link href={`/tools/${tool}?classId=${encodeURIComponent(selectedClassId)}`}>
+                      {TOOL_LABELS[tool] || tool} x{count}
+                    </Link>
+                  </Button>
+                ))}
+              </div>
+            )}
             <Card className="border-dashed">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
