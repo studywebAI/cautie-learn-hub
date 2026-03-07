@@ -12,29 +12,7 @@ import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-
-type ArtifactVersion = {
-  id: string;
-  version_number: number;
-  content: any;
-  created_at: string;
-};
-
-type CollabComment = {
-  id: string;
-  content: string;
-  created_at: string;
-};
-
-type Suggestion = {
-  id: string;
-  note: string | null;
-  status: string;
-  created_at: string;
-};
+import { ArtifactCollabPanel } from '@/components/tools/artifact-collab-panel';
 
 
 function FlashcardsPageContent() {
@@ -59,12 +37,6 @@ function FlashcardsPageContent() {
   const [history, setHistory] = useState<any[]>([]);
   const [plan, setPlan] = useState<string>('free');
   const [latestArtifactId, setLatestArtifactId] = useState<string | null>(null);
-  const [artifactVersions, setArtifactVersions] = useState<ArtifactVersion[]>([]);
-  const [comments, setComments] = useState<CollabComment[]>([]);
-  const [commentDraft, setCommentDraft] = useState('');
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [suggestionDraft, setSuggestionDraft] = useState('');
-  const { toast } = useToast();
 
   const handleGenerate = useCallback(async (text: string) => {
     if (!text.trim()) {
@@ -122,34 +94,6 @@ function FlashcardsPageContent() {
     loadMeta();
   }, []);
 
-  useEffect(() => {
-    const loadArtifactData = async () => {
-      if (!latestArtifactId) {
-        setArtifactVersions([]);
-        setComments([]);
-        setSuggestions([]);
-        return;
-      }
-
-      const [historyRes, commentsRes, suggestionsRes] = await Promise.all([
-        fetch(`/api/tools/v2/artifacts/${latestArtifactId}/history`),
-        fetch(`/api/collab/v1/comments?artifactId=${latestArtifactId}`),
-        fetch(`/api/collab/v1/suggestions?artifactId=${latestArtifactId}`),
-      ]);
-
-      if (historyRes.ok) {
-        const data = await historyRes.json();
-        setArtifactVersions(data.versions || []);
-      }
-      if (commentsRes.ok) {
-        setComments(await commentsRes.json());
-      }
-      if (suggestionsRes.ok) {
-        setSuggestions(await suggestionsRes.json());
-      }
-    };
-    loadArtifactData();
-  }, [latestArtifactId]);
 
   const handleFormSubmit = () => {
       handleGenerate(sourceText);
@@ -280,205 +224,34 @@ function FlashcardsPageContent() {
         Generate Flashcards
       </Button>
 
-      <Tabs defaultValue="actions" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="actions">Actions</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-          <TabsTrigger value="comments">Comments</TabsTrigger>
-          <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="actions" className="space-y-2">
-          <Button
-            variant="outline"
-            className="w-full"
-            disabled={!latestArtifactId || isLoading}
-            onClick={async () => {
-              if (!latestArtifactId) return;
-              try {
-                const res = await fetch(`/api/tools/v2/artifacts/${latestArtifactId}/transform`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    targetToolId: 'quiz',
-                    targetFlowName: 'generateQuiz',
-                    transformInput: { sourceText, questionCount: 10 },
-                    title: 'Quiz from Flashcards',
-                  }),
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data?.error || 'Transform failed');
-                toast({ title: 'Quiz artifact created' });
-              } catch (error: any) {
-                toast({ variant: 'destructive', title: 'Transform failed', description: error?.message || 'Unable to transform artifact' });
-              }
-            }}
-          >
-            Transform to Quiz
-          </Button>
-          <Button
-            variant="outline"
-            className="w-full"
-            disabled={!latestArtifactId || isLoading}
-            onClick={async () => {
-              if (!latestArtifactId) return;
-              try {
-                const res = await fetch(`/api/tools/v2/artifacts/${latestArtifactId}/transform`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    targetToolId: 'notes',
-                    targetFlowName: 'generateNotes',
-                    transformInput: { sourceText, style: 'structured', length: 'medium' },
-                    title: 'Notes from Flashcards',
-                  }),
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data?.error || 'Transform failed');
-                toast({ title: 'Notes artifact created' });
-              } catch (error: any) {
-                toast({ variant: 'destructive', title: 'Transform failed', description: error?.message || 'Unable to transform artifact' });
-              }
-            }}
-          >
-            Transform to Notes
-          </Button>
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-2">
-          {artifactVersions.length === 0 && <p className="text-xs text-muted-foreground">No artifact versions yet.</p>}
-          {artifactVersions.map((version) => (
-            <div key={version.id} className="rounded-md border p-2">
-              <p className="text-xs font-medium">Version {version.version_number}</p>
-              <p className="text-[11px] text-muted-foreground">{new Date(version.created_at).toLocaleString()}</p>
-            </div>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="comments" className="space-y-2">
-          <Textarea
-            value={commentDraft}
-            onChange={(e) => setCommentDraft(e.target.value)}
-            placeholder="Add collaboration comment..."
-            className="min-h-[90px]"
-          />
-          <Button
-            className="w-full"
-            disabled={!latestArtifactId || !commentDraft.trim()}
-            onClick={async () => {
-              if (!latestArtifactId || !commentDraft.trim()) return;
-              try {
-                const res = await fetch('/api/collab/v1/comments', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    artifactId: latestArtifactId,
-                    content: commentDraft.trim(),
-                  }),
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data?.error || 'Comment failed');
-                setCommentDraft('');
-                const commentsRes = await fetch(`/api/collab/v1/comments?artifactId=${latestArtifactId}`);
-                if (commentsRes.ok) setComments(await commentsRes.json());
-              } catch (error: any) {
-                toast({ variant: 'destructive', title: 'Comment failed', description: error?.message || 'Unable to add comment' });
-              }
-            }}
-          >
-            Add Comment
-          </Button>
-          {comments.length === 0 && <p className="text-xs text-muted-foreground">No comments yet.</p>}
-          {comments.map((comment) => (
-            <div key={comment.id} className="rounded-md border p-2">
-              <p className="text-xs">{comment.content}</p>
-              <p className="text-[11px] text-muted-foreground mt-1">{new Date(comment.created_at).toLocaleString()}</p>
-            </div>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="suggestions" className="space-y-2">
-          <Textarea
-            value={suggestionDraft}
-            onChange={(e) => setSuggestionDraft(e.target.value)}
-            placeholder="Propose an improvement suggestion..."
-            className="min-h-[90px]"
-          />
-          <Button
-            className="w-full"
-            disabled={!latestArtifactId || !suggestionDraft.trim()}
-            onClick={async () => {
-              if (!latestArtifactId || !suggestionDraft.trim()) return;
-              try {
-                const res = await fetch('/api/collab/v1/suggestions', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    artifactId: latestArtifactId,
-                    patch: { summary: suggestionDraft.trim() },
-                    note: suggestionDraft.trim(),
-                  }),
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data?.error || 'Suggestion failed');
-                setSuggestionDraft('');
-                const suggestionsRes = await fetch(`/api/collab/v1/suggestions?artifactId=${latestArtifactId}`);
-                if (suggestionsRes.ok) setSuggestions(await suggestionsRes.json());
-              } catch (error: any) {
-                toast({ variant: 'destructive', title: 'Suggestion failed', description: error?.message || 'Unable to create suggestion' });
-              }
-            }}
-          >
-            Create Suggestion
-          </Button>
-          {suggestions.length === 0 && <p className="text-xs text-muted-foreground">No suggestions yet.</p>}
-          {suggestions.map((suggestion) => (
-            <div key={suggestion.id} className="rounded-md border p-2">
-              <p className="text-xs">{suggestion.note || 'No note'}</p>
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <p className="text-[11px] text-muted-foreground">{new Date(suggestion.created_at).toLocaleString()}</p>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{suggestion.status}</Badge>
-                  {suggestion.status === 'pending' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        try {
-                          const res = await fetch(`/api/collab/v1/suggestions/${suggestion.id}/apply`, { method: 'POST' });
-                          const data = await res.json();
-                          if (!res.ok) throw new Error(data?.error || 'Apply failed');
-                          const suggestionsRes = await fetch(`/api/collab/v1/suggestions?artifactId=${latestArtifactId}`);
-                          if (suggestionsRes.ok) setSuggestions(await suggestionsRes.json());
-                          toast({ title: 'Suggestion applied' });
-                        } catch (error: any) {
-                          toast({ variant: 'destructive', title: 'Apply failed', description: error?.message || 'Unable to apply suggestion' });
-                        }
-                      }}
-                    >
-                      Apply
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </TabsContent>
-      </Tabs>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label>Recent Runs</Label>
-          <Badge variant="outline">{plan.toUpperCase()}</Badge>
-        </div>
-        {history.length === 0 && <p className="text-xs text-muted-foreground">No runs yet.</p>}
-        {history.map((run: any) => (
-          <div key={run.id} className="rounded-md border p-2">
-            <p className="text-xs font-medium">{run.status}</p>
-            <p className="text-[11px] text-muted-foreground">{new Date(run.created_at).toLocaleString()}</p>
-          </div>
-        ))}
-      </div>
+      <ArtifactCollabPanel
+        latestArtifactId={latestArtifactId}
+        isLoading={isLoading}
+        plan={plan}
+        history={history}
+        transformActions={[
+          {
+            label: 'Transform to Quiz',
+            successMessage: 'Quiz artifact created',
+            request: {
+              targetToolId: 'quiz',
+              targetFlowName: 'generateQuiz',
+              transformInput: { sourceText, questionCount: 10 },
+              title: 'Quiz from Flashcards',
+            },
+          },
+          {
+            label: 'Transform to Notes',
+            successMessage: 'Notes artifact created',
+            request: {
+              targetToolId: 'notes',
+              targetFlowName: 'generateNotes',
+              transformInput: { sourceText, style: 'structured', length: 'medium' },
+              title: 'Notes from Flashcards',
+            },
+          },
+        ]}
+      />
     </div>
   );
 

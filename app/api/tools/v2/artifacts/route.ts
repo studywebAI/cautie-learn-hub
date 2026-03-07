@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getAuthedToolboxContext } from "@/lib/toolbox/server";
 
 const CreateArtifactSchema = z.object({
+  artifactId: z.string().uuid().optional(),
   toolId: z.string().min(1),
   artifactType: z.string().min(1),
   title: z.string().min(1).max(200),
@@ -14,6 +15,50 @@ export async function POST(request: NextRequest) {
   try {
     const { supabase, user } = await getAuthedToolboxContext();
     const payload = CreateArtifactSchema.parse(await request.json());
+
+    if (payload.artifactId) {
+      const { data: existing } = await supabase
+        .from("artifacts")
+        .select("*")
+        .eq("id", payload.artifactId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!existing) {
+        return NextResponse.json({ error: "Artifact not found" }, { status: 404 });
+      }
+
+      const nextVersion = (existing.latest_version || 1) + 1;
+      const { data: version, error: versionError } = await supabase
+        .from("artifact_versions")
+        .insert({
+          artifact_id: existing.id,
+          version_number: nextVersion,
+          content: payload.content,
+          metadata: payload.metadata || {},
+        })
+        .select("*")
+        .single();
+
+      if (versionError) {
+        return NextResponse.json({ error: versionError.message }, { status: 500 });
+      }
+
+      await supabase
+        .from("artifacts")
+        .update({
+          title: payload.title,
+          latest_version: nextVersion,
+          metadata: {
+            ...(existing.metadata || {}),
+            ...(payload.metadata || {}),
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existing.id);
+
+      return NextResponse.json({ artifact: existing, version });
+    }
 
     const { data: artifact, error } = await supabase
       .from("artifacts")

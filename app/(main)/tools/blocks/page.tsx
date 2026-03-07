@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,14 +11,26 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Save, FileText } from 'lucide-react';
 import type { BaseBlock } from '@/components/blocks/types';
+import { ArtifactCollabPanel } from '@/components/tools/artifact-collab-panel';
 
 export default function BlockEditorPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [blocks, setBlocks] = useState<BaseBlock[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [latestArtifactId, setLatestArtifactId] = useState<string | null>(null);
+  const [plan, setPlan] = useState<string>('free');
   const { toast } = useToast();
   const router = useRouter();
+
+  useEffect(() => {
+    fetch('/api/billing/v1/usage-summary')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.plan) setPlan(data.plan);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -65,6 +77,33 @@ export default function BlockEditorPage() {
           })
         )
       );
+
+      // Persist into toolbox artifact system (create or version bump)
+      const artifactRes = await fetch('/api/tools/v2/artifacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          artifactId: latestArtifactId || undefined,
+          toolId: 'blocks',
+          artifactType: 'blocks',
+          title: title.trim(),
+          content: {
+            title: title.trim(),
+            description: description.trim(),
+            blocks,
+            materialId: material.id,
+          },
+          metadata: {
+            materialId: material.id,
+          },
+        }),
+      });
+
+      if (artifactRes.ok) {
+        const artifactData = await artifactRes.json();
+        const artifactId = artifactData?.id || artifactData?.artifact?.id || latestArtifactId;
+        if (artifactId) setLatestArtifactId(artifactId);
+      }
 
       toast({ title: 'Block material created successfully!' });
       router.push(`/material/${material.id}`);
@@ -138,6 +177,36 @@ export default function BlockEditorPage() {
             )}
           </Button>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Artifact Collaboration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ArtifactCollabPanel
+              latestArtifactId={latestArtifactId}
+              isLoading={isSaving}
+              plan={plan}
+              history={[]}
+              transformActions={[
+                {
+                  label: 'Transform to Notes',
+                  successMessage: 'Notes artifact created',
+                  request: {
+                    targetToolId: 'notes',
+                    targetFlowName: 'generateNotes',
+                    transformInput: {
+                      sourceText: `${title}\n${description}\n${blocks.map((b: any) => JSON.stringify(b)).join('\n')}`,
+                      style: 'structured',
+                      length: 'medium',
+                    },
+                    title: 'Notes from Blocks',
+                  },
+                },
+              ]}
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

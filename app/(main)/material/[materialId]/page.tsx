@@ -18,6 +18,19 @@ import { BlockRenderer } from '@/components/blocks/BlockRenderer';
 import { BlockEditor } from '@/components/blocks/BlockEditor';
 import type { BaseBlock } from '@/components/blocks/types';
 
+type ArtifactRecord = {
+  id: string;
+  title: string;
+  tool_id: string;
+  artifact_type: string;
+  updated_at: string;
+};
+
+type ArtifactVersion = {
+  version_number: number;
+  content: any;
+  created_at: string;
+};
 
 function MaterialPageContent() {
   const params = useParams();
@@ -28,6 +41,8 @@ function MaterialPageContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [artifact, setArtifact] = useState<ArtifactRecord | null>(null);
+  const [artifactVersions, setArtifactVersions] = useState<ArtifactVersion[]>([]);
 
   useEffect(() => {
     if (!materialId) return;
@@ -38,18 +53,42 @@ function MaterialPageContent() {
       try {
         // Fetch material
         const materialResponse = await fetch(`/api/materials/${materialId}`);
-        if (!materialResponse.ok) {
-          const errorData = await materialResponse.json();
-          throw new Error(errorData.error || 'Failed to fetch material');
-        }
-        const materialData: MaterialReference = await materialResponse.json();
-        setMaterial(materialData);
+        if (materialResponse.ok) {
+          const materialData: MaterialReference = await materialResponse.json();
+          setMaterial(materialData);
+          setArtifact(null);
+          setArtifactVersions([]);
 
-        // Fetch blocks
-        const blocksResponse = await fetch(`/api/materials/${materialId}/blocks`);
-        if (blocksResponse.ok) {
-          const blocksData = await blocksResponse.json();
-          setBlocks(blocksData.blocks || []);
+          // Fetch blocks
+          const blocksResponse = await fetch(`/api/materials/${materialId}/blocks`);
+          if (blocksResponse.ok) {
+            const blocksData = await blocksResponse.json();
+            setBlocks(blocksData.blocks || []);
+          }
+        } else {
+          // Fallback: resolve toolbox artifact by id
+          const artifactsResponse = await fetch('/api/tools/v2/artifacts');
+          if (!artifactsResponse.ok) {
+            const errorData = await materialResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to fetch material/artifact');
+          }
+
+          const artifacts: ArtifactRecord[] = await artifactsResponse.json();
+          const matchedArtifact = artifacts.find((a) => a.id === materialId) || null;
+          if (!matchedArtifact) {
+            const errorData = await materialResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Material or artifact not found');
+          }
+
+          setArtifact(matchedArtifact);
+          setMaterial(null);
+          setBlocks([]);
+
+          const artifactHistoryRes = await fetch(`/api/tools/v2/artifacts/${materialId}/history`);
+          if (artifactHistoryRes.ok) {
+            const artifactHistory = await artifactHistoryRes.json();
+            setArtifactVersions(artifactHistory.versions || []);
+          }
         }
 
         // Fetch user role
@@ -69,6 +108,40 @@ function MaterialPageContent() {
   }, [materialId]);
 
   const renderContent = () => {
+    if (artifact) {
+      const latestContent = artifactVersions?.[0]?.content;
+      const artifactType = artifact.artifact_type?.toLowerCase();
+      if (!latestContent) {
+        return <p>No artifact content found.</p>;
+      }
+
+      if (artifactType === 'notes' || artifactType === 'note') {
+        return <NoteViewer notes={latestContent.notes || latestContent} />;
+      }
+      if (artifactType === 'quiz') {
+        return <QuizTaker quiz={latestContent} mode="practice" sourceText="" onRestart={() => {}} />;
+      }
+      if (artifactType === 'flashcards' || artifactType === 'flashcard') {
+        return <FlashcardViewer cards={latestContent.flashcards || latestContent} mode="flip" onRestart={() => {}} />;
+      }
+      if (artifactType === 'blocks') {
+        const artifactBlocks = latestContent.blocks || [];
+        return (
+          <div className="space-y-4">
+            {artifactBlocks.map((block: any) => (
+              <BlockRenderer key={block.id} block={block} isEditing={false} />
+            ))}
+          </div>
+        );
+      }
+
+      return (
+        <pre className="rounded-md border bg-muted/30 p-3 text-xs overflow-auto">
+          {JSON.stringify(latestContent, null, 2)}
+        </pre>
+      );
+    }
+
     // If blocks exist, render them
     if (blocks.length > 0) {
       if (isEditing && userRole === 'teacher') {
@@ -135,7 +208,7 @@ function MaterialPageContent() {
     );
   }
 
-  if (!material) {
+  if (!material && !artifact) {
     return null;
   }
 
@@ -143,12 +216,12 @@ function MaterialPageContent() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <Button variant="ghost" asChild className="-ml-4">
-          <Link href={`/class/${material.class_id}`}>
+          <Link href={material ? `/class/${material.class_id}` : '/material'}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Class
+            {material ? 'Back to Class' : 'Back to Materials'}
           </Link>
         </Button>
-        {userRole === 'teacher' && (material?.type === 'BLOCK' || blocks.length > 0) && (
+        {material && userRole === 'teacher' && (material?.type === 'BLOCK' || blocks.length > 0) && (
           <Button
             variant="outline"
             onClick={() => setIsEditing(!isEditing)}
@@ -160,18 +233,22 @@ function MaterialPageContent() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Badge variant="outline">{material.type}</Badge>
-        <h1 className="text-3xl font-bold font-headline">{material.title}</h1>
+        <Badge variant="outline">{material ? material.type : artifact?.artifact_type?.toUpperCase()}</Badge>
+        <h1 className="text-3xl font-bold font-headline">{material ? material.title : artifact?.title}</h1>
         <p className="text-sm text-muted-foreground">
-          Created on {format(new Date(material.created_at), 'MMMM d, yyyy')}
+          {material
+            ? `Created on ${format(new Date(material.created_at), 'MMMM d, yyyy')}`
+            : `Updated on ${format(new Date(artifact!.updated_at), 'MMMM d, yyyy')}`}
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {material.concepts?.map(concept => (
-          <Badge key={concept.id} variant="secondary">{concept.name}</Badge>
-        ))}
-      </div>
+      {material && (
+        <div className="flex flex-wrap gap-2">
+          {material.concepts?.map(concept => (
+            <Badge key={concept.id} variant="secondary">{concept.name}</Badge>
+          ))}
+        </div>
+      )}
 
       {renderContent()}
     </div>

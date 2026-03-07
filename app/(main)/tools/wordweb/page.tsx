@@ -2,9 +2,10 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Pen, Eraser, Undo, Redo, Trash2 } from 'lucide-react';
+import { Pen, Eraser, Undo, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ArtifactCollabPanel } from '@/components/tools/artifact-collab-panel';
 
 type DrawingPath = {
   id: string;
@@ -34,12 +35,23 @@ export default function WordwebPage() {
   const [currentPath, setCurrentPath] = useState<DrawingPath | null>(null);
   const [text, setText] = useState('');
   const [materialId, setMaterialId] = useState<string | null>(null);
+  const [artifactId, setArtifactId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [plan, setPlan] = useState<string>('free');
 
   const supabase = createClient();
   const { toast } = useToast();
 
   // Load wordweb from Supabase
+  useEffect(() => {
+    fetch('/api/billing/v1/usage-summary')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.plan) setPlan(data.plan);
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     const loadWordweb = async () => {
       try {
@@ -113,6 +125,25 @@ export default function WordwebPage() {
           setMaterialId(newMaterial.id);
         }
 
+        const artifactPayload = {
+          artifactId: artifactId || undefined,
+          toolId: 'wordweb',
+          artifactType: 'wordweb',
+          title: 'Wordweb Drawing',
+          content: wordwebData,
+          metadata: { materialId: materialId || null },
+        };
+        const artifactRes = await fetch('/api/tools/v2/artifacts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(artifactPayload),
+        });
+        if (artifactRes.ok) {
+          const artifactData = await artifactRes.json();
+          const nextArtifactId = artifactData?.id || artifactData?.artifact?.id || artifactId;
+          if (nextArtifactId) setArtifactId(nextArtifactId);
+        }
+
         toast({
           title: "Saved",
           description: "Wordweb saved successfully",
@@ -128,7 +159,7 @@ export default function WordwebPage() {
     }, 2000);
 
     return () => clearTimeout(saveTimeout);
-  }, [paths, text, materialId, isLoading, supabase, toast]);
+  }, [paths, text, materialId, isLoading, supabase, toast, artifactId]);
 
   // Redraw canvas when paths change
   useEffect(() => {
@@ -330,6 +361,27 @@ export default function WordwebPage() {
             className="w-full h-full p-3 border rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
+      </div>
+
+      <div className="border-t p-4">
+        <ArtifactCollabPanel
+          latestArtifactId={artifactId}
+          isLoading={isLoading}
+          plan={plan}
+          history={[]}
+          transformActions={[
+            {
+              label: 'Transform to Notes',
+              successMessage: 'Notes artifact created',
+              request: {
+                targetToolId: 'notes',
+                targetFlowName: 'generateNotes',
+                transformInput: { sourceText: text || 'Wordweb content', style: 'structured', length: 'medium' },
+                title: 'Notes from Wordweb',
+              },
+            },
+          ]}
+        />
       </div>
     </div>
   );

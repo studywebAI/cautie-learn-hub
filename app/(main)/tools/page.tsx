@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BrainCircuit, Copy, FileSignature, Blocks, Sparkles, Clock3, Wand2 } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Copy, FileSignature, Blocks, Sparkles, Clock3, Wand2, Network } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,12 +26,14 @@ type ToolRun = {
 type Artifact = {
   id: string;
   title: string;
-  tool_id: string;
+  tool_id?: string;
+  artifact_type?: string;
   updated_at: string;
 };
 
 export default function ToolsPage() {
   const { dictionary } = useDictionary();
+  const sidebarTools = dictionary.sidebar.tools as Record<string, string | undefined>;
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [runs, setRuns] = useState<ToolRun[]>([]);
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
@@ -41,34 +43,41 @@ export default function ToolsPage() {
     () => [
       {
         key: 'quiz',
-        title: dictionary.sidebar.tools.quizGenerator || 'Quiz',
+        title: sidebarTools.quizGenerator || 'Quiz',
         description: dictionary.tools.quiz.description || 'Generate quizzes from your source content.',
         icon: BrainCircuit,
         href: '/tools/quiz',
       },
       {
         key: 'flashcards',
-        title: dictionary.sidebar.tools.flashcardMaker || 'Flashcards',
+        title: sidebarTools.flashcardMaker || 'Flashcards',
         description: dictionary.tools.flashcards.description || 'Create study decks and active recall cards.',
         icon: Copy,
         href: '/tools/flashcards',
       },
       {
         key: 'notes',
-        title: dictionary.sidebar.tools.notes || 'Notes',
+        title: sidebarTools.notes || 'Notes',
         description: dictionary.tools.material?.description || 'Generate structured study notes.',
         icon: FileSignature,
         href: '/tools/notes',
       },
       {
         key: 'blocks',
-        title: dictionary.sidebar.tools.blocks || 'Blocks',
+        title: sidebarTools.blocks || 'Blocks',
         description: 'Build reusable structured learning materials.',
         icon: Blocks,
         href: '/tools/blocks',
       },
+      {
+        key: 'wordweb',
+        title: sidebarTools.wordweb || 'Wordweb',
+        description: 'Build visual concept maps and save them as artifacts.',
+        icon: Network,
+        href: '/tools/wordweb',
+      },
     ],
-    [dictionary]
+    [dictionary, sidebarTools]
   );
 
   useEffect(() => {
@@ -144,6 +153,9 @@ export default function ToolsPage() {
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link href="/tools/flashcards">Build Flashcards</Link>
                 </Button>
+                <Button asChild variant="outline" className="w-full justify-start">
+                  <Link href="/tools/wordweb">Create Wordweb</Link>
+                </Button>
               </CardContent>
             </Card>
 
@@ -157,10 +169,10 @@ export default function ToolsPage() {
               <CardContent className="space-y-2 text-sm">
                 {recentArtifacts.length === 0 && <p className="text-muted-foreground">No recent artifacts yet.</p>}
                 {recentArtifacts.map((a) => (
-                  <div key={a.id} className="rounded-md border p-2">
+                  <Link key={a.id} href={`/material/${a.id}`} className="block rounded-md border p-2 hover:bg-muted/40">
                     <p className="font-medium truncate">{a.title}</p>
-                    <p className="text-muted-foreground text-xs">{a.tool_id}</p>
-                  </div>
+                    <p className="text-muted-foreground text-xs">{a.tool_id || a.artifact_type || 'artifact'}</p>
+                  </Link>
                 ))}
               </CardContent>
             </Card>
