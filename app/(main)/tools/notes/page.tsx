@@ -27,6 +27,13 @@ type CollabComment = {
   created_at: string;
 };
 
+type Suggestion = {
+  id: string;
+  note: string | null;
+  status: string;
+  created_at: string;
+};
+
 type ToolRun = {
   id: string;
   status: string;
@@ -47,6 +54,8 @@ export default function NotesPage() {
   const [artifactVersions, setArtifactVersions] = useState<ArtifactVersion[]>([]);
   const [comments, setComments] = useState<CollabComment[]>([]);
   const [commentDraft, setCommentDraft] = useState('');
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [suggestionDraft, setSuggestionDraft] = useState('');
   const { toast } = useToast();
 
   const canGenerate = sourceText.trim().length > 0 && !isLoading;
@@ -78,9 +87,10 @@ export default function NotesPage() {
         return;
       }
 
-      const [historyRes, commentsRes] = await Promise.all([
+      const [historyRes, commentsRes, suggestionsRes] = await Promise.all([
         fetch(`/api/tools/v2/artifacts/${latestArtifactId}/history`),
         fetch(`/api/collab/v1/comments?artifactId=${latestArtifactId}`),
+        fetch(`/api/collab/v1/suggestions?artifactId=${latestArtifactId}`),
       ]);
 
       if (historyRes.ok) {
@@ -90,6 +100,9 @@ export default function NotesPage() {
       if (commentsRes.ok) {
         const commentData = await commentsRes.json();
         setComments(commentData || []);
+      }
+      if (suggestionsRes.ok) {
+        setSuggestions(await suggestionsRes.json());
       }
     };
     loadArtifactData();
@@ -205,10 +218,11 @@ export default function NotesPage() {
       </Button>
 
       <Tabs defaultValue="actions" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="actions">Actions</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
           <TabsTrigger value="comments">Comments</TabsTrigger>
+          <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="actions" className="space-y-2">
@@ -328,6 +342,74 @@ export default function NotesPage() {
             </div>
           ))}
         </TabsContent>
+
+        <TabsContent value="suggestions" className="space-y-2">
+          <Textarea
+            value={suggestionDraft}
+            onChange={(e) => setSuggestionDraft(e.target.value)}
+            placeholder="Propose an improvement suggestion..."
+            className="min-h-[90px]"
+          />
+          <Button
+            className="w-full"
+            disabled={!latestArtifactId || !suggestionDraft.trim()}
+            onClick={async () => {
+              if (!latestArtifactId || !suggestionDraft.trim()) return;
+              try {
+                const res = await fetch('/api/collab/v1/suggestions', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    artifactId: latestArtifactId,
+                    patch: { summary: suggestionDraft.trim() },
+                    note: suggestionDraft.trim(),
+                  }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data?.error || 'Suggestion failed');
+                setSuggestionDraft('');
+                const suggestionsRes = await fetch(`/api/collab/v1/suggestions?artifactId=${latestArtifactId}`);
+                if (suggestionsRes.ok) setSuggestions(await suggestionsRes.json());
+              } catch (error: any) {
+                toast({ variant: 'destructive', title: 'Suggestion failed', description: error?.message || 'Unable to create suggestion' });
+              }
+            }}
+          >
+            Create Suggestion
+          </Button>
+          {suggestions.length === 0 && <p className="text-xs text-muted-foreground">No suggestions yet.</p>}
+          {suggestions.map((suggestion) => (
+            <div key={suggestion.id} className="rounded-md border p-2">
+              <p className="text-xs">{suggestion.note || 'No note'}</p>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <p className="text-[11px] text-muted-foreground">{new Date(suggestion.created_at).toLocaleString()}</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{suggestion.status}</Badge>
+                  {suggestion.status === 'pending' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`/api/collab/v1/suggestions/${suggestion.id}/apply`, { method: 'POST' });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data?.error || 'Apply failed');
+                          const suggestionsRes = await fetch(`/api/collab/v1/suggestions?artifactId=${latestArtifactId}`);
+                          if (suggestionsRes.ok) setSuggestions(await suggestionsRes.json());
+                          toast({ title: 'Suggestion applied' });
+                        } catch (error: any) {
+                          toast({ variant: 'destructive', title: 'Apply failed', description: error?.message || 'Unable to apply suggestion' });
+                        }
+                      }}
+                    >
+                      Apply
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </TabsContent>
       </Tabs>
 
       <div className="space-y-2">
@@ -345,6 +427,7 @@ export default function NotesPage() {
           ))}
         </div>
       </div>
+
     </div>
   );
 
