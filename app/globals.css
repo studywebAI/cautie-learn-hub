@@ -123,9 +123,9 @@
   .theme-light {
     --background: 0 0% 100%;
     --foreground: 0 0% 0%;
-    --card: 0 0% 99%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
-    --popover: 0 0% 99%;
+    --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
     --primary: 0 0% 15%;
     --primary-foreground: 0 0% 100%;
@@ -148,8 +148,8 @@
     --chart-4: 0 0% 65%;
     --chart-5: 0 0% 80%;
 
-    --surface-1: 0 0% 99%;
-    --surface-2: 0 0% 97%;
+    --surface-1: 0 0% 100%;
+    --surface-2: 0 0% 98%;
     --surface-3: 0 0% 95%;
     --interactive-hover: 0 0% 92%;
     --interactive-active: 0 0% 88%;
