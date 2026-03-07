@@ -5,26 +5,28 @@ import { Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { NoteViewer } from '@/components/material-viewers/note-viewer';
 import type { GenerateNotesOutput } from '@/ai/flows/generate-notes';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { ArtifactCollabPanel } from '@/components/tools/artifact-collab-panel';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type ToolRun = {
   id: string;
   status: string;
   created_at: string;
+  finished_at?: string | null;
   error_message?: string | null;
 };
 
 export default function NotesPage() {
   const [sourceText, setSourceText] = useState('');
-  const [topic, setTopic] = useState('');
   const [length, setLength] = useState<'short' | 'medium' | 'long'>('medium');
   const [style, setStyle] = useState('structured');
+  const [modePack, setModePack] = useState<'core' | 'exam' | 'reference'>('core');
+  const [outputFocus, setOutputFocus] = useState<'clarity' | 'compression' | 'retention'>('clarity');
   const [isLoading, setIsLoading] = useState(false);
   const [plan, setPlan] = useState<string>('free');
   const [generatedNotes, setGeneratedNotes] = useState<GenerateNotesOutput['notes'] | null>(null);
@@ -42,6 +44,23 @@ export default function NotesPage() {
   };
 
   useEffect(() => {
+    const savedLength = localStorage.getItem('tools.notes.length');
+    const savedStyle = localStorage.getItem('tools.notes.style');
+    const savedPack = localStorage.getItem('tools.notes.pack');
+    const savedFocus = localStorage.getItem('tools.notes.focus');
+    if (savedLength === 'short' || savedLength === 'medium' || savedLength === 'long') {
+      setLength(savedLength);
+    }
+    if (savedStyle) {
+      setStyle(savedStyle);
+    }
+    if (savedPack === 'core' || savedPack === 'exam' || savedPack === 'reference') {
+      setModePack(savedPack);
+    }
+    if (savedFocus === 'clarity' || savedFocus === 'compression' || savedFocus === 'retention') {
+      setOutputFocus(savedFocus);
+    }
+
     const loadMeta = async () => {
       const usageRes = await fetch('/api/billing/v1/usage-summary');
       if (usageRes.ok) {
@@ -62,6 +81,14 @@ export default function NotesPage() {
       });
       return;
     }
+    if (sourceText.trim().length < 120) {
+      toast({
+        variant: 'destructive',
+        title: 'More source text needed',
+        description: 'Add more context to avoid low-quality or narrow notes.',
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -70,12 +97,13 @@ export default function NotesPage() {
         flowName: 'generateNotes',
         mode: style,
         artifactType: 'notes',
-        artifactTitle: topic ? `${topic} Notes` : 'Generated Notes',
+        artifactTitle: 'Generated Notes',
         input: {
           sourceText,
-          topic: topic || undefined,
           length,
           style,
+          modePack,
+          outputFocus,
           highlightTitles: false,
           fontFamily: 'default',
         },
@@ -88,62 +116,89 @@ export default function NotesPage() {
       toast({
         variant: 'destructive',
         title: 'Generation failed',
-        description: error?.message || 'Unable to generate notes',
+        description: error?.message || 'Unable to generate notes from provided source text',
       });
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    localStorage.setItem('tools.notes.length', length);
+  }, [length]);
+
+  useEffect(() => {
+    localStorage.setItem('tools.notes.style', style);
+  }, [style]);
+
+  useEffect(() => {
+    localStorage.setItem('tools.notes.pack', modePack);
+  }, [modePack]);
+
+  useEffect(() => {
+    localStorage.setItem('tools.notes.focus', outputFocus);
+  }, [outputFocus]);
+
   const leftPanel = useMemo(
     () => (
-      <div className="space-y-4 pt-1">
-        <div className="space-y-2">
-          <Label htmlFor="topic">Topic (optional)</Label>
-          <Input id="topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. French Revolution" />
-        </div>
+      <div className="space-y-3 pt-1">
         <div className="space-y-2">
           <Label htmlFor="source">Source Text</Label>
           <Textarea
             id="source"
             value={sourceText}
             onChange={(e) => setSourceText(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                void handleGenerate();
+              }
+            }}
             placeholder="Paste your source content here..."
-            className="min-h-[320px]"
+            className="min-h-[74vh] text-sm"
           />
+          <p className="text-xs text-muted-foreground">Use Ctrl/Cmd + Enter to generate.</p>
         </div>
       </div>
     ),
-    [sourceText, topic]
+    [sourceText, handleGenerate]
   );
 
   const centerPanel = (
     <div className="space-y-3 pt-1">
-      {!generatedNotes && (
-        <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-          Generated notes will appear here after you run the tool.
-        </div>
-      )}
       {generatedNotes && <NoteViewer notes={generatedNotes} />}
     </div>
   );
 
   const rightPanel = (
     <div className="space-y-4 pt-1">
-      <div className="space-y-2">
-        <Label>Style</Label>
+      <div className="space-y-3">
+        <Tabs value={modePack} onValueChange={(v) => setModePack(v as 'core' | 'exam' | 'reference')}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="core">Core</TabsTrigger>
+            <TabsTrigger value="exam">Exam</TabsTrigger>
+            <TabsTrigger value="reference">Reference</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <select
           value={style}
           onChange={(e) => setStyle(e.target.value)}
           className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
         >
           <option value="structured">Structured</option>
-          <option value="bullet-points">Bullet Points</option>
           <option value="standard">Standard</option>
-          <option value="timeline">Timeline</option>
+          <option value="bullet-points">Cornell / Bullet</option>
+          <option value="timeline">Exam-cram Timeline</option>
           <option value="mindmap">Mindmap</option>
-          <option value="vocabulary">Vocabulary</option>
+          <option value="vocabulary">Citation / Vocabulary</option>
         </select>
+        <Tabs value={outputFocus} onValueChange={(v) => setOutputFocus(v as 'clarity' | 'compression' | 'retention')}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="clarity">Clarity</TabsTrigger>
+            <TabsTrigger value="compression">Cram</TabsTrigger>
+            <TabsTrigger value="retention">Retention</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
       <div className="space-y-2">
         <Label>Length</Label>

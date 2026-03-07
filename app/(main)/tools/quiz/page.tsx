@@ -8,13 +8,14 @@ import { AppContext } from '@/contexts/app-context';
 
 import type { Quiz } from '@/lib/types';
 import { QuizDuel } from '@/components/tools/quiz-duel';
-import { QuizEditor } from '@/components/tools/quiz-editor';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { ArtifactCollabPanel } from '@/components/tools/artifact-collab-panel';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 
 
 function QuizPageContent() {
@@ -32,16 +33,27 @@ function QuizPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedQuiz, setGeneratedQuiz] = useState<Quiz | null>(null);
   const [quizMode, setQuizMode] = useState<QuizMode>('practice');
+  const [modePack, setModePack] = useState<'practice' | 'exam' | 'adaptive'>('practice');
+  const [difficultyProfile, setDifficultyProfile] = useState<'balanced' | 'ramp' | 'hard'>('balanced');
   const [questionCount, setQuestionCount] = useState(7);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [currentView, setCurrentView] = useState<'setup' | 'edit' | 'take' | 'duel'>('setup');
+  const [currentView, setCurrentView] = useState<'setup' | 'take' | 'duel'>('setup');
 
   const [history, setHistory] = useState<any[]>([]);
   const [plan, setPlan] = useState<string>('free');
   const [latestArtifactId, setLatestArtifactId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleGenerate = useCallback(async (text: string) => {
     if (!text.trim()) {
+      return;
+    }
+    if (text.trim().length < 120) {
+      setCurrentView('setup');
+      toast({
+        variant: 'destructive',
+        title: 'More source text needed',
+        description: 'Add more context to avoid weak or narrow quiz output.',
+      });
       return;
     }
     setIsLoading(true);
@@ -57,25 +69,26 @@ function QuizPageContent() {
           mode: quizMode,
           artifactType: 'quiz',
           artifactTitle: 'Generated Quiz',
-          input: { sourceText: text, questionCount: count, language },
+          input: { sourceText: text, questionCount: count, language, difficultyProfile, modePack },
           computeClass: count > 20 ? 'heavy' : 'standard',
         });
         const response = run?.output_payload || run;
         setGeneratedQuiz(response as Quiz);
         setLatestArtifactId(run?.output_artifact_id || null);
-        if (isEditMode) {
-          setCurrentView('edit');
-        } else {
-          setCurrentView('take');
-        }
+        setCurrentView('take');
       }
     } catch (error) {
       console.error('Error generating quiz:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Quiz generation failed',
+        description: (error as any)?.message || 'Unable to generate quiz from provided source text',
+      });
       setCurrentView('setup');
     } finally {
       setIsLoading(false);
     }
-  }, [quizMode, questionCount, isEditMode, language]);
+  }, [quizMode, questionCount, language, difficultyProfile, modePack]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) {
@@ -84,6 +97,19 @@ function QuizPageContent() {
   }, [sourceTextFromParams, handleGenerate]);
 
   useEffect(() => {
+    const savedMode = localStorage.getItem('tools.quiz.mode');
+    const savedCount = localStorage.getItem('tools.quiz.count');
+    const savedPack = localStorage.getItem('tools.quiz.pack');
+    const savedDifficulty = localStorage.getItem('tools.quiz.difficulty');
+    if (savedMode) setQuizMode(savedMode as QuizMode);
+    if (savedCount && !Number.isNaN(Number(savedCount))) setQuestionCount(Number(savedCount));
+    if (savedPack === 'practice' || savedPack === 'exam' || savedPack === 'adaptive') {
+      setModePack(savedPack);
+    }
+    if (savedDifficulty === 'balanced' || savedDifficulty === 'ramp' || savedDifficulty === 'hard') {
+      setDifficultyProfile(savedDifficulty);
+    }
+
     const loadMeta = async () => {
       const [usageRes, runsRes] = await Promise.all([
         fetch('/api/billing/v1/usage-summary'),
@@ -101,24 +127,26 @@ function QuizPageContent() {
     loadMeta();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('tools.quiz.mode', quizMode);
+  }, [quizMode]);
+
+  useEffect(() => {
+    localStorage.setItem('tools.quiz.count', String(questionCount));
+  }, [questionCount]);
+
+  useEffect(() => {
+    localStorage.setItem('tools.quiz.pack', modePack);
+  }, [modePack]);
+
+  useEffect(() => {
+    localStorage.setItem('tools.quiz.difficulty', difficultyProfile);
+  }, [difficultyProfile]);
+
 
   const handleFormSubmit = () => {
     handleGenerate(sourceText);
   }
-
-  const handleStartQuiz = (finalQuiz: Quiz) => {
-    setGeneratedQuiz(finalQuiz);
-    setCurrentView('take');
-  }
-
-  const handleCreateForAssignment = (finalQuiz: Quiz) => {
-    console.log("Creating quiz for assignment in class:", classId, finalQuiz);
-    if (classId) {
-        router.push(`/class/${classId}`);
-    } else {
-        router.push('/classes');
-    }
-  };
 
   const handleRestart = () => {
     setGeneratedQuiz(null);
@@ -150,9 +178,6 @@ function QuizPageContent() {
     )
   }
 
-  if (generatedQuiz && currentView === 'edit') {
-    return <QuizEditor quiz={generatedQuiz} sourceText={sourceText} onStartQuiz={handleStartQuiz} onBack={() => setCurrentView('setup')} isAssignmentContext={isAssignmentContext} onCreateForAssignment={handleCreateForAssignment} />;
-  }
   if (generatedQuiz && currentView === 'take') {
     return <QuizTaker quiz={generatedQuiz} mode={quizMode} sourceText={sourceText} onRestart={handleRestart} />;
   }
@@ -166,19 +191,21 @@ function QuizPageContent() {
       <Textarea
         value={sourceText}
         onChange={(e) => setSourceText(e.target.value)}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            e.preventDefault();
+            handleGenerate(sourceText);
+          }
+        }}
         placeholder="Paste material to generate quiz questions..."
-        className="min-h-[360px]"
+        className="min-h-[74vh] text-sm"
       />
+      <p className="text-xs text-muted-foreground">Use Ctrl/Cmd + Enter to generate.</p>
     </div>
   );
 
   const centerPanel = (
     <div className="space-y-3 pt-1">
-      {!generatedQuiz && (
-        <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-          Quiz preview appears after generation.
-        </div>
-      )}
       {generatedQuiz && (
         <div className="space-y-2">
           <h3 className="font-semibold">{generatedQuiz.title}</h3>
@@ -197,8 +224,23 @@ function QuizPageContent() {
 
   const rightPanel = (
     <div className="space-y-4 pt-1">
-      <div className="space-y-2">
-        <Label>Quiz Mode</Label>
+      <div className="space-y-3">
+        <Tabs
+          value={modePack}
+          onValueChange={(v) => {
+            const next = v as 'practice' | 'exam' | 'adaptive';
+            setModePack(next);
+            if (next === 'adaptive') setQuizMode('adaptive');
+            if (next === 'exam') setQuizMode('exam');
+            if (next === 'practice') setQuizMode('practice');
+          }}
+        >
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="practice">Practice</TabsTrigger>
+            <TabsTrigger value="exam">Exam</TabsTrigger>
+            <TabsTrigger value="adaptive">Adaptive</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <select
           value={quizMode}
           onChange={(e) => setQuizMode(e.target.value as QuizMode)}
@@ -208,6 +250,13 @@ function QuizPageContent() {
             <option key={mode} value={mode}>{mode}</option>
           ))}
         </select>
+        <Tabs value={difficultyProfile} onValueChange={(v) => setDifficultyProfile(v as 'balanced' | 'ramp' | 'hard')}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="balanced">Balanced</TabsTrigger>
+            <TabsTrigger value="ramp">Ramp</TabsTrigger>
+            <TabsTrigger value="hard">Hard</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
       <div className="space-y-2">
         <Label>Questions</Label>
@@ -219,17 +268,6 @@ function QuizPageContent() {
           onChange={(e) => setQuestionCount(parseInt(e.target.value) || 1)}
           className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
         />
-      </div>
-      <div className="space-y-2">
-        <Label>Edit Mode</Label>
-        <select
-          value={isEditMode ? 'edit' : 'direct'}
-          onChange={(e) => setIsEditMode(e.target.value === 'edit')}
-          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-        >
-          <option value="direct">Direct Start</option>
-          <option value="edit">Review & Edit</option>
-        </select>
       </div>
       <Button onClick={handleFormSubmit} disabled={isLoading || !sourceText.trim()} className="w-full">
         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}

@@ -44,7 +44,7 @@ type Props = {
   latestArtifactId: string | null;
   isLoading?: boolean;
   plan: string;
-  history: Array<{ id: string; status: string; created_at: string }>;
+  history: Array<{ id: string; status: string; created_at: string; finished_at?: string | null }>;
   transformActions?: TransformAction[];
   showDiffPreview?: boolean;
 };
@@ -100,6 +100,19 @@ export function ArtifactCollabPanel({
     const previous = JSON.stringify(artifactVersions[1].content);
     return latest.length - previous.length;
   }, [artifactVersions, showDiffPreview]);
+
+  const formatDuration = (createdAt: string, finishedAt?: string | null) => {
+    if (!finishedAt) return null;
+    const start = new Date(createdAt).getTime();
+    const end = new Date(finishedAt).getTime();
+    if (Number.isNaN(start) || Number.isNaN(end) || end < start) return null;
+    const ms = end - start;
+    const secs = Math.round(ms / 1000);
+    if (secs < 60) return `${secs}s`;
+    const mins = Math.floor(secs / 60);
+    const rem = secs % 60;
+    return `${mins}m ${rem}s`;
+  };
 
   return (
     <div className="space-y-3">
@@ -288,7 +301,14 @@ export function ArtifactCollabPanel({
         {history.length === 0 && <p className="text-xs text-muted-foreground">No runs yet.</p>}
         {history.map((run) => (
           <div key={run.id} className="rounded-md border p-2">
-            <p className="text-xs font-medium">{run.status}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-medium">{run.status}</p>
+              {formatDuration(run.created_at, run.finished_at) && (
+                <Badge variant="secondary" className="text-[10px]">
+                  {formatDuration(run.created_at, run.finished_at)}
+                </Badge>
+              )}
+            </div>
             <p className="text-[11px] text-muted-foreground">{new Date(run.created_at).toLocaleString()}</p>
           </div>
         ))}

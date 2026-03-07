@@ -39,9 +39,10 @@ const generateQuizFlow = ai.defineFlow(
       input: { schema: GenerateQuizInputSchema },
       output: { schema: QuizSchema },
       prompt: `You are an expert in creating educational content.
-Crucially, all factual information in the quiz questions and answers must be accurate and verifiable. Prioritize information directly from the provided Source Text.
-If external general knowledge is incorporated, ensure it is widely accepted and, if possible, mention the source (e.g., "Wikipedia").
-Avoid making up facts or details not present in the Source Text or commonly accepted knowledge.
+All questions and answers MUST be based only on the provided Source Text.
+Do not use web knowledge, prior knowledge, external references, or assumptions.
+If source text is missing details, stay within what is present and simplify the question set.
+Never cite Wikipedia or any external source.
 
 Your task is to generate a multiple-choice quiz from the provided source text.
 The quiz should have a concise and relevant title (without phrases like "a comprehensive quiz") and a brief description.
@@ -52,7 +53,7 @@ Exactly one option for each question must be correct.
 Do not generate questions that are identical or very similar to the questions represented by these IDs: {{{existingQuestionIds}}}.
 {{/if}}
 
-For each question, if you use information from an external trusted source (like Wikipedia) or if you want to highlight a specific page/section from the source text, include a 'source_info' field in the question's output, e.g., "Wikipedia", or "Source Text - Page 5".
+For each question, if needed, include 'source_info' referencing only the provided source text.
 
 Source Text:
 {{{sourceText}}}

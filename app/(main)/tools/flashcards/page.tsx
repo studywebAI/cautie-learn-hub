@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles } from 'lucide-react';
 import { FlashcardViewer, StudyMode } from '@/components/tools/flashcard-viewer';
 import { AppContext } from '@/contexts/app-context';
-import { FlashcardEditor } from '@/components/tools/flashcard-editor';
 import type { Flashcard } from '@/lib/types';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ArtifactCollabPanel } from '@/components/tools/artifact-collab-panel';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 
 
 function FlashcardsPageContent() {
@@ -30,16 +31,27 @@ function FlashcardsPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedCards, setGeneratedCards] = useState<Flashcard[] | null>(null);
   const [studyMode, setStudyMode] = useState<StudyMode>('flip');
+  const [modePack, setModePack] = useState<'core' | 'retention' | 'exam'>('core');
+  const [retentionProfile, setRetentionProfile] = useState<'balanced' | 'aggressive' | 'exam-cram'>('balanced');
   const [flashcardCount, setFlashcardCount] = useState(10);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [currentView, setCurrentView] = useState<'setup' | 'edit' | 'study'>('setup');
+  const [currentView, setCurrentView] = useState<'setup' | 'study'>('setup');
 
   const [history, setHistory] = useState<any[]>([]);
   const [plan, setPlan] = useState<string>('free');
   const [latestArtifactId, setLatestArtifactId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleGenerate = useCallback(async (text: string) => {
     if (!text.trim()) {
+      return;
+    }
+    if (text.trim().length < 120) {
+      setCurrentView('setup');
+      toast({
+        variant: 'destructive',
+        title: 'More source text needed',
+        description: 'Add more context to avoid weak flashcard generation.',
+      });
       return;
     }
     setIsLoading(true);
@@ -51,24 +63,25 @@ function FlashcardsPageContent() {
         mode: studyMode,
         artifactType: 'flashcards',
         artifactTitle: 'Generated Flashcards',
-        input: { sourceText: text, count: flashcardCount, language },
+        input: { sourceText: text, count: flashcardCount, language, modePack, retentionProfile },
         computeClass: flashcardCount > 20 ? 'heavy' : 'standard',
       });
       const response = run?.output_payload || run;
       setGeneratedCards(response.flashcards);
       setLatestArtifactId(run?.output_artifact_id || null);
-      if (isEditMode) {
-        setCurrentView('edit');
-      } else {
-        setCurrentView('study');
-      }
+      setCurrentView('study');
     } catch (error) {
       console.error('Error generating flashcards:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Flashcard generation failed',
+        description: (error as any)?.message || 'Unable to generate flashcards from provided source text',
+      });
       setCurrentView('setup');
     } finally {
       setIsLoading(false);
     }
-  }, [isEditMode, flashcardCount, language, studyMode]);
+  }, [flashcardCount, language, studyMode, modePack, retentionProfile]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) {
@@ -77,6 +90,19 @@ function FlashcardsPageContent() {
   }, [sourceTextFromParams, handleGenerate]);
 
   useEffect(() => {
+    const savedMode = localStorage.getItem('tools.flashcards.mode');
+    const savedCount = localStorage.getItem('tools.flashcards.count');
+    const savedPack = localStorage.getItem('tools.flashcards.pack');
+    const savedRetention = localStorage.getItem('tools.flashcards.retention');
+    if (savedMode) setStudyMode(savedMode as StudyMode);
+    if (savedCount && !Number.isNaN(Number(savedCount))) setFlashcardCount(Number(savedCount));
+    if (savedPack === 'core' || savedPack === 'retention' || savedPack === 'exam') {
+      setModePack(savedPack);
+    }
+    if (savedRetention === 'balanced' || savedRetention === 'aggressive' || savedRetention === 'exam-cram') {
+      setRetentionProfile(savedRetention);
+    }
+
     const loadMeta = async () => {
       const [usageRes, runsRes] = await Promise.all([
         fetch('/api/billing/v1/usage-summary'),
@@ -94,24 +120,26 @@ function FlashcardsPageContent() {
     loadMeta();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('tools.flashcards.mode', studyMode);
+  }, [studyMode]);
+
+  useEffect(() => {
+    localStorage.setItem('tools.flashcards.count', String(flashcardCount));
+  }, [flashcardCount]);
+
+  useEffect(() => {
+    localStorage.setItem('tools.flashcards.pack', modePack);
+  }, [modePack]);
+
+  useEffect(() => {
+    localStorage.setItem('tools.flashcards.retention', retentionProfile);
+  }, [retentionProfile]);
+
 
   const handleFormSubmit = () => {
       handleGenerate(sourceText);
   }
-
-  const handleStartStudy = (finalCards: Flashcard[]) => {
-    setGeneratedCards(finalCards);
-    setCurrentView('study');
-  };
-
-  const handleCreateForAssignment = (finalCards: Flashcard[]) => {
-    console.log("Creating flashcards for assignment in class:", classId, finalCards);
-    if (classId) {
-        router.push(`/class/${classId}`);
-    } else {
-        router.push('/classes');
-    }
-  };
 
   const handleRestart = () => {
     setGeneratedCards(null);
@@ -143,10 +171,6 @@ function FlashcardsPageContent() {
     )
   }
 
-  if (generatedCards && currentView === 'edit') {
-    return <FlashcardEditor cards={generatedCards} sourceText={sourceText} onStartStudy={handleStartStudy} onBack={handleRestart} isAssignmentContext={isAssignmentContext} />;
-  }
-
   if (generatedCards && currentView === 'study') {
     return <FlashcardViewer cards={generatedCards} mode={studyMode} onRestart={handleRestart} />;
   }
@@ -157,19 +181,21 @@ function FlashcardsPageContent() {
       <Textarea
         value={sourceText}
         onChange={(e) => setSourceText(e.target.value)}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            e.preventDefault();
+            handleGenerate(sourceText);
+          }
+        }}
         placeholder="Paste material to generate flashcards..."
-        className="min-h-[360px]"
+        className="min-h-[74vh] text-sm"
       />
+      <p className="text-xs text-muted-foreground">Use Ctrl/Cmd + Enter to generate.</p>
     </div>
   );
 
   const centerPanel = (
     <div className="space-y-3 pt-1">
-      {!generatedCards && (
-        <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-          Flashcard preview appears after generation.
-        </div>
-      )}
       {generatedCards && (
         <div className="space-y-2">
           {generatedCards.slice(0, 6).map((card) => (
@@ -185,8 +211,23 @@ function FlashcardsPageContent() {
 
   const rightPanel = (
     <div className="space-y-4 pt-1">
-      <div className="space-y-2">
-        <Label>Study Mode</Label>
+      <div className="space-y-3">
+        <Tabs
+          value={modePack}
+          onValueChange={(v) => {
+            const next = v as 'core' | 'retention' | 'exam';
+            setModePack(next);
+            if (next === 'retention') setStudyMode('multiple-choice');
+            if (next === 'core') setStudyMode('flip');
+            if (next === 'exam') setStudyMode('type');
+          }}
+        >
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="core">Core</TabsTrigger>
+            <TabsTrigger value="retention">Retention</TabsTrigger>
+            <TabsTrigger value="exam">Exam</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <select
           value={studyMode}
           onChange={(e) => setStudyMode(e.target.value as StudyMode)}
@@ -196,6 +237,13 @@ function FlashcardsPageContent() {
             <option key={mode} value={mode}>{mode}</option>
           ))}
         </select>
+        <Tabs value={retentionProfile} onValueChange={(v) => setRetentionProfile(v as 'balanced' | 'aggressive' | 'exam-cram')}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="balanced">Balanced</TabsTrigger>
+            <TabsTrigger value="aggressive">Aggressive</TabsTrigger>
+            <TabsTrigger value="exam-cram">Exam-Cram</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
       <div className="space-y-2">
         <Label>Cards</Label>
@@ -207,17 +255,6 @@ function FlashcardsPageContent() {
           onChange={(e) => setFlashcardCount(parseInt(e.target.value) || 1)}
           className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
         />
-      </div>
-      <div className="space-y-2">
-        <Label>Edit Mode</Label>
-        <select
-          value={isEditMode ? 'edit' : 'direct'}
-          onChange={(e) => setIsEditMode(e.target.value === 'edit')}
-          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-        >
-          <option value="direct">Direct Start</option>
-          <option value="edit">Review & Edit</option>
-        </select>
       </div>
       <Button onClick={handleFormSubmit} disabled={isLoading || !sourceText.trim()} className="w-full">
         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}

@@ -21,6 +21,7 @@ type ToolRun = {
   tool_id: string;
   status: string;
   created_at: string;
+  input_payload?: Record<string, any>;
 };
 
 type Artifact = {
@@ -107,10 +108,19 @@ export default function ToolsPage() {
 
   const recentArtifacts = artifacts.slice(0, 5);
   const recentRuns = runs.slice(0, 6);
+  const latestRun = runs[0];
+  const latestSourceText = typeof latestRun?.input_payload?.sourceText === 'string' ? latestRun.input_payload.sourceText : '';
+  const resumeHref = latestRun?.tool_id
+    ? latestSourceText
+      ? `/tools/${latestRun.tool_id}?sourceText=${encodeURIComponent(latestSourceText.slice(0, 1200))}`
+      : `/tools/${latestRun.tool_id}`
+    : null;
   const runByTool = recentRuns.reduce<Record<string, number>>((acc, run) => {
     acc[run.tool_id] = (acc[run.tool_id] || 0) + 1;
     return acc;
   }, {});
+
+  const recommendedTool = Object.entries(runByTool).sort((a, b) => b[1] - a[1])[0]?.[0] || 'quiz';
 
   return (
     <div className="h-full overflow-auto p-6">
@@ -156,6 +166,11 @@ export default function ToolsPage() {
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link href="/tools/wordweb">Create Wordweb</Link>
                 </Button>
+                {latestRun?.tool_id && (
+                  <Button asChild variant="secondary" className="w-full justify-start">
+                    <Link href={resumeHref || `/tools/${latestRun.tool_id}`}>Continue Last Session</Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
@@ -167,6 +182,12 @@ export default function ToolsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
+                {latestRun && (
+                  <div className="rounded-md border p-2">
+                    <p className="font-medium">Last run: {latestRun.tool_id}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(latestRun.created_at).toLocaleString()}</p>
+                  </div>
+                )}
                 {recentArtifacts.length === 0 && <p className="text-muted-foreground">No recent artifacts yet.</p>}
                 {recentArtifacts.map((a) => (
                   <Link key={a.id} href={`/material/${a.id}`} className="block rounded-md border p-2 hover:bg-muted/40">
@@ -185,9 +206,9 @@ export default function ToolsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <p className="rounded-md border p-2">Convert notes into a quiz for retrieval practice.</p>
-                <p className="rounded-md border p-2">Generate flashcards from your latest quiz mistakes.</p>
-                <p className="rounded-md border p-2">Use blocks to package reusable lesson content.</p>
+                <p className="rounded-md border p-2">Most-used studio: <span className="font-medium">{recommendedTool}</span></p>
+                <p className="rounded-md border p-2">Convert your latest artifact into another format in one click.</p>
+                <p className="rounded-md border p-2">Run with longer source text for higher-quality output and fewer retries.</p>
               </CardContent>
             </Card>
           </CardContent>

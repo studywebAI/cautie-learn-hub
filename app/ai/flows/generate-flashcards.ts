@@ -42,9 +42,9 @@ const generateFlashcardsFlow = ai.defineFlow(
       input: { schema: GenerateFlashcardsInputSchema },
       output: { schema: GenerateFlashcardsOutputSchema },
       prompt: `You are an expert in creating effective learning materials.
-Crucially, all factual information in the flashcards must be accurate and verifiable. Prioritize information directly from the provided Source Text.
-If external general knowledge is incorporated, ensure it is widely accepted and, if possible, mention the source (e.g., "Wikipedia").
-Avoid making up facts or details not present in the Source Text or commonly accepted knowledge.
+All flashcard content MUST be derived only from the provided Source Text.
+Do not use web knowledge, prior knowledge, external references, or assumptions.
+Never cite Wikipedia or any external source.
 
 Your task is to generate a set of flashcards based on the provided source text. Create exactly {{{count}}} flashcards.
 
@@ -53,7 +53,7 @@ For each flashcard, you must provide:
 2.  **front**: A key term or a question.
 3.  **back**: The corresponding definition or answer.
 4.  **cloze**: A "fill-in-the-blank" sentence where the "back" of the card is the missing word. The blank should be represented by "____".
-5.  **source_info**: (Optional) Information about where the content for this flashcard was sourced (e.g., "Wikipedia", or "Source Text - Page 5").
+5.  **source_info**: (Optional) Source reference that points only to the provided Source Text.
 
 {{#if existingFlashcardIds}}
 Do not generate flashcards with front text that is identical or very similar to the text from this list: {{{existingFlashcardIds}}}.

@@ -23,6 +23,40 @@ export default function BlockEditorPage() {
   const { toast } = useToast();
   const router = useRouter();
 
+  const applyTemplate = (template: 'lesson' | 'quiz' | 'reflection') => {
+    const now = new Date().toISOString();
+    const makeBlock = (type: BaseBlock['type'], data: any, position: number): BaseBlock => ({
+      id: `tpl-${Date.now()}-${position}-${Math.random().toString(36).slice(2, 7)}`,
+      type,
+      data,
+      position,
+      created_at: now,
+      updated_at: now,
+    });
+
+    if (template === 'lesson') {
+      setBlocks([
+        makeBlock('text', { text: 'Lesson goal' }, 0),
+        makeBlock('list', { items: [{ id: '1', text: 'Key concept 1' }, { id: '2', text: 'Key concept 2' }] }, 1),
+        makeBlock('quote', { text: 'Important takeaway', author: '' }, 2),
+      ]);
+      return;
+    }
+    if (template === 'quiz') {
+      setBlocks([
+        makeBlock('text', { text: 'Quick check instructions' }, 0),
+        makeBlock('multiple_choice', { question: 'Question', options: [{ id: 'a', text: 'Option A', correct: true }, { id: 'b', text: 'Option B', correct: false }], multiple_correct: false, shuffle: false }, 1),
+        makeBlock('open_question', { question: 'Explain why', ai_grading: true, grading_criteria: 'Correctness and clarity', max_score: 5 }, 2),
+      ]);
+      return;
+    }
+    setBlocks([
+      makeBlock('text', { text: 'Reflection prompt' }, 0),
+      makeBlock('open_question', { question: 'What did you learn today?', ai_grading: true, grading_criteria: 'Specific and grounded response', max_score: 5 }, 1),
+      makeBlock('fill_in_blank', { text: 'The most important concept was ___.', answers: [''], case_sensitive: false }, 2),
+    ]);
+  };
+
   useEffect(() => {
     fetch('/api/billing/v1/usage-summary')
       .then((res) => (res.ok ? res.json() : null))
@@ -157,7 +191,12 @@ export default function BlockEditorPage() {
           <CardHeader>
             <CardTitle>Content Blocks</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => applyTemplate('lesson')}>Lesson Template</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => applyTemplate('quiz')}>Quiz Template</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => applyTemplate('reflection')}>Reflection Template</Button>
+            </div>
             <StandaloneBlockEditor
               blocks={blocks}
               onBlocksChange={setBlocks}

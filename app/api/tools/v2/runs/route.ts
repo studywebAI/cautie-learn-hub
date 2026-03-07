@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { executeAIFlow } from "@/lib/ai/flow-executor";
 import type { ComputeClass, ToolRunStatus } from "@/lib/toolbox/contracts";
+import { enforceSourceOnlyGuard } from "@/lib/toolbox/source-guard";
 import {
   assertRunAllowed,
   getAuthedToolboxContext,
@@ -80,7 +81,13 @@ export async function POST(request: NextRequest) {
     await writeRunEvent(supabase, createdRun.id, "started", {});
 
     try {
-      const output = await executeAIFlow(payload.flowName, payload.input || payload.source || {});
+      const inputPayload = payload.input || payload.source || {};
+      const output = await executeAIFlow(payload.flowName, inputPayload);
+      enforceSourceOnlyGuard({
+        toolId: payload.toolId,
+        inputPayload,
+        outputPayload: output,
+      });
       let artifactId: string | null = null;
 
       if (payload.persistArtifact) {
@@ -138,6 +145,7 @@ export async function POST(request: NextRequest) {
       const { data: finalRun } = await supabase.from("tool_runs").select("*").eq("id", createdRun.id).single();
       return NextResponse.json(finalRun || createdRun);
     } catch (err: any) {
+      const errorCode = err?.code || "RUN_FAILED";
       await supabase
         .from("tool_runs")
         .update({
@@ -146,10 +154,13 @@ export async function POST(request: NextRequest) {
           finished_at: new Date().toISOString(),
         })
         .eq("id", createdRun.id);
-      await writeRunEvent(supabase, createdRun.id, "failed", { error: err?.message || "Run failed" });
+      await writeRunEvent(supabase, createdRun.id, "failed", {
+        error: err?.message || "Run failed",
+        code: errorCode,
+      });
       return NextResponse.json(
-        { error: err?.message || "Tool execution failed", runId: createdRun.id },
-        { status: 500 }
+        { error: err?.message || "Tool execution failed", code: errorCode, runId: createdRun.id },
+        { status: errorCode === "SOURCE_GUARD_FAILED" ? 422 : 500 }
       );
     }
   } catch (error: any) {

@@ -57,6 +57,8 @@ CORE PRINCIPLES:
 - Ensure notes are comprehensive but not overwhelming
 - Use appropriate formatting for maximum clarity and retention
 - Maintain academic integrity and accuracy
+- Use only the provided Source Text as factual input
+- Do not use web knowledge, prior knowledge, or external references
 
 Source Text:
 {{{sourceText}}}
