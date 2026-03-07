@@ -4,16 +4,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { type Flashcard } from '@/lib/types';
 // import { explainAnswer } from '@/ai/flows/explain-answer'; // Removed direct import
 import { useToast } from '@/hooks/use-toast';
-import { ChevronsLeftRight, ArrowLeft, ArrowRight, RefreshCw, Lightbulb, Loader2 } from 'lucide-react';
+import { ChevronsLeftRight, ArrowLeft, ArrowRight, RefreshCw, Lightbulb, Loader2, Clock3, Shield, Pause } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TypeView } from './type-view';
 import { MultipleChoiceView } from './multiple-choice-view';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export type StudyMode = 'flip' | 'type' | 'multiple-choice';
+
+type CardSRSState = {
+  intervalDays: number;
+  ease: number;
+  dueAt: string;
+  reps: number;
+  lapses: number;
+  suspended: boolean;
+  buriedUntil: string | null;
+  lastScore: number | null;
+  lastReviewedAt: string | null;
+};
 
 const cardVariants = {
   enter: (direction: number) => ({
@@ -31,6 +44,23 @@ const cardVariants = {
     opacity: 0,
   }),
 };
+
+const defaultSRSState = (): CardSRSState => ({
+  intervalDays: 0,
+  ease: 2.3,
+  dueAt: new Date().toISOString(),
+  reps: 0,
+  lapses: 0,
+  suspended: false,
+  buriedUntil: null,
+  lastScore: null,
+  lastReviewedAt: null,
+});
+
+const deckStorageKey = (cards: Flashcard[]) => `tools.flashcards.srs.${cards.map((c) => c.id).join('.')}`;
+
+const isDueNow = (dueAt: string) => new Date(dueAt).getTime() <= Date.now();
+const isBuriedNow = (buriedUntil: string | null) => !!buriedUntil && new Date(buriedUntil).getTime() > Date.now();
 
 // Sub-component for Classic Flip Mode
 function FlipView({ card, isFlipped, setIsFlipped }: { card: Flashcard; isFlipped: boolean; setIsFlipped: (f: boolean) => void; }) {
@@ -68,19 +98,81 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
   const [isAnswered, setIsAnswered] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [isExplanationLoading, setIsExplanationLoading] = useState(false);
-  const [cardsReviewed, setCardsReviewed] = useState<Set<number>>(new Set());
+  const [cardsReviewed, setCardsReviewed] = useState<Set<string>>(new Set());
   const [correctCards, setCorrectCards] = useState(0);
+  const [srsState, setSrsState] = useState<Record<string, CardSRSState>>({});
   const startTimeRef = React.useRef(Date.now());
   const { toast } = useToast();
 
+  const queue = React.useMemo(() => {
+    const due: Flashcard[] = [];
+    const fresh: Flashcard[] = [];
+    const rest: Flashcard[] = [];
+    for (const card of cards) {
+      const state = srsState[card.id] || defaultSRSState();
+      if (state.suspended || isBuriedNow(state.buriedUntil)) continue;
+      if (isDueNow(state.dueAt)) due.push(card);
+      else if (state.reps === 0) fresh.push(card);
+      else rest.push(card);
+    }
+    if (due.length > 0) return due;
+    if (fresh.length > 0) return fresh;
+    return rest;
+  }, [cards, srsState]);
+
+  useEffect(() => {
+    const key = deckStorageKey(cards);
+    try {
+      const raw = localStorage.getItem(key);
+      const parsed = raw ? (JSON.parse(raw) as Record<string, CardSRSState>) : {};
+      const hydrated: Record<string, CardSRSState> = {};
+      for (const card of cards) {
+        hydrated[card.id] = parsed[card.id] || defaultSRSState();
+      }
+      setSrsState(hydrated);
+    } catch {
+      const initial: Record<string, CardSRSState> = {};
+      for (const card of cards) initial[card.id] = defaultSRSState();
+      setSrsState(initial);
+    }
+  }, [cards]);
+
+  useEffect(() => {
+    if (!cards.length || !Object.keys(srsState).length) return;
+    localStorage.setItem(deckStorageKey(cards), JSON.stringify(srsState));
+  }, [cards, srsState]);
+
+  useEffect(() => {
+    if (currentIndex >= queue.length) {
+      setCurrentIndex(Math.max(0, queue.length - 1));
+    }
+  }, [queue.length, currentIndex]);
+
   // Track card as reviewed when moving forward
   const markCurrentReviewed = useCallback(() => {
-    setCardsReviewed(prev => new Set(prev).add(currentIndex));
-  }, [currentIndex]);
+    const id = queue[currentIndex]?.id;
+    if (!id) return;
+    setCardsReviewed(prev => new Set(prev).add(id));
+  }, [currentIndex, queue]);
+
+  const computeDeckHealth = useCallback(() => {
+    const states = cards.map((c) => srsState[c.id] || defaultSRSState());
+    const dueCount = states.filter((s) => isDueNow(s.dueAt) && !s.suspended && !isBuriedNow(s.buriedUntil)).length;
+    const matureCount = states.filter((s) => s.reps >= 3).length;
+    const totalLapses = states.reduce((acc, s) => acc + s.lapses, 0);
+    const totalReviews = states.reduce((acc, s) => acc + s.reps + s.lapses, 0);
+    const lapseRate = totalReviews > 0 ? totalLapses / totalReviews : 0;
+    const duePenalty = cards.length > 0 ? (dueCount / cards.length) * 35 : 0;
+    const maturityBoost = cards.length > 0 ? (matureCount / cards.length) * 20 : 0;
+    const lapsePenalty = lapseRate * 35;
+    const health = Math.max(0, Math.min(100, Math.round(70 - duePenalty - lapsePenalty + maturityBoost)));
+    return { health, dueCount, matureCount, lapseRate };
+  }, [cards, srsState]);
 
   // Save flashcard session to database
   const saveFlashcardProgress = useCallback(async () => {
     const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
+    const deckHealth = computeDeckHealth();
     try {
       await fetch('/api/activity', {
         method: 'POST',
@@ -94,6 +186,10 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
           metadata: {
             mode,
             cards_reviewed: cardsReviewed.size,
+            deck_health: deckHealth.health,
+            due_cards: deckHealth.dueCount,
+            mature_cards: deckHealth.matureCount,
+            lapse_rate: deckHealth.lapseRate,
           }
         })
       });
@@ -101,10 +197,72 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
     } catch (error) {
       console.error('Failed to save flashcard session:', error);
     }
-  }, [cards.length, cardsReviewed.size, correctCards, mode]);
+  }, [cards.length, cardsReviewed.size, correctCards, mode, computeDeckHealth]);
+
+  const applyRating = (quality: 0 | 1 | 2 | 3) => {
+    const card = queue[currentIndex];
+    if (!card) return;
+    const prev = srsState[card.id] || defaultSRSState();
+    const now = new Date();
+
+    let nextEase = prev.ease;
+    let nextReps = prev.reps;
+    let nextLapses = prev.lapses;
+    let nextInterval = prev.intervalDays;
+
+    if (quality === 0) {
+      nextEase = Math.max(1.3, prev.ease - 0.2);
+      nextReps = 0;
+      nextLapses = prev.lapses + 1;
+      nextInterval = 1;
+    } else if (quality === 1) {
+      nextEase = Math.max(1.3, prev.ease - 0.12);
+      nextReps = prev.reps + 1;
+      nextInterval = Math.max(1, Math.round(Math.max(1, prev.intervalDays) * 1.2));
+    } else if (quality === 2) {
+      nextEase = prev.ease;
+      nextReps = prev.reps + 1;
+      nextInterval = prev.reps <= 1 ? 3 : Math.max(1, Math.round(Math.max(1, prev.intervalDays) * prev.ease));
+    } else {
+      nextEase = Math.min(2.7, prev.ease + 0.06);
+      nextReps = prev.reps + 1;
+      nextInterval = prev.reps <= 1 ? 5 : Math.max(1, Math.round(Math.max(1, prev.intervalDays) * prev.ease * 1.3));
+    }
+
+    const due = new Date(now.getTime() + nextInterval * 24 * 60 * 60 * 1000).toISOString();
+    setSrsState((prevState) => ({
+      ...prevState,
+      [card.id]: {
+        ...prevState[card.id],
+        intervalDays: nextInterval,
+        ease: nextEase,
+        reps: nextReps,
+        lapses: nextLapses,
+        dueAt: due,
+        lastScore: quality,
+        lastReviewedAt: now.toISOString(),
+      },
+    }));
+
+    setCardsReviewed((prevSet) => new Set(prevSet).add(card.id));
+    if (quality >= 2) {
+      setCorrectCards((prevCount) => prevCount + 1);
+    }
+
+    if (currentIndex >= queue.length - 1) {
+      saveFlashcardProgress();
+      toast({ title: 'Review queue complete', description: 'Queue updated using spaced repetition.' });
+      return;
+    }
+    setDirection(1);
+    setIsFlipped(false);
+    setIsAnswered(false);
+    setExplanation(null);
+    setCurrentIndex((prevIndex) => prevIndex + 1);
+  };
 
   const handleNext = () => {
-    if (currentIndex === cards.length - 1) {
+    if (currentIndex === queue.length - 1) {
       // Last card - save progress
       markCurrentReviewed();
       saveFlashcardProgress();
@@ -138,7 +296,8 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
   }
   
   const handleGetExplanation = async () => {
-    const card = cards[currentIndex];
+    const card = queue[currentIndex];
+    if (!card) return;
     setIsExplanationLoading(true);
     setExplanation(null);
     try {
@@ -197,15 +356,47 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
         document.removeEventListener('keydown', handleKeyDown);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, cards.length, mode, isAnswered]);
+  }, [currentIndex, queue.length, mode, isAnswered]);
 
-  const card = cards[currentIndex];
+  const card = queue[currentIndex];
+  const deckHealth = computeDeckHealth();
+  const canRate = !!card && ((mode === 'flip' && isFlipped) || (mode !== 'flip' && isAnswered));
+
+  const suspendCurrent = () => {
+    if (!card) return;
+    setSrsState((prev) => ({
+      ...prev,
+      [card.id]: { ...(prev[card.id] || defaultSRSState()), suspended: true },
+    }));
+    toast({ title: 'Card suspended', description: 'This card is removed from active review queue.' });
+  };
+
+  const buryCurrentToday = () => {
+    if (!card) return;
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+    setSrsState((prev) => ({
+      ...prev,
+      [card.id]: { ...(prev[card.id] || defaultSRSState()), buriedUntil: endOfDay.toISOString() },
+    }));
+    toast({ title: 'Card buried for today' });
+  };
+
+  const unsuspendAll = () => {
+    setSrsState((prev) => {
+      const next = { ...prev };
+      for (const id of Object.keys(next)) {
+        next[id] = { ...next[id], suspended: false, buriedUntil: null };
+      }
+      return next;
+    });
+  };
 
   const getModeDescription = () => {
     switch (mode) {
-        case 'flip': return 'Click the card or press Spacebar to flip it.';
-        case 'type': return 'Type the answer to fill in the blank and press Enter.';
-        case 'multiple-choice': return 'Select the correct answer from the options below.';
+        case 'flip': return 'Flip, then rate recall quality to schedule next review.';
+        case 'type': return 'Answer, then rate recall quality to schedule next review.';
+        case 'multiple-choice': return 'Choose answer, then rate recall quality to schedule next review.';
         default: return '';
     }
   }
@@ -222,9 +413,9 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
         case 'flip':
             return <FlipView card={card} isFlipped={isFlipped} setIsFlipped={setIsFlipped} />;
         case 'type':
-            return <TypeView card={card} onAnswered={() => handleCardAnswered(true)} />;
+            return <TypeView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
         case 'multiple-choice':
-            return <MultipleChoiceView card={card} onAnswered={() => handleCardAnswered(true)} />;
+            return <MultipleChoiceView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
         default:
             return null;
     }
@@ -237,10 +428,25 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
       <CardHeader>
         <CardTitle className="font-headline">Study Flashcards</CardTitle>
         <CardDescription>
-          Card {currentIndex + 1} of {cards.length}. {getModeDescription()}
+          Card {queue.length === 0 ? 0 : currentIndex + 1} of {queue.length}. {getModeDescription()}
         </CardDescription>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <Badge variant="outline">Deck Health {deckHealth.health}%</Badge>
+          <Badge variant="secondary">{deckHealth.dueCount} due</Badge>
+          <Badge variant="secondary">{deckHealth.matureCount} mature</Badge>
+          <Badge variant="secondary">Lapse {(deckHealth.lapseRate * 100).toFixed(0)}%</Badge>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-6 overflow-hidden min-h-[24rem]">
+        {queue.length === 0 && (
+          <div className="w-full rounded-md border p-4 text-sm text-muted-foreground">
+            All cards are suspended or buried for now.
+            <div className="mt-3">
+              <Button size="sm" variant="outline" onClick={unsuspendAll}>Unsuspend/Unbury All</Button>
+            </div>
+          </div>
+        )}
+        {queue.length > 0 && (
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={currentIndex}
@@ -268,6 +474,7 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
             </div>
           </motion.div>
         </AnimatePresence>
+        )}
         {explanation && (
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -282,6 +489,27 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
                     </AlertDescription>
                 </Alert>
             </motion.div>
+        )}
+        {canRate && (
+          <div className="w-full max-w-md space-y-2">
+            <p className="text-xs text-muted-foreground text-center">Rate recall to schedule the next review</p>
+            <div className="grid grid-cols-4 gap-2">
+              <Button size="sm" variant="destructive" onClick={() => applyRating(0)}>Again</Button>
+              <Button size="sm" variant="outline" onClick={() => applyRating(1)}>Hard</Button>
+              <Button size="sm" variant="secondary" onClick={() => applyRating(2)}>Good</Button>
+              <Button size="sm" onClick={() => applyRating(3)}>Easy</Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button size="sm" variant="outline" onClick={buryCurrentToday}>
+                <Pause className="mr-2 h-4 w-4" />
+                Bury Today
+              </Button>
+              <Button size="sm" variant="outline" onClick={suspendCurrent}>
+                <Shield className="mr-2 h-4 w-4" />
+                Suspend Card
+              </Button>
+            </div>
+          </div>
         )}
       </CardContent>
       <CardFooter className="justify-between">
@@ -298,7 +526,7 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
             size="icon" 
             onClick={handleNext} 
             aria-label="Next Card" 
-            disabled={currentIndex === cards.length - 1 || (mode !== 'flip' && !isAnswered)}
+            disabled={currentIndex === queue.length - 1 || (mode !== 'flip' && !isAnswered)}
           >
             <ArrowRight className="h-5 w-5" />
           </Button>
