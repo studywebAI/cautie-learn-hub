@@ -5,22 +5,23 @@ import type { Quiz, QuizQuestion, Flashcard } from '@/lib/types';
 export function quizToMarkdown(quiz: Quiz): string {
   const lines: string[] = ['# Quiz\n'];
 
-  quiz.questions.forEach((q: QuizQuestion, i: number) => {
+  quiz.questions.forEach((q, i) => {
     lines.push(`## Question ${i + 1}`);
     lines.push(q.question);
     lines.push('');
-    q.options.forEach((opt: string, j: number) => {
+    q.options.forEach((opt, j) => {
       const letter = String.fromCharCode(65 + j);
-      lines.push(`${letter}. ${opt}`);
+      lines.push(`${letter}. ${opt.text}`);
     });
     lines.push('');
   });
 
   lines.push('---\n## Answer Key\n');
-  quiz.questions.forEach((q: QuizQuestion, i: number) => {
-    const answerIndex = q.options.indexOf(q.correctAnswer);
+  quiz.questions.forEach((q, i) => {
+    const correctOpt = q.options.find(o => o.isCorrect);
+    const answerIndex = correctOpt ? q.options.indexOf(correctOpt) : -1;
     const letter = answerIndex >= 0 ? String.fromCharCode(65 + answerIndex) : '?';
-    lines.push(`${i + 1}. **${letter}** — ${q.correctAnswer}`);
+    lines.push(`${i + 1}. **${letter}** — ${correctOpt?.text || 'Unknown'}`);
   });
 
   return lines.join('\n');
