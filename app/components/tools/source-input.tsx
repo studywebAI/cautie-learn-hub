@@ -227,7 +227,7 @@ export function SourceInput({
         </div>
       )}
 
-      {/* Tips area — fills remaining space when textarea is small */}
+      {/* Tips area */}
       {!value && (
         <div className="flex-1 flex items-start pt-4">
           <div className="space-y-2.5 text-xs text-muted-foreground">
@@ -238,12 +238,14 @@ export function SourceInput({
             {tips.map((tip, i) => (
               <p key={i} className="pl-5">• {tip}</p>
             ))}
-            <p className="pl-5 pt-1 text-[10px] text-muted-foreground/60">
-              Press ⌘+Enter to generate
-            </p>
           </div>
         </div>
       )}
+
+      {/* Shortcut hint — always at the bottom */}
+      <p className="mt-auto pt-2 pl-5 text-[10px] text-muted-foreground/60">
+        Press ⌘+Enter to generate
+      </p>
 
       <input
         ref={fileInputRef}
