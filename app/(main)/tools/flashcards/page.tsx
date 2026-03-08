@@ -19,6 +19,7 @@ import { ExportToolbar } from '@/components/tools/export-toolbar';
 import { flashcardsToMarkdown, flashcardsToHtml } from '@/lib/export-formatters';
 import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/import-parsers';
+import { getToolStrings } from '@/lib/tool-i18n';
 
 function FlashcardsPageContent() {
   const router = useRouter();
@@ -31,6 +32,7 @@ function FlashcardsPageContent() {
   const { run: savedRun } = useSavedRun(runId);
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
+  const t = getToolStrings(language);
 
   const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +66,7 @@ function FlashcardsPageContent() {
       setCurrentView('study');
     } catch (error) {
       console.error('Error generating flashcards:', error);
-      toast({ variant: 'destructive', title: 'Flashcard generation failed', description: (error as any)?.message || 'Unable to generate flashcards' });
+      toast({ variant: 'destructive', title: t.flashcards.generatingTitle, description: (error as any)?.message || 'Unable to generate flashcards' });
       setCurrentView('setup');
     } finally {
       setIsLoading(false);
@@ -75,7 +77,6 @@ function FlashcardsPageContent() {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
   }, [sourceTextFromParams, handleGenerate]);
 
-  // Load saved run from history
   useEffect(() => {
     if (savedRun?.output_payload && savedRun.status === 'succeeded') {
       const output = savedRun.output_payload;
@@ -117,8 +118,8 @@ function FlashcardsPageContent() {
       <div className="flex flex-1 items-center justify-center p-8">
         <div className="flex flex-col items-center gap-2 text-center">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <h3 className="text-lg font-normal mt-3">Generating Flashcards</h3>
-          <p className="text-xs text-muted-foreground">Working on it...</p>
+          <h3 className="text-lg font-normal mt-3">{t.flashcards.generatingTitle}</h3>
+          <p className="text-xs text-muted-foreground">{t.workingOnIt}</p>
         </div>
       </div>
     );
@@ -128,7 +129,7 @@ function FlashcardsPageContent() {
     return (
       <div className="h-full flex flex-col">
         <div className="px-4 md:px-6 pt-3 flex items-center justify-between">
-          <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">← Back</Button>
+          <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">{t.back}</Button>
           <ExportToolbar
             toolType="flashcards"
             title={customTitle.trim() || undefined}
@@ -143,61 +144,17 @@ function FlashcardsPageContent() {
     );
   }
 
-  const studyModeOptions = [
-    { value: 'flip', label: 'Flip', description: 'Classic card flip — tap to reveal the answer' },
-    { value: 'type', label: 'Type', description: 'Type your answer before revealing the correct one' },
-    { value: 'multiple-choice', label: 'Multiple Choice', description: 'Choose the correct answer from options' },
-    { value: 'write', label: 'Write', description: 'Write the full answer from memory, then compare' },
-    { value: 'speak', label: 'Speak', description: 'Say the answer out loud, then check yourself' },
-    { value: 'match', label: 'Match', description: 'Match terms to definitions in a timed game' },
-    { value: 'scatter', label: 'Scatter', description: 'Drag terms onto their matching definitions' },
-  ];
-
-  const packOptions = [
-    { value: 'core', label: 'Core', description: 'Essential terms and definitions from the material' },
-    { value: 'retention', label: 'Retention', description: 'Spaced-repetition optimized for long-term memory' },
-    { value: 'exam', label: 'Exam', description: 'Exam-style questions with tricky distractors' },
-    { value: 'deep-dive', label: 'Deep Dive', description: 'Nuanced cards covering edge cases and details' },
-    { value: 'quick-review', label: 'Quick Review', description: 'High-level overview cards for fast revision' },
-    { value: 'application', label: 'Application', description: 'Apply concepts to real-world scenarios' },
-    { value: 'connections', label: 'Connections', description: 'Cards linking related concepts across topics' },
-  ];
-
-  const retentionOptions = [
-    { value: 'balanced', label: 'Balanced', description: 'Standard repetition schedule for steady learning' },
-    { value: 'aggressive', label: 'Aggressive', description: 'More repetitions, faster intervals for quick mastery' },
-    { value: 'exam-cram', label: 'Exam Cram', description: 'Intense short-term memorization before an exam' },
-    { value: 'long-term', label: 'Long Term', description: 'Extended intervals optimized for months-long retention' },
-    { value: 'weak-focus', label: 'Weak Focus', description: 'Prioritizes cards you keep getting wrong' },
-  ];
-
-  const cardStyleOptions = [
-    { value: 'standard', label: 'Standard', description: 'Simple front/back question and answer format' },
-    { value: 'cloze', label: 'Cloze', description: 'Fill-in-the-blank within a sentence or passage' },
-    { value: 'image-occlusion', label: 'Image', description: 'Hide parts of diagrams or images to test recall' },
-    { value: 'reversed', label: 'Reversed', description: 'Answer shown first — recall the question/term' },
-    { value: 'context', label: 'Context', description: 'Includes surrounding context for better understanding' },
-    { value: 'mnemonic', label: 'Mnemonic', description: 'Includes memory tricks and associations' },
-  ];
-
-  const complexityOptions = [
-    { value: 'simple', label: 'Simple', description: 'Single facts and definitions' },
-    { value: 'medium', label: 'Medium', description: 'Concepts requiring some explanation' },
-    { value: 'complex', label: 'Complex', description: 'Multi-layered ideas with connections' },
-    { value: 'expert', label: 'Expert', description: 'Advanced material with synthesis required' },
-  ];
-
   const currentSettings = { studyMode, modePack, retentionProfile, flashcardCount, cardStyle, complexity };
 
   const sidebar = (
     <>
       <div className="space-y-1.5">
-        <p className="text-xs text-muted-foreground">Title</p>
+        <p className="text-xs text-muted-foreground">{t.title}</p>
         <input
           type="text"
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
-          placeholder="e.g. Spanish Vocab Set 2"
+          placeholder={t.titlePlaceholder}
           className="w-full h-8 rounded-md border border-input bg-background px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           disabled={isLoading}
         />
@@ -216,21 +173,21 @@ function FlashcardsPageContent() {
         }}
       />
 
-      <PillSelector label="Pack" options={packOptions} value={modePack}
+      <PillSelector label={t.flashcards.labels.pack} options={t.flashcards.packOptions} value={modePack}
         onChange={(v) => { setModePack(v); if (v === 'retention') setStudyMode('multiple-choice'); if (v === 'core') setStudyMode('flip'); if (v === 'exam') setStudyMode('type'); }}
         disabled={isLoading} />
 
-      <PillSelector label="Study Mode" options={studyModeOptions} value={studyMode} onChange={(v) => setStudyMode(v as StudyMode)} disabled={isLoading} />
+      <PillSelector label={t.flashcards.labels.studyMode} options={t.flashcards.studyModeOptions} value={studyMode} onChange={(v) => setStudyMode(v as StudyMode)} disabled={isLoading} />
 
-      <PillSelector label="Retention" options={retentionOptions} value={retentionProfile} onChange={setRetentionProfile} disabled={isLoading} />
+      <PillSelector label={t.flashcards.labels.retention} options={t.flashcards.retentionOptions} value={retentionProfile} onChange={setRetentionProfile} disabled={isLoading} />
 
-      <PillSelector label="Card Style" options={cardStyleOptions} value={cardStyle} onChange={setCardStyle} disabled={isLoading} />
+      <PillSelector label={t.flashcards.labels.cardStyle} options={t.flashcards.cardStyleOptions} value={cardStyle} onChange={setCardStyle} disabled={isLoading} />
 
-      <PillSelector label="Complexity" options={complexityOptions} value={complexity} onChange={setComplexity} disabled={isLoading} />
+      <PillSelector label={t.flashcards.labels.complexity} options={t.flashcards.complexityOptions} value={complexity} onChange={setComplexity} disabled={isLoading} />
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Cards</p>
+          <p className="text-xs text-muted-foreground">{t.cards}</p>
           <span className="text-xs font-mono tabular-nums">{flashcardCount}</span>
         </div>
         <Slider value={[flashcardCount]} onValueChange={([v]) => setFlashcardCount(v)} min={1} max={50} step={1} disabled={isLoading} />
@@ -238,7 +195,7 @@ function FlashcardsPageContent() {
 
       <Button onClick={() => handleGenerate(sourceText)} disabled={isLoading || !sourceText.trim()} className="w-full rounded-full">
         <Sparkles className="mr-2 h-4 w-4" />
-        Generate Flashcards
+        {t.flashcards.generate}
       </Button>
 
       <ImportToolbar
@@ -249,7 +206,7 @@ function FlashcardsPageContent() {
             setGeneratedCards(cards);
             setCurrentView('study');
           } else {
-            toast({ variant: 'destructive', title: 'Could not parse', description: 'The content could not be recognized as flashcards.' });
+            toast({ variant: 'destructive', title: t.couldNotParse, description: t.flashcards.parseError });
           }
         }}
         disabled={isLoading}
@@ -258,8 +215,8 @@ function FlashcardsPageContent() {
   );
 
   return (
-    <WorkbenchShell title={isAssignmentContext ? 'Create Flashcards' : 'Flashcards'} sidebar={sidebar}>
-      <SourceInput value={sourceText} onChange={setSourceText} onSubmit={() => handleGenerate(sourceText)} placeholder="Paste or type your source material..." />
+    <WorkbenchShell title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'} sidebar={sidebar}>
+      <SourceInput value={sourceText} onChange={setSourceText} onSubmit={() => handleGenerate(sourceText)} placeholder={t.sourceInputPlaceholder} />
     </WorkbenchShell>
   );
 }

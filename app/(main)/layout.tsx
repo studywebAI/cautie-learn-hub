@@ -9,14 +9,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     const isMobile = useIsMobile();
     const pathname = usePathname();
     
-    // Hide content on class detail pages
     const isClassPage = pathname?.startsWith('/class/');
 
     return (
         <SidebarProvider>
             <AppSidebar />
             <SidebarInset className={`bg-background h-screen ${isMobile ? 'ml-14' : ''} relative`}>
-                <div className={isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto p-3 md:p-4"}>
+                <div key={pathname} className={`${isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto p-3 md:p-4"} animate-fade-in`}>
                     {children}
                 </div>
             </SidebarInset>

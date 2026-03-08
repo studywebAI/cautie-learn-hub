@@ -107,63 +107,32 @@ This is a Next.js project. The warnings about `vite.config.ts`, `index.html`, an
 
 # Tools Redesign Plan
 
-## Status: 🔄 IN PROGRESS
+## Status: ✅ COMPLETED
 
 ## Kernprincipes
 - **Alles zichtbaar** — geen dropdowns, geen hidden settings. Alles is direct klikbaar.
 - **Aparte pagina's** — quiz/flashcards/notes blijven eigen routes, maar delen dezelfde nieuwe layout
 - **Professioneel** — ElevenLabs-niveau polish, niet amateuristisch
 
-## Problemen (huidige staat)
-1. 3-kolommen layout — center panel is nutteloos, verspilde ruimte
-2. Native `<select>` elementen — lelijk, amateuristisch
-3. Hardcoded NL strings — moet via i18n dictionary
-4. Te veel verborgen opties — dropdowns, tabs-in-tabs, onduidelijke hiërarchie
-5. WorkbenchShell is een rigid grid — werkt niet
+### Fase 1: Nieuwe Layout + Zichtbare Controls ✅
+- 2-panel WorkbenchShell met input (links) + settings sidebar (rechts)
+- PillSelector radio chips, sliders, PresetManager
+- Mobile: slide-over settings panel met gear toggle
+- Custom title input per tool
+- Export/import round-trip (Markdown, HTML, paste)
 
-## Redesign
+### Fase 2: i18n ✅
+- Alle tool strings via `getToolStrings(locale)` uit `app/lib/tool-i18n.ts`
+- 7 talen: EN, NL, DE, FR, ES, RU, ZH
+- Labels, descriptions, buttons, placeholders, error messages
 
-### Fase 1: Nieuwe Layout + Zichtbare Controls
-**Layout: 2-panel — input (left/main) + settings sidebar (right, altijd open)**
+### Fase 3: Toolbox Homepage ✅
+- Dashboard met Quick Actions, Continue, Recommended cards
+- Teacher recommendation system via announcements
+- Usage stats en recent artifacts
 
-```
-┌──────────────────────────────┬─────────────────┐
-│                              │  Mode            │
-│   [drag-drop + textarea]     │  ● Practice      │
-│                              │  ○ Exam          │
-│   Groot, clean, focus        │  ○ Adaptive      │
-│                              │                  │
-│                              │  Difficulty       │
-│                              │  ● Balanced       │
-│                              │  ○ Ramp           │
-│                              │  ○ Hard           │
-│                              │                  │
-│                              │  Questions: ──●── │
-│                              │              12   │
-│                              │                  │
-│   ┌──────────────────────┐   │  [Transform ▸]   │
-│   │  ✨ Generate Quiz    │   │  [History]       │
-│   └──────────────────────┘   │                  │
-└──────────────────────────────┴─────────────────┘
-```
-
-**Controls:**
-- **Mode** → radio-group pills (vertical list, zichtbaar, één klik)
-- **Difficulty** → radio-group pills
-- **Count** → slider met nummer label (geen input field)
-- **Generate** → grote prominente knop onder textarea
-- **Geen** Card-in-Card, geen nested borders, geen shadows
-- **Sidebar** scrollt als er te veel opties zijn, maar alles is direct zichtbaar
-- **File upload** → drag-drop zone geïntegreerd in textarea area
-
-### Fase 2: i18n
-- Alle strings via `useDictionary()`
-- 7 talen
-
-### Fase 3: Toolbox Homepage
-- Cleaner grid, minder ruis
-
-### Fase 4: Polish
-- framer-motion page transitions
-- font-weight: 400 everywhere
-- Dark mode tokens check
+### Fase 4: Polish ✅
+- `animate-fade-in` page transitions via main layout
+- font-weight: 400 on tool page headings (text-lg font-normal)
+- Dark mode tokens verified (strict neutral palette, surface layers)
+- Mobile responsive WorkbenchShell with slide-over sidebar
