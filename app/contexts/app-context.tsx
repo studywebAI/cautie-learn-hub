@@ -70,8 +70,6 @@ export type AppContextType = {
   setReducedMotion: (enabled: boolean) => void;
   theme: ThemeType;
   setTheme: (theme: ThemeType) => void;
-  accentColor: AccentColor;
-  setAccentColor: (accentColor: AccentColor) => void;
   sessionRecap: SessionRecapData | null;
   setSessionRecap: (data: SessionRecapData | null) => void;
   classes: ClassInfo[];
