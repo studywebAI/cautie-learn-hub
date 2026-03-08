@@ -115,7 +115,12 @@
     "addTask": "Adicionar Tarefa",
     "today": "Hoje",
     "week": "Semana",
-    "month": "Mês"
+    "month": "Mês",
+    "monday": "Seg",
+    "tuesday": "Ter",
+    "wednesday": "Qua",
+    "thursday": "Qui",
+    "friday": "Sex"
   },
   "subjects": {
     "title": "Matérias",
@@ -201,7 +206,7 @@
     "copy": "Copiar",
     "paste": "Colar",
     "undo": "Desfazer",
-    "refazer": "Refazer",
+    "redo": "Refazer",
     "reset": "Redefinir",
     "clear": "Limpar",
     "refresh": "Atualizar",
