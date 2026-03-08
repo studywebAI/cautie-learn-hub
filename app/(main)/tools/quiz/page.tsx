@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense, useCallback, useContext } from 'r
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
 import { Loader2, Sparkles } from 'lucide-react';
+import { FunLoader } from '@/components/tools/fun-loader';
 import { QuizTaker, QuizMode } from '@/components/tools/quiz-taker';
 import { AppContext } from '@/contexts/app-context';
 import type { Quiz } from '@/lib/types';
@@ -132,15 +133,7 @@ function QuizPageContent() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex flex-1 items-center justify-center p-8">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <h3 className="text-lg font-normal mt-3">{t.quiz.generatingTitle}</h3>
-          <p className="text-xs text-muted-foreground">{t.workingOnIt}</p>
-        </div>
-      </div>
-    );
+    return <FunLoader tool="quiz" />;
   }
 
   if (generatedQuiz && currentView === 'take') {
