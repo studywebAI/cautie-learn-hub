@@ -18,6 +18,8 @@ import { PresetManager } from '@/components/tools/preset-manager';
 import { Slider } from '@/components/ui/slider';
 import { ExportToolbar } from '@/components/tools/export-toolbar';
 import { notesToMarkdown, notesToHtml } from '@/lib/export-formatters';
+import { ImportToolbar } from '@/components/tools/import-toolbar';
+import { parseNotesFromMarkdown, parseNotesFromHtml } from '@/lib/import-parsers';
 
 function NotesPageContent() {
   const searchParams = useSearchParams();
