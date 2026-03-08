@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { SourceInput } from '@/components/tools/source-input';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { NoteViewer } from '@/components/material-viewers/note-viewer';
 import type { GenerateNotesOutput } from '@/ai/flows/generate-notes';
@@ -133,25 +133,12 @@ export default function NotesPage() {
 
   const leftPanel = useMemo(
     () => (
-      <div className="space-y-3 pt-1">
-        <div className="space-y-2">
-          <Label htmlFor="source">Source Text</Label>
-          <Textarea
-            id="source"
-            value={sourceText}
-            onChange={(e) => setSourceText(e.target.value)}
-            onKeyDown={(e) => {
-              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                e.preventDefault();
-                void handleGenerate();
-              }
-            }}
-            placeholder="Paste your source content here..."
-            className="min-h-[74vh] text-sm"
-          />
-          <p className="text-xs text-muted-foreground">Use Ctrl/Cmd + Enter to generate.</p>
-        </div>
-      </div>
+      <SourceInput
+        value={sourceText}
+        onChange={setSourceText}
+        onSubmit={handleGenerate}
+        placeholder="Plak je bronmateriaal hier..."
+      />
     ),
     [sourceText, handleGenerate]
   );

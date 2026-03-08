@@ -10,9 +10,9 @@ import type { Quiz } from '@/lib/types';
 import { QuizDuel } from '@/components/tools/quiz-duel';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { SourceInput } from '@/components/tools/source-input';
 import { ArtifactCollabPanel } from '@/components/tools/artifact-collab-panel';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
@@ -177,22 +177,12 @@ function QuizPageContent() {
   }
 
   const leftPanel = (
-    <div className="space-y-3 pt-1">
-      <Label>Source Text</Label>
-      <Textarea
-        value={sourceText}
-        onChange={(e) => setSourceText(e.target.value)}
-        onKeyDown={(e) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-            e.preventDefault();
-            handleGenerate(sourceText);
-          }
-        }}
-        placeholder="Paste material to generate quiz questions..."
-        className="min-h-[74vh] text-sm"
-      />
-      <p className="text-xs text-muted-foreground">Use Ctrl/Cmd + Enter to generate.</p>
-    </div>
+    <SourceInput
+      value={sourceText}
+      onChange={setSourceText}
+      onSubmit={() => handleGenerate(sourceText)}
+      placeholder="Plak materiaal om quizvragen te genereren..."
+    />
   );
 
   const centerPanel = (
