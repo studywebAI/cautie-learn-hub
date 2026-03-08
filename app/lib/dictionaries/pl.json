@@ -10,14 +10,14 @@
       "title": "Narzędzia",
       "quizGenerator": "Quiz",
       "flashcardMaker": "Fiszki",
-      "materialProcessor": "Materiał",
+      "materialProcessor": "Przetwarzaj materiał",
       "notes": "Notatki",
       "blocks": "Bloki"
     }
   },
   "header": {
-    "studentDashboard": "Panel Ucznia",
-    "teacherDashboard": "Panel Nauczyciela",
+    "studentDashboard": "Panel ucznia",
+    "teacherDashboard": "Panel nauczyciela",
     "roleSwitcher": "Zmiana roli",
     "myAccount": "Moje konto",
     "logOut": "Wyloguj",
@@ -64,52 +64,63 @@
   },
   "tools": {
     "title": "Narzędzia",
-    "description": "Inteligentne narzędzia do nauki.",
+    "description": "Zestaw inteligentnych narzędzi do przyspieszenia nauki.",
     "select": "Wybierz narzędzie",
     "quiz": {
       "title": "Quiz",
-      "description": "Twórz quizy wielokrotnego wyboru."
+      "description": "Twórz quizy wielokrotnego wyboru z dowolnego tekstu. Testuj swoją wiedzę w różnych trybach."
     },
     "flashcards": {
       "title": "Fiszki",
-      "description": "Generuj fiszki automatycznie."
+      "description": "Automatycznie generuj fiszki z materiałów do nauki."
     },
     "notes": {
       "title": "Notatki",
-      "description": "Twórz i organizuj notatki."
+      "description": "Twórz i organizuj notatki w jednym miejscu."
     },
     "blocks": {
       "title": "Bloki",
-      "description": "Twórz strukturę treści."
+      "description": "Buduj strukturalną treść z edytorem bloków."
     },
     "wordweb": {
       "title": "Mapa pojęć",
-      "description": "Wizualizuj połączenia między koncepcjami."
+      "description": "Wizualizuj połączenia między koncepcjami za pomocą interaktywnych map."
     },
     "material": {
       "title": "Przetwarzaj materiał",
-      "description": "Otrzymuj podsumowania."
+      "description": "Otrzymaj zwięzłe podsumowanie dowolnego dokumentu lub wklejonego tekstu."
     }
   },
   "material": {
-    "title": "Materiał",
-    "description": "Prześlij pliki lub wklej tekst.",
+    "title": "Przetwarzaj materiał",
+    "description": "Prześlij pliki lub wklej tekst, aby wygenerować podsumowania, fiszki i więcej.",
+    "importTitle": "Importuj treść",
+    "importDescription": "Podaj plik, wklej tekst lub jedno i drugie. AI użyje tekstu jako kontekstu dla pliku.",
     "clickToUpload": "Kliknij aby przesłać",
+    "dragAndDrop": "lub przeciągnij i upuść",
     "remove": "Usuń",
+    "pasteText": "Lub wklej tekst tutaj...",
     "processing": "Przetwarzanie...",
     "processWithAi": "Przetwórz z AI",
     "summary": "Podsumowanie",
-    "done": "Gotowe"
+    "suggestedActions": "Sugerowane działania",
+    "done": "Gotowe",
+    "select": "Wybierz"
   },
   "agenda": {
     "title": "Agenda",
-    "description": "Kalendarz terminów i zadań.",
+    "description": "Twój skonsolidowany kalendarz terminów, zadań i osobistych spotkań.",
     "eventsOn": "Wydarzenia",
-    "noEvents": "Brak wydarzeń.",
+    "noEvents": "Brak wydarzeń na ten dzień.",
     "addTask": "Dodaj zadanie",
     "today": "Dzisiaj",
     "week": "Tydzień",
-    "month": "Miesiąc"
+    "month": "Miesiąc",
+    "monday": "Pon",
+    "tuesday": "Wt",
+    "wednesday": "Śr",
+    "thursday": "Czw",
+    "friday": "Pt"
   },
   "subjects": {
     "title": "Przedmioty",
@@ -123,31 +134,47 @@
   },
   "classes": {
     "title": "Klasy",
-    "description": "Zarządzaj klasami i uczniami.",
+    "description": "Zarządzaj swoimi klasami i uczniami.",
     "noClasses": "Nie znaleziono klas.",
     "createClass": "Utwórz klasę",
     "joinClass": "Dołącz do klasy",
-    "students": "Uczniowie"
+    "joinCode": "Kod dołączenia",
+    "students": "Uczniowie",
+    "assignments": "Zadania",
+    "announcements": "Ogłoszenia"
   },
   "settings": {
     "title": "Ustawienia",
-    "description": "Zarządzaj kontem.",
+    "description": "Zarządzaj swoim kontem i ustawieniami aplikacji.",
     "general": {
       "title": "Ogólne",
+      "description": "Konfiguruj preferencje aplikacji.",
       "language": "Język"
     },
     "personalization": {
       "title": "Personalizacja",
+      "description": "Dostosuj wygląd i kolory aplikacji.",
       "theme": "Motyw",
+      "themeDescription": "Wybierz preferowany schemat kolorów.",
       "light": "Jasny",
       "dark": "Ciemny",
       "ocean": "Ocean"
     },
     "accessibility": {
       "title": "Dostępność",
-      "highContrast": "Wysoki kontrast",
-      "dyslexiaFont": "Czcionka dla dysleksji",
-      "reducedMotion": "Zmniejsz animacje"
+      "description": "Dostosuj wygląd i zachowanie aplikacji do swoich potrzeb.",
+      "highContrast": "Tryb wysokiego kontrastu",
+      "highContrastDescription": "Zwiększ kontrast tekstu i tła.",
+      "dyslexiaFont": "Czcionka przyjazna dla dysleksji",
+      "dyslexiaFontDescription": "Użyj czcionki zaprojektowanej do łatwiejszego czytania.",
+      "reducedMotion": "Zmniejsz animacje",
+      "reducedMotionDescription": "Wyłącz dekoracyjne animacje i przejścia."
+    },
+    "developer": {
+      "title": "Ustawienia deweloperskie",
+      "description": "Tymczasowe ustawienia do celów rozwojowych.",
+      "roleSwitch": "Przełącz rolę (tylko Dev)",
+      "roleSwitchDescription": "Przełączaj między widokiem ucznia i nauczyciela."
     }
   },
   "common": {
@@ -162,6 +189,7 @@
     "close": "Zamknij",
     "back": "Wstecz",
     "next": "Dalej",
+    "previous": "Poprzedni",
     "loading": "Ładowanie...",
     "error": "Błąd",
     "success": "Sukces",
@@ -169,6 +197,8 @@
     "yes": "Tak",
     "no": "Nie",
     "search": "Szukaj",
+    "filter": "Filtruj",
+    "sort": "Sortuj",
     "view": "Zobacz",
     "download": "Pobierz",
     "upload": "Prześlij",
@@ -177,120 +207,178 @@
     "paste": "Wklej",
     "undo": "Cofnij",
     "redo": "Ponów",
+    "reset": "Resetuj",
+    "clear": "Wyczyść",
     "refresh": "Odśwież",
+    "retry": "Ponów próbę",
+    "more": "Więcej",
+    "less": "Mniej",
     "all": "Wszystkie",
+    "none": "Żadne",
     "select": "Wybierz",
+    "selected": "Wybrano",
     "optional": "Opcjonalne",
     "required": "Wymagane"
   },
   "auth": {
     "login": "Zaloguj",
     "logout": "Wyloguj",
-    "signup": "Zarejestruj",
+    "signup": "Zarejestruj się",
     "email": "E-mail",
-    "password": "Hasło"
+    "password": "Hasło",
+    "confirmPassword": "Potwierdź hasło",
+    "forgotPassword": "Zapomniałeś hasła?",
+    "resetPassword": "Resetuj hasło",
+    "dontHaveAccount": "Nie masz konta?",
+    "alreadyHaveAccount": "Masz już konto?",
+    "orContinueWith": "Lub kontynuuj za pomocą"
   },
   "notifications": {
     "title": "Powiadomienia",
-    "noNotifications": "Brak powiadomień"
+    "noNotifications": "Brak powiadomień",
+    "markAsRead": "Oznacz jako przeczytane",
+    "markAllAsRead": "Oznacz wszystkie jako przeczytane",
+    "clearAll": "Wyczyść wszystkie"
   },
   "errors": {
     "somethingWentWrong": "Coś poszło nie tak",
-    "pageNotFound": "Nie znaleziono strony"
+    "pageNotFound": "Nie znaleziono strony",
+    "unauthorized": "Brak autoryzacji",
+    "forbidden": "Zabronione",
+    "tryAgain": "Spróbuj ponownie"
   },
   "setup": {
     "welcome": "Witamy w Cautie",
-    "getStarted": "Zacznijmy",
+    "getStarted": "Zacznijmy konfigurację",
     "step": "Krok",
+    "of": "z",
+    "next": "Dalej",
+    "back": "Wstecz",
     "finish": "Zakończ konfigurację",
     "language": {
-      "title": "Wybierz język"
+      "title": "Wybierz swój język",
+      "description": "Wybierz język, którego chcesz używać w aplikacji."
+    },
+    "theme": {
+      "title": "Wybierz swój motyw",
+      "description": "Wybierz schemat kolorów, który Ci odpowiada."
     },
     "profile": {
-      "title": "Skonfiguruj profil",
+      "title": "Skonfiguruj swój profil",
+      "description": "Opowiedz nam trochę o sobie, aby spersonalizować Twoje doświadczenie.",
       "firstName": "Imię",
       "lastName": "Nazwisko",
       "role": "Jestem...",
       "student": "Uczniem",
-      "teacher": "Nauczycielem"
+      "teacher": "Nauczycielem",
+      "saveProfile": "Zapisz profil"
     }
   },
   "quiz": {
     "title": "Quiz",
-    "answerAllQuestions": "Odpowiedz na wszystkie pytania.",
-    "gradingCriteria": "Opisz jak oceniać...",
-    "expectedAnswer": "Wpisz oczekiwaną odpowiedź...",
+    "answerAllQuestions": "Odpowiedz na wszystkie pytania i wyślij na końcu.",
+    "askFollowUp": "Zadaj pytanie uzupełniające...",
+    "gradingCriteria": "Opisz, jak oceniać to pytanie...",
+    "additionalCriteria": "Dodatkowe kryteria oceniania...",
+    "aiGrading": "Ustawienia oceniania AI",
+    "expectedAnswer": "Wpisz oczekiwaną poprawną odpowiedź...",
     "export": "Eksportuj",
-    "import": "Importuj"
+    "import": "Importuj",
+    "undo": "Cofnij",
+    "redo": "Ponów"
   },
   "flashcards": {
     "front": "Przód",
-    "back": "Tył"
+    "back": "Tył",
+    "termOrQuestion": "Termin lub pytanie",
+    "definitionOrAnswer": "Definicja lub odpowiedź"
   },
   "notes": {
-    "createNotes": "Twórz notatki...",
-    "enterText": "Zacznij pisać..."
+    "createNotes": "Twórz notatki z tekstu, plików lub poprzednich projektów.",
+    "enterText": "Zacznij pisać treść..."
   },
   "blocks": {
-    "enterText": "Wpisz tekst...",
-    "enterCode": "Wpisz kod...",
-    "yourAnswer": "Wpisz odpowiedź tutaj...",
+    "enterText": "Wpisz treść tekstu...",
+    "enterCode": "Wpisz swój kod...",
+    "yourAnswer": "Wpisz swoją odpowiedź tutaj...",
+    "followUpQuestion": "Zadaj pytanie uzupełniające...",
     "nodeTitle": "Tytuł węzła",
+    "detailedDescription": "Szczegółowy opis",
+    "calloutText": "Wpisz tekst wyróżnienia...",
     "quoteText": "Wpisz cytat...",
     "authorName": "Imię autora...",
+    "source": "Książka, artykuł itp...",
     "caption": "Dodaj podpis...",
-    "mediaUrl": "Wpisz URL..."
+    "mediaUrl": "Wpisz URL multimediów...",
+    "embedUrl": "Wpisz URL osadzonej treści...",
+    "matchItems": "Dopasuj elementy...",
+    "putInOrder": "Ułóż w kolejności...",
+    "acceptSynonyms": "np. Akceptuj synonimy, skup się na kluczowych pojęciach..."
   },
   "classes": {
     "searchClasses": "Szukaj klas...",
     "className": "Nazwa klasy",
     "classDescription": "Opis klasy",
-    "chapterTitle": "Tytuł rozdziału"
+    "briefSummary": "Krótkie podsumowanie tego, co obejmie ta klasa.",
+    "e.gHistory101": "np. Historia 101, Zaawansowana fizyka",
+    "chapterTitle": "Tytuł rozdziału",
+    "chapterDescription": "Opis rozdziału"
   },
   "assignments": {
     "assignmentTitle": "Tytuł zadania",
-    "extraInstructions": "Dodaj instrukcje...",
+    "extraInstructions": "Dodaj dodatkowe instrukcje lub kontekst dla uczniów.",
+    "instructionsDetails": "Dodaj instrukcje lub szczegóły dla uczniów",
     "selectType": "Wybierz typ",
-    "selectClass": "Wybierz klasę"
+    "selectClass": "Wybierz klasę",
+    "weekLecture": "np. Wykład tygodnia 1"
   },
   "submissions": {
-    "writeSubmission": "Napisz odpowiedź...",
-    "provideFeedback": "Daj informację zwrotną...",
+    "writeSubmission": "Napisz swoją odpowiedź na zadanie tutaj...",
+    "fileUploadComing": "Przesyłanie plików wkrótce...",
+    "provideFeedback": "Przekaż konstruktywną opinię...",
     "addComment": "Dodaj komentarz...",
-    "grade": "Ocena"
+    "grade": "Ocena",
+    "e.g8.5": "np. 8.5"
   },
   "announcements": {
-    "announcementTitle": "Tytuł ogłoszenia",
-    "announcementMessage": "Wiadomość"
+    "announcementTitle": "Wpisz tytuł ogłoszenia",
+    "announcementMessage": "Wpisz treść ogłoszenia"
+  },
+  "material": {
+    "noteTitle": "Tytuł notatki",
+    "e.gChapter1": "np. Rozdział 1: Renesans",
+    "sourceText": "Wklej tekst z podręcznika, artykułu lub innego materiału źródłowego...",
+    "fileTitle": "np. Lektura rozdziału 5"
   },
   "verification": {
-    "enterCode": "Wpisz kod weryfikacyjny"
+    "enterCode": "Wpisz 8-cyfrowy kod weryfikacyjny",
+    "verificationCode": "8-cyfrowy kod weryfikacyjny"
   },
   "subjectEditor": {
-    "e.gStudyOfLiving": "Np. Badanie organizmów żywych...",
-    "introduction": "Np. Wprowadzenie"
+    "e.gStudyOfLiving": "np. Badanie żywych organizmów, komórek, genetyki i ekosystemów...",
+    "introduction": "np. Wprowadzenie"
   },
   "chapterEditor": {
-    "newChapterTitle": "Np. Podstawowe pojęcia",
+    "newChapterTitle": "np. Podstawowe pojęcia",
     "newChapterDescription": "Opis rozdziału"
   },
   "paragraphEditor": {
-    "newParagraphTitle": "Np. Podstawowe pojęcia",
+    "newParagraphTitle": "np. Podstawowe pojęcia",
     "newParagraphDescription": "Opis akapitu"
   },
   "teacherCode": {
     "enterCode": "Wpisz kod nauczyciela"
   },
   "upgrade": {
-    "upgrade": "Ulepszenie"
+    "upgrade": "Ulepsz"
   },
   "search": {
     "search": "Szukaj..."
   },
   "wordweb": {
-    "addNotes": "Dodaj notatki..."
+    "addNotes": "Dodaj notatki, adnotacje lub tekst tutaj..."
   },
   "paragraphs": {
-    "newParagraph": "Np. Zestaw ćwiczeń A"
+    "newParagraph": "np. Zestaw ćwiczeń A"
   }
 }
