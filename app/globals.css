@@ -166,7 +166,7 @@
   }
 
   .theme-dark {
-    --background: 0 0% 0%;
+    --background: 0 0% 7%;
     --foreground: 0 0% 100%;
     --card: 0 0% 4%;
     --card-foreground: 0 0% 100%;
