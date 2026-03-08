@@ -81,14 +81,6 @@ export default function NotesPage() {
       });
       return;
     }
-    if (sourceText.trim().length < 120) {
-      toast({
-        variant: 'destructive',
-        title: 'More source text needed',
-        description: 'Add more context to avoid low-quality or narrow notes.',
-      });
-      return;
-    }
 
     setIsLoading(true);
     try {
