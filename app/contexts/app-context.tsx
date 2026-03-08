@@ -11,7 +11,7 @@ import type { Dictionary, Locale } from '@/lib/get-dictionary';
 
 export type UserRole = 'student' | 'teacher';
 export type ThemeType = 'light' | 'dark' | 'ocean' | 'ocean-dark' | 'forest' | 'forest-dark' | 'sunset' | 'sunset-dark' | 'rose' | 'rose-dark';
-export type AccentColor = 'none' | 'sky' | 'mint' | 'coral' | 'violet' | 'amber';
+// AccentColor removed — themes handle their own accent
 export type ClassInfo = Tables<'classes'>;
 export type ClassAssignment = Tables<'assignments'> & {
   chapter_id?: string | null;
