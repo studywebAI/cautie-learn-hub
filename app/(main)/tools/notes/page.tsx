@@ -106,18 +106,37 @@ function NotesPageContent() {
     return (
       <div className="h-full overflow-auto p-4 md:p-6">
         <div className="max-w-4xl mx-auto space-y-4">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" onClick={() => setGeneratedNotes(null)} className="rounded-full">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <Button variant="ghost" onClick={() => { setGeneratedNotes(null); setPaintActive(false); setHighlightActive(false); }} className="rounded-full">
               {t.back}
             </Button>
-            <ExportToolbar
-              toolType="notes"
-              title={customTitle.trim() || undefined}
-              getMarkdown={() => notesToMarkdown(generatedNotes)}
-              getHtml={() => notesToHtml(generatedNotes)}
-            />
+            <div className="flex items-center gap-2 flex-wrap">
+              <TextHighlighterToolbar
+                active={highlightActive}
+                onToggle={() => { setHighlightActive(h => !h); if (paintActive) setPaintActive(false); }}
+                containerRef={notesContentRef}
+              />
+              <Button
+                variant={paintActive ? 'default' : 'outline'}
+                size="sm"
+                className="rounded-full h-8 gap-1.5"
+                onClick={() => { setPaintActive(p => !p); if (highlightActive) setHighlightActive(false); }}
+              >
+                <Paintbrush className="h-3.5 w-3.5" />
+                <span className="text-xs">Annotate</span>
+              </Button>
+              <ExportToolbar
+                toolType="notes"
+                title={customTitle.trim() || undefined}
+                getMarkdown={() => notesToMarkdown(generatedNotes)}
+                getHtml={() => notesToHtml(generatedNotes)}
+              />
+            </div>
           </div>
-          <NoteViewer notes={generatedNotes} />
+          <div className="relative" ref={notesContentRef}>
+            <NoteViewer notes={generatedNotes} />
+            <PaintOverlay active={paintActive} onClose={() => setPaintActive(false)} />
+          </div>
         </div>
       </div>
     );
