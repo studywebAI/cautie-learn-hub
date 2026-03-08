@@ -42,6 +42,7 @@ function FlashcardsPageContent() {
   const [cardStyle, setCardStyle] = useState('standard');
   const [complexity, setComplexity] = useState('medium');
   const [currentView, setCurrentView] = useState<'setup' | 'study'>('setup');
+  const [customTitle, setCustomTitle] = useState('');
   const { toast } = useToast();
 
   const handleGenerate = useCallback(async (text: string) => {
