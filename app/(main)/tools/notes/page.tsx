@@ -139,9 +139,16 @@ function NotesPageContent() {
     return (
       <div className="h-full overflow-auto p-6">
         <div className="max-w-4xl mx-auto space-y-4">
-          <Button variant="ghost" onClick={() => setGeneratedNotes(null)} className="rounded-full">
-            ← Back
-          </Button>
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" onClick={() => setGeneratedNotes(null)} className="rounded-full">
+              ← Back
+            </Button>
+            <ExportToolbar
+              toolType="notes"
+              getMarkdown={() => notesToMarkdown(generatedNotes)}
+              getHtml={() => notesToHtml(generatedNotes)}
+            />
+          </div>
           <NoteViewer notes={generatedNotes} />
         </div>
       </div>
