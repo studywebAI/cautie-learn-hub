@@ -11,6 +11,7 @@ import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
 import { PillSelector } from '@/components/tools/pill-selector';
+import { PresetManager } from '@/components/tools/preset-manager';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 
@@ -28,9 +29,11 @@ function FlashcardsPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedCards, setGeneratedCards] = useState<Flashcard[] | null>(null);
   const [studyMode, setStudyMode] = useState<StudyMode>('flip');
-  const [modePack, setModePack] = useState<'core' | 'retention' | 'exam'>('core');
-  const [retentionProfile, setRetentionProfile] = useState<'balanced' | 'aggressive' | 'exam-cram'>('balanced');
+  const [modePack, setModePack] = useState('core');
+  const [retentionProfile, setRetentionProfile] = useState('balanced');
   const [flashcardCount, setFlashcardCount] = useState(10);
+  const [cardStyle, setCardStyle] = useState('standard');
+  const [complexity, setComplexity] = useState('medium');
   const [currentView, setCurrentView] = useState<'setup' | 'study'>('setup');
   const { toast } = useToast();
 
@@ -45,7 +48,7 @@ function FlashcardsPageContent() {
         mode: studyMode,
         artifactType: 'flashcards',
         artifactTitle: 'Generated Flashcards',
-        input: { sourceText: text, count: flashcardCount, language, modePack, retentionProfile },
+        input: { sourceText: text, count: flashcardCount, language, modePack, retentionProfile, cardStyle, complexity },
         computeClass: flashcardCount > 20 ? 'heavy' : 'standard',
       });
       const response = run?.output_payload || run;
@@ -53,38 +56,33 @@ function FlashcardsPageContent() {
       setCurrentView('study');
     } catch (error) {
       console.error('Error generating flashcards:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Flashcard generation failed',
-        description: (error as any)?.message || 'Unable to generate flashcards',
-      });
+      toast({ variant: 'destructive', title: 'Flashcard generation failed', description: (error as any)?.message || 'Unable to generate flashcards' });
       setCurrentView('setup');
     } finally {
       setIsLoading(false);
     }
-  }, [flashcardCount, language, studyMode, modePack, retentionProfile]);
+  }, [flashcardCount, language, studyMode, modePack, retentionProfile, cardStyle, complexity]);
 
   useEffect(() => {
-    if (sourceTextFromParams && !isAssignmentContext) {
-      handleGenerate(sourceTextFromParams);
-    }
+    if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
   }, [sourceTextFromParams, handleGenerate]);
 
   useEffect(() => {
-    const savedMode = localStorage.getItem('tools.flashcards.mode');
-    const savedCount = localStorage.getItem('tools.flashcards.count');
-    const savedPack = localStorage.getItem('tools.flashcards.pack');
-    const savedRetention = localStorage.getItem('tools.flashcards.retention');
-    if (savedMode) setStudyMode(savedMode as StudyMode);
-    if (savedCount && !Number.isNaN(Number(savedCount))) setFlashcardCount(Number(savedCount));
-    if (savedPack === 'core' || savedPack === 'retention' || savedPack === 'exam') setModePack(savedPack);
-    if (savedRetention === 'balanced' || savedRetention === 'aggressive' || savedRetention === 'exam-cram') setRetentionProfile(savedRetention);
+    const s = (k: string) => localStorage.getItem(`tools.flashcards.${k}`);
+    if (s('mode')) setStudyMode(s('mode') as StudyMode);
+    if (s('count') && !Number.isNaN(Number(s('count')))) setFlashcardCount(Number(s('count')));
+    if (s('pack')) setModePack(s('pack')!);
+    if (s('retention')) setRetentionProfile(s('retention')!);
+    if (s('cardStyle')) setCardStyle(s('cardStyle')!);
+    if (s('complexity')) setComplexity(s('complexity')!);
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.flashcards.mode', studyMode); }, [studyMode]);
   useEffect(() => { localStorage.setItem('tools.flashcards.count', String(flashcardCount)); }, [flashcardCount]);
   useEffect(() => { localStorage.setItem('tools.flashcards.pack', modePack); }, [modePack]);
   useEffect(() => { localStorage.setItem('tools.flashcards.retention', retentionProfile); }, [retentionProfile]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.cardStyle', cardStyle); }, [cardStyle]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.complexity', complexity); }, [complexity]);
 
   const handleRestart = () => {
     setGeneratedCards(null);
@@ -112,75 +110,87 @@ function FlashcardsPageContent() {
   }
 
   const studyModeOptions = [
-    { value: 'flip', label: 'Flip' },
-    { value: 'type', label: 'Type' },
-    { value: 'multiple-choice', label: 'Multiple Choice' },
+    { value: 'flip', label: 'Flip', description: 'Classic card flip — tap to reveal the answer' },
+    { value: 'type', label: 'Type', description: 'Type your answer before revealing the correct one' },
+    { value: 'multiple-choice', label: 'Multiple Choice', description: 'Choose the correct answer from options' },
+    { value: 'write', label: 'Write', description: 'Write the full answer from memory, then compare' },
+    { value: 'speak', label: 'Speak', description: 'Say the answer out loud, then check yourself' },
+    { value: 'match', label: 'Match', description: 'Match terms to definitions in a timed game' },
+    { value: 'scatter', label: 'Scatter', description: 'Drag terms onto their matching definitions' },
   ];
 
   const packOptions = [
-    { value: 'core', label: 'Core' },
-    { value: 'retention', label: 'Retention' },
-    { value: 'exam', label: 'Exam' },
+    { value: 'core', label: 'Core', description: 'Essential terms and definitions from the material' },
+    { value: 'retention', label: 'Retention', description: 'Spaced-repetition optimized for long-term memory' },
+    { value: 'exam', label: 'Exam', description: 'Exam-style questions with tricky distractors' },
+    { value: 'deep-dive', label: 'Deep Dive', description: 'Nuanced cards covering edge cases and details' },
+    { value: 'quick-review', label: 'Quick Review', description: 'High-level overview cards for fast revision' },
+    { value: 'application', label: 'Application', description: 'Apply concepts to real-world scenarios' },
+    { value: 'connections', label: 'Connections', description: 'Cards linking related concepts across topics' },
   ];
 
   const retentionOptions = [
-    { value: 'balanced', label: 'Balanced' },
-    { value: 'aggressive', label: 'Aggressive' },
-    { value: 'exam-cram', label: 'Exam-Cram' },
+    { value: 'balanced', label: 'Balanced', description: 'Standard repetition schedule for steady learning' },
+    { value: 'aggressive', label: 'Aggressive', description: 'More repetitions, faster intervals for quick mastery' },
+    { value: 'exam-cram', label: 'Exam Cram', description: 'Intense short-term memorization before an exam' },
+    { value: 'long-term', label: 'Long Term', description: 'Extended intervals optimized for months-long retention' },
+    { value: 'weak-focus', label: 'Weak Focus', description: 'Prioritizes cards you keep getting wrong' },
   ];
+
+  const cardStyleOptions = [
+    { value: 'standard', label: 'Standard', description: 'Simple front/back question and answer format' },
+    { value: 'cloze', label: 'Cloze', description: 'Fill-in-the-blank within a sentence or passage' },
+    { value: 'image-occlusion', label: 'Image', description: 'Hide parts of diagrams or images to test recall' },
+    { value: 'reversed', label: 'Reversed', description: 'Answer shown first — recall the question/term' },
+    { value: 'context', label: 'Context', description: 'Includes surrounding context for better understanding' },
+    { value: 'mnemonic', label: 'Mnemonic', description: 'Includes memory tricks and associations' },
+  ];
+
+  const complexityOptions = [
+    { value: 'simple', label: 'Simple', description: 'Single facts and definitions' },
+    { value: 'medium', label: 'Medium', description: 'Concepts requiring some explanation' },
+    { value: 'complex', label: 'Complex', description: 'Multi-layered ideas with connections' },
+    { value: 'expert', label: 'Expert', description: 'Advanced material with synthesis required' },
+  ];
+
+  const currentSettings = { studyMode, modePack, retentionProfile, flashcardCount, cardStyle, complexity };
 
   const sidebar = (
     <>
-      <PillSelector
-        label="Pack"
-        options={packOptions}
-        value={modePack}
-        onChange={(v) => {
-          const next = v as 'core' | 'retention' | 'exam';
-          setModePack(next);
-          if (next === 'retention') setStudyMode('multiple-choice');
-          if (next === 'core') setStudyMode('flip');
-          if (next === 'exam') setStudyMode('type');
+      <PresetManager
+        toolId="flashcards"
+        currentSettings={currentSettings}
+        onLoadPreset={(s) => {
+          if (s.studyMode) setStudyMode(s.studyMode);
+          if (s.modePack) setModePack(s.modePack);
+          if (s.retentionProfile) setRetentionProfile(s.retentionProfile);
+          if (s.flashcardCount) setFlashcardCount(s.flashcardCount);
+          if (s.cardStyle) setCardStyle(s.cardStyle);
+          if (s.complexity) setComplexity(s.complexity);
         }}
-        disabled={isLoading}
       />
 
-      <PillSelector
-        label="Study Mode"
-        options={studyModeOptions}
-        value={studyMode}
-        onChange={(v) => setStudyMode(v as StudyMode)}
-        disabled={isLoading}
-      />
+      <PillSelector label="Pack" options={packOptions} value={modePack}
+        onChange={(v) => { setModePack(v); if (v === 'retention') setStudyMode('multiple-choice'); if (v === 'core') setStudyMode('flip'); if (v === 'exam') setStudyMode('type'); }}
+        disabled={isLoading} />
 
-      <PillSelector
-        label="Retention"
-        options={retentionOptions}
-        value={retentionProfile}
-        onChange={(v) => setRetentionProfile(v as 'balanced' | 'aggressive' | 'exam-cram')}
-        disabled={isLoading}
-      />
+      <PillSelector label="Study Mode" options={studyModeOptions} value={studyMode} onChange={(v) => setStudyMode(v as StudyMode)} disabled={isLoading} />
+
+      <PillSelector label="Retention" options={retentionOptions} value={retentionProfile} onChange={setRetentionProfile} disabled={isLoading} />
+
+      <PillSelector label="Card Style" options={cardStyleOptions} value={cardStyle} onChange={setCardStyle} disabled={isLoading} />
+
+      <PillSelector label="Complexity" options={complexityOptions} value={complexity} onChange={setComplexity} disabled={isLoading} />
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">Cards</p>
           <span className="text-xs font-mono tabular-nums">{flashcardCount}</span>
         </div>
-        <Slider
-          value={[flashcardCount]}
-          onValueChange={([v]) => setFlashcardCount(v)}
-          min={1}
-          max={50}
-          step={1}
-          disabled={isLoading}
-        />
+        <Slider value={[flashcardCount]} onValueChange={([v]) => setFlashcardCount(v)} min={1} max={50} step={1} disabled={isLoading} />
       </div>
 
-      <Button
-        onClick={() => handleGenerate(sourceText)}
-        disabled={isLoading || !sourceText.trim()}
-        className="w-full rounded-full"
-      >
+      <Button onClick={() => handleGenerate(sourceText)} disabled={isLoading || !sourceText.trim()} className="w-full rounded-full">
         <Sparkles className="mr-2 h-4 w-4" />
         Generate Flashcards
       </Button>
@@ -188,16 +198,8 @@ function FlashcardsPageContent() {
   );
 
   return (
-    <WorkbenchShell
-      title={isAssignmentContext ? 'Create Flashcards' : 'Flashcards'}
-      sidebar={sidebar}
-    >
-      <SourceInput
-        value={sourceText}
-        onChange={setSourceText}
-        onSubmit={() => handleGenerate(sourceText)}
-        placeholder="Paste or type your source material..."
-      />
+    <WorkbenchShell title={isAssignmentContext ? 'Create Flashcards' : 'Flashcards'} sidebar={sidebar}>
+      <SourceInput value={sourceText} onChange={setSourceText} onSubmit={() => handleGenerate(sourceText)} placeholder="Paste or type your source material..." />
     </WorkbenchShell>
   );
 }
