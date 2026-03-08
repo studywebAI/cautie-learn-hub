@@ -385,7 +385,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     assignments, createAssignment, deleteAssignment, refetchAssignments,
     students, personalTasks, createPersonalTask, updatePersonalTask,
     materials, refetchMaterials,
-  }), [session, isLoading, language, dictionary, role, highContrast, dyslexiaFont, reducedMotion, theme, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials]);
+  }), [session, isLoading, appReady, language, dictionary, role, highContrast, dyslexiaFont, reducedMotion, theme, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials]);
 
   return (
     <AppContext.Provider value={contextValue}>
