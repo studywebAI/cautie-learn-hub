@@ -10,7 +10,7 @@ import { getDictionary } from '@/lib/get-dictionary';
 import type { Dictionary, Locale } from '@/lib/get-dictionary';
 
 export type UserRole = 'student' | 'teacher';
-export type ThemeType = 'light' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
+export type ThemeType = 'light' | 'dark' | 'ocean' | 'ocean-dark' | 'forest' | 'forest-dark' | 'sunset' | 'sunset-dark' | 'rose' | 'rose-dark';
 export type AccentColor = 'none' | 'sky' | 'mint' | 'coral' | 'violet' | 'amber';
 export type ClassInfo = Tables<'classes'>;
 export type ClassAssignment = Tables<'assignments'> & {
@@ -142,9 +142,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       'theme-light',
       'theme-dark',
       'theme-ocean',
+      'theme-ocean-dark',
       'theme-forest',
+      'theme-forest-dark',
       'theme-sunset',
+      'theme-sunset-dark',
       'theme-rose',
+      'theme-rose-dark',
       'accent-sky',
       'accent-mint',
       'accent-coral',
