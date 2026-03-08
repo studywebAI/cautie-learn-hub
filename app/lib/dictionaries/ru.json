@@ -115,7 +115,12 @@
     "addTask": "Добавить задание",
     "today": "Сегодня",
     "week": "Неделя",
-    "month": "Месяц"
+    "month": "Месяц",
+    "monday": "Пн",
+    "tuesday": "Вт",
+    "wednesday": "Ср",
+    "thursday": "Чт",
+    "friday": "Пт"
   },
   "subjects": {
     "title": "Предметы",

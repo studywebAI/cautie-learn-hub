@@ -115,7 +115,12 @@
     "addTask": "إضافة مهمة",
     "today": "اليوم",
     "week": "أسبوع",
-    "month": "شهر"
+    "month": "شهر",
+    "monday": "اثنين",
+    "tuesday": "ثلاثاء",
+    "wednesday": "أربعاء",
+    "thursday": "خميس",
+    "friday": "جمعة"
   },
   "subjects": {
     "title": "المواد",

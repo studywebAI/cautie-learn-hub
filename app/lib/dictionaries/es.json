@@ -115,7 +115,12 @@
     "addTask": "Añadir tarea",
     "today": "Hoy",
     "week": "Semana",
-    "month": "Mes"
+    "month": "Mes",
+    "monday": "Lun",
+    "tuesday": "Mar",
+    "wednesday": "Mié",
+    "thursday": "Jue",
+    "friday": "Vie"
   },
   "subjects": {
     "title": "Asignaturas",

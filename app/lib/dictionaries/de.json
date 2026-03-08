@@ -115,7 +115,12 @@
     "addTask": "Aufgabe hinzufügen",
     "today": "Heute",
     "week": "Woche",
-    "month": "Monat"
+    "month": "Monat",
+    "monday": "Mo",
+    "tuesday": "Di",
+    "wednesday": "Mi",
+    "thursday": "Do",
+    "friday": "Fr"
   },
   "subjects": {
     "title": "Fächer",

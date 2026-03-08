@@ -206,7 +206,7 @@
     "copy": "Copiar",
     "paste": "Colar",
     "undo": "Desfazer",
-    "refazer": "Refazer",
+    "redo": "Refazer",
     "reset": "Redefinir",
     "clear": "Limpar",
     "refresh": "Atualizar",

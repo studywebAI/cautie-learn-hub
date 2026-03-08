@@ -115,7 +115,12 @@
     "addTask": "Ajouter une tâche",
     "today": "Aujourd'hui",
     "week": "Semaine",
-    "month": "Mois"
+    "month": "Mois",
+    "monday": "Lun",
+    "tuesday": "Mar",
+    "wednesday": "Mer",
+    "thursday": "Jeu",
+    "friday": "Ven"
   },
   "subjects": {
     "title": "Matières",
