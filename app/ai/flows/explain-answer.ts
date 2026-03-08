@@ -17,6 +17,7 @@ const ExplainAnswerInputSchema = z.object({
   isHint: z.boolean().describe('Whether to provide a subtle hint instead of full explanation.').optional(),
   followUpQuestion: z.string().describe('A follow-up question from the user.').optional(),
   sourceText: z.string().describe('The original source text for context.').optional(),
+  isFlashcard: z.boolean().describe('Whether this is a flashcard explanation rather than a quiz explanation.').optional(),
 });
 type ExplainAnswerInput = z.infer<typeof ExplainAnswerInputSchema>;
 
