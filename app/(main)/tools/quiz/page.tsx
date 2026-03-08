@@ -192,7 +192,7 @@ function QuizPageContent() {
       />
 
       <PillSelector label={t.quiz.labels.pack} options={t.quiz.packOptions} value={modePack}
-        onChange={(v) => { setModePack(v); if (v === 'adaptive') setQuizMode('adaptive'); if (v === 'exam') setQuizMode('exam'); if (v === 'practice') setQuizMode('practice'); }}
+        onChange={(v) => setModePack(v)}
         disabled={isLoading} />
 
       <PillSelector label={t.quiz.labels.mode} options={t.quiz.modeOptions} value={quizMode} onChange={(v) => setQuizMode(v as QuizMode)} disabled={isLoading} />
