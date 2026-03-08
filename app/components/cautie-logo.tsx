@@ -69,31 +69,27 @@ interface CautieLogoProps {
 }
 
 export function CautieLogo({ size = 'md', className = '' }: CautieLogoProps) {
-  const { color, path, seed } = useMemo(() => {
+  const { color, strokes } = useMemo(() => {
     const s = Math.floor(Math.random() * 1000);
     const c = HIGHLIGHT_COLORS[s % HIGHLIGHT_COLORS.length];
-    const p = generateHighlighterPath(100, 32, s);
-    return { color: c, path: p, seed: s };
+    const paths = generateHighlighterStrokes(100, 32, s);
+    return { color: c, strokes: paths };
   }, []);
 
   const textSize = size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-2xl' : 'text-base';
-  const svgH = size === 'sm' ? 22 : size === 'lg' ? 38 : 28;
-  const svgW = size === 'sm' ? 52 : size === 'lg' ? 100 : 72;
   const padX = size === 'sm' ? 'px-1.5' : size === 'lg' ? 'px-3' : 'px-2';
 
   return (
     <span className={`relative inline-flex items-center ${padX} ${className}`}>
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
-        viewBox={`0 0 100 32`}
+        viewBox="0 0 100 32"
         preserveAspectRatio="none"
         style={{ width: '100%', height: '100%' }}
       >
-        <path
-          d={path}
-          fill={color}
-          opacity={0.45}
-        />
+        {strokes.map((d, i) => (
+          <path key={i} d={d} fill={color} opacity={0.35} />
+        ))}
       </svg>
       <span className={`relative ${textSize} tracking-tight lowercase font-medium`} style={{ zIndex: 1 }}>
         cautie
