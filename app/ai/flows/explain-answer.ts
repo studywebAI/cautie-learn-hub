@@ -17,6 +17,7 @@ const ExplainAnswerInputSchema = z.object({
   isHint: z.boolean().describe('Whether to provide a subtle hint instead of full explanation.').optional(),
   followUpQuestion: z.string().describe('A follow-up question from the user.').optional(),
   sourceText: z.string().describe('The original source text for context.').optional(),
+  isFlashcard: z.boolean().describe('Whether this is a flashcard explanation rather than a quiz explanation.').optional(),
 });
 type ExplainAnswerInput = z.infer<typeof ExplainAnswerInputSchema>;
 
@@ -45,7 +46,14 @@ const explainAnswerFlow = ai.defineFlow(
       model,
       input: { schema: ExplainAnswerInputSchema },
       output: { schema: ExplainAnswerOutputSchema },
-      prompt: `You are an expert educational tutor. Provide accurate, factual information, and avoid making things up. {{#if isHint}}Provide a subtle hint to help the student think about the question without giving away the answer. The hint should be based on the question and source text.{{/if}}{{#if followUpQuestion}}The user has asked a follow-up question: "{{{followUpQuestion}}}". First, check if this question is related to the subject matter from the source text. If it is not related to schoolwork or the topic, politely refuse to answer and explain that you can only answer questions related to the subject. If it is related, answer it helpfully based on the source text and question context.{{/if}}{{#unless isHint}}{{#unless followUpQuestion}}Focus solely on explaining the correctness or incorrectness of the answers. Do NOT include any complimentary phrases like "nice try", "almost had it", or "good job". When generating explanations, if external sources like Wikipedia have been provided, refer to them to verify and backup the explanation.
+      prompt: `You are an expert educational tutor. Provide accurate, factual information, and avoid making things up. {{#if isHint}}Provide a subtle hint to help the student think about the question without giving away the answer. The hint should be based on the question and source text.{{/if}}{{#if followUpQuestion}}The user has asked a follow-up question: "{{{followUpQuestion}}}". First, check if this question is related to the subject matter from the source text. If it is not related to schoolwork or the topic, politely refuse to answer and explain that you can only answer questions related to the subject. If it is related, answer it helpfully based on the source text and question context.{{/if}}{{#unless isHint}}{{#unless followUpQuestion}}{{#if isFlashcard}}You are explaining a flashcard to help the student understand the concept. Do NOT refer to "answers", "correct/incorrect", or quiz terminology. Simply explain the concept on this flashcard clearly and concisely.
+
+Term: "{{{question}}}"
+Definition: "{{{correctAnswer}}}"
+
+Explain this concept: what it means, why it matters, and any important context or connections to related ideas.
+
+{{else}}Focus solely on explaining the correctness or incorrectness of the answers. Do NOT include any complimentary phrases like "nice try", "almost had it", or "good job". When generating explanations, if external sources like Wikipedia have been provided, refer to them to verify and backup the explanation.
 
 Question: "{{{question}}}"
 Student's Answer: "{{{selectedAnswer}}}"
@@ -62,7 +70,7 @@ Here's why your answer was incorrect and why the correct answer is right:
 2. **Correct Reasoning:** Provide a thorough explanation of the logical steps and facts that lead to the correct answer.
 3. **Contrast and Clarification:** Explicitly compare the incorrect reasoning with the correct reasoning, highlighting the critical differences.
 
-{{/if}}{{/unless}}{{/unless}}`,
+{{/if}}{{/if}}{{/unless}}{{/unless}}`,
     });
     const { output } = await prompt(input);
     // Sources will be handled by quiz-taker.tsx and passed here if available
