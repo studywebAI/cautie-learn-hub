@@ -178,10 +178,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setReducedMotionState(rm);
     if(rm) document.body.setAttribute('data-reduced-motion', 'true');
     const savedTheme = getFromLocalStorage<ThemeType>('studyweb-theme', 'light');
-    const savedAccent = getFromLocalStorage<AccentColor>('studyweb-accent-color', 'none');
     setThemeState(savedTheme);
-    setAccentColorState(savedAccent);
-    applyAppearance(savedTheme, savedAccent);
+    applyAppearance(savedTheme);
 
     // STEP 3: Fetch session + dashboard data in PARALLEL
     const init = async () => {
