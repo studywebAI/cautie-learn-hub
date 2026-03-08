@@ -23,8 +23,7 @@ function QuizPageContent() {
   const classId = searchParams.get('classId');
   const isAssignmentContext = context === 'assignment';
   const appContext = useContext(AppContext);
-  if (!appContext) return null;
-  const { language } = appContext;
+  const language = appContext?.language ?? 'en';
 
   const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
   const [isLoading, setIsLoading] = useState(false);
