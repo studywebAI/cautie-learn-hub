@@ -35,6 +35,7 @@ function NotesPageContent() {
   const [audience, setAudience] = useState('student');
   const [isLoading, setIsLoading] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState<GenerateNotesOutput['notes'] | null>(null);
+  const [customTitle, setCustomTitle] = useState('');
   const { toast } = useToast();
 
   const canGenerate = sourceText.trim().length > 0 && !isLoading;
