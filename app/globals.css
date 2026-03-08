@@ -300,49 +300,49 @@
     --sidebar-ring: 140 38% 26%;
   }
 
-  /* Sunset: everything is warm orange, just orange */
+  /* Sunset: committed warm orange tones */
   .theme-sunset {
-    --background: 22 40% 97%;
-    --foreground: 22 22% 13%;
-    --card: 22 36% 95%;
-    --card-foreground: 22 22% 13%;
-    --popover: 22 36% 95%;
-    --popover-foreground: 22 22% 13%;
-    --primary: 22 75% 44%;
+    --background: 22 30% 92%;
+    --foreground: 22 25% 13%;
+    --card: 22 26% 87%;
+    --card-foreground: 22 25% 13%;
+    --popover: 22 26% 88%;
+    --popover-foreground: 22 25% 13%;
+    --primary: 22 70% 40%;
     --primary-foreground: 22 30% 97%;
-    --secondary: 22 20% 91%;
-    --secondary-foreground: 22 22% 13%;
-    --muted: 22 16% 90%;
-    --muted-foreground: 22 14% 38%;
-    --accent: 22 20% 91%;
-    --accent-foreground: 22 22% 13%;
+    --secondary: 22 20% 85%;
+    --secondary-foreground: 22 25% 13%;
+    --muted: 22 18% 85%;
+    --muted-foreground: 22 16% 38%;
+    --accent: 22 20% 85%;
+    --accent-foreground: 22 25% 13%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --success: 22 60% 42%;
     --success-foreground: 22 30% 97%;
-    --border: 22 18% 84%;
-    --input: 22 18% 84%;
-    --ring: 22 75% 44%;
+    --border: 22 18% 80%;
+    --input: 22 18% 80%;
+    --ring: 22 70% 40%;
     --chart-1: 22 68% 38%;
     --chart-2: 22 52% 48%;
     --chart-3: 22 38% 56%;
     --chart-4: 22 26% 64%;
     --chart-5: 22 16% 74%;
-    --surface-1: 22 36% 95%;
-    --surface-2: 22 30% 93%;
-    --surface-3: 22 26% 91%;
-    --interactive-hover: 22 22% 88%;
-    --interactive-active: 22 22% 85%;
+    --surface-1: 22 26% 87%;
+    --surface-2: 22 22% 85%;
+    --surface-3: 22 20% 83%;
+    --interactive-hover: 22 20% 81%;
+    --interactive-active: 22 20% 78%;
     --focus-ring: 22 68% 40%;
-    --sidebar-background: 22 36% 96%;
-    --sidebar-foreground: 22 22% 13%;
-    --sidebar-primary: 22 75% 44%;
+    --sidebar-background: 22 26% 87%;
+    --sidebar-foreground: 22 25% 13%;
+    --sidebar-primary: 22 70% 40%;
     --sidebar-primary-foreground: 22 30% 97%;
-    --sidebar-accent: 22 18% 90%;
-    --sidebar-accent-foreground: 22 22% 13%;
+    --sidebar-accent: 22 20% 83%;
+    --sidebar-accent-foreground: 22 25% 13%;
     --sidebar-active-foreground: var(--sidebar-accent-foreground);
-    --sidebar-border: 22 18% 86%;
-    --sidebar-ring: 22 75% 44%;
+    --sidebar-border: 22 18% 82%;
+    --sidebar-ring: 22 70% 40%;
   }
 
   /* Rose: everything is pink, just pink */
