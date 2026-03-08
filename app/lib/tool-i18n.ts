@@ -395,12 +395,12 @@ const nl: ToolStrings = {
       { value: 'scatter', label: 'Scatter', description: 'Sleep termen naar hun bijpassende definities' },
     ],
     packOptions: [
-      { value: 'core', label: 'Kern', description: 'Essentiële termen en definities uit het materiaal' },
+      { value: 'core', label: 'Basis', description: 'Essentiële termen en definities uit het materiaal' },
       { value: 'retention', label: 'Onthouden', description: 'Geoptimaliseerd voor langetermijngeheugen' },
-      { value: 'exam', label: 'Examen', description: 'Examenstijl vragen met lastige afleiders' },
+      { value: 'exam', label: 'Toetsklaar', description: 'Examenstijl vragen met lastige afleiders' },
       { value: 'deep-dive', label: 'Diepgang', description: 'Genuanceerde kaarten over randgevallen' },
-      { value: 'quick-review', label: 'Snel overzicht', description: 'Overzichtskaarten voor snelle herhaling' },
-      { value: 'application', label: 'Toepassing', description: 'Pas concepten toe in de praktijk' },
+      { value: 'quick-review', label: 'Snelle scan', description: 'Overzichtskaarten voor snelle herhaling' },
+      { value: 'application', label: 'Praktijk', description: 'Pas concepten toe in de praktijk' },
       { value: 'connections', label: 'Verbindingen', description: 'Kaarten die gerelateerde concepten verbinden' },
     ],
     retentionOptions: [
