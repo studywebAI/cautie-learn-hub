@@ -67,7 +67,7 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
               'hover:bg-accent hover:text-accent-foreground',
               'disabled:opacity-50 disabled:pointer-events-none',
               value === opt.value
-                ? 'bg-foreground text-background border-foreground'
+                ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-background text-foreground border-border'
             )}
           >
