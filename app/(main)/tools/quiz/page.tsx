@@ -80,6 +80,17 @@ function QuizPageContent() {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
   }, [sourceTextFromParams, handleGenerate]);
 
+  // Load saved run from history
+  useEffect(() => {
+    if (savedRun?.output_payload && savedRun.status === 'succeeded') {
+      const output = savedRun.output_payload;
+      setGeneratedQuiz(output as Quiz);
+      setCurrentView('take');
+      if (savedRun.input_payload?.sourceText) setSourceText(savedRun.input_payload.sourceText);
+      if (savedRun.mode) setQuizMode(savedRun.mode as QuizMode);
+    }
+  }, [savedRun]);
+
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`tools.quiz.${k}`);
     if (s('mode')) setQuizMode(s('mode') as QuizMode);
