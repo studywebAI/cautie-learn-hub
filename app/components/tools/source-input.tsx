@@ -3,7 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, FileText, ImageIcon, X, Loader2, Link2, Lightbulb } from 'lucide-react';
+import { UploadCloud, FileText, ImageIcon, X, Loader2, Link2, Lightbulb, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SourceInputProps {
