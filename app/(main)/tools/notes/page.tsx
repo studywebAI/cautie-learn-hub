@@ -16,6 +16,8 @@ import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { PillSelector } from '@/components/tools/pill-selector';
 import { PresetManager } from '@/components/tools/preset-manager';
 import { Slider } from '@/components/ui/slider';
+import { ExportToolbar } from '@/components/tools/export-toolbar';
+import { notesToMarkdown, notesToHtml } from '@/lib/export-formatters';
 
 function NotesPageContent() {
   const searchParams = useSearchParams();

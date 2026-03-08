@@ -15,6 +15,8 @@ import { PillSelector } from '@/components/tools/pill-selector';
 import { PresetManager } from '@/components/tools/preset-manager';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
+import { ExportToolbar } from '@/components/tools/export-toolbar';
+import { flashcardsToMarkdown, flashcardsToHtml } from '@/lib/export-formatters';
 
 function FlashcardsPageContent() {
   const router = useRouter();

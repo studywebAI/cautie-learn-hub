@@ -16,6 +16,8 @@ import { PillSelector } from '@/components/tools/pill-selector';
 import { PresetManager } from '@/components/tools/preset-manager';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
+import { ExportToolbar } from '@/components/tools/export-toolbar';
+import { quizToMarkdown, quizToHtml } from '@/lib/export-formatters';
 
 function QuizPageContent() {
   const router = useRouter();
