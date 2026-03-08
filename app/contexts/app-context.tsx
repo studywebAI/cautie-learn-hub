@@ -57,6 +57,7 @@ export type DashboardSubject = {
 export type AppContextType = {
   session: Session | null;
   isLoading: boolean;
+  appReady: boolean;
   language: Locale;
   setLanguage: (language: Locale) => void;
   dictionary: Dictionary;
