@@ -150,6 +150,7 @@ function NotesPageContent() {
             </Button>
             <ExportToolbar
               toolType="notes"
+              title={customTitle.trim() || undefined}
               getMarkdown={() => notesToMarkdown(generatedNotes)}
               getHtml={() => notesToHtml(generatedNotes)}
             />
