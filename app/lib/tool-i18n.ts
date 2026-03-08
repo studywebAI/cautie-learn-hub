@@ -240,12 +240,12 @@ const en: ToolStrings = {
     parseError: 'The content could not be recognized as notes.',
     labels: { pack: 'Pack', style: 'Style', focus: 'Focus', tone: 'Tone', audience: 'Audience' },
     packOptions: [
-      { value: 'core', label: 'Core', description: 'Key concepts and main ideas distilled clearly' },
-      { value: 'exam', label: 'Exam', description: 'Exam-focused notes with testable facts highlighted' },
-      { value: 'reference', label: 'Reference', description: 'Comprehensive reference material with full detail' },
-      { value: 'lecture', label: 'Lecture', description: 'Follows the flow of a lecture with speaker cues' },
-      { value: 'revision', label: 'Revision', description: 'Ultra-condensed review summaries for quick revision' },
-      { value: 'research', label: 'Research', description: 'Academic-style notes with citations and evidence' },
+      { value: 'core', label: 'Essentials', description: 'Key concepts and main ideas distilled clearly' },
+      { value: 'exam', label: 'Test-Ready', description: 'Exam-focused notes with testable facts highlighted' },
+      { value: 'reference', label: 'Full Reference', description: 'Comprehensive reference material with full detail' },
+      { value: 'lecture', label: 'Lecture Flow', description: 'Follows the flow of a lecture with speaker cues' },
+      { value: 'revision', label: 'Quick Scan', description: 'Ultra-condensed review summaries for quick revision' },
+      { value: 'research', label: 'Academic', description: 'Academic-style notes with citations and evidence' },
     ],
     styleOptions: [
       { value: 'structured', label: 'Structured', description: 'Hierarchical headings with organized sections' },
