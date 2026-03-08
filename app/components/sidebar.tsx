@@ -577,7 +577,7 @@ export function AppSidebar() {
         <SidebarTrigger />
       </div>
       <SidebarContent className="px-3 py-3 flex-1">
-        <p className="px-2 pb-3 pt-1 text-lg tracking-tight text-sidebar-foreground lowercase group-data-[collapsible=icon]:hidden">[cautie]</p>
+        <div className="px-1 pb-2 pt-1 group-data-[collapsible=icon]:hidden"><CautieLogo size="sm" className="text-sidebar-foreground" /></div>
         <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">main</p>
         <SidebarMenu>
           {menuItems.map((item) => (
