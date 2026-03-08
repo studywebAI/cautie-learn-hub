@@ -74,7 +74,6 @@ export function AppSidebar() {
     { href: '/tools/quiz', label: dictionary.sidebar.tools.quizGenerator, icon: BrainCircuit },
     { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: Copy },
     { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: FileSignature },
-    { href: '/tools/blocks', label: dictionary.sidebar.tools.blocks || 'blocks', icon: FileSignature },
   ];
 
   const isTeacher = context?.role === 'teacher';
