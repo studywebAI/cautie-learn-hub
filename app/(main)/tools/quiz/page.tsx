@@ -16,6 +16,8 @@ import { PillSelector } from '@/components/tools/pill-selector';
 import { PresetManager } from '@/components/tools/preset-manager';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
+import { ExportToolbar } from '@/components/tools/export-toolbar';
+import { quizToMarkdown, quizToHtml } from '@/lib/export-formatters';
 
 function QuizPageContent() {
   const router = useRouter();
@@ -138,7 +140,22 @@ function QuizPageContent() {
   }
 
   if (generatedQuiz && currentView === 'take') {
-    return <QuizTaker quiz={generatedQuiz} mode={quizMode} sourceText={sourceText} onRestart={handleRestart} />;
+    return (
+      <div className="h-full flex flex-col">
+        <div className="px-6 pt-3 flex items-center justify-between">
+          <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">← Back</Button>
+          <ExportToolbar
+            toolType="quiz"
+            title={generatedQuiz.title}
+            getMarkdown={() => quizToMarkdown(generatedQuiz)}
+            getHtml={() => quizToHtml(generatedQuiz)}
+          />
+        </div>
+        <div className="flex-1 min-h-0 overflow-auto">
+          <QuizTaker quiz={generatedQuiz} mode={quizMode} sourceText={sourceText} onRestart={handleRestart} />
+        </div>
+      </div>
+    );
   }
   if (currentView === 'duel') {
     return <QuizDuel sourceText={sourceText} onRestart={handleRestart} />;

@@ -15,6 +15,8 @@ import { PillSelector } from '@/components/tools/pill-selector';
 import { PresetManager } from '@/components/tools/preset-manager';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
+import { ExportToolbar } from '@/components/tools/export-toolbar';
+import { flashcardsToMarkdown, flashcardsToHtml } from '@/lib/export-formatters';
 
 function FlashcardsPageContent() {
   const router = useRouter();
@@ -120,7 +122,21 @@ function FlashcardsPageContent() {
   }
 
   if (generatedCards && currentView === 'study') {
-    return <FlashcardViewer cards={generatedCards} mode={studyMode} onRestart={handleRestart} />;
+    return (
+      <div className="h-full flex flex-col">
+        <div className="px-6 pt-3 flex items-center justify-between">
+          <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">← Back</Button>
+          <ExportToolbar
+            toolType="flashcards"
+            getMarkdown={() => flashcardsToMarkdown(generatedCards)}
+            getHtml={() => flashcardsToHtml(generatedCards)}
+          />
+        </div>
+        <div className="flex-1 min-h-0 overflow-auto">
+          <FlashcardViewer cards={generatedCards} mode={studyMode} onRestart={handleRestart} />
+        </div>
+      </div>
+    );
   }
 
   const studyModeOptions = [
