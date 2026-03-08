@@ -240,10 +240,7 @@ export default function ToolsPage() {
                       className="h-5 border-0 bg-transparent px-0 text-[10px] text-muted-foreground focus:outline-none"
                     >
                       <option value="quiz">quiz</option>
-                      <option value="flashcards">flashcards</option>
                       <option value="notes">notes</option>
-                      <option value="blocks">blocks</option>
-                      <option value="wordweb">wordweb</option>
                     </select>
                     <Button
                       type="button"
