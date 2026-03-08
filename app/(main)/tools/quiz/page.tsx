@@ -47,15 +47,6 @@ function QuizPageContent() {
     if (!text.trim()) {
       return;
     }
-    if (text.trim().length < 120) {
-      setCurrentView('setup');
-      toast({
-        variant: 'destructive',
-        title: 'More source text needed',
-        description: 'Add more context to avoid weak or narrow quiz output.',
-      });
-      return;
-    }
     setIsLoading(true);
     setGeneratedQuiz(null);
     try {

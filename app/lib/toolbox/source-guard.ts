@@ -42,11 +42,6 @@ export function enforceSourceOnlyGuard(payload: {
   if (!SOURCE_ONLY_TOOLS.has(payload.toolId)) return;
 
   const sourceText = String(payload.inputPayload?.sourceText || "").trim();
-  if (sourceText.length < 80) {
-    const err = new Error("Source text is too short for source-only generation.");
-    (err as any).code = "SOURCE_GUARD_FAILED";
-    throw err;
-  }
 
   const outputText = collectText(payload.outputPayload).join(" ");
   if (!outputText.trim()) {
