@@ -5,18 +5,15 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2, Sparkles } from 'lucide-react';
 import { QuizTaker, QuizMode } from '@/components/tools/quiz-taker';
 import { AppContext } from '@/contexts/app-context';
-
 import type { Quiz } from '@/lib/types';
 import { QuizDuel } from '@/components/tools/quiz-duel';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { SourceInput } from '@/components/tools/source-input';
-import { ArtifactCollabPanel } from '@/components/tools/artifact-collab-panel';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PillSelector } from '@/components/tools/pill-selector';
+import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-
 
 function QuizPageContent() {
   const router = useRouter();
@@ -26,8 +23,7 @@ function QuizPageContent() {
   const classId = searchParams.get('classId');
   const isAssignmentContext = context === 'assignment';
   const appContext = useContext(AppContext);
-  if (!appContext) return null;
-  const { language } = appContext;
+  const language = appContext?.language ?? 'en';
 
   const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
   const [isLoading, setIsLoading] = useState(false);
@@ -37,16 +33,10 @@ function QuizPageContent() {
   const [difficultyProfile, setDifficultyProfile] = useState<'balanced' | 'ramp' | 'hard'>('balanced');
   const [questionCount, setQuestionCount] = useState(7);
   const [currentView, setCurrentView] = useState<'setup' | 'take' | 'duel'>('setup');
-
-  const [history, setHistory] = useState<any[]>([]);
-  const [plan, setPlan] = useState<string>('free');
-  const [latestArtifactId, setLatestArtifactId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleGenerate = useCallback(async (text: string) => {
-    if (!text.trim()) {
-      return;
-    }
+    if (!text.trim()) return;
     setIsLoading(true);
     setGeneratedQuiz(null);
     try {
@@ -65,7 +55,6 @@ function QuizPageContent() {
         });
         const response = run?.output_payload || run;
         setGeneratedQuiz(response as Quiz);
-        setLatestArtifactId(run?.output_artifact_id || null);
         setCurrentView('take');
       }
     } catch (error) {
@@ -73,7 +62,7 @@ function QuizPageContent() {
       toast({
         variant: 'destructive',
         title: 'Quiz generation failed',
-        description: (error as any)?.message || 'Unable to generate quiz from provided source text',
+        description: (error as any)?.message || 'Unable to generate quiz',
       });
       setCurrentView('setup');
     } finally {
@@ -94,214 +83,143 @@ function QuizPageContent() {
     const savedDifficulty = localStorage.getItem('tools.quiz.difficulty');
     if (savedMode) setQuizMode(savedMode as QuizMode);
     if (savedCount && !Number.isNaN(Number(savedCount))) setQuestionCount(Number(savedCount));
-    if (savedPack === 'practice' || savedPack === 'exam' || savedPack === 'adaptive') {
-      setModePack(savedPack);
-    }
-    if (savedDifficulty === 'balanced' || savedDifficulty === 'ramp' || savedDifficulty === 'hard') {
-      setDifficultyProfile(savedDifficulty);
-    }
-
-    const loadMeta = async () => {
-      const [usageRes, runsRes] = await Promise.all([
-        fetch('/api/billing/v1/usage-summary'),
-        fetch('/api/tools/v2/runs'),
-      ]);
-      if (usageRes.ok) {
-        const usage = await usageRes.json();
-        setPlan(usage.plan || 'free');
-      }
-      if (runsRes.ok) {
-        const runs = await runsRes.json();
-        setHistory((runs || []).filter((r: any) => r.tool_id === 'quiz').slice(0, 8));
-      }
-    };
-    loadMeta();
+    if (savedPack === 'practice' || savedPack === 'exam' || savedPack === 'adaptive') setModePack(savedPack);
+    if (savedDifficulty === 'balanced' || savedDifficulty === 'ramp' || savedDifficulty === 'hard') setDifficultyProfile(savedDifficulty);
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('tools.quiz.mode', quizMode);
-  }, [quizMode]);
-
-  useEffect(() => {
-    localStorage.setItem('tools.quiz.count', String(questionCount));
-  }, [questionCount]);
-
-  useEffect(() => {
-    localStorage.setItem('tools.quiz.pack', modePack);
-  }, [modePack]);
-
-  useEffect(() => {
-    localStorage.setItem('tools.quiz.difficulty', difficultyProfile);
-  }, [difficultyProfile]);
-
-
-  const handleFormSubmit = () => {
-    handleGenerate(sourceText);
-  }
+  useEffect(() => { localStorage.setItem('tools.quiz.mode', quizMode); }, [quizMode]);
+  useEffect(() => { localStorage.setItem('tools.quiz.count', String(questionCount)); }, [questionCount]);
+  useEffect(() => { localStorage.setItem('tools.quiz.pack', modePack); }, [modePack]);
+  useEffect(() => { localStorage.setItem('tools.quiz.difficulty', difficultyProfile); }, [difficultyProfile]);
 
   const handleRestart = () => {
     setGeneratedQuiz(null);
     setCurrentView('setup');
     if (isAssignmentContext) {
-        if (classId) {
-            router.push(`/class/${classId}`);
-        } else {
-            router.push('/classes');
-        }
+      if (classId) router.push(`/class/${classId}`);
+      else router.push('/classes');
     }
-  }
-
-  const quizModeOptions = ['practice', 'normal', 'exam', 'survival', 'speedrun', 'adaptive', 'boss-fight', 'duel'];
+  };
 
   if (isLoading) {
-     return (
-       <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm p-8">
+    return (
+      <div className="flex flex-1 items-center justify-center p-8">
         <div className="flex flex-col items-center gap-2 text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <h3 className="text-2xl font-bold tracking-tight mt-4">
-                Generating Your Quiz
-            </h3>
-            <p className="text-sm text-muted-foreground">
-                The AI is working its magic. Please wait a moment...
-            </p>
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <h3 className="text-lg font-normal mt-3">Generating Quiz</h3>
+          <p className="text-xs text-muted-foreground">Working on it...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (generatedQuiz && currentView === 'take') {
     return <QuizTaker quiz={generatedQuiz} mode={quizMode} sourceText={sourceText} onRestart={handleRestart} />;
   }
   if (currentView === 'duel') {
-    return <QuizDuel sourceText={sourceText} onRestart={handleRestart} />
+    return <QuizDuel sourceText={sourceText} onRestart={handleRestart} />;
   }
 
-  const leftPanel = (
-    <SourceInput
-      value={sourceText}
-      onChange={setSourceText}
-      onSubmit={() => handleGenerate(sourceText)}
-      placeholder="Plak materiaal om quizvragen te genereren..."
-    />
-  );
+  const modeOptions = [
+    { value: 'practice', label: 'Practice' },
+    { value: 'normal', label: 'Normal' },
+    { value: 'exam', label: 'Exam' },
+    { value: 'survival', label: 'Survival' },
+    { value: 'speedrun', label: 'Speedrun' },
+    { value: 'adaptive', label: 'Adaptive' },
+    { value: 'boss-fight', label: 'Boss Fight' },
+    { value: 'duel', label: 'Duel' },
+  ];
 
-  const centerPanel = (
-    <div className="space-y-3 pt-1">
-      {generatedQuiz && (
-        <div className="space-y-2">
-          <h3 className="font-semibold">{generatedQuiz.title}</h3>
-          <p className="text-sm text-muted-foreground">{generatedQuiz.description}</p>
-          <div className="space-y-2">
-            {generatedQuiz.questions.slice(0, 5).map((q, idx) => (
-              <div key={q.id} className="rounded-md border p-3">
-                <p className="text-sm font-medium">{idx + 1}. {q.question}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  const packOptions = [
+    { value: 'practice', label: 'Practice' },
+    { value: 'exam', label: 'Exam' },
+    { value: 'adaptive', label: 'Adaptive' },
+  ];
 
-  const rightPanel = (
-    <div className="space-y-4 pt-1">
-      <div className="space-y-3">
-        <Tabs
-          value={modePack}
-          onValueChange={(v) => {
-            const next = v as 'practice' | 'exam' | 'adaptive';
-            setModePack(next);
-            if (next === 'adaptive') setQuizMode('adaptive');
-            if (next === 'exam') setQuizMode('exam');
-            if (next === 'practice') setQuizMode('practice');
-          }}
-        >
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="practice">Practice</TabsTrigger>
-            <TabsTrigger value="exam">Exam</TabsTrigger>
-            <TabsTrigger value="adaptive">Adaptive</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <select
-          value={quizMode}
-          onChange={(e) => setQuizMode(e.target.value as QuizMode)}
-          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-        >
-          {quizModeOptions.map((mode) => (
-            <option key={mode} value={mode}>{mode}</option>
-          ))}
-        </select>
-        <Tabs value={difficultyProfile} onValueChange={(v) => setDifficultyProfile(v as 'balanced' | 'ramp' | 'hard')}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="balanced">Balanced</TabsTrigger>
-            <TabsTrigger value="ramp">Ramp</TabsTrigger>
-            <TabsTrigger value="hard">Hard</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+  const difficultyOptions = [
+    { value: 'balanced', label: 'Balanced' },
+    { value: 'ramp', label: 'Ramp' },
+    { value: 'hard', label: 'Hard' },
+  ];
+
+  const sidebar = (
+    <>
+      <PillSelector
+        label="Pack"
+        options={packOptions}
+        value={modePack}
+        onChange={(v) => {
+          const next = v as 'practice' | 'exam' | 'adaptive';
+          setModePack(next);
+          if (next === 'adaptive') setQuizMode('adaptive');
+          if (next === 'exam') setQuizMode('exam');
+          if (next === 'practice') setQuizMode('practice');
+        }}
+        disabled={isLoading}
+      />
+
+      <PillSelector
+        label="Mode"
+        options={modeOptions}
+        value={quizMode}
+        onChange={(v) => setQuizMode(v as QuizMode)}
+        disabled={isLoading}
+      />
+
+      <PillSelector
+        label="Difficulty"
+        options={difficultyOptions}
+        value={difficultyProfile}
+        onChange={(v) => setDifficultyProfile(v as 'balanced' | 'ramp' | 'hard')}
+        disabled={isLoading}
+      />
+
       <div className="space-y-2">
-        <Label>Questions</Label>
-        <input
-          type="number"
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Questions</p>
+          <span className="text-xs font-mono tabular-nums">{questionCount}</span>
+        </div>
+        <Slider
+          value={[questionCount]}
+          onValueChange={([v]) => setQuestionCount(v)}
           min={1}
-          max={100}
-          value={questionCount}
-          onChange={(e) => setQuestionCount(parseInt(e.target.value) || 1)}
-          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+          max={50}
+          step={1}
+          disabled={isLoading}
         />
       </div>
-      <Button onClick={handleFormSubmit} disabled={isLoading || !sourceText.trim()} className="w-full">
-        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+
+      <Button
+        onClick={() => handleGenerate(sourceText)}
+        disabled={isLoading || !sourceText.trim()}
+        className="w-full rounded-full"
+      >
+        <Sparkles className="mr-2 h-4 w-4" />
         Generate Quiz
       </Button>
-
-      <ArtifactCollabPanel
-        latestArtifactId={latestArtifactId}
-        isLoading={isLoading}
-        plan={plan}
-        history={history}
-        transformActions={[
-          {
-            label: 'Transform to Flashcards',
-            successMessage: 'Flashcards artifact created',
-            request: {
-              targetToolId: 'flashcards',
-              targetFlowName: 'generateFlashcards',
-              transformInput: { sourceText, count: 12 },
-              title: 'Flashcards from Quiz',
-            },
-          },
-          {
-            label: 'Transform to Notes',
-            successMessage: 'Notes artifact created',
-            request: {
-              targetToolId: 'notes',
-              targetFlowName: 'generateNotes',
-              transformInput: { sourceText, style: 'structured', length: 'medium' },
-              title: 'Notes from Quiz',
-            },
-          },
-        ]}
-      />
-    </div>
+    </>
   );
 
   return (
     <WorkbenchShell
-      title={isAssignmentContext ? 'Create New Quiz' : 'Quiz Studio'}
-      description={isAssignmentContext ? 'Create quiz content to attach to an assignment.' : 'Generate, review, and run quizzes in a unified workbench.'}
-      plan={plan}
-      left={leftPanel}
-      center={centerPanel}
-      right={rightPanel}
-    />
+      title={isAssignmentContext ? 'Create Quiz' : 'Quiz'}
+      sidebar={sidebar}
+    >
+      <SourceInput
+        value={sourceText}
+        onChange={setSourceText}
+        onSubmit={() => handleGenerate(sourceText)}
+        placeholder="Paste or type your source material..."
+      />
+    </WorkbenchShell>
   );
 }
 
 export default function QuizPage() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <QuizPageContent />
-        </Suspense>
-    )
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+      <QuizPageContent />
+    </Suspense>
+  );
 }
