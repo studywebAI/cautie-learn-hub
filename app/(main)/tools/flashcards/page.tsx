@@ -167,22 +167,12 @@ function FlashcardsPageContent() {
   }
 
   const leftPanel = (
-    <div className="space-y-3 pt-1">
-      <Label>Source Text</Label>
-      <Textarea
-        value={sourceText}
-        onChange={(e) => setSourceText(e.target.value)}
-        onKeyDown={(e) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-            e.preventDefault();
-            handleGenerate(sourceText);
-          }
-        }}
-        placeholder="Paste material to generate flashcards..."
-        className="min-h-[74vh] text-sm"
-      />
-      <p className="text-xs text-muted-foreground">Use Ctrl/Cmd + Enter to generate.</p>
-    </div>
+    <SourceInput
+      value={sourceText}
+      onChange={setSourceText}
+      onSubmit={() => handleGenerate(sourceText)}
+      placeholder="Plak materiaal om flashcards te genereren..."
+    />
   );
 
   const centerPanel = (

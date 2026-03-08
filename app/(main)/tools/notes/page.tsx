@@ -133,25 +133,12 @@ export default function NotesPage() {
 
   const leftPanel = useMemo(
     () => (
-      <div className="space-y-3 pt-1">
-        <div className="space-y-2">
-          <Label htmlFor="source">Source Text</Label>
-          <Textarea
-            id="source"
-            value={sourceText}
-            onChange={(e) => setSourceText(e.target.value)}
-            onKeyDown={(e) => {
-              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                e.preventDefault();
-                void handleGenerate();
-              }
-            }}
-            placeholder="Paste your source content here..."
-            className="min-h-[74vh] text-sm"
-          />
-          <p className="text-xs text-muted-foreground">Use Ctrl/Cmd + Enter to generate.</p>
-        </div>
-      </div>
+      <SourceInput
+        value={sourceText}
+        onChange={setSourceText}
+        onSubmit={handleGenerate}
+        placeholder="Plak je bronmateriaal hier..."
+      />
     ),
     [sourceText, handleGenerate]
   );
