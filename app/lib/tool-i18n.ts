@@ -432,12 +432,12 @@ const nl: ToolStrings = {
     parseError: 'De inhoud kon niet worden herkend als notities.',
     labels: { pack: 'Pakket', style: 'Stijl', focus: 'Focus', tone: 'Toon', audience: 'Publiek' },
     packOptions: [
-      { value: 'core', label: 'Kern', description: 'Kernconcepten en hoofdideeën helder samengevat' },
-      { value: 'exam', label: 'Examen', description: 'Examengericht met toetsbare feiten' },
-      { value: 'reference', label: 'Referentie', description: 'Uitgebreid referentiemateriaal' },
+      { value: 'core', label: 'Basis', description: 'Kernconcepten en hoofdideeën helder samengevat' },
+      { value: 'exam', label: 'Toetsklaar', description: 'Examengericht met toetsbare feiten' },
+      { value: 'reference', label: 'Naslagwerk', description: 'Uitgebreid referentiemateriaal' },
       { value: 'lecture', label: 'College', description: 'Volgt de flow van een college' },
-      { value: 'revision', label: 'Herhaling', description: 'Ultra-beknopte samenvattingen' },
-      { value: 'research', label: 'Onderzoek', description: 'Academische stijl met bronnen' },
+      { value: 'revision', label: 'Snelle scan', description: 'Ultra-beknopte samenvattingen' },
+      { value: 'research', label: 'Academisch', description: 'Academische stijl met bronnen' },
     ],
     styleOptions: [
       { value: 'structured', label: 'Gestructureerd', description: 'Hiërarchische koppen met georganiseerde secties' },
