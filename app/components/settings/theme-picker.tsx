@@ -14,13 +14,9 @@ const THEMES: ThemeOption[] = [
   { value: 'light', label: 'light', colors: { bg: '#fff', fg: '#000', primary: '#262626', card: '#fff', muted: '#f5f5f5' } },
   { value: 'dark', label: 'dark', colors: { bg: '#0d0d0d', fg: '#fff', primary: '#e6e6e6', card: '#141414', muted: '#262626' } },
   { value: 'ocean', label: 'ocean', colors: { bg: '#f2f7fa', fg: '#1a2e3a', primary: '#0077b6', card: '#edf4f8', muted: '#dae6ed' } },
-  { value: 'ocean-dark', label: 'ocean dark', colors: { bg: '#0f1a21', fg: '#dce8ef', primary: '#1a9fd4', card: '#142530', muted: '#1c2f3b' } },
   { value: 'forest', label: 'forest', colors: { bg: '#f2f5f2', fg: '#1e3324', primary: '#2d6b3f', card: '#edf2ed', muted: '#dfe6df' } },
-  { value: 'forest-dark', label: 'forest dark', colors: { bg: '#0e150f', fg: '#dae3db', primary: '#3d9954', card: '#152017', muted: '#1c2c1f' } },
   { value: 'sunset', label: 'sunset', colors: { bg: '#fdf6f0', fg: '#2b1f18', primary: '#e84b1a', card: '#fbf0e8', muted: '#f0ddd0' } },
-  { value: 'sunset-dark', label: 'sunset dark', colors: { bg: '#170f0b', fg: '#f0d8c8', primary: '#e84b1a', card: '#1f1510', muted: '#2b1c14' } },
   { value: 'rose', label: 'rose', colors: { bg: '#faf2f5', fg: '#331a24', primary: '#b8366a', card: '#f7eaf0', muted: '#edd7e0' } },
-  { value: 'rose-dark', label: 'rose dark', colors: { bg: '#170e12', fg: '#ecd8e0', primary: '#d14080', card: '#1f1219', muted: '#2b1820' } },
 ];
 
 function ThemeCard({ option, selected, onClick }: { option: ThemeOption; selected: boolean; onClick: () => void }) {
@@ -40,7 +36,6 @@ function ThemeCard({ option, selected, onClick }: { option: ThemeOption; selecte
           <Check className="w-3 h-3" style={{ color: option.colors.bg }} />
         </div>
       )}
-      {/* Mini UI preview */}
       <div className="flex flex-col gap-1.5 w-full">
         <div className="flex items-center gap-1.5">
           <div className="w-8 h-1.5 rounded-full" style={{ backgroundColor: option.colors.primary }} />
@@ -70,7 +65,7 @@ export function ThemePicker({
   return (
     <div className="space-y-3">
       <label className="text-sm text-foreground lowercase">theme</label>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3">
         {THEMES.map((t) => (
           <ThemeCard key={t.value} option={t} selected={theme === t.value} onClick={() => setTheme(t.value)} />
         ))}
