@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense, useContext, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useSavedRun } from '@/hooks/use-saved-run';
 import { Loader2, Sparkles } from 'lucide-react';
 import { FlashcardViewer, StudyMode } from '@/components/tools/flashcard-viewer';
 import { AppContext } from '@/contexts/app-context';
