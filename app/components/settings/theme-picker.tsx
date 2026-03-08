@@ -13,10 +13,10 @@ type ThemeOption = {
 const THEMES: ThemeOption[] = [
   { value: 'light', label: 'light', colors: { bg: '#fff', fg: '#000', primary: '#262626', card: '#fff', muted: '#f5f5f5' } },
   { value: 'dark', label: 'dark', colors: { bg: '#0d0d0d', fg: '#fff', primary: '#e6e6e6', card: '#141414', muted: '#262626' } },
-  { value: 'ocean', label: 'ocean', colors: { bg: '#f2f7fa', fg: '#1a2e3a', primary: '#0077b6', card: '#edf4f8', muted: '#dae6ed' } },
-  { value: 'forest', label: 'forest', colors: { bg: '#f2f5f2', fg: '#1e3324', primary: '#2d6b3f', card: '#edf2ed', muted: '#dfe6df' } },
-  { value: 'sunset', label: 'sunset', colors: { bg: '#fdf6f0', fg: '#2b1f18', primary: '#e84b1a', card: '#fbf0e8', muted: '#f0ddd0' } },
-  { value: 'rose', label: 'rose', colors: { bg: '#faf2f5', fg: '#331a24', primary: '#b8366a', card: '#f7eaf0', muted: '#edd7e0' } },
+  { value: 'ocean', label: 'ocean', colors: { bg: '#f4f7f9', fg: '#1a2a33', primary: '#2a6a8f', card: '#eef3f6', muted: '#e4eaee' } },
+  { value: 'forest', label: 'forest', colors: { bg: '#f2f5f3', fg: '#1c2e20', primary: '#2d6b3f', card: '#edf2ee', muted: '#e2e8e3' } },
+  { value: 'sunset', label: 'sunset', colors: { bg: '#f9f5f2', fg: '#2b2118', primary: '#b86425', card: '#f5f0eb', muted: '#ebe3dc' } },
+  { value: 'rose', label: 'rose', colors: { bg: '#f9f2f5', fg: '#331a24', primary: '#a33c5e', card: '#f5eaef', muted: '#ebe0e5' } },
 ];
 
 function ThemeCard({ option, selected, onClick }: { option: ThemeOption; selected: boolean; onClick: () => void }) {
