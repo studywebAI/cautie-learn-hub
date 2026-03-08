@@ -35,6 +35,10 @@ function QuizPageContent() {
   const [questionCount, setQuestionCount] = useState(7);
   const [questionType, setQuestionType] = useState('mixed');
   const [feedbackStyle, setFeedbackStyle] = useState('immediate');
+  const [gradingStrictness, setGradingStrictness] = useState('moderate');
+  const [spellingTolerance, setSpellingTolerance] = useState('lenient');
+  const [partialCredit, setPartialCredit] = useState('enabled');
+  const [gradingMethod, setGradingMethod] = useState('auto');
   const [currentView, setCurrentView] = useState<'setup' | 'take' | 'duel'>('setup');
   const { toast } = useToast();
 
