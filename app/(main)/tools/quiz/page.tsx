@@ -145,11 +145,11 @@ function QuizPageContent() {
   if (generatedQuiz && currentView === 'take') {
     return (
       <div className="h-full flex flex-col">
-        <div className="px-6 pt-3 flex items-center justify-between">
+        <div className="px-4 md:px-6 pt-3 flex items-center justify-between">
           <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">← Back</Button>
           <ExportToolbar
             toolType="quiz"
-            title={generatedQuiz.title}
+            title={customTitle.trim() || generatedQuiz.title}
             getMarkdown={() => quizToMarkdown(generatedQuiz)}
             getHtml={() => quizToHtml(generatedQuiz)}
           />
