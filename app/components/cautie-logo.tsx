@@ -20,40 +20,47 @@ const HIGHLIGHT_COLORS = [
   '#9DE0AD', // seafoam
 ];
 
-// Generate a slightly different hand-drawn highlighter path each time
-function generateHighlighterPath(width: number, height: number, seed: number): string {
-  const r = (base: number, variance: number) => base + ((seed * 13 + variance * 7) % 100) / 100 * variance * 2 - variance;
-  
-  // Main stroke: a thick, angled swipe like dragging a highlighter bottom-left to top-right
-  const startX = r(-width * 0.06, width * 0.03);
-  const startY = r(height * 0.92, height * 0.06);
-  const endX = r(width * 1.08, width * 0.04);
-  const endY = r(height * 0.08, height * 0.06);
-  
-  // Thickness of the stroke (highlighter width)
-  const thick = r(height * 0.55, height * 0.08);
-  
-  // Angle perpendicular to the stroke direction for thickness
-  const dx = endX - startX;
-  const dy = endY - startY;
-  const len = Math.sqrt(dx * dx + dy * dy);
-  const nx = (-dy / len) * thick;
-  const ny = (dx / len) * thick;
-  
-  // Wobbly control points along the stroke
-  const mid1x = r(width * 0.3, width * 0.06);
-  const mid1y = r(height * 0.65, height * 0.08);
-  const mid2x = r(width * 0.65, width * 0.06);
-  const mid2y = r(height * 0.35, height * 0.08);
-  
-  // The stroke is two wobbly edges offset by the thickness
-  return `
-    M ${startX} ${startY}
-    C ${mid1x} ${mid1y + r(0, height * 0.04)}, ${mid2x} ${mid2y + r(0, height * 0.04)}, ${endX} ${endY}
-    L ${endX + nx * r(1, 0.15)} ${endY + ny * r(1, 0.15)}
-    C ${mid2x + nx + r(0, width * 0.03)} ${mid2y + ny + r(0, height * 0.04)}, ${mid1x + nx + r(0, width * 0.03)} ${mid1y + ny + r(0, height * 0.04)}, ${startX + nx * r(1, 0.12)} ${startY + ny * r(1, 0.12)}
-    Z
-  `;
+// Generate multiple diagonal strokes like ////// highlighter marks, top-right to bottom-left
+function generateHighlighterStrokes(width: number, height: number, seed: number): string[] {
+  const r = (base: number, variance: number, offset: number) =>
+    base + ((seed * 13 + offset * 37 + variance * 7) % 100) / 100 * variance * 2 - variance;
+
+  const strokes: string[] = [];
+  const count = 5 + (seed % 4); // 5-8 diagonal strokes spread across the word
+  const spacing = width / (count - 0.5);
+
+  for (let i = 0; i < count; i++) {
+    const centerX = spacing * (i + 0.25) + r(0, spacing * 0.15, i);
+    // Each stroke goes from top-right to bottom-left (like a / shape)
+    const topX = centerX + r(width * 0.06, width * 0.025, i * 3);
+    const topY = r(-height * 0.08, height * 0.1, i * 5); // uneven top ends
+    const botX = centerX - r(width * 0.06, width * 0.025, i * 7);
+    const botY = height + r(height * 0.06, height * 0.1, i * 11); // uneven bottom ends
+
+    // Stroke width varies slightly
+    const strokeW = r(spacing * 0.7, spacing * 0.12, i * 13);
+
+    // Wobbly midpoint
+    const midX = (topX + botX) / 2 + r(0, width * 0.015, i * 17);
+    const midY = height * 0.5 + r(0, height * 0.06, i * 19);
+
+    // Left edge (going down)
+    const lTopX = topX - strokeW / 2;
+    const lBotX = botX - strokeW / 2;
+    // Right edge (going up)
+    const rTopX = topX + strokeW / 2;
+    const rBotX = botX + strokeW / 2;
+
+    strokes.push(`
+      M ${lTopX} ${topY}
+      Q ${midX - strokeW / 2 + r(0, 1.5, i * 23)} ${midY + r(0, 2, i * 29)}, ${lBotX} ${botY}
+      L ${rBotX} ${botY}
+      Q ${midX + strokeW / 2 + r(0, 1.5, i * 31)} ${midY + r(0, 2, i * 37)}, ${rTopX} ${topY}
+      Z
+    `);
+  }
+
+  return strokes;
 }
 
 interface CautieLogoProps {
@@ -62,31 +69,27 @@ interface CautieLogoProps {
 }
 
 export function CautieLogo({ size = 'md', className = '' }: CautieLogoProps) {
-  const { color, path, seed } = useMemo(() => {
+  const { color, strokes } = useMemo(() => {
     const s = Math.floor(Math.random() * 1000);
     const c = HIGHLIGHT_COLORS[s % HIGHLIGHT_COLORS.length];
-    const p = generateHighlighterPath(100, 32, s);
-    return { color: c, path: p, seed: s };
+    const paths = generateHighlighterStrokes(100, 32, s);
+    return { color: c, strokes: paths };
   }, []);
 
   const textSize = size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-2xl' : 'text-base';
-  const svgH = size === 'sm' ? 22 : size === 'lg' ? 38 : 28;
-  const svgW = size === 'sm' ? 52 : size === 'lg' ? 100 : 72;
   const padX = size === 'sm' ? 'px-1.5' : size === 'lg' ? 'px-3' : 'px-2';
 
   return (
     <span className={`relative inline-flex items-center ${padX} ${className}`}>
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
-        viewBox={`0 0 100 32`}
+        viewBox="0 0 100 32"
         preserveAspectRatio="none"
         style={{ width: '100%', height: '100%' }}
       >
-        <path
-          d={path}
-          fill={color}
-          opacity={0.45}
-        />
+        {strokes.map((d, i) => (
+          <path key={i} d={d} fill={color} opacity={0.35} />
+        ))}
       </svg>
       <span className={`relative ${textSize} tracking-tight lowercase font-medium`} style={{ zIndex: 1 }}>
         cautie
