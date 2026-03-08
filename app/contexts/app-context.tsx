@@ -378,7 +378,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }, [session]);
 
   const contextValue = useMemo(() => ({
-    session, isLoading, language, setLanguage, dictionary, role, setRole,
+    session, isLoading, appReady, language, setLanguage, dictionary, role, setRole,
     highContrast, setHighContrast, dyslexiaFont, setDyslexiaFont,
     reducedMotion, setReducedMotion, theme, setTheme, sessionRecap, setSessionRecap,
     classes, subjects, createClass, isCreatingClass, refetchClasses,
