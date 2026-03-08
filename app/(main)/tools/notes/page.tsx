@@ -15,7 +15,11 @@ import { PillSelector } from '@/components/tools/pill-selector';
 import { PresetManager } from '@/components/tools/preset-manager';
 import { Slider } from '@/components/ui/slider';
 
-export default function NotesPage() {
+function NotesPageContent() {
+  const searchParams = useSearchParams();
+  const runId = searchParams.get('runId');
+  const { run: savedRun } = useSavedRun(runId);
+
   const [sourceText, setSourceText] = useState('');
   const [length, setLength] = useState<'short' | 'medium' | 'long'>('medium');
   const [style, setStyle] = useState('structured');
@@ -28,6 +32,14 @@ export default function NotesPage() {
   const { toast } = useToast();
 
   const canGenerate = sourceText.trim().length > 0 && !isLoading;
+
+  // Load saved run from history
+  useEffect(() => {
+    if (savedRun?.output_payload && savedRun.status === 'succeeded') {
+      const output = savedRun.output_payload;
+      setGeneratedNotes((output.notes || null) as GenerateNotesOutput['notes'] | null);
+    }
+  }, [savedRun]);
 
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`tools.notes.${k}`);
