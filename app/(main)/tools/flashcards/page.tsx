@@ -191,6 +191,18 @@ function FlashcardsPageContent() {
 
   const sidebar = (
     <>
+      <div className="space-y-1.5">
+        <p className="text-xs text-muted-foreground">Title</p>
+        <input
+          type="text"
+          value={customTitle}
+          onChange={(e) => setCustomTitle(e.target.value)}
+          placeholder="e.g. Spanish Vocab Set 2"
+          className="w-full h-8 rounded-md border border-input bg-background px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          disabled={isLoading}
+        />
+      </div>
+
       <PresetManager
         toolId="flashcards"
         currentSettings={currentSettings}
