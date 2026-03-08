@@ -278,13 +278,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const setTheme = (newTheme: ThemeType) => {
     setThemeState(newTheme);
     saveToLocalStorage('studyweb-theme', newTheme);
-    applyAppearance(newTheme, accentColor);
-  };
-
-  const setAccentColor = (newAccentColor: AccentColor) => {
-    setAccentColorState(newAccentColor);
-    saveToLocalStorage('studyweb-accent-color', newAccentColor);
-    applyAppearance(theme, newAccentColor);
+    applyAppearance(newTheme);
   };
 
   const refetchClasses = useCallback(async () => {
