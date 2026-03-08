@@ -33,7 +33,7 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
             className={cn(
               'p-0.5 rounded-full transition-colors',
               showInfo
-                ? 'bg-foreground text-background'
+                ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             )}
           >
@@ -67,7 +67,7 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
               'hover:bg-accent hover:text-accent-foreground',
               'disabled:opacity-50 disabled:pointer-events-none',
               value === opt.value
-                ? 'bg-foreground text-background border-foreground'
+                ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-background text-foreground border-border'
             )}
           >
