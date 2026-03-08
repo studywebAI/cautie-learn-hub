@@ -255,49 +255,49 @@
     --sidebar-ring: 204 75% 30%;
   }
 
-  /* Forest: everything is green, just green */
+  /* Forest: committed green tones */
   .theme-forest {
-    --background: 140 18% 96%;
-    --foreground: 140 22% 13%;
-    --card: 140 16% 94%;
-    --card-foreground: 140 22% 13%;
-    --popover: 140 16% 94%;
-    --popover-foreground: 140 22% 13%;
-    --primary: 140 40% 28%;
+    --background: 140 18% 92%;
+    --foreground: 140 25% 13%;
+    --card: 140 16% 87%;
+    --card-foreground: 140 25% 13%;
+    --popover: 140 16% 88%;
+    --popover-foreground: 140 25% 13%;
+    --primary: 140 38% 26%;
     --primary-foreground: 140 14% 96%;
-    --secondary: 140 12% 91%;
-    --secondary-foreground: 140 22% 13%;
-    --muted: 140 10% 90%;
-    --muted-foreground: 140 12% 38%;
-    --accent: 140 12% 91%;
-    --accent-foreground: 140 22% 13%;
+    --secondary: 140 14% 85%;
+    --secondary-foreground: 140 25% 13%;
+    --muted: 140 12% 85%;
+    --muted-foreground: 140 14% 38%;
+    --accent: 140 14% 85%;
+    --accent-foreground: 140 25% 13%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --success: 140 40% 32%;
+    --success: 140 38% 30%;
     --success-foreground: 140 14% 96%;
-    --border: 140 10% 84%;
-    --input: 140 10% 84%;
-    --ring: 140 40% 28%;
+    --border: 140 12% 80%;
+    --input: 140 12% 80%;
+    --ring: 140 38% 26%;
     --chart-1: 140 36% 26%;
     --chart-2: 140 28% 36%;
     --chart-3: 140 20% 46%;
     --chart-4: 140 14% 56%;
     --chart-5: 140 10% 68%;
-    --surface-1: 140 16% 94%;
-    --surface-2: 140 14% 92%;
-    --surface-3: 140 12% 90%;
-    --interactive-hover: 140 12% 88%;
-    --interactive-active: 140 12% 85%;
+    --surface-1: 140 16% 87%;
+    --surface-2: 140 14% 85%;
+    --surface-3: 140 12% 83%;
+    --interactive-hover: 140 14% 81%;
+    --interactive-active: 140 14% 78%;
     --focus-ring: 140 36% 26%;
-    --sidebar-background: 140 16% 95%;
-    --sidebar-foreground: 140 22% 13%;
-    --sidebar-primary: 140 40% 28%;
+    --sidebar-background: 140 16% 87%;
+    --sidebar-foreground: 140 25% 13%;
+    --sidebar-primary: 140 38% 26%;
     --sidebar-primary-foreground: 140 14% 96%;
-    --sidebar-accent: 140 12% 90%;
-    --sidebar-accent-foreground: 140 22% 13%;
+    --sidebar-accent: 140 12% 83%;
+    --sidebar-accent-foreground: 140 25% 13%;
     --sidebar-active-foreground: var(--sidebar-accent-foreground);
-    --sidebar-border: 140 10% 86%;
-    --sidebar-ring: 140 40% 28%;
+    --sidebar-border: 140 12% 82%;
+    --sidebar-ring: 140 38% 26%;
   }
 
   /* Sunset: everything is warm orange, just orange */
