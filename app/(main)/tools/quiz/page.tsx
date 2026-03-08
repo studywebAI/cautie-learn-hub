@@ -20,6 +20,7 @@ import { ExportToolbar } from '@/components/tools/export-toolbar';
 import { quizToMarkdown, quizToHtml } from '@/lib/export-formatters';
 import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseQuizFromMarkdown, parseQuizFromHtml } from '@/lib/import-parsers';
+import { getToolStrings } from '@/lib/tool-i18n';
 
 function QuizPageContent() {
   const router = useRouter();
@@ -32,6 +33,7 @@ function QuizPageContent() {
   const { run: savedRun, isLoading: isLoadingRun } = useSavedRun(runId);
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
+  const t = getToolStrings(language);
 
   const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
   const [isLoading, setIsLoading] = useState(false);
@@ -74,7 +76,7 @@ function QuizPageContent() {
       }
     } catch (error) {
       console.error('Error generating quiz:', error);
-      toast({ variant: 'destructive', title: 'Quiz generation failed', description: (error as any)?.message || 'Unable to generate quiz' });
+      toast({ variant: 'destructive', title: t.quiz.generatingTitle, description: (error as any)?.message || 'Unable to generate quiz' });
       setCurrentView('setup');
     } finally {
       setIsLoading(false);
@@ -85,7 +87,6 @@ function QuizPageContent() {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
   }, [sourceTextFromParams, handleGenerate]);
 
-  // Load saved run from history
   useEffect(() => {
     if (savedRun?.output_payload && savedRun.status === 'succeeded') {
       const output = savedRun.output_payload;
@@ -135,8 +136,8 @@ function QuizPageContent() {
       <div className="flex flex-1 items-center justify-center p-8">
         <div className="flex flex-col items-center gap-2 text-center">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <h3 className="text-lg font-normal mt-3">Generating Quiz</h3>
-          <p className="text-xs text-muted-foreground">Working on it...</p>
+          <h3 className="text-lg font-normal mt-3">{t.quiz.generatingTitle}</h3>
+          <p className="text-xs text-muted-foreground">{t.workingOnIt}</p>
         </div>
       </div>
     );
@@ -146,7 +147,7 @@ function QuizPageContent() {
     return (
       <div className="h-full flex flex-col">
         <div className="px-4 md:px-6 pt-3 flex items-center justify-between">
-          <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">← Back</Button>
+          <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">{t.back}</Button>
           <ExportToolbar
             toolType="quiz"
             title={customTitle.trim() || generatedQuiz.title}
@@ -164,97 +165,17 @@ function QuizPageContent() {
     return <QuizDuel sourceText={sourceText} onRestart={handleRestart} />;
   }
 
-  const modeOptions = [
-    { value: 'practice', label: 'Practice', description: 'Relaxed mode with hints and explanations after each question' },
-    { value: 'normal', label: 'Normal', description: 'Standard quiz with score at the end' },
-    { value: 'exam', label: 'Exam', description: 'Strict timed exam — no going back, no hints' },
-    { value: 'survival', label: 'Survival', description: 'Endless questions until you get one wrong' },
-    { value: 'speedrun', label: 'Speedrun', description: 'Answer as many as possible in a time limit' },
-    { value: 'adaptive', label: 'Adaptive', description: 'Difficulty adjusts based on your performance' },
-    { value: 'boss-fight', label: 'Boss Fight', description: 'One extremely hard multi-part question' },
-    { value: 'duel', label: 'Duel', description: 'Compete head-to-head against an AI opponent' },
-    { value: 'blitz', label: 'Blitz', description: '5-second timer per question, pure speed' },
-    { value: 'reverse', label: 'Reverse', description: 'Given the answer, figure out the question' },
-    { value: 'elimination', label: 'Elimination', description: 'Wrong answers remove options until only correct remains' },
-  ];
-
-  const packOptions = [
-    { value: 'practice', label: 'Practice', description: 'Lighter questions focused on understanding concepts' },
-    { value: 'exam', label: 'Exam', description: 'Rigorous questions matching real exam difficulty' },
-    { value: 'adaptive', label: 'Adaptive', description: 'Mix of difficulties that adapts to your level' },
-    { value: 'deep-dive', label: 'Deep Dive', description: 'Focuses on edge cases, exceptions, and nuance' },
-    { value: 'rapid-review', label: 'Rapid Review', description: 'Quick-fire questions covering broad surface area' },
-    { value: 'application', label: 'Application', description: 'Scenario-based questions testing real-world usage' },
-  ];
-
-  const difficultyOptions = [
-    { value: 'balanced', label: 'Balanced', description: 'Even mix of easy, medium, and hard questions' },
-    { value: 'ramp', label: 'Ramp', description: 'Starts easy and gradually gets harder' },
-    { value: 'hard', label: 'Hard', description: 'All questions are challenging from the start' },
-    { value: 'easy', label: 'Easy', description: 'Beginner-friendly questions for building confidence' },
-    { value: 'random', label: 'Random', description: 'Completely random difficulty distribution' },
-    { value: 'inverted', label: 'Inverted', description: 'Starts hard and gets easier — reverse ramp' },
-  ];
-
-  const questionTypeOptions = [
-    { value: 'mixed', label: 'Mixed', description: 'Combination of all question types' },
-    { value: 'multiple-choice', label: 'Multiple Choice', description: 'Pick the correct answer from options' },
-    { value: 'true-false', label: 'True/False', description: 'Simple true or false statements' },
-    { value: 'fill-blank', label: 'Fill in Blank', description: 'Complete the missing word or phrase' },
-    { value: 'short-answer', label: 'Short Answer', description: 'Write a brief response in your own words' },
-    { value: 'matching', label: 'Matching', description: 'Match items from two columns together' },
-    { value: 'ordering', label: 'Ordering', description: 'Put items in the correct sequence' },
-  ];
-
-  const feedbackOptions = [
-    { value: 'immediate', label: 'Immediate', description: 'See if you\'re right or wrong after each question' },
-    { value: 'end', label: 'At End', description: 'Review all answers together when the quiz is done' },
-    { value: 'detailed', label: 'Detailed', description: 'Full explanation with source references after each question' },
-    { value: 'minimal', label: 'Minimal', description: 'Just correct/incorrect, no explanations' },
-    { value: 'none', label: 'None', description: 'No feedback at all — score only' },
-  ];
-
-  const gradingStrictnessOptions = [
-    { value: 'exact', label: 'Exact', description: 'Answer must match exactly — no wiggle room at all' },
-    { value: 'strict', label: 'Strict', description: 'Very close match required, minor phrasing differences allowed' },
-    { value: 'moderate', label: 'Moderate', description: 'Accepts semantically correct answers with different wording' },
-    { value: 'lenient', label: 'Lenient', description: 'Accepts any answer that demonstrates understanding' },
-    { value: 'conceptual', label: 'Conceptual', description: 'Only checks if the core concept is correct, ignores details' },
-  ];
-
-  const spellingToleranceOptions = [
-    { value: 'none', label: 'No Tolerance', description: 'Spelling mistakes count as wrong answers' },
-    { value: 'strict', label: 'Strict', description: 'Only allows 1 character difference' },
-    { value: 'lenient', label: 'Lenient', description: 'Allows minor typos and common misspellings' },
-    { value: 'ignore', label: 'Ignore Spelling', description: 'Spelling is completely ignored when grading' },
-  ];
-
-  const partialCreditOptions = [
-    { value: 'enabled', label: 'Enabled', description: 'Get partial points for partially correct answers' },
-    { value: 'disabled', label: 'Disabled', description: 'All or nothing — no partial credit' },
-    { value: 'generous', label: 'Generous', description: 'Awards credit for any relevant knowledge shown' },
-    { value: 'weighted', label: 'Weighted', description: 'Partial credit scaled by how close the answer is' },
-  ];
-
-  const gradingMethodOptions = [
-    { value: 'auto', label: 'Auto', description: 'AI grades automatically based on your strictness settings' },
-    { value: 'self', label: 'Self Grade', description: 'Grade yourself — compare your answer to the correct one' },
-    { value: 'ai-review', label: 'AI Review', description: 'AI grades and provides detailed improvement suggestions' },
-    { value: 'off', label: 'Off', description: 'No grading at all — just practice without scores' },
-    { value: 'peer', label: 'Peer', description: 'Share answers for peer review and discussion' },
-  ];
-
   const currentSettings = { quizMode, modePack, difficultyProfile, questionCount, questionType, feedbackStyle, gradingStrictness, spellingTolerance, partialCredit, gradingMethod };
 
   const sidebar = (
     <>
       <div className="space-y-1.5">
-        <p className="text-xs text-muted-foreground">Title</p>
+        <p className="text-xs text-muted-foreground">{t.title}</p>
         <input
           type="text"
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
-          placeholder="e.g. Biology Ch3 Quiz"
+          placeholder={t.titlePlaceholder}
           className="w-full h-8 rounded-md border border-input bg-background px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           disabled={isLoading}
         />
@@ -277,29 +198,29 @@ function QuizPageContent() {
         }}
       />
 
-      <PillSelector label="Pack" options={packOptions} value={modePack}
+      <PillSelector label={t.quiz.labels.pack} options={t.quiz.packOptions} value={modePack}
         onChange={(v) => { setModePack(v); if (v === 'adaptive') setQuizMode('adaptive'); if (v === 'exam') setQuizMode('exam'); if (v === 'practice') setQuizMode('practice'); }}
         disabled={isLoading} />
 
-      <PillSelector label="Mode" options={modeOptions} value={quizMode} onChange={(v) => setQuizMode(v as QuizMode)} disabled={isLoading} />
+      <PillSelector label={t.quiz.labels.mode} options={t.quiz.modeOptions} value={quizMode} onChange={(v) => setQuizMode(v as QuizMode)} disabled={isLoading} />
 
-      <PillSelector label="Difficulty" options={difficultyOptions} value={difficultyProfile} onChange={setDifficultyProfile} disabled={isLoading} />
+      <PillSelector label={t.quiz.labels.difficulty} options={t.quiz.difficultyOptions} value={difficultyProfile} onChange={setDifficultyProfile} disabled={isLoading} />
 
-      <PillSelector label="Question Type" options={questionTypeOptions} value={questionType} onChange={setQuestionType} disabled={isLoading} />
+      <PillSelector label={t.quiz.labels.questionType} options={t.quiz.questionTypeOptions} value={questionType} onChange={setQuestionType} disabled={isLoading} />
 
-      <PillSelector label="Feedback" options={feedbackOptions} value={feedbackStyle} onChange={setFeedbackStyle} disabled={isLoading} />
+      <PillSelector label={t.quiz.labels.feedback} options={t.quiz.feedbackOptions} value={feedbackStyle} onChange={setFeedbackStyle} disabled={isLoading} />
 
-      <PillSelector label="Grading Strictness" options={gradingStrictnessOptions} value={gradingStrictness} onChange={setGradingStrictness} disabled={isLoading} />
+      <PillSelector label={t.quiz.labels.gradingStrictness} options={t.quiz.gradingStrictnessOptions} value={gradingStrictness} onChange={setGradingStrictness} disabled={isLoading} />
 
-      <PillSelector label="Spelling Tolerance" options={spellingToleranceOptions} value={spellingTolerance} onChange={setSpellingTolerance} disabled={isLoading} />
+      <PillSelector label={t.quiz.labels.spellingTolerance} options={t.quiz.spellingToleranceOptions} value={spellingTolerance} onChange={setSpellingTolerance} disabled={isLoading} />
 
-      <PillSelector label="Partial Credit" options={partialCreditOptions} value={partialCredit} onChange={setPartialCredit} disabled={isLoading} />
+      <PillSelector label={t.quiz.labels.partialCredit} options={t.quiz.partialCreditOptions} value={partialCredit} onChange={setPartialCredit} disabled={isLoading} />
 
-      <PillSelector label="Grading Method" options={gradingMethodOptions} value={gradingMethod} onChange={setGradingMethod} disabled={isLoading} />
+      <PillSelector label={t.quiz.labels.gradingMethod} options={t.quiz.gradingMethodOptions} value={gradingMethod} onChange={setGradingMethod} disabled={isLoading} />
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Questions</p>
+          <p className="text-xs text-muted-foreground">{t.questions}</p>
           <span className="text-xs font-mono tabular-nums">{questionCount}</span>
         </div>
         <Slider value={[questionCount]} onValueChange={([v]) => setQuestionCount(v)} min={1} max={50} step={1} disabled={isLoading} />
@@ -307,7 +228,7 @@ function QuizPageContent() {
 
       <Button onClick={() => handleGenerate(sourceText)} disabled={isLoading || !sourceText.trim()} className="w-full rounded-full">
         <Sparkles className="mr-2 h-4 w-4" />
-        Generate Quiz
+        {t.quiz.generate}
       </Button>
 
       <ImportToolbar
@@ -318,7 +239,7 @@ function QuizPageContent() {
             setGeneratedQuiz(quiz);
             setCurrentView('take');
           } else {
-            toast({ variant: 'destructive', title: 'Could not parse', description: 'The content could not be recognized as a quiz. Make sure it matches the export format.' });
+            toast({ variant: 'destructive', title: t.couldNotParse, description: t.quiz.parseError });
           }
         }}
         disabled={isLoading}
@@ -327,8 +248,8 @@ function QuizPageContent() {
   );
 
   return (
-    <WorkbenchShell title={isAssignmentContext ? 'Create Quiz' : 'Quiz'} sidebar={sidebar}>
-      <SourceInput value={sourceText} onChange={setSourceText} onSubmit={() => handleGenerate(sourceText)} placeholder="Paste or type your source material..." />
+    <WorkbenchShell title={isAssignmentContext ? t.quiz.createQuiz : 'Quiz'} sidebar={sidebar}>
+      <SourceInput value={sourceText} onChange={setSourceText} onSubmit={() => handleGenerate(sourceText)} placeholder={t.sourceInputPlaceholder} />
     </WorkbenchShell>
   );
 }
