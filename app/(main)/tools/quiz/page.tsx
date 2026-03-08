@@ -97,6 +97,10 @@ function QuizPageContent() {
   useEffect(() => { localStorage.setItem('tools.quiz.difficulty', difficultyProfile); }, [difficultyProfile]);
   useEffect(() => { localStorage.setItem('tools.quiz.questionType', questionType); }, [questionType]);
   useEffect(() => { localStorage.setItem('tools.quiz.feedbackStyle', feedbackStyle); }, [feedbackStyle]);
+  useEffect(() => { localStorage.setItem('tools.quiz.gradingStrictness', gradingStrictness); }, [gradingStrictness]);
+  useEffect(() => { localStorage.setItem('tools.quiz.spellingTolerance', spellingTolerance); }, [spellingTolerance]);
+  useEffect(() => { localStorage.setItem('tools.quiz.partialCredit', partialCredit); }, [partialCredit]);
+  useEffect(() => { localStorage.setItem('tools.quiz.gradingMethod', gradingMethod); }, [gradingMethod]);
 
   const handleRestart = () => {
     setGeneratedQuiz(null);
