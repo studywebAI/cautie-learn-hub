@@ -213,6 +213,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         console.error('Init error:', e);
       } finally {
         setIsLoading(false);
+        // Small delay to let UI settle, then mark ready
+        setTimeout(() => setAppReady(true), 600);
       }
     };
 
