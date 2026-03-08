@@ -298,9 +298,6 @@ export default function ToolsPage() {
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link href="/tools/flashcards">Build Flashcards</Link>
                 </Button>
-                <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/tools/wordweb">Create Wordweb</Link>
-                </Button>
                 {latestRun?.tool_id && (
                   <Button asChild variant="secondary" className="w-full justify-start">
                     <Link href={resumeHref || `/tools/${latestRun.tool_id}`}>Continue Last Session</Link>
