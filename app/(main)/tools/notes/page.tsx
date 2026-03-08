@@ -42,6 +42,9 @@ function NotesPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState<GenerateNotesOutput['notes'] | null>(null);
   const [customTitle, setCustomTitle] = useState('');
+  const [paintActive, setPaintActive] = useState(false);
+  const [highlightActive, setHighlightActive] = useState(false);
+  const notesContentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const canGenerate = sourceText.trim().length > 0 && !isLoading;
