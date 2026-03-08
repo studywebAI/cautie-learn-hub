@@ -136,7 +136,6 @@ function FlashcardsPageContent() {
       </div>
     );
   }
-  }
 
   const studyModeOptions = [
     { value: 'flip', label: 'Flip', description: 'Classic card flip — tap to reveal the answer' },
