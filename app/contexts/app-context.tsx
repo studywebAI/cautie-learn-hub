@@ -133,7 +133,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
 
-  const applyAppearance = useCallback((currentTheme: ThemeType, currentAccent: AccentColor) => {
+  const applyAppearance = useCallback((currentTheme: ThemeType) => {
     if (typeof window === 'undefined') return;
     const root = document.documentElement;
     root.classList.remove(
@@ -147,17 +147,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       'theme-sunset-dark',
       'theme-rose',
       'theme-rose-dark',
-      'accent-sky',
-      'accent-mint',
-      'accent-coral',
-      'accent-violet',
-      'accent-amber',
-      'has-accent'
     );
     root.classList.add(`theme-${currentTheme}`);
-    if (currentAccent !== 'none') {
-      root.classList.add('has-accent', `accent-${currentAccent}`);
-    }
   }, []);
 
   // OPTIMIZED: Load cache first (instant), then fetch in parallel
