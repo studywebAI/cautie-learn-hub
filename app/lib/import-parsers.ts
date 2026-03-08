@@ -91,10 +91,13 @@ export function parseFlashcardsFromMarkdown(text: string): Flashcard[] | null {
     const cardPattern = /###\s*Card\s*\d+\s*\n\*\*Front:\*\*\s*(.*?)\n\*\*Back:\*\*\s*(.*?)(?=\n###|\n#|$)/gis;
     let match;
     while ((match = cardPattern.exec(text)) !== null) {
+      const front = match[1].trim();
+      const back = match[2].trim();
       cards.push({
         id: `card-${cards.length + 1}`,
-        front: match[1].trim(),
-        back: match[2].trim(),
+        front,
+        back,
+        cloze: front.replace(new RegExp(back.split(' ')[0], 'i'), '____'),
       });
     }
 
