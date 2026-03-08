@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BrainCircuit, Copy, FileSignature, Blocks, Sparkles, Clock3, Wand2, Network } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Copy, FileSignature, Sparkles, Clock3, Wand2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
