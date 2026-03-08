@@ -340,9 +340,9 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
                 flowName: 'explainAnswer',
                 input: {
                     question: card.front,
-                    selectedAnswer: card.back, // Treat the back as the "selected" answer
+                    selectedAnswer: card.back,
                     correctAnswer: card.back,
-                    isCorrect: true, // We always want the "why is this correct" explanation
+                    isFlashcard: true,
                 },
             }),
         });
