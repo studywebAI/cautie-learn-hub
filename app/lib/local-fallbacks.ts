@@ -14,8 +14,8 @@ export interface ProcessingResult {
  * Extractive summarization - takes first N sentences
  */
 export function simpleSummarize(text: string, maxSentences: number = 3): ProcessingResult {
-  if (!text || text.length < 50) {
-    return { success: false, reason: 'Text too short for summarization' };
+  if (!text) {
+    return { success: false, reason: 'No text provided' };
   }
 
   try {
