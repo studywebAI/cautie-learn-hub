@@ -10,7 +10,7 @@ import type { Flashcard } from '@/lib/types';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { SourceInput } from '@/components/tools/source-input';
 import { ArtifactCollabPanel } from '@/components/tools/artifact-collab-panel';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
