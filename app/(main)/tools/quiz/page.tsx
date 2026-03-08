@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense, useCallback, useContext } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
-import { Sparkles } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { FunLoader } from '@/components/tools/fun-loader';
 import { QuizTaker, QuizMode } from '@/components/tools/quiz-taker';
 import { AppContext } from '@/contexts/app-context';
