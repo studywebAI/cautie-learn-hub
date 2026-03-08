@@ -209,8 +209,6 @@ export default function SettingsPage() {
                     <ThemePicker
                       theme={theme}
                       setTheme={setTheme}
-                      accentColor={accentColor}
-                      setAccentColor={setAccentColor}
                     />
                   </CardContent>
                 </Card>
