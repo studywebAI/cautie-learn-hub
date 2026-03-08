@@ -4,6 +4,7 @@ import { useContext, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ThemePicker } from '@/components/settings/theme-picker';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
