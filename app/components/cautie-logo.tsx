@@ -19,26 +19,34 @@ const HIGHLIGHT_COLORS = [
 function generateHighlighterPath(width: number, height: number, seed: number): string {
   const r = (base: number, variance: number) => base + ((seed * 13 + variance * 7) % 100) / 100 * variance * 2 - variance;
   
-  const y1 = r(height * 0.15, height * 0.08);
-  const y2 = r(height * 0.85, height * 0.08);
-  const overshootLeft = r(-width * 0.03, width * 0.02);
-  const overshootRight = r(width * 1.04, width * 0.03);
+  // Main stroke: a thick, angled swipe like dragging a highlighter bottom-left to top-right
+  const startX = r(-width * 0.06, width * 0.03);
+  const startY = r(height * 0.92, height * 0.06);
+  const endX = r(width * 1.08, width * 0.04);
+  const endY = r(height * 0.08, height * 0.06);
   
-  // Slightly wobbly rectangle with overshoot
-  const cp1y = r(height * 0.1, height * 0.06);
-  const cp2y = r(height * 0.9, height * 0.06);
-  const midDipTop = r(height * 0.18, height * 0.05);
-  const midDipBot = r(height * 0.82, height * 0.05);
+  // Thickness of the stroke (highlighter width)
+  const thick = r(height * 0.55, height * 0.08);
   
+  // Angle perpendicular to the stroke direction for thickness
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  const nx = (-dy / len) * thick;
+  const ny = (dx / len) * thick;
+  
+  // Wobbly control points along the stroke
+  const mid1x = r(width * 0.3, width * 0.06);
+  const mid1y = r(height * 0.65, height * 0.08);
+  const mid2x = r(width * 0.65, width * 0.06);
+  const mid2y = r(height * 0.35, height * 0.08);
+  
+  // The stroke is two wobbly edges offset by the thickness
   return `
-    M ${overshootLeft} ${y1}
-    Q ${width * 0.15} ${cp1y}, ${width * 0.35} ${midDipTop}
-    Q ${width * 0.55} ${r(height * 0.12, height * 0.04)}, ${width * 0.75} ${r(height * 0.16, height * 0.05)}
-    L ${overshootRight} ${r(height * 0.14, height * 0.06)}
-    L ${overshootRight} ${r(height * 0.86, height * 0.06)}
-    Q ${width * 0.75} ${r(height * 0.88, height * 0.04)}, ${width * 0.55} ${midDipBot}
-    Q ${width * 0.35} ${cp2y}, ${width * 0.15} ${r(height * 0.85, height * 0.05)}
-    L ${overshootLeft} ${y2}
+    M ${startX} ${startY}
+    C ${mid1x} ${mid1y + r(0, height * 0.04)}, ${mid2x} ${mid2y + r(0, height * 0.04)}, ${endX} ${endY}
+    L ${endX + nx * r(1, 0.15)} ${endY + ny * r(1, 0.15)}
+    C ${mid2x + nx + r(0, width * 0.03)} ${mid2y + ny + r(0, height * 0.04)}, ${mid1x + nx + r(0, width * 0.03)} ${mid1y + ny + r(0, height * 0.04)}, ${startX + nx * r(1, 0.12)} ${startY + ny * r(1, 0.12)}
     Z
   `;
 }
