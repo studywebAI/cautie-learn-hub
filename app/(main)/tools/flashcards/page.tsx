@@ -70,6 +70,17 @@ function FlashcardsPageContent() {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
   }, [sourceTextFromParams, handleGenerate]);
 
+  // Load saved run from history
+  useEffect(() => {
+    if (savedRun?.output_payload && savedRun.status === 'succeeded') {
+      const output = savedRun.output_payload;
+      setGeneratedCards(output.flashcards || null);
+      setCurrentView('study');
+      if (savedRun.input_payload?.sourceText) setSourceText(savedRun.input_payload.sourceText);
+      if (savedRun.mode) setStudyMode(savedRun.mode as StudyMode);
+    }
+  }, [savedRun]);
+
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`tools.flashcards.${k}`);
     if (s('mode')) setStudyMode(s('mode') as StudyMode);
