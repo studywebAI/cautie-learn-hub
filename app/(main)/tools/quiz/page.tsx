@@ -57,7 +57,7 @@ function QuizPageContent() {
           mode: quizMode,
           artifactType: 'quiz',
           artifactTitle: 'Generated Quiz',
-          input: { sourceText: text, questionCount: count, language, difficultyProfile, modePack, questionType, feedbackStyle },
+          input: { sourceText: text, questionCount: count, language, difficultyProfile, modePack, questionType, feedbackStyle, gradingStrictness, spellingTolerance, partialCredit, gradingMethod },
           computeClass: count > 20 ? 'heavy' : 'standard',
         });
         const response = run?.output_payload || run;
