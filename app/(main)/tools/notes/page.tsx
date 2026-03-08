@@ -23,21 +23,6 @@ import { AppContext } from '@/contexts/app-context';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { PaintOverlay } from '@/components/tools/paint-overlay';
 import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
-import { Button } from '@/components/ui/button';
-import { SourceInput } from '@/components/tools/source-input';
-import { WorkbenchShell } from '@/components/tools/workbench-shell';
-import { NoteViewer } from '@/components/material-viewers/note-viewer';
-import type { GenerateNotesOutput } from '@/ai/flows/generate-notes';
-import { runToolFlowV2 } from '@/lib/toolbox/client';
-import { PillSelector } from '@/components/tools/pill-selector';
-import { PresetManager } from '@/components/tools/preset-manager';
-import { Slider } from '@/components/ui/slider';
-import { ExportToolbar } from '@/components/tools/export-toolbar';
-import { notesToMarkdown, notesToHtml } from '@/lib/export-formatters';
-import { ImportToolbar } from '@/components/tools/import-toolbar';
-import { parseNotesFromMarkdown, parseNotesFromHtml } from '@/lib/import-parsers';
-import { AppContext } from '@/contexts/app-context';
-import { getToolStrings } from '@/lib/tool-i18n';
 
 function NotesPageContent() {
   const searchParams = useSearchParams();
