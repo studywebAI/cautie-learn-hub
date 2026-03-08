@@ -65,11 +65,8 @@ export function SidebarProfile() {
           </Link>
         </Button>
 
-        {/* Guest username */}
+        {/* Guest username - no avatar */}
         <div className="flex items-center gap-2 w-full rounded-md px-2 py-1 text-left">
-          <div className="flex items-center justify-center h-7 w-7 rounded-full shrink-0 bg-primary/10 text-primary">
-            <User className="h-3.5 w-3.5" />
-          </div>
           <div className="flex-1 min-w-0">
               <p className="text-sm truncate">guest</p>
               <p className="text-[11px] text-muted-foreground leading-tight">free</p>
