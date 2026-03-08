@@ -18,7 +18,7 @@ export function SourceInput({
   value,
   onChange,
   onSubmit,
-  placeholder = 'Paste or type your source material...',
+  placeholder = 'Enter your text here...',
   disabled = false,
 }: SourceInputProps) {
   const { toast } = useToast();
@@ -178,7 +178,7 @@ export function SourceInput({
       {/* Spacer to push input area to bottom */}
       <div className="flex-1" />
 
-      {/* URL import bar */}
+      {/* URL import bar (shown inline when toggled) */}
       {showUrlInput && (
         <div className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-1 duration-150">
           <input
@@ -186,7 +186,7 @@ export function SourceInput({
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleUrlImport(); if (e.key === 'Escape') setShowUrlInput(false); }}
-            placeholder="https://en.wikipedia.org/wiki/..."
+            placeholder="https://example.com/article"
             className="flex-1 bg-background border rounded-full px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
             disabled={isFetchingUrl}
           />
@@ -196,63 +196,65 @@ export function SourceInput({
         </div>
       )}
 
-      {/* Textarea — bottom */}
-      <Textarea
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          if (uploadedFile) setUploadedFile(null);
-        }}
-        onKeyDown={(e) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-            e.preventDefault();
-            onSubmit?.();
-          }
-        }}
-        placeholder="Enter your text here..."
-        className="min-h-[120px] max-h-[200px] resize-none text-sm"
-        disabled={disabled || isProcessing}
-      />
+      {/* Bottom input area: textarea left + action buttons right */}
+      <div className="flex gap-2 items-stretch">
+        {/* Textarea — takes most width */}
+        <div className="flex-1 flex flex-col gap-1.5">
+          <Textarea
+            value={value}
+            onChange={(e) => {
+              onChange(e.target.value);
+              if (uploadedFile) setUploadedFile(null);
+            }}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                onSubmit?.();
+              }
+            }}
+            placeholder={placeholder}
+            className="min-h-[200px] resize-none text-sm flex-1"
+            disabled={disabled || isProcessing}
+          />
+          {charCount > 0 && (
+            <span className="text-[10px] text-muted-foreground font-mono tabular-nums pl-1">
+              {wordCount} words · {charCount} chars
+            </span>
+          )}
+        </div>
 
-      {/* Action bar — below textarea */}
-      <div className="flex items-center gap-1.5">
-        <Button
-          type="button"
-          variant={showUrlInput ? 'secondary' : 'ghost'}
-          size="sm"
-          className="gap-1.5 text-xs rounded-full"
-          onClick={() => setShowUrlInput(!showUrlInput)}
-          disabled={disabled || isProcessing}
-        >
-          <Link2 className="h-3.5 w-3.5" />
-          URL
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="gap-1.5 text-xs rounded-full"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled || isProcessing}
-        >
-          {isProcessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
-          Upload
-        </Button>
-        {charCount > 0 && (
-          <span className="ml-auto mr-2 text-[10px] text-muted-foreground font-mono tabular-nums">
-            {wordCount} words · {charCount} chars
-          </span>
-        )}
-        <Button
-          type="button"
-          size="sm"
-          className="ml-auto gap-1.5 rounded-full"
-          onClick={() => onSubmit?.()}
-          disabled={disabled || isProcessing || !value.trim()}
-        >
-          {isProcessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-          Generate
-        </Button>
+        {/* Right side action buttons — stacked vertically */}
+        <div className="flex flex-col gap-2 w-[100px] shrink-0">
+          <Button
+            type="button"
+            variant={showUrlInput ? 'secondary' : 'outline'}
+            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
+            onClick={() => setShowUrlInput(!showUrlInput)}
+            disabled={disabled || isProcessing}
+          >
+            <Link2 className="h-4 w-4" />
+            URL
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled || isProcessing}
+          >
+            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+            Upload
+          </Button>
+          <Button
+            type="button"
+            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
+            onClick={() => onSubmit?.()}
+            disabled={disabled || isProcessing || !value.trim()}
+          >
+            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            Generate
+          </Button>
+        </div>
       </div>
 
       <input

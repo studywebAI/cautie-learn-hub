@@ -1,13 +1,9 @@
 const SOURCE_ONLY_TOOLS = new Set(["notes", "quiz", "flashcards"]);
 
-const BLOCKED_PATTERNS = [
-  /\bwikipedia\b/i,
-  /\baccording to\b/i,
-  /\bgoogle\b/i,
-  /\binternet\b/i,
-  /\bwww\./i,
-  /\bhttps?:\/\//i,
-];
+// No blocked patterns — users can paste anything (Wikipedia, URLs, etc.).
+// The guard only ensures AI output is grounded in user-provided text, not that
+// the user's input is "clean".
+const BLOCKED_PATTERNS: RegExp[] = [];
 
 function collectText(value: any): string[] {
   if (value == null) return [];
