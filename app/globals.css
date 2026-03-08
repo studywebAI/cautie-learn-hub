@@ -39,14 +39,14 @@
     --chart-4: 0 0% 65%;
     --chart-5: 0 0% 80%;
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 0 0% 99%;
     --sidebar-foreground: 0 0% 0%;
     --sidebar-primary: 0 0% 15%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent: 0 0% 96%;
     --sidebar-accent-foreground: 0 0% 0%;
     --sidebar-active-foreground: var(--sidebar-accent-foreground);
-    --sidebar-border: 0 0% 91%;
+    --sidebar-border: 0 0% 94%;
     --sidebar-ring: 0 0% 15%;
   }
 
