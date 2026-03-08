@@ -155,7 +155,7 @@ export function RecentsSidebar() {
       <div className="rounded-md bg-transparent space-y-0.5">
         {displayItems.map((item) => {
           const Icon = TYPE_ICONS[item.type] || FileSignature;
-          const dateStr = format(new Date(item.date), 'MMM d');
+          const dateStr = format(new Date(item.date), 'MMM d, HH:mm');
 
           return (
             <div
