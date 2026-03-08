@@ -192,6 +192,19 @@ function NotesPageContent() {
         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
         Generate Notes
       </Button>
+
+      <ImportToolbar
+        toolType="notes"
+        onImport={(text) => {
+          const notes = text.includes('<') ? parseNotesFromHtml(text) : parseNotesFromMarkdown(text);
+          if (notes && notes.length > 0) {
+            setGeneratedNotes(notes as any);
+          } else {
+            toast({ variant: 'destructive', title: 'Could not parse', description: 'The content could not be recognized as notes.' });
+          }
+        }}
+        disabled={isLoading}
+      />
     </>
   );
 

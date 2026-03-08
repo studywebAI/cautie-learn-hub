@@ -226,6 +226,20 @@ function FlashcardsPageContent() {
         <Sparkles className="mr-2 h-4 w-4" />
         Generate Flashcards
       </Button>
+
+      <ImportToolbar
+        toolType="flashcards"
+        onImport={(text) => {
+          const cards = text.includes('<') ? parseFlashcardsFromHtml(text) : parseFlashcardsFromMarkdown(text);
+          if (cards && cards.length > 0) {
+            setGeneratedCards(cards);
+            setCurrentView('study');
+          } else {
+            toast({ variant: 'destructive', title: 'Could not parse', description: 'The content could not be recognized as flashcards.' });
+          }
+        }}
+        disabled={isLoading}
+      />
     </>
   );
 
