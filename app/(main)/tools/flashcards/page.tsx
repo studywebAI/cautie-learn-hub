@@ -17,6 +17,8 @@ import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { ExportToolbar } from '@/components/tools/export-toolbar';
 import { flashcardsToMarkdown, flashcardsToHtml } from '@/lib/export-formatters';
+import { ImportToolbar } from '@/components/tools/import-toolbar';
+import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/import-parsers';
 
 function FlashcardsPageContent() {
   const router = useRouter();
