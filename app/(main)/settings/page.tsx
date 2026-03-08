@@ -25,8 +25,6 @@ export default function SettingsPage() {
     setReducedMotion,
     theme,
     setTheme,
-    accentColor,
-    setAccentColor,
     session
   } = useContext(AppContext) as AppContextType;
 
