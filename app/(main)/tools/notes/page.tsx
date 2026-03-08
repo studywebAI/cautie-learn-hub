@@ -35,6 +35,7 @@ function NotesPageContent() {
   const [audience, setAudience] = useState('student');
   const [isLoading, setIsLoading] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState<GenerateNotesOutput['notes'] | null>(null);
+  const [customTitle, setCustomTitle] = useState('');
   const { toast } = useToast();
 
   const canGenerate = sourceText.trim().length > 0 && !isLoading;
@@ -66,7 +67,7 @@ function NotesPageContent() {
         flowName: 'generateNotes',
         mode: style,
         artifactType: 'notes',
-        artifactTitle: 'Generated Notes',
+        artifactTitle: customTitle.trim() || 'Generated Notes',
         input: {
           sourceText, length, style, modePack, outputFocus, tone, audience,
           highlightTitles: false, fontFamily: 'default',
@@ -149,6 +150,7 @@ function NotesPageContent() {
             </Button>
             <ExportToolbar
               toolType="notes"
+              title={customTitle.trim() || undefined}
               getMarkdown={() => notesToMarkdown(generatedNotes)}
               getHtml={() => notesToHtml(generatedNotes)}
             />
@@ -161,6 +163,18 @@ function NotesPageContent() {
 
   const sidebar = (
     <>
+      <div className="space-y-1.5">
+        <p className="text-xs text-muted-foreground">Title</p>
+        <input
+          type="text"
+          value={customTitle}
+          onChange={(e) => setCustomTitle(e.target.value)}
+          placeholder="e.g. History Ch5 Notes"
+          className="w-full h-8 rounded-md border border-input bg-background px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          disabled={isLoading}
+        />
+      </div>
+
       <PresetManager
         toolId="notes"
         currentSettings={currentSettings}

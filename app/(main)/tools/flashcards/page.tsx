@@ -42,6 +42,7 @@ function FlashcardsPageContent() {
   const [cardStyle, setCardStyle] = useState('standard');
   const [complexity, setComplexity] = useState('medium');
   const [currentView, setCurrentView] = useState<'setup' | 'study'>('setup');
+  const [customTitle, setCustomTitle] = useState('');
   const { toast } = useToast();
 
   const handleGenerate = useCallback(async (text: string) => {
@@ -54,7 +55,7 @@ function FlashcardsPageContent() {
         flowName: 'generateFlashcards',
         mode: studyMode,
         artifactType: 'flashcards',
-        artifactTitle: 'Generated Flashcards',
+        artifactTitle: customTitle.trim() || 'Generated Flashcards',
         input: { sourceText: text, count: flashcardCount, language, modePack, retentionProfile, cardStyle, complexity },
         computeClass: flashcardCount > 20 ? 'heavy' : 'standard',
       });
@@ -126,10 +127,11 @@ function FlashcardsPageContent() {
   if (generatedCards && currentView === 'study') {
     return (
       <div className="h-full flex flex-col">
-        <div className="px-6 pt-3 flex items-center justify-between">
+        <div className="px-4 md:px-6 pt-3 flex items-center justify-between">
           <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">← Back</Button>
           <ExportToolbar
             toolType="flashcards"
+            title={customTitle.trim() || undefined}
             getMarkdown={() => flashcardsToMarkdown(generatedCards)}
             getHtml={() => flashcardsToHtml(generatedCards)}
           />
@@ -189,6 +191,18 @@ function FlashcardsPageContent() {
 
   const sidebar = (
     <>
+      <div className="space-y-1.5">
+        <p className="text-xs text-muted-foreground">Title</p>
+        <input
+          type="text"
+          value={customTitle}
+          onChange={(e) => setCustomTitle(e.target.value)}
+          placeholder="e.g. Spanish Vocab Set 2"
+          className="w-full h-8 rounded-md border border-input bg-background px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          disabled={isLoading}
+        />
+      </div>
+
       <PresetManager
         toolId="flashcards"
         currentSettings={currentSettings}

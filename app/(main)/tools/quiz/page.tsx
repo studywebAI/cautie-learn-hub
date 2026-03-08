@@ -47,6 +47,7 @@ function QuizPageContent() {
   const [partialCredit, setPartialCredit] = useState('enabled');
   const [gradingMethod, setGradingMethod] = useState('auto');
   const [currentView, setCurrentView] = useState<'setup' | 'take' | 'duel'>('setup');
+  const [customTitle, setCustomTitle] = useState('');
   const { toast } = useToast();
 
   const handleGenerate = useCallback(async (text: string) => {
@@ -63,7 +64,7 @@ function QuizPageContent() {
           flowName: 'generateQuiz',
           mode: quizMode,
           artifactType: 'quiz',
-          artifactTitle: 'Generated Quiz',
+          artifactTitle: customTitle.trim() || 'Generated Quiz',
           input: { sourceText: text, questionCount: count, language, difficultyProfile, modePack, questionType, feedbackStyle, gradingStrictness, spellingTolerance, partialCredit, gradingMethod },
           computeClass: count > 20 ? 'heavy' : 'standard',
         });
@@ -144,11 +145,11 @@ function QuizPageContent() {
   if (generatedQuiz && currentView === 'take') {
     return (
       <div className="h-full flex flex-col">
-        <div className="px-6 pt-3 flex items-center justify-between">
+        <div className="px-4 md:px-6 pt-3 flex items-center justify-between">
           <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">← Back</Button>
           <ExportToolbar
             toolType="quiz"
-            title={generatedQuiz.title}
+            title={customTitle.trim() || generatedQuiz.title}
             getMarkdown={() => quizToMarkdown(generatedQuiz)}
             getHtml={() => quizToHtml(generatedQuiz)}
           />
@@ -247,6 +248,18 @@ function QuizPageContent() {
 
   const sidebar = (
     <>
+      <div className="space-y-1.5">
+        <p className="text-xs text-muted-foreground">Title</p>
+        <input
+          type="text"
+          value={customTitle}
+          onChange={(e) => setCustomTitle(e.target.value)}
+          placeholder="e.g. Biology Ch3 Quiz"
+          className="w-full h-8 rounded-md border border-input bg-background px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          disabled={isLoading}
+        />
+      </div>
+
       <PresetManager
         toolId="quiz"
         currentSettings={currentSettings}
