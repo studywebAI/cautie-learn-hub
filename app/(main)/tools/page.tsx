@@ -101,20 +101,6 @@ export default function ToolsPage() {
         icon: FileSignature,
         href: '/tools/notes',
       },
-      {
-        key: 'blocks',
-        title: sidebarTools.blocks || 'Blocks',
-        description: 'Build reusable structured learning materials.',
-        icon: Blocks,
-        href: '/tools/blocks',
-      },
-      {
-        key: 'wordweb',
-        title: sidebarTools.wordweb || 'Wordweb',
-        description: 'Build visual concept maps and save them as artifacts.',
-        icon: Network,
-        href: '/tools/wordweb',
-      },
     ],
     [dictionary, sidebarTools]
   );
