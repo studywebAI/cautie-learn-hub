@@ -180,7 +180,37 @@ function QuizPageContent() {
     { value: 'none', label: 'None', description: 'No feedback at all — score only' },
   ];
 
-  const currentSettings = { quizMode, modePack, difficultyProfile, questionCount, questionType, feedbackStyle };
+  const gradingStrictnessOptions = [
+    { value: 'exact', label: 'Exact', description: 'Answer must match exactly — no wiggle room at all' },
+    { value: 'strict', label: 'Strict', description: 'Very close match required, minor phrasing differences allowed' },
+    { value: 'moderate', label: 'Moderate', description: 'Accepts semantically correct answers with different wording' },
+    { value: 'lenient', label: 'Lenient', description: 'Accepts any answer that demonstrates understanding' },
+    { value: 'conceptual', label: 'Conceptual', description: 'Only checks if the core concept is correct, ignores details' },
+  ];
+
+  const spellingToleranceOptions = [
+    { value: 'none', label: 'No Tolerance', description: 'Spelling mistakes count as wrong answers' },
+    { value: 'strict', label: 'Strict', description: 'Only allows 1 character difference' },
+    { value: 'lenient', label: 'Lenient', description: 'Allows minor typos and common misspellings' },
+    { value: 'ignore', label: 'Ignore Spelling', description: 'Spelling is completely ignored when grading' },
+  ];
+
+  const partialCreditOptions = [
+    { value: 'enabled', label: 'Enabled', description: 'Get partial points for partially correct answers' },
+    { value: 'disabled', label: 'Disabled', description: 'All or nothing — no partial credit' },
+    { value: 'generous', label: 'Generous', description: 'Awards credit for any relevant knowledge shown' },
+    { value: 'weighted', label: 'Weighted', description: 'Partial credit scaled by how close the answer is' },
+  ];
+
+  const gradingMethodOptions = [
+    { value: 'auto', label: 'Auto', description: 'AI grades automatically based on your strictness settings' },
+    { value: 'self', label: 'Self Grade', description: 'Grade yourself — compare your answer to the correct one' },
+    { value: 'ai-review', label: 'AI Review', description: 'AI grades and provides detailed improvement suggestions' },
+    { value: 'off', label: 'Off', description: 'No grading at all — just practice without scores' },
+    { value: 'peer', label: 'Peer', description: 'Share answers for peer review and discussion' },
+  ];
+
+  const currentSettings = { quizMode, modePack, difficultyProfile, questionCount, questionType, feedbackStyle, gradingStrictness, spellingTolerance, partialCredit, gradingMethod };
 
   const sidebar = (
     <>
@@ -194,6 +224,10 @@ function QuizPageContent() {
           if (s.questionCount) setQuestionCount(s.questionCount);
           if (s.questionType) setQuestionType(s.questionType);
           if (s.feedbackStyle) setFeedbackStyle(s.feedbackStyle);
+          if (s.gradingStrictness) setGradingStrictness(s.gradingStrictness);
+          if (s.spellingTolerance) setSpellingTolerance(s.spellingTolerance);
+          if (s.partialCredit) setPartialCredit(s.partialCredit);
+          if (s.gradingMethod) setGradingMethod(s.gradingMethod);
         }}
       />
 
@@ -208,6 +242,14 @@ function QuizPageContent() {
       <PillSelector label="Question Type" options={questionTypeOptions} value={questionType} onChange={setQuestionType} disabled={isLoading} />
 
       <PillSelector label="Feedback" options={feedbackOptions} value={feedbackStyle} onChange={setFeedbackStyle} disabled={isLoading} />
+
+      <PillSelector label="Grading Strictness" options={gradingStrictnessOptions} value={gradingStrictness} onChange={setGradingStrictness} disabled={isLoading} />
+
+      <PillSelector label="Spelling Tolerance" options={spellingToleranceOptions} value={spellingTolerance} onChange={setSpellingTolerance} disabled={isLoading} />
+
+      <PillSelector label="Partial Credit" options={partialCreditOptions} value={partialCredit} onChange={setPartialCredit} disabled={isLoading} />
+
+      <PillSelector label="Grading Method" options={gradingMethodOptions} value={gradingMethod} onChange={setGradingMethod} disabled={isLoading} />
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
