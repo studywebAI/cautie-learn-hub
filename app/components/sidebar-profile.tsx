@@ -65,11 +65,8 @@ export function SidebarProfile() {
           </Link>
         </Button>
 
-        {/* Guest username */}
+        {/* Guest username - no avatar */}
         <div className="flex items-center gap-2 w-full rounded-md px-2 py-1 text-left">
-          <div className="flex items-center justify-center h-7 w-7 rounded-full shrink-0 bg-primary/10 text-primary">
-            <User className="h-3.5 w-3.5" />
-          </div>
           <div className="flex-1 min-w-0">
               <p className="text-sm truncate">guest</p>
               <p className="text-[11px] text-muted-foreground leading-tight">free</p>
@@ -117,9 +114,6 @@ export function SidebarProfile() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-2 w-full rounded-md px-2 py-1 text-left hover:bg-sidebar-accent/45 transition-colors group">
-            <div className={`flex items-center justify-center h-7 w-7 rounded-full shrink-0 ${isPremium ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-primary/10 text-primary'}`}>
-              {isPremium ? <Crown className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" /> : <User className="h-3.5 w-3.5" />}
-            </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{emailPrefix}</p>
               <p className="text-[11px] text-muted-foreground leading-tight">{tierLabel}</p>

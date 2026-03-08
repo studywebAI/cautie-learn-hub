@@ -39,14 +39,14 @@
     --chart-4: 0 0% 65%;
     --chart-5: 0 0% 80%;
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 0 0% 99%;
     --sidebar-foreground: 0 0% 0%;
     --sidebar-primary: 0 0% 15%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent: 0 0% 96%;
     --sidebar-accent-foreground: 0 0% 0%;
     --sidebar-active-foreground: var(--sidebar-accent-foreground);
-    --sidebar-border: 0 0% 91%;
+    --sidebar-border: 0 0% 94%;
     --sidebar-ring: 0 0% 15%;
   }
 
@@ -154,14 +154,14 @@
     --interactive-hover: 0 0% 92%;
     --interactive-active: 0 0% 88%;
     --focus-ring: 0 0% 18%;
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 0 0% 99%;
     --sidebar-foreground: 0 0% 0%;
     --sidebar-primary: 0 0% 15%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent: 0 0% 96%;
     --sidebar-accent-foreground: 0 0% 0%;
     --sidebar-active-foreground: var(--sidebar-accent-foreground);
-    --sidebar-border: 0 0% 91%;
+    --sidebar-border: 0 0% 94%;
     --sidebar-ring: 0 0% 15%;
   }
 
@@ -243,7 +243,7 @@
     --interactive-hover: 202 30% 90%;
     --interactive-active: 202 30% 88%;
     --focus-ring: 200 90% 34%;
-    --sidebar-background: 202 34% 95%;
+    --sidebar-background: 202 34% 97%;
     --sidebar-foreground: 202 26% 11%;
     --sidebar-primary: 200 100% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -287,7 +287,7 @@
     --interactive-hover: 122 18% 89%;
     --interactive-active: 122 18% 87%;
     --focus-ring: 145 35% 28%;
-    --sidebar-background: 122 20% 94%;
+    --sidebar-background: 122 20% 97%;
     --sidebar-foreground: 145 20% 14%;
     --sidebar-primary: 145 45% 28%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -331,7 +331,7 @@
     --interactive-hover: 24 46% 89%;
     --interactive-active: 24 46% 86%;
     --focus-ring: 14 75% 48%;
-    --sidebar-background: 24 56% 95%;
+    --sidebar-background: 24 56% 97%;
     --sidebar-foreground: 18 20% 12%;
     --sidebar-primary: 14 82% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -375,7 +375,7 @@
     --interactive-hover: 334 34% 89%;
     --interactive-active: 334 34% 86%;
     --focus-ring: 336 58% 42%;
-    --sidebar-background: 334 46% 95%;
+    --sidebar-background: 334 46% 98%;
     --sidebar-foreground: 336 20% 14%;
     --sidebar-primary: 336 65% 46%;
     --sidebar-primary-foreground: 0 0% 100%;

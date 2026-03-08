@@ -57,6 +57,7 @@ export type DashboardSubject = {
 export type AppContextType = {
   session: Session | null;
   isLoading: boolean;
+  appReady: boolean;
   language: Locale;
   setLanguage: (language: Locale) => void;
   dictionary: Dictionary;
@@ -113,6 +114,7 @@ const saveToLocalStorage = <T,>(key: string, value: T) => {
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [appReady, setAppReady] = useState(false);
   const [hasHydrated, setHasHydrated] = useState(false); // Track if we've loaded from cache
   const [language, setLanguageState] = useState<Locale>('en');
   const [dictionary, setDictionary] = useState<Dictionary>(() => getDictionary(language));
@@ -211,6 +213,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         console.error('Init error:', e);
       } finally {
         setIsLoading(false);
+        // Small delay to let UI settle, then mark ready
+        setTimeout(() => setAppReady(true), 600);
       }
     };
 
@@ -374,14 +378,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }, [session]);
 
   const contextValue = useMemo(() => ({
-    session, isLoading, language, setLanguage, dictionary, role, setRole,
+    session, isLoading, appReady, language, setLanguage, dictionary, role, setRole,
     highContrast, setHighContrast, dyslexiaFont, setDyslexiaFont,
     reducedMotion, setReducedMotion, theme, setTheme, sessionRecap, setSessionRecap,
     classes, subjects, createClass, isCreatingClass, refetchClasses,
     assignments, createAssignment, deleteAssignment, refetchAssignments,
     students, personalTasks, createPersonalTask, updatePersonalTask,
     materials, refetchMaterials,
-  }), [session, isLoading, language, dictionary, role, highContrast, dyslexiaFont, reducedMotion, theme, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials]);
+  }), [session, isLoading, appReady, language, dictionary, role, highContrast, dyslexiaFont, reducedMotion, theme, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials]);
 
   return (
     <AppContext.Provider value={contextValue}>
