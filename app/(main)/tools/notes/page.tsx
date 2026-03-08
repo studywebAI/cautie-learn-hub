@@ -67,7 +67,7 @@ function NotesPageContent() {
         flowName: 'generateNotes',
         mode: style,
         artifactType: 'notes',
-        artifactTitle: 'Generated Notes',
+        artifactTitle: customTitle.trim() || 'Generated Notes',
         input: {
           sourceText, length, style, modePack, outputFocus, tone, audience,
           highlightTitles: false, fontFamily: 'default',

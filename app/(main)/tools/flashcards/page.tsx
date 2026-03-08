@@ -55,7 +55,7 @@ function FlashcardsPageContent() {
         flowName: 'generateFlashcards',
         mode: studyMode,
         artifactType: 'flashcards',
-        artifactTitle: 'Generated Flashcards',
+        artifactTitle: customTitle.trim() || 'Generated Flashcards',
         input: { sourceText: text, count: flashcardCount, language, modePack, retentionProfile, cardStyle, complexity },
         computeClass: flashcardCount > 20 ? 'heavy' : 'standard',
       });

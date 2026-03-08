@@ -64,7 +64,7 @@ function QuizPageContent() {
           flowName: 'generateQuiz',
           mode: quizMode,
           artifactType: 'quiz',
-          artifactTitle: 'Generated Quiz',
+          artifactTitle: customTitle.trim() || 'Generated Quiz',
           input: { sourceText: text, questionCount: count, language, difficultyProfile, modePack, questionType, feedbackStyle, gradingStrictness, spellingTolerance, partialCredit, gradingMethod },
           computeClass: count > 20 ? 'heavy' : 'standard',
         });
