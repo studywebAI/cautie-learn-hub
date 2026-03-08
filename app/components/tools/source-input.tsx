@@ -3,7 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, FileText, ImageIcon, X, Loader2 } from 'lucide-react';
+import { UploadCloud, FileText, ImageIcon, X, Loader2, Link2, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SourceInputProps {
@@ -25,6 +25,9 @@ export function SourceInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -91,15 +94,74 @@ export function SourceInput({
     }
   };
 
+  const handleUrlImport = async () => {
+    const url = urlInput.trim();
+    if (!url) return;
+
+    try {
+      new URL(url.startsWith('http') ? url : `https://${url}`);
+    } catch {
+      toast({ variant: 'destructive', title: 'Invalid URL', description: 'Enter a valid website URL.' });
+      return;
+    }
+
+    setIsFetchingUrl(true);
+    try {
+      const res = await fetch('/api/tools/extract-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url.startsWith('http') ? url : `https://${url}` }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.text) {
+          onChange(data.text);
+          setUrlInput('');
+          setShowUrlInput(false);
+          toast({ title: 'Content imported', description: `Extracted text from ${new URL(url.startsWith('http') ? url : `https://${url}`).hostname}` });
+        } else {
+          toast({ variant: 'destructive', title: 'No content found', description: 'Could not extract text from this URL.' });
+        }
+      } else {
+        toast({ variant: 'destructive', title: 'Import failed', description: 'Could not fetch content from this URL.' });
+      }
+    } catch {
+      toast({ variant: 'destructive', title: 'Import failed', description: 'Network error fetching URL.' });
+    } finally {
+      setIsFetchingUrl(false);
+    }
+  };
+
   const isImage = uploadedFile?.type.startsWith('image/');
+  const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
+  const charCount = value.length;
+
+  const tips = [
+    'Paste lecture notes, textbook chapters, or articles',
+    'Upload a PDF, DOCX, or image with text',
+    'Import content from any URL',
+    'Even a single sentence works — more text = richer output',
+  ];
 
   return (
     <div
-      className="h-full flex flex-col gap-2"
+      className="h-full flex flex-col gap-3"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
-      <div className="flex items-center justify-end">
+      {/* Action bar */}
+      <div className="flex items-center gap-1.5">
+        <Button
+          type="button"
+          variant={showUrlInput ? 'secondary' : 'ghost'}
+          size="sm"
+          className="gap-1.5 text-xs rounded-full"
+          onClick={() => setShowUrlInput(!showUrlInput)}
+          disabled={disabled || isProcessing}
+        >
+          <Link2 className="h-3.5 w-3.5" />
+          URL
+        </Button>
         <Button
           type="button"
           variant="ghost"
@@ -111,8 +173,32 @@ export function SourceInput({
           {isProcessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
           Upload
         </Button>
+        {charCount > 0 && (
+          <span className="ml-auto text-[10px] text-muted-foreground font-mono tabular-nums">
+            {wordCount} words · {charCount} chars
+          </span>
+        )}
       </div>
 
+      {/* URL import bar */}
+      {showUrlInput && (
+        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150">
+          <input
+            autoFocus
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleUrlImport(); if (e.key === 'Escape') setShowUrlInput(false); }}
+            placeholder="https://en.wikipedia.org/wiki/..."
+            className="flex-1 bg-background border rounded-full px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+            disabled={isFetchingUrl}
+          />
+          <Button size="sm" onClick={handleUrlImport} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full text-xs h-7 px-3">
+            {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
+          </Button>
+        </div>
+      )}
+
+      {/* Textarea — compact, max ~200px */}
       <Textarea
         value={value}
         onChange={(e) => {
@@ -126,10 +212,11 @@ export function SourceInput({
           }
         }}
         placeholder={placeholder}
-        className="flex-1 min-h-0 resize-none text-sm"
+        className="min-h-[120px] max-h-[200px] resize-none text-sm"
         disabled={disabled || isProcessing}
       />
 
+      {/* Uploaded file chip */}
       {uploadedFile && (
         <div className="flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1.5 text-xs">
           {isImage ? <ImageIcon className="h-3.5 w-3.5 shrink-0 text-primary" /> : <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />}
@@ -137,6 +224,24 @@ export function SourceInput({
           <Button variant="ghost" size="icon" className="ml-auto h-4 w-4 shrink-0" onClick={() => setUploadedFile(null)}>
             <X className="h-3 w-3" />
           </Button>
+        </div>
+      )}
+
+      {/* Tips area — fills remaining space when textarea is small */}
+      {!value && (
+        <div className="flex-1 flex items-start pt-4">
+          <div className="space-y-2.5 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-foreground/60">
+              <Lightbulb className="h-3.5 w-3.5" />
+              <span className="font-medium">Tips</span>
+            </div>
+            {tips.map((tip, i) => (
+              <p key={i} className="pl-5">• {tip}</p>
+            ))}
+            <p className="pl-5 pt-1 text-[10px] text-muted-foreground/60">
+              Press ⌘+Enter to generate
+            </p>
+          </div>
         </div>
       )}
 
