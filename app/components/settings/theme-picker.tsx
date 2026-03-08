@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import type { ThemeType, AccentColor } from '@/contexts/app-context';
+import type { ThemeType } from '@/contexts/app-context';
 import { Check } from 'lucide-react';
 
 type ThemeOption = {
@@ -23,21 +23,6 @@ const THEMES: ThemeOption[] = [
   { value: 'rose-dark', label: 'rose dark', colors: { bg: '#170e12', fg: '#ecd8e0', primary: '#d14080', card: '#1f1219', muted: '#2b1820' } },
 ];
 
-type AccentOption = {
-  value: AccentColor;
-  label: string;
-  color: string;
-};
-
-const ACCENTS: AccentOption[] = [
-  { value: 'none', label: 'none', color: 'transparent' },
-  { value: 'sky', label: 'sky', color: '#3b9cff' },
-  { value: 'mint', label: 'mint', color: '#2eb87a' },
-  { value: 'coral', label: 'coral', color: '#f06840' },
-  { value: 'violet', label: 'violet', color: '#8b5cf6' },
-  { value: 'amber', label: 'amber', color: '#f59e0b' },
-];
-
 function ThemeCard({ option, selected, onClick }: { option: ThemeOption; selected: boolean; onClick: () => void }) {
   return (
     <button
@@ -57,12 +42,10 @@ function ThemeCard({ option, selected, onClick }: { option: ThemeOption; selecte
       )}
       {/* Mini UI preview */}
       <div className="flex flex-col gap-1.5 w-full">
-        {/* Header bar */}
         <div className="flex items-center gap-1.5">
           <div className="w-8 h-1.5 rounded-full" style={{ backgroundColor: option.colors.primary }} />
           <div className="w-5 h-1.5 rounded-full" style={{ backgroundColor: option.colors.muted }} />
         </div>
-        {/* Content area */}
         <div className="flex gap-1.5 mt-1">
           <div className="flex-1 rounded-md p-1.5" style={{ backgroundColor: option.colors.card }}>
             <div className="w-full h-1 rounded-full mb-1" style={{ backgroundColor: option.colors.fg, opacity: 0.7 }} />
@@ -70,7 +53,6 @@ function ThemeCard({ option, selected, onClick }: { option: ThemeOption; selecte
           </div>
           <div className="w-8 rounded-md" style={{ backgroundColor: option.colors.muted }} />
         </div>
-        {/* Button */}
         <div className="w-10 h-3 rounded-full mt-0.5" style={{ backgroundColor: option.colors.primary }} />
       </div>
       <span className="text-xs mt-2 lowercase" style={{ color: option.colors.fg }}>{option.label}</span>
@@ -78,60 +60,20 @@ function ThemeCard({ option, selected, onClick }: { option: ThemeOption; selecte
   );
 }
 
-function AccentDot({ option, selected, onClick }: { option: AccentOption; selected: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'flex flex-col items-center gap-1.5 group'
-      )}
-    >
-      <div
-        className={cn(
-          'w-8 h-8 rounded-full transition-all duration-200 border-2',
-          option.value === 'none' ? 'border-dashed border-muted-foreground/40' : 'border-transparent',
-          selected && option.value !== 'none' && 'ring-2 ring-offset-2 ring-offset-background',
-          selected && option.value === 'none' && 'border-foreground'
-        )}
-        style={{
-          backgroundColor: option.value === 'none' ? 'transparent' : option.color,
-          ...(selected && option.value !== 'none' ? { ['--tw-ring-color' as string]: option.color } : {}),
-        }}
-      />
-      <span className="text-xs text-muted-foreground lowercase">{option.label}</span>
-    </button>
-  );
-}
-
 export function ThemePicker({
   theme,
   setTheme,
-  accentColor,
-  setAccentColor,
 }: {
   theme: ThemeType;
   setTheme: (t: ThemeType) => void;
-  accentColor: AccentColor;
-  setAccentColor: (a: AccentColor) => void;
 }) {
   return (
-    <div className="space-y-6">
-      <div className="space-y-3">
-        <label className="text-sm text-foreground lowercase">theme</label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-          {THEMES.map((t) => (
-            <ThemeCard key={t.value} option={t} selected={theme === t.value} onClick={() => setTheme(t.value)} />
-          ))}
-        </div>
-      </div>
-      <div className="space-y-3">
-        <label className="text-sm text-foreground lowercase">accent color</label>
-        <p className="text-xs text-muted-foreground">tints buttons, focus rings, and active states across the UI.</p>
-        <div className="flex gap-4 flex-wrap">
-          {ACCENTS.map((a) => (
-            <AccentDot key={a.value} option={a} selected={accentColor === a.value} onClick={() => setAccentColor(a.value)} />
-          ))}
-        </div>
+    <div className="space-y-3">
+      <label className="text-sm text-foreground lowercase">theme</label>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+        {THEMES.map((t) => (
+          <ThemeCard key={t.value} option={t} selected={theme === t.value} onClick={() => setTheme(t.value)} />
+        ))}
       </div>
     </div>
   );

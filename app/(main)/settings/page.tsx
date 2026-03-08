@@ -25,8 +25,6 @@ export default function SettingsPage() {
     setReducedMotion,
     theme,
     setTheme,
-    accentColor,
-    setAccentColor,
     session
   } = useContext(AppContext) as AppContextType;
 
@@ -211,8 +209,6 @@ export default function SettingsPage() {
                     <ThemePicker
                       theme={theme}
                       setTheme={setTheme}
-                      accentColor={accentColor}
-                      setAccentColor={setAccentColor}
                     />
                   </CardContent>
                 </Card>
