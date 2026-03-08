@@ -108,10 +108,13 @@ export function parseFlashcardsFromMarkdown(text: string): Flashcard[] | null {
     for (const line of lines) {
       const parts = line.split(/\t|(?:\s[—–-]\s)/);
       if (parts.length >= 2) {
+        const front = parts[0].trim();
+        const back = parts.slice(1).join(' ').trim();
         cards.push({
           id: `card-${cards.length + 1}`,
-          front: parts[0].trim(),
-          back: parts.slice(1).join(' ').trim(),
+          front,
+          back,
+          cloze: `${front.replace(new RegExp(back.split(' ')[0], 'i'), '____')}`,
         });
       }
     }
