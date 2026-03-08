@@ -3,7 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, FileText, ImageIcon, X, Loader2, Link2, Lightbulb } from 'lucide-react';
+import { UploadCloud, FileText, ImageIcon, X, Loader2, Link2, Lightbulb, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SourceInputProps {
@@ -149,7 +149,72 @@ export function SourceInput({
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
-      {/* Action bar */}
+      {/* Tips area — top */}
+      {!value && (
+        <div className="flex items-start pt-2">
+          <div className="space-y-2.5 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-foreground/60">
+              <Lightbulb className="h-3.5 w-3.5" />
+              <span className="font-medium">Tips</span>
+            </div>
+            {tips.map((tip, i) => (
+              <p key={i} className="pl-5">• {tip}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Uploaded file chip */}
+      {uploadedFile && (
+        <div className="flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1.5 text-xs">
+          {isImage ? <ImageIcon className="h-3.5 w-3.5 shrink-0 text-primary" /> : <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />}
+          <span className="truncate">{uploadedFile.name}</span>
+          <Button variant="ghost" size="icon" className="ml-auto h-4 w-4 shrink-0" onClick={() => setUploadedFile(null)}>
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+
+      {/* Spacer to push input area to bottom */}
+      <div className="flex-1" />
+
+      {/* URL import bar */}
+      {showUrlInput && (
+        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-1 duration-150">
+          <input
+            autoFocus
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleUrlImport(); if (e.key === 'Escape') setShowUrlInput(false); }}
+            placeholder="https://en.wikipedia.org/wiki/..."
+            className="flex-1 bg-background border rounded-full px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+            disabled={isFetchingUrl}
+          />
+          <Button size="sm" onClick={handleUrlImport} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full text-xs h-7 px-3">
+            {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
+          </Button>
+        </div>
+      )}
+
+      {/* Textarea — bottom */}
+      <Textarea
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          if (uploadedFile) setUploadedFile(null);
+        }}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            e.preventDefault();
+            onSubmit?.();
+          }
+        }}
+        placeholder="Enter your text here..."
+        className="min-h-[120px] max-h-[200px] resize-none text-sm"
+        disabled={disabled || isProcessing}
+      />
+
+      {/* Action bar — below textarea */}
       <div className="flex items-center gap-1.5">
         <Button
           type="button"
@@ -174,78 +239,21 @@ export function SourceInput({
           Upload
         </Button>
         {charCount > 0 && (
-          <span className="ml-auto text-[10px] text-muted-foreground font-mono tabular-nums">
+          <span className="ml-auto mr-2 text-[10px] text-muted-foreground font-mono tabular-nums">
             {wordCount} words · {charCount} chars
           </span>
         )}
+        <Button
+          type="button"
+          size="sm"
+          className="ml-auto gap-1.5 rounded-full"
+          onClick={() => onSubmit?.()}
+          disabled={disabled || isProcessing || !value.trim()}
+        >
+          {isProcessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+          Generate
+        </Button>
       </div>
-
-      {/* URL import bar */}
-      {showUrlInput && (
-        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150">
-          <input
-            autoFocus
-            value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleUrlImport(); if (e.key === 'Escape') setShowUrlInput(false); }}
-            placeholder="https://en.wikipedia.org/wiki/..."
-            className="flex-1 bg-background border rounded-full px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
-            disabled={isFetchingUrl}
-          />
-          <Button size="sm" onClick={handleUrlImport} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full text-xs h-7 px-3">
-            {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
-          </Button>
-        </div>
-      )}
-
-      {/* Textarea — compact, max ~200px */}
-      <Textarea
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          if (uploadedFile) setUploadedFile(null);
-        }}
-        onKeyDown={(e) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-            e.preventDefault();
-            onSubmit?.();
-          }
-        }}
-        placeholder={placeholder}
-        className="min-h-[120px] max-h-[200px] resize-none text-sm"
-        disabled={disabled || isProcessing}
-      />
-
-      {/* Uploaded file chip */}
-      {uploadedFile && (
-        <div className="flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1.5 text-xs">
-          {isImage ? <ImageIcon className="h-3.5 w-3.5 shrink-0 text-primary" /> : <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />}
-          <span className="truncate">{uploadedFile.name}</span>
-          <Button variant="ghost" size="icon" className="ml-auto h-4 w-4 shrink-0" onClick={() => setUploadedFile(null)}>
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
-      )}
-
-      {/* Tips area */}
-      {!value && (
-        <div className="flex-1 flex items-start pt-4">
-          <div className="space-y-2.5 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5 text-foreground/60">
-              <Lightbulb className="h-3.5 w-3.5" />
-              <span className="font-medium">Tips</span>
-            </div>
-            {tips.map((tip, i) => (
-              <p key={i} className="pl-5">• {tip}</p>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Shortcut hint — always at the bottom */}
-      <p className="mt-auto pt-2 pl-5 text-[10px] text-muted-foreground/60">
-        Press ⌘+Enter to generate
-      </p>
 
       <input
         ref={fileInputRef}
