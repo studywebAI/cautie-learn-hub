@@ -18,6 +18,8 @@ import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { ExportToolbar } from '@/components/tools/export-toolbar';
 import { quizToMarkdown, quizToHtml } from '@/lib/export-formatters';
+import { ImportToolbar } from '@/components/tools/import-toolbar';
+import { parseQuizFromMarkdown, parseQuizFromHtml } from '@/lib/import-parsers';
 
 function QuizPageContent() {
   const router = useRouter();
@@ -294,6 +296,20 @@ function QuizPageContent() {
         <Sparkles className="mr-2 h-4 w-4" />
         Generate Quiz
       </Button>
+
+      <ImportToolbar
+        toolType="quiz"
+        onImport={(text) => {
+          const quiz = text.includes('<') ? parseQuizFromHtml(text) : parseQuizFromMarkdown(text);
+          if (quiz && quiz.questions.length > 0) {
+            setGeneratedQuiz(quiz);
+            setCurrentView('take');
+          } else {
+            toast({ variant: 'destructive', title: 'Could not parse', description: 'The content could not be recognized as a quiz. Make sure it matches the export format.' });
+          }
+        }}
+        disabled={isLoading}
+      />
     </>
   );
 

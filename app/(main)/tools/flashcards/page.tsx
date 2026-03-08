@@ -17,6 +17,8 @@ import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { ExportToolbar } from '@/components/tools/export-toolbar';
 import { flashcardsToMarkdown, flashcardsToHtml } from '@/lib/export-formatters';
+import { ImportToolbar } from '@/components/tools/import-toolbar';
+import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/import-parsers';
 
 function FlashcardsPageContent() {
   const router = useRouter();
@@ -224,6 +226,20 @@ function FlashcardsPageContent() {
         <Sparkles className="mr-2 h-4 w-4" />
         Generate Flashcards
       </Button>
+
+      <ImportToolbar
+        toolType="flashcards"
+        onImport={(text) => {
+          const cards = text.includes('<') ? parseFlashcardsFromHtml(text) : parseFlashcardsFromMarkdown(text);
+          if (cards && cards.length > 0) {
+            setGeneratedCards(cards);
+            setCurrentView('study');
+          } else {
+            toast({ variant: 'destructive', title: 'Could not parse', description: 'The content could not be recognized as flashcards.' });
+          }
+        }}
+        disabled={isLoading}
+      />
     </>
   );
 
