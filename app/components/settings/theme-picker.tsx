@@ -11,12 +11,12 @@ type ThemeOption = {
 };
 
 const THEMES: ThemeOption[] = [
-  { value: 'light', label: 'light', colors: { bg: '#fff', fg: '#000', primary: '#262626', card: '#fff', muted: '#f5f5f5' } },
-  { value: 'dark', label: 'dark', colors: { bg: '#0d0d0d', fg: '#fff', primary: '#e6e6e6', card: '#141414', muted: '#262626' } },
-  { value: 'ocean', label: 'ocean', colors: { bg: '#f4f7f9', fg: '#1a2a33', primary: '#2a6a8f', card: '#eef3f6', muted: '#e4eaee' } },
-  { value: 'forest', label: 'forest', colors: { bg: '#f2f5f3', fg: '#1c2e20', primary: '#2d6b3f', card: '#edf2ee', muted: '#e2e8e3' } },
-  { value: 'sunset', label: 'sunset', colors: { bg: '#f9f5f2', fg: '#2b2118', primary: '#b86425', card: '#f5f0eb', muted: '#ebe3dc' } },
-  { value: 'rose', label: 'rose', colors: { bg: '#f9f2f5', fg: '#331a24', primary: '#a33c5e', card: '#f5eaef', muted: '#ebe0e5' } },
+  { value: 'light', label: 'light', colors: { bg: '#ffffff', fg: '#000000', primary: '#262626', card: '#f5f5f5', muted: '#f0f0f0' } },
+  { value: 'dark', label: 'dark', colors: { bg: '#121212', fg: '#ffffff', primary: '#e6e6e6', card: '#1c1c1c', muted: '#262626' } },
+  { value: 'ocean', label: 'ocean', colors: { bg: '#dfe8ed', fg: '#1a2e38', primary: '#1e5f82', card: '#cfdce3', muted: '#c7d5dd' } },
+  { value: 'forest', label: 'forest', colors: { bg: '#dde5df', fg: '#1c2e20', primary: '#2a6038', card: '#ced8d0', muted: '#c6d1c9' } },
+  { value: 'sunset', label: 'sunset', colors: { bg: '#e8ddd5', fg: '#2b2118', primary: '#a85a20', card: '#d9ccbf', muted: '#d1c3b5' } },
+  { value: 'rose', label: 'rose', colors: { bg: '#e5dade', fg: '#331a24', primary: '#943458', card: '#d6c9ce', muted: '#cfc1c7' } },
 ];
 
 function ThemeCard({ option, selected, onClick }: { option: ThemeOption; selected: boolean; onClick: () => void }) {
