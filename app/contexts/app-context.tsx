@@ -10,7 +10,7 @@ import { getDictionary } from '@/lib/get-dictionary';
 import type { Dictionary, Locale } from '@/lib/get-dictionary';
 
 export type UserRole = 'student' | 'teacher';
-export type ThemeType = 'light' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
+export type ThemeType = 'light' | 'dark' | 'ocean' | 'ocean-dark' | 'forest' | 'forest-dark' | 'sunset' | 'sunset-dark' | 'rose' | 'rose-dark';
 export type AccentColor = 'none' | 'sky' | 'mint' | 'coral' | 'violet' | 'amber';
 export type ClassInfo = Tables<'classes'>;
 export type ClassAssignment = Tables<'assignments'> & {
