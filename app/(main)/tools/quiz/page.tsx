@@ -21,9 +21,11 @@ function QuizPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sourceTextFromParams = searchParams.get('sourceText');
+  const runId = searchParams.get('runId');
   const context = searchParams.get('context');
   const classId = searchParams.get('classId');
   const isAssignmentContext = context === 'assignment';
+  const { run: savedRun, isLoading: isLoadingRun } = useSavedRun(runId);
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
 
