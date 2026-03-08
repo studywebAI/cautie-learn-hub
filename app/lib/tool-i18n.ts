@@ -203,12 +203,12 @@ const en: ToolStrings = {
       { value: 'scatter', label: 'Scatter', description: 'Drag terms onto their matching definitions' },
     ],
     packOptions: [
-      { value: 'core', label: 'Core', description: 'Essential terms and definitions from the material' },
-      { value: 'retention', label: 'Retention', description: 'Spaced-repetition optimized for long-term memory' },
-      { value: 'exam', label: 'Exam', description: 'Exam-style questions with tricky distractors' },
+      { value: 'core', label: 'Essentials', description: 'Essential terms and definitions from the material' },
+      { value: 'retention', label: 'Memorize', description: 'Spaced-repetition optimized for long-term memory' },
+      { value: 'exam', label: 'Test-Ready', description: 'Exam-style questions with tricky distractors' },
       { value: 'deep-dive', label: 'Deep Dive', description: 'Nuanced cards covering edge cases and details' },
-      { value: 'quick-review', label: 'Quick Review', description: 'High-level overview cards for fast revision' },
-      { value: 'application', label: 'Application', description: 'Apply concepts to real-world scenarios' },
+      { value: 'quick-review', label: 'Quick Scan', description: 'High-level overview cards for fast revision' },
+      { value: 'application', label: 'Real World', description: 'Apply concepts to real-world scenarios' },
       { value: 'connections', label: 'Connections', description: 'Cards linking related concepts across topics' },
     ],
     retentionOptions: [
