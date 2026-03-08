@@ -1,6 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
+
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useSavedRun } from '@/hooks/use-saved-run';
 import { Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -13,7 +17,11 @@ import { PillSelector } from '@/components/tools/pill-selector';
 import { PresetManager } from '@/components/tools/preset-manager';
 import { Slider } from '@/components/ui/slider';
 
-export default function NotesPage() {
+function NotesPageContent() {
+  const searchParams = useSearchParams();
+  const runId = searchParams.get('runId');
+  const { run: savedRun } = useSavedRun(runId);
+
   const [sourceText, setSourceText] = useState('');
   const [length, setLength] = useState<'short' | 'medium' | 'long'>('medium');
   const [style, setStyle] = useState('structured');
@@ -26,6 +34,14 @@ export default function NotesPage() {
   const { toast } = useToast();
 
   const canGenerate = sourceText.trim().length > 0 && !isLoading;
+
+  // Load saved run from history
+  useEffect(() => {
+    if (savedRun?.output_payload && savedRun.status === 'succeeded') {
+      const output = savedRun.output_payload;
+      setGeneratedNotes((output.notes || null) as GenerateNotesOutput['notes'] | null);
+    }
+  }, [savedRun]);
 
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`tools.notes.${k}`);
@@ -172,5 +188,13 @@ export default function NotesPage() {
     <WorkbenchShell title="Notes" sidebar={sidebar}>
       <SourceInput value={sourceText} onChange={setSourceText} onSubmit={handleGenerate} placeholder="Paste or type your source material..." />
     </WorkbenchShell>
+  );
+}
+
+export default function NotesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+      <NotesPageContent />
+    </Suspense>
   );
 }

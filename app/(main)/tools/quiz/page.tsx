@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense, useCallback, useContext } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useSavedRun } from '@/hooks/use-saved-run';
 import { Loader2, Sparkles } from 'lucide-react';
 import { QuizTaker, QuizMode } from '@/components/tools/quiz-taker';
 import { AppContext } from '@/contexts/app-context';
@@ -20,9 +21,11 @@ function QuizPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sourceTextFromParams = searchParams.get('sourceText');
+  const runId = searchParams.get('runId');
   const context = searchParams.get('context');
   const classId = searchParams.get('classId');
   const isAssignmentContext = context === 'assignment';
+  const { run: savedRun, isLoading: isLoadingRun } = useSavedRun(runId);
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
 
@@ -76,6 +79,17 @@ function QuizPageContent() {
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
   }, [sourceTextFromParams, handleGenerate]);
+
+  // Load saved run from history
+  useEffect(() => {
+    if (savedRun?.output_payload && savedRun.status === 'succeeded') {
+      const output = savedRun.output_payload;
+      setGeneratedQuiz(output as Quiz);
+      setCurrentView('take');
+      if (savedRun.input_payload?.sourceText) setSourceText(savedRun.input_payload.sourceText);
+      if (savedRun.mode) setQuizMode(savedRun.mode as QuizMode);
+    }
+  }, [savedRun]);
 
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`tools.quiz.${k}`);
