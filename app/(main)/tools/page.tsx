@@ -45,9 +45,9 @@ const TOOL_LABELS: Record<string, string> = {
 };
 
 function extractRecommendedTool(input: string) {
-  const marker = input.match(/\[TOOL_REC:(quiz|flashcards|notes|blocks|wordweb)\]/i);
+  const marker = input.match(/\[TOOL_REC:(quiz|flashcards|notes)\]/i);
   if (marker?.[1]) return marker[1].toLowerCase();
-  const urlHint = input.match(/\/tools\/(quiz|flashcards|notes|blocks|wordweb)\b/i);
+  const urlHint = input.match(/\/tools\/(quiz|flashcards|notes)\b/i);
   if (urlHint?.[1]) return urlHint[1].toLowerCase();
   return null;
 }
