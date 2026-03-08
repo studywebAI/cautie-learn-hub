@@ -1,10 +1,10 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Paintbrush } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
@@ -21,6 +21,8 @@ import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseNotesFromMarkdown, parseNotesFromHtml } from '@/lib/import-parsers';
 import { AppContext } from '@/contexts/app-context';
 import { getToolStrings } from '@/lib/tool-i18n';
+import { PaintOverlay } from '@/components/tools/paint-overlay';
+import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
 
 function NotesPageContent() {
   const searchParams = useSearchParams();
@@ -40,6 +42,9 @@ function NotesPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState<GenerateNotesOutput['notes'] | null>(null);
   const [customTitle, setCustomTitle] = useState('');
+  const [paintActive, setPaintActive] = useState(false);
+  const [highlightActive, setHighlightActive] = useState(false);
+  const notesContentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const canGenerate = sourceText.trim().length > 0 && !isLoading;
@@ -101,18 +106,37 @@ function NotesPageContent() {
     return (
       <div className="h-full overflow-auto p-4 md:p-6">
         <div className="max-w-4xl mx-auto space-y-4">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" onClick={() => setGeneratedNotes(null)} className="rounded-full">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <Button variant="ghost" onClick={() => { setGeneratedNotes(null); setPaintActive(false); setHighlightActive(false); }} className="rounded-full">
               {t.back}
             </Button>
-            <ExportToolbar
-              toolType="notes"
-              title={customTitle.trim() || undefined}
-              getMarkdown={() => notesToMarkdown(generatedNotes)}
-              getHtml={() => notesToHtml(generatedNotes)}
-            />
+            <div className="flex items-center gap-2 flex-wrap">
+              <TextHighlighterToolbar
+                active={highlightActive}
+                onToggle={() => { setHighlightActive(h => !h); if (paintActive) setPaintActive(false); }}
+                containerRef={notesContentRef}
+              />
+              <Button
+                variant={paintActive ? 'default' : 'outline'}
+                size="sm"
+                className="rounded-full h-8 gap-1.5"
+                onClick={() => { setPaintActive(p => !p); if (highlightActive) setHighlightActive(false); }}
+              >
+                <Paintbrush className="h-3.5 w-3.5" />
+                <span className="text-xs">Annotate</span>
+              </Button>
+              <ExportToolbar
+                toolType="notes"
+                title={customTitle.trim() || undefined}
+                getMarkdown={() => notesToMarkdown(generatedNotes)}
+                getHtml={() => notesToHtml(generatedNotes)}
+              />
+            </div>
           </div>
-          <NoteViewer notes={generatedNotes} />
+          <div className="relative" ref={notesContentRef}>
+            <NoteViewer notes={generatedNotes} />
+            <PaintOverlay active={paintActive} onClose={() => setPaintActive(false)} />
+          </div>
         </div>
       </div>
     );

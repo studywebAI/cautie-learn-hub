@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BrainCircuit, Copy, FileSignature, Blocks, Sparkles, Clock3, Wand2, Network } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Copy, FileSignature, Sparkles, Clock3, Wand2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,14 +42,12 @@ const TOOL_LABELS: Record<string, string> = {
   quiz: 'Quiz',
   flashcards: 'Flashcards',
   notes: 'Notes',
-  blocks: 'Blocks',
-  wordweb: 'Wordweb',
 };
 
 function extractRecommendedTool(input: string) {
-  const marker = input.match(/\[TOOL_REC:(quiz|flashcards|notes|blocks|wordweb)\]/i);
+  const marker = input.match(/\[TOOL_REC:(quiz|flashcards|notes)\]/i);
   if (marker?.[1]) return marker[1].toLowerCase();
-  const urlHint = input.match(/\/tools\/(quiz|flashcards|notes|blocks|wordweb)\b/i);
+  const urlHint = input.match(/\/tools\/(quiz|flashcards|notes)\b/i);
   if (urlHint?.[1]) return urlHint[1].toLowerCase();
   return null;
 }
@@ -102,20 +100,6 @@ export default function ToolsPage() {
         description: dictionary.tools.material?.description || 'Generate structured study notes.',
         icon: FileSignature,
         href: '/tools/notes',
-      },
-      {
-        key: 'blocks',
-        title: sidebarTools.blocks || 'Blocks',
-        description: 'Build reusable structured learning materials.',
-        icon: Blocks,
-        href: '/tools/blocks',
-      },
-      {
-        key: 'wordweb',
-        title: sidebarTools.wordweb || 'Wordweb',
-        description: 'Build visual concept maps and save them as artifacts.',
-        icon: Network,
-        href: '/tools/wordweb',
       },
     ],
     [dictionary, sidebarTools]
@@ -256,10 +240,7 @@ export default function ToolsPage() {
                       className="h-5 border-0 bg-transparent px-0 text-[10px] text-muted-foreground focus:outline-none"
                     >
                       <option value="quiz">quiz</option>
-                      <option value="flashcards">flashcards</option>
                       <option value="notes">notes</option>
-                      <option value="blocks">blocks</option>
-                      <option value="wordweb">wordweb</option>
                     </select>
                     <Button
                       type="button"
@@ -316,9 +297,6 @@ export default function ToolsPage() {
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link href="/tools/flashcards">Build Flashcards</Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/tools/wordweb">Create Wordweb</Link>
                 </Button>
                 {latestRun?.tool_id && (
                   <Button asChild variant="secondary" className="w-full justify-start">
