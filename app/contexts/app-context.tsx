@@ -214,7 +214,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       } finally {
         setIsLoading(false);
         // Small delay to let UI settle, then mark ready
-        setTimeout(() => setAppReady(true), 600);
+        setTimeout(() => setAppReady(true), 300);
       }
     };
 
