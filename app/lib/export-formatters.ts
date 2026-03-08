@@ -30,10 +30,10 @@ export function quizToMarkdown(quiz: Quiz): string {
 export function quizToHtml(quiz: Quiz): string {
   const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  const questions = quiz.questions.map((q: QuizQuestion, i: number) => {
-    const options = q.options.map((opt: string, j: number) => {
+  const questions = quiz.questions.map((q, i) => {
+    const options = q.options.map((opt, j) => {
       const letter = String.fromCharCode(65 + j);
-      return `<div class="option" data-letter="${letter}.">${opt}</div>`;
+      return `<div class="option" data-letter="${letter}.">${opt.text}</div>`;
     }).join('');
 
     return `<div class="question-block">
@@ -43,8 +43,9 @@ export function quizToHtml(quiz: Quiz): string {
     </div>`;
   }).join('');
 
-  const answerKey = quiz.questions.map((q: QuizQuestion, i: number) => {
-    const answerIndex = q.options.indexOf(q.correctAnswer);
+  const answerKey = quiz.questions.map((q, i) => {
+    const correctOpt = q.options.find(o => o.isCorrect);
+    const answerIndex = correctOpt ? q.options.indexOf(correctOpt) : -1;
     const letter = answerIndex >= 0 ? String.fromCharCode(65 + answerIndex) : '?';
     return `<span class="answer-row">${i + 1}. ${letter}</span>`;
   }).join('');
