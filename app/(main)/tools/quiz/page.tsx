@@ -47,6 +47,7 @@ function QuizPageContent() {
   const [partialCredit, setPartialCredit] = useState('enabled');
   const [gradingMethod, setGradingMethod] = useState('auto');
   const [currentView, setCurrentView] = useState<'setup' | 'take' | 'duel'>('setup');
+  const [customTitle, setCustomTitle] = useState('');
   const { toast } = useToast();
 
   const handleGenerate = useCallback(async (text: string) => {
