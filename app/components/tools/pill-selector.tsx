@@ -33,7 +33,7 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
             className={cn(
               'p-0.5 rounded-full transition-colors',
               showInfo
-                ? 'bg-foreground text-background'
+                ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             )}
           >
