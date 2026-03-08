@@ -471,8 +471,61 @@ function ChartRenderer({ data }: { data: ChartData }) {
     );
   }
 
-  // Fallback for pie chart (simplified)
-  return <div className="text-center p-4">Pie chart visualization coming soon...</div>;
+  // Pie chart
+  if (data.chartType === 'pie') {
+    const total = data.data.values.reduce((sum, v) => sum + v, 0);
+    const cx = 200;
+    const cy = 150;
+    const r = 100;
+    const colors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
+    let cumulativeAngle = -Math.PI / 2;
+
+    return (
+      <svg width="500" height="300" className="border rounded">
+        {data.data.values.map((value, index) => {
+          const sliceAngle = (value / total) * 2 * Math.PI;
+          const startAngle = cumulativeAngle;
+          const endAngle = cumulativeAngle + sliceAngle;
+          cumulativeAngle = endAngle;
+
+          const x1 = cx + r * Math.cos(startAngle);
+          const y1 = cy + r * Math.sin(startAngle);
+          const x2 = cx + r * Math.cos(endAngle);
+          const y2 = cy + r * Math.sin(endAngle);
+          const largeArc = sliceAngle > Math.PI ? 1 : 0;
+
+          const midAngle = startAngle + sliceAngle / 2;
+          const labelX = cx + (r + 20) * Math.cos(midAngle);
+          const labelY = cy + (r + 20) * Math.sin(midAngle);
+
+          const color = colors[index % colors.length];
+
+          return (
+            <g key={index}>
+              <path
+                d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                fill={color}
+                stroke="white"
+                strokeWidth="2"
+              />
+              <text
+                x={labelX}
+                y={labelY}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize="10"
+                fill="#374151"
+              >
+                {data.data.labels[index]} ({Math.round((value / total) * 100)}%)
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    );
+  }
+
+  return null;
 }
 
 function VennDiagramRenderer({ data }: { data: VennDiagramData }) {

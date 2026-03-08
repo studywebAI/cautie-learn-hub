@@ -356,11 +356,22 @@ export function BlockEditor({
 
       default:
         return (
-          <div className="p-4 text-center text-muted-foreground">
-            Editor for {block.type} not implemented yet.
-            <pre className="mt-2 text-xs text-left bg-muted p-2 rounded">
-              {JSON.stringify(block.data, null, 2)}
-            </pre>
+          <div className="p-4 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Edit raw data for "{block.type}" block:
+            </p>
+            <textarea
+              className="w-full min-h-[200px] font-mono text-xs p-3 rounded-md border bg-muted/30 resize-y"
+              value={JSON.stringify(block.data, null, 2)}
+              onChange={(e) => {
+                try {
+                  const parsed = JSON.parse(e.target.value);
+                  updateData(parsed);
+                } catch {
+                  // Invalid JSON, don't update
+                }
+              }}
+            />
           </div>
         );
     }
