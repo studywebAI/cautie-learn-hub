@@ -121,7 +121,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [dyslexiaFont, setDyslexiaFontState] = useState(false);
   const [reducedMotion, setReducedMotionState] = useState(false);
   const [theme, setThemeState] = useState<ThemeType>('light');
-  const [accentColor, setAccentColorState] = useState<AccentColor>('none');
+  
   const [sessionRecap, setSessionRecap] = useState<SessionRecapData | null>(null);
   const [classes, setClasses] = useState<ClassInfo[]>([]);
   const [subjects, setSubjects] = useState<DashboardSubject[]>([]);
