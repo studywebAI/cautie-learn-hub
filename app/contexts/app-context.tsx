@@ -142,13 +142,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       'theme-light',
       'theme-dark',
       'theme-ocean',
-      'theme-ocean-dark',
       'theme-forest',
-      'theme-forest-dark',
       'theme-sunset',
-      'theme-sunset-dark',
       'theme-rose',
-      'theme-rose-dark',
     );
     root.classList.add(`theme-${currentTheme}`);
   }, []);

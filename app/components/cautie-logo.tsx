@@ -13,6 +13,11 @@ const HIGHLIGHT_COLORS = [
   '#F0E68C', // khaki
   '#FF6B6B', // coral
   '#98D8C8', // teal
+  '#FFA07A', // light salmon
+  '#B5EAD7', // pastel green
+  '#E2B0FF', // mauve
+  '#FFDAC1', // peach
+  '#9DE0AD', // seafoam
 ];
 
 // Generate a slightly different hand-drawn highlighter path each time
