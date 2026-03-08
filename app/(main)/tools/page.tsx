@@ -42,8 +42,6 @@ const TOOL_LABELS: Record<string, string> = {
   quiz: 'Quiz',
   flashcards: 'Flashcards',
   notes: 'Notes',
-  blocks: 'Blocks',
-  wordweb: 'Wordweb',
 };
 
 function extractRecommendedTool(input: string) {
