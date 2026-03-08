@@ -71,7 +71,7 @@ function QuizPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [quizMode, questionCount, language, difficultyProfile, modePack, questionType, feedbackStyle]);
+  }, [quizMode, questionCount, language, difficultyProfile, modePack, questionType, feedbackStyle, gradingStrictness, spellingTolerance, partialCredit, gradingMethod]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
