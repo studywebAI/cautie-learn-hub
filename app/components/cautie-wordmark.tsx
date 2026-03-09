@@ -72,7 +72,7 @@ export function CautieWordmark({
               transform: `scaleX(${animated ? 0 : 1})`,
               transformOrigin: 'left center',
               animation: animated
-                ? 'cautie-highlight-swipe 230ms cubic-bezier(0.22, 1, 0.36, 1) 520ms both'
+                ? 'cautie-highlight-swipe 320ms cubic-bezier(0.22, 1, 0.36, 1) 820ms both'
                 : undefined,
             }}
           />
@@ -81,7 +81,7 @@ export function CautieWordmark({
           className="relative z-10"
           style={{
             color: animated ? 'var(--cautie-text-start)' : 'var(--cautie-text-end)',
-            animation: animated ? 'cautie-text-emerge 520ms ease-out 0ms both' : undefined,
+            animation: animated ? 'cautie-text-emerge 820ms ease-out 0ms both' : undefined,
           }}
         >
           cautie
