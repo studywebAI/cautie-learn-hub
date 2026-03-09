@@ -426,6 +426,17 @@
       transform: translateY(-10%);
     }
   }
+
+  @keyframes cautie-highlight-draw {
+    0% {
+      transform: translateY(-50%) rotate(var(--cautie-rotate, 0deg)) scaleX(0);
+      filter: blur(0.4px);
+    }
+    100% {
+      transform: translateY(-50%) rotate(var(--cautie-rotate, 0deg)) scaleX(1);
+      filter: blur(0);
+    }
+  }
 }
 
 /* Hide scrollbars */

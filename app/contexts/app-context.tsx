@@ -180,6 +180,27 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     applyAppearance(savedTheme);
 
     // STEP 3: Fetch session + dashboard data in PARALLEL
+    const preloadFirstImpressionData = async () => {
+      const [classesResult, subjectsResult] = await Promise.allSettled([
+        fetch('/api/classes', { credentials: 'include', cache: 'force-cache' }),
+        fetch('/api/subjects', { credentials: 'include', cache: 'force-cache' }),
+      ]);
+
+      if (classesResult.status === 'fulfilled' && classesResult.value.ok) {
+        const classesData = await classesResult.value.json().catch(() => []);
+        if (Array.isArray(classesData) && classesData.length > 0) {
+          setClasses(classesData);
+        }
+      }
+
+      if (subjectsResult.status === 'fulfilled' && subjectsResult.value.ok) {
+        const subjectsData = await subjectsResult.value.json().catch(() => []);
+        if (Array.isArray(subjectsData) && subjectsData.length > 0) {
+          setSubjects(subjectsData);
+        }
+      }
+    };
+
     const init = async () => {
       try {
         // Run both in parallel - no waiting!
@@ -205,6 +226,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           // Save to cache for next visit
           saveToLocalStorage('studyweb-cached-dashboard', dashboardData);
         }
+
+        // Warm first-visit tab data (classes + subjects) in background
+        void preloadFirstImpressionData();
       } catch (e) {
         console.error('Init error:', e);
       } finally {
@@ -236,6 +260,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               saveToLocalStorage('studyweb-cached-dashboard', data);
             }
           });
+        void preloadFirstImpressionData();
       }
     });
 

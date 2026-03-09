@@ -134,15 +134,12 @@ export default function ClassDetailsPage() {
     return null;
   }, [classId, loadingTabs]);
 
-  // Preload all tab data when class loads (background)
+  // Load only the active tab data first; keep other tabs lazy.
   useEffect(() => {
     if (classId && !isAppLoading) {
-      // Preload tabs in background - won't block UI
-      ['group', 'attendance', 'announcements', 'progress', 'subjects', 'analytics'].forEach((tabName: string) => {
-        loadTabData(tabName);
-      });
+      void loadTabData(tab);
     }
-  }, [classId, isAppLoading, loadTabData]);
+  }, [classId, isAppLoading, loadTabData, tab]);
 
   // Force refresh specific tab data
   const refreshTabData = useCallback((tabName: string) => {

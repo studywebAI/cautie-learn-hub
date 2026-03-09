@@ -32,7 +32,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { CautieLogo } from './cautie-logo';
+import { CautieWordmark } from './cautie-wordmark';
 
 type DropdownKind = 'classes' | 'subjects';
 type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
@@ -120,6 +120,45 @@ export function AppSidebar() {
     window.addEventListener('mousedown', onPointerDown);
     return () => window.removeEventListener('mousedown', onPointerDown);
   }, [dropdown]);
+
+  useEffect(() => {
+    if (!context?.classes?.length) return;
+    setClassItems(context.classes as DropdownClassItem[]);
+  }, [context?.classes]);
+
+  useEffect(() => {
+    if (!context?.subjects?.length) return;
+    setSubjectItems(
+      context.subjects.map((subject) => ({ id: subject.id, title: subject.title }))
+    );
+  }, [context?.subjects]);
+
+  useEffect(() => {
+    if (!context?.session) return;
+    let cancelled = false;
+
+    const preloadFirstViews = async () => {
+      const [classesResult, subjectsResult] = await Promise.allSettled([
+        fetch('/api/classes', { cache: 'force-cache' }),
+        fetch('/api/subjects', { cache: 'force-cache' }),
+      ]);
+
+      if (!cancelled && classesResult.status === 'fulfilled' && classesResult.value.ok) {
+        const classesData = await classesResult.value.json().catch(() => []);
+        setClassItems(Array.isArray(classesData) ? classesData : []);
+      }
+
+      if (!cancelled && subjectsResult.status === 'fulfilled' && subjectsResult.value.ok) {
+        const subjectsData = await subjectsResult.value.json().catch(() => []);
+        setSubjectItems(Array.isArray(subjectsData) ? subjectsData : []);
+      }
+    };
+
+    void preloadFirstViews();
+    return () => {
+      cancelled = true;
+    };
+  }, [context?.session]);
 
   const isDropdownTrigger = (href: string) => href === '/classes' || href === '/subjects';
   const canUseDropdownFor = (href: string) => href === '/classes' || href === '/subjects';
@@ -420,6 +459,9 @@ export function AppSidebar() {
       <>
         {/* Mini sidebar - always visible on mobile */}
         <div className="fixed left-0 top-0 h-full w-14 bg-sidebar border-r border-sidebar-border z-40 flex flex-col py-3">
+          <div className="mb-2 flex items-center justify-center">
+            <CautieWordmark compact className="scale-[0.52]" textClassName="font-headline" />
+          </div>
           {/* Hamburger button to open full drawer */}
           <Button
             variant="ghost"
@@ -503,7 +545,9 @@ export function AppSidebar() {
         {/* Full drawer sidebar (when hamburger is clicked) */}
         <Sidebar className="w-[19rem]">
           <SidebarContent className="px-3 py-3 flex-1">
-            <div className="px-1 pb-2 pt-1"><CautieLogo size="sm" className="text-sidebar-foreground" /></div>
+            <div className="mb-2 flex items-center px-2">
+              <CautieWordmark compact className="scale-[0.82]" textClassName="font-headline" />
+            </div>
             <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">main</p>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -576,7 +620,9 @@ export function AppSidebar() {
         <SidebarTrigger />
       </div>
       <SidebarContent className="px-3 py-3 flex-1">
-        <div className="px-1 pb-2 pt-1 group-data-[collapsible=icon]:hidden"><CautieLogo size="sm" className="text-sidebar-foreground" /></div>
+        <div className="mb-2 flex items-center px-2">
+          <CautieWordmark compact className="scale-[0.82]" textClassName="font-headline" />
+        </div>
         <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">main</p>
         <SidebarMenu>
           {menuItems.map((item) => (
