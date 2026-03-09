@@ -474,7 +474,7 @@
   @keyframes cautie-text-emerge {
     0% {
       color: hsl(var(--background));
-      filter: brightness(0.95);
+      filter: brightness(0.85);
     }
     100% {
       color: hsl(var(--foreground));
