@@ -22,12 +22,12 @@ const HIGHLIGHT_COLORS = [
 ];
 
 const STROKES = [
-  { d: 'M -8 86 C 22 70, 58 50, 134 8', width: 10, opacity: 0.34, duration: 560, delay: 70 },
-  { d: 'M -10 76 C 24 60, 64 40, 136 2', width: 10, opacity: 0.38, duration: 520, delay: 120 },
-  { d: 'M -6 68 C 28 52, 68 32, 138 -4', width: 10, opacity: 0.42, duration: 600, delay: 180 },
-  { d: 'M -12 58 C 22 44, 66 24, 132 -10', width: 9, opacity: 0.36, duration: 540, delay: 240 },
-  { d: 'M -4 50 C 30 34, 76 16, 140 -16', width: 9, opacity: 0.34, duration: 580, delay: 300 },
-  { d: 'M -10 42 C 24 28, 72 8, 136 -22', width: 8, opacity: 0.32, duration: 520, delay: 360 },
+  { d: 'M -8 72 C 18 61, 68 42, 166 4', width: 9, opacity: 0.34, duration: 540, delay: 70 },
+  { d: 'M -10 67 C 20 56, 72 36, 170 0', width: 9, opacity: 0.38, duration: 500, delay: 120 },
+  { d: 'M -7 62 C 24 50, 78 31, 172 -4', width: 9, opacity: 0.41, duration: 560, delay: 170 },
+  { d: 'M -11 57 C 18 46, 70 27, 168 -8', width: 8, opacity: 0.36, duration: 520, delay: 230 },
+  { d: 'M -6 52 C 26 40, 82 21, 174 -12', width: 8, opacity: 0.34, duration: 540, delay: 290 },
+  { d: 'M -9 47 C 20 36, 74 17, 170 -16', width: 7, opacity: 0.3, duration: 500, delay: 350 },
 ];
 
 type CautieWordmarkProps = {
@@ -72,25 +72,26 @@ export function CautieWordmark({
         )}
       >
         <svg
-          className="pointer-events-none absolute -inset-x-[30%] -inset-y-[55%] z-0 mix-blend-multiply"
-          viewBox="0 0 126 100"
+          className="pointer-events-none absolute -left-[18%] -right-[48%] -inset-y-[38%] z-0 mix-blend-multiply"
+          viewBox="0 0 170 100"
           preserveAspectRatio="none"
         >
           {STROKES.map((stroke, index) => (
             <path
               key={index}
               d={stroke.d}
+              pathLength={100}
               fill="none"
               stroke={highlightColor}
               strokeWidth={compact ? Math.max(6, stroke.width - 2) : stroke.width}
               strokeLinecap="round"
               opacity={stroke.opacity}
               style={{
-                strokeDasharray: 220,
-                strokeDashoffset: 220,
+                strokeDasharray: 100,
+                strokeDashoffset: 100,
                 animation: animated
                   ? `cautie-stripe-draw ${stroke.duration}ms ease-out ${stroke.delay}ms forwards`
-                  : `cautie-stripe-loop 3200ms ease-in-out ${stroke.delay}ms infinite`,
+                  : `cautie-stripe-loop 2600ms linear ${stroke.delay}ms infinite`,
               }}
             />
           ))}

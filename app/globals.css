@@ -455,7 +455,7 @@
 
   @keyframes cautie-stripe-draw {
     0% {
-      stroke-dashoffset: 220;
+      stroke-dashoffset: 100;
       opacity: 0.08;
     }
     25% {
@@ -469,19 +469,23 @@
 
   @keyframes cautie-stripe-loop {
     0% {
-      stroke-dashoffset: 220;
-      opacity: 0.05;
+      stroke-dashoffset: 100;
+      opacity: 0.08;
     }
-    18% {
+    20% {
       opacity: 0.34;
     }
-    65% {
+    78% {
+      stroke-dashoffset: 0;
+      opacity: 0.34;
+    }
+    95% {
       stroke-dashoffset: 0;
       opacity: 0.34;
     }
     100% {
-      stroke-dashoffset: -28;
-      opacity: 0.18;
+      stroke-dashoffset: 0;
+      opacity: 0.34;
     }
   }
 }
