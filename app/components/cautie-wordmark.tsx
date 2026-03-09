@@ -54,25 +54,25 @@ export function CautieWordmark({
       >
         <svg
           className="pointer-events-none absolute z-0 overflow-visible"
-          viewBox="0 0 320 110"
+          viewBox="0 0 320 120"
           preserveAspectRatio="none"
           aria-hidden="true"
           style={{
-            top: compact ? '64%' : '62%',
+            top: compact ? '58%' : '56%',
             left: compact ? '-6%' : '-7%',
             width: compact ? '112%' : '114%',
-            height: compact ? '0.56em' : '0.74em',
+            height: compact ? '0.74em' : '1.05em',
             transform: 'translateY(-50%)',
           }}
         >
           <path
-            d="M6 28 C66 24 126 24 186 26 C230 27 272 26 314 24 L314 84 C272 87 230 88 186 88 C126 88 66 89 6 92 Z"
+            d="M6 20 C66 14 126 12 186 14 C230 16 272 15 314 12 L314 102 C272 106 230 108 186 108 C126 108 66 106 6 104 Z"
             fill={HIGHLIGHT_COLOR}
             style={{
               transform: `scaleX(${animated ? 0 : 1})`,
               transformOrigin: 'left center',
               animation: animated
-                ? 'cautie-highlight-swipe 320ms cubic-bezier(0.22, 1, 0.36, 1) 820ms both'
+                ? 'cautie-highlight-swipe 320ms cubic-bezier(0.22, 1, 0.36, 1) 940ms both'
                 : undefined,
             }}
           />
@@ -80,8 +80,12 @@ export function CautieWordmark({
         <span
           className="relative z-10"
           style={{
-            color: animated ? 'var(--cautie-text-start)' : 'var(--cautie-text-end)',
-            animation: animated ? 'cautie-text-emerge 820ms ease-out 0ms both' : undefined,
+            display: 'inline-block',
+            whiteSpace: 'nowrap',
+            overflow: animated ? 'hidden' : 'visible',
+            width: animated ? '0ch' : '6ch',
+            color: 'var(--cautie-text-end)',
+            animation: animated ? 'cautie-type 760ms steps(6, end) 0ms forwards' : undefined,
           }}
         >
           cautie
