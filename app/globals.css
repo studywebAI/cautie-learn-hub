@@ -473,21 +473,21 @@
 
   @keyframes cautie-text-emerge {
     0% {
-      color: hsl(var(--background));
+      color: var(--cautie-text-start, hsl(var(--background)));
       filter: brightness(0.85);
     }
     100% {
-      color: hsl(var(--foreground));
+      color: var(--cautie-text-end, hsl(var(--foreground)));
       filter: brightness(1);
     }
   }
 
   @keyframes cautie-highlight-swipe {
     0% {
-      transform: translateY(-50%) scaleX(0);
+      transform: scaleX(0);
     }
     100% {
-      transform: translateY(-50%) scaleX(1);
+      transform: scaleX(1);
     }
   }
 }

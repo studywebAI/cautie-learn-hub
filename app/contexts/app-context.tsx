@@ -92,6 +92,24 @@ export type AppContextType = {
 
 export const AppContext = createContext<AppContextType | null>(null);
 
+const THEME_VALUES: ThemeType[] = ['light', 'dark', 'ocean', 'forest', 'sunset', 'rose'];
+
+const isThemeType = (value: string | null): value is ThemeType => {
+  return value !== null && THEME_VALUES.includes(value as ThemeType);
+};
+
+const getSystemTheme = (): ThemeType => {
+  if (typeof window === 'undefined') return 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+const getInitialTheme = (): ThemeType => {
+  if (typeof window === 'undefined') return 'light';
+  const savedTheme = window.localStorage.getItem('studyweb-theme');
+  if (isThemeType(savedTheme)) return savedTheme;
+  return getSystemTheme();
+};
+
 // Fast localStorage helpers - synchronous, instant
 const getFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
     if (typeof window === 'undefined') return defaultValue;
@@ -122,7 +140,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [highContrast, setHighContrastState] = useState(false);
   const [dyslexiaFont, setDyslexiaFontState] = useState(false);
   const [reducedMotion, setReducedMotionState] = useState(false);
-  const [theme, setThemeState] = useState<ThemeType>('light');
+  const [theme, setThemeState] = useState<ThemeType>(() => getInitialTheme());
   
   const [sessionRecap, setSessionRecap] = useState<SessionRecapData | null>(null);
   const [classes, setClasses] = useState<ClassInfo[]>([]);
@@ -175,9 +193,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const rm = getFromLocalStorage('studyweb-reduced-motion', false);
     setReducedMotionState(rm);
     if(rm) document.body.setAttribute('data-reduced-motion', 'true');
-    const savedTheme = getFromLocalStorage<ThemeType>('studyweb-theme', 'light');
-    setThemeState(savedTheme);
-    applyAppearance(savedTheme);
+    const resolvedTheme = getInitialTheme();
+    setThemeState(resolvedTheme);
+    applyAppearance(resolvedTheme);
 
     // STEP 3: Fetch session, then dashboard only when authenticated
     const preloadFirstImpressionData = async () => {
