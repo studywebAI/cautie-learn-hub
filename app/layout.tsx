@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { Libre_Baskerville, Atkinson_Hyperlegible } from 'next/font/google';
+import { Libre_Baskerville, Atkinson_Hyperlegible, Kalam } from 'next/font/google';
 import { cn } from "@/lib/utils";
 import { AppContextProvider } from "@/contexts/app-context";
 
@@ -16,6 +16,13 @@ const fontAtkinsonHyperlegible = Atkinson_Hyperlegible({
   subsets: ['latin'],
   variable: '--font-atkinson-hyperlegible',
   weight: ['400', '700'],
+});
+
+const fontKalam = Kalam({
+  subsets: ['latin'],
+  variable: '--font-kalam',
+  weight: ['400', '700'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -36,7 +43,8 @@ export default function RootLayout({
       <body className={cn(
         "font-sans antialiased",
         fontBaskerville.variable,
-        fontAtkinsonHyperlegible.variable
+        fontAtkinsonHyperlegible.variable,
+        fontKalam.variable
       )}>
         <AppContextProvider>
             {children}
