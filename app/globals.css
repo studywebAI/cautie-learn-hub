@@ -461,6 +461,15 @@
       stroke-dashoffset: 0;
     }
   }
+
+  @keyframes cautie-marker-draw {
+    0% {
+      transform: translateY(-50%) rotate(var(--cautie-rotate, -8deg)) scaleX(0);
+    }
+    100% {
+      transform: translateY(-50%) rotate(var(--cautie-rotate, -8deg)) scaleX(1);
+    }
+  }
 }
 
 /* Hide scrollbars */

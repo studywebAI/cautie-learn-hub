@@ -22,11 +22,12 @@ const HIGHLIGHT_COLORS = [
 ];
 
 const STROKES = [
-  { d: 'M -4 25 C 22 23, 56 19, 124 12', width: 8, duration: 760, delay: 0 },
-  { d: 'M -6 22 C 24 20, 60 16, 126 9', width: 8, duration: 760, delay: 70 },
-  { d: 'M -3 19 C 27 17, 62 13, 128 6', width: 7, duration: 760, delay: 130 },
-  { d: 'M -7 16 C 24 14, 64 10, 126 3', width: 7, duration: 760, delay: 190 },
-  { d: 'M -2 13 C 30 11, 68 8, 130 0', width: 6, duration: 760, delay: 250 },
+  { top: 50, left: -20, width: 162, rotate: -5.5, height: 0.24, duration: 560, delay: 0 },
+  { top: 56, left: -19, width: 160, rotate: -5.2, height: 0.24, duration: 560, delay: 70 },
+  { top: 62, left: -18, width: 158, rotate: -5.1, height: 0.23, duration: 560, delay: 140 },
+  { top: 68, left: -19, width: 160, rotate: -4.9, height: 0.23, duration: 560, delay: 210 },
+  { top: 74, left: -17, width: 156, rotate: -4.7, height: 0.22, duration: 560, delay: 280 },
+  { top: 80, left: -16, width: 154, rotate: -4.4, height: 0.22, duration: 560, delay: 350 },
 ];
 
 type CautieWordmarkProps = {
@@ -70,35 +71,25 @@ export function CautieWordmark({
           textClassName
         )}
       >
-        <svg
-          className={cn(
-            'pointer-events-none absolute z-0',
-            compact
-              ? '-left-[4%] -right-[8%] -top-[10%] -bottom-[-6%]'
-              : '-left-[3%] -right-[8%] -top-[8%] -bottom-[-6%]'
-          )}
-          viewBox="0 0 128 30"
-          preserveAspectRatio="none"
-        >
-          {STROKES.map((stroke, index) => (
-            <path
-              key={index}
-              d={stroke.d}
-              pathLength={100}
-              fill="none"
-              stroke={highlightColor}
-              strokeWidth={compact ? Math.max(5, stroke.width - 2) : stroke.width}
-              strokeLinecap="round"
-              style={{
-                strokeDasharray: 100,
-                strokeDashoffset: animated ? 100 : 0,
-                animation: animated
-                  ? `cautie-stripe-draw ${stroke.duration}ms linear ${stroke.delay}ms forwards`
-                  : undefined,
-              }}
-            />
-          ))}
-        </svg>
+        {STROKES.map((stroke, index) => (
+          <span
+            key={index}
+            className="pointer-events-none absolute z-0 block rounded-[0.14em]"
+            style={{
+              ['--cautie-rotate' as any]: `${stroke.rotate}deg`,
+              top: `${stroke.top}%`,
+              left: `${stroke.left}%`,
+              width: `${stroke.width}%`,
+              height: `${compact ? Math.max(0.19, stroke.height - 0.02) : stroke.height}em`,
+              transform: `translateY(-50%) rotate(${stroke.rotate}deg) scaleX(${animated ? 0 : 1})`,
+              transformOrigin: 'left center',
+              backgroundColor: highlightColor,
+              animation: animated
+                ? `cautie-marker-draw ${stroke.duration}ms linear ${stroke.delay}ms forwards`
+                : undefined,
+            }}
+          />
+        ))}
         <span className="relative z-10">cautie</span>
       </span>
     </div>
