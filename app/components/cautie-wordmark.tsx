@@ -22,12 +22,11 @@ const HIGHLIGHT_COLORS = [
 ];
 
 const STROKES = [
-  { d: 'M -8 72 C 18 61, 68 42, 166 4', width: 13, opacity: 0.34, duration: 540, delay: 70 },
-  { d: 'M -10 67 C 20 56, 72 36, 170 0', width: 13, opacity: 0.38, duration: 500, delay: 120 },
-  { d: 'M -7 62 C 24 50, 78 31, 172 -4', width: 12, opacity: 0.41, duration: 560, delay: 170 },
-  { d: 'M -11 57 C 18 46, 70 27, 168 -8', width: 12, opacity: 0.36, duration: 520, delay: 230 },
-  { d: 'M -6 52 C 26 40, 82 21, 174 -12', width: 11, opacity: 0.34, duration: 540, delay: 290 },
-  { d: 'M -9 47 C 20 36, 74 17, 170 -16', width: 11, opacity: 0.3, duration: 500, delay: 350 },
+  { d: 'M -8 54 C 30 50, 82 44, 176 34', width: 11, opacity: 0.34, duration: 520, delay: 70 },
+  { d: 'M -10 50 C 32 46, 86 40, 180 30', width: 11, opacity: 0.38, duration: 480, delay: 120 },
+  { d: 'M -6 46 C 36 42, 90 36, 184 26', width: 10, opacity: 0.4, duration: 540, delay: 170 },
+  { d: 'M -12 42 C 30 38, 88 32, 178 22', width: 10, opacity: 0.35, duration: 500, delay: 230 },
+  { d: 'M -8 38 C 36 34, 94 28, 186 18', width: 9, opacity: 0.32, duration: 520, delay: 290 },
 ];
 
 type CautieWordmarkProps = {
@@ -72,8 +71,13 @@ export function CautieWordmark({
         )}
       >
         <svg
-          className="pointer-events-none absolute -left-[18%] -right-[48%] -inset-y-[38%] z-0 mix-blend-multiply"
-          viewBox="0 0 170 100"
+          className={cn(
+            'pointer-events-none absolute z-0 mix-blend-multiply',
+            compact
+              ? '-left-[8%] -right-[28%] -top-[14%] -bottom-[2%]'
+              : '-left-[6%] -right-[22%] -top-[12%] -bottom-[2%]'
+          )}
+          viewBox="0 0 180 72"
           preserveAspectRatio="none"
         >
           {STROKES.map((stroke, index) => (
@@ -88,10 +92,10 @@ export function CautieWordmark({
               opacity={stroke.opacity}
               style={{
                 strokeDasharray: 100,
-                strokeDashoffset: 100,
+                strokeDashoffset: animated ? 100 : 0,
                 animation: animated
                   ? `cautie-stripe-draw ${stroke.duration}ms ease-out ${stroke.delay}ms forwards`
-                  : `cautie-stripe-loop 2600ms linear ${stroke.delay}ms infinite`,
+                  : undefined,
               }}
             />
           ))}
