@@ -1,3 +1,9 @@
+## Project Environment Notes
+
+- Hosting/Deploy: Vercel
+- Backend/Auth/Database: Supabase
+- Default validation approach: keep local checks lightweight unless requested.
+- Run `npm run build` only when needed to verify that recent code edits still compile before deployment.
 Top, dit is precies waar je Grades-tab volwassen wordt.
 Die optie “History / Reports” maakt het systeem niet alleen voor invoeren, maar voor analyse, controle en communicatie.
 

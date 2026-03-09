@@ -22,12 +22,12 @@ const HIGHLIGHT_COLORS = [
 ];
 
 const STROKES = [
-  { top: 28, left: -70, width: 240, rotate: -62, opacity: 0.34, duration: 420, delay: 70 },
-  { top: 36, left: -66, width: 230, rotate: -58, opacity: 0.38, duration: 380, delay: 120 },
-  { top: 45, left: -68, width: 236, rotate: -64, opacity: 0.42, duration: 450, delay: 170 },
-  { top: 54, left: -64, width: 228, rotate: -60, opacity: 0.38, duration: 410, delay: 230 },
-  { top: 63, left: -67, width: 234, rotate: -66, opacity: 0.36, duration: 400, delay: 280 },
-  { top: 72, left: -63, width: 226, rotate: -59, opacity: 0.32, duration: 430, delay: 340 },
+  { d: 'M -8 86 C 22 70, 58 50, 134 8', width: 10, opacity: 0.34, duration: 560, delay: 70 },
+  { d: 'M -10 76 C 24 60, 64 40, 136 2', width: 10, opacity: 0.38, duration: 520, delay: 120 },
+  { d: 'M -6 68 C 28 52, 68 32, 138 -4', width: 10, opacity: 0.42, duration: 600, delay: 180 },
+  { d: 'M -12 58 C 22 44, 66 24, 132 -10', width: 9, opacity: 0.36, duration: 540, delay: 240 },
+  { d: 'M -4 50 C 30 34, 76 16, 140 -16', width: 9, opacity: 0.34, duration: 580, delay: 300 },
+  { d: 'M -10 42 C 24 28, 72 8, 136 -22', width: 8, opacity: 0.32, duration: 520, delay: 360 },
 ];
 
 type CautieWordmarkProps = {
@@ -63,36 +63,38 @@ export function CautieWordmark({
   }, []);
 
   return (
-    <div
-      className={cn('inline-flex items-center justify-center', className)}
-    >
+    <div className={cn('inline-flex items-center justify-center overflow-visible', className)}>
       <span
         className={cn(
-          'relative inline-block lowercase tracking-tight text-foreground',
+          'relative inline-block lowercase tracking-tight text-foreground overflow-visible',
           compact ? 'text-xl font-semibold' : 'text-5xl font-bold',
           textClassName
         )}
       >
-        {STROKES.map((stroke, index) => (
-          <span
-            key={index}
-            className="pointer-events-none absolute rounded-full mix-blend-multiply"
-            style={{
-              ['--cautie-rotate' as any]: `${stroke.rotate}deg`,
-              top: `${stroke.top}%`,
-              left: `${stroke.left}%`,
-              width: `${stroke.width}%`,
-              height: compact ? '0.34em' : '0.4em',
-              transform: `translateY(-50%) rotate(${stroke.rotate}deg)`,
-              backgroundColor: highlightColor,
-              opacity: stroke.opacity,
-              transformOrigin: 'left center',
-              animation: animated
-                ? `cautie-highlight-draw ${stroke.duration}ms ease-out ${stroke.delay}ms forwards`
-                : `cautie-highlight-sweep 2600ms ease-in-out ${stroke.delay}ms infinite`,
-            }}
-          />
-        ))}
+        <svg
+          className="pointer-events-none absolute -inset-x-[30%] -inset-y-[55%] z-0 mix-blend-multiply"
+          viewBox="0 0 126 100"
+          preserveAspectRatio="none"
+        >
+          {STROKES.map((stroke, index) => (
+            <path
+              key={index}
+              d={stroke.d}
+              fill="none"
+              stroke={highlightColor}
+              strokeWidth={compact ? Math.max(6, stroke.width - 2) : stroke.width}
+              strokeLinecap="round"
+              opacity={stroke.opacity}
+              style={{
+                strokeDasharray: 220,
+                strokeDashoffset: 220,
+                animation: animated
+                  ? `cautie-stripe-draw ${stroke.duration}ms ease-out ${stroke.delay}ms forwards`
+                  : `cautie-stripe-loop 3200ms ease-in-out ${stroke.delay}ms infinite`,
+              }}
+            />
+          ))}
+        </svg>
         <span className="relative z-10">cautie</span>
       </span>
     </div>

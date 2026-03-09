@@ -452,6 +452,38 @@
       opacity: 0.3;
     }
   }
+
+  @keyframes cautie-stripe-draw {
+    0% {
+      stroke-dashoffset: 220;
+      opacity: 0.08;
+    }
+    25% {
+      opacity: 0.34;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      opacity: var(--cautie-opacity, 0.32);
+    }
+  }
+
+  @keyframes cautie-stripe-loop {
+    0% {
+      stroke-dashoffset: 220;
+      opacity: 0.05;
+    }
+    18% {
+      opacity: 0.34;
+    }
+    65% {
+      stroke-dashoffset: 0;
+      opacity: 0.34;
+    }
+    100% {
+      stroke-dashoffset: -28;
+      opacity: 0.18;
+    }
+  }
 }
 
 /* Hide scrollbars */
