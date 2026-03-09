@@ -139,8 +139,8 @@ export function AppSidebar() {
 
     const preloadFirstViews = async () => {
       const [classesResult, subjectsResult] = await Promise.allSettled([
-        fetch('/api/classes', { cache: 'force-cache' }),
-        fetch('/api/subjects', { cache: 'force-cache' }),
+        fetch('/api/classes', { credentials: 'include', cache: 'no-store' }),
+        fetch('/api/subjects', { credentials: 'include', cache: 'no-store' }),
       ]);
 
       if (!cancelled && classesResult.status === 'fulfilled' && classesResult.value.ok) {

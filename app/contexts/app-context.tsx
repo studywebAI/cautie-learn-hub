@@ -182,8 +182,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     // STEP 3: Fetch session + dashboard data in PARALLEL
     const preloadFirstImpressionData = async () => {
       const [classesResult, subjectsResult] = await Promise.allSettled([
-        fetch('/api/classes', { credentials: 'include', cache: 'force-cache' }),
-        fetch('/api/subjects', { credentials: 'include', cache: 'force-cache' }),
+        fetch('/api/classes', { credentials: 'include', cache: 'no-store' }),
+        fetch('/api/subjects', { credentials: 'include', cache: 'no-store' }),
       ]);
 
       if (classesResult.status === 'fulfilled' && classesResult.value.ok) {
@@ -227,8 +227,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           saveToLocalStorage('studyweb-cached-dashboard', dashboardData);
         }
 
-        // Warm first-visit tab data (classes + subjects) in background
-        void preloadFirstImpressionData();
+        // Warm first-visit tab data only for authenticated users.
+        if (newSession) {
+          void preloadFirstImpressionData();
+        }
       } catch (e) {
         console.error('Init error:', e);
       } finally {

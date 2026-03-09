@@ -22,12 +22,12 @@ const HIGHLIGHT_COLORS = [
 ];
 
 const STROKES = [
-  { top: 34, left: -8, width: 118, rotate: -18, opacity: 0.36, duration: 420, delay: 70 },
-  { top: 41, left: -5, width: 114, rotate: -16, opacity: 0.4, duration: 380, delay: 120 },
-  { top: 49, left: -6, width: 120, rotate: -20, opacity: 0.43, duration: 450, delay: 170 },
-  { top: 57, left: -4, width: 112, rotate: -17, opacity: 0.39, duration: 410, delay: 230 },
-  { top: 64, left: -7, width: 118, rotate: -19, opacity: 0.37, duration: 400, delay: 280 },
-  { top: 71, left: -3, width: 110, rotate: -15, opacity: 0.33, duration: 430, delay: 340 },
+  { top: 30, left: -24, width: 156, rotate: -31, opacity: 0.36, duration: 420, delay: 70 },
+  { top: 38, left: -22, width: 150, rotate: -29, opacity: 0.4, duration: 380, delay: 120 },
+  { top: 46, left: -20, width: 154, rotate: -33, opacity: 0.43, duration: 450, delay: 170 },
+  { top: 54, left: -19, width: 148, rotate: -30, opacity: 0.39, duration: 410, delay: 230 },
+  { top: 62, left: -21, width: 152, rotate: -32, opacity: 0.37, duration: 400, delay: 280 },
+  { top: 70, left: -18, width: 146, rotate: -28, opacity: 0.33, duration: 430, delay: 340 },
 ];
 
 type CautieWordmarkProps = {
@@ -82,7 +82,7 @@ export function CautieWordmark({
               top: `${stroke.top}%`,
               left: `${stroke.left}%`,
               width: `${stroke.width}%`,
-              height: compact ? '0.34em' : '0.38em',
+              height: compact ? '0.4em' : '0.44em',
               transform: `translateY(-50%) rotate(${stroke.rotate}deg)`,
               backgroundColor: highlightColor,
               opacity: stroke.opacity,
