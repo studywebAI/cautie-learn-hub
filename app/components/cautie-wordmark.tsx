@@ -22,12 +22,12 @@ const HIGHLIGHT_COLORS = [
 ];
 
 const STROKES = [
-  { d: 'M -8 72 C 18 61, 68 42, 166 4', width: 9, opacity: 0.34, duration: 540, delay: 70 },
-  { d: 'M -10 67 C 20 56, 72 36, 170 0', width: 9, opacity: 0.38, duration: 500, delay: 120 },
-  { d: 'M -7 62 C 24 50, 78 31, 172 -4', width: 9, opacity: 0.41, duration: 560, delay: 170 },
-  { d: 'M -11 57 C 18 46, 70 27, 168 -8', width: 8, opacity: 0.36, duration: 520, delay: 230 },
-  { d: 'M -6 52 C 26 40, 82 21, 174 -12', width: 8, opacity: 0.34, duration: 540, delay: 290 },
-  { d: 'M -9 47 C 20 36, 74 17, 170 -16', width: 7, opacity: 0.3, duration: 500, delay: 350 },
+  { d: 'M -8 72 C 18 61, 68 42, 166 4', width: 13, opacity: 0.34, duration: 540, delay: 70 },
+  { d: 'M -10 67 C 20 56, 72 36, 170 0', width: 13, opacity: 0.38, duration: 500, delay: 120 },
+  { d: 'M -7 62 C 24 50, 78 31, 172 -4', width: 12, opacity: 0.41, duration: 560, delay: 170 },
+  { d: 'M -11 57 C 18 46, 70 27, 168 -8', width: 12, opacity: 0.36, duration: 520, delay: 230 },
+  { d: 'M -6 52 C 26 40, 82 21, 174 -12', width: 11, opacity: 0.34, duration: 540, delay: 290 },
+  { d: 'M -9 47 C 20 36, 74 17, 170 -16', width: 11, opacity: 0.3, duration: 500, delay: 350 },
 ];
 
 type CautieWordmarkProps = {
@@ -83,7 +83,7 @@ export function CautieWordmark({
               pathLength={100}
               fill="none"
               stroke={highlightColor}
-              strokeWidth={compact ? Math.max(6, stroke.width - 2) : stroke.width}
+              strokeWidth={compact ? Math.max(8, stroke.width - 2) : stroke.width}
               strokeLinecap="round"
               opacity={stroke.opacity}
               style={{
