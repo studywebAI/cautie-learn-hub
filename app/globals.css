@@ -470,6 +470,26 @@
       transform: translateY(-50%) rotate(var(--cautie-rotate, -8deg)) scaleX(1);
     }
   }
+
+  @keyframes cautie-text-emerge {
+    0% {
+      color: hsl(var(--background));
+      filter: brightness(0.95);
+    }
+    100% {
+      color: hsl(var(--foreground));
+      filter: brightness(1);
+    }
+  }
+
+  @keyframes cautie-highlight-swipe {
+    0% {
+      transform: translateY(-50%) scaleX(0);
+    }
+    100% {
+      transform: translateY(-50%) scaleX(1);
+    }
+  }
 }
 
 /* Hide scrollbars */
