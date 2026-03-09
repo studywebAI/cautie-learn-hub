@@ -21,7 +21,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             setShowStartupSplash(true);
             return;
         }
-        const hideTimer = setTimeout(() => setShowStartupSplash(false), 1520);
+        const hideTimer = setTimeout(() => setShowStartupSplash(false), 1340);
         return () => clearTimeout(hideTimer);
     }, [isLoading]);
 

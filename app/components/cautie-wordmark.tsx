@@ -91,10 +91,10 @@ export function CautieWordmark({
           preserveAspectRatio="none"
             aria-hidden="true"
             style={{
-              top: compact ? '52%' : '50%',
+              top: compact ? '47%' : '45%',
               left: compact ? '-7%' : '-8%',
               width: compact ? '108%' : '109%',
-              height: compact ? '0.78em' : '1.08em',
+              height: compact ? '0.86em' : '1.16em',
               transform: 'translateY(-50%)',
             }}
           >
@@ -105,7 +105,7 @@ export function CautieWordmark({
               transform: `scaleX(${animated ? 0 : 1})`,
               transformOrigin: 'left center',
               animation: animated
-                ? 'cautie-highlight-swipe 380ms cubic-bezier(0.22, 1, 0.36, 1) 1080ms both'
+                ? 'cautie-highlight-swipe 340ms cubic-bezier(0.22, 1, 0.36, 1) 980ms both'
                 : undefined,
             }}
           />
@@ -118,7 +118,7 @@ export function CautieWordmark({
             overflow: animated ? 'hidden' : 'visible',
             width: animated ? '0ch' : '6ch',
             color: 'var(--cautie-text-end)',
-            animation: animated ? 'cautie-type 900ms steps(6, end) 0ms forwards' : undefined,
+            animation: animated ? 'cautie-type 860ms steps(6, end) 0ms forwards' : undefined,
           }}
         >
           cautie
