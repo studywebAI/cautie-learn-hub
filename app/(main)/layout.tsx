@@ -21,13 +21,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             setShowStartupSplash(true);
             return;
         }
-        const hideTimer = setTimeout(() => setShowStartupSplash(false), 120);
+        const hideTimer = setTimeout(() => setShowStartupSplash(false), 1000);
         return () => clearTimeout(hideTimer);
     }, [isLoading]);
 
     return (
         <SidebarProvider>
-            <StartupSplash visible={showStartupSplash && isLoading} />
+            <StartupSplash visible={showStartupSplash} />
             <AppSidebar />
             <SidebarInset className={`bg-background h-screen ${isMobile ? 'ml-14' : ''} relative`}>
                 <div key={pathname} className={`${isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto p-3 md:p-4"} animate-fade-in`}>

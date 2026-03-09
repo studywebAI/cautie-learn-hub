@@ -179,7 +179,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setThemeState(savedTheme);
     applyAppearance(savedTheme);
 
-    // STEP 3: Fetch session + dashboard data in PARALLEL
+    // STEP 3: Fetch session, then dashboard only when authenticated
     const preloadFirstImpressionData = async () => {
       const [classesResult, subjectsResult] = await Promise.allSettled([
         fetch('/api/classes', { credentials: 'include', cache: 'no-store' }),
@@ -203,16 +203,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const init = async () => {
       try {
-        // Run both in parallel - no waiting!
-        const [sessionResult, dashboardData] = await Promise.all([
-          supabase.auth.getSession(),
-          fetch('/api/dashboard', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null)
-        ]);
-
+        const sessionResult = await supabase.auth.getSession();
         const newSession = sessionResult.data.session;
         setSession(newSession);
 
-        // Update with fresh data if available
+        if (!newSession) return;
+
+        const dashboardData = await fetch('/api/dashboard', { credentials: 'include', cache: 'no-store' })
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null);
+
+        // Update with fresh data when available
         if (dashboardData) {
           setClasses(dashboardData.classes || []);
           setSubjects(dashboardData.subjects || []);
@@ -227,10 +228,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           saveToLocalStorage('studyweb-cached-dashboard', dashboardData);
         }
 
-        // Warm first-visit tab data only for authenticated users.
-        if (newSession) {
-          void preloadFirstImpressionData();
-        }
+        void preloadFirstImpressionData();
       } catch (e) {
         console.error('Init error:', e);
       } finally {
