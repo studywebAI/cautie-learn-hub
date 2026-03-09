@@ -437,6 +437,21 @@
       filter: blur(0);
     }
   }
+
+  @keyframes cautie-highlight-sweep {
+    0% {
+      transform: translate(-10%, -50%) rotate(var(--cautie-rotate, 0deg));
+      opacity: 0.28;
+    }
+    50% {
+      transform: translate(0%, -50%) rotate(var(--cautie-rotate, 0deg));
+      opacity: 0.5;
+    }
+    100% {
+      transform: translate(10%, -50%) rotate(var(--cautie-rotate, 0deg));
+      opacity: 0.3;
+    }
+  }
 }
 
 /* Hide scrollbars */

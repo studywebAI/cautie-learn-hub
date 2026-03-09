@@ -22,19 +22,18 @@ const HIGHLIGHT_COLORS = [
 ];
 
 const STROKES = [
-  { top: 52, left: -4, width: 108, rotate: -8, opacity: 0.46, duration: 420, delay: 80 },
-  { top: 44, left: 2, width: 102, rotate: -4, opacity: 0.39, duration: 380, delay: 130 },
-  { top: 59, left: 7, width: 96, rotate: -12, opacity: 0.48, duration: 450, delay: 190 },
-  { top: 49, left: -2, width: 104, rotate: -2, opacity: 0.42, duration: 410, delay: 250 },
-  { top: 56, left: 4, width: 98, rotate: -6, opacity: 0.44, duration: 400, delay: 300 },
-  { top: 47, left: 10, width: 92, rotate: -10, opacity: 0.36, duration: 430, delay: 350 },
+  { top: 34, left: -8, width: 118, rotate: -18, opacity: 0.36, duration: 420, delay: 70 },
+  { top: 41, left: -5, width: 114, rotate: -16, opacity: 0.4, duration: 380, delay: 120 },
+  { top: 49, left: -6, width: 120, rotate: -20, opacity: 0.43, duration: 450, delay: 170 },
+  { top: 57, left: -4, width: 112, rotate: -17, opacity: 0.39, duration: 410, delay: 230 },
+  { top: 64, left: -7, width: 118, rotate: -19, opacity: 0.37, duration: 400, delay: 280 },
+  { top: 71, left: -3, width: 110, rotate: -15, opacity: 0.33, duration: 430, delay: 340 },
 ];
 
 type CautieWordmarkProps = {
   className?: string;
   textClassName?: string;
   animated?: boolean;
-  angled?: boolean;
   compact?: boolean;
 };
 
@@ -42,7 +41,6 @@ export function CautieWordmark({
   className,
   textClassName,
   animated = false,
-  angled = true,
   compact = false,
 }: CautieWordmarkProps) {
   const fallbackColor = useMemo(
@@ -66,11 +64,7 @@ export function CautieWordmark({
 
   return (
     <div
-      className={cn(
-        'inline-flex items-center justify-center',
-        angled && 'origin-center rotate-[-62deg]',
-        className
-      )}
+      className={cn('inline-flex items-center justify-center', className)}
     >
       <span
         className={cn(
@@ -95,7 +89,7 @@ export function CautieWordmark({
               transformOrigin: 'left center',
               animation: animated
                 ? `cautie-highlight-draw ${stroke.duration}ms ease-out ${stroke.delay}ms forwards`
-                : undefined,
+                : `cautie-highlight-sweep 2600ms ease-in-out ${stroke.delay}ms infinite`,
             }}
           />
         ))}
