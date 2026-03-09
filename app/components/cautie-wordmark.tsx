@@ -22,12 +22,13 @@ const HIGHLIGHT_COLORS = [
 ];
 
 const STROKES = [
-  { top: 50, left: -20, width: 162, rotate: -5.5, height: 0.24, duration: 560, delay: 0 },
-  { top: 56, left: -19, width: 160, rotate: -5.2, height: 0.24, duration: 560, delay: 70 },
-  { top: 62, left: -18, width: 158, rotate: -5.1, height: 0.23, duration: 560, delay: 140 },
-  { top: 68, left: -19, width: 160, rotate: -4.9, height: 0.23, duration: 560, delay: 210 },
-  { top: 74, left: -17, width: 156, rotate: -4.7, height: 0.22, duration: 560, delay: 280 },
-  { top: 80, left: -16, width: 154, rotate: -4.4, height: 0.22, duration: 560, delay: 350 },
+  { top: 50, left: -8, width: 130, rotate: -5.4, height: 0.22, duration: 520, delay: 0 },
+  { top: 55, left: -7, width: 128, rotate: -5.1, height: 0.22, duration: 520, delay: 55 },
+  { top: 60, left: -6, width: 126, rotate: -5.0, height: 0.21, duration: 520, delay: 110 },
+  { top: 65, left: -7, width: 129, rotate: -4.8, height: 0.21, duration: 520, delay: 165 },
+  { top: 70, left: -5, width: 125, rotate: -4.6, height: 0.2, duration: 520, delay: 220 },
+  { top: 75, left: -6, width: 127, rotate: -4.4, height: 0.2, duration: 520, delay: 275 },
+  { top: 79, left: -4, width: 123, rotate: -4.2, height: 0.19, duration: 520, delay: 330 },
 ];
 
 type CautieWordmarkProps = {
@@ -66,7 +67,7 @@ export function CautieWordmark({
     <div className={cn('inline-flex items-center justify-center overflow-visible', className)}>
       <span
         className={cn(
-          'relative inline-block lowercase tracking-tight text-foreground overflow-visible',
+          'relative inline-block lowercase tracking-tight text-[hsl(var(--success))] overflow-visible',
           compact ? 'text-xl font-semibold' : 'text-5xl font-bold',
           textClassName
         )}
