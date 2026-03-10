@@ -513,9 +513,13 @@
       stroke-dashoffset: var(--stroke-length, 240);
       opacity: 1;
     }
-    100% {
+    88% {
       stroke-dashoffset: 0;
       opacity: 1;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 0;
     }
   }
 
@@ -672,7 +676,7 @@
 
   .cautie-stroke-segment {
     animation: none !important;
-    opacity: 1 !important;
+    opacity: 0 !important;
     stroke-dashoffset: 0 !important;
   }
 

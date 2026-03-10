@@ -46,46 +46,19 @@ export function CautieWordmark({
   animated = false,
   compact = false,
 }: CautieWordmarkProps) {
-  const strokePlan = [
-    {
-      d: 'M114 46 C102 34 80 34 66 48 C52 62 52 86 66 100 C82 114 108 110 122 92',
-      length: 200,
-      start: 0,
-      duration: 300,
-    },
-    {
-      d: 'M132 86 C126 68 134 50 152 44 C170 38 188 48 192 66 C196 84 184 96 168 98 C150 100 136 92 132 80 M190 66 L190 100',
-      length: 250,
-      start: 260,
-      duration: 360,
-    },
-    {
-      d: 'M210 56 L210 90 C210 104 222 112 234 104 C246 96 250 82 250 64 L250 56',
-      length: 190,
-      start: 560,
-      duration: 320,
-    },
-    {
-      d: 'M278 54 L278 104 M262 62 L296 62',
-      length: 120,
-      start: 840,
-      duration: 260,
-    },
-    {
-      d: 'M320 62 L320 104',
-      length: 90,
-      start: 1060,
-      duration: 220,
-    },
-    {
-      d: 'M346 82 C338 64 348 46 366 40 C384 34 402 42 408 58 C412 72 406 86 392 92 C378 98 360 94 350 84 M350 84 L406 84',
-      length: 230,
-      start: 1260,
-      duration: 340,
-    },
+  const letters = ['c', 'a', 'u', 't', 'i', 'e'];
+  const letterPlan = [
+    { start: 0, duration: 640 },
+    { start: 420, duration: 620 },
+    { start: 820, duration: 600 },
+    { start: 1220, duration: 520 },
+    { start: 1560, duration: 420 },
+    { start: 1840, duration: 640 },
   ] as const;
-  const WRITE_DURATION_MS = 1680;
-  const HIGHLIGHT_DELAY_MS = 1960;
+  const letterStrokeLengths = [280, 300, 250, 200, 160, 300] as const;
+  const letterXs = [18, 93, 169, 242, 301, 337] as const;
+  const WRITE_DURATION_MS = 2520;
+  const HIGHLIGHT_DELAY_MS = 2820;
   const HIGHLIGHT_DURATION_MS = 900;
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
@@ -157,8 +130,16 @@ export function CautieWordmark({
                 />
               </svg>
 
+              <span className="relative z-10 inline-flex">
+                {letters.map((letter, index) => (
+                  <span key={`base-${letter}-${index}`} style={{ color: 'var(--cautie-text-start)' }}>
+                    {letter}
+                  </span>
+                ))}
+              </span>
+
               <svg
-                className="pointer-events-none relative z-20 overflow-visible"
+                className="pointer-events-none absolute inset-0 z-20 overflow-visible"
                 viewBox="0 0 430 120"
                 aria-hidden="true"
                 style={{
@@ -168,38 +149,57 @@ export function CautieWordmark({
                   display: 'block',
                 }}
               >
-                {strokePlan.map((stroke, index) => {
+                {letters.map((letter, index) => {
+                  const plan = letterPlan[index];
                   return (
-                    <path
-                      key={`stroke-${index}`}
+                    <text
+                      key={`fill-letter-${letter}-${index}`}
+                      className="cautie-letter-reveal"
+                      x={letterXs[index]}
+                      y="84"
+                      fill="var(--cautie-text-end)"
+                      stroke="none"
+                      style={{
+                        fontFamily: 'var(--font-kalam), cursive',
+                        fontSize: '104px',
+                        fontWeight: 700,
+                        opacity: 0,
+                        animation: `cautieLetterReveal 120ms linear ${plan.start}ms forwards`,
+                      }}
+                    >
+                      {letter}
+                    </text>
+                  );
+                })}
+
+                {letters.map((letter, index) => {
+                  const plan = letterPlan[index];
+                  const strokeLength = letterStrokeLengths[index];
+                  return (
+                    <text
+                      key={`stroke-letter-${letter}-${index}`}
                       className="cautie-stroke-segment"
-                      d={stroke.d}
+                      x={letterXs[index]}
+                      y="84"
                       fill="none"
                       stroke="var(--cautie-text-end)"
-                      strokeWidth={compact ? 8.8 : 10.4}
+                      strokeWidth={compact ? 4.2 : 3.9}
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       style={{
-                        ['--stroke-length' as any]: stroke.length,
-                        strokeDasharray: stroke.length,
-                        strokeDashoffset: stroke.length,
-                        animation: `cautieStrokeDraw ${stroke.duration}ms cubic-bezier(0.33, 1, 0.68, 1) ${stroke.start}ms forwards`,
+                        fontFamily: 'var(--font-kalam), cursive',
+                        fontSize: '104px',
+                        fontWeight: 700,
+                        ['--stroke-length' as any]: strokeLength,
+                        strokeDasharray: strokeLength,
+                        strokeDashoffset: strokeLength,
+                        animation: `cautieStrokeDraw ${plan.duration}ms cubic-bezier(0.33, 1, 0.68, 1) ${plan.start}ms forwards`,
                       }}
-                    />
+                    >
+                      {letter}
+                    </text>
                   );
                 })}
-                <circle
-                  className="cautie-i-dot"
-                  cx="320"
-                  cy="42"
-                  r={compact ? 3.6 : 4.3}
-                  fill="var(--cautie-text-end)"
-                  style={{
-                    opacity: 0,
-                    transformOrigin: '320px 42px',
-                    animation: `dotPop 220ms ease 1180ms forwards`,
-                  }}
-                />
               </svg>
             </span>
           ) : (
