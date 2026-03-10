@@ -510,7 +510,7 @@
 
   @keyframes cautieStrokeDraw {
     0% {
-      stroke-dashoffset: 2000;
+      stroke-dashoffset: var(--stroke-length, 240);
       opacity: 1;
     }
     100% {

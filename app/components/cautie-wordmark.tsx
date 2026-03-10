@@ -55,6 +55,7 @@ export function CautieWordmark({
     { start: 1560, duration: 420 },
     { start: 1840, duration: 640 },
   ] as const;
+  const letterStrokeLengths = [280, 300, 250, 200, 160, 300] as const;
   const letterXs = [18, 93, 169, 242, 301, 337] as const;
   const WRITE_DURATION_MS = 2520;
   const HIGHLIGHT_DELAY_MS = 2820;
@@ -142,6 +143,7 @@ export function CautieWordmark({
               >
                 {letters.map((letter, index) => {
                   const plan = letterPlan[index];
+                  const strokeLength = letterStrokeLengths[index];
                   return (
                     <text
                       key={`stroke-letter-${letter}-${index}`}
@@ -149,7 +151,7 @@ export function CautieWordmark({
                       x={letterXs[index]}
                       y="84"
                       fill="none"
-                      stroke="#000000"
+                      stroke="var(--cautie-text-end)"
                       strokeWidth={compact ? 4.2 : 3.9}
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -157,8 +159,9 @@ export function CautieWordmark({
                         fontFamily: 'var(--font-kalam), cursive',
                         fontSize: '104px',
                         fontWeight: 700,
-                        strokeDasharray: 2000,
-                        strokeDashoffset: 2000,
+                        ['--stroke-length' as any]: strokeLength,
+                        strokeDasharray: strokeLength,
+                        strokeDashoffset: strokeLength,
                         animation: `cautieStrokeDraw ${plan.duration}ms cubic-bezier(0.33, 1, 0.68, 1) ${plan.start}ms forwards`,
                       }}
                     >
