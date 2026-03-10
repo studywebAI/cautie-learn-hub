@@ -48,8 +48,8 @@ export function CautieWordmark({
 }: CautieWordmarkProps) {
   const strokePlan = [
     {
-      d: 'M56 84 C48 66 54 44 72 36 C90 28 110 34 118 50 C124 64 120 80 108 90 C94 102 72 102 56 84',
-      length: 230,
+      d: 'M114 46 C102 34 80 34 66 48 C52 62 52 86 66 100 C82 114 108 110 122 92',
+      length: 200,
       start: 0,
       duration: 300,
     },
