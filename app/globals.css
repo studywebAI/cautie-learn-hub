@@ -508,6 +508,22 @@
     }
   }
 
+  @keyframes cautieLetterInk {
+    0% {
+      clip-path: inset(0 0 100% 0);
+      filter: blur(0.25px);
+      opacity: 0.2;
+    }
+    75% {
+      opacity: 1;
+    }
+    100% {
+      clip-path: inset(0 0 0 0);
+      filter: blur(0);
+      opacity: 1;
+    }
+  }
+
   @keyframes cautieHighlightSweep {
     0% {
       transform: scaleX(0);
@@ -616,10 +632,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #cautie-path {
+  .cautie-letter-ink {
     animation: none !important;
     clip-path: inset(0 0 0 0) !important;
     filter: none !important;
+    opacity: 1 !important;
   }
 
   #highlight {

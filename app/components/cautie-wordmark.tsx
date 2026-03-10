@@ -47,8 +47,11 @@ export function CautieWordmark({
   compact = false,
 }: CautieWordmarkProps) {
   const WRITE_DURATION_MS = 2400;
+  const LETTER_DRAW_MS = 700;
+  const LETTER_STAGGER_MS = 340;
   const HIGHLIGHT_DELAY_MS = 2700;
   const HIGHLIGHT_DURATION_MS = 900;
+  const letters = ['c', 'a', 'u', 't', 'i', 'e'];
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -120,16 +123,20 @@ export function CautieWordmark({
               <span className="relative z-10" style={{ color: 'var(--cautie-text-start)' }}>
                 cautie
               </span>
-              <span
-                id="cautie-path"
-                className="pointer-events-none absolute inset-0 z-20"
-                style={{
-                  color: 'var(--cautie-text-end)',
-                  clipPath: 'inset(0 100% 0 0)',
-                  animation: `cautieDominoDraw ${WRITE_DURATION_MS}ms steps(42, end) forwards`,
-                }}
-              >
-                cautie
+              <span className="pointer-events-none absolute inset-0 z-20 inline-flex items-baseline">
+                {letters.map((letter, index) => (
+                  <span
+                    key={`${letter}-${index}`}
+                    className="inline-block cautie-letter-ink"
+                    style={{
+                      color: 'var(--cautie-text-end)',
+                      clipPath: 'inset(0 0 100% 0)',
+                      animation: `cautieLetterInk ${LETTER_DRAW_MS}ms cubic-bezier(0.2, 0.9, 0.3, 1) ${index * LETTER_STAGGER_MS}ms forwards`,
+                    }}
+                  >
+                    {letter}
+                  </span>
+                ))}
               </span>
             </span>
           ) : (
