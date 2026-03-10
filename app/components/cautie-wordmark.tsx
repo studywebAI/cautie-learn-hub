@@ -95,13 +95,13 @@ export function CautieWordmark({
               viewBox="0 0 700 200"
               aria-hidden="true"
               style={{
-                width: compact ? '220px' : '420px',
+                width: '420px',
                 height: 'auto',
                 display: 'block',
               }}
             >
               <rect
-                id="logo-highlight"
+                id="highlight"
                 x="30"
                 y="90"
                 width="640"
@@ -114,18 +114,18 @@ export function CautieWordmark({
                 }}
               />
               <path
-                id="logo-path"
+                id="cautie-path"
                 d="M40 120 C40 60 120 60 120 110 C120 150 60 150 60 110 M140 120 C160 70 220 70 240 110 C240 150 160 150 160 110 M260 120 C260 70 340 70 340 120 C340 170 260 170 260 120 M360 120 L420 120 M440 120 C460 70 520 70 540 110 C540 150 460 150 460 110"
                 fill="none"
-                stroke="var(--cautie-text-end)"
-                strokeWidth={compact ? 7 : 6}
+                stroke="white"
+                strokeWidth={6}
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 pathLength={2000}
                 style={{
                   strokeDasharray: 2000,
                   strokeDashoffset: 2000,
-                  animation: `drawLogo ${WRITE_DURATION_MS}ms cubic-bezier(.33,1,.68,1) forwards`,
+                  animation: `writeLogo ${WRITE_DURATION_MS}ms cubic-bezier(.33,1,.68,1) forwards`,
                   filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.35))',
                 }}
               />
@@ -134,7 +134,7 @@ export function CautieWordmark({
                 cx="400"
                 cy="80"
                 r="6"
-                fill="var(--cautie-text-end)"
+                fill="white"
                 style={{
                   opacity: 0,
                   transformOrigin: '400px 80px',
