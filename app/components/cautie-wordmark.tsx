@@ -46,10 +46,10 @@ export function CautieWordmark({
   animated = false,
   compact = false,
 }: CautieWordmarkProps) {
-  const WRITE_DURATION_MS = 2400;
-  const LETTER_DRAW_MS = 700;
-  const LETTER_STAGGER_MS = 340;
-  const HIGHLIGHT_DELAY_MS = 2700;
+  const WRITE_DURATION_MS = 3600;
+  const LETTER_DRAW_MS = 1100;
+  const LETTER_STAGGER_MS = 500;
+  const HIGHLIGHT_DELAY_MS = 3900;
   const HIGHLIGHT_DURATION_MS = 900;
   const letters = ['c', 'a', 'u', 't', 'i', 'e'];
   const context = useContext(AppContext) as AppContextType | null;
