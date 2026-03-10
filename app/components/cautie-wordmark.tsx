@@ -47,7 +47,9 @@ export function CautieWordmark({
   compact = false,
 }: CautieWordmarkProps) {
   const WRITE_DURATION_MS = 2200;
-  const HIGHLIGHT_DURATION_MS = 800;
+  const DOT_POP_DURATION_MS = 350;
+  const HIGHLIGHT_DELAY_MS = 2500;
+  const HIGHLIGHT_DURATION_MS = 900;
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -90,49 +92,56 @@ export function CautieWordmark({
           {animated ? (
             <svg
               className="pointer-events-none relative z-10 overflow-visible"
-              viewBox="0 0 600 200"
+              viewBox="0 0 700 200"
               aria-hidden="true"
               style={{
-                width: compact ? '5.9ch' : '6.1ch',
-                height: compact ? '1.32em' : '1.36em',
+                width: compact ? '220px' : '420px',
+                height: 'auto',
                 display: 'block',
               }}
             >
               <rect
                 id="logo-highlight"
-                x="18"
-                y="108"
-                width="564"
-                height="36"
+                x="30"
+                y="90"
+                width="640"
+                height="50"
                 rx="8"
                 fill="rgba(255,230,0,0.45)"
                 style={{
                   width: 0,
-                  animation: `highlightSweep ${HIGHLIGHT_DURATION_MS}ms ease ${WRITE_DURATION_MS}ms forwards`,
+                  animation: `highlightSweep ${HIGHLIGHT_DURATION_MS}ms ease ${HIGHLIGHT_DELAY_MS}ms forwards`,
                 }}
               />
-              <text
+              <path
                 id="logo-path"
-                x="24"
-                y="126"
+                d="M40 120 C40 60 120 60 120 110 C120 150 60 150 60 110 M140 120 C160 70 220 70 240 110 C240 150 160 150 160 110 M260 120 C260 70 340 70 340 120 C340 170 260 170 260 120 M360 120 L420 120 M440 120 C460 70 520 70 540 110 C540 150 460 150 460 110"
                 fill="none"
                 stroke="var(--cautie-text-end)"
-                strokeWidth={compact ? 7.2 : 6.4}
+                strokeWidth={compact ? 7 : 6}
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                pathLength={2000}
                 style={{
-                  fontFamily: 'var(--font-kalam), cursive',
-                  fontSize: compact ? 104 : 112,
-                  fontWeight: 700,
-                  letterSpacing: compact ? '14px' : '15px',
-                  strokeDasharray: 1800,
-                  strokeDashoffset: 1800,
+                  strokeDasharray: 2000,
+                  strokeDashoffset: 2000,
                   animation: `drawLogo ${WRITE_DURATION_MS}ms cubic-bezier(.33,1,.68,1) forwards`,
-                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.3))',
+                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.35))',
                 }}
-              >
-                c a u t i e
-              </text>
+              />
+              <circle
+                id="idot"
+                cx="400"
+                cy="80"
+                r="6"
+                fill="var(--cautie-text-end)"
+                style={{
+                  opacity: 0,
+                  transformOrigin: '400px 80px',
+                  transformBox: 'fill-box',
+                  animation: `dotPop ${DOT_POP_DURATION_MS}ms ease ${WRITE_DURATION_MS}ms forwards`,
+                }}
+              />
             </svg>
           ) : (
             <>

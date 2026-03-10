@@ -506,8 +506,22 @@
       opacity: 1;
     }
     to {
-      width: 564px;
-      opacity: 0.5;
+      width: 640px;
+      opacity: 1;
+    }
+  }
+
+  @keyframes dotPop {
+    0% {
+      opacity: 0;
+      transform: scale(0.2);
+    }
+    70% {
+      transform: scale(1.25);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
     }
   }
 
@@ -584,8 +598,14 @@
 
   #logo-highlight {
     animation: none !important;
-    width: 564px !important;
-    opacity: 0.5 !important;
+    width: 640px !important;
+    opacity: 1 !important;
+  }
+
+  #idot {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: scale(1) !important;
   }
 
   .cautie-wordmark-text {
