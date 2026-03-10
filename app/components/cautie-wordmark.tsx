@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useId, useState } from 'react';
 import { AppContext, type AppContextType } from '@/contexts/app-context';
 import { cn } from '@/lib/utils';
 
@@ -46,20 +46,55 @@ export function CautieWordmark({
   animated = false,
   compact = false,
 }: CautieWordmarkProps) {
-  const letters = ['c', 'a', 'u', 't', 'i', 'e'];
-  const letterPlan = [
-    { start: 0, duration: 640 },
-    { start: 420, duration: 620 },
-    { start: 820, duration: 600 },
-    { start: 1220, duration: 520 },
-    { start: 1560, duration: 420 },
-    { start: 1840, duration: 640 },
+  const strokePlan = [
+    {
+      d: 'M58 74 C46 63 44 46 56 36 C71 24 94 28 104 44 C114 59 110 80 94 89 C78 98 62 90 54 78',
+      length: 230,
+      start: 0,
+      duration: 520,
+      strokeWidth: 22,
+    },
+    {
+      d: 'M118 74 C110 59 112 44 126 35 C143 26 162 34 168 50 C174 66 166 82 150 88 C132 94 118 86 118 74 M166 50 L166 88',
+      length: 250,
+      start: 420,
+      duration: 560,
+      strokeWidth: 22,
+    },
+    {
+      d: 'M184 46 L184 80 C186 95 198 99 212 91 C224 84 230 70 230 54 L230 42',
+      length: 190,
+      start: 860,
+      duration: 500,
+      strokeWidth: 21,
+    },
+    {
+      d: 'M246 37 L246 88 M232 51 L266 49',
+      length: 130,
+      start: 1300,
+      duration: 360,
+      strokeWidth: 19,
+    },
+    {
+      d: 'M278 49 L278 88',
+      length: 85,
+      start: 1620,
+      duration: 240,
+      strokeWidth: 19,
+    },
+    {
+      d: 'M306 72 C300 58 308 43 324 36 C341 30 357 40 361 56 C365 72 356 84 341 88 C325 92 312 86 307 74 M307 74 L356 71',
+      length: 250,
+      start: 1840,
+      duration: 660,
+      strokeWidth: 21,
+    },
   ] as const;
-  const letterStrokeLengths = [1200, 1200, 1200, 1200, 1200, 1200] as const;
-  const letterXs = [18, 93, 169, 242, 301, 337] as const;
-  const WRITE_DURATION_MS = 2520;
-  const HIGHLIGHT_DELAY_MS = 2820;
+  const WRITE_DURATION_MS = 2500;
+  const DOT_DELAY_MS = WRITE_DURATION_MS;
+  const HIGHLIGHT_DELAY_MS = WRITE_DURATION_MS + 120;
   const HIGHLIGHT_DURATION_MS = 900;
+  const maskId = `cautie-write-mask-${useId().replace(/:/g, '')}`;
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -121,7 +156,7 @@ export function CautieWordmark({
                   width="1000"
                   height="78"
                   rx="14"
-                  fill="rgba(255,235,0,0.45)"
+                  fill={highlightColor}
                   style={{
                     transformOrigin: 'left center',
                     transform: 'scaleX(0)',
@@ -136,39 +171,80 @@ export function CautieWordmark({
                 aria-hidden="true"
                 style={{
                   top: compact ? '-0.02em' : '-0.03em',
-                  width: compact ? '5.9ch' : '6.1ch',
+                  width: compact ? '5.85ch' : '6.05ch',
                   height: '1.08em',
                   display: 'block',
                 }}
               >
-                {letters.map((letter, index) => {
-                  const plan = letterPlan[index];
-                  const strokeLength = letterStrokeLengths[index];
-                  return (
-                    <text
-                      key={`stroke-letter-${letter}-${index}`}
-                      className="cautie-stroke-segment"
-                      x={letterXs[index]}
-                      y="84"
-                      fill="none"
-                      stroke="var(--cautie-text-end)"
-                      strokeWidth={compact ? 8.1 : 7.4}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                <defs>
+                  <mask id={maskId} maskUnits="userSpaceOnUse">
+                    <rect x="0" y="0" width="430" height="120" fill="black" />
+                    {strokePlan.map((segment, index) => {
+                      const dashSpan = segment.length + 12;
+                      return (
+                        <path
+                          key={`mask-stroke-${index}`}
+                          className="cautie-mask-stroke"
+                          d={segment.d}
+                          fill="none"
+                          stroke="white"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={compact ? Math.max(14, segment.strokeWidth - 3) : segment.strokeWidth}
+                          style={{
+                            ['--stroke-start' as any]: dashSpan,
+                            strokeDasharray: `${dashSpan} ${dashSpan}`,
+                            strokeDashoffset: dashSpan,
+                            animation: `cautieMaskDraw ${segment.duration}ms cubic-bezier(0.33, 1, 0.68, 1) ${segment.start}ms forwards`,
+                          }}
+                        />
+                      );
+                    })}
+                    <circle
+                      className="cautie-mask-dot"
+                      cx="278"
+                      cy="30"
+                      r={compact ? 6 : 7}
+                      fill="white"
                       style={{
-                        fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
-                        fontSize: '104px',
-                        fontWeight: 700,
-                        ['--stroke-length' as any]: strokeLength,
-                        strokeDasharray: strokeLength,
-                        strokeDashoffset: strokeLength,
-                        animation: `cautieStrokeDraw ${plan.duration}ms cubic-bezier(0.33, 1, 0.68, 1) ${plan.start}ms forwards`,
+                        opacity: 0,
+                        transformOrigin: '278px 30px',
+                        transform: 'scale(0)',
+                        animation: `dotPop 300ms ease ${DOT_DELAY_MS}ms forwards`,
                       }}
-                    >
-                      {letter}
-                    </text>
-                  );
-                })}
+                    />
+                  </mask>
+                </defs>
+
+                <text
+                  x="22"
+                  y="84"
+                  fill="var(--cautie-text-start)"
+                  style={{
+                    fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
+                    fontSize: '104px',
+                    fontWeight: 700,
+                    letterSpacing: '0px',
+                  }}
+                >
+                  cautie
+                </text>
+
+                <text
+                  x="22"
+                  y="84"
+                  fill="var(--cautie-text-end)"
+                  mask={`url(#${maskId})`}
+                  style={{
+                    fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
+                    fontSize: '104px',
+                    fontWeight: 700,
+                    letterSpacing: '0px',
+                    filter: 'drop-shadow(0 0 8px color-mix(in srgb, var(--cautie-text-end) 35%, transparent))',
+                  }}
+                >
+                  cautie
+                </text>
               </svg>
             </span>
           ) : (

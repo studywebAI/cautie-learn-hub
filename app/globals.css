@@ -519,6 +519,17 @@
     }
   }
 
+  @keyframes cautieMaskDraw {
+    0% {
+      stroke-dashoffset: var(--stroke-start, 1000);
+      opacity: 1;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
   @keyframes cautieLetterReveal {
     0% {
       opacity: 0;
@@ -674,6 +685,18 @@
     animation: none !important;
     opacity: 1 !important;
     stroke-dashoffset: 0 !important;
+  }
+
+  .cautie-mask-stroke {
+    animation: none !important;
+    opacity: 1 !important;
+    stroke-dashoffset: 0 !important;
+  }
+
+  .cautie-mask-dot {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: scale(1) !important;
   }
 
   .cautie-wordmark-text {
