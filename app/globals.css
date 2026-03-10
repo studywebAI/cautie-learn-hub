@@ -497,6 +497,31 @@
     }
   }
 
+  @keyframes cautieDominoDraw {
+    0% {
+      clip-path: inset(0 100% 0 0);
+      filter: blur(0.35px);
+    }
+    100% {
+      clip-path: inset(0 0 0 0);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes cautieHighlightSweep {
+    0% {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+    40% {
+      opacity: 1;
+    }
+    100% {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+  }
+
   @keyframes highlightSweep {
     0% {
       width: 0;
@@ -593,12 +618,13 @@
 @media (prefers-reduced-motion: reduce) {
   #cautie-path {
     animation: none !important;
-    stroke-dashoffset: 0 !important;
+    clip-path: inset(0 0 0 0) !important;
+    filter: none !important;
   }
 
   #highlight {
     animation: none !important;
-    width: 760px !important;
+    transform: scaleX(1) !important;
     opacity: 1 !important;
   }
 

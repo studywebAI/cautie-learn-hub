@@ -47,7 +47,6 @@ export function CautieWordmark({
   compact = false,
 }: CautieWordmarkProps) {
   const WRITE_DURATION_MS = 2400;
-  const DOT_POP_DURATION_MS = 300;
   const HIGHLIGHT_DELAY_MS = 2700;
   const HIGHLIGHT_DURATION_MS = 900;
   const context = useContext(AppContext) as AppContextType | null;
@@ -90,58 +89,49 @@ export function CautieWordmark({
           style={{ fontFamily: 'var(--font-kalam), cursive' }}
         >
           {animated ? (
-            <svg
-              className="pointer-events-none relative z-10 overflow-visible"
-              viewBox="0 0 900 200"
-              aria-hidden="true"
-              style={{
-                width: '520px',
-                height: 'auto',
-                display: 'block',
-              }}
-            >
-              <rect
-                id="highlight"
-                x="60"
-                y="95"
-                width="760"
-                height="55"
-                rx="10"
-                fill="rgba(255,235,0,0.45)"
+            <span className="relative inline-block">
+              <svg
+                className="pointer-events-none absolute z-0 overflow-visible"
+                viewBox="0 0 1000 160"
+                preserveAspectRatio="none"
+                aria-hidden="true"
                 style={{
-                  width: 0,
-                  animation: `highlightSweep ${HIGHLIGHT_DURATION_MS}ms ease ${HIGHLIGHT_DELAY_MS}ms forwards`,
+                  top: '-0.28em',
+                  left: '-0.18em',
+                  width: 'calc(100% + 0.36em)',
+                  height: '1.58em',
                 }}
-              />
-              <path
+              >
+                <rect
+                  id="highlight"
+                  x="0"
+                  y="46"
+                  width="1000"
+                  height="78"
+                  rx="14"
+                  fill="rgba(255,235,0,0.45)"
+                  style={{
+                    transformOrigin: 'left center',
+                    transform: 'scaleX(0)',
+                    animation: `cautieHighlightSweep ${HIGHLIGHT_DURATION_MS}ms ease ${HIGHLIGHT_DELAY_MS}ms forwards`,
+                  }}
+                />
+              </svg>
+              <span className="relative z-10" style={{ color: 'var(--cautie-text-start)' }}>
+                cautie
+              </span>
+              <span
                 id="cautie-path"
-                d="M100 118 C84 116 78 96 86 80 C94 64 124 64 138 80 C150 94 146 116 128 124 C112 132 98 124 100 110 C104 92 132 88 152 98 C172 108 180 132 200 136 C224 142 244 126 242 102 C240 82 214 76 198 90 C182 104 188 132 210 142 C238 154 278 138 288 108 L288 126 C288 140 304 146 314 134 C324 122 322 100 322 84 L322 104 C322 122 334 138 348 138 C362 138 374 122 374 104 L374 88 C374 78 384 74 390 82 C396 90 394 106 394 122 L394 142 L394 96 L434 96 L458 96 L458 140 C458 152 472 156 480 146 C488 136 488 118 488 104 L488 92 C488 82 498 78 504 86 C510 94 508 108 508 122 L508 140 C508 152 522 156 532 146 C542 136 546 120 554 106 C566 86 596 82 614 98 C630 112 626 140 604 146 C582 152 562 132 568 112 C574 92 604 90 626 100"
-                fill="none"
-                stroke="white"
-                strokeWidth={8}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                pathLength={2500}
+                className="pointer-events-none absolute inset-0 z-20"
                 style={{
-                  strokeDasharray: 2500,
-                  strokeDashoffset: 2500,
-                  animation: `writeLogo ${WRITE_DURATION_MS}ms cubic-bezier(.33,1,.68,1) forwards`,
-                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.35))',
+                  color: 'var(--cautie-text-end)',
+                  clipPath: 'inset(0 100% 0 0)',
+                  animation: `cautieDominoDraw ${WRITE_DURATION_MS}ms steps(42, end) forwards`,
                 }}
-              />
-              <circle
-                id="idot"
-                cx="498"
-                cy="66"
-                r="6"
-                fill="white"
-                style={{
-                  opacity: 0,
-                  transformOrigin: '498px 66px',
-                  animation: `dotPop ${DOT_POP_DURATION_MS}ms ease ${WRITE_DURATION_MS}ms forwards`,
-                }}
-              />
-            </svg>
+              >
+                cautie
+              </span>
+            </span>
           ) : (
             <>
               <svg
