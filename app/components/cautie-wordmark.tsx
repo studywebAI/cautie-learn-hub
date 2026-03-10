@@ -46,6 +46,11 @@ export function CautieWordmark({
   animated = false,
   compact = false,
 }: CautieWordmarkProps) {
+  const TEXT_REVEAL_DURATION_MS = 840;
+  const HIGHLIGHT_DELAY_AFTER_TEXT_MS = 120;
+  const HIGHLIGHT_DRAW_DURATION_MS = 420;
+  const HIGHLIGHT_SWEEP_DURATION_MS = 320;
+  const highlightDelayMs = TEXT_REVEAL_DURATION_MS + HIGHLIGHT_DELAY_AFTER_TEXT_MS;
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -91,34 +96,51 @@ export function CautieWordmark({
           preserveAspectRatio="none"
             aria-hidden="true"
             style={{
-              top: compact ? '47%' : '45%',
+              top: compact ? 'calc(47% - 0.043em)' : 'calc(45% - 0.058em)',
               left: compact ? '-7%' : '-8%',
               width: compact ? '108%' : '109%',
-              height: compact ? '0.86em' : '1.16em',
+              height: compact ? '0.946em' : '1.276em',
               transform: 'translateY(-50%)',
             }}
           >
           <path
+            className={cn(animated && 'cautie-highlight-fill')}
             d="M6 20 C66 14 126 12 186 14 C230 16 272 15 314 12 L314 102 C272 106 230 108 186 108 C126 108 66 106 6 104 Z"
             fill={highlightColor}
             style={{
               transform: `scaleX(${animated ? 0 : 1})`,
               transformOrigin: 'left center',
               animation: animated
-                ? 'cautie-highlight-swipe 340ms cubic-bezier(0.22, 1, 0.36, 1) 980ms both'
+                ? `cautie-highlight-fill ${HIGHLIGHT_DRAW_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1) ${highlightDelayMs}ms both`
+                : undefined,
+            }}
+          />
+          <path
+            className={cn(animated && 'cautie-highlight-glint')}
+            d="M16 24 C84 18 142 16 198 18 C238 20 270 20 304 18"
+            stroke="rgba(255,255,255,0.24)"
+            strokeWidth="7"
+            strokeLinecap="round"
+            fill="none"
+            style={{
+              opacity: animated ? 0 : 0.18,
+              animation: animated
+                ? `cautie-highlight-glint ${HIGHLIGHT_SWEEP_DURATION_MS}ms cubic-bezier(0.2, 0.72, 0.2, 1) ${highlightDelayMs + 40}ms both`
                 : undefined,
             }}
           />
         </svg>
         <span
-          className="relative z-10"
+          className={cn('relative z-10', animated && 'cautie-wordmark-text')}
           style={{
             display: 'inline-block',
             whiteSpace: 'nowrap',
-            overflow: animated ? 'hidden' : 'visible',
-            width: animated ? '0ch' : '6ch',
+            overflow: 'visible',
             color: 'var(--cautie-text-end)',
-            animation: animated ? 'cautie-type 860ms steps(6, end) 0ms forwards' : undefined,
+            clipPath: animated ? 'inset(0 100% 0 0)' : 'inset(0 0 0 0)',
+            animation: animated
+              ? `cautie-handwrite-reveal ${TEXT_REVEAL_DURATION_MS}ms cubic-bezier(0.18, 0.82, 0.3, 1) 0ms both`
+              : undefined,
           }}
         >
           cautie

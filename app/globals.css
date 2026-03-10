@@ -491,6 +491,65 @@
     }
   }
 
+  @keyframes cautie-handwrite-reveal {
+    0% {
+      clip-path: inset(0 100% 0 0);
+      transform: translateX(-0.03em) translateY(0.06em) rotate(-1deg);
+      filter: blur(0.35px);
+      opacity: 0.78;
+    }
+    38% {
+      clip-path: inset(0 56% 0 0);
+      transform: translateX(0.01em) translateY(-0.01em) rotate(-0.35deg);
+      filter: blur(0.2px);
+      opacity: 0.9;
+    }
+    72% {
+      clip-path: inset(0 22% 0 0);
+      transform: translateX(-0.005em) translateY(0.02em) rotate(0.15deg);
+      filter: blur(0.1px);
+      opacity: 0.96;
+    }
+    100% {
+      clip-path: inset(0 0 0 0);
+      transform: translateX(0) translateY(0) rotate(0deg);
+      filter: blur(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes cautie-highlight-fill {
+    0% {
+      transform: scaleX(0) translateX(-2%);
+      opacity: 0.26;
+      filter: blur(0.45px);
+    }
+    68% {
+      transform: scaleX(1.015) translateX(0%);
+      opacity: 0.62;
+      filter: blur(0.12px);
+    }
+    100% {
+      transform: scaleX(1) translateX(0%);
+      opacity: 0.5;
+      filter: blur(0);
+    }
+  }
+
+  @keyframes cautie-highlight-glint {
+    0% {
+      transform: translateX(-9%);
+      opacity: 0;
+    }
+    30% {
+      opacity: 0.2;
+    }
+    100% {
+      transform: translateX(7%);
+      opacity: 0;
+    }
+  }
+
   @keyframes cautie-type {
     0% {
       width: 0ch;
@@ -498,6 +557,28 @@
     100% {
       width: 6ch;
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cautie-wordmark-text {
+    animation: none !important;
+    clip-path: inset(0 0 0 0) !important;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+
+  .cautie-highlight-fill {
+    animation: none !important;
+    transform: scaleX(1) !important;
+    opacity: 0.5 !important;
+    filter: none !important;
+  }
+
+  .cautie-highlight-glint {
+    animation: none !important;
+    opacity: 0 !important;
   }
 }
 
