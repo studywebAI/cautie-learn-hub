@@ -658,6 +658,7 @@
 @media (prefers-reduced-motion: reduce) {
   .cautie-letter-reveal {
     animation: none !important;
+    clip-path: inset(0 0 0 0) !important;
     opacity: 1 !important;
   }
 
