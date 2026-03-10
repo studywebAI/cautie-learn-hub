@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { Libre_Baskerville, Atkinson_Hyperlegible, Kalam } from 'next/font/google';
+import { Libre_Baskerville, Atkinson_Hyperlegible, Kalam, Caveat } from 'next/font/google';
 import { cn } from "@/lib/utils";
 import { AppContextProvider } from "@/contexts/app-context";
 
@@ -25,6 +25,13 @@ const fontKalam = Kalam({
   display: 'swap',
 });
 
+const fontCaveat = Caveat({
+  subsets: ['latin'],
+  variable: '--font-caveat',
+  weight: ['400', '700'],
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: "cautie",
   description: "The future of learning, powered by AI.",
@@ -44,7 +51,8 @@ export default function RootLayout({
         "font-sans antialiased",
         fontBaskerville.variable,
         fontAtkinsonHyperlegible.variable,
-        fontKalam.variable
+        fontKalam.variable,
+        fontCaveat.variable
       )}>
         <AppContextProvider>
             {children}

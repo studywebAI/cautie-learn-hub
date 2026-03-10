@@ -55,7 +55,7 @@ export function CautieWordmark({
     { start: 1560, duration: 420 },
     { start: 1840, duration: 640 },
   ] as const;
-  const letterStrokeLengths = [280, 300, 250, 200, 160, 300] as const;
+  const letterStrokeLengths = [1200, 1200, 1200, 1200, 1200, 1200] as const;
   const letterXs = [18, 93, 169, 242, 301, 337] as const;
   const WRITE_DURATION_MS = 2520;
   const HIGHLIGHT_DELAY_MS = 2820;
@@ -97,7 +97,7 @@ export function CautieWordmark({
             compact ? 'text-xl font-semibold' : 'text-5xl font-bold',
             textClassName
           )}
-          style={{ fontFamily: 'var(--font-kalam), cursive' }}
+          style={{ fontFamily: 'var(--font-caveat), var(--font-kalam), cursive' }}
         >
           {animated ? (
             <span className="relative inline-block">
@@ -130,14 +130,6 @@ export function CautieWordmark({
                 />
               </svg>
 
-              <span className="relative z-10 inline-flex">
-                {letters.map((letter, index) => (
-                  <span key={`base-${letter}-${index}`} style={{ color: 'var(--cautie-text-start)' }}>
-                    {letter}
-                  </span>
-                ))}
-              </span>
-
               <svg
                 className="pointer-events-none absolute inset-0 z-20 overflow-visible"
                 viewBox="0 0 430 120"
@@ -151,29 +143,6 @@ export function CautieWordmark({
               >
                 {letters.map((letter, index) => {
                   const plan = letterPlan[index];
-                  return (
-                    <text
-                      key={`fill-letter-${letter}-${index}`}
-                      className="cautie-letter-reveal"
-                      x={letterXs[index]}
-                      y="84"
-                      fill="var(--cautie-text-end)"
-                      stroke="none"
-                      style={{
-                        fontFamily: 'var(--font-kalam), cursive',
-                        fontSize: '104px',
-                        fontWeight: 700,
-                        opacity: 0,
-                        animation: `cautieLetterReveal 120ms linear ${plan.start}ms forwards`,
-                      }}
-                    >
-                      {letter}
-                    </text>
-                  );
-                })}
-
-                {letters.map((letter, index) => {
-                  const plan = letterPlan[index];
                   const strokeLength = letterStrokeLengths[index];
                   return (
                     <text
@@ -183,11 +152,11 @@ export function CautieWordmark({
                       y="84"
                       fill="none"
                       stroke="var(--cautie-text-end)"
-                      strokeWidth={compact ? 4.2 : 3.9}
+                      strokeWidth={compact ? 8.1 : 7.4}
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       style={{
-                        fontFamily: 'var(--font-kalam), cursive',
+                        fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
                         fontSize: '104px',
                         fontWeight: 700,
                         ['--stroke-length' as any]: strokeLength,
