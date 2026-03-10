@@ -91,10 +91,11 @@ export function CautieWordmark({
     },
   ] as const;
   const WRITE_DURATION_MS = 2500;
-  const DOT_DELAY_MS = WRITE_DURATION_MS;
   const HIGHLIGHT_DELAY_MS = WRITE_DURATION_MS + 120;
   const HIGHLIGHT_DURATION_MS = 900;
   const maskId = `cautie-write-mask-${useId().replace(/:/g, '')}`;
+  const animatedWordWidth = compact ? '6.05ch' : '7.25ch';
+  const animatedWordHeight = compact ? '1.06em' : '1.26em';
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -129,23 +130,23 @@ export function CautieWordmark({
         <span
           className={cn(
             'relative inline-block lowercase tracking-tight overflow-visible',
-            compact ? 'text-xl font-semibold' : 'text-5xl font-bold',
+            compact ? 'text-xl font-semibold' : 'text-6xl font-bold',
             textClassName
           )}
           style={{ fontFamily: 'var(--font-caveat), var(--font-kalam), cursive' }}
         >
           {animated ? (
-            <span className="relative inline-block">
+            <span className="relative inline-block" style={{ width: animatedWordWidth, height: animatedWordHeight }}>
               <svg
                 className="pointer-events-none absolute z-0 overflow-visible"
                 viewBox="0 0 1000 160"
                 preserveAspectRatio="none"
                 aria-hidden="true"
                 style={{
-                  top: '-0.28em',
-                  left: '-0.18em',
-                  width: 'calc(100% + 0.36em)',
-                  height: '1.58em',
+                  top: '-0.12em',
+                  left: '-0.1em',
+                  width: 'calc(100% + 0.2em)',
+                  height: 'calc(100% + 0.24em)',
                 }}
               >
                 <rect
@@ -170,9 +171,9 @@ export function CautieWordmark({
                 viewBox="0 0 430 120"
                 aria-hidden="true"
                 style={{
-                  top: compact ? '-0.02em' : '-0.03em',
-                  width: compact ? '5.85ch' : '6.05ch',
-                  height: '1.08em',
+                  top: compact ? '-0.01em' : '-0.02em',
+                  width: '100%',
+                  height: '100%',
                   display: 'block',
                 }}
               >
@@ -188,7 +189,7 @@ export function CautieWordmark({
                           d={segment.d}
                           fill="none"
                           stroke="white"
-                          strokeLinecap="round"
+                          strokeLinecap="butt"
                           strokeLinejoin="round"
                           strokeWidth={compact ? Math.max(14, segment.strokeWidth - 3) : segment.strokeWidth}
                           style={{
@@ -200,35 +201,8 @@ export function CautieWordmark({
                         />
                       );
                     })}
-                    <circle
-                      className="cautie-mask-dot"
-                      cx="278"
-                      cy="30"
-                      r={compact ? 6 : 7}
-                      fill="white"
-                      style={{
-                        opacity: 0,
-                        transformOrigin: '278px 30px',
-                        transform: 'scale(0)',
-                        animation: `dotPop 300ms ease ${DOT_DELAY_MS}ms forwards`,
-                      }}
-                    />
                   </mask>
                 </defs>
-
-                <text
-                  x="22"
-                  y="84"
-                  fill="var(--cautie-text-start)"
-                  style={{
-                    fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
-                    fontSize: '104px',
-                    fontWeight: 700,
-                    letterSpacing: '0px',
-                  }}
-                >
-                  cautie
-                </text>
 
                 <text
                   x="22"
@@ -241,6 +215,23 @@ export function CautieWordmark({
                     fontWeight: 700,
                     letterSpacing: '0px',
                     filter: 'drop-shadow(0 0 8px color-mix(in srgb, var(--cautie-text-end) 35%, transparent))',
+                  }}
+                >
+                  cautie
+                </text>
+
+                <text
+                  className="cautie-final-fill"
+                  x="22"
+                  y="84"
+                  fill="var(--cautie-text-end)"
+                  style={{
+                    fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
+                    fontSize: '104px',
+                    fontWeight: 700,
+                    letterSpacing: '0px',
+                    opacity: 0,
+                    animation: `cautieFinalInk 1ms linear ${WRITE_DURATION_MS}ms forwards`,
                   }}
                 >
                   cautie

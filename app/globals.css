@@ -530,6 +530,15 @@
     }
   }
 
+  @keyframes cautieFinalInk {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
   @keyframes cautieLetterReveal {
     0% {
       opacity: 0;
@@ -697,6 +706,11 @@
     animation: none !important;
     opacity: 1 !important;
     transform: scale(1) !important;
+  }
+
+  .cautie-final-fill {
+    animation: none !important;
+    opacity: 1 !important;
   }
 
   .cautie-wordmark-text {
