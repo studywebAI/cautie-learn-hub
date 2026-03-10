@@ -506,7 +506,7 @@
       opacity: 1;
     }
     100% {
-      width: 700px;
+      width: 760px;
       opacity: 1;
     }
   }
@@ -517,7 +517,7 @@
       transform: scale(0);
     }
     70% {
-      transform: scale(1.25);
+      transform: scale(1.3);
     }
     100% {
       opacity: 1;
@@ -598,7 +598,7 @@
 
   #highlight {
     animation: none !important;
-    width: 700px !important;
+    width: 760px !important;
     opacity: 1 !important;
   }
 

@@ -46,10 +46,10 @@ export function CautieWordmark({
   animated = false,
   compact = false,
 }: CautieWordmarkProps) {
-  const WRITE_DURATION_MS = 2200;
-  const DOT_POP_DURATION_MS = 350;
-  const HIGHLIGHT_DELAY_MS = 2500;
-  const HIGHLIGHT_DURATION_MS = 800;
+  const WRITE_DURATION_MS = 2400;
+  const DOT_POP_DURATION_MS = 300;
+  const HIGHLIGHT_DELAY_MS = 2700;
+  const HIGHLIGHT_DURATION_MS = 900;
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -92,20 +92,20 @@ export function CautieWordmark({
           {animated ? (
             <svg
               className="pointer-events-none relative z-10 overflow-visible"
-              viewBox="0 0 800 200"
+              viewBox="0 0 900 200"
               aria-hidden="true"
               style={{
-                width: '500px',
+                width: '520px',
                 height: 'auto',
                 display: 'block',
               }}
             >
               <rect
                 id="highlight"
-                x="40"
+                x="60"
                 y="95"
-                width="700"
-                height="50"
+                width="760"
+                height="55"
                 rx="10"
                 fill="rgba(255,235,0,0.45)"
                 style={{
@@ -115,29 +115,29 @@ export function CautieWordmark({
               />
               <path
                 id="cautie-path"
-                d="M80 120 C80 60 150 60 150 110 C150 150 80 150 80 110 M180 120 L210 80 L240 120 M195 105 L225 105 M260 80 L260 130 C260 150 300 150 300 130 L300 80 M320 80 L380 80 M350 80 L350 150 M400 80 L400 150 M400 80 L440 80 M460 120 C460 90 520 90 520 120 C520 150 460 150 460 120"
+                d="M80 120 C80 60 150 60 150 110 C150 150 90 150 90 110 C90 80 140 80 160 120 L210 120 C230 80 280 80 300 120 C320 160 250 160 250 120 L340 120 L360 80 L380 120 L400 80 L420 120 C440 80 520 80 520 120 C520 160 440 160 440 120"
                 fill="none"
                 stroke="white"
-                strokeWidth={7}
+                strokeWidth={8}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                pathLength={2000}
+                pathLength={2500}
                 style={{
-                  strokeDasharray: 2000,
-                  strokeDashoffset: 2000,
+                  strokeDasharray: 2500,
+                  strokeDashoffset: 2500,
                   animation: `writeLogo ${WRITE_DURATION_MS}ms cubic-bezier(.33,1,.68,1) forwards`,
                   filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.35))',
                 }}
               />
               <circle
                 id="idot"
-                cx="420"
+                cx="395"
                 cy="60"
                 r="6"
                 fill="white"
                 style={{
                   opacity: 0,
-                  transformOrigin: '420px 60px',
+                  transformOrigin: '395px 60px',
                   animation: `dotPop ${DOT_POP_DURATION_MS}ms ease ${WRITE_DURATION_MS}ms forwards`,
                 }}
               />
