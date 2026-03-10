@@ -46,12 +46,18 @@ export function CautieWordmark({
   animated = false,
   compact = false,
 }: CautieWordmarkProps) {
-  const WRITE_DURATION_MS = 3600;
-  const LETTER_DRAW_MS = 1100;
-  const LETTER_STAGGER_MS = 500;
-  const HIGHLIGHT_DELAY_MS = 3900;
-  const HIGHLIGHT_DURATION_MS = 900;
   const letters = ['c', 'a', 'u', 't', 'i', 'e'];
+  const strokePlan = [
+    { d: 'M66 84 C56 66 62 42 84 34 C106 26 128 34 136 52 C142 68 134 88 114 96 C94 104 72 98 66 84', length: 230, start: 0, duration: 560 },
+    { d: 'M164 96 C154 80 160 58 180 50 C199 42 221 50 228 68 C235 86 224 102 206 106 C188 110 168 104 164 96 M226 68 L226 104', length: 260, start: 380, duration: 620 },
+    { d: 'M266 56 L266 92 C266 108 278 114 290 106 C300 100 306 88 306 72 L306 56', length: 190, start: 820, duration: 500 },
+    { d: 'M334 58 L382 58 M358 58 L358 108', length: 150, start: 1180, duration: 420 },
+    { d: 'M414 58 L414 108', length: 120, start: 1480, duration: 360 },
+    { d: 'M452 84 C442 66 448 44 470 36 C492 28 514 36 522 54 C530 72 522 92 502 100 C482 108 460 102 452 84 M452 84 L522 84', length: 280, start: 1760, duration: 640 },
+  ] as const;
+  const WRITE_DURATION_MS = 2600;
+  const HIGHLIGHT_DELAY_MS = 2860;
+  const HIGHLIGHT_DURATION_MS = 900;
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -107,6 +113,7 @@ export function CautieWordmark({
               >
                 <rect
                   id="highlight"
+                  className="cautie-highlight-rect"
                   x="0"
                   y="46"
                   width="1000"
@@ -120,24 +127,79 @@ export function CautieWordmark({
                   }}
                 />
               </svg>
-              <span className="relative z-10" style={{ color: 'var(--cautie-text-start)' }}>
-                cautie
-              </span>
-              <span className="pointer-events-none absolute inset-0 z-20 inline-flex items-baseline">
+
+              <span className="relative z-10 inline-flex">
                 {letters.map((letter, index) => (
-                  <span
-                    key={`${letter}-${index}`}
-                    className="inline-block cautie-letter-ink"
-                    style={{
-                      color: 'var(--cautie-text-end)',
-                      clipPath: 'inset(0 0 100% 0)',
-                      animation: `cautieLetterInk ${LETTER_DRAW_MS}ms cubic-bezier(0.2, 0.9, 0.3, 1) ${index * LETTER_STAGGER_MS}ms forwards`,
-                    }}
-                  >
+                  <span key={`base-${letter}-${index}`} style={{ color: 'var(--cautie-text-start)' }}>
                     {letter}
                   </span>
                 ))}
               </span>
+
+              <span className="pointer-events-none absolute inset-0 z-20 inline-flex">
+                {letters.map((letter, index) => {
+                  const plan = strokePlan[index];
+                  const revealDelay = plan.start + plan.duration - 70;
+                  return (
+                    <span
+                      key={`ink-${letter}-${index}`}
+                      className="inline-block cautie-letter-reveal"
+                      style={{
+                        color: 'var(--cautie-text-end)',
+                        opacity: 0,
+                        animation: `cautieLetterReveal 90ms linear ${revealDelay}ms forwards`,
+                      }}
+                    >
+                      {letter}
+                    </span>
+                  );
+                })}
+              </span>
+
+              <svg
+                className="pointer-events-none absolute z-30 overflow-visible"
+                viewBox="0 0 620 140"
+                aria-hidden="true"
+                style={{
+                  top: '-0.22em',
+                  left: '-0.12em',
+                  width: 'calc(100% + 0.24em)',
+                  height: '1.42em',
+                }}
+              >
+                {strokePlan.map((stroke, index) => (
+                  <path
+                    key={`stroke-${index}`}
+                    className="cautie-stroke-segment"
+                    d={stroke.d}
+                    fill="none"
+                    stroke="var(--cautie-text-end)"
+                    strokeWidth={compact ? 5 : 4.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      ['--stroke-length' as any]: stroke.length,
+                      strokeDasharray: stroke.length,
+                      strokeDashoffset: stroke.length,
+                      filter: 'drop-shadow(0 0 4px color-mix(in srgb, var(--cautie-text-end) 24%, transparent))',
+                      animation: `cautieStrokeDraw ${stroke.duration}ms cubic-bezier(0.33, 1, 0.68, 1) ${stroke.start}ms forwards`,
+                    }}
+                  />
+                ))}
+
+                <circle
+                  className="cautie-i-dot"
+                  cx="414"
+                  cy="42"
+                  r="4.4"
+                  fill="var(--cautie-text-end)"
+                  style={{
+                    opacity: 0,
+                    transformOrigin: '414px 42px',
+                    animation: `dotPop 260ms ease ${1660}ms forwards`,
+                  }}
+                />
+              </svg>
             </span>
           ) : (
             <>

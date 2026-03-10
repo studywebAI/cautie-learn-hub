@@ -508,6 +508,30 @@
     }
   }
 
+  @keyframes cautieStrokeDraw {
+    0% {
+      stroke-dashoffset: var(--stroke-length, 240);
+      opacity: 1;
+    }
+    88% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 0;
+    }
+  }
+
+  @keyframes cautieLetterReveal {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
   @keyframes cautieLetterInk {
     0% {
       clip-path: inset(0 0 100% 0);
@@ -632,23 +656,27 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cautie-letter-ink {
+  .cautie-letter-reveal {
     animation: none !important;
-    clip-path: inset(0 0 0 0) !important;
-    filter: none !important;
     opacity: 1 !important;
   }
 
-  #highlight {
+  .cautie-highlight-rect {
     animation: none !important;
     transform: scaleX(1) !important;
     opacity: 1 !important;
   }
 
-  #idot {
+  .cautie-i-dot {
     animation: none !important;
     opacity: 1 !important;
     transform: scale(1) !important;
+  }
+
+  .cautie-stroke-segment {
+    animation: none !important;
+    opacity: 0 !important;
+    stroke-dashoffset: 0 !important;
   }
 
   .cautie-wordmark-text {
