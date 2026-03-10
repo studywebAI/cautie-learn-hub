@@ -491,6 +491,26 @@
     }
   }
 
+  @keyframes drawLogo {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes highlightSweep {
+    from {
+      width: 0;
+      opacity: 0;
+    }
+    40% {
+      opacity: 1;
+    }
+    to {
+      width: 564px;
+      opacity: 0.5;
+    }
+  }
+
   @keyframes cautie-handwrite-stroke {
     0% {
       stroke-dashoffset: 1000;
@@ -557,6 +577,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  #logo-path {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+
+  #logo-highlight {
+    animation: none !important;
+    width: 564px !important;
+    opacity: 0.5 !important;
+  }
+
   .cautie-wordmark-text {
     animation: none !important;
     opacity: 1 !important;
