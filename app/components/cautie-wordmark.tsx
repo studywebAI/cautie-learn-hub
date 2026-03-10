@@ -130,43 +130,15 @@ export function CautieWordmark({
                 />
               </svg>
 
-              <span className="relative z-10 inline-flex">
-                {letters.map((letter, index) => (
-                  <span key={`base-${letter}-${index}`} style={{ color: 'var(--cautie-text-start)' }}>
-                    {letter}
-                  </span>
-                ))}
-              </span>
-
-              <span className="pointer-events-none absolute inset-0 z-20 inline-flex">
-                {letters.map((letter, index) => {
-                  const plan = letterPlan[index];
-                  const revealDelay = plan.start + plan.duration - 40;
-                  return (
-                    <span
-                      key={`ink-${letter}-${index}`}
-                      className="inline-block cautie-letter-reveal"
-                      style={{
-                        color: 'var(--cautie-text-end)',
-                        opacity: 0,
-                        animation: `cautieLetterReveal 90ms linear ${revealDelay}ms forwards`,
-                      }}
-                    >
-                      {letter}
-                    </span>
-                  );
-                })}
-              </span>
-
               <svg
-                className="pointer-events-none absolute z-30 overflow-visible"
+                className="pointer-events-none relative z-20 overflow-visible"
                 viewBox="0 0 430 120"
                 aria-hidden="true"
                 style={{
-                  top: '-0.07em',
-                  left: '-0.02em',
-                  width: '100%',
+                  top: compact ? '-0.02em' : '-0.03em',
+                  width: compact ? '5.9ch' : '6.1ch',
                   height: '1.08em',
+                  display: 'block',
                 }}
               >
                 {letters.map((letter, index) => {
@@ -197,18 +169,6 @@ export function CautieWordmark({
                     </text>
                   );
                 })}
-                <circle
-                  className="cautie-i-dot"
-                  cx="314"
-                  cy="23"
-                  r="4.2"
-                  fill="var(--cautie-text-end)"
-                  style={{
-                    opacity: 0,
-                    transformOrigin: '314px 23px',
-                    animation: `dotPop 220ms ease 1920ms forwards`,
-                  }}
-                />
               </svg>
             </span>
           ) : (
