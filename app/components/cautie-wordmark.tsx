@@ -111,22 +111,28 @@ export function CautieWordmark({
                   animation: `highlightSweep ${HIGHLIGHT_DURATION_MS}ms ease ${WRITE_DURATION_MS}ms forwards`,
                 }}
               />
-              <path
+              <text
                 id="logo-path"
-                d="M26 126 C 32 96, 52 82, 72 84 C 92 87, 102 112, 95 128 C 87 144, 66 143, 56 127 C 46 110, 59 86, 94 84 C 126 82, 142 105, 145 124 C 148 143, 165 145, 176 130 C 186 115, 178 91, 160 88 C 142 85, 130 108, 141 125 C 152 142, 171 146, 189 139 C 209 132, 223 111, 229 91 C 234 76, 245 74, 253 84 C 261 93, 259 114, 272 129 C 284 143, 304 141, 313 126 C 322 112, 315 89, 299 85 C 283 81, 272 97, 275 113 C 279 132, 301 141, 324 136 C 341 132, 354 120, 352 106 C 350 93, 334 90, 328 78 C 322 67, 328 50, 343 48 C 358 46, 367 59, 367 74 C 367 95, 359 117, 360 136 C 361 154, 375 161, 388 153 C 397 147, 406 133, 412 118 C 420 95, 440 84, 460 90 C 478 96, 487 116, 480 132 C 473 148, 453 152, 437 145 C 422 138, 414 121, 420 105 C 427 86, 448 76, 474 77 C 500 78, 521 91, 531 112"
+                x="24"
+                y="126"
                 fill="none"
                 stroke="var(--cautie-text-end)"
-                strokeWidth={compact ? 8 : 7}
+                strokeWidth={compact ? 7.2 : 6.4}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                pathLength={1600}
                 style={{
-                  strokeDasharray: 1600,
-                  strokeDashoffset: 1600,
+                  fontFamily: 'var(--font-kalam), cursive',
+                  fontSize: compact ? 104 : 112,
+                  fontWeight: 700,
+                  letterSpacing: compact ? '14px' : '15px',
+                  strokeDasharray: 1800,
+                  strokeDashoffset: 1800,
                   animation: `drawLogo ${WRITE_DURATION_MS}ms cubic-bezier(.33,1,.68,1) forwards`,
                   filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.3))',
                 }}
-              />
+              >
+                c a u t i e
+              </text>
             </svg>
           ) : (
             <>
