@@ -49,7 +49,7 @@ export function CautieWordmark({
   const WRITE_DURATION_MS = 2200;
   const DOT_POP_DURATION_MS = 350;
   const HIGHLIGHT_DELAY_MS = 2500;
-  const HIGHLIGHT_DURATION_MS = 900;
+  const HIGHLIGHT_DURATION_MS = 800;
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -92,22 +92,22 @@ export function CautieWordmark({
           {animated ? (
             <svg
               className="pointer-events-none relative z-10 overflow-visible"
-              viewBox="0 0 700 200"
+              viewBox="0 0 800 200"
               aria-hidden="true"
               style={{
-                width: '420px',
+                width: '500px',
                 height: 'auto',
                 display: 'block',
               }}
             >
               <rect
                 id="highlight"
-                x="30"
-                y="90"
-                width="640"
+                x="40"
+                y="95"
+                width="700"
                 height="50"
-                rx="8"
-                fill="rgba(255,230,0,0.45)"
+                rx="10"
+                fill="rgba(255,235,0,0.45)"
                 style={{
                   width: 0,
                   animation: `highlightSweep ${HIGHLIGHT_DURATION_MS}ms ease ${HIGHLIGHT_DELAY_MS}ms forwards`,
@@ -115,10 +115,10 @@ export function CautieWordmark({
               />
               <path
                 id="cautie-path"
-                d="M40 120 C40 60 120 60 120 110 C120 150 60 150 60 110 M140 120 C160 70 220 70 240 110 C240 150 160 150 160 110 M260 120 C260 70 340 70 340 120 C340 170 260 170 260 120 M360 120 L420 120 M440 120 C460 70 520 70 540 110 C540 150 460 150 460 110"
+                d="M80 120 C80 60 150 60 150 110 C150 150 80 150 80 110 M180 120 L210 80 L240 120 M195 105 L225 105 M260 80 L260 130 C260 150 300 150 300 130 L300 80 M320 80 L380 80 M350 80 L350 150 M400 80 L400 150 M400 80 L440 80 M460 120 C460 90 520 90 520 120 C520 150 460 150 460 120"
                 fill="none"
                 stroke="white"
-                strokeWidth={6}
+                strokeWidth={7}
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 pathLength={2000}
@@ -131,14 +131,13 @@ export function CautieWordmark({
               />
               <circle
                 id="idot"
-                cx="400"
-                cy="80"
+                cx="420"
+                cy="60"
                 r="6"
                 fill="white"
                 style={{
                   opacity: 0,
-                  transformOrigin: '400px 80px',
-                  transformBox: 'fill-box',
+                  transformOrigin: '420px 60px',
                   animation: `dotPop ${DOT_POP_DURATION_MS}ms ease ${WRITE_DURATION_MS}ms forwards`,
                 }}
               />

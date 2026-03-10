@@ -498,15 +498,15 @@
   }
 
   @keyframes highlightSweep {
-    from {
+    0% {
       width: 0;
       opacity: 0;
     }
     40% {
       opacity: 1;
     }
-    to {
-      width: 640px;
+    100% {
+      width: 700px;
       opacity: 1;
     }
   }
@@ -514,7 +514,7 @@
   @keyframes dotPop {
     0% {
       opacity: 0;
-      transform: scale(0.2);
+      transform: scale(0);
     }
     70% {
       transform: scale(1.25);
@@ -598,7 +598,7 @@
 
   #highlight {
     animation: none !important;
-    width: 640px !important;
+    width: 700px !important;
     opacity: 1 !important;
   }
 
