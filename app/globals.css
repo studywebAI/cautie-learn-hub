@@ -708,7 +708,8 @@
     transform: scale(1) !important;
   }
 
-  .cautie-final-fill {
+  .cautie-final-fill,
+  .cautie-letter-fill {
     animation: none !important;
     opacity: 1 !important;
   }
