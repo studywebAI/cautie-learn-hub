@@ -46,7 +46,7 @@ export function CautieWordmark({
   animated = false,
   compact = false,
 }: CautieWordmarkProps) {
-  const TEXT_REVEAL_DURATION_MS = 840;
+  const TEXT_REVEAL_DURATION_MS = 920;
   const HIGHLIGHT_DELAY_AFTER_TEXT_MS = 120;
   const HIGHLIGHT_DRAW_DURATION_MS = 420;
   const HIGHLIGHT_SWEEP_DURATION_MS = 320;
@@ -90,10 +90,44 @@ export function CautieWordmark({
           )}
           style={{ fontFamily: 'var(--font-kalam), cursive' }}
         >
+          {animated ? (
+            <svg
+              className="pointer-events-none absolute z-20 overflow-visible cautie-handwrite-layer"
+              viewBox="0 0 420 140"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+              style={{
+                left: '0',
+                top: compact ? '-0.06em' : '-0.09em',
+                width: '100%',
+                height: compact ? '1.28em' : '1.34em',
+              }}
+            >
+              <text
+                x="4"
+                y="103"
+                className="cautie-handwrite-outline"
+                style={{
+                  fontFamily: 'var(--font-kalam), cursive',
+                  fontSize: '116px',
+                  fontWeight: 700,
+                  letterSpacing: '-1px',
+                  fill: 'none',
+                  stroke: 'var(--cautie-text-end)',
+                  strokeWidth: compact ? 5.8 : 5.2,
+                  strokeLinecap: 'round',
+                  strokeLinejoin: 'round',
+                  animation: `cautie-handwrite-stroke ${TEXT_REVEAL_DURATION_MS}ms cubic-bezier(0.2, 0.72, 0.28, 1) 0ms both`,
+                }}
+              >
+                cautie
+              </text>
+            </svg>
+          ) : null}
           <svg
             className="pointer-events-none absolute z-0 overflow-visible"
-          viewBox="0 0 320 120"
-          preserveAspectRatio="none"
+            viewBox="0 0 320 120"
+            preserveAspectRatio="none"
             aria-hidden="true"
             style={{
               top: compact ? 'calc(47% - 0.043em)' : 'calc(45% - 0.058em)',
@@ -137,9 +171,8 @@ export function CautieWordmark({
             whiteSpace: 'nowrap',
             overflow: 'visible',
             color: 'var(--cautie-text-end)',
-            clipPath: animated ? 'inset(0 100% 0 0)' : 'inset(0 0 0 0)',
             animation: animated
-              ? `cautie-handwrite-reveal ${TEXT_REVEAL_DURATION_MS}ms cubic-bezier(0.18, 0.82, 0.3, 1) 0ms both`
+              ? `cautie-handwrite-fill ${TEXT_REVEAL_DURATION_MS}ms linear 0ms both`
               : undefined,
           }}
         >

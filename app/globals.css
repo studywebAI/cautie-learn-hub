@@ -491,29 +491,35 @@
     }
   }
 
-  @keyframes cautie-handwrite-reveal {
+  @keyframes cautie-handwrite-stroke {
     0% {
-      clip-path: inset(0 100% 0 0);
-      transform: translateX(-0.03em) translateY(0.06em) rotate(-1deg);
-      filter: blur(0.35px);
-      opacity: 0.78;
+      stroke-dasharray: 1200;
+      stroke-dashoffset: 1200;
+      filter: blur(0.25px);
+      opacity: 1;
     }
-    38% {
-      clip-path: inset(0 56% 0 0);
-      transform: translateX(0.01em) translateY(-0.01em) rotate(-0.35deg);
-      filter: blur(0.2px);
-      opacity: 0.9;
-    }
-    72% {
-      clip-path: inset(0 22% 0 0);
-      transform: translateX(-0.005em) translateY(0.02em) rotate(0.15deg);
+    62% {
+      stroke-dasharray: 1200;
+      stroke-dashoffset: 520;
       filter: blur(0.1px);
-      opacity: 0.96;
+      opacity: 1;
     }
     100% {
-      clip-path: inset(0 0 0 0);
-      transform: translateX(0) translateY(0) rotate(0deg);
+      stroke-dasharray: 1200;
+      stroke-dashoffset: 0;
       filter: blur(0);
+      opacity: 0;
+    }
+  }
+
+  @keyframes cautie-handwrite-fill {
+    0% {
+      opacity: 0;
+    }
+    72% {
+      opacity: 0;
+    }
+    100% {
       opacity: 1;
     }
   }
@@ -563,10 +569,14 @@
 @media (prefers-reduced-motion: reduce) {
   .cautie-wordmark-text {
     animation: none !important;
-    clip-path: inset(0 0 0 0) !important;
-    transform: none !important;
-    filter: none !important;
     opacity: 1 !important;
+  }
+
+  .cautie-handwrite-layer,
+  .cautie-handwrite-outline {
+    animation: none !important;
+    opacity: 0 !important;
+    filter: none !important;
   }
 
   .cautie-highlight-fill {
