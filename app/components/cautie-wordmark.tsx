@@ -46,11 +46,12 @@ export function CautieWordmark({
   animated = false,
   compact = false,
 }: CautieWordmarkProps) {
-  const TEXT_REVEAL_DURATION_MS = 920;
+  const TEXT_REVEAL_DURATION_MS = 2200;
   const HIGHLIGHT_DELAY_AFTER_TEXT_MS = 120;
-  const HIGHLIGHT_DRAW_DURATION_MS = 420;
-  const HIGHLIGHT_SWEEP_DURATION_MS = 320;
+  const HIGHLIGHT_DRAW_DURATION_MS = 800;
+  const HIGHLIGHT_SWEEP_DURATION_MS = 800;
   const highlightDelayMs = TEXT_REVEAL_DURATION_MS + HIGHLIGHT_DELAY_AFTER_TEXT_MS;
+  const textFillDelayMs = TEXT_REVEAL_DURATION_MS - 120;
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -93,35 +94,32 @@ export function CautieWordmark({
           {animated ? (
             <svg
               className="pointer-events-none absolute z-20 overflow-visible cautie-handwrite-layer"
-              viewBox="0 0 420 140"
+              viewBox="0 0 600 200"
               preserveAspectRatio="none"
               aria-hidden="true"
               style={{
                 left: '0',
-                top: compact ? '-0.06em' : '-0.09em',
+                top: compact ? '-0.14em' : '-0.18em',
                 width: '100%',
-                height: compact ? '1.28em' : '1.34em',
+                height: compact ? '1.5em' : '1.58em',
               }}
             >
-              <text
-                x="4"
-                y="103"
-                className="cautie-handwrite-outline"
+              <path
+                className="cautie-handwrite-path"
+                d="M26 126 C 32 96, 52 82, 72 84 C 92 87, 102 112, 95 128 C 87 144, 66 143, 56 127 C 46 110, 59 86, 94 84 C 126 82, 142 105, 145 124 C 148 143, 165 145, 176 130 C 186 115, 178 91, 160 88 C 142 85, 130 108, 141 125 C 152 142, 171 146, 189 139 C 209 132, 223 111, 229 91 C 234 76, 245 74, 253 84 C 261 93, 259 114, 272 129 C 284 143, 304 141, 313 126 C 322 112, 315 89, 299 85 C 283 81, 272 97, 275 113 C 279 132, 301 141, 324 136 C 341 132, 354 120, 352 106 C 350 93, 334 90, 328 78 C 322 67, 328 50, 343 48 C 358 46, 367 59, 367 74 C 367 95, 359 117, 360 136 C 361 154, 375 161, 388 153 C 397 147, 406 133, 412 118 C 420 95, 440 84, 460 90 C 478 96, 487 116, 480 132 C 473 148, 453 152, 437 145 C 422 138, 414 121, 420 105 C 427 86, 448 76, 474 77 C 500 78, 521 91, 531 112"
+                pathLength={1000}
                 style={{
-                  fontFamily: 'var(--font-kalam), cursive',
-                  fontSize: '116px',
-                  fontWeight: 700,
-                  letterSpacing: '-1px',
                   fill: 'none',
                   stroke: 'var(--cautie-text-end)',
-                  strokeWidth: compact ? 5.8 : 5.2,
+                  strokeWidth: compact ? 8 : 7,
                   strokeLinecap: 'round',
                   strokeLinejoin: 'round',
-                  animation: `cautie-handwrite-stroke ${TEXT_REVEAL_DURATION_MS}ms cubic-bezier(0.2, 0.72, 0.28, 1) 0ms both`,
+                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.3))',
+                  strokeDasharray: 1000,
+                  strokeDashoffset: 1000,
+                  animation: `cautie-handwrite-stroke ${TEXT_REVEAL_DURATION_MS}ms cubic-bezier(0.33, 1, 0.68, 1) 0ms forwards`,
                 }}
-              >
-                cautie
-              </text>
+              />
             </svg>
           ) : null}
           <svg
@@ -172,8 +170,9 @@ export function CautieWordmark({
             overflow: 'visible',
             color: 'var(--cautie-text-end)',
             animation: animated
-              ? `cautie-handwrite-fill ${TEXT_REVEAL_DURATION_MS}ms linear 0ms both`
+              ? `cautie-handwrite-fill 260ms ease ${textFillDelayMs}ms forwards`
               : undefined,
+            opacity: animated ? 0 : 1,
           }}
         >
           cautie

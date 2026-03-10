@@ -493,21 +493,15 @@
 
   @keyframes cautie-handwrite-stroke {
     0% {
-      stroke-dasharray: 1200;
-      stroke-dashoffset: 1200;
-      filter: blur(0.25px);
+      stroke-dashoffset: 1000;
       opacity: 1;
     }
-    62% {
-      stroke-dasharray: 1200;
-      stroke-dashoffset: 520;
-      filter: blur(0.1px);
+    92% {
+      stroke-dashoffset: 0;
       opacity: 1;
     }
     100% {
-      stroke-dasharray: 1200;
       stroke-dashoffset: 0;
-      filter: blur(0);
       opacity: 0;
     }
   }
@@ -526,32 +520,28 @@
 
   @keyframes cautie-highlight-fill {
     0% {
-      transform: scaleX(0) translateX(-2%);
-      opacity: 0.26;
-      filter: blur(0.45px);
+      transform: scaleX(0);
+      opacity: 0;
     }
-    68% {
-      transform: scaleX(1.015) translateX(0%);
-      opacity: 0.62;
-      filter: blur(0.12px);
+    40% {
+      opacity: 0.56;
     }
     100% {
-      transform: scaleX(1) translateX(0%);
+      transform: scaleX(1);
       opacity: 0.5;
-      filter: blur(0);
     }
   }
 
   @keyframes cautie-highlight-glint {
     0% {
-      transform: translateX(-9%);
+      transform: translateX(-10%);
       opacity: 0;
     }
     30% {
       opacity: 0.2;
     }
     100% {
-      transform: translateX(7%);
+      transform: translateX(10%);
       opacity: 0;
     }
   }
@@ -573,10 +563,10 @@
   }
 
   .cautie-handwrite-layer,
-  .cautie-handwrite-outline {
+  .cautie-handwrite-path {
     animation: none !important;
     opacity: 0 !important;
-    filter: none !important;
+    stroke-dashoffset: 0 !important;
   }
 
   .cautie-highlight-fill {
