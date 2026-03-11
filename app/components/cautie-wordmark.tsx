@@ -49,11 +49,11 @@ export function CautieWordmark({
 }: CautieWordmarkProps) {
   if (!SHOW_CAUTIE_LOGO) return null;
 
-  const TYPE_DURATION_MS = 320;
-  const HIGHLIGHT_DELAY_MS = TYPE_DURATION_MS + 18;
-  const HIGHLIGHT_DURATION_MS = 170;
-  const animatedWordWidth = compact ? '6.05ch' : '7.25ch';
-  const animatedWordHeight = compact ? '1.06em' : '1.26em';
+  const TYPE_DURATION_MS = 680;
+  const HIGHLIGHT_DELAY_MS = TYPE_DURATION_MS + 12;
+  const HIGHLIGHT_DURATION_MS = 95;
+  const animatedWordWidth = compact ? '6.9ch' : '8.1ch';
+  const animatedWordHeight = compact ? '1.18em' : '1.34em';
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -77,59 +77,6 @@ export function CautieWordmark({
     setHighlightColor(next);
   }, []);
 
-  useEffect(() => {
-    if (!animated) return;
-
-    let audioCtx: AudioContext | null = null;
-    const playTypingClicks = async () => {
-      try {
-        const AudioContextCtor =
-          window.AudioContext ||
-          (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-
-        if (!AudioContextCtor) return;
-        audioCtx = new AudioContextCtor();
-        if (audioCtx.state === 'suspended') {
-          await audioCtx.resume().catch(() => {});
-        }
-        if (audioCtx.state !== 'running') return;
-
-        const clicks = 6;
-        const stepMs = TYPE_DURATION_MS / clicks;
-        for (let i = 0; i < clicks; i++) {
-          const when = audioCtx.currentTime + 0.02 + (stepMs * i) / 1000;
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(700 + i * 24, when);
-          gain.gain.setValueAtTime(0.0001, when);
-          gain.gain.exponentialRampToValueAtTime(0.03, when + 0.006);
-          gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
-
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(when);
-          osc.stop(when + 0.055);
-        }
-
-        window.setTimeout(() => {
-          audioCtx?.close().catch(() => {});
-          audioCtx = null;
-        }, TYPE_DURATION_MS + 260);
-      } catch {
-        // Ignore audio errors (autoplay restrictions / unsupported contexts).
-      }
-    };
-
-    void playTypingClicks();
-
-    return () => {
-      audioCtx?.close().catch(() => {});
-      audioCtx = null;
-    };
-  }, [animated, TYPE_DURATION_MS]);
-
   return (
     <div
       className={cn('inline-flex items-center justify-center overflow-visible', className)}
@@ -141,7 +88,7 @@ export function CautieWordmark({
         <span
           className={cn(
             'relative inline-block lowercase tracking-tight overflow-visible',
-            compact ? 'text-xl font-semibold' : 'text-6xl font-bold',
+            compact ? 'text-2xl font-semibold' : 'text-7xl font-bold',
             textClassName
           )}
           style={{ fontFamily: 'var(--font-caveat), var(--font-kalam), cursive' }}
@@ -155,18 +102,18 @@ export function CautieWordmark({
                 aria-hidden="true"
                 style={{
                   top: '-0.12em',
-                  left: '-0.1em',
-                  width: 'calc(100% + 0.2em)',
-                  height: 'calc(100% + 0.24em)',
+                  left: '-0.04em',
+                  width: 'calc(100% + 0.08em)',
+                  height: 'calc(100% + 0.18em)',
                 }}
               >
                 <rect
                   id="highlight"
                   className="cautie-highlight-rect"
                   x="0"
-                  y="46"
+                  y="50"
                   width="1000"
-                  height="78"
+                  height="70"
                   rx="14"
                   fill={highlightColor}
                   style={{
@@ -178,15 +125,15 @@ export function CautieWordmark({
                 <rect
                   className="cautie-highlight-glint"
                   x="0"
-                  y="46"
+                  y="50"
                   width="1000"
-                  height="78"
+                  height="70"
                   rx="14"
                   fill="rgba(255,255,255,0.26)"
                   style={{
                     opacity: 0,
                     transformOrigin: 'left center',
-                    animation: `cautie-highlight-glint ${HIGHLIGHT_DURATION_MS}ms ease-out ${HIGHLIGHT_DELAY_MS + 30}ms forwards`,
+                    animation: `cautie-highlight-glint-tight ${HIGHLIGHT_DURATION_MS}ms ease-out ${HIGHLIGHT_DELAY_MS + 10}ms forwards`,
                   }}
                 />
               </svg>
@@ -208,19 +155,22 @@ export function CautieWordmark({
             <>
               <svg
                 className="pointer-events-none absolute z-0 overflow-visible"
-                viewBox="0 0 320 120"
+                viewBox="0 0 1000 160"
                 preserveAspectRatio="none"
                 aria-hidden="true"
                 style={{
-                  top: compact ? '47%' : '45%',
-                  left: compact ? '-7%' : '-8%',
-                  width: compact ? '108%' : '109%',
-                  height: compact ? '0.86em' : '1.16em',
-                  transform: 'translateY(-50%)',
+                  top: '-0.12em',
+                  left: '-0.04em',
+                  width: 'calc(100% + 0.08em)',
+                  height: 'calc(100% + 0.18em)',
                 }}
               >
-                <path
-                  d="M6 20 C66 14 126 12 186 14 C230 16 272 15 314 12 L314 102 C272 106 230 108 186 108 C126 108 66 106 6 104 Z"
+                <rect
+                  x="0"
+                  y="50"
+                  width="1000"
+                  height="70"
+                  rx="14"
                   fill={highlightColor}
                 />
               </svg>
