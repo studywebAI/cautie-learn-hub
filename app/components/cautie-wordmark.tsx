@@ -48,56 +48,61 @@ export function CautieWordmark({
 }: CautieWordmarkProps) {
   const strokePlan = [
     {
-      d: 'M58 74 C46 63 44 46 56 36 C71 24 94 28 104 44 C114 59 110 80 94 89 C78 98 62 90 54 78',
-      length: 230,
+      d: 'M60 74 C48 60 49 41 63 33 C79 24 98 30 107 45 C113 57 110 76 97 86 C82 96 65 91 56 78',
       start: 0,
-      duration: 520,
+      duration: 430,
       strokeWidth: 34,
     },
     {
-      d: 'M118 74 C110 59 112 44 126 35 C143 26 162 34 168 50 C174 66 166 82 150 88 C132 94 118 86 118 74 M166 50 L166 88',
-      length: 250,
-      start: 420,
-      duration: 560,
+      d: 'M122 75 C116 60 119 44 133 36 C148 28 165 34 171 48 C176 62 170 77 156 85 C142 93 127 90 122 75',
+      start: 430,
+      duration: 380,
       strokeWidth: 34,
     },
     {
-      d: 'M184 46 L184 80 C186 95 198 99 212 91 C224 84 230 70 230 54 L230 42',
-      length: 190,
-      start: 860,
+      d: 'M168 48 L168 88',
+      start: 810,
+      duration: 170,
+      strokeWidth: 30,
+    },
+    {
+      d: 'M188 48 L188 80 C190 94 204 100 218 92 C229 86 236 72 236 54 L236 44',
+      start: 980,
       duration: 500,
       strokeWidth: 32,
     },
     {
-      d: 'M246 37 L246 88 M232 51 L266 49',
-      length: 130,
-      start: 1300,
-      duration: 360,
+      d: 'M256 36 L256 89',
+      start: 1480,
+      duration: 220,
       strokeWidth: 30,
     },
     {
-      d: 'M278 49 L278 88',
-      length: 85,
-      start: 1620,
-      duration: 240,
+      d: 'M242 50 L272 50',
+      start: 1700,
+      duration: 130,
+      strokeWidth: 24,
+    },
+    {
+      d: 'M282 50 L282 89',
+      start: 1830,
+      duration: 200,
       strokeWidth: 28,
     },
     {
-      d: 'M278 30 L278 30.01',
-      length: 4,
-      start: 1760,
-      duration: 130,
-      strokeWidth: 20,
+      d: 'M282 31 L282 31.01',
+      start: 2030,
+      duration: 110,
+      strokeWidth: 18,
     },
     {
-      d: 'M306 72 C300 58 308 43 324 36 C341 30 357 40 361 56 C365 72 356 84 341 88 C325 92 312 86 307 74 M307 74 L356 71',
-      length: 250,
-      start: 1840,
-      duration: 660,
+      d: 'M306 73 C300 59 307 44 322 37 C338 30 355 38 361 53 C366 68 358 82 344 88 C330 94 314 90 307 77 M307 76 L355 73',
+      start: 2140,
+      duration: 430,
       strokeWidth: 34,
     },
   ] as const;
-  const WRITE_DURATION_MS = 2500;
+  const WRITE_DURATION_MS = 2570;
   const HIGHLIGHT_DELAY_MS = WRITE_DURATION_MS + 120;
   const HIGHLIGHT_DURATION_MS = 900;
   const maskId = `cautie-write-mask-${useId().replace(/:/g, '')}`;
@@ -188,21 +193,21 @@ export function CautieWordmark({
                   <mask id={maskId} maskUnits="userSpaceOnUse">
                     <rect x="0" y="0" width="430" height="120" fill="black" />
                     {strokePlan.map((segment, index) => {
-                      const dashSpan = segment.length + segment.strokeWidth * 0.25;
                       return (
                         <path
                           key={`mask-stroke-${index}`}
                           className="cautie-mask-stroke"
                           d={segment.d}
+                          pathLength={1}
                           fill="none"
                           stroke="white"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={compact ? Math.max(18, segment.strokeWidth - 6) : segment.strokeWidth}
                           style={{
-                            ['--stroke-start' as any]: dashSpan,
-                            strokeDasharray: `${dashSpan} ${dashSpan}`,
-                            strokeDashoffset: dashSpan,
+                            ['--stroke-start' as any]: 1,
+                            strokeDasharray: '1',
+                            strokeDashoffset: 1,
                             animation: `cautieMaskDraw ${segment.duration}ms cubic-bezier(0.33, 1, 0.68, 1) ${segment.start}ms forwards`,
                           }}
                         />
