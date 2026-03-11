@@ -46,50 +46,55 @@ export function CautieWordmark({
   animated = false,
   compact = false,
 }: CautieWordmarkProps) {
-  const letters = ['c', 'a', 'u', 't', 'i', 'e'] as const;
-  const letterXs = [22, 82, 142, 198, 250, 298] as const;
   const strokePlan = [
     {
       d: 'M58 74 C46 63 44 46 56 36 C71 24 94 28 104 44 C114 59 110 80 94 89 C78 98 62 90 54 78',
       length: 230,
       start: 0,
       duration: 520,
-      strokeWidth: 26,
+      strokeWidth: 34,
     },
     {
       d: 'M118 74 C110 59 112 44 126 35 C143 26 162 34 168 50 C174 66 166 82 150 88 C132 94 118 86 118 74 M166 50 L166 88',
       length: 250,
       start: 420,
       duration: 560,
-      strokeWidth: 26,
+      strokeWidth: 34,
     },
     {
       d: 'M184 46 L184 80 C186 95 198 99 212 91 C224 84 230 70 230 54 L230 42',
       length: 190,
       start: 860,
       duration: 500,
-      strokeWidth: 24,
+      strokeWidth: 32,
     },
     {
       d: 'M246 37 L246 88 M232 51 L266 49',
       length: 130,
       start: 1300,
       duration: 360,
-      strokeWidth: 23,
+      strokeWidth: 30,
     },
     {
       d: 'M278 49 L278 88',
       length: 85,
       start: 1620,
       duration: 240,
-      strokeWidth: 22,
+      strokeWidth: 28,
+    },
+    {
+      d: 'M278 30 L278 30.01',
+      length: 4,
+      start: 1760,
+      duration: 130,
+      strokeWidth: 20,
     },
     {
       d: 'M306 72 C300 58 308 43 324 36 C341 30 357 40 361 56 C365 72 356 84 341 88 C325 92 312 86 307 74 M307 74 L356 71',
       length: 250,
       start: 1840,
       duration: 660,
-      strokeWidth: 26,
+      strokeWidth: 34,
     },
   ] as const;
   const WRITE_DURATION_MS = 2500;
@@ -183,7 +188,7 @@ export function CautieWordmark({
                   <mask id={maskId} maskUnits="userSpaceOnUse">
                     <rect x="0" y="0" width="430" height="120" fill="black" />
                     {strokePlan.map((segment, index) => {
-                      const dashSpan = segment.length + 12;
+                      const dashSpan = segment.length + segment.strokeWidth * 0.25;
                       return (
                         <path
                           key={`mask-stroke-${index}`}
@@ -191,9 +196,9 @@ export function CautieWordmark({
                           d={segment.d}
                           fill="none"
                           stroke="white"
-                          strokeLinecap="butt"
+                          strokeLinecap="round"
                           strokeLinejoin="round"
-                          strokeWidth={compact ? Math.max(14, segment.strokeWidth - 3) : segment.strokeWidth}
+                          strokeWidth={compact ? Math.max(18, segment.strokeWidth - 6) : segment.strokeWidth}
                           style={{
                             ['--stroke-start' as any]: dashSpan,
                             strokeDasharray: `${dashSpan} ${dashSpan}`,
@@ -220,30 +225,6 @@ export function CautieWordmark({
                 >
                   cautie
                 </text>
-
-                {letters.map((letter, index) => {
-                  const segment = strokePlan[index];
-                  const inkAt = segment.start + Math.floor(segment.duration * 0.72);
-                  return (
-                    <text
-                      key={`ink-${letter}-${index}`}
-                      className="cautie-letter-fill"
-                      x={letterXs[index]}
-                      y="84"
-                      fill="var(--cautie-text-end)"
-                      style={{
-                        fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
-                        fontSize: '104px',
-                        fontWeight: 700,
-                        letterSpacing: '0px',
-                        opacity: 0,
-                        animation: `cautieFinalInk 90ms linear ${inkAt}ms forwards`,
-                      }}
-                    >
-                      {letter}
-                    </text>
-                  );
-                })}
               </svg>
             </span>
           ) : (
