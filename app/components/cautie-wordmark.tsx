@@ -3,6 +3,7 @@
 import { useContext, useEffect, useId, useState } from 'react';
 import { AppContext, type AppContextType } from '@/contexts/app-context';
 import { cn } from '@/lib/utils';
+import { SHOW_CAUTIE_LOGO } from '@/lib/branding';
 
 const HIGHLIGHT_COLORS = [
   'rgba(250, 204, 21, 0.66)',
@@ -46,6 +47,8 @@ export function CautieWordmark({
   animated = false,
   compact = false,
 }: CautieWordmarkProps) {
+  if (!SHOW_CAUTIE_LOGO) return null;
+
   const strokePlan = [
     {
       d: 'M60 74 C48 60 49 41 63 33 C79 24 98 30 107 45 C113 57 110 76 97 86 C82 96 65 91 56 78',

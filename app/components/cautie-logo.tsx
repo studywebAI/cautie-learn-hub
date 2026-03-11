@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { SHOW_CAUTIE_LOGO } from '@/lib/branding';
 
 const HIGHLIGHT_COLORS = [
   '#FFE066', '#7EC8E3', '#FF9A9E', '#A8E6CF', '#FFB347',
@@ -57,6 +58,8 @@ interface CautieLogoProps {
 }
 
 export function CautieLogo({ size = 'md', className = '' }: CautieLogoProps) {
+  if (!SHOW_CAUTIE_LOGO) return null;
+
   const { color, strokes } = useMemo(() => {
     const s = Math.floor(Math.random() * 1000);
     const c = HIGHLIGHT_COLORS[s % HIGHLIGHT_COLORS.length];
