@@ -625,6 +625,12 @@ function NotesPageContent() {
             <p className="text-xs text-muted-foreground">
               Import page text, then generate notes with your current settings.
             </p>
+            <textarea
+              value={sourceText}
+              onChange={(e) => setSourceText(e.target.value)}
+              placeholder="Imported link text appears here. You can edit before generating."
+              className="w-full min-h-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+            />
           </div>
         )}
 
@@ -686,6 +692,13 @@ function NotesPageContent() {
               )}
             </div>
 
+            <textarea
+              value={sourceText}
+              onChange={(e) => setSourceText(e.target.value)}
+              placeholder="Transcript text for note generation appears here. You can edit it."
+              className="w-full min-h-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
@@ -720,12 +733,6 @@ function NotesPageContent() {
         <div className="min-h-0 flex-1">
           {inputMode === 'text-files' && (
             <SourceInput value={sourceText} onChange={setSourceText} onSubmit={handleGenerate} placeholder={t.sourceInputPlaceholder} />
-          )}
-          {inputMode === 'links' && (
-            <SourceInput value={sourceText} onChange={setSourceText} onSubmit={handleGenerate} placeholder="Imported link text appears here. You can edit before generating." />
-          )}
-          {inputMode === 'listen' && (
-            <SourceInput value={sourceText} onChange={setSourceText} onSubmit={handleGenerate} placeholder="Live transcript flows here. You can edit before generating." />
           )}
         </div>
       </div>
