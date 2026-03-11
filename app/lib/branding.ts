@@ -1,1 +1,1 @@
-export const SHOW_CAUTIE_LOGO = false;
+export const SHOW_CAUTIE_LOGO = true;
