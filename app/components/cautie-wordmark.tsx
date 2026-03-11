@@ -49,6 +49,8 @@ export function CautieWordmark({
 }: CautieWordmarkProps) {
   if (!SHOW_CAUTIE_LOGO) return null;
 
+  const letters = ['c', 'a', 'u', 't', 'i', 'e'] as const;
+  const letterXs = [22, 82, 142, 198, 250, 298] as const;
   const strokePlan = [
     {
       d: 'M60 74 C48 60 49 41 63 33 C79 24 98 30 107 45 C113 57 110 76 97 86 C82 96 65 91 56 78',
@@ -105,7 +107,8 @@ export function CautieWordmark({
       strokeWidth: 30,
     },
   ] as const;
-  const WRITE_DURATION_MS = 1700;
+  const WRITE_START_DELAY_MS = 120;
+  const WRITE_DURATION_MS = WRITE_START_DELAY_MS + 1700;
   const HIGHLIGHT_DELAY_MS = WRITE_DURATION_MS + 40;
   const HIGHLIGHT_DURATION_MS = 520;
   const maskId = `cautie-write-mask-${useId().replace(/:/g, '')}`;
@@ -204,14 +207,14 @@ export function CautieWordmark({
                           pathLength={1}
                           fill="none"
                           stroke="white"
-                          strokeLinecap="round"
+                          strokeLinecap="butt"
                           strokeLinejoin="round"
                           strokeWidth={compact ? Math.max(14, segment.strokeWidth - 5) : segment.strokeWidth}
                           style={{
                             ['--stroke-start' as any]: 1,
                             strokeDasharray: '1',
                             strokeDashoffset: 1,
-                            animation: `cautieMaskDraw ${segment.duration}ms cubic-bezier(0.33, 1, 0.68, 1) ${segment.start}ms forwards`,
+                            animation: `cautieMaskDraw ${segment.duration}ms cubic-bezier(0.33, 1, 0.68, 1) ${WRITE_START_DELAY_MS + segment.start}ms forwards`,
                           }}
                         />
                       );
@@ -233,6 +236,30 @@ export function CautieWordmark({
                 >
                   cautie
                 </text>
+
+                {letters.map((letter, index) => {
+                  const lockMoments = [250, 650, 930, 1200, 1400, 1660] as const;
+                  const lockAt = WRITE_START_DELAY_MS + lockMoments[index];
+                  return (
+                    <text
+                      key={`lock-${letter}-${index}`}
+                      className="cautie-letter-lock"
+                      x={letterXs[index]}
+                      y="84"
+                      fill="var(--cautie-text-end)"
+                      style={{
+                        fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
+                        fontSize: '104px',
+                        fontWeight: 700,
+                        letterSpacing: '0px',
+                        opacity: 0,
+                        animation: `cautieFinalInk 80ms linear ${lockAt}ms forwards`,
+                      }}
+                    >
+                      {letter}
+                    </text>
+                  );
+                })}
               </svg>
             </span>
           ) : (

@@ -522,10 +522,22 @@
   @keyframes cautieMaskDraw {
     0% {
       stroke-dashoffset: var(--stroke-start, 1000);
+      opacity: 0;
+    }
+    4% {
       opacity: 1;
     }
     100% {
       stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
+  @keyframes cautieFinalInk {
+    0% {
+      opacity: 0;
+    }
+    100% {
       opacity: 1;
     }
   }
@@ -697,6 +709,11 @@
     animation: none !important;
     opacity: 1 !important;
     transform: scale(1) !important;
+  }
+
+  .cautie-letter-lock {
+    animation: none !important;
+    opacity: 1 !important;
   }
 
   .cautie-wordmark-text {
