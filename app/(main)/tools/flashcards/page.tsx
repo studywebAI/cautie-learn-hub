@@ -209,7 +209,16 @@ function FlashcardsPageContent() {
 
   return (
     <WorkbenchShell title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'} sidebar={sidebar}>
-      <SourceInput value={sourceText} onChange={setSourceText} onSubmit={() => handleGenerate(sourceText)} placeholder={t.sourceInputPlaceholder} />
+      <SourceInput
+        toolId="flashcards"
+        value={sourceText}
+        onChange={setSourceText}
+        onSubmit={() => handleGenerate(sourceText)}
+        placeholder={t.sourceInputPlaceholder}
+        enableMic
+        enableCaptions
+        sourceMergeMode="append_labeled"
+      />
     </WorkbenchShell>
   );
 }

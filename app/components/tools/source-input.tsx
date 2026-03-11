@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, FileText, ImageIcon, X, Loader2, Link2, Lightbulb, Sparkles } from 'lucide-react';
+import { UploadCloud, FileText, ImageIcon, X, Loader2, Link2, Lightbulb, Sparkles, Mic, Captions, StopCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SourceInputProps {
@@ -12,7 +12,62 @@ interface SourceInputProps {
   onSubmit?: () => void;
   placeholder?: string;
   disabled?: boolean;
+  toolId?: 'notes' | 'quiz' | 'flashcards';
+  enableMic?: boolean;
+  enableCaptions?: boolean;
+  sourceMergeMode?: 'append_labeled';
 }
+
+type TranscriptChunk = {
+  id: string;
+  text: string;
+  startedAt?: number;
+  endedAt?: number;
+  selected: boolean;
+};
+
+type BrowserSpeechRecognition = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  maxAlternatives: number;
+  onresult: ((event: any) => void) | null;
+  onerror: ((event: any) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+};
+
+type SpeechRecognitionConstructor = new () => BrowserSpeechRecognition;
+
+const getSpeechRecognitionConstructor = (): SpeechRecognitionConstructor | null => {
+  if (typeof window === 'undefined') return null;
+  return (
+    (window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor }).SpeechRecognition ||
+    (window as unknown as { webkitSpeechRecognition?: SpeechRecognitionConstructor }).webkitSpeechRecognition ||
+    null
+  );
+};
+
+const normalizeText = (value: string) => value.replace(/\s+/g, ' ').trim();
+
+const appendLabeledBlock = (existing: string, label: string, body: string) => {
+  const cleanBody = body.trim();
+  if (!cleanBody) return existing;
+  const block = `### SOURCE: ${label}\n${cleanBody}`;
+  if (!existing.trim()) return block;
+  return `${existing.trimEnd()}\n\n${block}`;
+};
+
+const formatTime = (epochMs?: number) => {
+  if (!epochMs) return '--:--';
+  const d = new Date(epochMs);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
+};
 
 export function SourceInput({
   value,
@@ -20,14 +75,27 @@ export function SourceInput({
   onSubmit,
   placeholder = 'Enter your text here...',
   disabled = false,
+  toolId,
+  enableMic = true,
+  enableCaptions = true,
+  sourceMergeMode = 'append_labeled',
 }: SourceInputProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
+  const keepListeningRef = useRef(false);
+  const chunkStartedAtRef = useRef<number | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [urlInput, setUrlInput] = useState('');
-  const [showUrlInput, setShowUrlInput] = useState(false);
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeechSupported] = useState(Boolean(getSpeechRecognitionConstructor()));
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [chunks, setChunks] = useState<TranscriptChunk[]>([]);
+  const [captionsOpen, setCaptionsOpen] = useState(false);
+
+  const hasSelectedChunks = useMemo(() => chunks.some((chunk) => chunk.selected), [chunks]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -56,16 +124,23 @@ export function SourceInput({
     setIsProcessing(true);
 
     try {
+      const appendSource = (label: string, text: string) => {
+        const next = sourceMergeMode === 'append_labeled'
+          ? appendLabeledBlock(value, label, text)
+          : text;
+        onChange(next);
+      };
+
       if (file.type === 'text/plain') {
         const text = await file.text();
-        onChange(text);
+        appendSource(`FILE (${file.name})`, text);
       } else {
         const formData = new FormData();
         formData.append('file', file);
         const res = await fetch('/api/tools/extract-text', { method: 'POST', body: formData });
         if (res.ok) {
           const data = await res.json();
-          if (data.text) onChange(data.text);
+          if (data.text) appendSource(`FILE (${file.name})`, data.text);
           else toast({ title: 'File uploaded', description: 'Could not extract text. Enter text manually.' });
         } else {
           toast({ title: 'File uploaded', description: 'Text extraction unavailable. Enter text manually.' });
@@ -115,10 +190,14 @@ export function SourceInput({
       if (res.ok) {
         const data = await res.json();
         if (data.text) {
-          onChange(data.text);
+          const resolvedUrl = url.startsWith('http') ? url : `https://${url}`;
+          const host = new URL(resolvedUrl).hostname;
+          const next = sourceMergeMode === 'append_labeled'
+            ? appendLabeledBlock(value, `URL (${host})`, data.text)
+            : data.text;
+          onChange(next);
           setUrlInput('');
-          setShowUrlInput(false);
-          toast({ title: 'Content imported', description: `Extracted text from ${new URL(url.startsWith('http') ? url : `https://${url}`).hostname}` });
+          toast({ title: 'Content imported', description: `Extracted text from ${host}` });
         } else {
           toast({ variant: 'destructive', title: 'No content found', description: 'Could not extract text from this URL.' });
         }
@@ -130,6 +209,110 @@ export function SourceInput({
     } finally {
       setIsFetchingUrl(false);
     }
+  };
+
+  const pushChunk = (text: string) => {
+    const clean = normalizeText(text);
+    if (!clean) return;
+    const startedAt = chunkStartedAtRef.current ?? Date.now();
+    const endedAt = Date.now();
+    chunkStartedAtRef.current = endedAt;
+    setChunks((prev) => [
+      ...prev,
+      {
+        id: `${endedAt}-${Math.random().toString(36).slice(2, 8)}`,
+        text: clean,
+        startedAt,
+        endedAt,
+        selected: true,
+      },
+    ]);
+  };
+
+  const stopListening = () => {
+    keepListeningRef.current = false;
+    setIsListening(false);
+    setInterimTranscript('');
+    const recognition = recognitionRef.current;
+    recognitionRef.current = null;
+    if (!recognition) return;
+    try { recognition.onresult = null; } catch {}
+    try { recognition.onerror = null; } catch {}
+    try { recognition.onend = null; } catch {}
+    try { recognition.stop(); } catch {}
+    try { recognition.abort(); } catch {}
+  };
+
+  const startListening = () => {
+    if (isListening) return;
+    const RecognitionConstructor = getSpeechRecognitionConstructor();
+    if (!RecognitionConstructor) {
+      toast({ variant: 'destructive', title: 'Microphone unavailable', description: 'Use a Chromium browser for speech recognition.' });
+      return;
+    }
+
+    const recognition = new RecognitionConstructor();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    recognition.lang = 'en-US';
+    keepListeningRef.current = true;
+    setIsListening(true);
+    chunkStartedAtRef.current = Date.now();
+
+    recognition.onresult = (event: any) => {
+      let interim = '';
+      for (let i = event.resultIndex ?? 0; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        const text = result?.[0]?.transcript || '';
+        if (result?.isFinal) pushChunk(text);
+        else interim = normalizeText(text);
+      }
+      setInterimTranscript(interim);
+    };
+
+    recognition.onerror = (event: any) => {
+      const err = event?.error || 'unknown';
+      if (err !== 'no-speech') {
+        toast({ variant: 'destructive', title: 'Microphone error', description: `Speech recognition error: ${err}` });
+      }
+    };
+
+    recognition.onend = () => {
+      if (!keepListeningRef.current) {
+        setIsListening(false);
+        return;
+      }
+      try {
+        recognition.start();
+      } catch {
+        keepListeningRef.current = false;
+        setIsListening(false);
+      }
+    };
+
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+    } catch {
+      setIsListening(false);
+      keepListeningRef.current = false;
+      toast({ variant: 'destructive', title: 'Microphone unavailable', description: 'Could not start listening.' });
+    }
+  };
+
+  const selectedChunks = chunks.filter((chunk) => chunk.selected);
+
+  const applySelectedCaptions = (replace = false) => {
+    if (selectedChunks.length === 0) return;
+    const start = selectedChunks[0]?.startedAt;
+    const end = selectedChunks[selectedChunks.length - 1]?.endedAt;
+    const block = selectedChunks.map((chunk) => chunk.text).join('\n');
+    const label = `CAPTION (${formatTime(start)}-${formatTime(end)})`;
+    const next = sourceMergeMode === 'append_labeled'
+      ? appendLabeledBlock(replace ? '' : value, label, block)
+      : block;
+    onChange(next);
   };
 
   const isImage = uploadedFile?.type.startsWith('image/');
@@ -145,10 +328,52 @@ export function SourceInput({
 
   return (
     <div
-      className="h-full flex flex-col gap-3"
+      className="h-full flex flex-col gap-3 relative"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
+      {captionsOpen && (
+        <div className="absolute right-0 top-0 z-20 h-full w-[320px] border bg-background shadow-xl p-3 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm">Captions</p>
+            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setCaptionsOpen(false)}>Close</Button>
+          </div>
+          {chunks.length === 0 ? (
+            <div className="rounded-md border p-3 text-xs text-muted-foreground">
+              No captions yet. Start Mic and speak to record chunks.
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setChunks((prev) => prev.map((c) => ({ ...c, selected: true })))}>Select all</Button>
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setChunks((prev) => prev.map((c) => ({ ...c, selected: false })))}>Clear</Button>
+              </div>
+              <div className="flex-1 overflow-auto space-y-2 pr-1">
+                {chunks.map((chunk) => (
+                  <label key={chunk.id} className="flex gap-2 rounded-md border p-2 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={chunk.selected}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setChunks((prev) => prev.map((c) => c.id === chunk.id ? { ...c, selected: checked } : c));
+                      }}
+                    />
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">{formatTime(chunk.startedAt)} - {formatTime(chunk.endedAt)}</p>
+                      <p>{chunk.text}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button size="sm" className="h-8 text-xs" disabled={!hasSelectedChunks} onClick={() => applySelectedCaptions(false)}>Insert selected</Button>
+                <Button size="sm" variant="destructive" className="h-8 text-xs" disabled={!hasSelectedChunks} onClick={() => applySelectedCaptions(true)}>Replace source</Button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
       {/* Tips area — top */}
       {!value && (
         <div className="flex items-start pt-2">
@@ -175,26 +400,19 @@ export function SourceInput({
         </div>
       )}
 
-      {/* Spacer to push input area to bottom */}
-      <div className="flex-1" />
-
-      {/* URL import bar (shown inline when toggled) */}
-      {showUrlInput && (
-        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-1 duration-150">
-          <input
-            autoFocus
-            value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleUrlImport(); if (e.key === 'Escape') setShowUrlInput(false); }}
-            placeholder="https://example.com/article"
-            className="flex-1 bg-background border rounded-full px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
-            disabled={isFetchingUrl}
-          />
-          <Button size="sm" onClick={handleUrlImport} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full text-xs h-7 px-3">
-            {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
-          </Button>
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        <input
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleUrlImport(); }}
+          placeholder="https://example.com/article"
+          className="flex-1 bg-background border rounded-full px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+          disabled={isFetchingUrl}
+        />
+        <Button size="sm" onClick={handleUrlImport} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full text-xs h-7 px-3">
+          {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
+        </Button>
+      </div>
 
       {/* Bottom input area: textarea left + action buttons right */}
       <div className="flex gap-2 items-stretch">
@@ -227,10 +445,10 @@ export function SourceInput({
         <div className="flex flex-col gap-2 w-[100px] shrink-0">
           <Button
             type="button"
-            variant={showUrlInput ? 'secondary' : 'outline'}
+            variant="outline"
             className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
-            onClick={() => setShowUrlInput(!showUrlInput)}
-            disabled={disabled || isProcessing}
+            onClick={handleUrlImport}
+            disabled={disabled || isProcessing || isFetchingUrl || !urlInput.trim()}
           >
             <Link2 className="h-4 w-4" />
             URL
@@ -247,6 +465,26 @@ export function SourceInput({
           </Button>
           <Button
             type="button"
+            variant={isListening ? 'secondary' : 'outline'}
+            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
+            onClick={() => (isListening ? stopListening() : startListening())}
+            disabled={disabled || isProcessing || !enableMic || !isSpeechSupported}
+          >
+            {isListening ? <StopCircle className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            Mic
+          </Button>
+          <Button
+            type="button"
+            variant={captionsOpen ? 'secondary' : 'outline'}
+            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
+            onClick={() => setCaptionsOpen((prev) => !prev)}
+            disabled={disabled || !enableCaptions}
+          >
+            <Captions className="h-4 w-4" />
+            Captions
+          </Button>
+          <Button
+            type="button"
             className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
             onClick={() => onSubmit?.()}
             disabled={disabled || isProcessing || !value.trim()}
@@ -256,6 +494,12 @@ export function SourceInput({
           </Button>
         </div>
       </div>
+
+      {isListening && (
+        <div className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
+          Listening{interimTranscript ? `: ${interimTranscript}` : '...'}
+        </div>
+      )}
 
       <input
         ref={fileInputRef}

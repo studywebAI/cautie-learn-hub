@@ -242,7 +242,16 @@ function QuizPageContent() {
 
   return (
     <WorkbenchShell title={isAssignmentContext ? t.quiz.createQuiz : 'Quiz'} sidebar={sidebar}>
-      <SourceInput value={sourceText} onChange={setSourceText} onSubmit={() => handleGenerate(sourceText)} placeholder={t.sourceInputPlaceholder} />
+      <SourceInput
+        toolId="quiz"
+        value={sourceText}
+        onChange={setSourceText}
+        onSubmit={() => handleGenerate(sourceText)}
+        placeholder={t.sourceInputPlaceholder}
+        enableMic
+        enableCaptions
+        sourceMergeMode="append_labeled"
+      />
     </WorkbenchShell>
   );
 }
