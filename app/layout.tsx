@@ -40,6 +40,20 @@ export const metadata: Metadata = {
   themeColor: "#007bff",
 };
 
+const themeBootstrapScript = `
+(() => {
+  try {
+    const themes = ['light', 'dark', 'ocean', 'forest', 'sunset', 'rose'];
+    const saved = localStorage.getItem('studyweb-theme');
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const resolved = themes.includes(saved || '') ? saved : (systemDark ? 'dark' : 'light');
+    const root = document.documentElement;
+    root.classList.remove('theme-light', 'theme-dark', 'theme-ocean', 'theme-forest', 'theme-sunset', 'theme-rose');
+    root.classList.add('theme-' + resolved);
+  } catch {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -47,6 +61,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
+      </head>
       <body className={cn(
         "font-sans antialiased",
         fontBaskerville.variable,

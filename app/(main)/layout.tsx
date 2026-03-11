@@ -1,24 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { AppSidebar } from "@/components/sidebar";
 import { StartupSplash } from "@/components/startup-splash";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePathname } from "next/navigation";
+import { AppContext } from "@/contexts/app-context";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     const isMobile = useIsMobile();
     const pathname = usePathname();
-    const [showStartupSplash, setShowStartupSplash] = useState(true);
-    
+    const appContext = useContext(AppContext);
+    const appReady = appContext?.appReady ?? false;
+    const [minimumSplashDone, setMinimumSplashDone] = useState(false);
+
     const isClassPage = pathname?.startsWith('/class/');
 
     useEffect(() => {
-        // Intro runs once on initial page open only.
-        const hideTimer = setTimeout(() => setShowStartupSplash(false), 900);
+        // Keep intro visible long enough for animation while app preloads.
+        const hideTimer = setTimeout(() => setMinimumSplashDone(true), 900);
         return () => clearTimeout(hideTimer);
     }, []);
+
+    const showStartupSplash = useMemo(() => !(appReady && minimumSplashDone), [appReady, minimumSplashDone]);
 
     return (
         <SidebarProvider>

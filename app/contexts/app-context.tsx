@@ -133,7 +133,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [appReady, setAppReady] = useState(false);
-  const [hasHydrated, setHasHydrated] = useState(false); // Track if we've loaded from cache
   const [language, setLanguageState] = useState<Locale>('en');
   const [dictionary, setDictionary] = useState<Dictionary>(() => getDictionary(language));
   const [role, setRoleState] = useState<UserRole>('student');
@@ -197,7 +196,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setThemeState(resolvedTheme);
     applyAppearance(resolvedTheme);
 
-    // STEP 3: Fetch session, then dashboard only when authenticated
+    // STEP 3: Fetch session and first-impression data before declaring app ready
     const preloadFirstImpressionData = async () => {
       const [classesResult, subjectsResult] = await Promise.allSettled([
         fetch('/api/classes', { credentials: 'include', cache: 'no-store' }),
@@ -206,16 +205,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
       if (classesResult.status === 'fulfilled' && classesResult.value.ok) {
         const classesData = await classesResult.value.json().catch(() => []);
-        if (Array.isArray(classesData) && classesData.length > 0) {
-          setClasses(classesData);
-        }
+        if (Array.isArray(classesData)) setClasses(classesData);
       }
 
       if (subjectsResult.status === 'fulfilled' && subjectsResult.value.ok) {
         const subjectsData = await subjectsResult.value.json().catch(() => []);
-        if (Array.isArray(subjectsData) && subjectsData.length > 0) {
-          setSubjects(subjectsData);
-        }
+        if (Array.isArray(subjectsData)) setSubjects(subjectsData);
       }
     };
 
@@ -227,9 +222,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
         if (!newSession) return;
 
-        const dashboardData = await fetch('/api/dashboard', { credentials: 'include', cache: 'no-store' })
-          .then(r => r.ok ? r.json() : null)
-          .catch(() => null);
+        const [dashboardData] = await Promise.all([
+          fetch('/api/dashboard', { credentials: 'include', cache: 'no-store' })
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null),
+          preloadFirstImpressionData(),
+        ]);
 
         // Update with fresh data when available
         if (dashboardData) {
@@ -245,14 +243,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           // Save to cache for next visit
           saveToLocalStorage('studyweb-cached-dashboard', dashboardData);
         }
-
-        void preloadFirstImpressionData();
       } catch (e) {
         console.error('Init error:', e);
       } finally {
         setIsLoading(false);
-        // Small delay to let UI settle, then mark ready
-        setTimeout(() => setAppReady(true), 300);
+        setAppReady(true);
       }
     };
 
