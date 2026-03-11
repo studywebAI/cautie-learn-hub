@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
-import { Loader2, Sparkles, Paintbrush, Mic, Square, Radio, WandSparkles, CircleSlash2 } from 'lucide-react';
+import { Loader2, Sparkles, Paintbrush, Mic, Square, WandSparkles, CircleSlash2, Link2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
@@ -23,7 +23,6 @@ import { AppContext } from '@/contexts/app-context';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { PaintOverlay } from '@/components/tools/paint-overlay';
 import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 
@@ -53,6 +52,22 @@ const getSpeechRecognitionConstructor = (): SpeechRecognitionConstructor | null 
 
 const normalizeTranscriptSegment = (value: string) => value.replace(/\s+/g, ' ').trim();
 
+const isLikelyLyricNoise = (segment: string) => {
+  const cleaned = segment.trim().toLowerCase();
+  if (!cleaned) return true;
+
+  // Repetitive short lines are often music/hooks or crowd noise.
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  if (words.length >= 4 && words.length <= 9) {
+    const uniqueWordRatio = new Set(words).size / words.length;
+    if (uniqueWordRatio < 0.55) return true;
+  }
+
+  // Singing artifacts / non-lexical vocalizations.
+  if (/(la\s+la|na\s+na|oh\s+oh|woo+|mmm+|hmm+)/.test(cleaned)) return true;
+  return false;
+};
+
 const shouldSuppressAsInterruption = (segment: string) => {
   const cleaned = segment.trim().toLowerCase();
   if (!cleaned) return true;
@@ -61,6 +76,25 @@ const shouldSuppressAsInterruption = (segment: string) => {
   const shortQuestion = words.length <= 7 && (cleaned.endsWith('?') || cleaned.startsWith('wait') || cleaned.startsWith('what'));
   const handRaiseNoise = /^((uh|um|hmm|yeah|yes|no)\b[\s,!?.]*){1,3}$/.test(cleaned);
   return shortQuestion || handRaiseNoise;
+};
+
+const cleanTranscriptSegment = (segment: string) => {
+  const cleaned = normalizeTranscriptSegment(segment)
+    .replace(/[^\S\r\n]+/g, ' ')
+    .replace(/\s+([,.;!?])/g, '$1');
+
+  if (!cleaned) return '';
+  if (isLikelyLyricNoise(cleaned)) return '';
+
+  // Strip obvious stutter repeats: "the the the concept" -> "the concept"
+  const words = cleaned.split(' ');
+  const deduped: string[] = [];
+  for (let i = 0; i < words.length; i += 1) {
+    const w = words[i];
+    if (i > 0 && words[i - 1].toLowerCase() === w.toLowerCase()) continue;
+    deduped.push(w);
+  }
+  return deduped.join(' ').trim();
 };
 
 const appendTranscript = (existing: string, nextSegment: string) => {
@@ -72,6 +106,7 @@ const appendTranscript = (existing: string, nextSegment: string) => {
 function NotesPageContent() {
   const searchParams = useSearchParams();
   const runId = searchParams.get('runId');
+  const listenOnOpen = searchParams.get('listen') === '1';
   const { run: savedRun } = useSavedRun(runId);
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
@@ -98,6 +133,9 @@ function NotesPageContent() {
   const [lectureFocus, setLectureFocus] = useState(true);
   const [autoDraftEnabled, setAutoDraftEnabled] = useState(true);
   const [isAutoDrafting, setIsAutoDrafting] = useState(false);
+  const [inputMode, setInputMode] = useState<'text-files' | 'links' | 'listen'>('text-files');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [isFetchingLink, setIsFetchingLink] = useState(false);
   const notesContentRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const keepListeningRef = useRef(false);
@@ -105,6 +143,7 @@ function NotesPageContent() {
   const autoDraftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastAutoDraftAtRef = useRef(0);
   const lastAutoDraftLengthRef = useRef(0);
+  const lastAcceptedChunkRef = useRef('');
   const { toast } = useToast();
 
   const canGenerate = sourceText.trim().length > 0 && !isLoading;
@@ -132,7 +171,22 @@ function NotesPageContent() {
     if (s('focus')) setOutputFocus(s('focus')!);
     if (s('tone')) setTone(s('tone')!);
     if (s('audience')) setAudience(s('audience')!);
+
+    const cachedTranscript = localStorage.getItem('tools.notes.liveTranscript');
+    if (cachedTranscript) {
+      setLiveTranscript(cachedTranscript);
+      setSourceText(cachedTranscript);
+      lastAutoDraftLengthRef.current = cachedTranscript.length;
+    }
   }, []);
+
+  useEffect(() => {
+    if (!liveTranscript.trim()) {
+      localStorage.removeItem('tools.notes.liveTranscript');
+      return;
+    }
+    localStorage.setItem('tools.notes.liveTranscript', liveTranscript);
+  }, [liveTranscript]);
 
   const runNotesGeneration = useCallback(async (inputText: string, options?: { background?: boolean }) => {
     const text = inputText.trim();
@@ -176,7 +230,7 @@ function NotesPageContent() {
     }
   }, [audience, customTitle, length, modePack, outputFocus, style, t.notes.generatingTitle, toast, tone]);
 
-  const stopListening = useCallback(() => {
+  const stopListening = useCallback(async (options?: { finalize?: boolean }) => {
     keepListeningRef.current = false;
     setIsListening(false);
     setInterimTranscript('');
@@ -190,7 +244,12 @@ function NotesPageContent() {
     try { recognition.onend = null; } catch {}
     try { recognition.stop(); } catch {}
     try { recognition.abort(); } catch {}
-  }, []);
+    const shouldFinalize = options?.finalize !== false;
+    const finalText = (liveTranscript || sourceText).trim();
+    if (shouldFinalize && finalText.length > 40) {
+      await runNotesGeneration(finalText, { background: false });
+    }
+  }, [liveTranscript, runNotesGeneration, sourceText]);
 
   const startListening = useCallback(() => {
     if (isListening) return;
@@ -228,11 +287,15 @@ function NotesPageContent() {
             .map((piece: string) => normalizeTranscriptSegment(piece))
             .filter(Boolean);
 
-          const accepted = lectureFocusRef.current
+          const accepted = (lectureFocusRef.current
             ? pieces.filter((piece: string) => !shouldSuppressAsInterruption(piece))
-            : pieces;
+            : pieces)
+            .map((piece: string) => cleanTranscriptSegment(piece))
+            .filter(Boolean)
+            .filter((piece: string) => piece !== lastAcceptedChunkRef.current);
 
           if (accepted.length > 0) {
+            lastAcceptedChunkRef.current = accepted[accepted.length - 1];
             finalChunk = appendTranscript(finalChunk, accepted.join(' '));
           }
         } else {
@@ -293,6 +356,52 @@ function NotesPageContent() {
     await runNotesGeneration(sourceText, { background: false });
   };
 
+  const handleLinkImport = useCallback(async () => {
+    const raw = linkUrl.trim();
+    if (!raw) return;
+
+    const normalized = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+    try {
+      new URL(normalized);
+    } catch {
+      toast({ variant: 'destructive', title: 'Invalid URL', description: 'Enter a valid website URL.' });
+      return;
+    }
+
+    setIsFetchingLink(true);
+    try {
+      const response = await fetch('/api/tools/extract-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: normalized }),
+      });
+      if (!response.ok) {
+        toast({ variant: 'destructive', title: 'Import failed', description: 'Could not fetch content from this URL.' });
+        return;
+      }
+      const data = await response.json();
+      const extracted = typeof data?.text === 'string' ? data.text.trim() : '';
+      if (!extracted) {
+        toast({ variant: 'destructive', title: 'No content found', description: 'Could not extract text from this URL.' });
+        return;
+      }
+      setSourceText(extracted);
+      toast({ title: 'Content imported', description: `Extracted text from ${new URL(normalized).hostname}` });
+    } catch {
+      toast({ variant: 'destructive', title: 'Import failed', description: 'Network error fetching URL.' });
+    } finally {
+      setIsFetchingLink(false);
+    }
+  }, [linkUrl, toast]);
+
+  useEffect(() => {
+    if (!listenOnOpen || !isSpeechSupported || isListening) return;
+    const timer = setTimeout(() => {
+      startListening();
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [isListening, isSpeechSupported, listenOnOpen, startListening]);
+
   useEffect(() => { localStorage.setItem('tools.notes.length', length); }, [length]);
   useEffect(() => { localStorage.setItem('tools.notes.style', style); }, [style]);
   useEffect(() => { localStorage.setItem('tools.notes.pack', modePack); }, [modePack]);
@@ -334,11 +443,17 @@ function NotesPageContent() {
   }, [autoDraftEnabled, isAutoDrafting, isListening, isLoading, liveTranscript, runNotesGeneration]);
 
   useEffect(() => () => {
-    stopListening();
+    void stopListening({ finalize: false });
     if (autoDraftTimerRef.current) {
       clearTimeout(autoDraftTimerRef.current);
     }
   }, [stopListening]);
+
+  useEffect(() => {
+    if (inputMode !== 'listen' && isListening) {
+      void stopListening({ finalize: false });
+    }
+  }, [inputMode, isListening, stopListening]);
 
   const lengthMap: Record<string, number> = { short: 0, medium: 1, long: 2 };
   const lengthFromSlider = (v: number) => (['short', 'medium', 'long'] as const)[v];
@@ -460,21 +575,70 @@ function NotesPageContent() {
   return (
     <WorkbenchShell title="Notes" sidebar={sidebar}>
       <div className="h-full flex flex-col gap-4">
-        <Card className="border-primary/30 bg-[hsl(var(--surface-2))]">
-          <CardContent className="p-4 space-y-3">
-            <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={inputMode === 'text-files' ? 'default' : 'outline'}
+            className="rounded-full"
+            onClick={() => setInputMode('text-files')}
+          >
+            Text & Files
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={inputMode === 'links' ? 'default' : 'outline'}
+            className="rounded-full"
+            onClick={() => setInputMode('links')}
+          >
+            Links
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={inputMode === 'listen' ? 'default' : 'outline'}
+            className="rounded-full"
+            onClick={() => setInputMode('listen')}
+          >
+            Listen
+          </Button>
+        </div>
+
+        {inputMode === 'links' && (
+          <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
+            <div className="flex gap-2 items-center">
+              <Link2 className="h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://example.com/article"
+                className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                disabled={isFetchingLink}
+                onKeyDown={(e) => { if (e.key === 'Enter') void handleLinkImport(); }}
+              />
+              <Button size="sm" onClick={() => void handleLinkImport()} disabled={isFetchingLink || !linkUrl.trim()} className="rounded-full">
+                {isFetchingLink ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Import'}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Import page text, then generate notes with your current settings.
+            </p>
+          </div>
+        )}
+
+        {inputMode === 'listen' && (
+          <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="gap-1">
-                  <Radio className="h-3 w-3" />
-                  Listen Mode
-                </Badge>
-                {isListening ? <Badge>Capturing live</Badge> : <Badge variant="outline">Ready</Badge>}
-                {!isSpeechSupported && <Badge variant="destructive">Browser unsupported</Badge>}
-                {isAutoDrafting && <Badge variant="outline">Drafting notes...</Badge>}
+                {isListening ? <Badge>Live</Badge> : <Badge variant="outline">Idle</Badge>}
+                {!isSpeechSupported && <Badge variant="destructive">Unsupported browser</Badge>}
+                {isAutoDrafting && <Badge variant="outline">Drafting...</Badge>}
               </div>
               <div className="flex items-center gap-2">
                 {isListening ? (
-                  <Button size="sm" className="rounded-full" onClick={stopListening}>
+                  <Button size="sm" className="rounded-full" onClick={() => void stopListening({ finalize: true })}>
                     <Square className="mr-2 h-4 w-4" />
                     Stop
                   </Button>
@@ -503,88 +667,66 @@ function NotesPageContent() {
             <div className="flex flex-wrap gap-4">
               <label className="flex items-center gap-2 text-xs">
                 <Switch checked={lectureFocus} onCheckedChange={setLectureFocus} />
-                Lecture focus (ignore short interruptions)
+                Lecture focus
               </label>
               <label className="flex items-center gap-2 text-xs">
                 <Switch checked={autoDraftEnabled} onCheckedChange={setAutoDraftEnabled} />
-                Auto-convert transcript to notes
+                Auto notes
               </label>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-lg border bg-background/70 p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">Live transcript</p>
-                  <span className="text-[10px] font-mono text-muted-foreground">{liveTranscript.length} chars</span>
-                </div>
-                <div className="min-h-[112px] max-h-[170px] overflow-auto text-sm leading-relaxed">
-                  {liveTranscript ? (
-                    <p>
-                      {liveTranscript}
-                      {interimTranscript ? <span className="text-muted-foreground"> {interimTranscript}</span> : null}
-                    </p>
-                  ) : (
-                    <p className="text-muted-foreground">Click Listen and start speaking to capture lecture text live.</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-lg border bg-background/70 p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">Live notes draft</p>
-                  <span className="text-[10px] text-muted-foreground">
-                    {liveDraftNotes ? `${liveDraftNotes.length} sections` : 'No draft yet'}
-                  </span>
-                </div>
-                <div className="min-h-[112px] max-h-[170px] overflow-auto text-sm leading-relaxed">
-                  {liveDraftNotes && liveDraftNotes.length > 0 ? (
-                    <ul className="space-y-1">
-                      {liveDraftNotes.slice(0, 4).map((note, idx) => (
-                        <li key={`${note.title}-${idx}`} className="truncate">
-                          - {note.title}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-muted-foreground">Auto-drafted notes will appear here during listening.</p>
-                  )}
-                </div>
-                <div className="mt-3 flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full"
-                    disabled={!liveDraftNotes || liveDraftNotes.length === 0}
-                    onClick={() => setGeneratedNotes(liveDraftNotes)}
-                  >
-                    Open draft
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="rounded-full"
-                    onClick={() => {
-                      setLiveTranscript('');
-                      setInterimTranscript('');
-                      setSourceText('');
-                      setLiveDraftNotes(null);
-                      setListenError(null);
-                      lastAutoDraftLengthRef.current = 0;
-                    }}
-                  >
-                    <CircleSlash2 className="mr-1 h-4 w-4" />
-                    Clear
-                  </Button>
-                </div>
-              </div>
+            <div className="rounded-md border bg-background/70 p-3 text-sm min-h-[96px] max-h-[170px] overflow-auto">
+              {liveTranscript ? (
+                <p>
+                  {liveTranscript}
+                  {interimTranscript ? <span className="text-muted-foreground"> {interimTranscript}</span> : null}
+                </p>
+              ) : (
+                <p className="text-muted-foreground">Live transcript appears here while listening.</p>
+              )}
             </div>
 
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full"
+                disabled={!liveDraftNotes || liveDraftNotes.length === 0}
+                onClick={() => setGeneratedNotes(liveDraftNotes)}
+              >
+                Open draft
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="rounded-full"
+                onClick={() => {
+                  setLiveTranscript('');
+                  setInterimTranscript('');
+                  setSourceText('');
+                  setLiveDraftNotes(null);
+                  setListenError(null);
+                  lastAutoDraftLengthRef.current = 0;
+                }}
+              >
+                <CircleSlash2 className="mr-1 h-4 w-4" />
+                Clear
+              </Button>
+            </div>
             {listenError ? <p className="text-xs text-destructive">{listenError}</p> : null}
-          </CardContent>
-        </Card>
+          </div>
+        )}
 
         <div className="min-h-0 flex-1">
-          <SourceInput value={sourceText} onChange={setSourceText} onSubmit={handleGenerate} placeholder={t.sourceInputPlaceholder} />
+          {inputMode === 'text-files' && (
+            <SourceInput value={sourceText} onChange={setSourceText} onSubmit={handleGenerate} placeholder={t.sourceInputPlaceholder} />
+          )}
+          {inputMode === 'links' && (
+            <SourceInput value={sourceText} onChange={setSourceText} onSubmit={handleGenerate} placeholder="Imported link text appears here. You can edit before generating." />
+          )}
+          {inputMode === 'listen' && (
+            <SourceInput value={sourceText} onChange={setSourceText} onSubmit={handleGenerate} placeholder="Live transcript flows here. You can edit before generating." />
+          )}
         </div>
       </div>
     </WorkbenchShell>
