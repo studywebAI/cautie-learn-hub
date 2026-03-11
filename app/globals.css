@@ -721,6 +721,11 @@
     opacity: 1 !important;
   }
 
+  .cautie-type-text {
+    animation: none !important;
+    width: 6ch !important;
+  }
+
   .cautie-handwrite-layer,
   .cautie-handwrite-path {
     animation: none !important;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useEffect, useId, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { AppContext, type AppContextType } from '@/contexts/app-context';
 import { cn } from '@/lib/utils';
 import { SHOW_CAUTIE_LOGO } from '@/lib/branding';
@@ -49,69 +49,9 @@ export function CautieWordmark({
 }: CautieWordmarkProps) {
   if (!SHOW_CAUTIE_LOGO) return null;
 
-  const letters = ['c', 'a', 'u', 't', 'i', 'e'] as const;
-  const letterXs = [22, 82, 142, 198, 250, 298] as const;
-  const strokePlan = [
-    {
-      d: 'M60 74 C48 60 49 41 63 33 C79 24 98 30 107 45 C113 57 110 76 97 86 C82 96 65 91 56 78',
-      start: 0,
-      duration: 300,
-      strokeWidth: 30,
-    },
-    {
-      d: 'M122 75 C116 60 119 44 133 36 C148 28 165 34 171 48 C176 62 170 77 156 85 C142 93 127 90 122 75',
-      start: 300,
-      duration: 260,
-      strokeWidth: 30,
-    },
-    {
-      d: 'M168 48 L168 88',
-      start: 560,
-      duration: 120,
-      strokeWidth: 26,
-    },
-    {
-      d: 'M188 48 L188 80 C190 94 204 100 218 92 C229 86 236 72 236 54 L236 44',
-      start: 680,
-      duration: 300,
-      strokeWidth: 28,
-    },
-    {
-      d: 'M256 36 L256 89',
-      start: 980,
-      duration: 150,
-      strokeWidth: 24,
-    },
-    {
-      d: 'M242 50 L272 50',
-      start: 1130,
-      duration: 90,
-      strokeWidth: 20,
-    },
-    {
-      d: 'M282 50 L282 89',
-      start: 1220,
-      duration: 130,
-      strokeWidth: 22,
-    },
-    {
-      d: 'M282 31 L282 31.01',
-      start: 1350,
-      duration: 90,
-      strokeWidth: 15,
-    },
-    {
-      d: 'M306 73 C300 59 307 44 322 37 C338 30 355 38 361 53 C366 68 358 82 344 88 C330 94 314 90 307 77 M307 76 L355 73',
-      start: 1440,
-      duration: 260,
-      strokeWidth: 30,
-    },
-  ] as const;
-  const WRITE_START_DELAY_MS = 120;
-  const WRITE_DURATION_MS = WRITE_START_DELAY_MS + 1700;
-  const HIGHLIGHT_DELAY_MS = WRITE_DURATION_MS + 40;
-  const HIGHLIGHT_DURATION_MS = 520;
-  const maskId = `cautie-write-mask-${useId().replace(/:/g, '')}`;
+  const TYPE_DURATION_MS = 320;
+  const HIGHLIGHT_DELAY_MS = TYPE_DURATION_MS + 18;
+  const HIGHLIGHT_DURATION_MS = 170;
   const animatedWordWidth = compact ? '6.05ch' : '7.25ch';
   const animatedWordHeight = compact ? '1.06em' : '1.26em';
   const context = useContext(AppContext) as AppContextType | null;
@@ -136,6 +76,59 @@ export function CautieWordmark({
     }
     setHighlightColor(next);
   }, []);
+
+  useEffect(() => {
+    if (!animated) return;
+
+    let audioCtx: AudioContext | null = null;
+    const playTypingClicks = async () => {
+      try {
+        const AudioContextCtor =
+          window.AudioContext ||
+          (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+        if (!AudioContextCtor) return;
+        audioCtx = new AudioContextCtor();
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume().catch(() => {});
+        }
+        if (audioCtx.state !== 'running') return;
+
+        const clicks = 6;
+        const stepMs = TYPE_DURATION_MS / clicks;
+        for (let i = 0; i < clicks; i++) {
+          const when = audioCtx.currentTime + 0.02 + (stepMs * i) / 1000;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(700 + i * 24, when);
+          gain.gain.setValueAtTime(0.0001, when);
+          gain.gain.exponentialRampToValueAtTime(0.03, when + 0.006);
+          gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(when);
+          osc.stop(when + 0.055);
+        }
+
+        window.setTimeout(() => {
+          audioCtx?.close().catch(() => {});
+          audioCtx = null;
+        }, TYPE_DURATION_MS + 260);
+      } catch {
+        // Ignore audio errors (autoplay restrictions / unsupported contexts).
+      }
+    };
+
+    void playTypingClicks();
+
+    return () => {
+      audioCtx?.close().catch(() => {});
+      audioCtx = null;
+    };
+  }, [animated, TYPE_DURATION_MS]);
 
   return (
     <div
@@ -179,88 +172,37 @@ export function CautieWordmark({
                   style={{
                     transformOrigin: 'left center',
                     transform: 'scaleX(0)',
-                    animation: `cautieHighlightSweep ${HIGHLIGHT_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1) ${HIGHLIGHT_DELAY_MS}ms forwards`,
+                    animation: `cautieHighlightSweep ${HIGHLIGHT_DURATION_MS}ms cubic-bezier(0.2, 0.9, 0.2, 1) ${HIGHLIGHT_DELAY_MS}ms forwards`,
+                  }}
+                />
+                <rect
+                  className="cautie-highlight-glint"
+                  x="0"
+                  y="46"
+                  width="1000"
+                  height="78"
+                  rx="14"
+                  fill="rgba(255,255,255,0.26)"
+                  style={{
+                    opacity: 0,
+                    transformOrigin: 'left center',
+                    animation: `cautie-highlight-glint ${HIGHLIGHT_DURATION_MS}ms ease-out ${HIGHLIGHT_DELAY_MS + 30}ms forwards`,
                   }}
                 />
               </svg>
 
-              <svg
-                className="pointer-events-none absolute inset-0 z-20 overflow-visible"
-                viewBox="0 0 430 120"
-                aria-hidden="true"
+              <span
+                className="cautie-type-text relative z-10 inline-block overflow-hidden whitespace-nowrap lowercase"
                 style={{
-                  top: compact ? '-0.01em' : '-0.02em',
-                  width: '100%',
-                  height: '100%',
-                  display: 'block',
+                  width: '0ch',
+                  color: 'var(--cautie-text-end)',
+                  lineHeight: 1,
+                  willChange: 'width',
+                  animation: `cautie-type ${TYPE_DURATION_MS}ms steps(6, end) 0ms forwards`,
                 }}
               >
-                <defs>
-                  <mask id={maskId} maskUnits="userSpaceOnUse">
-                    <rect x="0" y="0" width="430" height="120" fill="black" />
-                    {strokePlan.map((segment, index) => {
-                      return (
-                        <path
-                          key={`mask-stroke-${index}`}
-                          className="cautie-mask-stroke"
-                          d={segment.d}
-                          pathLength={1}
-                          fill="none"
-                          stroke="white"
-                          strokeLinecap="butt"
-                          strokeLinejoin="round"
-                          strokeWidth={compact ? Math.max(14, segment.strokeWidth - 5) : segment.strokeWidth}
-                          style={{
-                            ['--stroke-start' as any]: 1,
-                            strokeDasharray: '1',
-                            strokeDashoffset: 1,
-                            animation: `cautieMaskDraw ${segment.duration}ms cubic-bezier(0.33, 1, 0.68, 1) ${WRITE_START_DELAY_MS + segment.start}ms forwards`,
-                          }}
-                        />
-                      );
-                    })}
-                  </mask>
-                </defs>
-
-                <text
-                  x="22"
-                  y="84"
-                  fill="var(--cautie-text-end)"
-                  mask={`url(#${maskId})`}
-                  style={{
-                    fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
-                    fontSize: '104px',
-                    fontWeight: 700,
-                    letterSpacing: '0px',
-                  }}
-                >
-                  cautie
-                </text>
-
-                {letters.map((letter, index) => {
-                  const lockMoments = [250, 650, 930, 1200, 1400, 1660] as const;
-                  const lockAt = WRITE_START_DELAY_MS + lockMoments[index];
-                  return (
-                    <text
-                      key={`lock-${letter}-${index}`}
-                      className="cautie-letter-lock"
-                      x={letterXs[index]}
-                      y="84"
-                      fill="var(--cautie-text-end)"
-                      style={{
-                        fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
-                        fontSize: '104px',
-                        fontWeight: 700,
-                        letterSpacing: '0px',
-                        opacity: 0,
-                        animation: `cautieFinalInk 80ms linear ${lockAt}ms forwards`,
-                      }}
-                    >
-                      {letter}
-                    </text>
-                  );
-                })}
-              </svg>
+                cautie
+              </span>
             </span>
           ) : (
             <>
