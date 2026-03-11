@@ -106,7 +106,6 @@ const appendTranscript = (existing: string, nextSegment: string) => {
 function NotesPageContent() {
   const searchParams = useSearchParams();
   const runId = searchParams.get('runId');
-  const listenOnOpen = searchParams.get('listen') === '1';
   const { run: savedRun } = useSavedRun(runId);
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
@@ -394,14 +393,6 @@ function NotesPageContent() {
     }
   }, [linkUrl, toast]);
 
-  useEffect(() => {
-    if (!listenOnOpen || !isSpeechSupported || isListening) return;
-    const timer = setTimeout(() => {
-      startListening();
-    }, 120);
-    return () => clearTimeout(timer);
-  }, [isListening, isSpeechSupported, listenOnOpen, startListening]);
-
   useEffect(() => { localStorage.setItem('tools.notes.length', length); }, [length]);
   useEffect(() => { localStorage.setItem('tools.notes.style', style); }, [style]);
   useEffect(() => { localStorage.setItem('tools.notes.pack', modePack); }, [modePack]);
@@ -527,16 +518,6 @@ function NotesPageContent() {
           if (s.audience) setAudience(s.audience);
         }}
       />
-
-      <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Listen mode</p>
-          <Badge variant={isListening ? 'default' : 'outline'}>{isListening ? 'Live' : 'Idle'}</Badge>
-        </div>
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
-          Start live lecture capture from the main Notes area. This panel shows status only.
-        </p>
-      </div>
 
       <PillSelector label={t.notes.labels.pack} options={t.notes.packOptions} value={modePack} onChange={setModePack} disabled={isLoading} />
       <PillSelector label={t.notes.labels.style} options={t.notes.styleOptions} value={style} onChange={setStyle} disabled={isLoading} />
