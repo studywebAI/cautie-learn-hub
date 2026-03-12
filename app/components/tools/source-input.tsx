@@ -102,6 +102,14 @@ export function SourceInput({
     valueRef.current = value;
   }, [value]);
 
+  const appendSource = (label: string, text: string, replace = false) => {
+    const base = replace ? '' : valueRef.current;
+    const next = sourceMergeMode === 'append_labeled'
+      ? appendLabeledBlock(base, label, text)
+      : text;
+    onChange(next);
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -129,14 +137,6 @@ export function SourceInput({
     setIsProcessing(true);
 
     try {
-  const appendSource = (label: string, text: string, replace = false) => {
-    const base = replace ? '' : valueRef.current;
-    const next = sourceMergeMode === 'append_labeled'
-      ? appendLabeledBlock(base, label, text)
-      : text;
-    onChange(next);
-  };
-
       if (file.type === 'text/plain') {
         const text = await file.text();
         appendSource(`FILE (${file.name})`, text);
@@ -198,10 +198,7 @@ export function SourceInput({
         if (data.text) {
           const resolvedUrl = url.startsWith('http') ? url : `https://${url}`;
           const host = new URL(resolvedUrl).hostname;
-          const next = sourceMergeMode === 'append_labeled'
-            ? appendLabeledBlock(value, `URL (${host})`, data.text)
-            : data.text;
-          onChange(next);
+          appendSource(`URL (${host})`, data.text);
           setUrlInput('');
           toast({ title: 'Content imported', description: `Extracted text from ${host}` });
         } else {
