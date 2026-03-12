@@ -18,6 +18,7 @@ import {
   Trash2,
   WandSparkles,
   Check,
+  Circle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBrowserSpeech } from '@/hooks/use-browser-speech';
@@ -751,12 +752,12 @@ export function SourceInput({
                 variant="outline"
                 size="sm"
                 className={manualSelected
-                  ? "h-6 rounded-full px-2 text-[11px] border-emerald-500/45 bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/20"
-                  : "h-6 rounded-full px-2 text-[11px] border-border/70 text-muted-foreground hover:text-foreground"}
+                  ? "h-6 w-6 rounded-full p-0 border-emerald-500/45 bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/20"
+                  : "h-6 w-6 rounded-full p-0 border-border/70 text-muted-foreground hover:text-foreground"}
                 onClick={() => setManualSelected((v) => !v)}
+                aria-label={manualSelected ? 'Deselect manual source' : 'Select manual source'}
               >
-                {manualSelected ? <Check className="mr-1 h-3 w-3" /> : null}
-                {manualSelected ? 'Using' : 'Off'}
+                {manualSelected ? <Check className="h-3 w-3" /> : <Circle className="h-3 w-3" />}
               </Button>
             </div>
 
@@ -779,12 +780,12 @@ export function SourceInput({
                     variant="outline"
                     size="sm"
                     className={source.selected
-                      ? "h-6 rounded-full px-2 text-[11px] border-emerald-500/45 bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/20"
-                      : "h-6 rounded-full px-2 text-[11px] border-border/70 text-muted-foreground hover:text-foreground"}
+                      ? "h-6 w-6 rounded-full p-0 border-emerald-500/45 bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/20"
+                      : "h-6 w-6 rounded-full p-0 border-border/70 text-muted-foreground hover:text-foreground"}
                     onClick={() => toggleSourceSelected(source.id, !source.selected)}
+                    aria-label={source.selected ? `Deselect ${source.label}` : `Select ${source.label}`}
                   >
-                    {source.selected ? <Check className="mr-1 h-3 w-3" /> : null}
-                    {source.selected ? 'Using' : 'Off'}
+                    {source.selected ? <Check className="h-3 w-3" /> : <Circle className="h-3 w-3" />}
                   </Button>
                   <Button
                     type="button"

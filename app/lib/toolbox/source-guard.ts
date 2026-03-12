@@ -1,4 +1,4 @@
-const SOURCE_ONLY_TOOLS = new Set(["notes", "quiz", "flashcards"]);
+const SOURCE_ONLY_TOOLS = new Set(["notes", "quiz"]);
 
 // No blocked patterns — users can paste anything (Wikipedia, URLs, etc.).
 // The guard only ensures AI output is grounded in user-provided text, not that
