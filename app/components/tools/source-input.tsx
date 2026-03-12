@@ -21,6 +21,7 @@ import {
   CircleDot,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useBrowserSpeech } from '@/hooks/use-browser-speech';
 
 interface SourceInputProps {
   value: string;
@@ -31,6 +32,9 @@ interface SourceInputProps {
   toolId?: 'notes' | 'quiz' | 'flashcards';
   enableMic?: boolean;
   enableCaptions?: boolean;
+  speechLanguage?: string;
+  autoInsertCaptions?: boolean;
+  enableBackendFallback?: boolean;
   sourceMergeMode?: 'append_labeled';
 }
 
@@ -56,31 +60,7 @@ type SourceEntry = {
   urlKey?: string;
 };
 
-type BrowserSpeechRecognition = {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  maxAlternatives: number;
-  onresult: ((event: any) => void) | null;
-  onerror: ((event: any) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-};
-
-type SpeechRecognitionConstructor = new () => BrowserSpeechRecognition;
-
 const URL_REGEX = /\b((?:https?:\/\/|www\.)[^\s<>"]+)/gi;
-
-const getSpeechRecognitionConstructor = (): SpeechRecognitionConstructor | null => {
-  if (typeof window === 'undefined') return null;
-  return (
-    (window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor }).SpeechRecognition ||
-    (window as unknown as { webkitSpeechRecognition?: SpeechRecognitionConstructor }).webkitSpeechRecognition ||
-    null
-  );
-};
 
 const normalizeText = (value: string) => value.replace(/\s+/g, ' ').trim();
 
@@ -150,14 +130,14 @@ export function SourceInput({
   toolId,
   enableMic = true,
   enableCaptions = true,
+  speechLanguage = 'en',
+  autoInsertCaptions = true,
+  enableBackendFallback = false,
   sourceMergeMode = 'append_labeled',
 }: SourceInputProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
-  const keepListeningRef = useRef(false);
   const chunkStartedAtRef = useRef<number | null>(null);
-  const interimRef = useRef('');
   const initializedRef = useRef(false);
   const lastEmittedRef = useRef('');
 
@@ -172,9 +152,9 @@ export function SourceInput({
   const [linksOpen, setLinksOpen] = useState(false);
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
 
-  const [isListening, setIsListening] = useState(false);
-  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState('');
+  const [micError, setMicError] = useState<string | null>(null);
+  const [autoCaptionInsert, setAutoCaptionInsert] = useState(autoInsertCaptions);
   const [chunks, setChunks] = useState<TranscriptChunk[]>([]);
   const [captionsOpen, setCaptionsOpen] = useState(false);
 
@@ -185,12 +165,8 @@ export function SourceInput({
   }, [value]);
 
   useEffect(() => {
-    setIsSpeechSupported(Boolean(getSpeechRecognitionConstructor()));
-  }, []);
-
-  useEffect(() => {
-    interimRef.current = interimTranscript;
-  }, [interimTranscript]);
+    setAutoCaptionInsert(autoInsertCaptions);
+  }, [autoInsertCaptions]);
 
   const compiledSource = useMemo(() => {
     let next = '';
@@ -391,7 +367,7 @@ export function SourceInput({
     }
   };
 
-  const pushChunk = (text: string) => {
+  const pushChunk = useCallback((text: string) => {
     const clean = normalizeText(text);
     if (!clean) return;
     const startedAt = chunkStartedAtRef.current ?? Date.now();
@@ -408,99 +384,57 @@ export function SourceInput({
         selected: true,
       },
     ]);
-  };
-
-  const stopListening = () => {
-    const pending = normalizeText(interimRef.current);
-    if (pending) {
-      pushChunk(pending);
-      interimRef.current = '';
+    if (autoCaptionInsert) {
+      setManualText((prev) => (prev.trim() ? `${prev.trimEnd()} ${clean}` : clean));
     }
-    keepListeningRef.current = false;
-    setIsListening(false);
+  }, [autoCaptionInsert]);
+
+  const mapMicErrorMessage = useCallback((code: string) => {
+    if (code === 'no-speech') return 'No speech detected. Speak clearly and closer to your mic.';
+    if (code === 'not-allowed') return 'Microphone permission is blocked.';
+    if (code === 'audio-capture') return 'No microphone was detected.';
+    if (code === 'not-supported') return 'Speech recognition is not supported in this browser.';
+    if (code === 'start-failed') return 'Could not start microphone listening.';
+    return `Speech recognition error: ${code}`;
+  }, []);
+
+  const {
+    isSupported: isSpeechSupported,
+    isListening,
+    lastError,
+    start: startSpeech,
+    stop: stopSpeech,
+  } = useBrowserSpeech({
+    language: speechLanguage,
+    suppressNoSpeechError: false,
+    onFinalText: pushChunk,
+    onInterimText: setInterimTranscript,
+    onError: (code) => {
+      const message = mapMicErrorMessage(code);
+      setMicError(message);
+      if (code !== 'no-speech') {
+        toast({ variant: 'destructive', title: 'Microphone error', description: message });
+      }
+    },
+  });
+
+  const stopListening = useCallback(() => {
+    stopSpeech();
     setInterimTranscript('');
-    const recognition = recognitionRef.current;
-    recognitionRef.current = null;
-    if (!recognition) return;
-    try { recognition.onresult = null; } catch {}
-    try { recognition.onerror = null; } catch {}
-    try { recognition.onend = null; } catch {}
-    try { recognition.stop(); } catch {}
-    try { recognition.abort(); } catch {}
-  };
+  }, [stopSpeech]);
+
+  const startListening = useCallback(() => {
+    setMicError(null);
+    chunkStartedAtRef.current = Date.now();
+    const started = startSpeech();
+    if (!started && !enableBackendFallback) {
+      setMicError('Speech could not start. Backend fallback transcription is not configured yet.');
+    }
+  }, [enableBackendFallback, startSpeech]);
 
   useEffect(() => {
     return () => stopListening();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const startListening = () => {
-    if (isListening) return;
-    const RecognitionConstructor = getSpeechRecognitionConstructor();
-    if (!RecognitionConstructor) {
-      toast({ variant: 'destructive', title: 'Microphone unavailable', description: 'Use a Chromium browser for speech recognition.' });
-      return;
-    }
-
-    const recognition = new RecognitionConstructor();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-    recognition.lang = 'en-US';
-    keepListeningRef.current = true;
-    setIsListening(true);
-    chunkStartedAtRef.current = Date.now();
-
-    recognition.onresult = (event: any) => {
-      let interim = '';
-      for (let i = event.resultIndex ?? 0; i < event.results.length; i += 1) {
-        const result = event.results[i];
-        const text = result?.[0]?.transcript || '';
-        if (result?.isFinal) {
-          pushChunk(text);
-          interimRef.current = '';
-        }
-        else interim = normalizeText(text);
-      }
-      interimRef.current = interim;
-      setInterimTranscript(interim);
-    };
-
-    recognition.onerror = (event: any) => {
-      const err = event?.error || 'unknown';
-      if (err !== 'no-speech') {
-        toast({ variant: 'destructive', title: 'Microphone error', description: `Speech recognition error: ${err}` });
-      }
-    };
-
-    recognition.onend = () => {
-      if (!keepListeningRef.current) {
-        setIsListening(false);
-        return;
-      }
-      const pending = normalizeText(interimRef.current);
-      if (pending) {
-        pushChunk(pending);
-        interimRef.current = '';
-        setInterimTranscript('');
-      }
-      try {
-        recognition.start();
-      } catch {
-        keepListeningRef.current = false;
-        setIsListening(false);
-      }
-    };
-
-    recognitionRef.current = recognition;
-    try {
-      recognition.start();
-    } catch {
-      setIsListening(false);
-      keepListeningRef.current = false;
-      toast({ variant: 'destructive', title: 'Microphone unavailable', description: 'Could not start listening.' });
-    }
-  };
+  }, [stopListening]);
 
   const insertSelectedCaptions = (replaceAll = false) => {
     if (selectedChunks.length === 0) return;
@@ -553,7 +487,7 @@ export function SourceInput({
     'Paste lecture notes, textbook chapters, or articles',
     'Upload a PDF, DOCX, or image with text',
     'Paste links in text and they are auto-imported',
-    'Use Mic, then pick caption chunks to include',
+    'Use Mic and captions are auto-added while recording',
   ];
 
   return (
@@ -761,7 +695,7 @@ export function SourceInput({
             variant={isListening ? 'secondary' : 'outline'}
             className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
             onClick={() => (isListening ? stopListening() : startListening())}
-            disabled={disabled || isProcessing || !enableMic || !isSpeechSupported}
+            disabled={disabled || isProcessing || !enableMic || (!isSpeechSupported && !enableBackendFallback)}
           >
             {isListening ? <StopCircle className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             Mic
@@ -788,9 +722,33 @@ export function SourceInput({
         </div>
       </div>
 
-      {isListening && (
-        <div className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
-          Listening{interimTranscript ? `: ${interimTranscript}` : '...'}
+      {enableMic && (
+        <div className="rounded-md border border-dashed px-3 py-2 text-xs space-y-2">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span>Mic status: {isListening ? 'listening' : 'idle'}</span>
+            <span>Language: {speechLanguage.toUpperCase()}</span>
+          </div>
+          <label className="flex items-center gap-2 text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={autoCaptionInsert}
+              onChange={(e) => setAutoCaptionInsert(e.target.checked)}
+            />
+            Auto-add recognized speech to source text
+          </label>
+          {interimTranscript && (
+            <p className="text-muted-foreground">Live: {interimTranscript}</p>
+          )}
+          {(micError || lastError) && (
+            <p className="text-red-400">
+              {micError || mapMicErrorMessage(lastError || 'unknown')}
+            </p>
+          )}
+          {!isSpeechSupported && !enableBackendFallback && (
+            <p className="text-muted-foreground">
+              Browser speech is unavailable here. Backend fallback is not configured.
+            </p>
+          )}
         </div>
       )}
 

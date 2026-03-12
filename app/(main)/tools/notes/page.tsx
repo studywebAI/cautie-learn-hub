@@ -561,6 +561,7 @@ function NotesPageContent() {
         onChange={setSourceText}
         onSubmit={handleGenerate}
         placeholder={t.sourceInputPlaceholder}
+        speechLanguage={language}
         enableMic
         enableCaptions
         sourceMergeMode="append_labeled"

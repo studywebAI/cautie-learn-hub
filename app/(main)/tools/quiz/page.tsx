@@ -248,6 +248,7 @@ function QuizPageContent() {
         onChange={setSourceText}
         onSubmit={() => handleGenerate(sourceText)}
         placeholder={t.sourceInputPlaceholder}
+        speechLanguage={language}
         enableMic
         enableCaptions
         sourceMergeMode="append_labeled"
