@@ -460,7 +460,7 @@ export function AppSidebar() {
         {/* Mini sidebar - always visible on mobile */}
         <div className="fixed left-0 top-0 h-full w-14 bg-sidebar border-r border-sidebar-border z-40 flex flex-col py-3">
           <div className="mb-2 flex items-center justify-center">
-            <CautieWordmark compact className="scale-[0.62]" textClassName="font-headline" />
+            <CautieWordmark compact className="scale-[0.8]" textClassName="font-headline" />
           </div>
           {/* Hamburger button to open full drawer */}
           <Button
@@ -546,7 +546,7 @@ export function AppSidebar() {
         <Sidebar className="w-[19rem]">
           <SidebarContent className="px-3 py-3 flex-1">
             <div className="mb-2 flex items-center px-2">
-              <CautieWordmark compact className="scale-[1]" textClassName="font-headline" />
+              <CautieWordmark compact className="scale-[1.2]" textClassName="font-headline" />
             </div>
             <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">main</p>
             <SidebarMenu>
@@ -621,7 +621,7 @@ export function AppSidebar() {
       </div>
       <SidebarContent className="px-3 py-3 flex-1">
         <div className="mb-2 flex items-center px-2">
-          <CautieWordmark compact className="scale-[1]" textClassName="font-headline" />
+          <CautieWordmark compact className="scale-[1.2]" textClassName="font-headline" />
         </div>
         <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">main</p>
         <SidebarMenu>

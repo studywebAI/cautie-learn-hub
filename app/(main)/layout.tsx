@@ -19,7 +19,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
     useEffect(() => {
         // Keep intro visible long enough for animation while app preloads.
-        const hideTimer = setTimeout(() => setMinimumSplashDone(true), 900);
+        const hideTimer = setTimeout(() => setMinimumSplashDone(true), 700);
         return () => clearTimeout(hideTimer);
     }, []);
 

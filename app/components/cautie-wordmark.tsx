@@ -49,11 +49,12 @@ export function CautieWordmark({
 }: CautieWordmarkProps) {
   if (!SHOW_CAUTIE_LOGO) return null;
 
-  const TYPE_DURATION_MS = 680;
-  const HIGHLIGHT_DELAY_MS = TYPE_DURATION_MS + 12;
+  const LETTER_STAGGER_MS = 70;
+  const LETTER_DURATION_MS = 95;
+  const HIGHLIGHT_DELAY_MS = 0;
   const HIGHLIGHT_DURATION_MS = 95;
-  const animatedWordWidth = compact ? '6.9ch' : '8.1ch';
-  const animatedWordHeight = compact ? '1.18em' : '1.34em';
+  const animatedWordWidth = compact ? '5.2ch' : '5.85ch';
+  const animatedWordHeight = compact ? '1.1em' : '1.26em';
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -100,20 +101,20 @@ export function CautieWordmark({
                 viewBox="0 0 1000 160"
                 preserveAspectRatio="none"
                 aria-hidden="true"
-                style={{
-                  top: '-0.12em',
-                  left: '-0.04em',
-                  width: 'calc(100% + 0.08em)',
-                  height: 'calc(100% + 0.18em)',
-                }}
+                 style={{
+                   top: '-0.1em',
+                   left: '0',
+                   width: '100%',
+                   height: 'calc(100% + 0.14em)',
+                 }}
               >
                 <rect
                   id="highlight"
                   className="cautie-highlight-rect"
-                  x="0"
-                  y="50"
-                  width="1000"
-                  height="70"
+                  x="72"
+                  y="56"
+                  width="848"
+                  height="58"
                   rx="14"
                   fill={highlightColor}
                   style={{
@@ -124,10 +125,10 @@ export function CautieWordmark({
                 />
                 <rect
                   className="cautie-highlight-glint"
-                  x="0"
-                  y="50"
-                  width="1000"
-                  height="70"
+                  x="72"
+                  y="56"
+                  width="848"
+                  height="58"
                   rx="14"
                   fill="rgba(255,255,255,0.26)"
                   style={{
@@ -139,16 +140,24 @@ export function CautieWordmark({
               </svg>
 
               <span
-                className="cautie-type-text relative z-10 inline-block overflow-hidden whitespace-nowrap lowercase"
+                className="relative z-10 inline-flex items-baseline lowercase"
                 style={{
-                  width: '0ch',
                   color: 'var(--cautie-text-end)',
                   lineHeight: 1,
-                  willChange: 'width',
-                  animation: `cautie-type ${TYPE_DURATION_MS}ms steps(6, end) 0ms forwards`,
                 }}
               >
-                cautie
+                {'cautie'.split('').map((letter, index) => (
+                  <span
+                    key={`${letter}-${index}`}
+                    className="cautie-letter-step inline-block"
+                    style={{
+                      opacity: 0,
+                      animation: `cautie-letter-step ${LETTER_DURATION_MS}ms ease-out ${index * LETTER_STAGGER_MS}ms forwards`,
+                    }}
+                  >
+                    {letter}
+                  </span>
+                ))}
               </span>
             </span>
           ) : (
@@ -159,20 +168,20 @@ export function CautieWordmark({
                 preserveAspectRatio="none"
                 aria-hidden="true"
                 style={{
-                  top: '-0.12em',
-                  left: '-0.04em',
-                  width: 'calc(100% + 0.08em)',
-                  height: 'calc(100% + 0.18em)',
-                }}
-              >
-                <rect
-                  x="0"
-                  y="50"
-                  width="1000"
-                  height="70"
-                  rx="14"
-                  fill={highlightColor}
-                />
+                   top: '-0.1em',
+                   left: '0',
+                   width: '100%',
+                   height: 'calc(100% + 0.14em)',
+                 }}
+               >
+                 <rect
+                   x="72"
+                   y="56"
+                   width="848"
+                   height="58"
+                   rx="14"
+                   fill={highlightColor}
+                 />
               </svg>
               <span className="relative z-10" style={{ color: 'var(--cautie-text-end)' }}>
                 cautie

@@ -678,6 +678,17 @@
     }
   }
 
+  @keyframes cautie-letter-step {
+    0% {
+      opacity: 0;
+      transform: translateY(0.05em);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   @keyframes cautie-type {
     0% {
       width: 0ch;
@@ -738,6 +749,12 @@
   .cautie-type-text {
     animation: none !important;
     width: 6ch !important;
+  }
+
+  .cautie-letter-step {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 
   .cautie-handwrite-layer,
