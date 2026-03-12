@@ -17,8 +17,7 @@ import {
   StopCircle,
   Trash2,
   WandSparkles,
-  Circle,
-  CircleDot,
+  Check,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBrowserSpeech } from '@/hooks/use-browser-speech';
@@ -213,6 +212,8 @@ export function SourceInput({
       toast({ variant: 'destructive', title: 'Invalid URL', description: 'Enter a valid website URL.' });
       return;
     }
+    setUrlInput(normalized);
+    setLinksOpen(true);
 
     const host = new URL(normalized).hostname;
     const key = urlKey(normalized);
@@ -743,15 +744,20 @@ export function SourceInput({
             </div>
 
             <div className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs">
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={() => setManualSelected((v) => !v)}
-              >
-                {manualSelected ? <CircleDot className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-              </button>
               <span className="font-medium">Your text</span>
               <span className="text-muted-foreground ml-auto">{wordCount} words</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={manualSelected
+                  ? "h-6 rounded-full px-2 text-[11px] border-emerald-500/45 bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/20"
+                  : "h-6 rounded-full px-2 text-[11px] border-border/70 text-muted-foreground hover:text-foreground"}
+                onClick={() => setManualSelected((v) => !v)}
+              >
+                {manualSelected ? <Check className="mr-1 h-3 w-3" /> : null}
+                {manualSelected ? 'Using' : 'Off'}
+              </Button>
             </div>
 
             <div className="max-h-[140px] overflow-auto space-y-1 pr-1">
@@ -760,13 +766,6 @@ export function SourceInput({
               )}
               {sources.map((source) => (
                 <div key={source.id} className="flex items-start gap-2 rounded-md border px-2 py-1.5 text-xs">
-                  <button
-                    type="button"
-                    className="text-muted-foreground hover:text-foreground mt-0.5"
-                    onClick={() => toggleSourceSelected(source.id, !source.selected)}
-                  >
-                    {source.selected ? <CircleDot className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-                  </button>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{source.label}</p>
                     {source.loading && <p className="text-muted-foreground">Importing...</p>}
@@ -775,6 +774,18 @@ export function SourceInput({
                       <p className="text-muted-foreground truncate">{source.text.slice(0, 90) || source.url}</p>
                     )}
                   </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={source.selected
+                      ? "h-6 rounded-full px-2 text-[11px] border-emerald-500/45 bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/20"
+                      : "h-6 rounded-full px-2 text-[11px] border-border/70 text-muted-foreground hover:text-foreground"}
+                    onClick={() => toggleSourceSelected(source.id, !source.selected)}
+                  >
+                    {source.selected ? <Check className="mr-1 h-3 w-3" /> : null}
+                    {source.selected ? 'Using' : 'Off'}
+                  </Button>
                   <Button
                     type="button"
                     variant="ghost"
