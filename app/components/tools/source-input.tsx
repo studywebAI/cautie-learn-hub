@@ -64,10 +64,10 @@ const URL_REGEX = /\b((?:https?:\/\/|www\.)[^\s<>"]+)/gi;
 
 const normalizeText = (value: string) => value.replace(/\s+/g, ' ').trim();
 
-const appendLabeledBlock = (existing: string, label: string, body: string) => {
+const appendLabeledBlock = (existing: string, _label: string, body: string) => {
   const cleanBody = body.trim();
   if (!cleanBody) return existing;
-  const block = `### SOURCE: ${label}\n${cleanBody}`;
+  const block = cleanBody;
   if (!existing.trim()) return block;
   return `${existing.trimEnd()}\n\n${block}`;
 };
@@ -750,7 +750,7 @@ export function SourceInput({
               >
                 {manualSelected ? <CircleDot className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
               </button>
-              <span className="font-medium">MANUAL_TEXT</span>
+              <span className="font-medium">Your text</span>
               <span className="text-muted-foreground ml-auto">{wordCount} words</span>
             </div>
 
