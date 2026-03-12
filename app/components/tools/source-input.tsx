@@ -157,6 +157,7 @@ export function SourceInput({
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const keepListeningRef = useRef(false);
   const chunkStartedAtRef = useRef<number | null>(null);
+  const interimRef = useRef('');
   const initializedRef = useRef(false);
   const lastEmittedRef = useRef('');
 
@@ -172,7 +173,7 @@ export function SourceInput({
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
 
   const [isListening, setIsListening] = useState(false);
-  const [isSpeechSupported] = useState(Boolean(getSpeechRecognitionConstructor()));
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState('');
   const [chunks, setChunks] = useState<TranscriptChunk[]>([]);
   const [captionsOpen, setCaptionsOpen] = useState(false);
@@ -182,6 +183,14 @@ export function SourceInput({
     initializedRef.current = true;
     if (value.trim()) setManualText(value);
   }, [value]);
+
+  useEffect(() => {
+    setIsSpeechSupported(Boolean(getSpeechRecognitionConstructor()));
+  }, []);
+
+  useEffect(() => {
+    interimRef.current = interimTranscript;
+  }, [interimTranscript]);
 
   const compiledSource = useMemo(() => {
     let next = '';
@@ -402,6 +411,11 @@ export function SourceInput({
   };
 
   const stopListening = () => {
+    const pending = normalizeText(interimRef.current);
+    if (pending) {
+      pushChunk(pending);
+      interimRef.current = '';
+    }
     keepListeningRef.current = false;
     setIsListening(false);
     setInterimTranscript('');
@@ -442,9 +456,13 @@ export function SourceInput({
       for (let i = event.resultIndex ?? 0; i < event.results.length; i += 1) {
         const result = event.results[i];
         const text = result?.[0]?.transcript || '';
-        if (result?.isFinal) pushChunk(text);
+        if (result?.isFinal) {
+          pushChunk(text);
+          interimRef.current = '';
+        }
         else interim = normalizeText(text);
       }
+      interimRef.current = interim;
       setInterimTranscript(interim);
     };
 
@@ -459,6 +477,12 @@ export function SourceInput({
       if (!keepListeningRef.current) {
         setIsListening(false);
         return;
+      }
+      const pending = normalizeText(interimRef.current);
+      if (pending) {
+        pushChunk(pending);
+        interimRef.current = '';
+        setInterimTranscript('');
       }
       try {
         recognition.start();
