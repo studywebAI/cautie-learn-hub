@@ -132,11 +132,14 @@ export function SourceInput({
   enableCaptions = true,
   speechLanguage = 'en',
   autoInsertCaptions = true,
-  enableBackendFallback = false,
+  enableBackendFallback = true,
   sourceMergeMode = 'append_labeled',
 }: SourceInputProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fallbackRecorderRef = useRef<MediaRecorder | null>(null);
+  const fallbackStreamRef = useRef<MediaStream | null>(null);
+  const fallbackAudioChunksRef = useRef<Blob[]>([]);
   const chunkStartedAtRef = useRef<number | null>(null);
   const initializedRef = useRef(false);
   const lastEmittedRef = useRef('');
@@ -155,6 +158,8 @@ export function SourceInput({
   const [interimTranscript, setInterimTranscript] = useState('');
   const [micError, setMicError] = useState<string | null>(null);
   const [autoCaptionInsert, setAutoCaptionInsert] = useState(autoInsertCaptions);
+  const [isFallbackRecording, setIsFallbackRecording] = useState(false);
+  const [isTranscribingFallback, setIsTranscribingFallback] = useState(false);
   const [chunks, setChunks] = useState<TranscriptChunk[]>([]);
   const [captionsOpen, setCaptionsOpen] = useState(false);
 
@@ -398,6 +403,121 @@ export function SourceInput({
     return `Speech recognition error: ${code}`;
   }, []);
 
+  const cleanupFallbackStream = useCallback(() => {
+    const stream = fallbackStreamRef.current;
+    fallbackStreamRef.current = null;
+    if (!stream) return;
+    for (const track of stream.getTracks()) {
+      track.stop();
+    }
+  }, []);
+
+  const transcribeFallbackAudio = useCallback(async (blob: Blob) => {
+    if (blob.size === 0) return;
+    setIsTranscribingFallback(true);
+    try {
+      const fileExt = blob.type.includes('mp4') ? 'mp4' : 'webm';
+      const file = new File([blob], `speech.${fileExt}`, { type: blob.type || 'audio/webm' });
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('language', speechLanguage);
+
+      const response = await fetch('/api/tools/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Transcription failed');
+      }
+
+      const text = normalizeText(payload?.text || '');
+      if (text) {
+        pushChunk(text);
+      } else {
+        setMicError('No speech was detected in the recording.');
+      }
+    } catch (error: any) {
+      setMicError(error?.message || 'Could not transcribe fallback audio.');
+      toast({
+        variant: 'destructive',
+        title: 'Transcription error',
+        description: error?.message || 'Could not transcribe fallback audio.',
+      });
+    } finally {
+      setIsTranscribingFallback(false);
+    }
+  }, [pushChunk, speechLanguage, toast]);
+
+  const startFallbackRecording = useCallback(async () => {
+    if (isFallbackRecording) return;
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      setMicError('Microphone is unavailable in this environment.');
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setMicError('Browser does not support audio recording fallback.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      fallbackStreamRef.current = stream;
+      fallbackAudioChunksRef.current = [];
+
+      const preferredMime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm')
+          ? 'audio/webm'
+          : '';
+      const recorder = preferredMime
+        ? new MediaRecorder(stream, { mimeType: preferredMime })
+        : new MediaRecorder(stream);
+
+      recorder.ondataavailable = (event: BlobEvent) => {
+        if (event.data?.size) fallbackAudioChunksRef.current.push(event.data);
+      };
+
+      recorder.onerror = () => {
+        setMicError('Audio recording failed.');
+      };
+
+      recorder.onstop = async () => {
+        const blob = new Blob(fallbackAudioChunksRef.current, {
+          type: recorder.mimeType || 'audio/webm',
+        });
+        fallbackAudioChunksRef.current = [];
+        await transcribeFallbackAudio(blob);
+        cleanupFallbackStream();
+      };
+
+      fallbackRecorderRef.current = recorder;
+      setIsFallbackRecording(true);
+      recorder.start(250);
+    } catch (error: any) {
+      cleanupFallbackStream();
+      setMicError(error?.message || 'Could not access microphone for fallback recording.');
+    }
+  }, [cleanupFallbackStream, isFallbackRecording, transcribeFallbackAudio]);
+
+  const stopFallbackRecording = useCallback(() => {
+    const recorder = fallbackRecorderRef.current;
+    fallbackRecorderRef.current = null;
+    if (!recorder) {
+      cleanupFallbackStream();
+      setIsFallbackRecording(false);
+      return;
+    }
+
+    if (recorder.state !== 'inactive') {
+      recorder.stop();
+    } else {
+      cleanupFallbackStream();
+    }
+    setIsFallbackRecording(false);
+  }, [cleanupFallbackStream]);
+
   const {
     isSupported: isSpeechSupported,
     isListening,
@@ -420,21 +540,28 @@ export function SourceInput({
 
   const stopListening = useCallback(() => {
     stopSpeech();
+    stopFallbackRecording();
     setInterimTranscript('');
-  }, [stopSpeech]);
+  }, [stopSpeech, stopFallbackRecording]);
 
   const startListening = useCallback(() => {
     setMicError(null);
     chunkStartedAtRef.current = Date.now();
     const started = startSpeech();
-    if (!started && !enableBackendFallback) {
+    if (started) return;
+    if (!enableBackendFallback) {
       setMicError('Speech could not start. Backend fallback transcription is not configured yet.');
+      return;
     }
-  }, [enableBackendFallback, startSpeech]);
+    void startFallbackRecording();
+  }, [enableBackendFallback, startFallbackRecording, startSpeech]);
 
   useEffect(() => {
-    return () => stopListening();
-  }, [stopListening]);
+    return () => {
+      stopListening();
+      cleanupFallbackStream();
+    };
+  }, [cleanupFallbackStream, stopListening]);
 
   const insertSelectedCaptions = (replaceAll = false) => {
     if (selectedChunks.length === 0) return;
@@ -692,12 +819,12 @@ export function SourceInput({
           </Button>
           <Button
             type="button"
-            variant={isListening ? 'secondary' : 'outline'}
+            variant={isListening || isFallbackRecording ? 'secondary' : 'outline'}
             className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
-            onClick={() => (isListening ? stopListening() : startListening())}
+            onClick={() => (isListening || isFallbackRecording ? stopListening() : startListening())}
             disabled={disabled || isProcessing || !enableMic || (!isSpeechSupported && !enableBackendFallback)}
           >
-            {isListening ? <StopCircle className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            {isListening || isFallbackRecording ? <StopCircle className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             Mic
           </Button>
           <Button
@@ -725,7 +852,7 @@ export function SourceInput({
       {enableMic && (
         <div className="rounded-md border border-dashed px-3 py-2 text-xs space-y-2">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span>Mic status: {isListening ? 'listening' : 'idle'}</span>
+            <span>Mic status: {isListening ? 'listening' : isFallbackRecording ? 'recording (fallback)' : isTranscribingFallback ? 'transcribing (fallback)' : 'idle'}</span>
             <span>Language: {speechLanguage.toUpperCase()}</span>
           </div>
           <label className="flex items-center gap-2 text-muted-foreground">
@@ -738,6 +865,9 @@ export function SourceInput({
           </label>
           {interimTranscript && (
             <p className="text-muted-foreground">Live: {interimTranscript}</p>
+          )}
+          {isTranscribingFallback && (
+            <p className="text-muted-foreground">Transcribing fallback audio...</p>
           )}
           {(micError || lastError) && (
             <p className="text-red-400">
