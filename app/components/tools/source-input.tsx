@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { UploadCloud, FileText, ImageIcon, X, Loader2, Link2, Lightbulb, Sparkles, Mic, Captions, StopCircle } from 'lucide-react';
@@ -85,6 +85,7 @@ export function SourceInput({
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const keepListeningRef = useRef(false);
   const chunkStartedAtRef = useRef<number | null>(null);
+  const valueRef = useRef(value);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [urlInput, setUrlInput] = useState('');
@@ -96,6 +97,10 @@ export function SourceInput({
   const [captionsOpen, setCaptionsOpen] = useState(false);
 
   const hasSelectedChunks = useMemo(() => chunks.some((chunk) => chunk.selected), [chunks]);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -124,12 +129,13 @@ export function SourceInput({
     setIsProcessing(true);
 
     try {
-      const appendSource = (label: string, text: string) => {
-        const next = sourceMergeMode === 'append_labeled'
-          ? appendLabeledBlock(value, label, text)
-          : text;
-        onChange(next);
-      };
+  const appendSource = (label: string, text: string, replace = false) => {
+    const base = replace ? '' : valueRef.current;
+    const next = sourceMergeMode === 'append_labeled'
+      ? appendLabeledBlock(base, label, text)
+      : text;
+    onChange(next);
+  };
 
       if (file.type === 'text/plain') {
         const text = await file.text();
@@ -227,6 +233,8 @@ export function SourceInput({
         selected: true,
       },
     ]);
+    // Live append so Mic action is visibly functional without requiring manual insert.
+    appendSource(`CAPTION (${formatTime(startedAt)}-${formatTime(endedAt)})`, clean);
   };
 
   const stopListening = () => {
@@ -242,6 +250,13 @@ export function SourceInput({
     try { recognition.stop(); } catch {}
     try { recognition.abort(); } catch {}
   };
+
+  useEffect(() => {
+    return () => {
+      stopListening();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const startListening = () => {
     if (isListening) return;
@@ -309,10 +324,7 @@ export function SourceInput({
     const end = selectedChunks[selectedChunks.length - 1]?.endedAt;
     const block = selectedChunks.map((chunk) => chunk.text).join('\n');
     const label = `CAPTION (${formatTime(start)}-${formatTime(end)})`;
-    const next = sourceMergeMode === 'append_labeled'
-      ? appendLabeledBlock(replace ? '' : value, label, block)
-      : block;
-    onChange(next);
+    appendSource(label, block, replace);
   };
 
   const isImage = uploadedFile?.type.startsWith('image/');
@@ -323,7 +335,7 @@ export function SourceInput({
     'Paste lecture notes, textbook chapters, or articles',
     'Upload a PDF, DOCX, or image with text',
     'Import content from any URL',
-    'Even a single sentence works — more text = richer output',
+    'Even a single sentence works - more text = richer output',
   ];
 
   return (
@@ -374,7 +386,7 @@ export function SourceInput({
           )}
         </div>
       )}
-      {/* Tips area — top */}
+      {/* Tips area - top */}
       {!value && (
         <div className="flex items-start pt-2">
           <div className="space-y-2.5 text-xs text-muted-foreground">
@@ -383,7 +395,7 @@ export function SourceInput({
               <span className="font-medium">Tips</span>
             </div>
             {tips.map((tip, i) => (
-              <p key={i} className="pl-5">• {tip}</p>
+              <p key={i} className="pl-5">- {tip}</p>
             ))}
           </div>
         </div>
@@ -400,23 +412,9 @@ export function SourceInput({
         </div>
       )}
 
-      <div className="flex items-center gap-2">
-        <input
-          value={urlInput}
-          onChange={(e) => setUrlInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleUrlImport(); }}
-          placeholder="https://example.com/article"
-          className="flex-1 bg-background border rounded-full px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
-          disabled={isFetchingUrl}
-        />
-        <Button size="sm" onClick={handleUrlImport} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full text-xs h-7 px-3">
-          {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
-        </Button>
-      </div>
-
       {/* Bottom input area: textarea left + action buttons right */}
       <div className="flex gap-2 items-stretch">
-        {/* Textarea — takes most width */}
+        {/* Textarea - takes most width */}
         <div className="flex-1 flex flex-col gap-1.5">
           <Textarea
             value={value}
@@ -441,7 +439,7 @@ export function SourceInput({
           )}
         </div>
 
-        {/* Right side action buttons — stacked vertically */}
+        {/* Right side action buttons - stacked vertically */}
         <div className="flex flex-col gap-2 w-[100px] shrink-0">
           <Button
             type="button"
@@ -500,6 +498,20 @@ export function SourceInput({
           Listening{interimTranscript ? `: ${interimTranscript}` : '...'}
         </div>
       )}
+
+      <div className="flex items-center gap-2">
+        <input
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleUrlImport(); }}
+          placeholder="https://example.com/article"
+          className="flex-1 bg-background border rounded-full px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+          disabled={isFetchingUrl}
+        />
+        <Button size="sm" onClick={handleUrlImport} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full text-xs h-7 px-3">
+          {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
+        </Button>
+      </div>
 
       <input
         ref={fileInputRef}
