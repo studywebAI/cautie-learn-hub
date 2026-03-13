@@ -15,6 +15,7 @@ const NoteSchema = z.object({
 
 const GenerateNotesInputSchema = z.object({
   sourceText: z.string().describe('The source text from which to generate notes.'),
+  groundingInstruction: z.string().optional().describe('Mandatory grounding constraints for factual outputs.'),
   imageDataUri: z.string().optional().describe('Base64 data URI of an image to analyze as context.'),
   topic: z.string().optional().describe('The main topic to focus on.'),
   length: z.string().optional().describe('The desired length of the notes: short, medium, long.'),
@@ -59,6 +60,9 @@ CORE PRINCIPLES:
 - Maintain academic integrity and accuracy
 - Use only the provided Source Text as factual input
 - Do not use web knowledge, prior knowledge, or external references
+{{#if groundingInstruction}}
+{{{groundingInstruction}}}
+{{/if}}
 
 Source Text:
 {{{sourceText}}}

@@ -14,6 +14,7 @@ const GenerateQuizInputSchema = z.object({
   sourceText: z.string().describe('The source text from which to generate the quiz.'),
   questionCount: z.number().optional().default(7).describe('The desired number of questions.'),
   existingQuestionIds: z.array(z.string()).optional().describe('An array of question IDs that should not be regenerated.'),
+  groundingInstruction: z.string().optional().describe('Mandatory grounding constraints for factual outputs.'),
 });
 type GenerateQuizInput = z.infer<typeof GenerateQuizInputSchema>;
 
@@ -43,6 +44,9 @@ All questions and answers MUST be based only on the provided Source Text.
 Do not use web knowledge, prior knowledge, external references, or assumptions.
 If source text is missing details, stay within what is present and simplify the question set.
 Never cite Wikipedia or any external source.
+{{#if groundingInstruction}}
+{{{groundingInstruction}}}
+{{/if}}
 
 Your task is to generate a multiple-choice quiz from the provided source text.
 The quiz should have a concise and relevant title (without phrases like "a comprehensive quiz") and a brief description.

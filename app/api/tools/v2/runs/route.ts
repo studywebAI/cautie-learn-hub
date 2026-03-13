@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { executeAIFlow } from "@/lib/ai/flow-executor";
 import type { ComputeClass, ToolRunStatus } from "@/lib/toolbox/contracts";
-import { enforceSourceOnlyGuard } from "@/lib/toolbox/source-guard";
 import {
   assertRunAllowed,
   getAuthedToolboxContext,
@@ -83,11 +82,6 @@ export async function POST(request: NextRequest) {
     try {
       const inputPayload = payload.input || payload.source || {};
       const output = await executeAIFlow(payload.flowName, inputPayload);
-      enforceSourceOnlyGuard({
-        toolId: payload.toolId,
-        inputPayload,
-        outputPayload: output,
-      });
       let artifactId: string | null = null;
 
       if (payload.persistArtifact) {

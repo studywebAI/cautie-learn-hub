@@ -318,7 +318,7 @@ export function AppSidebar() {
     return (
       <div
         ref={floatingRef}
-        className="fixed z-[120] rounded-xl border border-border/70 bg-[hsl(var(--surface-1))] shadow-[0_16px_34px_-20px_hsl(var(--foreground)/0.4)]"
+        className="fixed z-[120] rounded-xl border border-border/70 bg-[hsl(var(--surface-1))]"
         style={{ left: dropdown.left, top: dropdown.top }}
         onMouseEnter={clearCloseTimer}
         onMouseLeave={scheduleClose}

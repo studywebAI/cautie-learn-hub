@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     const upstreamForm = new FormData();
-    upstreamForm.append('model', 'whisper-1');
+    upstreamForm.append('model', 'gpt-4o-mini-transcribe');
     upstreamForm.append('file', input, input.name || 'speech.webm');
     if (language) upstreamForm.append('language', language);
 

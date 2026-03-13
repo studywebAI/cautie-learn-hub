@@ -1,5 +1,14 @@
 type FlowHandler = (input: any) => Promise<any> | any;
 
+const SOURCE_GROUNDED_FLOWS = new Set(["generateNotes", "generateQuiz", "generateFlashcards"]);
+const SOURCE_GROUNDING_INSTRUCTION = [
+  "Grounding requirements:",
+  "- Use only facts present in the provided source content (text, imported links, extracted files/captions).",
+  "- Do not invent missing details, names, dates, formulas, or examples.",
+  "- If information is missing, keep the output general and avoid guessing.",
+  "- Do not use external or prior knowledge beyond the provided source content.",
+].join("\n");
+
 const flowMap: Record<string, () => Promise<FlowHandler>> = {
   suggestAnswers: () =>
     import("@/ai/flows/suggest-answers").then((m) => m.suggestAnswers),
@@ -84,5 +93,10 @@ export async function executeAIFlow(flowName: string, input: any) {
     throw new Error("Imported flow is not a function");
   }
 
-  return flow(input);
+  const enrichedInput =
+    SOURCE_GROUNDED_FLOWS.has(flowName) && input && typeof input === "object"
+      ? { ...input, groundingInstruction: SOURCE_GROUNDING_INSTRUCTION }
+      : input;
+
+  return flow(enrichedInput);
 }

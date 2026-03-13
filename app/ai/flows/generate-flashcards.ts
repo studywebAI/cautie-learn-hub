@@ -14,6 +14,7 @@ const GenerateFlashcardsInputSchema = z.object({
   sourceText: z.string().describe('The source text from which to generate flashcards.'),
   count: z.number().optional().default(10).describe('The number of flashcards to generate.'),
   existingFlashcardIds: z.array(z.string()).optional().describe('An array of flashcard front texts that should not be regenerated.'),
+  groundingInstruction: z.string().optional().describe('Mandatory grounding constraints for factual outputs.'),
 });
 type GenerateFlashcardsInput = z.infer<typeof GenerateFlashcardsInputSchema>;
 
@@ -45,6 +46,9 @@ const generateFlashcardsFlow = ai.defineFlow(
 All flashcard content MUST be derived only from the provided Source Text.
 Do not use web knowledge, prior knowledge, external references, or assumptions.
 Never cite Wikipedia or any external source.
+{{#if groundingInstruction}}
+{{{groundingInstruction}}}
+{{/if}}
 
 Your task is to generate a set of flashcards based on the provided source text. Create exactly {{{count}}} flashcards.
 

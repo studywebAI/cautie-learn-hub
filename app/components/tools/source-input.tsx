@@ -16,12 +16,8 @@ import {
   Captions,
   StopCircle,
   Trash2,
-  WandSparkles,
-  Check,
-  Circle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useBrowserSpeech } from '@/hooks/use-browser-speech';
 
 interface SourceInputProps {
   value: string;
@@ -37,14 +33,6 @@ interface SourceInputProps {
   enableBackendFallback?: boolean;
   sourceMergeMode?: 'append_labeled';
 }
-
-type TranscriptChunk = {
-  id: string;
-  text: string;
-  startedAt?: number;
-  endedAt?: number;
-  selected: boolean;
-};
 
 type SourceKind = 'url' | 'file' | 'caption';
 
@@ -131,8 +119,8 @@ export function SourceInput({
   enableMic = true,
   enableCaptions = true,
   speechLanguage = 'en',
-  autoInsertCaptions = true,
-  enableBackendFallback = true,
+  autoInsertCaptions: _autoInsertCaptions = true,
+  enableBackendFallback: _enableBackendFallback = true,
   sourceMergeMode = 'append_labeled',
 }: SourceInputProps) {
   const { toast } = useToast();
@@ -140,12 +128,12 @@ export function SourceInput({
   const fallbackRecorderRef = useRef<MediaRecorder | null>(null);
   const fallbackStreamRef = useRef<MediaStream | null>(null);
   const fallbackAudioChunksRef = useRef<Blob[]>([]);
-  const chunkStartedAtRef = useRef<number | null>(null);
+  const recordingStartedAtRef = useRef<number | null>(null);
+  const recordingSegmentsRef = useRef<string[]>([]);
   const initializedRef = useRef(false);
   const lastEmittedRef = useRef('');
 
   const [manualText, setManualText] = useState('');
-  const [manualSelected, setManualSelected] = useState(true);
   const [sources, setSources] = useState<SourceEntry[]>([]);
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -155,12 +143,10 @@ export function SourceInput({
   const [linksOpen, setLinksOpen] = useState(false);
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
 
-  const [interimTranscript, setInterimTranscript] = useState('');
   const [micError, setMicError] = useState<string | null>(null);
-  const [autoCaptionInsert, setAutoCaptionInsert] = useState(autoInsertCaptions);
   const [isFallbackRecording, setIsFallbackRecording] = useState(false);
   const [isTranscribingFallback, setIsTranscribingFallback] = useState(false);
-  const [chunks, setChunks] = useState<TranscriptChunk[]>([]);
+  const [isFinalizingRecording, setIsFinalizingRecording] = useState(false);
   const [captionsOpen, setCaptionsOpen] = useState(false);
 
   useEffect(() => {
@@ -169,21 +155,16 @@ export function SourceInput({
     if (value.trim()) setManualText(value);
   }, [value]);
 
-  useEffect(() => {
-    setAutoCaptionInsert(autoInsertCaptions);
-  }, [autoInsertCaptions]);
-
   const compiledSource = useMemo(() => {
     let next = '';
 
-    if (manualSelected && manualText.trim()) {
+    if (manualText.trim()) {
       next = sourceMergeMode === 'append_labeled'
         ? appendLabeledBlock(next, 'MANUAL_TEXT', manualText)
         : manualText;
     }
 
     for (const source of sources) {
-      if (!source.selected) continue;
       const body = source.text.trim() || source.url || '';
       if (!body) continue;
       next = sourceMergeMode === 'append_labeled'
@@ -192,7 +173,7 @@ export function SourceInput({
     }
 
     return next;
-  }, [manualSelected, manualText, sourceMergeMode, sources]);
+  }, [manualText, sourceMergeMode, sources]);
 
   useEffect(() => {
     if (compiledSource === lastEmittedRef.current) return;
@@ -200,8 +181,10 @@ export function SourceInput({
     onChange(compiledSource);
   }, [compiledSource, onChange]);
 
-  const hasSelectedChunks = useMemo(() => chunks.some((chunk) => chunk.selected), [chunks]);
-  const selectedChunks = useMemo(() => chunks.filter((chunk) => chunk.selected), [chunks]);
+  const captionSources = useMemo(
+    () => sources.filter((source) => source.kind === 'caption'),
+    [sources]
+  );
 
   const addSource = useCallback((entry: SourceEntry) => {
     setSources((prev) => [...prev, entry]);
@@ -287,10 +270,6 @@ export function SourceInput({
     setSources((prev) => prev.filter((s) => s.id !== id));
   };
 
-  const toggleSourceSelected = (id: string, selected: boolean) => {
-    setSources((prev) => prev.map((s) => (s.id === id ? { ...s, selected } : s)));
-  };
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -374,35 +353,46 @@ export function SourceInput({
     }
   };
 
-  const pushChunk = useCallback((text: string) => {
+  const appendRecordingSegment = useCallback((text: string) => {
     const clean = normalizeText(text);
     if (!clean) return;
-    const startedAt = chunkStartedAtRef.current ?? Date.now();
-    const endedAt = Date.now();
-    chunkStartedAtRef.current = endedAt;
-
-    setChunks((prev) => [
-      ...prev,
-      {
-        id: `${endedAt}-${Math.random().toString(36).slice(2, 8)}`,
-        text: clean,
-        startedAt,
-        endedAt,
-        selected: true,
-      },
-    ]);
-    if (autoCaptionInsert) {
-      setManualText((prev) => (prev.trim() ? `${prev.trimEnd()} ${clean}` : clean));
+    const prev = recordingSegmentsRef.current[recordingSegmentsRef.current.length - 1];
+    if (prev && prev.toLowerCase() === clean.toLowerCase()) {
+      return;
     }
-  }, [autoCaptionInsert]);
+    recordingSegmentsRef.current = [...recordingSegmentsRef.current, clean];
+  }, []);
 
-  const mapMicErrorMessage = useCallback((code: string) => {
-    if (code === 'no-speech') return 'No speech detected. Speak clearly and closer to your mic.';
-    if (code === 'not-allowed') return 'Microphone permission is blocked.';
-    if (code === 'audio-capture') return 'No microphone was detected.';
-    if (code === 'not-supported') return 'Speech recognition is not supported in this browser.';
-    if (code === 'start-failed') return 'Could not start microphone listening.';
-    return `Speech recognition error: ${code}`;
+  const beginRecordingSession = useCallback(() => {
+    recordingStartedAtRef.current = Date.now();
+    recordingSegmentsRef.current = [];
+    setIsFinalizingRecording(false);
+  }, []);
+
+  const finalizeRecordingSession = useCallback(() => {
+    const joined = normalizeText(recordingSegmentsRef.current.join(' '));
+    const captionText = cleanupCaptionText(joined);
+    const start = recordingStartedAtRef.current ?? Date.now();
+    const end = Date.now();
+
+    recordingStartedAtRef.current = null;
+    recordingSegmentsRef.current = [];
+
+    if (!captionText) {
+      setMicError('No speech was detected in the recording.');
+      return;
+    }
+
+    const captionSource: SourceEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      kind: 'caption',
+      label: `CAPTION (${formatTime(start)}-${formatTime(end)})`,
+      text: captionText,
+      selected: true,
+    };
+
+    setSources((prev) => [...prev, captionSource]);
+    setManualText((prev) => (prev.trim() ? `${prev.trimEnd()}\n\n${captionText}` : captionText));
   }, []);
 
   const cleanupFallbackStream = useCallback(() => {
@@ -436,7 +426,8 @@ export function SourceInput({
 
       const text = normalizeText(payload?.text || '');
       if (text) {
-        pushChunk(text);
+        appendRecordingSegment(text);
+        finalizeRecordingSession();
       } else {
         setMicError('No speech was detected in the recording.');
       }
@@ -449,8 +440,9 @@ export function SourceInput({
       });
     } finally {
       setIsTranscribingFallback(false);
+      setIsFinalizingRecording(false);
     }
-  }, [pushChunk, speechLanguage, toast]);
+  }, [appendRecordingSegment, finalizeRecordingSession, speechLanguage, toast]);
 
   const startFallbackRecording = useCallback(async () => {
     if (isFallbackRecording) return;
@@ -500,6 +492,7 @@ export function SourceInput({
     } catch (error: any) {
       cleanupFallbackStream();
       setMicError(error?.message || 'Could not access microphone for fallback recording.');
+      setIsFinalizingRecording(false);
     }
   }, [cleanupFallbackStream, isFallbackRecording, transcribeFallbackAudio]);
 
@@ -520,43 +513,19 @@ export function SourceInput({
     setIsFallbackRecording(false);
   }, [cleanupFallbackStream]);
 
-  const {
-    isSupported: isSpeechSupported,
-    isListening,
-    lastError,
-    start: startSpeech,
-    stop: stopSpeech,
-  } = useBrowserSpeech({
-    language: speechLanguage,
-    suppressNoSpeechError: false,
-    onFinalText: pushChunk,
-    onInterimText: setInterimTranscript,
-    onError: (code) => {
-      const message = mapMicErrorMessage(code);
-      setMicError(message);
-      if (code !== 'no-speech') {
-        toast({ variant: 'destructive', title: 'Microphone error', description: message });
-      }
-    },
-  });
-
   const stopListening = useCallback(() => {
-    stopSpeech();
+    const wasListening = isFallbackRecording;
+    if (!wasListening) return;
+
+    setIsFinalizingRecording(true);
     stopFallbackRecording();
-    setInterimTranscript('');
-  }, [stopSpeech, stopFallbackRecording]);
+  }, [isFallbackRecording, stopFallbackRecording]);
 
   const startListening = useCallback(() => {
     setMicError(null);
-    chunkStartedAtRef.current = Date.now();
-    const started = startSpeech();
-    if (started) return;
-    if (!enableBackendFallback) {
-      setMicError('Speech could not start. Backend fallback transcription is not configured yet.');
-      return;
-    }
+    beginRecordingSession();
     void startFallbackRecording();
-  }, [enableBackendFallback, startFallbackRecording, startSpeech]);
+  }, [beginRecordingSession, startFallbackRecording]);
 
   useEffect(() => {
     return () => {
@@ -565,34 +534,9 @@ export function SourceInput({
     };
   }, [cleanupFallbackStream, stopListening]);
 
-  const insertSelectedCaptions = (replaceAll = false) => {
-    if (selectedChunks.length === 0) return;
-
-    const start = selectedChunks[0]?.startedAt;
-    const end = selectedChunks[selectedChunks.length - 1]?.endedAt;
-    const block = selectedChunks.map((chunk) => chunk.text).join('\n');
-
-    const captionSource: SourceEntry = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      kind: 'caption',
-      label: `CAPTION (${formatTime(start)}-${formatTime(end)})`,
-      text: block,
-      selected: true,
-    };
-
-    if (replaceAll) {
-      setManualText('');
-      setManualSelected(false);
-      setSources([captionSource]);
-      return;
-    }
-
-    setSources((prev) => [...prev, captionSource]);
-  };
-
-  const cleanSelectedCaptions = () => {
-    setChunks((prev) => prev.map((chunk) => (
-      chunk.selected ? { ...chunk, text: cleanupCaptionText(chunk.text) } : chunk
+  const updateSourceText = (id: string, text: string) => {
+    setSources((prev) => prev.map((source) => (
+      source.id === id ? { ...source, text } : source
     )));
   };
 
@@ -626,56 +570,42 @@ export function SourceInput({
       onDrop={handleDrop}
     >
       {captionsOpen && (
-        <div className="absolute right-0 top-0 z-20 h-full w-[360px] border bg-background shadow-xl p-3 flex flex-col gap-3">
+        <div className="absolute right-0 top-0 z-20 h-full w-[360px] border bg-background p-3 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <p className="text-sm">Captions</p>
             <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setCaptionsOpen(false)}>Close</Button>
           </div>
 
-          {chunks.length === 0 ? (
+          {captionSources.length === 0 ? (
             <div className="rounded-md border p-3 text-xs text-muted-foreground">
-              No captions yet. Start Mic, then choose chunks to insert.
+              No captions yet. Record with Mic and each finished recording appears here.
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setChunks((prev) => prev.map((c) => ({ ...c, selected: true })))}>Select all</Button>
-                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setChunks((prev) => prev.map((c) => ({ ...c, selected: false })))}>Clear</Button>
-                <Button variant="outline" size="sm" className="h-7 text-xs ml-auto" disabled={!hasSelectedChunks} onClick={cleanSelectedCaptions}>
-                  <WandSparkles className="h-3 w-3 mr-1" />
-                  Clean selected
-                </Button>
-              </div>
-
               <div className="flex-1 overflow-auto space-y-2 pr-1">
-                {chunks.map((chunk) => (
-                  <div key={chunk.id} className="rounded-md border p-2 text-xs space-y-2">
+                {captionSources.map((caption) => (
+                  <div key={caption.id} className="rounded-md border p-2 text-xs space-y-2">
                     <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={chunk.selected}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setChunks((prev) => prev.map((c) => c.id === chunk.id ? { ...c, selected: checked } : c));
-                        }}
-                      />
-                      <p className="text-muted-foreground">{formatTime(chunk.startedAt)} - {formatTime(chunk.endedAt)}</p>
+                      <p className="text-muted-foreground">{caption.label}</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="ml-auto h-5 w-5 shrink-0"
+                        onClick={() => removeSource(caption.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                     <Textarea
-                      value={chunk.text}
+                      value={caption.text}
                       onChange={(e) => {
-                        const next = e.target.value;
-                        setChunks((prev) => prev.map((c) => c.id === chunk.id ? { ...c, text: next } : c));
+                        updateSourceText(caption.id, e.target.value);
                       }}
                       className="min-h-[72px] text-xs"
                     />
                   </div>
                 ))}
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <Button size="sm" className="h-8 text-xs" disabled={!hasSelectedChunks} onClick={() => insertSelectedCaptions(false)}>Insert selected</Button>
-                <Button size="sm" variant="destructive" className="h-8 text-xs" disabled={!hasSelectedChunks} onClick={() => insertSelectedCaptions(true)}>Replace source</Button>
               </div>
             </>
           )}
@@ -741,24 +671,14 @@ export function SourceInput({
           <div className="rounded-md border p-2 space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">Included sources</p>
-              <span className="text-[10px] text-muted-foreground">{sources.filter((s) => s.selected).length + (manualSelected && manualText.trim() ? 1 : 0)} selected</span>
+              <span className="text-[10px] text-muted-foreground">
+                {sources.length + (manualText.trim() ? 1 : 0)} included
+              </span>
             </div>
 
             <div className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs">
               <span className="font-medium">Your text</span>
               <span className="text-muted-foreground ml-auto">{wordCount} words</span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className={manualSelected
-                  ? "h-6 w-6 rounded-full p-0 border-emerald-500/45 bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/20"
-                  : "h-6 w-6 rounded-full p-0 border-border/70 text-muted-foreground hover:text-foreground"}
-                onClick={() => setManualSelected((v) => !v)}
-                aria-label={manualSelected ? 'Deselect manual source' : 'Select manual source'}
-              >
-                {manualSelected ? <Check className="h-3 w-3" /> : <Circle className="h-3 w-3" />}
-              </Button>
             </div>
 
             <div className="max-h-[140px] overflow-auto space-y-1 pr-1">
@@ -775,18 +695,6 @@ export function SourceInput({
                       <p className="text-muted-foreground truncate">{source.text.slice(0, 90) || source.url}</p>
                     )}
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={source.selected
-                      ? "h-6 w-6 rounded-full p-0 border-emerald-500/45 bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/20"
-                      : "h-6 w-6 rounded-full p-0 border-border/70 text-muted-foreground hover:text-foreground"}
-                    onClick={() => toggleSourceSelected(source.id, !source.selected)}
-                    aria-label={source.selected ? `Deselect ${source.label}` : `Select ${source.label}`}
-                  >
-                    {source.selected ? <Check className="h-3 w-3" /> : <Circle className="h-3 w-3" />}
-                  </Button>
                   <Button
                     type="button"
                     variant="ghost"
@@ -831,12 +739,12 @@ export function SourceInput({
           </Button>
           <Button
             type="button"
-            variant={isListening || isFallbackRecording ? 'secondary' : 'outline'}
+            variant={isFallbackRecording ? 'secondary' : 'outline'}
             className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
-            onClick={() => (isListening || isFallbackRecording ? stopListening() : startListening())}
-            disabled={disabled || isProcessing || !enableMic || (!isSpeechSupported && !enableBackendFallback)}
+            onClick={() => (isFallbackRecording ? stopListening() : startListening())}
+            disabled={disabled || isProcessing || !enableMic}
           >
-            {isListening || isFallbackRecording ? <StopCircle className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            {isFallbackRecording ? <StopCircle className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             Mic
           </Button>
           <Button
@@ -864,31 +772,21 @@ export function SourceInput({
       {enableMic && (
         <div className="rounded-md border border-dashed px-3 py-2 text-xs space-y-2">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span>Mic status: {isListening ? 'listening' : isFallbackRecording ? 'recording (fallback)' : isTranscribingFallback ? 'transcribing (fallback)' : 'idle'}</span>
+            <span>Mic status: {isFallbackRecording ? 'recording' : isTranscribingFallback ? 'transcribing' : 'idle'}</span>
             <span>Language: {speechLanguage.toUpperCase()}</span>
           </div>
-          <label className="flex items-center gap-2 text-muted-foreground">
-            <input
-              type="checkbox"
-              checked={autoCaptionInsert}
-              onChange={(e) => setAutoCaptionInsert(e.target.checked)}
-            />
-            Auto-add recognized speech to source text
-          </label>
-          {interimTranscript && (
-            <p className="text-muted-foreground">Live: {interimTranscript}</p>
-          )}
           {isTranscribingFallback && (
-            <p className="text-muted-foreground">Transcribing fallback audio...</p>
+            <p className="text-muted-foreground">Transcribing audio...</p>
           )}
-          {(micError || lastError) && (
-            <p className="text-red-400">
-              {micError || mapMicErrorMessage(lastError || 'unknown')}
+          {isFinalizingRecording && !isTranscribingFallback && (
+            <p className="text-muted-foreground flex items-center gap-2">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Finalizing caption...
             </p>
           )}
-          {!isSpeechSupported && !enableBackendFallback && (
-            <p className="text-muted-foreground">
-              Browser speech is unavailable here. Backend fallback is not configured.
+          {micError && (
+            <p className="text-red-400">
+              {micError}
             </p>
           )}
         </div>
