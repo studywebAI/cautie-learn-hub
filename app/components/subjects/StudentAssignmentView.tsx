@@ -385,7 +385,7 @@ export function StudentAssignmentView({
           blocks.map((block, index) => (
             <Card key={block.id} className="relative">
               <CardContent className="pt-6">
-                {/* Block number */}
+                {/* Block number. */}
                 <div className="absolute -left-4 top-6 text-muted-foreground font-medium text-sm">
                   {index + 1}.
                 </div>
