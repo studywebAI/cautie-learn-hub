@@ -101,15 +101,15 @@ export function CautieWordmark({ className, textClassName, animated = false, com
  ['--cautie-text-start' as any]: 'hsl(var(--background))',
  ['--cautie-text-end' as any]: resolvedTextColor,
  }}>
- span className={cn(
+ <span className={cn(
  'relative inline-block lowercase tracking-tight overflow-visible',
  compact ? 'text-2xl font-semibold' : 'text-7xl font-bold',
  textClassName
  )} style={{ fontFamily: 'var(--font-caveat), var(--font-kalam), cursive' }}>
  {animated ? (
- span className="relative inline-block" style={{ width: animatedWordWidth, height: animatedWordHeight, lineHeight: 1 }}
+ <span className="relative inline-block" style={{ width: animatedWordWidth, height: animatedWordHeight, lineHeight: 1 }}>
  <svg className="pointer-events-none absolute inset-0 z-0 overflow-visible" viewBox="0 0 400 160" preserveAspectRatio="none" aria-hidden="true">
- rect x="18" y="58" width="368" height="64" rx="26" fill={highlightColor} style={{
+ <rect x="18" y="58" width="368" height="64" rx="26" fill={highlightColor} style={{
  transformOrigin: 'left center',
  transformBox: 'fill-box',
  transform: 'scaleX(0)',
@@ -117,7 +117,7 @@ export function CautieWordmark({ className, textClassName, animated = false, com
  animation: `cautie-logo-highlight ${HIGHLIGHT_DURATION_MS}ms cubic-bezier(0.12, 0.85, 0.22, 1) ${HIGHLIGHT_DELAY_MS}ms forwards`
  }}
  />
- rect x="11" y=""54" width=382" height="72" rx="30" fill={highlightColor} style={{
+ <rect x="11" y="54" width="382" height="72" rx="30" fill={highlightColor} style={{
  transformOrigin: 'left center',
  transformBox: 'fill-box',
  transform: 'scaleX(0)',
@@ -125,32 +125,32 @@ export function CautieWordmark({ className, textClassName, animated = false, com
  animation: `cautie-logo-highlight-spill ${HIGHLIGHT_DURATION_MS + 35}ms cubic-bezier(0.12, 0.85, 0.22, 1) ${HIGHLIGHT_DELAY_MS + 10}ms forwards`
  }}
  />
- g fill="none"" stroke=var(--cautie-text-end)" strokeWidth={compact ? 7.5 : 8.5} strokeLinecap="round" strokeLinejoin="round">
+ <g fill="none" stroke="var(--cautie-text-end)" strokeWidth={compact ? 7.5 : 8.5} strokeLinecap="round" strokeLinejoin="round">
  {STROKES.map((stroke) => (
- path key={stroke.id} d={stroke.d} pathLength={1} style={{
+ <path key={stroke.id} d={stroke.d} pathLength={1} style={{
  strokeDasharray: 1,
  strokeDashoffset: 1,
  animation: `cautie-logo-stroke ${stroke.duration ?? 170}ms linear ${stroke.delay}ms forwards`
  }}
- />)
- )}
- circle cx="294" cy="48" r={compact ? 3.6 : 4.2} fill="var(--cautie-text-end)" stroke="none" style={{
+ />
+ ))}
+ <circle cx="294" cy="48" r={compact ? 3.6 : 4.2} fill="var(--cautie-text-end)" stroke="none" style={{
  opacity: 0,
  animation: `dotPop 120ms ease-out ${7 * STROKE_STEP_MS + 40}ms forwards`
  }}
  />
- g>
- svg>>
- span
+ </g>
+ </svg>
+ </span>
  ) : (
- >
- span aria-hidden="true"" className=pointer-events-none absolute left-[-2%] top-[58%] z-0 h-[0.54em] w-[104%] -translate-y-1/2 rounded-[999px]" style={{ background: highlightColor, opacity: 0.82 }} />
- span className="relative z-10" style={{ color: 'var(--cautie-text-end)' }}>
+ <>
+ <span aria-hidden="true" className="pointer-events-none absolute left-[-2%] top-[58%] z-0 h-[0.54em] w-[104%] -translate-y-1/2 rounded-[999px]" style={{ background: highlightColor, opacity: 0.82 }} />
+ <span className="relative z-10" style={{ color: 'var(--cautie-text-end)' }}>
  cautie
- span>>
- 
+ </span>
+ </>
  )}
- span>
- div>
+ </span>
+ </div>
  );
-}{
+}
