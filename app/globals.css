@@ -784,3 +784,12 @@
 * {
   scrollbar-width: none;
 }
+
+/* Global glow/shadow kill switch */
+[class*="shadow"] {
+  box-shadow: none !important;
+}
+
+[class*="drop-shadow"] {
+  filter: none !important;
+}
