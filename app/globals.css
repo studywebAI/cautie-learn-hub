@@ -712,6 +712,15 @@
     }
   }
 
+  @keyframes cautie-logo-stroke {
+    0% {
+      stroke-dashoffset: 1;
+    }
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+
   @keyframes cautie-logo-highlight {
     0% {
       transform: scaleX(0);
