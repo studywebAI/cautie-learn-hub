@@ -49,12 +49,11 @@ export function CautieWordmark({
 }: CautieWordmarkProps) {
   if (!SHOW_CAUTIE_LOGO) return null;
 
-  const LETTER_STAGGER_MS = 70;
-  const LETTER_DURATION_MS = 95;
-  const HIGHLIGHT_DELAY_MS = 0;
-  const HIGHLIGHT_DURATION_MS = 95;
-  const animatedWordWidth = compact ? '5.2ch' : '5.85ch';
-  const animatedWordHeight = compact ? '1.1em' : '1.26em';
+  const WRITE_DURATION_MS = 1000;
+  const HIGHLIGHT_DELAY_MS = WRITE_DURATION_MS + 40;
+  const HIGHLIGHT_DURATION_MS = 260;
+  const animatedWordWidth = compact ? '5.25ch' : '5.9ch';
+  const animatedWordHeight = compact ? '1.12em' : '1.3em';
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -95,94 +94,49 @@ export function CautieWordmark({
           style={{ fontFamily: 'var(--font-caveat), var(--font-kalam), cursive' }}
         >
           {animated ? (
-            <span className="relative inline-block" style={{ width: animatedWordWidth, height: animatedWordHeight }}>
-              <svg
-                className="pointer-events-none absolute z-0 overflow-visible"
-                viewBox="0 0 1000 160"
-                preserveAspectRatio="none"
-                aria-hidden="true"
-                 style={{
-                   top: '-0.1em',
-                   left: '0',
-                   width: '100%',
-                   height: 'calc(100% + 0.14em)',
-                 }}
-              >
-                <rect
-                  id="highlight"
-                  className="cautie-highlight-rect"
-                  x="72"
-                  y="56"
-                  width="848"
-                  height="58"
-                  rx="14"
-                  fill={highlightColor}
-                  style={{
-                    transformOrigin: 'left center',
-                    transform: 'scaleX(0)',
-                    animation: `cautieHighlightSweep ${HIGHLIGHT_DURATION_MS}ms cubic-bezier(0.2, 0.9, 0.2, 1) ${HIGHLIGHT_DELAY_MS}ms forwards`,
-                  }}
-                />
-                <rect
-                  className="cautie-highlight-glint"
-                  x="72"
-                  y="56"
-                  width="848"
-                  height="58"
-                  rx="14"
-                  fill="rgba(255,255,255,0.26)"
-                  style={{
-                    opacity: 0,
-                    transformOrigin: 'left center',
-                    animation: `cautie-highlight-glint-tight ${HIGHLIGHT_DURATION_MS}ms ease-out ${HIGHLIGHT_DELAY_MS + 10}ms forwards`,
-                  }}
-                />
-              </svg>
-
+            <span className="relative inline-block" style={{ width: animatedWordWidth, height: animatedWordHeight, lineHeight: 1 }}>
               <span
-                className="relative z-10 inline-flex items-baseline lowercase"
+                aria-hidden="true"
+                className="pointer-events-none absolute left-[-2%] top-[58%] z-0 h-[0.54em] w-[104%] -translate-y-1/2 rounded-[999px]"
+                style={{
+                  background: highlightColor,
+                  transformOrigin: 'left center',
+                  transform: 'scaleX(0)',
+                  opacity: 0,
+                  animation: `cautie-logo-highlight ${HIGHLIGHT_DURATION_MS}ms cubic-bezier(0.12, 0.85, 0.22, 1) ${HIGHLIGHT_DELAY_MS}ms forwards`,
+                }}
+              />
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute left-[-3.5%] top-[60%] z-0 h-[0.62em] w-[107%] -translate-y-1/2 rounded-[999px]"
+                style={{
+                  background: highlightColor,
+                  transformOrigin: 'left center',
+                  transform: 'scaleX(0)',
+                  opacity: 0,
+                  animation: `cautie-logo-highlight-spill ${HIGHLIGHT_DURATION_MS + 35}ms cubic-bezier(0.12, 0.85, 0.22, 1) ${HIGHLIGHT_DELAY_MS + 10}ms forwards`,
+                }}
+              />
+              <span
+                className="relative z-10 inline-block lowercase"
                 style={{
                   color: 'var(--cautie-text-end)',
                   lineHeight: 1,
+                  opacity: 0,
+                  clipPath: 'inset(0 100% 0 0)',
+                  animation: `cautie-logo-write ${WRITE_DURATION_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1) 0ms forwards`,
                 }}
               >
-                {'cautie'.split('').map((letter, index) => (
-                  <span
-                    key={`${letter}-${index}`}
-                    className="cautie-letter-step inline-block"
-                    style={{
-                      opacity: 0,
-                      animation: `cautie-letter-step ${LETTER_DURATION_MS}ms ease-out ${index * LETTER_STAGGER_MS}ms forwards`,
-                    }}
-                  >
-                    {letter}
-                  </span>
-                ))}
+                cautie
               </span>
             </span>
           ) : (
             <>
-              <svg
-                className="pointer-events-none absolute z-0 overflow-visible"
-                viewBox="0 0 1000 160"
-                preserveAspectRatio="none"
+              <span
                 aria-hidden="true"
-                style={{
-                   top: '-0.1em',
-                   left: '0',
-                   width: '100%',
-                   height: 'calc(100% + 0.14em)',
-                 }}
-               >
-                 <rect
-                   x="72"
-                   y="56"
-                   width="848"
-                   height="58"
-                   rx="14"
-                   fill={highlightColor}
-                 />
-              </svg>
+                className="pointer-events-none absolute left-[-2%] top-[58%] z-0 h-[0.54em] w-[104%] -translate-y-1/2 rounded-[999px]"
+                style={{ background: highlightColor, opacity: 0.82 }}
+              />
               <span className="relative z-10" style={{ color: 'var(--cautie-text-end)' }}>
                 cautie
               </span>
