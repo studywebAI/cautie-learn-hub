@@ -1,5 +1,3 @@
-'use client';
-
 import { useMemo } from 'react';
 import { SHOW_CAUTIE_LOGO } from '@/lib/branding';
 
@@ -15,7 +13,7 @@ function generateScribbleStrokes(width: number, height: number, seed: number): s
     base + ((seed * 13 + offset * 37 + variance * 7) % 100) / 100 * variance * 2 - variance;
 
   const strokes: string[] = [];
-  const count = 6 + (seed % 3); // 6-8 horizontal passes
+  const count = 10 + (seed % 5); // Increased from 6-8 to 10-14 strokes
   const verticalSpacing = height / (count + 1);
 
   for (let i = 0; i < count; i++) {
