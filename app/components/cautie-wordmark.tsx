@@ -65,10 +65,10 @@ export function CautieWordmark({
     { id: 't-cross', d: 'M242 68 L274 68', delay: 5 * STROKE_STEP_MS, duration: 145 },
     { id: 'i-stem', d: 'M286 62 L286 104', delay: 6 * STROKE_STEP_MS, duration: 185 },
     { id: 'i-dot', d: 'M286 48 L286 48', delay: 7 * STROKE_STEP_MS, duration: 80 },
-    { id: 'e-mid', d: 'M310 84 C318 82 327 83 336 86', delay: 8 * STROKE_STEP_MS, duration: 165 },
-    { id: 'e-top', d: 'M310 84 C314 74 321 68 330 66 C336 65 341 66 345 70 C347 72 348 75 348 78', delay: 9 * STROKE_STEP_MS, duration: 190 },
-    { id: 'e-top-hook', d: 'M338 74 C346 70 354 72 359 79 C360 81 360 83 359 85', delay: 9 * STROKE_STEP_MS + 60, duration: 120 },
-    { id: 'e-bottom', d: 'M310 84 C314 89 319 92 325 92', delay: 10 * STROKE_STEP_MS, duration: 95 },
+    { id: 'e-mid', d: 'M310 84 C320 82 330 83 339 87', delay: 8 * STROKE_STEP_MS, duration: 165 },
+    { id: 'e-top', d: 'M310 84 C313 72 323 64 334 64 C344 64 351 72 351 81', delay: 9 * STROKE_STEP_MS, duration: 190 },
+    { id: 'e-top-hook', d: 'M343 78 C351 78 357 82 359 88', delay: 9 * STROKE_STEP_MS + 60, duration: 120 },
+    { id: 'e-bottom', d: 'M310 84 C315 97 327 104 341 104 C350 103 356 97 356 90', delay: 10 * STROKE_STEP_MS, duration: 165 },
   ];
 
   const WRITE_DURATION_MS = STROKES.reduce((max, stroke) => {
