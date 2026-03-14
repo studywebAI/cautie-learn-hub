@@ -32,7 +32,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { SHOW_CAUTIE_LOGO } from '@/lib/branding';
+import { CautieWordmark } from './cautie-wordmark';
 
 type DropdownKind = 'classes' | 'subjects';
 type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
@@ -41,19 +41,7 @@ type DropdownSubjectItem = { id: string; title: string; classIds: string[] };
 type StudentLane = 'assigned' | 'tools';
 
 function SidebarTopLogo({ className = '' }: { className?: string }) {
-  if (!SHOW_CAUTIE_LOGO) return null;
-
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center justify-center rounded-full border border-[#2d6471] bg-[#3a8a99] px-4 py-1 lowercase text-[#f6fbff] shadow-[0_0_0_2px_rgba(34,77,86,0.35)]',
-        className
-      )}
-      style={{ fontFamily: 'var(--font-caveat), var(--font-kalam), cursive' }}
-    >
-      cautie
-    </span>
-  );
+  return <CautieWordmark compact className={cn('origin-left', className)} />;
 }
 
 export function AppSidebar() {

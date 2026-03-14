@@ -4,6 +4,7 @@
 - Backend/Auth/Database: Supabase
 - Default validation approach: keep local checks lightweight unless requested.
 - Run `npm run build` only when needed to verify that recent code edits still compile before deployment.
+- Database change rule: when schema/data changes are needed, write them in a `.sql` file in the repo and apply manually in the Supabase SQL Editor.
 Top, dit is precies waar je Grades-tab volwassen wordt.
 Die optie “History / Reports” maakt het systeem niet alleen voor invoeren, maar voor analyse, controle en communicatie.
 
