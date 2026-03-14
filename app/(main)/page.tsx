@@ -13,6 +13,7 @@ import { MySubjects } from "@/components/dashboard/my-subjects";
 import { parseISO, isFuture, differenceInDays } from 'date-fns';
 import type { Alert, Subject } from '@/lib/types';
 import { TodaysAgenda } from "@/components/dashboard/todays-agenda";
+import { useRouter } from "next/navigation";
 
 const AnalyticsDashboard = lazy(() => import("@/components/dashboard/analytics-dashboard").then(module => ({ default: module.AnalyticsDashboard })));
 
@@ -166,7 +167,8 @@ function DashboardSkeleton() {
 }
 
 export default function DashboardPage() {
-  const { role, isLoading, session } = useContext(AppContext) as AppContextType;
+  const { role, isLoading, session, classes } = useContext(AppContext) as AppContextType;
+  const router = useRouter();
   
   // Check for cached data directly to avoid skeleton flash
   const cached = typeof window !== 'undefined' 
@@ -174,12 +176,34 @@ export default function DashboardPage() {
     : null;
   const hasCachedData = cached && cached.classes && cached.classes.length > 0;
 
+  useEffect(() => {
+    if (!session || role !== 'teacher' || isLoading) return;
+
+    const activeClasses = (Array.isArray(classes) ? classes : []).filter(
+      (classItem) => classItem.status !== 'archived'
+    );
+    if (activeClasses.length === 0) return;
+
+    const preferredClassId =
+      (typeof window !== 'undefined' ? window.localStorage.getItem('studyweb-last-class-id') : null) ||
+      activeClasses[0].id;
+
+    const preferredClass = activeClasses.find((classItem) => classItem.id === preferredClassId) || activeClasses[0];
+    if (!preferredClass?.id) return;
+
+    router.replace(`/class/${preferredClass.id}?tab=subjects`);
+  }, [session, role, isLoading, classes, router]);
+
   // Show skeleton ONLY if truly loading AND no cached data available
   if (isLoading && !hasCachedData) {
     return <DashboardSkeleton />;
   }
 
   if (!session) return <StudentDashboard />;
+
+  if (role === 'teacher' && (Array.isArray(classes) ? classes : []).some((classItem) => classItem.status !== 'archived')) {
+    return <DashboardSkeleton />;
+  }
 
   return role === 'student' ? <StudentDashboard /> : <TeacherSummaryDashboard />;
 }

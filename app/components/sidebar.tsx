@@ -2,7 +2,7 @@
 
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Sidebar,
   SidebarContent,
@@ -38,9 +38,11 @@ type DropdownKind = 'classes' | 'subjects';
 type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
 type DropdownClassItem = { id: string; name: string; status?: string | null };
 type DropdownSubjectItem = { id: string; title: string };
+type StudentLane = 'assigned' | 'tools';
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { dictionary } = useDictionary();
   const context = useContext(AppContext) as AppContextType | null;
   const { toast } = useToast();
@@ -59,11 +61,19 @@ export function AppSidebar() {
   const [selectedSubjectClassId, setSelectedSubjectClassId] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [activeTeacherClassId, setActiveTeacherClassId] = useState('');
+  const [studentLane, setStudentLane] = useState<StudentLane>(() => {
+    if (typeof window === 'undefined') return 'assigned';
+    const savedLane = window.localStorage.getItem('studyweb-student-lane');
+    return savedLane === 'tools' ? 'tools' : 'assigned';
+  });
+
+  const isTeacher = context?.role === 'teacher';
 
   const menuItems = [
     { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
     { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
-    { href: '/classes', label: 'manage', icon: School },
+    { href: '/classes', label: isTeacher ? 'manage' : 'classes', icon: School },
     { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
     { href: '/material', label: dictionary.sidebar.material || 'material', icon: FileSignature },
   ];
@@ -74,7 +84,10 @@ export function AppSidebar() {
     { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: FileSignature },
   ];
 
-  const isTeacher = context?.role === 'teacher';
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('studyweb-student-lane', studentLane);
+  }, [studentLane]);
 
   const classDropdownItems = useMemo(() => {
     return [...classItems]
@@ -100,7 +113,32 @@ export function AppSidebar() {
   );
 
   useEffect(() => {
+    if (!isTeacher) return;
+    if (classDropdownItems.length === 0) {
+      setActiveTeacherClassId('');
+      return;
+    }
+
+    const storageClassId =
+      typeof window !== 'undefined' ? window.localStorage.getItem('studyweb-last-class-id') : null;
+    const preferredClassId = activeTeacherClassId || storageClassId || classDropdownItems[0].id;
+    const preferredClass =
+      classDropdownItems.find((classItem) => classItem.id === preferredClassId) || classDropdownItems[0];
+    setActiveTeacherClassId(preferredClass.id);
+  }, [isTeacher, classDropdownItems, activeTeacherClassId]);
+
+  useEffect(() => {
     setDropdown(null);
+  }, [pathname]);
+
+  useEffect(() => {
+    const classMatch = pathname?.match(/^\/class\/([^/?#]+)/);
+    const classIdFromPath = classMatch?.[1];
+    if (!classIdFromPath) return;
+    setActiveTeacherClassId(classIdFromPath);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('studyweb-last-class-id', classIdFromPath);
+    }
   }, [pathname]);
 
   useEffect(() => {
@@ -193,6 +231,9 @@ export function AppSidebar() {
     if (href.startsWith('/tools')) return pathname.startsWith(href);
     return pathname === href;
   };
+
+  const visibleMainItems = isTeacher || studentLane === 'assigned' ? menuItems : [];
+  const visibleToolsItems = isTeacher || studentLane === 'tools' ? toolsMenuItems : [];
 
   const renderFloatingDropdown = () => {
     if (!dropdown) return null;
@@ -415,6 +456,67 @@ export function AppSidebar() {
     );
   };
 
+  const renderTeacherClassSwitcher = () => {
+    if (!isTeacher) return null;
+
+    return (
+      <div className="mb-2 px-2">
+        <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">
+          class
+        </label>
+        <select
+          value={activeTeacherClassId}
+          onChange={(event) => {
+            const nextClassId = event.target.value;
+            setActiveTeacherClassId(nextClassId);
+            if (typeof window !== 'undefined') {
+              window.localStorage.setItem('studyweb-last-class-id', nextClassId);
+            }
+            router.push(`/class/${nextClassId}?tab=subjects`);
+            setOpenMobile(false);
+          }}
+          disabled={classDropdownItems.length === 0}
+          className="h-8 w-full rounded-md border border-sidebar-border bg-sidebar px-2 text-xs text-sidebar-foreground"
+        >
+          {classDropdownItems.length === 0 ? (
+            <option value="">no classes</option>
+          ) : (
+            classDropdownItems.map((classItem) => (
+              <option key={classItem.id} value={classItem.id}>
+                {classItem.label}
+              </option>
+            ))
+          )}
+        </select>
+      </div>
+    );
+  };
+
+  const renderStudentLaneToggle = () => {
+    if (isTeacher) return null;
+
+    return (
+      <div className="mb-2 grid grid-cols-2 gap-1 px-2">
+        <Button
+          size="sm"
+          variant={studentLane === 'assigned' ? 'default' : 'outline'}
+          className="h-7 text-xs lowercase"
+          onClick={() => setStudentLane('assigned')}
+        >
+          assigned
+        </Button>
+        <Button
+          size="sm"
+          variant={studentLane === 'tools' ? 'default' : 'outline'}
+          className="h-7 text-xs lowercase"
+          onClick={() => setStudentLane('tools')}
+        >
+          tools
+        </Button>
+      </div>
+    );
+  };
+
   // Mobile: Show mini sidebar with icons only + hamburger button
   if (isMobile) {
     return (
@@ -437,7 +539,7 @@ export function AppSidebar() {
 
           {/* Mini icon navigation */}
           <nav className="flex-1 flex flex-col gap-1 px-2">
-            {menuItems.map((item) => (
+            {visibleMainItems.map((item) => (
               <div key={item.href} className="relative">
                 {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
                   <>
@@ -474,8 +576,8 @@ export function AppSidebar() {
                 )}
               </div>
             ))}
-            <div className="h-px bg-sidebar-border my-2" />
-            {toolsMenuItems.map((item) => (
+            {visibleMainItems.length > 0 && visibleToolsItems.length > 0 && <div className="h-px bg-sidebar-border my-2" />}
+            {visibleToolsItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -510,59 +612,69 @@ export function AppSidebar() {
             <div className="mb-2 flex items-center px-2">
               <CautieWordmark compact className="scale-[1.2]" textClassName="font-headline" />
             </div>
-            <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">main</p>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.label} className="relative">
-                  {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
-                    <>
+            {renderTeacherClassSwitcher()}
+            {renderStudentLaneToggle()}
+            {visibleMainItems.length > 0 && (
+              <>
+                <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">main</p>
+                <SidebarMenu>
+                  {visibleMainItems.map((item) => (
+                    <SidebarMenuItem key={item.label} className="relative">
+                      {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
+                        <>
+                          <SidebarMenuButton
+                            data-nav-dropdown-trigger="true"
+                            onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                            onMouseLeave={scheduleClose}
+                            onClick={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                            isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
+                            tooltip={item.label}
+                          >
+                            <item.icon className="h-4 w-4" />
+                            <span className="lowercase text-[13px] leading-5">{item.label}</span>
+                          </SidebarMenuButton>
+                        </>
+                      ) : (
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isMenuItemActive(item.href)}
+                          tooltip={item.label}
+                        >
+                          <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                            <item.icon className="h-4 w-4" />
+                            <span className="lowercase text-[13px] leading-5">{item.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      )}
+                    </SidebarMenuItem>
+                  ))}
+
+                </SidebarMenu>
+              </>
+            )}
+
+            {visibleToolsItems.length > 0 && (
+              <>
+                {visibleMainItems.length > 0 && <div className="h-5" />}
+                <p className="px-2 pb-1.5 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">tools</p>
+                <SidebarMenu>
+                  {visibleToolsItems.map((item) => (
+                    <SidebarMenuItem key={item.label}>
                       <SidebarMenuButton
-                        data-nav-dropdown-trigger="true"
-                        onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
-                        onMouseLeave={scheduleClose}
-                        onClick={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
-                        isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
+                        asChild
+                        isActive={isMenuItemActive(item.href)}
                         tooltip={item.label}
                       >
-                        <item.icon className="h-4 w-4" />
-                        <span className="lowercase text-[13px] leading-5">{item.label}</span>
+                        <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                          <item.icon className="h-4 w-4" />
+                          <span className="lowercase text-[13px] leading-5">{item.label}</span>
+                        </Link>
                       </SidebarMenuButton>
-                    </>
-                  ) : (
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isMenuItemActive(item.href)}
-                      tooltip={item.label}
-                    >
-                      <Link href={item.href} onClick={() => setOpenMobile(false)}>
-                        <item.icon className="h-4 w-4" />
-                        <span className="lowercase text-[13px] leading-5">{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  )}
-                </SidebarMenuItem>
-              ))}
-
-            </SidebarMenu>
-
-            <div className="h-5" />
-            <p className="px-2 pb-1.5 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">tools</p>
-            <SidebarMenu>
-              {toolsMenuItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isMenuItemActive(item.href)}
-                    tooltip={item.label}
-                  >
-                    <Link href={item.href} onClick={() => setOpenMobile(false)}>
-                      <item.icon className="h-4 w-4" />
-                      <span className="lowercase text-[13px] leading-5">{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </>
+            )}
           </SidebarContent>
           <SidebarFooter className="px-3 pt-2 pb-3 flex flex-col gap-2">
             <RecentsSidebar />
@@ -585,58 +697,68 @@ export function AppSidebar() {
         <div className="mb-2 flex items-center px-2">
           <CautieWordmark compact className="scale-[1.2]" textClassName="font-headline" />
         </div>
-        <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">main</p>
-        <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.label} className="relative">
-              {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
-                <>
+        {renderTeacherClassSwitcher()}
+        {renderStudentLaneToggle()}
+        {visibleMainItems.length > 0 && (
+          <>
+            <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">main</p>
+            <SidebarMenu>
+              {visibleMainItems.map((item) => (
+                <SidebarMenuItem key={item.label} className="relative">
+                  {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
+                    <>
+                      <SidebarMenuButton
+                        data-nav-dropdown-trigger="true"
+                        onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                        onMouseLeave={scheduleClose}
+                        onClick={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                        isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
+                        tooltip={item.label}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span className="lowercase text-[13px] leading-5">{item.label}</span>
+                      </SidebarMenuButton>
+                    </>
+                  ) : (
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isMenuItemActive(item.href)}
+                      tooltip={item.label}
+                    >
+                      <Link href={item.href}>
+                        <item.icon className="h-4 w-4" />
+                        <span className="lowercase text-[13px] leading-5">{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  )}
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </>
+        )}
+
+        {visibleToolsItems.length > 0 && (
+          <>
+            {visibleMainItems.length > 0 && <div className="h-5" />}
+            <p className="px-2 pb-1.5 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">tools</p>
+            <SidebarMenu>
+              {visibleToolsItems.map((item) => (
+                <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton
-                    data-nav-dropdown-trigger="true"
-                    onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
-                    onMouseLeave={scheduleClose}
-                    onClick={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
-                    isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
+                    asChild
+                    isActive={isMenuItemActive(item.href)}
                     tooltip={item.label}
                   >
-                    <item.icon className="h-4 w-4" />
-                    <span className="lowercase text-[13px] leading-5">{item.label}</span>
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span className="lowercase text-[13px] leading-5">{item.label}</span>
+                    </Link>
                   </SidebarMenuButton>
-                </>
-              ) : (
-                <SidebarMenuButton
-                  asChild
-                  isActive={isMenuItemActive(item.href)}
-                  tooltip={item.label}
-                >
-                  <Link href={item.href}>
-                    <item.icon className="h-4 w-4" />
-                    <span className="lowercase text-[13px] leading-5">{item.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              )}
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-
-        <div className="h-5" />
-        <p className="px-2 pb-1.5 text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">tools</p>
-        <SidebarMenu>
-          {toolsMenuItems.map((item) => (
-            <SidebarMenuItem key={item.label}>
-              <SidebarMenuButton
-                asChild
-                isActive={isMenuItemActive(item.href)}
-                tooltip={item.label}
-              >
-                <Link href={item.href}>
-                  <item.icon className="h-4 w-4" />
-                  <span className="lowercase text-[13px] leading-5">{item.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </>
+        )}
       </SidebarContent>
       <SidebarFooter className="px-3 pt-2 pb-3 flex flex-col gap-2">
         <RecentsSidebar />

@@ -3,6 +3,15 @@
 Last updated: 2026-03-14  
 Project: `C:\Projects\cautie-learn-hub`
 
+## Implementation Progress (Live)
+Completed now:
+1. Intro gate now requires `appReady + isTier0Ready + introAnimationDone`.
+2. Added centralized preload resources in app context for `classes:list` and `subjects:list`.
+3. Sidebar now uses context preload orchestration instead of owning duplicate preload fetch loops.
+4. Teacher default landing from `/` now routes into class workspace (`/class/{id}?tab=subjects`) when classes exist.
+5. Added teacher class switcher in sidebar (persists last class in localStorage).
+6. Added student sidebar lane split (`assigned` vs `tools`) with persistent preference.
+
 ## Why this exists
 This document captures the agreed direction for making the app feel more professional and less MVP:
 - Cleaner information architecture (especially teacher vs student flows)
