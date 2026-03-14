@@ -29,6 +29,7 @@ type CautieWordmarkProps = {
   textClassName?: string;
   animated?: boolean;
   compact?: boolean;
+  onAnimationDone?: () => void;
 };
 
 type StrokeDef = {
@@ -52,6 +53,7 @@ export function CautieWordmark({
   textClassName,
   animated = false,
   compact = false,
+  onAnimationDone,
 }: CautieWordmarkProps) {
   if (!SHOW_CAUTIE_LOGO) return null;
 
@@ -76,12 +78,37 @@ export function CautieWordmark({
   }, 0);
   const HIGHLIGHT_DELAY_MS = WRITE_DURATION_MS + 120;
   const HIGHLIGHT_DURATION_MS = 300;
+  const TOTAL_ANIMATION_MS = HIGHLIGHT_DELAY_MS + HIGHLIGHT_DURATION_MS + 60;
   const animatedWordWidth = compact ? '5.25ch' : '5.9ch';
   const animatedWordHeight = compact ? '1.12em' : '1.3em';
 
   const context = useContext(AppContext) as AppContextType | null;
   const [resolvedTextColor, setResolvedTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
+  const [hasSignaledDone, setHasSignaledDone] = useState(false);
+
+  useEffect(() => {
+    if (!animated || !onAnimationDone) return;
+
+    console.log('[INTRO_WORDMARK] Animation scheduled', {
+      writeDurationMs: WRITE_DURATION_MS,
+      highlightDelayMs: HIGHLIGHT_DELAY_MS,
+      highlightDurationMs: HIGHLIGHT_DURATION_MS,
+      totalAnimationMs: TOTAL_ANIMATION_MS,
+    });
+  }, [animated, onAnimationDone, WRITE_DURATION_MS, HIGHLIGHT_DELAY_MS, HIGHLIGHT_DURATION_MS, TOTAL_ANIMATION_MS]);
+
+  useEffect(() => {
+    if (!animated || !onAnimationDone || hasSignaledDone) return;
+
+    const fallbackTimer = window.setTimeout(() => {
+      console.warn('[INTRO_WORDMARK] Fallback animation completion timer fired', { totalAnimationMs: TOTAL_ANIMATION_MS });
+      setHasSignaledDone(true);
+      onAnimationDone();
+    }, TOTAL_ANIMATION_MS + 250);
+
+    return () => window.clearTimeout(fallbackTimer);
+  }, [animated, onAnimationDone, hasSignaledDone, TOTAL_ANIMATION_MS]);
 
   useEffect(() => {
     setResolvedTextColor(resolveTextColor(context?.theme));
@@ -134,6 +161,15 @@ export function CautieWordmark({
                 transform: 'scaleX(0)',
                 opacity: 0,
                 animation: `cautie-logo-highlight-spill ${HIGHLIGHT_DURATION_MS + 40}ms cubic-bezier(0.12, 0.85, 0.22, 1) ${HIGHLIGHT_DELAY_MS + 20}ms forwards`
+              }}
+              onAnimationEnd={(event) => {
+                if (hasSignaledDone) return;
+                console.log('[INTRO_WORDMARK] Highlight animation ended', {
+                  animationName: event.animationName,
+                  elapsedTimeSeconds: event.elapsedTime,
+                });
+                setHasSignaledDone(true);
+                onAnimationDone?.();
               }}
               />
               <g fill="none" stroke="var(--cautie-text-end)" strokeWidth={compact ? 5.7 : 6.2} strokeLinecap="round" strokeLinejoin="round">

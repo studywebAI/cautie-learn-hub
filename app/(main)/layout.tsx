@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AppSidebar } from "@/components/sidebar";
 import { StartupSplash } from "@/components/startup-splash";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
@@ -13,21 +13,40 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     const pathname = usePathname();
     const appContext = useContext(AppContext);
     const appReady = appContext?.appReady ?? false;
-    const [minimumSplashDone, setMinimumSplashDone] = useState(false);
+    const [introAnimationDone, setIntroAnimationDone] = useState(false);
 
     const isClassPage = pathname?.startsWith('/class/');
 
     useEffect(() => {
-        // Keep intro visible long enough for animation while app preloads.
-        const hideTimer = setTimeout(() => setMinimumSplashDone(true), 700);
-        return () => clearTimeout(hideTimer);
+        console.log('[INTRO_LAYOUT] Mounted', { pathname, isMobile });
+    }, [pathname, isMobile]);
+
+    useEffect(() => {
+        console.log('[INTRO_LAYOUT] appReady changed', { appReady });
+    }, [appReady]);
+
+    useEffect(() => {
+        console.log('[INTRO_LAYOUT] introAnimationDone changed', { introAnimationDone });
+    }, [introAnimationDone]);
+
+    const onIntroAnimationDone = useCallback(() => {
+        console.log('[INTRO_LAYOUT] Received intro animation done signal');
+        setIntroAnimationDone(true);
     }, []);
 
-    const showStartupSplash = useMemo(() => !(appReady && minimumSplashDone), [appReady, minimumSplashDone]);
+    const showStartupSplash = useMemo(() => {
+        const shouldShow = !(appReady && introAnimationDone);
+        console.log('[INTRO_LAYOUT] Splash visibility computed', {
+            appReady,
+            introAnimationDone,
+            showStartupSplash: shouldShow,
+        });
+        return shouldShow;
+    }, [appReady, introAnimationDone]);
 
     return (
         <SidebarProvider>
-            <StartupSplash visible={showStartupSplash} />
+            <StartupSplash visible={showStartupSplash} onIntroAnimationDone={onIntroAnimationDone} />
             <div className={showStartupSplash ? 'opacity-0 pointer-events-none select-none' : ''}>
                 <AppSidebar />
             </div>
