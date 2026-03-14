@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { AppContext, AppContextType, ClassInfo } from "@/contexts/app-context";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, School, Users, FileText, Activity } from "lucide-react";
-import { ClassCard } from "@/components/dashboard/teacher/class-card";
+import { School, Users, FileText, Activity } from "lucide-react";
 import { Alerts } from "@/components/dashboard/alerts";
 import { MySubjects } from "@/components/dashboard/my-subjects";
 import { parseISO, isFuture, differenceInDays } from 'date-fns';
@@ -134,19 +133,14 @@ function TeacherSummaryDashboard() {
                 </Card>
             </div>
 
-             <Card>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {teacherClasses.slice(0, 2).map(classInfo => (
-                         <ClassCard key={classInfo.id} classInfo={classInfo} isArchived={false} />
-                    ))}
-                     {teacherClasses.length === 0 && (
-                        <div className="col-span-2 text-center p-8">
-                            <p className="text-muted-foreground">You haven't created any classes yet.</p>
-                            <Button asChild className="mt-4"><Link href="/classes">Create one now</Link></Button>
-                        </div>
-                    )}
+            {teacherClasses.length === 0 && (
+              <Card>
+                <CardContent className="text-center p-8">
+                  <p className="text-muted-foreground">You haven't created any classes yet.</p>
+                  <Button asChild className="mt-4"><Link href="/classes">Create one now</Link></Button>
                 </CardContent>
-             </Card>
+              </Card>
+            )}
         </div>
     );
 }

@@ -10,7 +10,6 @@ import { CreateClassDialog } from './create-class-dialog';
 import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Checkbox } from '@/components/ui/checkbox';
 
 export function TeacherDashboard() {
   const { classes, createClass, isLoading, refetchClasses } = useContext(AppContext) as AppContextType;
@@ -182,43 +181,50 @@ export function TeacherDashboard() {
   const archivedClasses = sortedFilteredClasses.filter(cls => cls.status === 'archived');
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex justify-between items-center gap-2">
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-6">
+      <section className="rounded-xl border border-border/70 bg-[hsl(var(--surface-1))] p-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-base font-semibold lowercase">class access</h2>
+          <p className="text-sm text-muted-foreground">
+            create a new class or join an existing class with a teacher code.
+          </p>
+        </div>
+        <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <Input
             placeholder="Enter teacher join code..."
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value)}
-            className="w-48 h-9"
+            className="h-9 w-full md:max-w-xs"
             onKeyDown={(e) => e.key === 'Enter' && handleJoinClass()}
           />
-          <Button 
-            variant="outline" 
-            onClick={handleJoinClass} 
-            disabled={isJoining || !joinCode.trim()}
-            size="sm"
-          >
-            {isJoining ? 'Joining...' : 'Join Class'}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleJoinClass}
+              disabled={isJoining || !joinCode.trim()}
+              size="sm"
+            >
+              {isJoining ? 'Joining...' : 'Join Class'}
+            </Button>
+            <Button onClick={() => setIsCreateDialogOpen(true)} size="sm">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create New Class
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant={isBulkMode ? "default" : "outline"}
-            onClick={toggleBulkMode}
-          >
-            {isBulkMode ? <Square className="mr-2 h-4 w-4" /> : <CheckSquare className="mr-2 h-4 w-4" />}
-            {isBulkMode ? 'Exit Bulk Mode' : 'Bulk Actions'}
-          </Button>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create New Class
-          </Button>
-        </div>
-      </div>
+      </section>
 
-      {/* Search Bar and Bulk Actions */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative max-w-sm">
+      <section className="rounded-xl border border-border/70 bg-[hsl(var(--surface-1))] p-4">
+        <div className="mb-4 flex flex-col gap-1">
+          <h2 className="text-base font-semibold lowercase">manage classes</h2>
+          <p className="text-sm text-muted-foreground">
+            keep class settings organized from one place.
+          </p>
+        </div>
+
+        <div className="mb-6 flex flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Search classes..."
@@ -226,10 +232,20 @@ export function TeacherDashboard() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 rounded-full"
           />
+            </div>
+            <Button
+              variant={isBulkMode ? "default" : "outline"}
+              onClick={toggleBulkMode}
+              size="sm"
+            >
+              {isBulkMode ? <Square className="mr-2 h-4 w-4" /> : <CheckSquare className="mr-2 h-4 w-4" />}
+              {isBulkMode ? 'Exit Bulk Mode' : 'Bulk Actions'}
+            </Button>
+          </div>
         </div>
 
         {isBulkMode && (
-          <div className="flex items-center gap-2">
+          <div className="mb-6 flex flex-wrap items-center gap-2">
             {selectedClasses.size > 0 && (
               <>
                 <span className="text-sm text-muted-foreground">
@@ -275,100 +291,100 @@ export function TeacherDashboard() {
             )}
           </div>
         )}
-      </div>
 
-      {activeClasses.length === 0 && archivedClasses.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed p-12 text-center">
-          <div className="flex flex-col items-center gap-2">
-            <h3 className="text-2xl font-bold tracking-tight">
-              You haven't created any classes yet.
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Create a class to start adding assignments and students.
-            </p>
-            <Button className="mt-4" onClick={() => setIsCreateDialogOpen(true)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create New Class
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {/* Active Classes - Always Visible */}
-          <div className="min-h-[400px]">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {activeClasses.map((classInfo, index) => (
-                <ClassCard
-                  key={classInfo.id}
-                  classInfo={classInfo}
-                  isArchived={false}
-                  isBulkMode={isBulkMode}
-                  isSelected={selectedClasses.has(classInfo.id)}
-                  priority={index < 12} // Load first 12 classes immediately
-                  onToggleSelect={(classId) => {
-                    const newSelected = new Set(selectedClasses);
-                    if (newSelected.has(classId)) {
-                      newSelected.delete(classId);
-                    } else {
-                      newSelected.add(classId);
-                    }
-                    setSelectedClasses(newSelected);
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Archived Classes Toggle */}
-          {archivedClassesCount > 0 && (
-            <div className="text-center pt-8 pb-4">
-              <Button
-                variant="outline"
-                onClick={handleToggleArchived}
-                className="rounded-full"
-              >
-                {showArchived ? (
-                  <>
-                    <ChevronUp className="mr-2 h-4 w-4" />
-                    Hide Archived Classes ({archivedClassesCount})
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="mr-2 h-4 w-4" />
-                    Show Archived Classes ({archivedClassesCount})
-                  </>
-                )}
+        {activeClasses.length === 0 && archivedClasses.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed p-12 text-center">
+            <div className="flex flex-col items-center gap-2">
+              <h3 className="text-2xl font-bold tracking-tight">
+                You haven't created any classes yet.
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Create a class to start adding assignments and students.
+              </p>
+              <Button className="mt-4" onClick={() => setIsCreateDialogOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create New Class
               </Button>
-
-              {showArchived && (
-                <div className="mt-8 space-y-4">
-                  <h2 className="text-xl font-semibold text-muted-foreground">Archived Classes</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {archivedClasses.map((classInfo) => (
-                      <ClassCard
-                        key={classInfo.id}
-                        classInfo={classInfo}
-                        isArchived={true}
-                        isBulkMode={isBulkMode}
-                        isSelected={selectedClasses.has(classInfo.id)}
-                        onToggleSelect={(classId) => {
-                          const newSelected = new Set(selectedClasses);
-                          if (newSelected.has(classId)) {
-                            newSelected.delete(classId);
-                          } else {
-                            newSelected.add(classId);
-                          }
-                          setSelectedClasses(newSelected);
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* Active Classes - Always Visible */}
+            <div className="min-h-[400px]">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {activeClasses.map((classInfo, index) => (
+                  <ClassCard
+                    key={classInfo.id}
+                    classInfo={classInfo}
+                    isArchived={false}
+                    isBulkMode={isBulkMode}
+                    isSelected={selectedClasses.has(classInfo.id)}
+                    priority={index < 12} // Load first 12 classes immediately
+                    onToggleSelect={(classId) => {
+                      const newSelected = new Set(selectedClasses);
+                      if (newSelected.has(classId)) {
+                        newSelected.delete(classId);
+                      } else {
+                        newSelected.add(classId);
+                      }
+                      setSelectedClasses(newSelected);
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Archived Classes Toggle */}
+            {archivedClassesCount > 0 && (
+              <div className="text-center pt-8 pb-4">
+                <Button
+                  variant="outline"
+                  onClick={handleToggleArchived}
+                  className="rounded-full"
+                >
+                  {showArchived ? (
+                    <>
+                      <ChevronUp className="mr-2 h-4 w-4" />
+                      Hide Archived Classes ({archivedClassesCount})
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="mr-2 h-4 w-4" />
+                      Show Archived Classes ({archivedClassesCount})
+                    </>
+                  )}
+                </Button>
+
+                {showArchived && (
+                  <div className="mt-8 space-y-4">
+                    <h2 className="text-xl font-semibold text-muted-foreground">Archived Classes</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {archivedClasses.map((classInfo) => (
+                        <ClassCard
+                          key={classInfo.id}
+                          classInfo={classInfo}
+                          isArchived={true}
+                          isBulkMode={isBulkMode}
+                          isSelected={selectedClasses.has(classInfo.id)}
+                          onToggleSelect={(classId) => {
+                            const newSelected = new Set(selectedClasses);
+                            if (newSelected.has(classId)) {
+                              newSelected.delete(classId);
+                            } else {
+                              newSelected.add(classId);
+                            }
+                            setSelectedClasses(newSelected);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
       <CreateClassDialog
         isOpen={isCreateDialogOpen}

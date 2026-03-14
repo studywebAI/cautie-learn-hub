@@ -32,13 +32,29 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { CautieWordmark } from './cautie-wordmark';
+import { SHOW_CAUTIE_LOGO } from '@/lib/branding';
 
 type DropdownKind = 'classes' | 'subjects';
 type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
 type DropdownClassItem = { id: string; name: string; status?: string | null };
 type DropdownSubjectItem = { id: string; title: string; classIds: string[] };
 type StudentLane = 'assigned' | 'tools';
+
+function SidebarTopLogo({ className = '' }: { className?: string }) {
+  if (!SHOW_CAUTIE_LOGO) return null;
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center justify-center rounded-full border border-[#2d6471] bg-[#3a8a99] px-4 py-1 lowercase text-[#f6fbff] shadow-[0_0_0_2px_rgba(34,77,86,0.35)]',
+        className
+      )}
+      style={{ fontFamily: 'var(--font-caveat), var(--font-kalam), cursive' }}
+    >
+      cautie
+    </span>
+  );
+}
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -528,7 +544,7 @@ export function AppSidebar() {
         {/* Mini sidebar - always visible on mobile */}
         <div className="fixed left-0 top-0 h-full w-14 bg-sidebar border-r border-sidebar-border z-40 flex flex-col py-3">
           <div className="mb-2 flex items-center justify-center">
-            <CautieWordmark compact className="scale-[0.8]" textClassName="font-headline" />
+            <SidebarTopLogo className="scale-[0.68] text-xl leading-none" />
           </div>
           {/* Hamburger button to open full drawer */}
           <Button
@@ -614,7 +630,7 @@ export function AppSidebar() {
         <Sidebar className="w-[19rem]">
           <SidebarContent className="px-3 py-3 flex-1">
             <div className="mb-2 flex items-center px-2">
-              <CautieWordmark compact className="scale-[1.2]" textClassName="font-headline" />
+              <SidebarTopLogo className="scale-[1.02] text-3xl leading-none" />
             </div>
             {renderTeacherClassSwitcher()}
             {renderStudentLaneToggle()}
@@ -699,7 +715,7 @@ export function AppSidebar() {
       </div>
       <SidebarContent className="px-3 py-3 flex-1">
         <div className="mb-2 flex items-center px-2">
-          <CautieWordmark compact className="scale-[1.2]" textClassName="font-headline" />
+          <SidebarTopLogo className="scale-[1.02] text-3xl leading-none" />
         </div>
         {renderTeacherClassSwitcher()}
         {renderStudentLaneToggle()}
