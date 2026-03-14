@@ -50,7 +50,7 @@ function StudentInviteDialog({ isOpen, setIsOpen, classInfo }: StudentInviteDial
         }
     }, [isOpen, classInfo.id]);
 
-    const studentInviteLink = joinCode ? `${window.location.origin}/classes/join/${joinCode}` : '';
+    const studentInviteLink = joinCode ? `${window.location.origin}/classes?join_code=${joinCode}` : '';
     const studentQrCodeUrl = studentInviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(studentInviteLink)}&format=png` : '';
 
     const copyToClipboard = (text: string, type: string) => {

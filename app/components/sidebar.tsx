@@ -19,6 +19,7 @@ import {
   BrainCircuit,
   Copy,
   FileSignature,
+  School,
   Calendar,
   Menu,
   ArrowUpRight,
@@ -72,6 +73,7 @@ export function AppSidebar() {
   const menuItems = [
     { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
     { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
+    { href: '/classes', label: isTeacher ? 'manage' : 'classes', icon: School },
     { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
     { href: '/material', label: dictionary.sidebar.material || 'material', icon: FileSignature },
   ];
@@ -101,14 +103,13 @@ export function AppSidebar() {
   const subjectDropdownItems = useMemo(
     () =>
       [...subjectItems]
-        .filter((subject) => !isTeacher || !activeTeacherClassId || subject.classIds.includes(activeTeacherClassId))
         .sort((a, b) => a.title.localeCompare(b.title))
         .map((subject) => ({
           id: subject.id,
           label: subject.title,
           href: `/subjects/${subject.id}`,
         })),
-    [subjectItems, isTeacher, activeTeacherClassId]
+    [subjectItems]
   );
 
   useEffect(() => {
@@ -170,8 +171,8 @@ export function AppSidebar() {
     );
   }, [context?.subjects]);
 
-  const isDropdownTrigger = (href: string) => href === '/subjects';
-  const canUseDropdownFor = (href: string) => href === '/subjects';
+  const isDropdownTrigger = (href: string) => href === '/classes' || href === '/subjects';
+  const canUseDropdownFor = (href: string) => href === '/classes' || href === '/subjects';
   const getDropdownKind = (href: string) => (href === '/classes' ? 'classes' : 'subjects') as 'classes' | 'subjects';
 
   const resetInlinePanels = () => {
@@ -229,6 +230,7 @@ export function AppSidebar() {
   };
 
   const isMenuItemActive = (href: string) => {
+    if (href === '/classes') return pathname === '/classes' || pathname.startsWith('/class/');
     if (href === '/subjects') return pathname === '/subjects' || pathname.startsWith('/subjects/');
     if (href.startsWith('/tools')) return pathname.startsWith(href);
     return pathname === href;

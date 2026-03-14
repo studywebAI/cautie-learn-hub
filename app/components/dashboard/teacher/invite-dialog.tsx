@@ -26,7 +26,7 @@ type InviteDialogProps = {
 export function InviteDialog({ isOpen, setIsOpen, classInfo }: InviteDialogProps) {
   const { toast } = useToast();
 
-  const inviteLink = classInfo.join_code ? `${window.location.origin}/classes/join/${classInfo.join_code}` : '';
+  const inviteLink = classInfo.join_code ? `${window.location.origin}/classes?join_code=${classInfo.join_code}` : '';
   const qrCodeUrl = classInfo.join_code ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(inviteLink)}&format=png` : '';
 
   const copyToClipboard = (text: string, type: 'link' | 'code') => {
