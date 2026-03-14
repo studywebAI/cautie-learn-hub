@@ -57,18 +57,17 @@ export function CautieWordmark({
 
   const STROKE_STEP_MS = 115;
   const STROKES: StrokeDef[] = [
-    { id: 'c', d: 'M104 66 C98 59 89 56 81 57 C66 60 58 73 61 86 C64 99 76 106 90 103 C96 101 101 97 104 92', delay: 0, duration: 220 },
-    { id: 'a-loop', d: 'M108 84 C108 68 119 59 132 61 C141 63 146 72 145 83 C143 95 134 102 124 102 C114 102 108 94 108 84', delay: 1 * STROKE_STEP_MS, duration: 230 },
-    { id: 'a-tail', d: 'M145 83 C147 89 151 93 156 94', delay: 2 * STROKE_STEP_MS, duration: 110 },
-    { id: 'u', d: 'M188 62 L188 89 C188 101 196 107 206 107 C218 107 226 99 226 87 L226 62 C226 88 232 104 242 104', delay: 3 * STROKE_STEP_MS, duration: 255 },
-    { id: 't-stem', d: 'M256 46 L256 104', delay: 4 * STROKE_STEP_MS, duration: 165 },
+    { id: 'c', d: 'M104 66 C99 60 92 57 83 57 C69 57 60 67 60 80 C60 93 69 102 83 102 C92 102 99 98 104 92', delay: 0, duration: 220 },
+    { id: 'a-loop', d: 'M108 84 C108 68 119 59 132 61 C141 63 146 72 145 83 C143 94 134 102 124 102 C114 102 108 94 108 84', delay: 1 * STROKE_STEP_MS, duration: 230 },
+    { id: 'a-tail', d: 'M145 83 C147 84 149 84 150 84', delay: 2 * STROKE_STEP_MS, duration: 90 },
+    { id: 'u', d: 'M188 62 L188 88 C188 100 196 102 206 102 C218 102 226 96 226 86 L226 62 C226 85 232 102 242 102', delay: 3 * STROKE_STEP_MS, duration: 255 },
+    { id: 't-stem', d: 'M256 46 L256 102', delay: 4 * STROKE_STEP_MS, duration: 165 },
     { id: 't-cross', d: 'M242 68 L274 68', delay: 5 * STROKE_STEP_MS, duration: 145 },
-    { id: 'i-stem', d: 'M286 62 L286 104', delay: 6 * STROKE_STEP_MS, duration: 185 },
+    { id: 'i-stem', d: 'M286 62 L286 102', delay: 6 * STROKE_STEP_MS, duration: 185 },
     { id: 'i-dot', d: 'M286 48 L286 48', delay: 7 * STROKE_STEP_MS, duration: 80 },
-    { id: 'e-mid', d: 'M310 84 C320 82 330 83 339 87', delay: 8 * STROKE_STEP_MS, duration: 165 },
-    { id: 'e-top', d: 'M310 84 C313 72 323 64 334 64 C344 64 351 72 351 81', delay: 9 * STROKE_STEP_MS, duration: 190 },
-    { id: 'e-top-hook', d: 'M343 78 C351 78 357 82 359 88', delay: 9 * STROKE_STEP_MS + 60, duration: 120 },
-    { id: 'e-bottom', d: 'M310 84 C315 97 327 104 341 104 C350 103 356 97 356 90', delay: 10 * STROKE_STEP_MS, duration: 165 },
+    { id: 'e-mid', d: 'M310 84 C320 82 330 82 338 84', delay: 8 * STROKE_STEP_MS, duration: 145 },
+    { id: 'e-top', d: 'M338 84 C346 86 349 93 346 98 C343 103 334 104 326 102 C317 100 311 94 310 86', delay: 9 * STROKE_STEP_MS, duration: 185 },
+    { id: 'e-bottom', d: 'M310 86 C309 76 317 68 328 67 C337 67 344 72 347 79', delay: 10 * STROKE_STEP_MS, duration: 175 },
   ];
 
   const WRITE_DURATION_MS = STROKES.reduce((max, stroke) => {
