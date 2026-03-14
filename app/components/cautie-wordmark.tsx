@@ -65,9 +65,9 @@ export function CautieWordmark({
     { id: 't-cross', d: 'M242 68 L274 68', delay: 5 * STROKE_STEP_MS, duration: 145 },
     { id: 'i-stem', d: 'M286 62 L286 102', delay: 6 * STROKE_STEP_MS, duration: 185 },
     { id: 'i-dot', d: 'M286 48 L286 48', delay: 7 * STROKE_STEP_MS, duration: 80 },
-    { id: 'e-mid', d: 'M310 84 C320 82 330 82 338 84', delay: 8 * STROKE_STEP_MS, duration: 145 },
-    { id: 'e-top', d: 'M338 84 C346 86 349 93 346 98 C343 103 334 104 326 102 C317 100 311 94 310 86', delay: 9 * STROKE_STEP_MS, duration: 185 },
-    { id: 'e-bottom', d: 'M310 86 C309 76 317 68 328 67 C337 67 344 72 347 79', delay: 10 * STROKE_STEP_MS, duration: 175 },
+    { id: 'e-mid', d: 'M310 84 C320 84 329 84 337 84', delay: 8 * STROKE_STEP_MS, duration: 145 },
+    { id: 'e-top', d: 'M337 84 C346 84 349 78 346 72 C343 67 334 66 326 68 C316 71 310 80 311 89', delay: 9 * STROKE_STEP_MS, duration: 185 },
+    { id: 'e-bottom', d: 'M311 89 C312 98 321 104 333 103 C343 102 350 95 350 87 C349 82 344 79 338 79', delay: 10 * STROKE_STEP_MS, duration: 175 },
   ];
 
   const WRITE_DURATION_MS = STROKES.reduce((max, stroke) => {
