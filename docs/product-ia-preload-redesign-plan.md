@@ -11,6 +11,10 @@ Completed now:
 4. Teacher default landing from `/` now routes into class workspace (`/class/{id}?tab=subjects`) when classes exist.
 5. Added teacher class switcher in sidebar (persists last class in localStorage).
 6. Added student sidebar lane split (`assigned` vs `tools`) with persistent preference.
+7. Added class workspace tiered tab warming:
+- Tier 1 immediate warm: `group`, `subjects`
+- Tier 2 idle warm: `announcements`, `progress`, `attendance`, `analytics`
+- Includes in-flight dedupe to avoid duplicate requests
 
 ## Why this exists
 This document captures the agreed direction for making the app feel more professional and less MVP:

@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
-import { useContext, useEffect, useState, useMemo, useCallback } from 'react';
+import { useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AssignmentList } from '@/components/dashboard/teacher/assignment-list';
@@ -28,6 +28,8 @@ import { GraduationCap } from 'lucide-react';
 // Cache for tab data - persists across tab switches
 const tabDataCache: Record<string, { data: any; timestamp: number }> = {};
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const TIER1_TABS = ['group', 'subjects'] as const;
+const TIER2_TABS = ['announcements', 'progress', 'attendance', 'analytics'] as const;
 
 export default function ClassDetailsPage() {
   const params = useParams();
@@ -44,6 +46,7 @@ export default function ClassDetailsPage() {
   // Centralized tab data cache
   const [cachedTabData, setCachedTabData] = useState<Record<string, any>>({});
   const [loadingTabs, setLoadingTabs] = useState<Record<string, boolean>>({});
+  const inFlightTabLoadsRef = useRef<Partial<Record<string, Promise<any>>>>({});
 
   const classInfo: ClassInfo | undefined = useMemo(() => {
     const contextClass = classes.find((c: any) => c.id === classId);
@@ -90,11 +93,14 @@ export default function ClassDetailsPage() {
     }
 
     // Don't refetch if already loading
-    if (loadingTabs[tabName]) return null;
+    if (inFlightTabLoadsRef.current[cacheKey]) {
+      return inFlightTabLoadsRef.current[cacheKey];
+    }
 
     setLoadingTabs((prev: any) => ({ ...prev, [tabName]: true }));
 
-    try {
+    const run = (async () => {
+      try {
       let url = '';
       switch (tabName) {
         case 'group':
@@ -126,19 +132,53 @@ export default function ClassDetailsPage() {
         setCachedTabData((prev: any) => ({ ...prev, [tabName]: data }));
         return data;
       }
-    } catch (error) {
-      console.error(`Failed to load ${tabName} data:`, error);
-    } finally {
-      setLoadingTabs((prev: any) => ({ ...prev, [tabName]: false }));
-    }
-    return null;
-  }, [classId, loadingTabs]);
+      } catch (error) {
+        console.error(`Failed to load ${tabName} data:`, error);
+      } finally {
+        setLoadingTabs((prev: any) => ({ ...prev, [tabName]: false }));
+        delete inFlightTabLoadsRef.current[cacheKey];
+      }
+      return null;
+    })();
+
+    inFlightTabLoadsRef.current[cacheKey] = run;
+    return run;
+  }, [classId]);
 
   // Load only the active tab data first; keep other tabs lazy.
   useEffect(() => {
     if (classId && !isAppLoading) {
       void loadTabData(tab);
     }
+  }, [classId, isAppLoading, loadTabData, tab]);
+
+  // Tiered background warming to make first tab impressions feel instant.
+  useEffect(() => {
+    if (!classId || isAppLoading) return;
+
+    const tier1Targets = TIER1_TABS.filter((tabName) => tabName !== tab);
+    if (tier1Targets.length > 0) {
+      void Promise.all(tier1Targets.map((tabName) => loadTabData(tabName)));
+    }
+
+    const runTier2 = () => {
+      const tier2Targets = TIER2_TABS.filter((tabName) => tabName !== tab);
+      if (tier2Targets.length > 0) {
+        void Promise.all(tier2Targets.map((tabName) => loadTabData(tabName)));
+      }
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const idleId = (window as any).requestIdleCallback(runTier2, { timeout: 1200 });
+      return () => {
+        if ('cancelIdleCallback' in window) {
+          (window as any).cancelIdleCallback(idleId);
+        }
+      };
+    }
+
+    const timer = globalThis.setTimeout(runTier2, 350);
+    return () => globalThis.clearTimeout(timer);
   }, [classId, isAppLoading, loadTabData, tab]);
 
   // Force refresh specific tab data
