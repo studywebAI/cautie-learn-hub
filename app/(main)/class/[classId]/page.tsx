@@ -253,7 +253,7 @@ export default function ClassDetailsPage() {
       case 'settings':
         return isTeacher ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ClassSettings classId={classId} className={classInfo.name} isArchived={classInfo.status === 'archived'} onArchive={() => window.location.href = '/'} />
+            <ClassSettings classId={classId} className={classInfo.name} isArchived={classInfo.status === 'archived'} onArchive={() => window.location.href = '/classes'} />
             <AuditLogsPanel classId={classId} />
           </div>
         ) : null;
