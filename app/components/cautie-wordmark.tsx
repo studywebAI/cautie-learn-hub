@@ -59,7 +59,7 @@ export function CautieWordmark({
   const STROKES: StrokeDef[] = [
     { id: 'c', d: 'M104 66 C98 59 89 56 81 57 C66 60 58 73 61 86 C64 99 76 106 90 103 C96 101 101 97 104 92', delay: 0, duration: 220 },
     { id: 'a-loop', d: 'M108 84 C108 68 119 59 132 61 C141 63 146 72 145 83 C143 95 134 102 124 102 C114 102 108 94 108 84', delay: 1 * STROKE_STEP_MS, duration: 230 },
-    { id: 'a-tail', d: 'M145 83 C146 94 151 101 159 102 C166 102 170 98 170 90 L170 72', delay: 2 * STROKE_STEP_MS, duration: 180 },
+    { id: 'a-tail', d: 'M145 83 C146 94 151 101 159 102 C166 102 170 98 170 90', delay: 2 * STROKE_STEP_MS, duration: 170 },
     { id: 'u', d: 'M188 62 L188 89 C188 101 196 107 206 107 C218 107 226 99 226 87 L226 62 C226 88 232 104 242 104', delay: 3 * STROKE_STEP_MS, duration: 255 },
     { id: 't-stem', d: 'M256 46 L256 104', delay: 4 * STROKE_STEP_MS, duration: 165 },
     { id: 't-cross', d: 'M242 68 L274 68', delay: 5 * STROKE_STEP_MS, duration: 145 },
@@ -67,7 +67,8 @@ export function CautieWordmark({
     { id: 'i-dot', d: 'M286 48 L286 48', delay: 7 * STROKE_STEP_MS, duration: 80 },
     { id: 'e-mid', d: 'M310 84 C318 82 327 83 336 86', delay: 8 * STROKE_STEP_MS, duration: 165 },
     { id: 'e-top', d: 'M310 84 C314 74 321 68 330 66 C336 65 341 66 345 70 C347 72 348 75 348 78', delay: 9 * STROKE_STEP_MS, duration: 190 },
-    { id: 'e-bottom', d: 'M310 84 C314 95 322 103 333 105 C341 106 348 103 351 97 C353 93 353 90 351 87', delay: 10 * STROKE_STEP_MS, duration: 200 },
+    { id: 'e-top-hook', d: 'M341 76 C346 75 349 77 350 81', delay: 9 * STROKE_STEP_MS + 70, duration: 90 },
+    { id: 'e-bottom', d: 'M310 84 C314 95 322 103 333 105 C340 106 345 104 348 100', delay: 10 * STROKE_STEP_MS, duration: 185 },
   ];
 
   const WRITE_DURATION_MS = STROKES.reduce((max, stroke) => {
