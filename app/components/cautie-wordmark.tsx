@@ -57,17 +57,17 @@ export function CautieWordmark({
 
   const STROKE_STEP_MS = 115;
   const STROKES: StrokeDef[] = [
-    { id: 'c', d: 'M104 66 C99 60 92 57 83 57 C69 57 60 67 60 80 C60 93 69 102 83 102 C92 102 99 98 104 92', delay: 0, duration: 220 },
+    { id: 'c', d: 'M104 80 C104 67 95 58 83 58 C70 58 61 67 61 80 C61 93 70 102 83 102 C95 102 104 94 104 82', delay: 0, duration: 220 },
     { id: 'a-loop', d: 'M108 84 C108 68 119 59 132 61 C141 63 146 72 145 83 C143 94 134 102 124 102 C114 102 108 94 108 84', delay: 1 * STROKE_STEP_MS, duration: 230 },
-    { id: 'a-tail', d: 'M145 83 C147 84 149 84 150 84', delay: 2 * STROKE_STEP_MS, duration: 90 },
-    { id: 'u', d: 'M188 62 L188 88 C188 100 196 102 206 102 C218 102 226 96 226 86 L226 62 C226 85 232 102 242 102', delay: 3 * STROKE_STEP_MS, duration: 255 },
+    { id: 'a-tail', d: 'M145 83 C147 84 148 85 149 84', delay: 2 * STROKE_STEP_MS, duration: 90 },
+    { id: 'u', d: 'M188 62 L188 88 C188 100 196 102 206 102 C218 102 226 96 226 86 L226 62 C226 84 230 101 238 101', delay: 3 * STROKE_STEP_MS, duration: 255 },
     { id: 't-stem', d: 'M256 46 L256 102', delay: 4 * STROKE_STEP_MS, duration: 165 },
     { id: 't-cross', d: 'M242 68 L274 68', delay: 5 * STROKE_STEP_MS, duration: 145 },
     { id: 'i-stem', d: 'M286 62 L286 102', delay: 6 * STROKE_STEP_MS, duration: 185 },
     { id: 'i-dot', d: 'M286 48 L286 48', delay: 7 * STROKE_STEP_MS, duration: 80 },
-    { id: 'e-mid', d: 'M310 84 C320 84 329 84 337 84', delay: 8 * STROKE_STEP_MS, duration: 145 },
-    { id: 'e-top', d: 'M337 84 C346 84 349 78 346 72 C343 67 334 66 326 68 C316 71 310 80 311 89', delay: 9 * STROKE_STEP_MS, duration: 185 },
-    { id: 'e-bottom', d: 'M311 89 C312 98 321 104 333 103 C343 102 350 95 350 87 C349 82 344 79 338 79', delay: 10 * STROKE_STEP_MS, duration: 175 },
+    { id: 'e-mid', d: 'M311 84 C319 84 327 84 335 84', delay: 8 * STROKE_STEP_MS, duration: 145 },
+    { id: 'e-top', d: 'M335 84 C344 84 349 78 349 72 C349 66 343 62 334 62 C322 62 313 71 311 83', delay: 9 * STROKE_STEP_MS, duration: 185 },
+    { id: 'e-bottom', d: 'M311 83 C310 94 319 102 332 102 C342 102 349 97 352 90', delay: 10 * STROKE_STEP_MS, duration: 175 },
   ];
 
   const WRITE_DURATION_MS = STROKES.reduce((max, stroke) => {
