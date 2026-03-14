@@ -59,13 +59,16 @@ export function CautieWordmark({
   const STROKES: StrokeDef[] = [
     { id: 'c', d: 'M104 66 C98 59 89 56 81 57 C66 60 58 73 61 86 C64 99 76 106 90 103 C96 101 101 97 104 92', delay: 0, duration: 220 },
     { id: 'a-loop', d: 'M108 84 C108 68 119 59 132 61 C141 63 146 72 145 83 C143 95 134 102 124 102 C114 102 108 94 108 84', delay: 1 * STROKE_STEP_MS, duration: 230 },
-    { id: 'a-tail', d: 'M145 83 C146 90 150 95 156 96 C161 96 165 93 165 88', delay: 2 * STROKE_STEP_MS, duration: 150 },
-    { id: 'u', d: 'M188 62 L188 89 C188 101 196 107 206 107 C218 107 226 99 226 87 L226 62 C226 86 231 96 236 97', delay: 3 * STROKE_STEP_MS, duration: 245 },
+    { id: 'a-tail', d: 'M145 83 C146 92 151 98 158 99 C164 99 168 95 168 89', delay: 2 * STROKE_STEP_MS, duration: 160 },
+    { id: 'u', d: 'M188 62 L188 89 C188 101 196 107 206 107 C218 107 226 99 226 87 L226 62 C226 88 232 104 242 104', delay: 3 * STROKE_STEP_MS, duration: 255 },
     { id: 't-stem', d: 'M256 46 L256 104', delay: 4 * STROKE_STEP_MS, duration: 165 },
     { id: 't-cross', d: 'M242 68 L274 68', delay: 5 * STROKE_STEP_MS, duration: 145 },
-    { id: 'i-stem', d: 'M286 62 L286 98', delay: 6 * STROKE_STEP_MS, duration: 170 },
+    { id: 'i-stem', d: 'M286 62 L286 104', delay: 6 * STROKE_STEP_MS, duration: 185 },
     { id: 'i-dot', d: 'M286 48 L286 48', delay: 7 * STROKE_STEP_MS, duration: 80 },
-    { id: 'e-cont', d: 'M310 84 C318 82 327 83 336 86 C333 75 340 67 349 68 C355 69 359 73 359 79 C359 86 354 90 347 92 C340 94 332 95 324 93 C318 91 313 88 310 84', delay: 8 * STROKE_STEP_MS, duration: 340 },
+    { id: 'e-mid', d: 'M310 84 C318 82 327 83 336 86', delay: 8 * STROKE_STEP_MS, duration: 165 },
+    { id: 'e-top', d: 'M310 84 C314 74 321 68 330 66 C336 65 341 66 345 70 C347 72 348 75 348 78', delay: 9 * STROKE_STEP_MS, duration: 190 },
+    { id: 'e-top-hook', d: 'M339 76 C344 74 349 75 352 79 C353 81 353 83 352 85', delay: 9 * STROKE_STEP_MS + 70, duration: 95 },
+    { id: 'e-bottom', d: 'M310 84 C314 95 322 101 332 102 C338 102 342 100 345 97', delay: 10 * STROKE_STEP_MS, duration: 170 },
   ];
 
   const WRITE_DURATION_MS = STROKES.reduce((max, stroke) => {
