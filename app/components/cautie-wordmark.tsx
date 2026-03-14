@@ -57,9 +57,9 @@ export function CautieWordmark({
 
   const STROKE_STEP_MS = 115;
   const STROKES: StrokeDef[] = [
-    { id: 'c', d: 'M104 80 C104 67 95 58 83 58 C70 58 61 67 61 80 C61 93 70 102 83 102 C95 102 104 94 104 82', delay: 0, duration: 220 },
-    { id: 'a-loop', d: 'M108 84 C108 68 119 59 132 61 C141 63 146 72 145 83 C143 94 134 102 124 102 C114 102 108 94 108 84', delay: 1 * STROKE_STEP_MS, duration: 230 },
-    { id: 'a-tail', d: 'M145 83 C147 84 148 85 149 84', delay: 2 * STROKE_STEP_MS, duration: 90 },
+    { id: 'c', d: 'M103 80 C103 67 95 58 83 58 C70 58 61 67 61 80 C61 93 70 102 83 102 C95 102 103 94 103 84', delay: 0, duration: 220 },
+    { id: 'a-loop', d: 'M108 84 C108 69 118 60 131 61 C141 63 147 72 146 83 C145 94 136 102 125 102 C114 102 108 95 108 84', delay: 1 * STROKE_STEP_MS, duration: 230 },
+    { id: 'a-tail', d: 'M146 83 C147 84 148 84 149 83', delay: 2 * STROKE_STEP_MS, duration: 90 },
     { id: 'u', d: 'M188 62 L188 88 C188 100 196 102 206 102 C218 102 226 96 226 86 L226 62 C226 84 230 101 238 101', delay: 3 * STROKE_STEP_MS, duration: 255 },
     { id: 't-stem', d: 'M256 46 L256 102', delay: 4 * STROKE_STEP_MS, duration: 165 },
     { id: 't-cross', d: 'M242 68 L274 68', delay: 5 * STROKE_STEP_MS, duration: 145 },
