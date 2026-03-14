@@ -59,7 +59,7 @@ export function CautieWordmark({
   const STROKES: StrokeDef[] = [
     { id: 'c', d: 'M104 66 C98 59 89 56 81 57 C66 60 58 73 61 86 C64 99 76 106 90 103 C96 101 101 97 104 92', delay: 0, duration: 220 },
     { id: 'a-loop', d: 'M108 84 C108 68 119 59 132 61 C141 63 146 72 145 83 C143 95 134 102 124 102 C114 102 108 94 108 84', delay: 1 * STROKE_STEP_MS, duration: 230 },
-    { id: 'a-tail', d: 'M145 83 C146 90 151 96 157 97 C162 97 166 94 166 90', delay: 2 * STROKE_STEP_MS, duration: 145 },
+    { id: 'a-tail', d: 'M145 83 C147 89 151 93 156 94', delay: 2 * STROKE_STEP_MS, duration: 110 },
     { id: 'u', d: 'M188 62 L188 89 C188 101 196 107 206 107 C218 107 226 99 226 87 L226 62 C226 88 232 104 242 104', delay: 3 * STROKE_STEP_MS, duration: 255 },
     { id: 't-stem', d: 'M256 46 L256 104', delay: 4 * STROKE_STEP_MS, duration: 165 },
     { id: 't-cross', d: 'M242 68 L274 68', delay: 5 * STROKE_STEP_MS, duration: 145 },
@@ -67,8 +67,8 @@ export function CautieWordmark({
     { id: 'i-dot', d: 'M286 48 L286 48', delay: 7 * STROKE_STEP_MS, duration: 80 },
     { id: 'e-mid', d: 'M310 84 C318 82 327 83 336 86', delay: 8 * STROKE_STEP_MS, duration: 165 },
     { id: 'e-top', d: 'M310 84 C314 74 321 68 330 66 C336 65 341 66 345 70 C347 72 348 75 348 78', delay: 9 * STROKE_STEP_MS, duration: 190 },
-    { id: 'e-top-hook', d: 'M338 75 C343 73 349 74 353 78 C355 80 355 83 354 86', delay: 9 * STROKE_STEP_MS + 70, duration: 100 },
-    { id: 'e-bottom', d: 'M310 84 C314 94 321 99 330 100 C336 100 340 99 342 97', delay: 10 * STROKE_STEP_MS, duration: 155 },
+    { id: 'e-top-hook', d: 'M338 74 C346 70 354 72 359 79 C360 81 360 83 359 85', delay: 9 * STROKE_STEP_MS + 60, duration: 120 },
+    { id: 'e-bottom', d: 'M310 84 C314 89 319 92 325 92', delay: 10 * STROKE_STEP_MS, duration: 95 },
   ];
 
   const WRITE_DURATION_MS = STROKES.reduce((max, stroke) => {
