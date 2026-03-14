@@ -59,7 +59,7 @@ export function CautieWordmark({
   const STROKES: StrokeDef[] = [
     { id: 'c', d: 'M96 70 C92 63 85 58 76 58 C63 58 54 67 54 80 C54 93 63 102 76 102 C85 102 92 97 96 90', delay: 0, duration: 220 },
     { id: 'a-loop', d: 'M118 84 C118 70 127 61 138 62 C147 63 152 71 152 81 C152 92 145 100 135 100 C125 100 118 94 118 84', delay: 1 * STROKE_STEP_MS, duration: 230 },
-    { id: 'a-tail', d: 'M152 83 L152 89 C152.5 90 154 90 155 89', delay: 2 * STROKE_STEP_MS, duration: 90 },
+    { id: 'a-tail', d: 'M152 82 L152 94 C152.6 95 154 94.6 155 93', delay: 2 * STROKE_STEP_MS, duration: 90 },
     { id: 'u', d: 'M188 62 L188 88 C188 100 196 102 206 102 C218 102 226 96 226 86 L226 62 C226 84 230 101 238 101', delay: 3 * STROKE_STEP_MS, duration: 255 },
     { id: 't-stem', d: 'M256 46 L256 102', delay: 4 * STROKE_STEP_MS, duration: 165 },
     { id: 't-cross', d: 'M242 68 L274 68', delay: 5 * STROKE_STEP_MS, duration: 145 },
