@@ -15,6 +15,10 @@ Completed now:
 - Tier 1 immediate warm: `group`, `subjects`
 - Tier 2 idle warm: `announcements`, `progress`, `attendance`, `analytics`
 - Includes in-flight dedupe to avoid duplicate requests
+8. Removed `Classes` from sidebar navigation and shifted teacher class navigation to class-switcher-first.
+9. Teacher `Subjects` is now class-scoped:
+- sidebar subject list filtered by active class
+- `/subjects` page fetches via class context
 
 ## Why this exists
 This document captures the agreed direction for making the app feel more professional and less MVP:

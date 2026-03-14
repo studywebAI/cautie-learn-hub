@@ -19,7 +19,6 @@ import {
   BrainCircuit,
   Copy,
   FileSignature,
-  School,
   Calendar,
   Menu,
   ArrowUpRight,
@@ -37,7 +36,7 @@ import { CautieWordmark } from './cautie-wordmark';
 type DropdownKind = 'classes' | 'subjects';
 type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
 type DropdownClassItem = { id: string; name: string; status?: string | null };
-type DropdownSubjectItem = { id: string; title: string };
+type DropdownSubjectItem = { id: string; title: string; classIds: string[] };
 type StudentLane = 'assigned' | 'tools';
 
 export function AppSidebar() {
@@ -73,7 +72,6 @@ export function AppSidebar() {
   const menuItems = [
     { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
     { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
-    { href: '/classes', label: isTeacher ? 'manage' : 'classes', icon: School },
     { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
     { href: '/material', label: dictionary.sidebar.material || 'material', icon: FileSignature },
   ];
@@ -103,13 +101,14 @@ export function AppSidebar() {
   const subjectDropdownItems = useMemo(
     () =>
       [...subjectItems]
+        .filter((subject) => !isTeacher || !activeTeacherClassId || subject.classIds.includes(activeTeacherClassId))
         .sort((a, b) => a.title.localeCompare(b.title))
         .map((subject) => ({
           id: subject.id,
           label: subject.title,
           href: `/subjects/${subject.id}`,
         })),
-    [subjectItems]
+    [subjectItems, isTeacher, activeTeacherClassId]
   );
 
   useEffect(() => {
@@ -163,12 +162,16 @@ export function AppSidebar() {
 
   useEffect(() => {
     setSubjectItems(
-      (context?.subjects || []).map((subject) => ({ id: subject.id, title: subject.title }))
+      (context?.subjects || []).map((subject) => ({
+        id: subject.id,
+        title: subject.title,
+        classIds: (subject.classes || []).map((classItem) => classItem.id),
+      }))
     );
   }, [context?.subjects]);
 
-  const isDropdownTrigger = (href: string) => href === '/classes' || href === '/subjects';
-  const canUseDropdownFor = (href: string) => href === '/classes' || href === '/subjects';
+  const isDropdownTrigger = (href: string) => href === '/subjects';
+  const canUseDropdownFor = (href: string) => href === '/subjects';
   const getDropdownKind = (href: string) => (href === '/classes' ? 'classes' : 'subjects') as 'classes' | 'subjects';
 
   const resetInlinePanels = () => {
@@ -226,7 +229,6 @@ export function AppSidebar() {
   };
 
   const isMenuItemActive = (href: string) => {
-    if (href === '/classes') return pathname === '/classes' || pathname.startsWith('/class/');
     if (href === '/subjects') return pathname === '/subjects' || pathname.startsWith('/subjects/');
     if (href.startsWith('/tools')) return pathname.startsWith(href);
     return pathname === href;

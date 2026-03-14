@@ -60,11 +60,11 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
     <div className="flex h-full">
       {/* Class Sidebar */}
       <aside className="w-56 border-r bg-card flex flex-col shrink-0">
-        {/* Back to Classes */}
+        {/* Back to Home */}
         <div className="p-3 border-b">
-          <Link href="/classes" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ChevronLeft className="h-4 w-4" />
-            Back to Classes
+            Back to Home
           </Link>
         </div>
 

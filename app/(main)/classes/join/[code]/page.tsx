@@ -39,7 +39,7 @@ export default function JoinClassPage() {
           title: 'Class not found',
           description: error.message,
         });
-        router.push('/classes');
+        router.push('/');
       } finally {
         setLoading(false);
       }
@@ -79,7 +79,7 @@ export default function JoinClassPage() {
 
       toast({ title: 'Successfully joined class!' });
       await refetchClasses();
-      router.push('/classes');
+      router.push('/');
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -108,7 +108,7 @@ export default function JoinClassPage() {
             <CardDescription>The join code is invalid or the class no longer exists.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => router.push('/classes')}>Go back</Button>
+            <Button onClick={() => router.push('/')}>Go back</Button>
           </CardContent>
         </Card>
       </div>

@@ -31,7 +31,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
   const [copiedLink, setCopiedLink] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  const studentInviteLink = joinCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes?join_code=${joinCode}` : '';
+  const studentInviteLink = joinCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes/join/${joinCode}` : '';
   const teacherInviteLink = teacherJoinCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes/join/${teacherJoinCode}` : '';
   const studentQrCodeUrl = studentInviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(studentInviteLink)}&format=png` : '';
   const teacherQrCodeUrl = teacherInviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(teacherInviteLink)}&format=png` : '';

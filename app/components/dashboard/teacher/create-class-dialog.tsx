@@ -39,7 +39,7 @@ export function CreateClassDialog({ isOpen, setIsOpen, onClassCreated }: CreateC
   const [qrCodeDataURL, setQrCodeDataURL] = useState<string>('');
   const { toast } = useToast();
 
-  const inviteLink = createdClass?.join_code ? `${window.location.origin}/classes?join_code=${createdClass.join_code}` : '';
+  const inviteLink = createdClass?.join_code ? `${window.location.origin}/classes/join/${createdClass.join_code}` : '';
 
   // Generate QR code client-side when class is created (PERFORMANCE FIX #2)
   useEffect(() => {
