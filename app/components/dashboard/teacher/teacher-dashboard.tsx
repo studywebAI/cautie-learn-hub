@@ -4,7 +4,22 @@
 import { useState, useContext, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Search, ChevronDown, ChevronUp, Archive, Trash2, Copy, CheckSquare, Square } from 'lucide-react';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import {
+  PlusCircle,
+  Search,
+  ChevronDown,
+  ChevronUp,
+  Archive,
+  Trash2,
+  Copy,
+  CheckSquare,
+  Square,
+  LayoutGrid,
+  Rows3,
+  ArrowUpRight
+} from 'lucide-react';
 import { ClassCard } from './class-card';
 import { CreateClassDialog } from './create-class-dialog';
 import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
@@ -20,6 +35,7 @@ export function TeacherDashboard() {
   const [archivedClassesCount, setArchivedClassesCount] = useState(0);
   const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
   const [isBulkMode, setIsBulkMode] = useState(false);
+  const [manageView, setManageView] = useState<'list' | 'grid'>('list');
   const [joinCode, setJoinCode] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const { toast } = useToast();
@@ -159,6 +175,16 @@ export function TeacherDashboard() {
     setIsBulkMode(!isBulkMode);
     setSelectedClasses(new Set());
   };
+
+  const toggleClassSelection = (classId: string) => {
+    const newSelected = new Set(selectedClasses);
+    if (newSelected.has(classId)) {
+      newSelected.delete(classId);
+    } else {
+      newSelected.add(classId);
+    }
+    setSelectedClasses(newSelected);
+  };
   
   if (isLoading || !classes) {
       return (
@@ -241,6 +267,28 @@ export function TeacherDashboard() {
               {isBulkMode ? <Square className="mr-2 h-4 w-4" /> : <CheckSquare className="mr-2 h-4 w-4" />}
               {isBulkMode ? 'Exit Bulk Mode' : 'Bulk Actions'}
             </Button>
+            <div className="inline-flex rounded-md border border-border/70 p-0.5">
+              <Button
+                type="button"
+                size="sm"
+                variant={manageView === 'list' ? 'default' : 'ghost'}
+                className="h-8 px-2"
+                onClick={() => setManageView('list')}
+                aria-label="List view"
+              >
+                <Rows3 className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={manageView === 'grid' ? 'default' : 'ghost'}
+                className="h-8 px-2"
+                onClick={() => setManageView('grid')}
+                aria-label="Grid view"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -311,27 +359,72 @@ export function TeacherDashboard() {
           <div className="space-y-8">
             {/* Active Classes - Always Visible */}
             <div className="min-h-[400px]">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {activeClasses.map((classInfo, index) => (
-                  <ClassCard
-                    key={classInfo.id}
-                    classInfo={classInfo}
-                    isArchived={false}
-                    isBulkMode={isBulkMode}
-                    isSelected={selectedClasses.has(classInfo.id)}
-                    priority={index < 12} // Load first 12 classes immediately
-                    onToggleSelect={(classId) => {
-                      const newSelected = new Set(selectedClasses);
-                      if (newSelected.has(classId)) {
-                        newSelected.delete(classId);
-                      } else {
-                        newSelected.add(classId);
-                      }
-                      setSelectedClasses(newSelected);
-                    }}
-                  />
-                ))}
-              </div>
+              {manageView === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {activeClasses.map((classInfo, index) => (
+                    <ClassCard
+                      key={classInfo.id}
+                      classInfo={classInfo}
+                      isArchived={false}
+                      isBulkMode={isBulkMode}
+                      isSelected={selectedClasses.has(classInfo.id)}
+                      priority={index < 12} // Load first 12 classes immediately
+                      onToggleSelect={toggleClassSelection}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-lg border border-border/70">
+                  <div className="grid grid-cols-[minmax(0,1fr)_130px] items-center border-b bg-muted/30 px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid-cols-[minmax(0,1.2fr)_220px_130px]">
+                    <span>Class</span>
+                    <span className="hidden md:block">Status</span>
+                    <span className="text-right">Action</span>
+                  </div>
+                  <div>
+                    {activeClasses.map((classInfo) => (
+                      <div
+                        key={classInfo.id}
+                        className={cn(
+                          'grid grid-cols-[minmax(0,1fr)_130px] items-center border-b px-3 py-3 last:border-b-0 md:grid-cols-[minmax(0,1.2fr)_220px_130px]',
+                          selectedClasses.has(classInfo.id) ? 'bg-primary/5' : 'bg-background'
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            {isBulkMode && (
+                              <input
+                                type="checkbox"
+                                checked={selectedClasses.has(classInfo.id)}
+                                onChange={() => toggleClassSelection(classInfo.id)}
+                                className="h-4 w-4 accent-primary"
+                              />
+                            )}
+                            <p className="truncate text-sm font-medium lowercase">{classInfo.name}</p>
+                          </div>
+                          {classInfo.description && (
+                            <p className="truncate pl-0 text-xs text-muted-foreground md:pl-6">
+                              {classInfo.description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="hidden md:block">
+                          <span className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                            active
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <Button asChild size="sm" variant="ghost" className="h-8">
+                            <Link href={`/class/${classInfo.id}?tab=subjects`}>
+                              open
+                              <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Archived Classes Toggle */}
@@ -358,26 +451,51 @@ export function TeacherDashboard() {
                 {showArchived && (
                   <div className="mt-8 space-y-4">
                     <h2 className="text-xl font-semibold text-muted-foreground">Archived Classes</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {archivedClasses.map((classInfo) => (
-                        <ClassCard
-                          key={classInfo.id}
-                          classInfo={classInfo}
-                          isArchived={true}
-                          isBulkMode={isBulkMode}
-                          isSelected={selectedClasses.has(classInfo.id)}
-                          onToggleSelect={(classId) => {
-                            const newSelected = new Set(selectedClasses);
-                            if (newSelected.has(classId)) {
-                              newSelected.delete(classId);
-                            } else {
-                              newSelected.add(classId);
-                            }
-                            setSelectedClasses(newSelected);
-                          }}
-                        />
-                      ))}
-                    </div>
+                    {manageView === 'grid' ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {archivedClasses.map((classInfo) => (
+                          <ClassCard
+                            key={classInfo.id}
+                            classInfo={classInfo}
+                            isArchived={true}
+                            isBulkMode={isBulkMode}
+                            isSelected={selectedClasses.has(classInfo.id)}
+                            onToggleSelect={toggleClassSelection}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="overflow-hidden rounded-lg border border-border/70">
+                        {archivedClasses.map((classInfo) => (
+                          <div
+                            key={classInfo.id}
+                            className={cn(
+                              'grid grid-cols-[minmax(0,1fr)_130px] items-center border-b px-3 py-3 last:border-b-0',
+                              selectedClasses.has(classInfo.id) ? 'bg-primary/5' : 'bg-background'
+                            )}
+                          >
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                {isBulkMode && (
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedClasses.has(classInfo.id)}
+                                    onChange={() => toggleClassSelection(classInfo.id)}
+                                    className="h-4 w-4 accent-primary"
+                                  />
+                                )}
+                                <p className="truncate text-sm font-medium lowercase">{classInfo.name}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <span className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                                archived
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
