@@ -11,6 +11,13 @@ import type { Dictionary, Locale } from '@/lib/get-dictionary';
 
 export type UserRole = 'student' | 'teacher';
 export type ThemeType = 'light' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
+export type PreloadResourceKey = 'classes:list' | 'subjects:list';
+export type PreloadStatus = 'idle' | 'loading' | 'ready' | 'error';
+export type PreloadSnapshot = Record<PreloadResourceKey, {
+  status: PreloadStatus;
+  updatedAt: number | null;
+  error: string | null;
+}>;
 // AccentColor removed — themes handle their own accent
 export type ClassInfo = Tables<'classes'>;
 export type ClassAssignment = Tables<'assignments'> & {
@@ -58,6 +65,7 @@ export type AppContextType = {
   session: Session | null;
   isLoading: boolean;
   appReady: boolean;
+  isTier0Ready: boolean;
   language: Locale;
   setLanguage: (language: Locale) => void;
   dictionary: Dictionary;
@@ -88,6 +96,8 @@ export type AppContextType = {
   updatePersonalTask: (id: string, updates: Partial<PersonalTask>) => Promise<void>;
   materials: MaterialReference[];
   refetchMaterials: (classId: string) => Promise<void>;
+  preloadSnapshot: PreloadSnapshot;
+  warmResources: (keys: PreloadResourceKey[]) => Promise<void>;
 };
 
 export const AppContext = createContext<AppContextType | null>(null);
@@ -133,6 +143,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [appReady, setAppReady] = useState(false);
+  const [isTier0Ready, setIsTier0Ready] = useState(false);
   const [language, setLanguageState] = useState<Locale>('en');
   const [dictionary, setDictionary] = useState<Dictionary>(() => getDictionary(language));
   const [role, setRoleState] = useState<UserRole>('student');
@@ -149,8 +160,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [personalTasks, setPersonalTasks] = useState<PersonalTask[]>([]);
   const [materials, setMaterials] = useState<MaterialReference[]>([]);
   const [isCreatingClass, setIsCreatingClass] = useState(false);
+  const [preloadSnapshot, setPreloadSnapshot] = useState<PreloadSnapshot>({
+    'classes:list': { status: 'idle', updatedAt: null, error: null },
+    'subjects:list': { status: 'idle', updatedAt: null, error: null },
+  });
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
+  const preloadInFlight = useRef<Partial<Record<PreloadResourceKey, Promise<void>>>>({});
 
   const applyAppearance = useCallback((currentTheme: ThemeType) => {
     if (typeof window === 'undefined') return;
@@ -165,6 +181,82 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     );
     root.classList.add(`theme-${currentTheme}`);
   }, []);
+
+  const setPreloadState = useCallback((key: PreloadResourceKey, next: Partial<PreloadSnapshot[PreloadResourceKey]>) => {
+    setPreloadSnapshot((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        ...next,
+      },
+    }));
+  }, []);
+
+  const fetchClassesResource = useCallback(async () => {
+    const res = await fetch('/api/classes', { credentials: 'include', cache: 'no-store' });
+    if (!res.ok) {
+      if (res.status === 401) {
+        setClasses([]);
+        return;
+      }
+      throw new Error(`classes fetch failed (${res.status})`);
+    }
+    const data = await res.json().catch(() => []);
+    setClasses(Array.isArray(data) ? data : []);
+  }, []);
+
+  const fetchSubjectsResource = useCallback(async () => {
+    const res = await fetch('/api/subjects', { credentials: 'include', cache: 'no-store' });
+    if (!res.ok) {
+      if (res.status === 401) {
+        setSubjects([]);
+        return;
+      }
+      throw new Error(`subjects fetch failed (${res.status})`);
+    }
+    const data = await res.json().catch(() => []);
+    setSubjects(Array.isArray(data) ? data : []);
+  }, []);
+
+  const warmResource = useCallback(async (key: PreloadResourceKey) => {
+    if (preloadInFlight.current[key]) {
+      await preloadInFlight.current[key];
+      return;
+    }
+
+    const run = (async () => {
+      const startedAt = Date.now();
+      setPreloadState(key, { status: 'loading', error: null });
+      try {
+        if (key === 'classes:list') {
+          await fetchClassesResource();
+        } else {
+          await fetchSubjectsResource();
+        }
+        setPreloadState(key, { status: 'ready', updatedAt: Date.now(), error: null });
+        console.log('[PRELOAD] Resource ready', { key, durationMs: Date.now() - startedAt });
+      } catch (error: any) {
+        setPreloadState(key, {
+          status: 'error',
+          updatedAt: Date.now(),
+          error: error?.message || 'Unknown preload error',
+        });
+        console.error('[PRELOAD] Resource failed', { key, error: error?.message || error });
+      }
+    })();
+
+    preloadInFlight.current[key] = run;
+    try {
+      await run;
+    } finally {
+      preloadInFlight.current[key] = undefined;
+    }
+  }, [fetchClassesResource, fetchSubjectsResource, setPreloadState]);
+
+  const warmResources = useCallback(async (keys: PreloadResourceKey[]) => {
+    const uniqueKeys = Array.from(new Set(keys));
+    await Promise.all(uniqueKeys.map((key) => warmResource(key)));
+  }, [warmResource]);
 
   // OPTIMIZED: Load cache first (instant), then fetch in parallel
   useEffect(() => {
@@ -196,37 +288,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setThemeState(resolvedTheme);
     applyAppearance(resolvedTheme);
 
-    // STEP 3: Fetch session and first-impression data before declaring app ready
-    const preloadFirstImpressionData = async () => {
-      const [classesResult, subjectsResult] = await Promise.allSettled([
-        fetch('/api/classes', { credentials: 'include', cache: 'no-store' }),
-        fetch('/api/subjects', { credentials: 'include', cache: 'no-store' }),
-      ]);
-
-      if (classesResult.status === 'fulfilled' && classesResult.value.ok) {
-        const classesData = await classesResult.value.json().catch(() => []);
-        if (Array.isArray(classesData)) setClasses(classesData);
-      }
-
-      if (subjectsResult.status === 'fulfilled' && subjectsResult.value.ok) {
-        const subjectsData = await subjectsResult.value.json().catch(() => []);
-        if (Array.isArray(subjectsData)) setSubjects(subjectsData);
-      }
-    };
-
     const init = async () => {
       try {
         const sessionResult = await supabase.auth.getSession();
         const newSession = sessionResult.data.session;
         setSession(newSession);
 
-        if (!newSession) return;
+        if (!newSession) {
+          setIsTier0Ready(true);
+          return;
+        }
 
         const [dashboardData] = await Promise.all([
           fetch('/api/dashboard', { credentials: 'include', cache: 'no-store' })
             .then(r => r.ok ? r.json() : null)
             .catch(() => null),
-          preloadFirstImpressionData(),
+          warmResources(['classes:list', 'subjects:list']),
         ]);
 
         // Update with fresh data when available
@@ -243,8 +320,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           // Save to cache for next visit
           saveToLocalStorage('studyweb-cached-dashboard', dashboardData);
         }
+        setIsTier0Ready(true);
       } catch (e) {
         console.error('Init error:', e);
+        setIsTier0Ready(true);
       } finally {
         setIsLoading(false);
         setAppReady(true);
@@ -273,12 +352,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               saveToLocalStorage('studyweb-cached-dashboard', data);
             }
           });
-        void preloadFirstImpressionData();
+        void warmResources(['classes:list', 'subjects:list']);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [applyAppearance]);
+  }, [applyAppearance, warmResources]);
 
   const setLanguage = (newLanguage: Locale) => {
     setLanguageState(newLanguage);
@@ -412,14 +491,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }, [session]);
 
   const contextValue = useMemo(() => ({
-    session, isLoading, appReady, language, setLanguage, dictionary, role, setRole,
+    session, isLoading, appReady, isTier0Ready, language, setLanguage, dictionary, role, setRole,
     highContrast, setHighContrast, dyslexiaFont, setDyslexiaFont,
     reducedMotion, setReducedMotion, theme, setTheme, sessionRecap, setSessionRecap,
     classes, subjects, createClass, isCreatingClass, refetchClasses,
     assignments, createAssignment, deleteAssignment, refetchAssignments,
     students, personalTasks, createPersonalTask, updatePersonalTask,
-    materials, refetchMaterials,
-  }), [session, isLoading, appReady, language, dictionary, role, highContrast, dyslexiaFont, reducedMotion, theme, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials]);
+    materials, refetchMaterials, preloadSnapshot, warmResources,
+  }), [session, isLoading, appReady, isTier0Ready, language, dictionary, role, highContrast, dyslexiaFont, reducedMotion, theme, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials, preloadSnapshot, warmResources]);
 
   return (
     <AppContext.Provider value={contextValue}>

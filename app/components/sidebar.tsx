@@ -49,8 +49,6 @@ export function AppSidebar() {
   const [dropdown, setDropdown] = useState<DropdownState>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const floatingRef = useRef<HTMLDivElement | null>(null);
-  const [classesLoading, setClassesLoading] = useState(false);
-  const [subjectsLoading, setSubjectsLoading] = useState(false);
   const [classItems, setClassItems] = useState<DropdownClassItem[]>([]);
   const [subjectItems, setSubjectItems] = useState<DropdownSubjectItem[]>([]);
   const [createClassOpen, setCreateClassOpen] = useState(false);
@@ -122,43 +120,14 @@ export function AppSidebar() {
   }, [dropdown]);
 
   useEffect(() => {
-    if (!context?.classes?.length) return;
-    setClassItems(context.classes as DropdownClassItem[]);
+    setClassItems((context?.classes || []) as DropdownClassItem[]);
   }, [context?.classes]);
 
   useEffect(() => {
-    if (!context?.subjects?.length) return;
     setSubjectItems(
-      context.subjects.map((subject) => ({ id: subject.id, title: subject.title }))
+      (context?.subjects || []).map((subject) => ({ id: subject.id, title: subject.title }))
     );
   }, [context?.subjects]);
-
-  useEffect(() => {
-    if (!context?.session) return;
-    let cancelled = false;
-
-    const preloadFirstViews = async () => {
-      const [classesResult, subjectsResult] = await Promise.allSettled([
-        fetch('/api/classes', { credentials: 'include', cache: 'no-store' }),
-        fetch('/api/subjects', { credentials: 'include', cache: 'no-store' }),
-      ]);
-
-      if (!cancelled && classesResult.status === 'fulfilled' && classesResult.value.ok) {
-        const classesData = await classesResult.value.json().catch(() => []);
-        setClassItems(Array.isArray(classesData) ? classesData : []);
-      }
-
-      if (!cancelled && subjectsResult.status === 'fulfilled' && subjectsResult.value.ok) {
-        const subjectsData = await subjectsResult.value.json().catch(() => []);
-        setSubjectItems(Array.isArray(subjectsData) ? subjectsData : []);
-      }
-    };
-
-    void preloadFirstViews();
-    return () => {
-      cancelled = true;
-    };
-  }, [context?.session]);
 
   const isDropdownTrigger = (href: string) => href === '/classes' || href === '/subjects';
   const canUseDropdownFor = (href: string) => href === '/classes' || href === '/subjects';
@@ -175,19 +144,12 @@ export function AppSidebar() {
   };
 
   const loadDropdownData = async (kind: DropdownKind) => {
+    if (!context) return;
     try {
       if (kind === 'classes') {
-        setClassesLoading(true);
-        const response = await fetch('/api/classes', { cache: 'no-store' });
-        if (!response.ok) throw new Error('Failed to load classes');
-        const data = await response.json();
-        setClassItems(Array.isArray(data) ? data : []);
+        await context.warmResources(['classes:list']);
       } else {
-        setSubjectsLoading(true);
-        const response = await fetch('/api/subjects', { cache: 'no-store' });
-        if (!response.ok) throw new Error('Failed to load subjects');
-        const data = await response.json();
-        setSubjectItems(Array.isArray(data) ? data : []);
+        await context.warmResources(['subjects:list']);
       }
     } catch (error: any) {
       toast({
@@ -195,9 +157,6 @@ export function AppSidebar() {
         title: kind === 'classes' ? 'Could not load classes' : 'Could not load subjects',
         description: error?.message || 'Try again.',
       });
-    } finally {
-      if (kind === 'classes') setClassesLoading(false);
-      else setSubjectsLoading(false);
     }
   };
 
@@ -239,7 +198,10 @@ export function AppSidebar() {
     if (!dropdown) return null;
     const items = dropdown.kind === 'classes' ? classDropdownItems : subjectDropdownItems;
     const emptyText = dropdown.kind === 'classes' ? 'No classes found' : 'No subjects found';
-    const loading = dropdown.kind === 'classes' ? classesLoading : subjectsLoading;
+    const loading =
+      dropdown.kind === 'classes'
+        ? context?.preloadSnapshot['classes:list']?.status === 'loading'
+        : context?.preloadSnapshot['subjects:list']?.status === 'loading';
 
     const submitCreateClass = async () => {
       if (!className.trim()) return;

@@ -13,6 +13,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     const pathname = usePathname();
     const appContext = useContext(AppContext);
     const appReady = appContext?.appReady ?? false;
+    const isTier0Ready = appContext?.isTier0Ready ?? false;
     const [introAnimationDone, setIntroAnimationDone] = useState(false);
 
     const isClassPage = pathname?.startsWith('/class/');
@@ -26,6 +27,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     }, [appReady]);
 
     useEffect(() => {
+        console.log('[INTRO_LAYOUT] isTier0Ready changed', { isTier0Ready });
+    }, [isTier0Ready]);
+
+    useEffect(() => {
         console.log('[INTRO_LAYOUT] introAnimationDone changed', { introAnimationDone });
     }, [introAnimationDone]);
 
@@ -35,14 +40,15 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     }, []);
 
     const showStartupSplash = useMemo(() => {
-        const shouldShow = !(appReady && introAnimationDone);
+        const shouldShow = !(appReady && isTier0Ready && introAnimationDone);
         console.log('[INTRO_LAYOUT] Splash visibility computed', {
             appReady,
+            isTier0Ready,
             introAnimationDone,
             showStartupSplash: shouldShow,
         });
         return shouldShow;
-    }, [appReady, introAnimationDone]);
+    }, [appReady, isTier0Ready, introAnimationDone]);
 
     return (
         <SidebarProvider>

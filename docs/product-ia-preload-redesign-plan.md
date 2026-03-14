@@ -27,20 +27,20 @@ This document captures the agreed direction for making the app feel more profess
 Observed from current codebase:
 
 1. Intro gating
-- `app/(main)/layout.tsx` now gates splash by `appReady && introAnimationDone`.
+- `app/(main)/layout.tsx` now gates splash by `appReady && isTier0Ready && introAnimationDone`.
 - Animation completion is signaled from wordmark/highlight callbacks (`StartupSplash` -> `CautieWordmark`).
 - Logging has been added for intro lifecycle.
 
-2. Data bootstrap
+2. Data bootstrap (now partially upgraded)
 - `app/contexts/app-context.tsx` currently:
 - loads cached dashboard data from localStorage
 - fetches `/api/dashboard`
-- also calls `preloadFirstImpressionData()` for `/api/classes` and `/api/subjects`
-- sets `appReady` after init finishes
+- exposes preload resource state (`classes:list`, `subjects:list`) with deduped warm calls
+- sets `isTier0Ready` for intro truthfulness
 
-3. Sidebar behavior
-- `app/components/sidebar.tsx` still fetches classes/subjects independently for dropdowns and hover/open behavior.
-- This duplicates preload responsibility already in context.
+3. Sidebar behavior (now partially upgraded)
+- `app/components/sidebar.tsx` now consumes context preload APIs for classes/subjects.
+- Duplicate direct preload ownership has been removed; context is source of truth.
 
 4. Teacher class workspace
 - `app/(main)/class/[classId]/page.tsx` loads active tab lazily and caches tab data (`tabDataCache`).
