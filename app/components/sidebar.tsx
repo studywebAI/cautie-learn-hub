@@ -88,7 +88,7 @@ export function AppSidebar() {
 
   const menuItems = [
     { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
-    { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
+    ...(isTeacher ? [] : [{ href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen }]),
     { href: '/classes', label: isTeacher ? 'manage' : 'classes', icon: School },
     { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
     { href: '/material', label: dictionary.sidebar.material || 'material', icon: FileSignature },

@@ -35,8 +35,8 @@ export default function ClassDetailsPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { classId } = params as { classId: string };
-  const tab = searchParams.get('tab') || 'invite';
   const { classes, assignments, isLoading: isAppLoading, materials, refetchMaterials, role, students: allStudents } = useContext(AppContext) as AppContextType;
+  const tab = searchParams.get('tab') || (role === 'teacher' ? 'subjects' : 'invite');
 
   const students = allStudents || [];
   const [directClassInfo, setDirectClassInfo] = useState<ClassInfo | null>(null);

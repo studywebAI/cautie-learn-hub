@@ -25,7 +25,7 @@ const tabs = [
 export default function ClassLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const searchParams = useSearchParams();
-  const { classes } = useContext(AppContext) as any;
+  const { classes, role } = useContext(AppContext) as any;
   const classId = params.classId as string;
   
   // Get class name from context first (instant), fallback to API only if needed
@@ -33,7 +33,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const [className, setClassName] = useState<string>(contextClass?.name || '');
 
   // Use useSearchParams properly - this will re-render when URL changes
-  const currentTab = searchParams?.get('tab') || 'invite';
+  const currentTab = searchParams?.get('tab') || (role === 'teacher' ? 'subjects' : 'invite');
 
   // Only fetch from API if not in context
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
         <div className="p-3 border-b">
           <Link href="/classes" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ChevronLeft className="h-4 w-4" />
-            Back to Classes
+            {role === 'teacher' ? 'Back to Manage' : 'Back to Classes'}
           </Link>
         </div>
 
