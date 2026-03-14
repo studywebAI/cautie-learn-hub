@@ -721,6 +721,20 @@
     }
   }
 
+  @keyframes cautie-logo-letter {
+    0% {
+      opacity: 0;
+      clip-path: inset(0 100% 0 0);
+    }
+    20% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
   @keyframes cautie-logo-highlight {
     0% {
       transform: scaleX(0);
