@@ -211,7 +211,7 @@ export default function DashboardPage() {
   if (!session) return <StudentDashboard />;
 
   if (role === 'student') {
-    return <DashboardSkeleton />;
+    return <StudentDashboard />;
   }
 
   if (role === 'teacher' && (Array.isArray(classes) ? classes : []).some((classItem) => classItem.status !== 'archived')) {
