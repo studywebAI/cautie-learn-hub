@@ -28,11 +28,11 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import { RecentsSidebar } from './recents-sidebar';
 import { SidebarProfile } from './sidebar-profile';
+import { CautieWordmark } from './cautie-wordmark';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { SHOW_CAUTIE_LOGO } from '@/lib/branding';
 
 type DropdownKind = 'classes' | 'subjects';
 type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
@@ -41,22 +41,13 @@ type DropdownSubjectItem = { id: string; title: string; classIds: string[] };
 type StudentLane = 'school' | 'tools';
 
 function SidebarTopLogo({ className = '' }: { className?: string }) {
-  if (!SHOW_CAUTIE_LOGO) return null;
-
   return (
-    <span
-      className={cn(
-        'inline-flex items-center justify-center rounded-full border px-4 py-1 lowercase text-[13px] font-medium tracking-[0.01em]',
-        className
-      )}
-      style={{
-        backgroundColor: 'hsl(var(--sidebar-accent))',
-        borderColor: 'hsl(var(--sidebar-border))',
-        color: 'hsl(var(--sidebar-foreground))',
-      }}
-    >
-      cautie
-    </span>
+    <CautieWordmark
+      compact
+      animated={false}
+      className={cn('inline-flex items-center justify-center', className)}
+      textClassName="!text-4xl !font-semibold"
+    />
   );
 }
 
