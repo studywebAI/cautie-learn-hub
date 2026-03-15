@@ -23,12 +23,13 @@ import {
   Calendar,
   Menu,
   ArrowUpRight,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import { RecentsSidebar } from './recents-sidebar';
 import { SidebarProfile } from './sidebar-profile';
-import { CautieWordmark } from './cautie-wordmark';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { cn } from '@/lib/utils';
@@ -42,12 +43,7 @@ type StudentLane = 'school' | 'tools';
 
 function SidebarTopLogo({ className = '' }: { className?: string }) {
   return (
-    <CautieWordmark
-      compact
-      animated={false}
-      className={cn('inline-flex items-center justify-center', className)}
-      textClassName="!text-4xl !font-semibold"
-    />
+    <span className={cn('text-2xl lowercase tracking-tight text-sidebar-foreground/95', className)}>cautie</span>
   );
 }
 
@@ -415,18 +411,23 @@ export function AppSidebar() {
     return (
       <div
         ref={floatingRef}
-        className="fixed z-[120] rounded-xl border border-border/70 bg-[hsl(var(--surface-1))]"
+        className="fixed z-[120] rounded-2xl border border-border/70 bg-[hsl(var(--surface-1))] shadow-2xl shadow-black/25"
         style={{ left: dropdown.left, top: dropdown.top }}
         onMouseEnter={clearCloseTimer}
         onMouseLeave={scheduleClose}
       >
         <div className="w-max min-w-[10rem] max-w-[22rem] max-h-[60vh] overflow-auto p-1">
+          {dropdown.kind === 'classes' && (
+            <div className="px-2 py-1 text-[11px] tracking-[0.08em] text-muted-foreground lowercase">
+              select different class
+            </div>
+          )}
           <div className="mb-1 flex gap-1 border-b border-border pb-1">
             {dropdown.kind === 'classes' && isTeacher && (
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-xs rounded-lg"
+                className="h-8 text-xs rounded-xl border-border/70 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
                 onClick={() => {
                   setNewClassMenuOpen((v) => !v);
                   setCreateClassOpen(false);
@@ -440,7 +441,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-xs rounded-lg"
+                className="h-8 text-xs rounded-xl border-border/70 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
                 onClick={() => {
                   setJoinClassOpen((v) => !v);
                   setCreateClassOpen(false);
@@ -453,7 +454,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-xs rounded-lg"
+                className="h-8 text-xs rounded-xl border-border/70 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
                 onClick={() => setCreateSubjectOpen((v) => !v)}
               >
                 + Create subject
@@ -582,7 +583,12 @@ export function AppSidebar() {
               <Link
                 key={entry.id}
                 href={dropdown.kind === 'classes' && isTeacher ? resolveTeacherClassRoute(entry.id) : entry.href}
-                className="block truncate rounded-lg px-2 py-1.5 text-sm hover:bg-[hsl(var(--surface-2))]"
+                className={cn(
+                  'flex items-center justify-between gap-2 truncate rounded-xl px-2.5 py-2 text-sm transition-colors',
+                  dropdown.kind === 'classes' && entry.id === activeTeacherClassId
+                    ? 'bg-[hsl(var(--surface-2))] text-foreground font-medium'
+                    : 'hover:bg-[hsl(var(--surface-2))] text-muted-foreground hover:text-foreground'
+                )}
                 onClick={() => {
                   if (dropdown.kind === 'classes' && isTeacher) {
                     setActiveTeacherClassId(entry.id);
@@ -595,7 +601,10 @@ export function AppSidebar() {
                   setOpenMobile(false);
                 }}
               >
-                {entry.label}
+                <span className="truncate">{entry.label}</span>
+                {dropdown.kind === 'classes' && entry.id === activeTeacherClassId && (
+                  <Check className="h-3.5 w-3.5 text-foreground/80" />
+                )}
               </Link>
             ))
           )}
@@ -613,11 +622,9 @@ export function AppSidebar() {
           class
         </label>
         <Button
-          ref={classDropdownTriggerRef}
           size="sm"
           variant="outline"
           className="mb-1.5 h-7 w-full justify-start text-xs"
-          data-nav-dropdown-trigger="true"
           onClick={(event) => {
             openDropdownFor('classes', event.currentTarget);
             setNewClassMenuOpen(true);
@@ -627,30 +634,26 @@ export function AppSidebar() {
         >
           + New class
         </Button>
-        <select
-          value={activeTeacherClassId}
-          onChange={(event) => {
-            const nextClassId = event.target.value;
-            setActiveTeacherClassId(nextClassId);
-            if (typeof window !== 'undefined') {
-              window.localStorage.setItem('studyweb-last-class-id', nextClassId);
-            }
-            router.push(resolveTeacherClassRoute(nextClassId));
-            setOpenMobile(false);
+        <button
+          ref={classDropdownTriggerRef}
+          type="button"
+          data-nav-dropdown-trigger="true"
+          onClick={(event) => {
+            setNewClassMenuOpen(false);
+            setCreateClassOpen(false);
+            setJoinClassOpen(false);
+            openDropdownFor('classes', event.currentTarget);
           }}
           disabled={classDropdownItems.length === 0}
-          className="h-8 w-full rounded-md border border-sidebar-border bg-sidebar px-2 text-xs text-sidebar-foreground"
+          className="h-10 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-2))] px-3 text-left text-sm text-sidebar-foreground transition-colors hover:bg-[hsl(var(--surface-3))] disabled:opacity-60"
         >
-          {classDropdownItems.length === 0 ? (
-            <option value="">no classes</option>
-          ) : (
-            classDropdownItems.map((classItem) => (
-              <option key={classItem.id} value={classItem.id}>
-                {classItem.label}
-              </option>
-            ))
-          )}
-        </select>
+          <span className="flex items-center justify-between gap-2">
+            <span className="truncate">
+              {classDropdownItems.find((classItem) => classItem.id === activeTeacherClassId)?.label || 'no classes'}
+            </span>
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          </span>
+        </button>
       </div>
     );
   };
@@ -702,7 +705,7 @@ export function AppSidebar() {
         {/* Mini sidebar - always visible on mobile */}
         <div className="fixed left-0 top-0 h-full w-14 bg-sidebar border-r border-sidebar-border z-40 flex flex-col py-3">
           <div className="mb-2 flex items-center justify-center">
-            <SidebarTopLogo className="scale-[0.68] text-xl leading-none" />
+            <SidebarTopLogo className="text-base leading-none" />
           </div>
           {/* Hamburger button to open full drawer */}
           <Button
@@ -788,7 +791,7 @@ export function AppSidebar() {
         <Sidebar className="w-[17.5rem]">
           <SidebarContent className="px-3 py-3 flex-1">
             <div className="mb-2 flex items-center px-2">
-              <SidebarTopLogo className="scale-[1.02] text-3xl leading-none" />
+              <SidebarTopLogo className="text-2xl leading-none" />
             </div>
             {renderTeacherClassSwitcher()}
             {renderStudentLaneToggle()}
@@ -873,7 +876,7 @@ export function AppSidebar() {
       </div>
       <SidebarContent className="px-3 py-3 flex-1">
         <div className="mb-2 flex items-center px-2">
-          <SidebarTopLogo className="scale-[1.02] text-3xl leading-none" />
+          <SidebarTopLogo className="text-2xl leading-none" />
         </div>
         {renderTeacherClassSwitcher()}
         {renderStudentLaneToggle()}

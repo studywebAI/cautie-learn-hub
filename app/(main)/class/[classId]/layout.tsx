@@ -92,7 +92,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md text-sm mb-1 transition-colors",
                   isActive 
-                    ? "bg-primary text-primary-foreground" 
+                    ? "border border-border/70 bg-[hsl(var(--surface-2))] text-foreground" 
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
