@@ -38,7 +38,7 @@ type DropdownKind = 'classes' | 'subjects';
 type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
 type DropdownClassItem = { id: string; name: string; status?: string | null };
 type DropdownSubjectItem = { id: string; title: string; classIds: string[] };
-type StudentLane = 'assigned' | 'tools';
+type StudentLane = 'school' | 'tools';
 
 function SidebarTopLogo({ className = '' }: { className?: string }) {
   const [highlightColor, setHighlightColor] = useState('rgba(110, 158, 53, 0.92)');
@@ -93,9 +93,11 @@ export function AppSidebar() {
   const [submitting, setSubmitting] = useState(false);
   const [activeTeacherClassId, setActiveTeacherClassId] = useState('');
   const [studentLane, setStudentLane] = useState<StudentLane>(() => {
-    if (typeof window === 'undefined') return 'assigned';
+    if (typeof window === 'undefined') return 'school';
     const savedLane = window.localStorage.getItem('studyweb-student-lane');
-    return savedLane === 'tools' ? 'tools' : 'assigned';
+    if (savedLane === 'tools') return 'tools';
+    if (savedLane === 'school' || savedLane === 'assigned') return 'school';
+    return 'school';
   });
 
   const isTeacher = context?.role === 'teacher';
@@ -286,7 +288,7 @@ export function AppSidebar() {
     return pathname === href;
   };
 
-  const visibleMainItems = isTeacher || studentLane === 'assigned' ? menuItems : [];
+  const visibleMainItems = isTeacher || studentLane === 'school' ? menuItems : [];
   const visibleToolsItems = isTeacher || studentLane === 'tools' ? toolsMenuItems : [];
 
   const renderFloatingDropdown = () => {
@@ -589,6 +591,20 @@ export function AppSidebar() {
         <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">
           class
         </label>
+        <Button
+          size="sm"
+          variant="outline"
+          className="mb-1.5 h-7 w-full justify-start text-xs"
+          data-nav-dropdown-trigger="true"
+          onClick={(event) => {
+            openDropdownFor('classes', event.currentTarget);
+            setNewClassMenuOpen(true);
+            setCreateClassOpen(false);
+            setJoinClassOpen(false);
+          }}
+        >
+          + New class
+        </Button>
         <select
           value={activeTeacherClassId}
           onChange={(event) => {
@@ -624,11 +640,11 @@ export function AppSidebar() {
       <div className="mb-2 grid grid-cols-2 gap-1 px-2">
         <Button
           size="sm"
-          variant={studentLane === 'assigned' ? 'default' : 'outline'}
+          variant={studentLane === 'school' ? 'default' : 'outline'}
           className="h-7 text-xs lowercase"
-          onClick={() => setStudentLane('assigned')}
+          onClick={() => setStudentLane('school')}
         >
-          assigned
+          school
         </Button>
         <Button
           size="sm"
