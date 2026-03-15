@@ -258,6 +258,31 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     await Promise.all(uniqueKeys.map((key) => warmResource(key)));
   }, [warmResource]);
 
+  const warmBootstrapBundle = useCallback(async (classIds: string[]) => {
+    if (classIds.length === 0) return;
+    const startedAt = Date.now();
+    const ids = classIds.slice(0, 8).join(',');
+    try {
+      const res = await fetch(`/api/preload/bootstrap?classIds=${encodeURIComponent(ids)}`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        throw new Error(`bootstrap preload failed (${res.status})`);
+      }
+      const payload = await res.json().catch(() => null);
+      console.log('[PRELOAD][TIER1] bootstrap bundle ready', {
+        durationMs: Date.now() - startedAt,
+        classCount: payload?.classes?.length || 0,
+      });
+    } catch (error: any) {
+      console.warn('[PRELOAD][TIER1] bootstrap bundle failed', {
+        durationMs: Date.now() - startedAt,
+        error: error?.message || String(error),
+      });
+    }
+  }, []);
+
   // OPTIMIZED: Load cache first (instant), then fetch in parallel
   useEffect(() => {
     // STEP 1: Load from cache IMMEDIATELY (synchronous, instant)
@@ -321,6 +346,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           
           // Save to cache for next visit
           saveToLocalStorage('studyweb-cached-dashboard', dashboardData);
+
+          const activeClassIds = (dashboardData.classes || [])
+            .filter((classItem: any) => classItem?.status !== 'archived')
+            .slice(0, 4)
+            .map((classItem: any) => classItem.id)
+            .filter(Boolean);
+          void warmBootstrapBundle(activeClassIds);
         }
         console.log('[PRELOAD][TIER0] ready', { durationMs: Date.now() - tier0StartedAt });
         setIsTier0Ready(true);
@@ -361,7 +393,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [applyAppearance, warmResources]);
+  }, [applyAppearance, warmResources, warmBootstrapBundle]);
 
   const setLanguage = (newLanguage: Locale) => {
     setLanguageState(newLanguage);
