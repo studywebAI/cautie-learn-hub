@@ -4,6 +4,10 @@
 
 @layer base {
   :root {
+    --type-micro: 11px;
+    --type-body: 13px;
+    --type-section: 16px;
+    --type-page: 24px;
     --background: 0 0% 99%;
     --foreground: 224 18% 12%;
     --card: 0 0% 100%;
@@ -398,12 +402,41 @@
   body {
     @apply bg-background text-foreground;
     font-family: Inter, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: var(--type-body);
+    line-height: 1.45;
+    letter-spacing: -0.005em;
   }
   button, input, textarea, select, option {
     font-family: Inter, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: var(--type-body);
+    line-height: 1.45;
   }
   body * {
     font-weight: 400 !important;
+  }
+  h1 {
+    font-size: var(--type-page);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  h2 {
+    font-size: 20px;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+  }
+  h3 {
+    font-size: var(--type-section);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  h4, h5, h6 {
+    font-size: var(--type-body);
+    line-height: 1.35;
+  }
+  small, .text-xs {
+    font-size: var(--type-micro) !important;
+    line-height: 1.35;
+    letter-spacing: 0;
   }
   body[data-reduced-motion="true"] * {
     @apply transition-none animate-none !important;
