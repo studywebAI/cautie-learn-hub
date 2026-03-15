@@ -9,7 +9,7 @@ import { TeacherDashboard } from '@/components/dashboard/teacher/teacher-dashboa
 import { useToast } from '@/hooks/use-toast';
 
 function ClassesPageContent() {
-  const { role, session, refetchClasses } = useContext(AppContext) as AppContextType;
+  const { role, session, refetchClasses, classes } = useContext(AppContext) as AppContextType;
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -76,11 +76,27 @@ function ClassesPageContent() {
     }
   }, [searchParams, router, toast, session, refetchClasses]);
 
+  useEffect(() => {
+    if (role !== 'teacher') return;
+    const activeClasses = (Array.isArray(classes) ? classes : []).filter(
+      (classItem) => classItem.status !== 'archived'
+    );
+    if (activeClasses.length === 0) return;
+
+    const preferredClassId =
+      (typeof window !== 'undefined' ? window.localStorage.getItem('studyweb-last-class-id') : null) ||
+      activeClasses[0].id;
+    const preferredClass = activeClasses.find((classItem) => classItem.id === preferredClassId) || activeClasses[0];
+    if (!preferredClass?.id) return;
+
+    router.replace(`/class/${preferredClass.id}?tab=subjects`);
+  }, [role, classes, router]);
+
   if (role === 'student') {
     return <StudentClasses />;
   }
 
-  return <TeacherDashboard />;
+  return <div className="p-4 text-sm text-muted-foreground">Redirecting to class...</div>;
 }
 
 

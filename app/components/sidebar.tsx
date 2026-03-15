@@ -62,6 +62,7 @@ export function AppSidebar() {
   const [dropdown, setDropdown] = useState<DropdownState>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const floatingRef = useRef<HTMLDivElement | null>(null);
+  const classDropdownTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [classItems, setClassItems] = useState<DropdownClassItem[]>([]);
   const [subjectItems, setSubjectItems] = useState<DropdownSubjectItem[]>([]);
   const [createClassOpen, setCreateClassOpen] = useState(false);
@@ -193,6 +194,19 @@ export function AppSidebar() {
   }, [dropdown]);
 
   useEffect(() => {
+    const openClassDropdown = () => {
+      if (!isTeacher || !classDropdownTriggerRef.current) return;
+      setNewClassMenuOpen(false);
+      setCreateClassOpen(false);
+      setJoinClassOpen(false);
+      openDropdownFor('classes', classDropdownTriggerRef.current);
+    };
+
+    window.addEventListener('cautie:open-class-dropdown', openClassDropdown);
+    return () => window.removeEventListener('cautie:open-class-dropdown', openClassDropdown);
+  }, [isTeacher]);
+
+  useEffect(() => {
     setClassItems((context?.classes || []) as DropdownClassItem[]);
   }, [context?.classes]);
 
@@ -206,9 +220,9 @@ export function AppSidebar() {
     );
   }, [context?.subjects]);
 
-  const isDropdownTrigger = (href: string) => href === '/classes' || href === '/subjects';
-  const canUseDropdownFor = (href: string) => href === '/classes' || href === '/subjects';
-  const getDropdownKind = (href: string) => (href === '/classes' ? 'classes' : 'subjects') as 'classes' | 'subjects';
+  const isDropdownTrigger = (href: string) => href === '/subjects';
+  const canUseDropdownFor = (href: string) => href === '/subjects';
+  const getDropdownKind = (href: string) => 'subjects' as const;
 
   const resetInlinePanels = () => {
     setCreateClassOpen(false);
@@ -599,6 +613,7 @@ export function AppSidebar() {
           class
         </label>
         <Button
+          ref={classDropdownTriggerRef}
           size="sm"
           variant="outline"
           className="mb-1.5 h-7 w-full justify-start text-xs"
