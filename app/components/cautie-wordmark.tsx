@@ -128,7 +128,7 @@ export function CautieWordmark({
           compact ? 'text-2xl font-semibold' : 'text-7xl font-bold',
           textClassName
         )}
-        style={{ fontFamily: 'var(--font-caveat), var(--font-kalam), cursive' }}
+        style={{ fontFamily: 'Inter, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif' }}
       >
         {animated ? (
           <span className="relative inline-block" style={{ width: animatedWordWidth, height: animatedWordHeight, lineHeight: 1 }}>

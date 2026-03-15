@@ -399,6 +399,12 @@
     @apply bg-background text-foreground;
     font-family: Inter, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
   }
+  button, input, textarea, select, option {
+    font-family: Inter, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  body * {
+    font-weight: 400 !important;
+  }
   body[data-reduced-motion="true"] * {
     @apply transition-none animate-none !important;
   }
