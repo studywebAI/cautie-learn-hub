@@ -85,6 +85,7 @@ export function AppSidebar() {
   const [createClassOpen, setCreateClassOpen] = useState(false);
   const [createSubjectOpen, setCreateSubjectOpen] = useState(false);
   const [joinClassOpen, setJoinClassOpen] = useState(false);
+  const [newClassMenuOpen, setNewClassMenuOpen] = useState(false);
   const [className, setClassName] = useState('');
   const [subjectTitle, setSubjectTitle] = useState('');
   const [selectedSubjectClassId, setSelectedSubjectClassId] = useState('');
@@ -208,10 +209,30 @@ export function AppSidebar() {
     setCreateClassOpen(false);
     setCreateSubjectOpen(false);
     setJoinClassOpen(false);
+    setNewClassMenuOpen(false);
     setClassName('');
     setSubjectTitle('');
     setSelectedSubjectClassId('');
     setJoinCode('');
+  };
+
+  const resolveTeacherClassRoute = (nextClassId: string) => {
+    const defaultRoute = `/class/${nextClassId}?tab=subjects`;
+    if (!pathname) return defaultRoute;
+
+    const classRouteMatch = pathname.match(/^\/class\/[^/?#]+(?<suffix>.*)$/);
+    if (classRouteMatch) {
+      const suffix = classRouteMatch.groups?.suffix || '';
+      const currentQuery = typeof window !== 'undefined' ? window.location.search : '';
+      return `/class/${nextClassId}${suffix}${currentQuery}`;
+    }
+
+    if (pathname === '/subjects') return `/class/${nextClassId}/subjects`;
+    if (pathname.startsWith('/subjects/')) return `/class/${nextClassId}/subjects`;
+    if (pathname === '/agenda') return `/class/${nextClassId}/agenda`;
+    if (pathname === '/' || pathname === '/classes') return defaultRoute;
+
+    return defaultRoute;
   };
 
   const loadDropdownData = async (kind: DropdownKind) => {
@@ -289,8 +310,16 @@ export function AppSidebar() {
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Failed to create class');
         toast({ title: 'Class created' });
+        if (data?.id) {
+          setActiveTeacherClassId(data.id);
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem('studyweb-last-class-id', data.id);
+          }
+          router.push(resolveTeacherClassRoute(data.id));
+        }
         setClassName('');
         setCreateClassOpen(false);
+        setNewClassMenuOpen(false);
         await loadDropdownData('classes');
       } catch (error: any) {
         toast({ variant: 'destructive', title: 'Could not create class', description: error?.message || 'Try again.' });
@@ -341,8 +370,17 @@ export function AppSidebar() {
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Failed to join class');
         toast({ title: data?.message || 'Joined class' });
+        const joinedClassId = data?.class?.id;
+        if (joinedClassId) {
+          setActiveTeacherClassId(joinedClassId);
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem('studyweb-last-class-id', joinedClassId);
+          }
+          router.push(resolveTeacherClassRoute(joinedClassId));
+        }
         setJoinCode('');
         setJoinClassOpen(false);
+        setNewClassMenuOpen(false);
         await loadDropdownData('classes');
       } catch (error: any) {
         toast({ variant: 'destructive', title: 'Could not join class', description: error?.message || 'Try again.' });
@@ -367,11 +405,12 @@ export function AppSidebar() {
                 variant="outline"
                 className="h-7 text-xs rounded-lg"
                 onClick={() => {
-                  setCreateClassOpen((v) => !v);
+                  setNewClassMenuOpen((v) => !v);
+                  setCreateClassOpen(false);
                   setJoinClassOpen(false);
                 }}
               >
-                + Create class
+                + New class
               </Button>
             )}
             {dropdown.kind === 'classes' && !isTeacher && (
@@ -401,6 +440,16 @@ export function AppSidebar() {
 
           {createClassOpen && (
             <div className="mb-1 space-y-1 rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
+              <button
+                type="button"
+                className="text-[11px] text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setCreateClassOpen(false);
+                  setNewClassMenuOpen(true);
+                }}
+              >
+                Back
+              </button>
               <Input
                 placeholder="Class name"
                 value={className}
@@ -450,6 +499,16 @@ export function AppSidebar() {
 
           {joinClassOpen && (
             <div className="mb-1 space-y-1 rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
+              <button
+                type="button"
+                className="text-[11px] text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setJoinClassOpen(false);
+                  setNewClassMenuOpen(true);
+                }}
+              >
+                Back
+              </button>
               <Input
                 placeholder="Enter join code"
                 value={joinCode}
@@ -464,6 +523,33 @@ export function AppSidebar() {
             </div>
           )}
 
+          {dropdown.kind === 'classes' && isTeacher && newClassMenuOpen && !createClassOpen && !joinClassOpen && (
+            <div className="mb-1 space-y-1 rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 w-full justify-start text-xs"
+                onClick={() => {
+                  setCreateClassOpen(true);
+                  setNewClassMenuOpen(false);
+                }}
+              >
+                Create new class
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 w-full justify-start text-xs"
+                onClick={() => {
+                  setJoinClassOpen(true);
+                  setNewClassMenuOpen(false);
+                }}
+              >
+                Join as teacher (collaborate)
+              </Button>
+            </div>
+          )}
+
           {loading ? (
             <p className="px-2 py-1.5 text-xs text-muted-foreground">Loading...</p>
           ) : items.length === 0 ? (
@@ -472,9 +558,15 @@ export function AppSidebar() {
             items.map((entry) => (
               <Link
                 key={entry.id}
-                href={entry.href}
+                href={dropdown.kind === 'classes' && isTeacher ? resolveTeacherClassRoute(entry.id) : entry.href}
                 className="block truncate rounded-lg px-2 py-1.5 text-sm hover:bg-[hsl(var(--surface-2))]"
                 onClick={() => {
+                  if (dropdown.kind === 'classes' && isTeacher) {
+                    setActiveTeacherClassId(entry.id);
+                    if (typeof window !== 'undefined') {
+                      window.localStorage.setItem('studyweb-last-class-id', entry.id);
+                    }
+                  }
                   resetInlinePanels();
                   setDropdown(null);
                   setOpenMobile(false);
@@ -505,7 +597,7 @@ export function AppSidebar() {
             if (typeof window !== 'undefined') {
               window.localStorage.setItem('studyweb-last-class-id', nextClassId);
             }
-            router.push(`/class/${nextClassId}?tab=subjects`);
+            router.push(resolveTeacherClassRoute(nextClassId));
             setOpenMobile(false);
           }}
           disabled={classDropdownItems.length === 0}
