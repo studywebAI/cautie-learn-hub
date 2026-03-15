@@ -4,21 +4,7 @@ import { cn } from '@/lib/utils';
 import { SHOW_CAUTIE_LOGO } from '@/lib/branding';
 
 const HIGHLIGHT_COLORS = [
-  'rgba(250, 204, 21, 0.66)',
-  'rgba(253, 224, 71, 0.66)',
-  'rgba(254, 240, 138, 0.66)',
-  'rgba(251, 191, 36, 0.64)',
-  'rgba(253, 186, 116, 0.64)',
-  'rgba(252, 165, 165, 0.62)',
-  'rgba(253, 164, 175, 0.62)',
-  'rgba(249, 168, 212, 0.62)',
-  'rgba(216, 180, 254, 0.62)',
-  'rgba(196, 181, 253, 0.62)',
-  'rgba(165, 180, 252, 0.62)',
-  'rgba(147, 197, 253, 0.62)',
-  'rgba(103, 232, 249, 0.6)',
-  'rgba(134, 239, 172, 0.6)',
-  'rgba(190, 242, 100, 0.6)',
+  'rgba(123, 165, 64, 0.9)',
 ];
 
 const LIGHT_THEME_SET = new Set(['light', 'ocean', 'forest', 'sunset', 'rose']);

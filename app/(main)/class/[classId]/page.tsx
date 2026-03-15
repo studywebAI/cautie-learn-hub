@@ -158,13 +158,29 @@ export default function ClassDetailsPage() {
 
     const tier1Targets = TIER1_TABS.filter((tabName) => tabName !== tab);
     if (tier1Targets.length > 0) {
-      void Promise.all(tier1Targets.map((tabName) => loadTabData(tabName)));
+      const tier1StartedAt = Date.now();
+      void Promise.all(tier1Targets.map((tabName) => loadTabData(tabName))).finally(() => {
+        console.log('[PRELOAD][TIER1] class workspace warm complete', {
+          classId,
+          activeTab: tab,
+          targets: tier1Targets,
+          durationMs: Date.now() - tier1StartedAt,
+        });
+      });
     }
 
     const runTier2 = () => {
       const tier2Targets = TIER2_TABS.filter((tabName) => tabName !== tab);
       if (tier2Targets.length > 0) {
-        void Promise.all(tier2Targets.map((tabName) => loadTabData(tabName)));
+        const tier2StartedAt = Date.now();
+        void Promise.all(tier2Targets.map((tabName) => loadTabData(tabName))).finally(() => {
+          console.log('[PRELOAD][TIER2] class workspace warm complete', {
+            classId,
+            activeTab: tab,
+            targets: tier2Targets,
+            durationMs: Date.now() - tier2StartedAt,
+          });
+        });
       }
     };
 

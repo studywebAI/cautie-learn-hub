@@ -32,7 +32,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { CautieWordmark } from './cautie-wordmark';
+import { SHOW_CAUTIE_LOGO } from '@/lib/branding';
 
 type DropdownKind = 'classes' | 'subjects';
 type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
@@ -41,7 +41,31 @@ type DropdownSubjectItem = { id: string; title: string; classIds: string[] };
 type StudentLane = 'assigned' | 'tools';
 
 function SidebarTopLogo({ className = '' }: { className?: string }) {
-  return <CautieWordmark compact className={cn('origin-left', className)} />;
+  const [highlightColor, setHighlightColor] = useState('rgba(123, 165, 64, 0.9)');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = window.sessionStorage.getItem('cautie-highlight-color');
+    if (saved) setHighlightColor(saved);
+  }, []);
+
+  if (!SHOW_CAUTIE_LOGO) return null;
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center justify-center rounded-full border px-4 py-1 lowercase text-white shadow-[0_0_0_2px_rgba(16,25,14,0.38)]',
+        className
+      )}
+      style={{
+        backgroundColor: highlightColor,
+        borderColor: '#32461f',
+        fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
+      }}
+    >
+      cautie
+    </span>
+  );
 }
 
 export function AppSidebar() {

@@ -71,10 +71,19 @@ export async function GET(
       }
     }
 
-    // Fetch paragraphs
+    // Fetch paragraphs with optional per-user progress snapshot
     const { data: paragraphs, error } = await (supabase as any)
       .from('paragraphs')
-      .select('*')
+      .select(`
+        id,
+        title,
+        paragraph_number,
+        chapter_id,
+        progress_snapshots(
+          student_id,
+          completion_percent
+        )
+      `)
       .eq('chapter_id', resolvedParams.chapterId)
       .order('paragraph_number', { ascending: true });
 
@@ -83,7 +92,19 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch paragraphs' }, { status: 500 });
     }
 
-    return NextResponse.json(paragraphs || []);
+    const normalizedParagraphs = (paragraphs || []).map((paragraph: any) => {
+      const progressRows = Array.isArray(paragraph.progress_snapshots) ? paragraph.progress_snapshots : [];
+      const ownProgress = progressRows.find((row: any) => row.student_id === user.id);
+      return {
+        id: paragraph.id,
+        title: paragraph.title,
+        paragraph_number: paragraph.paragraph_number,
+        chapter_id: paragraph.chapter_id,
+        completion_percent: ownProgress?.completion_percent ?? 0,
+      };
+    });
+
+    return NextResponse.json(normalizedParagraphs);
 
   } catch (err) {
     console.error('Paragraphs GET error:', err);

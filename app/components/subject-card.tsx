@@ -302,7 +302,8 @@ function IconCover({ title, description }: { title: string; description?: string
 
   return (
     <div className="w-full h-full bg-primary/10 flex items-center justify-center relative overflow-hidden">
-      <IconComponent className="w-20 h-20 text-primary" strokeWidth={1.5} />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,hsl(var(--primary)/0.2),transparent_55%),radial-gradient(circle_at_80%_70%,hsl(var(--primary)/0.14),transparent_50%)]" />
+      <IconComponent className="w-20 h-20 text-primary relative z-10" strokeWidth={1.5} />
     </div>
   );
 }
@@ -313,19 +314,18 @@ export function SubjectCard({ subject }: SubjectCardProps) {
   const className = subject.classes?.[0]?.name;
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col rounded-xl">
+    <Card className="overflow-hidden transition-all duration-200 h-full flex flex-col rounded-2xl border-border/70 bg-[hsl(var(--surface-1))] hover:border-primary/40 hover:shadow-md">
       <CardContent className="p-0 flex flex-col h-full">
-        {/* Title + Class above cover */}
-        <div className="px-3 pt-3 pb-2">
-          <h3 className="text-sm font-semibold truncate">{subject.title}</h3>
+        <div className="px-4 pt-4 pb-2">
+          <h3 className="text-sm font-semibold truncate lowercase">{subject.title}</h3>
           {className && (
-            <p className="text-xs text-muted-foreground truncate">{className}</p>
+            <p className="text-[11px] text-muted-foreground truncate lowercase mt-0.5">{className}</p>
           )}
         </div>
 
         {/* Cover area (clickable → chapter overview) */}
         <Link href={`/subjects/${subject.id}`} className="block">
-          <div className="aspect-[16/9] relative cursor-pointer mx-3 rounded-lg overflow-hidden">
+          <div className="aspect-[16/9] relative cursor-pointer mx-4 rounded-xl overflow-hidden border border-border/60">
             {subject.cover_image_url ? (
               <img
                 src={subject.cover_image_url}
@@ -339,21 +339,21 @@ export function SubjectCard({ subject }: SubjectCardProps) {
         </Link>
 
         {/* Paragraphs with progress */}
-        <div className="px-3 pt-2 pb-3 space-y-1 flex-1">
+        <div className="px-4 pt-3 pb-4 space-y-1.5 flex-1">
           {paragraphs.length > 0 ? (
             [...paragraphs, ...Array(Math.max(0, 3 - paragraphs.length)).fill(null)].slice(0, 3).map((p, idx) => {
               if (!p) {
                 return (
                   <div
                     key={`placeholder-${idx}`}
-                    className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-lg opacity-40"
+                    className="grid grid-cols-[2.8rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-2 text-xs py-1.5 px-2 rounded-lg opacity-40 min-h-8"
                   >
-                    <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-xs font-medium shrink-0 min-w-[2.2rem] text-center">
+                    <span className="bg-muted text-muted-foreground px-1.5 py-0.5 rounded-md text-[11px] font-medium text-center">
                       --
                     </span>
                     <span className="flex-1" />
-                    <span className="text-muted-foreground text-xs tabular-nums w-7 text-right">0%</span>
-                    <div className="w-10 h-1.5 bg-muted rounded-full overflow-hidden" />
+                    <span className="text-muted-foreground text-xs tabular-nums text-right">0%</span>
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden" />
                   </div>
                 );
               }
@@ -366,30 +366,28 @@ export function SubjectCard({ subject }: SubjectCardProps) {
                 <Link
                   key={p.id}
                   href={`/subjects/${subject.id}/chapters/${p.chapter_id}/paragraphs/${p.id}`}
-                  className={`flex items-center gap-2 text-xs py-1.5 px-2 rounded-lg transition-colors hover:bg-muted/50 ${
-                    isLast ? 'bg-muted/40' : ''
+                  className={`grid grid-cols-[2.8rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-2 text-xs py-1.5 px-2 rounded-lg transition-colors min-h-8 hover:bg-muted/50 ${
+                    isLast ? 'bg-primary/10' : ''
                   }`}
                 >
-                  <span className="bg-foreground text-background px-2 py-0.5 rounded-full text-xs font-medium shrink-0 min-w-[2.2rem] text-center">
+                  <span className="bg-muted text-foreground px-1.5 py-0.5 rounded-md text-[11px] font-semibold text-center tabular-nums">
                     {p.chapter_number}.{p.paragraph_number}
                   </span>
-                  <span className="truncate flex-1 text-xs">{p.title}</span>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-muted-foreground text-xs tabular-nums w-7 text-right">
-                      {roundedProgress}%
-                    </span>
-                    <div className="w-10 h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary rounded-full transition-all"
-                        style={{ width: `${roundedProgress}%` }}
-                      />
-                    </div>
+                  <span className="truncate text-xs">{p.title}</span>
+                  <span className="text-muted-foreground text-xs tabular-nums text-right">
+                    {roundedProgress}%
+                  </span>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all"
+                      style={{ width: `${roundedProgress}%` }}
+                    />
                   </div>
                 </Link>
               );
             })
           ) : (
-            <p className="text-xs text-muted-foreground text-center py-3">no paragraphs yet</p>
+            <p className="text-xs text-muted-foreground text-center py-3 lowercase">no paragraphs yet</p>
           )}
         </div>
       </CardContent>

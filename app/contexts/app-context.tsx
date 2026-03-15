@@ -289,12 +289,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     applyAppearance(resolvedTheme);
 
     const init = async () => {
+      const tier0StartedAt = Date.now();
       try {
         const sessionResult = await supabase.auth.getSession();
         const newSession = sessionResult.data.session;
         setSession(newSession);
 
         if (!newSession) {
+          console.log('[PRELOAD][TIER0] ready (no session)', { durationMs: Date.now() - tier0StartedAt });
           setIsTier0Ready(true);
           return;
         }
@@ -320,9 +322,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           // Save to cache for next visit
           saveToLocalStorage('studyweb-cached-dashboard', dashboardData);
         }
+        console.log('[PRELOAD][TIER0] ready', { durationMs: Date.now() - tier0StartedAt });
         setIsTier0Ready(true);
       } catch (e) {
         console.error('Init error:', e);
+        console.log('[PRELOAD][TIER0] failed/partial', { durationMs: Date.now() - tier0StartedAt });
         setIsTier0Ready(true);
       } finally {
         setIsLoading(false);
