@@ -2,6 +2,7 @@
 
 import { useContext, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { SubjectsGrid } from '@/components/subjects-grid';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { ArrowUpRight } from 'lucide-react';
 
 export default function SubjectsPage() {
   const context = useContext(AppContext) as AppContextType | null;
+  const router = useRouter();
   const isTeacher = context?.role === 'teacher';
   const [teacherClassId, setTeacherClassId] = useState<string | undefined>(undefined);
 
@@ -24,6 +26,11 @@ export default function SubjectsPage() {
       teacherActiveClasses.find((classItem) => classItem.id === savedClassId) || teacherActiveClasses[0];
     setTeacherClassId(preferredClass?.id);
   }, [isTeacher, teacherActiveClasses]);
+
+  useEffect(() => {
+    if (!isTeacher || !teacherClassId) return;
+    router.replace(`/class/${teacherClassId}?tab=subjects`);
+  }, [isTeacher, teacherClassId, router]);
 
   const selectedClass = useMemo(
     () => teacherActiveClasses.find((classItem) => classItem.id === teacherClassId),
@@ -42,6 +49,16 @@ export default function SubjectsPage() {
       <div className="h-full p-4 md:p-6">
         <div className="rounded-lg border border-dashed p-8 text-sm text-muted-foreground">
           No active class selected. Select or create a class first.
+        </div>
+      </div>
+    );
+  }
+
+  if (isTeacher) {
+    return (
+      <div className="h-full p-4 md:p-6">
+        <div className="rounded-lg border border-dashed p-8 text-sm text-muted-foreground">
+          Redirecting to the selected class subjects...
         </div>
       </div>
     );

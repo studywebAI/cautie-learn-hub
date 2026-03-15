@@ -22,8 +22,8 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "19rem"
-const SIDEBAR_WIDTH_MOBILE = "19rem"
+const SIDEBAR_WIDTH = "16.5rem"
+const SIDEBAR_WIDTH_MOBILE = "17.5rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
@@ -249,7 +249,7 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border"
+            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-xl group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border"
           >
             {children}
           </div>
@@ -440,7 +440,7 @@ const SidebarGroupLabel = React.forwardRef<
       ref={ref}
       data-sidebar="group-label"
       className={cn(
-        "duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-[11px] tracking-[0.08em] text-sidebar-foreground/55 outline-none transition-[margin,opa] ease-linear [&>svg]:size-4 [&>svg]:shrink-0",
+        "duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-[11px] tracking-[0.04em] text-sidebar-foreground/52 outline-none transition-[margin,opa] ease-linear [&>svg]:size-4 [&>svg]:shrink-0",
         "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
         className
       )}
@@ -513,13 +513,13 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-md p-2 pl-3 text-left text-[13px] text-sidebar-foreground/90 outline-none transition-[width,height,padding] hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-sidebar-foreground active:bg-[hsl(var(--sidebar-accent)/0.64)] active:text-sidebar-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-[hsl(var(--sidebar-accent)/0.76)] data-[active=true]:font-normal data-[active=true]:text-[hsl(var(--sidebar-active-foreground)/0.92)] data-[state=open]:hover:bg-[hsl(var(--sidebar-accent)/0.5)] data-[state=open]:hover:text-sidebar-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-lg p-2 pl-3 text-left text-[13px] text-sidebar-foreground/88 outline-none transition-[width,height,padding,color,background-color] duration-150 hover:bg-[hsl(var(--sidebar-accent)/0.58)] hover:text-sidebar-foreground active:bg-[hsl(var(--sidebar-accent)/0.72)] active:text-sidebar-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-[hsl(var(--sidebar-accent)/0.92)] data-[active=true]:font-medium data-[active=true]:text-[hsl(var(--sidebar-active-foreground)/0.98)] data-[state=open]:hover:bg-[hsl(var(--sidebar-accent)/0.58)] data-[state=open]:hover:text-sidebar-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "hover:bg-[hsl(var(--sidebar-accent)/0.55)] hover:text-sidebar-foreground",
+        default: "hover:bg-[hsl(var(--sidebar-accent)/0.58)] hover:text-sidebar-foreground",
         outline:
-          "bg-background border border-sidebar-border hover:bg-[hsl(var(--sidebar-accent)/0.55)] hover:text-sidebar-foreground",
+          "bg-background border border-sidebar-border hover:bg-[hsl(var(--sidebar-accent)/0.58)] hover:text-sidebar-foreground",
       },
       size: {
         default: "h-9 text-[13px]",

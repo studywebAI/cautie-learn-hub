@@ -12,9 +12,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Helvetica", "Arial", ...fontFamily.sans],
-        body: ["Helvetica", "Arial", ...fontFamily.sans],
-        headline: ["Helvetica", "Arial", ...fontFamily.sans],
+        sans: ["Inter", "SF Pro Text", "Segoe UI", "Helvetica", "Arial", ...fontFamily.sans],
+        body: ["Inter", "SF Pro Text", "Segoe UI", "Helvetica", "Arial", ...fontFamily.sans],
+        headline: ["Inter", "SF Pro Text", "Segoe UI", "Helvetica", "Arial", ...fontFamily.sans],
         dyslexia: ["var(--font-atkinson-hyperlegible)", ...fontFamily.sans],
       },
       colors: {

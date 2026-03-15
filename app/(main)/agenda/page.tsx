@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useContext, useMemo, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { AppContext, AppContextType, PersonalTask, ClassAssignment, ClassInfo, useDictionary } from '@/contexts/app-context';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,6 +21,8 @@ import { useToast } from '@/hooks/use-toast';
 type ViewMode = 'week' | 'list';
 
 export default function AgendaPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { assignments, classes, isLoading, role, personalTasks, createPersonalTask, updatePersonalTask, refetchAssignments } = useContext(AppContext) as AppContextType;
   const { dictionary } = useDictionary();
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date());
@@ -32,9 +35,35 @@ export default function AgendaPage() {
   const [chapters, setChapters] = useState<Map<string, { id: string; title: string }>>(new Map());
   const { toast } = useToast();
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
 
   const isStudent = role === 'student';
   const isTeacher = role === 'teacher';
+  const classIdFromQuery = searchParams.get('classId') || '';
+
+  useEffect(() => {
+    if (!isTeacher) return;
+    const teacherClasses = (classes || []).filter((classItem) => classItem.status !== 'archived');
+    if (teacherClasses.length === 0) {
+      setSelectedClassId('');
+      return;
+    }
+
+    const savedClassId = typeof window !== 'undefined' ? window.localStorage.getItem('studyweb-last-class-id') : null;
+    const preferredClassId = classIdFromQuery || savedClassId || teacherClasses[0].id;
+    const resolvedClassId =
+      teacherClasses.find((classItem) => classItem.id === preferredClassId)?.id || teacherClasses[0].id;
+
+    setSelectedClassId(resolvedClassId);
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('studyweb-last-class-id', resolvedClassId);
+    }
+
+    if (classIdFromQuery !== resolvedClassId) {
+      router.replace(`/agenda?classId=${resolvedClassId}`);
+    }
+  }, [isTeacher, classes, classIdFromQuery, router]);
 
   // Fetch chapter data for assignments with chapter_id
   useEffect(() => {
@@ -115,13 +144,15 @@ export default function AgendaPage() {
     } else {
       // Teacher view - only show assignments from their classes
       const teacherAssignmentEvents = assignmentEvents.filter(event => 
-        (classes || []).some((c: ClassInfo) => c.id === event.href.replace('/class/', ''))
+        selectedClassId
+          ? event.href.replace('/class/', '') === selectedClassId
+          : (classes || []).some((c: ClassInfo) => c.id === event.href.replace('/class/', ''))
       );
       allEvents = teacherAssignmentEvents;
     }
 
     return allEvents;
-  }, [assignments, classes, isStudent, personalTasks, isLoading, chapters]);
+  }, [assignments, classes, isStudent, personalTasks, isLoading, chapters, selectedClassId]);
 
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -289,6 +320,28 @@ export default function AgendaPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div></div>
           <div className="flex items-center gap-3">
+            {isTeacher && (
+              <select
+                value={selectedClassId}
+                onChange={(event) => {
+                  const nextClassId = event.target.value;
+                  setSelectedClassId(nextClassId);
+                  if (typeof window !== 'undefined') {
+                    window.localStorage.setItem('studyweb-last-class-id', nextClassId);
+                  }
+                  router.replace(`/agenda?classId=${nextClassId}`);
+                }}
+                className="h-9 min-w-[190px] rounded-md border border-border bg-background px-2 text-sm"
+              >
+                {(classes || [])
+                  .filter((classItem) => classItem.status !== 'archived')
+                  .map((classItem) => (
+                    <option key={classItem.id} value={classItem.id}>
+                      {classItem.name}
+                    </option>
+                  ))}
+              </select>
+            )}
             <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
             
             {isStudent && (

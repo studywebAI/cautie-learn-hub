@@ -41,27 +41,18 @@ type DropdownSubjectItem = { id: string; title: string; classIds: string[] };
 type StudentLane = 'school' | 'tools';
 
 function SidebarTopLogo({ className = '' }: { className?: string }) {
-  const [highlightColor, setHighlightColor] = useState('rgba(110, 158, 53, 0.92)');
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const saved = window.sessionStorage.getItem('cautie-highlight-color');
-    if (saved) setHighlightColor(saved);
-  }, []);
-
   if (!SHOW_CAUTIE_LOGO) return null;
 
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center rounded-full border-[3px] px-4 py-0.5 lowercase text-white shadow-[0_2px_0_rgba(20,33,12,0.5)]',
+        'inline-flex items-center justify-center rounded-full border px-4 py-1 lowercase text-[13px] font-medium tracking-[0.01em]',
         className
       )}
       style={{
-        backgroundColor: highlightColor,
-        borderColor: '#2f4a1d',
-        fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
-        fontStyle: 'italic',
+        backgroundColor: 'hsl(var(--sidebar-accent))',
+        borderColor: 'hsl(var(--sidebar-border))',
+        color: 'hsl(var(--sidebar-foreground))',
       }}
     >
       cautie
@@ -101,12 +92,13 @@ export function AppSidebar() {
   });
 
   const isTeacher = context?.role === 'teacher';
+  const teacherAgendaHref = isTeacher && activeTeacherClassId ? `/agenda?classId=${activeTeacherClassId}` : '/agenda';
 
   const menuItems = [
     { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
     ...(isTeacher ? [] : [{ href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen }]),
     { href: '/classes', label: isTeacher ? 'manage' : 'classes', icon: School },
-    { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
+    { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: Calendar },
     { href: '/material', label: dictionary.sidebar.material || 'material', icon: FileSignature },
   ];
 
@@ -225,13 +217,16 @@ export function AppSidebar() {
     const classRouteMatch = pathname.match(/^\/class\/[^/?#]+(?<suffix>.*)$/);
     if (classRouteMatch) {
       const suffix = classRouteMatch.groups?.suffix || '';
+      if (suffix === '/agenda' || suffix.startsWith('/agenda/')) {
+        return `/agenda?classId=${nextClassId}`;
+      }
       const currentQuery = typeof window !== 'undefined' ? window.location.search : '';
       return `/class/${nextClassId}${suffix}${currentQuery}`;
     }
 
-    if (pathname === '/subjects') return `/class/${nextClassId}/subjects`;
-    if (pathname.startsWith('/subjects/')) return `/class/${nextClassId}/subjects`;
-    if (pathname === '/agenda') return `/class/${nextClassId}/agenda`;
+    if (pathname === '/subjects') return `/class/${nextClassId}?tab=subjects`;
+    if (pathname.startsWith('/subjects/')) return `/class/${nextClassId}?tab=subjects`;
+    if (pathname === '/agenda') return `/agenda?classId=${nextClassId}`;
     if (pathname === '/' || pathname === '/classes') return defaultRoute;
 
     return defaultRoute;
@@ -283,6 +278,7 @@ export function AppSidebar() {
 
   const isMenuItemActive = (href: string) => {
     if (href === '/classes') return pathname === '/classes' || pathname.startsWith('/class/');
+    if (href.startsWith('/agenda')) return pathname === '/agenda';
     if (href === '/subjects') return pathname === '/subjects' || pathname.startsWith('/subjects/');
     if (href.startsWith('/tools')) return pathname.startsWith(href);
     return pathname === href;
@@ -748,7 +744,7 @@ export function AppSidebar() {
         </div>
 
         {/* Full drawer sidebar (when hamburger is clicked) */}
-        <Sidebar className="w-[19rem]">
+        <Sidebar className="w-[17.5rem]">
           <SidebarContent className="px-3 py-3 flex-1">
             <div className="mb-2 flex items-center px-2">
               <SidebarTopLogo className="scale-[1.02] text-3xl leading-none" />
@@ -830,7 +826,7 @@ export function AppSidebar() {
 
   // Desktop: Regular sidebar with trigger
   return (
-    <Sidebar className="w-64" collapsible="icon">
+    <Sidebar className="w-[16.5rem]" collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
