@@ -113,6 +113,26 @@ export function AppSidebar() {
     window.localStorage.setItem('studyweb-student-lane', studentLane);
   }, [studentLane]);
 
+  useEffect(() => {
+    if (isTeacher || typeof window === 'undefined') return;
+    const currentPathWithSearch = `${window.location.pathname}${window.location.search}`;
+
+    if (pathname?.startsWith('/tools')) {
+      if (studentLane !== 'tools') {
+        setStudentLane('tools');
+      }
+      window.localStorage.setItem('studyweb-last-tools-route', currentPathWithSearch);
+      return;
+    }
+
+    if (pathname?.startsWith('/classes') || pathname?.startsWith('/subjects') || pathname?.startsWith('/agenda') || pathname === '/' || pathname?.startsWith('/material')) {
+      if (studentLane !== 'school') {
+        setStudentLane('school');
+      }
+      window.localStorage.setItem('studyweb-last-school-route', currentPathWithSearch);
+    }
+  }, [pathname, isTeacher, studentLane]);
+
   const classDropdownItems = useMemo(() => {
     return [...classItems]
       .filter((classItem) => classItem.status !== 'archived')
@@ -632,24 +652,39 @@ export function AppSidebar() {
   const renderStudentLaneToggle = () => {
     if (isTeacher) return null;
 
+    const switchStudentLane = (nextLane: StudentLane) => {
+      setStudentLane(nextLane);
+      if (typeof window === 'undefined') return;
+
+      const lastSchoolRoute = window.localStorage.getItem('studyweb-last-school-route') || '/classes';
+      const lastToolsRoute = window.localStorage.getItem('studyweb-last-tools-route') || '/tools';
+      const isOnToolsRoute = pathname?.startsWith('/tools');
+
+      if (nextLane === 'tools' && !isOnToolsRoute) {
+        router.push(lastToolsRoute);
+        setOpenMobile(false);
+        return;
+      }
+
+      if (nextLane === 'school' && isOnToolsRoute) {
+        router.push(lastSchoolRoute);
+        setOpenMobile(false);
+      }
+    };
+
     return (
-      <div className="mb-2 grid grid-cols-2 gap-1 px-2">
-        <Button
-          size="sm"
-          variant={studentLane === 'school' ? 'default' : 'outline'}
-          className="h-7 text-xs lowercase"
-          onClick={() => setStudentLane('school')}
+      <div className="mb-2 px-2">
+        <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/50 lowercase">
+          mode
+        </label>
+        <select
+          value={studentLane}
+          onChange={(event) => switchStudentLane(event.target.value as StudentLane)}
+          className="h-8 w-full rounded-md border border-sidebar-border bg-sidebar px-2 text-xs text-sidebar-foreground"
         >
-          school
-        </Button>
-        <Button
-          size="sm"
-          variant={studentLane === 'tools' ? 'default' : 'outline'}
-          className="h-7 text-xs lowercase"
-          onClick={() => setStudentLane('tools')}
-        >
-          tools
-        </Button>
+          <option value="school">school</option>
+          <option value="tools">tools</option>
+        </select>
       </div>
     );
   };

@@ -188,6 +188,21 @@ export default function DashboardPage() {
     router.replace(`/class/${preferredClass.id}?tab=subjects`);
   }, [session, role, isLoading, classes, router]);
 
+  useEffect(() => {
+    if (!session || role !== 'student' || isLoading) return;
+    if (typeof window === 'undefined') return;
+
+    const savedLane = window.localStorage.getItem('studyweb-student-lane');
+    if (savedLane === 'tools') {
+      const lastToolsRoute = window.localStorage.getItem('studyweb-last-tools-route') || '/tools';
+      router.replace(lastToolsRoute);
+      return;
+    }
+
+    const lastSchoolRoute = window.localStorage.getItem('studyweb-last-school-route') || '/classes';
+    router.replace(lastSchoolRoute);
+  }, [session, role, isLoading, router]);
+
   // Show skeleton ONLY if truly loading AND no cached data available
   if (isLoading && !hasCachedData) {
     return <DashboardSkeleton />;
@@ -195,9 +210,13 @@ export default function DashboardPage() {
 
   if (!session) return <StudentDashboard />;
 
+  if (role === 'student') {
+    return <DashboardSkeleton />;
+  }
+
   if (role === 'teacher' && (Array.isArray(classes) ? classes : []).some((classItem) => classItem.status !== 'archived')) {
     return <DashboardSkeleton />;
   }
 
-  return role === 'student' ? <StudentDashboard /> : <TeacherSummaryDashboard />;
+  return <TeacherSummaryDashboard />;
 }
