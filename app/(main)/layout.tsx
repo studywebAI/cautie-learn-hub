@@ -3,6 +3,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AppSidebar } from "@/components/sidebar";
 import { StartupSplash } from "@/components/startup-splash";
+import { GlobalCommandPalette } from "@/components/global-command-palette";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePathname } from "next/navigation";
@@ -53,6 +54,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return (
         <SidebarProvider>
             <StartupSplash visible={showStartupSplash} onIntroAnimationDone={onIntroAnimationDone} />
+            <GlobalCommandPalette />
             <div className={showStartupSplash ? 'opacity-0 pointer-events-none select-none' : ''}>
                 <AppSidebar />
             </div>

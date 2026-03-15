@@ -41,7 +41,7 @@ type DropdownSubjectItem = { id: string; title: string; classIds: string[] };
 type StudentLane = 'assigned' | 'tools';
 
 function SidebarTopLogo({ className = '' }: { className?: string }) {
-  const [highlightColor, setHighlightColor] = useState('rgba(123, 165, 64, 0.9)');
+  const [highlightColor, setHighlightColor] = useState('rgba(110, 158, 53, 0.92)');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -54,13 +54,14 @@ function SidebarTopLogo({ className = '' }: { className?: string }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center rounded-full border px-4 py-1 lowercase text-white shadow-[0_0_0_2px_rgba(16,25,14,0.38)]',
+        'inline-flex items-center justify-center rounded-full border-[3px] px-4 py-0.5 lowercase text-white shadow-[0_2px_0_rgba(20,33,12,0.5)]',
         className
       )}
       style={{
         backgroundColor: highlightColor,
-        borderColor: '#32461f',
+        borderColor: '#2f4a1d',
         fontFamily: 'var(--font-caveat), var(--font-kalam), cursive',
+        fontStyle: 'italic',
       }}
     >
       cautie
