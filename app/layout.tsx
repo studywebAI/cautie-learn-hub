@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Libre_Baskerville, Atkinson_Hyperlegible, Kalam, Caveat } from 'next/font/google';
@@ -36,7 +36,13 @@ export const metadata: Metadata = {
   title: "cautie",
   description: "The future of learning, powered by AI.",
   manifest: "/manifest.json",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: "#007bff",
 };
 

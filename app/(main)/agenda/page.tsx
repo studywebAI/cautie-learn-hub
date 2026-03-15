@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useContext, useMemo, useEffect } from 'react';
+import { Suspense, useState, useContext, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { AppContext, AppContextType, PersonalTask, ClassAssignment, ClassInfo, useDictionary } from '@/contexts/app-context';
@@ -21,6 +21,25 @@ import { useToast } from '@/hooks/use-toast';
 type ViewMode = 'week' | 'list';
 
 export default function AgendaPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          <div className="lg:col-span-2">
+            <Skeleton className="h-[400px] w-full" />
+          </div>
+          <div>
+            <Skeleton className="h-64 w-full" />
+          </div>
+        </div>
+      }
+    >
+      <AgendaPageContent />
+    </Suspense>
+  );
+}
+
+function AgendaPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { assignments, classes, isLoading, role, personalTasks, createPersonalTask, updatePersonalTask, refetchAssignments } = useContext(AppContext) as AppContextType;
