@@ -76,7 +76,7 @@ export function AppSidebar() {
 
   const isTeacher = context?.role === 'teacher';
   const activeClassTab = searchParams?.get('tab') || '';
-  const teacherSubjectsHref = isTeacher && activeTeacherClassId ? `/class/${activeTeacherClassId}?tab=subjects` : '/subjects';
+  const teacherSubjectsHref = isTeacher && activeTeacherClassId ? `/subjects?classId=${activeTeacherClassId}` : '/subjects';
   const teacherManageHref = isTeacher && activeTeacherClassId ? `/class/${activeTeacherClassId}?tab=group` : '/classes';
   const teacherAgendaHref = isTeacher && activeTeacherClassId ? `/agenda?classId=${activeTeacherClassId}` : '/agenda';
 
