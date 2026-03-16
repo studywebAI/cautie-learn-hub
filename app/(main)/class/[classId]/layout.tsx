@@ -57,14 +57,14 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const visibleTabs = tabs;
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col lg:flex-row">
       {/* Class Sidebar */}
-      <aside className="w-56 border-r bg-card flex flex-col shrink-0">
+      <aside className="w-full border-b bg-card flex flex-col shrink-0 lg:w-56 lg:border-b-0 lg:border-r">
         {/* Class Switch Action */}
         <div className="p-3 border-b">
           <button
             type="button"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
             onClick={() => {
               window.dispatchEvent(new Event('cautie:open-class-dropdown'));
             }}
@@ -75,7 +75,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
 
         {/* Class Title */}
         <div className="p-4 border-b">
-          <h2 className="font-semibold truncate">{className || 'Loading...'}</h2>
+          <h2 className="truncate">{className || 'Loading...'}</h2>
         </div>
 
         {/* Navigation Tabs */}
@@ -90,7 +90,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
                 replace
                 prefetch={true}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm mb-1 transition-colors",
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-xs mb-1 transition-colors",
                   isActive 
                     ? "border border-border/70 bg-[hsl(var(--surface-2))] text-foreground" 
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -105,7 +105,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto p-6">
+      <main className="flex-1 overflow-auto p-4 lg:p-6">
         {children}
       </main>
     </div>

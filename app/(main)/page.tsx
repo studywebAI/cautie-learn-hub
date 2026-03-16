@@ -93,41 +93,41 @@ function TeacherSummaryDashboard() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
+                    <CardTitle className="text-sm">Total Classes</CardTitle>
                     <School className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{teacherClasses.length}</div>
+                    <div className="text-xl">{teacherClasses.length}</div>
                     <p className="text-xs text-muted-foreground">classes managed</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+                    <CardTitle className="text-sm">Total Students</CardTitle>
                      <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{totalStudents}</div>
+                    <div className="text-xl">{totalStudents}</div>
                     <p className="text-xs text-muted-foreground">students across all classes</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Active Assignments</CardTitle>
+                    <CardTitle className="text-sm">Active Assignments</CardTitle>
                      <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{activeAssignments}</div>
+                    <div className="text-xl">{activeAssignments}</div>
                     <p className="text-xs text-muted-foreground">upcoming assignments</p>
                 </CardContent>
               </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
+                      <CardTitle className="text-sm">Active Alerts</CardTitle>
                        <Activity className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                      <div className="text-2xl font-bold">0</div>
+                      <div className="text-xl">0</div>
                       <p className="text-xs text-muted-foreground">students need attention</p>
                   </CardContent>
                 </Card>
@@ -171,24 +171,6 @@ export default function DashboardPage() {
   const hasCachedData = cached && cached.classes && cached.classes.length > 0;
 
   useEffect(() => {
-    if (!session || role !== 'teacher' || isLoading) return;
-
-    const activeClasses = (Array.isArray(classes) ? classes : []).filter(
-      (classItem) => classItem.status !== 'archived'
-    );
-    if (activeClasses.length === 0) return;
-
-    const preferredClassId =
-      (typeof window !== 'undefined' ? window.localStorage.getItem('studyweb-last-class-id') : null) ||
-      activeClasses[0].id;
-
-    const preferredClass = activeClasses.find((classItem) => classItem.id === preferredClassId) || activeClasses[0];
-    if (!preferredClass?.id) return;
-
-    router.replace(`/class/${preferredClass.id}?tab=subjects`);
-  }, [session, role, isLoading, classes, router]);
-
-  useEffect(() => {
     if (!session || role !== 'student' || isLoading) return;
     if (typeof window === 'undefined') return;
 
@@ -214,9 +196,7 @@ export default function DashboardPage() {
     return <StudentDashboard />;
   }
 
-  if (role === 'teacher' && (Array.isArray(classes) ? classes : []).some((classItem) => classItem.status !== 'archived')) {
-    return <DashboardSkeleton />;
-  }
+  if (role === 'teacher') return <TeacherSummaryDashboard />;
 
-  return <TeacherSummaryDashboard />;
+  return <StudentDashboard />;
 }

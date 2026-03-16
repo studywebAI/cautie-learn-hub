@@ -4,37 +4,37 @@
 
 @layer base {
   :root {
-    --type-micro: 12px;
-    --type-body: 14px;
-    --type-section: 17px;
-    --type-page: 28px;
-    --background: 0 0% 99%;
-    --foreground: 0 0% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 11%;
+    --type-micro: 11px;
+    --type-body: 13px;
+    --type-section: 15px;
+    --type-page: 22px;
+    --background: 0 0% 97%;
+    --foreground: 0 0% 12%;
+    --card: 0 0% 99%;
+    --card-foreground: 0 0% 12%;
+    --popover: 0 0% 99%;
+    --popover-foreground: 0 0% 12%;
     --primary: 0 0% 9%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 95%;
+    --secondary: 0 0% 94%;
     --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 44%;
-    --accent: 0 0% 94%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 42%;
+    --accent: 0 0% 93%;
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
+    --border: 0 0% 86%;
+    --input: 0 0% 86%;
     --ring: 0 0% 18%;
     --radius: 0.875rem;
-    --surface-1: 0 0% 100%;
-    --surface-2: 0 0% 97%;
-    --surface-3: 0 0% 94%;
-    --interactive-hover: 0 0% 92%;
-    --interactive-active: 0 0% 89%;
+    --surface-1: 0 0% 99%;
+    --surface-2: 0 0% 96%;
+    --surface-3: 0 0% 93%;
+    --interactive-hover: 0 0% 91%;
+    --interactive-active: 0 0% 88%;
     --focus-ring: 0 0% 26%;
     --chart-1: 0 0% 22%;
     --chart-2: 0 0% 36%;
@@ -42,11 +42,11 @@
     --chart-4: 0 0% 64%;
     --chart-5: 0 0% 78%;
 
-    --sidebar-background: 0 0% 97%;
+    --sidebar-background: 0 0% 96%;
     --sidebar-foreground: 0 0% 36%;
     --sidebar-primary: 0 0% 9%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 92%;
+    --sidebar-accent: 0 0% 91%;
     --sidebar-accent-foreground: 0 0% 18%;
     --sidebar-active-foreground: 0 0% 14%;
     --sidebar-border: 0 0% 87%;
@@ -54,26 +54,26 @@
   }
 
   .dark {
-    --background: 0 0% 6%;
+    --background: 0 0% 7%;
     --foreground: 0 0% 90%;
-    --card: 0 0% 10%;
+    --card: 0 0% 9%;
     --card-foreground: 0 0% 90%;
-    --popover: 0 0% 10%;
+    --popover: 0 0% 9%;
     --popover-foreground: 0 0% 90%;
     --primary: 0 0% 92%;
     --primary-foreground: 0 0% 6%;
-    --secondary: 0 0% 14%;
+    --secondary: 0 0% 13%;
     --secondary-foreground: 0 0% 92%;
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 62%;
-    --accent: 0 0% 14%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 0 0% 13%;
     --accent-foreground: 0 0% 92%;
     --destructive: 0 62% 35%;
     --destructive-foreground: 0 0% 100%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
     --ring: 0 0% 84%;
     --chart-1: 0 0% 78%;
     --chart-2: 0 0% 62%;
@@ -81,17 +81,17 @@
     --chart-4: 0 0% 36%;
     --chart-5: 0 0% 24%;
 
-    --surface-1: 0 0% 10%;
-    --surface-2: 0 0% 12%;
-    --surface-3: 0 0% 14%;
-    --interactive-hover: 0 0% 17%;
-    --interactive-active: 0 0% 21%;
+    --surface-1: 0 0% 9%;
+    --surface-2: 0 0% 11%;
+    --surface-3: 0 0% 13%;
+    --interactive-hover: 0 0% 16%;
+    --interactive-active: 0 0% 20%;
     --focus-ring: 0 0% 84%;
-    --sidebar-background: 0 0% 9%;
+    --sidebar-background: 0 0% 8%;
     --sidebar-foreground: 0 0% 74%;
     --sidebar-primary: 0 0% 92%;
     --sidebar-primary-foreground: 0 0% 6%;
-    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent: 0 0% 13%;
     --sidebar-accent-foreground: 0 0% 88%;
     --sidebar-active-foreground: 0 0% 94%;
     --sidebar-border: 0 0% 18%;
@@ -123,26 +123,26 @@
   }
 
   .theme-light {
-    --background: 0 0% 99%;
-    --foreground: 0 0% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 11%;
+    --background: 0 0% 97%;
+    --foreground: 0 0% 12%;
+    --card: 0 0% 99%;
+    --card-foreground: 0 0% 12%;
+    --popover: 0 0% 99%;
+    --popover-foreground: 0 0% 12%;
     --primary: 0 0% 9%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 95%;
+    --secondary: 0 0% 94%;
     --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 44%;
-    --accent: 0 0% 94%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 42%;
+    --accent: 0 0% 93%;
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
+    --border: 0 0% 86%;
+    --input: 0 0% 86%;
     --ring: 0 0% 18%;
     --chart-1: 0 0% 22%;
     --chart-2: 0 0% 36%;
@@ -150,17 +150,17 @@
     --chart-4: 0 0% 64%;
     --chart-5: 0 0% 78%;
 
-    --surface-1: 0 0% 100%;
-    --surface-2: 0 0% 97%;
-    --surface-3: 0 0% 94%;
-    --interactive-hover: 0 0% 92%;
-    --interactive-active: 0 0% 89%;
+    --surface-1: 0 0% 99%;
+    --surface-2: 0 0% 96%;
+    --surface-3: 0 0% 93%;
+    --interactive-hover: 0 0% 91%;
+    --interactive-active: 0 0% 88%;
     --focus-ring: 0 0% 26%;
-    --sidebar-background: 0 0% 97%;
+    --sidebar-background: 0 0% 96%;
     --sidebar-foreground: 0 0% 36%;
     --sidebar-primary: 0 0% 9%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 92%;
+    --sidebar-accent: 0 0% 91%;
     --sidebar-accent-foreground: 0 0% 18%;
     --sidebar-active-foreground: 0 0% 14%;
     --sidebar-border: 0 0% 87%;
@@ -168,26 +168,26 @@
   }
 
   .theme-dark {
-    --background: 0 0% 6%;
+    --background: 0 0% 7%;
     --foreground: 0 0% 90%;
-    --card: 0 0% 10%;
+    --card: 0 0% 9%;
     --card-foreground: 0 0% 90%;
-    --popover: 0 0% 10%;
+    --popover: 0 0% 9%;
     --popover-foreground: 0 0% 90%;
     --primary: 0 0% 92%;
     --primary-foreground: 0 0% 6%;
-    --secondary: 0 0% 14%;
+    --secondary: 0 0% 13%;
     --secondary-foreground: 0 0% 92%;
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 62%;
-    --accent: 0 0% 14%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 0 0% 13%;
     --accent-foreground: 0 0% 92%;
     --destructive: 0 62% 35%;
     --destructive-foreground: 0 0% 100%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
     --ring: 0 0% 84%;
     --chart-1: 0 0% 78%;
     --chart-2: 0 0% 62%;
@@ -195,17 +195,17 @@
     --chart-4: 0 0% 36%;
     --chart-5: 0 0% 24%;
 
-    --surface-1: 0 0% 10%;
-    --surface-2: 0 0% 12%;
-    --surface-3: 0 0% 14%;
-    --interactive-hover: 0 0% 17%;
-    --interactive-active: 0 0% 21%;
+    --surface-1: 0 0% 9%;
+    --surface-2: 0 0% 11%;
+    --surface-3: 0 0% 13%;
+    --interactive-hover: 0 0% 16%;
+    --interactive-active: 0 0% 20%;
     --focus-ring: 0 0% 84%;
-    --sidebar-background: 0 0% 9%;
+    --sidebar-background: 0 0% 8%;
     --sidebar-foreground: 0 0% 74%;
     --sidebar-primary: 0 0% 92%;
     --sidebar-primary-foreground: 0 0% 6%;
-    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent: 0 0% 13%;
     --sidebar-accent-foreground: 0 0% 88%;
     --sidebar-active-foreground: 0 0% 94%;
     --sidebar-border: 0 0% 18%;
@@ -403,43 +403,48 @@
     @apply bg-background text-foreground;
     font-family: Inter, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
     font-size: var(--type-body);
-    line-height: 1.5;
+    line-height: 1.45;
     letter-spacing: -0.004em;
-    font-weight: 450;
+    font-weight: 400;
   }
   button, input, textarea, select, option {
     font-family: Inter, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
     font-size: var(--type-body);
-    line-height: 1.5;
-    font-weight: 450;
+    line-height: 1.45;
+    font-weight: 400;
   }
   h1 {
     font-size: var(--type-page);
     line-height: 1.2;
     letter-spacing: -0.02em;
-    font-weight: 560;
+    font-weight: 500;
   }
   h2 {
-    font-size: 22px;
+    font-size: 18px;
     line-height: 1.25;
     letter-spacing: -0.015em;
-    font-weight: 540;
+    font-weight: 500;
   }
   h3 {
     font-size: var(--type-section);
     line-height: 1.35;
     letter-spacing: -0.01em;
-    font-weight: 530;
+    font-weight: 500;
   }
   h4, h5, h6 {
     font-size: var(--type-body);
     line-height: 1.35;
-    font-weight: 520;
+    font-weight: 400;
   }
   small, .text-xs {
     font-size: var(--type-micro) !important;
     line-height: 1.35;
     letter-spacing: 0;
+  }
+  .font-bold,
+  .font-semibold,
+  .font-medium {
+    font-weight: 400 !important;
   }
   body[data-reduced-motion="true"] * {
     @apply transition-none animate-none !important;
