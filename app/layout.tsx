@@ -8,14 +8,14 @@ import { AppContextProvider } from "@/contexts/app-context";
 const fontInter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-  weight: ['400', '700'],
+  weight: ['400', '500'],
   display: 'swap',
 });
 
 const fontAtkinsonHyperlegible = Atkinson_Hyperlegible({
   subsets: ['latin'],
   variable: '--font-atkinson-hyperlegible',
-  weight: ['400', '700'],
+  weight: ['400'],
 });
 
 export const metadata: Metadata = {
@@ -29,7 +29,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#007bff",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f5f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#111216" },
+  ],
 };
 
 const themeBootstrapScript = `

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 import { AppSidebar } from "@/components/sidebar";
 import { StartupSplash } from "@/components/startup-splash";
 import { GlobalCommandPalette } from "@/components/global-command-palette";
@@ -19,36 +19,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
     const isClassPage = pathname?.startsWith('/class/');
 
-    useEffect(() => {
-        console.log('[INTRO_LAYOUT] Mounted', { pathname, isMobile });
-    }, [pathname, isMobile]);
-
-    useEffect(() => {
-        console.log('[INTRO_LAYOUT] appReady changed', { appReady });
-    }, [appReady]);
-
-    useEffect(() => {
-        console.log('[INTRO_LAYOUT] isTier0Ready changed', { isTier0Ready });
-    }, [isTier0Ready]);
-
-    useEffect(() => {
-        console.log('[INTRO_LAYOUT] introAnimationDone changed', { introAnimationDone });
-    }, [introAnimationDone]);
-
     const onIntroAnimationDone = useCallback(() => {
-        console.log('[INTRO_LAYOUT] Received intro animation done signal');
         setIntroAnimationDone(true);
     }, []);
 
     const showStartupSplash = useMemo(() => {
-        const shouldShow = !(appReady && isTier0Ready && introAnimationDone);
-        console.log('[INTRO_LAYOUT] Splash visibility computed', {
-            appReady,
-            isTier0Ready,
-            introAnimationDone,
-            showStartupSplash: shouldShow,
-        });
-        return shouldShow;
+        return !(appReady && isTier0Ready && introAnimationDone);
     }, [appReady, isTier0Ready, introAnimationDone]);
 
     return (
@@ -59,7 +35,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <AppSidebar />
             </div>
             <SidebarInset className={`bg-background h-screen ${isMobile ? 'ml-14' : ''} relative`}>
-                <div key={pathname} className={`${isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto p-2 md:p-3"} animate-fade-in`}>
+                <div key={pathname} className={`${isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto p-2.5 md:p-4"} animate-fade-in`}>
                     {children}
                 </div>
             </SidebarInset>

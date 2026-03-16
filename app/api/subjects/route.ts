@@ -137,6 +137,9 @@ async function getSubjectParagraphContext(supabase: any, subjectIds: string[], u
 export async function GET(req: Request) {
   try {
     logSubjects('GET - Handling request', { url: req.url });
+    const requestUrl = new URL(req.url);
+    const classIdFilter = requestUrl.searchParams.get('classId');
+    const isLite = requestUrl.searchParams.get('lite') === '1';
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
@@ -174,15 +177,59 @@ export async function GET(req: Request) {
     let subjects: any[] = []
 
     if (isTeacher) {
-      logSubjects('GET - Teacher branch - loading subjects for owner/collaborator', { userId: user.id })
-      const { data, error } = await (supabase as any).from('subjects')
-        .select(`
-          *,
-          class_subjects(
-            classes:class_id(id, name)
-          )
-        `)
-        .eq('user_id', user.id)
+      logSubjects('GET - Teacher branch - loading subjects for owner/collaborator', {
+        userId: user.id,
+        classIdFilter,
+        isLite,
+      })
+      let data: any[] | null = null
+      let error: any = null
+
+      if (classIdFilter) {
+        const [linkedResult, directResult] = await Promise.all([
+          (supabase as any).from('class_subjects').select('subject_id').eq('class_id', classIdFilter),
+          (supabase as any).from('subjects').select('id').eq('class_id', classIdFilter).eq('user_id', user.id),
+        ])
+
+        if (linkedResult.error) {
+          return NextResponse.json({ error: linkedResult.error.message }, { status: 500 })
+        }
+        if (directResult.error) {
+          return NextResponse.json({ error: directResult.error.message }, { status: 500 })
+        }
+
+        const filteredSubjectIds = [
+          ...(linkedResult.data || []).map((row: any) => row.subject_id),
+          ...(directResult.data || []).map((row: any) => row.id),
+        ].filter(Boolean)
+
+        if (filteredSubjectIds.length === 0) {
+          return NextResponse.json([])
+        }
+
+        const result = await (supabase as any).from('subjects')
+          .select(`
+            *,
+            class_subjects(
+              classes:class_id(id, name)
+            )
+          `)
+          .eq('user_id', user.id)
+          .in('id', filteredSubjectIds)
+        data = result.data
+        error = result.error
+      } else {
+        const result = await (supabase as any).from('subjects')
+          .select(`
+            *,
+            class_subjects(
+              classes:class_id(id, name)
+            )
+          `)
+          .eq('user_id', user.id)
+        data = result.data
+        error = result.error
+      }
 
       if (error) {
         logSubjects('GET - Supabase error fetching teacher subjects', {
@@ -200,7 +247,7 @@ export async function GET(req: Request) {
         ...subject,
         classes: subject.class_subjects ? subject.class_subjects.map((cs: any) => cs.classes).filter(Boolean) : []
       }))
-      logSubjects('GET - Teacher subjects loaded', { 
+      logSubjects('GET - Teacher subjects loaded', {
         count: subjects.length,
         subjectIds: subjects.slice(0, 10).map((s: any) => s.id)
       })
@@ -302,7 +349,11 @@ export async function GET(req: Request) {
       })
     }
 
-    // Enrich subjects with paragraph context
+    if (isLite) {
+      logSubjects('GET - Returning lite subjects', { count: subjects.length })
+      return NextResponse.json(subjects)
+    }
+
     const subjectIds = subjects.map((s: any) => s.id)
     const paragraphContext = await getSubjectParagraphContext(supabase, subjectIds, user.id)
 
@@ -310,7 +361,7 @@ export async function GET(req: Request) {
       ...subject,
       paragraphContext: paragraphContext[subject.id] || { paragraphs: [], lastParagraphId: null }
     }))
-    logSubjects('GET - Returning enriched subjects', { 
+    logSubjects('GET - Returning enriched subjects', {
       count: enrichedSubjects.length,
       withContextExamples: enrichedSubjects.slice(0, 3).map((s: any) => ({
         id: s.id,

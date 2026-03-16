@@ -206,7 +206,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const fetchSubjectsResource = useCallback(async () => {
-    const res = await fetch('/api/subjects', { credentials: 'include', cache: 'no-store' });
+    const params = new URLSearchParams();
+    if (role === 'teacher') {
+      params.set('lite', '1');
+      if (typeof window !== 'undefined') {
+        const activeClassId = window.localStorage.getItem('studyweb-last-class-id');
+        if (activeClassId) params.set('classId', activeClassId);
+      }
+    }
+    const url = params.size > 0 ? `/api/subjects?${params.toString()}` : '/api/subjects';
+    const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
     if (!res.ok) {
       if (res.status === 401) {
         setSubjects([]);
@@ -216,7 +225,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
     const data = await res.json().catch(() => []);
     setSubjects(Array.isArray(data) ? data : []);
-  }, []);
+  }, [role]);
 
   const warmResource = useCallback(async (key: PreloadResourceKey) => {
     if (preloadInFlight.current[key]) {
