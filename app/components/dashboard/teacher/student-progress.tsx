@@ -103,7 +103,7 @@ export function StudentProgressPanel({ classId }: StudentProgressPanelProps) {
               {sortedStudents.map(student => (
                 <Link
                   key={student.id}
-                  href={`/class/${classId}/student/${student.id}`}
+                  href={`/class/${classId}?tab=progress&studentId=${student.id}`}
                   className="flex items-center gap-3 p-3 border rounded-lg hover:bg-accent transition-colors"
                 >
                   <Avatar>

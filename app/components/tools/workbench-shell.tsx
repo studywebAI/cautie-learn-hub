@@ -23,7 +23,7 @@ export function WorkbenchShell({ title, description, children, sidebar }: Workbe
       <div className="flex h-full">
         {/* Main content area */}
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="px-4 md:px-6 pt-4 pb-2 flex items-center justify-between">
+          <div className="px-5 md:px-7 pt-5 pb-2 flex items-center justify-between">
             <div>
               <h1 className="text-lg font-normal">{title}</h1>
               {description && (
@@ -36,7 +36,7 @@ export function WorkbenchShell({ title, description, children, sidebar }: Workbe
               </Button>
             )}
           </div>
-          <div className="flex-1 min-h-0 px-4 md:px-6 pb-6">
+          <div className="flex-1 min-h-0 px-5 md:px-7 pb-7">
             {children}
           </div>
         </div>

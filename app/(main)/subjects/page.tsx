@@ -46,7 +46,7 @@ export default function SubjectsPage() {
 
   if (isTeacher && !teacherClassId) {
     return (
-      <div className="h-full p-4 md:p-6">
+      <div className="h-full p-5 md:p-7">
         <div className="rounded-lg border border-dashed p-8 text-sm text-muted-foreground">
           No active class selected. Select or create a class first.
         </div>
@@ -56,7 +56,7 @@ export default function SubjectsPage() {
 
   if (isTeacher) {
     return (
-      <div className="h-full p-4 md:p-6">
+      <div className="h-full p-5 md:p-7">
         <div className="rounded-lg border border-dashed p-8 text-sm text-muted-foreground">
           Redirecting to the selected class subjects...
         </div>
@@ -65,7 +65,7 @@ export default function SubjectsPage() {
   }
 
   return (
-    <div className="h-full p-4 md:p-6">
+    <div className="h-full p-5 md:p-7">
       {isTeacher && (
         <div className="mb-4 rounded-xl border border-border/70 bg-[hsl(var(--surface-1))] p-3 md:p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">

@@ -470,13 +470,13 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                 {isTeacher && (
                   <div className="flex gap-2 pt-4 border-t">
                     <Button variant="outline" className="flex-1" asChild>
-                      <Link href={`/class/${classId}/assignments?student=${selectedStudent.id}`}>
+                      <Link href={`/class/${classId}?tab=assignments&studentId=${selectedStudent.id}`}>
                         <FileText className="h-4 w-4 mr-2" />
                         View Assignments
                       </Link>
                     </Button>
                     <Button variant="outline" className="flex-1" asChild>
-                      <Link href={`/class/${classId}/progress?student=${selectedStudent.id}`}>
+                      <Link href={`/class/${classId}?tab=progress&studentId=${selectedStudent.id}`}>
                         <TrendingUp className="h-4 w-4 mr-2" />
                         View Progress
                       </Link>

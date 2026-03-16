@@ -85,7 +85,6 @@ export function AppSidebar() {
     { href: isTeacher ? teacherSubjectsHref : '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
     { href: isTeacher ? teacherManageHref : '/classes', label: isTeacher ? 'manage' : 'classes', icon: School },
     { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: Calendar },
-    { href: '/material', label: dictionary.sidebar.material || 'material', icon: FileSignature },
   ];
 
   const toolsMenuItems = [

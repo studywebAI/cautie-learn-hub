@@ -334,8 +334,8 @@ function AgendaPageContent() {
   }
 
   return (
-    <>
-      <div className="flex flex-col gap-8 h-full">
+    <div className="h-full p-2 md:p-3">
+      <div className="flex h-full flex-col gap-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div></div>
           <div className="flex items-center gap-3">
@@ -467,6 +467,6 @@ function AgendaPageContent() {
           initialDate={selectedDay}
         />
       )}
-    </>
+    </div>
   );
 }

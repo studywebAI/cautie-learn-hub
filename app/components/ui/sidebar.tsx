@@ -22,8 +22,8 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "15.5rem"
-const SIDEBAR_WIDTH_MOBILE = "16.25rem"
+const SIDEBAR_WIDTH = "15.25rem"
+const SIDEBAR_WIDTH_MOBILE = "15.75rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
@@ -440,7 +440,7 @@ const SidebarGroupLabel = React.forwardRef<
       ref={ref}
       data-sidebar="group-label"
         className={cn(
-          "duration-200 flex h-7 shrink-0 items-center rounded-md px-2 text-[10px] tracking-[0.06em] text-sidebar-foreground/55 outline-none transition-[margin,opa] ease-linear [&>svg]:size-4 [&>svg]:shrink-0",
+          "duration-200 flex h-7 shrink-0 items-center rounded-md px-2 text-[10px] tracking-[0.06em] text-sidebar-foreground/58 outline-none transition-[margin,opa] ease-linear [&>svg]:size-4 [&>svg]:shrink-0",
           "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
           className
         )}
@@ -513,7 +513,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-xl p-1.5 pl-2.5 text-left text-[12px] font-normal text-[hsl(var(--sidebar-foreground)/0.9)] outline-none transition-[width,height,padding,color,background-color] duration-150 hover:bg-[hsl(var(--sidebar-accent)/0.74)] hover:text-[hsl(var(--sidebar-active-foreground)/0.96)] active:bg-[hsl(var(--sidebar-accent)/0.9)] active:text-[hsl(var(--sidebar-active-foreground)/1)] disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-[hsl(var(--sidebar-accent)/1)] data-[active=true]:font-normal data-[active=true]:text-[hsl(var(--sidebar-active-foreground)/1)] data-[state=open]:hover:bg-[hsl(var(--sidebar-accent)/0.74)] data-[state=open]:hover:text-[hsl(var(--sidebar-active-foreground)/0.96)] group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-xl p-1.5 pl-2.5 text-left text-[13px] font-normal text-[hsl(var(--sidebar-foreground)/0.92)] outline-none transition-[width,height,padding,color,background-color] duration-150 hover:bg-[hsl(var(--sidebar-accent)/0.74)] hover:text-[hsl(var(--sidebar-active-foreground)/0.96)] active:bg-[hsl(var(--sidebar-accent)/0.9)] active:text-[hsl(var(--sidebar-active-foreground)/1)] disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-[hsl(var(--sidebar-accent)/1)] data-[active=true]:font-normal data-[active=true]:text-[hsl(var(--sidebar-active-foreground)/1)] data-[state=open]:hover:bg-[hsl(var(--sidebar-accent)/0.74)] data-[state=open]:hover:text-[hsl(var(--sidebar-active-foreground)/0.96)] group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -522,7 +522,7 @@ const sidebarMenuButtonVariants = cva(
           "bg-background border border-sidebar-border hover:bg-[hsl(var(--sidebar-accent)/0.58)] hover:text-sidebar-foreground",
       },
       size: {
-        default: "h-8 text-[12px]",
+        default: "h-8 text-[13px]",
         sm: "h-7 text-xs",
         lg: "h-10 text-[12px] group-data-[collapsible=icon]:!p-0",
       },

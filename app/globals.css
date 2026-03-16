@@ -7,7 +7,7 @@
     --type-micro: 11px;
     --type-body: 12.5px;
     --type-section: 14px;
-    --type-page: 21px;
+    --type-page: 24px;
     --background: 0 0% 96.8%;
     --foreground: 240 6% 15%;
     --card: 0 0% 98.8%;
@@ -29,7 +29,7 @@
     --border: 240 5% 85.5%;
     --input: 240 5% 85.5%;
     --ring: 240 7% 18%;
-    --radius: 0.95rem;
+    --radius: 0.75rem;
     --surface-1: 0 0% 98.8%;
     --surface-2: 0 0% 95.8%;
     --surface-3: 0 0% 93.2%;
@@ -404,7 +404,7 @@
     font-family: Inter, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
     font-size: var(--type-body);
     line-height: 1.42;
-    letter-spacing: -0.004em;
+    letter-spacing: -0.003em;
     font-weight: 400;
   }
   button, input, textarea, select, option {
@@ -417,19 +417,19 @@
     font-size: var(--type-page);
     line-height: 1.2;
     letter-spacing: -0.016em;
-    font-weight: 440;
+    font-weight: 460;
   }
   h2 {
     font-size: 17px;
     line-height: 1.25;
     letter-spacing: -0.012em;
-    font-weight: 430;
+    font-weight: 440;
   }
   h3 {
     font-size: var(--type-section);
     line-height: 1.35;
     letter-spacing: -0.01em;
-    font-weight: 420;
+    font-weight: 430;
   }
   h4, h5, h6 {
     font-size: var(--type-body);
