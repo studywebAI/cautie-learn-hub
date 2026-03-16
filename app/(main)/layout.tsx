@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useMemo, useState } from "react";
+import { Suspense, useCallback, useContext, useMemo, useState } from "react";
 import { AppSidebar } from "@/components/sidebar";
 import { StartupSplash } from "@/components/startup-splash";
 import { GlobalCommandPalette } from "@/components/global-command-palette";
@@ -31,9 +31,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <SidebarProvider>
             <StartupSplash visible={showStartupSplash} onIntroAnimationDone={onIntroAnimationDone} />
             <GlobalCommandPalette />
-            <div className={showStartupSplash ? 'opacity-0 pointer-events-none select-none' : ''}>
-                <AppSidebar />
-            </div>
+            <Suspense fallback={null}>
+                <div className={showStartupSplash ? 'opacity-0 pointer-events-none select-none' : ''}>
+                    <AppSidebar />
+                </div>
+            </Suspense>
             <SidebarInset className={`bg-background h-screen ${isMobile ? 'ml-14' : ''} relative`}>
                 <div key={pathname} className={`${isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto p-2.5 md:p-4"} animate-fade-in`}>
                     {children}
