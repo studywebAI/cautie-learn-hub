@@ -791,7 +791,7 @@ export function AppSidebar() {
 
         {/* Full drawer sidebar (when hamburger is clicked) */}
         <Sidebar className="w-[17.5rem]">
-          <SidebarContent className="px-3 py-3 flex-1">
+          <SidebarContent className="px-3.5 py-3.5 flex-1">
             {renderTeacherClassSwitcher()}
             {renderStudentLaneToggle()}
             {visibleMainItems.length > 0 && (
@@ -856,7 +856,7 @@ export function AppSidebar() {
               </>
             )}
           </SidebarContent>
-          <SidebarFooter className="px-3 pt-2 pb-3 flex flex-col gap-2">
+          <SidebarFooter className="px-3.5 pt-2.5 pb-3.5 flex flex-col gap-2">
             <RecentsSidebar />
             <div className="h-px bg-sidebar-border" />
             <SidebarProfile />
@@ -873,7 +873,7 @@ export function AppSidebar() {
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
-      <SidebarContent className="px-3 py-3 flex-1">
+      <SidebarContent className="px-3.5 py-3.5 flex-1">
         {renderTeacherClassSwitcher()}
         {renderStudentLaneToggle()}
         {visibleMainItems.length > 0 && (
@@ -937,7 +937,7 @@ export function AppSidebar() {
           </>
         )}
       </SidebarContent>
-      <SidebarFooter className="px-3 pt-2 pb-3 flex flex-col gap-2">
+      <SidebarFooter className="px-3.5 pt-2.5 pb-3.5 flex flex-col gap-2">
         <RecentsSidebar />
         <div className="h-px bg-sidebar-border" />
         <SidebarProfile />

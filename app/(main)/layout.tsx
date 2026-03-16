@@ -37,7 +37,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 </div>
             </Suspense>
             <SidebarInset className={`bg-background h-screen ${isMobile ? 'ml-14' : ''} relative`}>
-                <div key={pathname} className={`${isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto p-2.5 md:p-4"} animate-fade-in`}>
+                <div key={pathname} className={`${isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto p-3 md:p-5"} animate-fade-in`}>
                     {children}
                 </div>
             </SidebarInset>
