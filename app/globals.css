@@ -406,6 +406,9 @@
     line-height: 1.42;
     letter-spacing: -0.003em;
     font-weight: 500;
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
+    text-rendering: geometricPrecision;
   }
   button, input, textarea, select, option {
     font-family: Inter, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;

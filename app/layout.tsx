@@ -8,7 +8,7 @@ import { AppContextProvider } from "@/contexts/app-context";
 const fontInter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-  weight: ['400', '500'],
+  weight: ['400', '500', '600'],
   display: 'swap',
 });
 
@@ -60,7 +60,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
       <body className={cn(
-        "font-sans antialiased",
+        "font-sans subpixel-antialiased",
         fontInter.variable,
         fontAtkinsonHyperlegible.variable
       )}>
