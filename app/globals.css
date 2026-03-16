@@ -19,7 +19,7 @@
     --secondary: 0 0% 93.8%;
     --secondary-foreground: 240 6% 14%;
     --muted: 0 0% 93.8%;
-    --muted-foreground: 240 5% 45%;
+    --muted-foreground: 240 5% 34%;
     --accent: 0 0% 92.8%;
     --accent-foreground: 240 6% 14%;
     --destructive: 0 84% 60%;
@@ -43,7 +43,7 @@
     --chart-5: 0 0% 78%;
 
     --sidebar-background: 0 0% 95.6%;
-    --sidebar-foreground: 240 5% 37%;
+    --sidebar-foreground: 240 6% 30%;
     --sidebar-primary: 0 0% 9%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 90.8%;
@@ -134,7 +134,7 @@
     --secondary: 0 0% 93.8%;
     --secondary-foreground: 240 6% 14%;
     --muted: 0 0% 93.8%;
-    --muted-foreground: 240 5% 45%;
+    --muted-foreground: 240 5% 34%;
     --accent: 0 0% 92.8%;
     --accent-foreground: 240 6% 14%;
     --destructive: 0 84% 60%;
@@ -157,7 +157,7 @@
     --interactive-active: 0 0% 88.4%;
     --focus-ring: 0 0% 26%;
     --sidebar-background: 0 0% 95.6%;
-    --sidebar-foreground: 240 5% 37%;
+    --sidebar-foreground: 240 6% 30%;
     --sidebar-primary: 0 0% 9%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 90.8%;
@@ -405,36 +405,36 @@
     font-size: var(--type-body);
     line-height: 1.42;
     letter-spacing: -0.003em;
-    font-weight: 450;
+    font-weight: 500;
   }
   button, input, textarea, select, option {
     font-family: Inter, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
     font-size: var(--type-body);
     line-height: 1.42;
-    font-weight: 450;
+    font-weight: 500;
   }
   h1 {
     font-size: var(--type-page);
     line-height: 1.2;
     letter-spacing: -0.016em;
-    font-weight: 460;
+    font-weight: 560;
   }
   h2 {
     font-size: 17px;
     line-height: 1.25;
     letter-spacing: -0.012em;
-    font-weight: 440;
+    font-weight: 540;
   }
   h3 {
     font-size: var(--type-section);
     line-height: 1.35;
     letter-spacing: -0.01em;
-    font-weight: 430;
+    font-weight: 520;
   }
   h4, h5, h6 {
     font-size: var(--type-body);
     line-height: 1.35;
-    font-weight: 450;
+    font-weight: 500;
   }
   small, .text-xs {
     font-size: var(--type-micro) !important;
@@ -444,11 +444,11 @@
   .font-bold,
   .font-semibold,
   .font-medium {
-    font-weight: 450 !important;
+    font-weight: 500 !important;
   }
   b,
   strong {
-    font-weight: 450;
+    font-weight: 500;
   }
   body[data-reduced-motion="true"] * {
     @apply transition-none animate-none !important;

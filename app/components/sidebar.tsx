@@ -622,7 +622,7 @@ export function AppSidebar() {
 
     return (
       <div className="mb-2 px-2">
-        <label className="mb-1 block text-[10px] tracking-[0.08em] text-sidebar-foreground/52 lowercase">
+        <label className="mb-1 block text-[10px] tracking-[0.08em] text-sidebar-foreground/70 lowercase">
           class
         </label>
         <Button
@@ -687,7 +687,7 @@ export function AppSidebar() {
 
     return (
       <div className="mb-2 px-2">
-        <label className="mb-1 block text-[10px] tracking-[0.08em] text-sidebar-foreground/52 lowercase">
+        <label className="mb-1 block text-[10px] tracking-[0.08em] text-sidebar-foreground/70 lowercase">
           mode
         </label>
         <select
@@ -795,7 +795,7 @@ export function AppSidebar() {
             {renderStudentLaneToggle()}
             {visibleMainItems.length > 0 && (
               <>
-                 <p className="px-2 pb-1.5 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/52 lowercase">main</p>
+                 <p className="px-2 pb-1.5 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/70 lowercase">main</p>
                 <SidebarMenu>
                   {visibleMainItems.map((item) => (
                     <SidebarMenuItem key={item.label} className="relative">
@@ -835,7 +835,7 @@ export function AppSidebar() {
             {visibleToolsItems.length > 0 && (
               <>
                 {visibleMainItems.length > 0 && <div className="h-5" />}
-                 <p className="px-2 pb-1.5 text-[10px] tracking-[0.08em] text-sidebar-foreground/52 lowercase">tools</p>
+                  <p className="px-2 pb-1.5 text-[10px] tracking-[0.08em] text-sidebar-foreground/70 lowercase">tools</p>
                 <SidebarMenu>
                   {visibleToolsItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
@@ -877,7 +877,7 @@ export function AppSidebar() {
         {renderStudentLaneToggle()}
         {visibleMainItems.length > 0 && (
           <>
-            <p className="px-2 pb-1.5 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/52 lowercase">main</p>
+            <p className="px-2 pb-1.5 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/70 lowercase">main</p>
             <SidebarMenu>
               {visibleMainItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
@@ -916,7 +916,7 @@ export function AppSidebar() {
         {visibleToolsItems.length > 0 && (
           <>
             {visibleMainItems.length > 0 && <div className="h-5" />}
-            <p className="px-2 pb-1.5 text-[10px] tracking-[0.08em] text-sidebar-foreground/52 lowercase">tools</p>
+            <p className="px-2 pb-1.5 text-[10px] tracking-[0.08em] text-sidebar-foreground/70 lowercase">tools</p>
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
