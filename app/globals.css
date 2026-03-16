@@ -56,9 +56,9 @@
   .dark {
     --background: 0 0% 5%;
     --foreground: 0 0% 89%;
-    --card: 0 0% 8%;
+    --card: 0 0% 6%;
     --card-foreground: 0 0% 89%;
-    --popover: 0 0% 8%;
+    --popover: 0 0% 6%;
     --popover-foreground: 0 0% 89%;
     --primary: 0 0% 92%;
     --primary-foreground: 0 0% 6%;
@@ -72,8 +72,8 @@
     --destructive-foreground: 0 0% 100%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
+    --border: 0 0% 6%;
+    --input: 0 0% 6%;
     --ring: 0 0% 84%;
     --chart-1: 0 0% 78%;
     --chart-2: 0 0% 62%;
@@ -81,20 +81,20 @@
     --chart-4: 0 0% 36%;
     --chart-5: 0 0% 24%;
 
-    --surface-1: 0 0% 8%;
-    --surface-2: 0 0% 10%;
-    --surface-3: 0 0% 12%;
+    --surface-1: 0 0% 6%;
+    --surface-2: 0 0% 8%;
+    --surface-3: 0 0% 10%;
     --interactive-hover: 0 0% 15%;
     --interactive-active: 0 0% 19%;
     --focus-ring: 0 0% 84%;
-    --sidebar-background: 0 0% 8%;
+    --sidebar-background: 0 0% 4%;
     --sidebar-foreground: 0 0% 70%;
     --sidebar-primary: 0 0% 92%;
     --sidebar-primary-foreground: 0 0% 6%;
-    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 88%;
     --sidebar-active-foreground: 0 0% 93%;
-    --sidebar-border: 0 0% 18%;
+    --sidebar-border: 0 0% 4%;
     --sidebar-ring: 0 0% 84%;
   }
 
@@ -170,9 +170,9 @@
   .theme-dark {
     --background: 0 0% 5%;
     --foreground: 0 0% 89%;
-    --card: 0 0% 8%;
+    --card: 0 0% 6%;
     --card-foreground: 0 0% 89%;
-    --popover: 0 0% 8%;
+    --popover: 0 0% 6%;
     --popover-foreground: 0 0% 89%;
     --primary: 0 0% 92%;
     --primary-foreground: 0 0% 6%;
@@ -186,8 +186,8 @@
     --destructive-foreground: 0 0% 100%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
+    --border: 0 0% 6%;
+    --input: 0 0% 6%;
     --ring: 0 0% 84%;
     --chart-1: 0 0% 78%;
     --chart-2: 0 0% 62%;
@@ -195,20 +195,20 @@
     --chart-4: 0 0% 36%;
     --chart-5: 0 0% 24%;
 
-    --surface-1: 0 0% 8%;
-    --surface-2: 0 0% 10%;
-    --surface-3: 0 0% 12%;
+    --surface-1: 0 0% 6%;
+    --surface-2: 0 0% 8%;
+    --surface-3: 0 0% 10%;
     --interactive-hover: 0 0% 15%;
     --interactive-active: 0 0% 19%;
     --focus-ring: 0 0% 84%;
-    --sidebar-background: 0 0% 8%;
+    --sidebar-background: 0 0% 4%;
     --sidebar-foreground: 0 0% 70%;
     --sidebar-primary: 0 0% 92%;
     --sidebar-primary-foreground: 0 0% 6%;
-    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 88%;
     --sidebar-active-foreground: 0 0% 93%;
-    --sidebar-border: 0 0% 18%;
+    --sidebar-border: 0 0% 4%;
     --sidebar-ring: 0 0% 84%;
   }
 

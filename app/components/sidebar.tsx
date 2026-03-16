@@ -707,7 +707,7 @@ export function AppSidebar() {
     return (
       <>
         {/* Mini sidebar - always visible on mobile */}
-        <div className="fixed left-0 top-0 h-full w-14 bg-sidebar border-r border-sidebar-border z-40 flex flex-col py-3">
+        <div className="fixed left-0 top-0 h-full w-14 bg-sidebar z-40 flex flex-col py-3">
           {/* Hamburger button to open full drawer */}
           <Button
             variant="ghost"
@@ -857,7 +857,6 @@ export function AppSidebar() {
           </SidebarContent>
           <SidebarFooter className="px-3.5 pt-2.5 pb-3.5 flex flex-col gap-2">
             <RecentsSidebar />
-            <div className="h-px bg-sidebar-border" />
             <SidebarProfile />
           </SidebarFooter>
         </Sidebar>
@@ -938,7 +937,6 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="px-3.5 pt-2.5 pb-3.5 flex flex-col gap-2">
         <RecentsSidebar />
-        <div className="h-px bg-sidebar-border" />
         <SidebarProfile />
       </SidebarFooter>
       {renderFloatingDropdown()}
