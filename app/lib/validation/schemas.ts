@@ -71,7 +71,8 @@ export const updateChapterSchema = z.object({
 export const createParagraphSchema = z.object({
   title: nonEmptyStringSchema,
   content: z.any().optional(), // Rich content (JSON)
-  paragraph_number: z.number().int().positive("Paragraph number must be positive")
+  // Optional for create flows where backend auto-assigns ordering
+  paragraph_number: z.number().int().positive("Paragraph number must be positive").optional()
 });
 
 export const updateParagraphSchema = z.object({

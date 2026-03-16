@@ -166,6 +166,13 @@ export default function SubjectDetailPage() {
         setSelectedChapterId(null);
         setIsCreateParagraphOpen(false);
         toast({ title: 'Paragraph created' });
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast({
+          title: 'Error',
+          description: errorData?.details || errorData?.error || 'Failed to create paragraph',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to create paragraph', variant: 'destructive' });
