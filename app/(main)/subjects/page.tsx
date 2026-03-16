@@ -71,33 +71,25 @@ function SubjectsPageContent() {
   if (isTeacher) {
     return (
       <div className="h-full p-6 md:p-8">
-        <div className="mb-4 rounded-xl border border-border/70 bg-[hsl(var(--surface-1))] p-4 md:p-5">
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div className="min-w-0">
-              <p className="text-xs tracking-[0.08em] text-muted-foreground uppercase">class context</p>
-              <p className="truncate text-sm text-foreground">
-                showing subjects for {selectedClass?.name || 'selected class'}
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <select
-                value={teacherClassId}
-                onChange={(event) => handleTeacherClassChange(event.target.value)}
-                className="h-8 min-w-[190px] rounded-xl border border-border bg-background px-3 text-[12px]"
-              >
-                {teacherActiveClasses.map((classItem) => (
-                  <option key={classItem.id} value={classItem.id}>
-                    {classItem.name}
-                  </option>
-                ))}
-              </select>
-              <Button asChild size="sm" variant="outline" className="h-8">
-                <Link href={`/class/${teacherClassId}?tab=subjects`}>
-                  open in manage
-                  <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            </div>
+        <div className="mb-4 rounded-xl bg-[hsl(var(--surface-1))] p-4 md:p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <select
+              value={teacherClassId}
+              onChange={(event) => handleTeacherClassChange(event.target.value)}
+              className="h-9 min-w-[220px] rounded-xl border border-border bg-background px-3 text-[13px]"
+            >
+              {teacherActiveClasses.map((classItem) => (
+                <option key={classItem.id} value={classItem.id}>
+                  {classItem.name}
+                </option>
+              ))}
+            </select>
+            <Button asChild size="sm" variant="outline" className="h-9 px-3">
+              <Link href={`/class/${teacherClassId}?tab=subjects`}>
+                open in manage
+                <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
+              </Link>
+            </Button>
           </div>
         </div>
         <SubjectsGrid isTeacher={true} classId={teacherClassId} />

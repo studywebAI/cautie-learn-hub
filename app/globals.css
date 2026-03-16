@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    --type-micro: 11px;
-    --type-body: 12.5px;
+    --type-micro: 12px;
+    --type-body: 13px;
     --type-section: 14px;
     --type-page: 24px;
     --background: 0 0% 96.8%;
@@ -401,20 +401,20 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: Inter, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+    font-family: "Segoe UI Variable Text", "Segoe UI", Inter, "SF Pro Text", Helvetica, Arial, sans-serif;
     font-size: var(--type-body);
     line-height: 1.42;
     letter-spacing: -0.003em;
-    font-weight: 500;
+    font-weight: 550;
     -webkit-font-smoothing: auto;
     -moz-osx-font-smoothing: auto;
     text-rendering: geometricPrecision;
   }
   button, input, textarea, select, option {
-    font-family: Inter, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+    font-family: "Segoe UI Variable Text", "Segoe UI", Inter, "SF Pro Text", Helvetica, Arial, sans-serif;
     font-size: var(--type-body);
     line-height: 1.42;
-    font-weight: 500;
+    font-weight: 550;
   }
   h1 {
     font-size: var(--type-page);
@@ -437,7 +437,7 @@
   h4, h5, h6 {
     font-size: var(--type-body);
     line-height: 1.35;
-    font-weight: 500;
+    font-weight: 560;
   }
   small, .text-xs {
     font-size: var(--type-micro) !important;
@@ -448,11 +448,11 @@
   .font-semibold,
   .font-medium,
   .font-normal {
-    font-weight: 500 !important;
+    font-weight: 560 !important;
   }
   b,
   strong {
-    font-weight: 500;
+    font-weight: 560;
   }
   body[data-reduced-motion="true"] * {
     @apply transition-none animate-none !important;

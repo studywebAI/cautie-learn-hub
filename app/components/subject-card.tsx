@@ -312,34 +312,26 @@ export function SubjectCard({ subject }: SubjectCardProps) {
   const paragraphs = subject.paragraphContext?.paragraphs || [];
   const lastParagraphId = subject.paragraphContext?.lastParagraphId;
   const className = subject.classes?.[0]?.name;
+  const Icon = getSubjectIcon(subject.title, subject.description);
 
   return (
-    <Card className="overflow-hidden transition-all duration-200 h-full flex flex-col rounded-2xl border-border/70 bg-[hsl(var(--surface-1))] hover:border-primary/40 hover:shadow-md">
+    <Card className="overflow-hidden transition-all duration-200 h-full flex flex-col rounded-2xl border-border/70 bg-[hsl(var(--surface-1))] hover:shadow-md">
       <CardContent className="p-0 flex flex-col h-full">
-        <div className="px-4 pt-4 pb-2">
-          <h3 className="text-sm font-semibold truncate lowercase">{subject.title}</h3>
+        <div className="px-4 pt-4 pb-3">
+          <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/12 text-primary">
+            <Icon className="h-4 w-4" strokeWidth={1.8} />
+          </div>
+          <h3 className="text-[14px] font-semibold truncate lowercase">{subject.title}</h3>
           {className && (
-            <p className="text-[11px] text-muted-foreground truncate lowercase mt-0.5">{className}</p>
+            <p className="text-[12px] text-muted-foreground truncate lowercase mt-0.5">{className}</p>
           )}
         </div>
 
         {/* Cover area (clickable → chapter overview) */}
-        <Link href={`/subjects/${subject.id}`} className="block">
-          <div className="aspect-[16/9] relative cursor-pointer mx-4 rounded-xl overflow-hidden border border-border/60">
-            {subject.cover_image_url ? (
-              <img
-                src={subject.cover_image_url}
-                alt={subject.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <IconCover title={subject.title} description={subject.description} />
-            )}
-          </div>
-        </Link>
+        
 
         {/* Paragraphs with progress */}
-        <div className="px-4 pt-3 pb-4 space-y-1.5 flex-1">
+        <div className="px-4 pt-1 pb-4 space-y-1.5 flex-1">
           {paragraphs.length > 0 ? (
             [...paragraphs, ...Array(Math.max(0, 3 - paragraphs.length)).fill(null)].slice(0, 3).map((p, idx) => {
               if (!p) {

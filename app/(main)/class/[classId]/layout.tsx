@@ -57,14 +57,13 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const visibleTabs = tabs;
 
   return (
-    <div className="flex h-full flex-col lg:flex-row">
-      {/* Class Sidebar */}
-      <aside className="w-full border-b bg-card flex flex-col shrink-0 lg:w-56 lg:border-b-0 lg:border-r">
-        {/* Class Switch Action */}
-        <div className="p-3 border-b">
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border/60 bg-[hsl(var(--surface-1))] px-5 py-3 lg:px-7">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="truncate text-[18px]">{className || 'Loading...'}</h2>
           <button
             type="button"
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex h-9 items-center rounded-lg bg-[hsl(var(--surface-2))] px-3 text-[13px] text-muted-foreground hover:text-foreground"
             onClick={() => {
               window.dispatchEvent(new Event('cautie:open-class-dropdown'));
             }}
@@ -72,28 +71,21 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
             Select different class
           </button>
         </div>
-
-        {/* Class Title */}
-        <div className="p-4 border-b">
-          <h2 className="truncate">{className || 'Loading...'}</h2>
-        </div>
-
-        {/* Navigation Tabs */}
-        <nav className="flex-1 overflow-auto p-2">
+        <nav className="flex flex-wrap gap-2">
           {visibleTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = currentTab === tab.id;
             return (
               <Link
                 key={tab.id}
-                href={tab.href}
+                href={`/class/${classId}${tab.href}`}
                 replace
                 prefetch={true}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-xs mb-1 transition-colors",
-                  isActive 
-                    ? "border border-border/70 bg-[hsl(var(--surface-2))] text-foreground" 
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  "inline-flex h-10 items-center gap-2 rounded-lg px-3 text-[13px] transition-colors",
+                  isActive
+                    ? "bg-[hsl(var(--surface-3))] text-foreground"
+                    : "bg-[hsl(var(--surface-2))] text-muted-foreground hover:text-foreground"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -102,9 +94,8 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
             );
           })}
         </nav>
-      </aside>
+      </div>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-auto p-5 lg:p-7">
         {children}
       </main>

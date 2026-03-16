@@ -83,7 +83,7 @@ export function AppSidebar() {
   const menuItems = [
     { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
     { href: isTeacher ? teacherSubjectsHref : '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
-    { href: isTeacher ? teacherManageHref : '/classes', label: isTeacher ? 'manage' : 'classes', icon: School },
+    { href: isTeacher ? teacherManageHref : '/classes', label: isTeacher ? 'Manage' : 'classes', icon: School },
     { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: Calendar },
   ];
 
@@ -420,9 +420,9 @@ export function AppSidebar() {
         onMouseEnter={clearCloseTimer}
         onMouseLeave={scheduleClose}
       >
-        <div className="w-max min-w-[9.5rem] max-w-[18rem] max-h-[60vh] overflow-auto p-1">
+        <div className="w-max min-w-[11rem] max-w-[22rem] max-h-[65vh] overflow-auto p-1.5">
           {dropdown.kind === 'classes' && (
-            <div className="px-2 py-1 text-[11px] tracking-[0.08em] text-muted-foreground lowercase">
+            <div className="px-2 py-1 text-[12px] tracking-[0.08em] text-muted-foreground lowercase">
               select different class
             </div>
           )}
@@ -431,7 +431,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 rounded-xl border-border/70 bg-[hsl(var(--surface-2))] px-2.5 text-[11px] font-normal hover:bg-[hsl(var(--surface-3))]"
+                className="h-8 rounded-xl border-border/70 bg-[hsl(var(--surface-2))] px-3 text-[12px] font-medium hover:bg-[hsl(var(--surface-3))]"
                 onClick={() => {
                   setNewClassMenuOpen((v) => !v);
                   setCreateClassOpen(false);
@@ -445,7 +445,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-[11px] rounded-lg border-border/70 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
+                  className="h-8 text-[12px] rounded-lg border-border/70 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
                 onClick={() => {
                   setJoinClassOpen((v) => !v);
                   setCreateClassOpen(false);
@@ -458,7 +458,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-[11px] rounded-lg border-border/70 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
+                  className="h-8 text-[12px] rounded-lg border-border/70 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
                 onClick={() => setCreateSubjectOpen((v) => !v)}
               >
                 + Create subject
@@ -470,7 +470,7 @@ export function AppSidebar() {
              <div className="mb-1 space-y-1 rounded-2xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
               <button
                 type="button"
-                className="text-[11px] text-muted-foreground hover:text-foreground"
+                className="text-[12px] text-muted-foreground hover:text-foreground"
                 onClick={() => {
                   setCreateClassOpen(false);
                   setNewClassMenuOpen(true);
@@ -529,7 +529,7 @@ export function AppSidebar() {
             <div className="mb-1 space-y-1 rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
               <button
                 type="button"
-                className="text-[11px] text-muted-foreground hover:text-foreground"
+                className="text-[12px] text-muted-foreground hover:text-foreground"
                 onClick={() => {
                   setJoinClassOpen(false);
                   setNewClassMenuOpen(true);
@@ -556,7 +556,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                 className="h-7 w-full justify-start rounded-xl text-[11px] font-normal"
+                 className="h-8 w-full justify-start rounded-xl text-[12px] font-medium"
                 onClick={() => {
                   setCreateClassOpen(true);
                   setNewClassMenuOpen(false);
@@ -567,7 +567,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                 className="h-7 w-full justify-start rounded-xl text-[11px] font-normal"
+                 className="h-8 w-full justify-start rounded-xl text-[12px] font-medium"
                 onClick={() => {
                   setJoinClassOpen(true);
                   setNewClassMenuOpen(false);
@@ -588,7 +588,7 @@ export function AppSidebar() {
                 key={entry.id}
                 href={dropdown.kind === 'classes' && isTeacher ? resolveTeacherClassRoute(entry.id) : entry.href}
                 className={cn(
-                  'flex items-center justify-between gap-2 truncate rounded-xl px-2 py-1.5 text-[12px] transition-colors',
+                  'flex items-center justify-between gap-2 truncate rounded-xl px-2.5 py-2 text-[13px] transition-colors',
                   dropdown.kind === 'classes' && entry.id === activeTeacherClassId
                     ? 'bg-[hsl(var(--surface-2))] text-foreground'
                     : 'hover:bg-[hsl(var(--surface-2))] text-muted-foreground hover:text-foreground'
@@ -622,13 +622,13 @@ export function AppSidebar() {
 
     return (
       <div className="mb-2 px-2">
-        <label className="mb-1 block text-[10px] tracking-[0.08em] text-sidebar-foreground/70 lowercase">
+        <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
           class
         </label>
         <Button
           size="sm"
           variant="outline"
-          className="mb-1 h-7 w-full justify-start rounded-xl px-2.5 text-[11px] font-normal"
+          className="mb-1 h-8 w-full justify-start rounded-xl px-3 text-[12px] font-medium"
           onClick={(event) => {
             openDropdownFor('classes', event.currentTarget);
             setNewClassMenuOpen(true);
@@ -649,7 +649,7 @@ export function AppSidebar() {
             openDropdownFor('classes', event.currentTarget);
           }}
           disabled={classDropdownItems.length === 0}
-          className="h-7 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-2))] px-2.5 text-left text-[11px] text-sidebar-foreground transition-colors hover:bg-[hsl(var(--surface-3))] disabled:opacity-60"
+          className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-2))] px-3 text-left text-[12px] text-sidebar-foreground transition-colors hover:bg-[hsl(var(--surface-3))] disabled:opacity-60"
         >
           <span className="flex items-center justify-between gap-2">
             <span className="truncate">
@@ -687,13 +687,13 @@ export function AppSidebar() {
 
     return (
       <div className="mb-2 px-2">
-        <label className="mb-1 block text-[10px] tracking-[0.08em] text-sidebar-foreground/70 lowercase">
+        <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
           mode
         </label>
         <select
           value={studentLane}
           onChange={(event) => switchStudentLane(event.target.value as StudentLane)}
-          className="h-7 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-2))] px-2.5 text-[11px] text-sidebar-foreground transition-colors hover:bg-[hsl(var(--surface-3))]"
+          className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-2))] px-3 text-[12px] text-sidebar-foreground transition-colors hover:bg-[hsl(var(--surface-3))]"
         >
           <option value="school">school</option>
           <option value="tools">tools</option>
@@ -789,13 +789,13 @@ export function AppSidebar() {
         </div>
 
         {/* Full drawer sidebar (when hamburger is clicked) */}
-        <Sidebar className="w-[17.5rem]">
+        <Sidebar className="w-[22rem]">
           <SidebarContent className="px-3.5 py-3.5 flex-1">
             {renderTeacherClassSwitcher()}
             {renderStudentLaneToggle()}
             {visibleMainItems.length > 0 && (
               <>
-                 <p className="px-2 pb-1.5 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/70 lowercase">main</p>
+                 <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">main</p>
                 <SidebarMenu>
                   {visibleMainItems.map((item) => (
                     <SidebarMenuItem key={item.label} className="relative">
@@ -810,7 +810,7 @@ export function AppSidebar() {
                             tooltip={item.label}
                           >
                             <item.icon className="h-4 w-4" />
-                            <span className="text-[12px] leading-5">{item.label}</span>
+                            <span className="text-[13px] leading-5">{item.label}</span>
                           </SidebarMenuButton>
                         </>
                       ) : (
@@ -821,7 +821,7 @@ export function AppSidebar() {
                         >
                           <Link href={item.href} onClick={() => setOpenMobile(false)}>
                             <item.icon className="h-4 w-4" />
-                            <span className="text-[12px] leading-5">{item.label}</span>
+                            <span className="text-[13px] leading-5">{item.label}</span>
                           </Link>
                         </SidebarMenuButton>
                       )}
@@ -835,7 +835,7 @@ export function AppSidebar() {
             {visibleToolsItems.length > 0 && (
               <>
                 {visibleMainItems.length > 0 && <div className="h-5" />}
-                  <p className="px-2 pb-1.5 text-[10px] tracking-[0.08em] text-sidebar-foreground/70 lowercase">tools</p>
+                  <p className="px-2 pb-1.5 text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">tools</p>
                 <SidebarMenu>
                   {visibleToolsItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
@@ -846,7 +846,7 @@ export function AppSidebar() {
                       >
                         <Link href={item.href} onClick={() => setOpenMobile(false)}>
                           <item.icon className="h-4 w-4" />
-                          <span className="text-[12px] leading-5">{item.label}</span>
+                          <span className="text-[13px] leading-5">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -867,7 +867,7 @@ export function AppSidebar() {
 
   // Desktop: Regular sidebar with trigger
   return (
-    <Sidebar className="w-[16.5rem]" collapsible="icon">
+    <Sidebar className="w-[24.75rem]" collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
@@ -876,7 +876,7 @@ export function AppSidebar() {
         {renderStudentLaneToggle()}
         {visibleMainItems.length > 0 && (
           <>
-            <p className="px-2 pb-1.5 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/70 lowercase">main</p>
+            <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">main</p>
             <SidebarMenu>
               {visibleMainItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
@@ -891,7 +891,7 @@ export function AppSidebar() {
                         tooltip={item.label}
                       >
                         <item.icon className="h-4 w-4" />
-                        <span className="text-[12px] leading-5">{item.label}</span>
+                        <span className="text-[13px] leading-5">{item.label}</span>
                       </SidebarMenuButton>
                     </>
                   ) : (
@@ -902,7 +902,7 @@ export function AppSidebar() {
                     >
                       <Link href={item.href}>
                         <item.icon className="h-4 w-4" />
-                        <span className="text-[12px] leading-5">{item.label}</span>
+                        <span className="text-[13px] leading-5">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   )}
@@ -915,7 +915,7 @@ export function AppSidebar() {
         {visibleToolsItems.length > 0 && (
           <>
             {visibleMainItems.length > 0 && <div className="h-5" />}
-            <p className="px-2 pb-1.5 text-[10px] tracking-[0.08em] text-sidebar-foreground/70 lowercase">tools</p>
+            <p className="px-2 pb-1.5 text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">tools</p>
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -926,7 +926,7 @@ export function AppSidebar() {
                   >
                     <Link href={item.href}>
                       <item.icon className="h-4 w-4" />
-                      <span className="text-[12px] leading-5">{item.label}</span>
+                      <span className="text-[13px] leading-5">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
