@@ -119,7 +119,7 @@ export function RecentsSidebar() {
   if (isLoading) {
     return (
       <div className="px-2">
-        <p className="text-[11px] tracking-[0.06em] text-muted-foreground/70 flex items-center gap-1 mb-2 px-1 lowercase">
+        <p className="text-[12px] tracking-[0.06em] text-muted-foreground/85 flex items-center gap-1 mb-2 px-1 lowercase">
           <Clock className="h-3 w-3" />
           recents
         </p>
@@ -135,7 +135,7 @@ export function RecentsSidebar() {
   if (recents.length === 0) {
     return (
       <div className="px-2">
-        <p className="text-[11px] tracking-[0.06em] text-muted-foreground/70 flex items-center gap-1 mb-2 px-1 lowercase">
+        <p className="text-[12px] tracking-[0.06em] text-muted-foreground/85 flex items-center gap-1 mb-2 px-1 lowercase">
           <Clock className="h-3 w-3" />
           recents
         </p>
@@ -148,7 +148,7 @@ export function RecentsSidebar() {
 
   return (
     <div className="px-2">
-      <p className="text-[11px] tracking-[0.06em] text-muted-foreground/70 flex items-center gap-1 mb-2 px-1 lowercase">
+      <p className="text-[12px] tracking-[0.06em] text-muted-foreground/85 flex items-center gap-1 mb-2 px-1 lowercase">
         <Clock className="h-3 w-3" />
         recents
       </p>
@@ -164,10 +164,10 @@ export function RecentsSidebar() {
               onClick={() => handleClick(item)}
             >
               <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
-              <span className="text-xs flex-1 truncate">
+              <span className="text-[12px] flex-1 truncate">
                 {item.title}
               </span>
-              <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
+              <span className="text-[11px] text-muted-foreground/85 shrink-0 font-mono">
                 {dateStr}
               </span>
             </div>
@@ -179,7 +179,7 @@ export function RecentsSidebar() {
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-1 w-full px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors mt-1"
+          className="flex items-center gap-1 w-full px-2 py-1 text-[11px] text-muted-foreground/85 hover:text-foreground transition-colors mt-1"
         >
           {expanded ? (
             <>
