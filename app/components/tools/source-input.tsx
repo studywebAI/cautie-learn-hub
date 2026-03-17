@@ -684,10 +684,18 @@ export function SourceInput({
 
   useEffect(() => {
     return () => {
-      stopListening();
+      const recorder = fallbackRecorderRef.current;
+      fallbackRecorderRef.current = null;
+      if (recorder && recorder.state !== 'inactive') {
+        try {
+          recorder.stop();
+        } catch {
+          // no-op during teardown
+        }
+      }
       cleanupFallbackStream();
     };
-  }, [cleanupFallbackStream, stopListening]);
+  }, [cleanupFallbackStream]);
 
   const updateSourceText = (id: string, text: string) => {
     setSources((prev) => prev.map((source) => (
