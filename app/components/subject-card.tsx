@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   // Science - Biology
   Microscope, FlaskConical, Atom, Beaker, TestTubes, Dna, Bug, Leaf, Feather, 
@@ -309,13 +310,27 @@ function IconCover({ title, description }: { title: string; description?: string
 }
 
 export function SubjectCard({ subject }: SubjectCardProps) {
+  const router = useRouter();
   const paragraphs = subject.paragraphContext?.paragraphs || [];
   const lastParagraphId = subject.paragraphContext?.lastParagraphId;
   const className = subject.classes?.[0]?.name;
   const Icon = getSubjectIcon(subject.title, subject.description);
+  const subjectHref = `/subjects/${subject.id}`;
+  const lastWorkedParagraph = (lastParagraphId && paragraphs.find((paragraph) => paragraph.id === lastParagraphId)) || paragraphs[0] || null;
 
   return (
-    <Card className="overflow-hidden transition-all duration-200 h-full flex flex-col rounded-2xl border-border/70 bg-[hsl(var(--surface-1))] hover:shadow-md">
+    <Card
+      className="overflow-hidden transition-all duration-200 h-full flex flex-col rounded-2xl border-border/70 bg-[hsl(var(--surface-1))] hover:shadow-md cursor-pointer"
+      role="button"
+      tabIndex={0}
+      onClick={() => router.push(subjectHref)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          router.push(subjectHref);
+        }
+      }}
+    >
       <CardContent className="p-0 flex flex-col h-full">
         <div className="px-4 pt-4 pb-3">
           <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/12 text-primary">
@@ -324,6 +339,17 @@ export function SubjectCard({ subject }: SubjectCardProps) {
           <h3 className="text-[14px] font-semibold truncate lowercase">{subject.title}</h3>
           {className && (
             <p className="text-[12px] text-muted-foreground truncate lowercase mt-0.5">{className}</p>
+          )}
+          {lastWorkedParagraph && (
+            <Link
+              href={`/subjects/${subject.id}/chapters/${lastWorkedParagraph.chapter_id}/paragraphs/${lastWorkedParagraph.id}`}
+              onClick={(event) => event.stopPropagation()}
+              className="mt-2 inline-flex max-w-full items-center rounded-lg bg-primary/10 px-2 py-1 text-[11px] text-primary hover:bg-primary/15"
+            >
+              <span className="truncate">
+                resume {lastWorkedParagraph.chapter_number}.{lastWorkedParagraph.paragraph_number} {lastWorkedParagraph.title}
+              </span>
+            </Link>
           )}
         </div>
 
@@ -358,6 +384,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
                 <Link
                   key={p.id}
                   href={`/subjects/${subject.id}/chapters/${p.chapter_id}/paragraphs/${p.id}`}
+                  onClick={(event) => event.stopPropagation()}
                   className={`grid grid-cols-[2.8rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-2 text-xs py-1.5 px-2 rounded-lg transition-colors min-h-8 hover:bg-muted/50 ${
                     isLast ? 'bg-primary/10' : ''
                   }`}
@@ -379,7 +406,16 @@ export function SubjectCard({ subject }: SubjectCardProps) {
               );
             })
           ) : (
-            <p className="text-xs text-muted-foreground text-center py-3 lowercase">no paragraphs yet</p>
+            <div className="flex items-center justify-between gap-2 py-2">
+              <p className="text-xs text-muted-foreground lowercase">no paragraphs yet</p>
+              <Link
+                href={subjectHref}
+                onClick={(event) => event.stopPropagation()}
+                className="text-xs text-primary hover:underline lowercase"
+              >
+                open subject
+              </Link>
+            </div>
           )}
         </div>
       </CardContent>
