@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { Suspense, useContext, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
@@ -9,7 +9,11 @@ import { Button } from '@/components/ui/button';
 import { ArrowUpRight } from 'lucide-react';
 
 export default function SubjectsPage() {
-  return <SubjectsPageContent />;
+  return (
+    <Suspense fallback={null}>
+      <SubjectsPageContent />
+    </Suspense>
+  );
 }
 
 function SubjectsPageContent() {

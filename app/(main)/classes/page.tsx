@@ -1,11 +1,10 @@
 
 'use client';
 
-import { useContext, useEffect } from 'react';
+import { Suspense, useContext, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { StudentClasses } from '@/components/dashboard/student/student-classes';
-import { TeacherDashboard } from '@/components/dashboard/teacher/teacher-dashboard';
 import { useToast } from '@/hooks/use-toast';
 
 function ClassesPageContent() {
@@ -101,5 +100,9 @@ function ClassesPageContent() {
 
 
 export default function ClassesPage() {
-    return <ClassesPageContent />;
+    return (
+      <Suspense fallback={null}>
+        <ClassesPageContent />
+      </Suspense>
+    );
 }
