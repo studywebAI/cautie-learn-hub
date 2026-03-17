@@ -75,7 +75,6 @@ function SubjectsPageContent() {
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <h1 className="text-[18px] font-semibold lowercase">subjects</h1>
-              <p className="mt-1 text-[13px] text-muted-foreground">Manage subjects within your active class.</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <select
@@ -107,7 +106,6 @@ function SubjectsPageContent() {
     <div className="h-full px-4 py-4 md:px-6 md:py-5">
       <div className="mb-4 rounded-2xl border border-border/70 bg-[hsl(var(--surface-1))] px-4 py-4 md:px-5 md:py-5">
         <h1 className="text-[18px] font-semibold lowercase">subjects</h1>
-        <p className="mt-1 text-[13px] text-muted-foreground">Browse your subjects and continue where you left off.</p>
       </div>
       <SubjectsGrid isTeacher={isTeacher} classId={isTeacher ? teacherClassId : undefined} />
     </div>

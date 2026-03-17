@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useContext, useCallback, useEffect } from 'react';
+import React, { useState, useContext, useCallback, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AppContext, AppContextType } from '@/contexts/app-context';
@@ -27,8 +27,18 @@ type SubjectsGridProps = {
 };
 
 export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) {
-  const [subjects, setSubjects] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { classes, session, subjects: cachedSubjects } = useContext(AppContext) as AppContextType;
+  const seededSubjects = useMemo(() => {
+    const source = Array.isArray(cachedSubjects) ? cachedSubjects : [];
+    if (!classId) return source;
+    return source.filter((subject: any) => {
+      const classIds = Array.isArray(subject?.classes) ? subject.classes.map((classItem: any) => classItem?.id) : [];
+      return classIds.length === 0 || classIds.includes(classId);
+    });
+  }, [cachedSubjects, classId]);
+
+  const [subjects, setSubjects] = useState<any[]>(seededSubjects);
+  const [isLoading, setIsLoading] = useState(seededSubjects.length === 0);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newSubjectTitle, setNewSubjectTitle] = useState('');
   const [newSubjectDescription, setNewSubjectDescription] = useState('');
@@ -36,7 +46,12 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
-  const { classes, session } = useContext(AppContext) as AppContextType;
+
+  useEffect(() => {
+    if (seededSubjects.length === 0) return;
+    setSubjects((prev) => (prev.length === 0 ? seededSubjects : prev));
+    setIsLoading(false);
+  }, [seededSubjects]);
 
   const toggleClassSelection = (classItemId: string) => {
     setSelectedClassIds(prev =>
@@ -48,7 +63,9 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
   const fetchSubjects = useCallback(async () => {
     try {
-      setIsLoading(true);
+      if (subjects.length === 0) {
+        setIsLoading(true);
+      }
       const apiUrl = classId ? `/api/classes/${classId}/subjects` : '/api/subjects';
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error('Failed to fetch subjects');
@@ -60,7 +77,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
     } finally {
       setIsLoading(false);
     }
-  }, [classId]);
+  }, [classId, subjects.length]);
 
   useEffect(() => {
     fetchSubjects();

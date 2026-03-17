@@ -302,7 +302,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setAssignments(cached.assignments || []);
       setPersonalTasks(cached.personalTasks || []);
       setStudents(cached.students || []);
-      // Don't set role from cache - always fetch fresh from API
+      const cachedRole = cached?.subscription?.type;
+      if (cachedRole === 'teacher' || cachedRole === 'student') {
+        setRoleState(cachedRole);
+      }
     }
 
     // STEP 2: Load settings from cache (instant)

@@ -94,6 +94,31 @@ export function AppSidebar() {
   ];
 
   useEffect(() => {
+    if (!isTeacher || !context) return;
+    void context.warmResources(['classes:list', 'subjects:list']);
+
+    const refreshResources = () => {
+      void context.warmResources(['classes:list', 'subjects:list']);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', refreshResources);
+      const intervalId = window.setInterval(refreshResources, 120000);
+      return () => {
+        window.removeEventListener('focus', refreshResources);
+        window.clearInterval(intervalId);
+      };
+    }
+  }, [isTeacher, context]);
+
+  useEffect(() => {
+    if (!isTeacher || !activeTeacherClassId) return;
+    router.prefetch(`/subjects?classId=${activeTeacherClassId}`);
+    router.prefetch(`/class/${activeTeacherClassId}?tab=group`);
+    router.prefetch(`/class/${activeTeacherClassId}?tab=subjects`);
+  }, [isTeacher, activeTeacherClassId, router]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem('studyweb-student-lane', studentLane);
   }, [studentLane]);
