@@ -124,6 +124,17 @@ export function SourceInput({
   sourceMergeMode = 'append_labeled',
 }: SourceInputProps) {
   const { toast } = useToast();
+  const micSessionIdRef = useRef<string>('');
+  const micChunkCountRef = useRef(0);
+  const micChunkBytesRef = useRef(0);
+  const debugMic = useCallback((event: string, details?: Record<string, unknown>) => {
+    console.log('[MIC_DEBUG][CLIENT]', {
+      event,
+      sessionId: micSessionIdRef.current || null,
+      ts: new Date().toISOString(),
+      ...details,
+    });
+  }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fallbackRecorderRef = useRef<MediaRecorder | null>(null);
   const fallbackStreamRef = useRef<MediaStream | null>(null);
@@ -364,10 +375,20 @@ export function SourceInput({
   }, []);
 
   const beginRecordingSession = useCallback(() => {
+    micSessionIdRef.current = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    micChunkCountRef.current = 0;
+    micChunkBytesRef.current = 0;
     recordingStartedAtRef.current = Date.now();
     recordingSegmentsRef.current = [];
     setIsFinalizingRecording(false);
-  }, []);
+    debugMic('recording_session_started', {
+      speechLanguage,
+      enableMic,
+      enableCaptions,
+      manualTextLength: manualText.length,
+      sourceCount: sources.length,
+    });
+  }, [debugMic, enableCaptions, enableMic, manualText.length, sources.length, speechLanguage]);
 
   const finalizeRecordingSession = useCallback(() => {
     const joined = normalizeText(recordingSegmentsRef.current.join(' '));
@@ -377,9 +398,19 @@ export function SourceInput({
 
     recordingStartedAtRef.current = null;
     recordingSegmentsRef.current = [];
+    debugMic('recording_session_finalize', {
+      joinedLength: joined.length,
+      captionLength: captionText.length,
+      chunks: micChunkCountRef.current,
+      chunkBytes: micChunkBytesRef.current,
+      start,
+      end,
+      durationMs: end - start,
+    });
 
     if (!captionText) {
       setMicError('No speech was detected in the recording.');
+      debugMic('recording_session_no_speech');
       return;
     }
 
@@ -393,7 +424,11 @@ export function SourceInput({
 
     setSources((prev) => [...prev, captionSource]);
     setManualText((prev) => (prev.trim() ? `${prev.trimEnd()}\n\n${captionText}` : captionText));
-  }, []);
+    debugMic('recording_session_caption_inserted', {
+      captionSourceId: captionSource.id,
+      captionPreview: captionText.slice(0, 100),
+    });
+  }, [debugMic]);
 
   const cleanupFallbackStream = useCallback(() => {
     const stream = fallbackStreamRef.current;
@@ -405,8 +440,17 @@ export function SourceInput({
   }, []);
 
   const transcribeFallbackAudio = useCallback(async (blob: Blob) => {
-    if (blob.size === 0) return;
+    if (blob.size === 0) {
+      debugMic('transcribe_skipped_empty_blob');
+      return;
+    }
     setIsTranscribingFallback(true);
+    const transcribeStartedAt = Date.now();
+    debugMic('transcribe_started', {
+      blobType: blob.type,
+      blobSize: blob.size,
+      speechLanguage,
+    });
     try {
       const fileExt = blob.type.includes('mp4') ? 'mp4' : 'webm';
       const file = new File([blob], `speech.${fileExt}`, { type: blob.type || 'audio/webm' });
@@ -420,6 +464,14 @@ export function SourceInput({
       });
 
       const payload = await response.json().catch(() => ({}));
+      debugMic('transcribe_response', {
+        ok: response.ok,
+        status: response.status,
+        durationMs: Date.now() - transcribeStartedAt,
+        payloadKeys: Object.keys(payload || {}),
+        textLength: typeof payload?.text === 'string' ? payload.text.length : 0,
+        error: payload?.error || null,
+      });
       if (!response.ok) {
         throw new Error(payload?.error || 'Transcription failed');
       }
@@ -427,12 +479,21 @@ export function SourceInput({
       const text = normalizeText(payload?.text || '');
       if (text) {
         appendRecordingSegment(text);
+        debugMic('transcribe_text_received', {
+          normalizedLength: text.length,
+          normalizedPreview: text.slice(0, 120),
+        });
         finalizeRecordingSession();
       } else {
         setMicError('No speech was detected in the recording.');
+        debugMic('transcribe_no_text');
       }
     } catch (error: any) {
       setMicError(error?.message || 'Could not transcribe fallback audio.');
+      debugMic('transcribe_error', {
+        message: error?.message || null,
+        durationMs: Date.now() - transcribeStartedAt,
+      });
       toast({
         variant: 'destructive',
         title: 'Transcription error',
@@ -441,8 +502,11 @@ export function SourceInput({
     } finally {
       setIsTranscribingFallback(false);
       setIsFinalizingRecording(false);
+      debugMic('transcribe_finished', {
+        durationMs: Date.now() - transcribeStartedAt,
+      });
     }
-  }, [appendRecordingSegment, finalizeRecordingSession, speechLanguage, toast]);
+  }, [appendRecordingSegment, debugMic, finalizeRecordingSession, speechLanguage, toast]);
 
   const startFallbackRecording = useCallback(async () => {
     if (isFallbackRecording) return;
@@ -456,9 +520,14 @@ export function SourceInput({
     }
 
     try {
+      debugMic('media_devices_request_start');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       fallbackStreamRef.current = stream;
       fallbackAudioChunksRef.current = [];
+      debugMic('media_devices_request_success', {
+        audioTracks: stream.getAudioTracks().length,
+        trackLabels: stream.getAudioTracks().map((t) => t.label || 'unknown'),
+      });
 
       const preferredMime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
@@ -470,16 +539,37 @@ export function SourceInput({
         : new MediaRecorder(stream);
 
       recorder.ondataavailable = (event: BlobEvent) => {
-        if (event.data?.size) fallbackAudioChunksRef.current.push(event.data);
+        if (event.data?.size) {
+          fallbackAudioChunksRef.current.push(event.data);
+          micChunkCountRef.current += 1;
+          micChunkBytesRef.current += event.data.size;
+          debugMic('recorder_chunk', {
+            chunkIndex: micChunkCountRef.current,
+            size: event.data.size,
+            totalBytes: micChunkBytesRef.current,
+            recorderState: recorder.state,
+          });
+        }
       };
 
-      recorder.onerror = () => {
+      recorder.onerror = (event) => {
         setMicError('Audio recording failed.');
+        debugMic('recorder_error', {
+          recorderState: recorder.state,
+          eventType: event.type,
+        });
       };
 
       recorder.onstop = async () => {
         const blob = new Blob(fallbackAudioChunksRef.current, {
           type: recorder.mimeType || 'audio/webm',
+        });
+        debugMic('recorder_stopped', {
+          recorderMimeType: recorder.mimeType,
+          finalBlobType: blob.type,
+          finalBlobBytes: blob.size,
+          chunks: micChunkCountRef.current,
+          totalChunkBytes: micChunkBytesRef.current,
         });
         fallbackAudioChunksRef.current = [];
         await transcribeFallbackAudio(blob);
@@ -488,13 +578,20 @@ export function SourceInput({
 
       fallbackRecorderRef.current = recorder;
       setIsFallbackRecording(true);
+      debugMic('recorder_start', {
+        recorderMimeType: recorder.mimeType,
+        preferredMime,
+      });
       recorder.start(250);
     } catch (error: any) {
       cleanupFallbackStream();
       setMicError(error?.message || 'Could not access microphone for fallback recording.');
       setIsFinalizingRecording(false);
+      debugMic('media_devices_request_error', {
+        message: error?.message || null,
+      });
     }
-  }, [cleanupFallbackStream, isFallbackRecording, transcribeFallbackAudio]);
+  }, [cleanupFallbackStream, debugMic, isFallbackRecording, transcribeFallbackAudio]);
 
   const stopFallbackRecording = useCallback(() => {
     const recorder = fallbackRecorderRef.current;
@@ -506,26 +603,30 @@ export function SourceInput({
     }
 
     if (recorder.state !== 'inactive') {
+      debugMic('recorder_stop_requested', { recorderState: recorder.state });
       recorder.stop();
     } else {
       cleanupFallbackStream();
+      debugMic('recorder_already_inactive');
     }
     setIsFallbackRecording(false);
-  }, [cleanupFallbackStream]);
+  }, [cleanupFallbackStream, debugMic]);
 
   const stopListening = useCallback(() => {
     const wasListening = isFallbackRecording;
     if (!wasListening) return;
 
     setIsFinalizingRecording(true);
+    debugMic('stop_listening');
     stopFallbackRecording();
-  }, [isFallbackRecording, stopFallbackRecording]);
+  }, [debugMic, isFallbackRecording, stopFallbackRecording]);
 
   const startListening = useCallback(() => {
     setMicError(null);
+    debugMic('start_listening');
     beginRecordingSession();
     void startFallbackRecording();
-  }, [beginRecordingSession, startFallbackRecording]);
+  }, [beginRecordingSession, debugMic, startFallbackRecording]);
 
   useEffect(() => {
     return () => {
@@ -668,47 +769,6 @@ export function SourceInput({
             disabled={disabled || isProcessing}
           />
 
-          <div className="rounded-md border p-2 space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">Included sources</p>
-              <span className="text-[10px] text-muted-foreground">
-                {sources.length + (manualText.trim() ? 1 : 0)} included
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs">
-              <span className="font-medium">Your text</span>
-              <span className="text-muted-foreground ml-auto">{wordCount} words</span>
-            </div>
-
-            <div className="max-h-[140px] overflow-auto space-y-1 pr-1">
-              {sources.length === 0 && (
-                <p className="text-xs text-muted-foreground px-1 py-1">No additional sources yet.</p>
-              )}
-              {sources.map((source) => (
-                <div key={source.id} className="flex items-start gap-2 rounded-md border px-2 py-1.5 text-xs">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{source.label}</p>
-                    {source.loading && <p className="text-muted-foreground">Importing...</p>}
-                    {source.error && <p className="text-red-400">{source.error}</p>}
-                    {!source.loading && !source.error && (
-                      <p className="text-muted-foreground truncate">{source.text.slice(0, 90) || source.url}</p>
-                    )}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 shrink-0"
-                    onClick={() => removeSource(source.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {charCount > 0 && (
             <span className="text-[10px] text-muted-foreground font-mono tabular-nums pl-1">
               {wordCount} words - {charCount} chars
@@ -768,29 +828,6 @@ export function SourceInput({
           </Button>
         </div>
       </div>
-
-      {enableMic && (
-        <div className="rounded-md border border-dashed px-3 py-2 text-xs space-y-2">
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span>Mic status: {isFallbackRecording ? 'recording' : isTranscribingFallback ? 'transcribing' : 'idle'}</span>
-            <span>Language: {speechLanguage.toUpperCase()}</span>
-          </div>
-          {isTranscribingFallback && (
-            <p className="text-muted-foreground">Transcribing audio...</p>
-          )}
-          {isFinalizingRecording && !isTranscribingFallback && (
-            <p className="text-muted-foreground flex items-center gap-2">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Finalizing caption...
-            </p>
-          )}
-          {micError && (
-            <p className="text-red-400">
-              {micError}
-            </p>
-          )}
-        </div>
-      )}
 
       <input
         ref={fileInputRef}
