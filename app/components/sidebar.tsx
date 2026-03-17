@@ -52,6 +52,7 @@ export function AppSidebar() {
   const { setOpenMobile, openMobile } = useSidebar();
   const [dropdown, setDropdown] = useState<DropdownState>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didWarmTeacherResourcesRef = useRef(false);
   const floatingRef = useRef<HTMLDivElement | null>(null);
   const classDropdownTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [classItems, setClassItems] = useState<DropdownClassItem[]>([]);
@@ -94,22 +95,30 @@ export function AppSidebar() {
   ];
 
   useEffect(() => {
-    if (!isTeacher || !context) return;
-    void context.warmResources(['classes:list', 'subjects:list']);
+    const warmResources = context?.warmResources;
+    if (!isTeacher || !warmResources) {
+      didWarmTeacherResourcesRef.current = false;
+      return;
+    }
+
+    if (!didWarmTeacherResourcesRef.current) {
+      didWarmTeacherResourcesRef.current = true;
+      void warmResources(['classes:list', 'subjects:list']);
+    }
 
     const refreshResources = () => {
-      void context.warmResources(['classes:list', 'subjects:list']);
+      void warmResources(['classes:list', 'subjects:list']);
     };
 
     if (typeof window !== 'undefined') {
       window.addEventListener('focus', refreshResources);
-      const intervalId = window.setInterval(refreshResources, 120000);
+      const intervalId = window.setInterval(refreshResources, 300000);
       return () => {
         window.removeEventListener('focus', refreshResources);
         window.clearInterval(intervalId);
       };
     }
-  }, [isTeacher, context]);
+  }, [isTeacher, context?.warmResources]);
 
   useEffect(() => {
     if (!isTeacher || !activeTeacherClassId) return;

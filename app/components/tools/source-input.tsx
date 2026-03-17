@@ -128,12 +128,25 @@ export function SourceInput({
   const micChunkCountRef = useRef(0);
   const micChunkBytesRef = useRef(0);
   const debugMic = useCallback((event: string, details?: Record<string, unknown>) => {
-    console.log('[MIC_DEBUG][CLIENT]', {
+    const payload = {
       event,
       sessionId: micSessionIdRef.current || null,
       ts: new Date().toISOString(),
       ...details,
-    });
+    };
+    console.log('[MIC_DEBUG][CLIENT]', payload);
+
+    // Mirror client mic logs to server so they appear in Vercel logs too.
+    try {
+      void fetch('/api/tools/mic-debug', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      });
+    } catch {
+      // Keep local flow resilient if debug logging fails.
+    }
   }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fallbackRecorderRef = useRef<MediaRecorder | null>(null);
