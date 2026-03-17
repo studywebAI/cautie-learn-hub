@@ -49,7 +49,7 @@ export function AppSidebar() {
   const context = useContext(AppContext) as AppContextType | null;
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, openMobile } = useSidebar();
   const [dropdown, setDropdown] = useState<DropdownState>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const floatingRef = useRef<HTMLDivElement | null>(null);
@@ -431,7 +431,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 rounded-xl border-border/70 bg-[hsl(var(--surface-2))] px-3 text-[12px] font-medium hover:bg-[hsl(var(--surface-3))]"
+                className="h-8 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[12px] font-medium text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
                 onClick={() => {
                   setNewClassMenuOpen((v) => !v);
                   setCreateClassOpen(false);
@@ -445,7 +445,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                  className="h-8 text-[12px] rounded-lg border-border/70 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
+                  className="h-8 text-[12px] rounded-lg border-sidebar-border/80 bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
                 onClick={() => {
                   setJoinClassOpen((v) => !v);
                   setCreateClassOpen(false);
@@ -458,7 +458,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                  className="h-8 text-[12px] rounded-lg border-border/70 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
+                  className="h-8 text-[12px] rounded-lg border-sidebar-border/80 bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
                 onClick={() => setCreateSubjectOpen((v) => !v)}
               >
                 + Create subject
@@ -590,8 +590,8 @@ export function AppSidebar() {
                 className={cn(
                   'flex items-center justify-between gap-2 truncate rounded-xl px-2.5 py-2 text-[13px] transition-colors',
                   dropdown.kind === 'classes' && entry.id === activeTeacherClassId
-                    ? 'bg-[hsl(var(--surface-2))] text-foreground'
-                    : 'hover:bg-[hsl(var(--surface-2))] text-muted-foreground hover:text-foreground'
+                    ? 'bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]'
+                    : 'hover:bg-sidebar-accent text-muted-foreground hover:text-[hsl(var(--sidebar-active-foreground))]'
                 )}
                 onClick={() => {
                   if (dropdown.kind === 'classes' && isTeacher) {
@@ -620,6 +620,41 @@ export function AppSidebar() {
   const renderTeacherClassSwitcher = () => {
     if (!isTeacher) return null;
 
+    if (isMobile) {
+      return (
+        <div className="mb-2 px-2">
+          <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
+            class
+          </label>
+          <select
+            value={activeTeacherClassId}
+            onChange={(event) => {
+              const nextClassId = event.target.value;
+              if (!nextClassId) return;
+              setActiveTeacherClassId(nextClassId);
+              if (typeof window !== 'undefined') {
+                window.localStorage.setItem('studyweb-last-class-id', nextClassId);
+              }
+              router.push(resolveTeacherClassRoute(nextClassId));
+              setOpenMobile(false);
+            }}
+            disabled={classDropdownItems.length === 0}
+            className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-3 text-[12px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-sidebar-accent/90 disabled:opacity-60"
+          >
+            {classDropdownItems.length === 0 ? (
+              <option value="">no classes</option>
+            ) : (
+              classDropdownItems.map((classItem) => (
+                <option key={classItem.id} value={classItem.id}>
+                  {classItem.label}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+      );
+    }
+
     return (
       <div className="mb-2 px-2">
         <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
@@ -628,7 +663,7 @@ export function AppSidebar() {
         <Button
           size="sm"
           variant="outline"
-          className="mb-1 h-8 w-full justify-start rounded-xl px-3 text-[12px] font-medium"
+          className="mb-1 h-8 w-full justify-start rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[12px] font-medium text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
           onClick={(event) => {
             openDropdownFor('classes', event.currentTarget);
             setNewClassMenuOpen(true);
@@ -649,7 +684,7 @@ export function AppSidebar() {
             openDropdownFor('classes', event.currentTarget);
           }}
           disabled={classDropdownItems.length === 0}
-          className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-2))] px-3 text-left text-[12px] text-sidebar-foreground transition-colors hover:bg-[hsl(var(--surface-3))] disabled:opacity-60"
+          className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-3 text-left text-[12px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-sidebar-accent/90 disabled:opacity-60"
         >
           <span className="flex items-center justify-between gap-2">
             <span className="truncate">
@@ -693,7 +728,7 @@ export function AppSidebar() {
         <select
           value={studentLane}
           onChange={(event) => switchStudentLane(event.target.value as StudentLane)}
-          className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-2))] px-3 text-[12px] text-sidebar-foreground transition-colors hover:bg-[hsl(var(--surface-3))]"
+          className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-3 text-[12px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-sidebar-accent/90"
         >
           <option value="school">school</option>
           <option value="tools">tools</option>
@@ -707,7 +742,7 @@ export function AppSidebar() {
     return (
       <>
         {/* Mini sidebar - always visible on mobile */}
-        <div className="fixed left-0 top-0 h-full w-14 bg-sidebar z-40 flex flex-col py-3">
+        <div className={cn("fixed left-0 top-0 h-full w-14 bg-sidebar z-40 flex flex-col py-3 transition-opacity", openMobile && "pointer-events-none opacity-0")}>
           {/* Hamburger button to open full drawer */}
           <Button
             variant="ghost"

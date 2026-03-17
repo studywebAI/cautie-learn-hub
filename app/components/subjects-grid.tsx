@@ -129,7 +129,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[...Array(6)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-0">
@@ -150,7 +150,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
       <div className="space-y-6">
         {isTeacher && (
           <div className="flex justify-end">
-            <Button onClick={() => setIsCreateOpen(true)} size="sm" className="rounded-full">
+            <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
               + create subject
             </Button>
           </div>
@@ -160,13 +160,13 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
           <div className="text-center py-16 text-muted-foreground">
             <p className="text-sm mb-4 lowercase">no subjects yet</p>
             {isTeacher && (
-              <Button onClick={() => setIsCreateOpen(true)} size="sm" className="rounded-full">
+              <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
                 create first subject
               </Button>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {subjects.map((subject) => (
               <SubjectCard key={subject.id} subject={subject} />
             ))}
@@ -261,10 +261,10 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="rounded-full">
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="rounded-xl">
               cancel
             </Button>
-            <Button onClick={handleCreateSubject} disabled={isCreating || !newSubjectTitle.trim()} className="rounded-full">
+            <Button onClick={handleCreateSubject} disabled={isCreating || !newSubjectTitle.trim()} className="rounded-xl">
               {isCreating ? 'creating...' : 'create'}
             </Button>
           </DialogFooter>

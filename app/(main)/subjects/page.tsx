@@ -60,8 +60,8 @@ function SubjectsPageContent() {
 
   if (isTeacher && !teacherClassId) {
     return (
-      <div className="h-full p-5 md:p-7">
-        <div className="rounded-lg border border-dashed p-8 text-sm text-muted-foreground">
+      <div className="h-full px-4 py-4 md:px-6 md:py-5">
+        <div className="rounded-xl border border-dashed p-8 text-sm text-muted-foreground">
           No active class selected. Select or create a class first.
         </div>
       </div>
@@ -70,26 +70,32 @@ function SubjectsPageContent() {
 
   if (isTeacher) {
     return (
-      <div className="h-full p-6 md:p-8">
-        <div className="mb-4 rounded-xl bg-[hsl(var(--surface-1))] p-4 md:p-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <select
-              value={teacherClassId}
-              onChange={(event) => handleTeacherClassChange(event.target.value)}
-              className="h-9 min-w-[220px] rounded-xl border border-border bg-background px-3 text-[13px]"
-            >
-              {teacherActiveClasses.map((classItem) => (
-                <option key={classItem.id} value={classItem.id}>
-                  {classItem.name}
-                </option>
-              ))}
-            </select>
-            <Button asChild size="sm" variant="outline" className="h-9 px-3">
-              <Link href={`/class/${teacherClassId}?tab=subjects`}>
-                open in manage
-                <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
-              </Link>
-            </Button>
+      <div className="h-full px-4 py-4 md:px-6 md:py-5">
+        <div className="mb-4 rounded-2xl border border-border/70 bg-[hsl(var(--surface-1))] px-4 py-4 md:px-5 md:py-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h1 className="text-[18px] font-semibold lowercase">subjects</h1>
+              <p className="mt-1 text-[13px] text-muted-foreground">Manage subjects within your active class.</p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <select
+                value={teacherClassId}
+                onChange={(event) => handleTeacherClassChange(event.target.value)}
+                className="h-9 min-w-[220px] rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-3 text-[13px] text-[hsl(var(--sidebar-active-foreground))]"
+              >
+                {teacherActiveClasses.map((classItem) => (
+                  <option key={classItem.id} value={classItem.id}>
+                    {classItem.name}
+                  </option>
+                ))}
+              </select>
+              <Button asChild size="sm" variant="outline" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
+                <Link href={`/class/${teacherClassId}?tab=subjects`}>
+                  open in manage
+                  <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
         <SubjectsGrid isTeacher={true} classId={teacherClassId} />
@@ -98,7 +104,11 @@ function SubjectsPageContent() {
   }
 
   return (
-    <div className="h-full p-6 md:p-8">
+    <div className="h-full px-4 py-4 md:px-6 md:py-5">
+      <div className="mb-4 rounded-2xl border border-border/70 bg-[hsl(var(--surface-1))] px-4 py-4 md:px-5 md:py-5">
+        <h1 className="text-[18px] font-semibold lowercase">subjects</h1>
+        <p className="mt-1 text-[13px] text-muted-foreground">Browse your subjects and continue where you left off.</p>
+      </div>
       <SubjectsGrid isTeacher={isTeacher} classId={isTeacher ? teacherClassId : undefined} />
     </div>
   );
