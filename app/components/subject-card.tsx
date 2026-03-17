@@ -406,7 +406,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
               );
             })
           ) : (
-            <p className="text-xs text-muted-foreground text-center py-3 lowercase">no paragraphs yet</p>
+            <div className="py-3" aria-hidden="true" />
           )}
         </div>
       </CardContent>
