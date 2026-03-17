@@ -103,7 +103,20 @@ export default function SubjectDetailPage() {
           const storageKey = `lastActivity_${subjectId}`;
           const stored = localStorage.getItem(storageKey);
           if (stored) {
-            try { setLastActivity(JSON.parse(stored)); } catch {}
+            try {
+              const parsed = JSON.parse(stored) as LastActivity;
+              const paragraphStillExists = chaptersWithParagraphs.some((chapter) =>
+                (chapter.paragraphs || []).some((paragraph: Paragraph) => paragraph.id === parsed.paragraphId)
+              );
+              if (paragraphStillExists) {
+                setLastActivity(parsed);
+              } else {
+                localStorage.removeItem(storageKey);
+                setLastActivity(null);
+              }
+            } catch {
+              setLastActivity(null);
+            }
           }
         }
       } catch (error) {

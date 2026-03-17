@@ -406,16 +406,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
               );
             })
           ) : (
-            <div className="flex items-center justify-between gap-2 py-2">
-              <p className="text-xs text-muted-foreground lowercase">no paragraphs yet</p>
-              <Link
-                href={subjectHref}
-                onClick={(event) => event.stopPropagation()}
-                className="text-xs text-primary hover:underline lowercase"
-              >
-                open subject
-              </Link>
-            </div>
+            <p className="text-xs text-muted-foreground text-center py-3 lowercase">no paragraphs yet</p>
           )}
         </div>
       </CardContent>
