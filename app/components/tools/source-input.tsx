@@ -154,6 +154,8 @@ export function SourceInput({
   const fallbackAudioChunksRef = useRef<Blob[]>([]);
   const recordingStartedAtRef = useRef<number | null>(null);
   const recordingSegmentsRef = useRef<string[]>([]);
+  const restartAttemptsRef = useRef(0);
+  const isFinalizingRecordingRef = useRef(false);
   const initializedRef = useRef(false);
   const lastEmittedRef = useRef('');
 
@@ -172,6 +174,10 @@ export function SourceInput({
   const [isTranscribingFallback, setIsTranscribingFallback] = useState(false);
   const [isFinalizingRecording, setIsFinalizingRecording] = useState(false);
   const [captionsOpen, setCaptionsOpen] = useState(false);
+
+  useEffect(() => {
+    isFinalizingRecordingRef.current = isFinalizingRecording;
+  }, [isFinalizingRecording]);
 
   useEffect(() => {
     if (initializedRef.current) return;
@@ -391,6 +397,7 @@ export function SourceInput({
     micSessionIdRef.current = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     micChunkCountRef.current = 0;
     micChunkBytesRef.current = 0;
+    restartAttemptsRef.current = 0;
     recordingStartedAtRef.current = Date.now();
     recordingSegmentsRef.current = [];
     setIsFinalizingRecording(false);
@@ -537,6 +544,17 @@ export function SourceInput({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       fallbackStreamRef.current = stream;
       fallbackAudioChunksRef.current = [];
+      for (const track of stream.getAudioTracks()) {
+        track.onended = () => {
+          debugMic('audio_track_ended', { label: track.label, readyState: track.readyState });
+        };
+        track.onmute = () => {
+          debugMic('audio_track_muted', { label: track.label, readyState: track.readyState });
+        };
+        track.onunmute = () => {
+          debugMic('audio_track_unmuted', { label: track.label, readyState: track.readyState });
+        };
+      }
       debugMic('media_devices_request_success', {
         audioTracks: stream.getAudioTracks().length,
         trackLabels: stream.getAudioTracks().map((t) => t.label || 'unknown'),
@@ -577,14 +595,37 @@ export function SourceInput({
         const blob = new Blob(fallbackAudioChunksRef.current, {
           type: recorder.mimeType || 'audio/webm',
         });
+        const recordingDurationMs = recordingStartedAtRef.current
+          ? Date.now() - recordingStartedAtRef.current
+          : null;
+        const unexpectedEarlyStop =
+          !isFinalizingRecordingRef.current &&
+          (blob.size === 0 || micChunkCountRef.current === 0) &&
+          !!recordingDurationMs &&
+          recordingDurationMs < 3000;
         debugMic('recorder_stopped', {
           recorderMimeType: recorder.mimeType,
           finalBlobType: blob.type,
           finalBlobBytes: blob.size,
           chunks: micChunkCountRef.current,
           totalChunkBytes: micChunkBytesRef.current,
+          recordingDurationMs,
+          expectedStop: isFinalizingRecordingRef.current,
+          unexpectedEarlyStop,
         });
         fallbackAudioChunksRef.current = [];
+
+        if (unexpectedEarlyStop && restartAttemptsRef.current < 1) {
+          restartAttemptsRef.current += 1;
+          debugMic('recorder_auto_restart', { attempt: restartAttemptsRef.current });
+          cleanupFallbackStream();
+          setIsFallbackRecording(false);
+          setTimeout(() => {
+            void startFallbackRecording();
+          }, 180);
+          return;
+        }
+
         await transcribeFallbackAudio(blob);
         cleanupFallbackStream();
       };
