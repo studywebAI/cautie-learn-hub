@@ -249,8 +249,8 @@ function QuizPageContent() {
         onSubmit={() => handleGenerate(sourceText)}
         placeholder={t.sourceInputPlaceholder}
         speechLanguage={language}
-        enableMic
-        enableCaptions
+        enableMic={false}
+        enableCaptions={false}
         sourceMergeMode="append_labeled"
       />
     </WorkbenchShell>

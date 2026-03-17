@@ -859,26 +859,30 @@ export function SourceInput({
             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
             Upload
           </Button>
-          <Button
-            type="button"
-            variant={isFallbackRecording ? 'secondary' : 'outline'}
-            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
-            onClick={() => (isFallbackRecording ? stopListening() : startListening())}
-            disabled={disabled || isProcessing || !enableMic}
-          >
-            {isFallbackRecording ? <StopCircle className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-            Mic
-          </Button>
-          <Button
-            type="button"
-            variant={captionsOpen ? 'secondary' : 'outline'}
-            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
-            onClick={() => setCaptionsOpen((prev) => !prev)}
-            disabled={disabled || !enableCaptions}
-          >
-            <Captions className="h-4 w-4" />
-            Captions
-          </Button>
+          {enableMic && (
+            <Button
+              type="button"
+              variant={isFallbackRecording ? 'secondary' : 'outline'}
+              className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
+              onClick={() => (isFallbackRecording ? stopListening() : startListening())}
+              disabled={disabled || isProcessing || !enableMic}
+            >
+              {isFallbackRecording ? <StopCircle className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              Mic
+            </Button>
+          )}
+          {enableCaptions && (
+            <Button
+              type="button"
+              variant={captionsOpen ? 'secondary' : 'outline'}
+              className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
+              onClick={() => setCaptionsOpen((prev) => !prev)}
+              disabled={disabled || !enableCaptions}
+            >
+              <Captions className="h-4 w-4" />
+              Captions
+            </Button>
+          )}
           <Button
             type="button"
             className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
