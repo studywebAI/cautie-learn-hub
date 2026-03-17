@@ -119,6 +119,15 @@ export function AppSidebar() {
   }, [isTeacher, activeTeacherClassId, router]);
 
   useEffect(() => {
+    if (!isTeacher || classDropdownItems.length === 0) return;
+    classDropdownItems.slice(0, 8).forEach((classItem) => {
+      router.prefetch(`/class/${classItem.id}?tab=subjects`);
+      router.prefetch(`/class/${classItem.id}?tab=group`);
+      router.prefetch(`/subjects?classId=${classItem.id}`);
+    });
+  }, [isTeacher, classDropdownItems, router]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem('studyweb-student-lane', studentLane);
   }, [studentLane]);

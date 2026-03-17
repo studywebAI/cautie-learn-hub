@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useContext, useEffect, Suspense } from 'react';
+import { useContext, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { StudentClasses } from '@/components/dashboard/student/student-classes';
@@ -96,14 +96,10 @@ function ClassesPageContent() {
     return <StudentClasses />;
   }
 
-  return <div className="p-4 text-sm text-muted-foreground">Redirecting to class...</div>;
+  return null;
 }
 
 
 export default function ClassesPage() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <ClassesPageContent />
-        </Suspense>
-    );
+    return <ClassesPageContent />;
 }

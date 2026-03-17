@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
@@ -9,17 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowUpRight } from 'lucide-react';
 
 export default function SubjectsPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="h-full p-6 md:p-8">
-          <div className="rounded-lg border border-dashed p-8 text-sm text-muted-foreground">Loading subjects...</div>
-        </div>
-      }
-    >
-      <SubjectsPageContent />
-    </Suspense>
-  );
+  return <SubjectsPageContent />;
 }
 
 function SubjectsPageContent() {
@@ -44,11 +34,6 @@ function SubjectsPageContent() {
       teacherActiveClasses[0];
     setTeacherClassId(preferredClass?.id);
   }, [isTeacher, teacherActiveClasses, searchParams]);
-
-  const selectedClass = useMemo(
-    () => teacherActiveClasses.find((classItem) => classItem.id === teacherClassId),
-    [teacherActiveClasses, teacherClassId]
-  );
 
   const handleTeacherClassChange = (nextClassId: string) => {
     setTeacherClassId(nextClassId);
