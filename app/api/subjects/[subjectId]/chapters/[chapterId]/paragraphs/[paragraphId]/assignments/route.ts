@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { makeRequestId, subjectsError, subjectsLog, subjectsWarn } from '@/lib/subjects-log'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,12 +10,22 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string }> }
 ) {
+  const requestId = makeRequestId('paragraph_assignments');
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params;
+    subjectsLog('paragraph-assignments', requestId, 'request.start', {
+      subjectId: resolvedParams.subjectId,
+      chapterId: resolvedParams.chapterId,
+      paragraphId: resolvedParams.paragraphId,
+    });
 
     const { data: { user } } = await supabase.auth.getUser()
+    subjectsLog('paragraph-assignments', requestId, 'auth.state', {
+      authenticated: Boolean(user),
+      userId: user?.id || null,
+    });
 
     const { data: assignments, error } = await supabase
       .from('assignments')
@@ -23,11 +34,16 @@ export async function GET(
       .order('assignment_index', { ascending: true })
 
     if (error) {
-      console.error('Assignments fetch error:', error);
+      subjectsError('paragraph-assignments', requestId, 'assignments.query.error', {
+        message: error.message,
+      });
       return NextResponse.json([])
     }
 
     const safeAssignments = assignments || [];
+    subjectsLog('paragraph-assignments', requestId, 'assignments.query.ok', {
+      assignmentCount: safeAssignments.length,
+    });
 
     const getLetterIndex = (index: number): string => {
       if (index < 26) return String.fromCharCode(97 + index);
@@ -75,6 +91,11 @@ export async function GET(
         );
       }
     }
+    subjectsLog('paragraph-assignments', requestId, 'metrics.computed', {
+      assignmentCount: safeAssignments.length,
+      withBlocks: blocksByAssignment.size,
+      withAnswers: answersByAssignment.size,
+    });
 
     const transformedAssignments = safeAssignments.map((assignment) => {
       const totalBlocks = blocksByAssignment.get(assignment.id) || 0;
@@ -91,9 +112,15 @@ export async function GET(
       };
     });
 
+    subjectsLog('paragraph-assignments', requestId, 'response.ready', {
+      assignmentCount: transformedAssignments.length,
+    });
     return NextResponse.json(transformedAssignments)
   } catch (err) {
-    console.error('Unexpected error:', err);
+    subjectsError('paragraph-assignments', requestId, 'request.error', {
+      message: (err as any)?.message || 'Unknown error',
+      stack: (err as any)?.stack || null,
+    });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { makeRequestId, subjectsError, subjectsLog, subjectsWarn } from '@/lib/subjects-log';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,16 +48,20 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string }> }
 ) {
+  const requestId = makeRequestId('paragraph_overview');
   try {
     const { subjectId, chapterId, paragraphId } = await params;
+    subjectsLog('paragraph-overview', requestId, 'request.start', { subjectId, chapterId, paragraphId });
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
 
     const { data: auth } = await supabase.auth.getUser();
     const user = auth?.user;
     if (!user) {
+      subjectsWarn('paragraph-overview', requestId, 'auth.unauthorized');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    subjectsLog('paragraph-overview', requestId, 'auth.ok', { userId: user.id });
     const profileResult = await supabase
       .from('profiles')
       .select('subscription_type')
@@ -64,7 +69,12 @@ export async function GET(
       .maybeSingle();
     const isTeacher = profileResult.data?.subscription_type === 'teacher';
     const hasAccess = await canAccessSubject(supabase, user.id, subjectId);
+    subjectsLog('paragraph-overview', requestId, 'profile.loaded', {
+      isTeacher,
+      subscriptionType: profileResult.data?.subscription_type || null,
+    });
     if (!hasAccess) {
+      subjectsWarn('paragraph-overview', requestId, 'access.denied.subject', { subjectId, userId: user.id });
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
     }
 
@@ -94,11 +104,18 @@ export async function GET(
     ]);
 
     if (!chapterCheck.data) {
+      subjectsWarn('paragraph-overview', requestId, 'access.denied.chapter', { chapterId, subjectId });
       return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
     }
     if (!paragraphResult.data) {
+      subjectsWarn('paragraph-overview', requestId, 'access.denied.paragraph', { paragraphId, chapterId });
       return NextResponse.json({ error: 'Paragraph not found' }, { status: 404 });
     }
+    subjectsLog('paragraph-overview', requestId, 'hierarchy.valid', {
+      chapterId,
+      paragraphId,
+      allParagraphCount: paragraphListResult.data?.length || 0,
+    });
 
     const assignments = assignmentsResult.data || [];
     const assignmentIds = assignments.map((assignment: any) => assignment.id).filter(Boolean);
@@ -151,12 +168,21 @@ export async function GET(
       };
     });
 
-    return NextResponse.json({
+    const response = {
       paragraph: paragraphResult.data,
       allParagraphs: paragraphListResult.data || [],
       assignments: transformedAssignments,
+    };
+    subjectsLog('paragraph-overview', requestId, 'response.ready', {
+      assignmentCount: response.assignments.length,
+      paragraphCount: response.allParagraphs.length,
     });
+    return NextResponse.json(response);
   } catch (error: any) {
+    subjectsError('paragraph-overview', requestId, 'request.error', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || null,
+    });
     return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { makeRequestId, subjectsError, subjectsLog, subjectsWarn } from '@/lib/subjects-log'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,15 +39,22 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ subjectId: string }> }
 ) {
+  const requestId = makeRequestId('subject_chapters');
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params;
+    subjectsLog('subject-chapters', requestId, 'request.start', {
+      subjectId: resolvedParams.subjectId,
+      url: request.url,
+    });
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      subjectsWarn('subject-chapters', requestId, 'auth.unauthorized');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    subjectsLog('subject-chapters', requestId, 'auth.ok', { userId: user.id });
 
     // Get user subscription type
     const { data: profile } = await supabase
@@ -56,6 +64,10 @@ export async function GET(
       .maybeSingle();
 
     const isTeacher = profile?.subscription_type === 'teacher';
+    subjectsLog('subject-chapters', requestId, 'profile.loaded', {
+      isTeacher,
+      subscriptionType: profile?.subscription_type || null,
+    });
 
     // Verify access
     if (isTeacher) {
@@ -83,6 +95,10 @@ export async function GET(
             .limit(1);
 
           if (!linkMembership || linkMembership.length === 0) {
+            subjectsWarn('subject-chapters', requestId, 'access.denied.teacher', {
+              subjectId: resolvedParams.subjectId,
+              userId: user.id,
+            });
             return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
           }
         }
@@ -91,6 +107,10 @@ export async function GET(
       // Students must have access through class membership
       const hasAccess = await studentHasSubjectAccess(supabase, user.id, resolvedParams.subjectId);
       if (!hasAccess) {
+        subjectsWarn('subject-chapters', requestId, 'access.denied.student', {
+          subjectId: resolvedParams.subjectId,
+          userId: user.id,
+        });
         return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
     }
@@ -103,14 +123,20 @@ export async function GET(
       .order('chapter_number', { ascending: true });
 
     if (error) {
-      console.log('Chapters fetch error:', error.message);
+      subjectsError('subject-chapters', requestId, 'chapters.query.error', { message: error.message });
       return NextResponse.json({ error: 'Failed to fetch chapters' }, { status: 500 });
     }
+    subjectsLog('subject-chapters', requestId, 'response.ready', {
+      chapterCount: chapters?.length || 0,
+    });
 
     return NextResponse.json(chapters || []);
 
   } catch (err) {
-    console.error('Chapters GET error:', err);
+    subjectsError('subject-chapters', requestId, 'request.error', {
+      message: (err as any)?.message || 'Unknown error',
+      stack: (err as any)?.stack || null,
+    });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

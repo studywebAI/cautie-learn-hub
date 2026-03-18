@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createHash } from 'crypto';
 import { createClient } from '@/lib/supabase/server';
+import { makeRequestId, subjectsError, subjectsLog, subjectsWarn } from '@/lib/subjects-log';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,18 +16,28 @@ function stableHash(payload: unknown): string {
 }
 
 export async function GET(request: NextRequest) {
+  const requestId = makeRequestId('subjects_sync');
   try {
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
     const { data: auth } = await supabase.auth.getUser();
     const user = auth?.user;
+    subjectsLog('subjects-sync', requestId, 'request.start', {
+      url: request.url,
+    });
 
     if (!user) {
+      subjectsWarn('subjects-sync', requestId, 'auth.unauthorized');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    subjectsLog('subjects-sync', requestId, 'auth.ok', { userId: user.id });
 
     const classId = request.nextUrl.searchParams.get('classId');
     const clientChecksum = request.nextUrl.searchParams.get('checksum') || '';
+    subjectsLog('subjects-sync', requestId, 'params', {
+      classId: classId || null,
+      hasClientChecksum: Boolean(clientChecksum),
+    });
     const subjectsUrl = new URL('/api/subjects', request.url);
     if (classId) subjectsUrl.searchParams.set('classId', classId);
 
@@ -37,6 +48,10 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     const isTeacher = profile?.subscription_type === 'teacher';
+    subjectsLog('subjects-sync', requestId, 'profile.loaded', {
+      subscriptionType: profile?.subscription_type || null,
+      isTeacher,
+    });
     const scopedSubjectIds = new Set<string>();
     const scopedClassIds = new Set<string>();
 
@@ -86,9 +101,16 @@ export async function GET(request: NextRequest) {
 
     const subjectIds = Array.from(scopedSubjectIds);
     const classIds = Array.from(scopedClassIds);
+    subjectsLog('subjects-sync', requestId, 'scope.computed', {
+      subjectCount: subjectIds.length,
+      classCount: classIds.length,
+    });
 
     if (subjectIds.length === 0) {
       const emptyChecksum = stableHash({ subjectIds: [], classIds: [] });
+      subjectsLog('subjects-sync', requestId, 'scope.empty', {
+        checksum: emptyChecksum,
+      });
       return NextResponse.json({
         changed: clientChecksum !== emptyChecksum,
         checksum: emptyChecksum,
@@ -137,6 +159,14 @@ export async function GET(request: NextRequest) {
         : { data: [], error: null };
 
     if (assignmentsRows.error) return NextResponse.json({ error: assignmentsRows.error.message }, { status: 500 });
+    subjectsLog('subjects-sync', requestId, 'graph.loaded', {
+      subjects: subjectsRows.data?.length || 0,
+      classSubjects: classSubjectRows.data?.length || 0,
+      chapters: chapterRows.data?.length || 0,
+      paragraphs: paragraphRows.data?.length || 0,
+      assignments: assignmentsRows.data?.length || 0,
+      sessions: sessionRows.data?.length || 0,
+    });
 
     const checksumPayload = {
       subjects: (subjectsRows.data || []).map((row: any) => [row.id, row.updated_at || row.created_at || null]),
@@ -149,8 +179,13 @@ export async function GET(request: NextRequest) {
 
     const checksum = stableHash(checksumPayload);
     if (clientChecksum && clientChecksum === checksum) {
+      subjectsLog('subjects-sync', requestId, 'checksum.match', { checksum });
       return NextResponse.json({ changed: false, checksum });
     }
+    subjectsLog('subjects-sync', requestId, 'checksum.changed', {
+      previous: clientChecksum || null,
+      next: checksum,
+    });
 
     const subjectsResponse = await fetch(subjectsUrl, {
       headers: { cookie: request.headers.get('cookie') || '' },
@@ -158,6 +193,9 @@ export async function GET(request: NextRequest) {
     });
 
     if (!subjectsResponse.ok) {
+      subjectsError('subjects-sync', requestId, 'subjects.refresh.failed', {
+        status: subjectsResponse.status,
+      });
       return NextResponse.json(
         { error: `Failed to refresh subjects (${subjectsResponse.status})` },
         { status: subjectsResponse.status },
@@ -165,12 +203,20 @@ export async function GET(request: NextRequest) {
     }
 
     const subjects = await subjectsResponse.json();
+    subjectsLog('subjects-sync', requestId, 'response.ready', {
+      changed: true,
+      subjectCount: Array.isArray(subjects) ? subjects.length : 0,
+    });
     return NextResponse.json({
       changed: true,
       checksum,
       subjects: Array.isArray(subjects) ? subjects : [],
     });
   } catch (error: any) {
+    subjectsError('subjects-sync', requestId, 'request.error', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || null,
+    });
     return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 });
   }
 }

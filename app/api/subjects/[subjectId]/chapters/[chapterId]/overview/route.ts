@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { makeRequestId, subjectsError, subjectsLog, subjectsWarn } from '@/lib/subjects-log';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,14 +41,20 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ subjectId: string; chapterId: string }> }
 ) {
+  const requestId = makeRequestId('chapter_overview');
   try {
     const { subjectId, chapterId } = await params;
+    subjectsLog('chapter-overview', requestId, 'request.start', { subjectId, chapterId });
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
 
     const { data: auth } = await supabase.auth.getUser();
     const user = auth?.user;
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) {
+      subjectsWarn('chapter-overview', requestId, 'auth.unauthorized');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    subjectsLog('chapter-overview', requestId, 'auth.ok', { userId: user.id });
 
     const [profileResponse, chaptersResponse, paragraphsResponse] = await Promise.all([
       supabase.from('profiles').select('subscription_type').eq('id', user.id).maybeSingle(),
@@ -75,8 +82,13 @@ export async function GET(
     ]);
 
     const isTeacher = profileResponse.data?.subscription_type === 'teacher';
+    subjectsLog('chapter-overview', requestId, 'profile.loaded', {
+      isTeacher,
+      subscriptionType: profileResponse.data?.subscription_type || null,
+    });
     const subjectAccess = await canAccessSubject(supabase, user.id, subjectId);
     if (!subjectAccess.allowed || !subjectAccess.subject) {
+      subjectsWarn('chapter-overview', requestId, 'access.denied.subject', { subjectId, userId: user.id });
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
     }
 
@@ -87,6 +99,7 @@ export async function GET(
       .eq('subject_id', subjectId)
       .maybeSingle();
     if (!chapter) {
+      subjectsWarn('chapter-overview', requestId, 'access.denied.chapter', { chapterId, subjectId });
       return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
     }
 
@@ -110,7 +123,7 @@ export async function GET(
       };
     });
 
-    return NextResponse.json({
+    const response = {
       subject: {
         id: subjectAccess.subject.id,
         title: subjectAccess.subject.title || subjectAccess.subject.name,
@@ -118,8 +131,19 @@ export async function GET(
       chapter,
       adjacentChapters,
       paragraphs,
+    };
+    subjectsLog('chapter-overview', requestId, 'response.ready', {
+      chapterId: chapter.id,
+      paragraphCount: paragraphs.length,
+      hasPrev: Boolean(adjacentChapters.prev),
+      hasNext: Boolean(adjacentChapters.next),
     });
+    return NextResponse.json(response);
   } catch (error: any) {
+    subjectsError('chapter-overview', requestId, 'request.error', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || null,
+    });
     return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { makeRequestId, subjectsError, subjectsLog, subjectsWarn } from '@/lib/subjects-log';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,14 +43,23 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ subjectId: string }> }
 ) {
+  const requestId = makeRequestId('subject_overview');
   try {
     const { subjectId } = await params;
+    subjectsLog('subject-overview', requestId, 'request.start', {
+      subjectId,
+      url: request.url,
+    });
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
 
     const { data: auth } = await supabase.auth.getUser();
     const user = auth?.user;
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) {
+      subjectsWarn('subject-overview', requestId, 'auth.unauthorized');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    subjectsLog('subject-overview', requestId, 'auth.ok', { userId: user.id });
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -57,11 +67,21 @@ export async function GET(
       .eq('id', user.id)
       .maybeSingle();
     const isTeacher = profile?.subscription_type === 'teacher';
+    subjectsLog('subject-overview', requestId, 'profile.loaded', {
+      isTeacher,
+      subscriptionType: profile?.subscription_type || null,
+    });
     const subjectAccess = await canAccessSubject(supabase, user.id, subjectId);
     if (!subjectAccess.allowed || !subjectAccess.subject) {
+      subjectsWarn('subject-overview', requestId, 'access.denied', { subjectId, userId: user.id });
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
     }
     const subject = subjectAccess.subject;
+    subjectsLog('subject-overview', requestId, 'access.allowed', {
+      subjectId: subject.id,
+      classId: subject.class_id ?? null,
+      subjectUserId: subject.user_id ?? null,
+    });
 
     const { data: chapters, error: chapterError } = await (supabase as any)
       .from('chapters')
@@ -70,8 +90,14 @@ export async function GET(
       .order('chapter_number', { ascending: true });
 
     if (chapterError) {
+      subjectsError('subject-overview', requestId, 'chapters.query.error', {
+        message: chapterError.message,
+      });
       return NextResponse.json({ error: chapterError.message }, { status: 500 });
     }
+    subjectsLog('subject-overview', requestId, 'chapters.query.ok', {
+      chapterCount: chapters?.length || 0,
+    });
 
     const chapterIds = (chapters || []).map((chapter: any) => chapter.id).filter(Boolean);
 
@@ -96,8 +122,14 @@ export async function GET(
         : { data: [], error: null };
 
     if (paragraphError) {
+      subjectsError('subject-overview', requestId, 'paragraphs.query.error', {
+        message: paragraphError.message,
+      });
       return NextResponse.json({ error: paragraphError.message }, { status: 500 });
     }
+    subjectsLog('subject-overview', requestId, 'paragraphs.query.ok', {
+      paragraphCount: paragraphRows?.length || 0,
+    });
 
     const paragraphsByChapter = (paragraphRows || []).reduce((acc: Record<string, any[]>, row: any) => {
       const chapterId = row.chapter_id as string;
@@ -123,15 +155,23 @@ export async function GET(
       paragraphs: paragraphsByChapter[chapter.id] || [],
     }));
 
-    return NextResponse.json({
+    const response = {
       subject: {
         id: subject.id,
         name: subject.title || subject.name,
         description: subject.description || null,
       },
       chapters: chaptersWithParagraphs,
+    };
+    subjectsLog('subject-overview', requestId, 'response.ready', {
+      chapterCount: response.chapters.length,
     });
+    return NextResponse.json(response);
   } catch (error: any) {
+    subjectsError('subject-overview', requestId, 'request.error', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || null,
+    });
     return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 });
   }
 }
