@@ -62,6 +62,7 @@ export default function SubjectDetailPage() {
   const [newParagraphTitle, setNewParagraphTitle] = useState('');
   const [paragraphTitleTouched, setParagraphTitleTouched] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [expandedParagraphs, setExpandedParagraphs] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
@@ -69,7 +70,11 @@ export default function SubjectDetailPage() {
 
   const loadSubjectOverview = async () => {
     const response = await fetch(`/api/subjects/${subjectId}/overview`, { cache: 'no-store' });
-    if (!response.ok) throw new Error('Failed to fetch subject overview');
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      const message = errorBody?.error || `Failed to fetch subject overview (${response.status})`;
+      throw new Error(message);
+    }
     const data = await response.json();
     setSubject(data.subject || null);
     setChapters(Array.isArray(data.chapters) ? data.chapters : []);
@@ -80,6 +85,7 @@ export default function SubjectDetailPage() {
     const fetchSubjectData = async () => {
       try {
         setIsLoading(true);
+        setLoadError(null);
         const chaptersWithParagraphs = await loadSubjectOverview();
 
         const storageKey = `lastActivity_${subjectId}`;
@@ -102,6 +108,8 @@ export default function SubjectDetailPage() {
         }
       } catch (error) {
         console.error('Error fetching subject data:', error);
+        const message = error instanceof Error ? error.message : 'Failed to load subject';
+        setLoadError(message);
       } finally {
         setIsLoading(false);
       }
@@ -196,6 +204,10 @@ export default function SubjectDetailPage() {
         ))}
       </div>
     );
+  }
+
+  if (loadError) {
+    return <div className="text-center py-8 text-muted-foreground">Failed to load subject: {loadError}</div>;
   }
 
   if (!subject) {

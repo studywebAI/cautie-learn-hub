@@ -108,34 +108,52 @@ export async function GET(
 
     const chapterIds = (chapters || []).map((chapter: any) => chapter.id).filter(Boolean);
 
-    const { data: paragraphRows, error: paragraphError } =
-      chapterIds.length > 0
-        ? await (supabase as any)
-            .from('paragraphs')
-            .select(
-              `
-                id,
-                title,
-                paragraph_number,
-                chapter_id,
-                progress_snapshots(
-                  student_id,
-                  completion_percent
-                )
-              `
+    let paragraphRows: any[] = [];
+    if (chapterIds.length > 0) {
+      const paragraphWithProgressResult = await (supabase as any)
+        .from('paragraphs')
+        .select(
+          `
+            id,
+            title,
+            paragraph_number,
+            chapter_id,
+            progress_snapshots(
+              student_id,
+              completion_percent
             )
-            .in('chapter_id', chapterIds)
-            .order('paragraph_number', { ascending: true })
-        : { data: [], error: null };
+          `
+        )
+        .in('chapter_id', chapterIds)
+        .order('paragraph_number', { ascending: true });
 
-    if (paragraphError) {
-      subjectsError('subject-overview', requestId, 'paragraphs.query.error', {
-        message: paragraphError.message,
-      });
-      return NextResponse.json({ error: paragraphError.message }, { status: 500 });
+      if (paragraphWithProgressResult.error) {
+        subjectsWarn('subject-overview', requestId, 'paragraphs.query.with_progress.failed', {
+          message: paragraphWithProgressResult.error.message,
+        });
+        const paragraphFallbackResult = await (supabase as any)
+          .from('paragraphs')
+          .select('id, title, paragraph_number, chapter_id')
+          .in('chapter_id', chapterIds)
+          .order('paragraph_number', { ascending: true });
+
+        if (paragraphFallbackResult.error) {
+          subjectsError('subject-overview', requestId, 'paragraphs.query.fallback.error', {
+            message: paragraphFallbackResult.error.message,
+          });
+          return NextResponse.json({ error: paragraphFallbackResult.error.message }, { status: 500 });
+        }
+
+        paragraphRows = (paragraphFallbackResult.data || []).map((row: any) => ({
+          ...row,
+          progress_snapshots: [],
+        }));
+      } else {
+        paragraphRows = paragraphWithProgressResult.data || [];
+      }
     }
     subjectsLog('subject-overview', requestId, 'paragraphs.query.ok', {
-      paragraphCount: paragraphRows?.length || 0,
+      paragraphCount: paragraphRows.length || 0,
     });
 
     const paragraphsByChapter = (paragraphRows || []).reduce((acc: Record<string, any[]>, row: any) => {
