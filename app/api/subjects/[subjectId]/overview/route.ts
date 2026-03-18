@@ -92,7 +92,7 @@ export async function GET(
 
     const { data: chapters, error: chapterError } = await (supabase as any)
       .from('chapters')
-      .select('id, title, chapter_number, description')
+      .select('id, title, chapter_number')
       .eq('subject_id', subjectId)
       .order('chapter_number', { ascending: true });
 
@@ -177,6 +177,7 @@ export async function GET(
 
     const chaptersWithParagraphs = (chapters || []).map((chapter: any) => ({
       ...chapter,
+      description: null,
       paragraphs: paragraphsByChapter[chapter.id] || [],
     }));
 
