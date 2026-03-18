@@ -6,12 +6,13 @@ import { makeRequestId, subjectsError, subjectsLog, subjectsWarn } from '@/lib/s
 export const dynamic = 'force-dynamic';
 
 async function canAccessSubject(supabase: any, userId: string, subjectId: string) {
-  const { data: subject } = await (supabase as any)
+  const { data: subject, error } = await (supabase as any)
     .from('subjects')
-    .select('id, title, name, description, user_id, class_id')
+    .select('id, title, description, user_id, class_id')
     .eq('id', subjectId)
     .maybeSingle();
 
+  if (error) return { allowed: false, subject: null, error: error.message };
   if (!subject) return { allowed: false, subject: null };
 
   const { data: memberships } = await supabase
@@ -87,6 +88,12 @@ export async function GET(
       subscriptionType: profileResponse.data?.subscription_type || null,
     });
     const subjectAccess = await canAccessSubject(supabase, user.id, subjectId);
+    if ((subjectAccess as any).error) {
+      subjectsError('chapter-overview', requestId, 'subject.query.error', {
+        message: (subjectAccess as any).error,
+      });
+      return NextResponse.json({ error: 'Failed to fetch subject access' }, { status: 500 });
+    }
     if (!subjectAccess.allowed || !subjectAccess.subject) {
       subjectsWarn('chapter-overview', requestId, 'access.denied.subject', { subjectId, userId: user.id });
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
@@ -126,7 +133,7 @@ export async function GET(
     const response = {
       subject: {
         id: subjectAccess.subject.id,
-        title: subjectAccess.subject.title || subjectAccess.subject.name,
+        title: subjectAccess.subject.title,
       },
       chapter,
       adjacentChapters,
