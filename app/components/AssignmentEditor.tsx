@@ -53,6 +53,7 @@ interface AssignmentBlock {
   type: string;
   position: number;
   width: 'full' | 'half';
+  size?: 1 | 2 | 3; // Visual width preset inside its slot (1=small, 2=medium, 3=full)
   column?: 'left' | 'right';
   rowId: string; // Group blocks in same row
   data: any;
@@ -181,6 +182,7 @@ export function AssignmentEditor({
     ...b,
     rowId: b.rowId || generateRowId(),
     width: b.width || 'full' as const,
+    size: b.size || 3,
     position: b.position ?? i,
     locked: b.locked ?? false,
     showFeedback: b.showFeedback ?? false,
@@ -381,6 +383,23 @@ export function AssignmentEditor({
       saveToHistory(newBlocks);
       return newBlocks;
     });
+  };
+
+  const setBlockSize = (blockId: string, size: 1 | 2 | 3) => {
+    setBlocks(prev => {
+      const newBlocks = prev.map(block =>
+        block.id === blockId ? { ...block, size } : block
+      );
+      saveToHistory(newBlocks);
+      return newBlocks;
+    });
+  };
+
+  const getBlockWidthPercent = (block: AssignmentBlock) => {
+    const size = block.size ?? 3;
+    if (size === 1) return 38;
+    if (size === 2) return 68;
+    return 100;
   };
 
   const deleteBlock = (blockId: string) => {
@@ -1178,10 +1197,10 @@ export function AssignmentEditor({
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-8 px-2" title="undo">
-            ↶
+            undo
           </Button>
           <Button variant="ghost" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-8 px-2" title="redo">
-            ↷
+            redo
           </Button>
           <div className="w-px h-4 bg-border mx-1" />
           <Button variant="ghost" size="sm" onClick={handleExport} className="h-8 px-2" title="export">
@@ -1219,7 +1238,7 @@ export function AssignmentEditor({
         </div>
         
                 <div className="flex items-center gap-2">
-          {isSaving && <span className="text-xs text-muted-foreground animate-pulse">●</span>}
+          {isSaving && <span className="text-xs text-muted-foreground animate-pulse">saving...</span>}
           {isTeacher && (
             <Button
               variant={isStudentPreview ? 'default' : 'outline'}
@@ -1321,13 +1340,18 @@ export function AssignmentEditor({
                           )}
                           
                           <div
-                            className={`p-3 border rounded-xl transition-all ${
+                            className={`p-3 border rounded-xl transition-all duration-200 ease-out ${
                               row.blocks[0].locked 
                                 ? 'border-primary/50 bg-primary/5'
                               : selectedBlock === row.blocks[0].id 
                                   ? 'border-primary bg-sidebar-accent' 
                                   : 'border-sidebar-border/65 bg-sidebar-accent/40 hover:bg-sidebar-accent/65'
                             } ${!row.blocks[0].locked ? 'opacity-80' : ''}`}
+                            style={{
+                              width: `${getBlockWidthPercent(row.blocks[0])}%`,
+                              marginLeft: 'auto',
+                              marginRight: 'auto',
+                            }}
                             onClick={(e) => {
                               if (!showTeacherControls) return;
                               // Only select if clicking near the edge (within 8px of border)
@@ -1357,6 +1381,24 @@ export function AssignmentEditor({
                             <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
                               selectedBlock === row.blocks[0].id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                             }`}>
+                              <div className="flex items-center gap-0.5 px-0.5">
+                                {[1, 2, 3].map((size) => (
+                                  <Button
+                                    key={size}
+                                    type="button"
+                                    variant={row.blocks[0].size === size ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setBlockSize(row.blocks[0].id, size as 1 | 2 | 3);
+                                    }}
+                                    className="h-5 min-w-5 px-1 text-[10px]"
+                                    title={`width ${size}/3`}
+                                  >
+                                    {size}
+                                  </Button>
+                                ))}
+                              </div>
                               <div 
                                 className="h-5 w-5 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
                                 onMouseDown={(e) => handleGripMouseDown(e, row.blocks[0].id)}
@@ -1405,13 +1447,18 @@ export function AssignmentEditor({
                                 
                                 {block ? (
                                   <div
-                                    className={`h-full p-3 border rounded-xl transition-all ${
+                                    className={`h-full p-3 border rounded-xl transition-all duration-200 ease-out ${
                                       block.locked 
                                         ? 'border-primary/50 bg-primary/5'
                                       : selectedBlock === block.id 
                                           ? 'border-primary bg-sidebar-accent' 
                                           : 'border-sidebar-border/65 bg-sidebar-accent/40 hover:bg-sidebar-accent/65'
                                     } ${!block.locked ? 'opacity-90' : ''}`}
+                                    style={{
+                                      width: `${getBlockWidthPercent(block)}%`,
+                                      marginLeft: 'auto',
+                                      marginRight: 'auto',
+                                    }}
                                     onClick={(e) => {
                                       if (!showTeacherControls) return;
                                       const rect = e.currentTarget.getBoundingClientRect();
@@ -1440,6 +1487,24 @@ export function AssignmentEditor({
                                     <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
                                       selectedBlock === block.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                                     }`}>
+                                      <div className="flex items-center gap-0.5 px-0.5">
+                                        {[1, 2, 3].map((size) => (
+                                          <Button
+                                            key={size}
+                                            type="button"
+                                            variant={block.size === size ? 'default' : 'ghost'}
+                                            size="sm"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setBlockSize(block.id, size as 1 | 2 | 3);
+                                            }}
+                                            className="h-5 min-w-5 px-1 text-[10px]"
+                                            title={`width ${size}/3`}
+                                          >
+                                            {size}
+                                          </Button>
+                                        ))}
+                                      </div>
                                       <div 
                                         className="h-5 w-5 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
                                         onMouseDown={(e) => handleGripMouseDown(e, block.id)}
