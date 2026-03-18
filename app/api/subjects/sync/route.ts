@@ -136,21 +136,12 @@ export async function GET(request: NextRequest) {
 
     const chapterIds = (chapterRows.data || []).map((row: any) => row.id).filter(Boolean);
 
-    const [paragraphRows, sessionRows] = await Promise.all([
+    const paragraphRows =
       chapterIds.length > 0
-        ? (supabase as any).from('paragraphs').select('id, chapter_id, updated_at, created_at').in('chapter_id', chapterIds)
-        : Promise.resolve({ data: [], error: null }),
-      (supabase as any)
-        .from('session_logs')
-        .select('subject_id, paragraph_id, started_at')
-        .eq('user_id', user.id)
-        .in('subject_id', subjectIds)
-        .order('started_at', { ascending: false })
-        .limit(200),
-    ]);
+        ? await (supabase as any).from('paragraphs').select('id, chapter_id, updated_at, created_at').in('chapter_id', chapterIds)
+        : { data: [], error: null };
 
     if (paragraphRows.error) return NextResponse.json({ error: paragraphRows.error.message }, { status: 500 });
-    if (sessionRows.error) return NextResponse.json({ error: sessionRows.error.message }, { status: 500 });
 
     const paragraphIds = (paragraphRows.data || []).map((row: any) => row.id).filter(Boolean);
     const assignmentsRows =
@@ -165,7 +156,6 @@ export async function GET(request: NextRequest) {
       chapters: chapterRows.data?.length || 0,
       paragraphs: paragraphRows.data?.length || 0,
       assignments: assignmentsRows.data?.length || 0,
-      sessions: sessionRows.data?.length || 0,
     });
 
     const checksumPayload = {
@@ -174,7 +164,6 @@ export async function GET(request: NextRequest) {
       chapters: (chapterRows.data || []).map((row: any) => [row.id, row.subject_id, row.updated_at || row.created_at || null]),
       paragraphs: (paragraphRows.data || []).map((row: any) => [row.id, row.chapter_id, row.updated_at || row.created_at || null]),
       assignments: (assignmentsRows.data || []).map((row: any) => [row.id, row.paragraph_id, row.updated_at || row.created_at || null]),
-      sessions: (sessionRows.data || []).map((row: any) => [row.subject_id, row.paragraph_id, row.started_at || null]),
     };
 
     const checksum = stableHash(checksumPayload);
