@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useContext } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -58,6 +58,7 @@ function indexToLetter(index: number): string {
 
 export default function ParagraphDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const { subjectId, chapterId, paragraphId } = params as {
     subjectId: string;
     chapterId: string;
@@ -73,9 +74,11 @@ export default function ParagraphDetailPage() {
   const [settingsOpen, setSettingsOpen] = useState<string | null>(null);
   const [bulkSettingsOpen, setBulkSettingsOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [resolvedChapterId, setResolvedChapterId] = useState(chapterId);
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
+  const effectiveChapterId = resolvedChapterId || chapterId;
 
   // Auto-track study session for students
   useSessionTracking(paragraphId, !isTeacher);
@@ -95,6 +98,15 @@ export default function ParagraphDetailPage() {
         );
         if (!response.ok) return;
         const payload = await response.json();
+        const canonicalChapterId = payload?.canonicalChapterId as string | undefined;
+        if (canonicalChapterId && canonicalChapterId !== chapterId) {
+          setResolvedChapterId(canonicalChapterId);
+          router.replace(
+            `/subjects/${subjectId}/chapters/${canonicalChapterId}/paragraphs/${paragraphId}`
+          );
+        } else {
+          setResolvedChapterId(chapterId);
+        }
         setParagraph(payload.paragraph || null);
         setAllParagraphs(Array.isArray(payload.allParagraphs) ? payload.allParagraphs : []);
         const normalizedAssignments = (payload.assignments || []).map((a: any) => ({
@@ -113,7 +125,7 @@ export default function ParagraphDetailPage() {
     };
 
     fetchData();
-  }, [subjectId, chapterId, paragraphId]);
+  }, [subjectId, chapterId, paragraphId, router]);
 
   const handleUpdateAssignment = async (assignmentId: string, updates: Partial<Assignment>) => {
     setIsUpdating(true);
@@ -164,11 +176,11 @@ export default function ParagraphDetailPage() {
     if (!newAssignmentTitle.trim()) return;
 
     try {
-      const response = await fetch(
-        `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch(
+          `/api/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title: newAssignmentTitle.trim(), answers_enabled: false }),
         }
       );
@@ -315,7 +327,7 @@ export default function ParagraphDetailPage() {
 
                 {/* Title */}
                 <Link
-                  href={`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignment.id}`}
+                  href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments/${assignment.id}`}
                   className="text-sm flex-1 hover:underline truncate"
                 >
                   {assignment.title}
@@ -398,7 +410,7 @@ export default function ParagraphDetailPage() {
       <div className="flex justify-between items-center pt-4">
         {prevParagraph ? (
           <Link
-            href={`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${prevParagraph.id}`}
+            href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${prevParagraph.id}`}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
             ← {prevParagraph.paragraph_number}. {prevParagraph.title}
@@ -408,7 +420,7 @@ export default function ParagraphDetailPage() {
         )}
         {nextParagraph && (
           <Link
-            href={`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${nextParagraph.id}`}
+            href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${nextParagraph.id}`}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
             {nextParagraph.paragraph_number}. {nextParagraph.title} →

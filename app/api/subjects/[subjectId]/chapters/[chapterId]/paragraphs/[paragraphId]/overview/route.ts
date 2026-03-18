@@ -78,23 +78,38 @@ export async function GET(
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
     }
 
-    const [chapterCheck, paragraphResult, paragraphListResult, assignmentsResult] = await Promise.all([
-      (supabase as any)
-        .from('chapters')
-        .select('id')
-        .eq('id', chapterId)
-        .eq('subject_id', subjectId)
-        .maybeSingle(),
-      (supabase as any)
-        .from('paragraphs')
-        .select('id, title, paragraph_number, chapter_id')
-        .eq('id', paragraphId)
-        .eq('chapter_id', chapterId)
-        .maybeSingle(),
+    const { data: paragraphResult } = await (supabase as any)
+      .from('paragraphs')
+      .select('id, title, paragraph_number, chapter_id')
+      .eq('id', paragraphId)
+      .maybeSingle();
+
+    if (!paragraphResult) {
+      subjectsWarn('paragraph-overview', requestId, 'access.denied.paragraph', { paragraphId, chapterId });
+      return NextResponse.json({ error: 'Paragraph not found' }, { status: 404 });
+    }
+
+    const canonicalChapterId = paragraphResult.chapter_id as string;
+    const { data: chapterCheck } = await (supabase as any)
+      .from('chapters')
+      .select('id, subject_id')
+      .eq('id', canonicalChapterId)
+      .maybeSingle();
+
+    if (!chapterCheck || chapterCheck.subject_id !== subjectId) {
+      subjectsWarn('paragraph-overview', requestId, 'access.denied.chapter', {
+        requestedChapterId: chapterId,
+        resolvedChapterId: canonicalChapterId,
+        subjectId,
+      });
+      return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
+    }
+
+    const [paragraphListResult, assignmentsResult] = await Promise.all([
       (supabase as any)
         .from('paragraphs')
         .select('id, title, paragraph_number')
-        .eq('chapter_id', chapterId)
+        .eq('chapter_id', canonicalChapterId)
         .order('paragraph_number', { ascending: true }),
       supabase
         .from('assignments')
@@ -102,18 +117,10 @@ export async function GET(
         .eq('paragraph_id', paragraphId)
         .order('assignment_index', { ascending: true }),
     ]);
-
-    if (!chapterCheck.data) {
-      subjectsWarn('paragraph-overview', requestId, 'access.denied.chapter', { chapterId, subjectId });
-      return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
-    }
-    if (!paragraphResult.data) {
-      subjectsWarn('paragraph-overview', requestId, 'access.denied.paragraph', { paragraphId, chapterId });
-      return NextResponse.json({ error: 'Paragraph not found' }, { status: 404 });
-    }
     subjectsLog('paragraph-overview', requestId, 'hierarchy.valid', {
       chapterId,
       paragraphId,
+      canonicalChapterId,
       allParagraphCount: paragraphListResult.data?.length || 0,
     });
 
@@ -169,9 +176,10 @@ export async function GET(
     });
 
     const response = {
-      paragraph: paragraphResult.data,
+      paragraph: paragraphResult,
       allParagraphs: paragraphListResult.data || [],
       assignments: transformedAssignments,
+      canonicalChapterId,
     };
     subjectsLog('paragraph-overview', requestId, 'response.ready', {
       assignmentCount: response.assignments.length,

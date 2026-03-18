@@ -36,7 +36,8 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
     if (!classId) return source;
     return source.filter((subject: any) => {
       const classIds = Array.isArray(subject?.classes) ? subject.classes.map((classItem: any) => classItem?.id) : [];
-      return classIds.length === 0 || classIds.includes(classId);
+      const directClassId = typeof subject?.class_id === 'string' ? subject.class_id : null;
+      return classIds.includes(classId) || directClassId === classId;
     });
   }, [cachedSubjects, classId]);
 
