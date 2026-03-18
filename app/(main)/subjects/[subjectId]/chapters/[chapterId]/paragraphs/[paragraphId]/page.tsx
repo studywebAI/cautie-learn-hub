@@ -297,7 +297,7 @@ export default function ParagraphDetailPage() {
           )}
         </div>
       ) : (
-        <div className="border-2 border-foreground border-l-0 rounded-br-xl overflow-hidden">
+        <div className="space-y-2">
           {assignments.map((assignment, index) => {
             // For students, hide invisible assignments
             if (!isTeacher && !assignment.is_visible) return null;
@@ -311,7 +311,7 @@ export default function ParagraphDetailPage() {
             return (
               <div
                 key={assignment.id}
-                className={`flex items-center gap-3 py-3 px-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0 ${
+                className={`flex items-center gap-3 rounded-xl bg-sidebar-accent/40 px-4 py-3 transition-colors hover:bg-sidebar-accent/65 ${
                   !assignment.is_visible ? 'opacity-50' : ''
                 }`}
               >

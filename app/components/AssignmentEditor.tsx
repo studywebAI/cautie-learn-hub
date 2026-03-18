@@ -204,6 +204,7 @@ export function AssignmentEditor({
   // Settings state
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aiSettingsBlockId, setAiSettingsBlockId] = useState<string | null>(null);
+  const [isStudentPreview, setIsStudentPreview] = useState(false);
   const [localAnswersEnabled, setLocalAnswersEnabled] = useState(answersEnabled);
   const [localIsVisible, setLocalIsVisible] = useState(isVisible);
   const [localIsLocked, setLocalIsLocked] = useState(false);
@@ -232,6 +233,7 @@ export function AssignmentEditor({
   const paperRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const router = useRouter();
+  const showTeacherControls = isTeacher && !isStudentPreview;
 
   // Toggle lock state for a block
   const toggleBlockLock = (blockId: string) => {
@@ -1076,7 +1078,7 @@ export function AssignmentEditor({
   // Render block action icons (lock, check, AI settings)
   // Always visible for teachers on question blocks (hover or selected)
   const renderBlockIcons = (block: AssignmentBlock, isHovered: boolean = false) => {
-    if (!isTeacher) return null;
+    if (!showTeacherControls) return null;
     
     const isQuestionBlock = ['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'ordering'].includes(block.type);
     if (!isQuestionBlock) return null;
@@ -1166,11 +1168,11 @@ export function AssignmentEditor({
 
   return (
     <div 
-      className="h-screen flex flex-col bg-background select-none"
+      className="h-screen flex flex-col bg-sidebar select-none"
       onMouseMove={handleMouseMove}
     >
       {/* Top toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b bg-background">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-sidebar-border/70 bg-sidebar">
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" onClick={() => router.back()} className="h-8 px-2">
             <ArrowLeft className="h-4 w-4" />
@@ -1188,7 +1190,7 @@ export function AssignmentEditor({
           <Button variant="ghost" size="sm" onClick={handleImport} className="h-8 px-2" title="import">
             <Upload className="h-4 w-4" />
           </Button>
-          {isTeacher && (
+          {showTeacherControls && (
             <>
               <div className="w-px h-4 bg-border mx-1" />
               <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
@@ -1216,15 +1218,25 @@ export function AssignmentEditor({
           )}
         </div>
         
-        <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
           {isSaving && <span className="text-xs text-muted-foreground animate-pulse">●</span>}
+          {isTeacher && (
+            <Button
+              variant={isStudentPreview ? 'default' : 'outline'}
+              size="sm"
+              className="h-8"
+              onClick={() => setIsStudentPreview((prev) => !prev)}
+            >
+              {isStudentPreview ? 'exit student view' : 'student view'}
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Block sidebar */}
-        <div className={`border-r bg-muted/30 transition-all duration-200 flex flex-col ${isSidebarOpen ? 'w-44' : 'w-12'}`}>
+        <div className={`${showTeacherControls ? 'border-r border-sidebar-border/70 bg-sidebar-accent/35' : 'w-0 overflow-hidden border-r-0'} transition-all duration-200 flex flex-col ${isSidebarOpen ? 'w-44' : 'w-12'}`}>
           <Button
             variant="ghost"
             size="sm"
@@ -1267,10 +1279,10 @@ export function AssignmentEditor({
         </div>
 
         {/* Paper area */}
-        <div className="flex-1 overflow-auto p-4 bg-muted/20">
+        <div className="flex-1 overflow-auto p-4 bg-sidebar">
           <div
             ref={paperRef}
-            className="bg-background border border-border rounded shadow-sm min-h-[calc(100vh-120px)] max-w-5xl p-6 relative"
+            className="bg-sidebar-accent/25 border border-sidebar-border/70 rounded-2xl shadow-sm min-h-[calc(100vh-120px)] max-w-5xl p-6 relative"
           >
             {rows.length === 0 ? (
               <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -1309,14 +1321,15 @@ export function AssignmentEditor({
                           )}
                           
                           <div
-                            className={`p-3 border rounded-lg transition-all ${
+                            className={`p-3 border rounded-xl transition-all ${
                               row.blocks[0].locked 
                                 ? 'border-primary/50 bg-primary/5'
-                                : selectedBlock === row.blocks[0].id 
-                                  ? 'border-primary bg-primary/5' 
-                                  : 'border-border/50 hover:border-border'
+                              : selectedBlock === row.blocks[0].id 
+                                  ? 'border-primary bg-sidebar-accent' 
+                                  : 'border-sidebar-border/65 bg-sidebar-accent/40 hover:bg-sidebar-accent/65'
                             } ${!row.blocks[0].locked ? 'opacity-80' : ''}`}
                             onClick={(e) => {
+                              if (!showTeacherControls) return;
                               // Only select if clicking near the edge (within 8px of border)
                               const rect = e.currentTarget.getBoundingClientRect();
                               const x = e.clientX - rect.left;
@@ -1340,6 +1353,7 @@ export function AssignmentEditor({
                             )}
                             
                             {/* Controls */}
+                            {showTeacherControls && (
                             <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
                               selectedBlock === row.blocks[0].id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                             }`}>
@@ -1367,6 +1381,7 @@ export function AssignmentEditor({
                                 <Trash2 className="h-3 w-3" />
                               </Button>
                             </div>
+                            )}
                             
                             {renderBlockContent(row.blocks[0])}
                             
@@ -1390,14 +1405,15 @@ export function AssignmentEditor({
                                 
                                 {block ? (
                                   <div
-                                    className={`h-full p-3 border rounded-lg transition-all ${
+                                    className={`h-full p-3 border rounded-xl transition-all ${
                                       block.locked 
                                         ? 'border-primary/50 bg-primary/5'
-                                        : selectedBlock === block.id 
-                                          ? 'border-primary bg-primary/5' 
-                                          : 'border-border/50 hover:border-border'
+                                      : selectedBlock === block.id 
+                                          ? 'border-primary bg-sidebar-accent' 
+                                          : 'border-sidebar-border/65 bg-sidebar-accent/40 hover:bg-sidebar-accent/65'
                                     } ${!block.locked ? 'opacity-90' : ''}`}
                                     onClick={(e) => {
+                                      if (!showTeacherControls) return;
                                       const rect = e.currentTarget.getBoundingClientRect();
                                       const x = e.clientX - rect.left;
                                       const y = e.clientY - rect.top;
@@ -1420,6 +1436,7 @@ export function AssignmentEditor({
                                     )}
                                     
                                     {/* Controls */}
+                                    {showTeacherControls && (
                                     <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
                                       selectedBlock === block.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                                     }`}>
@@ -1447,6 +1464,7 @@ export function AssignmentEditor({
                                         <Trash2 className="h-3 w-3" />
                                       </Button>
                                     </div>
+                                    )}
                                     
                                     {renderBlockContent(block)}
                                     
@@ -1742,3 +1760,4 @@ export function AssignmentEditor({
     </div>
   );
 }
+

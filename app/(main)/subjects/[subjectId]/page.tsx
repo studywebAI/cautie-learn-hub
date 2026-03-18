@@ -245,7 +245,7 @@ export default function SubjectDetailPage() {
       {lastActivity && (
         <Link
           href={`/subjects/${subjectId}/chapters/${lastActivity.chapterId}/paragraphs/${lastActivity.paragraphId}`}
-          className="block p-3 bg-muted/50 rounded-lg border hover:bg-muted transition-colors mb-4"
+          className="mb-4 block rounded-xl border border-sidebar-border/70 bg-sidebar-accent/40 p-3 transition-colors hover:bg-sidebar-accent/65"
         >
           <p className="text-sm">
             <span className="text-muted-foreground">Last active in </span>
@@ -294,7 +294,7 @@ export default function SubjectDetailPage() {
           )}
         </div>
       ) : (
-        <div className="space-y-0">
+        <div className="space-y-3">
           {chapters.map((chapter) => {
             const maxVisible = 10;
             const allParagraphs = chapter.paragraphs || [];
@@ -304,23 +304,23 @@ export default function SubjectDetailPage() {
             const remainingCount = allParagraphs.length - maxVisible;
 
             return (
-              <div key={chapter.id} className="rounded-xl border overflow-hidden bg-card">
-                <div className="flex items-stretch min-h-[108px] border-b border-border">
+              <div key={chapter.id} className="overflow-hidden rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/30">
+                <div className="flex min-h-[108px] items-stretch">
                   <Link
                     href={`/subjects/${subjectId}/chapters/${chapter.id}`}
-                    className="relative w-32 shrink-0 bg-muted hover:bg-muted/80 transition-colors"
+                    className="relative w-32 shrink-0 bg-sidebar-accent/80 transition-colors hover:bg-sidebar-accent"
                   >
                     <div className="absolute inset-0 flex items-center justify-center text-2xl text-muted-foreground/60">
                       {chapter.chapter_number}
                     </div>
                   </Link>
-                  <div className="flex-1 p-4 flex items-start justify-between gap-3">
-                    <Link
-                      href={`/subjects/${subjectId}/chapters/${chapter.id}`}
-                      className="text-sm hover:underline"
-                    >
-                      {chapter.title}
-                    </Link>
+                    <div className="flex flex-1 items-start justify-between gap-3 p-4">
+                      <Link
+                        href={`/subjects/${subjectId}/chapters/${chapter.id}`}
+                        className="text-sm text-[hsl(var(--sidebar-active-foreground))] hover:underline"
+                      >
+                        {chapter.title}
+                      </Link>
                     {isTeacher && (
                       <button
                         className="text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -347,18 +347,18 @@ export default function SubjectDetailPage() {
                           key={paragraph.id}
                           href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
                           onClick={() => handleParagraphClick(chapter, paragraph)}
-                          className="flex items-center gap-3 py-3 px-4 hover:bg-muted/40 transition-colors border-b border-border last:border-b-0"
+                          className="mx-2 mb-2 flex items-center gap-3 rounded-xl border border-sidebar-border/60 bg-sidebar-accent/45 px-4 py-3 transition-colors hover:bg-sidebar-accent/70"
                         >
-                          <span className="w-14 text-xs text-muted-foreground tabular-nums">
+                          <span className="w-14 text-xs text-sidebar-foreground tabular-nums">
                             {chapter.chapter_number}.{paragraph.paragraph_number}
                           </span>
-                          <span className="text-sm flex-1 truncate">{paragraph.title}</span>
-                          <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">
+                          <span className="flex-1 truncate text-sm text-[hsl(var(--sidebar-active-foreground))]">{paragraph.title}</span>
+                          <span className="w-10 text-right text-xs text-sidebar-foreground tabular-nums">
                             {roundedProgress}%
                           </span>
-                          <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                          <div className="h-2 w-16 overflow-hidden rounded-full bg-sidebar-accent">
                             <div
-                              className="h-full bg-foreground/30 rounded-full transition-all"
+                              className="h-full rounded-full bg-[hsl(var(--sidebar-active-foreground))] transition-all"
                               style={{ width: `${roundedProgress}%` }}
                             />
                           </div>

@@ -141,7 +141,7 @@ export default function ChapterOverviewPage() {
   }
 
   return (
-    <div className="space-y-4">
+      <div className="space-y-5">
       {/* Minimal header */}
       <div className="flex items-center justify-between">
         <div>
@@ -179,29 +179,29 @@ export default function ChapterOverviewPage() {
 
       {/* Paragraphs list */}
       {paragraphs.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No paragraphs yet</p>
+        <p className="text-sidebar-foreground text-sm">No paragraphs yet</p>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-2">
           {paragraphs.map((paragraph) => (
             <Link
               key={paragraph.id}
               href={`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraph.id}`}
               onClick={() => handleParagraphClick(paragraph.id, paragraph.paragraph_number, paragraph.title)}
-              className="flex items-center justify-between py-2 px-3 -mx-3 rounded hover:bg-muted/50 transition-colors"
+              className="flex items-center justify-between rounded-xl border border-sidebar-border/70 bg-sidebar-accent/40 px-3 py-3 transition-colors hover:bg-sidebar-accent/65"
             >
               <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground w-14 tabular-nums">
+                <span className="w-14 text-sm text-sidebar-foreground tabular-nums">
                   {chapter.chapter_number}.{paragraph.paragraph_number}
                 </span>
-                <span className="text-sm">{paragraph.title}</span>
+                <span className="text-sm text-[hsl(var(--sidebar-active-foreground))]">{paragraph.title}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground w-10 text-right tabular-nums">
+                <span className="w-10 text-right text-sm text-sidebar-foreground tabular-nums">
                   {paragraph.completion_percent}%
                 </span>
-                <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div className="h-1.5 w-16 overflow-hidden rounded-full bg-sidebar-accent">
                   <div
-                    className="h-full bg-foreground/30 rounded-full transition-all"
+                    className="h-full rounded-full bg-[hsl(var(--sidebar-active-foreground))] transition-all"
                     style={{ width: `${paragraph.completion_percent}%` }}
                   />
                 </div>
