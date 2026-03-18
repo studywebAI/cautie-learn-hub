@@ -89,29 +89,22 @@ export default function ParagraphDetailPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        
-        const paragraphsResponse = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs`);
-        if (paragraphsResponse.ok) {
-          const paragraphs = await paragraphsResponse.json();
-          setAllParagraphs(paragraphs);
-          const currentParagraph = paragraphs.find((p: Paragraph) => p.id === paragraphId);
-          if (currentParagraph) setParagraph(currentParagraph);
-        }
-
-        const assignmentsResponse = await fetch(
-          `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments`
+        const response = await fetch(
+          `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/overview`,
+          { cache: 'no-store' }
         );
-        if (assignmentsResponse.ok) {
-          const assignmentsData = await assignmentsResponse.json();
-          const normalizedAssignments = (assignmentsData || []).map((a: any) => ({
-            ...a,
-            is_visible: a.is_visible ?? true,
-            is_locked: a.is_locked ?? false,
-            answer_mode: a.answer_mode ?? 'view_only',
-            ai_grading_enabled: a.ai_grading_enabled ?? false,
-          }));
-          setAssignments(normalizedAssignments);
-        }
+        if (!response.ok) return;
+        const payload = await response.json();
+        setParagraph(payload.paragraph || null);
+        setAllParagraphs(Array.isArray(payload.allParagraphs) ? payload.allParagraphs : []);
+        const normalizedAssignments = (payload.assignments || []).map((a: any) => ({
+          ...a,
+          is_visible: a.is_visible ?? true,
+          is_locked: a.is_locked ?? false,
+          answer_mode: a.answer_mode ?? 'view_only',
+          ai_grading_enabled: a.ai_grading_enabled ?? false,
+        }));
+        setAssignments(normalizedAssignments);
       } catch (error) {
         console.error('Error fetching paragraph data:', error);
       } finally {

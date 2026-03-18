@@ -36,44 +36,60 @@ export async function GET(
       return String.fromCharCode(97 + first) + String.fromCharCode(97 + second);
     };
 
-    // Compute progress per assignment from student_answers if user is logged in
-    const transformedAssignments = await Promise.all(
-      safeAssignments.map(async (assignment) => {
-        let progress_percent = 0;
-        let correct_percent = 0;
+    const assignmentIds = safeAssignments.map((assignment) => assignment.id).filter(Boolean);
+    let blocksByAssignment = new Map<string, number>();
+    let answersByAssignment = new Map<string, { total: number; correct: number }>();
 
-        // Get block count for this assignment
-        const { count: blockCount } = await supabase
-          .from('blocks')
-          .select('*', { count: 'exact', head: true })
-          .eq('assignment_id', assignment.id);
+    if (assignmentIds.length > 0) {
+      const { data: blockRows } = await supabase
+        .from('blocks')
+        .select('assignment_id')
+        .in('assignment_id', assignmentIds);
 
-        const totalBlocks = blockCount || 0;
+      blocksByAssignment = (blockRows || []).reduce((acc: Map<string, number>, row: any) => {
+        const assignmentId = row.assignment_id as string;
+        if (!assignmentId) return acc;
+        acc.set(assignmentId, (acc.get(assignmentId) || 0) + 1);
+        return acc;
+      }, new Map<string, number>());
 
-        if (user && totalBlocks > 0) {
-          // Get student answers for this assignment
-          const { data: answers } = await supabase
-            .from('student_answers')
-            .select('is_correct, score')
-            .eq('assignment_id', assignment.id)
-            .eq('student_id', user.id);
+      if (user) {
+        const { data: answerRows } = await supabase
+          .from('student_answers')
+          .select('assignment_id, is_correct')
+          .eq('student_id', user.id)
+          .in('assignment_id', assignmentIds);
 
-          if (answers && answers.length > 0) {
-            progress_percent = Math.ceil((answers.length / totalBlocks) * 100);
-            const correctCount = answers.filter(a => a.is_correct === true).length;
-            correct_percent = Math.ceil((correctCount / totalBlocks) * 100);
-          }
-        }
+        answersByAssignment = (answerRows || []).reduce(
+          (acc: Map<string, { total: number; correct: number }>, row: any) => {
+            const assignmentId = row.assignment_id as string;
+            if (!assignmentId) return acc;
+            const previous = acc.get(assignmentId) || { total: 0, correct: 0 };
+            acc.set(assignmentId, {
+              total: previous.total + 1,
+              correct: previous.correct + (row.is_correct === true ? 1 : 0),
+            });
+            return acc;
+          },
+          new Map<string, { total: number; correct: number }>()
+        );
+      }
+    }
 
-        return {
-          ...assignment,
-          letter_index: getLetterIndex(assignment.assignment_index),
-          block_count: totalBlocks,
-          progress_percent,
-          correct_percent,
-        };
-      })
-    );
+    const transformedAssignments = safeAssignments.map((assignment) => {
+      const totalBlocks = blocksByAssignment.get(assignment.id) || 0;
+      const answerStats = answersByAssignment.get(assignment.id) || { total: 0, correct: 0 };
+      const progress_percent = totalBlocks > 0 ? Math.ceil((answerStats.total / totalBlocks) * 100) : 0;
+      const correct_percent = totalBlocks > 0 ? Math.ceil((answerStats.correct / totalBlocks) * 100) : 0;
+
+      return {
+        ...assignment,
+        letter_index: getLetterIndex(assignment.assignment_index),
+        block_count: totalBlocks,
+        progress_percent,
+        correct_percent,
+      };
+    });
 
     return NextResponse.json(transformedAssignments)
   } catch (err) {

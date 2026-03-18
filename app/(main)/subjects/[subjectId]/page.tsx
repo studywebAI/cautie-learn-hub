@@ -67,56 +67,37 @@ export default function SubjectDetailPage() {
   const { role } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
 
+  const loadSubjectOverview = async () => {
+    const response = await fetch(`/api/subjects/${subjectId}/overview`, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Failed to fetch subject overview');
+    const data = await response.json();
+    setSubject(data.subject || null);
+    setChapters(Array.isArray(data.chapters) ? data.chapters : []);
+    return Array.isArray(data.chapters) ? data.chapters : [];
+  };
+
   useEffect(() => {
     const fetchSubjectData = async () => {
       try {
         setIsLoading(true);
-        const subjectResponse = await fetch(`/api/subjects/${subjectId}`);
-        if (subjectResponse.ok) {
-          const subjectData = await subjectResponse.json();
-          setSubject({
-            id: subjectData.id,
-            name: subjectData.title || subjectData.name,
-            description: subjectData.description || null,
-          });
-        }
+        const chaptersWithParagraphs = await loadSubjectOverview();
 
-        const chaptersResponse = await fetch(`/api/subjects/${subjectId}/chapters`);
-        if (chaptersResponse.ok) {
-          const chaptersData = await chaptersResponse.json();
-          const chaptersWithParagraphs = await Promise.all(
-            chaptersData.map(async (chapter: any) => {
-              try {
-                const paragraphsResponse = await fetch(`/api/subjects/${subjectId}/chapters/${chapter.id}/paragraphs`);
-                if (paragraphsResponse.ok) {
-                  const paragraphs = await paragraphsResponse.json();
-                  return { ...chapter, paragraphs };
-                }
-                return { ...chapter, paragraphs: [] };
-              } catch {
-                return { ...chapter, paragraphs: [] };
-              }
-            })
-          );
-          setChapters(chaptersWithParagraphs);
-
-          const storageKey = `lastActivity_${subjectId}`;
-          const stored = localStorage.getItem(storageKey);
-          if (stored) {
-            try {
-              const parsed = JSON.parse(stored) as LastActivity;
-              const paragraphStillExists = chaptersWithParagraphs.some((chapter) =>
-                (chapter.paragraphs || []).some((paragraph: Paragraph) => paragraph.id === parsed.paragraphId)
-              );
-              if (paragraphStillExists) {
-                setLastActivity(parsed);
-              } else {
-                localStorage.removeItem(storageKey);
-                setLastActivity(null);
-              }
-            } catch {
+        const storageKey = `lastActivity_${subjectId}`;
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored) as LastActivity;
+            const paragraphStillExists = chaptersWithParagraphs.some((chapter: Chapter) =>
+              (chapter.paragraphs || []).some((paragraph: Paragraph) => paragraph.id === parsed.paragraphId)
+            );
+            if (paragraphStillExists) {
+              setLastActivity(parsed);
+            } else {
+              localStorage.removeItem(storageKey);
               setLastActivity(null);
             }
+          } catch {
+            setLastActivity(null);
           }
         }
       } catch (error) {
@@ -167,25 +148,7 @@ export default function SubjectDetailPage() {
         body: JSON.stringify({ title: resolvedTitle }),
       });
       if (response.ok) {
-        const chaptersResponse = await fetch(`/api/subjects/${subjectId}/chapters`);
-        if (chaptersResponse.ok) {
-          const chaptersData = await chaptersResponse.json();
-          const chaptersWithParagraphs = await Promise.all(
-            chaptersData.map(async (chapter: any) => {
-              try {
-                const paragraphsResponse = await fetch(`/api/subjects/${subjectId}/chapters/${chapter.id}/paragraphs`);
-                if (paragraphsResponse.ok) {
-                  const paragraphs = await paragraphsResponse.json();
-                  return { ...chapter, paragraphs };
-                }
-                return { ...chapter, paragraphs: [] };
-              } catch {
-                return { ...chapter, paragraphs: [] };
-              }
-            })
-          );
-          setChapters(chaptersWithParagraphs);
-        }
+        await loadSubjectOverview();
         setNewParagraphTitle('');
         setParagraphTitleTouched(false);
         setSelectedChapterId(null);

@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AppContext } from '@/contexts/app-context';
 import Link from 'next/link';
 
 interface Chapter {
@@ -32,8 +31,6 @@ export default function ChapterOverviewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [adjacentChapters, setAdjacentChapters] = useState<{prev?: Chapter, next?: Chapter}>({});
 
-  const { user } = useContext(AppContext) as any;
-
   useEffect(() => {
     const fetchChapterData = async () => {
       if (!subjectId || !chapterId) return;
@@ -41,63 +38,15 @@ export default function ChapterOverviewPage() {
       setIsLoading(true);
 
       try {
-        // Fetch subject info
-        const subjectResponse = await fetch(`/api/subjects/${subjectId}`);
-        if (subjectResponse.ok) {
-          const subjectData = await subjectResponse.json();
-          setSubject(subjectData);
-        }
-
-        // Fetch chapter info
-        const chapterResponse = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}`);
-        if (!chapterResponse.ok) return;
-        const chapterData = await chapterResponse.json();
-        setChapter(chapterData);
-
-        // Fetch paragraphs for this chapter
-        const paragraphsResponse = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs`);
-        if (!paragraphsResponse.ok) return;
-        const paragraphsData = await paragraphsResponse.json();
-
-        // Fetch progress for each paragraph if user is student
-        const paragraphsWithProgress = await Promise.all(
-          paragraphsData.map(async (paragraph: any) => {
-            try {
-              if (!user || user.role === 'teacher') {
-                return { ...paragraph, completion_percent: 0 };
-              }
-
-              const progressResponse = await fetch(
-                `/api/progress/${paragraph.id}?studentId=${user.id}`
-              );
-
-              if (progressResponse.ok) {
-                const progressData = await progressResponse.json();
-                return {
-                  ...paragraph,
-                  completion_percent: progressData.completion_percent || 0,
-                };
-              }
-            } catch {}
-
-            return { ...paragraph, completion_percent: 0 };
-          })
-        );
-
-        setParagraphs(paragraphsWithProgress);
-
-        // Fetch adjacent chapters
-        const chaptersResponse = await fetch(`/api/subjects/${subjectId}/chapters`);
-        if (chaptersResponse.ok) {
-          const chaptersData = await chaptersResponse.json();
-          const currentIndex = chaptersData.findIndex((c: Chapter) => c.id === chapterId);
-
-          setAdjacentChapters({
-            prev: currentIndex > 0 ? chaptersData[currentIndex - 1] : undefined,
-            next: currentIndex < chaptersData.length - 1 ? chaptersData[currentIndex + 1] : undefined
-          });
-        }
-
+        const response = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/overview`, {
+          cache: 'no-store',
+        });
+        if (!response.ok) return;
+        const payload = await response.json();
+        setSubject(payload.subject || null);
+        setChapter(payload.chapter || null);
+        setParagraphs(Array.isArray(payload.paragraphs) ? payload.paragraphs : []);
+        setAdjacentChapters(payload.adjacentChapters || {});
       } catch (error) {
         console.error('Error fetching chapter data:', error);
       } finally {
@@ -106,7 +55,7 @@ export default function ChapterOverviewPage() {
     };
 
     fetchChapterData();
-  }, [subjectId, chapterId, user]);
+  }, [subjectId, chapterId]);
 
   const handleParagraphClick = (paragraphId: string, paragraphNumber: number, paragraphTitle: string) => {
     // Track activity for "last active in" banner
