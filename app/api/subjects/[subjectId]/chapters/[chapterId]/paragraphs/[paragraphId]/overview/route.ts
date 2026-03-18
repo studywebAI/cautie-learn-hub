@@ -11,7 +11,7 @@ function getLetterIndex(index: number): string {
   return String.fromCharCode(97 + first) + String.fromCharCode(97 + second);
 }
 
-async function canAccessSubject(supabase: any, userId: string, subjectId: string, isTeacher: boolean) {
+async function canAccessSubject(supabase: any, userId: string, subjectId: string) {
   const { data: subject } = await (supabase as any)
     .from('subjects')
     .select('id, user_id, class_id')
@@ -26,12 +26,7 @@ async function canAccessSubject(supabase: any, userId: string, subjectId: string
     .eq('user_id', userId);
   const classIds = (memberships || []).map((m: any) => m.class_id).filter(Boolean);
 
-  if (isTeacher) {
-    if (subject.user_id === userId) return true;
-    if (subject.class_id && classIds.includes(subject.class_id)) return true;
-  } else if (subject.class_id && classIds.includes(subject.class_id)) {
-    return true;
-  }
+  if (subject.class_id && classIds.includes(subject.class_id)) return true;
 
   if (classIds.length > 0) {
     const { data: links } = await (supabase as any)
@@ -42,6 +37,8 @@ async function canAccessSubject(supabase: any, userId: string, subjectId: string
       .limit(1);
     if (links && links.length > 0) return true;
   }
+
+  if (subject.user_id === userId) return true;
 
   return false;
 }
@@ -66,7 +63,7 @@ export async function GET(
       .eq('id', user.id)
       .maybeSingle();
     const isTeacher = profileResult.data?.subscription_type === 'teacher';
-    const hasAccess = await canAccessSubject(supabase, user.id, subjectId, isTeacher);
+    const hasAccess = await canAccessSubject(supabase, user.id, subjectId);
     if (!hasAccess) {
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
     }

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-async function canAccessSubject(supabase: any, userId: string, subjectId: string, isTeacher: boolean) {
+async function canAccessSubject(supabase: any, userId: string, subjectId: string) {
   const { data: subject } = await (supabase as any)
     .from('subjects')
     .select('id, title, name, description, user_id, class_id')
@@ -19,12 +19,8 @@ async function canAccessSubject(supabase: any, userId: string, subjectId: string
     .eq('user_id', userId);
   const classIds = (memberships || []).map((m: any) => m.class_id).filter(Boolean);
 
-  if (isTeacher) {
-    if (subject.user_id === userId) return { allowed: true, subject };
-    if (subject.class_id && classIds.includes(subject.class_id)) return { allowed: true, subject };
-  } else {
-    if (subject.class_id && classIds.includes(subject.class_id)) return { allowed: true, subject };
-  }
+  // Primary access model: any class member of a linked class can access.
+  if (subject.class_id && classIds.includes(subject.class_id)) return { allowed: true, subject };
 
   if (classIds.length > 0) {
     const { data: links } = await (supabase as any)
@@ -35,6 +31,9 @@ async function canAccessSubject(supabase: any, userId: string, subjectId: string
       .limit(1);
     if (links && links.length > 0) return { allowed: true, subject };
   }
+
+  // Fallback for legacy/unlinked records.
+  if (subject.user_id === userId) return { allowed: true, subject };
 
   return { allowed: false, subject: null };
 }
@@ -58,7 +57,7 @@ export async function GET(
       .eq('id', user.id)
       .maybeSingle();
     const isTeacher = profile?.subscription_type === 'teacher';
-    const subjectAccess = await canAccessSubject(supabase, user.id, subjectId, isTeacher);
+    const subjectAccess = await canAccessSubject(supabase, user.id, subjectId);
     if (!subjectAccess.allowed || !subjectAccess.subject) {
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
     }
