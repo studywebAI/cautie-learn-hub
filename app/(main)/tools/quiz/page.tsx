@@ -14,7 +14,6 @@ import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
 import { PillSelector } from '@/components/tools/pill-selector';
-import { PresetManager } from '@/components/tools/preset-manager';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { ExportToolbar } from '@/components/tools/export-toolbar';
@@ -40,15 +39,9 @@ function QuizPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedQuiz, setGeneratedQuiz] = useState<Quiz | null>(null);
   const [quizMode, setQuizMode] = useState<QuizMode>('practice');
-  const [modePack, setModePack] = useState('practice');
   const [difficultyProfile, setDifficultyProfile] = useState('balanced');
   const [questionCount, setQuestionCount] = useState(7);
   const [questionType, setQuestionType] = useState('mixed');
-  const [feedbackStyle, setFeedbackStyle] = useState('immediate');
-  const [gradingStrictness, setGradingStrictness] = useState('moderate');
-  const [spellingTolerance, setSpellingTolerance] = useState('lenient');
-  const [partialCredit, setPartialCredit] = useState('enabled');
-  const [gradingMethod, setGradingMethod] = useState('auto');
   const [currentView, setCurrentView] = useState<'setup' | 'take' | 'duel'>('setup');
   const [customTitle, setCustomTitle] = useState('');
   const { toast } = useToast();
@@ -68,7 +61,7 @@ function QuizPageContent() {
           mode: quizMode,
           artifactType: 'quiz',
           artifactTitle: customTitle.trim() || 'Generated Quiz',
-          input: { sourceText: text, questionCount: count, language, difficultyProfile, modePack, questionType, feedbackStyle, gradingStrictness, spellingTolerance, partialCredit, gradingMethod },
+          input: { sourceText: text, questionCount: count, language, difficultyProfile, questionType },
           computeClass: count > 20 ? 'heavy' : 'standard',
         });
         const response = run?.output_payload || run;
@@ -82,7 +75,7 @@ function QuizPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [quizMode, questionCount, language, difficultyProfile, modePack, questionType, feedbackStyle, gradingStrictness, spellingTolerance, partialCredit, gradingMethod]);
+  }, [quizMode, questionCount, language, difficultyProfile, questionType]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
@@ -102,26 +95,14 @@ function QuizPageContent() {
     const s = (k: string) => localStorage.getItem(`tools.quiz.${k}`);
     if (s('mode')) setQuizMode(s('mode') as QuizMode);
     if (s('count') && !Number.isNaN(Number(s('count')))) setQuestionCount(Number(s('count')));
-    if (s('pack')) setModePack(s('pack')!);
     if (s('difficulty')) setDifficultyProfile(s('difficulty')!);
     if (s('questionType')) setQuestionType(s('questionType')!);
-    if (s('feedbackStyle')) setFeedbackStyle(s('feedbackStyle')!);
-    if (s('gradingStrictness')) setGradingStrictness(s('gradingStrictness')!);
-    if (s('spellingTolerance')) setSpellingTolerance(s('spellingTolerance')!);
-    if (s('partialCredit')) setPartialCredit(s('partialCredit')!);
-    if (s('gradingMethod')) setGradingMethod(s('gradingMethod')!);
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.quiz.mode', quizMode); }, [quizMode]);
   useEffect(() => { localStorage.setItem('tools.quiz.count', String(questionCount)); }, [questionCount]);
-  useEffect(() => { localStorage.setItem('tools.quiz.pack', modePack); }, [modePack]);
   useEffect(() => { localStorage.setItem('tools.quiz.difficulty', difficultyProfile); }, [difficultyProfile]);
   useEffect(() => { localStorage.setItem('tools.quiz.questionType', questionType); }, [questionType]);
-  useEffect(() => { localStorage.setItem('tools.quiz.feedbackStyle', feedbackStyle); }, [feedbackStyle]);
-  useEffect(() => { localStorage.setItem('tools.quiz.gradingStrictness', gradingStrictness); }, [gradingStrictness]);
-  useEffect(() => { localStorage.setItem('tools.quiz.spellingTolerance', spellingTolerance); }, [spellingTolerance]);
-  useEffect(() => { localStorage.setItem('tools.quiz.partialCredit', partialCredit); }, [partialCredit]);
-  useEffect(() => { localStorage.setItem('tools.quiz.gradingMethod', gradingMethod); }, [gradingMethod]);
 
   const handleRestart = () => {
     setGeneratedQuiz(null);
@@ -158,8 +139,6 @@ function QuizPageContent() {
     return <QuizDuel sourceText={sourceText} onRestart={handleRestart} />;
   }
 
-  const currentSettings = { quizMode, modePack, difficultyProfile, questionCount, questionType, feedbackStyle, gradingStrictness, spellingTolerance, partialCredit, gradingMethod };
-
   const sidebar = (
     <>
       <div className="space-y-1.5">
@@ -174,42 +153,11 @@ function QuizPageContent() {
         />
       </div>
 
-      <PresetManager
-        toolId="quiz"
-        currentSettings={currentSettings}
-        onLoadPreset={(s) => {
-          if (s.quizMode) setQuizMode(s.quizMode);
-          if (s.modePack) setModePack(s.modePack);
-          if (s.difficultyProfile) setDifficultyProfile(s.difficultyProfile);
-          if (s.questionCount) setQuestionCount(s.questionCount);
-          if (s.questionType) setQuestionType(s.questionType);
-          if (s.feedbackStyle) setFeedbackStyle(s.feedbackStyle);
-          if (s.gradingStrictness) setGradingStrictness(s.gradingStrictness);
-          if (s.spellingTolerance) setSpellingTolerance(s.spellingTolerance);
-          if (s.partialCredit) setPartialCredit(s.partialCredit);
-          if (s.gradingMethod) setGradingMethod(s.gradingMethod);
-        }}
-      />
-
-      <PillSelector label={t.quiz.labels.pack} options={t.quiz.packOptions} value={modePack}
-        onChange={(v) => setModePack(v)}
-        disabled={isLoading} />
-
       <PillSelector label={t.quiz.labels.mode} options={t.quiz.modeOptions} value={quizMode} onChange={(v) => setQuizMode(v as QuizMode)} disabled={isLoading} />
 
       <PillSelector label={t.quiz.labels.difficulty} options={t.quiz.difficultyOptions} value={difficultyProfile} onChange={setDifficultyProfile} disabled={isLoading} />
 
       <PillSelector label={t.quiz.labels.questionType} options={t.quiz.questionTypeOptions} value={questionType} onChange={setQuestionType} disabled={isLoading} />
-
-      <PillSelector label={t.quiz.labels.feedback} options={t.quiz.feedbackOptions} value={feedbackStyle} onChange={setFeedbackStyle} disabled={isLoading} />
-
-      <PillSelector label={t.quiz.labels.gradingStrictness} options={t.quiz.gradingStrictnessOptions} value={gradingStrictness} onChange={setGradingStrictness} disabled={isLoading} />
-
-      <PillSelector label={t.quiz.labels.spellingTolerance} options={t.quiz.spellingToleranceOptions} value={spellingTolerance} onChange={setSpellingTolerance} disabled={isLoading} />
-
-      <PillSelector label={t.quiz.labels.partialCredit} options={t.quiz.partialCreditOptions} value={partialCredit} onChange={setPartialCredit} disabled={isLoading} />
-
-      <PillSelector label={t.quiz.labels.gradingMethod} options={t.quiz.gradingMethodOptions} value={gradingMethod} onChange={setGradingMethod} disabled={isLoading} />
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">

@@ -13,7 +13,6 @@ import { NoteViewer } from '@/components/material-viewers/note-viewer';
 import type { GenerateNotesOutput } from '@/ai/flows/generate-notes';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { PillSelector } from '@/components/tools/pill-selector';
-import { PresetManager } from '@/components/tools/preset-manager';
 import { Slider } from '@/components/ui/slider';
 import { ExportToolbar } from '@/components/tools/export-toolbar';
 import { notesToMarkdown, notesToHtml } from '@/lib/export-formatters';
@@ -114,9 +113,6 @@ function NotesPageContent() {
   const [sourceText, setSourceText] = useState('');
   const [length, setLength] = useState<'short' | 'medium' | 'long'>('medium');
   const [style, setStyle] = useState('structured');
-  const [modePack, setModePack] = useState('core');
-  const [outputFocus, setOutputFocus] = useState('clarity');
-  const [tone, setTone] = useState('neutral');
   const [audience, setAudience] = useState('student');
   const [isLoading, setIsLoading] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState<GenerateNotesOutput['notes'] | null>(null);
@@ -166,9 +162,6 @@ function NotesPageContent() {
     const s = (k: string) => localStorage.getItem(`tools.notes.${k}`);
     if (s('length') === 'short' || s('length') === 'medium' || s('length') === 'long') setLength(s('length') as any);
     if (s('style')) setStyle(s('style')!);
-    if (s('pack')) setModePack(s('pack')!);
-    if (s('focus')) setOutputFocus(s('focus')!);
-    if (s('tone')) setTone(s('tone')!);
     if (s('audience')) setAudience(s('audience')!);
 
     const cachedTranscript = localStorage.getItem('tools.notes.liveTranscript');
@@ -206,9 +199,9 @@ function NotesPageContent() {
           sourceText: text,
           length,
           style,
-          modePack,
-          outputFocus,
-          tone,
+          modePack: 'core',
+          outputFocus: 'clarity',
+          tone: 'neutral',
           audience,
           highlightTitles: false,
           fontFamily: 'default',
@@ -227,7 +220,7 @@ function NotesPageContent() {
       if (background) setIsAutoDrafting(false);
       else setIsLoading(false);
     }
-  }, [audience, customTitle, length, modePack, outputFocus, style, t.notes.generatingTitle, toast, tone]);
+  }, [audience, customTitle, length, style, t.notes.generatingTitle, toast]);
 
   const stopListening = useCallback(async (options?: { finalize?: boolean }) => {
     keepListeningRef.current = false;
@@ -395,9 +388,6 @@ function NotesPageContent() {
 
   useEffect(() => { localStorage.setItem('tools.notes.length', length); }, [length]);
   useEffect(() => { localStorage.setItem('tools.notes.style', style); }, [style]);
-  useEffect(() => { localStorage.setItem('tools.notes.pack', modePack); }, [modePack]);
-  useEffect(() => { localStorage.setItem('tools.notes.focus', outputFocus); }, [outputFocus]);
-  useEffect(() => { localStorage.setItem('tools.notes.tone', tone); }, [tone]);
   useEffect(() => { localStorage.setItem('tools.notes.audience', audience); }, [audience]);
 
   useEffect(() => {
@@ -449,8 +439,6 @@ function NotesPageContent() {
   const lengthMap: Record<string, number> = { short: 0, medium: 1, long: 2 };
   const lengthFromSlider = (v: number) => (['short', 'medium', 'long'] as const)[v];
   const lengthLabels: Record<string, string> = { short: t.short, medium: t.medium, long: t.long };
-
-  const currentSettings = { length, style, modePack, outputFocus, tone, audience };
 
   if (generatedNotes) {
     return (
@@ -506,23 +494,7 @@ function NotesPageContent() {
         />
       </div>
 
-      <PresetManager
-        toolId="notes"
-        currentSettings={currentSettings}
-        onLoadPreset={(s) => {
-          if (s.length) setLength(s.length);
-          if (s.style) setStyle(s.style);
-          if (s.modePack) setModePack(s.modePack);
-          if (s.outputFocus) setOutputFocus(s.outputFocus);
-          if (s.tone) setTone(s.tone);
-          if (s.audience) setAudience(s.audience);
-        }}
-      />
-
-      <PillSelector label={t.notes.labels.pack} options={t.notes.packOptions} value={modePack} onChange={setModePack} disabled={isLoading} />
       <PillSelector label={t.notes.labels.style} options={t.notes.styleOptions} value={style} onChange={setStyle} disabled={isLoading} />
-      <PillSelector label={t.notes.labels.focus} options={t.notes.focusOptions} value={outputFocus} onChange={setOutputFocus} disabled={isLoading} />
-      <PillSelector label={t.notes.labels.tone} options={t.notes.toneOptions} value={tone} onChange={setTone} disabled={isLoading} />
       <PillSelector label={t.notes.labels.audience} options={t.notes.audienceOptions} value={audience} onChange={setAudience} disabled={isLoading} />
 
       <div className="space-y-2">

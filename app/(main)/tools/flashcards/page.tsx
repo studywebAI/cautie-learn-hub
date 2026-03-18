@@ -13,7 +13,6 @@ import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
 import { PillSelector } from '@/components/tools/pill-selector';
-import { PresetManager } from '@/components/tools/preset-manager';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { ExportToolbar } from '@/components/tools/export-toolbar';
@@ -39,10 +38,7 @@ function FlashcardsPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedCards, setGeneratedCards] = useState<Flashcard[] | null>(null);
   const [studyMode, setStudyMode] = useState<StudyMode>('flip');
-  const [modePack, setModePack] = useState('core');
-  const [retentionProfile, setRetentionProfile] = useState('balanced');
   const [flashcardCount, setFlashcardCount] = useState(10);
-  const [cardStyle, setCardStyle] = useState('standard');
   const [complexity, setComplexity] = useState('medium');
   const [currentView, setCurrentView] = useState<'setup' | 'study'>('setup');
   const [customTitle, setCustomTitle] = useState('');
@@ -59,7 +55,7 @@ function FlashcardsPageContent() {
         mode: studyMode,
         artifactType: 'flashcards',
         artifactTitle: customTitle.trim() || 'Generated Flashcards',
-        input: { sourceText: text, count: flashcardCount, language, modePack, retentionProfile, cardStyle, complexity },
+        input: { sourceText: text, count: flashcardCount, language, complexity },
         computeClass: flashcardCount > 20 ? 'heavy' : 'standard',
       });
       const response = run?.output_payload || run;
@@ -72,7 +68,7 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [flashcardCount, language, studyMode, modePack, retentionProfile, cardStyle, complexity]);
+  }, [flashcardCount, language, studyMode, complexity]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
@@ -92,17 +88,11 @@ function FlashcardsPageContent() {
     const s = (k: string) => localStorage.getItem(`tools.flashcards.${k}`);
     if (s('mode')) setStudyMode(s('mode') as StudyMode);
     if (s('count') && !Number.isNaN(Number(s('count')))) setFlashcardCount(Number(s('count')));
-    if (s('pack')) setModePack(s('pack')!);
-    if (s('retention')) setRetentionProfile(s('retention')!);
-    if (s('cardStyle')) setCardStyle(s('cardStyle')!);
     if (s('complexity')) setComplexity(s('complexity')!);
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.flashcards.mode', studyMode); }, [studyMode]);
   useEffect(() => { localStorage.setItem('tools.flashcards.count', String(flashcardCount)); }, [flashcardCount]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.pack', modePack); }, [modePack]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.retention', retentionProfile); }, [retentionProfile]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.cardStyle', cardStyle); }, [cardStyle]);
   useEffect(() => { localStorage.setItem('tools.flashcards.complexity', complexity); }, [complexity]);
 
   const handleRestart = () => {
@@ -137,8 +127,6 @@ function FlashcardsPageContent() {
     );
   }
 
-  const currentSettings = { studyMode, modePack, retentionProfile, flashcardCount, cardStyle, complexity };
-
   const sidebar = (
     <>
       <div className="space-y-1.5">
@@ -153,28 +141,7 @@ function FlashcardsPageContent() {
         />
       </div>
 
-      <PresetManager
-        toolId="flashcards"
-        currentSettings={currentSettings}
-        onLoadPreset={(s) => {
-          if (s.studyMode) setStudyMode(s.studyMode);
-          if (s.modePack) setModePack(s.modePack);
-          if (s.retentionProfile) setRetentionProfile(s.retentionProfile);
-          if (s.flashcardCount) setFlashcardCount(s.flashcardCount);
-          if (s.cardStyle) setCardStyle(s.cardStyle);
-          if (s.complexity) setComplexity(s.complexity);
-        }}
-      />
-
-      <PillSelector label={t.flashcards.labels.pack} options={t.flashcards.packOptions} value={modePack}
-        onChange={(v) => { setModePack(v); if (v === 'retention') setStudyMode('multiple-choice'); if (v === 'core') setStudyMode('flip'); if (v === 'exam') setStudyMode('type'); }}
-        disabled={isLoading} />
-
       <PillSelector label={t.flashcards.labels.studyMode} options={t.flashcards.studyModeOptions} value={studyMode} onChange={(v) => setStudyMode(v as StudyMode)} disabled={isLoading} />
-
-      <PillSelector label={t.flashcards.labels.retention} options={t.flashcards.retentionOptions} value={retentionProfile} onChange={setRetentionProfile} disabled={isLoading} />
-
-      <PillSelector label={t.flashcards.labels.cardStyle} options={t.flashcards.cardStyleOptions} value={cardStyle} onChange={setCardStyle} disabled={isLoading} />
 
       <PillSelector label={t.flashcards.labels.complexity} options={t.flashcards.complexityOptions} value={complexity} onChange={setComplexity} disabled={isLoading} />
 
