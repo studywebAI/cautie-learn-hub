@@ -25,7 +25,16 @@ async function studentHasSubjectAccess(supabase: any, userId: string, subjectId:
     .in('class_id', classIds)
     .limit(1);
 
-  return !!(links && links.length > 0);
+  if (links && links.length > 0) return true;
+
+  const { data: directSubject } = await (supabase as any)
+    .from('subjects')
+    .select('id')
+    .eq('id', subjectId)
+    .in('class_id', classIds)
+    .maybeSingle();
+
+  return !!directSubject;
 }
 
 // GET paragraphs for a chapter
@@ -56,13 +65,31 @@ export async function GET(
     if (isTeacher) {
       const { data: subject } = await (supabase as any)
         .from('subjects')
-        .select('id')
+        .select('id, user_id, class_id')
         .eq('id', resolvedParams.subjectId)
-        .eq('user_id', user.id)
         .maybeSingle();
 
-      if (!subject) {
-        return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
+      if (!subject) return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
+      if (subject.user_id !== user.id) {
+        const { data: memberships } = await supabase
+          .from('class_members')
+          .select('class_id')
+          .eq('user_id', user.id);
+        const memberClassIds = (memberships || []).map((m: any) => m.class_id).filter(Boolean);
+        const directMatch = subject.class_id && memberClassIds.includes(subject.class_id);
+
+        if (!directMatch) {
+          const { data: linkMembership } = await (supabase as any)
+            .from('class_subjects')
+            .select('class_id')
+            .eq('subject_id', resolvedParams.subjectId)
+            .in('class_id', memberClassIds)
+            .limit(1);
+
+          if (!linkMembership || linkMembership.length === 0) {
+            return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
+          }
+        }
       }
     } else {
       const hasAccess = await studentHasSubjectAccess(supabase, user.id, resolvedParams.subjectId);

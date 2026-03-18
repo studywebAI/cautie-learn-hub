@@ -37,6 +37,7 @@ export default function AssignmentDetailPage() {
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [assignmentList, setAssignmentList] = useState<Assignment[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const { toast } = useToast();
   const { role } = useContext(AppContext) as any;
   const isTeacher = role === 'teacher';
@@ -57,6 +58,9 @@ export default function AssignmentDetailPage() {
         if (assignmentResponse.ok) {
           const assignmentData = await assignmentResponse.json();
           setAssignment(assignmentData);
+          setLoadError(null);
+        } else {
+          setLoadError('Assignment not found.');
         }
 
         // Fetch paragraph assignments for prev/next navigation
@@ -77,10 +81,12 @@ export default function AssignmentDetailPage() {
         );
         if (blocksResponse.ok) {
           const blocksData = await blocksResponse.json();
-          setBlocks(blocksData.sort((a: Block, b: Block) => a.position - b.position));
+          const normalizedBlocks = Array.isArray(blocksData) ? blocksData : [];
+          setBlocks(normalizedBlocks.sort((a: Block, b: Block) => a.position - b.position));
         }
       } catch (error) {
         console.error('Error fetching assignment data:', error);
+        setLoadError('Failed to load assignment.');
         toast({
           title: 'Error',
           description: 'Failed to load assignment.',
@@ -100,6 +106,22 @@ export default function AssignmentDetailPage() {
       : null;
 
   if (!assignment) {
+    if (loadError) {
+      return (
+        <div className="flex h-screen items-center justify-center">
+          <div className="text-center">
+            <p className="mb-3 text-muted-foreground">{loadError}</p>
+            <button
+              type="button"
+              className="text-sm text-primary underline"
+              onClick={() => router.push(`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}`)}
+            >
+              go back to paragraph
+            </button>
+          </div>
+        </div>
+      );
+    }
     return <div className="flex items-center justify-center h-screen">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>

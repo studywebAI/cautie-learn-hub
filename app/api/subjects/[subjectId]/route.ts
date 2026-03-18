@@ -8,6 +8,16 @@ function logSubjectDetail(...args: any[]) {
   console.log('[SUBJECT_DETAIL]', ...args)
 }
 
+async function getMemberClassIds(supabase: any, userId: string): Promise<string[]> {
+  const { data: memberships, error } = await supabase
+    .from('class_members')
+    .select('class_id')
+    .eq('user_id', userId);
+
+  if (error) return [];
+  return (memberships || []).map((m: any) => m.class_id).filter(Boolean);
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ subjectId: string }> }
@@ -43,7 +53,6 @@ export async function GET(
         .from('subjects')
         .select('*')
         .eq('id', subjectId)
-        .eq('user_id', user.id)
         .maybeSingle()
 
       if (fetchError) {
@@ -54,6 +63,24 @@ export async function GET(
       if (!subject) {
         logSubjectDetail('GET - Teacher has no access to subject', subjectId)
         return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
+      }
+
+      const memberClassIds = await getMemberClassIds(supabase, user.id);
+      const directClassMatch = subject.class_id && memberClassIds.includes(subject.class_id);
+
+      let linkedClassMatch = false;
+      if (!directClassMatch && memberClassIds.length > 0) {
+        const { data: links } = await (supabase as any)
+          .from('class_subjects')
+          .select('class_id')
+          .eq('subject_id', subjectId)
+          .in('class_id', memberClassIds)
+          .limit(1);
+        linkedClassMatch = !!(links && links.length > 0);
+      }
+
+      if (subject.user_id !== user.id && !directClassMatch && !linkedClassMatch) {
+        return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
       }
 
       logSubjectDetail('GET - Returning teacher subject', subject.id)
@@ -91,6 +118,15 @@ export async function GET(
     }
 
     const allowedSubjectIds = [...new Set((classSubjectLinks || []).map((cs: any) => cs.subject_id))]
+
+    const { data: directSubjectRows } = await (supabase as any)
+      .from('subjects')
+      .select('id')
+      .eq('id', subjectId)
+      .in('class_id', classIds);
+    if (directSubjectRows?.[0]?.id) {
+      allowedSubjectIds.push(directSubjectRows[0].id);
+    }
     logSubjectDetail('GET - Allowed subject IDs', allowedSubjectIds)
 
     if (!allowedSubjectIds.includes(subjectId)) {

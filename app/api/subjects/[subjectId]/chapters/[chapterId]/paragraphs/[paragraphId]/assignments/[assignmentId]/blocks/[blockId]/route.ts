@@ -58,10 +58,19 @@ export async function POST(
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
     }
 
-    const classId = assignment.paragraphs.chapters.subjects.class_id
+    let classId = assignment.paragraphs.chapters.subjects.class_id as string | null;
+    if (!classId) {
+      const { data: linkRow } = await (supabase as any)
+        .from('class_subjects')
+        .select('class_id')
+        .eq('subject_id', resolvedParams.subjectId)
+        .limit(1)
+        .maybeSingle();
+      classId = linkRow?.class_id || null;
+    }
 
     if (!classId) {
-      return NextResponse.json({ error: 'Assignment not associated with a class' }, { status: 400 })
+      return NextResponse.json({ error: 'Assignment not associated with a class' }, { status: 400 });
     }
 
     // Check if user is member of the class
@@ -181,23 +190,17 @@ export async function PUT(
     const classId = subjectData.class_id
 
     // Check if user is teacher/owner
-    let isTeacher = false
+    let isTeacher = false;
     if (classId) {
-      // Subject associated with class
-      const { data: classAccess, error: classError } = await supabase
-        .from('classes')
-        .select('owner_id')
-        .eq('id', classId)
-        .single()
-
-      if (classError || !classAccess) {
-        return NextResponse.json({ error: 'Class not found' }, { status: 404 })
-      }
-
-      isTeacher = classAccess.owner_id === user.id
+      const { data: classMembership } = await supabase
+        .from('class_members')
+        .select('user_id')
+        .eq('class_id', classId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      isTeacher = !!classMembership;
     } else {
-      // Global subject
-      isTeacher = subjectData.user_id === user.id
+      isTeacher = subjectData.user_id === user.id;
     }
 
     if (!isTeacher) {
@@ -284,23 +287,17 @@ export async function DELETE(
     const classId = subjectData.class_id
 
     // Check if user is teacher/owner
-    let isTeacher = false
+    let isTeacher = false;
     if (classId) {
-      // Subject associated with class
-      const { data: classAccess, error: classError } = await supabase
-        .from('classes')
-        .select('owner_id')
-        .eq('id', classId)
-        .single()
-
-      if (classError || !classAccess) {
-        return NextResponse.json({ error: 'Class not found' }, { status: 404 })
-      }
-
-      isTeacher = classAccess.owner_id === user.id
+      const { data: classMembership } = await supabase
+        .from('class_members')
+        .select('user_id')
+        .eq('class_id', classId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      isTeacher = !!classMembership;
     } else {
-      // Global subject
-      isTeacher = subjectData.user_id === user.id
+      isTeacher = subjectData.user_id === user.id;
     }
 
     if (!isTeacher) {
