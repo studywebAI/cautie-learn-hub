@@ -4,8 +4,43 @@ import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
+async function canAccessSubject(supabase: any, userId: string, subjectId: string, isTeacher: boolean) {
+  const { data: subject } = await (supabase as any)
+    .from('subjects')
+    .select('id, title, name, description, user_id, class_id')
+    .eq('id', subjectId)
+    .maybeSingle();
+
+  if (!subject) return { allowed: false, subject: null };
+
+  const { data: memberships } = await supabase
+    .from('class_members')
+    .select('class_id')
+    .eq('user_id', userId);
+  const classIds = (memberships || []).map((m: any) => m.class_id).filter(Boolean);
+
+  if (isTeacher) {
+    if (subject.user_id === userId) return { allowed: true, subject };
+    if (subject.class_id && classIds.includes(subject.class_id)) return { allowed: true, subject };
+  } else {
+    if (subject.class_id && classIds.includes(subject.class_id)) return { allowed: true, subject };
+  }
+
+  if (classIds.length > 0) {
+    const { data: links } = await (supabase as any)
+      .from('class_subjects')
+      .select('class_id')
+      .eq('subject_id', subjectId)
+      .in('class_id', classIds)
+      .limit(1);
+    if (links && links.length > 0) return { allowed: true, subject };
+  }
+
+  return { allowed: false, subject: null };
+}
+
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ subjectId: string; chapterId: string }> }
 ) {
   try {
@@ -17,23 +52,7 @@ export async function GET(
     const user = auth?.user;
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const chapterResponse = await fetch(
-      new URL(`/api/subjects/${subjectId}/chapters/${chapterId}`, request.url),
-      {
-        headers: { cookie: request.headers.get('cookie') || '' },
-        cache: 'no-store',
-      }
-    );
-
-    if (!chapterResponse.ok) {
-      return NextResponse.json({ error: 'Chapter not found' }, { status: chapterResponse.status });
-    }
-
-    const [subjectResponse, profileResponse, chaptersResponse, paragraphsResponse] = await Promise.all([
-      fetch(new URL(`/api/subjects/${subjectId}`, request.url), {
-        headers: { cookie: request.headers.get('cookie') || '' },
-        cache: 'no-store',
-      }),
+    const [profileResponse, chaptersResponse, paragraphsResponse] = await Promise.all([
       supabase.from('profiles').select('subscription_type').eq('id', user.id).maybeSingle(),
       (supabase as any)
         .from('chapters')
@@ -58,9 +77,21 @@ export async function GET(
         .order('paragraph_number', { ascending: true }),
     ]);
 
-    const chapter = await chapterResponse.json();
-    const subject = subjectResponse.ok ? await subjectResponse.json() : null;
     const isTeacher = profileResponse.data?.subscription_type === 'teacher';
+    const subjectAccess = await canAccessSubject(supabase, user.id, subjectId, isTeacher);
+    if (!subjectAccess.allowed || !subjectAccess.subject) {
+      return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
+    }
+
+    const { data: chapter } = await (supabase as any)
+      .from('chapters')
+      .select('id, title, chapter_number')
+      .eq('id', chapterId)
+      .eq('subject_id', subjectId)
+      .maybeSingle();
+    if (!chapter) {
+      return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
+    }
 
     const chapters = chaptersResponse.data || [];
     const currentIndex = chapters.findIndex((row: any) => row.id === chapterId);
@@ -83,12 +114,10 @@ export async function GET(
     });
 
     return NextResponse.json({
-      subject: subject
-        ? {
-            id: subject.id,
-            title: subject.title || subject.name,
-          }
-        : null,
+      subject: {
+        id: subjectAccess.subject.id,
+        title: subjectAccess.subject.title || subjectAccess.subject.name,
+      },
       chapter,
       adjacentChapters,
       paragraphs,

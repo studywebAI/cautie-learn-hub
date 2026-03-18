@@ -4,6 +4,41 @@ import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
+async function canAccessSubject(supabase: any, userId: string, subjectId: string, isTeacher: boolean) {
+  const { data: subject } = await (supabase as any)
+    .from('subjects')
+    .select('id, title, name, description, user_id, class_id')
+    .eq('id', subjectId)
+    .maybeSingle();
+
+  if (!subject) return { allowed: false, subject: null };
+
+  const { data: memberships } = await supabase
+    .from('class_members')
+    .select('class_id')
+    .eq('user_id', userId);
+  const classIds = (memberships || []).map((m: any) => m.class_id).filter(Boolean);
+
+  if (isTeacher) {
+    if (subject.user_id === userId) return { allowed: true, subject };
+    if (subject.class_id && classIds.includes(subject.class_id)) return { allowed: true, subject };
+  } else {
+    if (subject.class_id && classIds.includes(subject.class_id)) return { allowed: true, subject };
+  }
+
+  if (classIds.length > 0) {
+    const { data: links } = await (supabase as any)
+      .from('class_subjects')
+      .select('class_id')
+      .eq('subject_id', subjectId)
+      .in('class_id', classIds)
+      .limit(1);
+    if (links && links.length > 0) return { allowed: true, subject };
+  }
+
+  return { allowed: false, subject: null };
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ subjectId: string }> }
@@ -17,26 +52,17 @@ export async function GET(
     const user = auth?.user;
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const subjectResponse = await fetch(new URL(`/api/subjects/${subjectId}`, request.url), {
-      headers: { cookie: request.headers.get('cookie') || '' },
-      cache: 'no-store',
-    });
-
-    if (!subjectResponse.ok) {
-      return NextResponse.json(
-        { error: 'Subject not found' },
-        { status: subjectResponse.status }
-      );
-    }
-
-    const subject = await subjectResponse.json();
-
     const { data: profile } = await supabase
       .from('profiles')
       .select('subscription_type')
       .eq('id', user.id)
       .maybeSingle();
     const isTeacher = profile?.subscription_type === 'teacher';
+    const subjectAccess = await canAccessSubject(supabase, user.id, subjectId, isTeacher);
+    if (!subjectAccess.allowed || !subjectAccess.subject) {
+      return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
+    }
+    const subject = subjectAccess.subject;
 
     const { data: chapters, error: chapterError } = await (supabase as any)
       .from('chapters')
