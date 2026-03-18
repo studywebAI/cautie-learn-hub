@@ -27,7 +27,10 @@ type SubjectsGridProps = {
 };
 
 export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) {
-  const { classes, session, subjects: cachedSubjects } = useContext(AppContext) as AppContextType;
+  const { classes, subjects: cachedSubjects, warmResources } = useContext(AppContext) as AppContextType;
+  const scopeKey = classId || 'all';
+  const cacheKey = `studyweb-subjects-cache:${scopeKey}`;
+  const checksumKey = `studyweb-subjects-checksum:${scopeKey}`;
   const seededSubjects = useMemo(() => {
     const source = Array.isArray(cachedSubjects) ? cachedSubjects : [];
     if (!classId) return source;
@@ -38,7 +41,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
   }, [cachedSubjects, classId]);
 
   const [subjects, setSubjects] = useState<any[]>(seededSubjects);
-  const [isLoading, setIsLoading] = useState(seededSubjects.length === 0);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newSubjectTitle, setNewSubjectTitle] = useState('');
   const [newSubjectDescription, setNewSubjectDescription] = useState('');
@@ -48,10 +51,34 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
   const { toast } = useToast();
 
   useEffect(() => {
-    if (seededSubjects.length === 0) return;
-    setSubjects((prev) => (prev.length === 0 ? seededSubjects : prev));
-    setIsLoading(false);
-  }, [seededSubjects]);
+    let hydrated = false;
+    if (typeof window !== 'undefined') {
+      try {
+        const fromStorage = window.localStorage.getItem(cacheKey);
+        if (fromStorage) {
+          const parsed = JSON.parse(fromStorage);
+          if (Array.isArray(parsed)) {
+            setSubjects(parsed);
+            setIsLoading(false);
+            hydrated = true;
+          }
+        }
+      } catch {
+        // Ignore local cache parse failures.
+      }
+    }
+
+    if (!hydrated && seededSubjects.length > 0) {
+      setSubjects(seededSubjects);
+      setIsLoading(false);
+      hydrated = true;
+    }
+
+    if (!hydrated) {
+      setSubjects([]);
+      setIsLoading(true);
+    }
+  }, [cacheKey, seededSubjects]);
 
   const toggleClassSelection = (classItemId: string) => {
     setSelectedClassIds(prev =>
@@ -63,25 +90,67 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
   const fetchSubjects = useCallback(async () => {
     try {
-      if (subjects.length === 0) {
-        setIsLoading(true);
-      }
+      setIsLoading(true);
       const apiUrl = classId ? `/api/classes/${classId}/subjects` : '/api/subjects';
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, { cache: 'no-store' });
       if (!response.ok) throw new Error('Failed to fetch subjects');
       const data = await response.json();
-      setSubjects(data || []);
+      const nextSubjects = Array.isArray(data) ? data : [];
+      setSubjects(nextSubjects);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(cacheKey, JSON.stringify(nextSubjects));
+      }
     } catch (error) {
       console.error('Error fetching subjects:', error);
-      setSubjects([]);
+      setSubjects((prev) => (prev.length === 0 ? [] : prev));
     } finally {
       setIsLoading(false);
     }
-  }, [classId, subjects.length]);
+  }, [cacheKey, classId]);
+
+  const syncSubjects = useCallback(async (force = false) => {
+    try {
+      if (typeof window === 'undefined') {
+        await fetchSubjects();
+        return;
+      }
+      const checksum =
+        !force ? window.localStorage.getItem(checksumKey) || '' : '';
+
+      const syncUrl = new URL('/api/subjects/sync', window.location.origin);
+      if (classId) syncUrl.searchParams.set('classId', classId);
+      if (checksum) syncUrl.searchParams.set('checksum', checksum);
+
+      const response = await fetch(syncUrl.toString(), {
+        cache: 'no-store',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`sync failed (${response.status})`);
+      }
+
+      const payload = await response.json();
+      if (typeof payload?.checksum === 'string') {
+        window.localStorage.setItem(checksumKey, payload.checksum);
+      }
+
+      if (payload?.changed && Array.isArray(payload?.subjects)) {
+        setSubjects(payload.subjects);
+        window.localStorage.setItem(cacheKey, JSON.stringify(payload.subjects));
+      }
+    } catch (error) {
+      console.warn('Subjects sync failed; falling back to full fetch', error);
+      await fetchSubjects();
+    } finally {
+      setIsLoading(false);
+      void warmResources(['subjects:list']);
+    }
+  }, [cacheKey, checksumKey, classId, fetchSubjects, warmResources]);
 
   useEffect(() => {
-    fetchSubjects();
-  }, [fetchSubjects]);
+    void syncSubjects();
+  }, [syncSubjects]);
 
   const handleCreateSubject = async () => {
     if (!newSubjectTitle.trim()) {
@@ -122,7 +191,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
         throw new Error(errorData.error || 'Failed to create subject');
       }
 
-      fetchSubjects();
+      await syncSubjects(true);
       setNewSubjectTitle('');
       setNewSubjectDescription('');
       setAutoIcons(true);
@@ -164,20 +233,20 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-6 text-[13px] text-[hsl(var(--sidebar-active-foreground))]">
         {isTeacher && (
           <div className="flex justify-end">
-            <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
+            <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[13px] text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
               + create subject
             </Button>
           </div>
         )}
 
         {subjects.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <p className="text-sm mb-4 lowercase">no subjects yet</p>
+          <div className="py-16 text-center text-sidebar-foreground/80">
+            <p className="mb-4 text-[13px] lowercase">no subjects yet</p>
             {isTeacher && (
-              <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
+              <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[13px] text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
                 create first subject
               </Button>
             )}

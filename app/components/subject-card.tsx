@@ -320,7 +320,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
 
   return (
     <Card
-      className="overflow-hidden transition-all duration-200 h-full flex flex-col rounded-2xl border-border/70 bg-[hsl(var(--surface-1))] hover:shadow-md cursor-pointer"
+      className="h-full cursor-pointer overflow-hidden rounded-2xl border border-sidebar-border/80 bg-sidebar-accent/40 transition-all duration-200 hover:bg-sidebar-accent/60 hover:shadow-sm"
       role="button"
       tabIndex={0}
       onClick={() => router.push(subjectHref)}
@@ -333,18 +333,18 @@ export function SubjectCard({ subject }: SubjectCardProps) {
     >
       <CardContent className="p-0 flex flex-col h-full">
         <div className="px-4 pt-4 pb-3">
-          <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/12 text-primary">
+          <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]">
             <Icon className="h-4 w-4" strokeWidth={1.8} />
           </div>
-          <h3 className="text-[14px] font-semibold truncate lowercase">{subject.title}</h3>
+          <h3 className="truncate text-[13px] font-medium lowercase text-[hsl(var(--sidebar-active-foreground))]">{subject.title}</h3>
           {className && (
-            <p className="text-[12px] text-muted-foreground truncate lowercase mt-0.5">{className}</p>
+            <p className="mt-0.5 truncate text-[12px] lowercase text-sidebar-foreground">{className}</p>
           )}
           {lastWorkedParagraph && (
             <Link
               href={`/subjects/${subject.id}/chapters/${lastWorkedParagraph.chapter_id}/paragraphs/${lastWorkedParagraph.id}`}
               onClick={(event) => event.stopPropagation()}
-              className="mt-2 inline-flex max-w-full items-center rounded-lg bg-primary/10 px-2 py-1 text-[11px] text-primary hover:bg-primary/15"
+              className="mt-2 inline-flex max-w-full items-center rounded-lg bg-sidebar-accent px-2 py-1 text-[11px] text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
             >
               <span className="truncate">
                 resume {lastWorkedParagraph.chapter_number}.{lastWorkedParagraph.paragraph_number} {lastWorkedParagraph.title}
@@ -364,14 +364,14 @@ export function SubjectCard({ subject }: SubjectCardProps) {
                 return (
                   <div
                     key={`placeholder-${idx}`}
-                    className="grid grid-cols-[2.8rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-2 text-xs py-1.5 px-2 rounded-lg opacity-40 min-h-8"
+                    className="grid min-h-8 grid-cols-[2.8rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-2 rounded-lg px-2 py-1.5 text-xs opacity-40"
                   >
-                    <span className="bg-muted text-muted-foreground px-1.5 py-0.5 rounded-md text-[11px] font-medium text-center">
+                    <span className="rounded-md bg-sidebar-accent px-1.5 py-0.5 text-center text-[11px] font-medium text-sidebar-foreground">
                       --
                     </span>
                     <span className="flex-1" />
-                    <span className="text-muted-foreground text-xs tabular-nums text-right">0%</span>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden" />
+                    <span className="text-right text-xs tabular-nums text-sidebar-foreground">0%</span>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-sidebar-accent" />
                   </div>
                 );
               }
@@ -385,20 +385,20 @@ export function SubjectCard({ subject }: SubjectCardProps) {
                   key={p.id}
                   href={`/subjects/${subject.id}/chapters/${p.chapter_id}/paragraphs/${p.id}`}
                   onClick={(event) => event.stopPropagation()}
-                  className={`grid grid-cols-[2.8rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-2 text-xs py-1.5 px-2 rounded-lg transition-colors min-h-8 hover:bg-muted/50 ${
-                    isLast ? 'bg-primary/10' : ''
+                  className={`grid min-h-8 grid-cols-[2.8rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-sidebar-accent/70 ${
+                    isLast ? 'bg-sidebar-accent' : ''
                   }`}
                 >
-                  <span className="bg-muted text-foreground px-1.5 py-0.5 rounded-md text-[11px] font-semibold text-center tabular-nums">
+                  <span className="rounded-md bg-sidebar-accent/80 px-1.5 py-0.5 text-center text-[11px] font-medium tabular-nums text-[hsl(var(--sidebar-active-foreground))]">
                     {p.chapter_number}.{p.paragraph_number}
                   </span>
-                  <span className="truncate text-xs">{p.title}</span>
-                  <span className="text-muted-foreground text-xs tabular-nums text-right">
+                  <span className="truncate text-xs text-[hsl(var(--sidebar-active-foreground))]">{p.title}</span>
+                  <span className="text-right text-xs tabular-nums text-sidebar-foreground">
                     {roundedProgress}%
                   </span>
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-sidebar-accent/80">
                     <div
-                      className="h-full bg-primary rounded-full transition-all"
+                      className="h-full rounded-full bg-[hsl(var(--sidebar-active-foreground))] transition-all"
                       style={{ width: `${roundedProgress}%` }}
                     />
                   </div>

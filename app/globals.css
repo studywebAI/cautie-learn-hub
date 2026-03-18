@@ -8,8 +8,8 @@
     --type-body: 13px;
     --type-section: 14px;
     --type-page: 24px;
-    --background: 0 0% 96.8%;
-    --foreground: 240 6% 15%;
+    --background: 0 0% 98.8%;
+    --foreground: 240 8% 13%;
     --card: 0 0% 98.8%;
     --card-foreground: 240 6% 15%;
     --popover: 0 0% 98.8%;
@@ -54,8 +54,8 @@
   }
 
   .dark {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 92%;
+    --background: 0 0% 7%;
+    --foreground: 0 0% 96%;
     --card: 0 0% 8%;
     --card-foreground: 0 0% 92%;
     --popover: 0 0% 9%;
@@ -123,8 +123,8 @@
   }
 
   .theme-light {
-    --background: 0 0% 96.8%;
-    --foreground: 240 6% 15%;
+    --background: 0 0% 98.8%;
+    --foreground: 240 8% 13%;
     --card: 0 0% 98.8%;
     --card-foreground: 240 6% 15%;
     --popover: 0 0% 98.8%;
@@ -168,8 +168,8 @@
   }
 
   .theme-dark {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 92%;
+    --background: 0 0% 7%;
+    --foreground: 0 0% 96%;
     --card: 0 0% 8%;
     --card-foreground: 0 0% 92%;
     --popover: 0 0% 9%;

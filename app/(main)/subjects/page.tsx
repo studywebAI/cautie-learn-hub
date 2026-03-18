@@ -50,7 +50,7 @@ function SubjectsPageContent() {
   if (isTeacher && !teacherClassId) {
     return (
       <div className="h-full px-4 py-4 md:px-6 md:py-5">
-        <div className="rounded-xl border border-dashed p-8 text-sm text-muted-foreground">
+        <div className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/40 p-8 text-[13px] text-sidebar-foreground">
           No active class selected. Select or create a class first.
         </div>
       </div>
@@ -60,10 +60,10 @@ function SubjectsPageContent() {
   if (isTeacher) {
     return (
       <div className="h-full px-4 py-4 md:px-6 md:py-5">
-        <div className="mb-4 rounded-2xl border border-border/70 bg-[hsl(var(--surface-1))] px-4 py-4 md:px-5 md:py-5">
+        <div className="mb-4 rounded-2xl border border-sidebar-border/80 bg-sidebar-accent/50 px-4 py-4 md:px-5 md:py-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <h1 className="text-[18px] font-semibold lowercase">subjects</h1>
+              <h1 className="text-[17px] font-medium lowercase text-[hsl(var(--sidebar-active-foreground))]">subjects</h1>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <select
@@ -93,8 +93,8 @@ function SubjectsPageContent() {
 
   return (
     <div className="h-full px-4 py-4 md:px-6 md:py-5">
-      <div className="mb-4 rounded-2xl border border-border/70 bg-[hsl(var(--surface-1))] px-4 py-4 md:px-5 md:py-5">
-        <h1 className="text-[18px] font-semibold lowercase">subjects</h1>
+      <div className="mb-4 rounded-2xl border border-sidebar-border/80 bg-sidebar-accent/50 px-4 py-4 md:px-5 md:py-5">
+        <h1 className="text-[17px] font-medium lowercase text-[hsl(var(--sidebar-active-foreground))]">subjects</h1>
       </div>
       <SubjectsGrid isTeacher={isTeacher} classId={isTeacher ? teacherClassId : undefined} />
     </div>
