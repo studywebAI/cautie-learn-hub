@@ -19,7 +19,7 @@ export type PreloadSnapshot = Record<PreloadResourceKey, {
   error: string | null;
 }>;
 const PRELOAD_FRESH_TTL_MS = 30_000;
-const DASHBOARD_MIN_INTERVAL_MS = 5_000;
+const DASHBOARD_MIN_INTERVAL_MS = 1_000;
 // AccentColor removed — themes handle their own accent
 export type ClassInfo = Tables<'classes'>;
 export type ClassAssignment = Tables<'assignments'> & {
@@ -336,7 +336,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     void warmBootstrapBundle(activeClassIds);
   }, [setPreloadState, warmBootstrapBundle]);
 
-  const fetchDashboardSnapshot = useCallback(async (force = false) => {
+  const fetchDashboardSnapshot = useCallback(async (force = false, source: 'init' | 'auth_signed_in' | 'manual' = 'manual') => {
     if (dashboardInFlightRef.current) {
       return await dashboardInFlightRef.current;
     }
@@ -348,7 +348,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const run = (async () => {
       lastDashboardFetchAtRef.current = Date.now();
-      return await fetch('/api/dashboard', { credentials: 'include', cache: 'no-store' })
+      return await fetch(`/api/dashboard?source=${source}`, { credentials: 'include', cache: 'no-store' })
         .then(r => r.ok ? r.json() : null)
         .catch(() => null);
     })();
@@ -410,7 +410,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        const dashboardData = await fetchDashboardSnapshot(true);
+        // If we already hydrated from local cache, do not immediately hit /api/dashboard again.
+        if (cached) {
+          const now = Date.now();
+          setPreloadState('classes:list', { status: 'ready', updatedAt: now, error: null });
+          setPreloadState('subjects:list', { status: 'ready', updatedAt: now, error: null });
+          console.log('[PRELOAD][TIER0] using cached dashboard snapshot', { durationMs: Date.now() - tier0StartedAt });
+          setIsTier0Ready(true);
+          return;
+        }
+
+        const dashboardData = await fetchDashboardSnapshot(true, 'init');
 
         // Update with fresh data when available
         if (dashboardData) {
@@ -433,24 +443,28 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     init();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      // Optionally refetch data on auth change
-      if (session) {
-        void fetchDashboardSnapshot(false)
-          .then(data => {
-            if (data) {
-              applyDashboardData(data);
-            } else {
-              void warmResources(['classes:list', 'subjects:list']);
-            }
-          })
-          .catch(() => void warmResources(['classes:list', 'subjects:list']));
-      }
     });
 
     return () => subscription.unsubscribe();
   }, [applyAppearance, warmResources, applyDashboardData, fetchDashboardSnapshot, supabase.auth]);
+
+  useEffect(() => {
+    if (!session || !appReady) return;
+
+    const intervalId = window.setInterval(() => {
+      void fetchDashboardSnapshot(false, 'manual')
+        .then((data) => {
+          if (data) {
+            applyDashboardData(data);
+          }
+        })
+        .catch(() => {});
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [session, appReady, fetchDashboardSnapshot, applyDashboardData]);
 
   const setLanguage = (newLanguage: Locale) => {
     setLanguageState(newLanguage);

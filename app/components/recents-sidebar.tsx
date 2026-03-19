@@ -39,6 +39,8 @@ const TYPE_LABELS: Record<string, string> = {
   subject: 'Subject',
   assignment: 'Assignment',
 };
+const RECENTS_CACHE_KEY = 'studyweb-recents-cache-v1';
+const RECENTS_CACHE_TTL_MS = 60_000;
 
 export function RecentsSidebar() {
   const { session } = useContext(AppContext) as AppContextType;
@@ -58,6 +60,17 @@ export function RecentsSidebar() {
 
     const fetchRecents = async () => {
       try {
+        if (typeof window !== 'undefined') {
+          const raw = window.sessionStorage.getItem(RECENTS_CACHE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed?.updatedAt && Date.now() - parsed.updatedAt < RECENTS_CACHE_TTL_MS && Array.isArray(parsed?.items)) {
+              setRecents(parsed.items);
+              return;
+            }
+          }
+        }
+
         // Fetch both tool runs and materials in parallel
         const [runsRes, materialsRes] = await Promise.all([
           fetch('/api/tools/v2/runs').then(r => r.ok ? r.json() : []),
@@ -90,6 +103,12 @@ export function RecentsSidebar() {
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         setRecents(all);
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem(
+            RECENTS_CACHE_KEY,
+            JSON.stringify({ updatedAt: Date.now(), items: all })
+          );
+        }
       } catch (error) {
         console.error('Failed to fetch recents:', error);
       } finally {

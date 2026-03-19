@@ -3,9 +3,12 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
+const DASHBOARD_CACHE_TTL_MS = 4000;
+const dashboardResponseCache = new Map<string, { updatedAt: number; payload: any }>();
 
 export async function GET(request: Request) {
   try {
+    const source = new URL(request.url).searchParams.get('source') || 'unknown';
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
@@ -16,11 +19,18 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const cached = dashboardResponseCache.get(user.id);
+    if (cached && Date.now() - cached.updatedAt < DASHBOARD_CACHE_TTL_MS) {
+      console.log('[DASHBOARD] cache.hit', { userId: user.id, source });
+      return NextResponse.json(cached.payload, { headers: { 'x-dashboard-cache': 'hit' } });
+    }
+
     console.log('[DASHBOARD] GET - Authenticated user details:', {
       id: user.id,
       email: user.email,
       user_metadata: user.user_metadata,
-      created_at: user.created_at
+      created_at: user.created_at,
+      source,
     });
 
     // Fetch profile first to determine subscription type/tier and get preferences
@@ -227,7 +237,7 @@ export async function GET(request: Request) {
       const classLimit = subscriptionTier === 'pro' ? 20 : subscriptionTier === 'premium' ? 5 : 0;
       const canCreateClass = classesCreated < classLimit;
 
-      return NextResponse.json({
+      const payload = {
         classes,
         subjects,
         assignments,
@@ -250,7 +260,9 @@ export async function GET(request: Request) {
           dyslexia_font: profileData?.dyslexia_font || false,
           reduced_motion: profileData?.reduced_motion || false,
         }
-      })
+      };
+      dashboardResponseCache.set(user.id, { updatedAt: Date.now(), payload });
+      return NextResponse.json(payload, { headers: { 'x-dashboard-cache': 'miss' } })
     } else {
       // Students: get classes they are a MEMBER of + subjects linked to those classes
       const [membershipsResult, personalTasksResult] = await Promise.all([
@@ -360,7 +372,7 @@ export async function GET(request: Request) {
       // Calculate quiz limits for students
       const quizLimit = subscriptionTier === 'pro' ? 999999 : subscriptionTier === 'premium' ? 30 : 5;
 
-      return NextResponse.json({
+      const payload = {
         classes,
         subjects,
         assignments,
@@ -383,7 +395,9 @@ export async function GET(request: Request) {
           dyslexia_font: profileData?.dyslexia_font || false,
           reduced_motion: profileData?.reduced_motion || false,
         }
-      })
+      };
+      dashboardResponseCache.set(user.id, { updatedAt: Date.now(), payload });
+      return NextResponse.json(payload, { headers: { 'x-dashboard-cache': 'miss' } })
     }
 
   } catch (err) {

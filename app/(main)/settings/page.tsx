@@ -32,17 +32,41 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
   const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
   const [subscriptionType, setSubscriptionType] = useState<string>('student');
+  const SUBSCRIPTION_CACHE_KEY = 'studyweb-subscription-cache-v1';
+  const SUBSCRIPTION_CACHE_TTL_MS = 300_000;
 
   // Fetch subscription status
   useEffect(() => {
     const fetchSubscription = async () => {
       if (!session) return;
       try {
+        if (typeof window !== 'undefined') {
+          const raw = window.sessionStorage.getItem(SUBSCRIPTION_CACHE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed?.updatedAt && Date.now() - parsed.updatedAt < SUBSCRIPTION_CACHE_TTL_MS) {
+              setSubscriptionTier(parsed.tier || 'free');
+              setSubscriptionType(parsed.type || 'student');
+              return;
+            }
+          }
+        }
+
         const res = await fetch('/api/subscription/upgrade');
         if (res.ok) {
           const data = await res.json();
           setSubscriptionTier(data.tier || 'free');
           setSubscriptionType(data.type || 'student');
+          if (typeof window !== 'undefined') {
+            window.sessionStorage.setItem(
+              SUBSCRIPTION_CACHE_KEY,
+              JSON.stringify({
+                updatedAt: Date.now(),
+                tier: data.tier || 'free',
+                type: data.type || 'student',
+              })
+            );
+          }
         }
       } catch (e) {
         console.error('Failed to fetch subscription:', e);
@@ -163,6 +187,16 @@ export default function SettingsPage() {
                               const data = await res.json();
                               setSubscriptionTier(data.tier || 'free');
                               setSubscriptionType(data.type || 'student');
+                              if (typeof window !== 'undefined') {
+                                window.sessionStorage.setItem(
+                                  SUBSCRIPTION_CACHE_KEY,
+                                  JSON.stringify({
+                                    updatedAt: Date.now(),
+                                    tier: data.tier || 'free',
+                                    type: data.type || 'student',
+                                  })
+                                );
+                              }
                             }
                           } catch (e) {
                             console.error('Failed to refresh subscription:', e);

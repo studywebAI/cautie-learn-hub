@@ -29,15 +29,34 @@ export function SidebarProfile() {
   const isCollapsed = state === 'collapsed';
   const router = useRouter();
   const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
+  const SUBSCRIPTION_CACHE_KEY = 'studyweb-subscription-cache-v1';
+  const SUBSCRIPTION_CACHE_TTL_MS = 300_000;
 
   // Fetch subscription status on mount
   useEffect(() => {
     const fetchSubscription = async () => {
       try {
+        if (typeof window !== 'undefined') {
+          const raw = window.sessionStorage.getItem(SUBSCRIPTION_CACHE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed?.updatedAt && Date.now() - parsed.updatedAt < SUBSCRIPTION_CACHE_TTL_MS) {
+              setSubscriptionTier(parsed.tier || 'free');
+              return;
+            }
+          }
+        }
+
         const res = await fetch('/api/subscription/upgrade');
         if (res.ok) {
           const data = await res.json();
           setSubscriptionTier(data.tier || 'free');
+          if (typeof window !== 'undefined') {
+            window.sessionStorage.setItem(
+              SUBSCRIPTION_CACHE_KEY,
+              JSON.stringify({ updatedAt: Date.now(), tier: data.tier || 'free' })
+            );
+          }
         }
       } catch (e) {
         console.error('Failed to fetch subscription:', e);
