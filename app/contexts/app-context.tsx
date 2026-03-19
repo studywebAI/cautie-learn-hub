@@ -19,7 +19,7 @@ export type PreloadSnapshot = Record<PreloadResourceKey, {
   error: string | null;
 }>;
 const PRELOAD_FRESH_TTL_MS = 30_000;
-const DASHBOARD_MIN_INTERVAL_MS = 1_000;
+const DASHBOARD_MIN_INTERVAL_MS = 5_000;
 // AccentColor removed — themes handle their own accent
 export type ClassInfo = Tables<'classes'>;
 export type ClassAssignment = Tables<'assignments'> & {
@@ -449,22 +449,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     return () => subscription.unsubscribe();
   }, [applyAppearance, warmResources, applyDashboardData, fetchDashboardSnapshot, supabase.auth]);
-
-  useEffect(() => {
-    if (!session || !appReady) return;
-
-    const intervalId = window.setInterval(() => {
-      void fetchDashboardSnapshot(false, 'manual')
-        .then((data) => {
-          if (data) {
-            applyDashboardData(data);
-          }
-        })
-        .catch(() => {});
-    }, 1000);
-
-    return () => window.clearInterval(intervalId);
-  }, [session, appReady, fetchDashboardSnapshot, applyDashboardData]);
 
   const setLanguage = (newLanguage: Locale) => {
     setLanguageState(newLanguage);
