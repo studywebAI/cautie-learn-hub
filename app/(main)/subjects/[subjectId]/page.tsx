@@ -31,7 +31,6 @@ type Chapter = {
   id: string;
   title: string;
   chapter_number: number;
-  description: string | null;
   paragraphs?: Paragraph[];
 };
 

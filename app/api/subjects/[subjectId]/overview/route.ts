@@ -177,7 +177,6 @@ export async function GET(
 
     const chaptersWithParagraphs = (chapters || []).map((chapter: any) => ({
       ...chapter,
-      description: null,
       paragraphs: paragraphsByChapter[chapter.id] || [],
     }));
 
