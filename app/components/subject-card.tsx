@@ -342,6 +342,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
           )}
           {lastWorkedParagraph && (
             <Link
+              prefetch={false}
               href={`/subjects/${subject.id}/chapters/${lastWorkedParagraph.chapter_id}/paragraphs/${lastWorkedParagraph.id}`}
               onClick={(event) => event.stopPropagation()}
               className="mt-2 inline-flex max-w-full items-center rounded-lg bg-sidebar-accent px-2 py-1 text-[11px] text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
@@ -383,6 +384,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
               return (
                 <Link
                   key={p.id}
+                  prefetch={false}
                   href={`/subjects/${subject.id}/chapters/${p.chapter_id}/paragraphs/${p.id}`}
                   onClick={(event) => event.stopPropagation()}
                   className={`grid min-h-8 grid-cols-[2.8rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-sidebar-accent/70 ${

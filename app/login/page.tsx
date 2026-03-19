@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { AuthForm } from '@/components/auth-form';
@@ -9,7 +9,7 @@ function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const authSearchParams = {
     message: searchParams.get('message') || '',
     type: searchParams.get('type') || '',
@@ -25,7 +25,7 @@ function LoginContent() {
       }
     };
     checkSession();
-  }, [router, supabase.auth]);
+  }, [router, supabase]);
 
   const signIn = async (formData: FormData) => {
     setIsLoading(true);

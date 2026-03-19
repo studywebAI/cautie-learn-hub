@@ -120,12 +120,6 @@ export function AppSidebar() {
     }
   }, [isTeacher, context?.warmResources]);
 
-  useEffect(() => {
-    if (!isTeacher || !activeTeacherClassId) return;
-    router.prefetch(`/subjects?classId=${activeTeacherClassId}`);
-    router.prefetch(`/class/${activeTeacherClassId}?tab=group`);
-    router.prefetch(`/class/${activeTeacherClassId}?tab=subjects`);
-  }, [isTeacher, activeTeacherClassId, router]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -175,14 +169,6 @@ export function AppSidebar() {
     [subjectItems]
   );
 
-  useEffect(() => {
-    if (!isTeacher || classDropdownItems.length === 0) return;
-    classDropdownItems.slice(0, 8).forEach((classItem) => {
-      router.prefetch(`/class/${classItem.id}?tab=subjects`);
-      router.prefetch(`/class/${classItem.id}?tab=group`);
-      router.prefetch(`/subjects?classId=${classItem.id}`);
-    });
-  }, [isTeacher, classDropdownItems, router]);
 
   useEffect(() => {
     if (!isTeacher) return;
@@ -629,6 +615,7 @@ export function AppSidebar() {
             items.map((entry) => (
               <Link
                 key={entry.id}
+                prefetch={false}
                 href={dropdown.kind === 'classes' && isTeacher ? resolveTeacherClassRoute(entry.id) : entry.href}
                 className={cn(
                   'flex items-center justify-between gap-2 truncate rounded-xl px-2.5 py-2 text-[13px] transition-colors',
@@ -822,6 +809,7 @@ export function AppSidebar() {
                   </>
                 ) : (
                   <Link
+                    prefetch={false}
                     href={item.href}
                     className={cn(
                       "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
@@ -840,6 +828,7 @@ export function AppSidebar() {
             {visibleToolsItems.map((item) => (
               <Link
                 key={item.href}
+                prefetch={false}
                 href={item.href}
                 className={cn(
                   "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
@@ -858,6 +847,7 @@ export function AppSidebar() {
           <div className="px-2 mt-auto">
             <Link
               href="/upgrade"
+              prefetch={false}
               className="flex items-center justify-center h-10 w-10 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent"
               title="Upgrade"
             >
@@ -897,7 +887,7 @@ export function AppSidebar() {
                           isActive={isMenuItemActive(item.href)}
                           tooltip={item.label}
                         >
-                          <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                          <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
                             <item.icon className="h-4 w-4" />
                             <span className="text-[13px] leading-5">{item.label}</span>
                           </Link>
@@ -922,7 +912,7 @@ export function AppSidebar() {
                         isActive={isMenuItemActive(item.href)}
                         tooltip={item.label}
                       >
-                        <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                        <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
                           <item.icon className="h-4 w-4" />
                           <span className="text-[13px] leading-5">{item.label}</span>
                         </Link>
@@ -978,7 +968,7 @@ export function AppSidebar() {
                       isActive={isMenuItemActive(item.href)}
                       tooltip={item.label}
                     >
-                      <Link href={item.href}>
+                      <Link prefetch={false} href={item.href}>
                         <item.icon className="h-4 w-4" />
                         <span className="text-[13px] leading-5">{item.label}</span>
                       </Link>
@@ -1002,7 +992,7 @@ export function AppSidebar() {
                     isActive={isMenuItemActive(item.href)}
                     tooltip={item.label}
                   >
-                    <Link href={item.href}>
+                    <Link prefetch={false} href={item.href}>
                       <item.icon className="h-4 w-4" />
                       <span className="text-[13px] leading-5">{item.label}</span>
                     </Link>
