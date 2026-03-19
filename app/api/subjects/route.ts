@@ -135,6 +135,7 @@ async function getSubjectParagraphContext(supabase: any, subjectIds: string[], u
 }
 
 export async function GET(req: Request) {
+  const startedAt = Date.now()
   try {
     logSubjects('GET - Handling request', { url: req.url });
     const requestUrl = new URL(req.url);
@@ -148,7 +149,8 @@ export async function GET(req: Request) {
       logSubjects('GET - Unauthorized attempt', {
         message: userError?.message,
         status: userError?.status,
-        name: userError?.name
+        name: userError?.name,
+        durationMs: Date.now() - startedAt,
       })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -192,9 +194,17 @@ export async function GET(req: Request) {
         ])
 
         if (linkedResult.error) {
+          logSubjects('GET - Linked subjects fetch failed', {
+            message: linkedResult.error.message,
+            durationMs: Date.now() - startedAt,
+          })
           return NextResponse.json({ error: linkedResult.error.message }, { status: 500 })
         }
         if (directResult.error) {
+          logSubjects('GET - Direct subjects fetch failed', {
+            message: directResult.error.message,
+            durationMs: Date.now() - startedAt,
+          })
           return NextResponse.json({ error: directResult.error.message }, { status: 500 })
         }
 
@@ -204,6 +214,10 @@ export async function GET(req: Request) {
         ].filter(Boolean)
 
         if (filteredSubjectIds.length === 0) {
+          logSubjects('GET - No filtered subject IDs for class', {
+            classIdFilter,
+            durationMs: Date.now() - startedAt,
+          })
           return NextResponse.json([])
         }
 
@@ -236,7 +250,8 @@ export async function GET(req: Request) {
           message: error.message,
           code: error.code,
           details: error.details,
-          hint: error.hint
+          hint: error.hint,
+          durationMs: Date.now() - startedAt,
         })
         return NextResponse.json({
           error: `Supabase error fetching subjects: ${error.message}`
@@ -263,7 +278,8 @@ export async function GET(req: Request) {
           message: memberError.message,
           code: memberError.code,
           details: memberError.details,
-          hint: memberError.hint
+          hint: memberError.hint,
+          durationMs: Date.now() - startedAt,
         })
         return NextResponse.json({ error: memberError.message }, { status: 500 })
       }
@@ -271,7 +287,7 @@ export async function GET(req: Request) {
       const classIds = (memberships || []).map((m: any) => m.class_id)
 
       if (classIds.length === 0) {
-        logSubjects('GET - No class memberships', { userId: user.id })
+        logSubjects('GET - No class memberships', { userId: user.id, durationMs: Date.now() - startedAt })
         return NextResponse.json([])
       }
 
@@ -292,7 +308,8 @@ export async function GET(req: Request) {
           message: csError.message,
           code: csError.code,
           details: csError.details,
-          hint: csError.hint
+          hint: csError.hint,
+          durationMs: Date.now() - startedAt,
         })
         return NextResponse.json({ error: csError.message }, { status: 500 })
       }
@@ -303,7 +320,8 @@ export async function GET(req: Request) {
           message: directError.message,
           code: directError.code,
           details: directError.details,
-          hint: directError.hint
+          hint: directError.hint,
+          durationMs: Date.now() - startedAt,
         })
         return NextResponse.json({ error: directError.message }, { status: 500 })
       }
@@ -314,7 +332,7 @@ export async function GET(req: Request) {
       ])]
 
       if (subjectIds.length === 0) {
-        logSubjects('GET - No subjects for joined classes', { classIds })
+        logSubjects('GET - No subjects for joined classes', { classIds, durationMs: Date.now() - startedAt })
         return NextResponse.json([])
       }
 
@@ -332,7 +350,8 @@ export async function GET(req: Request) {
           message: error.message,
           code: error.code,
           details: error.details,
-          hint: error.hint
+          hint: error.hint,
+          durationMs: Date.now() - startedAt,
         })
         return NextResponse.json({
           error: `Supabase error fetching subjects: ${error.message}`
@@ -350,7 +369,7 @@ export async function GET(req: Request) {
     }
 
     if (isLite) {
-      logSubjects('GET - Returning lite subjects', { count: subjects.length })
+      logSubjects('GET - Returning lite subjects', { count: subjects.length, durationMs: Date.now() - startedAt })
       return NextResponse.json(subjects)
     }
 
@@ -367,11 +386,12 @@ export async function GET(req: Request) {
         id: s.id,
         paragraphs: s.paragraphContext?.paragraphs?.length ?? 0,
         lastParagraphId: s.paragraphContext?.lastParagraphId ?? null
-      }))
+      })),
+      durationMs: Date.now() - startedAt,
     })
     return NextResponse.json(enrichedSubjects)
   } catch (error) {
-    logSubjects('GET - Unexpected error', error)
+    logSubjects('GET - Unexpected error', { error, durationMs: Date.now() - startedAt })
     return NextResponse.json({
       error: 'Internal server error while fetching subjects'
     }, { status: 500 })

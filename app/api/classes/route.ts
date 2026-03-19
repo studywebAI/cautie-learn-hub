@@ -14,6 +14,7 @@ function log(...args: any[]) {
 }
 
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now()
   log('GET - Starting request...')
   
   try {
@@ -26,7 +27,8 @@ export async function GET(request: NextRequest) {
       log('GET - Auth error', {
         message: authError.message,
         status: authError.status,
-        name: authError.name
+        name: authError.name,
+        durationMs: Date.now() - startedAt,
       });
       if (authError.message.includes('User from sub claim in JWT does not exist')) {
         return NextResponse.json({ error: 'Session expired or invalid', code: 'SESSION_INVALID' }, { status: 401 });
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!user) {
-      log('GET - No user found, returning empty array');
+      log('GET - No user found, returning empty array', { durationMs: Date.now() - startedAt });
       return NextResponse.json([]);
     }
 
@@ -114,7 +116,7 @@ export async function GET(request: NextRequest) {
       });
 
       if (memberError) {
-        log('GET - Member classes error:', memberError);
+        log('GET - Member classes error:', { memberError, durationMs: Date.now() - startedAt });
         return NextResponse.json({ error: memberError.message }, { status: 500 });
       }
 
@@ -160,7 +162,7 @@ export async function GET(request: NextRequest) {
       });
 
       if (memberError) {
-        log('GET - Student classes error:', memberError);
+        log('GET - Student classes error:', { memberError, durationMs: Date.now() - startedAt });
         return NextResponse.json({ error: memberError.message }, { status: 500 });
       }
 
@@ -168,11 +170,15 @@ export async function GET(request: NextRequest) {
       log('Total student classes (final):', allClasses.length);
     }
 
-    log('Returning classes:', allClasses.length, 'includeArchived:', request.nextUrl.searchParams.get('includeArchived') === 'true');
+    log('GET - Returning classes', {
+      count: allClasses.length,
+      includeArchived: request.nextUrl.searchParams.get('includeArchived') === 'true',
+      durationMs: Date.now() - startedAt,
+    });
     return NextResponse.json(allClasses);
     
   } catch (err: any) {
-    log('GET - Unexpected error', err);
+    log('GET - Unexpected error', { err, durationMs: Date.now() - startedAt });
     return NextResponse.json({ 
       error: 'Internal server error',
       details: err?.message || 'Unknown error'

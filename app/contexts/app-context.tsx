@@ -18,6 +18,7 @@ export type PreloadSnapshot = Record<PreloadResourceKey, {
   updatedAt: number | null;
   error: string | null;
 }>;
+const PRELOAD_FRESH_TTL_MS = 30_000;
 // AccentColor removed — themes handle their own accent
 export type ClassInfo = Tables<'classes'>;
 export type ClassAssignment = Tables<'assignments'> & {
@@ -228,6 +229,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }, [role]);
 
   const warmResource = useCallback(async (key: PreloadResourceKey) => {
+    const snapshot = preloadSnapshot[key];
+    if (
+      snapshot.status === 'ready' &&
+      snapshot.updatedAt !== null &&
+      Date.now() - snapshot.updatedAt < PRELOAD_FRESH_TTL_MS
+    ) {
+      return;
+    }
+
     if (preloadInFlight.current[key]) {
       await preloadInFlight.current[key];
       return;
@@ -260,7 +270,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       preloadInFlight.current[key] = undefined;
     }
-  }, [fetchClassesResource, fetchSubjectsResource, setPreloadState]);
+  }, [fetchClassesResource, fetchSubjectsResource, preloadSnapshot, setPreloadState]);
 
   const warmResources = useCallback(async (keys: PreloadResourceKey[]) => {
     const uniqueKeys = Array.from(new Set(keys));
@@ -338,15 +348,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        const [dashboardData] = await Promise.all([
-          fetch('/api/dashboard', { credentials: 'include', cache: 'no-store' })
-            .then(r => r.ok ? r.json() : null)
-            .catch(() => null),
-          warmResources(['classes:list', 'subjects:list']),
-        ]);
+        const dashboardData = await fetch('/api/dashboard', { credentials: 'include', cache: 'no-store' })
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null);
 
         // Update with fresh data when available
         if (dashboardData) {
+          const now = Date.now();
           setClasses(dashboardData.classes || []);
           setSubjects(dashboardData.subjects || []);
           setAssignments(dashboardData.assignments || []);
@@ -358,6 +366,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           
           // Save to cache for next visit
           saveToLocalStorage('studyweb-cached-dashboard', dashboardData);
+          setPreloadState('classes:list', { status: 'ready', updatedAt: now, error: null });
+          setPreloadState('subjects:list', { status: 'ready', updatedAt: now, error: null });
 
           const activeClassIds = (dashboardData.classes || [])
             .filter((classItem: any) => classItem?.status !== 'archived')
@@ -365,6 +375,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             .map((classItem: any) => classItem.id)
             .filter(Boolean);
           void warmBootstrapBundle(activeClassIds);
+        } else {
+          await warmResources(['classes:list', 'subjects:list']);
         }
         console.log('[PRELOAD][TIER0] ready', { durationMs: Date.now() - tier0StartedAt });
         setIsTier0Ready(true);
@@ -389,6 +401,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           .then(r => r.ok ? r.json() : null)
           .then(data => {
             if (data) {
+              const now = Date.now();
               setClasses(data.classes || []);
               setSubjects(data.subjects || []);
               setAssignments(data.assignments || []);
@@ -398,14 +411,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               const subscriptionType = data.subscription?.type || 'student';
               setRoleState(subscriptionType as UserRole);
               saveToLocalStorage('studyweb-cached-dashboard', data);
+              setPreloadState('classes:list', { status: 'ready', updatedAt: now, error: null });
+              setPreloadState('subjects:list', { status: 'ready', updatedAt: now, error: null });
+            } else {
+              void warmResources(['classes:list', 'subjects:list']);
             }
+          })
+          .catch(() => {
+            void warmResources(['classes:list', 'subjects:list']);
           });
-        void warmResources(['classes:list', 'subjects:list']);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [applyAppearance, warmResources, warmBootstrapBundle]);
+  }, [applyAppearance, warmResources, warmBootstrapBundle, setPreloadState]);
 
   const setLanguage = (newLanguage: Locale) => {
     setLanguageState(newLanguage);

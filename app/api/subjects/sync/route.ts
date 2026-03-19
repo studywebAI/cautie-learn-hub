@@ -17,6 +17,8 @@ function stableHash(payload: unknown): string {
 
 export async function GET(request: NextRequest) {
   const requestId = makeRequestId('subjects_sync');
+  const startedAt = Date.now();
+  const durationMs = () => Date.now() - startedAt;
   try {
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
@@ -27,7 +29,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      subjectsWarn('subjects-sync', requestId, 'auth.unauthorized');
+      subjectsWarn('subjects-sync', requestId, 'auth.unauthorized', { durationMs: durationMs() });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     subjectsLog('subjects-sync', requestId, 'auth.ok', { userId: user.id });
@@ -63,8 +65,20 @@ export async function GET(request: NextRequest) {
           : Promise.resolve({ data: [], error: null }),
       ]);
 
-      if (ownedSubjects.error) return NextResponse.json({ error: ownedSubjects.error.message }, { status: 500 });
-      if (linkedSubjects.error) return NextResponse.json({ error: linkedSubjects.error.message }, { status: 500 });
+      if (ownedSubjects.error) {
+        subjectsError('subjects-sync', requestId, 'owned_subjects.query.error', {
+          message: ownedSubjects.error.message,
+          durationMs: durationMs(),
+        });
+        return NextResponse.json({ error: ownedSubjects.error.message }, { status: 500 });
+      }
+      if (linkedSubjects.error) {
+        subjectsError('subjects-sync', requestId, 'linked_subjects.query.error', {
+          message: linkedSubjects.error.message,
+          durationMs: durationMs(),
+        });
+        return NextResponse.json({ error: linkedSubjects.error.message }, { status: 500 });
+      }
 
       for (const row of (ownedSubjects.data || []) as SubjectRow[]) {
         if (classId && row.class_id !== classId) continue;
@@ -79,7 +93,13 @@ export async function GET(request: NextRequest) {
         .select('class_id')
         .eq('user_id', user.id);
 
-      if (membershipsError) return NextResponse.json({ error: membershipsError.message }, { status: 500 });
+      if (membershipsError) {
+        subjectsError('subjects-sync', requestId, 'memberships.query.error', {
+          message: membershipsError.message,
+          durationMs: durationMs(),
+        });
+        return NextResponse.json({ error: membershipsError.message }, { status: 500 });
+      }
 
       const memberClassIds = (memberships || []).map((m: any) => m.class_id).filter(Boolean);
       const resolvedClassIds = classId ? memberClassIds.filter((id: string) => id === classId) : memberClassIds;
@@ -91,8 +111,20 @@ export async function GET(request: NextRequest) {
           (supabase as any).from('class_subjects').select('subject_id').in('class_id', resolvedClassIds),
         ]);
 
-        if (directSubjects.error) return NextResponse.json({ error: directSubjects.error.message }, { status: 500 });
-        if (linkedSubjects.error) return NextResponse.json({ error: linkedSubjects.error.message }, { status: 500 });
+        if (directSubjects.error) {
+          subjectsError('subjects-sync', requestId, 'direct_subjects.query.error', {
+            message: directSubjects.error.message,
+            durationMs: durationMs(),
+          });
+          return NextResponse.json({ error: directSubjects.error.message }, { status: 500 });
+        }
+        if (linkedSubjects.error) {
+          subjectsError('subjects-sync', requestId, 'linked_subjects.query.error', {
+            message: linkedSubjects.error.message,
+            durationMs: durationMs(),
+          });
+          return NextResponse.json({ error: linkedSubjects.error.message }, { status: 500 });
+        }
 
         for (const row of directSubjects.data || []) scopedSubjectIds.add(row.id as string);
         for (const row of linkedSubjects.data || []) scopedSubjectIds.add(row.subject_id as string);
@@ -110,6 +142,7 @@ export async function GET(request: NextRequest) {
       const emptyChecksum = stableHash({ subjectIds: [], classIds: [] });
       subjectsLog('subjects-sync', requestId, 'scope.empty', {
         checksum: emptyChecksum,
+        durationMs: durationMs(),
       });
       return NextResponse.json({
         changed: clientChecksum !== emptyChecksum,
@@ -130,9 +163,27 @@ export async function GET(request: NextRequest) {
       (supabase as any).from('chapters').select('id, subject_id, updated_at, created_at').in('subject_id', subjectIds),
     ]);
 
-    if (subjectsRows.error) return NextResponse.json({ error: subjectsRows.error.message }, { status: 500 });
-    if (classSubjectRows.error) return NextResponse.json({ error: classSubjectRows.error.message }, { status: 500 });
-    if (chapterRows.error) return NextResponse.json({ error: chapterRows.error.message }, { status: 500 });
+    if (subjectsRows.error) {
+      subjectsError('subjects-sync', requestId, 'subjects_rows.query.error', {
+        message: subjectsRows.error.message,
+        durationMs: durationMs(),
+      });
+      return NextResponse.json({ error: subjectsRows.error.message }, { status: 500 });
+    }
+    if (classSubjectRows.error) {
+      subjectsError('subjects-sync', requestId, 'class_subject_rows.query.error', {
+        message: classSubjectRows.error.message,
+        durationMs: durationMs(),
+      });
+      return NextResponse.json({ error: classSubjectRows.error.message }, { status: 500 });
+    }
+    if (chapterRows.error) {
+      subjectsError('subjects-sync', requestId, 'chapters_rows.query.error', {
+        message: chapterRows.error.message,
+        durationMs: durationMs(),
+      });
+      return NextResponse.json({ error: chapterRows.error.message }, { status: 500 });
+    }
 
     const chapterIds = (chapterRows.data || []).map((row: any) => row.id).filter(Boolean);
 
@@ -141,7 +192,13 @@ export async function GET(request: NextRequest) {
         ? await (supabase as any).from('paragraphs').select('id, chapter_id, updated_at, created_at').in('chapter_id', chapterIds)
         : { data: [], error: null };
 
-    if (paragraphRows.error) return NextResponse.json({ error: paragraphRows.error.message }, { status: 500 });
+    if (paragraphRows.error) {
+      subjectsError('subjects-sync', requestId, 'paragraph_rows.query.error', {
+        message: paragraphRows.error.message,
+        durationMs: durationMs(),
+      });
+      return NextResponse.json({ error: paragraphRows.error.message }, { status: 500 });
+    }
 
     const paragraphIds = (paragraphRows.data || []).map((row: any) => row.id).filter(Boolean);
     const assignmentsRows =
@@ -149,7 +206,13 @@ export async function GET(request: NextRequest) {
         ? await (supabase as any).from('assignments').select('id, paragraph_id, updated_at, created_at').in('paragraph_id', paragraphIds)
         : { data: [], error: null };
 
-    if (assignmentsRows.error) return NextResponse.json({ error: assignmentsRows.error.message }, { status: 500 });
+    if (assignmentsRows.error) {
+      subjectsError('subjects-sync', requestId, 'assignments_rows.query.error', {
+        message: assignmentsRows.error.message,
+        durationMs: durationMs(),
+      });
+      return NextResponse.json({ error: assignmentsRows.error.message }, { status: 500 });
+    }
     subjectsLog('subjects-sync', requestId, 'graph.loaded', {
       subjects: subjectsRows.data?.length || 0,
       classSubjects: classSubjectRows.data?.length || 0,
@@ -168,7 +231,7 @@ export async function GET(request: NextRequest) {
 
     const checksum = stableHash(checksumPayload);
     if (clientChecksum && clientChecksum === checksum) {
-      subjectsLog('subjects-sync', requestId, 'checksum.match', { checksum });
+      subjectsLog('subjects-sync', requestId, 'checksum.match', { checksum, durationMs: durationMs() });
       return NextResponse.json({ changed: false, checksum });
     }
     subjectsLog('subjects-sync', requestId, 'checksum.changed', {
@@ -184,6 +247,7 @@ export async function GET(request: NextRequest) {
     if (!subjectsResponse.ok) {
       subjectsError('subjects-sync', requestId, 'subjects.refresh.failed', {
         status: subjectsResponse.status,
+        durationMs: durationMs(),
       });
       return NextResponse.json(
         { error: `Failed to refresh subjects (${subjectsResponse.status})` },
@@ -195,6 +259,7 @@ export async function GET(request: NextRequest) {
     subjectsLog('subjects-sync', requestId, 'response.ready', {
       changed: true,
       subjectCount: Array.isArray(subjects) ? subjects.length : 0,
+      durationMs: durationMs(),
     });
     return NextResponse.json({
       changed: true,
@@ -205,6 +270,7 @@ export async function GET(request: NextRequest) {
     subjectsError('subjects-sync', requestId, 'request.error', {
       message: error?.message || 'Unknown error',
       stack: error?.stack || null,
+      durationMs: durationMs(),
     });
     return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 });
   }

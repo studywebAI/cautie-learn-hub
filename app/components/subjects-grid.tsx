@@ -27,7 +27,7 @@ type SubjectsGridProps = {
 };
 
 export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) {
-  const { classes, subjects: cachedSubjects, warmResources } = useContext(AppContext) as AppContextType;
+  const { classes, subjects: cachedSubjects } = useContext(AppContext) as AppContextType;
   const scopeKey = classId || 'all';
   const cacheKey = `studyweb-subjects-cache:${scopeKey}`;
   const checksumKey = `studyweb-subjects-checksum:${scopeKey}`;
@@ -145,9 +145,8 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
       await fetchSubjects();
     } finally {
       setIsLoading(false);
-      void warmResources(['subjects:list']);
     }
-  }, [cacheKey, checksumKey, classId, fetchSubjects, warmResources]);
+  }, [cacheKey, checksumKey, classId, fetchSubjects]);
 
   useEffect(() => {
     void syncSubjects();
