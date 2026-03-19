@@ -165,9 +165,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     'classes:list': { status: 'idle', updatedAt: null, error: null },
     'subjects:list': { status: 'idle', updatedAt: null, error: null },
   });
+  const preloadSnapshotRef = useRef<PreloadSnapshot>(preloadSnapshot);
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
   const preloadInFlight = useRef<Partial<Record<PreloadResourceKey, Promise<void>>>>({});
+
+  useEffect(() => {
+    preloadSnapshotRef.current = preloadSnapshot;
+  }, [preloadSnapshot]);
 
   const applyAppearance = useCallback((currentTheme: ThemeType) => {
     if (typeof window === 'undefined') return;
@@ -229,7 +234,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }, [role]);
 
   const warmResource = useCallback(async (key: PreloadResourceKey) => {
-    const snapshot = preloadSnapshot[key];
+    const snapshot = preloadSnapshotRef.current[key];
     if (
       snapshot.status === 'ready' &&
       snapshot.updatedAt !== null &&
@@ -270,7 +275,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       preloadInFlight.current[key] = undefined;
     }
-  }, [fetchClassesResource, fetchSubjectsResource, preloadSnapshot, setPreloadState]);
+  }, [fetchClassesResource, fetchSubjectsResource, setPreloadState]);
 
   const warmResources = useCallback(async (keys: PreloadResourceKey[]) => {
     const uniqueKeys = Array.from(new Set(keys));
