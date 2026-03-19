@@ -19,6 +19,7 @@ export type PreloadSnapshot = Record<PreloadResourceKey, {
   error: string | null;
 }>;
 const PRELOAD_FRESH_TTL_MS = 30_000;
+const DASHBOARD_MIN_INTERVAL_MS = 5_000;
 // AccentColor removed — themes handle their own accent
 export type ClassInfo = Tables<'classes'>;
 export type ClassAssignment = Tables<'assignments'> & {
@@ -166,9 +167,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     'subjects:list': { status: 'idle', updatedAt: null, error: null },
   });
   const preloadSnapshotRef = useRef<PreloadSnapshot>(preloadSnapshot);
-  const supabaseRef = useRef(createClient());
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+  if (!supabaseRef.current) {
+    supabaseRef.current = createClient();
+  }
   const supabase = supabaseRef.current;
   const preloadInFlight = useRef<Partial<Record<PreloadResourceKey, Promise<void>>>>({});
+  const initStartedRef = useRef(false);
+  const dashboardInFlightRef = useRef<Promise<any | null> | null>(null);
+  const lastDashboardFetchAtRef = useRef(0);
 
   useEffect(() => {
     preloadSnapshotRef.current = preloadSnapshot;
@@ -307,8 +314,58 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const applyDashboardData = useCallback((dashboardData: any) => {
+    if (!dashboardData) return;
+    const now = Date.now();
+    setClasses(dashboardData.classes || []);
+    setSubjects(dashboardData.subjects || []);
+    setAssignments(dashboardData.assignments || []);
+    setPersonalTasks(dashboardData.personalTasks || []);
+    setStudents(dashboardData.students || []);
+    const subscriptionType = dashboardData.subscription?.type || 'student';
+    setRoleState(subscriptionType as UserRole);
+    saveToLocalStorage('studyweb-cached-dashboard', dashboardData);
+    setPreloadState('classes:list', { status: 'ready', updatedAt: now, error: null });
+    setPreloadState('subjects:list', { status: 'ready', updatedAt: now, error: null });
+
+    const activeClassIds = (dashboardData.classes || [])
+      .filter((classItem: any) => classItem?.status !== 'archived')
+      .slice(0, 4)
+      .map((classItem: any) => classItem.id)
+      .filter(Boolean);
+    void warmBootstrapBundle(activeClassIds);
+  }, [setPreloadState, warmBootstrapBundle]);
+
+  const fetchDashboardSnapshot = useCallback(async (force = false) => {
+    if (dashboardInFlightRef.current) {
+      return await dashboardInFlightRef.current;
+    }
+
+    const now = Date.now();
+    if (!force && now - lastDashboardFetchAtRef.current < DASHBOARD_MIN_INTERVAL_MS) {
+      return null;
+    }
+
+    const run = (async () => {
+      lastDashboardFetchAtRef.current = Date.now();
+      return await fetch('/api/dashboard', { credentials: 'include', cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null);
+    })();
+
+    dashboardInFlightRef.current = run;
+    try {
+      return await run;
+    } finally {
+      dashboardInFlightRef.current = null;
+    }
+  }, []);
+
   // OPTIMIZED: Load cache first (instant), then fetch in parallel
   useEffect(() => {
+    if (initStartedRef.current) return;
+    initStartedRef.current = true;
+
     // STEP 1: Load from cache IMMEDIATELY (synchronous, instant)
     const cached = getFromLocalStorage('studyweb-cached-dashboard', null as any);
     if (cached) {
@@ -353,33 +410,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        const dashboardData = await fetch('/api/dashboard', { credentials: 'include', cache: 'no-store' })
-          .then(r => r.ok ? r.json() : null)
-          .catch(() => null);
+        const dashboardData = await fetchDashboardSnapshot(true);
 
         // Update with fresh data when available
         if (dashboardData) {
-          const now = Date.now();
-          setClasses(dashboardData.classes || []);
-          setSubjects(dashboardData.subjects || []);
-          setAssignments(dashboardData.assignments || []);
-          setPersonalTasks(dashboardData.personalTasks || []);
-          setStudents(dashboardData.students || []);
-          // Use subscription_type to determine role for frontend compatibility
-          const subscriptionType = dashboardData.subscription?.type || 'student';
-          setRoleState(subscriptionType as UserRole);
-          
-          // Save to cache for next visit
-          saveToLocalStorage('studyweb-cached-dashboard', dashboardData);
-          setPreloadState('classes:list', { status: 'ready', updatedAt: now, error: null });
-          setPreloadState('subjects:list', { status: 'ready', updatedAt: now, error: null });
-
-          const activeClassIds = (dashboardData.classes || [])
-            .filter((classItem: any) => classItem?.status !== 'archived')
-            .slice(0, 4)
-            .map((classItem: any) => classItem.id)
-            .filter(Boolean);
-          void warmBootstrapBundle(activeClassIds);
+          applyDashboardData(dashboardData);
         } else {
           await warmResources(['classes:list', 'subjects:list']);
         }
@@ -402,34 +437,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       // Optionally refetch data on auth change
       if (session) {
-        fetch('/api/dashboard', { credentials: 'include' })
-          .then(r => r.ok ? r.json() : null)
+        void fetchDashboardSnapshot(false)
           .then(data => {
             if (data) {
-              const now = Date.now();
-              setClasses(data.classes || []);
-              setSubjects(data.subjects || []);
-              setAssignments(data.assignments || []);
-              setPersonalTasks(data.personalTasks || []);
-              setStudents(data.students || []);
-              // Use subscription_type to determine role for frontend compatibility
-              const subscriptionType = data.subscription?.type || 'student';
-              setRoleState(subscriptionType as UserRole);
-              saveToLocalStorage('studyweb-cached-dashboard', data);
-              setPreloadState('classes:list', { status: 'ready', updatedAt: now, error: null });
-              setPreloadState('subjects:list', { status: 'ready', updatedAt: now, error: null });
+              applyDashboardData(data);
             } else {
               void warmResources(['classes:list', 'subjects:list']);
             }
           })
-          .catch(() => {
-            void warmResources(['classes:list', 'subjects:list']);
-          });
+          .catch(() => void warmResources(['classes:list', 'subjects:list']));
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [applyAppearance, warmResources, warmBootstrapBundle, setPreloadState]);
+  }, [applyAppearance, warmResources, applyDashboardData, fetchDashboardSnapshot, supabase.auth]);
 
   const setLanguage = (newLanguage: Locale) => {
     setLanguageState(newLanguage);
