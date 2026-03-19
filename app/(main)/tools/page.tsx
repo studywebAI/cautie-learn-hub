@@ -256,7 +256,7 @@ export default function ToolsPage() {
                 )}
                 {teacherRecommendationCount > 0 && teacherRecommendationHref && (
                   <Button asChild variant="ghost" size="sm" className="h-5 px-1.5 text-[10px] text-muted-foreground">
-                    <Link href={teacherRecommendationHref}>teacher picks {teacherRecommendationCount}</Link>
+                    <Link prefetch={false} href={teacherRecommendationHref}>teacher picks {teacherRecommendationCount}</Link>
                   </Button>
                 )}
               </div>
@@ -274,7 +274,7 @@ export default function ToolsPage() {
                     size="sm"
                     className="h-5 px-1.5 text-[10px]"
                   >
-                    <Link href={`/tools/${tool}?classId=${encodeURIComponent(selectedClassId)}`}>
+                    <Link prefetch={false} href={`/tools/${tool}?classId=${encodeURIComponent(selectedClassId)}`}>
                       {TOOL_LABELS[tool] || tool} x{count}
                     </Link>
                   </Button>
@@ -290,17 +290,17 @@ export default function ToolsPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <Button asChild className="w-full justify-start">
-                  <Link href="/tools/quiz">Create Quiz</Link>
+                  <Link prefetch={false} href="/tools/quiz">Create Quiz</Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/tools/notes">Generate Notes</Link>
+                  <Link prefetch={false} href="/tools/notes">Generate Notes</Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/tools/flashcards">Build Flashcards</Link>
+                  <Link prefetch={false} href="/tools/flashcards">Build Flashcards</Link>
                 </Button>
                 {latestRun?.tool_id && (
                   <Button asChild variant="secondary" className="w-full justify-start">
-                    <Link href={resumeHref || `/tools/${latestRun.tool_id}`}>Continue Last Session</Link>
+                    <Link prefetch={false} href={resumeHref || `/tools/${latestRun.tool_id}`}>Continue Last Session</Link>
                   </Button>
                 )}
               </CardContent>
@@ -322,7 +322,7 @@ export default function ToolsPage() {
                 )}
                 {recentArtifacts.length === 0 && <p className="text-muted-foreground">No recent artifacts yet.</p>}
                 {recentArtifacts.map((a) => (
-                  <Link key={a.id} href={`/material/${a.id}`} className="block rounded-md border p-2 hover:bg-muted/40">
+                  <Link prefetch={false} key={a.id} href={`/material/${a.id}`} className="block rounded-md border p-2 hover:bg-muted/40">
                     <p className="font-medium truncate">{a.title}</p>
                     <p className="text-muted-foreground text-xs">{a.tool_id || a.artifact_type || 'artifact'}</p>
                   </Link>
@@ -369,7 +369,7 @@ export default function ToolsPage() {
                 </CardContent>
                 <CardFooter>
                   <Button asChild className="w-full">
-                    <Link href={tool.href}>
+                    <Link prefetch={false} href={tool.href}>
                       Open Workbench
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>

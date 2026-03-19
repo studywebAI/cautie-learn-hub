@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -96,7 +96,7 @@ export function SearchPanel({ classId }: SearchPanelProps) {
           <ScrollArea className="h-[300px]">
             <div className="space-y-2">
               {results.map(result => (
-                <Link
+                <Link prefetch={false}
                   key={`${result.type}-${result.id}`}
                   href={result.url}
                   className="flex items-center gap-3 p-3 border rounded-lg hover:bg-accent transition-colors"
@@ -129,3 +129,4 @@ export function SearchPanel({ classId }: SearchPanelProps) {
     </Card>
   );
 }
+

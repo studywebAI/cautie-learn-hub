@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useContext, useMemo } from 'react';
 import { useParams } from 'next/navigation';
@@ -217,7 +217,7 @@ export default function SubjectDetailPage() {
     <div className="space-y-0">
       {/* Last activity banner */}
       {lastActivity && (
-        <Link
+        <Link prefetch={false}
           href={`/subjects/${subjectId}/chapters/${lastActivity.chapterId}/paragraphs/${lastActivity.paragraphId}`}
           className="mb-4 block rounded-xl border border-sidebar-border/70 bg-sidebar-accent/40 p-3 transition-colors hover:bg-sidebar-accent/65"
         >
@@ -280,7 +280,7 @@ export default function SubjectDetailPage() {
             return (
               <div key={chapter.id} className="overflow-hidden rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/30">
                 <div className="flex min-h-[108px] items-stretch">
-                  <Link
+                  <Link prefetch={false}
                     href={`/subjects/${subjectId}/chapters/${chapter.id}`}
                     className="relative w-32 shrink-0 bg-sidebar-accent/80 transition-colors hover:bg-sidebar-accent"
                   >
@@ -289,7 +289,7 @@ export default function SubjectDetailPage() {
                     </div>
                   </Link>
                     <div className="flex flex-1 items-start justify-between gap-3 p-4">
-                      <Link
+                      <Link prefetch={false}
                         href={`/subjects/${subjectId}/chapters/${chapter.id}`}
                         className="text-sm text-[hsl(var(--sidebar-active-foreground))] hover:underline"
                       >
@@ -317,7 +317,7 @@ export default function SubjectDetailPage() {
                       const roundedProgress = Math.ceil(paragraph.progress_percent || 0);
 
                       return (
-                        <Link
+                        <Link prefetch={false}
                           key={paragraph.id}
                           href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
                           onClick={() => handleParagraphClick(chapter, paragraph)}
@@ -439,3 +439,4 @@ export default function SubjectDetailPage() {
     </div>
   );
 }
+

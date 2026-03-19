@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -126,8 +126,9 @@ export function ClassCard({
   }
 
   return (
-    <Link href={`/class/${classInfo.id}`} className="group">
+    <Link prefetch={false} href={`/class/${classInfo.id}`} className="group">
       {card}
     </Link>
   );
 }
+

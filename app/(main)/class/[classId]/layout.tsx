@@ -80,7 +80,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
                 key={tab.id}
                 href={`/class/${classId}${tab.href}`}
                 replace
-                prefetch={true}
+                prefetch={false}
                 className={cn(
                   "inline-flex h-10 items-center gap-2 rounded-lg px-3 text-[13px] transition-colors",
                   isActive

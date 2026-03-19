@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Suspense, useContext, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -78,7 +78,7 @@ function SubjectsPageContent() {
                 ))}
               </select>
               <Button asChild size="sm" variant="outline" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
-                <Link href={`/class/${teacherClassId}?tab=subjects`}>
+                <Link prefetch={false} href={`/class/${teacherClassId}?tab=subjects`}>
                   open in manage
                   <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
@@ -100,3 +100,4 @@ function SubjectsPageContent() {
     </div>
   );
 }
+

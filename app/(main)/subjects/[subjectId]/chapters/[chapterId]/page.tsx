@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
@@ -94,7 +94,7 @@ export default function ChapterOverviewPage() {
       {/* Minimal header */}
       <div className="flex items-center justify-between">
         <div>
-          <Link 
+          <Link prefetch={false} 
             href={`/subjects/${subjectId}`}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
@@ -108,7 +108,7 @@ export default function ChapterOverviewPage() {
         {/* Minimal chapter navigation */}
         <div className="flex gap-4 text-sm">
           {adjacentChapters.prev && (
-            <Link
+            <Link prefetch={false}
               href={`/subjects/${subjectId}/chapters/${adjacentChapters.prev.id}`}
               className="text-muted-foreground hover:text-foreground"
             >
@@ -116,7 +116,7 @@ export default function ChapterOverviewPage() {
             </Link>
           )}
           {adjacentChapters.next && (
-            <Link
+            <Link prefetch={false}
               href={`/subjects/${subjectId}/chapters/${adjacentChapters.next.id}`}
               className="text-muted-foreground hover:text-foreground"
             >
@@ -132,7 +132,7 @@ export default function ChapterOverviewPage() {
       ) : (
         <div className="space-y-2">
           {paragraphs.map((paragraph) => (
-            <Link
+            <Link prefetch={false}
               key={paragraph.id}
               href={`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraph.id}`}
               onClick={() => handleParagraphClick(paragraph.id, paragraph.paragraph_number, paragraph.title)}
@@ -162,3 +162,4 @@ export default function ChapterOverviewPage() {
     </div>
   );
 }
+

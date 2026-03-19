@@ -1,4 +1,4 @@
-
+﻿
 'use client';
 
 import { useMemo } from 'react';
@@ -49,7 +49,7 @@ export function TodaysAgenda({ assignments, personalTasks, classes }: TodaysAgen
       <div className="text-center text-muted-foreground p-4">
         <p>You have nothing scheduled for today.</p>
         <Button variant="link" asChild className="mt-2">
-          <Link href="/agenda">Go to Agenda to add tasks</Link>
+          <Link prefetch={false} href="/agenda">Go to Agenda to add tasks</Link>
         </Button>
       </div>
     );
@@ -74,7 +74,7 @@ export function TodaysAgenda({ assignments, personalTasks, classes }: TodaysAgen
     if (event.type === 'assignment') {
         const href = event.material_id ? `/material/${event.material_id}` : `/class/${event.class_id}`;
         return (
-            <Link key={event.id} href={href} className="block hover:bg-muted/80 rounded-lg transition-colors">
+            <Link prefetch={false} key={event.id} href={href} className="block hover:bg-muted/80 rounded-lg transition-colors">
                 {content}
             </Link>
         )
@@ -92,3 +92,4 @@ export function TodaysAgenda({ assignments, personalTasks, classes }: TodaysAgen
 }
 
     
+

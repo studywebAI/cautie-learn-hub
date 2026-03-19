@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -401,3 +401,5 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
     </>
   );
 }
+
+

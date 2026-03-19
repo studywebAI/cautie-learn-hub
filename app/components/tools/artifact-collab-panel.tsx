@@ -127,7 +127,7 @@ export function ArtifactCollabPanel({
         <TabsContent value="actions" className="space-y-2">
           {latestArtifactId && (
             <Button asChild variant="secondary" className="w-full">
-              <Link href={`/material/${latestArtifactId}`}>Open Current Artifact</Link>
+              <Link prefetch={false} href={`/material/${latestArtifactId}`}>Open Current Artifact</Link>
             </Button>
           )}
           {transformActions.length === 0 && (

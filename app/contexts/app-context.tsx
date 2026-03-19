@@ -20,6 +20,7 @@ export type PreloadSnapshot = Record<PreloadResourceKey, {
 }>;
 const PRELOAD_FRESH_TTL_MS = 30_000;
 const DASHBOARD_MIN_INTERVAL_MS = 5_000;
+const DASHBOARD_LAST_FETCH_KEY = 'studyweb-dashboard-last-fetch-at';
 // AccentColor removed — themes handle their own accent
 export type ClassInfo = Tables<'classes'>;
 export type ClassAssignment = Tables<'assignments'> & {
@@ -342,12 +343,24 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const now = Date.now();
+    const persistedLastFetchAt =
+      typeof window !== 'undefined'
+        ? Number(window.sessionStorage.getItem(DASHBOARD_LAST_FETCH_KEY) || '0')
+        : 0;
+    const effectiveLastFetchAt = Math.max(lastDashboardFetchAtRef.current, persistedLastFetchAt);
     if (!force && now - lastDashboardFetchAtRef.current < DASHBOARD_MIN_INTERVAL_MS) {
+      return null;
+    }
+    if (!force && now - effectiveLastFetchAt < DASHBOARD_MIN_INTERVAL_MS) {
       return null;
     }
 
     const run = (async () => {
-      lastDashboardFetchAtRef.current = Date.now();
+      const startedAt = Date.now();
+      lastDashboardFetchAtRef.current = startedAt;
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(DASHBOARD_LAST_FETCH_KEY, String(startedAt));
+      }
       return await fetch(`/api/dashboard?source=${source}`, { credentials: 'include', cache: 'no-store' })
         .then(r => r.ok ? r.json() : null)
         .catch(() => null);

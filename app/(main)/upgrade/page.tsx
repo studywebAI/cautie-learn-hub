@@ -116,7 +116,7 @@ export default function UpgradePage() {
                   className="border-white/20 bg-transparent hover:bg-white/10 text-white"
                   asChild
                 >
-                  <Link href="/settings">
+                  <Link prefetch={false} href="/settings">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Settings
                   </Link>

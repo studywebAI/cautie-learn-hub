@@ -1,4 +1,4 @@
-import {
+﻿import {
   Card,
   CardContent,
   CardDescription,
@@ -30,7 +30,7 @@ export function MySubjects({ subjects }: MySubjectsProps) {
                 </CardDescription>
             </div>
              <Button asChild variant="outline">
-                <Link href="/subjects">
+                <Link prefetch={false} href="/subjects">
                     View All Subjects
                     <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -43,3 +43,4 @@ export function MySubjects({ subjects }: MySubjectsProps) {
     </Card>
   );
 }
+

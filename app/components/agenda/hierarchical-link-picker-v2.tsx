@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import {
@@ -179,7 +179,7 @@ export function HierarchicalLinkPickerV2({
         type: 'assignment',
         url: item.path || '',
         title: item.title,
-        path: `${item.subjectName} › ${item.chapterTitle} › ${item.paragraphTitle} › ${item.assignmentIndex}`,
+        path: `${item.subjectName} â€º ${item.chapterTitle} â€º ${item.paragraphTitle} â€º ${item.assignmentIndex}`,
       });
       onClose();
       return;
@@ -255,10 +255,10 @@ export function HierarchicalLinkPickerV2({
 
   const getItemDescription = (item: LinkItem) => {
     if (item.type === 'assignment') {
-      return `${item.subjectName} › ${item.chapterTitle} › ${item.paragraphTitle}`;
+      return `${item.subjectName} â€º ${item.chapterTitle} â€º ${item.paragraphTitle}`;
     }
     if (item.type === 'paragraph') {
-      return `${item.subjectName} › ${item.chapterTitle}`;
+      return `${item.subjectName} â€º ${item.chapterTitle}`;
     }
     if (item.type === 'chapter') {
       return item.subjectName;
@@ -357,3 +357,4 @@ export function HierarchicalLinkPickerV2({
     </Dialog>
   );
 }
+

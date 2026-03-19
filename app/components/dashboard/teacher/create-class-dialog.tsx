@@ -1,4 +1,4 @@
-
+﻿
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -258,3 +258,5 @@ export function CreateClassDialog({ isOpen, setIsOpen, onClassCreated }: CreateC
     </>
   );
 }
+
+

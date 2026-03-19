@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useContext } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -245,11 +245,11 @@ export default function ParagraphDetailPage() {
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div>
-          <Link
+          <Link prefetch={false}
             href={`/subjects/${subjectId}`}
             className="text-xs text-muted-foreground hover:text-foreground mb-1 block"
           >
-            ← Back to chapters
+            â† Back to chapters
           </Link>
           <h1 className="text-lg">
             {paragraph.paragraph_number}. {paragraph.title}
@@ -326,7 +326,7 @@ export default function ParagraphDetailPage() {
                 </span>
 
                 {/* Title */}
-                <Link
+                <Link prefetch={false}
                   href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments/${assignment.id}`}
                   className="text-sm flex-1 hover:underline truncate"
                 >
@@ -409,21 +409,21 @@ export default function ParagraphDetailPage() {
       {/* Navigation to adjacent paragraphs */}
       <div className="flex justify-between items-center pt-4">
         {prevParagraph ? (
-          <Link
+          <Link prefetch={false}
             href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${prevParagraph.id}`}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            ← {prevParagraph.paragraph_number}. {prevParagraph.title}
+            â† {prevParagraph.paragraph_number}. {prevParagraph.title}
           </Link>
         ) : (
           <div />
         )}
         {nextParagraph && (
-          <Link
+          <Link prefetch={false}
             href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${nextParagraph.id}`}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            {nextParagraph.paragraph_number}. {nextParagraph.title} →
+            {nextParagraph.paragraph_number}. {nextParagraph.title} â†’
           </Link>
         )}
       </div>
@@ -454,3 +454,4 @@ export default function ParagraphDetailPage() {
     </div>
   );
 }
+

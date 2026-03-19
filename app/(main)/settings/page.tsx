@@ -211,7 +211,7 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">Upgrade Your Plan</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Link href="/upgrade" className="block">
+                        <Link prefetch={false} href="/upgrade" className="block">
                           <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">

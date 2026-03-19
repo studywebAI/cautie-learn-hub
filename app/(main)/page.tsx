@@ -177,11 +177,15 @@ export default function DashboardPage() {
     const savedLane = window.localStorage.getItem('studyweb-student-lane');
     if (savedLane === 'tools') {
       const lastToolsRoute = window.localStorage.getItem('studyweb-last-tools-route') || '/tools';
+      const current = `${window.location.pathname}${window.location.search}`;
+      if (current === lastToolsRoute) return;
       router.replace(lastToolsRoute);
       return;
     }
 
     const lastSchoolRoute = window.localStorage.getItem('studyweb-last-school-route') || '/classes';
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (current === lastSchoolRoute) return;
     router.replace(lastSchoolRoute);
   }, [session, role, isLoading, router]);
 

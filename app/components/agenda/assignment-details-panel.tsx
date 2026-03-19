@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -104,7 +104,7 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
           <div key={index} className="flex items-center gap-2">
             {index > 0 && <ChevronRight className="h-4 w-4" />}
             {crumb.icon && <crumb.icon className="h-4 w-4" />}
-            <Link href={crumb.href} className="hover:underline">
+            <Link prefetch={false} href={crumb.href} className="hover:underline">
               {crumb.label}
             </Link>
           </div>
@@ -185,7 +185,7 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
           <CardContent>
             <div className="space-y-2">
               {(event as any).linked_content.map((link: any, idx: number) => (
-                <Link
+                <Link prefetch={false}
                   key={idx}
                   href={link.url}
                   className="flex items-center gap-2 p-2 rounded-lg border hover:bg-muted/50 transition-colors"
@@ -202,3 +202,4 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,7 +62,7 @@ export function SubjectOverview({ classId, cachedSubjects }: SubjectOverviewProp
           </CardTitle>
         </div>
         <Button size="sm" asChild>
-          <Link href={`/class/${classId}?tab=subjects`}>
+          <Link prefetch={false} href={`/class/${classId}?tab=subjects`}>
             <Plus className="mr-2 h-4 w-4" />
             Add Subject
           </Link>
@@ -81,7 +81,7 @@ export function SubjectOverview({ classId, cachedSubjects }: SubjectOverviewProp
           <div className="space-y-3">
             {/* Sort alphabetically for consistent ordering */}
             {([...subjects] as Subject[]).sort((a, b) => a.name.localeCompare(b.name)).map(subject => (
-              <Link 
+              <Link prefetch={false} 
                 key={subject.id} 
                 href={`/subjects/${subject.id}`}
                 className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
@@ -109,3 +109,4 @@ export function SubjectOverview({ classId, cachedSubjects }: SubjectOverviewProp
     </Card>
   );
 }
+

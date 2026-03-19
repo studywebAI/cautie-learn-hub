@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Image from 'next/image';
@@ -94,3 +94,5 @@ export function InviteDialog({ isOpen, setIsOpen, classInfo }: InviteDialogProps
     </Dialog>
   );
 }
+
+

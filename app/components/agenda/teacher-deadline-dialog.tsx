@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
@@ -307,3 +307,5 @@ export function TeacherDeadlineDialog({
     </>
   );
 }
+
+

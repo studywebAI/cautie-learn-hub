@@ -1,4 +1,4 @@
-
+﻿
 'use client';
 
 import { useState, useContext, useEffect } from 'react';
@@ -414,7 +414,7 @@ export function TeacherDashboard() {
                         </div>
                         <div className="text-right">
                           <Button asChild size="sm" variant="ghost" className="h-8">
-                            <Link href={`/class/${classInfo.id}?tab=subjects`}>
+                            <Link prefetch={false} href={`/class/${classInfo.id}?tab=subjects`}>
                               open
                               <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
                             </Link>
@@ -512,3 +512,4 @@ export function TeacherDashboard() {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-
+﻿
 import {
   Card,
   CardContent,
@@ -78,7 +78,7 @@ export function UpcomingDeadlines() {
           sortedDeadlines.slice(0,3).map((deadline) => {
             const href = deadline.material_id ? `/material/${deadline.material_id}` : `/class/${deadline.class_id}`;
             return (
-              <Link key={deadline.id} href={href} className="block group">
+              <Link prefetch={false} key={deadline.id} href={href} className="block group">
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg group-hover:bg-muted transition-colors">
                   <div className="flex flex-col gap-0.5">
                       <p className="font-semibold">{deadline.title}</p>
@@ -97,7 +97,7 @@ export function UpcomingDeadlines() {
       </CardContent>
        <CardFooter>
         <Button asChild variant="outline" className="w-full">
-          <Link href="/agenda">
+          <Link prefetch={false} href="/agenda">
             {dictionary.dashboard.upcomingDeadlines.viewAgenda}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
@@ -106,3 +106,4 @@ export function UpcomingDeadlines() {
     </Card>
   );
 }
+

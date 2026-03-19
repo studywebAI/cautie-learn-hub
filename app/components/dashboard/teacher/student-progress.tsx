@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -101,7 +101,7 @@ export function StudentProgressPanel({ classId }: StudentProgressPanelProps) {
           <ScrollArea className="h-[400px]">
             <div className="space-y-3">
               {sortedStudents.map(student => (
-                <Link
+                <Link prefetch={false}
                   key={student.id}
                   href={`/class/${classId}?tab=progress&studentId=${student.id}`}
                   className="flex items-center gap-3 p-3 border rounded-lg hover:bg-accent transition-colors"
@@ -138,3 +138,4 @@ export function StudentProgressPanel({ classId }: StudentProgressPanelProps) {
     </Card>
   );
 }
+

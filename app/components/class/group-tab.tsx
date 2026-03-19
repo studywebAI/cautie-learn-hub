@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -470,13 +470,13 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                 {isTeacher && (
                   <div className="flex gap-2 pt-4 border-t">
                     <Button variant="outline" className="flex-1" asChild>
-                      <Link href={`/class/${classId}?tab=assignments&studentId=${selectedStudent.id}`}>
+                      <Link prefetch={false} href={`/class/${classId}?tab=assignments&studentId=${selectedStudent.id}`}>
                         <FileText className="h-4 w-4 mr-2" />
                         View Assignments
                       </Link>
                     </Button>
                     <Button variant="outline" className="flex-1" asChild>
-                      <Link href={`/class/${classId}?tab=progress&studentId=${selectedStudent.id}`}>
+                      <Link prefetch={false} href={`/class/${classId}?tab=progress&studentId=${selectedStudent.id}`}>
                         <TrendingUp className="h-4 w-4 mr-2" />
                         View Progress
                       </Link>
@@ -491,3 +491,4 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
     </div>
   );
 }
+

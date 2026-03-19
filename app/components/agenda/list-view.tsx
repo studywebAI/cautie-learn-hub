@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { format, isToday, isTomorrow, isThisWeek } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
@@ -109,14 +109,14 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
           <span>{event.subject}</span>
           {event.chapter_title && (
             <>
-              <span>›</span>
+              <span>â€º</span>
               <span className="truncate">{event.chapter_title}</span>
             </>
           )}
         </div>
         {event.linked_path && (
           <div className="text-xs text-primary mt-1 truncate">
-            → {event.linked_path}
+            â†’ {event.linked_path}
           </div>
         )}
       </div>
@@ -161,7 +161,7 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
       );
     }
     return (
-      <Link href={href} className="block">
+      <Link prefetch={false} href={href} className="block">
         {content}
       </Link>
     );
@@ -169,3 +169,4 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
 
   return content;
 }
+

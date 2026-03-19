@@ -83,7 +83,7 @@ export function AppHeader() {
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                            <Link href="/settings" className="flex items-center">
+                            <Link prefetch={false} href="/settings" className="flex items-center">
                                 <Settings className="mr-2 h-4 w-4" />
                                 <span>Settings</span>
                             </Link>
@@ -104,7 +104,7 @@ export function AppHeader() {
             </>
         ) : (
              <Button asChild className="rounded-full">
-                <Link href="/login">{dictionary.header.logIn}</Link>
+                <Link prefetch={false} href="/login">{dictionary.header.logIn}</Link>
             </Button>
         )}
 

@@ -80,7 +80,12 @@ function AgendaPageContent() {
     }
 
     if (classIdFromQuery !== resolvedClassId) {
-      router.replace(`/agenda?classId=${resolvedClassId}`);
+      const target = `/agenda?classId=${resolvedClassId}`;
+      if (typeof window !== 'undefined') {
+        const current = `${window.location.pathname}${window.location.search}`;
+        if (current === target) return;
+      }
+      router.replace(target);
     }
   }, [isTeacher, classes, classIdFromQuery, router]);
 

@@ -63,6 +63,7 @@ export function ToolboxCommandPalette() {
             {filtered.map((item) => (
               <Link
                 key={item.id}
+                prefetch={false}
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className="block rounded-md border p-3 hover:bg-muted/50"

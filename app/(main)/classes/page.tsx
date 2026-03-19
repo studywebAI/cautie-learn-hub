@@ -88,7 +88,12 @@ function ClassesPageContent() {
     const preferredClass = activeClasses.find((classItem) => classItem.id === preferredClassId) || activeClasses[0];
     if (!preferredClass?.id) return;
 
-    router.replace(`/class/${preferredClass.id}?tab=subjects`);
+    const target = `/class/${preferredClass.id}?tab=subjects`;
+    if (typeof window !== 'undefined') {
+      const current = `${window.location.pathname}${window.location.search}`;
+      if (current === target) return;
+    }
+    router.replace(target);
   }, [role, classes, router]);
 
   if (role === 'student') {

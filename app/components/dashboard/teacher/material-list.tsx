@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useContext, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -496,7 +496,7 @@ export function MaterialList({ materials, classId, isLoading, isTeacher = true }
             const Icon = iconMap[material.type] || File;
             return (
               <div key={material.id} className="flex items-start justify-between p-4 rounded-lg bg-muted/50 border">
-                <Link href={`/material/${material.id}`} className="flex items-start gap-4 flex-1 group">
+                <Link prefetch={false} href={`/material/${material.id}`} className="flex items-start gap-4 flex-1 group">
                   <Icon className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
                   <div className="space-y-2">
                     <p className="group-hover:underline">{material.title}</p>
@@ -517,7 +517,7 @@ export function MaterialList({ materials, classId, isLoading, isTeacher = true }
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild>
-                        <Link href={`/material/${material.id}`}>View Material</Link>
+                        <Link prefetch={false} href={`/material/${material.id}`}>View Material</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleCopyLink(material.id)}>
                         Copy Link for Assignment
@@ -534,7 +534,7 @@ export function MaterialList({ materials, classId, isLoading, isTeacher = true }
                   </DropdownMenu>
                 ) : (
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/material/${material.id}`}>View Material</Link>
+                    <Link prefetch={false} href={`/material/${material.id}`}>View Material</Link>
                   </Button>
                 )}
               </div>
@@ -561,3 +561,4 @@ export function MaterialList({ materials, classId, isLoading, isTeacher = true }
     </>
   );
 }
+
