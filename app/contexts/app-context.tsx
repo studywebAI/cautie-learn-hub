@@ -455,9 +455,19 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     init();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    // Listen for auth changes. Ignore token refresh churn because most consumers only need stable identity.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === 'TOKEN_REFRESHED') return;
+      setSession((prevSession) => {
+        const prevUserId = prevSession?.user?.id ?? null;
+        const nextUserId = nextSession?.user?.id ?? null;
+        const prevEmail = prevSession?.user?.email ?? null;
+        const nextEmail = nextSession?.user?.email ?? null;
+        const authPresenceChanged = Boolean(prevSession) !== Boolean(nextSession);
+        const identityChanged = prevUserId !== nextUserId || prevEmail !== nextEmail;
+        if (!authPresenceChanged && !identityChanged) return prevSession;
+        return nextSession;
+      });
     });
 
     return () => subscription.unsubscribe();

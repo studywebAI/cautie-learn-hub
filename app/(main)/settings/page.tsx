@@ -29,6 +29,7 @@ export default function SettingsPage() {
   } = useContext(AppContext) as AppContextType;
 
   const { dictionary } = useDictionary();
+  const userId = session?.user?.id ?? null;
   const [activeTab, setActiveTab] = useState('general');
   const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
   const [subscriptionType, setSubscriptionType] = useState<string>('student');
@@ -38,7 +39,7 @@ export default function SettingsPage() {
   // Fetch subscription status
   useEffect(() => {
     const fetchSubscription = async () => {
-      if (!session) return;
+      if (!userId) return;
       try {
         if (typeof window !== 'undefined') {
           const raw = window.sessionStorage.getItem(SUBSCRIPTION_CACHE_KEY);
@@ -73,7 +74,7 @@ export default function SettingsPage() {
       }
     };
     fetchSubscription();
-  }, [session]);
+  }, [userId]);
 
   const isPremium = subscriptionTier === 'premium' || subscriptionTier === 'pro';
 

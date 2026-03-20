@@ -37,13 +37,14 @@ const pieChartConfig = {
 export const AnalyticsDashboard = React.memo(function AnalyticsDashboard() {
   const context = useContext(AppContext) as AppContextType;
   const { session } = context;
+  const userId = session?.user?.id ?? null;
   const { dictionary } = useDictionary();
   const [analytics, setAnalytics] = useState<StudentAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
-      if (!session?.user?.id) return;
+      if (!userId) return;
 
       try {
         const params = new URLSearchParams();
@@ -62,7 +63,7 @@ export const AnalyticsDashboard = React.memo(function AnalyticsDashboard() {
     };
 
     fetchAnalytics();
-  }, [session]);
+  }, [userId]);
 
   if (loading) {
     return (

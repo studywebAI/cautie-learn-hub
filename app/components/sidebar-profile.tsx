@@ -25,6 +25,7 @@ import {
 
 export function SidebarProfile() {
   const { session } = useContext(AppContext) as AppContextType;
+  const userId = session?.user?.id ?? null;
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
   const router = useRouter();
@@ -62,8 +63,8 @@ export function SidebarProfile() {
         console.error('Failed to fetch subscription:', e);
       }
     };
-    if (session) fetchSubscription();
-  }, [session]);
+    if (userId) fetchSubscription();
+  }, [userId]);
 
   // Not logged in - show guest state with sign up button
   if (!session) {

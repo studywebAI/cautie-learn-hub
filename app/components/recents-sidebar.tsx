@@ -44,6 +44,7 @@ const RECENTS_CACHE_TTL_MS = 60_000;
 
 export function RecentsSidebar() {
   const { session } = useContext(AppContext) as AppContextType;
+  const userId = session?.user?.id ?? null;
   const [recents, setRecents] = useState<RecentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
@@ -53,7 +54,8 @@ export function RecentsSidebar() {
   const isCollapsed = state === 'collapsed';
 
   useEffect(() => {
-    if (!session) {
+    if (!userId) {
+      setRecents([]);
       setIsLoading(false);
       return;
     }
@@ -117,7 +119,7 @@ export function RecentsSidebar() {
     };
 
     fetchRecents();
-  }, [session]);
+  }, [userId]);
 
   const handleClick = (item: RecentItem) => {
     if (item.source === 'tool_run') {
