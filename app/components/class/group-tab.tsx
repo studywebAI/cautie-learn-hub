@@ -65,6 +65,12 @@ type Teacher = {
   joinedAt: string | null;
   lastSeen: string | null;
   onlineStatus: 'online' | 'offline';
+  subjects?: Array<{
+    id: string;
+    title: string;
+    ownerName: string | null;
+    ownerEmail: string | null;
+  }>;
 };
 
 type GroupData = {
@@ -90,6 +96,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
   const [data, setData] = useState<GroupData | null>(cachedData || null);
   const [loading, setLoading] = useState(!cachedData);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [filter, setFilter] = useState<'all' | 'online' | 'offline'>('all');
 
   useEffect(() => {
@@ -232,6 +239,47 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Teachers List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Docenten</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(data.teachers || []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">Geen docenten gevonden</p>
+          ) : (
+            [...data.teachers]
+              .sort((a, b) => (a.email || a.name).localeCompare(b.email || b.name))
+              .map((teacher) => (
+                <button
+                  type="button"
+                  key={teacher.id}
+                  className="w-full rounded-lg border p-3 text-left transition-colors hover:bg-accent/50"
+                  onClick={() => setSelectedTeacher(teacher)}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{teacher.email || teacher.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {(teacher.subjects || []).length > 0
+                          ? (teacher.subjects || []).map((s) => s.title).join(', ')
+                          : 'Nog geen subjects'}
+                      </p>
+                    </div>
+                    <Badge variant={teacher.onlineStatus === 'online' ? 'outline' : 'secondary'}>
+                      {teacher.onlineStatus === 'online' ? 'Online' : 'Offline'}
+                    </Badge>
+                  </div>
+                </button>
+              ))
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-semibold">Leerlingen</h3>
       </div>
 
       {/* Filters */}
@@ -481,6 +529,36 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                         View Progress
                       </Link>
                     </Button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Teacher Detail Dialog */}
+      <Dialog open={!!selectedTeacher} onOpenChange={() => setSelectedTeacher(null)}>
+        <DialogContent className="max-w-xl">
+          {selectedTeacher && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedTeacher.email || selectedTeacher.name}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Gekoppelde subjects
+                </p>
+                {(selectedTeacher.subjects || []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nog geen subjects gekoppeld.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {(selectedTeacher.subjects || []).map((subject) => (
+                      <div key={subject.id} className="rounded-lg border p-3">
+                        <p className="font-medium">{subject.title}</p>
+                        <p className="text-xs text-muted-foreground">{subject.ownerEmail || subject.ownerName || 'Onbekende eigenaar'}</p>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

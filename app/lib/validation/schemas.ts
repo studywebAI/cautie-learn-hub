@@ -18,7 +18,8 @@ export const optionalNonEmptyString = z.string().min(1).optional();
 
 export const createClassSchema = z.object({
   name: nonEmptyStringSchema,
-  description: z.string().optional().nullable()
+  description: z.string().optional().nullable(),
+  subject_title: z.string().optional().nullable()
 });
 
 export const updateClassSchema = z.object({
@@ -201,7 +202,8 @@ export const addClassMemberSchema = z.object({
 // ============================================
 
 export const joinClassSchema = z.object({
-  class_code: nonEmptyStringSchema
+  class_code: nonEmptyStringSchema,
+  subject_title: z.string().optional().nullable()
 });
 
 // ============================================

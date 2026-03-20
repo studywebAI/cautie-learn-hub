@@ -106,8 +106,36 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ clas
       return { ...subject, chapters: chaptersWithParagraphs };
     }));
 
-    console.log('Returning enriched subjects:', JSON.stringify(enrichedSubjects, null, 2));
-    return NextResponse.json(enrichedSubjects);
+    const ownerIds = [...new Set(enrichedSubjects.map((subject: any) => subject.user_id).filter(Boolean))];
+    let ownerProfiles: any[] = [];
+    if (ownerIds.length > 0) {
+      const { data: ownerRows } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', ownerIds);
+      ownerProfiles = ownerRows || [];
+    }
+
+    const ownerById = new Map(ownerProfiles.map((row: any) => [row.id, row]));
+
+    const subjectsWithOwner = enrichedSubjects.map((subject: any) => {
+      const owner = subject.user_id ? ownerById.get(subject.user_id) : null;
+      return {
+        ...subject,
+        owner_name: owner?.full_name || null,
+        owner_email: owner?.email || null,
+        is_owned_by_current_user: subject.user_id === user.id,
+      };
+    });
+
+    const defaultSubject = subjectsWithOwner.find((subject: any) => subject.user_id === user.id) || null;
+
+    console.log('Returning enriched subjects:', JSON.stringify(subjectsWithOwner, null, 2));
+    return NextResponse.json({
+      subjects: subjectsWithOwner,
+      currentUserId: user.id,
+      defaultSubjectId: defaultSubject?.id || null,
+    });
   } catch (error) {
     console.error('Error fetching subjects:', error);
     return NextResponse.json({ error: 'Internal server error while fetching subjects' }, { status: 500 });

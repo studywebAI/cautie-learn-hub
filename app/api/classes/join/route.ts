@@ -144,6 +144,7 @@ export async function POST(request: NextRequest) {
     return validation.error;
   }
   const classCode = sanitizeCode(validation.data.class_code);
+  const subjectTitleInput = sanitizeCode(validation.data.subject_title);
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
 
@@ -246,6 +247,54 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
+  let defaultSubject: { id: string; title: string } | null = null;
+
+  // Teacher collaboration join: ensure the joining teacher gets their own class subject.
+  if (subscriptionType === 'teacher' && matchedBy === 'teacher_join_code') {
+    const normalizedSubjectTitle =
+      subjectTitleInput ||
+      `${(user.user_metadata?.full_name || user.email || 'Teacher').toString().split('@')[0]}'s subject`;
+
+    const { data: existingOwnedSubject } = await supabase
+      .from('subjects')
+      .select('id, title')
+      .eq('class_id', classData.id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (existingOwnedSubject) {
+      defaultSubject = existingOwnedSubject;
+    } else {
+      const { data: createdSubject, error: createdSubjectError } = await supabase
+        .from('subjects')
+        .insert([{
+          title: normalizedSubjectTitle,
+          description: null,
+          class_id: classData.id,
+          user_id: user.id,
+          class_label: normalizedSubjectTitle,
+        }])
+        .select('id, title')
+        .single();
+
+      if (createdSubjectError) {
+        return NextResponse.json({ error: `Joined class but failed to create your subject: ${createdSubjectError.message}` }, { status: 500 });
+      }
+
+      defaultSubject = createdSubject;
+    }
+
+    if (defaultSubject) {
+      const { error: classSubjectLinkError } = await (supabase as any)
+        .from('class_subjects')
+        .upsert([{ class_id: classData.id, subject_id: defaultSubject.id }], { onConflict: 'class_id,subject_id' });
+
+      if (classSubjectLinkError) {
+        return NextResponse.json({ error: `Joined class but failed to link your subject: ${classSubjectLinkError.message}` }, { status: 500 });
+      }
+    }
+  }
+
   // Log audit
   await logAuditEntry(supabase, {
     userId: user.id,
@@ -260,6 +309,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ 
     message: `Successfully joined class as ${subscriptionType}`, 
     class: { id: classData.id, name: classData.name, description: classData.description },
-    role: subscriptionType
+    role: subscriptionType,
+    default_subject: defaultSubject
   });
 }

@@ -9,6 +9,7 @@ export async function GET(
 ) {
   try {
     const { classId } = await params
+    const subjectId = req.nextUrl.searchParams.get('subjectId')
     console.log(`\n🌐 [GRADES_GET] Fetching grades for class: ${classId}`)
     
     const cookieStore = cookies()
@@ -51,7 +52,7 @@ export async function GET(
 
     console.log('[GRADES_GET] Querying grade_sets table...')
     // Get grade sets for this class
-    const { data: gradeSets, error } = await (supabase as any)
+    let gradeSetsQuery = (supabase as any)
       .from('grade_sets')
       .select(`
         *,
@@ -61,6 +62,12 @@ export async function GET(
       `)
       .eq('class_id', classId)
       .order('created_at', { ascending: false })
+
+    if (subjectId && subjectId !== 'all') {
+      gradeSetsQuery = gradeSetsQuery.eq('subject_id', subjectId)
+    }
+
+    const { data: gradeSets, error } = await gradeSetsQuery
 
     console.log('[GRADES_GET] Query result:', { count: gradeSets?.length, error: error?.message })
     

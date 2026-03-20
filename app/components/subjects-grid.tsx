@@ -96,7 +96,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
       const response = await fetch(apiUrl, { cache: 'no-store' });
       if (!response.ok) throw new Error('Failed to fetch subjects');
       const data = await response.json();
-      const nextSubjects = Array.isArray(data) ? data : [];
+      const nextSubjects = Array.isArray(data) ? data : (data?.subjects || []);
       setSubjects(nextSubjects);
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(cacheKey, JSON.stringify(nextSubjects));

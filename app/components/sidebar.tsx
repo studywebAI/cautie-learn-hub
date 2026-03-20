@@ -62,9 +62,11 @@ export function AppSidebar() {
   const [joinClassOpen, setJoinClassOpen] = useState(false);
   const [newClassMenuOpen, setNewClassMenuOpen] = useState(false);
   const [className, setClassName] = useState('');
+  const [classSubjectTitle, setClassSubjectTitle] = useState('');
   const [subjectTitle, setSubjectTitle] = useState('');
   const [selectedSubjectClassId, setSelectedSubjectClassId] = useState('');
   const [joinCode, setJoinCode] = useState('');
+  const [joinSubjectTitle, setJoinSubjectTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTeacherClassId, setActiveTeacherClassId] = useState('');
   const [studentLane, setStudentLane] = useState<StudentLane>(() => {
@@ -252,9 +254,11 @@ export function AppSidebar() {
     setJoinClassOpen(false);
     setNewClassMenuOpen(false);
     setClassName('');
+    setClassSubjectTitle('');
     setSubjectTitle('');
     setSelectedSubjectClassId('');
     setJoinCode('');
+    setJoinSubjectTitle('');
   };
 
   const resolveTeacherClassRoute = (nextClassId: string) => {
@@ -351,13 +355,13 @@ export function AppSidebar() {
         : context?.preloadSnapshot['subjects:list']?.status === 'loading';
 
     const submitCreateClass = async () => {
-      if (!className.trim()) return;
+      if (!className.trim() || !classSubjectTitle.trim()) return;
       setSubmitting(true);
       try {
         const response = await fetch('/api/classes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: className.trim(), description: null }),
+          body: JSON.stringify({ name: className.trim(), description: null, subject_title: classSubjectTitle.trim() }),
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Failed to create class');
@@ -370,6 +374,7 @@ export function AppSidebar() {
           router.push(resolveTeacherClassRoute(data.id));
         }
         setClassName('');
+        setClassSubjectTitle('');
         setCreateClassOpen(false);
         setNewClassMenuOpen(false);
         await loadDropdownData('classes');
@@ -412,12 +417,16 @@ export function AppSidebar() {
 
     const submitJoinClass = async () => {
       if (!joinCode.trim()) return;
+      if (isTeacher && !joinSubjectTitle.trim()) return;
       setSubmitting(true);
       try {
         const response = await fetch('/api/classes/join', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ class_code: joinCode.trim() }),
+          body: JSON.stringify({
+            class_code: joinCode.trim(),
+            subject_title: isTeacher ? joinSubjectTitle.trim() : undefined,
+          }),
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Failed to join class');
@@ -431,6 +440,7 @@ export function AppSidebar() {
           router.push(resolveTeacherClassRoute(joinedClassId));
         }
         setJoinCode('');
+        setJoinSubjectTitle('');
         setJoinClassOpen(false);
         setNewClassMenuOpen(false);
         await loadDropdownData('classes');
@@ -513,8 +523,14 @@ export function AppSidebar() {
                 onChange={(e) => setClassName(e.target.value)}
                 className="h-8 text-sm"
               />
+              <Input
+                placeholder="Your subject (e.g. Wiskunde)"
+                value={classSubjectTitle}
+                onChange={(e) => setClassSubjectTitle(e.target.value)}
+                className="h-8 text-sm"
+              />
               <div className="flex justify-end">
-                <Button size="sm" className="h-7 text-xs" onClick={submitCreateClass} disabled={submitting || !className.trim()}>
+                <Button size="sm" className="h-7 text-xs" onClick={submitCreateClass} disabled={submitting || !className.trim() || !classSubjectTitle.trim()}>
                   Create
                 </Button>
               </div>
@@ -572,8 +588,16 @@ export function AppSidebar() {
                 onChange={(e) => setJoinCode(e.target.value)}
                 className="h-8 text-sm"
               />
+              {isTeacher && (
+                <Input
+                  placeholder="Your subject (e.g. Wiskunde)"
+                  value={joinSubjectTitle}
+                  onChange={(e) => setJoinSubjectTitle(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              )}
               <div className="flex justify-end">
-                <Button size="sm" className="h-7 text-xs" onClick={submitJoinClass} disabled={submitting || !joinCode.trim()}>
+                <Button size="sm" className="h-7 text-xs" onClick={submitJoinClass} disabled={submitting || !joinCode.trim() || (isTeacher && !joinSubjectTitle.trim())}>
                   Join
                 </Button>
               </div>

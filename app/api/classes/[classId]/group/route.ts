@@ -230,10 +230,40 @@ export async function GET(
       }
     })
 
+    const [directSubjectsResult, linkedSubjectsResult] = await Promise.all([
+      supabase
+        .from('subjects')
+        .select('id, title, user_id')
+        .eq('class_id', classId),
+      (supabase as any)
+        .from('class_subjects')
+        .select('subjects(id, title, user_id)')
+        .eq('class_id', classId),
+    ])
+
+    const classSubjectsById = new Map<string, { id: string; title: string; user_id: string | null }>()
+    for (const subjectRow of (directSubjectsResult.data || []) as any[]) {
+      classSubjectsById.set(subjectRow.id, subjectRow)
+    }
+    for (const linkedRow of (linkedSubjectsResult.data || []) as any[]) {
+      const linkedSubject = linkedRow?.subjects
+      if (linkedSubject?.id) {
+        classSubjectsById.set(linkedSubject.id, linkedSubject)
+      }
+    }
+    const classSubjects = Array.from(classSubjectsById.values())
+
     // Build teachers data
     const teachers = teacherIds.map(teacherId => {
       const profile = profiles.find((p: any) => p.id === teacherId)
-      const member = classMembers?.find((m: any) => m.user_id === teacherId)
+      const teacherSubjects = classSubjects
+        .filter((subject: any) => subject.user_id === teacherId)
+        .map((subject: any) => ({
+          id: subject.id,
+          title: subject.title,
+          ownerName: profile?.full_name || null,
+          ownerEmail: profile?.email || null
+        }))
       
       return {
         id: teacherId,
@@ -243,7 +273,8 @@ export async function GET(
         role: 'teacher',
         joinedAt: null,
         lastSeen: profile?.last_seen,
-        onlineStatus: getOnlineStatus(profile?.last_seen)
+        onlineStatus: getOnlineStatus(profile?.last_seen),
+        subjects: teacherSubjects
       }
     })
 

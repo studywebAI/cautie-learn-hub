@@ -80,17 +80,42 @@ type GradePreset = {
 export function GradesTab({ classId }: { classId: string }) {
   const [view, setView] = useState<'menu' | 'new' | 'edit' | 'edit-detail' | 'history' | 'reports'>('menu');
   const [gradeSets, setGradeSets] = useState<GradeSet[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [selectedGradeSetId, setSelectedGradeSetId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadGradeSets();
+    void loadClassSubjects();
   }, [classId]);
 
-  const loadGradeSets = async () => {
+  useEffect(() => {
+    void loadGradeSets(selectedSubjectFilter);
+  }, [classId, selectedSubjectFilter]);
+
+  const loadClassSubjects = async () => {
+    try {
+      const response = await fetch(`/api/classes/${classId}/subjects`);
+      if (!response.ok) return;
+      const data = await response.json();
+      const incoming: Subject[] = data.subjects || [];
+      setSubjects(incoming);
+      if (data.defaultSubjectId) {
+        setSelectedSubjectFilter(data.defaultSubjectId);
+      } else {
+        setSelectedSubjectFilter('all');
+      }
+    } catch (error) {
+      console.error('Failed to load class subjects for grades filter:', error);
+      setSelectedSubjectFilter('all');
+    }
+  };
+
+  const loadGradeSets = async (subjectId: string = 'all') => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/classes/${classId}/grades`);
+      const query = subjectId && subjectId !== 'all' ? `?subjectId=${encodeURIComponent(subjectId)}` : '';
+      const response = await fetch(`/api/classes/${classId}/grades${query}`);
       if (response.ok) {
         const data = await response.json();
         setGradeSets(data.grade_sets || []);
@@ -106,8 +131,10 @@ export function GradesTab({ classId }: { classId: string }) {
     return (
       <NewGradesWizard 
         classId={classId} 
+        defaultSubjectId={selectedSubjectFilter !== 'all' ? selectedSubjectFilter : ''}
+        initialSubjects={subjects}
         onComplete={() => {
-          loadGradeSets();
+          loadGradeSets(selectedSubjectFilter);
           setView('menu');
         }}
         onCancel={() => setView('menu')}
@@ -125,7 +152,7 @@ export function GradesTab({ classId }: { classId: string }) {
           setView('edit');
         }}
         onDeleted={() => {
-          loadGradeSets();
+          loadGradeSets(selectedSubjectFilter);
           setSelectedGradeSetId(null);
           setView('edit');
         }}
@@ -161,7 +188,8 @@ export function GradesTab({ classId }: { classId: string }) {
           setSelectedGradeSetId(id);
           setView('edit-detail');
         }}
-        onRefresh={loadGradeSets}
+        onRefresh={() => loadGradeSets(selectedSubjectFilter)}
+        subjectId={selectedSubjectFilter}
         onBack={() => setView('menu')}
       />
     );
@@ -174,6 +202,19 @@ export function GradesTab({ classId }: { classId: string }) {
         <div>
           <h1 className="text-2xl font-bold">Grades</h1>
           <p className="text-muted-foreground">Manage grades for your class</p>
+        </div>
+        <div className="w-full max-w-[280px]">
+          <Label className="mb-1 block text-xs text-muted-foreground">Subject</Label>
+          <select
+            value={selectedSubjectFilter}
+            onChange={(e) => setSelectedSubjectFilter(e.target.value)}
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="all">All subjects</option>
+            {subjects.map((subject) => (
+              <option key={subject.id} value={subject.id}>{subject.title}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -523,10 +564,14 @@ const toNumeric = (value: string): number | null => {
 
 function NewGradesWizard({
   classId, 
+  defaultSubjectId,
+  initialSubjects,
   onComplete, 
   onCancel 
 }: { 
   classId: string; 
+  defaultSubjectId?: string;
+  initialSubjects?: Subject[];
   onComplete: () => void; 
   onCancel: () => void;
 }) {
@@ -543,8 +588,8 @@ function NewGradesWizard({
   // Step 3: Students & Grades
   const [students, setStudents] = useState<StudentGrade[]>([]);
   const [everyoneGrade, setEveryoneGrade] = useState('');
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+  const [subjects, setSubjects] = useState<Subject[]>(initialSubjects || []);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>(defaultSubjectId || '');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [presets, setPresets] = useState<GradePreset[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
@@ -559,12 +604,25 @@ function NewGradesWizard({
     }
   }, [step]);
 
+  useEffect(() => {
+    if (defaultSubjectId) {
+      setSelectedSubjectId(defaultSubjectId);
+    }
+  }, [defaultSubjectId]);
+
   const loadSubjects = async () => {
     try {
       const response = await fetch(`/api/classes/${classId}/subjects`);
       if (response.ok) {
         const data = await response.json();
-        setSubjects(data.subjects || []);
+        if (Array.isArray(data)) {
+          setSubjects(data as Subject[]);
+        } else {
+          setSubjects(data.subjects || []);
+          if (!selectedSubjectId && data.defaultSubjectId) {
+            setSelectedSubjectId(data.defaultSubjectId);
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to load subjects:', error);
@@ -1041,18 +1099,20 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
 // EDIT GRADES LIST
 // =============================================
 
-function EditGradesList({ 
-  classId, 
-  gradeSets, 
-  loading, 
-  onSelectGradeSet, 
+function EditGradesList({
+  classId,
+  gradeSets,
+  loading,
+  subjectId,
+  onSelectGradeSet,
   onRefresh,
-  onBack 
-}: { 
-  classId: string; 
-  gradeSets: GradeSet[]; 
+  onBack
+}: {
+  classId: string;
+  gradeSets: GradeSet[];
   loading: boolean;
-  onSelectGradeSet: (id: string) => void; 
+  subjectId?: string;
+  onSelectGradeSet: (id: string) => void;
   onRefresh: () => void;
   onBack: () => void;
 }) {

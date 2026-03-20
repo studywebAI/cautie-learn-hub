@@ -195,8 +195,8 @@ export async function POST(request: NextRequest) {
       log('POST - Validation failed:', validation.error);
       return validation.error;
     }
-    const { name, description } = validation.data;
-    log('POST - Validated data:', { name, description });
+    const { name, description, subject_title } = validation.data;
+    log('POST - Validated data:', { name, description, subject_title });
 
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
@@ -310,6 +310,35 @@ export async function POST(request: NextRequest) {
 
     log('POST - class_members insert succeeded', { class_id: data.id });
 
+    const normalizedSubjectTitle = (subject_title || '').trim() || name.trim();
+
+    // Ensure each teacher has a default subject in the class.
+    const { data: createdSubject, error: createdSubjectError } = await supabase
+      .from('subjects')
+      .insert([{
+        title: normalizedSubjectTitle,
+        description: null,
+        class_id: data.id,
+        user_id: user.id,
+        class_label: normalizedSubjectTitle,
+      }])
+      .select('id, title')
+      .single();
+
+    if (createdSubjectError) {
+      log('POST - Subject creation failed', createdSubjectError.message);
+      return NextResponse.json({ error: `Class created but default subject failed: ${createdSubjectError.message}` }, { status: 500 });
+    }
+
+    const { error: classSubjectLinkError } = await (supabase as any)
+      .from('class_subjects')
+      .upsert([{ class_id: data.id, subject_id: createdSubject.id }], { onConflict: 'class_id,subject_id' });
+
+    if (classSubjectLinkError) {
+      log('POST - class_subjects upsert failed', classSubjectLinkError.message);
+      return NextResponse.json({ error: `Class created but subject link failed: ${classSubjectLinkError.message}` }, { status: 500 });
+    }
+
     // Log audit entry
     await logAuditEntry(supabase, {
       userId: user.id,
@@ -317,14 +346,17 @@ export async function POST(request: NextRequest) {
       action: 'create',
       entityType: 'class',
       entityId: data.id,
-      changes: { name, description }
+      changes: { name, description, subject_title: normalizedSubjectTitle }
     });
 
     // Increment classes_created counter
     log('POST - Incrementing classes_created counter')
     await supabase.rpc('increment_classes_created', { user_id: user.id });
 
-    return NextResponse.json(data);
+    return NextResponse.json({
+      ...data,
+      default_subject: createdSubject,
+    });
   } catch (err: any) {
     console.error('[CLASSES_POST] Unexpected error:', err);
     return NextResponse.json({ 
