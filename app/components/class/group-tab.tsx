@@ -126,6 +126,9 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
     noLinkedSubjects: isDutch ? 'Nog geen vakken gekoppeld.' : 'No linked subjects yet.',
     unknownOwner: isDutch ? 'Onbekende eigenaar' : 'Unknown owner',
     offlineSince: (when: string) => (isDutch ? `Offline - ${when}` : `Offline - ${when}`),
+    people: isDutch ? 'personen' : 'people',
+    teacherListHint: isDutch ? 'Klik een docent om gekoppelde vakken te bekijken' : 'Click a teacher to view linked subjects',
+    studentListHint: isDutch ? 'Selecteer een leerling voor details en prestaties' : 'Select a student for details and performance',
   };
 
   const [data, setData] = useState<GroupData | null>(cachedData || null);
@@ -229,10 +232,10 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
     .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically for consistency
 
   const getActionIcon = (action: string) => {
-    if (action.includes('create')) return <CheckCircle className="h-3 w-3 text-green-500" />;
-    if (action.includes('edit') || action.includes('update')) return <Activity className="h-3 w-3 text-blue-500" />;
-    if (action.includes('submit')) return <FileText className="h-3 w-3 text-purple-500" />;
-    return <Clock className="h-3 w-3 text-gray-500" />;
+    if (action.includes('create')) return <CheckCircle className="h-3 w-3 text-foreground/70" />;
+    if (action.includes('edit') || action.includes('update')) return <Activity className="h-3 w-3 text-foreground/70" />;
+    if (action.includes('submit')) return <FileText className="h-3 w-3 text-foreground/70" />;
+    return <Clock className="h-3 w-3 text-foreground/60" />;
   };
 
   if (loading) {
@@ -254,93 +257,105 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Teachers List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t.teachers}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {(data.teachers || []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t.noTeachers}</p>
-          ) : (
-            [...data.teachers]
-              .sort((a, b) => (a.email || a.name).localeCompare(b.email || b.name))
-              .map((teacher) => (
-                <button
-                  type="button"
-                  key={teacher.id}
-                  className="w-full rounded-lg border p-3 text-left transition-colors hover:bg-accent/50"
-                  onClick={() => {
-                    setSelectedTeacher(teacher);
-                    void logClassTabEvent({
-                      classId,
-                      tab: 'group',
-                      event: 'teacher_opened',
-                      stage: 'action',
-                      level: 'debug',
-                      meta: { teacher_id: teacher.id },
-                    });
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{teacher.email || teacher.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {(teacher.subjects || []).length > 0
-                          ? (teacher.subjects || []).map((s) => s.title).join(', ')
-                          : t.noSubjectsYet}
-                      </p>
+    <div className="space-y-4">
+      <div className="grid gap-4 xl:grid-cols-[22rem_minmax(0,1fr)]">
+        <Card className="rounded-2xl border-none shadow-none">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">{t.teachers}</CardTitle>
+              <span className="text-xs text-muted-foreground">
+                {data.teachers.length} {t.people}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">{t.teacherListHint}</p>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {(data.teachers || []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t.noTeachers}</p>
+            ) : (
+              [...data.teachers]
+                .sort((a, b) => (a.email || a.name).localeCompare(b.email || b.name))
+                .map((teacher) => (
+                  <button
+                    type="button"
+                    key={teacher.id}
+                    className="w-full rounded-xl bg-muted/30 p-3 text-left transition-colors hover:bg-muted/55"
+                    onClick={() => {
+                      setSelectedTeacher(teacher);
+                      void logClassTabEvent({
+                        classId,
+                        tab: 'group',
+                        event: 'teacher_opened',
+                        stage: 'action',
+                        level: 'debug',
+                        meta: { teacher_id: teacher.id },
+                      });
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{teacher.email || teacher.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {(teacher.subjects || []).length > 0
+                            ? (teacher.subjects || []).map((s) => s.title).join(', ')
+                            : t.noSubjectsYet}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-[11px]">
+                        {teacher.onlineStatus === 'online' ? t.online : t.offline}
+                      </Badge>
                     </div>
-                    <Badge variant={teacher.onlineStatus === 'online' ? 'outline' : 'secondary'}>
-                      {teacher.onlineStatus === 'online' ? t.online : t.offline}
-                    </Badge>
-                  </div>
-                </button>
-              ))
-          )}
-        </CardContent>
-      </Card>
+                  </button>
+                ))
+            )}
+          </CardContent>
+        </Card>
 
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold">{t.students}</h3>
-      </div>
+        <div className="space-y-4">
+          <Card className="rounded-2xl border-none shadow-none">
+            <CardContent className="pt-6">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h3 className="text-base font-semibold">{t.students}</h3>
+                  <p className="text-xs text-muted-foreground">{t.studentListHint}</p>
+                </div>
+                <div className="inline-flex w-full gap-2 rounded-full bg-muted/35 p-1 md:w-auto">
+                  <Button
+                    variant={filter === 'all' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setFilter('all')}
+                    className="h-8 rounded-full px-3"
+                  >
+                    {t.allStudents}
+                  </Button>
+                  <Button
+                    variant={filter === 'online' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setFilter('online')}
+                    className="h-8 rounded-full px-3 gap-2"
+                  >
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    {t.online} ({data.students.filter(s => s.onlineStatus === 'online').length})
+                  </Button>
+                  <Button
+                    variant={filter === 'offline' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setFilter('offline')}
+                    className="h-8 rounded-full px-3 gap-2"
+                  >
+                    <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                    {t.offline} ({data.students.filter(s => s.onlineStatus === 'offline').length})
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Filters */}
-      <div className="flex gap-2">
-        <Button
-          variant={filter === 'all' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setFilter('all')}
-        >
-          {t.allStudents}
-        </Button>
-        <Button
-          variant={filter === 'online' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setFilter('online')}
-          className="gap-2"
-        >
-          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-          {t.online} ({data.students.filter(s => s.onlineStatus === 'online').length})
-        </Button>
-        <Button
-          variant={filter === 'offline' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setFilter('offline')}
-          className="gap-2"
-        >
-          <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-          {t.offline} ({data.students.filter(s => s.onlineStatus === 'offline').length})
-        </Button>
-      </div>
-
-      {/* Students Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
         {filteredStudents.map(student => (
           <Card 
             key={student.id} 
-            className="hover:shadow-lg transition-shadow cursor-pointer"
+            className="cursor-pointer rounded-2xl border-none shadow-none transition-colors hover:bg-muted/40"
             onClick={() => {
               setSelectedStudent(student);
               void logClassTabEvent({
@@ -402,9 +417,9 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
 
                   {/* Last graded */}
                   {student.lastGraded && (
-                    <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 rounded text-xs">
+                    <div className="mt-3 rounded-xl bg-muted/45 p-2 text-xs">
                       <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 text-amber-500" />
+                        <Star className="h-3 w-3 text-foreground/70" />
                         <span className="font-medium">{t.lastGrade}: {student.lastGraded.grade}%</span>
                       </div>
                     </div>
@@ -414,10 +429,12 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
             </CardContent>
           </Card>
         ))}
+          </div>
+        </div>
       </div>
 
       {filteredStudents.length === 0 && (
-        <Card>
+        <Card className="rounded-2xl border-none shadow-none">
           <CardContent className="py-12 text-center text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>{t.noStudentsFound}</p>
@@ -427,7 +444,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
 
       {/* Student Detail Dialog */}
       <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl border-none">
           {selectedStudent && (
             <>
               <DialogHeader>
@@ -448,19 +465,19 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
               <div className="space-y-6 mt-4">
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-center p-3 bg-muted/45 rounded-xl">
                     <p className="text-2xl font-bold">{selectedStudent.stats.completionRate}%</p>
                     <p className="text-xs text-muted-foreground">{t.complete}</p>
                   </div>
-                  <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-center p-3 bg-muted/45 rounded-xl">
                     <p className="text-2xl font-bold">{selectedStudent.stats.completedAssignments}</p>
                     <p className="text-xs text-muted-foreground">{t.submitted}</p>
                   </div>
-                  <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-center p-3 bg-muted/45 rounded-xl">
                     <p className="text-2xl font-bold">{selectedStudent.stats.gradedAssignments}</p>
                     <p className="text-xs text-muted-foreground">{t.graded}</p>
                   </div>
-                  <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-center p-3 bg-muted/45 rounded-xl">
                     <p className="text-2xl font-bold">
                       {selectedStudent.stats.averageGrade !== null ? `${selectedStudent.stats.averageGrade}%` : '-'}
                     </p>
@@ -470,9 +487,9 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
 
                 {/* Last Graded */}
                 {selectedStudent.lastGraded && (
-                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200">
+                  <div className="p-4 bg-muted/45 rounded-xl">
                     <h4 className="font-semibold flex items-center gap-2 mb-2">
-                      <Star className="h-4 w-4 text-amber-500" />
+                      <Star className="h-4 w-4 text-foreground/70" />
                       {t.lastGrade}
                     </h4>
                     <div className="flex items-center justify-between">
@@ -493,7 +510,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                   {selectedStudent.recentActivity.length > 0 ? (
                     <div className="space-y-2">
                       {selectedStudent.recentActivity.map(activity => (
-                        <div key={activity.id} className="flex items-center gap-2 p-2 border rounded text-sm">
+                        <div key={activity.id} className="flex items-center gap-2 p-2 rounded-xl bg-muted/35 text-sm">
                           {getActionIcon(activity.action)}
                           <span className="flex-1 capitalize">{activity.action.replace(/_/g, ' ')}</span>
                           <span className="text-muted-foreground text-xs">
@@ -516,10 +533,10 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                   {selectedStudent.recentSubmissions.length > 0 ? (
                     <div className="space-y-2">
                       {selectedStudent.recentSubmissions.map(submission => (
-                        <div key={submission.id} className="flex items-center justify-between p-2 border rounded text-sm">
+                        <div key={submission.id} className="flex items-center justify-between p-2 rounded-xl bg-muted/35 text-sm">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             {submission.grade !== null ? (
-                              <Star className="h-4 w-4 text-amber-500 shrink-0" />
+                              <Star className="h-4 w-4 text-foreground/70 shrink-0" />
                             ) : submission.status === 'submitted' ? (
                               <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
                             ) : (
@@ -529,7 +546,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {submission.grade !== null && (
-                              <Badge variant="outline" className="text-amber-500">
+                              <Badge variant="secondary">
                                 {submission.grade}%
                               </Badge>
                             )}
@@ -550,7 +567,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
 
                 {/* Quick Links for Teachers */}
                 {isTeacher && (
-                  <div className="flex gap-2 pt-4 border-t">
+                  <div className="flex gap-2 pt-4">
                     <Button variant="outline" className="flex-1" asChild>
                       <Link prefetch={false} href={`/class/${classId}?tab=assignments&studentId=${selectedStudent.id}`}>
                         <FileText className="h-4 w-4 mr-2" />
@@ -573,7 +590,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
 
       {/* Teacher Detail Dialog */}
       <Dialog open={!!selectedTeacher} onOpenChange={() => setSelectedTeacher(null)}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl rounded-2xl border-none">
           {selectedTeacher && (
             <>
               <DialogHeader>
@@ -588,7 +605,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                 ) : (
                   <div className="space-y-2">
                     {(selectedTeacher.subjects || []).map((subject) => (
-                      <div key={subject.id} className="rounded-lg border p-3">
+                      <div key={subject.id} className="rounded-xl bg-muted/35 p-3">
                         <p className="font-medium">{subject.title}</p>
                         <p className="text-xs text-muted-foreground">{subject.ownerEmail || subject.ownerName || t.unknownOwner}</p>
                       </div>
