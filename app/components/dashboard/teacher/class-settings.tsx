@@ -64,6 +64,19 @@ type TeacherInviteCodeActivity = {
   is_expired?: boolean;
 };
 
+type ScheduleSlot = {
+  id: string;
+  class_id: string;
+  day_of_week: number;
+  period_index: number;
+  title: string;
+  start_time: string;
+  end_time: string;
+  is_break: boolean;
+  subject_id: string | null;
+  notes: string | null;
+};
+
 export function ClassSettings({ classId, className, onArchive, isArchived = false }: ClassSettingsProps) {
   const [isArchiving, setIsArchiving] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
@@ -89,6 +102,19 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
   const [preferences, setPreferences] = useState<ClassPreferences>(DEFAULT_CLASS_PREFERENCES);
   const [pendingJoinRequests, setPendingJoinRequests] = useState<PendingTeacherJoinRequest[]>([]);
   const [inviteActivity, setInviteActivity] = useState<TeacherInviteCodeActivity[]>([]);
+  const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlot[]>([]);
+  const [loadingSchedule, setLoadingSchedule] = useState(false);
+  const [creatingScheduleSlot, setCreatingScheduleSlot] = useState(false);
+  const [newScheduleSlot, setNewScheduleSlot] = useState({
+    day_of_week: '1',
+    period_index: '1',
+    title: '',
+    start_time: '08:30',
+    end_time: '09:20',
+    is_break: false,
+    subject_id: '',
+    notes: '',
+  });
   const { refetchClasses } = useContext(AppContext) as any;
 
   useEffect(() => {
@@ -96,6 +122,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     void loadSubjectSettings();
     void loadPendingJoinRequests();
     void loadInviteActivity();
+    void loadSchedule();
     void logClassTabEvent({
       classId,
       tab: 'settings',
@@ -150,6 +177,86 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       });
     } finally {
       setLoadingClassConfig(false);
+    }
+  };
+
+  const loadSchedule = async () => {
+    setLoadingSchedule(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}/school-schedule`);
+      const data = await response.json();
+      if (!response.ok && response.status !== 403) {
+        throw new Error(data.error || 'Failed to load schedule');
+      }
+      setScheduleSlots(data.slots || []);
+    } catch (error: any) {
+      toast({
+        title: 'Could not load school schedule',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingSchedule(false);
+    }
+  };
+
+  const createScheduleSlot = async () => {
+    if (!preferences.school_schedule_enabled) {
+      toast({ title: 'Enable school schedule first', variant: 'destructive' });
+      return;
+    }
+    if (!newScheduleSlot.title.trim()) {
+      toast({ title: 'Slot title is required', variant: 'destructive' });
+      return;
+    }
+
+    setCreatingScheduleSlot(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}/school-schedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          day_of_week: Number(newScheduleSlot.day_of_week),
+          period_index: Number(newScheduleSlot.period_index),
+          title: newScheduleSlot.title.trim(),
+          start_time: newScheduleSlot.start_time,
+          end_time: newScheduleSlot.end_time,
+          is_break: newScheduleSlot.is_break,
+          subject_id: newScheduleSlot.subject_id || null,
+          notes: newScheduleSlot.notes || null,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to create slot');
+      toast({ title: 'Schedule slot added' });
+      setNewScheduleSlot((prev) => ({ ...prev, title: '', notes: '' }));
+      await loadSchedule();
+    } catch (error: any) {
+      toast({
+        title: 'Could not add schedule slot',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setCreatingScheduleSlot(false);
+    }
+  };
+
+  const deleteScheduleSlot = async (slotId: string) => {
+    try {
+      const response = await fetch(`/api/classes/${classId}/school-schedule?slotId=${encodeURIComponent(slotId)}`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to delete slot');
+      toast({ title: 'Schedule slot removed' });
+      await loadSchedule();
+    } catch (error: any) {
+      toast({
+        title: 'Could not remove schedule slot',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -692,6 +799,130 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           <Button onClick={() => void handleSavePreferences()} disabled={savingPreferences}>
             {savingPreferences ? 'Saving...' : 'Save Teaching Defaults'}
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>School Schedule</CardTitle>
+          <CardDescription>
+            Create timetable slots per weekday. Students only see this when enabled and visible in teaching defaults.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-1">
+              <Label>Day</Label>
+              <select
+                value={newScheduleSlot.day_of_week}
+                onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, day_of_week: e.target.value }))}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="1">Monday</option>
+                <option value="2">Tuesday</option>
+                <option value="3">Wednesday</option>
+                <option value="4">Thursday</option>
+                <option value="5">Friday</option>
+                <option value="6">Saturday</option>
+                <option value="7">Sunday</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label>Period</Label>
+              <Input
+                value={newScheduleSlot.period_index}
+                onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, period_index: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Start</Label>
+              <Input
+                type="time"
+                value={newScheduleSlot.start_time}
+                onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, start_time: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>End</Label>
+              <Input
+                type="time"
+                value={newScheduleSlot.end_time}
+                onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, end_time: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1">
+              <Label>Title</Label>
+              <Input
+                value={newScheduleSlot.title}
+                onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder="Period 1 - Math"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Subject (optional)</Label>
+              <select
+                value={newScheduleSlot.subject_id}
+                onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, subject_id: e.target.value }))}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">No subject link</option>
+                {subjects.map((subject) => (
+                  <option key={subject.id} value={subject.id}>{subject.title}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <p className="text-sm font-medium">Break slot</p>
+              <p className="text-xs text-muted-foreground">Mark this timetable slot as pause/break.</p>
+            </div>
+            <Switch
+              checked={newScheduleSlot.is_break}
+              onCheckedChange={(checked) => setNewScheduleSlot((prev) => ({ ...prev, is_break: Boolean(checked) }))}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label>Notes (optional)</Label>
+            <Input
+              value={newScheduleSlot.notes}
+              onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, notes: e.target.value }))}
+              placeholder="Extra info for this slot"
+            />
+          </div>
+
+          <Button onClick={() => void createScheduleSlot()} disabled={creatingScheduleSlot || !preferences.school_schedule_enabled}>
+            {creatingScheduleSlot ? 'Adding...' : 'Add schedule slot'}
+          </Button>
+
+          <div className="space-y-2">
+            {loadingSchedule ? (
+              <p className="text-sm text-muted-foreground">Loading schedule slots...</p>
+            ) : scheduleSlots.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No schedule slots yet.</p>
+            ) : (
+              scheduleSlots.map((slot) => (
+                <div key={slot.id} className="rounded-md border p-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium">
+                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, slot.day_of_week - 1)]} · P{slot.period_index} · {slot.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {slot.start_time} - {slot.end_time} {slot.is_break ? '· Break' : ''}
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => void deleteScheduleSlot(slot.id)}>
+                    Remove
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
         </CardContent>
       </Card>
 

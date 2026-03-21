@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,48 @@ export default function StudysetPage() {
   const [days, setDays] = useState('7');
   const [minutesPerDay, setMinutesPerDay] = useState('45');
   const [confidence, setConfidence] = useState('beginner');
+  const [sourceBundle, setSourceBundle] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [studysets, setStudysets] = useState<any[]>([]);
+
+  const loadStudysets = async () => {
+    try {
+      const response = await fetch('/api/studysets');
+      if (!response.ok) return;
+      const data = await response.json();
+      setStudysets(data.studysets || []);
+    } catch {
+      setStudysets([]);
+    }
+  };
+
+  const createStudyset = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      const response = await fetch('/api/studysets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          confidence_level: confidence,
+          target_days: Number(days),
+          minutes_per_day: Number(minutesPerDay),
+          source_bundle: sourceBundle,
+        }),
+      });
+      if (!response.ok) return;
+      setName('');
+      setSourceBundle('');
+      await loadStudysets();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadStudysets();
+  }, []);
 
   return (
     <div className="h-full overflow-auto p-5 md:p-7">
@@ -66,10 +108,17 @@ export default function StudysetPage() {
 
               <div className="space-y-1">
                 <Label>Context bundle (notes, files, links, pasted text)</Label>
-                <Textarea placeholder="Paste or describe everything related to this exam/topic..." className="min-h-[160px]" />
+                <Textarea
+                  value={sourceBundle}
+                  onChange={(e) => setSourceBundle(e.target.value)}
+                  placeholder="Paste or describe everything related to this exam/topic..."
+                  className="min-h-[160px]"
+                />
               </div>
 
-              <Button disabled={!name.trim()}>Generate study plan (next phase)</Button>
+              <Button disabled={!name.trim() || saving} onClick={() => void createStudyset()}>
+                {saving ? 'Saving...' : 'Save studyset'}
+              </Button>
             </CardContent>
           </Card>
 
@@ -85,8 +134,28 @@ export default function StudysetPage() {
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>My Studysets</CardTitle>
+            <CardDescription>Saved long-term plans.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {studysets.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No studysets yet.</p>
+            ) : (
+              studysets.map((item) => (
+                <div key={item.id} className="rounded-md border p-3">
+                  <p className="font-medium">{item.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {item.target_days} days · {item.minutes_per_day} min/day · {item.confidence_level}
+                  </p>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
-
