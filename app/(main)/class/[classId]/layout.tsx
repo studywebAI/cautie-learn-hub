@@ -56,9 +56,10 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const visibleTabs = tabs;
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-border/60 bg-[hsl(var(--surface-1))] px-4 py-4">
-        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex h-full flex-col gap-4">
+      <div className="bg-[hsl(var(--surface-1))] p-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="truncate text-[18px]">{className || 'Loading...'}</h2>
           <button
             type="button"
@@ -93,6 +94,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
             );
           })}
         </nav>
+        </div>
       </div>
 
       <main className="flex-1 overflow-auto p-4">
