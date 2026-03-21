@@ -56,15 +56,15 @@
   .dark {
     --background: 0 0% 11.76%;
     --foreground: 0 0% 78.43%;
-    --card: 0 0% 7.84%;
+    --card: 0 0% 11.76%;
     --card-foreground: 0 0% 78.43%;
-    --popover: 0 0% 7.84%;
+    --popover: 0 0% 11.76%;
     --popover-foreground: 0 0% 78.43%;
     --primary: 0 0% 15.69%;
     --primary-foreground: 0 0% 94.12%;
     --secondary: 0 0% 15.69%;
     --secondary-foreground: 0 0% 94.12%;
-    --muted: 0 0% 7.84%;
+    --muted: 0 0% 11.76%;
     --muted-foreground: 0 0% 40%;
     --accent: 0 0% 15.69%;
     --accent-foreground: 0 0% 94.12%;
@@ -81,9 +81,9 @@
     --chart-4: 0 0% 36%;
     --chart-5: 0 0% 24%;
 
-    --surface-1: 0 0% 7.84%;
-    --surface-2: 0 0% 7.84%;
-    --surface-3: 0 0% 7.84%;
+    --surface-1: 0 0% 11.76%;
+    --surface-2: 0 0% 11.76%;
+    --surface-3: 0 0% 11.76%;
     --interactive-hover: 0 0% 18%;
     --interactive-active: 0 0% 22%;
     --focus-ring: 0 0% 84%;
@@ -170,15 +170,15 @@
   .theme-dark {
     --background: 0 0% 11.76%;
     --foreground: 0 0% 78.43%;
-    --card: 0 0% 7.84%;
+    --card: 0 0% 11.76%;
     --card-foreground: 0 0% 78.43%;
-    --popover: 0 0% 7.84%;
+    --popover: 0 0% 11.76%;
     --popover-foreground: 0 0% 78.43%;
     --primary: 0 0% 15.69%;
     --primary-foreground: 0 0% 94.12%;
     --secondary: 0 0% 15.69%;
     --secondary-foreground: 0 0% 94.12%;
-    --muted: 0 0% 7.84%;
+    --muted: 0 0% 11.76%;
     --muted-foreground: 0 0% 40%;
     --accent: 0 0% 15.69%;
     --accent-foreground: 0 0% 94.12%;
@@ -195,9 +195,9 @@
     --chart-4: 0 0% 36%;
     --chart-5: 0 0% 24%;
 
-    --surface-1: 0 0% 7.84%;
-    --surface-2: 0 0% 7.84%;
-    --surface-3: 0 0% 7.84%;
+    --surface-1: 0 0% 11.76%;
+    --surface-2: 0 0% 11.76%;
+    --surface-3: 0 0% 11.76%;
     --interactive-hover: 0 0% 18%;
     --interactive-active: 0 0% 22%;
     --focus-ring: 0 0% 84%;
