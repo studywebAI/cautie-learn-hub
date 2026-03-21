@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Users, Clock, TrendingUp, FileText, CheckCircle, Activity, Star } from 'lucide-react';
+import { Users, Clock, TrendingUp, FileText, CheckCircle, Activity, Star, ChevronDown, ChevronRight, ClipboardCheck, CalendarDays, Library } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Link from 'next/link';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
@@ -129,6 +129,12 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
     people: isDutch ? 'personen' : 'people',
     teacherListHint: isDutch ? 'Klik een docent om gekoppelde vakken te bekijken' : 'Click a teacher to view linked subjects',
     studentListHint: isDutch ? 'Selecteer een leerling voor details en prestaties' : 'Select a student for details and performance',
+    expand: isDutch ? 'Uitklappen' : 'Expand',
+    collapse: isDutch ? 'Inklappen' : 'Collapse',
+    viewGrades: isDutch ? 'Bekijk cijfers' : 'View grades',
+    viewAttendance: isDutch ? 'Bekijk aanwezigheid' : 'View attendance',
+    viewSchedule: isDutch ? 'Bekijk rooster' : 'View schedule',
+    viewSubjects: isDutch ? 'Bekijk vakken' : 'View subjects',
   };
 
   const [data, setData] = useState<GroupData | null>(cachedData || null);
@@ -136,6 +142,44 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [filter, setFilter] = useState<'all' | 'online' | 'offline'>('all');
+  const [teachersCollapsed, setTeachersCollapsed] = useState(false);
+  const [studentsCollapsed, setStudentsCollapsed] = useState(false);
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = window.localStorage.getItem(`group-panel-state:${classId}`);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved) as { teachersCollapsed?: boolean; studentsCollapsed?: boolean };
+      setTeachersCollapsed(parsed.teachersCollapsed === true);
+      setStudentsCollapsed(parsed.studentsCollapsed === true);
+    } catch {
+      // ignore invalid cache
+    }
+  }, [classId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(
+      `group-panel-state:${classId}`,
+      JSON.stringify({ teachersCollapsed, studentsCollapsed })
+    );
+  }, [classId, teachersCollapsed, studentsCollapsed]);
+
+  useEffect(() => {
+    const loadClassPreferences = async () => {
+      try {
+        const response = await fetch(`/api/classes/${classId}`);
+        if (!response.ok) return;
+        const result = await response.json();
+        setScheduleEnabled(result?.preferences?.school_schedule_enabled === true);
+      } catch {
+        setScheduleEnabled(false);
+      }
+    };
+    void loadClassPreferences();
+  }, [classId]);
 
   useEffect(() => {
     // Show cached data immediately, but always refresh in background
@@ -262,14 +306,22 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
         <Card className="rounded-2xl border-none shadow-none">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">{t.teachers}</CardTitle>
+              <button
+                type="button"
+                onClick={() => setTeachersCollapsed((value) => !value)}
+                className="inline-flex items-center gap-1.5 text-left"
+                aria-label={teachersCollapsed ? t.expand : t.collapse}
+              >
+                {teachersCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                <CardTitle className="text-base">{t.teachers}</CardTitle>
+              </button>
               <span className="text-xs text-muted-foreground">
                 {data.teachers.length} {t.people}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">{t.teacherListHint}</p>
+            {!teachersCollapsed && <p className="text-xs text-muted-foreground">{t.teacherListHint}</p>}
           </CardHeader>
-          <CardContent className="space-y-2">
+          {!teachersCollapsed && <CardContent className="space-y-2">
             {(data.teachers || []).length === 0 ? (
               <p className="text-sm text-muted-foreground">{t.noTeachers}</p>
             ) : (
@@ -308,7 +360,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                   </button>
                 ))
             )}
-          </CardContent>
+          </CardContent>}
         </Card>
 
         <div className="space-y-4">
@@ -316,10 +368,18 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
             <CardContent className="pt-6">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h3 className="text-base font-semibold">{t.students}</h3>
-                  <p className="text-xs text-muted-foreground">{t.studentListHint}</p>
+                  <button
+                    type="button"
+                    onClick={() => setStudentsCollapsed((value) => !value)}
+                    className="inline-flex items-center gap-1.5 text-left"
+                    aria-label={studentsCollapsed ? t.expand : t.collapse}
+                  >
+                    {studentsCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    <h3 className="text-base font-semibold">{t.students}</h3>
+                  </button>
+                  {!studentsCollapsed && <p className="text-xs text-muted-foreground">{t.studentListHint}</p>}
                 </div>
-                <div className="inline-flex w-full gap-2 rounded-full bg-muted/35 p-1 md:w-auto">
+                {!studentsCollapsed && <div className="inline-flex w-full gap-2 rounded-full bg-muted/35 p-1 md:w-auto">
                   <Button
                     variant={filter === 'all' ? 'default' : 'ghost'}
                     size="sm"
@@ -346,12 +406,12 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                     <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
                     {t.offline} ({data.students.filter(s => s.onlineStatus === 'offline').length})
                   </Button>
-                </div>
+                </div>}
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
+          {!studentsCollapsed && <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
         {filteredStudents.map(student => (
           <Card 
             key={student.id} 
@@ -429,11 +489,11 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
             </CardContent>
           </Card>
         ))}
-          </div>
+          </div>}
         </div>
       </div>
 
-      {filteredStudents.length === 0 && (
+      {!studentsCollapsed && filteredStudents.length === 0 && (
         <Card className="rounded-2xl border-none shadow-none">
           <CardContent className="py-12 text-center text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -567,7 +627,13 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
 
                 {/* Quick Links for Teachers */}
                 {isTeacher && (
-                  <div className="flex gap-2 pt-4">
+                  <div className="grid grid-cols-1 gap-2 pt-4 md:grid-cols-2">
+                    <Button variant="outline" className="flex-1" asChild>
+                      <Link prefetch={false} href={`/class/${classId}?tab=grades&studentId=${selectedStudent.id}`}>
+                        <ClipboardCheck className="h-4 w-4 mr-2" />
+                        {t.viewGrades}
+                      </Link>
+                    </Button>
                     <Button variant="outline" className="flex-1" asChild>
                       <Link prefetch={false} href={`/class/${classId}?tab=assignments&studentId=${selectedStudent.id}`}>
                         <FileText className="h-4 w-4 mr-2" />
@@ -580,6 +646,20 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                         {t.viewProgress}
                       </Link>
                     </Button>
+                    <Button variant="outline" className="flex-1" asChild>
+                      <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}`}>
+                        <CalendarDays className="h-4 w-4 mr-2" />
+                        {t.viewAttendance}
+                      </Link>
+                    </Button>
+                    {scheduleEnabled && (
+                      <Button variant="outline" className="flex-1" asChild>
+                        <Link prefetch={false} href={`/agenda?classId=${classId}`}>
+                          <CalendarDays className="h-4 w-4 mr-2" />
+                          {t.viewSchedule}
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
@@ -597,6 +677,40 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                 <DialogTitle>{selectedTeacher.email || selectedTeacher.name}</DialogTitle>
               </DialogHeader>
               <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  <Button variant="outline" asChild>
+                    <Link prefetch={false} href={`/class/${classId}?tab=grades&teacherId=${selectedTeacher.id}`}>
+                      <ClipboardCheck className="h-4 w-4 mr-2" />
+                      {t.viewGrades}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link prefetch={false} href={`/class/${classId}?tab=progress&teacherId=${selectedTeacher.id}`}>
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      {t.viewProgress}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link prefetch={false} href={`/class/${classId}?tab=attendance&teacherId=${selectedTeacher.id}`}>
+                      <CalendarDays className="h-4 w-4 mr-2" />
+                      {t.viewAttendance}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link prefetch={false} href={`/class/${classId}?tab=subjects`}>
+                      <Library className="h-4 w-4 mr-2" />
+                      {t.viewSubjects}
+                    </Link>
+                  </Button>
+                  {scheduleEnabled && (
+                    <Button variant="outline" asChild>
+                      <Link prefetch={false} href={`/agenda?classId=${classId}`}>
+                        <CalendarDays className="h-4 w-4 mr-2" />
+                        {t.viewSchedule}
+                      </Link>
+                    </Button>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">
                   {t.linkedSubjects}
                 </p>
