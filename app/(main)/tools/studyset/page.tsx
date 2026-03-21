@@ -97,7 +97,7 @@ export default function StudysetPage() {
 
   return (
     <div className="h-full overflow-auto">
-      <div className="w-full space-y-4">
+      <div className="flex min-h-full w-full flex-col gap-4">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -110,8 +110,8 @@ export default function StudysetPage() {
           </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <Card className="h-full lg:col-span-2">
             <CardHeader>
               <CardTitle>Create Studyset</CardTitle>
               <CardDescription>Collect all context once, then generate a multi-day plan.</CardDescription>
@@ -161,7 +161,7 @@ export default function StudysetPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="h-full">
             <CardHeader>
               <CardTitle>Target Structure</CardTitle>
             </CardHeader>
@@ -174,7 +174,7 @@ export default function StudysetPage() {
           </Card>
         </div>
 
-        <Card>
+        <Card className="flex-1">
           <CardHeader>
             <CardTitle>My Studysets</CardTitle>
             <CardDescription>Saved long-term plans.</CardDescription>
