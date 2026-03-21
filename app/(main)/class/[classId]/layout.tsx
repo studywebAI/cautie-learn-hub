@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { 
   BookOpen, Users, FileText, Settings, GraduationCap, Bell, 
   BarChart3, Library, Calendar, UserPlus, Layers,
-  ClipboardCheck
+  ClipboardCheck, History
 } from 'lucide-react';
 import Link from 'next/link';
 import { AppContext } from '@/contexts/app-context';
@@ -19,6 +19,7 @@ const tabs = [
   { id: 'progress', label: 'Progress', icon: BarChart3, href: '?tab=progress' },
   { id: 'subjects', label: 'Subjects', icon: Library, href: '?tab=subjects' },
   { id: 'analytics', label: 'Analytics', icon: Layers, href: '?tab=analytics' },
+  { id: 'logs', label: 'Logs', icon: History, href: '?tab=logs' },
   { id: 'settings', label: 'Settings', icon: Settings, href: '?tab=settings' },
 ];
 

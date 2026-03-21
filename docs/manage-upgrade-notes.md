@@ -6,6 +6,7 @@
 - Any new/changed table logic must be shipped as a `.sql` file for Supabase SQL editor.
 - Add extensive logging for every class tab (`invite`, `group`, `subjects`, `grades`, `attendance`, `announcements`, `progress`, `analytics`, `settings`, `chapters`, `materials`, `students`, `assignments`).
 - Prefer structured telemetry payloads over ad-hoc strings.
+- Dedicated class `Logs` tab should categorize timeline data (teacher invites, join requests, settings, attendance, grades, telemetry, other).
 - Teacher join policy:
   - Hard block teacher invite/join when `invite_allow_teacher_invites = false`.
   - Teacher join via one-time teacher invite code requires approval (pending request + approve/reject).

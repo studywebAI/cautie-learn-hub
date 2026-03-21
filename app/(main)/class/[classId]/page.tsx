@@ -16,13 +16,13 @@ import { ChapterContentViewer } from '@/components/class/ChapterContentViewer';
 import { ChapterEditor } from '@/components/class/ChapterEditor';
 import { QuickGrader } from '@/components/dashboard/teacher/quick-grader';
 import { AttendancePanel } from '@/components/dashboard/teacher/attendance-panel';
-import { AuditLogsPanel } from '@/components/dashboard/teacher/audit-logs-panel';
 import { SubjectOverview } from '@/components/dashboard/teacher/subject-overview';
 import { StudentProgressPanel } from '@/components/dashboard/teacher/student-progress';
 import { InviteTab } from '@/components/class/invite-tab';
 import { GroupTab } from '@/components/class/group-tab';
 import { AttendanceTab } from '@/components/class/attendance-tab';
 import { GradesTab } from '@/components/class/grades-tab';
+import { LogsTab } from '@/components/class/logs-tab';
 import { GraduationCap } from 'lucide-react';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 
@@ -349,11 +349,10 @@ export default function ClassDetailsPage() {
         return isTeacher ? <AttendanceTab classId={classId} /> : null;
       case 'settings':
         return isTeacher ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ClassSettings classId={classId} className={classInfo.name} isArchived={classInfo.status === 'archived'} onArchive={() => window.location.href = '/classes'} />
-            <AuditLogsPanel classId={classId} />
-          </div>
+          <ClassSettings classId={classId} className={classInfo.name} isArchived={classInfo.status === 'archived'} onArchive={() => window.location.href = '/classes'} />
         ) : null;
+      case 'logs':
+        return isTeacher ? <LogsTab classId={classId} /> : null;
       case 'chapters':
         return (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
