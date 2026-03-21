@@ -8,19 +8,19 @@
     --type-body: 13px;
     --type-section: 14px;
     --type-page: 24px;
-    --background: 0 0% 98.8%;
+    --background: 0 0% 97.2%;
     --foreground: 240 8% 13%;
-    --card: 0 0% 98.8%;
+    --card: 0 0% 99.2%;
     --card-foreground: 240 6% 15%;
-    --popover: 0 0% 98.8%;
+    --popover: 0 0% 99.2%;
     --popover-foreground: 240 6% 15%;
     --primary: 0 0% 9%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 93.8%;
+    --secondary: 0 0% 99.2%;
     --secondary-foreground: 240 6% 14%;
-    --muted: 0 0% 93.8%;
+    --muted: 0 0% 96%;
     --muted-foreground: 240 5% 34%;
-    --accent: 0 0% 92.8%;
+    --accent: 0 0% 96%;
     --accent-foreground: 240 6% 14%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -30,9 +30,9 @@
     --input: 240 5% 85.5%;
     --ring: 240 7% 18%;
     --radius: 0.75rem;
-    --surface-1: 0 0% 98.8%;
-    --surface-2: 0 0% 95.8%;
-    --surface-3: 0 0% 93.2%;
+    --surface-1: 0 0% 99.2%;
+    --surface-2: 0 0% 97.6%;
+    --surface-3: 0 0% 96%;
     --interactive-hover: 0 0% 90.8%;
     --interactive-active: 0 0% 88.4%;
     --focus-ring: 0 0% 26%;
@@ -42,7 +42,7 @@
     --chart-4: 0 0% 64%;
     --chart-5: 0 0% 78%;
 
-    --sidebar-background: 0 0% 98.8%;
+    --sidebar-background: 0 0% 99.2%;
     --sidebar-foreground: 240 6% 30%;
     --sidebar-primary: 0 0% 9%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -54,19 +54,19 @@
   }
 
   .dark {
-    --background: 0 0% 7%;
+    --background: 0 0% 10%;
     --foreground: 0 0% 96%;
-    --card: 0 0% 8%;
+    --card: 0 0% 7.6%;
     --card-foreground: 0 0% 92%;
-    --popover: 0 0% 9%;
+    --popover: 0 0% 7.8%;
     --popover-foreground: 0 0% 92%;
     --primary: 0 0% 92%;
     --primary-foreground: 0 0% 6%;
-    --secondary: 0 0% 14%;
+    --secondary: 0 0% 7.6%;
     --secondary-foreground: 0 0% 92%;
-    --muted: 0 0% 14%;
+    --muted: 0 0% 9%;
     --muted-foreground: 0 0% 68%;
-    --accent: 0 0% 14%;
+    --accent: 0 0% 9%;
     --accent-foreground: 0 0% 92%;
     --destructive: 0 62% 35%;
     --destructive-foreground: 0 0% 100%;
@@ -81,13 +81,13 @@
     --chart-4: 0 0% 36%;
     --chart-5: 0 0% 24%;
 
-    --surface-1: 0 0% 8%;
-    --surface-2: 0 0% 11%;
-    --surface-3: 0 0% 14%;
+    --surface-1: 0 0% 7.6%;
+    --surface-2: 0 0% 8.6%;
+    --surface-3: 0 0% 9.6%;
     --interactive-hover: 0 0% 18%;
     --interactive-active: 0 0% 22%;
     --focus-ring: 0 0% 84%;
-    --sidebar-background: 0 0% 7%;
+    --sidebar-background: 0 0% 7.6%;
     --sidebar-foreground: 0 0% 75%;
     --sidebar-primary: 0 0% 92%;
     --sidebar-primary-foreground: 0 0% 6%;
@@ -123,19 +123,19 @@
   }
 
   .theme-light {
-    --background: 0 0% 98.8%;
+    --background: 0 0% 97.2%;
     --foreground: 240 8% 13%;
-    --card: 0 0% 98.8%;
+    --card: 0 0% 99.2%;
     --card-foreground: 240 6% 15%;
-    --popover: 0 0% 98.8%;
+    --popover: 0 0% 99.2%;
     --popover-foreground: 240 6% 15%;
     --primary: 0 0% 9%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 93.8%;
+    --secondary: 0 0% 99.2%;
     --secondary-foreground: 240 6% 14%;
-    --muted: 0 0% 93.8%;
+    --muted: 0 0% 96%;
     --muted-foreground: 240 5% 34%;
-    --accent: 0 0% 92.8%;
+    --accent: 0 0% 96%;
     --accent-foreground: 240 6% 14%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -150,13 +150,13 @@
     --chart-4: 0 0% 64%;
     --chart-5: 0 0% 78%;
 
-    --surface-1: 0 0% 98.8%;
-    --surface-2: 0 0% 95.8%;
-    --surface-3: 0 0% 93.2%;
+    --surface-1: 0 0% 99.2%;
+    --surface-2: 0 0% 97.6%;
+    --surface-3: 0 0% 96%;
     --interactive-hover: 0 0% 90.8%;
     --interactive-active: 0 0% 88.4%;
     --focus-ring: 0 0% 26%;
-    --sidebar-background: 0 0% 98.8%;
+    --sidebar-background: 0 0% 99.2%;
     --sidebar-foreground: 240 6% 30%;
     --sidebar-primary: 0 0% 9%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -168,19 +168,19 @@
   }
 
   .theme-dark {
-    --background: 0 0% 7%;
+    --background: 0 0% 10%;
     --foreground: 0 0% 96%;
-    --card: 0 0% 8%;
+    --card: 0 0% 7.6%;
     --card-foreground: 0 0% 92%;
-    --popover: 0 0% 9%;
+    --popover: 0 0% 7.8%;
     --popover-foreground: 0 0% 92%;
     --primary: 0 0% 92%;
     --primary-foreground: 0 0% 6%;
-    --secondary: 0 0% 14%;
+    --secondary: 0 0% 7.6%;
     --secondary-foreground: 0 0% 92%;
-    --muted: 0 0% 14%;
+    --muted: 0 0% 9%;
     --muted-foreground: 0 0% 68%;
-    --accent: 0 0% 14%;
+    --accent: 0 0% 9%;
     --accent-foreground: 0 0% 92%;
     --destructive: 0 62% 35%;
     --destructive-foreground: 0 0% 100%;
@@ -195,13 +195,13 @@
     --chart-4: 0 0% 36%;
     --chart-5: 0 0% 24%;
 
-    --surface-1: 0 0% 8%;
-    --surface-2: 0 0% 11%;
-    --surface-3: 0 0% 14%;
+    --surface-1: 0 0% 7.6%;
+    --surface-2: 0 0% 8.6%;
+    --surface-3: 0 0% 9.6%;
     --interactive-hover: 0 0% 18%;
     --interactive-active: 0 0% 22%;
     --focus-ring: 0 0% 84%;
-    --sidebar-background: 0 0% 7%;
+    --sidebar-background: 0 0% 7.6%;
     --sidebar-foreground: 0 0% 75%;
     --sidebar-primary: 0 0% 92%;
     --sidebar-primary-foreground: 0 0% 6%;
@@ -214,19 +214,19 @@
 
   /* Mist: calm cool blues */
   .theme-ocean {
-    --background: 205 30% 96.5%;
+    --background: 205 24% 92.8%;
     --foreground: 208 34% 14%;
-    --card: 205 24% 93.8%;
+    --card: 205 26% 95.2%;
     --card-foreground: 208 34% 14%;
-    --popover: 205 24% 94.2%;
+    --popover: 205 26% 95.3%;
     --popover-foreground: 208 34% 14%;
     --primary: 204 58% 32%;
     --primary-foreground: 205 25% 98%;
-    --secondary: 205 20% 92%;
+    --secondary: 205 26% 95.2%;
     --secondary-foreground: 208 30% 16%;
-    --muted: 205 18% 91.5%;
+    --muted: 205 20% 93.6%;
     --muted-foreground: 206 14% 38%;
-    --accent: 205 18% 91%;
+    --accent: 205 20% 93.6%;
     --accent-foreground: 208 30% 16%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -240,13 +240,13 @@
     --chart-3: 214 36% 42%;
     --chart-4: 186 32% 48%;
     --chart-5: 222 28% 56%;
-    --surface-1: 205 24% 93.8%;
-    --surface-2: 205 20% 92%;
-    --surface-3: 205 18% 90.5%;
+    --surface-1: 205 26% 95.2%;
+    --surface-2: 205 22% 94%;
+    --surface-3: 205 20% 93%;
     --interactive-hover: 205 20% 89%;
     --interactive-active: 205 20% 87%;
     --focus-ring: 204 58% 32%;
-    --sidebar-background: 205 24% 93.8%;
+    --sidebar-background: 205 26% 95.2%;
     --sidebar-foreground: 208 30% 16%;
     --sidebar-primary: 204 58% 32%;
     --sidebar-primary-foreground: 205 25% 98%;
@@ -259,19 +259,19 @@
 
   /* Sage: calm green with warm off-white surfaces */
   .theme-forest {
-    --background: 102 24% 96.5%;
+    --background: 102 18% 92.8%;
     --foreground: 132 26% 13.5%;
-    --card: 102 18% 94%;
+    --card: 102 20% 95.3%;
     --card-foreground: 132 26% 13.5%;
-    --popover: 102 18% 94.3%;
+    --popover: 102 20% 95.4%;
     --popover-foreground: 132 26% 13.5%;
     --primary: 134 34% 30%;
     --primary-foreground: 102 18% 98%;
-    --secondary: 102 14% 92%;
+    --secondary: 102 20% 95.3%;
     --secondary-foreground: 132 24% 16%;
-    --muted: 102 12% 91.2%;
+    --muted: 102 14% 93.7%;
     --muted-foreground: 128 12% 37%;
-    --accent: 102 14% 91%;
+    --accent: 102 14% 93.7%;
     --accent-foreground: 132 24% 16%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -285,13 +285,13 @@
     --chart-3: 154 24% 42%;
     --chart-4: 122 18% 52%;
     --chart-5: 96 16% 60%;
-    --surface-1: 102 18% 94%;
-    --surface-2: 102 14% 92%;
-    --surface-3: 102 12% 90.2%;
+    --surface-1: 102 20% 95.3%;
+    --surface-2: 102 16% 94.2%;
+    --surface-3: 102 14% 93.2%;
     --interactive-hover: 102 14% 89%;
     --interactive-active: 102 14% 87%;
     --focus-ring: 134 34% 30%;
-    --sidebar-background: 102 18% 94%;
+    --sidebar-background: 102 20% 95.3%;
     --sidebar-foreground: 132 24% 16%;
     --sidebar-primary: 134 34% 30%;
     --sidebar-primary-foreground: 102 18% 98%;
@@ -304,19 +304,19 @@
 
   /* Sand: warm off-white and subtle amber accents */
   .theme-sunset {
-    --background: 34 38% 96.6%;
+    --background: 34 24% 92.8%;
     --foreground: 28 30% 15%;
-    --card: 34 30% 94.1%;
+    --card: 34 28% 95.4%;
     --card-foreground: 28 30% 15%;
-    --popover: 34 30% 94.3%;
+    --popover: 34 28% 95.5%;
     --popover-foreground: 28 30% 15%;
     --primary: 26 58% 40%;
     --primary-foreground: 34 36% 98%;
-    --secondary: 34 20% 92%;
+    --secondary: 34 28% 95.4%;
     --secondary-foreground: 28 28% 16.5%;
-    --muted: 34 18% 91.2%;
+    --muted: 34 18% 93.8%;
     --muted-foreground: 24 16% 38%;
-    --accent: 34 20% 91%;
+    --accent: 34 18% 93.8%;
     --accent-foreground: 28 28% 16.5%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -330,13 +330,13 @@
     --chart-3: 38 44% 44%;
     --chart-4: 52 36% 50%;
     --chart-5: 20 28% 58%;
-    --surface-1: 34 30% 94.1%;
-    --surface-2: 34 20% 92%;
-    --surface-3: 34 18% 90.3%;
+    --surface-1: 34 28% 95.4%;
+    --surface-2: 34 20% 94.2%;
+    --surface-3: 34 18% 93.2%;
     --interactive-hover: 34 20% 89.2%;
     --interactive-active: 34 20% 87%;
     --focus-ring: 26 58% 40%;
-    --sidebar-background: 34 30% 94.1%;
+    --sidebar-background: 34 28% 95.4%;
     --sidebar-foreground: 28 28% 16.5%;
     --sidebar-primary: 26 58% 40%;
     --sidebar-primary-foreground: 34 36% 98%;
@@ -349,19 +349,19 @@
 
   /* Blossom: soft rose neutrals */
   .theme-rose {
-    --background: 344 26% 96.4%;
+    --background: 344 18% 92.8%;
     --foreground: 336 28% 15%;
-    --card: 344 20% 94%;
+    --card: 344 22% 95.3%;
     --card-foreground: 336 28% 15%;
-    --popover: 344 20% 94.2%;
+    --popover: 344 22% 95.4%;
     --popover-foreground: 336 28% 15%;
     --primary: 338 42% 36%;
     --primary-foreground: 344 20% 98%;
-    --secondary: 344 16% 92%;
+    --secondary: 344 22% 95.3%;
     --secondary-foreground: 336 24% 16.5%;
-    --muted: 344 14% 91.2%;
+    --muted: 344 14% 93.8%;
     --muted-foreground: 336 14% 38%;
-    --accent: 344 16% 91%;
+    --accent: 344 14% 93.8%;
     --accent-foreground: 336 24% 16.5%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -375,13 +375,13 @@
     --chart-3: 356 30% 46%;
     --chart-4: 304 22% 52%;
     --chart-5: 14 24% 58%;
-    --surface-1: 344 20% 94%;
-    --surface-2: 344 16% 92%;
-    --surface-3: 344 14% 90.2%;
+    --surface-1: 344 22% 95.3%;
+    --surface-2: 344 16% 94.2%;
+    --surface-3: 344 14% 93.2%;
     --interactive-hover: 344 16% 89.2%;
     --interactive-active: 344 16% 87%;
     --focus-ring: 338 42% 36%;
-    --sidebar-background: 344 20% 94%;
+    --sidebar-background: 344 22% 95.3%;
     --sidebar-foreground: 336 24% 16.5%;
     --sidebar-primary: 338 42% 36%;
     --sidebar-primary-foreground: 344 20% 98%;
