@@ -1,20 +1,16 @@
 ﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { 
-  Users, User, Clock, TrendingUp, FileText, 
-  CheckCircle, AlertCircle, Activity, Eye, 
-  GraduationCap, BookOpen, Star, X
-} from 'lucide-react';
+import { Users, Clock, TrendingUp, FileText, CheckCircle, Activity, Star } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Link from 'next/link';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
+import { AppContext, AppContextType } from '@/contexts/app-context';
 
 type Student = {
   id: string;
@@ -94,6 +90,44 @@ type GroupTabProps = {
 };
 
 export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
+  const appContext = useContext(AppContext) as AppContextType | null;
+  const language = appContext?.language || 'en';
+  const isDutch = language === 'nl';
+  const t = {
+    failedLoad: isDutch ? 'Kon groepsdata niet laden' : 'Failed to load group data',
+    teachers: isDutch ? 'Docenten' : 'Teachers',
+    students: isDutch ? 'Leerlingen' : 'Students',
+    noTeachers: isDutch ? 'Geen docenten gevonden' : 'No teachers found',
+    noSubjectsYet: isDutch ? 'Nog geen vakken gekoppeld' : 'No linked subjects yet',
+    online: isDutch ? 'Online' : 'Online',
+    offline: isDutch ? 'Offline' : 'Offline',
+    allStudents: isDutch ? 'Alle leerlingen' : 'All students',
+    noStudentsFound: isDutch ? 'Geen leerlingen gevonden' : 'No students found',
+    never: isDutch ? 'Nooit' : 'Never',
+    justNow: isDutch ? 'Net nu' : 'Just now',
+    minAgo: (m: number) => (isDutch ? `${m}m geleden` : `${m}m ago`),
+    hourAgo: (h: number) => (isDutch ? `${h}u geleden` : `${h}h ago`),
+    noEmail: isDutch ? 'Geen e-mail' : 'No email',
+    progress: isDutch ? 'Voortgang' : 'Progress',
+    assignments: isDutch ? 'Opdrachten' : 'Assignments',
+    avgGrade: isDutch ? 'Gem. cijfer' : 'Avg Grade',
+    lastGrade: isDutch ? 'Laatste cijfer' : 'Last grade',
+    complete: isDutch ? 'Voltooid' : 'Complete',
+    submitted: isDutch ? 'Ingeleverd' : 'Submitted',
+    graded: isDutch ? 'Beoordeeld' : 'Graded',
+    score: isDutch ? 'Score' : 'Score',
+    recentActivity: isDutch ? 'Recente activiteit' : 'Recent Activity',
+    noRecentActivity: isDutch ? 'Geen recente activiteit' : 'No recent activity',
+    recentSubmissions: isDutch ? 'Recente inzendingen' : 'Recent Submissions',
+    noSubmissions: isDutch ? 'Nog geen inzendingen' : 'No submissions yet',
+    viewAssignments: isDutch ? 'Bekijk opdrachten' : 'View Assignments',
+    viewProgress: isDutch ? 'Bekijk voortgang' : 'View Progress',
+    linkedSubjects: isDutch ? 'Gekoppelde vakken' : 'Linked subjects',
+    noLinkedSubjects: isDutch ? 'Nog geen vakken gekoppeld.' : 'No linked subjects yet.',
+    unknownOwner: isDutch ? 'Onbekende eigenaar' : 'Unknown owner',
+    offlineSince: (when: string) => (isDutch ? `Offline - ${when}` : `Offline - ${when}`),
+  };
+
   const [data, setData] = useState<GroupData | null>(cachedData || null);
   const [loading, setLoading] = useState(!cachedData);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -174,15 +208,15 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
   };
 
   const formatLastSeen = (lastSeen: string | null) => {
-    if (!lastSeen) return 'Never';
+    if (!lastSeen) return t.never;
     const date = new Date(lastSeen);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+    if (diffMins < 1) return t.justNow;
+    if (diffMins < 60) return t.minAgo(diffMins);
+    if (diffMins < 1440) return t.hourAgo(Math.floor(diffMins / 60));
     return date.toLocaleDateString();
   };
 
@@ -213,7 +247,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
-          Failed to load group data
+          {t.failedLoad}
         </CardContent>
       </Card>
     );
@@ -221,75 +255,14 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500 rounded-lg">
-                <Users className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{data.stats.totalStudents}</p>
-                <p className="text-sm text-muted-foreground">Total Students</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500 rounded-lg">
-                <Activity className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{data.stats.onlineStudents}</p>
-                <p className="text-sm text-muted-foreground">Online Now</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500 rounded-lg">
-                <GraduationCap className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{data.stats.totalTeachers}</p>
-                <p className="text-sm text-muted-foreground">Teachers</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500 rounded-lg">
-                <Star className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {data.students.filter(s => s.stats.averageGrade !== null).length}
-                </p>
-                <p className="text-sm text-muted-foreground">Graded</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Teachers List */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Docenten</CardTitle>
+          <CardTitle className="text-base">{t.teachers}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {(data.teachers || []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">Geen docenten gevonden</p>
+            <p className="text-sm text-muted-foreground">{t.noTeachers}</p>
           ) : (
             [...data.teachers]
               .sort((a, b) => (a.email || a.name).localeCompare(b.email || b.name))
@@ -316,11 +289,11 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                       <p className="truncate text-xs text-muted-foreground">
                         {(teacher.subjects || []).length > 0
                           ? (teacher.subjects || []).map((s) => s.title).join(', ')
-                          : 'Nog geen subjects'}
+                          : t.noSubjectsYet}
                       </p>
                     </div>
                     <Badge variant={teacher.onlineStatus === 'online' ? 'outline' : 'secondary'}>
-                      {teacher.onlineStatus === 'online' ? 'Online' : 'Offline'}
+                      {teacher.onlineStatus === 'online' ? t.online : t.offline}
                     </Badge>
                   </div>
                 </button>
@@ -330,7 +303,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
       </Card>
 
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold">Leerlingen</h3>
+        <h3 className="text-base font-semibold">{t.students}</h3>
       </div>
 
       {/* Filters */}
@@ -340,7 +313,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
           size="sm"
           onClick={() => setFilter('all')}
         >
-          All Students
+          {t.allStudents}
         </Button>
         <Button
           variant={filter === 'online' ? 'default' : 'outline'}
@@ -349,7 +322,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
           className="gap-2"
         >
           <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-          Online ({data.students.filter(s => s.onlineStatus === 'online').length})
+          {t.online} ({data.students.filter(s => s.onlineStatus === 'online').length})
         </Button>
         <Button
           variant={filter === 'offline' ? 'default' : 'outline'}
@@ -358,7 +331,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
           className="gap-2"
         >
           <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-          Offline ({data.students.filter(s => s.onlineStatus === 'offline').length})
+          {t.offline} ({data.students.filter(s => s.onlineStatus === 'offline').length})
         </Button>
       </div>
 
@@ -395,7 +368,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                     <p className="font-semibold truncate">{student.name}</p>
                     {student.onlineStatus === 'online' ? (
                       <Badge variant="outline" className="text-green-500 border-green-500 text-xs">
-                        Online
+                        {t.online}
                       </Badge>
                     ) : (
                       <Badge variant="secondary" className="text-xs">
@@ -403,17 +376,17 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{student.email || 'No email'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{student.email || t.noEmail}</p>
                   
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
+                      <span className="text-muted-foreground">{t.progress}</span>
                       <span className="font-medium">{student.stats.completionRate}%</span>
                     </div>
                     <Progress value={student.stats.completionRate} className="h-2" />
                     
                     <div className="flex items-center justify-between text-sm mt-2">
-                      <span className="text-muted-foreground">Assignments</span>
+                      <span className="text-muted-foreground">{t.assignments}</span>
                       <span>
                         {student.stats.completedAssignments}/{student.stats.totalAssignments}
                       </span>
@@ -421,7 +394,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                     
                     {student.stats.averageGrade !== null && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Avg Grade</span>
+                        <span className="text-muted-foreground">{t.avgGrade}</span>
                         <span className="font-medium">{student.stats.averageGrade}%</span>
                       </div>
                     )}
@@ -432,7 +405,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                     <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 rounded text-xs">
                       <div className="flex items-center gap-1">
                         <Star className="h-3 w-3 text-amber-500" />
-                        <span className="font-medium">Last grade: {student.lastGraded.grade}%</span>
+                        <span className="font-medium">{t.lastGrade}: {student.lastGraded.grade}%</span>
                       </div>
                     </div>
                   )}
@@ -447,7 +420,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No students found</p>
+            <p>{t.noStudentsFound}</p>
           </CardContent>
         </Card>
       )}
@@ -464,34 +437,34 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                   </Avatar>
                   <span>{selectedStudent.name}</span>
                   {selectedStudent.onlineStatus === 'online' ? (
-                    <Badge className="bg-green-500">Online</Badge>
+                    <Badge className="bg-green-500">{t.online}</Badge>
                   ) : (
-                    <Badge variant="secondary">Offline - {formatLastSeen(selectedStudent.lastSeen)}</Badge>
+                    <Badge variant="secondary">{t.offlineSince(formatLastSeen(selectedStudent.lastSeen))}</Badge>
                   )}
                 </DialogTitle>
               </DialogHeader>
-              <p className="text-sm text-muted-foreground">{selectedStudent.email || 'No email'}</p>
+              <p className="text-sm text-muted-foreground">{selectedStudent.email || t.noEmail}</p>
                
               <div className="space-y-6 mt-4">
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-3 bg-muted rounded-lg">
                     <p className="text-2xl font-bold">{selectedStudent.stats.completionRate}%</p>
-                    <p className="text-xs text-muted-foreground">Complete</p>
+                    <p className="text-xs text-muted-foreground">{t.complete}</p>
                   </div>
                   <div className="text-center p-3 bg-muted rounded-lg">
                     <p className="text-2xl font-bold">{selectedStudent.stats.completedAssignments}</p>
-                    <p className="text-xs text-muted-foreground">Submitted</p>
+                    <p className="text-xs text-muted-foreground">{t.submitted}</p>
                   </div>
                   <div className="text-center p-3 bg-muted rounded-lg">
                     <p className="text-2xl font-bold">{selectedStudent.stats.gradedAssignments}</p>
-                    <p className="text-xs text-muted-foreground">Graded</p>
+                    <p className="text-xs text-muted-foreground">{t.graded}</p>
                   </div>
                   <div className="text-center p-3 bg-muted rounded-lg">
                     <p className="text-2xl font-bold">
                       {selectedStudent.stats.averageGrade !== null ? `${selectedStudent.stats.averageGrade}%` : '-'}
                     </p>
-                    <p className="text-xs text-muted-foreground">Avg Grade</p>
+                    <p className="text-xs text-muted-foreground">{t.avgGrade}</p>
                   </div>
                 </div>
 
@@ -500,10 +473,10 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                   <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200">
                     <h4 className="font-semibold flex items-center gap-2 mb-2">
                       <Star className="h-4 w-4 text-amber-500" />
-                      Last Grade
+                      {t.lastGrade}
                     </h4>
                     <div className="flex items-center justify-between">
-                      <span>Score: {selectedStudent.lastGraded.grade}%</span>
+                      <span>{t.score}: {selectedStudent.lastGraded.grade}%</span>
                       <span className="text-sm text-muted-foreground">
                         {new Date(selectedStudent.lastGraded.submittedAt).toLocaleDateString()}
                       </span>
@@ -515,7 +488,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                 <div>
                   <h4 className="font-semibold flex items-center gap-2 mb-3">
                     <Activity className="h-4 w-4" />
-                    Recent Activity
+                    {t.recentActivity}
                   </h4>
                   {selectedStudent.recentActivity.length > 0 ? (
                     <div className="space-y-2">
@@ -530,7 +503,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">No recent activity</p>
+                    <p className="text-sm text-muted-foreground">{t.noRecentActivity}</p>
                   )}
                 </div>
 
@@ -538,7 +511,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                 <div>
                   <h4 className="font-semibold flex items-center gap-2 mb-3">
                     <FileText className="h-4 w-4" />
-                    Recent Submissions
+                    {t.recentSubmissions}
                   </h4>
                   {selectedStudent.recentSubmissions.length > 0 ? (
                     <div className="space-y-2">
@@ -571,7 +544,7 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">No submissions yet</p>
+                    <p className="text-sm text-muted-foreground">{t.noSubmissions}</p>
                   )}
                 </div>
 
@@ -581,13 +554,13 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                     <Button variant="outline" className="flex-1" asChild>
                       <Link prefetch={false} href={`/class/${classId}?tab=assignments&studentId=${selectedStudent.id}`}>
                         <FileText className="h-4 w-4 mr-2" />
-                        View Assignments
+                        {t.viewAssignments}
                       </Link>
                     </Button>
                     <Button variant="outline" className="flex-1" asChild>
                       <Link prefetch={false} href={`/class/${classId}?tab=progress&studentId=${selectedStudent.id}`}>
                         <TrendingUp className="h-4 w-4 mr-2" />
-                        View Progress
+                        {t.viewProgress}
                       </Link>
                     </Button>
                   </div>
@@ -608,16 +581,16 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
               </DialogHeader>
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Gekoppelde subjects
+                  {t.linkedSubjects}
                 </p>
                 {(selectedTeacher.subjects || []).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nog geen subjects gekoppeld.</p>
+                  <p className="text-sm text-muted-foreground">{t.noLinkedSubjects}</p>
                 ) : (
                   <div className="space-y-2">
                     {(selectedTeacher.subjects || []).map((subject) => (
                       <div key={subject.id} className="rounded-lg border p-3">
                         <p className="font-medium">{subject.title}</p>
-                        <p className="text-xs text-muted-foreground">{subject.ownerEmail || subject.ownerName || 'Onbekende eigenaar'}</p>
+                        <p className="text-xs text-muted-foreground">{subject.ownerEmail || subject.ownerName || t.unknownOwner}</p>
                       </div>
                     ))}
                   </div>
