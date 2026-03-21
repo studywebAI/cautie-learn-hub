@@ -840,7 +840,7 @@ export function AppSidebar() {
                       className={cn(
                         "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
                         isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)
-                          ? "bg-transparent text-[hsl(var(--sidebar-active-foreground))]"
+                          ? "bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]"
                           : "text-sidebar-foreground hover:bg-sidebar-accent"
                       )}
                       title={item.label}
@@ -855,7 +855,7 @@ export function AppSidebar() {
                     className={cn(
                       "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
                       isMenuItemActive(item.href)
-                        ? "bg-transparent text-[hsl(var(--sidebar-active-foreground))]"
+                        ? "bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]"
                         : "text-sidebar-foreground hover:bg-sidebar-accent"
                     )}
                     title={item.label}
@@ -874,7 +874,7 @@ export function AppSidebar() {
                 className={cn(
                   "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
                   isMenuItemActive(item.href)
-                    ? "bg-transparent text-[hsl(var(--sidebar-active-foreground))]"
+                    ? "bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]"
                     : "text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
                 title={item.label}
