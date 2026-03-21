@@ -513,13 +513,13 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-xl p-1.5 pl-2.5 text-left text-[13px] font-medium text-[hsl(var(--sidebar-foreground)/0.94)] outline-none transition-[width,height,padding,color,background-color] duration-150 hover:bg-[hsl(var(--sidebar-accent)/0.74)] hover:text-[hsl(var(--sidebar-active-foreground)/0.96)] active:bg-[hsl(var(--sidebar-accent)/0.9)] active:text-[hsl(var(--sidebar-active-foreground)/1)] disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-[hsl(var(--sidebar-accent)/1)] data-[active=true]:font-medium data-[active=true]:text-[hsl(var(--sidebar-active-foreground)/1)] data-[active=true]:[&>span]:text-black data-[state=open]:hover:bg-[hsl(var(--sidebar-accent)/0.74)] data-[state=open]:hover:text-[hsl(var(--sidebar-active-foreground)/0.96)] group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-xl p-1.5 pl-2.5 text-left text-[13px] font-medium text-[hsl(var(--sidebar-foreground)/0.94)] outline-none transition-[width,height,padding,color,background-color] duration-150 hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-[hsl(var(--sidebar-active-foreground)/0.96)] active:bg-[hsl(var(--sidebar-accent)/0.65)] active:text-[hsl(var(--sidebar-active-foreground)/1)] disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-transparent data-[active=true]:font-medium data-[active=true]:text-[hsl(var(--sidebar-active-foreground)/1)] data-[state=open]:hover:bg-[hsl(var(--sidebar-accent)/0.5)] data-[state=open]:hover:text-[hsl(var(--sidebar-active-foreground)/0.96)] group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
         default: "hover:bg-[hsl(var(--sidebar-accent)/0.58)] hover:text-sidebar-foreground",
         outline:
-          "bg-background border border-sidebar-border hover:bg-[hsl(var(--sidebar-accent)/0.58)] hover:text-sidebar-foreground",
+          "bg-background hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-sidebar-foreground",
       },
       size: {
         default: "h-8 text-[13px]",
@@ -691,7 +691,7 @@ const SidebarMenuSub = React.forwardRef<
     ref={ref}
     data-sidebar="menu-sub"
     className={cn(
-      "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-sidebar-border px-2.5 py-0.5",
+      "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 px-2.5 py-0.5",
       "group-data-[collapsible=icon]:hidden",
       className
     )}
