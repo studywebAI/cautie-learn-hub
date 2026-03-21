@@ -31,6 +31,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchNotifications = async () => {
@@ -142,8 +143,56 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
         return 'bg-orange-100 text-orange-800';
       case 'deadline_reminder':
         return 'bg-red-100 text-red-800';
+      case 'teacher_join_request':
+        return 'bg-amber-100 text-amber-800';
+      case 'teacher_join_request_result':
+        return 'bg-cyan-100 text-cyan-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleTeacherJoinDecision = async (notification: Notification, decision: 'approve' | 'reject') => {
+    const requestId = notification?.data?.request_id;
+    const classId = notification?.data?.class_id;
+    if (!requestId || !classId) {
+      toast({
+        title: 'Missing request details',
+        description: 'Cannot process this request.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setProcessingRequestId(requestId);
+    try {
+      const response = await fetch(`/api/classes/${classId}/teacher-join-requests`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          request_id: requestId,
+          decision,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.error || 'Failed to process join request');
+      }
+
+      toast({
+        title: decision === 'approve' ? 'Teacher approved' : 'Teacher rejected',
+      });
+      await markAsRead([notification.id]);
+      await fetchNotifications();
+      await fetchUnreadCount();
+    } catch (error: any) {
+      toast({
+        title: 'Action failed',
+        description: error?.message || 'Could not process request',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessingRequestId(null);
     }
   };
 
@@ -264,6 +313,25 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                         {notification.message}
                       </p>
+                      {notification.type === 'teacher_join_request' && (
+                        <div className="mt-3 flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleTeacherJoinDecision(notification, 'approve')}
+                            disabled={processingRequestId === notification?.data?.request_id}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleTeacherJoinDecision(notification, 'reject')}
+                            disabled={processingRequestId === notification?.data?.request_id}
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                   )}
                 </Card>

@@ -30,6 +30,18 @@ type ClassLookupResult = {
   lookupErrors: Array<{ step: string; message: string; code?: string; details?: string | null; hint?: string | null }>
 }
 
+async function getClassPreferences(supabase: any, classId: string) {
+  const { data } = await (supabase as any)
+    .from('class_preferences')
+    .select('invite_allow_teacher_invites')
+    .eq('class_id', classId)
+    .maybeSingle()
+
+  return {
+    invite_allow_teacher_invites: data?.invite_allow_teacher_invites !== false,
+  }
+}
+
 async function findClassByCode(
   supabase: any,
   classCode: string,
@@ -128,6 +140,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Class not found' }, { status: 404 });
   }
 
+  if (matchedBy === 'teacher_join_code') {
+    const prefs = await getClassPreferences(supabase, classData.id)
+    if (!prefs.invite_allow_teacher_invites) {
+      return NextResponse.json({ error: 'Teacher invites are disabled for this class' }, { status: 403 })
+    }
+  }
+
   return NextResponse.json({
     id: classData.id,
     name: classData.name,
@@ -185,6 +204,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const classPreferences = await getClassPreferences(supabase, classData.id)
+
   // Get user's subscription_type to determine role (global role)
   const { data: profile } = await supabase
     .from('profiles')
@@ -196,6 +217,13 @@ export async function POST(request: NextRequest) {
   const subscriptionType = profile?.subscription_type || 'student';
   
   logJoin('POST - User subscription_type:', subscriptionType);
+
+  if (subscriptionType === 'teacher' && matchedBy !== 'teacher_join_code') {
+    return NextResponse.json(
+      { error: 'Teachers must join with a teacher join code.' },
+      { status: 403 }
+    );
+  }
 
   // Check if user is already a member (use maybeSingle to handle null case)
   const { data: existingMember, error: checkError } = await supabase
@@ -216,6 +244,101 @@ export async function POST(request: NextRequest) {
       role: subscriptionType,
       class: { id: classData.id, name: classData.name, description: classData.description }
     }, { status: 200 });
+  }
+
+  let defaultSubject: { id: string; title: string } | null = null;
+
+  // Teacher collaboration join now requires approval from an existing class teacher.
+  if (subscriptionType === 'teacher' && matchedBy === 'teacher_join_code') {
+    if (!classPreferences.invite_allow_teacher_invites) {
+      return NextResponse.json({ error: 'Teacher invites are disabled for this class' }, { status: 403 });
+    }
+
+    const { data: existingPendingRequest } = await (supabase as any)
+      .from('class_teacher_join_requests')
+      .select('id')
+      .eq('class_id', classData.id)
+      .eq('requester_user_id', user.id)
+      .eq('status', 'pending')
+      .maybeSingle()
+
+    if (existingPendingRequest) {
+      return NextResponse.json({
+        message: 'Your teacher join request is already pending approval.',
+        pendingApproval: true,
+        class: { id: classData.id, name: classData.name, description: classData.description },
+      }, { status: 202 })
+    }
+
+    const normalizedSubjectTitle =
+      subjectTitleInput ||
+      `${(user.user_metadata?.full_name || user.email || 'Teacher').toString().split('@')[0]}'s subject`;
+
+    const { data: createdJoinRequest, error: joinRequestError } = await (supabase as any)
+      .from('class_teacher_join_requests')
+      .insert([{
+        class_id: classData.id,
+        requester_user_id: user.id,
+        requester_email: user.email || null,
+        subject_title: normalizedSubjectTitle,
+        status: 'pending',
+      }])
+      .select('id')
+      .single()
+
+    if (joinRequestError || !createdJoinRequest) {
+      return NextResponse.json({ error: joinRequestError?.message || 'Failed to create teacher join request' }, { status: 500 })
+    }
+
+    const { data: memberRows } = await supabase
+      .from('class_members')
+      .select('user_id')
+      .eq('class_id', classData.id)
+
+    const memberIds = (memberRows || []).map((row: any) => row.user_id).filter(Boolean)
+    const { data: teacherProfiles } = await supabase
+      .from('profiles')
+      .select('id, email, subscription_type')
+      .in('id', memberIds)
+      .eq('subscription_type', 'teacher')
+
+    const approverTeacherIds = (teacherProfiles || [])
+      .map((row: any) => row.id)
+      .filter((id: string) => id !== user.id)
+
+    if (approverTeacherIds.length > 0) {
+      const notifications = approverTeacherIds.map((teacherId: string) => ({
+        user_id: teacherId,
+        type: 'teacher_join_request',
+        title: 'Teacher join request',
+        message: `${user.email || 'A teacher'} is requesting to join "${classData.name}"`,
+        data: {
+          request_id: createdJoinRequest.id,
+          class_id: classData.id,
+          class_name: classData.name,
+          requester_user_id: user.id,
+          requester_email: user.email || null,
+          subject_title: normalizedSubjectTitle,
+        },
+      }))
+      await (supabase as any).from('notifications').insert(notifications)
+    }
+
+    await logAuditEntry(supabase, {
+      userId: user.id,
+      classId: classData.id,
+      action: 'teacher_join_request_created',
+      entityType: 'member',
+      entityId: createdJoinRequest.id,
+      metadata: { requester_email: user.email || null, subject_title: normalizedSubjectTitle },
+    });
+
+    return NextResponse.json({
+      message: 'Teacher join request sent. Waiting for approval from class teachers.',
+      pendingApproval: true,
+      class: { id: classData.id, name: classData.name, description: classData.description },
+      role: subscriptionType,
+    }, { status: 202 });
   }
 
   // Insert into class_members (no role column - role is global via subscription_type)
@@ -245,54 +368,6 @@ export async function POST(request: NextRequest) {
     }
     console.error('Error joining class:', insertError);
     return NextResponse.json({ error: insertError.message }, { status: 500 });
-  }
-
-  let defaultSubject: { id: string; title: string } | null = null;
-
-  // Teacher collaboration join: ensure the joining teacher gets their own class subject.
-  if (subscriptionType === 'teacher' && matchedBy === 'teacher_join_code') {
-    const normalizedSubjectTitle =
-      subjectTitleInput ||
-      `${(user.user_metadata?.full_name || user.email || 'Teacher').toString().split('@')[0]}'s subject`;
-
-    const { data: existingOwnedSubject } = await supabase
-      .from('subjects')
-      .select('id, title')
-      .eq('class_id', classData.id)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (existingOwnedSubject) {
-      defaultSubject = existingOwnedSubject;
-    } else {
-      const { data: createdSubject, error: createdSubjectError } = await supabase
-        .from('subjects')
-        .insert([{
-          title: normalizedSubjectTitle,
-          description: null,
-          class_id: classData.id,
-          user_id: user.id,
-          class_label: normalizedSubjectTitle,
-        }])
-        .select('id, title')
-        .single();
-
-      if (createdSubjectError) {
-        return NextResponse.json({ error: `Joined class but failed to create your subject: ${createdSubjectError.message}` }, { status: 500 });
-      }
-
-      defaultSubject = createdSubject;
-    }
-
-    if (defaultSubject) {
-      const { error: classSubjectLinkError } = await (supabase as any)
-        .from('class_subjects')
-        .upsert([{ class_id: classData.id, subject_id: defaultSubject.id }], { onConflict: 'class_id,subject_id' });
-
-      if (classSubjectLinkError) {
-        return NextResponse.json({ error: `Joined class but failed to link your subject: ${classSubjectLinkError.message}` }, { status: 500 });
-      }
-    }
   }
 
   // Log audit

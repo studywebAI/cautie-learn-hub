@@ -8,6 +8,18 @@ import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
 
+async function getInviteSettings(supabase: any, classId: string) {
+  const { data } = await (supabase as any)
+    .from('class_preferences')
+    .select('invite_allow_teacher_invites')
+    .eq('class_id', classId)
+    .maybeSingle()
+
+  return {
+    invite_allow_teacher_invites: data?.invite_allow_teacher_invites !== false,
+  }
+}
+
 // Validation schema for invite request
 const inviteSchema = z.object({
   studentEmails: z.array(z.string().email()).optional(),
@@ -79,6 +91,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const inviterName = userProfile?.full_name || 'A teacher'
+  const inviteSettings = await getInviteSettings(supabase, classData.id)
+
+  if (!inviteSettings.invite_allow_teacher_invites && (teacherEmails?.length || 0) > 0) {
+    return NextResponse.json({ error: 'Teacher invites are disabled for this class' }, { status: 403 })
+  }
 
   // Results tracking
   const results = {
@@ -124,7 +141,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   // Process teacher invites
-  if (teacherEmails && teacherEmails.length > 0) {
+  if (inviteSettings.invite_allow_teacher_invites && teacherEmails && teacherEmails.length > 0) {
     for (const email of teacherEmails) {
       try {
         // Only teachers can invite other teachers
@@ -243,6 +260,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .single()
 
   const isTeacher = userProfile?.subscription_type === 'teacher'
+  const inviteSettings = await getInviteSettings(supabase, classData.id)
 
   // Only members can view invite info
   if (!isMember) {
@@ -275,11 +293,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     classId: classData.id,
     className: classData.name,
     joinCode: classData.join_code,
-    teacherJoinCode: isTeacher ? classData.teacher_join_code : null,
+    teacherJoinCode: isTeacher && inviteSettings.invite_allow_teacher_invites ? classData.teacher_join_code : null,
     memberCount: {
       students: studentCount,
       teachers: teacherCount,
     },
-    canInviteTeachers: isTeacher,
+    canInviteTeachers: isTeacher && inviteSettings.invite_allow_teacher_invites,
   })
 }

@@ -42,13 +42,24 @@ type ImportCandidate = {
   class_id: string | null;
 };
 
+type PendingTeacherJoinRequest = {
+  id: string;
+  requester_user_id: string;
+  requester_email: string | null;
+  subject_title: string | null;
+  requested_at: string;
+  status: 'pending';
+};
+
 export function ClassSettings({ classId, className, onArchive, isArchived = false }: ClassSettingsProps) {
   const [isArchiving, setIsArchiving] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [loadingJoinRequests, setLoadingJoinRequests] = useState(false);
   const [loadingClassConfig, setLoadingClassConfig] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [regeneratingCodes, setRegeneratingCodes] = useState(false);
+  const [processingJoinRequestId, setProcessingJoinRequestId] = useState<string | null>(null);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [subjects, setSubjects] = useState<SubjectRow[]>([]);
   const [importCandidates, setImportCandidates] = useState<ImportCandidate[]>([]);
@@ -62,11 +73,13 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
   const [studentJoinCode, setStudentJoinCode] = useState('');
   const [teacherJoinCode, setTeacherJoinCode] = useState('');
   const [preferences, setPreferences] = useState<ClassPreferences>(DEFAULT_CLASS_PREFERENCES);
+  const [pendingJoinRequests, setPendingJoinRequests] = useState<PendingTeacherJoinRequest[]>([]);
   const { refetchClasses } = useContext(AppContext) as any;
 
   useEffect(() => {
     void loadClassConfig();
     void loadSubjectSettings();
+    void loadPendingJoinRequests();
     void logClassTabEvent({
       classId,
       tab: 'settings',
@@ -121,6 +134,51 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       });
     } finally {
       setLoadingClassConfig(false);
+    }
+  };
+
+  const loadPendingJoinRequests = async () => {
+    setLoadingJoinRequests(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}/teacher-join-requests`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to load join requests');
+      setPendingJoinRequests(data.requests || []);
+    } catch (error: any) {
+      toast({
+        title: 'Could not load join requests',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingJoinRequests(false);
+    }
+  };
+
+  const resolveJoinRequest = async (requestId: string, decision: 'approve' | 'reject') => {
+    setProcessingJoinRequestId(requestId);
+    try {
+      const response = await fetch(`/api/classes/${classId}/teacher-join-requests`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          request_id: requestId,
+          decision,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to process request');
+      toast({ title: decision === 'approve' ? 'Teacher approved' : 'Teacher rejected' });
+      await loadPendingJoinRequests();
+      await refetchClasses?.();
+    } catch (error: any) {
+      toast({
+        title: 'Could not process request',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessingJoinRequestId(null);
     }
   };
 
@@ -577,6 +635,48 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
 
       <Card>
         <CardHeader>
+          <CardTitle>Teacher Join Requests</CardTitle>
+          <CardDescription>Approve or reject teachers who request access via teacher join code.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {loadingJoinRequests ? (
+            <p className="text-sm text-muted-foreground">Loading requests...</p>
+          ) : pendingJoinRequests.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No pending teacher join requests.</p>
+          ) : (
+            pendingJoinRequests.map((request) => (
+              <div key={request.id} className="rounded-lg border p-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{request.requester_email || request.requester_user_id}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Subject: {request.subject_title || 'No subject provided'} · Requested {new Date(request.requested_at).toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => void resolveJoinRequest(request.id, 'approve')}
+                    disabled={processingJoinRequestId === request.id}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void resolveJoinRequest(request.id, 'reject')}
+                    disabled={processingJoinRequestId === request.id}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Subject Management</CardTitle>
           <CardDescription>
             See who owns which subject, change ownership, and share subjects between teachers.
@@ -757,4 +857,3 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     </div>
   );
 }
-

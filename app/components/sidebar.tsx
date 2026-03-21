@@ -431,6 +431,13 @@ export function AppSidebar() {
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Failed to join class');
         toast({ title: data?.message || 'Joined class' });
+        if (data?.pendingApproval) {
+          setJoinCode('');
+          setJoinSubjectTitle('');
+          setJoinClassOpen(false);
+          setNewClassMenuOpen(false);
+          return;
+        }
         const joinedClassId = data?.class?.id;
         if (joinedClassId) {
           setActiveTeacherClassId(joinedClassId);
