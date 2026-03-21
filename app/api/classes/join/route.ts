@@ -26,7 +26,7 @@ function maskCode(code: string): string {
 
 type ClassLookupResult = {
   classData: Pick<Database['public']['Tables']['classes']['Row'], 'id' | 'name' | 'description' | 'join_code' | 'teacher_join_code'> | null
-  matchedBy: 'join_code' | 'teacher_join_code' | null
+  matchedBy: 'join_code' | 'teacher_join_code' | 'teacher_invite_code' | null
   lookupErrors: Array<{ step: string; message: string; code?: string; details?: string | null; hint?: string | null }>
 }
 
@@ -116,6 +116,30 @@ async function findClassByCode(
   return { classData: null, matchedBy: null, lookupErrors }
 }
 
+async function consumeTeacherInviteCode(
+  supabase: any,
+  code: string,
+  userId: string
+): Promise<{ id: string; class_id: string; issued_by: string | null } | null> {
+  const nowIso = new Date().toISOString()
+  const { data, error } = await (supabase as any)
+    .from('class_teacher_invite_codes')
+    .update({
+      status: 'used',
+      used_by: userId,
+      used_at: nowIso,
+    })
+    .eq('code', code)
+    .eq('status', 'active')
+    .gt('expires_at', nowIso)
+    .is('used_by', null)
+    .select('id, class_id, issued_by')
+    .maybeSingle()
+
+  if (error || !data) return null
+  return data
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = sanitizeCode(searchParams.get('code'));
@@ -184,7 +208,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Join code is required' }, { status: 400 });
   }
 
-  const { classData, matchedBy, lookupErrors } = await findClassByCode(supabase, classCode)
+  let classData: ClassLookupResult['classData'] = null
+  let matchedBy: ClassLookupResult['matchedBy'] = null
+  let lookupErrors: ClassLookupResult['lookupErrors'] = []
+  let consumedInviteCode: { id: string; class_id: string; issued_by: string | null } | null = null
+
+  consumedInviteCode = await consumeTeacherInviteCode(supabase, classCode, user.id)
+  if (consumedInviteCode?.class_id) {
+    const { data: classByInviteCode } = await supabase
+      .from('classes')
+      .select('id, name, description, join_code, teacher_join_code')
+      .eq('id', consumedInviteCode.class_id)
+      .maybeSingle()
+    if (classByInviteCode) {
+      classData = classByInviteCode
+      matchedBy = 'teacher_invite_code'
+    }
+  }
+
+  if (!classData) {
+    const lookupResult = await findClassByCode(supabase, classCode)
+    classData = lookupResult.classData
+    matchedBy = lookupResult.matchedBy
+    lookupErrors = lookupResult.lookupErrors
+  }
   logJoin('POST - Class lookup result', {
     userId: user.id,
     codeMask: maskCode(classCode),
@@ -218,9 +265,9 @@ export async function POST(request: NextRequest) {
   
   logJoin('POST - User subscription_type:', subscriptionType);
 
-  if (subscriptionType === 'teacher' && matchedBy !== 'teacher_join_code') {
+  if (subscriptionType === 'teacher' && matchedBy !== 'teacher_invite_code') {
     return NextResponse.json(
-      { error: 'Teachers must join with a teacher join code.' },
+      { error: 'Teachers must join with a one-time teacher invite code.' },
       { status: 403 }
     );
   }
@@ -249,7 +296,7 @@ export async function POST(request: NextRequest) {
   let defaultSubject: { id: string; title: string } | null = null;
 
   // Teacher collaboration join now requires approval from an existing class teacher.
-  if (subscriptionType === 'teacher' && matchedBy === 'teacher_join_code') {
+  if (subscriptionType === 'teacher' && matchedBy === 'teacher_invite_code') {
     if (!classPreferences.invite_allow_teacher_invites) {
       return NextResponse.json({ error: 'Teacher invites are disabled for this class' }, { status: 403 });
     }
@@ -280,6 +327,8 @@ export async function POST(request: NextRequest) {
         class_id: classData.id,
         requester_user_id: user.id,
         requester_email: user.email || null,
+        invited_by_user_id: consumedInviteCode?.issued_by || null,
+        invite_code_id: consumedInviteCode?.id || null,
         subject_title: normalizedSubjectTitle,
         status: 'pending',
       }])
@@ -330,7 +379,12 @@ export async function POST(request: NextRequest) {
       action: 'teacher_join_request_created',
       entityType: 'member',
       entityId: createdJoinRequest.id,
-      metadata: { requester_email: user.email || null, subject_title: normalizedSubjectTitle },
+      metadata: {
+        requester_email: user.email || null,
+        subject_title: normalizedSubjectTitle,
+        invited_by_user_id: consumedInviteCode?.issued_by || null,
+        invite_code_id: consumedInviteCode?.id || null,
+      },
     });
 
     return NextResponse.json({

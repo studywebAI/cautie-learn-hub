@@ -8,5 +8,6 @@
 - Prefer structured telemetry payloads over ad-hoc strings.
 - Teacher join policy:
   - Hard block teacher invite/join when `invite_allow_teacher_invites = false`.
-  - Teacher join via teacher code requires approval (pending request + approve/reject).
+  - Teacher join via one-time teacher invite code requires approval (pending request + approve/reject).
   - Teachers cannot join through student join code.
+  - One-time codes must log: who issued, who used, when used, and join decision outcome.

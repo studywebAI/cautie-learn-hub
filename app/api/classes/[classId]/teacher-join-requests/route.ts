@@ -95,7 +95,7 @@ export async function PATCH(
 
     const { data: joinRequest, error: requestError } = await (supabase as any)
       .from('class_teacher_join_requests')
-      .select('id, class_id, requester_user_id, requester_email, subject_title, status')
+      .select('id, class_id, requester_user_id, requester_email, invited_by_user_id, invite_code_id, subject_title, status')
       .eq('id', requestId)
       .eq('class_id', classId)
       .maybeSingle()
@@ -197,6 +197,8 @@ export async function PATCH(
       metadata: {
         requester_user_id: joinRequest.requester_user_id,
         requester_email: joinRequest.requester_email,
+        invited_by_user_id: joinRequest.invited_by_user_id || null,
+        invite_code_id: joinRequest.invite_code_id || null,
       },
     })
 
@@ -206,4 +208,3 @@ export async function PATCH(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

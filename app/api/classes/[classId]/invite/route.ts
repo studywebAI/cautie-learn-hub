@@ -150,6 +150,33 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           continue
         }
 
+        const { data: generatedCode } = await (supabase as any).rpc('generate_teacher_join_code')
+        const oneTimeCode = String(generatedCode || '').trim()
+        if (!oneTimeCode) {
+          results.teachers.failed.push(email)
+          continue
+        }
+
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+        const { data: insertedInviteCode, error: inviteCodeError } = await (supabase as any)
+          .from('class_teacher_invite_codes')
+          .insert({
+            class_id: classData.id,
+            code: oneTimeCode,
+            issued_by: user.id,
+            issued_to_email: email.toLowerCase(),
+            status: 'active',
+            expires_at: expiresAt,
+          })
+          .select('id')
+          .single()
+
+        if (inviteCodeError || !insertedInviteCode) {
+          console.error('Failed to create one-time teacher code:', inviteCodeError)
+          results.teachers.failed.push(email)
+          continue
+        }
+
         const { error: notifError } = await supabase
           .from('notifications')
           .insert({
@@ -160,11 +187,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             data: {
               classId: classData.id,
               className: classData.name,
-              joinCode: classData.teacher_join_code,
+              joinCode: oneTimeCode,
               inviteeEmail: email,
               role: 'teacher',
               scheduledTime,
               inviterName,
+              oneTime: true,
+              expiresAt,
             },
           })
 
@@ -173,6 +202,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           results.teachers.failed.push(email)
         } else {
           results.teachers.invited.push(email)
+          await logAuditEntry(supabase as any, {
+            userId: user.id,
+            classId: classData.id,
+            action: 'teacher_invite_code_issued',
+            entityType: 'teacher_invite_code',
+            entityId: insertedInviteCode.id,
+            metadata: {
+              invitee_email: email.toLowerCase(),
+              expires_at: expiresAt,
+              source: 'invite_email',
+            },
+          })
         }
       } catch (err) {
         console.error('Error inviting teacher:', err)
@@ -293,7 +334,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     classId: classData.id,
     className: classData.name,
     joinCode: classData.join_code,
-    teacherJoinCode: isTeacher && inviteSettings.invite_allow_teacher_invites ? classData.teacher_join_code : null,
+    teacherJoinCode: null,
     memberCount: {
       students: studentCount,
       teachers: teacherCount,

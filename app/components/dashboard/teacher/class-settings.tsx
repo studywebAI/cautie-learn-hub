@@ -51,6 +51,19 @@ type PendingTeacherJoinRequest = {
   status: 'pending';
 };
 
+type TeacherInviteCodeActivity = {
+  id: string;
+  code: string;
+  issued_to_email: string | null;
+  status: 'active' | 'used' | 'expired' | 'revoked';
+  issued_at: string;
+  expires_at: string;
+  used_at: string | null;
+  issued_by_label: string | null;
+  used_by_label: string | null;
+  is_expired?: boolean;
+};
+
 export function ClassSettings({ classId, className, onArchive, isArchived = false }: ClassSettingsProps) {
   const [isArchiving, setIsArchiving] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
@@ -60,6 +73,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [regeneratingCodes, setRegeneratingCodes] = useState(false);
   const [processingJoinRequestId, setProcessingJoinRequestId] = useState<string | null>(null);
+  const [loadingInviteActivity, setLoadingInviteActivity] = useState(false);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [subjects, setSubjects] = useState<SubjectRow[]>([]);
   const [importCandidates, setImportCandidates] = useState<ImportCandidate[]>([]);
@@ -74,12 +88,14 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
   const [teacherJoinCode, setTeacherJoinCode] = useState('');
   const [preferences, setPreferences] = useState<ClassPreferences>(DEFAULT_CLASS_PREFERENCES);
   const [pendingJoinRequests, setPendingJoinRequests] = useState<PendingTeacherJoinRequest[]>([]);
+  const [inviteActivity, setInviteActivity] = useState<TeacherInviteCodeActivity[]>([]);
   const { refetchClasses } = useContext(AppContext) as any;
 
   useEffect(() => {
     void loadClassConfig();
     void loadSubjectSettings();
     void loadPendingJoinRequests();
+    void loadInviteActivity();
     void logClassTabEvent({
       classId,
       tab: 'settings',
@@ -137,6 +153,24 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     }
   };
 
+  const loadInviteActivity = async () => {
+    setLoadingInviteActivity(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}/teacher-invite-codes`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to load teacher invite activity');
+      setInviteActivity(data.recent_codes || []);
+    } catch (error: any) {
+      toast({
+        title: 'Could not load teacher invite activity',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingInviteActivity(false);
+    }
+  };
+
   const loadPendingJoinRequests = async () => {
     setLoadingJoinRequests(true);
     try {
@@ -170,6 +204,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       if (!response.ok) throw new Error(data.error || 'Failed to process request');
       toast({ title: decision === 'approve' ? 'Teacher approved' : 'Teacher rejected' });
       await loadPendingJoinRequests();
+      await loadInviteActivity();
       await refetchClasses?.();
     } catch (error: any) {
       toast({
@@ -669,6 +704,56 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                     Reject
                   </Button>
                 </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Teacher Invite Activity</CardTitle>
+          <CardDescription>
+            Categorized by status so you can track new teacher invite flow end-to-end.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {loadingInviteActivity ? (
+            <p className="text-sm text-muted-foreground">Loading teacher invite activity...</p>
+          ) : inviteActivity.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No teacher invite activity yet.</p>
+          ) : (
+            inviteActivity.map((item) => (
+              <div key={item.id} className="rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-mono text-sm">{item.code}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Issued by {item.issued_by_label || 'unknown'}{item.issued_to_email ? ` for ${item.issued_to_email}` : ''}
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded px-2 py-0.5 text-xs ${
+                      item.status === 'used'
+                        ? 'bg-green-100 text-green-700'
+                        : item.status === 'active'
+                        ? 'bg-blue-100 text-blue-700'
+                        : item.status === 'revoked'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {item.status === 'active' && item.is_expired ? 'expired' : item.status}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Issued: {new Date(item.issued_at).toLocaleString()} · Expires: {new Date(item.expires_at).toLocaleString()}
+                </p>
+                {item.used_at && (
+                  <p className="text-xs text-muted-foreground">
+                    Used by {item.used_by_label || 'unknown'} at {new Date(item.used_at).toLocaleString()}
+                  </p>
+                )}
               </div>
             ))
           )}

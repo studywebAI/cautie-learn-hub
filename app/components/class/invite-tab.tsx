@@ -33,9 +33,12 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
   const [copiedLink, setCopiedLink] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [preferences, setPreferences] = useState(DEFAULT_CLASS_PREFERENCES);
+  const [oneTimeTeacherCode, setOneTimeTeacherCode] = useState<string>('');
+  const [oneTimeTeacherCodeExpiresAt, setOneTimeTeacherCodeExpiresAt] = useState<string | null>(null);
+  const [isGeneratingTeacherCode, setIsGeneratingTeacherCode] = useState(false);
 
   const studentInviteLink = joinCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes?join_code=${joinCode}` : '';
-  const teacherInviteLink = teacherJoinCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes/join/${teacherJoinCode}` : '';
+  const teacherInviteLink = oneTimeTeacherCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes/join/${oneTimeTeacherCode}` : '';
   const studentQrCodeUrl = studentInviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(studentInviteLink)}&format=png` : '';
   const teacherQrCodeUrl = teacherInviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(teacherInviteLink)}&format=png` : '';
 
@@ -199,6 +202,42 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
     } finally { setIsSending(false); }
   };
 
+  const generateOneTimeTeacherCode = async () => {
+    if (!preferences.invite_allow_teacher_invites) return;
+    setIsGeneratingTeacherCode(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}/teacher-invite-codes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expires_in_minutes: 60 }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to generate teacher code');
+      setOneTimeTeacherCode(data?.code?.code || '');
+      setOneTimeTeacherCodeExpiresAt(data?.code?.expires_at || null);
+      toast({ title: 'One-time teacher code created (valid for 60 minutes)' });
+      void logClassTabEvent({
+        classId,
+        tab: 'invite',
+        event: 'teacher_code_generated',
+        stage: 'action',
+        level: 'info',
+      });
+    } catch (error: any) {
+      toast({ title: error?.message || 'Failed to generate teacher code', variant: 'destructive' });
+      void logClassTabEvent({
+        classId,
+        tab: 'invite',
+        event: 'teacher_code_generate_error',
+        stage: 'action',
+        level: 'error',
+        message: error?.message || 'Unknown error',
+      });
+    } finally {
+      setIsGeneratingTeacherCode(false);
+    }
+  };
+
   const validStudentEmails = studentEmails.filter(e => e.trim() !== '');
 
   return (
@@ -338,13 +377,38 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
               {/* Join Code & Link */}
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Teacher Join Code</Label>
+                  <Label className="text-sm font-semibold">One-Time Teacher Join Code</Label>
                   <div className="flex gap-2">
-                    <Input type="text" value={teacherJoinCode || 'Loading...'} readOnly className="font-mono text-lg font-bold border-2 border-black/20 text-foreground" />
-                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(teacherJoinCode || '', 'teacher')}>
+                    <Input
+                      type="text"
+                      value={oneTimeTeacherCode || ''}
+                      readOnly
+                      placeholder="Generate one-time code"
+                      className="font-mono text-lg font-bold border-2 border-black/20 text-foreground"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => copyToClipboard(oneTimeTeacherCode || '', 'teacher')}
+                      disabled={!oneTimeTeacherCode}
+                    >
                       {copiedTeacher ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={generateOneTimeTeacherCode}
+                    disabled={isGeneratingTeacherCode}
+                    className="w-full"
+                  >
+                    {isGeneratingTeacherCode ? 'Generating...' : 'Generate 1-hour one-time code'}
+                  </Button>
+                  {oneTimeTeacherCodeExpiresAt && (
+                    <p className="text-xs text-muted-foreground">
+                      Expires at {new Date(oneTimeTeacherCodeExpiresAt).toLocaleString()}
+                    </p>
+                  )}
                 </div>
                 {teacherInviteLink && (
                   <div className="space-y-2">

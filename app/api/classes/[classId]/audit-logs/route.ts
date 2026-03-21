@@ -46,21 +46,37 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch audit logs' }, { status: 500 })
     }
 
-    // Enrich with user names
-    const userIds = [...new Set((logs || []).map((l: any) => l.user_id))]
+    const metadataUserIdKeys = ['invited_by_user_id', 'requester_user_id', 'resolved_by', 'used_by', 'issued_by']
+
+    const userIds = [...new Set((logs || []).flatMap((log: any) => {
+      const ids = [log.user_id]
+      const metadata = log?.metadata || {}
+      for (const key of metadataUserIdKeys) {
+        if (metadata?.[key]) ids.push(metadata[key])
+      }
+      return ids
+    }).filter(Boolean))]
+
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('id, full_name, avatar_url')
+      .select('id, full_name, avatar_url, email')
       .in('id', userIds)
 
     const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
 
     const enrichedLogs = (logs || []).map((log: any) => ({
       ...log,
-      user: profileMap.get(log.user_id) || { full_name: 'Unknown', avatar_url: null }
+      user: profileMap.get(log.user_id) || { full_name: 'Unknown', avatar_url: null, email: null },
+      metadata_user_labels: metadataUserIdKeys.reduce((acc: Record<string, string>, key) => {
+        const value = log?.metadata?.[key]
+        if (!value) return acc
+        const profile = profileMap.get(value)
+        acc[key] = profile?.email || profile?.full_name || value
+        return acc
+      }, {})
     }))
 
-    return NextResponse.json(enrichedLogs)
+    return NextResponse.json({ logs: enrichedLogs })
   } catch (error) {
     console.error('Audit logs GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
