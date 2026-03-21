@@ -33,9 +33,9 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const visibleTabs = tabs;
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <div className="rounded-2xl bg-[hsl(var(--surface-1))] p-4">
-        <div className="flex flex-col gap-4">
+    <div className="flex h-full flex-col gap-2.5">
+      <div className="rounded-2xl bg-[hsl(var(--surface-1))] p-3">
+        <div className="flex flex-col gap-3">
           <div className="flex justify-end">
           <button
             type="button"
@@ -73,7 +73,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
         </div>
       </div>
 
-      <main className="flex-1 overflow-auto p-4">
+      <main className="flex-1 overflow-auto p-0">
         {children}
       </main>
     </div>

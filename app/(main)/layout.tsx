@@ -30,7 +30,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <AppSidebar />
             </Suspense>
             <SidebarInset className={`h-screen bg-background ${isMobile ? 'ml-14' : ''} relative text-[hsl(var(--sidebar-active-foreground))]`}>
-                <div className={`${isClassPage ? "h-full overflow-hidden p-4" : "h-full overflow-auto p-4"}`}>
+                <div className={`${isClassPage ? "h-full overflow-hidden p-2.5" : "h-full overflow-auto p-2.5"}`}>
                     {children}
                 </div>
             </SidebarInset>
