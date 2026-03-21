@@ -249,7 +249,7 @@ export default function ParagraphDetailPage() {
             href={`/subjects/${subjectId}`}
             className="text-xs text-muted-foreground hover:text-foreground mb-1 block"
           >
-            â† Back to chapters
+            Back to chapters
           </Link>
           <h1 className="text-lg">
             {paragraph.paragraph_number}. {paragraph.title}
@@ -413,7 +413,7 @@ export default function ParagraphDetailPage() {
             href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${prevParagraph.id}`}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            â† {prevParagraph.paragraph_number}. {prevParagraph.title}
+            {prevParagraph.paragraph_number}. {prevParagraph.title}
           </Link>
         ) : (
           <div />
@@ -423,7 +423,7 @@ export default function ParagraphDetailPage() {
             href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${nextParagraph.id}`}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            {nextParagraph.paragraph_number}. {nextParagraph.title} â†’
+            {nextParagraph.paragraph_number}. {nextParagraph.title}
           </Link>
         )}
       </div>
