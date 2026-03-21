@@ -13,6 +13,7 @@ import { parseISO, isFuture, differenceInDays } from 'date-fns';
 import type { Alert, Subject } from '@/lib/types';
 import { TodaysAgenda } from "@/components/dashboard/todays-agenda";
 import { NextSchoolSlot } from "@/components/dashboard/next-school-slot";
+import { TodaysStudysetTasks } from "@/components/dashboard/todays-studyset-tasks";
 import { useRouter } from "next/navigation";
 
 const AnalyticsDashboard = lazy(() => import("@/components/dashboard/analytics-dashboard").then(module => ({ default: module.AnalyticsDashboard })));
@@ -80,6 +81,7 @@ function StudentDashboard() {
         </div>
         <div className="lg:col-span-2 flex flex-col gap-6 md:gap-8">
             <NextSchoolSlot slots={schoolSlots} />
+            <TodaysStudysetTasks />
             <TodaysAgenda assignments={assignments} personalTasks={personalTasks} classes={classes} />
             <Suspense fallback={<Card><CardHeader><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>}>
               <AnalyticsDashboard />
