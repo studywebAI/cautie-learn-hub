@@ -24,7 +24,7 @@ type LogsTabProps = {
   classId: string;
 };
 
-type Category = 'all' | 'teacher_invites' | 'join_requests' | 'settings' | 'attendance' | 'grades' | 'telemetry' | 'other';
+type Category = 'all' | 'teacher_invites' | 'join_requests' | 'settings' | 'attendance' | 'grades' | 'subjects' | 'assignments' | 'other';
 type QuickPreset = 'none' | 'pending_teacher_joins' | 'invite_codes_used' | 'rejected_requests' | 'config_changes';
 
 const CATEGORY_LABELS: Record<Category, string> = {
@@ -34,9 +34,32 @@ const CATEGORY_LABELS: Record<Category, string> = {
   settings: 'Settings',
   attendance: 'Attendance',
   grades: 'Grades',
-  telemetry: 'Telemetry',
+  subjects: 'Subjects',
+  assignments: 'Assignments',
   other: 'Other',
 };
+
+const IMPORTANT_ACTION_HINTS = [
+  'grade',
+  'attendance',
+  'teacher_invite_code_',
+  'teacher_join_request_',
+  'update_profile',
+  'update_preferences',
+  'regenerate_invite_codes',
+  'archive',
+  'subject',
+  'assignment',
+];
+
+function isImportantLog(log: AuditLog) {
+  const action = String(log.action || '');
+  const entityType = String(log.entity_type || '');
+  if (action.startsWith('telemetry_') || entityType === 'class_tab') return false;
+  if (IMPORTANT_ACTION_HINTS.some((hint) => action.includes(hint))) return true;
+  if (entityType.includes('subject') || entityType.includes('assignment') || entityType.includes('grade') || entityType.includes('attendance')) return true;
+  return false;
+}
 
 function categorizeLog(log: AuditLog): Category {
   const action = String(log.action || '');
@@ -47,7 +70,8 @@ function categorizeLog(log: AuditLog): Category {
   if (action.startsWith('update_preferences') || action.startsWith('update_profile') || action.startsWith('regenerate_invite_codes') || action === 'archive') return 'settings';
   if (action.includes('attendance') || entityType.includes('attendance')) return 'attendance';
   if (action.includes('grade') || entityType.includes('grade')) return 'grades';
-  if (action.startsWith('telemetry_') || entityType === 'class_tab') return 'telemetry';
+  if (action.includes('subject') || entityType.includes('subject')) return 'subjects';
+  if (action.includes('assignment') || entityType.includes('assignment')) return 'assignments';
   return 'other';
 }
 
@@ -81,7 +105,7 @@ export function LogsTab({ classId }: LogsTabProps) {
       const response = await fetch(`/api/classes/${classId}/audit-logs?limit=${nextLimit}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to load logs');
-      const rows: AuditLog[] = data.logs || [];
+      const rows: AuditLog[] = (data.logs || []).filter((log: AuditLog) => isImportantLog(log));
       setLogs(rows);
       void logClassTabEvent({
         classId,
@@ -164,7 +188,8 @@ export function LogsTab({ classId }: LogsTabProps) {
       settings: 0,
       attendance: 0,
       grades: 0,
-      telemetry: 0,
+      subjects: 0,
+      assignments: 0,
       other: 0,
     };
     for (const log of logs) {
@@ -173,7 +198,7 @@ export function LogsTab({ classId }: LogsTabProps) {
     return base;
   }, [logs]);
 
-  const categories: Category[] = ['all', 'teacher_invites', 'join_requests', 'settings', 'attendance', 'grades', 'telemetry', 'other'];
+  const categories: Category[] = ['all', 'teacher_invites', 'join_requests', 'settings', 'attendance', 'grades', 'subjects', 'assignments', 'other'];
   const presets: Array<{ id: QuickPreset; label: string }> = [
     { id: 'none', label: 'No preset' },
     { id: 'pending_teacher_joins', label: 'Pending teacher joins' },
@@ -181,6 +206,27 @@ export function LogsTab({ classId }: LogsTabProps) {
     { id: 'rejected_requests', label: 'Rejected requests' },
     { id: 'config_changes', label: 'Config changes' },
   ];
+
+  const getCategoryClass = (categoryName: Category) => {
+    switch (categoryName) {
+      case 'teacher_invites':
+        return 'bg-blue-900/90 text-white border-blue-700';
+      case 'join_requests':
+        return 'bg-sky-700/90 text-white border-sky-600';
+      case 'settings':
+        return 'bg-pink-100 text-pink-700 border-pink-300';
+      case 'attendance':
+        return 'bg-rose-100 text-rose-700 border-rose-300';
+      case 'grades':
+        return 'bg-emerald-100 text-emerald-700 border-emerald-300';
+      case 'subjects':
+        return 'bg-amber-100 text-amber-700 border-amber-300';
+      case 'assignments':
+        return 'bg-violet-100 text-violet-700 border-violet-300';
+      default:
+        return 'bg-muted text-foreground border-border';
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -257,7 +303,9 @@ export function LogsTab({ classId }: LogsTabProps) {
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <p className="font-medium truncate capitalize">{formatAction(log.action)}</p>
-                      <Badge variant="outline">{CATEGORY_LABELS[categorizeLog(log)]}</Badge>
+                      <Badge variant="outline" className={getCategoryClass(categorizeLog(log))}>
+                        {CATEGORY_LABELS[categorizeLog(log)]}
+                      </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground shrink-0">{new Date(log.created_at).toLocaleString()}</p>
                   </div>

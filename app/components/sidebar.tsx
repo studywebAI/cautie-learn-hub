@@ -19,6 +19,7 @@ import {
   BrainCircuit,
   Copy,
   FileSignature,
+  Route,
   School,
   Calendar,
   Menu,
@@ -83,14 +84,21 @@ export function AppSidebar() {
   const teacherManageHref = isTeacher && activeTeacherClassId ? `/class/${activeTeacherClassId}?tab=group` : '/classes';
   const teacherAgendaHref = isTeacher && activeTeacherClassId ? `/agenda?classId=${activeTeacherClassId}` : '/agenda';
 
-  const menuItems = [
-    { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
-    { href: isTeacher ? teacherSubjectsHref : '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
-    { href: isTeacher ? teacherManageHref : '/classes', label: isTeacher ? 'Manage' : 'classes', icon: School },
-    { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: Calendar },
-  ];
+  const menuItems = isTeacher
+    ? [
+        { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
+        { href: teacherSubjectsHref, label: dictionary.sidebar.subjects, icon: BookOpen },
+        { href: teacherManageHref, label: 'Manage', icon: School },
+        { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: Calendar },
+      ]
+    : [
+        { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
+        { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
+        { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
+      ];
 
   const toolsMenuItems = [
+    { href: '/tools/studyset', label: 'Studyset', icon: Route },
     { href: '/tools/quiz', label: dictionary.sidebar.tools.quizGenerator, icon: BrainCircuit },
     { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: Copy },
     { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: FileSignature },
@@ -765,7 +773,7 @@ export function AppSidebar() {
       setStudentLane(nextLane);
       if (typeof window === 'undefined') return;
 
-      const lastSchoolRoute = window.localStorage.getItem('studyweb-last-school-route') || '/classes';
+      const lastSchoolRoute = window.localStorage.getItem('studyweb-last-school-route') || '/agenda';
       const lastToolsRoute = window.localStorage.getItem('studyweb-last-tools-route') || '/tools';
       const isOnToolsRoute = pathname?.startsWith('/tools');
 
@@ -786,14 +794,16 @@ export function AppSidebar() {
         <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
           mode
         </label>
-        <select
-          value={studentLane}
-          onChange={(event) => switchStudentLane(event.target.value as StudentLane)}
-          className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-3 text-[12px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-sidebar-accent/90"
+        <button
+          type="button"
+          onClick={() => switchStudentLane(studentLane === 'school' ? 'tools' : 'school')}
+          className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-3 text-left text-[12px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-sidebar-accent/90"
         >
-          <option value="school">school</option>
-          <option value="tools">tools</option>
-        </select>
+          <span className="flex items-center justify-between">
+            <span>{studentLane === 'school' ? 'school mode' : 'tools mode'}</span>
+            <span className="text-sidebar-foreground/70">{studentLane === 'school' ? 'switch to tools' : 'switch to school'}</span>
+          </span>
+        </button>
       </div>
     );
   };
@@ -888,7 +898,7 @@ export function AppSidebar() {
         </div>
 
         {/* Full drawer sidebar (when hamburger is clicked) */}
-        <Sidebar className="w-[22rem]">
+        <Sidebar className="w-[min(22rem,calc(100vw-3.5rem))]">
           <SidebarContent className="px-3.5 py-3.5 flex-1">
             {renderTeacherClassSwitcher()}
             {renderStudentLaneToggle()}
@@ -966,7 +976,7 @@ export function AppSidebar() {
 
   // Desktop: Regular sidebar with trigger
   return (
-    <Sidebar className="w-[24.75rem]" collapsible="icon">
+    <Sidebar className="w-[20rem] lg:w-[24.75rem]" collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>

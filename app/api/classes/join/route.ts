@@ -208,30 +208,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Join code is required' }, { status: 400 });
   }
 
-  let classData: ClassLookupResult['classData'] = null
-  let matchedBy: ClassLookupResult['matchedBy'] = null
-  let lookupErrors: ClassLookupResult['lookupErrors'] = []
   let consumedInviteCode: { id: string; class_id: string; issued_by: string | null } | null = null
-
-  consumedInviteCode = await consumeTeacherInviteCode(supabase, classCode, user.id)
-  if (consumedInviteCode?.class_id) {
-    const { data: classByInviteCode } = await supabase
-      .from('classes')
-      .select('id, name, description, join_code, teacher_join_code')
-      .eq('id', consumedInviteCode.class_id)
-      .maybeSingle()
-    if (classByInviteCode) {
-      classData = classByInviteCode
-      matchedBy = 'teacher_invite_code'
-    }
-  }
-
-  if (!classData) {
-    const lookupResult = await findClassByCode(supabase, classCode)
-    classData = lookupResult.classData
-    matchedBy = lookupResult.matchedBy
-    lookupErrors = lookupResult.lookupErrors
-  }
+  let { classData, matchedBy, lookupErrors } = await findClassByCode(supabase, classCode)
   logJoin('POST - Class lookup result', {
     userId: user.id,
     codeMask: maskCode(classCode),
@@ -240,18 +218,6 @@ export async function POST(request: NextRequest) {
     matchedBy,
     lookupErrors
   })
-
-  if (!classData) {
-    return NextResponse.json(
-      {
-        error: 'Class not found. Please check the code and try again.',
-        reason: lookupErrors.length > 0 ? 'lookup_failed' : 'no_match'
-      },
-      { status: 404 }
-    );
-  }
-
-  const classPreferences = await getClassPreferences(supabase, classData.id)
 
   // Get user's subscription_type to determine role (global role)
   const { data: profile } = await supabase
@@ -265,12 +231,40 @@ export async function POST(request: NextRequest) {
   
   logJoin('POST - User subscription_type:', subscriptionType);
 
-  if (subscriptionType === 'teacher' && matchedBy !== 'teacher_invite_code') {
+  // Teachers can only join using one-time invite codes; consume code only after role check.
+  if (subscriptionType === 'teacher') {
+    consumedInviteCode = await consumeTeacherInviteCode(supabase, classCode, user.id)
+    if (consumedInviteCode?.class_id) {
+      const { data: classByInviteCode } = await supabase
+        .from('classes')
+        .select('id, name, description, join_code, teacher_join_code')
+        .eq('id', consumedInviteCode.class_id)
+        .maybeSingle()
+      if (classByInviteCode) {
+        classData = classByInviteCode
+        matchedBy = 'teacher_invite_code'
+      }
+    }
+
+    if (matchedBy !== 'teacher_invite_code') {
+      return NextResponse.json(
+        { error: 'Teachers must join with a one-time teacher invite code.' },
+        { status: 403 }
+      );
+    }
+  }
+
+  if (!classData) {
     return NextResponse.json(
-      { error: 'Teachers must join with a one-time teacher invite code.' },
-      { status: 403 }
+      {
+        error: 'Class not found. Please check the code and try again.',
+        reason: lookupErrors.length > 0 ? 'lookup_failed' : 'no_match'
+      },
+      { status: 404 }
     );
   }
+
+  const classPreferences = await getClassPreferences(supabase, classData.id)
 
   // Check if user is already a member (use maybeSingle to handle null case)
   const { data: existingMember, error: checkError } = await supabase
@@ -299,6 +293,20 @@ export async function POST(request: NextRequest) {
   if (subscriptionType === 'teacher' && matchedBy === 'teacher_invite_code') {
     if (!classPreferences.invite_allow_teacher_invites) {
       return NextResponse.json({ error: 'Teacher invites are disabled for this class' }, { status: 403 });
+    }
+
+    if (consumedInviteCode?.id) {
+      await logAuditEntry(supabase as any, {
+        userId: user.id,
+        classId: classData.id,
+        action: 'teacher_invite_code_used',
+        entityType: 'teacher_invite_code',
+        entityId: consumedInviteCode.id,
+        metadata: {
+          used_by_user_id: user.id,
+          issued_by_user_id: consumedInviteCode.issued_by || null,
+        },
+      });
     }
 
     const { data: existingPendingRequest } = await (supabase as any)

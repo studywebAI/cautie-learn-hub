@@ -8,9 +8,14 @@ create table if not exists public.class_preferences (
   grades_show_class_average boolean not null default true,
   attendance_require_confirmation boolean not null default true,
   invite_allow_teacher_invites boolean not null default true,
+  school_schedule_enabled boolean not null default false,
+  school_schedule_visible_to_students boolean not null default true,
   updated_by uuid null references public.profiles(id),
   updated_at timestamptz not null default now()
 );
+
+alter table public.class_preferences add column if not exists school_schedule_enabled boolean not null default false;
+alter table public.class_preferences add column if not exists school_schedule_visible_to_students boolean not null default true;
 
 create table if not exists public.class_teacher_invite_codes (
   id uuid primary key default gen_random_uuid(),

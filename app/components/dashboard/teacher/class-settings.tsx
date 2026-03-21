@@ -662,6 +662,33 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             />
           </div>
 
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <p className="text-sm font-medium">Enable school schedule</p>
+              <p className="text-xs text-muted-foreground">Turns on class timetable management for this class.</p>
+            </div>
+            <Switch
+              checked={preferences.school_schedule_enabled}
+              onCheckedChange={(checked) =>
+                setPreferences((prev) => ({ ...prev, school_schedule_enabled: Boolean(checked) }))
+              }
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <p className="text-sm font-medium">Show school schedule to students</p>
+              <p className="text-xs text-muted-foreground">Students can view timetable blocks in agenda/dashboard when enabled.</p>
+            </div>
+            <Switch
+              checked={preferences.school_schedule_visible_to_students}
+              onCheckedChange={(checked) =>
+                setPreferences((prev) => ({ ...prev, school_schedule_visible_to_students: Boolean(checked) }))
+              }
+              disabled={!preferences.school_schedule_enabled}
+            />
+          </div>
+
           <Button onClick={() => void handleSavePreferences()} disabled={savingPreferences}>
             {savingPreferences ? 'Saving...' : 'Save Teaching Defaults'}
           </Button>

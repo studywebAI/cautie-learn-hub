@@ -4,6 +4,8 @@ export type ClassPreferences = {
   grades_show_class_average: boolean;
   attendance_require_confirmation: boolean;
   invite_allow_teacher_invites: boolean;
+  school_schedule_enabled: boolean;
+  school_schedule_visible_to_students: boolean;
 };
 
 export const DEFAULT_CLASS_PREFERENCES: ClassPreferences = {
@@ -12,6 +14,8 @@ export const DEFAULT_CLASS_PREFERENCES: ClassPreferences = {
   grades_show_class_average: true,
   attendance_require_confirmation: true,
   invite_allow_teacher_invites: true,
+  school_schedule_enabled: false,
+  school_schedule_visible_to_students: true,
 };
 
 export function normalizeClassPreferences(input: any): ClassPreferences {
@@ -27,6 +31,7 @@ export function normalizeClassPreferences(input: any): ClassPreferences {
     grades_show_class_average: input?.grades_show_class_average !== false,
     attendance_require_confirmation: input?.attendance_require_confirmation !== false,
     invite_allow_teacher_invites: input?.invite_allow_teacher_invites !== false,
+    school_schedule_enabled: input?.school_schedule_enabled === true,
+    school_schedule_visible_to_students: input?.school_schedule_visible_to_students !== false,
   };
 }
-

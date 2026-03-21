@@ -13,6 +13,8 @@ const DEFAULT_CLASS_PREFERENCES = {
   grades_show_class_average: true,
   attendance_require_confirmation: true,
   invite_allow_teacher_invites: true,
+  school_schedule_enabled: false,
+  school_schedule_visible_to_students: true,
 }
 
 const normalizePreferences = (raw: any) => ({
@@ -24,6 +26,8 @@ const normalizePreferences = (raw: any) => ({
   grades_show_class_average: raw?.grades_show_class_average !== false,
   attendance_require_confirmation: raw?.attendance_require_confirmation !== false,
   invite_allow_teacher_invites: raw?.invite_allow_teacher_invites !== false,
+  school_schedule_enabled: raw?.school_schedule_enabled === true,
+  school_schedule_visible_to_students: raw?.school_schedule_visible_to_students !== false,
 })
 
 // GET a specific class's public info
@@ -75,7 +79,7 @@ export async function GET(
   if (user) {
     const { data: prefRow } = await (supabase as any)
       .from('class_preferences')
-      .select('default_subject_view, grades_default_scale, grades_show_class_average, attendance_require_confirmation, invite_allow_teacher_invites')
+      .select('default_subject_view, grades_default_scale, grades_show_class_average, attendance_require_confirmation, invite_allow_teacher_invites, school_schedule_enabled, school_schedule_visible_to_students')
       .eq('class_id', classId)
       .maybeSingle()
 

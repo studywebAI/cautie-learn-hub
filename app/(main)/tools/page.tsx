@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BrainCircuit, Copy, FileSignature, Sparkles, Clock3, Wand2 } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Copy, FileSignature, Sparkles, Clock3, Wand2, Route } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,15 +39,16 @@ type AnnouncementLite = {
 };
 
 const TOOL_LABELS: Record<string, string> = {
+  studyset: 'Studyset',
   quiz: 'Quiz',
   flashcards: 'Flashcards',
   notes: 'Notes',
 };
 
 function extractRecommendedTool(input: string) {
-  const marker = input.match(/\[TOOL_REC:(quiz|flashcards|notes)\]/i);
+  const marker = input.match(/\[TOOL_REC:(studyset|quiz|flashcards|notes)\]/i);
   if (marker?.[1]) return marker[1].toLowerCase();
-  const urlHint = input.match(/\/tools\/(quiz|flashcards|notes)\b/i);
+  const urlHint = input.match(/\/tools\/(studyset|quiz|flashcards|notes)\b/i);
   if (urlHint?.[1]) return urlHint[1].toLowerCase();
   return null;
 }
@@ -80,6 +81,13 @@ export default function ToolsPage() {
 
   const tools = useMemo(
     () => [
+      {
+        key: 'studyset',
+        title: 'Studyset',
+        description: 'Build long-term, day-by-day study plans from all your material.',
+        icon: Route,
+        href: '/tools/studyset',
+      },
       {
         key: 'quiz',
         title: sidebarTools.quizGenerator || 'Quiz',
@@ -239,6 +247,7 @@ export default function ToolsPage() {
                       onChange={(event) => setRecommendedToolDraft(event.target.value)}
                       className="h-5 border-0 bg-transparent px-0 text-[10px] text-muted-foreground focus:outline-none"
                     >
+                      <option value="studyset">studyset</option>
                       <option value="quiz">quiz</option>
                       <option value="notes">notes</option>
                     </select>
@@ -290,6 +299,9 @@ export default function ToolsPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <Button asChild className="w-full justify-start">
+                  <Link prefetch={false} href="/tools/studyset">Create Studyset</Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full justify-start">
                   <Link prefetch={false} href="/tools/quiz">Create Quiz</Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
