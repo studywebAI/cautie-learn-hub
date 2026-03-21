@@ -4,7 +4,6 @@ import { useState, useEffect, useContext } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Users, Clock, TrendingUp, FileText, CheckCircle, Activity, Star, ChevronDown, ChevronRight, ClipboardCheck, CalendarDays, Library } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -141,7 +140,6 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
   const [loading, setLoading] = useState(!cachedData);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
-  const [filter, setFilter] = useState<'all' | 'online' | 'offline'>('all');
   const [teachersCollapsed, setTeachersCollapsed] = useState(false);
   const [studentsCollapsed, setStudentsCollapsed] = useState(false);
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
@@ -268,11 +266,6 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
   };
 
   const filteredStudents = (data?.students || [])
-    .filter(student => {
-      if (filter === 'online') return student.onlineStatus === 'online';
-      if (filter === 'offline') return student.onlineStatus === 'offline';
-      return true;
-    })
     .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically for consistency
 
   const getActionIcon = (action: string) => {
@@ -302,8 +295,10 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 xl:grid-cols-[22rem_minmax(0,1fr)]">
-        <Card className="rounded-2xl border-none shadow-none">
+      <Card className="rounded-2xl border-none shadow-none">
+        <CardContent className="space-y-4 pt-6">
+          <div className="grid gap-4 xl:grid-cols-[22rem_minmax(0,1fr)]">
+            <div className="rounded-2xl bg-muted/20">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <button
@@ -353,19 +348,15 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                             : t.noSubjectsYet}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-[11px]">
-                        {teacher.onlineStatus === 'online' ? t.online : t.offline}
-                      </Badge>
                     </div>
                   </button>
                 ))
             )}
           </CardContent>}
-        </Card>
+            </div>
 
-        <div className="space-y-4">
-          <Card className="rounded-2xl border-none shadow-none">
-            <CardContent className="pt-6">
+            <div className="rounded-2xl bg-muted/20">
+              <CardContent className="pt-6">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <button
@@ -379,43 +370,19 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                   </button>
                   {!studentsCollapsed && <p className="text-xs text-muted-foreground">{t.studentListHint}</p>}
                 </div>
-                {!studentsCollapsed && <div className="inline-flex w-full gap-2 rounded-full bg-muted/35 p-1 md:w-auto">
-                  <Button
-                    variant={filter === 'all' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setFilter('all')}
-                    className="h-8 rounded-full px-3"
-                  >
-                    {t.allStudents}
-                  </Button>
-                  <Button
-                    variant={filter === 'online' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setFilter('online')}
-                    className="h-8 rounded-full px-3 gap-2"
-                  >
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    {t.online} ({data.students.filter(s => s.onlineStatus === 'online').length})
-                  </Button>
-                  <Button
-                    variant={filter === 'offline' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setFilter('offline')}
-                    className="h-8 rounded-full px-3 gap-2"
-                  >
-                    <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                    {t.offline} ({data.students.filter(s => s.onlineStatus === 'offline').length})
-                  </Button>
-                </div>}
+                {!studentsCollapsed && (
+                  <span className="text-xs text-muted-foreground">{filteredStudents.length} {t.people}</span>
+                )}
               </div>
             </CardContent>
-          </Card>
+          
 
           {!studentsCollapsed && <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
         {filteredStudents.map(student => (
-          <Card 
-            key={student.id} 
-            className="cursor-pointer rounded-2xl border-none shadow-none transition-colors hover:bg-muted/40"
+          <button
+            type="button"
+            key={student.id}
+            className="w-full rounded-xl bg-muted/30 p-3 text-left transition-colors hover:bg-muted/55"
             onClick={() => {
               setSelectedStudent(student);
               void logClassTabEvent({
@@ -428,79 +395,31 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
               });
             }}
           >
-            <CardContent className="pt-4">
-              <div className="flex items-start gap-3">
-                <div className="relative">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
-                  </Avatar>
-                  <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                    student.onlineStatus === 'online' ? 'bg-green-500' : 'bg-gray-400'
-                  }`}></span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold truncate">{student.name}</p>
-                    {student.onlineStatus === 'online' ? (
-                      <Badge variant="outline" className="text-green-500 border-green-500 text-xs">
-                        {t.online}
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-xs">
-                        {formatLastSeen(student.lastSeen)}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate">{student.email || t.noEmail}</p>
-                  
-                  <div className="mt-3 space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{t.progress}</span>
-                      <span className="font-medium">{student.stats.completionRate}%</span>
-                    </div>
-                    <Progress value={student.stats.completionRate} className="h-2" />
-                    
-                    <div className="flex items-center justify-between text-sm mt-2">
-                      <span className="text-muted-foreground">{t.assignments}</span>
-                      <span>
-                        {student.stats.completedAssignments}/{student.stats.totalAssignments}
-                      </span>
-                    </div>
-                    
-                    {student.stats.averageGrade !== null && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{t.avgGrade}</span>
-                        <span className="font-medium">{student.stats.averageGrade}%</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Last graded */}
-                  {student.lastGraded && (
-                    <div className="mt-3 rounded-xl bg-muted/45 p-2 text-xs">
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 text-foreground/70" />
-                        <span className="font-medium">{t.lastGrade}: {student.lastGraded.grade}%</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+            <div className="flex items-start gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium">{student.name}</p>
+                <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {student.stats.completedAssignments}/{student.stats.totalAssignments} {t.assignments.toLowerCase()} · {t.avgGrade}: {student.stats.averageGrade !== null ? `${student.stats.averageGrade}%` : '-'}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </button>
         ))}
           </div>}
-        </div>
-      </div>
-
-      {!studentsCollapsed && filteredStudents.length === 0 && (
-        <Card className="rounded-2xl border-none shadow-none">
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>{t.noStudentsFound}</p>
-          </CardContent>
-        </Card>
-      )}
+          {!studentsCollapsed && filteredStudents.length === 0 && (
+            <div className="rounded-xl bg-muted/20 py-12 text-center text-muted-foreground">
+              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>{t.noStudentsFound}</p>
+            </div>
+          )}
+                </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Student Detail Dialog */}
       <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>

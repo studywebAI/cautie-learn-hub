@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,6 +81,7 @@ type GradePreset = {
 // =============================================
 
 export function GradesTab({ classId }: { classId: string }) {
+  const searchParams = useSearchParams();
   const [view, setView] = useState<'menu' | 'new' | 'edit' | 'edit-detail' | 'history' | 'reports'>('menu');
   const [gradeSets, setGradeSets] = useState<GradeSet[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -87,6 +89,8 @@ export function GradesTab({ classId }: { classId: string }) {
   const [preferences, setPreferences] = useState(DEFAULT_CLASS_PREFERENCES);
   const [loading, setLoading] = useState(true);
   const [selectedGradeSetId, setSelectedGradeSetId] = useState<string | null>(null);
+  const autoResolveRef = useRef<string>('');
+  const deepLinkedStudentId = searchParams?.get('studentId') || '';
 
   useEffect(() => {
     void logClassTabEvent({
@@ -103,6 +107,40 @@ export function GradesTab({ classId }: { classId: string }) {
   useEffect(() => {
     void loadGradeSets(selectedSubjectFilter);
   }, [classId, selectedSubjectFilter]);
+
+  useEffect(() => {
+    if (!deepLinkedStudentId) return;
+    if (view === 'menu') setView('edit');
+  }, [deepLinkedStudentId, view]);
+
+  useEffect(() => {
+    if (!deepLinkedStudentId || loading || gradeSets.length === 0) return;
+    if (view === 'edit-detail' && selectedGradeSetId) return;
+    if (autoResolveRef.current === `${classId}:${deepLinkedStudentId}`) return;
+
+    const resolveGradeSet = async () => {
+      autoResolveRef.current = `${classId}:${deepLinkedStudentId}`;
+      for (const gradeSet of gradeSets) {
+        try {
+          const response = await fetch(`/api/classes/${classId}/grades/${gradeSet.id}`);
+          if (!response.ok) continue;
+          const payload = await response.json();
+          const hasStudent = (payload?.grade_set?.student_grades || []).some(
+            (entry: any) => entry.student_id === deepLinkedStudentId
+          );
+          if (hasStudent) {
+            setSelectedGradeSetId(gradeSet.id);
+            setView('edit-detail');
+            return;
+          }
+        } catch {
+          // continue trying next grade set
+        }
+      }
+    };
+
+    void resolveGradeSet();
+  }, [classId, deepLinkedStudentId, gradeSets, loading, selectedGradeSetId, view]);
 
   const loadClassSubjects = async () => {
     try {
@@ -222,6 +260,7 @@ export function GradesTab({ classId }: { classId: string }) {
       <EditGradesDetail
         classId={classId}
         gradeSetId={selectedGradeSetId}
+        highlightedStudentId={deepLinkedStudentId}
         onBack={() => {
           setSelectedGradeSetId(null);
           setView('edit');
@@ -1265,11 +1304,13 @@ function EditGradesList({
 function EditGradesDetail({ 
   classId, 
   gradeSetId, 
+  highlightedStudentId,
   onBack,
   onDeleted
 }: { 
   classId: string; 
   gradeSetId: string; 
+  highlightedStudentId?: string;
   onBack: () => void;
   onDeleted: () => void;
 }) {
@@ -1306,7 +1347,15 @@ function EditGradesDetail({
       if (response.ok) {
         const data = await response.json();
         setGradeSet(data.grade_set);
-        setStudents(data.grade_set.student_grades || []);
+        const incoming = data.grade_set.student_grades || [];
+        if (highlightedStudentId) {
+          incoming.sort((a: any, b: any) => {
+            if (a.student_id === highlightedStudentId) return -1;
+            if (b.student_id === highlightedStudentId) return 1;
+            return 0;
+          });
+        }
+        setStudents(incoming);
         setSelectedPresetId(data.grade_set.grading_preset?.id || '');
       }
     } catch (error) {
@@ -1450,6 +1499,7 @@ function EditGradesDetail({
   }
 
   const canPublish = gradeSet.status === 'draft' && !saving;
+  const showDeepLinkHint = Boolean(highlightedStudentId);
 
   return (
     <div className="space-y-6">
@@ -1488,6 +1538,11 @@ function EditGradesDetail({
           </Button>
         </div>
       </div>
+      {showDeepLinkHint && (
+        <div className="rounded-lg bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+          Focused from Group tab. Highlighted student moved to top.
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1567,7 +1622,13 @@ function EditGradesDetail({
           </div>
           <div className="border rounded-lg divide-y">
             {students.map((student) => (
-              <div key={student.student_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-3 items-center">
+              <div
+                id={`grade-student-${student.student_id}`}
+                key={student.student_id}
+                className={`grid grid-cols-1 md:grid-cols-12 gap-3 p-3 items-center ${
+                  highlightedStudentId === student.student_id ? 'bg-muted/45' : ''
+                }`}
+              >
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{student.student?.full_name || student.student?.email || 'Unknown Student'}</p>
                   <p className="text-xs text-muted-foreground truncate">{student.student?.email || 'No email available'}</p>

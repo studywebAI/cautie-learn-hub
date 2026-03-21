@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -36,6 +37,7 @@ type AttendanceTabProps = {
 };
 
 export function AttendanceTab({ classId }: AttendanceTabProps) {
+  const searchParams = useSearchParams();
   const [students, setStudents] = useState<StudentAttendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<StudentAttendance | null>(null);
@@ -51,6 +53,7 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
   } | null>(null);
   const [preferences, setPreferences] = useState(DEFAULT_CLASS_PREFERENCES);
   const { toast } = useToast();
+  const selectedStudentId = searchParams?.get('studentId') || '';
 
   // Check if data was passed via props (from cache) or fetch it
   const fetchAttendance = async (forceRefresh = false) => {
@@ -245,6 +248,9 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
     setPendingAction(action);
     setIsConfirmDialogOpen(true);
   };
+  const visibleStudents = selectedStudentId
+    ? students.filter((student) => student.id === selectedStudentId)
+    : students;
 
   if (loading) {
     return (
@@ -258,12 +264,21 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Attendance</h2>
-        <p className="text-sm text-muted-foreground">{students.length} students</p>
+        <p className="text-sm text-muted-foreground">{visibleStudents.length} students</p>
       </div>
 
+      {selectedStudentId && (
+        <div className="rounded-lg bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+          Showing one student from Group tab.
+          <a href={`/class/${classId}?tab=attendance`} className="ml-2 underline underline-offset-2">
+            Show all
+          </a>
+        </div>
+      )}
+
       <div className="space-y-3">
-        {students.map(student => (
-          <Card key={student.id} className="hover:shadow-md transition-shadow">
+        {visibleStudents.map(student => (
+          <Card key={student.id} className={`transition-shadow ${selectedStudentId === student.id ? 'bg-muted/45' : 'hover:shadow-md'}`}>
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
                 {/* Avatar */}
