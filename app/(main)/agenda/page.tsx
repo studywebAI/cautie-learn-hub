@@ -19,6 +19,58 @@ import type { AiSuggestion, CalendarEvent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 type ViewMode = 'week' | 'list';
+type ScheduleSlot = {
+  id: string;
+  class_id: string;
+  class_name?: string;
+  day_of_week: number;
+  period_index: number;
+  title: string;
+  start_time: string;
+  end_time: string;
+  is_break: boolean;
+  notes?: string | null;
+};
+
+type StudysetAgendaItem = {
+  id: string;
+  studyset_id: string;
+  title: string;
+  plan_date: string;
+  summary?: string | null;
+  estimated_minutes: number;
+  tasks: Array<{
+    id: string;
+    type: string;
+    title: string;
+    description?: string | null;
+    estimated_minutes: number;
+  }>;
+};
+
+function startOfTodayLocal() {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return now;
+}
+
+function dateForWeekdayInRange(base: Date, targetDayOfWeek: number, weekOffset: number) {
+  const mondayBased = base.getDay() === 0 ? 7 : base.getDay();
+  const diff = targetDayOfWeek - mondayBased + weekOffset * 7;
+  const value = new Date(base);
+  value.setDate(base.getDate() + diff);
+  value.setHours(0, 0, 0, 0);
+  return value;
+}
+
+function toDateWithTime(day: Date, timeValue: string) {
+  const [hourPart, minutePart] = (timeValue || '00:00').split(':');
+  const hour = Number(hourPart || 0);
+  const minute = Number(minutePart || 0);
+  const value = new Date(day);
+  value.setHours(hour, minute, 0, 0);
+  return value;
+}
 
 export default function AgendaPage() {
   return (
@@ -55,6 +107,8 @@ function AgendaPageContent() {
   const { toast } = useToast();
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedClassId, setSelectedClassId] = useState<string>('');
+  const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlot[]>([]);
+  const [studysetAgendaItems, setStudysetAgendaItems] = useState<StudysetAgendaItem[]>([]);
 
   const isStudent = role === 'student';
   const isTeacher = role === 'teacher';
@@ -124,6 +178,78 @@ function AgendaPageContent() {
     fetchChapters();
   }, [assignments]);
 
+  useEffect(() => {
+    if (isLoading) return;
+    const controller = new AbortController();
+
+    const loadSchedule = async () => {
+      try {
+        if (isTeacher) {
+          if (!selectedClassId) {
+            setScheduleSlots([]);
+            return;
+          }
+          const response = await fetch(`/api/classes/${selectedClassId}/school-schedule`, { signal: controller.signal });
+          if (!response.ok) {
+            setScheduleSlots([]);
+            return;
+          }
+          const data = await response.json();
+          setScheduleSlots((data?.enabled ? data?.slots : []) || []);
+          return;
+        }
+
+        if (isStudent) {
+          const response = await fetch('/api/school-schedule', { signal: controller.signal });
+          if (!response.ok) {
+            setScheduleSlots([]);
+            return;
+          }
+          const data = await response.json();
+          setScheduleSlots(data?.slots || []);
+          return;
+        }
+
+        setScheduleSlots([]);
+      } catch (error: any) {
+        if (error?.name === 'AbortError') return;
+        setScheduleSlots([]);
+      }
+    };
+
+    void loadSchedule();
+    return () => controller.abort();
+  }, [isLoading, isTeacher, isStudent, selectedClassId]);
+
+  useEffect(() => {
+    if (isLoading || !isStudent) {
+      setStudysetAgendaItems([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const from = new Date().toISOString().slice(0, 10);
+    const to = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString().slice(0, 10);
+
+    const loadStudysetAgenda = async () => {
+      try {
+        const response = await fetch(`/api/studysets/agenda?from=${from}&to=${to}`, { signal: controller.signal });
+        if (!response.ok) {
+          setStudysetAgendaItems([]);
+          return;
+        }
+        const data = await response.json();
+        setStudysetAgendaItems(data?.items || []);
+      } catch (error: any) {
+        if (error?.name === 'AbortError') return;
+        setStudysetAgendaItems([]);
+      }
+    };
+
+    void loadStudysetAgenda();
+    return () => controller.abort();
+  }, [isLoading, isStudent]);
+
   const events: CalendarEvent[] = useMemo(() => {
     if (isLoading) return [];
 
@@ -151,6 +277,52 @@ function AgendaPageContent() {
         };
       });
 
+    const scheduleEvents: CalendarEvent[] = [];
+    if (scheduleSlots.length > 0) {
+      const horizonWeeks = 52;
+      const base = startOfTodayLocal();
+      for (let weekOffset = 0; weekOffset < horizonWeeks; weekOffset++) {
+        scheduleSlots.forEach((slot) => {
+          if (!slot.day_of_week || slot.day_of_week < 1 || slot.day_of_week > 7) return;
+          const dayDate = dateForWeekdayInRange(base, slot.day_of_week, weekOffset);
+          if (dayDate < base) return;
+          scheduleEvents.push({
+            id: `schedule-${slot.id}-${format(dayDate, 'yyyy-MM-dd')}`,
+            title: slot.is_break ? `Break · ${slot.title}` : slot.title,
+            subject: (slot as any).class_name || 'School schedule',
+            date: toDateWithTime(dayDate, slot.start_time),
+            type: 'study_plan',
+            href: '/agenda',
+            estimated_duration: Math.max(
+              0,
+              Math.round(
+                (toDateWithTime(dayDate, slot.end_time).getTime() - toDateWithTime(dayDate, slot.start_time).getTime()) / 60000
+              )
+            ),
+            description: slot.notes || `${slot.start_time}-${slot.end_time}`,
+          });
+        });
+      }
+    }
+
+    const studysetEvents: CalendarEvent[] = studysetAgendaItems
+      .filter((item) => Boolean(item.plan_date))
+      .map((item) => ({
+        id: `studyset-${item.id}`,
+        title: item.title,
+        subject: 'Studyset',
+        date: toDateWithTime(parseISO(item.plan_date), '18:00'),
+        type: 'study_plan' as const,
+        href: `/tools/studyset/${item.studyset_id}`,
+        estimated_duration: item.estimated_minutes || undefined,
+        description:
+          item.summary ||
+          item.tasks
+            .slice(0, 3)
+            .map((task) => task.title)
+            .join(', '),
+      }));
+
     if (isStudent) {
       const personalEvents = (personalTasks || []).map((t: PersonalTask) => ({
         id: t.id,
@@ -164,7 +336,7 @@ function AgendaPageContent() {
         tags: (t as any).tags,
       }));
 
-      allEvents = [...assignmentEvents, ...personalEvents];
+      allEvents = [...assignmentEvents, ...personalEvents, ...scheduleEvents, ...studysetEvents];
     } else {
       // Teacher view - only show assignments from their classes
       const teacherAssignmentEvents = assignmentEvents.filter(event => 
@@ -172,11 +344,11 @@ function AgendaPageContent() {
           ? event.href.replace('/class/', '') === selectedClassId
           : (classes || []).some((c: ClassInfo) => c.id === event.href.replace('/class/', ''))
       );
-      allEvents = teacherAssignmentEvents;
+      allEvents = [...teacherAssignmentEvents, ...scheduleEvents];
     }
 
     return allEvents;
-  }, [assignments, classes, isStudent, personalTasks, isLoading, chapters, selectedClassId]);
+  }, [assignments, classes, isStudent, personalTasks, isLoading, chapters, selectedClassId, scheduleSlots, studysetAgendaItems]);
 
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -260,6 +432,10 @@ function AgendaPageContent() {
   const handleEventClick = (event: CalendarEvent) => {
     if (event.type === 'assignment') {
       setSelectedEvent(event);
+      return;
+    }
+    if (event.href) {
+      router.push(event.href);
     }
   };
 

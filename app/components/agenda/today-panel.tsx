@@ -2,7 +2,7 @@
 
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BrainCircuit, BookCheck, Lightbulb, Loader2, Home, Circle, Square } from 'lucide-react';
+import { BrainCircuit, BookCheck, Lightbulb, Loader2, Home, Circle, Square, BookOpen } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
 import type { AiSuggestion } from '@/lib/types';
 import { useDictionary } from '@/contexts/app-context';
@@ -24,6 +24,17 @@ export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSugges
   const { dictionary } = useDictionary();
 
   const getDeadlineStyle = (event: CalendarEvent) => {
+    if (event.type !== 'assignment') {
+      return {
+        borderColor: 'rgb(15, 23, 42)',
+        bgColor: 'rgba(15, 23, 42, 0.08)',
+        icon: BookOpen,
+        iconColor: 'text-slate-700',
+        iconBg: 'bg-slate-100',
+        label: 'S'
+      };
+    }
+
     const assignmentType = (event as any).assignment_type || 'homework';
     
     switch (assignmentType) {

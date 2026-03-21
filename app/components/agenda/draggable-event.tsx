@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Home, Circle, Square, Check } from 'lucide-react';
+import { Home, Circle, Square, BookOpen } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
 import { Checkbox } from '../ui/checkbox';
 import { toast } from '@/hooks/use-toast';
@@ -33,6 +33,17 @@ export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
   };
 
   const getDeadlineStyle = () => {
+    if (event.type !== 'assignment') {
+      return {
+        borderColor: 'rgb(15, 23, 42)',
+        bgColor: 'rgba(15, 23, 42, 0.08)',
+        icon: BookOpen,
+        iconColor: 'text-slate-700',
+        iconBg: 'bg-slate-100',
+        label: 'S'
+      };
+    }
+
     const assignmentType = (event as any).assignment_type || 'homework';
     
     switch (assignmentType) {

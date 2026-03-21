@@ -7,14 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Route, CalendarDays, Clock3, BookOpen } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 export default function StudysetPage() {
+  const { toast } = useToast();
   const [name, setName] = useState('');
   const [days, setDays] = useState('7');
   const [minutesPerDay, setMinutesPerDay] = useState('45');
   const [confidence, setConfidence] = useState('beginner');
   const [sourceBundle, setSourceBundle] = useState('');
   const [saving, setSaving] = useState(false);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [studysets, setStudysets] = useState<any[]>([]);
 
   const loadStudysets = async () => {
@@ -43,12 +47,47 @@ export default function StudysetPage() {
           source_bundle: sourceBundle,
         }),
       });
-      if (!response.ok) return;
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || 'Failed to save studyset');
+      }
       setName('');
       setSourceBundle('');
       await loadStudysets();
+      toast({ title: 'Studyset saved' });
+    } catch (error: any) {
+      toast({
+        title: 'Could not save studyset',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const generatePlan = async (studysetId: string) => {
+    setGeneratingId(studysetId);
+    try {
+      const response = await fetch(`/api/studysets/${studysetId}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || 'Failed to generate plan');
+      }
+      await loadStudysets();
+      toast({ title: 'Plan generated', description: 'Daily tasks are now synced into Agenda.' });
+    } catch (error: any) {
+      toast({
+        title: 'Could not generate plan',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setGeneratingId(null);
     }
   };
 
@@ -66,7 +105,7 @@ export default function StudysetPage() {
               Studyset
             </CardTitle>
             <CardDescription>
-              Long-term study planning workspace. This is the first implementation and will expand with day-by-day AI tasks.
+              Long-term study planning workspace. Build once, then follow it day-by-day.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -130,7 +169,7 @@ export default function StudysetPage() {
               <p className="flex items-center gap-2"><CalendarDays className="h-4 w-4" /> Day-by-day plan</p>
               <p className="flex items-center gap-2"><Clock3 className="h-4 w-4" /> Daily time budget</p>
               <p className="flex items-center gap-2"><BookOpen className="h-4 w-4" /> Linked quizzes, notes, flashcards</p>
-              <p>Next implementation will save plans in database and sync with agenda.</p>
+              <p>Generated plans sync into Agenda automatically.</p>
             </CardContent>
           </Card>
         </div>
@@ -150,6 +189,19 @@ export default function StudysetPage() {
                   <p className="text-xs text-muted-foreground">
                     {item.target_days} days · {item.minutes_per_day} min/day · {item.confidence_level}
                   </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={generatingId === item.id}
+                      onClick={() => void generatePlan(item.id)}
+                    >
+                      {generatingId === item.id ? 'Generating...' : 'Generate plan'}
+                    </Button>
+                    <Button asChild size="sm">
+                      <Link href={`/tools/studyset/${item.id}`}>Open plan</Link>
+                    </Button>
+                  </div>
                 </div>
               ))
             )}

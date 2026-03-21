@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { logAuditEntry } from '@/lib/auth/class-permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,10 +67,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: createError?.message || 'Failed to create studyset' }, { status: 500 })
     }
 
+    await logAuditEntry(supabase as any, {
+      userId: user.id,
+      classId: classId || undefined,
+      action: 'studyset_created',
+      entityType: 'studyset',
+      entityId: studyset.id,
+      metadata: {
+        name: studyset.name,
+        target_days: studyset.target_days,
+        minutes_per_day: studyset.minutes_per_day,
+      },
+    })
+
     return NextResponse.json({ success: true, studyset })
   } catch (error) {
     console.error('studysets POST failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-
