@@ -124,8 +124,8 @@ export default function StudysetDetailPage() {
   const completedDays = useMemo(() => days.filter((day) => day.completed).length, [days]);
 
   return (
-    <div className="h-full overflow-auto p-5 md:p-7">
-      <div className="mx-auto max-w-5xl space-y-6">
+    <div className="h-full overflow-auto">
+      <div className="w-full space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Button asChild variant="outline" size="sm">
             <Link href="/tools/studyset">

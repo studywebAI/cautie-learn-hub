@@ -220,8 +220,8 @@ export default function ToolsPage() {
   const recommendedTool = Object.entries(runByTool).sort((a, b) => b[1] - a[1])[0]?.[0] || 'quiz';
 
   return (
-    <div className="h-full overflow-auto p-5 md:p-7">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="h-full overflow-auto">
+      <div className="w-full space-y-4">
         <Card>
           <CardHeader>
             <div className="flex flex-wrap items-start justify-between gap-4">

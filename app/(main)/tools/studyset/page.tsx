@@ -96,8 +96,8 @@ export default function StudysetPage() {
   }, []);
 
   return (
-    <div className="h-full overflow-auto p-5 md:p-7">
-      <div className="mx-auto max-w-5xl space-y-6">
+    <div className="h-full overflow-auto">
+      <div className="w-full space-y-4">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
