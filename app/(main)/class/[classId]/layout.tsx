@@ -57,7 +57,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border/60 bg-[hsl(var(--surface-1))] px-4 py-3 md:px-5 lg:px-7">
+      <div className="border-b border-border/60 bg-[hsl(var(--surface-1))] px-4 py-4">
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="truncate text-[18px]">{className || 'Loading...'}</h2>
           <button
@@ -95,7 +95,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
         </nav>
       </div>
 
-      <main className="flex-1 overflow-auto p-4 md:p-5 lg:p-7">
+      <main className="flex-1 overflow-auto p-4">
         {children}
       </main>
     </div>
