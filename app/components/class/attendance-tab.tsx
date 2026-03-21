@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Check, X, AlertCircle, MessageSquare, CheckCircle, Clock, BookOpen, UserMinus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DEFAULT_CLASS_PREFERENCES, normalizeClassPreferences } from '@/lib/class-preferences';
+import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 
 type StudentAttendance = {
   id: string;
@@ -47,6 +49,7 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
     wasSentOut?: boolean;
     wasTooLate?: boolean;
   } | null>(null);
+  const [preferences, setPreferences] = useState(DEFAULT_CLASS_PREFERENCES);
   const { toast } = useToast();
 
   // Check if data was passed via props (from cache) or fetch it
@@ -58,21 +61,63 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
     }
     
     setLoading(true);
+    void logClassTabEvent({
+      classId,
+      tab: 'attendance',
+      event: 'load_start',
+      stage: 'data',
+      level: 'debug',
+      meta: { force_refresh: forceRefresh },
+    });
     try {
       const response = await fetch(`/api/classes/${classId}/attendance`);
       if (response.ok) {
         const data = await response.json();
         setStudents(data.students || []);
+        void logClassTabEvent({
+          classId,
+          tab: 'attendance',
+          event: 'load_success',
+          stage: 'data',
+          level: 'debug',
+          meta: { student_count: (data.students || []).length },
+        });
       }
     } catch (error) {
       console.error('Failed to fetch attendance:', error);
+      void logClassTabEvent({
+        classId,
+        tab: 'attendance',
+        event: 'load_error',
+        stage: 'data',
+        level: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    void logClassTabEvent({
+      classId,
+      tab: 'attendance',
+      event: 'mount',
+      stage: 'ui',
+      level: 'info',
+    });
     fetchAttendance();
+    const loadPreferences = async () => {
+      try {
+        const response = await fetch(`/api/classes/${classId}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        setPreferences(normalizeClassPreferences(data.preferences || {}));
+      } catch {
+        setPreferences(DEFAULT_CLASS_PREFERENCES);
+      }
+    };
+    void loadPreferences();
   }, [classId]);
 
   // Method to refresh data after making changes
@@ -85,26 +130,54 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
   };
 
   const handleAttendanceToggle = (studentId: string, isPresent: boolean) => {
+    if (!preferences.attendance_require_confirmation) {
+      setPendingAction({ studentId, isPresent });
+      void handleConfirm({ studentId, isPresent });
+      return;
+    }
     setPendingAction({ studentId, isPresent });
     setIsConfirmDialogOpen(true);
   };
 
-  const handleConfirm = async () => {
-    if (!pendingAction) return;
+  const handleConfirm = async (directAction?: {
+    studentId: string;
+    isPresent: boolean;
+    hasHomeworkIncomplete?: boolean;
+    wasSentOut?: boolean;
+    wasTooLate?: boolean;
+  }) => {
+    const action = directAction || pendingAction;
+    if (!action) return;
 
     try {
       const response = await fetch(`/api/classes/${classId}/attendance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pendingAction)
+        body: JSON.stringify(action)
       });
 
       if (response.ok) {
         toast({ title: 'Attendance updated' });
+        void logClassTabEvent({
+          classId,
+          tab: 'attendance',
+          event: 'attendance_update_success',
+          stage: 'action',
+          level: 'info',
+          meta: action,
+        });
         fetchAttendance();
       }
     } catch (error) {
       console.error('Failed to update attendance:', error);
+      void logClassTabEvent({
+        classId,
+        tab: 'attendance',
+        event: 'attendance_update_error',
+        stage: 'action',
+        level: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
 
     setIsConfirmDialogOpen(false);
@@ -127,10 +200,26 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
 
       if (response.ok) {
         toast({ title: 'Note saved' });
+        void logClassTabEvent({
+          classId,
+          tab: 'attendance',
+          event: 'note_saved',
+          stage: 'action',
+          level: 'info',
+          meta: { student_id: selectedStudent.id },
+        });
         fetchAttendance();
       }
     } catch (error) {
       console.error('Failed to save note:', error);
+      void logClassTabEvent({
+        classId,
+        tab: 'attendance',
+        event: 'note_save_error',
+        stage: 'action',
+        level: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
 
     setIsNoteDialogOpen(false);
@@ -141,11 +230,19 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
     const student = students.find(s => s.id === studentId);
     if (!student) return;
 
-    setPendingAction({
+    const action = {
       studentId,
       isPresent: student.isPresent ?? true,
       [field]: value
-    });
+    };
+
+    if (!preferences.attendance_require_confirmation) {
+      setPendingAction(action);
+      void handleConfirm(action);
+      return;
+    }
+
+    setPendingAction(action);
     setIsConfirmDialogOpen(true);
   };
 
@@ -323,7 +420,7 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
             <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleConfirm}>
+            <Button onClick={() => void handleConfirm()}>
               Confirm
             </Button>
           </DialogFooter>

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Link from 'next/link';
+import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 
 type Student = {
   id: string;
@@ -104,20 +105,60 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
     if (cachedData) {
       setData(cachedData);
       setLoading(false);
+      void logClassTabEvent({
+        classId,
+        tab: 'group',
+        event: 'cache_hydrated',
+        stage: 'data',
+        level: 'debug',
+      });
     }
+    void logClassTabEvent({
+      classId,
+      tab: 'group',
+      event: 'mount',
+      stage: 'ui',
+      level: 'info',
+    });
     fetchGroupData();
   }, [classId, cachedData]);
 
   const fetchGroupData = async () => {
     setLoading(true);
+    void logClassTabEvent({
+      classId,
+      tab: 'group',
+      event: 'load_start',
+      stage: 'data',
+      level: 'debug',
+    });
     try {
       const response = await fetch(`/api/classes/${classId}/group`);
       if (response.ok) {
         const result = await response.json();
         setData(result);
+        void logClassTabEvent({
+          classId,
+          tab: 'group',
+          event: 'load_success',
+          stage: 'data',
+          level: 'debug',
+          meta: {
+            student_count: (result?.students || []).length,
+            teacher_count: (result?.teachers || []).length,
+          },
+        });
       }
     } catch (error) {
       console.error('Failed to fetch group data:', error);
+      void logClassTabEvent({
+        classId,
+        tab: 'group',
+        event: 'load_error',
+        stage: 'data',
+        level: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
     } finally {
       setLoading(false);
     }
@@ -257,7 +298,17 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
                   type="button"
                   key={teacher.id}
                   className="w-full rounded-lg border p-3 text-left transition-colors hover:bg-accent/50"
-                  onClick={() => setSelectedTeacher(teacher)}
+                  onClick={() => {
+                    setSelectedTeacher(teacher);
+                    void logClassTabEvent({
+                      classId,
+                      tab: 'group',
+                      event: 'teacher_opened',
+                      stage: 'action',
+                      level: 'debug',
+                      meta: { teacher_id: teacher.id },
+                    });
+                  }}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
@@ -317,7 +368,17 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
           <Card 
             key={student.id} 
             className="hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => setSelectedStudent(student)}
+            onClick={() => {
+              setSelectedStudent(student);
+              void logClassTabEvent({
+                classId,
+                tab: 'group',
+                event: 'student_opened',
+                stage: 'action',
+                level: 'debug',
+                meta: { student_id: student.id },
+              });
+            }}
           >
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">

@@ -4,12 +4,15 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Archive } from 'lucide-react';
+import { Archive, Copy, RotateCcw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { AppContext } from '@/contexts/app-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { ClassPreferences, DEFAULT_CLASS_PREFERENCES, normalizeClassPreferences } from '@/lib/class-preferences';
+import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 
 interface ClassSettingsProps {
   classId: string;
@@ -42,6 +45,10 @@ type ImportCandidate = {
 export function ClassSettings({ classId, className, onArchive, isArchived = false }: ClassSettingsProps) {
   const [isArchiving, setIsArchiving] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [loadingClassConfig, setLoadingClassConfig] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPreferences, setSavingPreferences] = useState(false);
+  const [regeneratingCodes, setRegeneratingCodes] = useState(false);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [subjects, setSubjects] = useState<SubjectRow[]>([]);
   const [importCandidates, setImportCandidates] = useState<ImportCandidate[]>([]);
@@ -50,10 +57,23 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
   const [importTitle, setImportTitle] = useState('');
   const [savingSubjectId, setSavingSubjectId] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [classTitle, setClassTitle] = useState(className || '');
+  const [classDescription, setClassDescription] = useState('');
+  const [studentJoinCode, setStudentJoinCode] = useState('');
+  const [teacherJoinCode, setTeacherJoinCode] = useState('');
+  const [preferences, setPreferences] = useState<ClassPreferences>(DEFAULT_CLASS_PREFERENCES);
   const { refetchClasses } = useContext(AppContext) as any;
 
   useEffect(() => {
+    void loadClassConfig();
     void loadSubjectSettings();
+    void logClassTabEvent({
+      classId,
+      tab: 'settings',
+      event: 'mount',
+      stage: 'ui',
+      level: 'info',
+    });
   }, [classId]);
 
   const teacherLabelById = useMemo(() => {
@@ -63,6 +83,46 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     }
     return map;
   }, [teachers]);
+
+  const loadClassConfig = async () => {
+    setLoadingClassConfig(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}`);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load class settings');
+      }
+      const fetchedClass = data.class || {};
+      setClassTitle(fetchedClass.name || className || '');
+      setClassDescription(fetchedClass.description || '');
+      setStudentJoinCode(fetchedClass.join_code || '');
+      setTeacherJoinCode(fetchedClass.teacher_join_code || '');
+      setPreferences(normalizeClassPreferences(data.preferences || {}));
+      void logClassTabEvent({
+        classId,
+        tab: 'settings',
+        event: 'load_class_config_success',
+        stage: 'data',
+        level: 'debug',
+      });
+    } catch (error: any) {
+      void logClassTabEvent({
+        classId,
+        tab: 'settings',
+        event: 'load_class_config_error',
+        stage: 'data',
+        level: 'error',
+        message: error?.message || 'Unknown error',
+      });
+      toast({
+        title: 'Could not load class settings',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingClassConfig(false);
+    }
+  };
 
   const loadSubjectSettings = async () => {
     setLoadingSubjects(true);
@@ -86,6 +146,145 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     }
   };
 
+  const handleSaveProfile = async () => {
+    if (!classTitle.trim()) {
+      toast({ title: 'Class name is required', variant: 'destructive' });
+      return;
+    }
+
+    setSavingProfile(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_profile',
+          name: classTitle.trim(),
+          description: classDescription.trim(),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to save class profile');
+
+      toast({ title: 'Class profile updated' });
+      await refetchClasses?.();
+      void logClassTabEvent({
+        classId,
+        tab: 'settings',
+        event: 'class_profile_saved',
+        stage: 'action',
+        level: 'info',
+      });
+    } catch (error: any) {
+      void logClassTabEvent({
+        classId,
+        tab: 'settings',
+        event: 'class_profile_save_error',
+        stage: 'action',
+        level: 'error',
+        message: error?.message || 'Unknown error',
+      });
+      toast({
+        title: 'Could not save class profile',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleSavePreferences = async () => {
+    setSavingPreferences(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_preferences',
+          preferences,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to save preferences');
+      setPreferences(normalizeClassPreferences(data.preferences || preferences));
+
+      toast({ title: 'Teaching defaults saved' });
+      void logClassTabEvent({
+        classId,
+        tab: 'settings',
+        event: 'preferences_saved',
+        stage: 'action',
+        level: 'info',
+        meta: preferences,
+      });
+    } catch (error: any) {
+      void logClassTabEvent({
+        classId,
+        tab: 'settings',
+        event: 'preferences_save_error',
+        stage: 'action',
+        level: 'error',
+        message: error?.message || 'Unknown error',
+      });
+      toast({
+        title: 'Could not save teaching defaults',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingPreferences(false);
+    }
+  };
+
+  const handleRegenerateCodes = async () => {
+    setRegeneratingCodes(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'regenerate_codes' }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to regenerate codes');
+      setStudentJoinCode(data.join_code || '');
+      setTeacherJoinCode(data.teacher_join_code || '');
+      toast({ title: 'Invite codes regenerated' });
+      void logClassTabEvent({
+        classId,
+        tab: 'settings',
+        event: 'codes_regenerated',
+        stage: 'action',
+        level: 'warn',
+      });
+    } catch (error: any) {
+      void logClassTabEvent({
+        classId,
+        tab: 'settings',
+        event: 'codes_regenerate_error',
+        stage: 'action',
+        level: 'error',
+        message: error?.message || 'Unknown error',
+      });
+      toast({
+        title: 'Could not regenerate codes',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRegeneratingCodes(false);
+    }
+  };
+
+  const copyText = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value || '');
+      toast({ title: `${label} copied` });
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
+  };
+
   const handleArchiveClass = async () => {
     setIsArchiving(true);
     try {
@@ -100,13 +299,12 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
 
       toast({
         title: 'Class archived',
-        description: `${className} has been archived successfully.`,
+        description: `${classTitle} has been archived successfully.`,
       });
 
       await refetchClasses();
       onArchive?.();
     } catch (error) {
-      console.error('Error archiving class:', error);
       toast({
         title: 'Failed to archive class',
         description: error instanceof Error ? error.message : 'An unknown error occurred',
@@ -224,9 +422,157 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
         <CardHeader>
           <CardTitle>Class Settings</CardTitle>
           <CardDescription>
-            Manage settings for {className}
+            Manage collaboration, defaults, invite access, and archive options.
           </CardDescription>
         </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Class Profile</CardTitle>
+          <CardDescription>Rename the class and update the class description.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1">
+            <Label>Class Name</Label>
+            <Input
+              value={classTitle}
+              onChange={(e) => setClassTitle(e.target.value)}
+              placeholder="Class name"
+              disabled={loadingClassConfig || savingProfile}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>Description</Label>
+            <Input
+              value={classDescription}
+              onChange={(e) => setClassDescription(e.target.value)}
+              placeholder="Optional class description"
+              disabled={loadingClassConfig || savingProfile}
+            />
+          </div>
+          <Button onClick={() => void handleSaveProfile()} disabled={savingProfile || loadingClassConfig}>
+            {savingProfile ? 'Saving...' : 'Save Profile'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Invite Access</CardTitle>
+          <CardDescription>Copy current join codes or rotate them if they leaked.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1">
+            <Label>Student Join Code</Label>
+            <div className="flex gap-2">
+              <Input value={studentJoinCode} readOnly />
+              <Button variant="outline" size="icon" onClick={() => void copyText(studentJoinCode, 'Student join code')}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label>Teacher Join Code</Label>
+            <div className="flex gap-2">
+              <Input value={teacherJoinCode} readOnly />
+              <Button variant="outline" size="icon" onClick={() => void copyText(teacherJoinCode, 'Teacher join code')}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <Button variant="outline" onClick={() => void handleRegenerateCodes()} disabled={regeneratingCodes}>
+            <RotateCcw className="mr-2 h-4 w-4" />
+            {regeneratingCodes ? 'Regenerating...' : 'Regenerate Invite Codes'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Teaching Defaults</CardTitle>
+          <CardDescription>Class-wide defaults used by grades, attendance, and invite flows.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1">
+            <Label>Default Subject View</Label>
+            <select
+              value={preferences.default_subject_view}
+              onChange={(e) =>
+                setPreferences((prev) => ({
+                  ...prev,
+                  default_subject_view: e.target.value === 'all' ? 'all' : 'mine',
+                }))
+              }
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="mine">My subject first</option>
+              <option value="all">All subjects first</option>
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <Label>Default Grade Scale</Label>
+            <select
+              value={preferences.grades_default_scale}
+              onChange={(e) =>
+                setPreferences((prev) => ({
+                  ...prev,
+                  grades_default_scale:
+                    e.target.value === 'a_f' || e.target.value === 'one_to_ten' ? (e.target.value as any) : 'both',
+                }))
+              }
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="both">Show A-F and 1-10</option>
+              <option value="a_f">Prefer A-F</option>
+              <option value="one_to_ten">Prefer 1-10</option>
+            </select>
+          </div>
+
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <p className="text-sm font-medium">Show class average in grades</p>
+              <p className="text-xs text-muted-foreground">Toggle class-level average cards in grades.</p>
+            </div>
+            <Switch
+              checked={preferences.grades_show_class_average}
+              onCheckedChange={(checked) =>
+                setPreferences((prev) => ({ ...prev, grades_show_class_average: Boolean(checked) }))
+              }
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <p className="text-sm font-medium">Require attendance confirmation</p>
+              <p className="text-xs text-muted-foreground">Prompt before attendance changes are saved.</p>
+            </div>
+            <Switch
+              checked={preferences.attendance_require_confirmation}
+              onCheckedChange={(checked) =>
+                setPreferences((prev) => ({ ...prev, attendance_require_confirmation: Boolean(checked) }))
+              }
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <p className="text-sm font-medium">Allow teacher invite actions</p>
+              <p className="text-xs text-muted-foreground">Enable or disable teacher invite section.</p>
+            </div>
+            <Switch
+              checked={preferences.invite_allow_teacher_invites}
+              onCheckedChange={(checked) =>
+                setPreferences((prev) => ({ ...prev, invite_allow_teacher_invites: Boolean(checked) }))
+              }
+            />
+          </div>
+
+          <Button onClick={() => void handleSavePreferences()} disabled={savingPreferences}>
+            {savingPreferences ? 'Saving...' : 'Save Teaching Defaults'}
+          </Button>
+        </CardContent>
       </Card>
 
       <Card>
@@ -370,7 +716,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <div>
                 <h3 className="font-medium text-red-600">Archive Class</h3>
                 <p className="text-sm text-muted-foreground">
-                  Archiving this class will hide it from all users. The class data will be preserved but no longer accessible.
+                  Archiving this class hides it from active workflows while preserving stored data.
                 </p>
               </div>
               <AlertDialog>
@@ -384,7 +730,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                   <AlertDialogHeader>
                     <AlertDialogTitle>Archive Class</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to archive "{className}"? This action cannot be undone.
+                      Are you sure you want to archive "{classTitle || className}"? This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -401,7 +747,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <div className="text-center">
                 <h3 className="font-medium text-gray-600">Class Archived</h3>
                 <p className="text-sm text-muted-foreground">
-                  This class has been archived and is no longer accessible to students.
+                  This class has been archived and is no longer active.
                 </p>
               </div>
             </div>
@@ -411,3 +757,4 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     </div>
   );
 }
+

@@ -24,6 +24,7 @@ import { GroupTab } from '@/components/class/group-tab';
 import { AttendanceTab } from '@/components/class/attendance-tab';
 import { GradesTab } from '@/components/class/grades-tab';
 import { GraduationCap } from 'lucide-react';
+import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 
 // Cache for tab data - persists across tab switches
 const tabDataCache: Record<string, { data: any; timestamp: number }> = {};
@@ -88,18 +89,33 @@ export default function ClassDetailsPage() {
     
     // Return cached data if valid
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      void logClassTabEvent({
+        classId,
+        tab: tabName,
+        event: 'cache_hit',
+        stage: 'load_tab_data',
+        level: 'debug',
+      });
       setCachedTabData((prev: any) => ({ ...prev, [tabName]: cached.data }));
       return cached.data;
     }
 
     // Don't refetch if already loading
     if (inFlightTabLoadsRef.current[cacheKey]) {
+      void logClassTabEvent({
+        classId,
+        tab: tabName,
+        event: 'inflight_reuse',
+        stage: 'load_tab_data',
+        level: 'debug',
+      });
       return inFlightTabLoadsRef.current[cacheKey];
     }
 
     setLoadingTabs((prev: any) => ({ ...prev, [tabName]: true }));
 
     const run = (async () => {
+      const startedAt = Date.now();
       try {
       let url = '';
       switch (tabName) {
@@ -125,15 +141,50 @@ export default function ClassDetailsPage() {
           return null;
       }
 
+      void logClassTabEvent({
+        classId,
+        tab: tabName,
+        event: 'load_start',
+        stage: 'load_tab_data',
+        level: 'info',
+        meta: { url },
+      });
+
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         tabDataCache[cacheKey] = { data, timestamp: Date.now() };
         setCachedTabData((prev: any) => ({ ...prev, [tabName]: data }));
+        void logClassTabEvent({
+          classId,
+          tab: tabName,
+          event: 'load_success',
+          stage: 'load_tab_data',
+          level: 'info',
+          meta: {
+            duration_ms: Date.now() - startedAt,
+          },
+        });
         return data;
       }
+      void logClassTabEvent({
+        classId,
+        tab: tabName,
+        event: 'load_http_error',
+        stage: 'load_tab_data',
+        level: 'warn',
+        meta: { status: response.status },
+      });
       } catch (error) {
         console.error(`Failed to load ${tabName} data:`, error);
+        void logClassTabEvent({
+          classId,
+          tab: tabName,
+          event: 'load_exception',
+          stage: 'load_tab_data',
+          level: 'error',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
       } finally {
         setLoadingTabs((prev: any) => ({ ...prev, [tabName]: false }));
         delete inFlightTabLoadsRef.current[cacheKey];
@@ -148,6 +199,13 @@ export default function ClassDetailsPage() {
   // Load only the active tab data first; keep other tabs lazy.
   useEffect(() => {
     if (classId && !isAppLoading) {
+      void logClassTabEvent({
+        classId,
+        tab,
+        event: 'tab_view',
+        stage: 'navigation',
+        level: 'info',
+      });
       void loadTabData(tab);
     }
   }, [classId, isAppLoading, loadTabData, tab]);
@@ -160,6 +218,14 @@ export default function ClassDetailsPage() {
     if (tier1Targets.length > 0) {
       const tier1StartedAt = Date.now();
       void Promise.all(tier1Targets.map((tabName) => loadTabData(tabName))).finally(() => {
+        void logClassTabEvent({
+          classId,
+          tab,
+          event: 'tier1_warm_complete',
+          stage: 'preload',
+          level: 'debug',
+          meta: { targets: tier1Targets, duration_ms: Date.now() - tier1StartedAt },
+        });
         console.log('[PRELOAD][TIER1] class workspace warm complete', {
           classId,
           activeTab: tab,
@@ -174,6 +240,14 @@ export default function ClassDetailsPage() {
       if (tier2Targets.length > 0) {
         const tier2StartedAt = Date.now();
         void Promise.all(tier2Targets.map((tabName) => loadTabData(tabName))).finally(() => {
+          void logClassTabEvent({
+            classId,
+            tab,
+            event: 'tier2_warm_complete',
+            stage: 'preload',
+            level: 'debug',
+            meta: { targets: tier2Targets, duration_ms: Date.now() - tier2StartedAt },
+          });
           console.log('[PRELOAD][TIER2] class workspace warm complete', {
             classId,
             activeTab: tab,
@@ -201,6 +275,13 @@ export default function ClassDetailsPage() {
   const refreshTabData = useCallback((tabName: string) => {
     const cacheKey = `${classId}-${tabName}`;
     delete tabDataCache[cacheKey];
+    void logClassTabEvent({
+      classId,
+      tab: tabName,
+      event: 'refresh_requested',
+      stage: 'manual',
+      level: 'info',
+    });
     return loadTabData(tabName);
   }, [classId, loadTabData]);
 

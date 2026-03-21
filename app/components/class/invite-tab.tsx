@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Plus, X, Clock, Users, BookUser, Eye, EyeOff, Copy, Check, Loader2, Link as LinkIcon, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { DEFAULT_CLASS_PREFERENCES, normalizeClassPreferences } from '@/lib/class-preferences';
+import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 
 type InviteDraft = {
   classId: string;
@@ -30,6 +32,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
   const [copiedTeacherLink, setCopiedTeacherLink] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [preferences, setPreferences] = useState(DEFAULT_CLASS_PREFERENCES);
 
   const studentInviteLink = joinCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes?join_code=${joinCode}` : '';
   const teacherInviteLink = teacherJoinCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes/join/${teacherJoinCode}` : '';
@@ -37,6 +40,14 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
   const teacherQrCodeUrl = teacherInviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(teacherInviteLink)}&format=png` : '';
 
   useEffect(() => {
+    void logClassTabEvent({
+      classId,
+      tab: 'invite',
+      event: 'mount',
+      stage: 'ui',
+      level: 'info',
+    });
+
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -52,6 +63,20 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
         console.error('Failed to load drafts:', e);
       }
     }
+  }, [classId]);
+
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const response = await fetch(`/api/classes/${classId}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        setPreferences(normalizeClassPreferences(data.preferences || {}));
+      } catch {
+        setPreferences(DEFAULT_CLASS_PREFERENCES);
+      }
+    };
+    void loadPreferences();
   }, [classId]);
 
   const saveDraft = () => {
@@ -109,12 +134,22 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
       else if (type === 'teacher') { setCopiedTeacher(true); setTimeout(() => setCopiedTeacher(false), 2000); }
       else { setCopiedTeacherLink(true); setTimeout(() => setCopiedTeacherLink(false), 2000); }
       toast({ title: 'Copied to clipboard!' });
+      void logClassTabEvent({
+        classId,
+        tab: 'invite',
+        event: 'copy_to_clipboard',
+        stage: 'action',
+        level: 'debug',
+        meta: { type },
+      });
     } catch (e) { toast({ title: 'Failed to copy', variant: 'destructive' }); }
   };
 
   const sendInvites = async () => {
     const validStudentEmails = studentEmails.filter(e => e.trim() !== '').filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim()));
-    const validTeacherEmails = teacherEmails.filter(e => e.trim() !== '').filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim()));
+    const validTeacherEmails = preferences.invite_allow_teacher_invites
+      ? teacherEmails.filter(e => e.trim() !== '').filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim()))
+      : [];
 
     if (validStudentEmails.length === 0 && validTeacherEmails.length === 0) {
       toast({ title: 'No valid emails to send', variant: 'destructive' });
@@ -122,6 +157,14 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
     }
 
     setIsSending(true);
+    void logClassTabEvent({
+      classId,
+      tab: 'invite',
+      event: 'send_invites_start',
+      stage: 'action',
+      level: 'info',
+      meta: { student_count: validStudentEmails.length, teacher_count: validTeacherEmails.length, scheduled: Boolean(scheduledTime) },
+    });
     try {
       const response = await fetch(`/api/classes/${classId}/invite`, {
         method: 'POST',
@@ -135,8 +178,23 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
         title: data.message || 'Invites sent!',
         description: scheduledTime ? `Will be sent at ${format(new Date(scheduledTime), 'PPp')}` : `${data.results?.students?.invited?.length || 0} student, ${data.results?.teachers?.invited?.length || 0} teacher invites`
       });
+      void logClassTabEvent({
+        classId,
+        tab: 'invite',
+        event: 'send_invites_success',
+        stage: 'action',
+        level: 'info',
+      });
       setStudentEmails(['']); setTeacherEmails(['']); setScheduledTime(''); saveDraft();
     } catch (e: any) {
+      void logClassTabEvent({
+        classId,
+        tab: 'invite',
+        event: 'send_invites_error',
+        stage: 'action',
+        level: 'error',
+        message: e?.message || 'Unknown error',
+      });
       toast({ title: e.message || 'Failed to send invites', variant: 'destructive' });
     } finally { setIsSending(false); }
   };
@@ -253,15 +311,19 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
               <BookUser className="h-5 w-5" />
               Invite Teachers
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setShowTeacherSection(!showTeacherSection)} className="gap-1">
-              {showTeacherSection ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {showTeacherSection ? 'Hide' : 'Show'}
-            </Button>
+            {preferences.invite_allow_teacher_invites && (
+              <Button variant="ghost" size="sm" onClick={() => setShowTeacherSection(!showTeacherSection)} className="gap-1">
+                {showTeacherSection ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showTeacherSection ? 'Hide' : 'Show'}
+              </Button>
+            )}
           </div>
-          <CardDescription className="text-sm">Invite other teachers to collaborate. Only class owners can invite teachers.</CardDescription>
+          <CardDescription className="text-sm">
+            Invite other teachers to collaborate. {preferences.invite_allow_teacher_invites ? 'Teacher invites are enabled.' : 'Teacher invites are disabled in Manage settings.'}
+          </CardDescription>
         </CardHeader>
         
-        {showTeacherSection && (
+        {preferences.invite_allow_teacher_invites && showTeacherSection && (
           <CardContent className="space-y-5">
             {/* QR Code and Join Code Row - Same as student */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/30 rounded-lg">

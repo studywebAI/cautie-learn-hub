@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { DEFAULT_CLASS_PREFERENCES, normalizeClassPreferences } from '@/lib/class-preferences';
+import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 
 type GradeSet = {
   id: string;
@@ -82,10 +84,19 @@ export function GradesTab({ classId }: { classId: string }) {
   const [gradeSets, setGradeSets] = useState<GradeSet[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>('all');
+  const [preferences, setPreferences] = useState(DEFAULT_CLASS_PREFERENCES);
   const [loading, setLoading] = useState(true);
   const [selectedGradeSetId, setSelectedGradeSetId] = useState<string | null>(null);
 
   useEffect(() => {
+    void logClassTabEvent({
+      classId,
+      tab: 'grades',
+      event: 'mount',
+      stage: 'ui',
+      level: 'info',
+    });
+    void loadClassPreferences();
     void loadClassSubjects();
   }, [classId]);
 
@@ -95,33 +106,97 @@ export function GradesTab({ classId }: { classId: string }) {
 
   const loadClassSubjects = async () => {
     try {
+      void logClassTabEvent({
+        classId,
+        tab: 'grades',
+        event: 'load_subjects_start',
+        stage: 'data',
+        level: 'debug',
+      });
       const response = await fetch(`/api/classes/${classId}/subjects`);
       if (!response.ok) return;
       const data = await response.json();
       const incoming: Subject[] = data.subjects || [];
       setSubjects(incoming);
-      if (data.defaultSubjectId) {
+      if (preferences.default_subject_view === 'all') {
+        setSelectedSubjectFilter('all');
+      } else if (data.defaultSubjectId) {
         setSelectedSubjectFilter(data.defaultSubjectId);
       } else {
         setSelectedSubjectFilter('all');
       }
+      void logClassTabEvent({
+        classId,
+        tab: 'grades',
+        event: 'load_subjects_success',
+        stage: 'data',
+        level: 'debug',
+        meta: { subject_count: incoming.length, default_view: preferences.default_subject_view },
+      });
     } catch (error) {
       console.error('Failed to load class subjects for grades filter:', error);
       setSelectedSubjectFilter('all');
+      void logClassTabEvent({
+        classId,
+        tab: 'grades',
+        event: 'load_subjects_error',
+        stage: 'data',
+        level: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
+  const loadClassPreferences = async () => {
+    try {
+      const response = await fetch(`/api/classes/${classId}`);
+      if (!response.ok) return;
+      const data = await response.json();
+      const next = normalizeClassPreferences(data.preferences || {});
+      setPreferences(next);
+      if (next.default_subject_view === 'all') {
+        setSelectedSubjectFilter('all');
+      }
+    } catch {
+      setPreferences(DEFAULT_CLASS_PREFERENCES);
     }
   };
 
   const loadGradeSets = async (subjectId: string = 'all') => {
     setLoading(true);
     try {
+      void logClassTabEvent({
+        classId,
+        tab: 'grades',
+        event: 'load_grade_sets_start',
+        stage: 'data',
+        level: 'debug',
+        meta: { subject_id: subjectId },
+      });
       const query = subjectId && subjectId !== 'all' ? `?subjectId=${encodeURIComponent(subjectId)}` : '';
       const response = await fetch(`/api/classes/${classId}/grades${query}`);
       if (response.ok) {
         const data = await response.json();
         setGradeSets(data.grade_sets || []);
+        void logClassTabEvent({
+          classId,
+          tab: 'grades',
+          event: 'load_grade_sets_success',
+          stage: 'data',
+          level: 'debug',
+          meta: { count: (data.grade_sets || []).length },
+        });
       }
     } catch (error) {
       console.error('Failed to load grade sets:', error);
+      void logClassTabEvent({
+        classId,
+        tab: 'grades',
+        event: 'load_grade_sets_error',
+        stage: 'data',
+        level: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
     } finally {
       setLoading(false);
     }
@@ -201,7 +276,10 @@ export function GradesTab({ classId }: { classId: string }) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Grades</h1>
-          <p className="text-muted-foreground">Manage grades for your class</p>
+          <p className="text-muted-foreground">
+            Manage grades for your class
+            {preferences.grades_default_scale !== 'both' ? ` - default scale: ${preferences.grades_default_scale === 'a_f' ? 'A-F' : '1-10'}` : ''}
+          </p>
         </div>
         <div className="w-full max-w-[280px]">
           <Label className="mb-1 block text-xs text-muted-foreground">Subject</Label>
@@ -339,14 +417,16 @@ export function GradesTab({ classId }: { classId: string }) {
                 <p className="text-2xl font-bold">{gradeSets.filter(g => g.status === 'draft').length}</p>
                 <p className="text-xs text-muted-foreground">Drafts</p>
               </div>
-              <div className="text-center p-3 bg-muted/30 rounded-lg">
-                <p className="text-2xl font-bold">
-                  {gradeSets.filter(g => g.average !== null).length > 0 
-                    ? (gradeSets.filter(g => g.average !== null).reduce((sum, g) => sum + (g.average || 0), 0) / gradeSets.filter(g => g.average !== null).length).toFixed(1)
-                    : '-'}
-                </p>
-                <p className="text-xs text-muted-foreground">Class Average</p>
-              </div>
+              {preferences.grades_show_class_average && (
+                <div className="text-center p-3 bg-muted/30 rounded-lg">
+                  <p className="text-2xl font-bold">
+                    {gradeSets.filter(g => g.average !== null).length > 0 
+                      ? (gradeSets.filter(g => g.average !== null).reduce((sum, g) => sum + (g.average || 0), 0) / gradeSets.filter(g => g.average !== null).length).toFixed(1)
+                      : '-'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Class Average</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
