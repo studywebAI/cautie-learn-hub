@@ -103,7 +103,7 @@ function TeacherSummaryDashboard() {
 
     if (isLoading || !classes) return <DashboardSkeleton />;
 
-    const teacherClasses = (Array.isArray(classes) ? classes : []).filter(c => c.owner_id === session?.user?.id);
+    const teacherClasses = (Array.isArray(classes) ? classes : []).filter((c: any) => c?.status !== 'archived');
     const totalStudents = students?.length || 0;
     const activeAssignments = (Array.isArray(assignments) ? assignments : []).length;
 

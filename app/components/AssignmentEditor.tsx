@@ -659,16 +659,24 @@ export function AssignmentEditor({
   };
 
   // Drag handlers for grip
-  const handleGripMouseDown = (e: React.MouseEvent, blockId: string) => {
-    e.preventDefault();
+  const startDragBlock = (blockId: string) => {
     setIsDragging(true);
     setDragSource({ type: 'block', id: blockId });
   };
 
-  const handleTemplateMouseDown = (e: React.MouseEvent, templateId: string) => {
-    e.preventDefault();
+  const startDragTemplate = (templateId: string) => {
     setIsDragging(true);
     setDragSource({ type: 'template', id: templateId });
+  };
+
+  const handleGripPointerDown = (e: React.PointerEvent, blockId: string) => {
+    e.preventDefault();
+    startDragBlock(blockId);
+  };
+
+  const handleTemplatePointerDown = (e: React.PointerEvent, templateId: string) => {
+    e.preventDefault();
+    startDragTemplate(templateId);
   };
 
   const handleMouseUp = () => {
@@ -687,12 +695,12 @@ export function AssignmentEditor({
     setDropTarget(null);
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const updateDropTargetFromPoint = (clientX: number, clientY: number) => {
     if (!isDragging || !paperRef.current) return;
     
     const paperRect = paperRef.current.getBoundingClientRect();
-    const y = e.clientY - paperRect.top;
-    const x = e.clientX - paperRect.left;
+    const y = clientY - paperRect.top;
+    const x = clientX - paperRect.left;
     
     const rows = getRows();
     
@@ -717,15 +725,23 @@ export function AssignmentEditor({
     setDropTarget({ rowIndex, column });
   };
 
+  const handlePointerMove = (e: React.PointerEvent) => {
+    updateDropTargetFromPoint(e.clientX, e.clientY);
+  };
+
   useEffect(() => {
-    const handleGlobalMouseUp = () => {
+    const handleGlobalPointerUp = () => {
       if (isDragging) {
         handleMouseUp();
       }
     };
     
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    window.addEventListener('touchend', handleGlobalPointerUp);
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalPointerUp);
+      window.removeEventListener('touchend', handleGlobalPointerUp);
+    };
   }, [isDragging, dragSource, dropTarget]);
 
   const handleSilentSave = async () => {
@@ -1188,7 +1204,8 @@ export function AssignmentEditor({
   return (
     <div 
       className="h-screen flex flex-col bg-sidebar select-none"
-      onMouseMove={handleMouseMove}
+      onPointerMove={handlePointerMove}
+      style={{ touchAction: isDragging ? 'none' : 'auto' }}
     >
       {/* Top toolbar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-sidebar-border/70 bg-sidebar">
@@ -1273,7 +1290,7 @@ export function AssignmentEditor({
                   <div
                     key={template.id}
                     className="flex items-center gap-2 p-2 rounded cursor-grab hover:bg-muted border border-transparent hover:border-border"
-                    onMouseDown={(e) => handleTemplateMouseDown(e, template.id)}
+                    onPointerDown={(e) => handleTemplatePointerDown(e, template.id)}
                   >
                     {template.icon}
                     <span className="text-sm">{template.label}</span>
@@ -1286,7 +1303,7 @@ export function AssignmentEditor({
                   <div
                     key={template.id}
                     className="p-2 rounded cursor-grab hover:bg-muted"
-                    onMouseDown={(e) => handleTemplateMouseDown(e, template.id)}
+                    onPointerDown={(e) => handleTemplatePointerDown(e, template.id)}
                     title={template.label}
                   >
                     {template.icon}
@@ -1401,7 +1418,7 @@ export function AssignmentEditor({
                               </div>
                               <div 
                                 className="h-5 w-5 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
-                                onMouseDown={(e) => handleGripMouseDown(e, row.blocks[0].id)}
+                                onPointerDown={(e) => handleGripPointerDown(e, row.blocks[0].id)}
                               >
                                 <GripVertical className="h-3 w-3" />
                               </div>
@@ -1507,7 +1524,7 @@ export function AssignmentEditor({
                                       </div>
                                       <div 
                                         className="h-5 w-5 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
-                                        onMouseDown={(e) => handleGripMouseDown(e, block.id)}
+                                        onPointerDown={(e) => handleGripPointerDown(e, block.id)}
                                       >
                                         <GripVertical className="h-3 w-3" />
                                       </div>
