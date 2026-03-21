@@ -1,16 +1,37 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, ArrowLeft, Crown, User, BookUser, Check, X } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, Crown, User, BookUser, Check } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 
 type PlanType = 'student' | 'teacher';
 type PlanTier = 'premium' | 'pro';
+
+const pricingByType: Record<PlanType, Record<PlanTier, string>> = {
+  student: {
+    premium: '$9.99/mo',
+    pro: '$19.99/mo',
+  },
+  teacher: {
+    premium: '$19.99/mo',
+    pro: '$39.99/mo',
+  },
+};
+
+const featureMap: Record<PlanType, Record<PlanTier, string[]>> = {
+  student: {
+    premium: ['30 AI tool actions/day', 'Smart summaries + quizzes', 'Studyset planning'],
+    pro: ['Unlimited AI tool actions', 'Advanced study plans', 'Priority generation speed', 'Full Studyset tracking'],
+  },
+  teacher: {
+    premium: ['Up to 5 classes', 'Teacher collaboration tools', 'Manage + schedule controls'],
+    pro: ['Up to 20 classes', 'Priority teacher workflows', 'Full audit visibility', 'Advanced class management'],
+  },
+};
 
 export default function UpgradePage() {
   const [code, setCode] = useState('');
@@ -19,7 +40,14 @@ export default function UpgradePage() {
   const [success, setSuccess] = useState(false);
   const [selectedType, setSelectedType] = useState<PlanType>('student');
   const [selectedTier, setSelectedTier] = useState<PlanTier>('premium');
-  const router = useRouter();
+
+  const activePrice = pricingByType[selectedType][selectedTier];
+  const activeFeatures = featureMap[selectedType][selectedTier];
+
+  const planLabel = useMemo(
+    () => `${selectedTier[0].toUpperCase()}${selectedTier.slice(1)} ${selectedType[0].toUpperCase()}${selectedType.slice(1)}`,
+    [selectedTier, selectedType]
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,11 +63,11 @@ export default function UpgradePage() {
       const res = await fetch('/api/subscription/upgrade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           code: code.trim(),
           tier: selectedTier,
-          type: selectedType
-        })
+          type: selectedType,
+        }),
       });
 
       const data = await res.json();
@@ -48,16 +76,12 @@ export default function UpgradePage() {
         setError(data.error || 'Invalid code');
       } else {
         setSuccess(true);
-        // Clear cached dashboard data to force refresh with new role
         if (typeof window !== 'undefined') {
           window.localStorage.removeItem('studyweb-cached-dashboard');
         }
-        // Force a hard refresh to update subscription state
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
+        setTimeout(() => window.location.reload(), 1500);
       }
-    } catch (err) {
+    } catch {
       setError('Something went wrong');
     } finally {
       setLoading(false);
@@ -66,248 +90,162 @@ export default function UpgradePage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-8">
-        <div className="w-full max-w-2xl text-center">
-          <div className="mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-6">
-              <Crown className="h-10 w-10 text-black" />
-            </div>
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Upgrade Successful!
-            </h1>
-            <p className="text-xl text-gray-300">
-              You're now a {selectedTier} {selectedType}!
-            </p>
-          </div>
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
-            <p className="text-gray-400 mb-4">Redirecting to dashboard...</p>
-            <div className="w-full bg-gray-800 rounded-full h-2">
-              <div className="bg-white h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
-            </div>
-          </div>
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8fafc,_#e2e8f0_55%,_#cbd5e1)] p-6 md:p-10">
+        <div className="mx-auto max-w-2xl">
+          <Card className="border-slate-300 shadow-2xl">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-3 inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white">
+                <Crown className="h-7 w-7" />
+              </div>
+              <CardTitle className="text-2xl">Upgrade successful</CardTitle>
+              <CardDescription>You are now on {planLabel}. Reloading your workspace...</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                <div className="h-full w-full animate-pulse bg-slate-900" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
-        <div className="relative max-w-7xl mx-auto px-8 py-16">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-4 bg-white/5 px-6 py-3 rounded-full border border-white/10">
-                <Shield className="h-6 w-6 text-white" />
-                <span className="text-sm font-medium text-gray-300">SECURE UPGRADE</span>
-              </div>
-              <h1 className="text-6xl font-bold leading-tight">
-                Upgrade Your
-                <span className="bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent"> Plan</span>
-              </h1>
-              <p className="text-xl text-gray-300 leading-relaxed">
-                Choose your plan and enter your subscription code to unlock premium features. 
-                Experience the full power of our platform with advanced tools and capabilities.
-              </p>
-              <div className="flex gap-4">
-                <Button 
-                  variant="outline" 
-                  className="border-white/20 bg-transparent hover:bg-white/10 text-white"
-                  asChild
-                >
-                  <Link prefetch={false} href="/settings">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Settings
-                  </Link>
-                </Button>
-              </div>
-            </div>
-            <div className="hidden lg:block">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-3xl blur-3xl"></div>
-                <div className="relative bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-6 bg-black/50 rounded-2xl border border-white/10">
-                      <User className="h-8 w-8 mx-auto mb-4 text-gray-300" />
-                      <div className="font-semibold">Student</div>
-                      <div className="text-sm text-gray-400 mt-2">AI learning tools</div>
-                    </div>
-                    <div className="text-center p-6 bg-black/50 rounded-2xl border border-white/10">
-                      <BookUser className="h-8 w-8 mx-auto mb-4 text-gray-300" />
-                      <div className="font-semibold">Teacher</div>
-                      <div className="text-sm text-gray-400 mt-2">Create classes</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#f8fafc,_#f1f5f9_45%,_#e2e8f0)] p-4 md:p-8">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <div className="flex items-center justify-between gap-3">
+          <Button variant="outline" className="bg-white/80" asChild>
+            <Link prefetch={false} href="/settings">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Settings
+            </Link>
+          </Button>
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white/70 px-4 py-2 text-xs font-medium text-slate-600">
+            <ShieldCheck className="h-4 w-4" />
+            Secure code redemption
           </div>
         </div>
-      </div>
 
-      {/* Main Content Section */}
-      <div className="max-w-4xl mx-auto px-8 pb-16">
-        <Card className="bg-black border-white/10 shadow-2xl">
-          <CardContent className="p-8 space-y-8">
-            {/* Plan Type Selection */}
-            <div>
-              <h3 className="text-lg font-semibold mb-6 text-gray-300">I am a:</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setSelectedType('student')}
-                  className={`p-6 rounded-xl border-2 transition-all duration-300 ${
-                    selectedType === 'student' 
-                      ? 'border-white bg-white/10 shadow-lg shadow-white/10' 
-                      : 'border-white/20 hover:border-white/40 hover:bg-white/5'
-                  }`}
-                >
-                  <div className="flex items-center justify-center mb-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      selectedType === 'student' ? 'bg-white text-black' : 'bg-white/10 text-gray-300'
-                    }`}>
-                      <User className="h-6 w-6" />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2 border-slate-300 bg-white/80 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-3xl leading-tight">Upgrade your plan without the ugly checkout flow</CardTitle>
+              <CardDescription>Pick role and tier, redeem code, done.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              <section className="space-y-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">1. Choose Role</h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedType('student')}
+                    className={`rounded-xl border p-4 text-left transition ${
+                      selectedType === 'student'
+                        ? 'border-slate-900 bg-slate-900 text-white shadow-lg'
+                        : 'border-slate-300 bg-white hover:border-slate-500'
+                    }`}
+                  >
+                    <div className="mb-2 flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      <span className="font-semibold">Student</span>
                     </div>
-                  </div>
-                  <div className="font-bold text-lg mb-2">Student</div>
-                  <div className="text-sm text-gray-400">
-                    AI learning tools and personalized study assistance
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedType('teacher')}
-                  className={`p-6 rounded-xl border-2 transition-all duration-300 ${
-                    selectedType === 'teacher' 
-                      ? 'border-white bg-white/10 shadow-lg shadow-white/10' 
-                      : 'border-white/20 hover:border-white/40 hover:bg-white/5'
-                  }`}
-                >
-                  <div className="flex items-center justify-center mb-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      selectedType === 'teacher' ? 'bg-white text-black' : 'bg-white/10 text-gray-300'
-                    }`}>
-                      <BookUser className="h-6 w-6" />
+                    <p className={`text-sm ${selectedType === 'student' ? 'text-slate-200' : 'text-slate-600'}`}>
+                      Learning tools, study plans, AI practice.
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedType('teacher')}
+                    className={`rounded-xl border p-4 text-left transition ${
+                      selectedType === 'teacher'
+                        ? 'border-slate-900 bg-slate-900 text-white shadow-lg'
+                        : 'border-slate-300 bg-white hover:border-slate-500'
+                    }`}
+                  >
+                    <div className="mb-2 flex items-center gap-2">
+                      <BookUser className="h-4 w-4" />
+                      <span className="font-semibold">Teacher</span>
                     </div>
-                  </div>
-                  <div className="font-bold text-lg mb-2">Teacher</div>
-                  <div className="text-sm text-gray-400">
-                    Create classes and manage student assignments
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <Separator className="bg-white/20" />
-
-            {/* Plan Tier Selection */}
-            <div>
-              <h3 className="text-lg font-semibold mb-6 text-gray-300">Select Tier:</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setSelectedTier('premium')}
-                  className={`p-6 rounded-xl border-2 transition-all duration-300 ${
-                    selectedTier === 'premium' 
-                      ? 'border-amber-400 bg-amber-400/10 shadow-lg shadow-amber-400/20' 
-                      : 'border-white/20 hover:border-amber-400/50 hover:bg-amber-400/5'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg font-bold">Premium</span>
-                    {selectedTier === 'premium' && (
-                      <div className="w-6 h-6 bg-amber-400 rounded-full flex items-center justify-center">
-                        <Check className="h-4 w-4 text-black" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-2xl font-bold mb-2">
-                    {selectedType === 'student' ? '$9.99' : '$19.99'}/mo
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    {selectedType === 'student' ? '30 AI tools/day' : '5 classes'}
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedTier('pro')}
-                  className={`p-6 rounded-xl border-2 transition-all duration-300 ${
-                    selectedTier === 'pro' 
-                      ? 'border-amber-400 bg-amber-400/10 shadow-lg shadow-amber-400/20' 
-                      : 'border-white/20 hover:border-amber-400/50 hover:bg-amber-400/5'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg font-bold">Pro</span>
-                    {selectedTier === 'pro' && (
-                      <div className="w-6 h-6 bg-amber-400 rounded-full flex items-center justify-center">
-                        <Check className="h-4 w-4 text-black" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-2xl font-bold mb-2">
-                    {selectedType === 'student' ? '$19.99' : '$39.99'}/mo
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    {selectedType === 'student' ? 'Unlimited AI tools' : '20 classes'}
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <Separator className="bg-white/20" />
-
-            {/* Code Input Section */}
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium mb-3 text-gray-300">
-                  Enter your subscription code:
-                </label>
-                <div className="relative">
-                  <Input
-                    type="text"
-                    placeholder="ENTER-YOUR-CODE-HERE"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    className="bg-black border-white/20 text-white placeholder-gray-500 text-center text-lg tracking-widest py-6 text-2xl"
-                    disabled={loading}
-                  />
-                  {code && (
-                    <button
-                      type="button"
-                      onClick={() => setCode('')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  )}
+                    <p className={`text-sm ${selectedType === 'teacher' ? 'text-slate-200' : 'text-slate-600'}`}>
+                      Class management, collaboration, schedules.
+                    </p>
+                  </button>
                 </div>
-              </div>
-              
-              {error && (
-                <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg">
-                  {error}
+              </section>
+
+              <Separator />
+
+              <section className="space-y-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">2. Choose Tier</h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {(['premium', 'pro'] as PlanTier[]).map((tier) => {
+                    const selected = selectedTier === tier;
+                    const tierName = tier[0].toUpperCase() + tier.slice(1);
+                    return (
+                      <button
+                        key={tier}
+                        type="button"
+                        onClick={() => setSelectedTier(tier)}
+                        className={`rounded-xl border p-4 text-left transition ${
+                          selected ? 'border-amber-500 bg-amber-50 shadow-sm' : 'border-slate-300 bg-white hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <span className="font-semibold">{tierName}</span>
+                          {selected && <Check className="h-4 w-4 text-amber-600" />}
+                        </div>
+                        <p className="text-xl font-bold text-slate-900">{pricingByType[selectedType][tier]}</p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {tier === 'premium' ? 'Solid daily workflow' : 'Full power + priority'}
+                        </p>
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
-              
-              <Button 
-                type="submit" 
-                className="w-full h-14 text-lg font-semibold bg-white text-black hover:bg-gray-200 transition-colors"
-                disabled={loading}
-              >
-                {loading ? (
-                  <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 border-2 border-black border-t-white rounded-full animate-spin"></div>
-                    Validating...
+              </section>
+            </CardContent>
+          </Card>
+
+          <Card className="h-fit border-slate-300 bg-white/90 shadow-xl lg:sticky lg:top-6">
+            <CardHeader>
+              <CardTitle className="text-xl">{planLabel}</CardTitle>
+              <CardDescription>{activePrice}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="space-y-2">
+                {activeFeatures.map((feature) => (
+                  <div key={feature} className="flex items-start gap-2 text-sm text-slate-700">
+                    <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
+                    <span>{feature}</span>
                   </div>
-                ) : (
-                  'Redeem Code'
+                ))}
+              </div>
+
+              <Separator />
+
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <label className="text-sm font-medium text-slate-700">3. Enter redemption code</label>
+                <Input
+                  type="text"
+                  placeholder="ENTER-CODE"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className="h-11 border-slate-300 bg-white text-center tracking-[0.18em]"
+                  disabled={loading}
+                />
+                {error && (
+                  <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                    {error}
+                  </p>
                 )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                <Button type="submit" className="h-11 w-full" disabled={loading}>
+                  {loading ? 'Validating...' : 'Redeem Code'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
