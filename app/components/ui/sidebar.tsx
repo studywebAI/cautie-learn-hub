@@ -182,7 +182,7 @@ const Sidebar = React.forwardRef<
       return (
         <div
           className={cn(
-            "flex h-full w-[--sidebar-width] flex-col bg-[hsl(var(--sidebar))/0.985] text-sidebar-foreground",
+            "flex h-full w-[--sidebar-width] flex-col bg-zinc-100 text-sidebar-foreground",
             className
           )}
           ref={ref}
@@ -199,7 +199,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-[hsl(var(--sidebar))/0.985] p-0 text-sidebar-foreground [&>button]:hidden"
+            className="w-[--sidebar-width] bg-zinc-100 p-0 text-sidebar-foreground [&>button]:hidden"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -249,7 +249,7 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-[hsl(var(--sidebar))/0.985]"
+            className="flex h-full w-full flex-col bg-zinc-100"
           >
             {children}
           </div>
@@ -513,7 +513,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-        "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-xl p-1.5 pl-2.5 text-left text-[13px] font-medium text-[hsl(var(--sidebar-foreground)/0.94)] outline-none transition-[width,height,padding,color,background-color] duration-150 hover:bg-gray-200/60 hover:text-black active:bg-gray-300/60 active:text-black disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-gray-300/70 data-[active=true]:font-medium data-[active=true]:text-black data-[active=true]:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] data-[state=open]:hover:bg-gray-200/60 data-[state=open]:hover:text-black group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+        "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-xl p-1.5 pl-2.5 text-left text-[13px] font-medium text-[hsl(var(--sidebar-foreground)/0.94)] outline-none transition-[width,height,padding,color,background-color] duration-150 hover:bg-zinc-200/70 hover:text-black active:bg-zinc-200 active:text-black disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-zinc-200 data-[active=true]:font-medium data-[active=true]:text-black data-[active=true]:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] data-[state=open]:hover:bg-zinc-200/70 data-[state=open]:hover:text-black group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {

@@ -345,6 +345,7 @@ export function AppSidebar() {
   };
 
   const isMenuItemActive = (href: string) => {
+    const [basePath] = href.split('?');
     if (href.startsWith('/class/')) {
       const [basePath, queryString] = href.split('?');
       if (pathname !== basePath) return false;
@@ -352,11 +353,11 @@ export function AppSidebar() {
       const expectedTab = new URLSearchParams(queryString).get('tab');
       return expectedTab ? activeClassTab === expectedTab : true;
     }
-    if (href === '/classes') return pathname === '/classes' || pathname.startsWith('/class/');
-    if (href.startsWith('/agenda')) return pathname === '/agenda';
-    if (href === '/subjects') return pathname === '/subjects' || pathname.startsWith('/subjects/');
+    if (basePath === '/classes') return pathname === '/classes' || pathname.startsWith('/class/');
+    if (basePath === '/agenda') return pathname === '/agenda';
+    if (basePath === '/subjects') return pathname === '/subjects' || pathname.startsWith('/subjects/');
     if (href.startsWith('/tools')) return pathname.startsWith(href);
-    return pathname === href;
+    return pathname === basePath;
   };
 
   const visibleMainItems = isTeacher || studentLane === 'school' ? menuItems : [];
@@ -865,7 +866,7 @@ export function AppSidebar() {
     return (
       <>
         {/* Mini sidebar - always visible on mobile */}
-        <div className={cn("fixed left-0 top-0 h-full w-14 bg-[hsl(var(--sidebar))/0.985] z-40 flex flex-col py-3 transition-opacity", openMobile && "pointer-events-none opacity-0")}>
+        <div className={cn("fixed left-0 top-0 h-full w-14 bg-zinc-100 z-40 flex flex-col py-3 transition-opacity", openMobile && "pointer-events-none opacity-0")}>
           {/* Hamburger button to open full drawer */}
           <Button
             variant="ghost"
@@ -892,8 +893,8 @@ export function AppSidebar() {
                       className={cn(
                         "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
                         isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)
-                          ? "bg-gray-300/70 text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]"
-                          : "text-sidebar-foreground hover:bg-gray-200/60"
+                          ? "bg-zinc-200 text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                          : "text-sidebar-foreground hover:bg-zinc-200/70"
                       )}
                       title={item.label}
                     >
@@ -906,8 +907,8 @@ export function AppSidebar() {
                     className={cn(
                       "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
                       isMenuItemActive(item.href)
-                        ? "bg-gray-300/70 text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]"
-                        : "text-sidebar-foreground hover:bg-gray-200/60"
+                        ? "bg-zinc-200 text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                        : "text-sidebar-foreground hover:bg-zinc-200/70"
                     )}
                     title={item.label}
                   >
@@ -924,8 +925,8 @@ export function AppSidebar() {
                 className={cn(
                   "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
                   isMenuItemActive(item.href)
-                    ? "bg-gray-300/70 text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]"
-                    : "text-sidebar-foreground hover:bg-gray-200/60"
+                    ? "bg-zinc-200 text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                    : "text-sidebar-foreground hover:bg-zinc-200/70"
                 )}
                 title={item.label}
               >
@@ -938,7 +939,7 @@ export function AppSidebar() {
           <div className="px-2 mt-auto">
             <Link
               href="/upgrade"
-              className="flex items-center justify-center h-10 w-10 rounded-lg transition-colors text-sidebar-foreground hover:bg-gray-200/60"
+              className="flex items-center justify-center h-10 w-10 rounded-lg transition-colors text-sidebar-foreground hover:bg-zinc-200/70"
               title="Upgrade"
             >
               <ArrowUpRight className="h-5 w-5" />
