@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 import type { Student } from '@/lib/teacher-types';
 import { GraduationCap } from 'lucide-react';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
@@ -263,8 +264,8 @@ export default function ClassDetailsPage() {
 
   if (isLoading && !classInfo) {
     return (
-      <div className="flex flex-col gap-8">
-        <Skeleton className="h-96 w-full" />
+      <div className="flex min-h-[55vh] items-center justify-center">
+        <CautieLoader label="Loading class" sublabel="Fetching group and tab data" size="lg" />
       </div>
     );
   }

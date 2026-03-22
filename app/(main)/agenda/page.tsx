@@ -4,7 +4,6 @@ import { Suspense, useState, useContext, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { AppContext, AppContextType, PersonalTask, ClassAssignment, ClassInfo, useDictionary } from '@/contexts/app-context';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { CreateTaskDialog } from '@/components/agenda/create-task-dialog';
 import { TodayPanel } from '@/components/agenda/today-panel';
@@ -14,6 +13,7 @@ import { ViewToggle } from '@/components/agenda/view-toggle';
 import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dialog';
 import { TeacherDeadlinesPanel } from '@/components/agenda/teacher-deadlines-panel';
 import { AssignmentDetailsPanel } from '@/components/agenda/assignment-details-panel';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 import { PlusCircle, Sparkles } from 'lucide-react';
 import type { AiSuggestion, CalendarEvent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -76,13 +76,8 @@ export default function AgendaPage() {
   return (
     <Suspense
       fallback={
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          <div className="lg:col-span-2">
-            <Skeleton className="h-[400px] w-full" />
-          </div>
-          <div>
-            <Skeleton className="h-64 w-full" />
-          </div>
+        <div className="flex min-h-[55vh] items-center justify-center">
+          <CautieLoader label="Loading agenda" sublabel="Building your timeline" size="lg" />
         </div>
       }
     >
@@ -503,13 +498,8 @@ function AgendaPageContent() {
   
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        <div className="lg:col-span-2">
-          <Skeleton className="h-[400px] w-full" />
-        </div>
-        <div>
-          <Skeleton className="h-64 w-full" />
-        </div>
+      <div className="flex min-h-[55vh] items-center justify-center">
+        <CautieLoader label="Loading agenda" sublabel="Syncing assignments and events" size="lg" />
       </div>
     );
   }
