@@ -3,12 +3,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { format } from 'date-fns';
+import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, RefreshCcw, Wand2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, CalendarDays, Clock3, CheckCircle2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 import { useToast } from '@/hooks/use-toast';
 
 type StudysetTask = {
@@ -40,6 +43,22 @@ type StudysetDetail = {
   status: string;
 };
 
+const TOOL_HREFS: Record<string, string> = {
+  notes: '/tools/notes',
+  flashcards: '/tools/flashcards',
+  quiz: '/tools/quiz',
+  wordweb: '/tools/notes',
+  review: '/tools/studyset',
+};
+
+function toolLabel(taskType: string) {
+  if (taskType === 'flashcards') return 'Flashcards';
+  if (taskType === 'wordweb') return 'Concept map';
+  if (taskType === 'quiz') return 'Quiz';
+  if (taskType === 'review') return 'Review';
+  return 'Notes';
+}
+
 export default function StudysetDetailPage() {
   const params = useParams<{ studysetId: string }>();
   const studysetId = params?.studysetId;
@@ -47,9 +66,12 @@ export default function StudysetDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
   const [studyset, setStudyset] = useState<StudysetDetail | null>(null);
   const [days, setDays] = useState<StudysetDay[]>([]);
   const [progress, setProgress] = useState({ total_tasks: 0, completed_tasks: 0, percent: 0 });
+  const [approval, setApproval] = useState<'pending' | 'approved' | 'changes'>('pending');
+  const [changeRequest, setChangeRequest] = useState('');
 
   const loadDetail = async () => {
     if (!studysetId) return;
@@ -117,6 +139,33 @@ export default function StudysetDetailPage() {
     }
   };
 
+  const regenerateWithChanges = async () => {
+    if (!studysetId) return;
+    setRegenerating(true);
+    try {
+      const response = await fetch(`/api/studysets/${studysetId}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feedback: changeRequest.trim() || 'Adjust the plan for better pacing.',
+        }),
+      });
+      if (!response.ok) throw new Error('Could not regenerate plan');
+      await loadDetail();
+      setApproval('pending');
+      setChangeRequest('');
+      toast({ title: 'Plan regenerated', description: 'Your requested changes were applied.' });
+    } catch (error: any) {
+      toast({
+        title: 'Could not regenerate plan',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   useEffect(() => {
     void loadDetail();
   }, [studysetId]);
@@ -134,20 +183,27 @@ export default function StudysetDetailPage() {
             </Link>
           </Button>
           <Button variant="outline" size="sm" onClick={() => void loadDetail()} disabled={loading}>
+            <RefreshCcw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
         </div>
 
-        <Card>
+        <Card className="border-none">
           <CardHeader>
             <CardTitle className="flex items-center justify-between gap-2">
               <span>{studyset?.name || 'Studyset'}</span>
               {studyset?.status && <Badge variant="outline">{studyset.status}</Badge>}
             </CardTitle>
             <CardDescription className="flex flex-wrap gap-4 text-xs">
-              <span className="inline-flex items-center gap-1"><CalendarDays className="h-3 w-3" /> {studyset?.target_days || 0} days</span>
-              <span className="inline-flex items-center gap-1"><Clock3 className="h-3 w-3" /> {studyset?.minutes_per_day || 0} min/day</span>
-              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {completedDays}/{days.length} days complete</span>
+              <span className="inline-flex items-center gap-1">
+                <CalendarDays className="h-3 w-3" /> {studyset?.target_days || 0} days
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Clock3 className="h-3 w-3" /> {studyset?.minutes_per_day || 0} min/day
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" /> {completedDays}/{days.length} days complete
+              </span>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -158,58 +214,122 @@ export default function StudysetDetailPage() {
           </CardContent>
         </Card>
 
+        <Card className="border-none">
+          <CardHeader>
+            <CardTitle className="text-base">Plan review</CardTitle>
+            <CardDescription>Approve this plan or request changes.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant={approval === 'approved' ? 'default' : 'outline'}
+                onClick={() => setApproval('approved')}
+              >
+                Looks good
+              </Button>
+              <Button
+                size="sm"
+                variant={approval === 'changes' ? 'default' : 'outline'}
+                onClick={() => setApproval('changes')}
+              >
+                Needs changes
+              </Button>
+            </div>
+
+            {approval === 'changes' && (
+              <div className="space-y-2">
+                <Textarea
+                  value={changeRequest}
+                  onChange={(event) => setChangeRequest(event.target.value)}
+                  placeholder="Describe what should change (pace, tool mix, focus topics)..."
+                  className="min-h-[120px]"
+                />
+                <Button onClick={() => void regenerateWithChanges()} disabled={regenerating}>
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  {regenerating ? 'Regenerating...' : 'Regenerate with changes'}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {loading ? (
-          <Card>
-            <CardContent className="p-6 text-sm text-muted-foreground">Loading studyset...</CardContent>
-          </Card>
+          <div className="flex min-h-[45vh] items-center justify-center">
+            <CautieLoader label="Loading study plan" sublabel="Preparing day-by-day tasks" size="lg" />
+          </div>
         ) : days.length === 0 ? (
-          <Card>
+          <Card className="border-none">
             <CardContent className="p-6 text-sm text-muted-foreground">
               No plan days yet. Generate a plan from the Studyset overview first.
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {days.map((day) => (
-              <Card key={day.id}>
+            {days.map((day, index) => (
+              <Card
+                key={day.id}
+                className="border-none studyset-day-card"
+                style={{ animationDelay: `${index * 55}ms` }}
+              >
                 <CardHeader>
                   <CardTitle className="text-base flex items-center justify-between gap-2">
-                    <span>Day {day.day_number}</span>
+                    <span>
+                      Day {day.day_number}
+                      {day.plan_date ? ` - ${format(new Date(`${day.plan_date}T00:00:00`), 'EEEE, MMM d')}` : ''}
+                    </span>
                     <Badge variant={day.completed ? 'default' : 'outline'}>
                       {day.completed ? 'Completed' : 'In progress'}
                     </Badge>
                   </CardTitle>
                   <CardDescription>
-                    {(day.plan_date || 'No date')} · {day.estimated_minutes} min · {day.summary || 'Study session'}
+                    {day.estimated_minutes} min · {day.summary || 'Study session'}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-2">
                   {day.studyset_plan_tasks.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No tasks for this day.</p>
                   ) : (
-                    day.studyset_plan_tasks.map((task) => (
-                      <div key={task.id} className="flex items-start gap-3 rounded-md border p-3">
-                        <Checkbox
-                          checked={task.completed}
-                          disabled={savingTaskId === task.id}
-                          onCheckedChange={(checked) => {
-                            if (typeof checked !== 'boolean') return;
-                            void toggleTask(task.id, checked);
-                          }}
-                        />
-                        <div className="flex-1">
-                          <p className={`text-sm ${task.completed ? 'line-through text-muted-foreground' : 'font-medium'}`}>
-                            {task.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {task.task_type} · {task.estimated_minutes} min
-                          </p>
-                          {task.description && (
-                            <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
-                          )}
+                    day.studyset_plan_tasks.map((task) => {
+                      const href =
+                        task.task_type === 'review'
+                          ? `/tools/studyset/${studysetId}`
+                          : `${TOOL_HREFS[task.task_type] || '/tools/notes'}?studysetId=${studysetId}&taskId=${task.id}`;
+
+                      return (
+                        <div key={task.id} className="rounded-xl bg-background p-3">
+                          <div className="flex items-start gap-3">
+                            <Checkbox
+                              checked={task.completed}
+                              disabled={savingTaskId === task.id}
+                              onCheckedChange={(checked) => {
+                                if (typeof checked !== 'boolean') return;
+                                void toggleTask(task.id, checked);
+                              }}
+                            />
+                            <div className="flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className={`text-sm ${task.completed ? 'line-through text-muted-foreground' : 'font-medium'}`}>
+                                  {task.title}
+                                </p>
+                                <Badge variant="outline" className="bg-card">
+                                  {toolLabel(task.task_type)}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {task.estimated_minutes} min
+                              </p>
+                              {task.description && (
+                                <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
+                              )}
+                            </div>
+                            <Button asChild size="sm" variant="outline">
+                              <Link href={href}>Start now</Link>
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </CardContent>
               </Card>
