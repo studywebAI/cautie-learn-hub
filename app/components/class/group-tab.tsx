@@ -134,6 +134,10 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
     viewAttendance: isDutch ? 'Bekijk aanwezigheid' : 'View attendance',
     viewSchedule: isDutch ? 'Bekijk rooster' : 'View schedule',
     viewSubjects: isDutch ? 'Bekijk vakken' : 'View subjects',
+    manageGroup: isDutch ? 'Beheer groep' : 'Manage group',
+    viewAnalytics: isDutch ? 'Bekijk analytics' : 'View analytics',
+    viewSettings: isDutch ? 'Bekijk instellingen' : 'View settings',
+    viewLogs: isDutch ? 'Bekijk logs' : 'View logs',
   };
 
   const [data, setData] = useState<GroupData | null>(cachedData || null);
@@ -604,27 +608,33 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=grades&teacherId=${selectedTeacher.id}`}>
-                      <ClipboardCheck className="h-4 w-4 mr-2" />
-                      {t.viewGrades}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=progress&teacherId=${selectedTeacher.id}`}>
-                      <TrendingUp className="h-4 w-4 mr-2" />
-                      {t.viewProgress}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=attendance&teacherId=${selectedTeacher.id}`}>
-                      <CalendarDays className="h-4 w-4 mr-2" />
-                      {t.viewAttendance}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
                     <Link prefetch={false} href={`/class/${classId}?tab=subjects`}>
                       <Library className="h-4 w-4 mr-2" />
                       {t.viewSubjects}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link prefetch={false} href={`/class/${classId}?tab=group`}>
+                      <Users className="h-4 w-4 mr-2" />
+                      {t.manageGroup}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link prefetch={false} href={`/class/${classId}?tab=analytics`}>
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      {t.viewAnalytics}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link prefetch={false} href={`/class/${classId}?tab=settings`}>
+                      <Activity className="h-4 w-4 mr-2" />
+                      {t.viewSettings}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link prefetch={false} href={`/class/${classId}?tab=logs`}>
+                      <Clock className="h-4 w-4 mr-2" />
+                      {t.viewLogs}
                     </Link>
                   </Button>
                   {scheduleEnabled && (
