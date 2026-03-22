@@ -1,14 +1,14 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import React, { useState, useEffect, Suspense, useCallback, useContext } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
 import { Loader2, Sparkles } from 'lucide-react';
 import { FunLoader } from '@/components/tools/fun-loader';
-import { QuizTaker, QuizMode } from '@/components/tools/quiz-taker';
+import type { QuizMode } from '@/components/tools/quiz-taker';
 import { AppContext } from '@/contexts/app-context';
 import type { Quiz } from '@/lib/types';
-import { QuizDuel } from '@/components/tools/quiz-duel';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,15 @@ import { quizToMarkdown, quizToHtml } from '@/lib/export-formatters';
 import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseQuizFromMarkdown, parseQuizFromHtml } from '@/lib/import-parsers';
 import { getToolStrings } from '@/lib/tool-i18n';
+
+const QuizTaker = dynamic(
+  () => import('@/components/tools/quiz-taker').then((m) => m.QuizTaker),
+  { ssr: false }
+);
+const QuizDuel = dynamic(
+  () => import('@/components/tools/quiz-duel').then((m) => m.QuizDuel),
+  { ssr: false }
+);
 
 function QuizPageContent() {
   const router = useRouter();

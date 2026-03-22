@@ -180,18 +180,19 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
   }, [classId]);
 
   useEffect(() => {
-    // Show cached data immediately, but always refresh in background
-    if (cachedData) {
-      setData(cachedData);
-      setLoading(false);
-      void logClassTabEvent({
-        classId,
-        tab: 'group',
-        event: 'cache_hydrated',
-        stage: 'data',
-        level: 'debug',
-      });
-    }
+    if (!cachedData) return;
+    setData(cachedData);
+    setLoading(false);
+    void logClassTabEvent({
+      classId,
+      tab: 'group',
+      event: 'cache_hydrated',
+      stage: 'data',
+      level: 'debug',
+    });
+  }, [classId, cachedData]);
+
+  useEffect(() => {
     void logClassTabEvent({
       classId,
       tab: 'group',
@@ -199,11 +200,16 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
       stage: 'ui',
       level: 'info',
     });
-    fetchGroupData();
+
+    // Parent route already preloads active tab data; avoid duplicate fetch + spinner flicker.
+    if (cachedData) return;
+    void fetchGroupData();
   }, [classId, cachedData]);
 
   const fetchGroupData = async () => {
-    setLoading(true);
+    if (!data) {
+      setLoading(true);
+    }
     void logClassTabEvent({
       classId,
       tab: 'group',

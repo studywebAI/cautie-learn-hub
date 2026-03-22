@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import type { MaterialReference } from '@/lib/teacher-types';
@@ -9,14 +10,29 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, ArrowLeft, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { FlashcardViewer } from '@/components/tools/flashcard-viewer';
-import { QuizTaker } from '@/components/tools/quiz-taker';
-import { NoteViewer } from '@/components/material-viewers/note-viewer';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { BlockRenderer } from '@/components/blocks/BlockRenderer';
-import { BlockEditor } from '@/components/blocks/BlockEditor';
 import type { BaseBlock } from '@/components/blocks/types';
+
+const FlashcardViewer = dynamic(
+  () => import('@/components/tools/flashcard-viewer').then((m) => m.FlashcardViewer),
+  { ssr: false }
+);
+const QuizTaker = dynamic(
+  () => import('@/components/tools/quiz-taker').then((m) => m.QuizTaker),
+  { ssr: false }
+);
+const NoteViewer = dynamic(
+  () => import('@/components/material-viewers/note-viewer').then((m) => m.NoteViewer),
+  { ssr: false }
+);
+const BlockRenderer = dynamic(
+  () => import('@/components/blocks/BlockRenderer').then((m) => m.BlockRenderer)
+);
+const BlockEditor = dynamic(
+  () => import('@/components/blocks/BlockEditor').then((m) => m.BlockEditor),
+  { ssr: false }
+);
 
 type ArtifactRecord = {
   id: string;

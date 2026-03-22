@@ -1,30 +1,66 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AssignmentList } from '@/components/dashboard/teacher/assignment-list';
-import { StudentList } from '@/components/dashboard/teacher/student-list';
 import type { Student } from '@/lib/teacher-types';
-import { MaterialList } from '@/components/dashboard/teacher/material-list';
-import { ClassSettings } from '@/components/dashboard/teacher/class-settings';
-import { AnnouncementManager } from '@/components/dashboard/teacher/announcement-manager';
-import { ClassAnalyticsDashboard } from '@/components/dashboard/teacher/class-analytics-dashboard';
-import { ChapterNavigation } from '@/components/class/ChapterNavigation';
-import { ChapterContentViewer } from '@/components/class/ChapterContentViewer';
-import { ChapterEditor } from '@/components/class/ChapterEditor';
-import { QuickGrader } from '@/components/dashboard/teacher/quick-grader';
-import { AttendancePanel } from '@/components/dashboard/teacher/attendance-panel';
-import { SubjectOverview } from '@/components/dashboard/teacher/subject-overview';
-import { StudentProgressPanel } from '@/components/dashboard/teacher/student-progress';
-import { InviteTab } from '@/components/class/invite-tab';
-import { GroupTab } from '@/components/class/group-tab';
-import { AttendanceTab } from '@/components/class/attendance-tab';
-import { GradesTab } from '@/components/class/grades-tab';
-import { LogsTab } from '@/components/class/logs-tab';
 import { GraduationCap } from 'lucide-react';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
+
+const AssignmentList = dynamic(
+  () => import('@/components/dashboard/teacher/assignment-list').then((m) => m.AssignmentList)
+);
+const StudentList = dynamic(
+  () => import('@/components/dashboard/teacher/student-list').then((m) => m.StudentList)
+);
+const MaterialList = dynamic(
+  () => import('@/components/dashboard/teacher/material-list').then((m) => m.MaterialList)
+);
+const ClassSettings = dynamic(
+  () => import('@/components/dashboard/teacher/class-settings').then((m) => m.ClassSettings)
+);
+const AnnouncementManager = dynamic(
+  () => import('@/components/dashboard/teacher/announcement-manager').then((m) => m.AnnouncementManager)
+);
+const ClassAnalyticsDashboard = dynamic(
+  () => import('@/components/dashboard/teacher/class-analytics-dashboard').then((m) => m.ClassAnalyticsDashboard)
+);
+const ChapterNavigation = dynamic(
+  () => import('@/components/class/ChapterNavigation').then((m) => m.ChapterNavigation)
+);
+const ChapterContentViewer = dynamic(
+  () => import('@/components/class/ChapterContentViewer').then((m) => m.ChapterContentViewer)
+);
+const ChapterEditor = dynamic(
+  () => import('@/components/class/ChapterEditor').then((m) => m.ChapterEditor)
+);
+const QuickGrader = dynamic(
+  () => import('@/components/dashboard/teacher/quick-grader').then((m) => m.QuickGrader),
+  { ssr: false }
+);
+const SubjectOverview = dynamic(
+  () => import('@/components/dashboard/teacher/subject-overview').then((m) => m.SubjectOverview)
+);
+const StudentProgressPanel = dynamic(
+  () => import('@/components/dashboard/teacher/student-progress').then((m) => m.StudentProgressPanel)
+);
+const InviteTab = dynamic(
+  () => import('@/components/class/invite-tab').then((m) => m.InviteTab)
+);
+const GroupTab = dynamic(
+  () => import('@/components/class/group-tab').then((m) => m.GroupTab)
+);
+const AttendanceTab = dynamic(
+  () => import('@/components/class/attendance-tab').then((m) => m.AttendanceTab)
+);
+const GradesTab = dynamic(
+  () => import('@/components/class/grades-tab').then((m) => m.GradesTab)
+);
+const LogsTab = dynamic(
+  () => import('@/components/class/logs-tab').then((m) => m.LogsTab)
+);
 
 // Cache for tab data - persists across tab switches
 const tabDataCache: Record<string, { data: any; timestamp: number }> = {};

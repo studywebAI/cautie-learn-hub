@@ -1,12 +1,20 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { AppContext } from '@/contexts/app-context';
 import { useContext } from 'react';
-import { AssignmentEditor } from '@/components/AssignmentEditor';
-import { StudentAssignmentView } from '@/components/subjects/StudentAssignmentView';
+
+const AssignmentEditor = dynamic(
+  () => import('@/components/AssignmentEditor').then((m) => m.AssignmentEditor),
+  { ssr: false }
+);
+const StudentAssignmentView = dynamic(
+  () => import('@/components/subjects/StudentAssignmentView').then((m) => m.StudentAssignmentView),
+  { ssr: false }
+);
 
 type Assignment = {
   id: string;
