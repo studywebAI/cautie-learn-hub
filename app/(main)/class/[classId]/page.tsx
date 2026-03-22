@@ -290,7 +290,14 @@ export default function ClassDetailsPage() {
           />
         );
       case 'group':
-        return <GroupTab classId={classId} isTeacher={isTeacher} cachedData={cachedTabData['group']} />;
+        return (
+          <GroupTab
+            classId={classId}
+            isTeacher={isTeacher}
+            cachedData={cachedTabData['group']}
+            parentLoading={!!loadingTabs['group']}
+          />
+        );
       case 'assignments':
         return (
           <>

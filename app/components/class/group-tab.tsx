@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import Link from 'next/link';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 import { AppContext, AppContextType } from '@/contexts/app-context';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 
 type Student = {
   id: string;
@@ -86,9 +87,10 @@ type GroupTabProps = {
   classId: string;
   isTeacher: boolean;
   cachedData?: GroupData; // Accept cached data from parent
+  parentLoading?: boolean;
 };
 
-export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
+export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false }: GroupTabProps) {
   const appContext = useContext(AppContext) as AppContextType | null;
   const language = appContext?.language || 'en';
   const isDutch = language === 'nl';
@@ -141,12 +143,21 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
   };
 
   const [data, setData] = useState<GroupData | null>(cachedData || null);
-  const [loading, setLoading] = useState(!cachedData);
+  const [loading, setLoading] = useState(!cachedData && !parentLoading);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [teachersCollapsed, setTeachersCollapsed] = useState(false);
   const [studentsCollapsed, setStudentsCollapsed] = useState(false);
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
+
+  useEffect(() => {
+    setSelectedStudent(null);
+    setSelectedTeacher(null);
+    if (!cachedData) {
+      setData(null);
+    }
+    setLoading(!cachedData && !parentLoading);
+  }, [classId, cachedData, parentLoading]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -206,9 +217,9 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
     });
 
     // Parent route already preloads active tab data; avoid duplicate fetch + spinner flicker.
-    if (cachedData) return;
+    if (cachedData || parentLoading || data) return;
     void fetchGroupData();
-  }, [classId, cachedData]);
+  }, [classId, cachedData, parentLoading, data]);
 
   const fetchGroupData = async () => {
     if (!data) {
@@ -285,10 +296,10 @@ export function GroupTab({ classId, isTeacher, cachedData }: GroupTabProps) {
     return <Clock className="h-3 w-3 text-foreground/60" />;
   };
 
-  if (loading) {
+  if (loading || parentLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <CautieLoader label="Loading group" sublabel="Fetching teachers and students" size="md" />
       </div>
     );
   }
