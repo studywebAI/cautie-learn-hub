@@ -1,11 +1,46 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import type { NextRequest } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i
+const NON_SESSION_WINDOW_MS = 30000
+const nonSessionRateState = new Map<string, number>()
+
+function hasLikelySessionCookie(rawCookie: string): boolean {
+  return /sb-[^=]+=/.test(rawCookie) || /supabase-auth-token/i.test(rawCookie)
+}
+
+function getClientKey(req: NextRequest): string {
+  const forwardedFor = req.headers.get('x-forwarded-for') || ''
+  const ip = forwardedFor.split(',')[0]?.trim() || 'unknown-ip'
+  const ua = req.headers.get('user-agent') || 'unknown-ua'
+  return `${ip}|${ua}|school-schedule`
+}
+
+export async function GET(req: NextRequest) {
   try {
+    const userAgent = req.headers.get('user-agent') || ''
+    const cookieHeader = req.headers.get('cookie') || ''
+    const hasSessionCookie = hasLikelySessionCookie(cookieHeader)
+    const looksLikeBot = BOT_UA_PATTERN.test(userAgent)
+
+    // Hard lock anonymous bot/non-session traffic for this endpoint.
+    if (!hasSessionCookie || looksLikeBot) {
+      const key = getClientKey(req)
+      const now = Date.now()
+      const lastAt = nonSessionRateState.get(key) || 0
+      if (now - lastAt < NON_SESSION_WINDOW_MS) {
+        return NextResponse.json({ slots: [] }, { status: 200 })
+      }
+      nonSessionRateState.set(key, now)
+      if (looksLikeBot) {
+        return NextResponse.json({ slots: [] }, { status: 200 })
+      }
+    }
+
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
@@ -57,4 +92,3 @@ export async function GET() {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

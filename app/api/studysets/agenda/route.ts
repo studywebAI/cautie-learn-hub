@@ -3,13 +3,48 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
+const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i
+const NON_SESSION_WINDOW_MS = 30000
+const nonSessionRateState = new Map<string, number>()
 
 function isDateString(value: string | null): value is string {
   return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value))
 }
 
+function hasLikelySessionCookie(rawCookie: string): boolean {
+  return /sb-[^=]+=/.test(rawCookie) || /supabase-auth-token/i.test(rawCookie)
+}
+
+function getClientKey(req: NextRequest): string {
+  const forwardedFor = req.headers.get('x-forwarded-for') || ''
+  const ip = forwardedFor.split(',')[0]?.trim() || 'unknown-ip'
+  const ua = req.headers.get('user-agent') || 'unknown-ua'
+  const from = req.nextUrl.searchParams.get('from') || ''
+  const to = req.nextUrl.searchParams.get('to') || ''
+  return `${ip}|${ua}|studysets-agenda|${from}|${to}`
+}
+
 export async function GET(req: NextRequest) {
   try {
+    const userAgent = req.headers.get('user-agent') || ''
+    const cookieHeader = req.headers.get('cookie') || ''
+    const hasSessionCookie = hasLikelySessionCookie(cookieHeader)
+    const looksLikeBot = BOT_UA_PATTERN.test(userAgent)
+
+    // Hard lock anonymous bot/non-session traffic for this endpoint.
+    if (!hasSessionCookie || looksLikeBot) {
+      const key = getClientKey(req)
+      const now = Date.now()
+      const lastAt = nonSessionRateState.get(key) || 0
+      if (now - lastAt < NON_SESSION_WINDOW_MS) {
+        return NextResponse.json({ items: [] }, { status: 200 })
+      }
+      nonSessionRateState.set(key, now)
+      if (looksLikeBot) {
+        return NextResponse.json({ items: [] }, { status: 200 })
+      }
+    }
+
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
