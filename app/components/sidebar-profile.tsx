@@ -79,7 +79,7 @@ export function SidebarProfile() {
           className="w-full h-8 text-xs rounded-md border-border/55 bg-transparent hover:bg-sidebar-accent/45"
           asChild
         >
-          <Link prefetch={false} href="/login">
+          <Link href="/login">
             <ArrowUpRight className="h-3 w-3 mr-1.5" />
             sign up
           </Link>
@@ -124,7 +124,7 @@ export function SidebarProfile() {
         className="w-full h-8 text-xs rounded-md border-border/55 bg-transparent hover:bg-sidebar-accent/45"
         asChild
       >
-        <Link prefetch={false} href="/upgrade">
+        <Link href="/upgrade">
           <ArrowUpRight className="h-3 w-3 mr-1.5" />
           upgrade
         </Link>

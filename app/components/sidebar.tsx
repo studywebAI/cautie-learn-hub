@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -29,8 +30,6 @@ import {
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
-import { RecentsSidebar } from './recents-sidebar';
-import { SidebarProfile } from './sidebar-profile';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { cn } from '@/lib/utils';
@@ -41,6 +40,16 @@ type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
 type DropdownClassItem = { id: string; name: string; status?: string | null };
 type DropdownSubjectItem = { id: string; title: string; classIds: string[] };
 type StudentLane = 'school' | 'tools';
+
+const RecentsSidebar = dynamic(
+  () => import('./recents-sidebar').then((m) => m.RecentsSidebar),
+  { ssr: false }
+);
+
+const SidebarProfile = dynamic(
+  () => import('./sidebar-profile').then((m) => m.SidebarProfile),
+  { ssr: false }
+);
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -353,6 +362,50 @@ export function AppSidebar() {
   const visibleMainItems = isTeacher || studentLane === 'school' ? menuItems : [];
   const visibleToolsItems = isTeacher || studentLane === 'tools' ? toolsMenuItems : [];
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const targets = Array.from(
+      new Set([
+        '/',
+        teacherSubjectsHref,
+        teacherManageHref,
+        teacherAgendaHref,
+        '/subjects',
+        '/agenda',
+        '/tools/studyset',
+        '/tools/quiz',
+        '/tools/flashcards',
+        '/tools/notes',
+      ])
+    ).slice(0, 10);
+
+    const prefetchLikelyRoutes = () => {
+      for (const target of targets) {
+        try {
+          void router.prefetch(target);
+        } catch {}
+      }
+    };
+
+    const browserWindow = window as Window & {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+
+    if (typeof browserWindow.requestIdleCallback === 'function') {
+      const idleId = browserWindow.requestIdleCallback(prefetchLikelyRoutes, { timeout: 1200 });
+      return () => {
+        if (typeof browserWindow.cancelIdleCallback === 'function') {
+          browserWindow.cancelIdleCallback(idleId);
+        }
+      };
+    }
+
+    const timer = browserWindow.setTimeout(prefetchLikelyRoutes, 300);
+    return () => browserWindow.clearTimeout(timer);
+  }, [router, teacherSubjectsHref, teacherManageHref, teacherAgendaHref]);
+
   const renderFloatingDropdown = () => {
     if (!dropdown) return null;
     const items = dropdown.kind === 'classes' ? classDropdownItems : subjectDropdownItems;
@@ -654,7 +707,6 @@ export function AppSidebar() {
             items.map((entry) => (
               <Link
                 key={entry.id}
-                prefetch={false}
                 href={dropdown.kind === 'classes' && isTeacher ? resolveTeacherClassRoute(entry.id) : entry.href}
                 className={cn(
                   'flex items-center justify-between gap-2 truncate rounded-xl px-2.5 py-2 text-[13px] transition-colors',
@@ -850,7 +902,6 @@ export function AppSidebar() {
                   </>
                 ) : (
                   <Link
-                    prefetch={false}
                     href={item.href}
                     className={cn(
                       "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
@@ -869,7 +920,6 @@ export function AppSidebar() {
             {visibleToolsItems.map((item) => (
               <Link
                 key={item.href}
-                prefetch={false}
                 href={item.href}
                 className={cn(
                   "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
@@ -888,7 +938,6 @@ export function AppSidebar() {
           <div className="px-2 mt-auto">
             <Link
               href="/upgrade"
-              prefetch={false}
               className="flex items-center justify-center h-10 w-10 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent"
               title="Upgrade"
             >
@@ -928,7 +977,7 @@ export function AppSidebar() {
                           isActive={isMenuItemActive(item.href)}
                           tooltip={item.label}
                         >
-                          <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
+                          <Link href={item.href} onClick={() => setOpenMobile(false)}>
                             <item.icon className="h-4 w-4" />
                             <span className="text-[13px] leading-5">{item.label}</span>
                           </Link>
@@ -953,7 +1002,7 @@ export function AppSidebar() {
                         isActive={isMenuItemActive(item.href)}
                         tooltip={item.label}
                       >
-                        <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
+                        <Link href={item.href} onClick={() => setOpenMobile(false)}>
                           <item.icon className="h-4 w-4" />
                           <span className="text-[13px] leading-5">{item.label}</span>
                         </Link>
@@ -1009,7 +1058,7 @@ export function AppSidebar() {
                       isActive={isMenuItemActive(item.href)}
                       tooltip={item.label}
                     >
-                      <Link prefetch={false} href={item.href}>
+                      <Link href={item.href}>
                         <item.icon className="h-4 w-4" />
                         <span className="text-[13px] leading-5">{item.label}</span>
                       </Link>
@@ -1033,7 +1082,7 @@ export function AppSidebar() {
                     isActive={isMenuItemActive(item.href)}
                     tooltip={item.label}
                   >
-                    <Link prefetch={false} href={item.href}>
+                    <Link href={item.href}>
                       <item.icon className="h-4 w-4" />
                       <span className="text-[13px] leading-5">{item.label}</span>
                     </Link>
