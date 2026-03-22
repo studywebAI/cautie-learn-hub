@@ -29,8 +29,6 @@ import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 // Cache for tab data - persists across tab switches
 const tabDataCache: Record<string, { data: any; timestamp: number }> = {};
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-const TIER1_TABS = ['group', 'subjects'] as const;
-const TIER2_TABS = ['announcements', 'progress', 'attendance', 'analytics'] as const;
 
 export default function ClassDetailsPage() {
   const params = useParams();
@@ -208,67 +206,6 @@ export default function ClassDetailsPage() {
       });
       void loadTabData(tab);
     }
-  }, [classId, isAppLoading, loadTabData, tab]);
-
-  // Tiered background warming to make first tab impressions feel instant.
-  useEffect(() => {
-    if (!classId || isAppLoading) return;
-
-    const tier1Targets = TIER1_TABS.filter((tabName) => tabName !== tab);
-    if (tier1Targets.length > 0) {
-      const tier1StartedAt = Date.now();
-      void Promise.all(tier1Targets.map((tabName) => loadTabData(tabName))).finally(() => {
-        void logClassTabEvent({
-          classId,
-          tab,
-          event: 'tier1_warm_complete',
-          stage: 'preload',
-          level: 'debug',
-          meta: { targets: tier1Targets, duration_ms: Date.now() - tier1StartedAt },
-        });
-        console.log('[PRELOAD][TIER1] class workspace warm complete', {
-          classId,
-          activeTab: tab,
-          targets: tier1Targets,
-          durationMs: Date.now() - tier1StartedAt,
-        });
-      });
-    }
-
-    const runTier2 = () => {
-      const tier2Targets = TIER2_TABS.filter((tabName) => tabName !== tab);
-      if (tier2Targets.length > 0) {
-        const tier2StartedAt = Date.now();
-        void Promise.all(tier2Targets.map((tabName) => loadTabData(tabName))).finally(() => {
-          void logClassTabEvent({
-            classId,
-            tab,
-            event: 'tier2_warm_complete',
-            stage: 'preload',
-            level: 'debug',
-            meta: { targets: tier2Targets, duration_ms: Date.now() - tier2StartedAt },
-          });
-          console.log('[PRELOAD][TIER2] class workspace warm complete', {
-            classId,
-            activeTab: tab,
-            targets: tier2Targets,
-            durationMs: Date.now() - tier2StartedAt,
-          });
-        });
-      }
-    };
-
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      const idleId = (window as any).requestIdleCallback(runTier2, { timeout: 1200 });
-      return () => {
-        if ('cancelIdleCallback' in window) {
-          (window as any).cancelIdleCallback(idleId);
-        }
-      };
-    }
-
-    const timer = globalThis.setTimeout(runTier2, 350);
-    return () => globalThis.clearTimeout(timer);
   }, [classId, isAppLoading, loadTabData, tab]);
 
   // Force refresh specific tab data

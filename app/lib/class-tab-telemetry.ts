@@ -13,7 +13,7 @@ type ClassTabTelemetryInput = {
 const EVENT_DEDUPE_WINDOW_MS = 5000;
 const MAX_EVENTS_PER_WINDOW = 12;
 const RATE_WINDOW_MS = 10000;
-const NETWORK_LEVELS = new Set<LogLevel>(['info', 'warn', 'error']);
+const NETWORK_LEVELS = new Set<LogLevel>(['error']);
 
 const recentEventByKey = new Map<string, number>();
 const recentWindowTimestamps: number[] = [];
