@@ -5,6 +5,47 @@ import { getClassPermission, logAuditEntry } from '@/lib/auth/class-permissions'
 
 export const dynamic = 'force-dynamic'
 
+const RATE_WINDOW_MS = 10000
+const MAX_EVENTS_PER_WINDOW = 20
+const DEDUPE_WINDOW_MS = 2500
+const telemetryRateState = new Map<string, number[]>()
+const telemetryLastEventAt = new Map<string, number>()
+
+function shouldAcceptTelemetry(input: {
+  userId: string
+  classId: string
+  tab: string
+  event: string
+  stage: string
+  level: string
+}) {
+  if (input.level === 'error') {
+    return { accepted: true as const }
+  }
+
+  const now = Date.now()
+  const rateKey = `${input.userId}:${input.classId}`
+  const eventKey = `${rateKey}:${input.tab}:${input.event}:${input.stage}:${input.level}`
+
+  const timestamps = telemetryRateState.get(rateKey) || []
+  const rateCutoff = now - RATE_WINDOW_MS
+  const kept = timestamps.filter((ts) => ts >= rateCutoff)
+  if (kept.length >= MAX_EVENTS_PER_WINDOW) {
+    telemetryRateState.set(rateKey, kept)
+    return { accepted: false as const, reason: 'rate_limited' as const }
+  }
+
+  const lastEventAt = telemetryLastEventAt.get(eventKey) || 0
+  if (now - lastEventAt < DEDUPE_WINDOW_MS) {
+    return { accepted: false as const, reason: 'duplicate' as const }
+  }
+
+  kept.push(now)
+  telemetryRateState.set(rateKey, kept)
+  telemetryLastEventAt.set(eventKey, now)
+  return { accepted: true as const }
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
@@ -36,6 +77,18 @@ export async function POST(
       return NextResponse.json({ error: 'tab and event are required' }, { status: 400 })
     }
 
+    const admission = shouldAcceptTelemetry({
+      userId: user.id,
+      classId,
+      tab,
+      event,
+      stage,
+      level,
+    })
+    if (!admission.accepted) {
+      return NextResponse.json({ success: true, dropped: admission.reason }, { status: 202 })
+    }
+
     await logAuditEntry(supabase as any, {
       userId: user.id,
       classId,
@@ -56,4 +109,3 @@ export async function POST(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

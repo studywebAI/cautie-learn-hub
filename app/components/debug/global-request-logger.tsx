@@ -22,6 +22,8 @@ declare global {
 }
 
 const MAX_STACK_LINES = 10;
+const GET_COALESCE_WINDOW_MS = 1200;
+const inFlightGetRequests = new Map<string, { startedAt: number; promise: Promise<Response> }>();
 
 function nextRequestId(): number {
   if (typeof window === 'undefined') return 0;
@@ -47,6 +49,15 @@ function debugLog(label: string, payload?: Record<string, unknown>) {
     return;
   }
   console.log(`[request-debug] ${label}`, { ts: now });
+}
+
+function toAbsoluteUrl(url: string): string {
+  if (typeof window === 'undefined') return url;
+  try {
+    return new URL(url, window.location.origin).toString();
+  } catch {
+    return url;
+  }
 }
 
 export function GlobalRequestLogger() {
@@ -94,10 +105,46 @@ export function GlobalRequestLogger() {
       });
 
       try {
-        const response = await window.__studywebOriginalFetch!(input as any, {
+        const absoluteUrl = toAbsoluteUrl(url);
+        const shouldCoalesce =
+          method === 'GET' &&
+          absoluteUrl.includes('/api/') &&
+          !mergedHeaders.has('x-debug-no-coalesce');
+
+        if (shouldCoalesce) {
+          const now = Date.now();
+          const existing = inFlightGetRequests.get(absoluteUrl);
+          if (existing && now - existing.startedAt < GET_COALESCE_WINDOW_MS) {
+            debugLog(`fetch:coalesced #${id}`, {
+              id,
+              method,
+              url: absoluteUrl,
+              correlationId,
+              sourceRequestStartedAt: existing.startedAt,
+            });
+            const sharedResponse = await existing.promise;
+            return sharedResponse.clone();
+          }
+        }
+
+        const sharedPromise = window.__studywebOriginalFetch!(input as any, {
           ...init,
           headers: mergedHeaders,
-        });
+        }).then((res) => res.clone());
+
+        if (shouldCoalesce) {
+          inFlightGetRequests.set(absoluteUrl, { startedAt: Date.now(), promise: sharedPromise });
+          void sharedPromise.finally(() => {
+            window.setTimeout(() => {
+              const current = inFlightGetRequests.get(absoluteUrl);
+              if (current?.promise === sharedPromise) {
+                inFlightGetRequests.delete(absoluteUrl);
+              }
+            }, GET_COALESCE_WINDOW_MS);
+          });
+        }
+
+        const response = await sharedPromise;
         debugLog(`fetch:end #${id}`, {
           id,
           method,

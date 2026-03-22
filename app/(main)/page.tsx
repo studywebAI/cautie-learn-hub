@@ -17,25 +17,19 @@ import { TodaysStudysetTasks } from "@/components/dashboard/todays-studyset-task
 import { useRouter } from "next/navigation";
 
 const AnalyticsDashboard = lazy(() => import("@/components/dashboard/analytics-dashboard").then(module => ({ default: module.AnalyticsDashboard })));
+const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i;
 
-const checkScheduledAssignments = async () => {
-  try {
-    await fetch('/api/scheduler');
-  } catch (error) {
-    console.error('Error checking scheduled assignments:', error);
-  }
-};
+function isLikelyBotClient(): boolean {
+  if (typeof window === 'undefined') return false;
+  return BOT_UA_PATTERN.test(window.navigator.userAgent || '');
+}
 
 function StudentDashboard() {
   const { isLoading, session, assignments, classes, personalTasks, subjects: dashboardSubjects } = useContext(AppContext) as AppContextType;
   const [schoolSlots, setSchoolSlots] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!session) return;
-    checkScheduledAssignments();
-  }, [session]);
-
-  useEffect(() => {
+    if (isLikelyBotClient()) return;
     if (!session) return;
     const loadSchoolSchedule = async () => {
       try {
@@ -100,11 +94,6 @@ function StudentDashboard() {
 
 function TeacherSummaryDashboard() {
     const { classes, assignments, students, isLoading, session } = useContext(AppContext) as AppContextType;
-
-    useEffect(() => {
-      if (!session) return;
-      checkScheduledAssignments();
-    }, [session]);
 
     if (isLoading || !classes) return <DashboardSkeleton />;
 

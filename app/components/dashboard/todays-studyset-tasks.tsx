@@ -23,6 +23,7 @@ type StudysetAgendaItem = {
   estimated_minutes: number;
   tasks: StudysetAgendaTask[];
 };
+const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i;
 
 function isoToday() {
   return new Date().toISOString().slice(0, 10);
@@ -33,6 +34,11 @@ export function TodaysStudysetTasks() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && BOT_UA_PATTERN.test(window.navigator.userAgent || '')) {
+      setLoading(false);
+      return;
+    }
+
     const controller = new AbortController();
 
     const load = async () => {
