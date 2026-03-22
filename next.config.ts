@@ -14,10 +14,17 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  compress: true,
+  poweredByHeader: false,
 
   transpilePackages: ['lucide-react'],
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
 
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60 * 60 * 24 * 7,
     remotePatterns: [
       {
         protocol: 'https',

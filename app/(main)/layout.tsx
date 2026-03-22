@@ -1,11 +1,20 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { AppSidebar } from "@/components/sidebar";
-import { GlobalCommandPalette } from "@/components/global-command-palette";
+import dynamic from "next/dynamic";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePathname } from "next/navigation";
+
+const AppSidebar = dynamic(
+    () => import("@/components/sidebar").then((m) => m.AppSidebar),
+    { ssr: false }
+);
+
+const GlobalCommandPalette = dynamic(
+    () => import("@/components/global-command-palette").then((m) => m.GlobalCommandPalette),
+    { ssr: false }
+);
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     const isMobile = useIsMobile();

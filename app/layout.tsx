@@ -18,6 +18,8 @@ const fontAtkinsonHyperlegible = Atkinson_Hyperlegible({
   subsets: ['latin'],
   variable: '--font-atkinson-hyperlegible',
   weight: ['400'],
+  preload: false,
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -56,6 +58,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const shouldEnableRequestLogger = process.env.NODE_ENV !== 'production';
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -67,9 +71,11 @@ export default function RootLayout({
         fontAtkinsonHyperlegible.variable
       )}>
         <AppContextProvider>
-            <Suspense fallback={null}>
-              <GlobalRequestLogger />
-            </Suspense>
+            {shouldEnableRequestLogger ? (
+              <Suspense fallback={null}>
+                <GlobalRequestLogger />
+              </Suspense>
+            ) : null}
             {children}
         </AppContextProvider>
         <Toaster />
