@@ -31,6 +31,8 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
   const scopeKey = classId || 'all';
   const cacheKey = `studyweb-subjects-cache:${scopeKey}`;
   const checksumKey = `studyweb-subjects-checksum:${scopeKey}`;
+  const syncAtKey = `studyweb-subjects-last-sync-at:${scopeKey}`;
+  const SYNC_COOLDOWN_MS = 20000;
   const seededSubjects = useMemo(() => {
     const source = Array.isArray(cachedSubjects) ? cachedSubjects : [];
     if (!classId) return source;
@@ -149,8 +151,22 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
   }, [cacheKey, checksumKey, classId, fetchSubjects]);
 
   useEffect(() => {
-    void syncSubjects();
-  }, [syncSubjects]);
+    const run = async () => {
+      if (typeof window !== 'undefined') {
+        const lastSyncAt = Number(window.localStorage.getItem(syncAtKey) || '0');
+        const now = Date.now();
+        if (lastSyncAt > 0 && now - lastSyncAt < SYNC_COOLDOWN_MS) {
+          setIsLoading(false);
+          return;
+        }
+      }
+      await syncSubjects();
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(syncAtKey, String(Date.now()));
+      }
+    };
+    void run();
+  }, [syncAtKey, syncSubjects]);
 
   const handleCreateSubject = async () => {
     if (!newSubjectTitle.trim()) {

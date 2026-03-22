@@ -241,6 +241,27 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setSubjects(Array.isArray(data) ? data : []);
   }, [role]);
 
+  const fetchNavigationBundle = useCallback(async () => {
+    const params = new URLSearchParams();
+    if (role === 'teacher' && typeof window !== 'undefined') {
+      const activeClassId = window.localStorage.getItem('studyweb-last-class-id');
+      if (activeClassId) params.set('classId', activeClassId);
+    }
+    const url = params.size > 0 ? `/api/preload/navigation?${params.toString()}` : '/api/preload/navigation';
+    const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
+    if (!res.ok) {
+      if (res.status === 401) {
+        setClasses([]);
+        setSubjects([]);
+        return;
+      }
+      throw new Error(`navigation preload failed (${res.status})`);
+    }
+    const data = await res.json().catch(() => ({}));
+    setClasses(Array.isArray(data?.classes) ? data.classes : []);
+    setSubjects(Array.isArray(data?.subjects) ? data.subjects : []);
+  }, [role]);
+
   const warmResource = useCallback(async (key: PreloadResourceKey) => {
     const snapshot = preloadSnapshotRef.current[key];
     if (
@@ -260,13 +281,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       const startedAt = Date.now();
       setPreloadState(key, { status: 'loading', error: null });
       try {
-        if (key === 'classes:list') {
-          await fetchClassesResource();
-        } else {
-          await fetchSubjectsResource();
-        }
-        setPreloadState(key, { status: 'ready', updatedAt: Date.now(), error: null });
-        console.log('[PRELOAD] Resource ready', { key, durationMs: Date.now() - startedAt });
+        await fetchNavigationBundle();
+        const updatedAt = Date.now();
+        setPreloadState('classes:list', { status: 'ready', updatedAt, error: null });
+        setPreloadState('subjects:list', { status: 'ready', updatedAt, error: null });
+        console.log('[PRELOAD] Resource ready', { key: 'navigation_bundle', durationMs: updatedAt - startedAt });
       } catch (error: any) {
         setPreloadState(key, {
           status: 'error',
@@ -283,7 +302,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       preloadInFlight.current[key] = undefined;
     }
-  }, [fetchClassesResource, fetchSubjectsResource, setPreloadState]);
+  }, [fetchNavigationBundle, setPreloadState]);
 
   const warmResources = useCallback(async (keys: PreloadResourceKey[]) => {
     const uniqueKeys = Array.from(new Set(keys));
