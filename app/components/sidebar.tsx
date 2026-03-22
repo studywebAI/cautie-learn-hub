@@ -865,7 +865,7 @@ export function AppSidebar() {
     return (
       <>
         {/* Mini sidebar - always visible on mobile */}
-        <div className={cn("fixed left-0 top-0 h-full w-14 bg-sidebar z-40 flex flex-col py-3 transition-opacity", openMobile && "pointer-events-none opacity-0")}>
+        <div className={cn("fixed left-0 top-0 h-full w-14 bg-[hsl(var(--sidebar))/0.985] z-40 flex flex-col py-3 transition-opacity", openMobile && "pointer-events-none opacity-0")}>
           {/* Hamburger button to open full drawer */}
           <Button
             variant="ghost"
@@ -892,8 +892,8 @@ export function AppSidebar() {
                       className={cn(
                         "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
                         isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)
-                          ? "bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent"
+                          ? "bg-gray-300/70 text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]"
+                          : "text-sidebar-foreground hover:bg-gray-200/60"
                       )}
                       title={item.label}
                     >
@@ -906,8 +906,8 @@ export function AppSidebar() {
                     className={cn(
                       "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
                       isMenuItemActive(item.href)
-                        ? "bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent"
+                        ? "bg-gray-300/70 text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]"
+                        : "text-sidebar-foreground hover:bg-gray-200/60"
                     )}
                     title={item.label}
                   >
@@ -924,8 +924,8 @@ export function AppSidebar() {
                 className={cn(
                   "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
                   isMenuItemActive(item.href)
-                    ? "bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent"
+                    ? "bg-gray-300/70 text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]"
+                    : "text-sidebar-foreground hover:bg-gray-200/60"
                 )}
                 title={item.label}
               >
@@ -938,7 +938,7 @@ export function AppSidebar() {
           <div className="px-2 mt-auto">
             <Link
               href="/upgrade"
-              className="flex items-center justify-center h-10 w-10 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent"
+              className="flex items-center justify-center h-10 w-10 rounded-lg transition-colors text-sidebar-foreground hover:bg-gray-200/60"
               title="Upgrade"
             >
               <ArrowUpRight className="h-5 w-5" />

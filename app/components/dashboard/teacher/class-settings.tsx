@@ -749,7 +749,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
   return (
     <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
       <aside className="lg:sticky lg:top-4 self-start">
-        <Card className="border-black/10 bg-black/[0.015]">
+        <Card className="border-0 bg-gray-100/70 shadow-none">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Class Settings</CardTitle>
             <CardDescription>Pick a topic to edit.</CardDescription>
@@ -761,10 +761,10 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 type="button"
                 variant="ghost"
                 onClick={() => setActiveSettingsSection(section.id)}
-                className={`h-auto w-full justify-start rounded-md border px-3 py-2 text-left ${
+                className={`h-auto w-full justify-start rounded-md px-3 py-2 text-left ${
                   activeSettingsSection === section.id
-                    ? 'border-black/40 bg-black text-white hover:bg-black/90'
-                    : 'border-transparent text-foreground/80 hover:border-black/10 hover:bg-black/[0.04]'
+                    ? 'bg-gray-300 text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] hover:bg-gray-300'
+                    : 'text-foreground/80 hover:bg-gray-200/70'
                 }`}
               >
                 <span className="text-sm font-medium">{section.label}</span>
@@ -775,7 +775,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       </aside>
 
       <div className="space-y-4">
-        <Card className="border-black/10 bg-black/[0.015]">
+        <Card className="border-0 bg-gray-100/70 shadow-none">
           <CardHeader>
             <CardTitle>{activeSectionMeta.label}</CardTitle>
             <CardDescription>{activeSectionMeta.description}</CardDescription>
@@ -783,7 +783,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
         </Card>
 
       {activeSettingsSection === 'profile' && (
-      <Card className="border-black/10 bg-black/[0.01]">
+      <Card className="border-0 bg-gray-100/60 shadow-none">
         <CardHeader>
           <CardTitle>Class Profile</CardTitle>
           <CardDescription>Rename the class and update the class description.</CardDescription>
@@ -813,7 +813,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'invite' && (
-      <Card className="border-black/10 bg-black/[0.01]">
+      <Card className="border-0 bg-gray-100/60 shadow-none">
         <CardHeader>
           <CardTitle>Invite Access</CardTitle>
           <CardDescription>Copy current join codes or rotate them if they leaked.</CardDescription>
@@ -846,7 +846,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'defaults' && (
-      <Card className="border-black/10 bg-black/[0.01]">
+      <Card className="border-0 bg-gray-100/60 shadow-none">
         <CardHeader>
           <CardTitle>Teaching Defaults</CardTitle>
           <CardDescription>Class-wide defaults used by grades, attendance, and invite flows.</CardDescription>
@@ -863,7 +863,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 }))
               }
             >
-              <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+              <SelectTrigger className="h-9 rounded-md border-0 bg-gray-200/70 text-sm">
                 <SelectValue placeholder="Choose default subject view" />
               </SelectTrigger>
               <SelectContent>
@@ -885,7 +885,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 }))
               }
             >
-              <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+              <SelectTrigger className="h-9 rounded-md border-0 bg-gray-200/70 text-sm">
                 <SelectValue placeholder="Choose default grade scale" />
               </SelectTrigger>
               <SelectContent>
@@ -896,7 +896,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </Select>
           </div>
 
-          <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="flex items-center justify-between rounded-md bg-gray-200/60 p-3">
             <div>
               <p className="text-sm font-medium">Show class average in grades</p>
               <p className="text-xs text-muted-foreground">Toggle class-level average cards in grades.</p>
@@ -915,7 +915,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="flex items-center justify-between rounded-md bg-gray-200/60 p-3">
             <div>
               <p className="text-sm font-medium">Require attendance confirmation</p>
               <p className="text-xs text-muted-foreground">Prompt before attendance changes are saved.</p>
@@ -934,7 +934,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="flex items-center justify-between rounded-md bg-gray-200/60 p-3">
             <div>
               <p className="text-sm font-medium">Allow teacher invite actions</p>
               <p className="text-xs text-muted-foreground">Enable or disable teacher invite section.</p>
@@ -953,7 +953,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="flex items-center justify-between rounded-md bg-gray-200/60 p-3">
             <div>
               <p className="text-sm font-medium">Enable school schedule</p>
               <p className="text-xs text-muted-foreground">Turns on class timetable management for this class.</p>
@@ -972,7 +972,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="flex items-center justify-between rounded-md bg-gray-200/60 p-3">
             <div>
               <p className="text-sm font-medium">Show school schedule to students</p>
               <p className="text-xs text-muted-foreground">Students can view timetable blocks in agenda/dashboard when enabled.</p>
@@ -998,7 +998,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'schedule' && (
-      <Card className="border-black/10 bg-black/[0.01]">
+      <Card className="border-0 bg-gray-100/60 shadow-none">
         <CardHeader>
           <CardTitle>School Schedule</CardTitle>
           <CardDescription>
@@ -1006,7 +1006,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+          <div className="rounded-md bg-emerald-100/70 p-3 text-sm text-emerald-900">
             Slot preview: {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, Number(newScheduleSlot.day_of_week) - 1)]}
             {' · '}P{newScheduleSlot.period_index || '?'}{' · '}
             {formatTimeLabel(newScheduleSlot.start_time)} - {formatTimeLabel(newScheduleSlot.end_time)}
@@ -1021,7 +1021,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 value={newScheduleSlot.day_of_week}
                 onValueChange={(value) => setNewScheduleSlot((prev) => ({ ...prev, day_of_week: value }))}
               >
-                <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                <SelectTrigger className="h-9 rounded-md border-0 bg-gray-200/70 text-sm">
                   <SelectValue placeholder="Choose a day" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1061,7 +1061,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 value={newScheduleSlot.start_time}
                 onValueChange={(value) => setNewScheduleSlot((prev) => ({ ...prev, start_time: value }))}
               >
-                <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                <SelectTrigger className="h-9 rounded-md border-0 bg-gray-200/70 text-sm">
                   <SelectValue placeholder="Choose start time" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1077,7 +1077,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 value={newScheduleSlot.end_time}
                 onValueChange={(value) => setNewScheduleSlot((prev) => ({ ...prev, end_time: value }))}
               >
-                <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                <SelectTrigger className="h-9 rounded-md border-0 bg-gray-200/70 text-sm">
                   <SelectValue placeholder="Choose end time" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1095,7 +1095,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                   setNewScheduleSlot((prev) => ({ ...prev, subject_id: value === '__none' ? '' : value }))
                 }
               >
-                <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                <SelectTrigger className="h-9 rounded-md border-0 bg-gray-200/70 text-sm">
                   <SelectValue placeholder="No subject link" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1115,7 +1115,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <p className="text-sm text-rose-700">End time must be after start time.</p>
           )}
 
-          <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="flex items-center justify-between rounded-md bg-gray-200/60 p-3">
             <div>
               <p className="text-sm font-medium">Break slot</p>
               <p className="text-xs text-muted-foreground">Mark this timetable slot as pause/break.</p>
@@ -1152,7 +1152,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <p className="text-sm text-muted-foreground">No schedule slots yet.</p>
             ) : (
               scheduleSlots.map((slot) => (
-                <div key={slot.id} className="rounded-md border p-3 flex items-center justify-between gap-3">
+                <div key={slot.id} className="rounded-md bg-gray-200/60 p-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="font-medium">
                       {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, slot.day_of_week - 1)]} · P{slot.period_index} · {slot.title}
@@ -1173,7 +1173,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'requests' && (
-      <Card className="border-black/10 bg-black/[0.01]">
+      <Card className="border-0 bg-gray-100/60 shadow-none">
         <CardHeader>
           <CardTitle>Teacher Join Requests</CardTitle>
           <CardDescription>Approve or reject teachers who request access via teacher join code.</CardDescription>
@@ -1185,7 +1185,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <p className="text-sm text-muted-foreground">No pending teacher join requests.</p>
           ) : (
             pendingJoinRequests.map((request) => (
-              <div key={request.id} className="rounded-lg border p-3 flex items-center justify-between gap-3">
+              <div key={request.id} className="rounded-lg bg-gray-200/60 p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-medium truncate">{request.requester_email || request.requester_user_id}</p>
                   <p className="text-xs text-muted-foreground">
@@ -1217,7 +1217,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'activity' && (
-      <Card className="border-black/10 bg-black/[0.01]">
+      <Card className="border-0 bg-gray-100/60 shadow-none">
         <CardHeader>
           <CardTitle>Teacher Invite Activity</CardTitle>
           <CardDescription>
@@ -1231,7 +1231,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <p className="text-sm text-muted-foreground">No teacher invite activity yet.</p>
           ) : (
             inviteActivity.map((item) => (
-              <div key={item.id} className="rounded-lg border p-3">
+              <div key={item.id} className="rounded-lg bg-gray-200/60 p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-mono text-sm">{item.code}</p>
@@ -1269,7 +1269,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'subjects' && (
-      <Card className="border-black/10 bg-black/[0.01]">
+      <Card className="border-0 bg-gray-100/60 shadow-none">
         <CardHeader>
           <CardTitle>Subject Management</CardTitle>
           <CardDescription>
@@ -1283,7 +1283,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <p className="text-sm text-muted-foreground">No subjects in this class yet.</p>
           ) : (
             subjects.map((subject) => (
-              <div key={subject.id} className="rounded-lg border p-4 space-y-3">
+              <div key={subject.id} className="rounded-lg bg-gray-200/60 p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{subject.title}</p>
@@ -1304,7 +1304,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                       }}
                       disabled={savingSubjectId === subject.id}
                     >
-                      <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                      <SelectTrigger className="h-9 rounded-md border-0 bg-gray-200/70 text-sm">
                         <SelectValue placeholder="Select teacher" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1320,7 +1320,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
 
                   <div className="space-y-2">
                     <Label>Shared Teachers</Label>
-                    <div className="space-y-2 rounded-md border p-2 max-h-36 overflow-auto">
+                    <div className="space-y-2 rounded-md bg-gray-200/60 p-2 max-h-36 overflow-auto">
                       {teachers.map((teacher) => {
                         const isOwner = subject.owner_teacher_id === teacher.id;
                         const checked = (subject.shared_teacher_ids || []).includes(teacher.id);
@@ -1353,7 +1353,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'import' && (
-      <Card className="border-black/10 bg-black/[0.01]">
+      <Card className="border-0 bg-gray-100/60 shadow-none">
         <CardHeader>
           <CardTitle>Import Subject</CardTitle>
           <CardDescription>
@@ -1367,7 +1367,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               value={importSourceId || '__none'}
               onValueChange={(value) => setImportSourceId(value === '__none' ? '' : value)}
             >
-              <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+              <SelectTrigger className="h-9 rounded-md border-0 bg-gray-200/70 text-sm">
                 <SelectValue placeholder="Select a subject" />
               </SelectTrigger>
               <SelectContent>
@@ -1387,7 +1387,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               value={importMode}
               onValueChange={(value) => setImportMode(value as 'copy' | 'link')}
             >
-              <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+              <SelectTrigger className="h-9 rounded-md border-0 bg-gray-200/70 text-sm">
                 <SelectValue placeholder="Choose import mode" />
               </SelectTrigger>
               <SelectContent>
@@ -1416,7 +1416,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'danger' && (
-      <Card className="border-black/10 bg-black/[0.01]">
+      <Card className="border-0 bg-gray-100/60 shadow-none">
         <CardHeader>
           <CardTitle>Danger Zone</CardTitle>
           <CardDescription>
@@ -1425,7 +1425,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
         </CardHeader>
         <CardContent>
           {!isArchived ? (
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-gray-200/60">
               <div>
                 <h3 className="font-medium text-red-600">Archive Class</h3>
                 <p className="text-sm text-muted-foreground">
@@ -1456,7 +1456,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               </AlertDialog>
             </div>
           ) : (
-            <div className="flex items-center justify-center p-4 border rounded-lg bg-gray-50">
+            <div className="flex items-center justify-center p-4 rounded-lg bg-gray-200/60">
               <div className="text-center">
                 <h3 className="font-medium text-gray-600">Class Archived</h3>
                 <p className="text-sm text-muted-foreground">
@@ -1472,3 +1472,4 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     </div>
   );
 }
+
