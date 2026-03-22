@@ -31,10 +31,12 @@ function StudentDashboard() {
   const [schoolSlots, setSchoolSlots] = useState<any[]>([]);
 
   useEffect(() => {
+    if (!session) return;
     checkScheduledAssignments();
-  }, []);
+  }, [session]);
 
   useEffect(() => {
+    if (!session) return;
     const loadSchoolSchedule = async () => {
       try {
         const response = await fetch('/api/school-schedule');
@@ -46,7 +48,7 @@ function StudentDashboard() {
       }
     };
     void loadSchoolSchedule();
-  }, []);
+  }, [session]);
 
   if (isLoading && !session) {
      return (
@@ -99,7 +101,10 @@ function StudentDashboard() {
 function TeacherSummaryDashboard() {
     const { classes, assignments, students, isLoading, session } = useContext(AppContext) as AppContextType;
 
-    useEffect(() => { checkScheduledAssignments(); }, []);
+    useEffect(() => {
+      if (!session) return;
+      checkScheduledAssignments();
+    }, [session]);
 
     if (isLoading || !classes) return <DashboardSkeleton />;
 

@@ -10,6 +10,42 @@ type ClassTabTelemetryInput = {
   meta?: Record<string, any>;
 };
 
+const EVENT_DEDUPE_WINDOW_MS = 5000;
+const MAX_EVENTS_PER_WINDOW = 12;
+const RATE_WINDOW_MS = 10000;
+const NETWORK_LEVELS = new Set<LogLevel>(['info', 'warn', 'error']);
+
+const recentEventByKey = new Map<string, number>();
+const recentWindowTimestamps: number[] = [];
+
+function buildEventKey(input: ClassTabTelemetryInput): string {
+  return `${input.classId}|${input.tab}|${input.stage || 'runtime'}|${input.event}|${input.level || 'info'}`;
+}
+
+function canSendToServer(input: ClassTabTelemetryInput): boolean {
+  const level = input.level || 'info';
+  if (!NETWORK_LEVELS.has(level)) return false;
+
+  const now = Date.now();
+  const cutoff = now - RATE_WINDOW_MS;
+  while (recentWindowTimestamps.length > 0 && recentWindowTimestamps[0] < cutoff) {
+    recentWindowTimestamps.shift();
+  }
+  if (recentWindowTimestamps.length >= MAX_EVENTS_PER_WINDOW) {
+    return false;
+  }
+
+  const eventKey = buildEventKey(input);
+  const lastSentAt = recentEventByKey.get(eventKey) || 0;
+  if (now - lastSentAt < EVENT_DEDUPE_WINDOW_MS) {
+    return false;
+  }
+
+  recentEventByKey.set(eventKey, now);
+  recentWindowTimestamps.push(now);
+  return true;
+}
+
 export async function logClassTabEvent(input: ClassTabTelemetryInput): Promise<void> {
   const payload = {
     tab: input.tab,
@@ -32,6 +68,10 @@ export async function logClassTabEvent(input: ClassTabTelemetryInput): Promise<v
     console.log(prefix, payload);
   }
 
+  if (!canSendToServer(input)) {
+    return;
+  }
+
   try {
     await fetch(`/api/classes/${input.classId}/telemetry`, {
       method: 'POST',
@@ -43,4 +83,3 @@ export async function logClassTabEvent(input: ClassTabTelemetryInput): Promise<v
     // Non-blocking telemetry
   }
 }
-
