@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ClassPreferences, DEFAULT_CLASS_PREFERENCES, normalizeClassPreferences } from '@/lib/class-preferences';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 
@@ -77,7 +78,49 @@ type ScheduleSlot = {
   notes: string | null;
 };
 
+type SettingsSectionId =
+  | 'profile'
+  | 'invite'
+  | 'defaults'
+  | 'schedule'
+  | 'requests'
+  | 'activity'
+  | 'subjects'
+  | 'import'
+  | 'danger';
+
 export function ClassSettings({ classId, className, onArchive, isArchived = false }: ClassSettingsProps) {
+  const preferenceSwitchClassName =
+    'data-[state=checked]:bg-emerald-600 data-[state=unchecked]:bg-rose-600';
+  const formatTimeLabel = (time: string) => {
+    const [hourText, minuteText] = time.split(':');
+    const hour = Number(hourText);
+    const minute = Number(minuteText);
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return time;
+    const suffix = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${String(minute).padStart(2, '0')} ${suffix}`;
+  };
+
+  const parseTimeToMinutes = (time: string) => {
+    const [hourText, minuteText] = time.split(':');
+    const hour = Number(hourText);
+    const minute = Number(minuteText);
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return NaN;
+    return hour * 60 + minute;
+  };
+
+  const scheduleTimeOptions = useMemo(() => {
+    const options: Array<{ value: string; label: string }> = [];
+    for (let hour = 0; hour < 24; hour += 1) {
+      for (let minute = 0; minute < 60; minute += 5) {
+        const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+        options.push({ value, label: formatTimeLabel(value) });
+      }
+    }
+    return options;
+  }, []);
+
   const [isArchiving, setIsArchiving] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [loadingJoinRequests, setLoadingJoinRequests] = useState(false);
@@ -103,6 +146,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
   const [pendingJoinRequests, setPendingJoinRequests] = useState<PendingTeacherJoinRequest[]>([]);
   const [inviteActivity, setInviteActivity] = useState<TeacherInviteCodeActivity[]>([]);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlot[]>([]);
+  const [activeSettingsSection, setActiveSettingsSection] = useState<SettingsSectionId>('profile');
   const [loadingSchedule, setLoadingSchedule] = useState(false);
   const [creatingScheduleSlot, setCreatingScheduleSlot] = useState(false);
   const [newScheduleSlot, setNewScheduleSlot] = useState({
@@ -116,6 +160,10 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     notes: '',
   });
   const { refetchClasses } = useContext(AppContext) as any;
+  const profileAutosaveReadyRef = useRef(false);
+  const preferencesAutosaveReadyRef = useRef(false);
+  const lastSavedProfileRef = useRef<{ name: string; description: string }>({ name: '', description: '' });
+  const lastSavedPreferencesRef = useRef<string>(JSON.stringify(DEFAULT_CLASS_PREFERENCES));
 
   useEffect(() => {
     void loadClassConfig();
@@ -153,7 +201,15 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       setClassDescription(fetchedClass.description || '');
       setStudentJoinCode(fetchedClass.join_code || '');
       setTeacherJoinCode(fetchedClass.teacher_join_code || '');
-      setPreferences(normalizeClassPreferences(data.preferences || {}));
+      const normalizedPreferences = normalizeClassPreferences(data.preferences || {});
+      setPreferences(normalizedPreferences);
+      lastSavedProfileRef.current = {
+        name: (fetchedClass.name || className || '').trim(),
+        description: (fetchedClass.description || '').trim(),
+      };
+      lastSavedPreferencesRef.current = JSON.stringify(normalizedPreferences);
+      profileAutosaveReadyRef.current = true;
+      preferencesAutosaveReadyRef.current = true;
       void logClassTabEvent({
         classId,
         tab: 'settings',
@@ -203,6 +259,14 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
   const createScheduleSlot = async () => {
     if (!preferences.school_schedule_enabled) {
       toast({ title: 'Enable school schedule first', variant: 'destructive' });
+      return;
+    }
+    if (!Number.isInteger(Number(newScheduleSlot.period_index)) || Number(newScheduleSlot.period_index) <= 0) {
+      toast({ title: 'Period must be a positive number', variant: 'destructive' });
+      return;
+    }
+    if (parseTimeToMinutes(newScheduleSlot.start_time) >= parseTimeToMinutes(newScheduleSlot.end_time)) {
+      toast({ title: 'End time must be after start time', variant: 'destructive' });
       return;
     }
     if (!newScheduleSlot.title.trim()) {
@@ -259,6 +323,21 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       });
     }
   };
+
+  const scheduleStartMinutes = parseTimeToMinutes(newScheduleSlot.start_time);
+  const scheduleEndMinutes = parseTimeToMinutes(newScheduleSlot.end_time);
+  const scheduleDurationMinutes = Number.isNaN(scheduleStartMinutes) || Number.isNaN(scheduleEndMinutes)
+    ? 0
+    : Math.max(0, scheduleEndMinutes - scheduleStartMinutes);
+  const isSchedulePeriodValid =
+    Number.isInteger(Number(newScheduleSlot.period_index)) && Number(newScheduleSlot.period_index) > 0;
+  const isScheduleTimeRangeValid = scheduleEndMinutes > scheduleStartMinutes;
+  const canCreateScheduleSlot =
+    preferences.school_schedule_enabled &&
+    !creatingScheduleSlot &&
+    isSchedulePeriodValid &&
+    isScheduleTimeRangeValid &&
+    Boolean(newScheduleSlot.title.trim());
 
   const loadInviteActivity = async () => {
     setLoadingInviteActivity(true);
@@ -346,9 +425,11 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     }
   };
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async ({ silent = false }: { silent?: boolean } = {}) => {
     if (!classTitle.trim()) {
-      toast({ title: 'Class name is required', variant: 'destructive' });
+      if (!silent) {
+        toast({ title: 'Class name is required', variant: 'destructive' });
+      }
       return;
     }
 
@@ -366,7 +447,13 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to save class profile');
 
-      toast({ title: 'Class profile updated' });
+      lastSavedProfileRef.current = {
+        name: classTitle.trim(),
+        description: classDescription.trim(),
+      };
+      if (!silent) {
+        toast({ title: 'Class profile updated' });
+      }
       await refetchClasses?.();
       void logClassTabEvent({
         classId,
@@ -394,7 +481,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     }
   };
 
-  const handleSavePreferences = async () => {
+  const handleSavePreferences = async ({ silent = false }: { silent?: boolean } = {}) => {
     setSavingPreferences(true);
     try {
       const response = await fetch(`/api/classes/${classId}`, {
@@ -407,9 +494,13 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to save preferences');
-      setPreferences(normalizeClassPreferences(data.preferences || preferences));
+      const normalizedPreferences = normalizeClassPreferences(data.preferences || preferences);
+      setPreferences(normalizedPreferences);
+      lastSavedPreferencesRef.current = JSON.stringify(normalizedPreferences);
 
-      toast({ title: 'Teaching defaults saved' });
+      if (!silent) {
+        toast({ title: 'Teaching defaults saved' });
+      }
       void logClassTabEvent({
         classId,
         tab: 'settings',
@@ -436,6 +527,32 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       setSavingPreferences(false);
     }
   };
+
+  useEffect(() => {
+    if (!profileAutosaveReadyRef.current || loadingClassConfig) return;
+    const name = classTitle.trim();
+    const description = classDescription.trim();
+    if (!name) return;
+    if (name === lastSavedProfileRef.current.name && description === lastSavedProfileRef.current.description) return;
+
+    const timer = setTimeout(() => {
+      void handleSaveProfile({ silent: true });
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [classTitle, classDescription, loadingClassConfig]);
+
+  useEffect(() => {
+    if (!preferencesAutosaveReadyRef.current || loadingClassConfig) return;
+    const serialized = JSON.stringify(preferences);
+    if (serialized === lastSavedPreferencesRef.current) return;
+
+    const timer = setTimeout(() => {
+      void handleSavePreferences({ silent: true });
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [preferences, loadingClassConfig]);
 
   const handleRegenerateCodes = async () => {
     setRegeneratingCodes(true);
@@ -616,18 +733,57 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Class Settings</CardTitle>
-          <CardDescription>
-            Manage collaboration, defaults, invite access, and archive options.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+  const settingsSections: Array<{ id: SettingsSectionId; label: string; description: string }> = [
+    { id: 'profile', label: 'Class Profile', description: 'Name and description' },
+    { id: 'invite', label: 'Invite Access', description: 'Join codes and rotation' },
+    { id: 'defaults', label: 'Teaching Defaults', description: 'Grades, attendance, schedule flags' },
+    { id: 'schedule', label: 'School Schedule', description: 'Create and manage timetable slots' },
+    { id: 'requests', label: 'Teacher Requests', description: 'Approve or reject joins' },
+    { id: 'activity', label: 'Invite Activity', description: 'Recent invite code usage' },
+    { id: 'subjects', label: 'Subject Management', description: 'Owners and shared teachers' },
+    { id: 'import', label: 'Import Subject', description: 'Copy or link from another class' },
+    { id: 'danger', label: 'Danger Zone', description: 'Archive class' },
+  ];
+  const activeSectionMeta = settingsSections.find((section) => section.id === activeSettingsSection) || settingsSections[0];
 
-      <Card>
+  return (
+    <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <aside className="lg:sticky lg:top-4 self-start">
+        <Card className="border-black/10 bg-black/[0.015]">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Class Settings</CardTitle>
+            <CardDescription>Pick a topic to edit.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            {settingsSections.map((section) => (
+              <Button
+                key={section.id}
+                type="button"
+                variant="ghost"
+                onClick={() => setActiveSettingsSection(section.id)}
+                className={`h-auto w-full justify-start rounded-md border px-3 py-2 text-left ${
+                  activeSettingsSection === section.id
+                    ? 'border-black/40 bg-black text-white hover:bg-black/90'
+                    : 'border-transparent text-foreground/80 hover:border-black/10 hover:bg-black/[0.04]'
+                }`}
+              >
+                <span className="text-sm font-medium">{section.label}</span>
+              </Button>
+            ))}
+          </CardContent>
+        </Card>
+      </aside>
+
+      <div className="space-y-4">
+        <Card className="border-black/10 bg-black/[0.015]">
+          <CardHeader>
+            <CardTitle>{activeSectionMeta.label}</CardTitle>
+            <CardDescription>{activeSectionMeta.description}</CardDescription>
+          </CardHeader>
+        </Card>
+
+      {activeSettingsSection === 'profile' && (
+      <Card className="border-black/10 bg-black/[0.01]">
         <CardHeader>
           <CardTitle>Class Profile</CardTitle>
           <CardDescription>Rename the class and update the class description.</CardDescription>
@@ -651,13 +807,13 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               disabled={loadingClassConfig || savingProfile}
             />
           </div>
-          <Button onClick={() => void handleSaveProfile()} disabled={savingProfile || loadingClassConfig}>
-            {savingProfile ? 'Saving...' : 'Save Profile'}
-          </Button>
+          <p className="text-xs text-muted-foreground">{savingProfile ? 'Saving changes...' : 'Changes autosave.'}</p>
         </CardContent>
       </Card>
+      )}
 
-      <Card>
+      {activeSettingsSection === 'invite' && (
+      <Card className="border-black/10 bg-black/[0.01]">
         <CardHeader>
           <CardTitle>Invite Access</CardTitle>
           <CardDescription>Copy current join codes or rotate them if they leaked.</CardDescription>
@@ -687,8 +843,10 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           </Button>
         </CardContent>
       </Card>
+      )}
 
-      <Card>
+      {activeSettingsSection === 'defaults' && (
+      <Card className="border-black/10 bg-black/[0.01]">
         <CardHeader>
           <CardTitle>Teaching Defaults</CardTitle>
           <CardDescription>Class-wide defaults used by grades, attendance, and invite flows.</CardDescription>
@@ -696,38 +854,46 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
         <CardContent className="space-y-4">
           <div className="space-y-1">
             <Label>Default Subject View</Label>
-            <select
+            <Select
               value={preferences.default_subject_view}
-              onChange={(e) =>
+              onValueChange={(value) =>
                 setPreferences((prev) => ({
                   ...prev,
-                  default_subject_view: e.target.value === 'all' ? 'all' : 'mine',
+                  default_subject_view: value === 'all' ? 'all' : 'mine',
                 }))
               }
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
-              <option value="mine">My subject first</option>
-              <option value="all">All subjects first</option>
-            </select>
+              <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                <SelectValue placeholder="Choose default subject view" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="mine">My subject first</SelectItem>
+                <SelectItem value="all">All subjects first</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1">
             <Label>Default Grade Scale</Label>
-            <select
+            <Select
               value={preferences.grades_default_scale}
-              onChange={(e) =>
+              onValueChange={(value) =>
                 setPreferences((prev) => ({
                   ...prev,
                   grades_default_scale:
-                    e.target.value === 'a_f' || e.target.value === 'one_to_ten' ? (e.target.value as any) : 'both',
+                    value === 'a_f' || value === 'one_to_ten' ? (value as any) : 'both',
                 }))
               }
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
-              <option value="both">Show A-F and 1-10</option>
-              <option value="a_f">Prefer A-F</option>
-              <option value="one_to_ten">Prefer 1-10</option>
-            </select>
+              <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                <SelectValue placeholder="Choose default grade scale" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="both">Show A-F and 1-10</SelectItem>
+                <SelectItem value="a_f">Prefer A-F</SelectItem>
+                <SelectItem value="one_to_ten">Prefer 1-10</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex items-center justify-between rounded-md border p-3">
@@ -735,12 +901,18 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <p className="text-sm font-medium">Show class average in grades</p>
               <p className="text-xs text-muted-foreground">Toggle class-level average cards in grades.</p>
             </div>
-            <Switch
-              checked={preferences.grades_show_class_average}
-              onCheckedChange={(checked) =>
-                setPreferences((prev) => ({ ...prev, grades_show_class_average: Boolean(checked) }))
-              }
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {preferences.grades_show_class_average ? 'On' : 'Off'}
+              </span>
+              <Switch
+                className={preferenceSwitchClassName}
+                checked={preferences.grades_show_class_average}
+                onCheckedChange={(checked) =>
+                  setPreferences((prev) => ({ ...prev, grades_show_class_average: Boolean(checked) }))
+                }
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-between rounded-md border p-3">
@@ -748,12 +920,18 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <p className="text-sm font-medium">Require attendance confirmation</p>
               <p className="text-xs text-muted-foreground">Prompt before attendance changes are saved.</p>
             </div>
-            <Switch
-              checked={preferences.attendance_require_confirmation}
-              onCheckedChange={(checked) =>
-                setPreferences((prev) => ({ ...prev, attendance_require_confirmation: Boolean(checked) }))
-              }
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {preferences.attendance_require_confirmation ? 'On' : 'Off'}
+              </span>
+              <Switch
+                className={preferenceSwitchClassName}
+                checked={preferences.attendance_require_confirmation}
+                onCheckedChange={(checked) =>
+                  setPreferences((prev) => ({ ...prev, attendance_require_confirmation: Boolean(checked) }))
+                }
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-between rounded-md border p-3">
@@ -761,12 +939,18 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <p className="text-sm font-medium">Allow teacher invite actions</p>
               <p className="text-xs text-muted-foreground">Enable or disable teacher invite section.</p>
             </div>
-            <Switch
-              checked={preferences.invite_allow_teacher_invites}
-              onCheckedChange={(checked) =>
-                setPreferences((prev) => ({ ...prev, invite_allow_teacher_invites: Boolean(checked) }))
-              }
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {preferences.invite_allow_teacher_invites ? 'On' : 'Off'}
+              </span>
+              <Switch
+                className={preferenceSwitchClassName}
+                checked={preferences.invite_allow_teacher_invites}
+                onCheckedChange={(checked) =>
+                  setPreferences((prev) => ({ ...prev, invite_allow_teacher_invites: Boolean(checked) }))
+                }
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-between rounded-md border p-3">
@@ -774,12 +958,18 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <p className="text-sm font-medium">Enable school schedule</p>
               <p className="text-xs text-muted-foreground">Turns on class timetable management for this class.</p>
             </div>
-            <Switch
-              checked={preferences.school_schedule_enabled}
-              onCheckedChange={(checked) =>
-                setPreferences((prev) => ({ ...prev, school_schedule_enabled: Boolean(checked) }))
-              }
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {preferences.school_schedule_enabled ? 'On' : 'Off'}
+              </span>
+              <Switch
+                className={preferenceSwitchClassName}
+                checked={preferences.school_schedule_enabled}
+                onCheckedChange={(checked) =>
+                  setPreferences((prev) => ({ ...prev, school_schedule_enabled: Boolean(checked) }))
+                }
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-between rounded-md border p-3">
@@ -787,72 +977,73 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <p className="text-sm font-medium">Show school schedule to students</p>
               <p className="text-xs text-muted-foreground">Students can view timetable blocks in agenda/dashboard when enabled.</p>
             </div>
-            <Switch
-              checked={preferences.school_schedule_visible_to_students}
-              onCheckedChange={(checked) =>
-                setPreferences((prev) => ({ ...prev, school_schedule_visible_to_students: Boolean(checked) }))
-              }
-              disabled={!preferences.school_schedule_enabled}
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {preferences.school_schedule_visible_to_students ? 'On' : 'Off'}
+              </span>
+              <Switch
+                className={preferenceSwitchClassName}
+                checked={preferences.school_schedule_visible_to_students}
+                onCheckedChange={(checked) =>
+                  setPreferences((prev) => ({ ...prev, school_schedule_visible_to_students: Boolean(checked) }))
+                }
+                disabled={!preferences.school_schedule_enabled}
+              />
+            </div>
           </div>
 
-          <Button onClick={() => void handleSavePreferences()} disabled={savingPreferences}>
-            {savingPreferences ? 'Saving...' : 'Save Teaching Defaults'}
-          </Button>
+          <p className="text-xs text-muted-foreground">{savingPreferences ? 'Saving defaults...' : 'Defaults autosave.'}</p>
         </CardContent>
       </Card>
+      )}
 
-      <Card>
+      {activeSettingsSection === 'schedule' && (
+      <Card className="border-black/10 bg-black/[0.01]">
         <CardHeader>
           <CardTitle>School Schedule</CardTitle>
           <CardDescription>
-            Create timetable slots per weekday. Students only see this when enabled and visible in teaching defaults.
+            Add one slot at a time: choose day, period, time range, and optional subject link.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+            Slot preview: {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, Number(newScheduleSlot.day_of_week) - 1)]}
+            {' · '}P{newScheduleSlot.period_index || '?'}{' · '}
+            {formatTimeLabel(newScheduleSlot.start_time)} - {formatTimeLabel(newScheduleSlot.end_time)}
+            {scheduleDurationMinutes > 0 ? ` (${scheduleDurationMinutes} min)` : ''}
+            {newScheduleSlot.title.trim() ? ` · ${newScheduleSlot.title.trim()}` : ''}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
             <div className="space-y-1">
               <Label>Day</Label>
-              <select
+              <Select
                 value={newScheduleSlot.day_of_week}
-                onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, day_of_week: e.target.value }))}
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                onValueChange={(value) => setNewScheduleSlot((prev) => ({ ...prev, day_of_week: value }))}
               >
-                <option value="1">Monday</option>
-                <option value="2">Tuesday</option>
-                <option value="3">Wednesday</option>
-                <option value="4">Thursday</option>
-                <option value="5">Friday</option>
-                <option value="6">Saturday</option>
-                <option value="7">Sunday</option>
-              </select>
+                <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                  <SelectValue placeholder="Choose a day" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Monday</SelectItem>
+                  <SelectItem value="2">Tuesday</SelectItem>
+                  <SelectItem value="3">Wednesday</SelectItem>
+                  <SelectItem value="4">Thursday</SelectItem>
+                  <SelectItem value="5">Friday</SelectItem>
+                  <SelectItem value="6">Saturday</SelectItem>
+                  <SelectItem value="7">Sunday</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label>Period</Label>
               <Input
                 value={newScheduleSlot.period_index}
                 onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, period_index: e.target.value }))}
+                inputMode="numeric"
               />
+              <p className="text-xs text-muted-foreground">Use 1, 2, 3...</p>
             </div>
-            <div className="space-y-1">
-              <Label>Start</Label>
-              <Input
-                type="time"
-                value={newScheduleSlot.start_time}
-                onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, start_time: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>End</Label>
-              <Input
-                type="time"
-                value={newScheduleSlot.end_time}
-                onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, end_time: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-1">
               <Label>Title</Label>
               <Input
@@ -861,30 +1052,84 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 placeholder="Period 1 - Math"
               />
             </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="space-y-1">
+              <Label>Start Time</Label>
+              <Select
+                value={newScheduleSlot.start_time}
+                onValueChange={(value) => setNewScheduleSlot((prev) => ({ ...prev, start_time: value }))}
+              >
+                <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                  <SelectValue placeholder="Choose start time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {scheduleTimeOptions.map((option) => (
+                    <SelectItem key={`start-${option.value}`} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>End</Label>
+              <Select
+                value={newScheduleSlot.end_time}
+                onValueChange={(value) => setNewScheduleSlot((prev) => ({ ...prev, end_time: value }))}
+              >
+                <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                  <SelectValue placeholder="Choose end time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {scheduleTimeOptions.map((option) => (
+                    <SelectItem key={`end-${option.value}`} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-1">
               <Label>Subject (optional)</Label>
-              <select
-                value={newScheduleSlot.subject_id}
-                onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, subject_id: e.target.value }))}
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              <Select
+                value={newScheduleSlot.subject_id || '__none'}
+                onValueChange={(value) =>
+                  setNewScheduleSlot((prev) => ({ ...prev, subject_id: value === '__none' ? '' : value }))
+                }
               >
-                <option value="">No subject link</option>
-                {subjects.map((subject) => (
-                  <option key={subject.id} value={subject.id}>{subject.title}</option>
-                ))}
-              </select>
+                <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                  <SelectValue placeholder="No subject link" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">No subject link</SelectItem>
+                  {subjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.id}>{subject.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
+          {!isSchedulePeriodValid && (
+            <p className="text-sm text-rose-700">Period must be a positive whole number.</p>
+          )}
+          {!isScheduleTimeRangeValid && (
+            <p className="text-sm text-rose-700">End time must be after start time.</p>
+          )}
 
           <div className="flex items-center justify-between rounded-md border p-3">
             <div>
               <p className="text-sm font-medium">Break slot</p>
               <p className="text-xs text-muted-foreground">Mark this timetable slot as pause/break.</p>
             </div>
-            <Switch
-              checked={newScheduleSlot.is_break}
-              onCheckedChange={(checked) => setNewScheduleSlot((prev) => ({ ...prev, is_break: Boolean(checked) }))}
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {newScheduleSlot.is_break ? 'On' : 'Off'}
+              </span>
+              <Switch
+                className={preferenceSwitchClassName}
+                checked={newScheduleSlot.is_break}
+                onCheckedChange={(checked) => setNewScheduleSlot((prev) => ({ ...prev, is_break: Boolean(checked) }))}
+              />
+            </div>
           </div>
 
           <div className="space-y-1">
@@ -896,7 +1141,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             />
           </div>
 
-          <Button onClick={() => void createScheduleSlot()} disabled={creatingScheduleSlot || !preferences.school_schedule_enabled}>
+          <Button onClick={() => void createScheduleSlot()} disabled={!canCreateScheduleSlot}>
             {creatingScheduleSlot ? 'Adding...' : 'Add schedule slot'}
           </Button>
 
@@ -925,8 +1170,10 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           </div>
         </CardContent>
       </Card>
+      )}
 
-      <Card>
+      {activeSettingsSection === 'requests' && (
+      <Card className="border-black/10 bg-black/[0.01]">
         <CardHeader>
           <CardTitle>Teacher Join Requests</CardTitle>
           <CardDescription>Approve or reject teachers who request access via teacher join code.</CardDescription>
@@ -967,8 +1214,10 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           )}
         </CardContent>
       </Card>
+      )}
 
-      <Card>
+      {activeSettingsSection === 'activity' && (
+      <Card className="border-black/10 bg-black/[0.01]">
         <CardHeader>
           <CardTitle>Teacher Invite Activity</CardTitle>
           <CardDescription>
@@ -1017,8 +1266,10 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           )}
         </CardContent>
       </Card>
+      )}
 
-      <Card>
+      {activeSettingsSection === 'subjects' && (
+      <Card className="border-black/10 bg-black/[0.01]">
         <CardHeader>
           <CardTitle>Subject Management</CardTitle>
           <CardDescription>
@@ -1045,19 +1296,26 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="space-y-1">
                     <Label>Owner</Label>
-                    <select
-                      value={subject.owner_teacher_id || ''}
-                      onChange={(e) => void handleOwnerChange(subject.id, e.target.value)}
+                    <Select
+                      value={subject.owner_teacher_id || '__none'}
+                      onValueChange={(value) => {
+                        if (value === '__none') return;
+                        void handleOwnerChange(subject.id, value);
+                      }}
                       disabled={savingSubjectId === subject.id}
-                      className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
                     >
-                      <option value="" disabled>Select teacher</option>
-                      {teachers.map((teacher) => (
-                        <option key={teacher.id} value={teacher.id}>
-                          {teacher.email || teacher.full_name || teacher.id}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                        <SelectValue placeholder="Select teacher" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none" disabled>Select teacher</SelectItem>
+                        {teachers.map((teacher) => (
+                          <SelectItem key={teacher.id} value={teacher.id}>
+                            {teacher.email || teacher.full_name || teacher.id}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -1092,8 +1350,10 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           )}
         </CardContent>
       </Card>
+      )}
 
-      <Card>
+      {activeSettingsSection === 'import' && (
+      <Card className="border-black/10 bg-black/[0.01]">
         <CardHeader>
           <CardTitle>Import Subject</CardTitle>
           <CardDescription>
@@ -1103,30 +1363,38 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
         <CardContent className="space-y-3">
           <div className="space-y-1">
             <Label>Source Subject</Label>
-            <select
-              value={importSourceId}
-              onChange={(e) => setImportSourceId(e.target.value)}
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            <Select
+              value={importSourceId || '__none'}
+              onValueChange={(value) => setImportSourceId(value === '__none' ? '' : value)}
             >
-              <option value="">Select a subject</option>
-              {importCandidates.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
-                  {candidate.title}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                <SelectValue placeholder="Select a subject" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none">Select a subject</SelectItem>
+                {importCandidates.map((candidate) => (
+                  <SelectItem key={candidate.id} value={candidate.id}>
+                    {candidate.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1">
             <Label>Mode</Label>
-            <select
+            <Select
               value={importMode}
-              onChange={(e) => setImportMode(e.target.value as 'copy' | 'link')}
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              onValueChange={(value) => setImportMode(value as 'copy' | 'link')}
             >
-              <option value="copy">Copy (new subject in this class)</option>
-              <option value="link">Link (same subject across classes)</option>
-            </select>
+              <SelectTrigger className="h-9 rounded-md border border-input bg-background text-sm">
+                <SelectValue placeholder="Choose import mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="copy">Copy (new subject in this class)</SelectItem>
+                <SelectItem value="link">Link (same subject across classes)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {importMode === 'copy' && (
@@ -1145,8 +1413,10 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           </Button>
         </CardContent>
       </Card>
+      )}
 
-      <Card>
+      {activeSettingsSection === 'danger' && (
+      <Card className="border-black/10 bg-black/[0.01]">
         <CardHeader>
           <CardTitle>Danger Zone</CardTitle>
           <CardDescription>
@@ -1197,6 +1467,8 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           )}
         </CardContent>
       </Card>
+      )}
+      </div>
     </div>
   );
 }
