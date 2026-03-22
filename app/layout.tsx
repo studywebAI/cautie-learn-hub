@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Inter, Atkinson_Hyperlegible } from 'next/font/google';
@@ -66,7 +67,9 @@ export default function RootLayout({
         fontAtkinsonHyperlegible.variable
       )}>
         <AppContextProvider>
-            <GlobalRequestLogger />
+            <Suspense fallback={null}>
+              <GlobalRequestLogger />
+            </Suspense>
             {children}
         </AppContextProvider>
         <Toaster />
