@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Inter, Atkinson_Hyperlegible } from 'next/font/google';
 import { cn } from "@/lib/utils";
 import { AppContextProvider } from "@/contexts/app-context";
+import { GlobalRequestLogger } from "@/components/debug/global-request-logger";
 
 const fontInter = Inter({
   subsets: ['latin'],
@@ -65,6 +66,7 @@ export default function RootLayout({
         fontAtkinsonHyperlegible.variable
       )}>
         <AppContextProvider>
+            <GlobalRequestLogger />
             {children}
         </AppContextProvider>
         <Toaster />

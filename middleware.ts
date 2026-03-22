@@ -11,6 +11,27 @@ const parseCanonicalHost = () => {
 };
 
 export function middleware(request: NextRequest) {
+  const authHeader = request.headers.get('authorization') || '';
+  const cookieHeader = request.headers.get('cookie') || '';
+  console.log('[request-debug] middleware', {
+    ts: new Date().toISOString(),
+    correlationId: request.headers.get('x-debug-request-id') || '',
+    debugPagePath: request.headers.get('x-debug-page-path') || '',
+    method: request.method,
+    path: request.nextUrl.pathname,
+    search: request.nextUrl.search,
+    host: request.headers.get('host') || '',
+    referer: request.headers.get('referer') || '',
+    origin: request.headers.get('origin') || '',
+    userAgent: request.headers.get('user-agent') || '',
+    secFetchMode: request.headers.get('sec-fetch-mode') || '',
+    secFetchDest: request.headers.get('sec-fetch-dest') || '',
+    secFetchSite: request.headers.get('sec-fetch-site') || '',
+    hasAuthorization: Boolean(authHeader),
+    authorizationPreview: authHeader ? `${authHeader.slice(0, 24)}...` : '',
+    cookiePreview: cookieHeader ? `${cookieHeader.slice(0, 160)}...` : '',
+  });
+
   const canonicalHost = parseCanonicalHost();
   if (!canonicalHost) return NextResponse.next();
 
