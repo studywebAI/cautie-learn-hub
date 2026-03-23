@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 type MicrosoftStatus = {
   connected: boolean;
@@ -33,6 +34,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { toast } = useToast();
 
   const loadStatus = useCallback(async () => {
     try {
@@ -64,6 +66,23 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     const ms = searchParams.get('ms');
     const msError = searchParams.get('ms_error');
     if (!ms && !msError) return;
+
+    if (ms === 'connected') {
+      toast({ title: 'Microsoft connected', description: 'Your account is linked.' });
+    } else if (msError) {
+      const map: Record<string, string> = {
+        access_denied: 'Microsoft login was canceled.',
+        invalid_state: 'Login session expired. Please try again.',
+        unauthorized: 'Please log in to Cautie first.',
+        integration_not_configured: 'Microsoft app credentials are missing on server.',
+        integration_storage_not_configured: 'Token encryption key is missing on server.',
+        token_exchange_failed: 'Microsoft token exchange failed.',
+        invalid_client: 'Microsoft app credentials are invalid.',
+        microsoft_connect_failed: 'Could not link Microsoft account.',
+      };
+      toast({ title: 'Microsoft connection failed', description: map[msError] || map.microsoft_connect_failed, variant: 'destructive' });
+    }
+
     void loadStatus();
 
     const params = new URLSearchParams(searchParams.toString());
@@ -71,7 +90,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     params.delete('ms_error');
     const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(next);
-  }, [loadStatus, pathname, router, searchParams]);
+  }, [loadStatus, pathname, router, searchParams, toast]);
 
   return (
     <div className="rounded-xl border border-orange-200/80 bg-orange-50/70 p-3 dark:border-orange-900/40 dark:bg-orange-950/25">

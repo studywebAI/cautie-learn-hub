@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ExternalLink, Link2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,8 +41,11 @@ type MicrosoftFileItem = {
 
 export default function IntegrationsPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [disconnecting, setDisconnecting] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(true);
   const [status, setStatus] = useState<MicrosoftStatus>({ connected: false });
+  const [statusError, setStatusError] = useState<string | null>(null);
   const [loadingFiles, setLoadingFiles] = useState(false);
   const [files, setFiles] = useState<MicrosoftFileItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -56,13 +59,25 @@ export default function IntegrationsPage() {
     () => APPS.find((app) => app.id === appQuery || app.kind === appQuery) || APPS[0],
     [appQuery]
   );
+  const oauthResult = searchParams.get('ms');
+  const oauthError = searchParams.get('ms_error');
+
+  const connectReturnTo = useMemo(() => {
+    const p = new URLSearchParams();
+    p.set('returnTo', returnTo);
+    p.set('app', selectedApp.id);
+    return `/settings/integrations?${p.toString()}`;
+  }, [returnTo, selectedApp.id]);
 
   useEffect(() => {
     const loadStatus = async () => {
       try {
+        setStatusLoading(true);
         const response = await fetch('/api/integrations/microsoft/status', { cache: 'no-store' });
         if (!response.ok) {
           setStatus({ connected: false });
+          const payload = await response.json().catch(() => ({}));
+          setStatusError(typeof payload?.error === 'string' ? payload.error : `Status request failed (${response.status})`);
           return;
         }
         const json = await response.json();
@@ -70,14 +85,18 @@ export default function IntegrationsPage() {
           connected: Boolean(json?.connected),
           account_email: json?.account_email ? String(json.account_email) : undefined,
         });
+        setStatusError(null);
       } catch {
         setStatus({ connected: false });
+        setStatusError('Could not reach integration status service.');
+      } finally {
+        setStatusLoading(false);
       }
     };
     void loadStatus();
   }, []);
 
-  const connectHref = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnTo)}`;
+  const connectHref = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(connectReturnTo)}`;
 
   const handleDisconnect = async () => {
     setDisconnecting(true);
@@ -127,6 +146,31 @@ export default function IntegrationsPage() {
     }
   };
 
+  useEffect(() => {
+    if (!oauthResult && !oauthError) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('ms');
+    params.delete('ms_error');
+    const next = params.toString() ? `/settings/integrations?${params.toString()}` : '/settings/integrations';
+    router.replace(next);
+  }, [oauthError, oauthResult, router, searchParams]);
+
+  const oauthMessage = (() => {
+    if (oauthResult === 'connected') return 'Microsoft linked successfully.';
+    if (!oauthError) return null;
+    const map: Record<string, string> = {
+      access_denied: 'Microsoft login was canceled.',
+      invalid_state: 'Login session expired. Please try again.',
+      unauthorized: 'Please log in to Cautie first.',
+      integration_not_configured: 'Microsoft app credentials are missing on server.',
+      integration_storage_not_configured: 'Token encryption key is missing on server.',
+      token_exchange_failed: 'Microsoft token exchange failed.',
+      invalid_client: 'Microsoft app credentials are invalid.',
+      microsoft_connect_failed: 'Could not link Microsoft account.',
+    };
+    return map[oauthError] || map.microsoft_connect_failed;
+  })();
+
   return (
     <div className="h-full overflow-auto">
       <div className="w-full space-y-4">
@@ -142,10 +186,22 @@ export default function IntegrationsPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="rounded-xl border border-orange-200/80 bg-orange-50/70 p-3 text-sm dark:border-orange-900/40 dark:bg-orange-950/25">
-              {status.connected
+              {statusLoading
+                ? 'Checking connection...'
+                : status.connected
                 ? `Connected as ${status.account_email || 'Microsoft account'}`
                 : 'Not connected yet'}
             </div>
+            {oauthMessage && (
+              <div className="rounded-xl border border-orange-200/80 bg-orange-50/70 p-3 text-sm text-foreground dark:border-orange-900/40 dark:bg-orange-950/25">
+                {oauthMessage}
+              </div>
+            )}
+            {statusError && (
+              <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                {statusError}
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               {!status.connected ? (
                 <Button asChild>

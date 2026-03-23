@@ -86,6 +86,7 @@ export function sanitizeMicrosoftErrorCode(input: unknown) {
   if (value.includes('access_denied') || value.includes('user canceled')) return 'access_denied';
   if (value.includes('unauthorized')) return 'unauthorized';
   if (value.includes('missing env')) return 'integration_not_configured';
+  if (value.includes('missing token encryption key')) return 'integration_storage_not_configured';
   if (value.includes('token')) return 'token_exchange_failed';
   if (value.includes('invalid_client')) return 'invalid_client';
   return 'microsoft_connect_failed';
