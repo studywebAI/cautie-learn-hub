@@ -158,7 +158,25 @@ export async function enqueueIntegrationIngestionJobs(
 ) {
   if (input.sourceIds.length === 0) return;
   const nowIso = new Date().toISOString();
-  const rows = input.sourceIds.map((sourceId) => ({
+  const uniqueSourceIds = Array.from(new Set(input.sourceIds));
+  const { data: existing, error: existingError } = await (supabase as any)
+    .from('external_integration_ingestion_jobs')
+    .select('source_id, status')
+    .eq('user_id', input.userId)
+    .eq('provider', input.provider)
+    .eq('app', input.app)
+    .in('source_id', uniqueSourceIds)
+    .in('status', ['queued', 'processing']);
+  if (existingError) throw new Error(existingError.message || 'Failed to check existing ingestion jobs');
+
+  const activeSourceIds = new Set<string>(
+    (Array.isArray(existing) ? existing : []).map((row: any) => String(row?.source_id || '')).filter(Boolean)
+  );
+
+  const sourceIdsToEnqueue = uniqueSourceIds.filter((sourceId) => !activeSourceIds.has(sourceId));
+  if (sourceIdsToEnqueue.length === 0) return;
+
+  const rows = sourceIdsToEnqueue.map((sourceId) => ({
     user_id: input.userId,
     source_id: sourceId,
     provider: input.provider,
@@ -229,22 +247,34 @@ export async function retryIntegrationIngestionJobs(
   input: { userId: string; provider?: string; app?: string; statuses?: Array<'error' | 'dead'>; limit?: number }
 ) {
   const statuses = input.statuses && input.statuses.length > 0 ? input.statuses : ['error', 'dead'];
-  let query = (supabase as any)
+  let selectQuery = (supabase as any)
+    .from('external_integration_ingestion_jobs')
+    .eq('user_id', input.userId)
+    .in('status', statuses)
+    .order('updated_at', { ascending: false });
+
+  if (input.provider) selectQuery = selectQuery.eq('provider', input.provider);
+  if (input.app) selectQuery = selectQuery.eq('app', input.app);
+  if (input.limit) selectQuery = selectQuery.limit(input.limit);
+
+  const { data, error } = await selectQuery.select('id');
+  if (error) throw new Error(error.message || 'Failed to list retryable ingestion jobs');
+
+  const ids = (Array.isArray(data) ? data : []).map((row: any) => String(row?.id || '')).filter(Boolean);
+  if (ids.length === 0) return 0;
+
+  const nowIso = new Date().toISOString();
+  const { error: updateError } = await (supabase as any)
     .from('external_integration_ingestion_jobs')
     .update({
       status: 'queued',
-      next_attempt_at: new Date().toISOString(),
+      attempts: 0,
+      next_attempt_at: nowIso,
       last_error: null,
-      updated_at: new Date().toISOString(),
+      updated_at: nowIso,
     })
     .eq('user_id', input.userId)
-    .in('status', statuses);
-
-  if (input.provider) query = query.eq('provider', input.provider);
-  if (input.app) query = query.eq('app', input.app);
-  if (input.limit) query = query.limit(input.limit);
-
-  const { error, count } = await query.select('id', { count: 'exact' });
-  if (error) throw new Error(error.message || 'Failed to retry ingestion jobs');
-  return count || 0;
+    .in('id', ids);
+  if (updateError) throw new Error(updateError.message || 'Failed to retry ingestion jobs');
+  return ids.length;
 }

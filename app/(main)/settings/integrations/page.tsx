@@ -31,6 +31,14 @@ type MicrosoftFileItem = {
   mimeType?: string;
 };
 
+type IntegrationSourceRecord = {
+  id: string;
+  provider_item_id: string;
+  extraction_status: string;
+  metadata?: Record<string, any>;
+  updated_at?: string;
+};
+
 export default function IntegrationsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -42,11 +50,15 @@ export default function IntegrationsPage() {
   const [files, setFiles] = useState<MicrosoftFileItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedLoading, setSelectedLoading] = useState(false);
-  const [ingestionSummary, setIngestionSummary] = useState<{ queued: number; processing: number; error: number }>({
+  const [ingestionSummary, setIngestionSummary] = useState<{ queued: number; processing: number; error: number; dead: number }>({
     queued: 0,
     processing: 0,
     error: 0,
+    dead: 0,
   });
+  const [sourceRecords, setSourceRecords] = useState<IntegrationSourceRecord[]>([]);
+  const [processingNow, setProcessingNow] = useState(false);
+  const [retryingFailed, setRetryingFailed] = useState(false);
 
   const returnTo = useMemo(() => {
     const raw = searchParams.get('returnTo') || '/tools';
@@ -132,9 +144,31 @@ export default function IntegrationsPage() {
   }, [selectedApp.kind, status.connected]);
 
   useEffect(() => {
+    const loadSourceRecords = async () => {
+      if (!status.connected) {
+        setSourceRecords([]);
+        return;
+      }
+      try {
+        const response = await fetch(
+          `/api/integrations/context-sources?provider=microsoft&app=${encodeURIComponent(selectedApp.kind)}`,
+          { cache: 'no-store' }
+        );
+        if (!response.ok) {
+          setSourceRecords([]);
+          return;
+        }
+        const json = await response.json();
+        const items = Array.isArray(json?.items) ? json.items : [];
+        setSourceRecords(items);
+      } catch {
+        setSourceRecords([]);
+      }
+    };
+
     const loadJobs = async () => {
       if (!status.connected) {
-        setIngestionSummary({ queued: 0, processing: 0, error: 0 });
+        setIngestionSummary({ queued: 0, processing: 0, error: 0, dead: 0 });
         return;
       }
       try {
@@ -145,18 +179,22 @@ export default function IntegrationsPage() {
         if (!response.ok) return;
         const json = await response.json();
         const jobs = Array.isArray(json?.jobs) ? json.jobs : [];
-        const next = { queued: 0, processing: 0, error: 0 };
+        const next = { queued: 0, processing: 0, error: 0, dead: 0 };
         for (const job of jobs) {
           const status = String(job?.status || '');
           if (status === 'queued') next.queued += 1;
           if (status === 'processing') next.processing += 1;
           if (status === 'error') next.error += 1;
+          if (status === 'dead') next.dead += 1;
         }
         setIngestionSummary(next);
       } catch {}
     };
+
+    void loadSourceRecords();
     void loadJobs();
     const timer = window.setInterval(() => {
+      void loadSourceRecords();
       void loadJobs();
     }, 4000);
     return () => window.clearInterval(timer);
@@ -229,6 +267,68 @@ export default function IntegrationsPage() {
     if (typeof window !== 'undefined') window.location.href = returnTo;
   };
 
+  const processNow = async () => {
+    if (!status.connected) return;
+    setProcessingNow(true);
+    try {
+      const response = await fetch('/api/integrations/ingestion-jobs/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'microsoft', app: selectedApp.kind, maxJobs: 25 }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        setStatusError(typeof payload?.error === 'string' ? payload.error : 'Failed to process ingestion jobs.');
+      }
+    } finally {
+      setProcessingNow(false);
+    }
+  };
+
+  const retryFailed = async () => {
+    if (!status.connected) return;
+    setRetryingFailed(true);
+    try {
+      const retryResponse = await fetch('/api/integrations/ingestion-jobs/retry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'microsoft', app: selectedApp.kind, statuses: ['error', 'dead'], limit: 100 }),
+      });
+      if (!retryResponse.ok) {
+        const payload = await retryResponse.json().catch(() => ({}));
+        setStatusError(typeof payload?.error === 'string' ? payload.error : 'Failed to retry ingestion jobs.');
+        return;
+      }
+      const processResponse = await fetch('/api/integrations/ingestion-jobs/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'microsoft', app: selectedApp.kind, maxJobs: 25 }),
+      });
+      if (!processResponse.ok) {
+        const payload = await processResponse.json().catch(() => ({}));
+        setStatusError(typeof payload?.error === 'string' ? payload.error : 'Failed to process ingestion jobs.');
+      }
+    } finally {
+      setRetryingFailed(false);
+    }
+  };
+
+  const sourceStatusByItemId = useMemo(() => {
+    const map = new Map<string, IntegrationSourceRecord>();
+    for (const source of sourceRecords) {
+      map.set(String(source.provider_item_id), source);
+    }
+    return map;
+  }, [sourceRecords]);
+
+  const formatStatus = (status: string) => {
+    if (status === 'ready') return 'ready';
+    if (status === 'pending') return 'pending';
+    if (status === 'empty') return 'empty';
+    if (status === 'error') return 'error';
+    return 'new';
+  };
+
   useEffect(() => {
     if (!oauthResult && !oauthError) return;
     const params = new URLSearchParams(searchParams.toString());
@@ -285,11 +385,12 @@ export default function IntegrationsPage() {
                 {statusError}
               </div>
             )}
-            {(ingestionSummary.queued > 0 || ingestionSummary.processing > 0 || ingestionSummary.error > 0) && (
+            {(ingestionSummary.queued > 0 || ingestionSummary.processing > 0 || ingestionSummary.error > 0 || ingestionSummary.dead > 0) && (
               <div className="rounded-xl border border-orange-200/80 bg-orange-50/70 p-3 text-sm text-foreground dark:border-orange-900/40 dark:bg-orange-950/25">
                 {ingestionSummary.processing > 0 && `${ingestionSummary.processing} processing `}
                 {ingestionSummary.queued > 0 && `${ingestionSummary.queued} queued `}
                 {ingestionSummary.error > 0 && `${ingestionSummary.error} failed `}
+                {ingestionSummary.dead > 0 && `${ingestionSummary.dead} dead-letter `}
               </div>
             )}
             <div className="flex flex-wrap gap-2">
@@ -304,6 +405,17 @@ export default function IntegrationsPage() {
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" onClick={() => void handleDisconnect()} disabled={disconnecting}>
                     {disconnecting ? 'Disconnecting...' : 'Disconnect'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => void processNow()} disabled={processingNow}>
+                    {processingNow ? 'Processing...' : 'Process now'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void retryFailed()}
+                    disabled={retryingFailed || ingestionSummary.error === 0 && ingestionSummary.dead === 0}
+                  >
+                    {retryingFailed ? 'Retrying...' : 'Retry failed'}
                   </Button>
                   <Button type="button" onClick={() => void handleUseSelected()} disabled={selectedIds.length === 0}>
                     Use selected files
@@ -377,6 +489,18 @@ export default function IntegrationsPage() {
                     onChange={() => toggleFile(file.id)}
                   />
                   <span className="truncate">{file.name}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {(() => {
+                      const record = sourceStatusByItemId.get(file.id);
+                      if (!record) return 'new';
+                      const status = formatStatus(String(record.extraction_status || ''));
+                      const last = (record.metadata && typeof record.metadata.last_ingested_at === 'string')
+                        ? String(record.metadata.last_ingested_at)
+                        : record.updated_at || '';
+                      const time = last ? new Date(last).toLocaleString() : '';
+                      return time ? `${status} · ${time}` : status;
+                    })()}
+                  </span>
                 </label>
               ))}
           </CardContent>
