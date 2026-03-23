@@ -144,7 +144,7 @@ function FlashcardsPageContent() {
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
           placeholder={t.titlePlaceholder}
-          className="w-full h-8 rounded-md border border-input bg-background px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="w-full h-8 rounded-md border border-input bg-white px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           disabled={isLoading}
         />
       </div>
@@ -161,7 +161,7 @@ function FlashcardsPageContent() {
         <Slider value={[flashcardCount]} onValueChange={([v]) => setFlashcardCount(v)} min={1} max={50} step={1} disabled={isLoading} />
       </div>
 
-      <Button onClick={() => handleGenerate(sourceText)} disabled={isLoading || !sourceText.trim()} className="w-full rounded-full">
+      <Button variant="outline" onClick={() => handleGenerate(sourceText)} disabled={isLoading || !sourceText.trim()} className="w-full rounded-full bg-white">
         <Sparkles className="mr-2 h-4 w-4" />
         {t.flashcards.generate}
       </Button>
@@ -186,8 +186,10 @@ function FlashcardsPageContent() {
     <WorkbenchShell
       title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'}
       sidebar={sidebar}
-      topAccessory={<MicrosoftAppStrip returnTo="/tools/flashcards" />}
     >
+      <div className="mb-3">
+        <MicrosoftAppStrip returnTo="/tools/flashcards" />
+      </div>
       <SourceInput
         toolId="flashcards"
         value={sourceText}

@@ -210,8 +210,10 @@ function QuizPageContent() {
     <WorkbenchShell
       title={isAssignmentContext ? t.quiz.createQuiz : 'Quiz'}
       sidebar={sidebar}
-      topAccessory={<MicrosoftAppStrip returnTo="/tools/quiz" />}
     >
+      <div className="mb-3">
+        <MicrosoftAppStrip returnTo="/tools/quiz" />
+      </div>
       <SourceInput
         toolId="quiz"
         value={sourceText}
