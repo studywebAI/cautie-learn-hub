@@ -3,11 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getValidMicrosoftAccessToken } from '@/lib/integrations/microsoft-store';
 import { listMicrosoftFiles, MicrosoftFileKind } from '@/lib/integrations/microsoft';
+import { checkRateLimit } from '@/lib/security/request-guards';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(request, { key: 'ms-files', limit: 40, windowMs: 60_000 });
+    if (!rateLimit.ok) return rateLimit.response;
+
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
     const {
@@ -38,6 +42,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items });
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to load files' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load files' }, { status: 500 });
   }
 }

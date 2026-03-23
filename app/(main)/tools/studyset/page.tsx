@@ -4,30 +4,42 @@ import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Atom,
+  Brain,
   BookOpen,
   Calculator,
   ChevronLeft,
   ChevronRight,
   Code2,
+  Compass,
   Dna,
   FlaskConical,
+  GraduationCap,
   Globe,
   Landmark,
+  Languages,
+  Lightbulb,
   Link2,
+  Microscope,
+  Music,
+  Palette,
   Pencil,
+  PenTool,
   Plus,
   Route,
+  Sigma,
   Upload,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 
 type StudysetRow = {
   id: string;
@@ -57,34 +69,62 @@ type UploadMeta = {
 
 type IconOption = {
   id: string;
-  label: string;
   Icon: LucideIcon;
+};
+
+type ColorOption = {
+  id: string;
+  swatchClass: string;
 };
 
 const STEP_TITLES = ['Basics', 'Calendar', 'Sources'];
 
 const ICON_OPTIONS: IconOption[] = [
-  { id: 'book-open', label: 'Book', Icon: BookOpen },
-  { id: 'flask', label: 'Science', Icon: FlaskConical },
-  { id: 'landmark', label: 'History', Icon: Landmark },
-  { id: 'globe', label: 'Geo', Icon: Globe },
-  { id: 'calculator', label: 'Math', Icon: Calculator },
-  { id: 'dna', label: 'Biology', Icon: Dna },
-  { id: 'atom', label: 'Physics', Icon: Atom },
-  { id: 'pencil', label: 'Writing', Icon: Pencil },
-  { id: 'code', label: 'Coding', Icon: Code2 },
+  { id: 'book-open', Icon: BookOpen },
+  { id: 'flask', Icon: FlaskConical },
+  { id: 'landmark', Icon: Landmark },
+  { id: 'globe', Icon: Globe },
+  { id: 'calculator', Icon: Calculator },
+  { id: 'dna', Icon: Dna },
+  { id: 'atom', Icon: Atom },
+  { id: 'pencil', Icon: Pencil },
+  { id: 'code', Icon: Code2 },
+  { id: 'brain', Icon: Brain },
+  { id: 'graduation-cap', Icon: GraduationCap },
+  { id: 'languages', Icon: Languages },
+  { id: 'music', Icon: Music },
+  { id: 'palette', Icon: Palette },
+  { id: 'microscope', Icon: Microscope },
+  { id: 'sigma', Icon: Sigma },
+  { id: 'compass', Icon: Compass },
+  { id: 'pen-tool', Icon: PenTool },
+  { id: 'lightbulb', Icon: Lightbulb },
 ];
 
-const COLOR_OPTIONS = ['slate', 'stone', 'zinc', 'neutral', 'gray', 'iron', 'graphite'];
+const COLOR_OPTIONS: ColorOption[] = [
+  { id: 'cobalt', swatchClass: 'bg-[#3a5be7]' },
+  { id: 'azure', swatchClass: 'bg-[#1d9bf0]' },
+  { id: 'turquoise', swatchClass: 'bg-[#19b5a5]' },
+  { id: 'mint', swatchClass: 'bg-[#25c47a]' },
+  { id: 'lime', swatchClass: 'bg-[#6ad63a]' },
+  { id: 'amber', swatchClass: 'bg-[#f4b400]' },
+  { id: 'orange', swatchClass: 'bg-[#f78422]' },
+  { id: 'coral', swatchClass: 'bg-[#ff6f61]' },
+  { id: 'rose', swatchClass: 'bg-[#ff4f8b]' },
+  { id: 'magenta', swatchClass: 'bg-[#d946ef]' },
+  { id: 'violet', swatchClass: 'bg-[#8b5cf6]' },
+  { id: 'grape', swatchClass: 'bg-[#5f3dc4]' },
+  { id: 'charcoal', swatchClass: 'bg-[#4b5563]' },
+  { id: 'slate', swatchClass: 'bg-[#64748b]' },
+];
 
-const COLOR_CLASS: Record<string, string> = {
-  slate: 'bg-slate-200 text-slate-900',
-  stone: 'bg-stone-200 text-stone-900',
-  zinc: 'bg-zinc-200 text-zinc-900',
-  neutral: 'bg-neutral-200 text-neutral-900',
-  gray: 'bg-gray-200 text-gray-900',
-  iron: 'bg-[#d8d8db] text-[#121212]',
-  graphite: 'bg-[#d1d1d4] text-[#101010]',
+const TYPING_PLACEHOLDERS = ['WW2 final prep', 'Chemistry exam sprint', 'Spanish oral practice'];
+const SOFT_ORANGE_SURFACE = 'border-orange-200/80 bg-orange-50/70 dark:border-orange-900/40 dark:bg-orange-950/25';
+const ORANGE_CALENDAR_CLASSES = {
+  day_selected:
+    'bg-[#f97316] text-white hover:bg-[#ea580c] hover:text-white focus:bg-[#ea580c] focus:text-white',
+  day_today: 'bg-orange-100 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100',
+  day_range_middle: 'aria-selected:bg-orange-100 aria-selected:text-orange-900 dark:aria-selected:bg-orange-900/40 dark:aria-selected:text-orange-100',
 };
 
 function toIsoLocalDate(date: Date) {
@@ -109,6 +149,18 @@ function parseSourceMeta(raw: string | null | undefined) {
   } catch {
     return { icon: null, color: null };
   }
+}
+
+function getMicrosoftErrorMessage(code: string) {
+  const map: Record<string, string> = {
+    access_denied: 'Microsoft connection was canceled.',
+    invalid_state: 'Connection expired. Please try linking again.',
+    unauthorized: 'Please log in before linking Microsoft.',
+    integration_not_configured: 'Microsoft integration is not configured yet.',
+    token_exchange_failed: 'Could not complete Microsoft sign-in. Please retry.',
+    microsoft_connect_failed: 'Could not link Microsoft. Please retry.',
+  };
+  return map[code] || map.microsoft_connect_failed;
 }
 
 export default function StudysetPage() {
@@ -137,6 +189,7 @@ export default function StudysetPage() {
   const [selectedMicrosoftFileIds, setSelectedMicrosoftFileIds] = useState<string[]>([]);
 
   const [creating, setCreating] = useState(false);
+  const [typingPlaceholder, setTypingPlaceholder] = useState(TYPING_PLACEHOLDERS[0]);
 
   const madeStudysets = useMemo(() => studysets.filter((row) => row.status !== 'archived'), [studysets]);
 
@@ -246,15 +299,29 @@ export default function StudysetPage() {
     if (searchParams.get('ms') === 'connected') {
       toast({ title: 'Microsoft connected', description: 'Word and PowerPoint files are ready.' });
       void loadMicrosoftStatus();
-      router.replace('/tools/studyset');
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('ms');
+      params.delete('ms_error');
+      const nextQuery = params.toString();
+      router.replace(nextQuery ? `/tools/studyset?${nextQuery}` : '/tools/studyset');
       return;
     }
     const msError = searchParams.get('ms_error');
     if (msError) {
-      toast({ title: 'Microsoft connect failed', description: msError, variant: 'destructive' });
+      toast({ title: 'Microsoft connect failed', description: getMicrosoftErrorMessage(msError), variant: 'destructive' });
       router.replace('/tools/studyset');
     }
   }, [router, searchParams, toast]);
+
+  useEffect(() => {
+    if (searchParams.get('open') === 'create') {
+      setView('create');
+      const rawStep = Number(searchParams.get('step'));
+      if (!Number.isNaN(rawStep)) {
+        setStep(Math.max(0, Math.min(2, rawStep)));
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     void loadMicrosoftFiles();
@@ -282,9 +349,40 @@ export default function StudysetPage() {
     const icon =
       selectedIcon || ICON_OPTIONS.find((option) => !usedMeta.icons.has(option.id))?.id || ICON_OPTIONS[0].id;
     const color =
-      selectedColor || COLOR_OPTIONS.find((option) => !usedMeta.colors.has(option)) || COLOR_OPTIONS[0];
+      selectedColor || COLOR_OPTIONS.find((option) => !usedMeta.colors.has(option.id))?.id || COLOR_OPTIONS[0].id;
     return { icon, color };
   };
+
+  useEffect(() => {
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let deleting = false;
+    let pauseTicks = 0;
+    const tick = () => {
+      const phrase = TYPING_PLACEHOLDERS[phraseIndex] || '';
+      if (!deleting) {
+        charIndex = Math.min(phrase.length, charIndex + 1);
+        setTypingPlaceholder(`${phrase.slice(0, charIndex)}|`);
+        if (charIndex === phrase.length) {
+          pauseTicks += 1;
+          if (pauseTicks > 7) {
+            deleting = true;
+            pauseTicks = 0;
+          }
+        }
+        return;
+      }
+      charIndex = Math.max(0, charIndex - 1);
+      setTypingPlaceholder(`${phrase.slice(0, charIndex)}|`);
+      if (charIndex === 0) {
+        deleting = false;
+        phraseIndex = (phraseIndex + 1) % TYPING_PLACEHOLDERS.length;
+      }
+    };
+
+    const timer = window.setInterval(tick, 90);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const handleUploadChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -396,8 +494,8 @@ export default function StudysetPage() {
   };
 
   return (
-    <div className="h-full overflow-auto">
-      <div className="w-full space-y-4">
+    <div className="h-full min-h-0 overflow-auto">
+      <div className="flex min-h-full w-full flex-col gap-4">
         <Card className="border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -406,6 +504,9 @@ export default function StudysetPage() {
             </CardTitle>
             <CardDescription>Build once, follow day-by-day. Changes auto-save.</CardDescription>
           </CardHeader>
+          <CardContent>
+            <MicrosoftAppStrip returnTo="/tools/studyset" />
+          </CardContent>
         </Card>
 
         {view === 'home' && (
@@ -450,7 +551,7 @@ export default function StudysetPage() {
         )}
 
         {view === 'create' && (
-          <Card className="border-none">
+          <Card className="flex min-h-[calc(100vh-10rem)] flex-col border-none">
             <CardHeader className="pb-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -472,7 +573,7 @@ export default function StudysetPage() {
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className="flex flex-1 flex-col space-y-4">
               {step === 0 && (
                 <div className="space-y-4">
                   <div className="space-y-1">
@@ -480,13 +581,14 @@ export default function StudysetPage() {
                     <Input
                       value={name}
                       onChange={(event) => setName(event.target.value)}
-                      placeholder="WW2 final prep"
+                      placeholder={typingPlaceholder}
+                      className={`border-orange-200/80 bg-orange-50/70 text-zinc-900 placeholder:text-zinc-500 dark:border-orange-900/40 dark:bg-orange-950/25 dark:text-zinc-100 dark:placeholder:text-zinc-400`}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Icon (optional)</Label>
-                    <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
+                    <div className="grid grid-cols-5 gap-2 md:grid-cols-10">
                       {ICON_OPTIONS.map((option) => {
                         const ActiveIcon = option.Icon;
                         const selected = selectedIcon === option.id;
@@ -495,14 +597,15 @@ export default function StudysetPage() {
                             key={option.id}
                             type="button"
                             onClick={() => setSelectedIcon(selected ? null : option.id)}
-                            className={`rounded-lg px-3 py-2 text-xs transition-colors ${
-                              selected ? 'bg-muted text-foreground' : 'bg-background text-muted-foreground'
+                            aria-label={option.id}
+                            title={option.id}
+                            className={`flex h-10 items-center justify-center rounded-lg transition-colors ${
+                              selected
+                                ? 'bg-muted text-foreground ring-1 ring-foreground/70'
+                                : 'bg-background text-muted-foreground hover:bg-muted/70'
                             }`}
                           >
-                            <span className="inline-flex items-center gap-1.5">
-                              <ActiveIcon className="h-3.5 w-3.5" />
-                              {option.label}
-                            </span>
+                            <ActiveIcon className="h-4 w-4" />
                           </button>
                         );
                       })}
@@ -511,20 +614,20 @@ export default function StudysetPage() {
 
                   <div className="space-y-2">
                     <Label>Color (optional)</Label>
-                    <div className="grid grid-cols-4 gap-2 md:grid-cols-7">
+                    <div className="grid grid-cols-7 gap-2 md:grid-cols-14">
                       {COLOR_OPTIONS.map((color) => {
-                        const selected = selectedColor === color;
+                        const selected = selectedColor === color.id;
                         return (
                           <button
-                            key={color}
+                            key={color.id}
                             type="button"
-                            onClick={() => setSelectedColor(selected ? null : color)}
-                            className={`rounded-lg px-2 py-2 text-xs capitalize transition-all ${COLOR_CLASS[color]} ${
-                              selected ? 'ring-1 ring-foreground' : ''
+                            aria-label={color.id}
+                            title={color.id}
+                            onClick={() => setSelectedColor(selected ? null : color.id)}
+                            className={`h-9 rounded-md transition-all ${color.swatchClass} ${
+                              selected ? 'ring-2 ring-foreground ring-offset-1 ring-offset-background' : 'hover:scale-[1.03]'
                             }`}
-                          >
-                            {color}
-                          </button>
+                          />
                         );
                       })}
                     </div>
@@ -538,15 +641,16 @@ export default function StudysetPage() {
               {step === 1 && (
                 <div className="space-y-3">
                   <Label>Select available study days</Label>
-                  <div className="rounded-xl bg-background p-2">
+                  <div className={`rounded-xl p-2 ${SOFT_ORANGE_SURFACE}`}>
                     <Calendar
                       mode="multiple"
                       selected={selectedDates}
                       onSelect={(value) => setSelectedDates(Array.isArray(value) ? value : [])}
                       className="mx-auto"
+                      classNames={ORANGE_CALENDAR_CLASSES}
                     />
                   </div>
-                  <div className="rounded-xl bg-background p-3 text-xs text-muted-foreground">
+                  <div className={`rounded-xl p-3 text-xs text-foreground/80 ${SOFT_ORANGE_SURFACE}`}>
                     {selectedDateStrings.length === 0
                       ? 'Pick at least one day.'
                       : `${selectedDateStrings.length} day${selectedDateStrings.length === 1 ? '' : 's'} selected.`}
@@ -562,7 +666,7 @@ export default function StudysetPage() {
                       value={notesText}
                       onChange={(event) => setNotesText(event.target.value)}
                       placeholder="What this studyset should focus on..."
-                      className="min-h-[110px]"
+                      className={`min-h-[110px] ${SOFT_ORANGE_SURFACE}`}
                     />
                   </div>
 
@@ -572,13 +676,13 @@ export default function StudysetPage() {
                       value={pastedText}
                       onChange={(event) => setPastedText(event.target.value)}
                       placeholder="Paste chapters, summaries, requirements..."
-                      className="min-h-[140px]"
+                      className={`min-h-[140px] ${SOFT_ORANGE_SURFACE}`}
                     />
                   </div>
 
-                  <div className="rounded-xl bg-background p-3">
+                  <div className={`rounded-xl p-3 ${SOFT_ORANGE_SURFACE}`}>
                     <p className="mb-2 text-sm font-medium">Files</p>
-                    <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-card px-3 py-2 text-sm">
+                    <label className={`flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm ${SOFT_ORANGE_SURFACE}`}>
                       <Upload className="h-4 w-4" />
                       Add files
                       <input
@@ -592,7 +696,7 @@ export default function StudysetPage() {
                     {uploads.length > 0 && (
                       <div className="mt-2 space-y-1">
                         {uploads.map((file) => (
-                          <div key={`${file.name}-${file.size}`} className="rounded-md bg-card px-2 py-1 text-xs">
+                          <div key={`${file.name}-${file.size}`} className={`rounded-md px-2 py-1 text-xs ${SOFT_ORANGE_SURFACE}`}>
                             {file.name}
                           </div>
                         ))}
@@ -600,7 +704,7 @@ export default function StudysetPage() {
                     )}
                   </div>
 
-                  <div className="rounded-xl bg-background p-3">
+                  <div className={`rounded-xl p-3 ${SOFT_ORANGE_SURFACE}`}>
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-medium">Import from Word/PowerPoint</p>
                       {microsoftConnected ? (
@@ -612,10 +716,10 @@ export default function StudysetPage() {
 
                     {!microsoftConnected ? (
                       <Button asChild variant="outline" className="mt-2">
-                        <a href="/api/integrations/microsoft/connect?returnTo=/tools/studyset">
+                        <Link prefetch={false} href="/settings/integrations?returnTo=%2Ftools%2Fstudyset%3Fopen%3Dcreate%26step%3D2">
                           <Link2 className="mr-2 h-4 w-4" />
                           Connect Microsoft
-                        </a>
+                        </Link>
                       </Button>
                     ) : (
                       <div className="mt-2 flex gap-2">
@@ -630,7 +734,7 @@ export default function StudysetPage() {
 
                     {microsoftConnected && (
                       <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-                        <div className="rounded-lg bg-card p-2">
+                        <div className={`rounded-lg p-2 ${SOFT_ORANGE_SURFACE}`}>
                           <p className="mb-1 text-xs font-medium">Word</p>
                           {microsoftLoading && <p className="text-xs text-muted-foreground">Loading...</p>}
                           {!microsoftLoading && sortedWordFiles.length === 0 && (
@@ -638,7 +742,7 @@ export default function StudysetPage() {
                           )}
                           <div className="space-y-1">
                             {sortedWordFiles.map((file) => (
-                              <label key={file.id} className="flex items-center gap-2 rounded-md bg-background px-2 py-1 text-xs">
+                              <label key={file.id} className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs ${SOFT_ORANGE_SURFACE}`}>
                                 <Checkbox
                                   checked={selectedMicrosoftFileIds.includes(file.id)}
                                   onCheckedChange={() => toggleMicrosoftFile(file.id)}
@@ -649,7 +753,7 @@ export default function StudysetPage() {
                           </div>
                         </div>
 
-                        <div className="rounded-lg bg-card p-2">
+                        <div className={`rounded-lg p-2 ${SOFT_ORANGE_SURFACE}`}>
                           <p className="mb-1 text-xs font-medium">PowerPoint</p>
                           {microsoftLoading && <p className="text-xs text-muted-foreground">Loading...</p>}
                           {!microsoftLoading && sortedPowerpointFiles.length === 0 && (
@@ -657,7 +761,7 @@ export default function StudysetPage() {
                           )}
                           <div className="space-y-1">
                             {sortedPowerpointFiles.map((file) => (
-                              <label key={file.id} className="flex items-center gap-2 rounded-md bg-background px-2 py-1 text-xs">
+                              <label key={file.id} className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs ${SOFT_ORANGE_SURFACE}`}>
                                 <Checkbox
                                   checked={selectedMicrosoftFileIds.includes(file.id)}
                                   onCheckedChange={() => toggleMicrosoftFile(file.id)}
@@ -673,7 +777,7 @@ export default function StudysetPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
+              <div className="mt-auto flex items-center justify-between pt-2">
                 <Button
                   type="button"
                   variant="outline"

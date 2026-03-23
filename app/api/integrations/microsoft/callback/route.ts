@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { exchangeMicrosoftCodeForToken, fetchMicrosoftProfile } from '@/lib/integrations/microsoft';
 import { upsertMicrosoftConnection } from '@/lib/integrations/microsoft-store';
+import { checkRateLimit, sanitizeMicrosoftErrorCode } from '@/lib/security/request-guards';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,9 @@ function clearOAuthCookies(response: NextResponse) {
 }
 
 export async function GET(request: NextRequest) {
+  const rateLimit = checkRateLimit(request, { key: 'ms-callback', limit: 30, windowMs: 60_000 });
+  if (!rateLimit.ok) return rateLimit.response;
+
   const cookieStorePromise = cookies();
   const cookieStore = await cookieStorePromise;
   const supabase = await createClient(cookieStorePromise);
@@ -33,21 +37,21 @@ export async function GET(request: NextRequest) {
   const redirectUri = `${getOrigin(request)}/api/integrations/microsoft/callback`;
 
   if (!user) {
-    doneUrl.searchParams.set('ms_error', 'unauthorized');
+    doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode('unauthorized'));
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);
     return response;
   }
 
   if (oauthError) {
-    doneUrl.searchParams.set('ms_error', oauthError);
+    doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode(oauthError));
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);
     return response;
   }
 
   if (!code || !state || !expectedState || state !== expectedState) {
-    doneUrl.searchParams.set('ms_error', 'invalid_state');
+    doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode('invalid_state'));
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);
     return response;
@@ -76,7 +80,7 @@ export async function GET(request: NextRequest) {
     clearOAuthCookies(response);
     return response;
   } catch (error: any) {
-    doneUrl.searchParams.set('ms_error', error?.message || 'callback_failed');
+    doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode(error?.message || 'callback_failed'));
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);
     return response;

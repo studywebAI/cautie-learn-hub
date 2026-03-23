@@ -1,12 +1,16 @@
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getMicrosoftConnection } from '@/lib/integrations/microsoft-store';
+import { checkRateLimit } from '@/lib/security/request-guards';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(request, { key: 'ms-status', limit: 60, windowMs: 60_000 });
+    if (!rateLimit.ok) return rateLimit.response;
+
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
     const {
@@ -31,6 +35,6 @@ export async function GET() {
       metadata: connection.metadata || {},
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to get status' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to get status' }, { status: 500 });
   }
 }

@@ -110,6 +110,15 @@ export default function SettingsPage() {
                 >
                   {dictionary.settings.accessibility.title}
                 </TabsTrigger>
+                <Link prefetch={false} href="/settings/integrations" className="w-full">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full justify-start lowercase text-[13px] text-muted-foreground hover:text-foreground"
+                  >
+                    integrations
+                  </Button>
+                </Link>
               </TabsList>
             </div>
 

@@ -301,17 +301,17 @@ export default function ToolsPage() {
                 <div className="flex flex-wrap gap-2">
                   {!microsoftConnected ? (
                     <Button asChild variant="outline" size="sm" className="h-8 text-xs">
-                      <a href="/api/integrations/microsoft/connect?returnTo=/tools">
+                      <Link prefetch={false} href="/settings/integrations?returnTo=%2Ftools">
                         <Link2 className="mr-1 h-3.5 w-3.5" />
                         Connect Word/PowerPoint
-                      </a>
+                      </Link>
                     </Button>
                   ) : (
                     <>
                       <Button asChild variant="outline" size="sm" className="h-8 text-xs">
-                        <Link prefetch={false} href="/tools/studyset">
+                        <Link prefetch={false} href="/settings/integrations?returnTo=%2Ftools">
                           <Link2 className="mr-1 h-3.5 w-3.5" />
-                          Browse docs
+                          Manage apps
                         </Link>
                       </Button>
                       <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => void disconnectMicrosoft()}>

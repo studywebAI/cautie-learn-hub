@@ -10,6 +10,7 @@ import { AppContext } from '@/contexts/app-context';
 import type { Flashcard } from '@/lib/types';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
+import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
 import { PillSelector } from '@/components/tools/pill-selector';
@@ -175,7 +176,11 @@ function FlashcardsPageContent() {
   );
 
   return (
-    <WorkbenchShell title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'} sidebar={sidebar}>
+    <WorkbenchShell
+      title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'}
+      sidebar={sidebar}
+      topAccessory={<MicrosoftAppStrip returnTo="/tools/flashcards" />}
+    >
       <SourceInput
         toolId="flashcards"
         value={sourceText}

@@ -12,9 +12,10 @@ type WorkbenchShellProps = {
   description?: string;
   children: ReactNode;
   sidebar: ReactNode;
+  topAccessory?: ReactNode;
 };
 
-export function WorkbenchShell({ title, description, children, sidebar }: WorkbenchShellProps) {
+export function WorkbenchShell({ title, description, children, sidebar, topAccessory }: WorkbenchShellProps) {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -37,6 +38,7 @@ export function WorkbenchShell({ title, description, children, sidebar }: Workbe
             )}
           </div>
           <div className="flex-1 min-h-0 px-5 md:px-7 pb-7">
+            {topAccessory && <div className="mb-3">{topAccessory}</div>}
             {children}
           </div>
         </div>

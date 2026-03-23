@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
+import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { NoteViewer } from '@/components/material-viewers/note-viewer';
 import type { GenerateNotesOutput } from '@/ai/flows/generate-notes';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
@@ -526,7 +527,7 @@ function NotesPageContent() {
   );
 
   return (
-    <WorkbenchShell title="Notes" sidebar={sidebar}>
+    <WorkbenchShell title="Notes" sidebar={sidebar} topAccessory={<MicrosoftAppStrip returnTo="/tools/notes" />}>
       <SourceInput
         toolId="notes"
         value={sourceText}

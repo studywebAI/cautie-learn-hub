@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildMicrosoftAuthUrl } from '@/lib/integrations/microsoft';
+import { checkRateLimit, sanitizeMicrosoftErrorCode } from '@/lib/security/request-guards';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,9 @@ function getOrigin(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const rateLimit = checkRateLimit(request, { key: 'ms-connect', limit: 20, windowMs: 60_000 });
+  if (!rateLimit.ok) return rateLimit.response;
+
   try {
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
@@ -48,7 +52,7 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error: any) {
     const url = new URL('/tools/studyset', getOrigin(request));
-    url.searchParams.set('ms_error', error?.message || 'microsoft_connect_failed');
+    url.searchParams.set('ms_error', sanitizeMicrosoftErrorCode(error?.message));
     return NextResponse.redirect(url);
   }
 }
