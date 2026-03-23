@@ -3,14 +3,35 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Cloud, ExternalLink, FileText, Link2, Presentation } from 'lucide-react';
+import { ExternalLink, Link2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 const APPS = [
-  { id: 'word', label: 'Word', Icon: FileText, description: 'Read-only .doc/.docx access' },
-  { id: 'powerpoint', label: 'PowerPoint', Icon: Presentation, description: 'Read-only .ppt/.pptx access' },
-  { id: 'onedrive', label: 'OneDrive', Icon: Cloud, description: 'Browse recent files safely' },
+  {
+    id: 'word',
+    label: 'Word',
+    logo: 'https://cdn.simpleicons.org/microsoftword/185ABD',
+    description: 'Read-only .doc/.docx access',
+    iconSurface: 'bg-[#EAF2FF] text-[#2B579A]',
+    cardSurface: 'border-[#2B579A]/25 bg-[#F5F9FF]',
+  },
+  {
+    id: 'powerpoint',
+    label: 'PowerPoint',
+    logo: 'https://cdn.simpleicons.org/microsoftpowerpoint/B7472A',
+    description: 'Read-only .ppt/.pptx access',
+    iconSurface: 'bg-[#FFF0EC] text-[#B7472A]',
+    cardSurface: 'border-[#B7472A]/25 bg-[#FFF7F4]',
+  },
+  {
+    id: 'onedrive',
+    label: 'OneDrive',
+    logo: 'https://cdn.simpleicons.org/microsoftonedrive/0078D4',
+    description: 'Browse recent files safely',
+    iconSurface: 'bg-[#EAF6FF] text-[#0078D4]',
+    cardSurface: 'border-[#0078D4]/25 bg-[#F5FAFF]',
+  },
 ];
 
 type MicrosoftStatus = {
@@ -109,7 +130,6 @@ export default function IntegrationsPage() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {APPS.map((app) => {
-              const Icon = app.Icon;
               const appHref = status.connected
                 ? `/tools/studyset?open=create&step=2&source=${encodeURIComponent(app.id)}`
                 : connectHref;
@@ -117,11 +137,11 @@ export default function IntegrationsPage() {
                 <a
                   key={app.id}
                   href={appHref}
-                  className="rounded-xl border border-orange-200/80 bg-orange-50/70 p-3 transition-colors hover:bg-orange-100/80 dark:border-orange-900/40 dark:bg-orange-950/25 dark:hover:bg-orange-900/35"
+                  className={`rounded-xl border p-3 transition-colors hover:brightness-[0.98] dark:border-orange-900/40 dark:bg-orange-950/25 dark:hover:bg-orange-900/35 ${app.cardSurface}`}
                 >
                   <div className="mb-2 flex items-center justify-between">
-                    <div className="rounded-lg bg-white/80 p-2 text-orange-700 dark:bg-orange-950/50 dark:text-orange-200">
-                      <Icon className="h-4 w-4" />
+                    <div className={`rounded-lg p-2 dark:bg-orange-950/50 ${app.iconSurface}`}>
+                      <img src={app.logo} alt={app.label} className="h-4 w-4" />
                     </div>
                     <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>

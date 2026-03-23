@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { FileText, Presentation, Cloud } from 'lucide-react';
 
 type MicrosoftStatus = {
   connected: boolean;
@@ -14,9 +13,27 @@ type MicrosoftAppStripProps = {
 };
 
 const APPS = [
-  { id: 'word', label: 'Word', Icon: FileText, href: '/tools/studyset?open=create&step=2&source=word' },
-  { id: 'powerpoint', label: 'PowerPoint', Icon: Presentation, href: '/tools/studyset?open=create&step=2&source=powerpoint' },
-  { id: 'onedrive', label: 'OneDrive', Icon: Cloud, href: '/tools/studyset?open=create&step=2&source=onedrive' },
+  {
+    id: 'word',
+    label: 'Word',
+    logo: 'https://cdn.simpleicons.org/microsoftword/185ABD',
+    href: '/tools/studyset?open=create&step=2&source=word',
+    cardClass: 'border-[#2B579A]/25 bg-[#EAF2FF]',
+  },
+  {
+    id: 'powerpoint',
+    label: 'PowerPoint',
+    logo: 'https://cdn.simpleicons.org/microsoftpowerpoint/B7472A',
+    href: '/tools/studyset?open=create&step=2&source=powerpoint',
+    cardClass: 'border-[#B7472A]/25 bg-[#FFF0EC]',
+  },
+  {
+    id: 'onedrive',
+    label: 'OneDrive',
+    logo: 'https://cdn.simpleicons.org/microsoftonedrive/0078D4',
+    href: '/tools/studyset?open=create&step=2&source=onedrive',
+    cardClass: 'border-[#0078D4]/25 bg-[#EAF6FF]',
+  },
 ];
 
 export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
@@ -57,17 +74,16 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       </div>
       <div className="grid grid-cols-3 gap-2">
         {APPS.map((app) => {
-          const Icon = app.Icon;
           const href = status.connected ? app.href : connectHref;
           return (
             <Link
               key={app.id}
               prefetch={false}
               href={href}
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-orange-200/90 bg-white/80 text-orange-700 transition-colors hover:bg-orange-100 dark:border-orange-900/40 dark:bg-orange-950/35 dark:text-orange-200 dark:hover:bg-orange-900/40"
+              className={`inline-flex h-10 items-center justify-center rounded-lg border transition-colors hover:brightness-[0.98] dark:border-orange-900/40 dark:bg-orange-950/35 ${app.cardClass}`}
               title={app.label}
             >
-              <Icon className="h-4 w-4" />
+              <img src={app.logo} alt={app.label} className="h-5 w-5" />
             </Link>
           );
         })}
