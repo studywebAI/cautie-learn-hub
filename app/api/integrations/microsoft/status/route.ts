@@ -35,6 +35,10 @@ export async function GET(request: NextRequest) {
       metadata: connection.metadata || {},
     });
   } catch (error: any) {
+    const message = String(error?.message || 'Failed to get status');
+    if (message.includes('Missing env:')) {
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
     return NextResponse.json({ error: 'Failed to get status' }, { status: 500 });
   }
 }

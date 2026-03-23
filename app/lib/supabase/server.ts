@@ -3,9 +3,22 @@ import { cookies } from 'next/headers'
 
 export async function createClient(cookieStore: ReturnType<typeof cookies> | Promise<ReturnType<typeof cookies>>) {
   const resolvedCookies = await cookieStore
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey =
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl) {
+    throw new Error('Missing env: NEXT_PUBLIC_SUPABASE_URL')
+  }
+  if (!supabaseKey) {
+    throw new Error('Missing env: SUPABASE_SECRET_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  }
+
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SECRET_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         get(name: string) {
