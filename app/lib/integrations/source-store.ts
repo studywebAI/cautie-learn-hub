@@ -223,3 +223,28 @@ export async function updateIntegrationIngestionJob(
     .eq('id', input.jobId);
   if (error) throw new Error(error.message || 'Failed to update ingestion job');
 }
+
+export async function retryIntegrationIngestionJobs(
+  supabase: any,
+  input: { userId: string; provider?: string; app?: string; statuses?: Array<'error' | 'dead'>; limit?: number }
+) {
+  const statuses = input.statuses && input.statuses.length > 0 ? input.statuses : ['error', 'dead'];
+  let query = (supabase as any)
+    .from('external_integration_ingestion_jobs')
+    .update({
+      status: 'queued',
+      next_attempt_at: new Date().toISOString(),
+      last_error: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', input.userId)
+    .in('status', statuses);
+
+  if (input.provider) query = query.eq('provider', input.provider);
+  if (input.app) query = query.eq('app', input.app);
+  if (input.limit) query = query.limit(input.limit);
+
+  const { error, count } = await query.select('id', { count: 'exact' });
+  if (error) throw new Error(error.message || 'Failed to retry ingestion jobs');
+  return count || 0;
+}
