@@ -5,7 +5,7 @@
  * Role is GLOBAL - determined by profiles.subscription_type across the entire website.
  * A teacher is a teacher everywhere, a student is a student everywhere.
  * 
- * Teachers have their own dedicated subjects within a class.
+ * Teachers have their own dedicated subjects within a class
  * Students can see all subjects but only submit to their own.
  */
 
