@@ -36,9 +36,12 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     const message = String(error?.message || 'Failed to get status');
-    if (message.includes('Missing env:')) {
-      return NextResponse.json({ error: message }, { status: 500 });
-    }
-    return NextResponse.json({ error: 'Failed to get status' }, { status: 500 });
+    const code = String(error?.code || '');
+    console.error('[microsoft-status] failed', {
+      message,
+      code,
+      stack: error?.stack || null,
+    });
+    return NextResponse.json({ error: message || 'Failed to get status', code: code || null }, { status: 500 });
   }
 }
