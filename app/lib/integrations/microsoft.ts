@@ -157,3 +157,40 @@ export async function listMicrosoftFiles(input: { accessToken: string; kind: Mic
 
   return items.filter((item) => item.kind === input.kind);
 }
+
+export async function extractMicrosoftFileText(input: {
+  accessToken: string;
+  fileId: string;
+  kind: MicrosoftFileKind;
+}) {
+  const fileId = encodeURIComponent(input.fileId);
+  const textEndpoint = `${MICROSOFT_GRAPH_BASE}/me/drive/items/${fileId}/content?format=text`;
+
+  const textResponse = await fetch(textEndpoint, {
+    headers: { Authorization: `Bearer ${input.accessToken}` },
+    cache: 'no-store',
+  });
+
+  if (textResponse.ok) {
+    const asText = await textResponse.text();
+    return asText.trim();
+  }
+
+  // Fallback: attempt normal content fetch and best-effort text decode.
+  const binaryResponse = await fetch(`${MICROSOFT_GRAPH_BASE}/me/drive/items/${fileId}/content`, {
+    headers: { Authorization: `Bearer ${input.accessToken}` },
+    cache: 'no-store',
+  });
+  if (!binaryResponse.ok) {
+    const payload = await binaryResponse.json().catch(() => ({}));
+    const message = payload?.error?.message || 'Failed to load Microsoft file content';
+    throw new Error(message);
+  }
+
+  const contentType = (binaryResponse.headers.get('content-type') || '').toLowerCase();
+  if (contentType.startsWith('text/')) {
+    return (await binaryResponse.text()).trim();
+  }
+
+  return '';
+}

@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 interface SourceInputProps {
   value: string;
   onChange: (text: string) => void;
+  onImageDataUriChange?: (imageDataUri: string | null) => void;
   onSubmit?: () => void;
   placeholder?: string;
   disabled?: boolean;
@@ -46,6 +47,14 @@ type SourceEntry = {
   error?: string;
   url?: string;
   urlKey?: string;
+};
+
+type ExternalMicrosoftSource = {
+  id: string;
+  name: string;
+  webUrl?: string;
+  kind?: 'word' | 'powerpoint';
+  mimeType?: string;
 };
 
 const URL_REGEX = /\b((?:https?:\/\/|www\.)[^\s<>"]+)/gi;
@@ -112,6 +121,7 @@ const extractUrlsFromText = (text: string) => {
 export function SourceInput({
   value,
   onChange,
+  onImageDataUriChange,
   onSubmit,
   placeholder = 'Enter your text here...',
   disabled = false,
@@ -163,6 +173,7 @@ export function SourceInput({
   const [sources, setSources] = useState<SourceEntry[]>([]);
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedImageDataUri, setUploadedImageDataUri] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [urlInput, setUrlInput] = useState('');
@@ -184,6 +195,85 @@ export function SourceInput({
     initializedRef.current = true;
     if (value.trim()) setManualText(value);
   }, [value]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const raw = window.sessionStorage.getItem('microsoft.selectedSources');
+    if (!raw) return;
+    window.sessionStorage.removeItem('microsoft.selectedSources');
+
+    let items: ExternalMicrosoftSource[] = [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) items = parsed;
+    } catch {
+      items = [];
+    }
+    if (items.length === 0) return;
+
+    const hydrate = async () => {
+      const res = await fetch('/api/integrations/microsoft/files/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            kind: item.kind === 'powerpoint' ? 'powerpoint' : 'word',
+            webUrl: item.webUrl,
+            mimeType: item.mimeType,
+          })),
+        }),
+      });
+
+      if (!res.ok) {
+        const fallback: SourceEntry[] = items.map((item) => {
+          const kindLabel = item.kind === 'powerpoint' ? 'PowerPoint' : 'Word';
+          const lines = [`Microsoft ${kindLabel} file: ${item.name}`];
+          if (item.webUrl) lines.push(`File URL: ${item.webUrl}`);
+          return {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            kind: 'file',
+            label: `MICROSOFT (${kindLabel})`,
+            text: lines.join('\n'),
+            selected: true,
+          };
+        });
+        setSources((prev) => [...prev, ...fallback]);
+        toast({
+          title: 'Microsoft files attached',
+          description: `${fallback.length} file${fallback.length === 1 ? '' : 's'} added as context.`,
+        });
+        return;
+      }
+
+      const json = await res.json();
+      const extractedItems = Array.isArray(json?.items) ? json.items : [];
+      const mapped: SourceEntry[] = extractedItems.map((item: any) => {
+        const kindLabel = item?.kind === 'powerpoint' ? 'PowerPoint' : 'Word';
+        const lines: string[] = [`Microsoft ${kindLabel} file: ${String(item?.name || 'Untitled')}`];
+        if (typeof item?.extractedText === 'string' && item.extractedText.trim()) {
+          lines.push(item.extractedText.trim());
+        }
+        if (item?.webUrl) lines.push(`File URL: ${String(item.webUrl)}`);
+        return {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          kind: 'file',
+          label: `MICROSOFT (${kindLabel})`,
+          text: lines.join('\n\n'),
+          selected: true,
+        };
+      });
+
+      setSources((prev) => [...prev, ...mapped]);
+      toast({
+        title: 'Microsoft files attached',
+        description: `${mapped.length} file${mapped.length === 1 ? '' : 's'} added as context.`,
+      });
+    };
+
+    void hydrate();
+  }, [toast]);
 
   const compiledSource = useMemo(() => {
     let next = '';
@@ -210,6 +300,10 @@ export function SourceInput({
     lastEmittedRef.current = compiledSource;
     onChange(compiledSource);
   }, [compiledSource, onChange]);
+
+  useEffect(() => {
+    onImageDataUriChange?.(uploadedImageDataUri);
+  }, [onImageDataUriChange, uploadedImageDataUri]);
 
   const captionSources = useMemo(
     () => sources.filter((source) => source.kind === 'caption'),
@@ -324,6 +418,17 @@ export function SourceInput({
     }
 
     setUploadedFile(file);
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUri = typeof reader.result === 'string' ? reader.result : null;
+        setUploadedImageDataUri(dataUri);
+      };
+      reader.onerror = () => setUploadedImageDataUri(null);
+      reader.readAsDataURL(file);
+    } else {
+      setUploadedImageDataUri(null);
+    }
     setIsProcessing(true);
 
     try {
@@ -344,7 +449,9 @@ export function SourceInput({
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         kind: 'file',
         label: `FILE (${file.name})`,
-        text: extractedText,
+        text: file.type.startsWith('image/')
+          ? [extractedText ? extractedText : '', `Attached image file: ${file.name} (${file.type || 'image'})`].filter(Boolean).join('\n\n')
+          : extractedText,
         selected: true,
         error: extractedText.trim() ? undefined : 'Could not extract text automatically.',
       });
@@ -706,7 +813,10 @@ export function SourceInput({
   const handleManualTextChange = (raw: string) => {
     const { cleanedText, urls } = extractUrlsFromText(raw);
     setManualText(cleanedText);
-    if (uploadedFile) setUploadedFile(null);
+    if (uploadedFile) {
+      setUploadedFile(null);
+      setUploadedImageDataUri(null);
+    }
 
     if (urls.length > 0) {
       setLinksOpen(true);
@@ -791,7 +901,15 @@ export function SourceInput({
         <div className="flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1.5 text-xs">
           {isImage ? <ImageIcon className="h-3.5 w-3.5 shrink-0 text-primary" /> : <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />}
           <span className="truncate">{uploadedFile.name}</span>
-          <Button variant="ghost" size="icon" className="ml-auto h-4 w-4 shrink-0" onClick={() => setUploadedFile(null)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto h-4 w-4 shrink-0"
+            onClick={() => {
+              setUploadedFile(null);
+              setUploadedImageDataUri(null);
+            }}
+          >
             <X className="h-3 w-3" />
           </Button>
         </div>

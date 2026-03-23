@@ -18,22 +18,13 @@ const APPS = [
     id: 'word',
     label: 'Word',
     logo: '/integrations/microsoft-word.svg',
-    href: '/tools/studyset?open=create&step=2&source=word',
-    cardClass: 'border-[#2B579A]/25 bg-[#EAF2FF]',
+    app: 'word',
   },
   {
     id: 'powerpoint',
     label: 'PowerPoint',
     logo: '/integrations/microsoft-powerpoint.svg',
-    href: '/tools/studyset?open=create&step=2&source=powerpoint',
-    cardClass: 'border-[#B7472A]/25 bg-[#FFF0EC]',
-  },
-  {
-    id: 'onedrive',
-    label: 'OneDrive',
-    logo: '/integrations/microsoft-onedrive.svg',
-    href: '/tools/studyset?open=create&step=2&source=onedrive',
-    cardClass: 'border-[#0078D4]/25 bg-[#EAF6FF]',
+    app: 'powerpoint',
   },
 ];
 
@@ -90,15 +81,15 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
           {status.connected ? 'Manage link' : 'Connect'}
         </Link>
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {APPS.map((app) => {
-          const href = app.href;
+          const href = `/settings/integrations?returnTo=${encodeURIComponent(returnTo)}&app=${encodeURIComponent(app.app)}`;
           return (
             <Link
               key={app.id}
               prefetch={false}
               href={href}
-              className={`inline-flex h-10 items-center justify-center rounded-lg border transition-colors hover:brightness-[0.98] dark:border-orange-900/40 dark:bg-orange-950/35 ${app.cardClass}`}
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-white transition-colors hover:bg-muted/40 dark:bg-background"
               title={app.label}
             >
               <img src={app.logo} alt={app.label} className="h-5 w-5" />

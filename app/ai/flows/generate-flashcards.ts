@@ -12,6 +12,7 @@ import { FlashcardSchema } from '@/lib/types';
 
 const GenerateFlashcardsInputSchema = z.object({
   sourceText: z.string().describe('The source text from which to generate flashcards.'),
+  imageDataUri: z.string().optional().describe('Optional image context as data URI.'),
   count: z.number().optional().default(10).describe('The number of flashcards to generate.'),
   existingFlashcardIds: z.array(z.string()).optional().describe('An array of flashcard front texts that should not be regenerated.'),
   groundingInstruction: z.string().optional().describe('Mandatory grounding constraints for factual outputs.'),
@@ -71,6 +72,11 @@ Example:
 
 Source Text:
 {{{sourceText}}}
+{{#if imageDataUri}}
+
+Image Context:
+{{media url=imageDataUri}}
+{{/if}}
 `,
     });
     const { output } = await prompt(input);

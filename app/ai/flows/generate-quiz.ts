@@ -12,6 +12,7 @@ import { QuizSchema, type Quiz } from '@/lib/types';
 
 const GenerateQuizInputSchema = z.object({
   sourceText: z.string().describe('The source text from which to generate the quiz.'),
+  imageDataUri: z.string().optional().describe('Optional image context as data URI.'),
   questionCount: z.number().optional().default(7).describe('The desired number of questions.'),
   existingQuestionIds: z.array(z.string()).optional().describe('An array of question IDs that should not be regenerated.'),
   groundingInstruction: z.string().optional().describe('Mandatory grounding constraints for factual outputs.'),
@@ -61,6 +62,11 @@ For each question, if needed, include 'source_info' referencing only the provide
 
 Source Text:
 {{{sourceText}}}
+{{#if imageDataUri}}
+
+Image Context:
+{{media url=imageDataUri}}
+{{/if}}
 `,
     });
     try {

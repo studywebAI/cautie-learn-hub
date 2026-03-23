@@ -43,6 +43,7 @@ function FlashcardsPageContent() {
   const [complexity, setComplexity] = useState('medium');
   const [currentView, setCurrentView] = useState<'setup' | 'study'>('setup');
   const [customTitle, setCustomTitle] = useState('');
+  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleGenerate = useCallback(async (text: string) => {
@@ -54,11 +55,17 @@ function FlashcardsPageContent() {
         toolId: 'flashcards',
         flowName: 'generateFlashcards',
         mode: studyMode,
-        artifactType: 'flashcards',
-        artifactTitle: customTitle.trim() || 'Generated Flashcards',
-        input: { sourceText: text, count: flashcardCount, language, complexity },
-        computeClass: flashcardCount > 20 ? 'heavy' : 'standard',
-      });
+          artifactType: 'flashcards',
+          artifactTitle: customTitle.trim() || 'Generated Flashcards',
+          input: {
+            sourceText: text,
+            imageDataUri: imageDataUri || undefined,
+            count: flashcardCount,
+            language,
+            complexity,
+          },
+          computeClass: flashcardCount > 20 ? 'heavy' : 'standard',
+        });
       const response = run?.output_payload || run;
       setGeneratedCards(response.flashcards);
       setCurrentView('study');
@@ -69,7 +76,7 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [flashcardCount, language, studyMode, complexity]);
+  }, [complexity, flashcardCount, imageDataUri, language, studyMode]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
@@ -185,6 +192,7 @@ function FlashcardsPageContent() {
         toolId="flashcards"
         value={sourceText}
         onChange={setSourceText}
+        onImageDataUriChange={setImageDataUri}
         onSubmit={() => handleGenerate(sourceText)}
         placeholder={t.sourceInputPlaceholder}
         speechLanguage={language}

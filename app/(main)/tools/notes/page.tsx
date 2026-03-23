@@ -131,6 +131,7 @@ function NotesPageContent() {
   const [isAutoDrafting, setIsAutoDrafting] = useState(false);
   const [inputMode, setInputMode] = useState<'text-files' | 'links' | 'listen'>('text-files');
   const [linkUrl, setLinkUrl] = useState('');
+  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [isFetchingLink, setIsFetchingLink] = useState(false);
   const notesContentRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
@@ -204,6 +205,7 @@ function NotesPageContent() {
           outputFocus: 'clarity',
           tone: 'neutral',
           audience,
+          imageDataUri: imageDataUri || undefined,
           highlightTitles: false,
           fontFamily: 'default',
         },
@@ -221,7 +223,7 @@ function NotesPageContent() {
       if (background) setIsAutoDrafting(false);
       else setIsLoading(false);
     }
-  }, [audience, customTitle, length, style, t.notes.generatingTitle, toast]);
+  }, [audience, customTitle, imageDataUri, length, style, t.notes.generatingTitle, toast]);
 
   const stopListening = useCallback(async (options?: { finalize?: boolean }) => {
     keepListeningRef.current = false;
@@ -532,6 +534,7 @@ function NotesPageContent() {
         toolId="notes"
         value={sourceText}
         onChange={setSourceText}
+        onImageDataUriChange={setImageDataUri}
         onSubmit={handleGenerate}
         placeholder={t.sourceInputPlaceholder}
         speechLanguage={language}

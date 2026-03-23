@@ -54,6 +54,7 @@ function QuizPageContent() {
   const [questionType, setQuestionType] = useState('mixed');
   const [currentView, setCurrentView] = useState<'setup' | 'take' | 'duel'>('setup');
   const [customTitle, setCustomTitle] = useState('');
+  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleGenerate = useCallback(async (text: string) => {
@@ -71,7 +72,14 @@ function QuizPageContent() {
           mode: quizMode,
           artifactType: 'quiz',
           artifactTitle: customTitle.trim() || 'Generated Quiz',
-          input: { sourceText: text, questionCount: count, language, difficultyProfile, questionType },
+          input: {
+            sourceText: text,
+            imageDataUri: imageDataUri || undefined,
+            questionCount: count,
+            language,
+            difficultyProfile,
+            questionType,
+          },
           computeClass: count > 20 ? 'heavy' : 'standard',
         });
         const response = run?.output_payload || run;
@@ -85,7 +93,7 @@ function QuizPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [quizMode, questionCount, language, difficultyProfile, questionType]);
+  }, [difficultyProfile, imageDataUri, language, questionCount, questionType, quizMode]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
@@ -208,6 +216,7 @@ function QuizPageContent() {
         toolId="quiz"
         value={sourceText}
         onChange={setSourceText}
+        onImageDataUriChange={setImageDataUri}
         onSubmit={() => handleGenerate(sourceText)}
         placeholder={t.sourceInputPlaceholder}
         speechLanguage={language}

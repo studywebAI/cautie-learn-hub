@@ -66,6 +66,11 @@ CORE PRINCIPLES:
 
 Source Text:
 {{{sourceText}}}
+{{#if imageDataUri}}
+
+Image Context:
+{{media url=imageDataUri}}
+{{/if}}
 
 {{#if topic}}
 Focus Topic: {{{topic}}}
