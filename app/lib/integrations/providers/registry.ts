@@ -1,7 +1,7 @@
 import type { IntegrationProvider, IntegrationProviderAdapter } from '@/lib/integrations/providers/types';
 import { microsoftProviderAdapter } from '@/lib/integrations/providers/microsoft-adapter';
 
-const PROVIDER_REGISTRY: Record<IntegrationProvider, IntegrationProviderAdapter> = {
+const PROVIDER_REGISTRY: Partial<Record<IntegrationProvider, IntegrationProviderAdapter>> = {
   microsoft: microsoftProviderAdapter,
 };
 

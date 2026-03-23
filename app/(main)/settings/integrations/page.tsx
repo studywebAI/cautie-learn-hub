@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ExternalLink, Link2 } from 'lucide-react';
+import { ExternalLink, Eye, EyeOff, Link2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { INTEGRATION_APPS } from '@/lib/integrations/catalog';
+import { ENABLED_INTEGRATION_APPS } from '@/lib/integrations/catalog';
 
-const APPS = INTEGRATION_APPS.filter((app) => app.provider === 'microsoft').map((app) => ({
+const APPS = ENABLED_INTEGRATION_APPS.filter((app) => app.provider === 'microsoft').map((app) => ({
   id: app.id,
   label: app.label,
   logo: app.logoPath,
@@ -27,7 +27,7 @@ type MicrosoftFileItem = {
   webUrl?: string;
   size?: number;
   lastModifiedDateTime?: string;
-  kind: 'word' | 'powerpoint' | 'excel';
+  kind: 'word' | 'powerpoint' | 'onedrive' | 'excel';
   mimeType?: string;
 };
 
@@ -59,6 +59,7 @@ export default function IntegrationsPage() {
   const [sourceRecords, setSourceRecords] = useState<IntegrationSourceRecord[]>([]);
   const [processingNow, setProcessingNow] = useState(false);
   const [retryingFailed, setRetryingFailed] = useState(false);
+  const [showEmail, setShowEmail] = useState(false);
 
   const returnTo = useMemo(() => {
     const raw = searchParams.get('returnTo') || '/tools';
@@ -71,6 +72,7 @@ export default function IntegrationsPage() {
   );
   const oauthResult = searchParams.get('ms');
   const oauthError = searchParams.get('ms_error');
+  const tab = searchParams.get('tab') === 'linked' ? 'linked' : 'connect';
 
   const connectReturnTo = useMemo(() => {
     const p = new URLSearchParams();
@@ -357,6 +359,57 @@ export default function IntegrationsPage() {
   return (
     <div className="h-full overflow-auto">
       <div className="w-full space-y-4">
+        <div className="flex items-center gap-2">
+          <Link
+            prefetch={false}
+            href={`/settings/integrations?tab=connect&returnTo=${encodeURIComponent(returnTo)}`}
+            className={`rounded-md border px-3 py-1.5 text-sm ${tab === 'connect' ? 'bg-muted border-border' : 'bg-white border-border'}`}
+          >
+            Connect
+          </Link>
+          <Link
+            prefetch={false}
+            href={`/settings/integrations?tab=linked&returnTo=${encodeURIComponent(returnTo)}`}
+            className={`rounded-md border px-3 py-1.5 text-sm ${tab === 'linked' ? 'bg-muted border-border' : 'bg-white border-border'}`}
+          >
+            Linked
+          </Link>
+        </div>
+
+        {tab === 'linked' && (
+          <Card className="border-none">
+            <CardHeader>
+              <CardTitle>Linked Accounts</CardTitle>
+              <CardDescription>Accounts currently linked to your user.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-xl border border-border bg-white p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-medium">Microsoft</p>
+                  {status.connected && (
+                    <button
+                      type="button"
+                      onClick={() => setShowEmail((prev) => !prev)}
+                      className="rounded-md border border-border bg-white p-1.5"
+                      title={showEmail ? 'Hide email' : 'Show email'}
+                    >
+                      {showEmail ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {status.connected
+                    ? showEmail
+                      ? status.account_email || 'No email returned'
+                      : '••••••••••••••••'
+                    : 'Not linked'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {tab === 'connect' && (
         <Card className="border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -368,7 +421,7 @@ export default function IntegrationsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="rounded-xl border border-orange-200/80 bg-orange-50/70 p-3 text-sm dark:border-orange-900/40 dark:bg-orange-950/25">
+            <div className="rounded-xl border border-border bg-white p-3 text-sm">
               {statusLoading
                 ? 'Checking connection...'
                 : status.connected
@@ -376,7 +429,7 @@ export default function IntegrationsPage() {
                 : 'Not connected yet'}
             </div>
             {oauthMessage && (
-              <div className="rounded-xl border border-orange-200/80 bg-orange-50/70 p-3 text-sm text-foreground dark:border-orange-900/40 dark:bg-orange-950/25">
+              <div className="rounded-xl border border-border bg-white p-3 text-sm text-foreground">
                 {oauthMessage}
               </div>
             )}
@@ -386,7 +439,7 @@ export default function IntegrationsPage() {
               </div>
             )}
             {(ingestionSummary.queued > 0 || ingestionSummary.processing > 0 || ingestionSummary.error > 0 || ingestionSummary.dead > 0) && (
-              <div className="rounded-xl border border-orange-200/80 bg-orange-50/70 p-3 text-sm text-foreground dark:border-orange-900/40 dark:bg-orange-950/25">
+              <div className="rounded-xl border border-border bg-white p-3 text-sm text-foreground">
                 {ingestionSummary.processing > 0 && `${ingestionSummary.processing} processing `}
                 {ingestionSummary.queued > 0 && `${ingestionSummary.queued} queued `}
                 {ingestionSummary.error > 0 && `${ingestionSummary.error} failed `}
@@ -430,7 +483,9 @@ export default function IntegrationsPage() {
             </div>
           </CardContent>
         </Card>
+        )}
 
+        {tab === 'connect' && (
         <Card className="border-none">
           <CardHeader>
             <CardTitle>Apps</CardTitle>
@@ -460,7 +515,9 @@ export default function IntegrationsPage() {
             })}
           </CardContent>
         </Card>
+        )}
 
+        {tab === 'connect' && (
         <Card className="border-none">
           <CardHeader>
             <CardTitle>{selectedApp.label} files</CardTitle>
@@ -505,6 +562,7 @@ export default function IntegrationsPage() {
               ))}
           </CardContent>
         </Card>
+        )}
 
         <Card className="border-none">
           <CardHeader>

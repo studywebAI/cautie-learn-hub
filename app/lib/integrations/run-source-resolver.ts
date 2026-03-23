@@ -11,6 +11,12 @@ function mergeSourceText(base: string, additions: string[]) {
   return merged.slice(0, MAX_INTEGRATION_SOURCE_TEXT_CHARS);
 }
 
+function isLikelyImageSource(source: any) {
+  const mime = String(source?.mime_type || '').toLowerCase();
+  const name = String(source?.name || '').toLowerCase();
+  return mime.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|svg)$/.test(name);
+}
+
 export async function resolveSelectedSourcesForRun(
   supabase: any,
   input: {
@@ -60,9 +66,12 @@ export async function resolveSelectedSourcesForRun(
     const webUrl = source.web_url ? `\nURL: ${source.web_url}` : '';
     return `[${source.provider}/${source.app}] ${source.name}${webUrl}`;
   });
+  const mediaBlocks = selectedSources
+    .filter((source) => isLikelyImageSource(source) && source.web_url)
+    .map((source) => `{{media url=${source.web_url}}}`);
 
   const existingSourceText = typeof input.baseInput?.sourceText === 'string' ? input.baseInput.sourceText : '';
-  const mergedSourceText = mergeSourceText(existingSourceText, [...fileReferenceBlocks, ...extractedBlocks]);
+  const mergedSourceText = mergeSourceText(existingSourceText, [...fileReferenceBlocks, ...mediaBlocks, ...extractedBlocks]);
 
   return {
     input: { ...input.baseInput, sourceText: mergedSourceText },

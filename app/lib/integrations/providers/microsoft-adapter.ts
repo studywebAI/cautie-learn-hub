@@ -6,7 +6,7 @@ import {
 import type { IntegrationProviderAdapter } from '@/lib/integrations/providers/types';
 
 function toMicrosoftKind(app: string): MicrosoftFileKind {
-  if (app === 'word' || app === 'powerpoint' || app === 'excel') return app;
+  if (app === 'word' || app === 'powerpoint' || app === 'excel' || app === 'onedrive') return app;
   throw new Error(`Unsupported Microsoft app: ${app}`);
 }
 

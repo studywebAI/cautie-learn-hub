@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { isEnabledIntegrationAppId, isEnabledIntegrationProviderId } from '@/lib/integrations/catalog';
 import { getValidMicrosoftAccessToken } from '@/lib/integrations/microsoft-store';
 import { getProviderAdapter } from '@/lib/integrations/providers/registry';
 import {
@@ -15,8 +16,8 @@ import { checkRateLimit, verifySameOrigin } from '@/lib/security/request-guards'
 export const dynamic = 'force-dynamic';
 
 const BodySchema = z.object({
-  provider: z.enum(['microsoft']).optional(),
-  app: z.enum(['word', 'powerpoint', 'excel']).optional(),
+  provider: z.string().refine((value) => isEnabledIntegrationProviderId(value), 'Unsupported provider').optional(),
+  app: z.string().refine((value) => isEnabledIntegrationAppId(value), 'Unsupported app').optional(),
   maxJobs: z.number().int().min(1).max(25).optional().default(10),
 });
 

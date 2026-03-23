@@ -39,7 +39,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 
 type StudysetRow = {
   id: string;
@@ -504,9 +503,6 @@ export default function StudysetPage() {
             </CardTitle>
             <CardDescription>Build once, follow day-by-day. Changes auto-save.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <MicrosoftAppStrip returnTo="/tools/studyset" />
-          </CardContent>
         </Card>
 
         {view === 'home' && (

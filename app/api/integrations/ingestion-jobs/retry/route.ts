@@ -2,12 +2,13 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { isEnabledIntegrationAppId, isEnabledIntegrationProviderId } from '@/lib/integrations/catalog';
 import { retryIntegrationIngestionJobs } from '@/lib/integrations/source-store';
 import { checkRateLimit, verifySameOrigin } from '@/lib/security/request-guards';
 
 const BodySchema = z.object({
-  provider: z.enum(['microsoft']).optional(),
-  app: z.enum(['word', 'powerpoint', 'excel']).optional(),
+  provider: z.string().refine((value) => isEnabledIntegrationProviderId(value), 'Unsupported provider').optional(),
+  app: z.string().refine((value) => isEnabledIntegrationAppId(value), 'Unsupported app').optional(),
   statuses: z.array(z.enum(['error', 'dead'])).optional(),
   limit: z.number().int().min(1).max(200).optional().default(100),
 });

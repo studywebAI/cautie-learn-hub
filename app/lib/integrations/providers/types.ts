@@ -1,5 +1,7 @@
-export type IntegrationProvider = 'microsoft';
-export type IntegrationApp = 'word' | 'powerpoint' | 'excel';
+import type { IntegrationAppId, IntegrationProviderId } from '@/lib/integrations/catalog';
+
+export type IntegrationProvider = IntegrationProviderId;
+export type IntegrationApp = IntegrationAppId;
 
 export type ProviderFileItem = {
   id: string;

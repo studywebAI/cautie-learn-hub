@@ -90,7 +90,7 @@ export async function fetchMicrosoftProfile(accessToken: string) {
   return payload as { id?: string; displayName?: string; mail?: string; userPrincipalName?: string };
 }
 
-export type MicrosoftFileKind = 'word' | 'powerpoint' | 'excel';
+export type MicrosoftFileKind = 'word' | 'powerpoint' | 'excel' | 'onedrive';
 
 export type MicrosoftFileItem = {
   id: string;
@@ -162,6 +162,9 @@ export async function listMicrosoftFiles(input: { accessToken: string; kind: Mic
     })
     .filter(Boolean) as MicrosoftFileItem[];
 
+  if (input.kind === 'onedrive') {
+    return items;
+  }
   return items.filter((item) => item.kind === input.kind);
 }
 

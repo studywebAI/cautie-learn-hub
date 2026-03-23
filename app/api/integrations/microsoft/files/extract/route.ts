@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { getIntegrationAppById, isEnabledIntegrationAppId } from '@/lib/integrations/catalog';
 import { createClient } from '@/lib/supabase/server';
 import { getValidMicrosoftAccessToken } from '@/lib/integrations/microsoft-store';
 import { extractMicrosoftFileText } from '@/lib/integrations/microsoft';
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
 const ItemSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  kind: z.enum(['word', 'powerpoint', 'excel']),
+  kind: z.string().refine((value) => isEnabledIntegrationAppId(value), 'Unsupported app'),
   webUrl: z.string().optional(),
   mimeType: z.string().optional(),
 });
@@ -40,6 +41,13 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
+    const hasNonMicrosoftKind = parsed.data.items.some((item) => {
+      const app = getIntegrationAppById(item.kind);
+      return !app || app.provider !== 'microsoft' || !app.enabled;
+    });
+    if (hasNonMicrosoftKind) {
+      return NextResponse.json({ error: 'Invalid app kind for Microsoft extraction' }, { status: 400 });
+    }
 
     const tokenState = await getValidMicrosoftAccessToken(supabase, user.id);
     if (!tokenState) {
@@ -51,7 +59,7 @@ export async function POST(request: NextRequest) {
         const text = await extractMicrosoftFileText({
           accessToken: tokenState.accessToken,
           fileId: item.id,
-          kind: item.kind,
+          kind: item.kind as 'word' | 'powerpoint' | 'excel' | 'onedrive',
         }).catch(() => '');
         return {
           id: item.id,

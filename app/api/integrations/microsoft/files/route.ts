@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { getIntegrationAppById, isEnabledIntegrationAppId } from '@/lib/integrations/catalog';
 import { createClient } from '@/lib/supabase/server';
 import { getValidMicrosoftAccessToken } from '@/lib/integrations/microsoft-store';
 import { listMicrosoftFiles, MicrosoftFileKind } from '@/lib/integrations/microsoft';
@@ -24,8 +25,9 @@ export async function GET(request: NextRequest) {
     }
 
     const kind = request.nextUrl.searchParams.get('kind');
-    if (kind !== 'word' && kind !== 'powerpoint' && kind !== 'excel') {
-      return NextResponse.json({ error: "Query param 'kind' must be 'word', 'powerpoint', or 'excel'" }, { status: 400 });
+    const appConfig = kind && isEnabledIntegrationAppId(kind) ? getIntegrationAppById(kind) : null;
+    if (!appConfig || appConfig.provider !== 'microsoft') {
+      return NextResponse.json({ error: "Query param 'kind' must be a supported Microsoft app" }, { status: 400 });
     }
     const query = request.nextUrl.searchParams.get('q') || '';
 

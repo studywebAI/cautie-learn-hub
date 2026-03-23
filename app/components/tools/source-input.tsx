@@ -189,50 +189,64 @@ export function SourceInput({
     if (value.trim()) setManualText(value);
   }, [value]);
 
-  useEffect(() => {
-    if (integrationHydratedRef.current) return;
-    integrationHydratedRef.current = true;
+  const hydrateIntegrationSources = useCallback(async (quiet = false) => {
+    const response = await fetch('/api/integrations/context-sources?provider=microsoft&selected=1', {
+      cache: 'no-store',
+    });
+    if (!response.ok) return;
+    const json = await response.json();
+    const items = Array.isArray(json?.items) ? json.items : [];
 
-    const hydrate = async () => {
-      const response = await fetch('/api/integrations/context-sources?provider=microsoft&selected=1', {
-        cache: 'no-store',
-      });
-      if (!response.ok) return;
-      const json = await response.json();
-      const items = Array.isArray(json?.items) ? json.items : [];
-      if (items.length === 0) return;
+    const mapped: SourceEntry[] = items.map((item: any) => {
+      const appKey = String(item?.app || '').toLowerCase();
+      const appLabel = appKey === 'powerpoint' ? 'PowerPoint' : appKey === 'onedrive' ? 'OneDrive' : 'Word';
+      const name = String(item?.name || 'Untitled');
+      const extracted = typeof item?.extracted_text === 'string' ? item.extracted_text.trim() : '';
+      const webUrl = typeof item?.web_url === 'string' ? item.web_url : '';
+      const lines = [`Microsoft ${appLabel} file: ${name}`];
+      if (extracted) lines.push(extracted);
+      if (webUrl) lines.push(`File URL: ${webUrl}`);
+      return {
+        id: `integration-${String(item?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)}`,
+        kind: 'file',
+        label: `MICROSOFT (${appLabel})`,
+        text: lines.join('\n\n'),
+        selected: true,
+      };
+    });
 
-      const mapped: SourceEntry[] = items.map((item: any) => {
-        const appKey = String(item?.app || '').toLowerCase();
-        const appLabel = appKey === 'powerpoint' ? 'PowerPoint' : appKey === 'excel' ? 'Excel' : 'Word';
-        const name = String(item?.name || 'Untitled');
-        const extracted = typeof item?.extracted_text === 'string' ? item.extracted_text.trim() : '';
-        const webUrl = typeof item?.web_url === 'string' ? item.web_url : '';
-        const lines = [`Microsoft ${appLabel} file: ${name}`];
-        if (extracted) lines.push(extracted);
-        if (webUrl) lines.push(`File URL: ${webUrl}`);
-        return {
-          id: `integration-${String(item?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)}`,
-          kind: 'file',
-          label: `MICROSOFT (${appLabel})`,
-          text: lines.join('\n\n'),
-          selected: true,
-        };
-      });
+    setSources((prev) => {
+      const localOnly = prev.filter((source) => !source.id.startsWith('integration-'));
+      return [...localOnly, ...mapped];
+    });
 
-      setSources((prev) => {
-        const existing = new Set(prev.map((source) => source.id));
-        const deduped = mapped.filter((source) => !existing.has(source.id));
-        return [...prev, ...deduped];
-      });
+    if (!quiet) {
       toast({
         title: 'Microsoft sources ready',
         description: `${mapped.length} selected file${mapped.length === 1 ? '' : 's'} loaded.`,
       });
-    };
-
-    void hydrate();
+    }
   }, [toast]);
+
+  useEffect(() => {
+    if (integrationHydratedRef.current) return;
+    integrationHydratedRef.current = true;
+    void hydrateIntegrationSources(true);
+  }, [hydrateIntegrationSources]);
+
+  useEffect(() => {
+    const onUpdated = () => {
+      void hydrateIntegrationSources(true);
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('integration-sources-updated', onUpdated as EventListener);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('integration-sources-updated', onUpdated as EventListener);
+      }
+    };
+  }, [hydrateIntegrationSources]);
 
   const compiledSource = useMemo(() => {
     let next = '';
@@ -883,10 +897,10 @@ export function SourceInput({
                 onChange={(e) => setUrlInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') void handleAddLink(); }}
                 placeholder="Paste a link and press Enter"
-                className="flex-1 bg-background border rounded-full px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+                className="flex-1 border rounded-full bg-white px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
                 disabled={isFetchingUrl}
               />
-              <Button size="sm" onClick={() => void handleAddLink()} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full text-xs h-7 px-3">
+              <Button variant="outline" size="sm" onClick={() => void handleAddLink()} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full bg-white text-xs h-7 px-3">
                 {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
               </Button>
             </div>
@@ -902,7 +916,7 @@ export function SourceInput({
               }
             }}
             placeholder={placeholder}
-            className="min-h-[200px] resize-none text-sm flex-1"
+            className="min-h-[200px] resize-none text-sm flex-1 bg-white"
             disabled={disabled || isProcessing}
           />
 
@@ -916,8 +930,8 @@ export function SourceInput({
         <div className="flex flex-col gap-2 w-[100px] shrink-0">
           <Button
             type="button"
-            variant={linksOpen ? 'secondary' : 'outline'}
-            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
+            variant="outline"
+            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-white"
             onClick={() => setLinksOpen((prev) => !prev)}
             disabled={disabled || isProcessing}
           >
@@ -927,7 +941,7 @@ export function SourceInput({
           <Button
             type="button"
             variant="outline"
-            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
+            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-white"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || isProcessing}
           >
@@ -937,8 +951,8 @@ export function SourceInput({
           {enableMic && (
             <Button
               type="button"
-              variant={isFallbackRecording ? 'secondary' : 'outline'}
-              className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
+              variant="outline"
+              className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-white"
               onClick={() => (isFallbackRecording ? stopListening() : startListening())}
               disabled={disabled || isProcessing || !enableMic}
             >
@@ -949,8 +963,8 @@ export function SourceInput({
           {enableCaptions && (
             <Button
               type="button"
-              variant={captionsOpen ? 'secondary' : 'outline'}
-              className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
+              variant="outline"
+              className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-white"
               onClick={() => setCaptionsOpen((prev) => !prev)}
               disabled={disabled || !enableCaptions}
             >
@@ -960,7 +974,8 @@ export function SourceInput({
           )}
           <Button
             type="button"
-            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3"
+            variant="outline"
+            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-white"
             onClick={() => onSubmit?.()}
             disabled={disabled || isProcessing || !canGenerate}
           >

@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import {
+  getIntegrationAppById,
+  isEnabledIntegrationAppId,
+  isEnabledIntegrationProviderId,
+} from '@/lib/integrations/catalog';
+import {
   clearSelectedIntegrationSources,
   enqueueIntegrationIngestionJobs,
   listIntegrationSources,
@@ -20,8 +25,8 @@ const ItemSchema = z.object({
 });
 
 const PostBodySchema = z.object({
-  provider: z.enum(['microsoft']),
-  app: z.enum(['word', 'powerpoint', 'excel']),
+  provider: z.string().refine((value) => isEnabledIntegrationProviderId(value), 'Unsupported provider'),
+  app: z.string().refine((value) => isEnabledIntegrationAppId(value), 'Unsupported app'),
   items: z.array(ItemSchema).min(1).max(15),
   replaceSelection: z.boolean().optional().default(true),
 });
@@ -94,6 +99,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid payload', details: parsed.error.issues }, { status: 400 });
     }
     const body = parsed.data;
+    const appConfig = getIntegrationAppById(body.app);
+    if (!appConfig || !appConfig.enabled || appConfig.provider !== body.provider) {
+      return NextResponse.json({ error: 'Provider/app mismatch' }, { status: 400 });
+    }
 
     if (body.replaceSelection) {
       await clearSelectedIntegrationSources(supabase, {

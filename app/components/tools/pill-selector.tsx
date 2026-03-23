@@ -64,11 +64,11 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
             onClick={() => onChange(opt.value)}
             className={cn(
               'px-3 py-1 text-xs rounded-full border transition-colors',
-              'hover:bg-accent hover:text-accent-foreground',
+              'hover:bg-muted',
               'disabled:opacity-50 disabled:pointer-events-none',
               value === opt.value
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-background text-foreground border-border'
+                ? 'bg-muted text-foreground border-border'
+                : 'bg-white text-foreground border-border'
             )}
           >
             {opt.label}
