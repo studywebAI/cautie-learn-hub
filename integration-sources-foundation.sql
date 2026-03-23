@@ -62,6 +62,42 @@ for all
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
+create table if not exists public.external_integration_ingestion_jobs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  source_id uuid not null references public.external_integration_sources(id) on delete cascade,
+  provider text not null,
+  app text not null,
+  status text not null default 'queued',
+  attempts int not null default 0,
+  max_attempts int not null default 5,
+  next_attempt_at timestamptz null,
+  last_error text null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.external_integration_ingestion_jobs add column if not exists max_attempts int not null default 5;
+alter table public.external_integration_ingestion_jobs add column if not exists next_attempt_at timestamptz null;
+update public.external_integration_ingestion_jobs
+set next_attempt_at = coalesce(next_attempt_at, created_at, now())
+where next_attempt_at is null;
+
+create index if not exists idx_external_integration_ingestion_jobs_user
+on public.external_integration_ingestion_jobs(user_id, provider, app);
+
+create index if not exists idx_external_integration_ingestion_jobs_status
+on public.external_integration_ingestion_jobs(status, updated_at);
+
+alter table public.external_integration_ingestion_jobs enable row level security;
+
+drop policy if exists "external_integration_ingestion_jobs_owner_all" on public.external_integration_ingestion_jobs;
+create policy "external_integration_ingestion_jobs_owner_all"
+on public.external_integration_ingestion_jobs
+for all
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
 create table if not exists public.tool_run_sources (
   id uuid primary key default gen_random_uuid(),
   run_id uuid not null references public.tool_runs(id) on delete cascade,

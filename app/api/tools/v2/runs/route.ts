@@ -9,7 +9,7 @@ import {
   getEntitlementSummary,
   recordMeterEvent,
 } from "@/lib/toolbox/server";
-import { listIntegrationSources } from "@/lib/integrations/source-store";
+import { resolveSelectedSourcesForRun } from "@/lib/integrations/run-source-resolver";
 
 const CreateRunSchema = z.object({
   toolId: z.string().min(1),
@@ -70,74 +70,6 @@ async function writeRunSources(supabase: any, runId: string, userId: string, sou
   }
 }
 
-const SOURCE_ENABLED_TOOLS = new Set(["quiz", "notes", "flashcards"]);
-const MAX_INTEGRATION_SOURCE_TEXT_CHARS = 40_000;
-
-function mergeSourceText(base: string, additions: string[]) {
-  const cleanBase = (base || "").trim();
-  const cleanAdditions = additions.map((v) => v.trim()).filter(Boolean);
-  if (cleanAdditions.length === 0) return cleanBase;
-  const merged = [cleanBase, ...cleanAdditions].filter(Boolean).join("\n\n");
-  return merged.slice(0, MAX_INTEGRATION_SOURCE_TEXT_CHARS);
-}
-
-async function enrichInputWithSelectedIntegrationSources(
-  supabase: any,
-  userId: string,
-  toolId: string,
-  baseInput: Record<string, any>
-) {
-  if (!SOURCE_ENABLED_TOOLS.has(toolId)) {
-    return {
-      input: baseInput,
-      sourceRefs: [] as Array<{ provider: string; app: string; name: string; status: string; hasExtractedText: boolean }>,
-    };
-  }
-
-  const selectedSources = await listIntegrationSources(supabase, userId, {
-    selectedOnly: true,
-    limit: 50,
-  }).catch(() => []);
-
-  if (!Array.isArray(selectedSources) || selectedSources.length === 0) {
-    return {
-      input: baseInput,
-      sourceRefs: [] as Array<{ provider: string; app: string; name: string; status: string; hasExtractedText: boolean }>,
-      selectedSourcesRaw: [] as any[],
-    };
-  }
-
-  const sourceRefs = selectedSources.map((source) => ({
-    provider: source.provider,
-    app: source.app,
-    name: source.name,
-    status: source.extraction_status,
-    hasExtractedText: Boolean(source.extracted_text && source.extracted_text.trim()),
-  }));
-
-  const extractedBlocks = selectedSources
-    .map((source) => {
-      const text = (source.extracted_text || "").trim();
-      if (!text) return "";
-      return `[${source.provider}/${source.app}] ${source.name}\n${text}`;
-    })
-    .filter(Boolean);
-
-  const fileReferenceBlocks = selectedSources.map((source) => {
-    const webUrl = source.web_url ? `\nURL: ${source.web_url}` : "";
-    return `[${source.provider}/${source.app}] ${source.name}${webUrl}`;
-  });
-
-  const existingSourceText = typeof baseInput?.sourceText === "string" ? baseInput.sourceText : "";
-  const mergedSourceText = mergeSourceText(existingSourceText, [...fileReferenceBlocks, ...extractedBlocks]);
-
-  return {
-    input: { ...baseInput, sourceText: mergedSourceText },
-    sourceRefs,
-    selectedSourcesRaw: selectedSources,
-  };
-}
-
 export async function POST(request: NextRequest) {
   try {
     const { supabase, user, plan, subscriptionType } = await getAuthedToolboxContext();
@@ -157,7 +89,11 @@ export async function POST(request: NextRequest) {
     }
 
     const baseInput = (payload.input || payload.source || {}) as Record<string, any>;
-    const enriched = await enrichInputWithSelectedIntegrationSources(supabase, user.id, payload.toolId, baseInput);
+    const enriched = await resolveSelectedSourcesForRun(supabase, {
+      userId: user.id,
+      toolId: payload.toolId,
+      baseInput,
+    });
     const contextPayload = {
       ...(payload.context || {}),
       integration_sources: enriched.sourceRefs,

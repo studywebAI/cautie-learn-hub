@@ -42,6 +42,11 @@ export default function IntegrationsPage() {
   const [files, setFiles] = useState<MicrosoftFileItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedLoading, setSelectedLoading] = useState(false);
+  const [ingestionSummary, setIngestionSummary] = useState<{ queued: number; processing: number; error: number }>({
+    queued: 0,
+    processing: 0,
+    error: 0,
+  });
 
   const returnTo = useMemo(() => {
     const raw = searchParams.get('returnTo') || '/tools';
@@ -127,6 +132,37 @@ export default function IntegrationsPage() {
   }, [selectedApp.kind, status.connected]);
 
   useEffect(() => {
+    const loadJobs = async () => {
+      if (!status.connected) {
+        setIngestionSummary({ queued: 0, processing: 0, error: 0 });
+        return;
+      }
+      try {
+        const response = await fetch(
+          `/api/integrations/ingestion-jobs?provider=microsoft&app=${encodeURIComponent(selectedApp.kind)}`,
+          { cache: 'no-store' }
+        );
+        if (!response.ok) return;
+        const json = await response.json();
+        const jobs = Array.isArray(json?.jobs) ? json.jobs : [];
+        const next = { queued: 0, processing: 0, error: 0 };
+        for (const job of jobs) {
+          const status = String(job?.status || '');
+          if (status === 'queued') next.queued += 1;
+          if (status === 'processing') next.processing += 1;
+          if (status === 'error') next.error += 1;
+        }
+        setIngestionSummary(next);
+      } catch {}
+    };
+    void loadJobs();
+    const timer = window.setInterval(() => {
+      void loadJobs();
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [selectedApp.kind, status.connected]);
+
+  useEffect(() => {
     const loadSelected = async () => {
       if (!status.connected) {
         setSelectedIds([]);
@@ -184,6 +220,11 @@ export default function IntegrationsPage() {
       setStatusError(typeof payload?.error === 'string' ? payload.error : 'Failed to store selected sources.');
       return;
     }
+    await fetch('/api/integrations/ingestion-jobs/process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider: 'microsoft', app: selectedApp.kind, maxJobs: 20 }),
+    }).catch(() => null);
     setStatusError(null);
     if (typeof window !== 'undefined') window.location.href = returnTo;
   };
@@ -242,6 +283,13 @@ export default function IntegrationsPage() {
             {statusError && (
               <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
                 {statusError}
+              </div>
+            )}
+            {(ingestionSummary.queued > 0 || ingestionSummary.processing > 0 || ingestionSummary.error > 0) && (
+              <div className="rounded-xl border border-orange-200/80 bg-orange-50/70 p-3 text-sm text-foreground dark:border-orange-900/40 dark:bg-orange-950/25">
+                {ingestionSummary.processing > 0 && `${ingestionSummary.processing} processing `}
+                {ingestionSummary.queued > 0 && `${ingestionSummary.queued} queued `}
+                {ingestionSummary.error > 0 && `${ingestionSummary.error} failed `}
               </div>
             )}
             <div className="flex flex-wrap gap-2">

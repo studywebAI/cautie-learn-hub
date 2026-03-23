@@ -2,14 +2,13 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
-import { getValidMicrosoftAccessToken } from '@/lib/integrations/microsoft-store';
-import { extractMicrosoftFileText } from '@/lib/integrations/microsoft';
 import {
   clearSelectedIntegrationSources,
+  enqueueIntegrationIngestionJobs,
   listIntegrationSources,
   upsertIntegrationSource,
 } from '@/lib/integrations/source-store';
-import { checkRateLimit } from '@/lib/security/request-guards';
+import { checkRateLimit, verifySameOrigin } from '@/lib/security/request-guards';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,6 +70,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const sameOrigin = verifySameOrigin(request);
+    if (!sameOrigin.ok) {
+      return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    }
+
     const rateLimit = checkRateLimit(request, { key: 'integration-sources-post', limit: 20, windowMs: 60_000 });
     if (!rateLimit.ok) return rateLimit.response;
 
@@ -99,24 +103,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (body.provider !== 'microsoft') {
-      return NextResponse.json({ error: 'Provider not supported yet' }, { status: 400 });
-    }
-
-    const tokenState = await getValidMicrosoftAccessToken(supabase, user.id);
-    if (!tokenState) {
-      return NextResponse.json({ error: 'Microsoft account not connected' }, { status: 404 });
-    }
-
     const results = [];
+    const sourceIds: string[] = [];
     for (const item of body.items) {
-      const extractedText = await extractMicrosoftFileText({
-        accessToken: tokenState.accessToken,
-        fileId: item.id,
-        kind: body.app,
-      }).catch(() => '');
-
-      const status = extractedText.trim().length > 0 ? 'ready' : 'empty';
       const source = await upsertIntegrationSource(supabase, {
         userId: user.id,
         provider: body.provider,
@@ -125,15 +114,23 @@ export async function POST(request: NextRequest) {
         name: item.name,
         mimeType: item.mimeType || null,
         webUrl: item.webUrl || null,
-        extractedText: extractedText || null,
-        extractionStatus: status,
+        extractedText: null,
+        extractionStatus: 'pending',
         isSelected: true,
         metadata: {
           imported_at: new Date().toISOString(),
         },
       });
+      sourceIds.push(source.id);
       results.push(source);
     }
+
+    await enqueueIntegrationIngestionJobs(supabase, {
+      userId: user.id,
+      provider: body.provider,
+      app: body.app,
+      sourceIds,
+    });
 
     return NextResponse.json({ items: results });
   } catch (error: any) {
