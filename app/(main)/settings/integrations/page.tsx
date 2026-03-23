@@ -11,7 +11,7 @@ const APPS = [
   {
     id: 'word',
     label: 'Word',
-    logo: 'https://cdn.simpleicons.org/microsoftword/185ABD',
+    logo: '/integrations/microsoft-word.svg',
     description: 'Read-only .doc/.docx access',
     iconSurface: 'bg-[#EAF2FF] text-[#2B579A]',
     cardSurface: 'border-[#2B579A]/25 bg-[#F5F9FF]',
@@ -19,7 +19,7 @@ const APPS = [
   {
     id: 'powerpoint',
     label: 'PowerPoint',
-    logo: 'https://cdn.simpleicons.org/microsoftpowerpoint/B7472A',
+    logo: '/integrations/microsoft-powerpoint.svg',
     description: 'Read-only .ppt/.pptx access',
     iconSurface: 'bg-[#FFF0EC] text-[#B7472A]',
     cardSurface: 'border-[#B7472A]/25 bg-[#FFF7F4]',
@@ -27,7 +27,7 @@ const APPS = [
   {
     id: 'onedrive',
     label: 'OneDrive',
-    logo: 'https://cdn.simpleicons.org/microsoftonedrive/0078D4',
+    logo: '/integrations/microsoft-onedrive.svg',
     description: 'Browse recent files safely',
     iconSurface: 'bg-[#EAF6FF] text-[#0078D4]',
     cardSurface: 'border-[#0078D4]/25 bg-[#F5FAFF]',

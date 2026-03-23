@@ -775,19 +775,17 @@ export function SourceInput({
         </div>
       )}
 
-      {!manualText && sources.length === 0 && (
-        <div className="flex items-start pt-2">
-          <div className="space-y-2.5 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5 text-foreground/60">
-              <Lightbulb className="h-3.5 w-3.5" />
-              <span className="font-medium">Tips {toolId ? `(${toolId})` : ''}</span>
-            </div>
-            {tips.map((tip, i) => (
-              <p key={i} className="pl-5">- {tip}</p>
-            ))}
+      <div className="flex items-start pt-1">
+        <div className="space-y-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-foreground/70">
+            <Lightbulb className="h-3.5 w-3.5" />
+            <span className="font-medium">Tips {toolId ? `(${toolId})` : ''}</span>
           </div>
+          {tips.map((tip, i) => (
+            <p key={i} className="pl-5">- {tip}</p>
+          ))}
         </div>
-      )}
+      </div>
 
       {uploadedFile && (
         <div className="flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1.5 text-xs">
@@ -799,7 +797,7 @@ export function SourceInput({
         </div>
       )}
 
-      <div className="flex gap-2 items-stretch">
+      <div className="mt-auto flex gap-2 items-stretch">
         <div className="flex-1 flex flex-col gap-2">
           {linksOpen && (
             <div className="flex items-center gap-2">

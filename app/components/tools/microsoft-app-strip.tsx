@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type MicrosoftStatus = {
   connected: boolean;
@@ -16,21 +17,21 @@ const APPS = [
   {
     id: 'word',
     label: 'Word',
-    logo: 'https://cdn.simpleicons.org/microsoftword/185ABD',
+    logo: '/integrations/microsoft-word.svg',
     href: '/tools/studyset?open=create&step=2&source=word',
     cardClass: 'border-[#2B579A]/25 bg-[#EAF2FF]',
   },
   {
     id: 'powerpoint',
     label: 'PowerPoint',
-    logo: 'https://cdn.simpleicons.org/microsoftpowerpoint/B7472A',
+    logo: '/integrations/microsoft-powerpoint.svg',
     href: '/tools/studyset?open=create&step=2&source=powerpoint',
     cardClass: 'border-[#B7472A]/25 bg-[#FFF0EC]',
   },
   {
     id: 'onedrive',
     label: 'OneDrive',
-    logo: 'https://cdn.simpleicons.org/microsoftonedrive/0078D4',
+    logo: '/integrations/microsoft-onedrive.svg',
     href: '/tools/studyset?open=create&step=2&source=onedrive',
     cardClass: 'border-[#0078D4]/25 bg-[#EAF6FF]',
   },
@@ -38,31 +39,48 @@ const APPS = [
 
 export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [status, setStatus] = useState<MicrosoftStatus>({ connected: false });
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const loadStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/api/integrations/microsoft/status', { cache: 'no-store' });
+      if (!response.ok) {
+        setStatus({ connected: false });
+        return;
+      }
+      const json = await response.json();
+      setStatus({
+        connected: Boolean(json?.connected),
+        account_email: json?.account_email ? String(json.account_email) : undefined,
+      });
+    } catch {
+      setStatus({ connected: false });
+    }
+  }, []);
 
   useEffect(() => {
-    const loadStatus = async () => {
-      try {
-        const response = await fetch('/api/integrations/microsoft/status', { cache: 'no-store' });
-        if (!response.ok) {
-          setStatus({ connected: false });
-          return;
-        }
-        const json = await response.json();
-        setStatus({
-          connected: Boolean(json?.connected),
-          account_email: json?.account_email ? String(json.account_email) : undefined,
-        });
-      } catch {
-        setStatus({ connected: false });
-      }
-    };
     void loadStatus();
-  }, []);
+  }, [loadStatus]);
 
   const connectHref = useMemo(
     () => `/settings/integrations?returnTo=${encodeURIComponent(returnTo)}`,
     [returnTo]
   );
+
+  useEffect(() => {
+    const ms = searchParams.get('ms');
+    const msError = searchParams.get('ms_error');
+    if (!ms && !msError) return;
+    void loadStatus();
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('ms');
+    params.delete('ms_error');
+    const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(next);
+  }, [loadStatus, pathname, router, searchParams]);
 
   return (
     <div className="rounded-xl border border-orange-200/80 bg-orange-50/70 p-3 dark:border-orange-900/40 dark:bg-orange-950/25">
@@ -74,7 +92,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       </div>
       <div className="grid grid-cols-3 gap-2">
         {APPS.map((app) => {
-          const href = status.connected ? app.href : connectHref;
+          const href = app.href;
           return (
             <Link
               key={app.id}

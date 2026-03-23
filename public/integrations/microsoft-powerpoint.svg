@@ -1,0 +1,6 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Microsoft PowerPoint">
+  <rect x="4" y="8" width="56" height="48" rx="10" fill="#B7472A"/>
+  <rect x="20" y="14" width="34" height="36" rx="6" fill="#D35E3C"/>
+  <rect x="10" y="14" width="18" height="36" rx="6" fill="#A33C22"/>
+  <path d="M14 24h7c3 0 5 2 5 5s-2 5-5 5h-4v6h-3V24zm3 3v4h4c1 0 2-.8 2-2s-1-2-2-2h-4z" fill="#fff"/>
+</svg>
