@@ -15,7 +15,7 @@ export async function GET() {
 
     const { data: rows, error } = await (supabase as any)
       .from('studysets')
-      .select('id, name, confidence_level, target_days, minutes_per_day, status, created_at, updated_at')
+      .select('id, name, confidence_level, target_days, minutes_per_day, status, source_bundle, created_at, updated_at')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
       .limit(100)
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         status: 'draft',
         source_bundle: sourceBundle,
       }])
-      .select('id, name, confidence_level, target_days, minutes_per_day, status, created_at, updated_at')
+      .select('id, name, confidence_level, target_days, minutes_per_day, status, source_bundle, created_at, updated_at')
       .single()
 
     if (createError || !studyset) {

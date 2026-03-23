@@ -1,49 +1,42 @@
 'use client';
 
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  CalendarDays,
-  CheckCircle2,
+  Atom,
+  BookOpen,
+  Calculator,
   ChevronLeft,
   ChevronRight,
-  Clock3,
-  FileText,
+  Code2,
+  Dna,
+  FlaskConical,
+  Globe,
+  Landmark,
   Link2,
+  Pencil,
+  Plus,
   Route,
   Upload,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 
 type StudysetRow = {
   id: string;
   name: string;
-  confidence_level: string;
   target_days: number;
   minutes_per_day: number;
   status: string;
   updated_at: string;
-};
-
-type UploadMeta = {
-  name: string;
-  size: number;
-  type: string;
+  source_bundle?: string | null;
 };
 
 type MicrosoftFileItem = {
@@ -56,20 +49,43 @@ type MicrosoftFileItem = {
   mimeType?: string;
 };
 
-const DRAFT_KEY = 'studyweb-studyset-wizard-draft-v1';
-const MAX_TARGET_DAYS = 60;
+type UploadMeta = {
+  name: string;
+  size: number;
+  type: string;
+};
 
-const STEP_TITLES = ['Schedule', 'Sources', 'Optional Notes'];
+type IconOption = {
+  id: string;
+  label: string;
+  Icon: LucideIcon;
+};
 
-const WEEKDAY_OPTIONS = [
-  { value: 1, label: 'Mon' },
-  { value: 2, label: 'Tue' },
-  { value: 3, label: 'Wed' },
-  { value: 4, label: 'Thu' },
-  { value: 5, label: 'Fri' },
-  { value: 6, label: 'Sat' },
-  { value: 0, label: 'Sun' },
-] as const;
+const STEP_TITLES = ['Basics', 'Calendar', 'Sources'];
+
+const ICON_OPTIONS: IconOption[] = [
+  { id: 'book-open', label: 'Book', Icon: BookOpen },
+  { id: 'flask', label: 'Science', Icon: FlaskConical },
+  { id: 'landmark', label: 'History', Icon: Landmark },
+  { id: 'globe', label: 'Geo', Icon: Globe },
+  { id: 'calculator', label: 'Math', Icon: Calculator },
+  { id: 'dna', label: 'Biology', Icon: Dna },
+  { id: 'atom', label: 'Physics', Icon: Atom },
+  { id: 'pencil', label: 'Writing', Icon: Pencil },
+  { id: 'code', label: 'Coding', Icon: Code2 },
+];
+
+const COLOR_OPTIONS = ['slate', 'stone', 'zinc', 'neutral', 'gray', 'iron', 'graphite'];
+
+const COLOR_CLASS: Record<string, string> = {
+  slate: 'bg-slate-200 text-slate-900',
+  stone: 'bg-stone-200 text-stone-900',
+  zinc: 'bg-zinc-200 text-zinc-900',
+  neutral: 'bg-neutral-200 text-neutral-900',
+  gray: 'bg-gray-200 text-gray-900',
+  iron: 'bg-[#d8d8db] text-[#121212]',
+  graphite: 'bg-[#d1d1d4] text-[#101010]',
+};
 
 function toIsoLocalDate(date: Date) {
   const y = date.getFullYear();
@@ -78,30 +94,21 @@ function toIsoLocalDate(date: Date) {
   return `${y}-${m}-${d}`;
 }
 
-function parseLocalDate(value: string) {
-  const parsed = new Date(`${value}T00:00:00`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+function normalizeDates(dates: Date[]) {
+  const unique = new Set(dates.map((date) => toIsoLocalDate(date)));
+  return Array.from(unique).sort();
 }
 
-function buildPlanDates(startDateValue: string, endDateValue: string, excludedWeekdays: Set<number>) {
-  const start = parseLocalDate(startDateValue);
-  const end = parseLocalDate(endDateValue);
-  if (!start || !end || end < start) return [];
-
-  const dates: string[] = [];
-  const cursor = new Date(start);
-  const maxLoops = 370;
-
-  for (let i = 0; i < maxLoops && cursor <= end; i += 1) {
-    const day = cursor.getDay();
-    if (!excludedWeekdays.has(day)) {
-      dates.push(toIsoLocalDate(cursor));
-      if (dates.length >= MAX_TARGET_DAYS) break;
-    }
-    cursor.setDate(cursor.getDate() + 1);
+function parseSourceMeta(raw: string | null | undefined) {
+  if (!raw) return { icon: null as string | null, color: null as string | null };
+  try {
+    const parsed = JSON.parse(raw);
+    const icon = typeof parsed?.meta?.icon === 'string' ? parsed.meta.icon : null;
+    const color = typeof parsed?.meta?.color === 'string' ? parsed.meta.color : null;
+    return { icon, color };
+  } catch {
+    return { icon: null, color: null };
   }
-
-  return dates;
 }
 
 export default function StudysetPage() {
@@ -109,97 +116,85 @@ export default function StudysetPage() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const today = useMemo(() => toIsoLocalDate(new Date()), []);
-
+  const [view, setView] = useState<'home' | 'create'>('home');
   const [step, setStep] = useState(0);
+  const [studysets, setStudysets] = useState<StudysetRow[]>([]);
+  const [loadingStudysets, setLoadingStudysets] = useState(true);
+
   const [name, setName] = useState('');
-  const [startDate, setStartDate] = useState(today);
-  const [targetDate, setTargetDate] = useState('');
-  const [minutesPerDay, setMinutesPerDay] = useState('45');
-  const [confidence, setConfidence] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
-  const [excludedDays, setExcludedDays] = useState<number[]>([0, 6]);
-  const [sourceBundle, setSourceBundle] = useState('');
-  const [additionalNotes, setAdditionalNotes] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [notesText, setNotesText] = useState('');
+  const [pastedText, setPastedText] = useState('');
+  const [uploads, setUploads] = useState<UploadMeta[]>([]);
+
   const [microsoftConnected, setMicrosoftConnected] = useState(false);
   const [microsoftEmail, setMicrosoftEmail] = useState('');
   const [microsoftLoading, setMicrosoftLoading] = useState(false);
   const [wordFiles, setWordFiles] = useState<MicrosoftFileItem[]>([]);
   const [powerpointFiles, setPowerpointFiles] = useState<MicrosoftFileItem[]>([]);
   const [selectedMicrosoftFileIds, setSelectedMicrosoftFileIds] = useState<string[]>([]);
-  const [uploads, setUploads] = useState<UploadMeta[]>([]);
-  const [studysets, setStudysets] = useState<StudysetRow[]>([]);
-  const [loadingStudysets, setLoadingStudysets] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [generatingId, setGeneratingId] = useState<string | null>(null);
 
+  const [creating, setCreating] = useState(false);
+
+  const madeStudysets = useMemo(() => studysets.filter((row) => row.status !== 'archived'), [studysets]);
+
+  const usedMeta = useMemo(() => {
+    const icons = new Set<string>();
+    const colors = new Set<string>();
+    for (const row of studysets) {
+      const meta = parseSourceMeta(row.source_bundle);
+      if (meta.icon) icons.add(meta.icon);
+      if (meta.color) colors.add(meta.color);
+    }
+    return { icons, colors };
+  }, [studysets]);
+
+  const selectedDateStrings = useMemo(() => normalizeDates(selectedDates), [selectedDates]);
+  const sortedWordFiles = useMemo(() => wordFiles.slice(0, 12), [wordFiles]);
+  const sortedPowerpointFiles = useMemo(() => powerpointFiles.slice(0, 12), [powerpointFiles]);
   const selectedMicrosoftFiles = useMemo(() => {
     const all = [...wordFiles, ...powerpointFiles];
     return all.filter((item) => selectedMicrosoftFileIds.includes(item.id));
   }, [wordFiles, powerpointFiles, selectedMicrosoftFileIds]);
-  const wordConnected = microsoftConnected && selectedMicrosoftFiles.some((item) => item.kind === 'word');
-  const powerpointConnected =
-    microsoftConnected && selectedMicrosoftFiles.some((item) => item.kind === 'powerpoint');
-  const excludedDaySet = useMemo(() => new Set(excludedDays), [excludedDays]);
-  const plannedDates = useMemo(
-    () => buildPlanDates(startDate, targetDate, excludedDaySet),
-    [startDate, targetDate, excludedDaySet]
-  );
-  const targetDays = plannedDates.length;
 
-  const hasSources =
-    sourceBundle.trim().length > 0 || uploads.length > 0 || selectedMicrosoftFiles.length > 0;
-  const isStep1Ready = Boolean(name.trim() && targetDate && targetDays > 0);
-  const isStep2Ready = hasSources;
+  const isStepOneReady = name.trim().length > 0;
+  const isStepTwoReady = selectedDateStrings.length > 0;
+  const isStepThreeReady =
+    notesText.trim().length > 0 ||
+    pastedText.trim().length > 0 ||
+    uploads.length > 0 ||
+    selectedMicrosoftFiles.length > 0;
 
-  useEffect(() => {
+  const resetWizard = () => {
+    setStep(0);
+    setName('');
+    setSelectedIcon(null);
+    setSelectedColor(null);
+    setSelectedDates([]);
+    setNotesText('');
+    setPastedText('');
+    setUploads([]);
+    setSelectedMicrosoftFileIds([]);
+  };
+
+  const loadStudysets = async () => {
+    setLoadingStudysets(true);
     try {
-      const raw = window.localStorage.getItem(DRAFT_KEY);
-      if (!raw) return;
-      const draft = JSON.parse(raw);
-      setName(String(draft?.name || ''));
-      setStartDate(String(draft?.startDate || today));
-      setTargetDate(String(draft?.targetDate || ''));
-      setMinutesPerDay(String(draft?.minutesPerDay || '45'));
-      const level = String(draft?.confidence || 'beginner');
-      if (level === 'beginner' || level === 'intermediate' || level === 'advanced') {
-        setConfidence(level);
+      const response = await fetch('/api/studysets', { cache: 'no-store' });
+      if (!response.ok) {
+        setStudysets([]);
+        return;
       }
-      setExcludedDays(Array.isArray(draft?.excludedDays) ? draft.excludedDays : [0, 6]);
-      setSourceBundle(String(draft?.sourceBundle || ''));
-      setAdditionalNotes(String(draft?.additionalNotes || ''));
-      setSelectedMicrosoftFileIds(Array.isArray(draft?.selectedMicrosoftFileIds) ? draft.selectedMicrosoftFileIds : []);
-      setUploads(Array.isArray(draft?.uploads) ? draft.uploads : []);
+      const data = await response.json();
+      setStudysets(Array.isArray(data?.studysets) ? data.studysets : []);
     } catch {
-      window.localStorage.removeItem(DRAFT_KEY);
+      setStudysets([]);
+    } finally {
+      setLoadingStudysets(false);
     }
-  }, [today]);
-
-  useEffect(() => {
-    const draft = {
-      name,
-      startDate,
-      targetDate,
-      minutesPerDay,
-      confidence,
-      excludedDays,
-      sourceBundle,
-      additionalNotes,
-      selectedMicrosoftFileIds,
-      uploads,
-    };
-    window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-  }, [
-    additionalNotes,
-    confidence,
-    excludedDays,
-    minutesPerDay,
-    name,
-    selectedMicrosoftFileIds,
-    sourceBundle,
-    startDate,
-    targetDate,
-    uploads,
-  ]);
+  };
 
   const loadMicrosoftStatus = async () => {
     try {
@@ -230,7 +225,6 @@ export default function StudysetPage() {
         fetch('/api/integrations/microsoft/files?kind=word', { cache: 'no-store' }),
         fetch('/api/integrations/microsoft/files?kind=powerpoint', { cache: 'no-store' }),
       ]);
-
       const wordJson = await wordRes.json().catch(() => ({}));
       const pptJson = await pptRes.json().catch(() => ({}));
       setWordFiles(Array.isArray(wordJson?.items) ? wordJson.items : []);
@@ -244,12 +238,13 @@ export default function StudysetPage() {
   };
 
   useEffect(() => {
+    void loadStudysets();
     void loadMicrosoftStatus();
   }, []);
 
   useEffect(() => {
     if (searchParams.get('ms') === 'connected') {
-      toast({ title: 'Microsoft connected', description: 'Word and PowerPoint files are now available.' });
+      toast({ title: 'Microsoft connected', description: 'Word and PowerPoint files are ready.' });
       void loadMicrosoftStatus();
       router.replace('/tools/studyset');
       return;
@@ -270,32 +265,25 @@ export default function StudysetPage() {
     setSelectedMicrosoftFileIds((prev) => prev.filter((id) => validIds.has(id)));
   }, [wordFiles, powerpointFiles]);
 
-  const loadStudysets = async () => {
-    setLoadingStudysets(true);
-    try {
-      const response = await fetch('/api/studysets');
-      if (!response.ok) {
-        setStudysets([]);
-        return;
-      }
-      const data = await response.json();
-      setStudysets(Array.isArray(data?.studysets) ? data.studysets : []);
-    } catch {
-      setStudysets([]);
-    } finally {
-      setLoadingStudysets(false);
-    }
+  const startCreate = () => {
+    resetWizard();
+    setView('create');
   };
 
-  useEffect(() => {
-    void loadStudysets();
-  }, []);
+  const goNext = () => {
+    if (step === 0 && !isStepOneReady) return;
+    if (step === 1 && !isStepTwoReady) return;
+    setStep((value) => Math.min(2, value + 1));
+  };
 
-  const toggleExcludedDay = (day: number) => {
-    setExcludedDays((prev) => {
-      if (prev.includes(day)) return prev.filter((value) => value !== day);
-      return [...prev, day].sort((a, b) => a - b);
-    });
+  const canNext = step === 0 ? isStepOneReady : step === 1 ? isStepTwoReady : false;
+
+  const autoPickMeta = () => {
+    const icon =
+      selectedIcon || ICON_OPTIONS.find((option) => !usedMeta.icons.has(option.id))?.id || ICON_OPTIONS[0].id;
+    const color =
+      selectedColor || COLOR_OPTIONS.find((option) => !usedMeta.colors.has(option)) || COLOR_OPTIONS[0];
+    return { icon, color };
   };
 
   const handleUploadChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -308,21 +296,38 @@ export default function StudysetPage() {
     setUploads(mapped);
   };
 
-  const createAndGenerate = async () => {
-    if (!isStep1Ready || !isStep2Ready) return;
+  const toggleMicrosoftFile = (fileId: string) => {
+    setSelectedMicrosoftFileIds((prev) =>
+      prev.includes(fileId) ? prev.filter((value) => value !== fileId) : [...prev, fileId]
+    );
+  };
 
-    const minutes = Math.max(10, Math.min(480, Number(minutesPerDay || 45)));
-    setGenerating(true);
+  const disconnectMicrosoft = async () => {
+    const response = await fetch('/api/integrations/microsoft/disconnect', { method: 'POST' });
+    if (!response.ok) return;
+    setMicrosoftConnected(false);
+    setMicrosoftEmail('');
+    setWordFiles([]);
+    setPowerpointFiles([]);
+    setSelectedMicrosoftFileIds([]);
+  };
+
+  const createStudyset = async () => {
+    if (!isStepOneReady || !isStepTwoReady || !isStepThreeReady) return;
+    setCreating(true);
     try {
+      const meta = autoPickMeta();
       const sourcePayload = {
+        meta: {
+          icon: meta.icon,
+          color: meta.color,
+        },
         schedule: {
-          start_date: startDate,
-          target_date: targetDate,
-          excluded_weekdays: excludedDays,
-          planned_dates: plannedDates,
+          selected_dates: selectedDateStrings,
         },
         sources: {
-          context_text: sourceBundle.trim(),
+          notes_text: notesText.trim(),
+          pasted_text: pastedText.trim(),
           uploaded_files: uploads,
           imports: {
             word: selectedMicrosoftFiles.some((file) => file.kind === 'word'),
@@ -340,7 +345,6 @@ export default function StudysetPage() {
             })),
           },
         },
-        additional_notes: additionalNotes.trim(),
       };
 
       const createRes = await fetch('/api/studysets', {
@@ -348,9 +352,9 @@ export default function StudysetPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
-          confidence_level: confidence,
-          target_days: Math.max(1, Math.min(MAX_TARGET_DAYS, targetDays)),
-          minutes_per_day: minutes,
+          confidence_level: 'beginner',
+          target_days: selectedDateStrings.length,
+          minutes_per_day: 45,
           source_bundle: JSON.stringify(sourcePayload),
         }),
       });
@@ -368,10 +372,8 @@ export default function StudysetPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          start_date: startDate,
-          end_date: targetDate,
-          excluded_weekdays: excludedDays,
-          feedback: additionalNotes.trim() || null,
+          selected_dates: selectedDateStrings,
+          feedback: notesText.trim() || null,
         }),
       });
 
@@ -380,235 +382,205 @@ export default function StudysetPage() {
         throw new Error(message || 'Failed to generate plan');
       }
 
-      window.localStorage.removeItem(DRAFT_KEY);
-      toast({ title: 'Study plan ready', description: 'Your plan was generated and synced to Agenda.' });
+      toast({ title: 'Studyset created', description: 'Today plan is ready.' });
       router.push(`/tools/studyset/${studysetId}`);
     } catch (error: any) {
       toast({
-        title: 'Could not generate study plan',
+        title: 'Could not create studyset',
         description: error?.message || 'Try again.',
         variant: 'destructive',
       });
     } finally {
-      setGenerating(false);
-    }
-  };
-
-  const generatePlanForExisting = async (studysetId: string) => {
-    setGeneratingId(studysetId);
-    try {
-      const response = await fetch(`/api/studysets/${studysetId}/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || 'Failed to generate plan');
-      }
-      await loadStudysets();
-      toast({ title: 'Plan generated', description: 'Daily tasks are now synced into Agenda.' });
-    } catch (error: any) {
-      toast({
-        title: 'Could not generate plan',
-        description: error?.message || 'Try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setGeneratingId(null);
-    }
-  };
-
-  const goNext = () => {
-    if (step === 0 && !isStep1Ready) return;
-    if (step === 1 && !isStep2Ready) return;
-    setStep((value) => Math.min(2, value + 1));
-  };
-
-  const canNext = step === 0 ? isStep1Ready : step === 1 ? isStep2Ready : false;
-
-  const toggleMicrosoftFile = (fileId: string) => {
-    setSelectedMicrosoftFileIds((prev) =>
-      prev.includes(fileId) ? prev.filter((value) => value !== fileId) : [...prev, fileId]
-    );
-  };
-
-  const disconnectMicrosoft = async () => {
-    try {
-      const response = await fetch('/api/integrations/microsoft/disconnect', { method: 'POST' });
-      if (!response.ok) throw new Error('Failed to disconnect');
-      setMicrosoftConnected(false);
-      setMicrosoftEmail('');
-      setWordFiles([]);
-      setPowerpointFiles([]);
-      setSelectedMicrosoftFileIds([]);
-      toast({ title: 'Disconnected', description: 'Microsoft account removed.' });
-    } catch {
-      toast({ title: 'Could not disconnect', variant: 'destructive' });
+      setCreating(false);
     }
   };
 
   return (
     <div className="h-full overflow-auto">
-      <div className="flex min-h-full w-full flex-col gap-4">
+      <div className="w-full space-y-4">
         <Card className="border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Route className="h-5 w-5" />
               Studyset
             </CardTitle>
-            <CardDescription>
-              Build once, then follow day-by-day. No manual save needed.
-            </CardDescription>
+            <CardDescription>Build once, follow day-by-day. Changes auto-save.</CardDescription>
           </CardHeader>
         </Card>
 
-        <Card className="border-none">
-          <CardHeader className="pb-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <CardTitle>Create Study Plan</CardTitle>
-                <CardDescription>{STEP_TITLES[step]}</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                {STEP_TITLES.map((title, index) => (
-                  <div
-                    key={title}
-                    className={`rounded-full px-3 py-1 text-xs ${
-                      index === step ? 'bg-muted text-foreground' : 'bg-background text-muted-foreground'
-                    }`}
-                  >
-                    {index + 1}. {title}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardHeader>
+        {view === 'home' && (
+          <>
+            <Card className="border-none">
+              <CardHeader>
+                <CardTitle>New studyset</CardTitle>
+                <CardDescription>Create a fresh study plan in 3 clear steps.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button type="button" onClick={startCreate}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Open new studyset
+                </Button>
+              </CardContent>
+            </Card>
 
-          <CardContent className="space-y-4">
-            {step === 0 && (
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <Label>Studyset name</Label>
-                  <Input
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    placeholder="Biology exam prep"
-                  />
+            {!loadingStudysets && madeStudysets.length > 0 && (
+              <Card className="border-none">
+                <CardHeader>
+                  <CardTitle>Made studysets</CardTitle>
+                  <CardDescription>Open today plan, edit tasks, or view all days.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {madeStudysets.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => router.push(`/tools/studyset/${item.id}`)}
+                      className="w-full rounded-xl bg-card px-3 py-2 text-left transition-colors hover:bg-muted"
+                    >
+                      <p className="text-sm font-medium">{item.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.target_days} days · {item.minutes_per_day} min/day
+                      </p>
+                    </button>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+
+        {view === 'create' && (
+          <Card className="border-none">
+            <CardHeader className="pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle>Create studyset</CardTitle>
+                  <CardDescription>{STEP_TITLES[step]}</CardDescription>
                 </div>
+                <div className="flex items-center gap-2">
+                  {STEP_TITLES.map((title, index) => (
+                    <div
+                      key={title}
+                      className={`rounded-full px-3 py-1 text-xs ${
+                        index === step ? 'bg-muted text-foreground' : 'bg-background text-muted-foreground'
+                      }`}
+                    >
+                      {index + 1}. {title}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardHeader>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <CardContent className="space-y-4">
+              {step === 0 && (
+                <div className="space-y-4">
                   <div className="space-y-1">
-                    <Label>Start date</Label>
-                    <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Target finish date</Label>
-                    <Input type="date" value={targetDate} onChange={(event) => setTargetDate(event.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Minutes per day</Label>
+                    <Label>Studyset name</Label>
                     <Input
-                      type="number"
-                      min={10}
-                      max={480}
-                      value={minutesPerDay}
-                      onChange={(event) => setMinutesPerDay(event.target.value)}
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="WW2 final prep"
                     />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Exclude days</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {WEEKDAY_OPTIONS.map((option) => {
-                        const selected = excludedDaySet.has(option.value);
+                    <Label>Icon (optional)</Label>
+                    <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
+                      {ICON_OPTIONS.map((option) => {
+                        const ActiveIcon = option.Icon;
+                        const selected = selectedIcon === option.id;
                         return (
                           <button
-                            key={option.value}
+                            key={option.id}
                             type="button"
-                            onClick={() => toggleExcludedDay(option.value)}
-                            className={`rounded-lg px-3 py-1.5 text-xs transition-colors ${
+                            onClick={() => setSelectedIcon(selected ? null : option.id)}
+                            className={`rounded-lg px-3 py-2 text-xs transition-colors ${
                               selected ? 'bg-muted text-foreground' : 'bg-background text-muted-foreground'
                             }`}
                           >
-                            {option.label}
+                            <span className="inline-flex items-center gap-1.5">
+                              <ActiveIcon className="h-3.5 w-3.5" />
+                              {option.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Color (optional)</Label>
+                    <div className="grid grid-cols-4 gap-2 md:grid-cols-7">
+                      {COLOR_OPTIONS.map((color) => {
+                        const selected = selectedColor === color;
+                        return (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setSelectedColor(selected ? null : color)}
+                            className={`rounded-lg px-2 py-2 text-xs capitalize transition-all ${COLOR_CLASS[color]} ${
+                              selected ? 'ring-1 ring-foreground' : ''
+                            }`}
+                          >
+                            {color}
                           </button>
                         );
                       })}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Excluded days are skipped in generated plan dates.
+                      If you skip icon/color, we auto-pick an unused combo.
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {step === 1 && (
+                <div className="space-y-3">
+                  <Label>Select available study days</Label>
+                  <div className="rounded-xl bg-background p-2">
+                    <Calendar
+                      mode="multiple"
+                      selected={selectedDates}
+                      onSelect={(value) => setSelectedDates(Array.isArray(value) ? value : [])}
+                      className="mx-auto"
+                    />
+                  </div>
+                  <div className="rounded-xl bg-background p-3 text-xs text-muted-foreground">
+                    {selectedDateStrings.length === 0
+                      ? 'Pick at least one day.'
+                      : `${selectedDateStrings.length} day${selectedDateStrings.length === 1 ? '' : 's'} selected.`}
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <Label>Notes</Label>
+                    <Textarea
+                      value={notesText}
+                      onChange={(event) => setNotesText(event.target.value)}
+                      placeholder="What this studyset should focus on..."
+                      className="min-h-[110px]"
+                    />
                   </div>
 
                   <div className="space-y-1">
-                    <Label>Current level</Label>
-                    <Select
-                      value={confidence}
-                      onValueChange={(value) =>
-                        setConfidence(value as 'beginner' | 'intermediate' | 'advanced')
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="beginner">Beginner</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label>Pasted text</Label>
+                    <Textarea
+                      value={pastedText}
+                      onChange={(event) => setPastedText(event.target.value)}
+                      placeholder="Paste chapters, summaries, requirements..."
+                      className="min-h-[140px]"
+                    />
                   </div>
-                </div>
 
-                <div className="rounded-xl bg-background p-3">
-                  <p className="text-sm font-medium">Schedule preview</p>
-                  {targetDays === 0 ? (
-                    <p className="text-xs text-muted-foreground">Set a valid date range with at least one included day.</p>
-                  ) : (
-                    <div className="mt-2 space-y-1">
-                      <p className="text-xs text-muted-foreground">
-                        {targetDays} planned day{targetDays === 1 ? '' : 's'} between {startDate} and {targetDate}
-                        {targetDays >= MAX_TARGET_DAYS ? ' (capped at 60)' : ''}.
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {plannedDates.slice(0, 14).map((date) => (
-                          <Badge key={date} variant="outline" className="bg-card">
-                            {date}
-                          </Badge>
-                        ))}
-                        {plannedDates.length > 14 && (
-                          <Badge variant="outline" className="bg-card">
-                            +{plannedDates.length - 14} more
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {step === 1 && (
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <Label>Context bundle</Label>
-                  <Textarea
-                    value={sourceBundle}
-                    onChange={(event) => setSourceBundle(event.target.value)}
-                    className="min-h-[160px]"
-                    placeholder="Paste key chapters, test scope, weak points, and anything important..."
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="rounded-xl bg-background p-3">
-                    <p className="mb-2 text-sm font-medium">Upload source files</p>
+                    <p className="mb-2 text-sm font-medium">Files</p>
                     <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-card px-3 py-2 text-sm">
                       <Upload className="h-4 w-4" />
-                      Choose files
+                      Add files
                       <input
                         type="file"
                         multiple
@@ -617,12 +589,10 @@ export default function StudysetPage() {
                         onChange={handleUploadChange}
                       />
                     </label>
-                    {uploads.length === 0 ? (
-                      <p className="mt-2 text-xs text-muted-foreground">No files selected yet.</p>
-                    ) : (
+                    {uploads.length > 0 && (
                       <div className="mt-2 space-y-1">
                         {uploads.map((file) => (
-                          <div key={`${file.name}-${file.size}`} className="rounded-lg bg-card px-2 py-1 text-xs">
+                          <div key={`${file.name}-${file.size}`} className="rounded-md bg-card px-2 py-1 text-xs">
                             {file.name}
                           </div>
                         ))}
@@ -631,74 +601,68 @@ export default function StudysetPage() {
                   </div>
 
                   <div className="rounded-xl bg-background p-3">
-                    <p className="mb-2 text-sm font-medium">Import from</p>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between rounded-lg bg-card px-3 py-2 text-sm">
-                        <span className="inline-flex items-center gap-2">
-                          <Link2 className="h-4 w-4" />
-                          Microsoft 365
-                        </span>
-                        {microsoftConnected ? (
-                          <span className="text-xs text-muted-foreground">{microsoftEmail || 'Connected'}</span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Not connected</span>
-                        )}
-                      </div>
-
-                      {!microsoftConnected ? (
-                        <Button asChild variant="outline" className="w-full">
-                          <a href="/api/integrations/microsoft/connect?returnTo=/tools/studyset">Connect Microsoft</a>
-                        </Button>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">Import from Word/PowerPoint</p>
+                      {microsoftConnected ? (
+                        <span className="text-xs text-muted-foreground">{microsoftEmail || 'Connected'}</span>
                       ) : (
-                        <div className="flex gap-2">
-                          <Button type="button" variant="outline" className="flex-1" onClick={() => void loadMicrosoftFiles()}>
-                            Refresh files
-                          </Button>
-                          <Button type="button" variant="outline" className="flex-1" onClick={() => void disconnectMicrosoft()}>
-                            Disconnect
-                          </Button>
-                        </div>
+                        <span className="text-xs text-muted-foreground">Not connected</span>
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Read-only access. We never edit external files.
-                    </p>
+
+                    {!microsoftConnected ? (
+                      <Button asChild variant="outline" className="mt-2">
+                        <a href="/api/integrations/microsoft/connect?returnTo=/tools/studyset">
+                          <Link2 className="mr-2 h-4 w-4" />
+                          Connect Microsoft
+                        </a>
+                      </Button>
+                    ) : (
+                      <div className="mt-2 flex gap-2">
+                        <Button type="button" variant="outline" onClick={() => void loadMicrosoftFiles()}>
+                          Refresh files
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => void disconnectMicrosoft()}>
+                          Disconnect
+                        </Button>
+                      </div>
+                    )}
 
                     {microsoftConnected && (
-                      <div className="mt-3 space-y-3">
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">Word documents</p>
-                          <div className="mt-1 space-y-1">
-                            {microsoftLoading && <p className="text-xs text-muted-foreground">Loading...</p>}
-                            {!microsoftLoading && wordFiles.length === 0 && (
-                              <p className="text-xs text-muted-foreground">No Word files found.</p>
-                            )}
-                            {wordFiles.slice(0, 8).map((file) => (
-                              <label key={file.id} className="flex items-center gap-2 rounded-md bg-card px-2 py-1.5 text-xs">
+                      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <div className="rounded-lg bg-card p-2">
+                          <p className="mb-1 text-xs font-medium">Word</p>
+                          {microsoftLoading && <p className="text-xs text-muted-foreground">Loading...</p>}
+                          {!microsoftLoading && sortedWordFiles.length === 0 && (
+                            <p className="text-xs text-muted-foreground">No Word files found.</p>
+                          )}
+                          <div className="space-y-1">
+                            {sortedWordFiles.map((file) => (
+                              <label key={file.id} className="flex items-center gap-2 rounded-md bg-background px-2 py-1 text-xs">
                                 <Checkbox
                                   checked={selectedMicrosoftFileIds.includes(file.id)}
                                   onCheckedChange={() => toggleMicrosoftFile(file.id)}
                                 />
-                                <span className="flex-1 truncate">{file.name}</span>
+                                <span className="truncate">{file.name}</span>
                               </label>
                             ))}
                           </div>
                         </div>
 
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">PowerPoint decks</p>
-                          <div className="mt-1 space-y-1">
-                            {microsoftLoading && <p className="text-xs text-muted-foreground">Loading...</p>}
-                            {!microsoftLoading && powerpointFiles.length === 0 && (
-                              <p className="text-xs text-muted-foreground">No PowerPoint files found.</p>
-                            )}
-                            {powerpointFiles.slice(0, 8).map((file) => (
-                              <label key={file.id} className="flex items-center gap-2 rounded-md bg-card px-2 py-1.5 text-xs">
+                        <div className="rounded-lg bg-card p-2">
+                          <p className="mb-1 text-xs font-medium">PowerPoint</p>
+                          {microsoftLoading && <p className="text-xs text-muted-foreground">Loading...</p>}
+                          {!microsoftLoading && sortedPowerpointFiles.length === 0 && (
+                            <p className="text-xs text-muted-foreground">No PowerPoint files found.</p>
+                          )}
+                          <div className="space-y-1">
+                            {sortedPowerpointFiles.map((file) => (
+                              <label key={file.id} className="flex items-center gap-2 rounded-md bg-background px-2 py-1 text-xs">
                                 <Checkbox
                                   checked={selectedMicrosoftFileIds.includes(file.id)}
                                   onCheckedChange={() => toggleMicrosoftFile(file.id)}
                                 />
-                                <span className="flex-1 truncate">{file.name}</span>
+                                <span className="truncate">{file.name}</span>
                               </label>
                             ))}
                           </div>
@@ -707,105 +671,39 @@ export default function StudysetPage() {
                     )}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <Label>Additional instructions (optional)</Label>
-                  <Textarea
-                    value={additionalNotes}
-                    onChange={(event) => setAdditionalNotes(event.target.value)}
-                    className="min-h-[160px]"
-                    placeholder="Optional: mention preferred tool mix, pace, weak topics, or exam strategy."
-                  />
-                </div>
-
-                <div className="rounded-xl bg-background p-3 text-xs text-muted-foreground">
-                  This step is optional. You can skip it and generate now.
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStep((value) => Math.max(0, value - 1))}
-                disabled={step === 0 || generating}
-              >
-                <ChevronLeft className="mr-1 h-4 w-4" />
-                Previous
-              </Button>
-
-              {step < 2 ? (
-                <Button type="button" onClick={goNext} disabled={!canNext || generating}>
-                  Next
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              ) : (
-                <Button type="button" onClick={() => void createAndGenerate()} disabled={generating || !isStep2Ready}>
-                  {generating ? 'Generating...' : 'Generate study plan'}
-                </Button>
               )}
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card className="border-none">
-          <CardHeader>
-            <CardTitle>My Studysets</CardTitle>
-            <CardDescription>Open existing plans or regenerate.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {loadingStudysets ? (
-              <p className="text-sm text-muted-foreground">Loading studysets...</p>
-            ) : studysets.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No studysets yet.</p>
-            ) : (
-              studysets.map((item) => (
-                <div key={item.id} className="rounded-xl bg-card p-3">
-                  <p className="font-medium">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarDays className="h-3 w-3" />
-                      {item.target_days} days
-                    </span>{' '}
-                    <span className="inline-flex items-center gap-1">
-                      <Clock3 className="h-3 w-3" />
-                      {item.minutes_per_day} min/day
-                    </span>{' '}
-                    <span className="inline-flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" />
-                      {item.confidence_level}
-                    </span>
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={generatingId === item.id}
-                      onClick={() => void generatePlanForExisting(item.id)}
-                    >
-                      {generatingId === item.id ? 'Generating...' : 'Regenerate'}
-                    </Button>
-                    <Button asChild size="sm">
-                      <Link href={`/tools/studyset/${item.id}`}>Open plan</Link>
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+              <div className="flex items-center justify-between">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    if (step === 0) {
+                      setView('home');
+                      return;
+                    }
+                    setStep((value) => Math.max(0, value - 1));
+                  }}
+                  disabled={creating}
+                >
+                  <ChevronLeft className="mr-1 h-4 w-4" />
+                  Previous
+                </Button>
 
-        <Card className="border-none">
-          <CardContent className="flex items-center gap-2 py-4 text-xs text-muted-foreground">
-            <FileText className="h-4 w-4" />
-            Your generated studyset syncs into Agenda and Dashboard automatically.
-          </CardContent>
-        </Card>
+                {step < 2 ? (
+                  <Button type="button" onClick={goNext} disabled={!canNext || creating}>
+                    Next
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button type="button" onClick={() => void createStudyset()} disabled={!isStepThreeReady || creating}>
+                    {creating ? 'Creating...' : 'Create studyset'}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

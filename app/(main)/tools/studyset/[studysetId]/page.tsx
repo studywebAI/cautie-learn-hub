@@ -4,13 +4,12 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
-import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, RefreshCcw, Wand2 } from 'lucide-react';
+import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, RefreshCcw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { useToast } from '@/hooks/use-toast';
 
@@ -37,7 +36,6 @@ type StudysetDay = {
 type StudysetDetail = {
   id: string;
   name: string;
-  confidence_level: string;
   target_days: number;
   minutes_per_day: number;
   status: string;
@@ -59,19 +57,25 @@ function toolLabel(taskType: string) {
   return 'Notes';
 }
 
+function toIsoLocalDate(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export default function StudysetDetailPage() {
   const params = useParams<{ studysetId: string }>();
   const studysetId = params?.studysetId;
   const { toast } = useToast();
+  const todayIso = useMemo(() => toIsoLocalDate(new Date()), []);
 
   const [loading, setLoading] = useState(true);
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null);
-  const [regenerating, setRegenerating] = useState(false);
+  const [showAllDays, setShowAllDays] = useState(false);
   const [studyset, setStudyset] = useState<StudysetDetail | null>(null);
   const [days, setDays] = useState<StudysetDay[]>([]);
   const [progress, setProgress] = useState({ total_tasks: 0, completed_tasks: 0, percent: 0 });
-  const [approval, setApproval] = useState<'pending' | 'approved' | 'changes'>('pending');
-  const [changeRequest, setChangeRequest] = useState('');
 
   const loadDetail = async () => {
     if (!studysetId) return;
@@ -139,38 +143,27 @@ export default function StudysetDetailPage() {
     }
   };
 
-  const regenerateWithChanges = async () => {
-    if (!studysetId) return;
-    setRegenerating(true);
-    try {
-      const response = await fetch(`/api/studysets/${studysetId}/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          feedback: changeRequest.trim() || 'Adjust the plan for better pacing.',
-        }),
-      });
-      if (!response.ok) throw new Error('Could not regenerate plan');
-      await loadDetail();
-      setApproval('pending');
-      setChangeRequest('');
-      toast({ title: 'Plan regenerated', description: 'Your requested changes were applied.' });
-    } catch (error: any) {
-      toast({
-        title: 'Could not regenerate plan',
-        description: error?.message || 'Try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setRegenerating(false);
-    }
-  };
-
   useEffect(() => {
     void loadDetail();
   }, [studysetId]);
 
   const completedDays = useMemo(() => days.filter((day) => day.completed).length, [days]);
+
+  const todayDay = useMemo(
+    () => days.find((day) => (day.plan_date || '').slice(0, 10) === todayIso),
+    [days, todayIso]
+  );
+
+  const fallbackDay = useMemo(
+    () => days.find((day) => !day.completed) || days[0] || null,
+    [days]
+  );
+
+  const visibleDays = useMemo(() => {
+    if (showAllDays) return days;
+    const day = todayDay || fallbackDay;
+    return day ? [day] : [];
+  }, [days, fallbackDay, showAllDays, todayDay]);
 
   return (
     <div className="h-full overflow-auto">
@@ -208,49 +201,27 @@ export default function StudysetDetailPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <Progress value={progress.percent} />
-            <p className="text-sm text-muted-foreground">
-              {progress.completed_tasks}/{progress.total_tasks} tasks completed ({progress.percent}%)
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none">
-          <CardHeader>
-            <CardTitle className="text-base">Plan review</CardTitle>
-            <CardDescription>Approve this plan or request changes.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant={approval === 'approved' ? 'default' : 'outline'}
-                onClick={() => setApproval('approved')}
-              >
-                Looks good
-              </Button>
-              <Button
-                size="sm"
-                variant={approval === 'changes' ? 'default' : 'outline'}
-                onClick={() => setApproval('changes')}
-              >
-                Needs changes
-              </Button>
-            </div>
-
-            {approval === 'changes' && (
-              <div className="space-y-2">
-                <Textarea
-                  value={changeRequest}
-                  onChange={(event) => setChangeRequest(event.target.value)}
-                  placeholder="Describe what should change (pace, tool mix, focus topics)..."
-                  className="min-h-[120px]"
-                />
-                <Button onClick={() => void regenerateWithChanges()} disabled={regenerating}>
-                  <Wand2 className="mr-2 h-4 w-4" />
-                  {regenerating ? 'Regenerating...' : 'Regenerate with changes'}
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm text-muted-foreground">
+                {progress.completed_tasks}/{progress.total_tasks} tasks completed ({progress.percent}%)
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant={showAllDays ? 'outline' : 'default'}
+                  onClick={() => setShowAllDays(false)}
+                >
+                  Today
+                </Button>
+                <Button
+                  size="sm"
+                  variant={showAllDays ? 'default' : 'outline'}
+                  onClick={() => setShowAllDays(true)}
+                >
+                  All days
                 </Button>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 
@@ -258,15 +229,15 @@ export default function StudysetDetailPage() {
           <div className="flex min-h-[45vh] items-center justify-center">
             <CautieLoader label="Loading study plan" sublabel="Preparing day-by-day tasks" size="lg" />
           </div>
-        ) : days.length === 0 ? (
+        ) : visibleDays.length === 0 ? (
           <Card className="border-none">
             <CardContent className="p-6 text-sm text-muted-foreground">
-              No plan days yet. Generate a plan from the Studyset overview first.
+              No plan days yet.
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {days.map((day, index) => (
+            {visibleDays.map((day, index) => (
               <Card
                 key={day.id}
                 className="border-none studyset-day-card"

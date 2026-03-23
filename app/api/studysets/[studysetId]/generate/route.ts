@@ -15,6 +15,7 @@ type TaskTemplate = {
 type SourceBundleContext = {
   additionalNotes?: string
   contextText?: string
+  selectedDates?: string[]
   imports?: {
     word?: boolean
     powerpoint?: boolean
@@ -33,7 +34,14 @@ function parseSourceBundle(raw: unknown): SourceBundleContext {
       contextText:
         typeof parsed?.sources?.context_text === 'string'
           ? parsed.sources.context_text
-          : undefined,
+          : typeof parsed?.sources?.pasted_text === 'string'
+            ? parsed.sources.pasted_text
+            : typeof parsed?.sources?.notes_text === 'string'
+              ? parsed.sources.notes_text
+              : undefined,
+      selectedDates: Array.isArray(parsed?.schedule?.selected_dates)
+        ? parsed.schedule.selected_dates
+        : undefined,
       imports: {
         word: parsed?.sources?.imports?.word === true,
         powerpoint: parsed?.sources?.imports?.powerpoint === true,
@@ -60,6 +68,19 @@ function normalizeExcludedWeekdays(input: unknown) {
     .map((value) => Number(value))
     .filter((value) => Number.isInteger(value) && value >= 0 && value <= 6)
   return new Set(values)
+}
+
+function normalizeSelectedDates(input: unknown) {
+  if (!Array.isArray(input)) return []
+  const values = input
+    .filter((value) => typeof value === 'string')
+    .map((value) => value.trim())
+    .filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value))
+    .filter((value) => {
+      const parsed = new Date(`${value}T00:00:00`)
+      return !Number.isNaN(parsed.getTime())
+    })
+  return Array.from(new Set(values)).sort()
 }
 
 function buildPlanDates(
@@ -210,10 +231,17 @@ export async function POST(
     const excludedWeekdays = normalizeExcludedWeekdays(body?.excluded_weekdays)
     const feedback = typeof body?.feedback === 'string' ? body.feedback.trim() : ''
     const sourceContext = parseSourceBundle(studyset.source_bundle)
+    const requestedDates = normalizeSelectedDates(body?.selected_dates)
+    const sourceDates = normalizeSelectedDates(sourceContext.selectedDates)
 
     const requestedTargetDays = Math.max(1, Number(studyset.target_days || 1))
     const minutesPerDay = Math.max(10, Number(studyset.minutes_per_day || 30))
-    const planDates = buildPlanDates(startDate, requestedTargetDays, excludedWeekdays, endDate)
+    const planDates =
+      requestedDates.length > 0
+        ? requestedDates
+        : sourceDates.length > 0
+          ? sourceDates
+          : buildPlanDates(startDate, requestedTargetDays, excludedWeekdays, endDate)
     const totalDays = planDates.length
 
     // Replace existing plan for deterministic regeneration.
@@ -295,6 +323,7 @@ export async function POST(
         name: studyset.name,
         target_days: totalDays,
         minutes_per_day: minutesPerDay,
+        selected_dates_count: planDates.length,
         excluded_weekdays: Array.from(excludedWeekdays),
       },
     })
