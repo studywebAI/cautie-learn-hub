@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { z } from "zod";
 import { executeAIFlow } from "@/lib/ai/flow-executor";
 import type { ComputeClass, ToolRunStatus } from "@/lib/toolbox/contracts";
@@ -8,6 +9,7 @@ import {
   getEntitlementSummary,
   recordMeterEvent,
 } from "@/lib/toolbox/server";
+import { listIntegrationSources } from "@/lib/integrations/source-store";
 
 const CreateRunSchema = z.object({
   toolId: z.string().min(1),
@@ -32,6 +34,110 @@ async function writeRunEvent(supabase: any, runId: string, eventType: string, pa
   });
 }
 
+async function writeRunSources(supabase: any, runId: string, userId: string, sources: any[]) {
+  if (!Array.isArray(sources) || sources.length === 0) return;
+  const rows = sources.map((source) => {
+    const provider = String(source?.provider || "");
+    const app = String(source?.app || "");
+    const name = String(source?.name || "source");
+    const text = String(source?.extracted_text || "");
+    const webUrl = source?.web_url ? String(source.web_url) : null;
+    const fingerprint = createHash("sha256")
+      .update(`${provider}|${app}|${name}|${text}`)
+      .digest("hex");
+    return {
+      run_id: runId,
+      user_id: userId,
+      provider,
+      app,
+      source_item_id: String(source?.provider_item_id || source?.id || ""),
+      source_name: name,
+      source_uri: webUrl,
+      source_kind: app,
+      extraction_status: String(source?.extraction_status || "unknown"),
+      content_fingerprint: fingerprint,
+      source_preview: text ? text.slice(0, 2000) : null,
+      metadata: source?.metadata || {},
+    };
+  });
+
+  const { error } = await supabase.from("tool_run_sources").insert(rows);
+  if (error) {
+    await writeRunEvent(supabase, runId, "run_sources_write_failed", {
+      error: error.message || "Failed to store run sources",
+      count: rows.length,
+    });
+  }
+}
+
+const SOURCE_ENABLED_TOOLS = new Set(["quiz", "notes", "flashcards"]);
+const MAX_INTEGRATION_SOURCE_TEXT_CHARS = 40_000;
+
+function mergeSourceText(base: string, additions: string[]) {
+  const cleanBase = (base || "").trim();
+  const cleanAdditions = additions.map((v) => v.trim()).filter(Boolean);
+  if (cleanAdditions.length === 0) return cleanBase;
+  const merged = [cleanBase, ...cleanAdditions].filter(Boolean).join("\n\n");
+  return merged.slice(0, MAX_INTEGRATION_SOURCE_TEXT_CHARS);
+}
+
+async function enrichInputWithSelectedIntegrationSources(
+  supabase: any,
+  userId: string,
+  toolId: string,
+  baseInput: Record<string, any>
+) {
+  if (!SOURCE_ENABLED_TOOLS.has(toolId)) {
+    return {
+      input: baseInput,
+      sourceRefs: [] as Array<{ provider: string; app: string; name: string; status: string; hasExtractedText: boolean }>,
+    };
+  }
+
+  const selectedSources = await listIntegrationSources(supabase, userId, {
+    selectedOnly: true,
+    limit: 50,
+  }).catch(() => []);
+
+  if (!Array.isArray(selectedSources) || selectedSources.length === 0) {
+    return {
+      input: baseInput,
+      sourceRefs: [] as Array<{ provider: string; app: string; name: string; status: string; hasExtractedText: boolean }>,
+      selectedSourcesRaw: [] as any[],
+    };
+  }
+
+  const sourceRefs = selectedSources.map((source) => ({
+    provider: source.provider,
+    app: source.app,
+    name: source.name,
+    status: source.extraction_status,
+    hasExtractedText: Boolean(source.extracted_text && source.extracted_text.trim()),
+  }));
+
+  const extractedBlocks = selectedSources
+    .map((source) => {
+      const text = (source.extracted_text || "").trim();
+      if (!text) return "";
+      return `[${source.provider}/${source.app}] ${source.name}\n${text}`;
+    })
+    .filter(Boolean);
+
+  const fileReferenceBlocks = selectedSources.map((source) => {
+    const webUrl = source.web_url ? `\nURL: ${source.web_url}` : "";
+    return `[${source.provider}/${source.app}] ${source.name}${webUrl}`;
+  });
+
+  const existingSourceText = typeof baseInput?.sourceText === "string" ? baseInput.sourceText : "";
+  const mergedSourceText = mergeSourceText(existingSourceText, [...fileReferenceBlocks, ...extractedBlocks]);
+
+  return {
+    input: { ...baseInput, sourceText: mergedSourceText },
+    sourceRefs,
+    selectedSourcesRaw: selectedSources,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { supabase, user, plan, subscriptionType } = await getAuthedToolboxContext();
@@ -50,6 +156,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(existingRun);
     }
 
+    const baseInput = (payload.input || payload.source || {}) as Record<string, any>;
+    const enriched = await enrichInputWithSelectedIntegrationSources(supabase, user.id, payload.toolId, baseInput);
+    const contextPayload = {
+      ...(payload.context || {}),
+      integration_sources: enriched.sourceRefs,
+    };
+
     const { data: createdRun, error: runError } = await supabase
       .from("tool_runs")
       .insert({
@@ -58,8 +171,8 @@ export async function POST(request: NextRequest) {
         flow_name: payload.flowName,
         mode: payload.mode || null,
         status: "queued",
-        input_payload: payload.input || payload.source || {},
-        context_payload: payload.context || {},
+        input_payload: enriched.input,
+        context_payload: contextPayload,
         options_payload: payload.options || {},
         compute_class: payload.computeClass,
         idempotency_key: payload.idempotencyKey,
@@ -78,9 +191,10 @@ export async function POST(request: NextRequest) {
 
     await supabase.from("tool_runs").update({ status: "running" }).eq("id", createdRun.id);
     await writeRunEvent(supabase, createdRun.id, "started", {});
+    await writeRunSources(supabase, createdRun.id, user.id, enriched.selectedSourcesRaw || []);
 
     try {
-      const inputPayload = payload.input || payload.source || {};
+      const inputPayload = enriched.input;
       const output = await executeAIFlow(payload.flowName, inputPayload);
       let artifactId: string | null = null;
 

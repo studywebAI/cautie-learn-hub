@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
     }
 
     const kind = request.nextUrl.searchParams.get('kind');
-    if (kind !== 'word' && kind !== 'powerpoint') {
-      return NextResponse.json({ error: "Query param 'kind' must be 'word' or 'powerpoint'" }, { status: 400 });
+    if (kind !== 'word' && kind !== 'powerpoint' && kind !== 'excel') {
+      return NextResponse.json({ error: "Query param 'kind' must be 'word', 'powerpoint', or 'excel'" }, { status: 400 });
     }
     const query = request.nextUrl.searchParams.get('q') || '';
 

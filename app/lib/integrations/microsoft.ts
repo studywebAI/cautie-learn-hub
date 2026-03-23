@@ -90,7 +90,7 @@ export async function fetchMicrosoftProfile(accessToken: string) {
   return payload as { id?: string; displayName?: string; mail?: string; userPrincipalName?: string };
 }
 
-export type MicrosoftFileKind = 'word' | 'powerpoint';
+export type MicrosoftFileKind = 'word' | 'powerpoint' | 'excel';
 
 export type MicrosoftFileItem = {
   id: string;
@@ -118,6 +118,13 @@ function detectKind(name?: string, mimeType?: string): MicrosoftFileKind | null 
     m.includes('presentationml') ||
     m === 'application/vnd.ms-powerpoint';
   if (isPowerPoint) return 'powerpoint';
+
+  const isExcel =
+    n.endsWith('.xls') ||
+    n.endsWith('.xlsx') ||
+    m.includes('spreadsheetml') ||
+    m === 'application/vnd.ms-excel';
+  if (isExcel) return 'excel';
 
   return null;
 }

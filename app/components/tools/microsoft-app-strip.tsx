@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { INTEGRATION_APPS } from '@/lib/integrations/catalog';
 
 type MicrosoftStatus = {
   connected: boolean;
@@ -14,20 +15,12 @@ type MicrosoftAppStripProps = {
   returnTo: string;
 };
 
-const APPS = [
-  {
-    id: 'word',
-    label: 'Word',
-    logo: '/integrations/microsoft-word.svg',
-    app: 'word',
-  },
-  {
-    id: 'powerpoint',
-    label: 'PowerPoint',
-    logo: '/integrations/microsoft-powerpoint.svg',
-    app: 'powerpoint',
-  },
-];
+const APPS = INTEGRATION_APPS.filter((app) => app.provider === 'microsoft').map((app) => ({
+  id: app.id,
+  label: app.label,
+  logo: app.logoPath,
+  app: app.id,
+}));
 
 export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [status, setStatus] = useState<MicrosoftStatus>({ connected: false });
@@ -100,7 +93,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
           {status.connected ? 'Manage link' : 'Connect'}
         </Link>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {APPS.map((app) => {
           const href = `/settings/integrations?returnTo=${encodeURIComponent(returnTo)}&app=${encodeURIComponent(app.app)}`;
           return (

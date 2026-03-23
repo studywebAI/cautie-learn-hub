@@ -6,23 +6,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ExternalLink, Link2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { INTEGRATION_APPS } from '@/lib/integrations/catalog';
 
-const APPS = [
-  {
-    id: 'word',
-    label: 'Word',
-    logo: '/integrations/microsoft-word.svg',
-    description: 'Read-only .doc/.docx access',
-    kind: 'word',
-  },
-  {
-    id: 'powerpoint',
-    label: 'PowerPoint',
-    logo: '/integrations/microsoft-powerpoint.svg',
-    description: 'Read-only .ppt/.pptx access',
-    kind: 'powerpoint',
-  },
-];
+const APPS = INTEGRATION_APPS.filter((app) => app.provider === 'microsoft').map((app) => ({
+  id: app.id,
+  label: app.label,
+  logo: app.logoPath,
+  description: app.description,
+  kind: app.id,
+}));
 
 type MicrosoftStatus = {
   connected: boolean;
@@ -35,7 +27,7 @@ type MicrosoftFileItem = {
   webUrl?: string;
   size?: number;
   lastModifiedDateTime?: string;
-  kind: 'word' | 'powerpoint';
+  kind: 'word' | 'powerpoint' | 'excel';
   mimeType?: string;
 };
 
@@ -49,6 +41,7 @@ export default function IntegrationsPage() {
   const [loadingFiles, setLoadingFiles] = useState(false);
   const [files, setFiles] = useState<MicrosoftFileItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedLoading, setSelectedLoading] = useState(false);
 
   const returnTo = useMemo(() => {
     const raw = searchParams.get('returnTo') || '/tools';
@@ -133,17 +126,66 @@ export default function IntegrationsPage() {
     void loadFiles();
   }, [selectedApp.kind, status.connected]);
 
+  useEffect(() => {
+    const loadSelected = async () => {
+      if (!status.connected) {
+        setSelectedIds([]);
+        return;
+      }
+      setSelectedLoading(true);
+      try {
+        const response = await fetch(
+          `/api/integrations/context-sources?provider=microsoft&app=${encodeURIComponent(selectedApp.kind)}&selected=1`,
+          { cache: 'no-store' }
+        );
+        if (!response.ok) {
+          setSelectedIds([]);
+          return;
+        }
+        const json = await response.json();
+        const ids = Array.isArray(json?.items)
+          ? json.items.map((item: any) => String(item?.provider_item_id || '')).filter(Boolean)
+          : [];
+        setSelectedIds(ids);
+      } catch {
+        setSelectedIds([]);
+      } finally {
+        setSelectedLoading(false);
+      }
+    };
+    void loadSelected();
+  }, [selectedApp.kind, status.connected]);
+
   const toggleFile = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((value) => value !== id) : [...prev, id]));
   };
 
-  const handleUseSelected = () => {
+  const handleUseSelected = async () => {
     const selectedFiles = files.filter((file) => selectedIds.includes(file.id));
     if (selectedFiles.length === 0) return;
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem('microsoft.selectedSources', JSON.stringify(selectedFiles));
-      window.location.href = returnTo;
+    const response = await fetch('/api/integrations/context-sources', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        provider: 'microsoft',
+        app: selectedApp.kind,
+        items: selectedFiles.map((file) => ({
+          id: file.id,
+          name: file.name,
+          mimeType: file.mimeType,
+          webUrl: file.webUrl,
+        })),
+        replaceSelection: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      setStatusError(typeof payload?.error === 'string' ? payload.error : 'Failed to store selected sources.');
+      return;
     }
+    setStatusError(null);
+    if (typeof window !== 'undefined') window.location.href = returnTo;
   };
 
   useEffect(() => {
@@ -215,7 +257,7 @@ export default function IntegrationsPage() {
                   <Button type="button" variant="outline" onClick={() => void handleDisconnect()} disabled={disconnecting}>
                     {disconnecting ? 'Disconnecting...' : 'Disconnect'}
                   </Button>
-                  <Button type="button" onClick={handleUseSelected} disabled={selectedIds.length === 0}>
+                  <Button type="button" onClick={() => void handleUseSelected()} disabled={selectedIds.length === 0}>
                     Use selected files
                   </Button>
                 </div>
@@ -270,6 +312,9 @@ export default function IntegrationsPage() {
             )}
             {status.connected && loadingFiles && (
               <p className="text-sm text-muted-foreground">Loading files...</p>
+            )}
+            {status.connected && selectedLoading && (
+              <p className="text-sm text-muted-foreground">Loading selected sources...</p>
             )}
             {status.connected && !loadingFiles && files.length === 0 && (
               <p className="text-sm text-muted-foreground">No files found.</p>

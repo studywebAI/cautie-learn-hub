@@ -49,14 +49,6 @@ type SourceEntry = {
   urlKey?: string;
 };
 
-type ExternalMicrosoftSource = {
-  id: string;
-  name: string;
-  webUrl?: string;
-  kind?: 'word' | 'powerpoint';
-  mimeType?: string;
-};
-
 const URL_REGEX = /\b((?:https?:\/\/|www\.)[^\s<>"]+)/gi;
 
 const normalizeText = (value: string) => value.replace(/\s+/g, ' ').trim();
@@ -168,6 +160,7 @@ export function SourceInput({
   const isFinalizingRecordingRef = useRef(false);
   const initializedRef = useRef(false);
   const lastEmittedRef = useRef('');
+  const integrationHydratedRef = useRef(false);
 
   const [manualText, setManualText] = useState('');
   const [sources, setSources] = useState<SourceEntry[]>([]);
@@ -197,78 +190,44 @@ export function SourceInput({
   }, [value]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const raw = window.sessionStorage.getItem('microsoft.selectedSources');
-    if (!raw) return;
-    window.sessionStorage.removeItem('microsoft.selectedSources');
-
-    let items: ExternalMicrosoftSource[] = [];
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) items = parsed;
-    } catch {
-      items = [];
-    }
-    if (items.length === 0) return;
+    if (integrationHydratedRef.current) return;
+    integrationHydratedRef.current = true;
 
     const hydrate = async () => {
-      const res = await fetch('/api/integrations/microsoft/files/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: items.map((item) => ({
-            id: item.id,
-            name: item.name,
-            kind: item.kind === 'powerpoint' ? 'powerpoint' : 'word',
-            webUrl: item.webUrl,
-            mimeType: item.mimeType,
-          })),
-        }),
+      const response = await fetch('/api/integrations/context-sources?provider=microsoft&selected=1', {
+        cache: 'no-store',
       });
+      if (!response.ok) return;
+      const json = await response.json();
+      const items = Array.isArray(json?.items) ? json.items : [];
+      if (items.length === 0) return;
 
-      if (!res.ok) {
-        const fallback: SourceEntry[] = items.map((item) => {
-          const kindLabel = item.kind === 'powerpoint' ? 'PowerPoint' : 'Word';
-          const lines = [`Microsoft ${kindLabel} file: ${item.name}`];
-          if (item.webUrl) lines.push(`File URL: ${item.webUrl}`);
-          return {
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            kind: 'file',
-            label: `MICROSOFT (${kindLabel})`,
-            text: lines.join('\n'),
-            selected: true,
-          };
-        });
-        setSources((prev) => [...prev, ...fallback]);
-        toast({
-          title: 'Microsoft files attached',
-          description: `${fallback.length} file${fallback.length === 1 ? '' : 's'} added as context.`,
-        });
-        return;
-      }
-
-      const json = await res.json();
-      const extractedItems = Array.isArray(json?.items) ? json.items : [];
-      const mapped: SourceEntry[] = extractedItems.map((item: any) => {
-        const kindLabel = item?.kind === 'powerpoint' ? 'PowerPoint' : 'Word';
-        const lines: string[] = [`Microsoft ${kindLabel} file: ${String(item?.name || 'Untitled')}`];
-        if (typeof item?.extractedText === 'string' && item.extractedText.trim()) {
-          lines.push(item.extractedText.trim());
-        }
-        if (item?.webUrl) lines.push(`File URL: ${String(item.webUrl)}`);
+      const mapped: SourceEntry[] = items.map((item: any) => {
+        const appKey = String(item?.app || '').toLowerCase();
+        const appLabel = appKey === 'powerpoint' ? 'PowerPoint' : appKey === 'excel' ? 'Excel' : 'Word';
+        const name = String(item?.name || 'Untitled');
+        const extracted = typeof item?.extracted_text === 'string' ? item.extracted_text.trim() : '';
+        const webUrl = typeof item?.web_url === 'string' ? item.web_url : '';
+        const lines = [`Microsoft ${appLabel} file: ${name}`];
+        if (extracted) lines.push(extracted);
+        if (webUrl) lines.push(`File URL: ${webUrl}`);
         return {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          id: `integration-${String(item?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)}`,
           kind: 'file',
-          label: `MICROSOFT (${kindLabel})`,
+          label: `MICROSOFT (${appLabel})`,
           text: lines.join('\n\n'),
           selected: true,
         };
       });
 
-      setSources((prev) => [...prev, ...mapped]);
+      setSources((prev) => {
+        const existing = new Set(prev.map((source) => source.id));
+        const deduped = mapped.filter((source) => !existing.has(source.id));
+        return [...prev, ...deduped];
+      });
       toast({
-        title: 'Microsoft files attached',
-        description: `${mapped.length} file${mapped.length === 1 ? '' : 's'} added as context.`,
+        title: 'Microsoft sources ready',
+        description: `${mapped.length} selected file${mapped.length === 1 ? '' : 's'} loaded.`,
       });
     };
 

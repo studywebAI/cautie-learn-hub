@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 const ItemSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  kind: z.enum(['word', 'powerpoint']),
+  kind: z.enum(['word', 'powerpoint', 'excel']),
   webUrl: z.string().optional(),
   mimeType: z.string().optional(),
 });
