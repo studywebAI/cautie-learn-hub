@@ -8,7 +8,7 @@ type MicrosoftTokenResponse = {
 
 const MICROSOFT_AUTH_BASE = 'https://login.microsoftonline.com/common/oauth2/v2.0';
 const MICROSOFT_GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
-const MICROSOFT_SCOPES = ['offline_access', 'User.Read', 'Files.Read'];
+const MICROSOFT_SCOPES = ['offline_access', 'User.Read', 'Files.Read', 'Files.Read.All'];
 
 function requireEnv(name: string) {
   const value = process.env[name];

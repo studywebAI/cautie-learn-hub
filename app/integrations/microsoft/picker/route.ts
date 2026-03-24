@@ -46,6 +46,28 @@ const REDIRECT_HTML = `<!doctype html>
           hasErrorParam: /[?&]error=/.test(window.location.search)
         });
 
+        try {
+          var usp = new URLSearchParams(window.location.search || '');
+          var oauthRaw = usp.get('oauth');
+          if (oauthRaw) {
+            var oauthDecoded = JSON.parse(oauthRaw);
+            send('info', 'picker-redirect-oauth-decoded', {
+              clientIdSuffix: String(oauthDecoded.clientId || '').slice(-6),
+              endpoint: oauthDecoded.endpoint || null,
+              scopeCount: Array.isArray(oauthDecoded.scopes) ? oauthDecoded.scopes.length : 0,
+              scopes: Array.isArray(oauthDecoded.scopes) ? oauthDecoded.scopes : [],
+              origin: oauthDecoded.origin || null,
+              redirectUri: oauthDecoded.redirectUri || null,
+              hasLoginHint: Boolean(oauthDecoded.loginHint),
+              hasState: Boolean(oauthDecoded.state)
+            });
+          }
+        } catch (e) {
+          send('warn', 'picker-redirect-oauth-decode-failed', {
+            message: String((e && e.message) || 'decode_failed')
+          });
+        }
+
         window.addEventListener('load', function () {
           send('info', 'picker-redirect-window-load', {
             hasOneDriveGlobal: !!window.OneDrive
