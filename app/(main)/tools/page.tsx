@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BrainCircuit, Copy, FileSignature, Sparkles, Clock3, Wand2, Route, Link2 } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Copy, FileSignature, Sparkles, Clock3, Wand2, Route } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,8 +67,6 @@ export default function ToolsPage() {
   const [recommendedToolDraft, setRecommendedToolDraft] = useState('quiz');
   const [publishingRecommendation, setPublishingRecommendation] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [microsoftConnected, setMicrosoftConnected] = useState(false);
-  const [microsoftEmail, setMicrosoftEmail] = useState('');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -118,12 +116,11 @@ export default function ToolsPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [usageRes, runsRes, artifactsRes, roleRes, microsoftRes] = await Promise.all([
+        const [usageRes, runsRes, artifactsRes, roleRes] = await Promise.all([
           fetch('/api/billing/v1/usage-summary'),
           fetch('/api/tools/v2/runs'),
           fetch('/api/tools/v2/artifacts'),
           fetch('/api/user/role'),
-          fetch('/api/integrations/microsoft/status', { cache: 'no-store' }),
         ]);
 
         if (usageRes.ok) {
@@ -139,15 +136,6 @@ export default function ToolsPage() {
           const roleJson = await roleRes.json();
           setRole(roleJson?.subscription_type === 'teacher' ? 'teacher' : 'student');
         }
-        if (microsoftRes.ok) {
-          const microsoftJson = await microsoftRes.json();
-          setMicrosoftConnected(Boolean(microsoftJson?.connected));
-          setMicrosoftEmail(String(microsoftJson?.account_email || ''));
-        } else {
-          setMicrosoftConnected(false);
-          setMicrosoftEmail('');
-        }
-
         // Tiny recommendation chip:
         // only render when explicit recommendation records exist for the selected class.
         if (selectedClassId) {
@@ -182,13 +170,6 @@ export default function ToolsPage() {
     };
     load();
   }, [selectedClassId]);
-
-  const disconnectMicrosoft = async () => {
-    const response = await fetch('/api/integrations/microsoft/disconnect', { method: 'POST' });
-    if (!response.ok) return;
-    setMicrosoftConnected(false);
-    setMicrosoftEmail('');
-  };
 
   const publishToolRecommendation = async () => {
     if (!selectedClassId || role !== 'teacher' || publishingRecommendation) return;
@@ -290,44 +271,6 @@ export default function ToolsPage() {
             </div>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div className="md:col-span-3 rounded-xl bg-background p-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium">Import from</p>
-                  <p className="text-xs text-muted-foreground">
-                    Connect read-only sources from external docs.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {!microsoftConnected ? (
-                    <Button asChild variant="outline" size="sm" className="h-8 text-xs">
-                      <Link prefetch={false} href="/settings/integrations?returnTo=%2Ftools">
-                        <Link2 className="mr-1 h-3.5 w-3.5" />
-                        Connect Word/PowerPoint
-                      </Link>
-                    </Button>
-                  ) : (
-                    <>
-                      <Button asChild variant="outline" size="sm" className="h-8 text-xs">
-                        <Link prefetch={false} href="/settings/integrations?returnTo=%2Ftools">
-                          <Link2 className="mr-1 h-3.5 w-3.5" />
-                          Manage apps
-                        </Link>
-                      </Button>
-                      <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => void disconnectMicrosoft()}>
-                        Disconnect
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-              {microsoftConnected && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Connected as {microsoftEmail || 'Microsoft account'} (read-only).
-                </p>
-              )}
-            </div>
-
             {role === 'student' && selectedClassId && topTeacherPicks.length > 0 && (
               <div className="md:col-span-3 flex flex-wrap items-center gap-2 rounded-md border border-dashed px-2 py-1.5">
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Teacher picks</span>

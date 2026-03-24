@@ -11,7 +11,6 @@ import { AppContext } from '@/contexts/app-context';
 import type { Quiz } from '@/lib/types';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
-import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
 import { PillSelector } from '@/components/tools/pill-selector';
@@ -218,7 +217,6 @@ function QuizPageContent() {
         onImageDataUriChange={setImageDataUri}
         onSubmit={() => handleGenerate(sourceText)}
         placeholder={t.sourceInputPlaceholder}
-        topContent={<MicrosoftAppStrip returnTo="/tools/quiz" />}
         speechLanguage={language}
         enableMic={false}
         enableCaptions={false}
