@@ -12,10 +12,16 @@ function getOrigin(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const requestId = crypto.randomUUID();
   const rateLimit = checkRateLimit(request, { key: 'ms-connect', limit: 20, windowMs: 60_000 });
   if (!rateLimit.ok) return rateLimit.response;
 
   try {
+    console.info('[microsoft-connect] request', {
+      requestId,
+      path: request.nextUrl.pathname,
+      search: request.nextUrl.search,
+    });
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
     const {
@@ -24,6 +30,7 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      console.warn('[microsoft-connect] unauthorized', { requestId });
       return NextResponse.redirect(new URL('/login?error=unauthorized', getOrigin(request)));
     }
 
@@ -49,8 +56,20 @@ export async function GET(request: NextRequest) {
       maxAge: 60 * 10,
     });
 
+    console.info('[microsoft-connect] redirect', {
+      requestId,
+      userId: user.id,
+      returnTo,
+      redirectUri,
+    });
     return response;
   } catch (error: any) {
+    console.error('[microsoft-connect] failed', {
+      requestId,
+      message: String(error?.message || 'unknown'),
+      code: String(error?.code || ''),
+      stack: error?.stack || null,
+    });
     const url = new URL('/tools/studyset', getOrigin(request));
     url.searchParams.set('ms_error', sanitizeMicrosoftErrorCode(error?.message));
     return NextResponse.redirect(url);

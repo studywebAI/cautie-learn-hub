@@ -17,6 +17,7 @@ function clearOAuthCookies(response: NextResponse) {
 }
 
 export async function GET(request: NextRequest) {
+  const requestId = crypto.randomUUID();
   const rateLimit = checkRateLimit(request, { key: 'ms-callback', limit: 30, windowMs: 60_000 });
   if (!rateLimit.ok) return rateLimit.response;
 
@@ -36,7 +37,17 @@ export async function GET(request: NextRequest) {
   const doneUrl = new URL(returnTo.startsWith('/') ? returnTo : '/tools/studyset', getOrigin(request));
   const redirectUri = `${getOrigin(request)}/api/integrations/microsoft/callback`;
 
+  console.info('[microsoft-callback] request', {
+    requestId,
+    hasCode: Boolean(code),
+    hasState: Boolean(state),
+    hasExpectedState: Boolean(expectedState),
+    hasOAuthError: Boolean(oauthError),
+    returnTo,
+  });
+
   if (!user) {
+    console.warn('[microsoft-callback] unauthorized', { requestId });
     doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode('unauthorized'));
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);
@@ -44,6 +55,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (oauthError) {
+    console.warn('[microsoft-callback] provider-error', { requestId, oauthError });
     doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode(oauthError));
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);
@@ -51,6 +63,13 @@ export async function GET(request: NextRequest) {
   }
 
   if (!code || !state || !expectedState || state !== expectedState) {
+    console.warn('[microsoft-callback] invalid-state', {
+      requestId,
+      hasCode: Boolean(code),
+      hasState: Boolean(state),
+      hasExpectedState: Boolean(expectedState),
+      stateMatches: Boolean(state && expectedState && state === expectedState),
+    });
     doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode('invalid_state'));
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);
@@ -76,10 +95,23 @@ export async function GET(request: NextRequest) {
     });
 
     doneUrl.searchParams.set('ms', 'connected');
+    console.info('[microsoft-callback] success', {
+      requestId,
+      userId: user.id,
+      accountEmail: profile.mail || profile.userPrincipalName || null,
+      scope: token.scope || null,
+      returnTo,
+    });
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);
     return response;
   } catch (error: any) {
+    console.error('[microsoft-callback] failed', {
+      requestId,
+      message: String(error?.message || 'callback_failed'),
+      code: String(error?.code || ''),
+      stack: error?.stack || null,
+    });
     doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode(error?.message || 'callback_failed'));
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);

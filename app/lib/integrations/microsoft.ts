@@ -38,6 +38,13 @@ export function buildMicrosoftAuthUrl(input: { redirectUri: string; state: strin
 }
 
 async function postToken(params: URLSearchParams) {
+  console.info('[microsoft-oauth] token-request', {
+    grantType: params.get('grant_type'),
+    hasClientId: Boolean(params.get('client_id')),
+    hasClientSecret: Boolean(params.get('client_secret')),
+    hasCode: Boolean(params.get('code')),
+    hasRefreshToken: Boolean(params.get('refresh_token')),
+  });
   const response = await fetch(`${MICROSOFT_AUTH_BASE}/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -48,8 +55,19 @@ async function postToken(params: URLSearchParams) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = payload?.error_description || payload?.error || 'Microsoft token exchange failed';
+    console.error('[microsoft-oauth] token-failed', {
+      status: response.status,
+      message,
+      error: payload?.error || null,
+    });
     throw new Error(message);
   }
+
+  console.info('[microsoft-oauth] token-success', {
+    tokenType: payload?.token_type || null,
+    expiresIn: payload?.expires_in || null,
+    hasRefreshToken: Boolean(payload?.refresh_token),
+  });
 
   return payload as MicrosoftTokenResponse;
 }
@@ -142,6 +160,12 @@ export async function listMicrosoftFiles(input: { accessToken: string; kind: Mic
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = payload?.error?.message || 'Failed to list Microsoft files';
+    console.error('[microsoft-graph] list-files-failed', {
+      kind: input.kind,
+      query: input.query || '',
+      status: response.status,
+      message,
+    });
     throw new Error(message);
   }
 
@@ -163,9 +187,21 @@ export async function listMicrosoftFiles(input: { accessToken: string; kind: Mic
     .filter(Boolean) as MicrosoftFileItem[];
 
   if (input.kind === 'onedrive') {
+    console.info('[microsoft-graph] list-files-success', {
+      kind: input.kind,
+      query: input.query || '',
+      count: items.length,
+    });
     return items;
   }
-  return items.filter((item) => item.kind === input.kind);
+  const filtered = items.filter((item) => item.kind === input.kind);
+  console.info('[microsoft-graph] list-files-success', {
+    kind: input.kind,
+    query: input.query || '',
+    count: filtered.length,
+    unfilteredCount: items.length,
+  });
+  return filtered;
 }
 
 export async function extractMicrosoftFileText(input: {

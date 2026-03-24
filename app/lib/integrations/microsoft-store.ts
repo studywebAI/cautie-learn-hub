@@ -92,6 +92,10 @@ export async function getValidMicrosoftAccessToken(supabase: any, userId: string
 
   const currentAccessToken = decryptSecret(connection.access_token_encrypted);
   if (!isExpiringSoon(connection.expires_at)) {
+    console.info('[microsoft-token] using-current-access-token', {
+      userId,
+      expiresAt: connection.expires_at,
+    });
     return {
       accessToken: currentAccessToken,
       connection,
@@ -100,12 +104,20 @@ export async function getValidMicrosoftAccessToken(supabase: any, userId: string
 
   const refreshToken = connection.refresh_token_encrypted ? decryptSecret(connection.refresh_token_encrypted) : '';
   if (!refreshToken) {
+    console.warn('[microsoft-token] no-refresh-token-available', {
+      userId,
+      expiresAt: connection.expires_at,
+    });
     return {
       accessToken: currentAccessToken,
       connection,
     };
   }
 
+  console.info('[microsoft-token] refreshing-access-token', {
+    userId,
+    expiresAt: connection.expires_at,
+  });
   const refreshed = await refreshMicrosoftToken(refreshToken);
   const nextExpiresAt = new Date(Date.now() + Number(refreshed.expires_in || 3600) * 1000).toISOString();
   await upsertMicrosoftConnection(supabase, {
@@ -119,6 +131,11 @@ export async function getValidMicrosoftAccessToken(supabase: any, userId: string
     metadata: connection.metadata || {},
   });
 
+  console.info('[microsoft-token] refresh-success', {
+    userId,
+    nextExpiresAt,
+    scope: refreshed.scope || connection.scope || null,
+  });
   return {
     accessToken: refreshed.access_token,
     connection: await getMicrosoftConnection(supabase, userId),

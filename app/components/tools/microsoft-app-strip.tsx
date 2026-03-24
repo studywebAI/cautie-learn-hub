@@ -24,6 +24,25 @@ type MicrosoftAppStripProps = {
   returnTo: string;
 };
 
+type OneDriveSdkSelection = {
+  id?: string;
+  name?: string;
+  webUrl?: string;
+  link?: string;
+  mimeType?: string;
+  file?: { mimeType?: string };
+  size?: number;
+  lastModifiedDateTime?: string;
+};
+
+declare global {
+  interface Window {
+    OneDrive?: {
+      open: (options: Record<string, any>) => void;
+    };
+  }
+}
+
 const APPS = ENABLED_INTEGRATION_APPS.filter((app) => app.provider === 'microsoft').map((app) => ({
   id: app.id,
   label: app.label,
@@ -66,6 +85,7 @@ function withQuery(path: string, params: Record<string, string>) {
 export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [status, setStatus] = useState<MicrosoftStatus>({ connected: false });
   const [isOpen, setIsOpen] = useState(false);
+  const [openingOfficialPicker, setOpeningOfficialPicker] = useState(false);
   const [loadingFiles, setLoadingFiles] = useState(false);
   const [attaching, setAttaching] = useState(false);
   const [activeApp, setActiveApp] = useState<string>(APPS[0]?.id || 'word');
@@ -109,6 +129,168 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       setStatus({ connected: false });
     }
   }, []);
+
+  const loadOneDriveSdk = useCallback(async () => {
+    if (typeof window === 'undefined') return false;
+    if (window.OneDrive?.open) return true;
+    const id = 'onedrive-sdk-v72';
+    const existing = document.getElementById(id) as HTMLScriptElement | null;
+    if (existing) {
+      await new Promise<void>((resolve, reject) => {
+        if (window.OneDrive?.open) {
+          resolve();
+          return;
+        }
+        existing.addEventListener('load', () => resolve(), { once: true });
+        existing.addEventListener('error', () => reject(new Error('Failed to load OneDrive SDK')), { once: true });
+      });
+      return Boolean(window.OneDrive?.open);
+    }
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.id = id;
+      script.src = 'https://js.live.net/v7.2/OneDrive.js';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load OneDrive SDK'));
+      document.head.appendChild(script);
+    });
+    return Boolean(window.OneDrive?.open);
+  }, []);
+
+  const attachFromPickerItems = useCallback(async (appId: string, items: OneDriveSdkSelection[]) => {
+    const normalized = items
+      .map((item) => ({
+        id: String(item.id || ''),
+        name: String(item.name || 'Untitled'),
+        mimeType: item.mimeType || item.file?.mimeType,
+        webUrl: item.webUrl || item.link,
+      }))
+      .filter((item) => item.id);
+
+    if (normalized.length === 0) {
+      toast({ variant: 'destructive', title: 'No file selected', description: 'Picker returned no usable file items.' });
+      return;
+    }
+
+    setAttaching(true);
+    try {
+      console.info('[ms-picker-client] attaching-selected', {
+        appId,
+        count: normalized.length,
+      });
+      const saveResponse = await fetch('/api/integrations/context-sources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'microsoft',
+          app: appId,
+          items: normalized,
+          replaceSelection: true,
+        }),
+      });
+
+      if (!saveResponse.ok) {
+        const payload = await saveResponse.json().catch(() => ({}));
+        throw new Error(typeof payload?.error === 'string' ? payload.error : 'Failed to attach files');
+      }
+
+      await fetch('/api/integrations/ingestion-jobs/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'microsoft', app: appId, maxJobs: 25 }),
+      }).catch(() => null);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft' } }));
+      }
+      toast({ title: 'Context attached', description: `${normalized.length} file${normalized.length === 1 ? '' : 's'} added.` });
+    } catch (error: any) {
+      console.error('[ms-picker-client] attach-failed', {
+        appId,
+        message: error?.message || 'unknown',
+      });
+      toast({ variant: 'destructive', title: 'Attach failed', description: error?.message || 'Could not attach files' });
+    } finally {
+      setAttaching(false);
+    }
+  }, [toast]);
+
+  const openOfficialPicker = useCallback(async (appId: string) => {
+    setOpeningOfficialPicker(true);
+    try {
+      const sdkReady = await loadOneDriveSdk();
+      if (!sdkReady || !window.OneDrive?.open) {
+        throw new Error('OneDrive picker SDK unavailable');
+      }
+
+      const configResponse = await fetch('/api/integrations/microsoft/picker-config', { cache: 'no-store' });
+      if (!configResponse.ok) {
+        const payload = await configResponse.json().catch(() => ({}));
+        throw new Error(typeof payload?.error === 'string' ? payload.error : 'Failed to get Microsoft picker config');
+      }
+      const config = await configResponse.json();
+      const filter = appId === 'word' ? '.doc,.docx' : appId === 'powerpoint' ? '.ppt,.pptx' : '';
+
+      console.info('[ms-picker-client] open-official-picker', {
+        appId,
+        filter,
+        redirectUri: config?.redirectUri || null,
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        window.OneDrive?.open({
+          clientId: config.clientId,
+          action: 'query',
+          multiSelect: true,
+          openInNewWindow: true,
+          advanced: {
+            redirectUri: config.redirectUri,
+            filter: filter || undefined,
+            queryParameters: 'select=id,name,size,webUrl,file,lastModifiedDateTime',
+          },
+          success: async (result: any) => {
+            const values: OneDriveSdkSelection[] = Array.isArray(result?.value)
+              ? result.value
+              : Array.isArray(result?.files)
+                ? result.files
+                : Array.isArray(result)
+                  ? result
+                  : [];
+            console.info('[ms-picker-client] picker-success', {
+              appId,
+              returnedCount: values.length,
+            });
+            await attachFromPickerItems(appId, values);
+            resolve();
+          },
+          cancel: () => {
+            console.info('[ms-picker-client] picker-cancel', { appId });
+            resolve();
+          },
+          error: (error: any) => {
+            const message = String(error?.message || error?.error?.message || 'Picker failed');
+            console.error('[ms-picker-client] picker-error', {
+              appId,
+              message,
+              raw: error || null,
+            });
+            reject(new Error(message));
+          },
+        });
+      });
+
+      return true;
+    } catch (error: any) {
+      console.warn('[ms-picker-client] official-picker-unavailable-fallback', {
+        appId,
+        message: error?.message || 'unknown',
+      });
+      return false;
+    } finally {
+      setOpeningOfficialPicker(false);
+    }
+  }, [attachFromPickerItems, loadOneDriveSdk]);
 
   const loadFiles = useCallback(async (kind: string, query?: string) => {
     if (!status.connected) {
@@ -203,7 +385,10 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       window.location.href = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`;
       return;
     }
-    setIsOpen(true);
+    const usedOfficial = await openOfficialPicker(appId);
+    if (!usedOfficial) {
+      setIsOpen(true);
+    }
   };
 
   const toggleFile = (id: string) => {
@@ -266,7 +451,8 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
             key={app.id}
             type="button"
             onClick={() => void openPicker(app.id)}
-            className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-sidebar-border bg-sidebar p-0 transition-transform hover:scale-[1.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            disabled={openingOfficialPicker || attaching}
+            className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-sidebar-border bg-sidebar p-0 transition-transform hover:scale-[1.04] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title={app.label}
           >
             <img src={app.logo} alt={app.label} className="h-9 w-9 object-contain" />
