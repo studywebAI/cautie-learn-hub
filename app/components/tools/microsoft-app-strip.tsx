@@ -351,6 +351,18 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       const runPickerAttempt = async (attempt: 'with_token' | 'without_token', advanced: Record<string, any>) => {
         log('picker-attempt-start', { traceId, appId, attempt, advancedKeys: Object.keys(advanced) });
         await new Promise<void>((resolve, reject) => {
+          const timeoutMs = 25_000;
+          const timeout = window.setTimeout(() => {
+            log('picker-timeout-no-callback', {
+              traceId,
+              appId,
+              attempt,
+              timeoutMs,
+              hint: 'no_success_cancel_or_error_callback_received',
+            }, 'error');
+            reject(new Error('Picker timeout (no callback from popup)'));
+          }, timeoutMs);
+
           window.OneDrive?.open({
             clientId: config.clientId,
             action: 'query',
@@ -358,6 +370,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
             openInNewWindow: true,
             advanced,
             success: async (result: any) => {
+              window.clearTimeout(timeout);
               const values: OneDriveSdkSelection[] = Array.isArray(result?.value)
                 ? result.value
                 : Array.isArray(result?.files)
@@ -384,10 +397,12 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
               }
             },
             cancel: () => {
+              window.clearTimeout(timeout);
               log('picker-cancel-callback', { traceId, appId, attempt });
               resolve();
             },
             error: (error: any) => {
+              window.clearTimeout(timeout);
               const message = safeErrorMessage(error);
               log('picker-error-callback', {
                 traceId,
