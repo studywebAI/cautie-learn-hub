@@ -166,7 +166,7 @@ function QuizPageContent() {
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
           placeholder={t.titlePlaceholder}
-          className="w-full h-8 rounded-md border border-input bg-background px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="w-full h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           disabled={isLoading}
         />
       </div>
@@ -185,7 +185,7 @@ function QuizPageContent() {
         <Slider value={[questionCount]} onValueChange={([v]) => setQuestionCount(v)} min={1} max={50} step={1} disabled={isLoading} />
       </div>
 
-      <Button variant="outline" onClick={() => handleGenerate(sourceText)} disabled={isLoading || !sourceText.trim()} className="w-full rounded-full bg-background">
+      <Button variant="outline" onClick={() => handleGenerate(sourceText)} disabled={isLoading || !sourceText.trim()} className="w-full rounded-full border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent">
         <Sparkles className="mr-2 h-4 w-4" />
         {t.quiz.generate}
       </Button>

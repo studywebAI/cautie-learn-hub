@@ -67,7 +67,7 @@ export function ImportToolbar({ toolType, onImport, disabled }: ImportToolbarPro
           type="button"
           variant="outline"
           size="sm"
-          className="flex-1 gap-1.5 text-xs rounded-full h-7"
+          className="flex-1 gap-1.5 text-xs rounded-full h-8 border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent"
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || isProcessing}
         >
@@ -78,7 +78,7 @@ export function ImportToolbar({ toolType, onImport, disabled }: ImportToolbarPro
           type="button"
           variant="outline"
           size="sm"
-          className="flex-1 gap-1.5 text-xs rounded-full h-7"
+          className="flex-1 gap-1.5 text-xs rounded-full h-8 border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent"
           onClick={handlePaste}
           disabled={disabled || isProcessing}
         >
