@@ -18,6 +18,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { ReactNode } from 'react';
 
 interface SourceInputProps {
   value: string;
@@ -33,6 +34,7 @@ interface SourceInputProps {
   autoInsertCaptions?: boolean;
   enableBackendFallback?: boolean;
   sourceMergeMode?: 'append_labeled';
+  topContent?: ReactNode;
 }
 
 type SourceKind = 'url' | 'file' | 'caption';
@@ -124,6 +126,7 @@ export function SourceInput({
   autoInsertCaptions: _autoInsertCaptions = true,
   enableBackendFallback: _enableBackendFallback = true,
   sourceMergeMode = 'append_labeled',
+  topContent,
 }: SourceInputProps) {
   const { toast } = useToast();
   const micSessionIdRef = useRef<string>('');
@@ -890,6 +893,8 @@ export function SourceInput({
 
       <div className="mt-auto flex gap-2 items-stretch">
         <div className="flex-1 flex flex-col gap-2">
+          {topContent && <div className="pb-1">{topContent}</div>}
+
           {linksOpen && (
             <div className="flex items-center gap-2">
               <input

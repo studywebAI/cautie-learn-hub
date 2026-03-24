@@ -219,16 +219,16 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
 
   return (
     <>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {APPS.map((app) => (
           <button
             key={app.id}
             type="button"
             onClick={() => void openPicker(app.id)}
-            className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-transparent p-0 transition-transform hover:scale-[1.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-14 w-14 items-center justify-center rounded-xl bg-transparent p-0 transition-transform hover:scale-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title={app.label}
           >
-            <img src={app.logo} alt={app.label} className="h-10 w-10 object-contain" />
+            <img src={app.logo} alt={app.label} className="h-12 w-12 object-contain" />
           </button>
         ))}
       </div>
@@ -252,12 +252,12 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                     setActiveApp(app.id);
                     setSelectedIds([]);
                   }}
-                  className={`inline-flex h-10 w-10 items-center justify-center rounded-md border ${
-                    activeApp === app.id ? 'border-foreground bg-muted' : 'border-border bg-background'
+                  className={`inline-flex h-12 w-12 items-center justify-center rounded-xl border ${
+                    activeApp === app.id ? 'border-foreground bg-muted/60' : 'border-transparent bg-transparent'
                   }`}
                   title={app.label}
                 >
-                  <img src={app.logo} alt={app.label} className="h-6 w-6" />
+                  <img src={app.logo} alt={app.label} className="h-9 w-9 object-contain" />
                 </button>
               ))}
             </div>

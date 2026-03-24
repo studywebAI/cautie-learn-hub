@@ -211,9 +211,6 @@ function QuizPageContent() {
       title={isAssignmentContext ? t.quiz.createQuiz : 'Quiz'}
       sidebar={sidebar}
     >
-      <div className="mb-3">
-        <MicrosoftAppStrip returnTo="/tools/quiz" />
-      </div>
       <SourceInput
         toolId="quiz"
         value={sourceText}
@@ -221,6 +218,7 @@ function QuizPageContent() {
         onImageDataUriChange={setImageDataUri}
         onSubmit={() => handleGenerate(sourceText)}
         placeholder={t.sourceInputPlaceholder}
+        topContent={<MicrosoftAppStrip returnTo="/tools/quiz" />}
         speechLanguage={language}
         enableMic={false}
         enableCaptions={false}

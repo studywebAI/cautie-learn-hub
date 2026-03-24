@@ -187,9 +187,6 @@ function FlashcardsPageContent() {
       title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'}
       sidebar={sidebar}
     >
-      <div className="mb-3">
-        <MicrosoftAppStrip returnTo="/tools/flashcards" />
-      </div>
       <SourceInput
         toolId="flashcards"
         value={sourceText}
@@ -197,6 +194,7 @@ function FlashcardsPageContent() {
         onImageDataUriChange={setImageDataUri}
         onSubmit={() => handleGenerate(sourceText)}
         placeholder={t.sourceInputPlaceholder}
+        topContent={<MicrosoftAppStrip returnTo="/tools/flashcards" />}
         speechLanguage={language}
         enableMic={false}
         enableCaptions={false}

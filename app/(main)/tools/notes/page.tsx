@@ -530,9 +530,6 @@ function NotesPageContent() {
 
   return (
     <WorkbenchShell title="Notes" sidebar={sidebar}>
-      <div className="mb-3">
-        <MicrosoftAppStrip returnTo="/tools/notes" />
-      </div>
       <SourceInput
         toolId="notes"
         value={sourceText}
@@ -540,6 +537,7 @@ function NotesPageContent() {
         onImageDataUriChange={setImageDataUri}
         onSubmit={handleGenerate}
         placeholder={t.sourceInputPlaceholder}
+        topContent={<MicrosoftAppStrip returnTo="/tools/notes" />}
         speechLanguage={language}
         enableMic={false}
         enableCaptions={false}
