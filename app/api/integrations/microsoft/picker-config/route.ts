@@ -94,6 +94,7 @@ export async function GET(request: NextRequest) {
       accessToken: tokenState?.accessToken || null,
       loginHint,
       endpointHint,
+      scope,
       isConsumerAccount,
       tokenExpiresAt: tokenState?.connection?.expires_at || null,
     });

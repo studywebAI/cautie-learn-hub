@@ -30,6 +30,7 @@ type PickerConfigResponse = {
   accessToken?: string | null;
   loginHint?: string | null;
   endpointHint?: string | null;
+  scope?: string | null;
   isConsumerAccount?: boolean | null;
   tokenExpiresAt?: string | null;
 };
@@ -366,6 +367,30 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         tokenExpiresAt: config.tokenExpiresAt || null,
         filter: filter || null,
       });
+
+      const scopeSet = new Set(
+        String(config.scope || '')
+          .split(/\s+/)
+          .map((scope) => scope.trim().toLowerCase())
+          .filter(Boolean)
+      );
+      const hasFilesReadAll = scopeSet.has('files.read.all');
+      if (!hasFilesReadAll) {
+        const returnWithPicker = withQuery(safeReturnTo, { ms_picker: '1', app: appId });
+        log('picker-scope-upgrade-required', {
+          traceId,
+          appId,
+          scope: config.scope || null,
+          missing: 'Files.Read.All',
+          redirectTo: `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`,
+        }, 'warn');
+        toast({
+          title: 'Microsoft consent needed',
+          description: 'Please approve OneDrive file access once to continue.',
+        });
+        window.location.href = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`;
+        return;
+      }
 
       const advancedBase: Record<string, any> = {
         redirectUri: config.redirectUri,
