@@ -12,7 +12,7 @@ FROM public.subjects s
 JOIN public.class_subjects cs ON s.id = cs.subject_id
 WHERE s.class_id IS NULL;
 
--- Update subjects with NULL class_id to use the first associated class from class_subjects
+-- Update subjects with. NULL class_id to use the first associated class from class_subjects
 -- Note: If a subject is linked to multiple classes, we'll pick the first one alphabetically
 UPDATE public.subjects s
 SET class_id = (
