@@ -27,6 +27,11 @@ type OneDriveSdkSelection = {
 type PickerConfigResponse = {
   clientId: string;
   redirectUri: string;
+  accessToken?: string | null;
+  loginHint?: string | null;
+  endpointHint?: string | null;
+  isConsumerAccount?: boolean | null;
+  tokenExpiresAt?: string | null;
 };
 
 declare global {
@@ -58,6 +63,16 @@ function newTraceId() {
     return crypto.randomUUID();
   }
   return `trace-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function safeErrorMessage(error: any) {
+  return String(
+    error?.message ||
+    error?.error?.message ||
+    error?.error_description ||
+    error?.statusText ||
+    'Picker failed'
+  );
 }
 
 export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
@@ -234,7 +249,8 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       }
 
       log('picker-config-fetch-start', { traceId, appId });
-      const configResponse = await fetch('/api/integrations/microsoft/picker-config', { cache: 'no-store' });
+      const configUrl = `/api/integrations/microsoft/picker-config?traceId=${encodeURIComponent(traceId)}&app=${encodeURIComponent(appId)}`;
+      const configResponse = await fetch(configUrl, { cache: 'no-store' });
       if (!configResponse.ok) {
         const payload = await configResponse.json().catch(() => ({}));
         throw new Error(typeof payload?.error === 'string' ? payload.error : 'Failed to get Microsoft picker config');
@@ -251,7 +267,31 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         appId,
         redirectUri: config.redirectUri,
         hasClientId: Boolean(config.clientId),
+        hasAccessToken: Boolean(config.accessToken),
+        hasLoginHint: Boolean(config.loginHint),
+        hasEndpointHint: Boolean(config.endpointHint),
+        isConsumerAccount: config.isConsumerAccount ?? null,
+        tokenExpiresAt: config.tokenExpiresAt || null,
         filter: filter || null,
+      });
+
+      const advanced: Record<string, any> = {
+        redirectUri: config.redirectUri,
+        filter: filter || undefined,
+        queryParameters: 'select=id,name,size,webUrl,file,lastModifiedDateTime',
+      };
+      if (config.accessToken) advanced.accessToken = config.accessToken;
+      if (config.loginHint) advanced.loginHint = config.loginHint;
+      if (config.endpointHint) advanced.endpointHint = config.endpointHint;
+      if (typeof config.isConsumerAccount === 'boolean') advanced.isConsumerAccount = config.isConsumerAccount;
+
+      log('picker-open-options-ready', {
+        traceId,
+        appId,
+        openInNewWindow: true,
+        action: 'query',
+        multiSelect: true,
+        advancedKeys: Object.keys(advanced),
       });
 
       await new Promise<void>((resolve, reject) => {
@@ -260,11 +300,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
           action: 'query',
           multiSelect: true,
           openInNewWindow: true,
-          advanced: {
-            redirectUri: config.redirectUri,
-            filter: filter || undefined,
-            queryParameters: 'select=id,name,size,webUrl,file,lastModifiedDateTime',
-          },
+          advanced,
           success: async (result: any) => {
             const values: OneDriveSdkSelection[] = Array.isArray(result?.value)
               ? result.value
@@ -279,6 +315,8 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
               appId,
               returnedCount: values.length,
               resultKeys: Object.keys(result || {}),
+              hasAccessTokenInResult: Boolean(result?.accessToken),
+              apiEndpoint: result?.apiEndpoint || null,
             });
 
             try {
@@ -293,12 +331,22 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
             resolve();
           },
           error: (error: any) => {
-            const message = String(error?.message || error?.error?.message || 'Picker failed');
+            const message = safeErrorMessage(error);
             log('picker-error-callback', {
               traceId,
               appId,
               message,
               code: String(error?.code || error?.error?.code || ''),
+              status: String(error?.status || error?.error?.status || ''),
+              errorType: String(error?.error || ''),
+              rawKeys: Object.keys(error || {}),
+              rawJson: (() => {
+                try {
+                  return JSON.stringify(error);
+                } catch {
+                  return '[unserializable]';
+                }
+              })(),
             });
             reject(new Error(message));
           },

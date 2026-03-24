@@ -33,7 +33,6 @@ export function buildMicrosoftAuthUrl(input: { redirectUri: string; state: strin
   url.searchParams.set('response_mode', 'query');
   url.searchParams.set('scope', scopes);
   url.searchParams.set('state', input.state);
-  url.searchParams.set('prompt', 'select_account');
   return url.toString();
 }
 
