@@ -46,10 +46,24 @@ export function middleware(request: NextRequest) {
   }
 
   const canonicalHost = parseCanonicalHost();
-  if (!canonicalHost) return NextResponse.next();
+  if (!canonicalHost) {
+    const response = NextResponse.next();
+    if (path.startsWith('/tools/') || path === '/integrations/microsoft/picker') {
+      response.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
+      response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+    }
+    return response;
+  }
 
   const requestHost = request.nextUrl.host.toLowerCase();
-  if (requestHost === canonicalHost) return NextResponse.next();
+  if (requestHost === canonicalHost) {
+    const response = NextResponse.next();
+    if (path.startsWith('/tools/') || path === '/integrations/microsoft/picker') {
+      response.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
+      response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+    }
+    return response;
+  }
 
   const redirectUrl = request.nextUrl.clone();
   redirectUrl.host = canonicalHost;

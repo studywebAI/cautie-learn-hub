@@ -56,16 +56,16 @@ export async function POST(request: NextRequest) {
     const rateLimit = checkRateLimit(request, { key: 'ms-picker-log', limit: 240, windowMs: 60_000 });
     if (!rateLimit.ok) return rateLimit.response;
 
-    const cookieStore = cookies();
-    const supabase = await createClient(cookieStore);
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      console.warn('[microsoft-picker-client-log] unauthorized', { requestId });
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    let userId: string | null = null;
+    try {
+      const cookieStore = cookies();
+      const supabase = await createClient(cookieStore);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      userId = user?.id || null;
+    } catch {
+      userId = null;
     }
 
     const body = await request.json().catch(() => null);
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       console.warn('[microsoft-picker-client-log] invalid-payload', {
         requestId,
-        userId: user.id,
+        userId,
         issues: parsed.error.issues.map((issue) => issue.message),
       });
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     const payload = parsed.data;
     const baseLog = {
       requestId,
-      userId: user.id,
+      userId,
       level: payload.level,
       event: payload.event,
       sessionTraceId: payload.sessionTraceId,
