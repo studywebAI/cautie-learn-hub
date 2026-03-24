@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const MICROSOFT_INTEGRATIONS_ENABLED = false;
-
 const parseCanonicalHost = () => {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (!siteUrl) return null;
@@ -14,23 +12,6 @@ const parseCanonicalHost = () => {
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  const isMicrosoftApiPath = path.startsWith('/api/integrations/microsoft');
-  const isMicrosoftPickerPath = path === '/integrations/microsoft/picker';
-  const isMicrosoftSettingsPath = path === '/settings/integrations';
-
-  if (!MICROSOFT_INTEGRATIONS_ENABLED && (isMicrosoftApiPath || isMicrosoftPickerPath || isMicrosoftSettingsPath)) {
-    if (isMicrosoftApiPath) {
-      return NextResponse.json(
-        { error: 'microsoft_integration_disabled', message: 'Microsoft integration is disabled.' },
-        { status: 410 }
-      );
-    }
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = '/tools';
-    redirectUrl.search = '';
-    return NextResponse.redirect(redirectUrl, 302);
-  }
-
   const userAgent = request.headers.get('user-agent') || '';
   const isNoisePath =
     path === '/manifest.json' ||
