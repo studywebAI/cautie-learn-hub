@@ -317,7 +317,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         filter: filter || undefined,
         queryParameters: 'select=id,name,size,webUrl,file,lastModifiedDateTime',
       };
-      if (config.loginHint) advancedBase.loginHint = config.loginHint;
+      // Keep picker options minimal/official to avoid provider-side login-hint edge cases.
       if (typeof config.isConsumerAccount === 'boolean') advancedBase.isConsumerAccount = config.isConsumerAccount;
 
       const tokenModeEnabled = false;
