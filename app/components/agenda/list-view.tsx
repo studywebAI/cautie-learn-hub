@@ -84,6 +84,14 @@ export function ListView({ events, onEventClick }: ListViewProps) {
 }
 
 function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventClick?: (event: CalendarEvent) => void }) {
+  const getClassChipColor = (classId?: string) => {
+    if (!classId) return 'hsl(var(--muted))';
+    let hash = 0;
+    for (let i = 0; i < classId.length; i += 1) hash = (hash * 31 + classId.charCodeAt(i)) | 0;
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue} 65% 52%)`;
+  };
+
   const buildHref = () => {
     if (!event.href) return undefined;
     
@@ -100,13 +108,31 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
   const content = (
     <div className="flex items-center gap-4 p-3 rounded-lg border transition-colors hover:bg-muted/50">
       <div className="w-1 h-12 rounded-full flex-shrink-0" style={{
-        backgroundColor: event.type === 'assignment' ? '#3b82f6' : undefined
+        backgroundColor:
+          event.type === 'assignment'
+            ? '#3b82f6'
+            : event.type === 'agenda_item' && event.visibility_state === 'hidden'
+            ? '#ef4444'
+            : event.type === 'agenda_item'
+            ? '#6366f1'
+            : undefined
       }} />
       
       <div className="flex-1 min-w-0">
         <p className="truncate">{event.title}</p>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>{event.subject}</span>
+          {event.class_name && (
+            <>
+              <span>·</span>
+              <span
+                className="inline-flex rounded-full px-2 py-0.5 text-white text-[10px]"
+                style={{ backgroundColor: getClassChipColor(event.class_id) }}
+              >
+                {event.class_name}
+              </span>
+            </>
+          )}
           {event.chapter_title && (
             <>
               <span>â€º</span>
@@ -143,6 +169,8 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
         
         {event.type === 'assignment' 
           ? <BookCheck className="h-4 w-4 text-blue-500" />
+          : event.type === 'agenda_item'
+          ? <BookCheck className="h-4 w-4 text-violet-500" />
           : <BrainCircuit className="h-4 w-4 text-primary" />
         }
       </div>

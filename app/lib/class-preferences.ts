@@ -6,6 +6,9 @@ export type ClassPreferences = {
   invite_allow_teacher_invites: boolean;
   school_schedule_enabled: boolean;
   school_schedule_visible_to_students: boolean;
+  agenda_default_visibility: 'visible' | 'hidden' | 'scheduled';
+  agenda_default_item_type: 'assignment' | 'quiz' | 'studyset' | 'event' | 'other';
+  agenda_show_schedule_overlay: boolean;
 };
 
 export const DEFAULT_CLASS_PREFERENCES: ClassPreferences = {
@@ -16,6 +19,9 @@ export const DEFAULT_CLASS_PREFERENCES: ClassPreferences = {
   invite_allow_teacher_invites: true,
   school_schedule_enabled: false,
   school_schedule_visible_to_students: true,
+  agenda_default_visibility: 'visible',
+  agenda_default_item_type: 'assignment',
+  agenda_show_schedule_overlay: true,
 };
 
 export function normalizeClassPreferences(input: any): ClassPreferences {
@@ -33,5 +39,17 @@ export function normalizeClassPreferences(input: any): ClassPreferences {
     invite_allow_teacher_invites: input?.invite_allow_teacher_invites !== false,
     school_schedule_enabled: input?.school_schedule_enabled === true,
     school_schedule_visible_to_students: input?.school_schedule_visible_to_students !== false,
+    agenda_default_visibility:
+      input?.agenda_default_visibility === 'hidden' || input?.agenda_default_visibility === 'scheduled'
+        ? input.agenda_default_visibility
+        : 'visible',
+    agenda_default_item_type:
+      input?.agenda_default_item_type === 'quiz' ||
+      input?.agenda_default_item_type === 'studyset' ||
+      input?.agenda_default_item_type === 'event' ||
+      input?.agenda_default_item_type === 'other'
+        ? input.agenda_default_item_type
+        : 'assignment',
+    agenda_show_schedule_overlay: input?.agenda_show_schedule_overlay !== false,
   };
 }

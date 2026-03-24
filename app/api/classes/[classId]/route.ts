@@ -15,6 +15,9 @@ const DEFAULT_CLASS_PREFERENCES = {
   invite_allow_teacher_invites: true,
   school_schedule_enabled: false,
   school_schedule_visible_to_students: true,
+  agenda_default_visibility: 'visible',
+  agenda_default_item_type: 'assignment',
+  agenda_show_schedule_overlay: true,
 }
 
 const normalizePreferences = (raw: any) => ({
@@ -28,6 +31,18 @@ const normalizePreferences = (raw: any) => ({
   invite_allow_teacher_invites: raw?.invite_allow_teacher_invites !== false,
   school_schedule_enabled: raw?.school_schedule_enabled === true,
   school_schedule_visible_to_students: raw?.school_schedule_visible_to_students !== false,
+  agenda_default_visibility:
+    raw?.agenda_default_visibility === 'hidden' || raw?.agenda_default_visibility === 'scheduled'
+      ? raw.agenda_default_visibility
+      : 'visible',
+  agenda_default_item_type:
+    raw?.agenda_default_item_type === 'quiz' ||
+    raw?.agenda_default_item_type === 'studyset' ||
+    raw?.agenda_default_item_type === 'event' ||
+    raw?.agenda_default_item_type === 'other'
+      ? raw.agenda_default_item_type
+      : 'assignment',
+  agenda_show_schedule_overlay: raw?.agenda_show_schedule_overlay !== false,
 })
 
 // GET a specific class's public info
@@ -79,7 +94,7 @@ export async function GET(
   if (user) {
     const { data: prefRow } = await (supabase as any)
       .from('class_preferences')
-      .select('default_subject_view, grades_default_scale, grades_show_class_average, attendance_require_confirmation, invite_allow_teacher_invites, school_schedule_enabled, school_schedule_visible_to_students')
+      .select('default_subject_view, grades_default_scale, grades_show_class_average, attendance_require_confirmation, invite_allow_teacher_invites, school_schedule_enabled, school_schedule_visible_to_students, agenda_default_visibility, agenda_default_item_type, agenda_show_schedule_overlay')
       .eq('class_id', classId)
       .maybeSingle()
 

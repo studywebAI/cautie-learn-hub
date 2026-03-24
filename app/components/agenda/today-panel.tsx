@@ -24,6 +24,37 @@ export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSugges
   const { dictionary } = useDictionary();
 
   const getDeadlineStyle = (event: CalendarEvent) => {
+    if (event.type === 'agenda_item') {
+      if (event.visibility_state === 'hidden') {
+        return {
+          borderColor: 'rgb(239, 68, 68)',
+          bgColor: 'rgba(239, 68, 68, 0.1)',
+          icon: Square,
+          iconColor: 'text-red-500',
+          iconBg: 'bg-red-100',
+          label: 'H'
+        };
+      }
+      if (event.item_type === 'quiz') {
+        return {
+          borderColor: 'rgb(249, 115, 22)',
+          bgColor: 'rgba(249, 115, 22, 0.1)',
+          icon: Circle,
+          iconColor: 'text-orange-500',
+          iconBg: 'bg-orange-100',
+          label: 'Q'
+        };
+      }
+      return {
+        borderColor: 'rgb(59, 130, 246)',
+        bgColor: 'rgba(59, 130, 246, 0.1)',
+        icon: Home,
+        iconColor: 'text-blue-500',
+        iconBg: 'bg-blue-100',
+        label: 'A'
+      };
+    }
+
     if (event.type !== 'assignment') {
       return {
         borderColor: 'rgb(15, 23, 42)',
@@ -86,7 +117,7 @@ export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSugges
         className="p-3 rounded-lg border-l-4 cursor-pointer hover:bg-muted/50 transition-colors"
         style={{borderColor: style.borderColor, backgroundColor: style.bgColor}}
         onClick={() => {
-          if (event.type === 'assignment' && onEventClick) {
+          if ((event.type === 'assignment' || event.type === 'agenda_item') && onEventClick) {
             onEventClick(event);
           }
         }}

@@ -32,7 +32,56 @@ export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
     transition,
   };
 
+  const getClassChipColor = (classId?: string) => {
+    if (!classId) return 'hsl(var(--muted))';
+    let hash = 0;
+    for (let i = 0; i < classId.length; i += 1) hash = (hash * 31 + classId.charCodeAt(i)) | 0;
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue} 65% 52%)`;
+  };
+
   const getDeadlineStyle = () => {
+    if (event.type === 'agenda_item') {
+      if (event.visibility_state === 'hidden') {
+        return {
+          borderColor: 'rgb(239, 68, 68)',
+          bgColor: 'rgba(239, 68, 68, 0.12)',
+          icon: Square,
+          iconColor: 'text-red-500',
+          iconBg: 'bg-red-100',
+          label: 'H',
+        };
+      }
+      if (event.item_type === 'quiz') {
+        return {
+          borderColor: 'rgb(245, 158, 11)',
+          bgColor: 'rgba(245, 158, 11, 0.12)',
+          icon: Circle,
+          iconColor: 'text-amber-500',
+          iconBg: 'bg-amber-100',
+          label: 'Q',
+        };
+      }
+      if (event.item_type === 'studyset') {
+        return {
+          borderColor: 'rgb(139, 92, 246)',
+          bgColor: 'rgba(139, 92, 246, 0.12)',
+          icon: BookOpen,
+          iconColor: 'text-violet-500',
+          iconBg: 'bg-violet-100',
+          label: 'S',
+        };
+      }
+      return {
+        borderColor: 'rgb(59, 130, 246)',
+        bgColor: 'rgba(59, 130, 246, 0.12)',
+        icon: Home,
+        iconColor: 'text-blue-500',
+        iconBg: 'bg-blue-100',
+        label: 'A',
+      };
+    }
+
     if (event.type !== 'assignment') {
       return {
         borderColor: 'rgb(15, 23, 42)',
@@ -156,6 +205,14 @@ export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
               {event.title}
             </p>
             <p className="text-sm text-muted-foreground">{event.subject}</p>
+            {event.class_name && (
+              <span
+                className="inline-flex mt-1 text-[10px] rounded-full px-2 py-0.5 text-white"
+                style={{ backgroundColor: getClassChipColor(event.class_id) }}
+              >
+                {event.class_name}
+              </span>
+            )}
             {event.chapter_title && (
               <p className="text-xs text-muted-foreground mt-1">
                 {event.chapter_title}

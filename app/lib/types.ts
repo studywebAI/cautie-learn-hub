@@ -140,8 +140,22 @@ export type CalendarEvent = {
   title: string;
   subject: string;
   date: Date;
-  type: 'assignment' | 'study_plan' | 'personal';
+  type: 'assignment' | 'study_plan' | 'personal' | 'agenda_item';
   href: string;
+  class_id?: string;
+  class_name?: string;
+  subject_id?: string | null;
+  item_type?: 'assignment' | 'quiz' | 'studyset' | 'event' | 'other';
+  visibility_state?: 'visible' | 'hidden' | 'scheduled';
+  publish_at?: string | null;
+  links?: Array<{
+    id?: string;
+    link_type: string;
+    link_ref_id?: string | null;
+    label: string;
+    metadata_json?: Record<string, any>;
+    position?: number;
+  }>;
   chapter_id?: string;
   chapter_title?: string;
   priority?: 'low' | 'medium' | 'high';

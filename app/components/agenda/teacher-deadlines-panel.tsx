@@ -13,8 +13,8 @@ interface TeacherDeadlinesPanelProps {
 }
 
 export function TeacherDeadlinesPanel({ events, selectedDay, onEventClick }: TeacherDeadlinesPanelProps) {
-  // Filter only assignments
-  const deadlines = events.filter(e => e.type === 'assignment');
+  // Teacher agenda source: unified agenda items, fallback assignments.
+  const deadlines = events.filter((event) => event.type === 'agenda_item' || event.type === 'assignment');
   
   // Events for selected day
   const selectedDayEvents = selectedDay
@@ -28,7 +28,16 @@ export function TeacherDeadlinesPanel({ events, selectedDay, onEventClick }: Tea
     .slice(0, 5);
 
   const getDeadlineStyle = (event: CalendarEvent) => {
-    const assignmentType = (event as any).assignment_type || 'homework';
+    const assignmentType = event.type === 'agenda_item' ? (event.item_type || 'assignment') : ((event as any).assignment_type || 'homework');
+    if (event.type === 'agenda_item' && event.visibility_state === 'hidden') {
+      return {
+        borderColor: 'rgb(239, 68, 68)',
+        icon: Square,
+        iconColor: 'text-red-500',
+        iconBg: 'bg-red-100',
+        label: 'H'
+      };
+    }
     
     switch (assignmentType) {
       case 'homework':
@@ -40,6 +49,7 @@ export function TeacherDeadlinesPanel({ events, selectedDay, onEventClick }: Tea
           label: 'H'
         };
       case 'small_test':
+      case 'quiz':
         return {
           borderColor: 'rgb(249, 115, 22)',
           icon: Circle,
@@ -48,6 +58,7 @@ export function TeacherDeadlinesPanel({ events, selectedDay, onEventClick }: Tea
           label: 't'
         };
       case 'big_test':
+      case 'event':
         return {
           borderColor: 'rgb(239, 68, 68)',
           icon: Square,
@@ -105,6 +116,9 @@ export function TeacherDeadlinesPanel({ events, selectedDay, onEventClick }: Tea
                         {event.title}
                       </p>
                       <p className="text-sm text-muted-foreground">{event.subject}</p>
+                      {event.class_name && (
+                        <p className="text-xs text-muted-foreground">{event.class_name}</p>
+                      )}
                       {event.chapter_title && (
                         <p className="text-xs text-muted-foreground mt-1">
                           {event.chapter_title}
