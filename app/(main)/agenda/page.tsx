@@ -532,11 +532,20 @@ function AgendaPageContent() {
     if (event?.type === 'agenda_item' && event.class_id) {
       const dueAt = new Date(newDate);
       dueAt.setHours(12, 0, 0, 0);
-      await fetch(`/api/classes/${event.class_id}/agenda/${event.id}`, {
+      const response = await fetch(`/api/classes/${event.class_id}/agenda/${event.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ due_at: dueAt.toISOString(), starts_at: dueAt.toISOString() }),
       });
+      if (!response.ok) return;
+      const updatedIso = dueAt.toISOString();
+      setTeacherAgendaItems((prev) =>
+        prev.map((item) =>
+          item.id === event.id
+            ? { ...item, due_at: updatedIso, starts_at: updatedIso }
+            : item
+        )
+      );
     }
   };
 

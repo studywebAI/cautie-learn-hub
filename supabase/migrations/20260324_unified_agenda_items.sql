@@ -233,6 +233,7 @@ alter table public.class_preferences
 with scheduled_assignments as (
   select
     a.id as assignment_id,
+    a.id as agenda_item_id,
     a.class_id,
     coalesce(
       ch.subject_id,
@@ -258,31 +259,8 @@ with scheduled_assignments as (
   left join public.chapters ch on ch.id = p.chapter_id
   left join public.subjects s on s.id = ch.subject_id
   where (a.scheduled_start_at is not null or a.scheduled_end_at is not null or a.due_date is not null)
-),
-inserted as (
-  insert into public.class_agenda_items (
-    class_id,
-    subject_id,
-    title,
-    description,
-    item_type,
-    starts_at,
-    due_at,
-    visibility_state,
-    created_by,
-    updated_by
-  )
-  select
-    sa.class_id,
-    sa.subject_id,
-    sa.title,
-    sa.description,
-    'assignment',
-    sa.starts_at,
-    sa.due_at,
-    'visible',
-    sa.actor_id,
-    sa.actor_id
+), to_insert as (
+  select *
   from scheduled_assignments sa
   where sa.actor_id is not null
     and not exists (
@@ -291,8 +269,34 @@ inserted as (
       where l.link_type = 'assignment'
         and l.link_ref_id = sa.assignment_id::text
     )
-  returning id, class_id, created_by
 )
+insert into public.class_agenda_items (
+  id,
+  class_id,
+  subject_id,
+  title,
+  description,
+  item_type,
+  starts_at,
+  due_at,
+  visibility_state,
+  created_by,
+  updated_by
+)
+select
+  ti.agenda_item_id,
+  ti.class_id,
+  ti.subject_id,
+  ti.title,
+  ti.description,
+  'assignment',
+  ti.starts_at,
+  ti.due_at,
+  'visible',
+  ti.actor_id,
+  ti.actor_id
+from to_insert ti;
+
 insert into public.class_agenda_item_links (
   agenda_item_id,
   link_type,
@@ -302,15 +306,46 @@ insert into public.class_agenda_item_links (
   position
 )
 select
-  i.id,
+  ti.agenda_item_id,
   'assignment',
-  sa.assignment_id::text,
+  ti.assignment_id::text,
   'Assignment',
   '{}'::jsonb,
   0
-from inserted i
-join scheduled_assignments sa
-  on sa.class_id = i.class_id
- and sa.actor_id = i.created_by
- and sa.title = (select ai.title from public.class_agenda_items ai where ai.id = i.id)
- and coalesce(sa.starts_at, 'epoch'::timestamptz) = coalesce((select ai.starts_at from public.class_agenda_items ai where ai.id = i.id), 'epoch'::timestamptz);
+from (
+  select
+    a.id as assignment_id,
+    a.id as agenda_item_id,
+    a.class_id,
+    coalesce(
+      ch.subject_id,
+      case
+        when s.class_id is not null then s.id
+        else null
+      end
+    ) as subject_id,
+    coalesce(a.title, 'Untitled Assignment') as title,
+    a.description,
+    coalesce(a.scheduled_start_at, a.due_date::timestamptz) as starts_at,
+    coalesce(a.scheduled_end_at, a.due_date::timestamptz) as due_at,
+    (
+      select cm.user_id
+      from public.class_members cm
+      join public.profiles p on p.id = cm.user_id and p.subscription_type = 'teacher'
+      where cm.class_id = a.class_id
+      order by cm.created_at asc
+      limit 1
+    ) as actor_id
+  from public.assignments a
+  left join public.paragraphs p on p.id = a.paragraph_id
+  left join public.chapters ch on ch.id = p.chapter_id
+  left join public.subjects s on s.id = ch.subject_id
+  where (a.scheduled_start_at is not null or a.scheduled_end_at is not null or a.due_date is not null)
+) ti
+where ti.actor_id is not null
+  and not exists (
+    select 1
+    from public.class_agenda_item_links l
+    where l.link_type = 'assignment'
+      and l.link_ref_id = ti.assignment_id::text
+  );

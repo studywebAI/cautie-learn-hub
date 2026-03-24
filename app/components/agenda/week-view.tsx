@@ -101,9 +101,9 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
       const newDateString = overId.replace('day-', '');
       const newDate = parseISO(newDateString);
 
-      // Only allow moving personal tasks to different dates
+      // Allow moving personal tasks and unified agenda items.
       const eventToMove = events.find(e => e.id === activeId);
-      if (eventToMove?.type === 'personal') {
+      if (eventToMove?.type === 'personal' || eventToMove?.type === 'agenda_item') {
         onEventMove(activeId, newDate);
       }
     }
