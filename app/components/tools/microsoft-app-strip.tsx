@@ -85,6 +85,8 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const router = useRouter();
   const { toast } = useToast();
   const sessionTraceId = useRef(newTraceId());
+  const logSeq = useRef(0);
+  const bootAtMs = useRef(Date.now());
 
   const reportServerLog = useCallback((level: 'info' | 'warn' | 'error', event: string, data: Record<string, unknown> = {}) => {
     if (typeof window === 'undefined') return;
@@ -115,11 +117,15 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   }, [pathname]);
 
   const log = useCallback((event: string, data: Record<string, unknown> = {}, level: 'info' | 'warn' | 'error' = 'info') => {
+    const seq = ++logSeq.current;
+    const elapsedMs = Date.now() - bootAtMs.current;
     const payload = {
       event,
+      seq,
       sessionTraceId: sessionTraceId.current,
       path: pathname,
       at: new Date().toISOString(),
+      elapsedMs,
       ...data,
     };
 
@@ -130,7 +136,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     } else {
       console.info('[ms-picker-client]', payload);
     }
-    reportServerLog(level, event, data);
+    reportServerLog(level, event, { seq, elapsedMs, ...data });
   }, [pathname, reportServerLog]);
 
   const currentReturnTo = useMemo(() => {
@@ -146,6 +152,42 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     if (returnTo && returnTo.startsWith('/')) return returnTo;
     return currentReturnTo.startsWith('/') ? currentReturnTo : '/tools/quiz';
   }, [currentReturnTo, returnTo]);
+
+  useEffect(() => {
+    log('component-mounted', {
+      returnTo,
+      pathname,
+      search: searchParams.toString(),
+      appCount: APPS.length,
+    });
+
+    const onError = (event: ErrorEvent) => {
+      log('window-error', {
+        message: event.message || 'unknown',
+        filename: event.filename || null,
+        line: event.lineno || null,
+        col: event.colno || null,
+      }, 'error');
+    };
+
+    const onRejection = (event: PromiseRejectionEvent) => {
+      let reason = 'unknown';
+      try {
+        reason = typeof event.reason === 'string' ? event.reason : JSON.stringify(event.reason);
+      } catch {
+        reason = String(event.reason || 'unknown');
+      }
+      log('window-unhandledrejection', { reason }, 'error');
+    };
+
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onRejection as any);
+    return () => {
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onRejection as any);
+      log('component-unmounted');
+    };
+  }, [log, pathname, returnTo, searchParams]);
 
   const loadStatus = useCallback(async () => {
     try {
@@ -287,9 +329,22 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
 
       log('picker-config-fetch-start', { traceId, appId });
       const configUrl = `/api/integrations/microsoft/picker-config?traceId=${encodeURIComponent(traceId)}&app=${encodeURIComponent(appId)}`;
+      const configFetchStart = Date.now();
       const configResponse = await fetch(configUrl, { cache: 'no-store' });
+      log('picker-config-fetch-response', {
+        traceId,
+        appId,
+        status: configResponse.status,
+        ok: configResponse.ok,
+        durationMs: Date.now() - configFetchStart,
+      });
       if (!configResponse.ok) {
         const payload = await configResponse.json().catch(() => ({}));
+        log('picker-config-fetch-non-ok-payload', {
+          traceId,
+          appId,
+          payloadKeys: Object.keys(payload || {}),
+        }, 'warn');
         throw new Error(typeof payload?.error === 'string' ? payload.error : 'Failed to get Microsoft picker config');
       }
 
@@ -346,23 +401,74 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         multiSelect: true,
         advancedKeysWithToken: Object.keys(advancedWithToken),
         advancedKeysBase: Object.keys(advancedBase),
+        redirectUriHost: (() => {
+          try {
+            return new URL(config.redirectUri).host;
+          } catch {
+            return null;
+          }
+        })(),
       });
 
       const runPickerAttempt = async (attempt: 'with_token' | 'without_token', advanced: Record<string, any>) => {
         log('picker-attempt-start', { traceId, appId, attempt, advancedKeys: Object.keys(advanced) });
         await new Promise<void>((resolve, reject) => {
+          const attemptStart = Date.now();
           const timeoutMs = 25_000;
+          let done = false;
+
+          const onMessage = (event: MessageEvent) => {
+            let dataPreview: string | null = null;
+            try {
+              dataPreview = typeof event.data === 'string'
+                ? event.data.slice(0, 220)
+                : JSON.stringify(event.data).slice(0, 220);
+            } catch {
+              dataPreview = '[unserializable]';
+            }
+            log('picker-popup-postmessage', {
+              traceId,
+              appId,
+              attempt,
+              origin: event.origin,
+              sourcePresent: Boolean(event.source),
+              dataPreview,
+            });
+          };
+          const onFocus = () => log('picker-window-focus', { traceId, appId, attempt });
+          const onBlur = () => log('picker-window-blur', { traceId, appId, attempt });
+          window.addEventListener('message', onMessage);
+          window.addEventListener('focus', onFocus);
+          window.addEventListener('blur', onBlur);
+
+          const finish = () => {
+            if (done) return;
+            done = true;
+            window.clearTimeout(timeout);
+            window.removeEventListener('message', onMessage);
+            window.removeEventListener('focus', onFocus);
+            window.removeEventListener('blur', onBlur);
+          };
+
           const timeout = window.setTimeout(() => {
             log('picker-timeout-no-callback', {
               traceId,
               appId,
               attempt,
               timeoutMs,
+              durationMs: Date.now() - attemptStart,
               hint: 'no_success_cancel_or_error_callback_received',
             }, 'error');
+            finish();
             reject(new Error('Picker timeout (no callback from popup)'));
           }, timeoutMs);
 
+          log('picker-open-invoked', {
+            traceId,
+            appId,
+            attempt,
+            durationSinceAttemptStartMs: Date.now() - attemptStart,
+          });
           window.OneDrive?.open({
             clientId: config.clientId,
             action: 'query',
@@ -370,7 +476,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
             openInNewWindow: true,
             advanced,
             success: async (result: any) => {
-              window.clearTimeout(timeout);
+              finish();
               const values: OneDriveSdkSelection[] = Array.isArray(result?.value)
                 ? result.value
                 : Array.isArray(result?.files)
@@ -387,6 +493,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                 resultKeys: Object.keys(result || {}),
                 hasAccessTokenInResult: Boolean(result?.accessToken),
                 apiEndpoint: result?.apiEndpoint || null,
+                durationMs: Date.now() - attemptStart,
               });
 
               try {
@@ -397,21 +504,23 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
               }
             },
             cancel: () => {
-              window.clearTimeout(timeout);
-              log('picker-cancel-callback', { traceId, appId, attempt });
+              finish();
+              log('picker-cancel-callback', { traceId, appId, attempt, durationMs: Date.now() - attemptStart });
               resolve();
             },
             error: (error: any) => {
-              window.clearTimeout(timeout);
+              finish();
               const message = safeErrorMessage(error);
               log('picker-error-callback', {
                 traceId,
                 appId,
                 attempt,
                 message,
+                durationMs: Date.now() - attemptStart,
                 code: String(error?.code || error?.error?.code || ''),
                 status: String(error?.status || error?.error?.status || ''),
                 errorType: String(error?.error || ''),
+                errorCode: String(error?.errorCode || ''),
                 rawKeys: Object.keys(error || {}),
                 rawJson: (() => {
                   try {

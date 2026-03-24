@@ -68,6 +68,13 @@ export async function POST(request: NextRequest) {
       userId = null;
     }
 
+    const origin = request.headers.get('origin') || null;
+    const referer = request.headers.get('referer') || null;
+    const secFetchSite = request.headers.get('sec-fetch-site') || null;
+    const secFetchMode = request.headers.get('sec-fetch-mode') || null;
+    const userAgent = request.headers.get('user-agent') || null;
+    const contentLength = request.headers.get('content-length') || null;
+
     const body = await request.json().catch(() => null);
     const parsed = PayloadSchema.safeParse(body);
     if (!parsed.success) {
@@ -83,6 +90,12 @@ export async function POST(request: NextRequest) {
     const baseLog = {
       requestId,
       userId,
+      origin,
+      referer,
+      secFetchSite,
+      secFetchMode,
+      userAgent,
+      contentLength,
       level: payload.level,
       event: payload.event,
       sessionTraceId: payload.sessionTraceId,

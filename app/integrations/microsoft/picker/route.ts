@@ -41,7 +41,9 @@ const REDIRECT_HTML = `<!doctype html>
 
         send('info', 'picker-redirect-page-load', {
           hasOpener: !!window.opener,
+          readyState: document.readyState,
           search: window.location.search || '',
+          hash: window.location.hash || '',
           hasOAuthParam: /[?&]oauth=/.test(window.location.search),
           hasErrorParam: /[?&]error=/.test(window.location.search)
         });
@@ -68,8 +70,36 @@ const REDIRECT_HTML = `<!doctype html>
           });
         }
 
+        try {
+          var hashRaw = window.location.hash || '';
+          if (hashRaw) {
+            var hashParams = new URLSearchParams(hashRaw.startsWith('#') ? hashRaw.slice(1) : hashRaw);
+            send('info', 'picker-redirect-hash-decoded', {
+              keys: Array.from(hashParams.keys()),
+              error: hashParams.get('error'),
+              error_description: hashParams.get('error_description'),
+              state: hashParams.get('state'),
+              token_type: hashParams.get('token_type'),
+              expires_in: hashParams.get('expires_in'),
+              hasAccessToken: Boolean(hashParams.get('access_token'))
+            });
+          }
+        } catch (e) {
+          send('warn', 'picker-redirect-hash-decode-failed', {
+            message: String((e && e.message) || 'decode_failed')
+          });
+        }
+
         window.addEventListener('load', function () {
           send('info', 'picker-redirect-window-load', {
+            hasOneDriveGlobal: !!window.OneDrive,
+            readyState: document.readyState
+          });
+        });
+
+        document.addEventListener('readystatechange', function () {
+          send('info', 'picker-redirect-ready-state-change', {
+            readyState: document.readyState,
             hasOneDriveGlobal: !!window.OneDrive
           });
         });

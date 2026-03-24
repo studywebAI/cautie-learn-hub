@@ -60,6 +60,8 @@ export async function GET(request: NextRequest) {
     });
 
     const loginHint = tokenState?.connection?.account_email || null;
+    const scope = tokenState?.connection?.scope || null;
+    const metadataKeys = tokenState?.connection?.metadata ? Object.keys(tokenState.connection.metadata) : [];
     const endpointHint = typeof tokenState?.connection?.metadata?.endpoint_hint === 'string'
       ? String(tokenState.connection.metadata.endpoint_hint)
       : null;
@@ -79,8 +81,11 @@ export async function GET(request: NextRequest) {
       hasAccessToken: Boolean(tokenState?.accessToken),
       hasLoginHint: Boolean(loginHint),
       hasEndpointHint: Boolean(endpointHint),
+      scope,
+      metadataKeys,
       isConsumerAccount,
       tokenExpiresAt: tokenState?.connection?.expires_at || null,
+      tokenLength: tokenState?.accessToken ? tokenState.accessToken.length : 0,
     });
 
     return NextResponse.json({
