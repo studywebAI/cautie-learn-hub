@@ -283,7 +283,8 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       if (config.loginHint) advancedBase.loginHint = config.loginHint;
       if (typeof config.isConsumerAccount === 'boolean') advancedBase.isConsumerAccount = config.isConsumerAccount;
 
-      const canUseSuppliedToken = Boolean(config.accessToken && config.endpointHint);
+      const tokenModeEnabled = false;
+      const canUseSuppliedToken = tokenModeEnabled && Boolean(config.accessToken && config.endpointHint);
       const advancedWithToken: Record<string, any> = { ...advancedBase };
       if (canUseSuppliedToken) {
         advancedWithToken.accessToken = config.accessToken;
@@ -292,7 +293,9 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         log('picker-supplied-token-skipped', {
           traceId,
           appId,
-          reason: !config.accessToken ? 'missing_access_token' : 'missing_endpoint_hint',
+          reason: !tokenModeEnabled
+            ? 'token_mode_temporarily_disabled'
+            : (!config.accessToken ? 'missing_access_token' : 'missing_endpoint_hint'),
           hasAccessToken: Boolean(config.accessToken),
           hasEndpointHint: Boolean(config.endpointHint),
         });

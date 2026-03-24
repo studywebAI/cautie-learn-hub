@@ -60,10 +60,9 @@ export async function GET(request: NextRequest) {
     });
 
     const loginHint = tokenState?.connection?.account_email || null;
-    const endpointHintFromMetadata = typeof tokenState?.connection?.metadata?.endpoint_hint === 'string'
+    const endpointHint = typeof tokenState?.connection?.metadata?.endpoint_hint === 'string'
       ? String(tokenState.connection.metadata.endpoint_hint)
       : null;
-    const endpointHint = endpointHintFromMetadata || (tokenState?.accessToken ? 'https://graph.microsoft.com/v1.0/' : null);
     const isConsumerAccount = typeof tokenState?.connection?.metadata?.is_consumer_account === 'boolean'
       ? Boolean(tokenState.connection.metadata.is_consumer_account)
       : null;
