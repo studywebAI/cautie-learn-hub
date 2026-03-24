@@ -12,8 +12,18 @@ function getOrigin(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const requestId = crypto.randomUUID();
   try {
+    console.info('[microsoft-picker-config] request', {
+      requestId,
+      method: request.method,
+      path: request.nextUrl.pathname,
+      search: request.nextUrl.search,
+    });
+
     const rateLimit = checkRateLimit(request, { key: 'ms-picker-config', limit: 60, windowMs: 60_000 });
-    if (!rateLimit.ok) return rateLimit.response;
+    if (!rateLimit.ok) {
+      console.warn('[microsoft-picker-config] rate-limited', { requestId });
+      return rateLimit.response;
+    }
 
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
@@ -37,7 +47,9 @@ export async function GET(request: NextRequest) {
     console.info('[microsoft-picker-config] ok', {
       requestId,
       userId: user.id,
+      origin: getOrigin(request),
       redirectUri,
+      clientIdSuffix: clientId.slice(-6),
     });
 
     return NextResponse.json({
@@ -54,4 +66,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to load picker config' }, { status: 500 });
   }
 }
-
