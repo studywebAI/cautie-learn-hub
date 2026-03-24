@@ -275,18 +275,19 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         filter: filter || null,
       });
 
-      const advanced: Record<string, any> = {
+      const advancedBase: Record<string, any> = {
         redirectUri: config.redirectUri,
         filter: filter || undefined,
         queryParameters: 'select=id,name,size,webUrl,file,lastModifiedDateTime',
       };
-      if (config.loginHint) advanced.loginHint = config.loginHint;
-      if (typeof config.isConsumerAccount === 'boolean') advanced.isConsumerAccount = config.isConsumerAccount;
+      if (config.loginHint) advancedBase.loginHint = config.loginHint;
+      if (typeof config.isConsumerAccount === 'boolean') advancedBase.isConsumerAccount = config.isConsumerAccount;
 
       const canUseSuppliedToken = Boolean(config.accessToken && config.endpointHint);
+      const advancedWithToken: Record<string, any> = { ...advancedBase };
       if (canUseSuppliedToken) {
-        advanced.accessToken = config.accessToken;
-        advanced.endpointHint = config.endpointHint;
+        advancedWithToken.accessToken = config.accessToken;
+        advancedWithToken.endpointHint = config.endpointHint;
       } else {
         log('picker-supplied-token-skipped', {
           traceId,
@@ -303,67 +304,90 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         openInNewWindow: true,
         action: 'query',
         multiSelect: true,
-        advancedKeys: Object.keys(advanced),
+        advancedKeysWithToken: Object.keys(advancedWithToken),
+        advancedKeysBase: Object.keys(advancedBase),
       });
 
-      await new Promise<void>((resolve, reject) => {
-        window.OneDrive?.open({
-          clientId: config.clientId,
-          action: 'query',
-          multiSelect: true,
-          openInNewWindow: true,
-          advanced,
-          success: async (result: any) => {
-            const values: OneDriveSdkSelection[] = Array.isArray(result?.value)
-              ? result.value
-              : Array.isArray(result?.files)
-                ? result.files
-                : Array.isArray(result)
-                  ? result
-                  : [];
+      const runPickerAttempt = async (attempt: 'with_token' | 'without_token', advanced: Record<string, any>) => {
+        log('picker-attempt-start', { traceId, appId, attempt, advancedKeys: Object.keys(advanced) });
+        await new Promise<void>((resolve, reject) => {
+          window.OneDrive?.open({
+            clientId: config.clientId,
+            action: 'query',
+            multiSelect: true,
+            openInNewWindow: true,
+            advanced,
+            success: async (result: any) => {
+              const values: OneDriveSdkSelection[] = Array.isArray(result?.value)
+                ? result.value
+                : Array.isArray(result?.files)
+                  ? result.files
+                  : Array.isArray(result)
+                    ? result
+                    : [];
 
-            log('picker-success-callback', {
-              traceId,
-              appId,
-              returnedCount: values.length,
-              resultKeys: Object.keys(result || {}),
-              hasAccessTokenInResult: Boolean(result?.accessToken),
-              apiEndpoint: result?.apiEndpoint || null,
-            });
+              log('picker-success-callback', {
+                traceId,
+                appId,
+                attempt,
+                returnedCount: values.length,
+                resultKeys: Object.keys(result || {}),
+                hasAccessTokenInResult: Boolean(result?.accessToken),
+                apiEndpoint: result?.apiEndpoint || null,
+              });
 
-            try {
-              await attachFromPickerItems(appId, values, traceId);
+              try {
+                await attachFromPickerItems(appId, values, traceId);
+                resolve();
+              } catch (error: any) {
+                reject(new Error(String(error?.message || 'Attach failed')));
+              }
+            },
+            cancel: () => {
+              log('picker-cancel-callback', { traceId, appId, attempt });
               resolve();
-            } catch (error: any) {
-              reject(new Error(String(error?.message || 'Attach failed')));
-            }
-          },
-          cancel: () => {
-            log('picker-cancel-callback', { traceId, appId });
-            resolve();
-          },
-          error: (error: any) => {
-            const message = safeErrorMessage(error);
-            log('picker-error-callback', {
-              traceId,
-              appId,
-              message,
-              code: String(error?.code || error?.error?.code || ''),
-              status: String(error?.status || error?.error?.status || ''),
-              errorType: String(error?.error || ''),
-              rawKeys: Object.keys(error || {}),
-              rawJson: (() => {
-                try {
-                  return JSON.stringify(error);
-                } catch {
-                  return '[unserializable]';
-                }
-              })(),
-            });
-            reject(new Error(message));
-          },
+            },
+            error: (error: any) => {
+              const message = safeErrorMessage(error);
+              log('picker-error-callback', {
+                traceId,
+                appId,
+                attempt,
+                message,
+                code: String(error?.code || error?.error?.code || ''),
+                status: String(error?.status || error?.error?.status || ''),
+                errorType: String(error?.error || ''),
+                rawKeys: Object.keys(error || {}),
+                rawJson: (() => {
+                  try {
+                    return JSON.stringify(error);
+                  } catch {
+                    return '[unserializable]';
+                  }
+                })(),
+              });
+              reject(new Error(message));
+            },
+          });
         });
-      });
+      };
+
+      if (canUseSuppliedToken) {
+        try {
+          await runPickerAttempt('with_token', advancedWithToken);
+        } catch (error: any) {
+          log('picker-attempt-fallback-triggered', {
+            traceId,
+            appId,
+            from: 'with_token',
+            to: 'without_token',
+            message: String(error?.message || 'unknown'),
+          });
+          await runPickerAttempt('without_token', advancedBase);
+        }
+      } else {
+        await runPickerAttempt('without_token', advancedBase);
+      }
 
       log('open-picker-finished', { traceId, appId });
     } catch (error: any) {
