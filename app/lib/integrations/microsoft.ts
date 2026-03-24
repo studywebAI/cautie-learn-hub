@@ -24,7 +24,7 @@ export function getMicrosoftAuthConfig() {
   };
 }
 
-export function buildMicrosoftAuthUrl(input: { redirectUri: string; state: string }) {
+export function buildMicrosoftAuthUrl(input: { redirectUri: string; state: string; prompt?: 'consent' | 'select_account' | 'login' }) {
   const { clientId, scopes } = getMicrosoftAuthConfig();
   const url = new URL(`${MICROSOFT_AUTH_BASE}/authorize`);
   url.searchParams.set('client_id', clientId);
@@ -33,6 +33,7 @@ export function buildMicrosoftAuthUrl(input: { redirectUri: string; state: strin
   url.searchParams.set('response_mode', 'query');
   url.searchParams.set('scope', scopes);
   url.searchParams.set('state', input.state);
+  if (input.prompt) url.searchParams.set('prompt', input.prompt);
   return url.toString();
 }
 

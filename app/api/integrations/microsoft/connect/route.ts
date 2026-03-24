@@ -12,6 +12,16 @@ function getOrigin(request: NextRequest) {
   return process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin;
 }
 
+function parseScopeSet(value: string | null | undefined) {
+  return new Set(
+    String(value || '')
+      .split(/\s+/)
+      .map((scope) => scope.trim())
+      .filter(Boolean)
+      .map((scope) => scope.toLowerCase())
+  );
+}
+
 export async function GET(request: NextRequest) {
   const requestId = crypto.randomUUID();
   const traceId = request.nextUrl.searchParams.get('traceId') || crypto.randomUUID();
@@ -40,7 +50,7 @@ export async function GET(request: NextRequest) {
     const returnToRaw = request.nextUrl.searchParams.get('returnTo') || '/tools/studyset';
     const returnTo = returnToRaw.startsWith('/') ? returnToRaw : '/tools/studyset';
 
-    // If already connected with a usable token, skip OAuth roundtrip.
+    // If already connected with a usable token and required scopes, skip OAuth roundtrip.
     const existingToken = await getValidMicrosoftAccessToken(supabase, user.id).catch((error: any) => {
       console.warn('[microsoft-connect] existing-token-check-failed', {
         requestId,
@@ -50,7 +60,11 @@ export async function GET(request: NextRequest) {
       });
       return null;
     });
-    if (existingToken?.accessToken) {
+    const requiredScopes = ['files.read.all'];
+    const existingScopes = parseScopeSet(existingToken?.connection?.scope || '');
+    const missingScopes = requiredScopes.filter((scope) => !existingScopes.has(scope));
+    const needsScopeUpgrade = missingScopes.length > 0;
+    if (existingToken?.accessToken && !needsScopeUpgrade) {
       const doneUrl = new URL(returnTo, getOrigin(request));
       doneUrl.searchParams.set('ms', 'connected');
       console.info('[microsoft-connect] already-connected-short-circuit', {
@@ -58,15 +72,30 @@ export async function GET(request: NextRequest) {
         traceId,
         userId: user.id,
         returnTo,
+        scope: existingToken.connection?.scope || null,
         tokenExpiresAt: existingToken.connection?.expires_at || null,
       });
       return NextResponse.redirect(doneUrl);
     }
 
+    if (existingToken?.accessToken && needsScopeUpgrade) {
+      console.info('[microsoft-connect] scope-upgrade-required', {
+        requestId,
+        traceId,
+        userId: user.id,
+        currentScope: existingToken.connection?.scope || null,
+        missingScopes,
+      });
+    }
+
     const state = randomBytes(24).toString('hex');
     const redirectUri = `${getOrigin(request)}/api/integrations/microsoft/callback`;
 
-    const authUrl = buildMicrosoftAuthUrl({ redirectUri, state });
+    const authUrl = buildMicrosoftAuthUrl({
+      redirectUri,
+      state,
+      prompt: needsScopeUpgrade ? 'consent' : undefined,
+    });
     const response = NextResponse.redirect(authUrl);
     response.cookies.set('ms_oauth_state', state, {
       httpOnly: true,
