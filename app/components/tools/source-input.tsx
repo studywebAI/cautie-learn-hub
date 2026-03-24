@@ -85,7 +85,7 @@ const normalizeUrl = (raw: string): string | null => {
   }
 };
 
-const urlKey = (url: string) => url.replace(/\/$/, '').toLowerCase();
+const urlKey = (url: string) => url;
 
 const cleanupCaptionText = (value: string) => {
   const normalized = value
@@ -285,6 +285,10 @@ export function SourceInput({
     () => sources.filter((source) => source.kind === 'caption'),
     [sources]
   );
+  const urlSources = useMemo(
+    () => sources.filter((source) => source.kind === 'url'),
+    [sources]
+  );
 
   const addSource = useCallback((entry: SourceEntry) => {
     setSources((prev) => [...prev, entry]);
@@ -323,7 +327,10 @@ export function SourceInput({
       ];
     });
 
-    if (!inserted) return;
+    if (!inserted) {
+      toast({ title: 'Link already added', description: 'That exact link is already in the list.' });
+      return;
+    }
 
     setIsFetchingUrl(true);
     try {
@@ -896,18 +903,39 @@ export function SourceInput({
           {topContent && <div className="pb-1">{topContent}</div>}
 
           {linksOpen && (
-            <div className="flex items-center gap-2">
-              <input
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') void handleAddLink(); }}
-                placeholder="Paste a link and press Enter"
-                className="flex-1 border border-sidebar-border rounded-full bg-sidebar-accent/65 px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
-                disabled={isFetchingUrl}
-              />
-              <Button variant="outline" size="sm" onClick={() => void handleAddLink()} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full border-sidebar-border bg-sidebar-accent/70 text-xs h-7 px-3 hover:bg-sidebar-accent">
-                {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
-              </Button>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') void handleAddLink(); }}
+                  placeholder="Paste a link and press Enter"
+                  className="flex-1 border border-sidebar-border rounded-full bg-sidebar-accent/65 px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+                  disabled={isFetchingUrl}
+                />
+                <Button variant="outline" size="sm" onClick={() => void handleAddLink()} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full border-sidebar-border bg-sidebar-accent/70 text-xs h-7 px-3 hover:bg-sidebar-accent">
+                  {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
+                </Button>
+              </div>
+              {urlSources.length > 0 && (
+                <div className="max-h-28 space-y-1 overflow-auto pr-1">
+                  {urlSources.map((source) => (
+                    <div key={source.id} className="flex items-center gap-2 rounded-full border border-sidebar-border bg-sidebar-accent/55 px-3 py-1 text-xs">
+                      <span className="flex-1 truncate">{source.url || source.label}</span>
+                      {source.loading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                      {source.error && <span className="text-destructive">Error</span>}
+                      <button
+                        type="button"
+                        onClick={() => removeSource(source.id)}
+                        className="rounded-full p-0.5 hover:bg-muted"
+                        aria-label="Remove link"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
