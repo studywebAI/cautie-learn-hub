@@ -86,15 +86,52 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const { toast } = useToast();
   const sessionTraceId = useRef(newTraceId());
 
-  const log = useCallback((event: string, data: Record<string, unknown> = {}) => {
-    console.info('[ms-picker-client]', {
+  const reportServerLog = useCallback((level: 'info' | 'warn' | 'error', event: string, data: Record<string, unknown> = {}) => {
+    if (typeof window === 'undefined') return;
+    const payload = {
+      level,
+      event,
+      sessionTraceId: sessionTraceId.current,
+      pickerTraceId: typeof data.traceId === 'string' ? data.traceId : null,
+      appId: typeof data.appId === 'string' ? data.appId : null,
+      path: pathname,
+      at: new Date().toISOString(),
+      data,
+      client: {
+        href: window.location.href,
+        referrer: document.referrer || null,
+        userAgent: navigator.userAgent || null,
+        visibilityState: document.visibilityState,
+        online: navigator.onLine,
+        language: navigator.language || null,
+      },
+    };
+    fetch('/api/integrations/microsoft/picker-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => null);
+  }, [pathname]);
+
+  const log = useCallback((event: string, data: Record<string, unknown> = {}, level: 'info' | 'warn' | 'error' = 'info') => {
+    const payload = {
       event,
       sessionTraceId: sessionTraceId.current,
       path: pathname,
       at: new Date().toISOString(),
       ...data,
-    });
-  }, [pathname]);
+    };
+
+    if (level === 'error') {
+      console.error('[ms-picker-client]', payload);
+    } else if (level === 'warn') {
+      console.warn('[ms-picker-client]', payload);
+    } else {
+      console.info('[ms-picker-client]', payload);
+    }
+    reportServerLog(level, event, data);
+  }, [pathname, reportServerLog]);
 
   const currentReturnTo = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -368,7 +405,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                     return '[unserializable]';
                   }
                 })(),
-              });
+              }, 'error');
               reject(new Error(message));
             },
           });
@@ -385,7 +422,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
             from: 'with_token',
             to: 'without_token',
             message: String(error?.message || 'unknown'),
-          });
+          }, 'warn');
           await runPickerAttempt('without_token', advancedBase);
         }
       } else {
@@ -395,7 +432,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       log('open-picker-finished', { traceId, appId });
     } catch (error: any) {
       const message = String(error?.message || 'Failed to open picker');
-      log('open-picker-failed', { traceId, appId, message });
+      log('open-picker-failed', { traceId, appId, message }, 'error');
       toast({ variant: 'destructive', title: 'Microsoft picker failed', description: message });
       throw error;
     } finally {
