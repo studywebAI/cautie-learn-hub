@@ -8,7 +8,8 @@ import { checkRateLimit, sanitizeMicrosoftErrorCode } from '@/lib/security/reque
 export const dynamic = 'force-dynamic';
 
 function getOrigin(request: NextRequest) {
-  return process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin;
+  // Prefer the runtime request host to avoid OAuth/picker redirect mismatches on preview domains.
+  return request.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
 }
 
 function clearOAuthCookies(response: NextResponse) {
