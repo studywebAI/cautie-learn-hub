@@ -50,7 +50,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               <div className="fixed inset-0 bg-background/80 z-40" onClick={() => setSidebarOpen(false)} />
             )}
             <div className={cn(
-              "fixed top-0 right-0 h-full w-[280px] bg-background border-l z-50 transition-transform duration-200",
+              "fixed top-0 right-0 h-full w-[280px] bg-sidebar border-l border-sidebar-border z-50 transition-transform duration-200",
               sidebarOpen ? "translate-x-0" : "translate-x-full"
             )}>
               <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b">
@@ -65,7 +65,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
             </div>
           </>
         ) : (
-          <div className="w-[280px] shrink-0 border-l bg-background">
+          <div className="w-[280px] shrink-0 border-l border-sidebar-border bg-sidebar">
             <ScrollArea className="h-full">
               <div className="p-4 space-y-5">
                 {sidebar}
