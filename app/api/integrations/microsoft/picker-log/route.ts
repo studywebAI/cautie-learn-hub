@@ -25,29 +25,37 @@ const PayloadSchema = z.object({
   }).optional().nullable(),
 });
 
+function sanitizeUnknown(value: unknown, depth = 0): unknown {
+  if (value === null || value === undefined) return value ?? null;
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+  if (typeof value === 'string') return value.length > 3000 ? `${value.slice(0, 3000)}...[truncated]` : value;
+  if (typeof value === 'function') return `[function ${value.name || 'anonymous'}]`;
+  if (value instanceof Error) {
+    return {
+      name: value.name,
+      message: value.message,
+      stack: value.stack ? String(value.stack).slice(0, 3000) : null,
+    };
+  }
+  if (Array.isArray(value)) {
+    if (depth >= 3) return `[array:${value.length}]`;
+    return value.slice(0, 50).map((entry) => sanitizeUnknown(entry, depth + 1));
+  }
+  if (typeof value === 'object') {
+    const rec = value as Record<string, unknown>;
+    if (depth >= 3) return { kind: 'object', keys: Object.keys(rec).slice(0, 30) };
+    const out: Record<string, unknown> = {};
+    for (const [key, raw] of Object.entries(rec)) {
+      out[key] = sanitizeUnknown(raw, depth + 1);
+    }
+    return out;
+  }
+  return String(value);
+}
+
 function sanitizeRecord(value: unknown) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
-  const out: Record<string, unknown> = {};
-  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
-    if (typeof raw === 'string') {
-      out[key] = raw.length > 1000 ? `${raw.slice(0, 1000)}...[truncated]` : raw;
-      continue;
-    }
-    if (typeof raw === 'number' || typeof raw === 'boolean' || raw === null) {
-      out[key] = raw;
-      continue;
-    }
-    if (Array.isArray(raw)) {
-      out[key] = raw.slice(0, 50);
-      continue;
-    }
-    if (typeof raw === 'object') {
-      out[key] = '[object]';
-      continue;
-    }
-    out[key] = String(raw);
-  }
-  return out;
+  return sanitizeUnknown(value, 0) as Record<string, unknown>;
 }
 
 export async function POST(request: NextRequest) {

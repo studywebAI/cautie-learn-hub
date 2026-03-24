@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
       });
       return null;
     });
-    const requiredScopes = ['files.read.all'];
+    const requiredScopes = ['files.read'];
     const existingScopes = parseScopeSet(existingToken?.connection?.scope || '');
     const missingScopes = requiredScopes.filter((scope) => !existingScopes.has(scope));
     const needsScopeUpgrade = missingScopes.length > 0;

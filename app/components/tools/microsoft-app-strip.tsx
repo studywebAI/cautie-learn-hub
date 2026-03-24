@@ -76,6 +76,36 @@ function safeErrorMessage(error: any) {
   );
 }
 
+function serializeUnknown(input: unknown, depth = 0): unknown {
+  if (input === null || input === undefined) return input ?? null;
+  if (typeof input === 'string') return input;
+  if (typeof input === 'number' || typeof input === 'boolean') return input;
+  if (typeof input === 'function') return `[function ${input.name || 'anonymous'}]`;
+  if (input instanceof Error) {
+    return {
+      name: input.name,
+      message: input.message,
+      stack: input.stack || null,
+    };
+  }
+  if (Array.isArray(input)) {
+    if (depth >= 2) return `[array:${input.length}]`;
+    return input.slice(0, 20).map((value) => serializeUnknown(value, depth + 1));
+  }
+  if (typeof input === 'object') {
+    const record = input as Record<string, unknown>;
+    if (depth >= 2) {
+      return { kind: 'object', keys: Object.keys(record).slice(0, 25) };
+    }
+    const out: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(record)) {
+      out[key] = serializeUnknown(value, depth + 1);
+    }
+    return out;
+  }
+  return String(input);
+}
+
 export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [status, setStatus] = useState<MicrosoftStatus>({ connected: false });
   const [openingOfficialPicker, setOpeningOfficialPicker] = useState(false);
@@ -172,13 +202,16 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     };
 
     const onRejection = (event: PromiseRejectionEvent) => {
-      let reason = 'unknown';
+      let reasonText = 'unknown';
       try {
-        reason = typeof event.reason === 'string' ? event.reason : JSON.stringify(event.reason);
+        reasonText = typeof event.reason === 'string' ? event.reason : String(event.reason || 'unknown');
       } catch {
-        reason = String(event.reason || 'unknown');
+        reasonText = 'unknown';
       }
-      log('window-unhandledrejection', { reason }, 'error');
+      log('window-unhandledrejection', {
+        reason: reasonText,
+        serializedReason: serializeUnknown(event.reason),
+      }, 'error');
     };
 
     window.addEventListener('error', onError);
@@ -374,14 +407,14 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
           .map((scope) => scope.trim().toLowerCase())
           .filter(Boolean)
       );
-      const hasFilesReadAll = scopeSet.has('files.read.all');
-      if (!hasFilesReadAll) {
+      const hasFilesRead = scopeSet.has('files.read') || scopeSet.has('files.read.all');
+      if (!hasFilesRead) {
         const returnWithPicker = withQuery(safeReturnTo, { ms_picker: '1', app: appId });
         log('picker-scope-upgrade-required', {
           traceId,
           appId,
           scope: config.scope || null,
-          missing: 'Files.Read.All',
+          missing: 'Files.Read',
           redirectTo: `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`,
         }, 'warn');
         toast({
@@ -395,7 +428,6 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       const advancedBase: Record<string, any> = {
         redirectUri: config.redirectUri,
         filter: filter || undefined,
-        queryParameters: 'select=id,name,size,webUrl,file,lastModifiedDateTime',
       };
       // Keep picker options minimal/official to avoid provider-side login-hint edge cases.
       if (typeof config.isConsumerAccount === 'boolean') advancedBase.isConsumerAccount = config.isConsumerAccount;
@@ -433,6 +465,20 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
             return null;
           }
         })(),
+      });
+      log('picker-open-options-payload', {
+        traceId,
+        appId,
+        options: {
+          clientIdSuffix: String(config.clientId || '').slice(-6),
+          action: 'query',
+          multiSelect: true,
+          openInNewWindow: true,
+          advanced: {
+            ...advancedWithToken,
+            accessToken: advancedWithToken.accessToken ? `[present:${String(advancedWithToken.accessToken).length}]` : null,
+          },
+        },
       });
 
       const runPickerAttempt = async (attempt: 'with_token' | 'without_token', advanced: Record<string, any>) => {
@@ -554,6 +600,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                     return '[unserializable]';
                   }
                 })(),
+                serializedError: serializeUnknown(error),
               }, 'error');
               reject(new Error(message));
             },

@@ -80,6 +80,13 @@ export async function GET(request: NextRequest) {
     const token = await exchangeMicrosoftCodeForToken({ code, redirectUri });
     const profile = await fetchMicrosoftProfile(token.access_token);
     const expiresAt = new Date(Date.now() + Number(token.expires_in || 3600) * 1000).toISOString();
+    const grantedScopes = String(token.scope || '')
+      .split(/\s+/)
+      .map((scope) => scope.trim())
+      .filter(Boolean);
+    const grantedSet = new Set(grantedScopes.map((scope) => scope.toLowerCase()));
+    const requiredScopes = ['user.read', 'files.read'];
+    const missingScopes = requiredScopes.filter((scope) => !grantedSet.has(scope));
 
     await upsertMicrosoftConnection(supabase, {
       userId: user.id,
@@ -100,6 +107,8 @@ export async function GET(request: NextRequest) {
       userId: user.id,
       accountEmail: profile.mail || profile.userPrincipalName || null,
       scope: token.scope || null,
+      grantedScopes,
+      missingScopes,
       returnTo,
     });
     const response = NextResponse.redirect(doneUrl);
