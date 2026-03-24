@@ -76,6 +76,28 @@ function safeErrorMessage(error: any) {
   );
 }
 
+function isAllowedForApp(appId: string, name?: string, mimeType?: string) {
+  const lowerName = String(name || '').toLowerCase();
+  const lowerMime = String(mimeType || '').toLowerCase();
+  if (appId === 'word') {
+    return (
+      lowerName.endsWith('.doc') ||
+      lowerName.endsWith('.docx') ||
+      lowerMime.includes('wordprocessingml') ||
+      lowerMime === 'application/msword'
+    );
+  }
+  if (appId === 'powerpoint') {
+    return (
+      lowerName.endsWith('.ppt') ||
+      lowerName.endsWith('.pptx') ||
+      lowerMime.includes('presentationml') ||
+      lowerMime === 'application/vnd.ms-powerpoint'
+    );
+  }
+  return true;
+}
+
 function serializeUnknown(input: unknown, depth = 0): unknown {
   if (input === null || input === undefined) return input ?? null;
   if (typeof input === 'string') return input;
@@ -297,15 +319,17 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         webUrl: item.webUrl || item.link,
       }))
       .filter((item) => item.id);
+    const filtered = normalized.filter((item) => isAllowedForApp(appId, item.name, item.mimeType));
 
     log('attach-normalize-finished', {
       traceId,
       appId,
       inputCount: items.length,
       normalizedCount: normalized.length,
+      filteredCount: filtered.length,
     });
 
-    if (normalized.length === 0) {
+    if (filtered.length === 0) {
       toast({ variant: 'destructive', title: 'No file selected', description: 'Picker returned no usable file items.' });
       return;
     }
@@ -316,7 +340,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       body: JSON.stringify({
         provider: 'microsoft',
         app: appId,
-        items: normalized,
+        items: filtered,
         replaceSelection: true,
       }),
     });
@@ -328,7 +352,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       throw new Error(message);
     }
 
-    log('attach-save-success', { traceId, appId, count: normalized.length });
+    log('attach-save-success', { traceId, appId, count: filtered.length });
 
     await fetch('/api/integrations/ingestion-jobs/process', {
       method: 'POST',
@@ -346,8 +370,8 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft' } }));
     }
-    toast({ title: 'Context attached', description: `${normalized.length} file${normalized.length === 1 ? '' : 's'} added.` });
-    log('attach-complete', { traceId, appId, count: normalized.length });
+    toast({ title: 'Context attached', description: `${filtered.length} file${filtered.length === 1 ? '' : 's'} added.` });
+    log('attach-complete', { traceId, appId, count: filtered.length });
   }, [log, toast]);
 
   const openOfficialPicker = useCallback(async (appId: string) => {
@@ -386,8 +410,6 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       if (!config?.clientId || !config?.redirectUri) {
         throw new Error('Microsoft picker config incomplete');
       }
-      const filter = appId === 'word' ? '.doc,.docx' : appId === 'powerpoint' ? '.ppt,.pptx' : '';
-
       log('picker-config-fetch-success', {
         traceId,
         appId,
@@ -398,7 +420,6 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         hasEndpointHint: Boolean(config.endpointHint),
         isConsumerAccount: config.isConsumerAccount ?? null,
         tokenExpiresAt: config.tokenExpiresAt || null,
-        filter: filter || null,
       });
 
       const scopeSet = new Set(
@@ -427,7 +448,6 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
 
       const advancedBase: Record<string, any> = {
         redirectUri: config.redirectUri,
-        filter: filter || undefined,
       };
       // Keep picker options minimal/official to avoid provider-side login-hint edge cases.
       if (typeof config.isConsumerAccount === 'boolean') advancedBase.isConsumerAccount = config.isConsumerAccount;
