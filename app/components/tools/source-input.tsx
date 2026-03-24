@@ -921,7 +921,7 @@ export function SourceInput({
               }
             }}
             placeholder={placeholder}
-            className="min-h-[200px] resize-none text-sm flex-1 border-sidebar-border bg-sidebar-accent/55"
+            className="min-h-[170px] resize-none text-sm flex-1 rounded-2xl border border-border bg-muted/70"
             disabled={disabled || isProcessing}
           />
 
@@ -936,7 +936,7 @@ export function SourceInput({
           <Button
             type="button"
             variant="outline"
-            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent"
+            className="flex-1 gap-1.5 text-xs rounded-full flex-col h-auto py-3 border-border bg-muted/80 hover:bg-muted"
             onClick={() => setLinksOpen((prev) => !prev)}
             disabled={disabled || isProcessing}
           >
@@ -946,7 +946,7 @@ export function SourceInput({
           <Button
             type="button"
             variant="outline"
-            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent"
+            className="flex-1 gap-1.5 text-xs rounded-full flex-col h-auto py-3 border-border bg-muted/80 hover:bg-muted"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || isProcessing}
           >
@@ -957,7 +957,7 @@ export function SourceInput({
             <Button
               type="button"
               variant="outline"
-              className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent"
+              className="flex-1 gap-1.5 text-xs rounded-full flex-col h-auto py-3 border-border bg-muted/80 hover:bg-muted"
               onClick={() => (isFallbackRecording ? stopListening() : startListening())}
               disabled={disabled || isProcessing || !enableMic}
             >
@@ -969,7 +969,7 @@ export function SourceInput({
             <Button
               type="button"
               variant="outline"
-              className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent"
+              className="flex-1 gap-1.5 text-xs rounded-full flex-col h-auto py-3 border-border bg-muted/80 hover:bg-muted"
               onClick={() => setCaptionsOpen((prev) => !prev)}
               disabled={disabled || !enableCaptions}
             >
@@ -980,7 +980,7 @@ export function SourceInput({
           <Button
             type="button"
             variant="outline"
-            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent"
+            className="flex-1 gap-1.5 text-xs rounded-full flex-col h-auto py-3 border-border bg-muted/80 hover:bg-muted"
             onClick={() => onSubmit?.()}
             disabled={disabled || isProcessing || !canGenerate}
           >
