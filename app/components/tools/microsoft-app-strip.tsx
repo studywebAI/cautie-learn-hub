@@ -63,6 +63,7 @@ function newTraceId() {
 export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [status, setStatus] = useState<MicrosoftStatus>({ connected: false });
   const [openingOfficialPicker, setOpeningOfficialPicker] = useState(false);
+  const [pendingPickerApp, setPendingPickerApp] = useState<string | null>(null);
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -328,11 +329,26 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
 
     if (!ms && !msError && !msPicker) return;
 
+    log('oauth-return-query-detected', {
+      ms: ms || null,
+      msError: msError || null,
+      msPicker: msPicker || null,
+      app: app || null,
+    });
+
     if (ms === 'connected') {
       toast({ title: 'Microsoft connected', description: 'Account linked.' });
       void loadStatus();
       if (msPicker === '1') {
-        void openOfficialPicker(selectedApp).catch(() => null);
+        setPendingPickerApp(selectedApp);
+        log('picker-open-deferred-after-oauth', {
+          app: selectedApp,
+          reason: 'requires_direct_user_interaction_for_popup',
+        });
+        toast({
+          title: 'Ready to pick file',
+          description: 'Click the Microsoft app button again to open the official picker.',
+        });
       }
     } else if (msError) {
       const map: Record<string, string> = {
@@ -355,7 +371,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     params.delete('ms_picker');
     const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(next);
-  }, [loadStatus, log, openOfficialPicker, pathname, router, searchParams, toast]);
+  }, [loadStatus, log, pathname, router, searchParams, toast]);
 
   const openPicker = async (appId: string) => {
     log('picker-button-click', { appId, connected: status.connected });
@@ -364,6 +380,10 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       log('oauth-connect-redirect', { appId, returnWithPicker });
       window.location.href = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`;
       return;
+    }
+    if (pendingPickerApp && pendingPickerApp === appId) {
+      log('picker-button-click-after-defer', { appId });
+      setPendingPickerApp(null);
     }
     await openOfficialPicker(appId);
   };
