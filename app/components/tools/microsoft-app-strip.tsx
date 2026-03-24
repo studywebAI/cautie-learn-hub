@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Check, Loader2, X } from 'lucide-react';
+import { Check, Loader2, Search, RefreshCw, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ENABLED_INTEGRATION_APPS } from '@/lib/integrations/catalog';
 
@@ -16,6 +16,8 @@ type MicrosoftFileItem = {
   name: string;
   webUrl?: string;
   mimeType?: string;
+  size?: number;
+  lastModifiedDateTime?: string;
 };
 
 type MicrosoftAppStripProps = {
@@ -27,6 +29,29 @@ const APPS = ENABLED_INTEGRATION_APPS.filter((app) => app.provider === 'microsof
   label: app.label,
   logo: app.logoPath,
 }));
+
+function formatFileSize(value?: number) {
+  if (!value || value <= 0) return '-';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = value;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+  const rounded = unitIndex === 0 ? Math.round(size).toString() : size.toFixed(1);
+  return `${rounded} ${units[unitIndex]}`;
+}
+
+function getFileTypeLabel(appId: string, mimeType?: string) {
+  if (mimeType?.includes('presentation')) return 'PowerPoint';
+  if (mimeType?.includes('wordprocessingml')) return 'Word';
+  if (mimeType?.includes('spreadsheetml')) return 'Excel';
+  if (appId === 'word') return 'Word';
+  if (appId === 'powerpoint') return 'PowerPoint';
+  if (appId === 'onedrive') return 'File';
+  return 'File';
+}
 
 function withQuery(path: string, params: Record<string, string>) {
   const [pathname, search = ''] = path.split('?');
@@ -47,6 +72,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [files, setFiles] = useState<MicrosoftFileItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState('');
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -84,7 +110,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     }
   }, []);
 
-  const loadFiles = useCallback(async (kind: string) => {
+  const loadFiles = useCallback(async (kind: string, query?: string) => {
     if (!status.connected) {
       setFiles([]);
       return;
@@ -92,7 +118,16 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     setLoadingFiles(true);
     setLoadError(null);
     try {
-      const response = await fetch(`/api/integrations/microsoft/files?kind=${encodeURIComponent(kind)}`, { cache: 'no-store' });
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 15000);
+      const params = new URLSearchParams();
+      params.set('kind', kind);
+      if (query && query.trim()) params.set('q', query.trim());
+      const response = await fetch(`/api/integrations/microsoft/files?${params.toString()}`, {
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      window.clearTimeout(timeout);
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
         setLoadError(typeof payload?.error === 'string' ? payload.error : 'Failed to load files');
@@ -101,8 +136,12 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       }
       const json = await response.json();
       setFiles(Array.isArray(json?.items) ? json.items : []);
-    } catch {
-      setLoadError('Failed to load files');
+    } catch (error: any) {
+      if (error?.name === 'AbortError') {
+        setLoadError('Loading timed out. Try refresh or another app tab.');
+      } else {
+        setLoadError('Failed to load files');
+      }
       setFiles([]);
     } finally {
       setLoadingFiles(false);
@@ -115,8 +154,8 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
 
   useEffect(() => {
     if (!isOpen) return;
-    void loadFiles(activeApp);
-  }, [activeApp, isOpen, loadFiles]);
+    void loadFiles(activeApp, searchText);
+  }, [activeApp, isOpen, loadFiles, searchText]);
 
   useEffect(() => {
     const ms = searchParams.get('ms');
@@ -158,6 +197,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const openPicker = async (appId: string) => {
     setActiveApp(appId);
     setSelectedIds([]);
+    setSearchText('');
     if (!status.connected) {
       const returnWithPicker = withQuery(safeReturnTo, { ms_picker: '1', app: appId });
       window.location.href = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`;
@@ -210,6 +250,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       toast({ title: 'Context attached', description: `${selected.length} file${selected.length === 1 ? '' : 's'} added.` });
       setIsOpen(false);
       setSelectedIds([]);
+      setSearchText('');
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Attach failed', description: error?.message || 'Could not attach files' });
     } finally {
@@ -235,65 +276,126 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
-          <div className="w-full max-w-2xl rounded-xl border border-border bg-background p-4 shadow-xl">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-medium">Select Microsoft file</p>
+          <div className="w-full max-w-5xl rounded-2xl border border-border bg-background shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+              <div>
+                <p className="text-lg font-semibold">Select Microsoft file</p>
+                <p className="text-xs text-muted-foreground">Choose one or more files to add as context.</p>
+              </div>
               <button type="button" onClick={() => setIsOpen(false)} className="rounded-md p-1 hover:bg-muted">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="mb-3 flex items-center gap-2">
-              {APPS.map((app) => (
-                <button
-                  key={app.id}
-                  type="button"
-                  onClick={() => {
-                    setActiveApp(app.id);
-                    setSelectedIds([]);
-                  }}
-                  className={`inline-flex h-12 w-12 items-center justify-center rounded-xl border ${
-                    activeApp === app.id ? 'border-foreground bg-muted/60' : 'border-transparent bg-transparent'
-                  }`}
-                  title={app.label}
-                >
-                  <img src={app.logo} alt={app.label} className="h-9 w-9 object-contain" />
-                </button>
-              ))}
-            </div>
-
-            <div className="max-h-[50vh] space-y-2 overflow-auto">
-              {loadingFiles && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading files...
+            <div className="grid gap-0 md:grid-cols-[220px_1fr]">
+              <div className="border-b border-r border-border bg-muted/30 p-3 md:border-b-0">
+                <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Microsoft Apps</div>
+                <div className="space-y-1">
+                  {APPS.map((app) => (
+                    <button
+                      key={app.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveApp(app.id);
+                        setSelectedIds([]);
+                        setSearchText('');
+                      }}
+                      className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm ${
+                        activeApp === app.id ? 'bg-background font-medium ring-1 ring-border' : 'hover:bg-background/60'
+                      }`}
+                      title={app.label}
+                    >
+                      <img src={app.logo} alt={app.label} className="h-6 w-6 object-contain" />
+                      <span>{app.label}</span>
+                    </button>
+                  ))}
                 </div>
-              )}
-              {!loadingFiles && loadError && (
-                <p className="text-sm text-destructive">{loadError}</p>
-              )}
-              {!loadingFiles && !loadError && files.length === 0 && (
-                <p className="text-sm text-muted-foreground">No files found.</p>
-              )}
-              {!loadingFiles && !loadError && files.map((file) => {
-                const checked = selectedIds.includes(file.id);
-                return (
+              </div>
+              <div className="p-3">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      placeholder="Search files"
+                      className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm"
+                    />
+                  </div>
                   <button
-                    key={file.id}
                     type="button"
-                    onClick={() => toggleFile(file.id)}
-                    className={`flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm ${
-                      checked ? 'border-foreground bg-muted' : 'border-border bg-background hover:bg-muted/30'
-                    }`}
+                    onClick={() => void loadFiles(activeApp, searchText)}
+                    className="inline-flex h-9 items-center gap-1 rounded-md border border-border px-3 text-sm hover:bg-muted/40"
                   >
-                    <span className="line-clamp-1 flex-1">{file.name}</span>
-                    {checked ? <Check className="h-4 w-4" /> : null}
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Refresh
                   </button>
-                );
-              })}
+                </div>
+
+                <div className="overflow-hidden rounded-lg border border-border">
+                  <div className="grid grid-cols-[minmax(0,1fr)_160px_110px_110px] bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground">
+                    <span>Name</span>
+                    <span>Modified</span>
+                    <span>Type</span>
+                    <span>Size</span>
+                  </div>
+                  <div className="max-h-[48vh] overflow-auto">
+                    {loadingFiles && (
+                      <div className="flex items-center gap-2 px-3 py-6 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading files...
+                      </div>
+                    )}
+                    {!loadingFiles && loadError && (
+                      <div className="space-y-2 px-3 py-4">
+                        <p className="text-sm text-destructive">{loadError}</p>
+                        <button
+                          type="button"
+                          onClick={() => void loadFiles(activeApp, searchText)}
+                          className="inline-flex h-8 items-center gap-1 rounded-md border border-border px-2.5 text-xs hover:bg-muted/40"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          Retry
+                        </button>
+                      </div>
+                    )}
+                    {!loadingFiles && !loadError && files.length === 0 && (
+                      <p className="px-3 py-4 text-sm text-muted-foreground">No files found.</p>
+                    )}
+                    {!loadingFiles && !loadError && files.map((file) => {
+                      const checked = selectedIds.includes(file.id);
+                      return (
+                        <button
+                          key={file.id}
+                          type="button"
+                          onClick={() => toggleFile(file.id)}
+                          className={`grid w-full grid-cols-[minmax(0,1fr)_160px_110px_110px] items-center gap-2 border-t border-border px-3 py-2 text-left text-sm ${
+                            checked ? 'bg-muted/60' : 'bg-background hover:bg-muted/30'
+                          }`}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            {checked ? <Check className="h-4 w-4 shrink-0" /> : <span className="h-4 w-4 shrink-0 rounded-sm border border-border" />}
+                            <span className="truncate">{file.name}</span>
+                          </span>
+                          <span className="truncate text-xs text-muted-foreground">
+                            {file.lastModifiedDateTime ? new Date(file.lastModifiedDateTime).toLocaleDateString() : '-'}
+                          </span>
+                          <span className="truncate text-xs text-muted-foreground">{getFileTypeLabel(activeApp, file.mimeType)}</span>
+                          <span className="truncate text-xs text-muted-foreground">{formatFileSize(file.size)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-end gap-2">
+            <div className="flex items-center justify-between border-t border-border px-5 py-3">
+              <p className="text-xs text-muted-foreground">
+                {selectedIds.length} selected
+              </p>
+              <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
@@ -308,8 +410,9 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                 className="rounded-md border border-border bg-background px-3 py-1.5 text-sm disabled:opacity-50"
                 disabled={attaching || selectedIds.length === 0}
               >
-                {attaching ? 'Attaching...' : 'Attach'}
+                {attaching ? 'Attaching...' : 'Open'}
               </button>
+              </div>
             </div>
           </div>
         </div>
