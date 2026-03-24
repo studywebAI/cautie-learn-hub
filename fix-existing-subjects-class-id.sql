@@ -1,6 +1,6 @@
 -- Fix existing subjects with NULL class_id
 -- This migration updates subjects that are linked to classes via class_subjects
--- but have NULL class_id, setting class_id to one of their associated classes
+-- but have NULL class_id, setting class_id to one of thei r associated classes.
 
 -- First, let's see what we're working with
 SELECT 'Subjects with NULL class_id:' as status;
