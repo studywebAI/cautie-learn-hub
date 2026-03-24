@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
+import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { NoteViewer } from '@/components/material-viewers/note-viewer';
 import type { GenerateNotesOutput } from '@/ai/flows/generate-notes';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
@@ -536,6 +537,7 @@ function NotesPageContent() {
         onImageDataUriChange={setImageDataUri}
         onSubmit={handleGenerate}
         placeholder={t.sourceInputPlaceholder}
+        topContent={<MicrosoftAppStrip returnTo="/tools/notes" />}
         speechLanguage={language}
         enableMic={false}
         enableCaptions={false}

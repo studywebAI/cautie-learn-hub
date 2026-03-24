@@ -18,6 +18,7 @@ import {
   Landmark,
   Languages,
   Lightbulb,
+  Link2,
   Microscope,
   Music,
   Palette,
@@ -32,9 +33,11 @@ import type { LucideIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 
 type StudysetRow = {
@@ -116,7 +119,6 @@ const COLOR_OPTIONS: ColorOption[] = [
 
 const TYPING_PLACEHOLDERS = ['WW2 final prep', 'Chemistry exam sprint', 'Spanish oral practice'];
 const SOFT_ORANGE_SURFACE = 'border-orange-200/80 bg-orange-50/70 dark:border-orange-900/40 dark:bg-orange-950/25';
-const MICROSOFT_IMPORTS_ENABLED = false;
 const ORANGE_CALENDAR_CLASSES = {
   day_selected:
     'bg-[#f97316] text-white hover:bg-[#ea580c] hover:text-white focus:bg-[#ea580c] focus:text-white',
@@ -214,7 +216,8 @@ export default function StudysetPage() {
   const isStepThreeReady =
     notesText.trim().length > 0 ||
     pastedText.trim().length > 0 ||
-    uploads.length > 0;
+    uploads.length > 0 ||
+    selectedMicrosoftFiles.length > 0;
 
   const resetWizard = () => {
     setStep(0);
@@ -288,10 +291,10 @@ export default function StudysetPage() {
 
   useEffect(() => {
     void loadStudysets();
+    void loadMicrosoftStatus();
   }, []);
 
   useEffect(() => {
-    if (!MICROSOFT_IMPORTS_ENABLED) return;
     if (searchParams.get('ms') === 'connected') {
       toast({ title: 'Microsoft connected', description: 'Word and PowerPoint files are ready.' });
       void loadMicrosoftStatus();
@@ -320,12 +323,10 @@ export default function StudysetPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!MICROSOFT_IMPORTS_ENABLED) return;
     void loadMicrosoftFiles();
   }, [microsoftConnected]);
 
   useEffect(() => {
-    if (!MICROSOFT_IMPORTS_ENABLED) return;
     const validIds = new Set([...wordFiles, ...powerpointFiles].map((file) => file.id));
     setSelectedMicrosoftFileIds((prev) => prev.filter((id) => validIds.has(id)));
   }, [wordFiles, powerpointFiles]);
@@ -426,11 +427,19 @@ export default function StudysetPage() {
           pasted_text: pastedText.trim(),
           uploaded_files: uploads,
           imports: {
-            word: false,
-            powerpoint: false,
+            word: selectedMicrosoftFiles.some((file) => file.kind === 'word'),
+            powerpoint: selectedMicrosoftFiles.some((file) => file.kind === 'powerpoint'),
             access_mode: 'read_only',
-            microsoft_account: null,
-            selected_documents: [],
+            microsoft_account: microsoftEmail || null,
+            selected_documents: selectedMicrosoftFiles.map((file) => ({
+              id: file.id,
+              name: file.name,
+              kind: file.kind,
+              web_url: file.webUrl || null,
+              mime_type: file.mimeType || null,
+              size: file.size || null,
+              last_modified: file.lastModifiedDateTime || null,
+            })),
           },
         },
       };
@@ -691,6 +700,76 @@ export default function StudysetPage() {
                     )}
                   </div>
 
+                  <div className={`rounded-xl p-3 ${SOFT_ORANGE_SURFACE}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">Import from Word/PowerPoint</p>
+                      {microsoftConnected ? (
+                        <span className="text-xs text-muted-foreground">{microsoftEmail || 'Connected'}</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Not connected</span>
+                      )}
+                    </div>
+
+                    {!microsoftConnected ? (
+                      <Button asChild variant="outline" className="mt-2">
+                        <Link prefetch={false} href="/settings/integrations?returnTo=%2Ftools%2Fstudyset%3Fopen%3Dcreate%26step%3D2">
+                          <Link2 className="mr-2 h-4 w-4" />
+                          Connect Microsoft
+                        </Link>
+                      </Button>
+                    ) : (
+                      <div className="mt-2 flex gap-2">
+                        <Button type="button" variant="outline" onClick={() => void loadMicrosoftFiles()}>
+                          Refresh files
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => void disconnectMicrosoft()}>
+                          Disconnect
+                        </Button>
+                      </div>
+                    )}
+
+                    {microsoftConnected && (
+                      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <div className={`rounded-lg p-2 ${SOFT_ORANGE_SURFACE}`}>
+                          <p className="mb-1 text-xs font-medium">Word</p>
+                          {microsoftLoading && <p className="text-xs text-muted-foreground">Loading...</p>}
+                          {!microsoftLoading && sortedWordFiles.length === 0 && (
+                            <p className="text-xs text-muted-foreground">No Word files found.</p>
+                          )}
+                          <div className="space-y-1">
+                            {sortedWordFiles.map((file) => (
+                              <label key={file.id} className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs ${SOFT_ORANGE_SURFACE}`}>
+                                <Checkbox
+                                  checked={selectedMicrosoftFileIds.includes(file.id)}
+                                  onCheckedChange={() => toggleMicrosoftFile(file.id)}
+                                />
+                                <span className="truncate">{file.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className={`rounded-lg p-2 ${SOFT_ORANGE_SURFACE}`}>
+                          <p className="mb-1 text-xs font-medium">PowerPoint</p>
+                          {microsoftLoading && <p className="text-xs text-muted-foreground">Loading...</p>}
+                          {!microsoftLoading && sortedPowerpointFiles.length === 0 && (
+                            <p className="text-xs text-muted-foreground">No PowerPoint files found.</p>
+                          )}
+                          <div className="space-y-1">
+                            {sortedPowerpointFiles.map((file) => (
+                              <label key={file.id} className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs ${SOFT_ORANGE_SURFACE}`}>
+                                <Checkbox
+                                  checked={selectedMicrosoftFileIds.includes(file.id)}
+                                  onCheckedChange={() => toggleMicrosoftFile(file.id)}
+                                />
+                                <span className="truncate">{file.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
