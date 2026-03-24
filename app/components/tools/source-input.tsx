@@ -897,10 +897,10 @@ export function SourceInput({
                 onChange={(e) => setUrlInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') void handleAddLink(); }}
                 placeholder="Paste a link and press Enter"
-                className="flex-1 border rounded-full bg-white px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+                className="flex-1 border rounded-full bg-background px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
                 disabled={isFetchingUrl}
               />
-              <Button variant="outline" size="sm" onClick={() => void handleAddLink()} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full bg-white text-xs h-7 px-3">
+              <Button variant="outline" size="sm" onClick={() => void handleAddLink()} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full bg-background text-xs h-7 px-3">
                 {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
               </Button>
             </div>
@@ -916,7 +916,7 @@ export function SourceInput({
               }
             }}
             placeholder={placeholder}
-            className="min-h-[200px] resize-none text-sm flex-1 bg-white"
+            className="min-h-[200px] resize-none text-sm flex-1 bg-background"
             disabled={disabled || isProcessing}
           />
 
@@ -931,7 +931,7 @@ export function SourceInput({
           <Button
             type="button"
             variant="outline"
-            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-white"
+            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-background"
             onClick={() => setLinksOpen((prev) => !prev)}
             disabled={disabled || isProcessing}
           >
@@ -941,7 +941,7 @@ export function SourceInput({
           <Button
             type="button"
             variant="outline"
-            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-white"
+            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-background"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || isProcessing}
           >
@@ -952,7 +952,7 @@ export function SourceInput({
             <Button
               type="button"
               variant="outline"
-              className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-white"
+              className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-background"
               onClick={() => (isFallbackRecording ? stopListening() : startListening())}
               disabled={disabled || isProcessing || !enableMic}
             >
@@ -964,7 +964,7 @@ export function SourceInput({
             <Button
               type="button"
               variant="outline"
-              className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-white"
+              className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-background"
               onClick={() => setCaptionsOpen((prev) => !prev)}
               disabled={disabled || !enableCaptions}
             >
@@ -975,7 +975,7 @@ export function SourceInput({
           <Button
             type="button"
             variant="outline"
-            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-white"
+            className="flex-1 gap-1.5 text-xs rounded-lg flex-col h-auto py-3 bg-background"
             onClick={() => onSubmit?.()}
             disabled={disabled || isProcessing || !canGenerate}
           >

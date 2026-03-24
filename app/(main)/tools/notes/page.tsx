@@ -492,7 +492,7 @@ function NotesPageContent() {
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
           placeholder={t.titlePlaceholder}
-          className="w-full h-8 rounded-md border border-input bg-white px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="w-full h-8 rounded-md border border-input bg-background px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           disabled={isLoading}
         />
       </div>
@@ -508,7 +508,7 @@ function NotesPageContent() {
         <Slider value={[lengthMap[length]]} onValueChange={([v]) => setLength(lengthFromSlider(v))} min={0} max={2} step={1} disabled={isLoading} />
       </div>
 
-      <Button variant="outline" onClick={handleGenerate} disabled={!canGenerate} className="w-full rounded-full bg-white">
+      <Button variant="outline" onClick={handleGenerate} disabled={!canGenerate} className="w-full rounded-full bg-background">
         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
         {t.notes.generate}
       </Button>

@@ -65,7 +65,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
             </div>
           </>
         ) : (
-          <div className="w-[280px] shrink-0 border-l bg-white">
+          <div className="w-[280px] shrink-0 border-l bg-background">
             <ScrollArea className="h-full">
               <div className="p-4 space-y-5">
                 {sidebar}

@@ -68,7 +68,7 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
               'disabled:opacity-50 disabled:pointer-events-none',
               value === opt.value
                 ? 'bg-muted text-foreground border-border'
-                : 'bg-white text-foreground border-border'
+                : 'bg-background text-foreground border-border'
             )}
           >
             {opt.label}

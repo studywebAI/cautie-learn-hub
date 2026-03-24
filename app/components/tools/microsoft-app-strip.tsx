@@ -219,23 +219,23 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {APPS.map((app) => (
           <button
             key={app.id}
             type="button"
             onClick={() => void openPicker(app.id)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-border bg-white hover:bg-muted/30"
+            className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-transparent p-0 transition-transform hover:scale-[1.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title={app.label}
           >
-            <img src={app.logo} alt={app.label} className="h-6 w-6" />
+            <img src={app.logo} alt={app.label} className="h-10 w-10 object-contain" />
           </button>
         ))}
       </div>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
-          <div className="w-full max-w-2xl rounded-xl border border-border bg-white p-4 shadow-xl">
+          <div className="w-full max-w-2xl rounded-xl border border-border bg-background p-4 shadow-xl">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-medium">Select Microsoft file</p>
               <button type="button" onClick={() => setIsOpen(false)} className="rounded-md p-1 hover:bg-muted">
@@ -253,7 +253,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                     setSelectedIds([]);
                   }}
                   className={`inline-flex h-10 w-10 items-center justify-center rounded-md border ${
-                    activeApp === app.id ? 'border-foreground bg-muted' : 'border-border bg-white'
+                    activeApp === app.id ? 'border-foreground bg-muted' : 'border-border bg-background'
                   }`}
                   title={app.label}
                 >
@@ -283,7 +283,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                     type="button"
                     onClick={() => toggleFile(file.id)}
                     className={`flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm ${
-                      checked ? 'border-foreground bg-muted' : 'border-border bg-white hover:bg-muted/30'
+                      checked ? 'border-foreground bg-muted' : 'border-border bg-background hover:bg-muted/30'
                     }`}
                   >
                     <span className="line-clamp-1 flex-1">{file.name}</span>
@@ -297,7 +297,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="rounded-md border border-border bg-white px-3 py-1.5 text-sm"
+                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm"
                 disabled={attaching}
               >
                 Cancel
@@ -305,7 +305,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
               <button
                 type="button"
                 onClick={() => void attachSelected()}
-                className="rounded-md border border-border bg-white px-3 py-1.5 text-sm disabled:opacity-50"
+                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm disabled:opacity-50"
                 disabled={attaching || selectedIds.length === 0}
               >
                 {attaching ? 'Attaching...' : 'Attach'}
