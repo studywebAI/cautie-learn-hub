@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildMicrosoftAuthUrl } from '@/lib/integrations/microsoft';
+import { getValidMicrosoftAccessToken } from '@/lib/integrations/microsoft-store';
 import { checkRateLimit, sanitizeMicrosoftErrorCode } from '@/lib/security/request-guards';
 
 export const dynamic = 'force-dynamic';
@@ -13,12 +14,14 @@ function getOrigin(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const requestId = crypto.randomUUID();
+  const traceId = request.nextUrl.searchParams.get('traceId') || crypto.randomUUID();
   const rateLimit = checkRateLimit(request, { key: 'ms-connect', limit: 20, windowMs: 60_000 });
   if (!rateLimit.ok) return rateLimit.response;
 
   try {
     console.info('[microsoft-connect] request', {
       requestId,
+      traceId,
       path: request.nextUrl.pathname,
       search: request.nextUrl.search,
     });
@@ -30,12 +33,36 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.warn('[microsoft-connect] unauthorized', { requestId });
+      console.warn('[microsoft-connect] unauthorized', { requestId, traceId });
       return NextResponse.redirect(new URL('/login?error=unauthorized', getOrigin(request)));
     }
 
     const returnToRaw = request.nextUrl.searchParams.get('returnTo') || '/tools/studyset';
     const returnTo = returnToRaw.startsWith('/') ? returnToRaw : '/tools/studyset';
+
+    // If already connected with a usable token, skip OAuth roundtrip.
+    const existingToken = await getValidMicrosoftAccessToken(supabase, user.id).catch((error: any) => {
+      console.warn('[microsoft-connect] existing-token-check-failed', {
+        requestId,
+        traceId,
+        userId: user.id,
+        message: String(error?.message || 'unknown'),
+      });
+      return null;
+    });
+    if (existingToken?.accessToken) {
+      const doneUrl = new URL(returnTo, getOrigin(request));
+      doneUrl.searchParams.set('ms', 'connected');
+      console.info('[microsoft-connect] already-connected-short-circuit', {
+        requestId,
+        traceId,
+        userId: user.id,
+        returnTo,
+        tokenExpiresAt: existingToken.connection?.expires_at || null,
+      });
+      return NextResponse.redirect(doneUrl);
+    }
+
     const state = randomBytes(24).toString('hex');
     const redirectUri = `${getOrigin(request)}/api/integrations/microsoft/callback`;
 
@@ -58,6 +85,7 @@ export async function GET(request: NextRequest) {
 
     console.info('[microsoft-connect] redirect', {
       requestId,
+      traceId,
       userId: user.id,
       returnTo,
       redirectUri,
@@ -66,6 +94,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('[microsoft-connect] failed', {
       requestId,
+      traceId,
       message: String(error?.message || 'unknown'),
       code: String(error?.code || ''),
       stack: error?.stack || null,
