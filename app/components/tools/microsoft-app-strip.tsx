@@ -280,10 +280,22 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         filter: filter || undefined,
         queryParameters: 'select=id,name,size,webUrl,file,lastModifiedDateTime',
       };
-      if (config.accessToken) advanced.accessToken = config.accessToken;
       if (config.loginHint) advanced.loginHint = config.loginHint;
-      if (config.endpointHint) advanced.endpointHint = config.endpointHint;
       if (typeof config.isConsumerAccount === 'boolean') advanced.isConsumerAccount = config.isConsumerAccount;
+
+      const canUseSuppliedToken = Boolean(config.accessToken && config.endpointHint);
+      if (canUseSuppliedToken) {
+        advanced.accessToken = config.accessToken;
+        advanced.endpointHint = config.endpointHint;
+      } else {
+        log('picker-supplied-token-skipped', {
+          traceId,
+          appId,
+          reason: !config.accessToken ? 'missing_access_token' : 'missing_endpoint_hint',
+          hasAccessToken: Boolean(config.accessToken),
+          hasEndpointHint: Boolean(config.endpointHint),
+        });
+      }
 
       log('picker-open-options-ready', {
         traceId,
