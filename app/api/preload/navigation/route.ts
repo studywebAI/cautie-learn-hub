@@ -45,26 +45,63 @@ export async function GET(request: NextRequest) {
 
     let subjects: any[] = []
     if (isTeacher) {
-      let query = (supabase as any)
+      const ownSubjectsQuery = (supabase as any)
         .from('subjects')
-        .select('id, title, description, cover_type, cover_image_url, class_id, class_subjects(classes:class_id(id, name))')
-        .or(`user_id.eq.${user.id},id.in.(SELECT subject_id FROM subject_teachers WHERE teacher_id = '${user.id}')`)
-        .order('created_at', { ascending: false })
+        .select('id')
+        .eq('user_id', user.id)
 
-      if (classIdFilter) {
-        query = query.eq('class_id', classIdFilter)
+      const ownSubjectsResult = classIdFilter
+        ? await ownSubjectsQuery.eq('class_id', classIdFilter)
+        : await ownSubjectsQuery
+
+      if (ownSubjectsResult.error) {
+        return NextResponse.json({ error: ownSubjectsResult.error.message }, { status: 500 })
       }
 
-      const subjectsResult = await query
-      if (subjectsResult.error) {
-        return NextResponse.json({ error: subjectsResult.error.message }, { status: 500 })
+      let taughtSubjectIds: string[] = []
+      try {
+        const taughtLinksResult = await (supabase as any)
+          .from('subject_teachers')
+          .select('subject_id')
+          .eq('teacher_id', user.id)
+
+        if (!taughtLinksResult.error) {
+          taughtSubjectIds = Array.from(
+            new Set((taughtLinksResult.data || []).map((row: any) => row.subject_id).filter(Boolean))
+          )
+        }
+      } catch {
+        taughtSubjectIds = []
       }
-      subjects = (subjectsResult.data || []).map((s: any) => ({
-        ...s,
-        classes: Array.isArray(s.class_subjects)
-          ? s.class_subjects.map((cs: any) => cs.classes).filter(Boolean)
-          : [],
-      }))
+
+      const ownSubjectIds = (ownSubjectsResult.data || []).map((row: any) => row.id).filter(Boolean)
+      const mergedSubjectIds = Array.from(new Set([...ownSubjectIds, ...taughtSubjectIds]))
+
+      if (mergedSubjectIds.length > 0) {
+        let subjectsQuery = (supabase as any)
+          .from('subjects')
+          .select('id, title, description, cover_type, cover_image_url, class_id, class_subjects(classes:class_id(id, name))')
+          .in('id', mergedSubjectIds)
+          .order('created_at', { ascending: false })
+
+        if (classIdFilter) {
+          subjectsQuery = subjectsQuery.eq('class_id', classIdFilter)
+        }
+
+        const subjectsResult = await subjectsQuery
+        if (subjectsResult.error) {
+          return NextResponse.json({ error: subjectsResult.error.message }, { status: 500 })
+        }
+
+        subjects = (subjectsResult.data || []).map((s: any) => ({
+          ...s,
+          classes: Array.isArray(s.class_subjects)
+            ? s.class_subjects.map((cs: any) => cs.classes).filter(Boolean)
+            : [],
+        }))
+      } else {
+        subjects = []
+      }
     } else {
       if (classIds.length > 0) {
         const [classSubjectsResult, directSubjectsResult] = await Promise.all([
@@ -120,4 +157,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 })
   }
 }
-
