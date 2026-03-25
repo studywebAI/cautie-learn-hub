@@ -148,6 +148,19 @@ function normalizeResourceScope(resource: string) {
   return `${trimmed}/.default offline_access`;
 }
 
+function resourceScopeCandidates(resource: string) {
+  const trimmed = String(resource || '').trim().replace(/\/+$/, '');
+  if (!trimmed) return [] as string[];
+  if (trimmed === 'https://api.onedrive.com') {
+    return [
+      'OneDrive.ReadOnly offline_access',
+      'OneDrive.ReadWrite offline_access',
+      `${trimmed}/.default offline_access`,
+    ];
+  }
+  return [`${trimmed}/.default offline_access`];
+}
+
 export async function getMicrosoftAccessTokenForResource(
   supabase: any,
   userId: string,
@@ -172,25 +185,37 @@ export async function getMicrosoftAccessTokenForResource(
     return base;
   }
 
-  const resourceScope = normalizeResourceScope(targetResource);
-  if (!resourceScope) return base;
-
-  try {
-    const refreshed = await refreshMicrosoftTokenForScope(refreshToken, resourceScope);
-    return {
-      accessToken: refreshed.access_token,
-      connection: {
-        ...connection,
-        scope: refreshed.scope || connection?.scope || null,
-      },
-    };
-  } catch (error: any) {
-    console.warn('[microsoft-token] resource-token-fallback-failed', {
-      userId,
-      resource: targetResource,
-      scopeRequested: resourceScope,
-      message: String(error?.message || 'unknown'),
-    });
-    return base;
+  const candidates = resourceScopeCandidates(targetResource);
+  for (const scopeCandidate of candidates) {
+    try {
+      const refreshed = await refreshMicrosoftTokenForScope(refreshToken, scopeCandidate);
+      console.info('[microsoft-token] resource-token-success', {
+        userId,
+        resource: targetResource,
+        scopeRequested: scopeCandidate,
+        returnedScope: refreshed.scope || null,
+      });
+      return {
+        accessToken: refreshed.access_token,
+        connection: {
+          ...connection,
+          scope: refreshed.scope || connection?.scope || null,
+        },
+      };
+    } catch (error: any) {
+      console.warn('[microsoft-token] resource-token-attempt-failed', {
+        userId,
+        resource: targetResource,
+        scopeRequested: scopeCandidate,
+        message: String(error?.message || 'unknown'),
+      });
+    }
   }
+
+  console.warn('[microsoft-token] resource-token-fallback-failed', {
+    userId,
+    resource: targetResource,
+    scopeRequested: candidates,
+  });
+  return base;
 }

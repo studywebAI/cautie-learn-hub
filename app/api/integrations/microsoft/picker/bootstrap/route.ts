@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
       locale: 'en-us',
     }).toString();
     const action = kind === 'consumer'
-      ? `${baseUrl}/v8.0/index.html?${queryString}`
+      ? `${baseUrl}?${queryString}`
       : `${baseUrl}/_layouts/15/FilePicker.aspx?${queryString}`;
 
     console.info('[microsoft-picker-bootstrap] ok', {
