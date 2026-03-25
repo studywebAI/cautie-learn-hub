@@ -112,8 +112,10 @@ For "mindmap" style:
 - Create concept maps showing relationships between ideas
 - Central node should be the main topic or key concept
 - Branches represent major subtopics or categories
-- Include 4-8 main branches with 1-4 sub-branches each for richer visualization
+- Include 5-9 main branches with 2-5 sub-branches each for richer visualization
 - Focus on hierarchical relationships and connections
+- Keep labels compact: each branch/sub label must be a short phrase (max ~8 words), not paragraphs
+- Do not use file metadata, filenames, URLs, or "source unavailable" filler text in nodes
 IMPORTANT: For mindmap style, output ONLY this exact JSON format:
 {"type": "mindmap", "central": "Main Topic", "branches": [{"topic": "Branch 1", "subs": ["Sub1", "Sub2", "Sub3"]}, {"topic": "Branch 2", "subs": ["Sub4", "Sub5"]}, {"topic": "Branch 3", "subs": ["Sub6"]}, {"topic": "Branch 4", "subs": ["Sub7", "Sub8", "Sub9", "Sub10"]}]}
 - OUTPUT MUST BE VALID JSON with no additional text

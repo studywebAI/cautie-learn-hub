@@ -59,12 +59,16 @@ type MicrosoftFileItem = {
   lastModifiedDateTime?: string;
   kind: 'onedrive';
   mimeType?: string;
+  extractedText?: string;
+  extractionStatus?: string;
 };
 
 type UploadMeta = {
   name: string;
   size: number;
   type: string;
+  extractedText?: string;
+  extractionStatus?: 'ready' | 'empty' | 'error';
 };
 
 type IconOption = {
@@ -209,11 +213,13 @@ export default function StudysetPage() {
 
   const isStepOneReady = name.trim().length > 0;
   const isStepTwoReady = selectedDateStrings.length > 0;
+  const hasExtractedUploads = uploads.some((file) => (file.extractedText || '').trim().length > 0);
+  const hasExtractedMicrosoft = selectedMicrosoftFiles.some((file) => (file.extractedText || '').trim().length > 0);
   const isStepThreeReady =
     notesText.trim().length > 0 ||
     pastedText.trim().length > 0 ||
-    uploads.length > 0 ||
-    selectedMicrosoftFiles.length > 0;
+    hasExtractedUploads ||
+    hasExtractedMicrosoft;
 
   const resetWizard = () => {
     setStep(0);
@@ -280,6 +286,8 @@ export default function StudysetPage() {
         lastModifiedDateTime: typeof item?.metadata?.last_modified === 'string' ? item.metadata.last_modified : undefined,
         kind: 'onedrive',
         mimeType: item?.mime_type ? String(item.mime_type) : undefined,
+        extractedText: typeof item?.extracted_text === 'string' ? item.extracted_text : '',
+        extractionStatus: typeof item?.extraction_status === 'string' ? item.extraction_status : undefined,
       })).filter((item: MicrosoftFileItem) => Boolean(item.id));
       setSelectedMicrosoftFiles(mapped);
     } catch {
@@ -391,14 +399,66 @@ export default function StudysetPage() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const handleUploadChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleUploadChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    const mapped = files.map((file) => ({
-      name: file.name,
-      size: file.size,
-      type: file.type || 'application/octet-stream',
-    }));
+    if (files.length === 0) return;
+
+    const mapped = await Promise.all(
+      files.map(async (file) => {
+        try {
+          if (file.type === 'text/plain') {
+            const text = (await file.text()).trim();
+            return {
+              name: file.name,
+              size: file.size,
+              type: file.type || 'application/octet-stream',
+              extractedText: text,
+              extractionStatus: text ? 'ready' as const : 'empty' as const,
+            };
+          }
+
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await fetch('/api/tools/extract-text', { method: 'POST', body: formData });
+          if (!res.ok) {
+            return {
+              name: file.name,
+              size: file.size,
+              type: file.type || 'application/octet-stream',
+              extractedText: '',
+              extractionStatus: 'error' as const,
+            };
+          }
+
+          const data = await res.json().catch(() => ({}));
+          const text = typeof data?.text === 'string' ? data.text.trim() : '';
+          return {
+            name: file.name,
+            size: file.size,
+            type: file.type || 'application/octet-stream',
+            extractedText: text,
+            extractionStatus: text ? 'ready' as const : 'empty' as const,
+          };
+        } catch {
+          return {
+            name: file.name,
+            size: file.size,
+            type: file.type || 'application/octet-stream',
+            extractedText: '',
+            extractionStatus: 'error' as const,
+          };
+        }
+      })
+    );
+
     setUploads(mapped);
+    const missingTextCount = mapped.filter((file) => (file.extractedText || '').trim().length === 0).length;
+    if (missingTextCount > 0) {
+      toast({
+        title: 'Some files have no extracted text',
+        description: `${missingTextCount} file${missingTextCount === 1 ? '' : 's'} will be ignored until extraction succeeds.`,
+      });
+    }
   };
 
   const disconnectMicrosoft = async () => {
@@ -414,6 +474,30 @@ export default function StudysetPage() {
     setCreating(true);
     try {
       const meta = autoPickMeta();
+      const extractedUploadFiles = uploads
+        .map((file) => ({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          extracted_text: (file.extractedText || '').trim(),
+          extraction_status: file.extractionStatus || ((file.extractedText || '').trim() ? 'ready' : 'empty'),
+        }))
+        .filter((file) => file.extracted_text.length > 0);
+
+      const extractedMicrosoftFiles = selectedMicrosoftFiles
+        .map((file) => ({
+          id: file.id,
+          name: file.name,
+          kind: file.kind,
+          web_url: file.webUrl || null,
+          mime_type: file.mimeType || null,
+          size: file.size || null,
+          last_modified: file.lastModifiedDateTime || null,
+          extracted_text: (file.extractedText || '').trim(),
+          extraction_status: file.extractionStatus || ((file.extractedText || '').trim() ? 'ready' : 'empty'),
+        }))
+        .filter((file) => file.extracted_text.length > 0);
+
       const sourcePayload = {
         meta: {
           icon: meta.icon,
@@ -425,22 +509,14 @@ export default function StudysetPage() {
         sources: {
           notes_text: notesText.trim(),
           pasted_text: pastedText.trim(),
-          uploaded_files: uploads,
+          uploaded_files: extractedUploadFiles,
           imports: {
             word: false,
             powerpoint: false,
-            onedrive: selectedMicrosoftFiles.length > 0,
+            onedrive: extractedMicrosoftFiles.length > 0,
             access_mode: 'read_only',
             microsoft_account: microsoftEmail || null,
-            selected_documents: selectedMicrosoftFiles.map((file) => ({
-              id: file.id,
-              name: file.name,
-              kind: file.kind,
-              web_url: file.webUrl || null,
-              mime_type: file.mimeType || null,
-              size: file.size || null,
-              last_modified: file.lastModifiedDateTime || null,
-            })),
+            selected_documents: extractedMicrosoftFiles,
           },
         },
       };

@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic'
 type ParsedSourceBundle = {
   notesText: string
   pastedText: string
-  selectedDocuments: Array<{ id: string; name: string; mime_type?: string | null; web_url?: string | null }>
-  uploadedFiles: Array<{ name: string; type?: string | null }>
+  selectedDocuments: Array<{ id: string; name: string; mime_type?: string | null; web_url?: string | null; extracted_text?: string; extraction_status?: string | null }>
+  uploadedFiles: Array<{ name: string; type?: string | null; extracted_text?: string; extraction_status?: string | null }>
   adaptive: {
     avg_score: number
     mastery_band: string
@@ -29,6 +29,8 @@ function parseSourceBundle(raw: unknown): ParsedSourceBundle {
             name: String(doc?.name || ''),
             mime_type: typeof doc?.mime_type === 'string' ? doc.mime_type : null,
             web_url: typeof doc?.web_url === 'string' ? doc.web_url : null,
+            extracted_text: typeof doc?.extracted_text === 'string' ? doc.extracted_text : '',
+            extraction_status: typeof doc?.extraction_status === 'string' ? doc.extraction_status : null,
           }))
           .filter((doc: any) => doc.id && doc.name)
       : []
@@ -38,6 +40,8 @@ function parseSourceBundle(raw: unknown): ParsedSourceBundle {
           .map((file: any) => ({
             name: String(file?.name || ''),
             type: typeof file?.type === 'string' ? file.type : null,
+            extracted_text: typeof file?.extracted_text === 'string' ? file.extracted_text : '',
+            extraction_status: typeof file?.extraction_status === 'string' ? file.extraction_status : null,
           }))
           .filter((file: any) => file.name)
       : []
@@ -73,16 +77,18 @@ function buildSourceText(studysetName: string, taskTitle: string, taskDescriptio
   if (bundle.notesText) sections.push(`STUDYSET NOTES\n${bundle.notesText}`)
   if (bundle.pastedText) sections.push(`PASTED SOURCE MATERIAL\n${bundle.pastedText}`)
 
-  if (bundle.uploadedFiles.length > 0) {
-    const files = bundle.uploadedFiles.map((file) => `- ${file.name}${file.type ? ` (${file.type})` : ''}`).join('\n')
-    sections.push(`UPLOADED FILES\n${files}`)
+  const uploadedExtractedBlocks = bundle.uploadedFiles
+    .map((file) => String(file?.extracted_text || '').trim())
+    .filter(Boolean)
+  if (uploadedExtractedBlocks.length > 0) {
+    sections.push(`UPLOADED FILE CONTENT\n${uploadedExtractedBlocks.join('\n\n')}`)
   }
 
-  if (bundle.selectedDocuments.length > 0) {
-    const docs = bundle.selectedDocuments
-      .map((doc) => `- ${doc.name}${doc.mime_type ? ` (${doc.mime_type})` : ''}${doc.web_url ? ` -> ${doc.web_url}` : ''}`)
-      .join('\n')
-    sections.push(`ONEDRIVE SELECTED FILES\n${docs}`)
+  const onedriveExtractedBlocks = bundle.selectedDocuments
+    .map((doc) => String(doc?.extracted_text || '').trim())
+    .filter(Boolean)
+  if (onedriveExtractedBlocks.length > 0) {
+    sections.push(`ONEDRIVE EXTRACTED CONTENT\n${onedriveExtractedBlocks.join('\n\n')}`)
   }
 
   if (bundle.adaptive.weak_topics.length > 0) {
@@ -90,10 +96,54 @@ function buildSourceText(studysetName: string, taskTitle: string, taskDescriptio
   }
 
   if (sections.length === 0) {
-    sections.push(`STUDYSET\n${studysetName}\n\nTASK\n${taskTitle}\n${taskDescription}`.trim())
+    sections.push('No extracted source content available yet. Use pasted text or files with successful text extraction.')
   }
 
   return sections.join('\n\n')
+}
+
+async function enrichSelectedDocumentsFromStore(
+  supabase: any,
+  userId: string,
+  bundle: ParsedSourceBundle
+): Promise<ParsedSourceBundle> {
+  const missingIds = bundle.selectedDocuments
+    .filter((doc) => !(doc.extracted_text || '').trim() && doc.id)
+    .map((doc) => doc.id);
+  if (missingIds.length === 0) return bundle;
+
+  const { data } = await (supabase as any)
+    .from('external_integration_sources')
+    .select('provider_item_id, extracted_text, extraction_status')
+    .eq('user_id', userId)
+    .eq('provider', 'microsoft')
+    .eq('app', 'onedrive')
+    .in('provider_item_id', missingIds)
+    .limit(50);
+
+  const byId = new Map<string, { extracted_text?: string | null; extraction_status?: string | null }>();
+  for (const row of Array.isArray(data) ? data : []) {
+    const key = String(row?.provider_item_id || '');
+    if (!key) continue;
+    byId.set(key, {
+      extracted_text: typeof row?.extracted_text === 'string' ? row.extracted_text : null,
+      extraction_status: typeof row?.extraction_status === 'string' ? row.extraction_status : null,
+    });
+  }
+
+  return {
+    ...bundle,
+    selectedDocuments: bundle.selectedDocuments.map((doc) => {
+      if ((doc.extracted_text || '').trim()) return doc;
+      const fromStore = byId.get(doc.id);
+      if (!fromStore) return doc;
+      return {
+        ...doc,
+        extracted_text: (fromStore.extracted_text || '').trim(),
+        extraction_status: fromStore.extraction_status || doc.extraction_status || null,
+      };
+    }),
+  };
 }
 
 function inferTool(taskType: string): 'notes' | 'flashcards' | 'quiz' {
@@ -244,7 +294,8 @@ export async function GET(
     } catch {
       // Normalized adaptive tables may not be migrated yet; JSON fallback already parsed.
     }
-    const sourceText = buildSourceText(studyset.name, taskTitle, taskDescription, parsedBundle)
+    const enrichedBundle = await enrichSelectedDocumentsFromStore(supabase, user.id, parsedBundle)
+    const sourceText = buildSourceText(studyset.name, taskTitle, taskDescription, enrichedBundle)
     console.info('[studyset-launch] payload built', {
       requestId,
       taskId,
@@ -287,7 +338,7 @@ export async function GET(
         ...baseResponse,
         launch: {
           ...baseResponse.launch,
-          flashcardsPreset: buildFlashcardsPreset(taskTitle, estimatedMinutes, parsedBundle),
+          flashcardsPreset: buildFlashcardsPreset(taskTitle, estimatedMinutes, enrichedBundle),
         },
       }
       console.info('[studyset-launch] success', { requestId, taskId, tool: 'flashcards' })
@@ -299,7 +350,7 @@ export async function GET(
         ...baseResponse,
         launch: {
           ...baseResponse.launch,
-          quizPreset: buildQuizPreset(taskTitle, taskDescription, estimatedMinutes, parsedBundle),
+          quizPreset: buildQuizPreset(taskTitle, taskDescription, estimatedMinutes, enrichedBundle),
         },
       }
       console.info('[studyset-launch] success', { requestId, taskId, tool: 'quiz' })
@@ -310,7 +361,7 @@ export async function GET(
       ...baseResponse,
       launch: {
         ...baseResponse.launch,
-        notesPreset: buildNotesPreset(taskTitle, estimatedMinutes, parsedBundle),
+        notesPreset: buildNotesPreset(taskTitle, estimatedMinutes, enrichedBundle),
       },
     }
     console.info('[studyset-launch] success', { requestId, taskId, tool: 'notes' })

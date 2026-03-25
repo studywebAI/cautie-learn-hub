@@ -55,23 +55,20 @@ export async function resolveSelectedSourcesForRun(
   }));
 
   const extractedBlocks = selectedSources
-    .map((source) => {
+    .map((source, index) => {
       const text = (source.extracted_text || '').trim();
       if (!text) return '';
-      return `[${source.provider}/${source.app}] ${source.name}\n${text}`;
+      // Keep prompt input grounded in extracted content only (no file metadata fallback).
+      return `[Imported source ${index + 1}]\n${text}`;
     })
     .filter(Boolean);
 
-  const fileReferenceBlocks = selectedSources.map((source) => {
-    const webUrl = source.web_url ? `\nURL: ${source.web_url}` : '';
-    return `[${source.provider}/${source.app}] ${source.name}${webUrl}`;
-  });
   const mediaBlocks = selectedSources
     .filter((source) => isLikelyImageSource(source) && source.web_url)
     .map((source) => `{{media url=${source.web_url}}}`);
 
   const existingSourceText = typeof input.baseInput?.sourceText === 'string' ? input.baseInput.sourceText : '';
-  const mergedSourceText = mergeSourceText(existingSourceText, [...fileReferenceBlocks, ...mediaBlocks, ...extractedBlocks]);
+  const mergedSourceText = mergeSourceText(existingSourceText, [...mediaBlocks, ...extractedBlocks]);
 
   return {
     input: { ...input.baseInput, sourceText: mergedSourceText },

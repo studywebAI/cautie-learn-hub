@@ -120,31 +120,9 @@ function buildMicrosoftContextBlock(input: {
   extractedText?: string;
   extractionStatus?: string;
 }) {
-  const appKey = String(input.app || '').toLowerCase();
-  const appLabel = appKey === 'powerpoint' ? 'PowerPoint' : appKey === 'onedrive' ? 'OneDrive' : 'Word';
-  const mime = input.mimeType?.trim() || 'unknown';
-  const url = input.webUrl?.trim() || 'not_available';
-  const status = input.extractionStatus?.trim() || (input.extractedText?.trim() ? 'ready' : 'pending');
   const extracted = input.extractedText?.trim() || '';
-  const isImage = mime.startsWith('image/');
-
-  const lines = [
-    `MICROSOFT_CONTEXT_FILE`,
-    `provider: microsoft`,
-    `app: ${appLabel}`,
-    `name: ${input.name}`,
-    `mime_type: ${mime}`,
-    `web_url: ${url}`,
-    `extraction_status: ${status}`,
-    '',
-    extracted
-      ? `extracted_text:\n${extracted}`
-      : isImage
-        ? 'extracted_text: [none]\nimage_note: This source is an image file. Use file metadata and any available visual attachment context.'
-        : 'extracted_text: [none yet]',
-  ];
-
-  return lines.join('\n');
+  // Never emit metadata-only context to model prompts.
+  return extracted;
 }
 
 function extractContextFileName(block: string) {
@@ -255,7 +233,7 @@ export function SourceInput({
       return {
         id: `integration-${String(item?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)}`,
         kind: 'file',
-        label: `MICROSOFT (${appLabel})`,
+        label: `${name} (${appLabel})`,
         text: extracted
           ? buildMicrosoftContextBlock({
             app: appKey || 'onedrive',
@@ -317,7 +295,7 @@ export function SourceInput({
         return {
           id: `integration-local-${id}`,
           kind: 'file',
-          label: 'MICROSOFT (OneDrive)',
+          label: `${name} (OneDrive)`,
           text: extractedText
             ? buildMicrosoftContextBlock({
               app: 'onedrive',
@@ -390,7 +368,7 @@ export function SourceInput({
     () =>
       sources
         .filter((source) => source.kind === 'file' && source.id.startsWith('integration-'))
-        .map((source) => ({ id: source.id, name: extractContextFileName(source.text) })),
+        .map((source) => ({ id: source.id, name: source.label || extractContextFileName(source.text) })),
     [sources]
   );
   const urlSources = useMemo(
@@ -540,9 +518,7 @@ export function SourceInput({
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         kind: 'file',
         label: `FILE (${file.name})`,
-        text: file.type.startsWith('image/')
-          ? [extractedText ? extractedText : '', `Attached image file: ${file.name} (${file.type || 'image'})`].filter(Boolean).join('\n\n')
-          : extractedText,
+        text: extractedText,
         selected: true,
         error: extractedText.trim() ? undefined : 'Could not extract text automatically.',
       });

@@ -2,7 +2,7 @@
 import React from 'react';
 import { marked } from 'marked';
 import { Card, CardContent } from '@/components/ui/card';
-import { ProfessionalMindmapRenderer } from './mindmap-professional';
+import { ReferenceMindmapRenderer } from './mindmap-reference';
 import { ProfessionalTimelineRenderer } from './timeline-professional';
 
 type NoteSection = {
@@ -868,7 +868,7 @@ export function NoteViewer({ notes }: NoteViewerProps) {
                               const data = JSON.parse(contentStr);
                               switch (data.type) {
                                 case 'mindmap':
-                                  return <ProfessionalMindmapRenderer data={data as MindmapData} title={note.title} />;
+                                  return <ReferenceMindmapRenderer data={data as MindmapData} title={note.title} />;
                                 case 'flowchart':
                                   return <FlowchartRenderer data={data as FlowchartData} />;
                                 case 'timeline':
