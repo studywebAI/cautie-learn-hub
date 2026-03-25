@@ -53,6 +53,7 @@ type PickerStatus =
   | 'Importing selected file'
   | 'Ready to use in Cautie'
   | 'Import failed';
+type PickerFileFilter = 'all' | 'word' | 'powerpoint' | 'excel' | 'pdf' | 'image';
 
 const ONEDRIVE_APP = ENABLED_INTEGRATION_APPS.find((app) => app.id === 'onedrive' && app.provider === 'microsoft');
 const RESUME_KEY = 'cautie.onedrive.embed.resume';
@@ -88,6 +89,28 @@ function extractItems(input: any): OneDrivePickedItem[] {
   return out;
 }
 
+function matchesPickerFilter(item: OneDrivePickedItem, filter: PickerFileFilter) {
+  if (filter === 'all') return true;
+  const name = String(item.name || '').toLowerCase();
+  const mime = String(item.mimeType || '').toLowerCase();
+  if (filter === 'word') {
+    return name.endsWith('.doc') || name.endsWith('.docx') || mime.includes('wordprocessingml') || mime === 'application/msword';
+  }
+  if (filter === 'powerpoint') {
+    return name.endsWith('.ppt') || name.endsWith('.pptx') || mime.includes('presentationml') || mime === 'application/vnd.ms-powerpoint';
+  }
+  if (filter === 'excel') {
+    return name.endsWith('.xls') || name.endsWith('.xlsx') || mime.includes('spreadsheetml') || mime === 'application/vnd.ms-excel';
+  }
+  if (filter === 'pdf') {
+    return name.endsWith('.pdf') || mime === 'application/pdf';
+  }
+  if (filter === 'image') {
+    return mime.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|svg)$/.test(name);
+  }
+  return true;
+}
+
 export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -105,6 +128,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [authTransitioning, setAuthTransitioning] = useState(false);
   const [switchingAccount, setSwitchingAccount] = useState(false);
   const [openAfterConnect, setOpenAfterConnect] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<PickerFileFilter>('all');
 
   const currentReturnTo = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -189,6 +213,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
 
   useEffect(() => {
     if (!status.connected || pickerOpen || opening) return;
+    if (searchParams.get('ms') || searchParams.get('ms_error')) return;
     if (typeof window === 'undefined') return;
     const raw = window.sessionStorage.getItem(RESUME_KEY);
     if (!raw) return;
@@ -215,7 +240,26 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       return;
     }
 
-    if (!status.connected) {
+    let connectedNow = status.connected;
+    if (!connectedNow) {
+      try {
+        const statusRes = await fetch('/api/integrations/microsoft/status', { cache: 'no-store' });
+        if (statusRes.ok) {
+          const statusJson = await statusRes.json().catch(() => ({}));
+          connectedNow = Boolean(statusJson?.connected);
+          if (connectedNow) {
+            setStatus({
+              connected: true,
+              account_email: statusJson?.account_email ? String(statusJson.account_email) : undefined,
+            });
+          }
+        }
+      } catch {
+        // fall through to connect redirect decision below
+      }
+    }
+
+    if (!connectedNow) {
       if (!allowConnectRedirect) {
         setPickerStatus('Import failed');
         return;
@@ -323,7 +367,10 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
             setPickerStatus('Importing selected file');
             try {
               const items = extractItems(command);
-              if (items.length === 0) throw new Error('No files were returned from OneDrive picker.');
+              const filteredItems = items.filter((item) => matchesPickerFilter(item, activeFilter));
+              if (filteredItems.length === 0) {
+                throw new Error(`No selected files match filter: ${activeFilter}.`);
+              }
 
               const saveRes = await fetch('/api/integrations/context-sources', {
                 method: 'POST',
@@ -331,7 +378,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                 body: JSON.stringify({
                   provider: 'microsoft',
                   app: 'onedrive',
-                  items,
+                  items: filteredItems,
                   replaceSelection: true,
                 }),
               });
@@ -348,7 +395,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
 
               window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft' } }));
               setPickerStatus('Ready to use in Cautie');
-              toast({ title: 'File imported', description: `${items[0].name} added as context.` });
+              toast({ title: 'File imported', description: `${filteredItems[0].name} added as context.` });
 
               port.postMessage({ type: 'result', id: commandEnvelopeId, data: { result: 'success' } });
               window.setTimeout(() => closePicker(), 180);
@@ -411,7 +458,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     } finally {
       setOpening(false);
     }
-  }, [closePicker, safeReturnTo, status.connected, toast]);
+  }, [activeFilter, closePicker, safeReturnTo, status.connected, toast]);
 
   useEffect(() => {
     if (!openAfterConnect) return;
@@ -516,6 +563,30 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
           <div className="flex items-center gap-2 border-b border-[#e1dfdd] bg-white px-3 py-1.5 text-xs text-muted-foreground">
             {pickerStatus === 'Ready to use in Cautie' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Loader2 className={`h-3.5 w-3.5 ${pickerStatus === 'Ready to select' || pickerStatus === 'Import failed' ? 'hidden' : 'animate-spin'}`} />}
             <span>{pickerStatus}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1 border-b border-[#e1dfdd] bg-white px-3 py-1.5 text-xs">
+            <span className="mr-1 text-muted-foreground">Filter:</span>
+            {([
+              ['all', 'All'],
+              ['word', 'Word'],
+              ['powerpoint', 'PowerPoint'],
+              ['excel', 'Excel'],
+              ['pdf', 'PDF'],
+              ['image', 'Image'],
+            ] as Array<[PickerFileFilter, string]>).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setActiveFilter(value)}
+                className={`rounded-full border px-2 py-0.5 ${
+                  activeFilter === value
+                    ? 'border-[#0f6cbd] bg-[#e8f2fc] text-[#0f6cbd]'
+                    : 'border-[#d1d1d1] bg-white text-[#323130]'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
           {authTransitioning && (
             <div className="border-b border-[#e1dfdd] bg-[#faf9f8] px-3 py-2 text-xs text-[#605e5c]">
