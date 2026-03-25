@@ -130,6 +130,7 @@ export type MicrosoftFileItem = {
   kind: MicrosoftFileKind;
   mimeType?: string;
   isFolder?: boolean;
+  isFile?: boolean;
 };
 
 function detectKind(name?: string, mimeType?: string): MicrosoftFileKind | null {
@@ -196,7 +197,8 @@ export async function listMicrosoftFiles(input: { accessToken: string; kind: Mic
         lastModifiedDateTime: item.lastModifiedDateTime ? String(item.lastModifiedDateTime) : undefined,
         kind: input.kind === 'onedrive' ? 'onedrive' : (detectedKind as MicrosoftFileKind),
         mimeType: item?.file?.mimeType ? String(item.file.mimeType) : undefined,
-        isFolder: Boolean(item?.folder),
+        isFolder: Boolean(item?.folder || item?.remoteItem?.folder || item?.package),
+        isFile: Boolean(item?.file || item?.remoteItem?.file),
       } as MicrosoftFileItem;
     })
     .filter(Boolean) as MicrosoftFileItem[];

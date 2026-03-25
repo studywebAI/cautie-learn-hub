@@ -52,6 +52,7 @@ type GraphListItem = {
   lastModifiedDateTime?: string;
   size?: number;
   isFolder?: boolean;
+  isFile?: boolean;
 };
 
 type PickerStatus =
@@ -119,6 +120,18 @@ function matchesPickerFilter(item: OneDrivePickedItem, filter: PickerFileFilter)
     return mime.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|svg)$/.test(name);
   }
   return true;
+}
+
+function fallbackTypeLabel(item: GraphListItem) {
+  const name = item.name.toLowerCase();
+  const mime = (item.mimeType || '').toLowerCase();
+  if (name.endsWith('.pdf') || mime === 'application/pdf') return 'PDF';
+  if (name.endsWith('.doc') || name.endsWith('.docx') || mime.includes('wordprocessingml') || mime === 'application/msword') return 'Word';
+  if (name.endsWith('.ppt') || name.endsWith('.pptx') || mime.includes('presentationml') || mime === 'application/vnd.ms-powerpoint') return 'PowerPoint';
+  if (name.endsWith('.xls') || name.endsWith('.xlsx') || mime.includes('spreadsheetml') || mime === 'application/vnd.ms-excel') return 'Excel';
+  if (mime.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|svg)$/.test(name)) return 'Image';
+  if (name.includes('.')) return name.split('.').pop()?.toUpperCase() || 'File';
+  return 'File';
 }
 
 export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
@@ -189,6 +202,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
           lastModifiedDateTime: item?.lastModifiedDateTime ? String(item.lastModifiedDateTime) : undefined,
           size: typeof item?.size === 'number' ? item.size : undefined,
           isFolder: Boolean(item?.isFolder),
+          isFile: Boolean(item?.isFile),
         }))
         .filter((item: GraphListItem) => Boolean(item.id));
       setFallbackFiles(mapped);
@@ -666,7 +680,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                       </thead>
                       <tbody>
                         {fallbackFiles
-                          .filter((file) => !file.isFolder)
+                          .filter((file) => file.isFile === true && !file.isFolder)
                           .filter((file) => matchesPickerFilter({
                             id: file.id,
                             name: file.name,
@@ -683,7 +697,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                             >
                               <td className="px-3 py-2">{file.name}</td>
                               <td className="px-3 py-2">{file.lastModifiedDateTime ? new Date(file.lastModifiedDateTime).toLocaleString() : '-'}</td>
-                              <td className="px-3 py-2">{file.isFolder ? 'folder' : (file.mimeType || 'file')}</td>
+                              <td className="px-3 py-2">{fallbackTypeLabel(file)}</td>
                             </tr>
                           ))}
                       </tbody>
