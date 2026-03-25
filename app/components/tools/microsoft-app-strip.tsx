@@ -156,6 +156,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   useEffect(() => {
     const ms = searchParams.get('ms');
     const msError = searchParams.get('ms_error');
+    const msErrorCode = searchParams.get('ms_error_code');
     const msPicker = searchParams.get('ms_picker');
     if (!ms && !msError && !msPicker) return;
 
@@ -173,13 +174,15 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     } else if (msError) {
       if (typeof window !== 'undefined') window.sessionStorage.removeItem(RESUME_KEY);
       setAuthTransitioning(false);
-      toast({ title: 'Microsoft connection failed', description: msError, variant: 'destructive' });
+      const message = msErrorCode ? `${msError} (${msErrorCode})` : msError;
+      toast({ title: 'Microsoft connection failed', description: message, variant: 'destructive' });
     }
 
     const params = new URLSearchParams(searchParams.toString());
     params.delete('ms');
     params.delete('ms_error');
     params.delete('ms_picker');
+    params.delete('ms_error_code');
     const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps

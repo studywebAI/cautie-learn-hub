@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
   const state = request.nextUrl.searchParams.get('state');
   const oauthError = request.nextUrl.searchParams.get('error_description') || request.nextUrl.searchParams.get('error');
+  const oauthErrorCode = request.nextUrl.searchParams.get('error') || '';
 
   const doneUrl = new URL(returnTo.startsWith('/') ? returnTo : '/tools/studyset', getOrigin(request));
   const redirectUri = `${getOrigin(request)}/api/integrations/microsoft/callback`;
@@ -58,6 +59,7 @@ export async function GET(request: NextRequest) {
   if (oauthError) {
     console.warn('[microsoft-callback] provider-error', { requestId, oauthError });
     doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode(oauthError));
+    if (oauthErrorCode) doneUrl.searchParams.set('ms_error_code', oauthErrorCode.slice(0, 80));
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);
     return response;
@@ -72,6 +74,7 @@ export async function GET(request: NextRequest) {
       stateMatches: Boolean(state && expectedState && state === expectedState),
     });
     doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode('invalid_state'));
+    doneUrl.searchParams.set('ms_error_code', 'invalid_state');
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);
     return response;
@@ -123,6 +126,7 @@ export async function GET(request: NextRequest) {
       stack: error?.stack || null,
     });
     doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode(error?.message || 'callback_failed'));
+    if (error?.code) doneUrl.searchParams.set('ms_error_code', String(error.code).slice(0, 80));
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);
     return response;

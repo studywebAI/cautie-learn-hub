@@ -75,13 +75,26 @@ export async function GET(request: NextRequest) {
       cache: 'no-store',
     });
     const driveProbe = await driveProbeRes.json().catch(() => ({})) as DriveProbe;
+    const rootChildrenRes = await fetch('https://graph.microsoft.com/v1.0/me/drive/root/children?$top=1', {
+      headers: { Authorization: `Bearer ${tokenState.accessToken}` },
+      cache: 'no-store',
+    }).catch(() => null);
+    const recentRes = await fetch('https://graph.microsoft.com/v1.0/me/drive/recent?$top=1', {
+      headers: { Authorization: `Bearer ${tokenState.accessToken}` },
+      cache: 'no-store',
+    }).catch(() => null);
+    const rootChildrenPayload = await rootChildrenRes?.json().catch(() => ({}));
+    const recentPayload = await recentRes?.json().catch(() => ({}));
+    const rootChildrenCount = Array.isArray(rootChildrenPayload?.value) ? rootChildrenPayload.value.length : 0;
+    const recentCount = Array.isArray(recentPayload?.value) ? recentPayload.value.length : 0;
+    const useRecentEntry = rootChildrenCount === 0 && recentCount > 0;
 
     const { baseUrl, kind } = resolvePickerBaseUrl(driveProbe, endpointHint);
     const channelId = crypto.randomUUID();
     const origin = getOrigin(request);
     const pickerOptions = {
       sdk: '8.0',
-      entry: { oneDrive: {} },
+      entry: useRecentEntry ? { oneDrive: { recent: {} } } : { oneDrive: { files: {} } },
       authentication: {},
       messaging: {
         origin,
@@ -109,6 +122,9 @@ export async function GET(request: NextRequest) {
         }
       })(),
       channelId,
+      rootChildrenCount,
+      recentCount,
+      useRecentEntry,
       scope: tokenState.connection?.scope || null,
       tokenExpiresAt: tokenState.connection?.expires_at || null,
     });
@@ -132,4 +148,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to initialize OneDrive picker' }, { status: 500 });
   }
 }
-
