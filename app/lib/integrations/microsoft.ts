@@ -95,6 +95,17 @@ export async function refreshMicrosoftToken(refreshToken: string) {
   return postToken(params);
 }
 
+export async function refreshMicrosoftTokenForScope(refreshToken: string, scope: string) {
+  const { clientId, clientSecret } = getMicrosoftAuthConfig();
+  const params = new URLSearchParams();
+  params.set('client_id', clientId);
+  params.set('client_secret', clientSecret);
+  params.set('grant_type', 'refresh_token');
+  params.set('refresh_token', refreshToken);
+  params.set('scope', scope);
+  return postToken(params);
+}
+
 export async function fetchMicrosoftProfile(accessToken: string) {
   const response = await fetch(`${MICROSOFT_GRAPH_BASE}/me?$select=id,displayName,mail,userPrincipalName`, {
     headers: { Authorization: `Bearer ${accessToken}` },

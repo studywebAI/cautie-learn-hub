@@ -1,5 +1,5 @@
 import { decryptSecret, encryptSecret } from '@/lib/integrations/token-crypto';
-import { refreshMicrosoftToken } from '@/lib/integrations/microsoft';
+import { refreshMicrosoftToken, refreshMicrosoftTokenForScope } from '@/lib/integrations/microsoft';
 
 type ConnectionRow = {
   id: string;
@@ -140,4 +140,57 @@ export async function getValidMicrosoftAccessToken(supabase: any, userId: string
     accessToken: refreshed.access_token,
     connection: await getMicrosoftConnection(supabase, userId),
   };
+}
+
+function normalizeResourceScope(resource: string) {
+  const trimmed = String(resource || '').trim().replace(/\/+$/, '');
+  if (!trimmed) return null;
+  return `${trimmed}/.default offline_access`;
+}
+
+export async function getMicrosoftAccessTokenForResource(
+  supabase: any,
+  userId: string,
+  resource: string | null | undefined
+) {
+  const base = await getValidMicrosoftAccessToken(supabase, userId);
+  if (!base?.accessToken) return null;
+
+  const targetResource = String(resource || '').trim();
+  if (!targetResource || targetResource.includes('graph.microsoft.com')) {
+    return base;
+  }
+
+  const connection = base.connection;
+  const refreshToken = connection?.refresh_token_encrypted ? decryptSecret(connection.refresh_token_encrypted) : '';
+  if (!refreshToken) {
+    console.warn('[microsoft-token] resource-token-fallback-no-refresh-token', {
+      userId,
+      resource: targetResource,
+      scope: connection?.scope || null,
+    });
+    return base;
+  }
+
+  const resourceScope = normalizeResourceScope(targetResource);
+  if (!resourceScope) return base;
+
+  try {
+    const refreshed = await refreshMicrosoftTokenForScope(refreshToken, resourceScope);
+    return {
+      accessToken: refreshed.access_token,
+      connection: {
+        ...connection,
+        scope: refreshed.scope || connection?.scope || null,
+      },
+    };
+  } catch (error: any) {
+    console.warn('[microsoft-token] resource-token-fallback-failed', {
+      userId,
+      resource: targetResource,
+      scopeRequested: resourceScope,
+      message: String(error?.message || 'unknown'),
+    });
+    return base;
+  }
 }

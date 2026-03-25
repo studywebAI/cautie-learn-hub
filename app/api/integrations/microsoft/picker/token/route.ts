@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
-import { getValidMicrosoftAccessToken } from '@/lib/integrations/microsoft-store';
+import { getMicrosoftAccessTokenForResource } from '@/lib/integrations/microsoft-store';
 import { checkRateLimit, verifySameOrigin } from '@/lib/security/request-guards';
 
 export const dynamic = 'force-dynamic';
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const tokenState = await getValidMicrosoftAccessToken(supabase, user.id);
+    const tokenState = await getMicrosoftAccessTokenForResource(supabase, user.id, body.resource || null);
     if (!tokenState?.accessToken) {
       return NextResponse.json({ error: 'Microsoft account not connected' }, { status: 404 });
     }
@@ -68,4 +68,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to issue picker token' }, { status: 500 });
   }
 }
-

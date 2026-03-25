@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getValidMicrosoftAccessToken } from '@/lib/integrations/microsoft-store';
+import { getMicrosoftAccessTokenForResource, getValidMicrosoftAccessToken } from '@/lib/integrations/microsoft-store';
 import { checkRateLimit } from '@/lib/security/request-guards';
 
 export const dynamic = 'force-dynamic';
@@ -90,12 +90,20 @@ export async function GET(request: NextRequest) {
     const useRecentEntry = rootChildrenCount === 0 && recentCount > 0;
 
     const { baseUrl, kind } = resolvePickerBaseUrl(driveProbe, endpointHint);
+    const pickerResource = kind === 'consumer' ? 'https://api.onedrive.com' : baseUrl;
+    const resourceTokenState = await getMicrosoftAccessTokenForResource(supabase, user.id, pickerResource);
+    const pickerAccessToken = resourceTokenState?.accessToken || tokenState.accessToken;
     const channelId = crypto.randomUUID();
     const origin = getOrigin(request);
     const pickerOptions = {
       sdk: '8.0',
       entry: useRecentEntry ? { oneDrive: { recent: {} } } : { oneDrive: { files: {} } },
-      authentication: {},
+      authentication: {
+        tokens: {
+          graph: true,
+          sharePoint: true,
+        },
+      },
       messaging: {
         origin,
         channelId,
@@ -106,7 +114,7 @@ export async function GET(request: NextRequest) {
       locale: 'en-us',
     }).toString();
     const action = kind === 'consumer'
-      ? `${baseUrl}?${queryString}`
+      ? `${baseUrl}/v8.0/index.html?${queryString}`
       : `${baseUrl}/_layouts/15/FilePicker.aspx?${queryString}`;
 
     console.info('[microsoft-picker-bootstrap] ok', {
@@ -135,7 +143,7 @@ export async function GET(request: NextRequest) {
       baseUrl,
       action,
       options: pickerOptions,
-      accessToken: tokenState.accessToken,
+      accessToken: pickerAccessToken,
       scope: tokenState.connection?.scope || null,
       accountEmail: tokenState.connection?.account_email || null,
     });
