@@ -32,7 +32,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is a teacher via class_members + subscription_type
+    // Check if user is a teacher via, class_members + subscription_type
     // (owner_id column was removed - all teachers are now equal via class_members)
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
