@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import React, { useState, useEffect, Suspense, useCallback, useContext } from 'react';
+import React, { useState, useEffect, Suspense, useCallback, useContext, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
 import { Loader2, Sparkles } from 'lucide-react';
@@ -37,6 +37,9 @@ function QuizPageContent() {
   const searchParams = useSearchParams();
   const sourceTextFromParams = searchParams.get('sourceText');
   const runId = searchParams.get('runId');
+  const taskId = searchParams.get('taskId');
+  const studysetId = searchParams.get('studysetId');
+  const launchRequested = searchParams.get('launch') === '1';
   const context = searchParams.get('context');
   const classId = searchParams.get('classId');
   const isAssignmentContext = context === 'assignment';
@@ -55,30 +58,46 @@ function QuizPageContent() {
   const [currentView, setCurrentView] = useState<'setup' | 'take' | 'duel'>('setup');
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const launchHandledRef = useRef(false);
   const { toast } = useToast();
 
-  const handleGenerate = useCallback(async (text: string) => {
+  const handleGenerate = useCallback(async (
+    text: string,
+    overrides?: Partial<{
+      mode: QuizMode;
+      questionCount: number;
+      difficultyProfile: string;
+      questionType: string;
+      title: string;
+    }>
+  ) => {
     if (!text.trim()) return;
     setIsLoading(true);
     setGeneratedQuiz(null);
     try {
-      if (quizMode === 'duel') {
+      const requestedMode = overrides?.mode || quizMode;
+      const requestedQuestionCount = overrides?.questionCount ?? questionCount;
+      const requestedDifficulty = overrides?.difficultyProfile || difficultyProfile;
+      const requestedQuestionType = overrides?.questionType || questionType;
+      const requestedTitle = overrides?.title || customTitle.trim() || 'Generated Quiz';
+
+      if (requestedMode === 'duel') {
         setCurrentView('duel');
       } else {
-        const count = (quizMode === 'survival' || quizMode === 'adaptive' || quizMode === 'boss-fight') ? 1 : questionCount;
+        const count = (requestedMode === 'survival' || requestedMode === 'adaptive' || requestedMode === 'boss-fight') ? 1 : requestedQuestionCount;
         const run = await runToolFlowV2({
           toolId: 'quiz',
           flowName: 'generateQuiz',
-          mode: quizMode,
+          mode: requestedMode,
           artifactType: 'quiz',
-          artifactTitle: customTitle.trim() || 'Generated Quiz',
+          artifactTitle: requestedTitle,
           input: {
             sourceText: text,
             imageDataUri: imageDataUri || undefined,
             questionCount: count,
             language,
-            difficultyProfile,
-            questionType,
+            difficultyProfile: requestedDifficulty,
+            questionType: requestedQuestionType,
           },
           computeClass: count > 20 ? 'heavy' : 'standard',
         });
@@ -93,11 +112,52 @@ function QuizPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [difficultyProfile, imageDataUri, language, questionCount, questionType, quizMode]);
+  }, [customTitle, difficultyProfile, imageDataUri, language, questionCount, questionType, quizMode]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
   }, [sourceTextFromParams, handleGenerate]);
+
+  useEffect(() => {
+    if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
+    launchHandledRef.current = true;
+
+    const runLaunch = async () => {
+      try {
+        const response = await fetch(`/api/studysets/plan-tasks/${taskId}/launch`);
+        if (!response.ok) throw new Error('Could not load studyset task preset');
+        const payload = await response.json();
+        const source = String(payload?.launch?.sourceText || '').trim();
+        const preset = payload?.launch?.quizPreset || {};
+        const title = String(payload?.launch?.artifactTitle || '').trim();
+
+        if (source) setSourceText(source);
+        if (preset?.mode) setQuizMode(preset.mode as QuizMode);
+        if (typeof preset?.questionCount === 'number') setQuestionCount(preset.questionCount);
+        if (preset?.difficultyProfile) setDifficultyProfile(String(preset.difficultyProfile));
+        if (preset?.questionType) setQuestionType(String(preset.questionType));
+        if (title) setCustomTitle(title);
+
+        if (source) {
+          await handleGenerate(source, {
+            mode: preset?.mode as QuizMode | undefined,
+            questionCount: typeof preset?.questionCount === 'number' ? preset.questionCount : undefined,
+            difficultyProfile: preset?.difficultyProfile ? String(preset.difficultyProfile) : undefined,
+            questionType: preset?.questionType ? String(preset.questionType) : undefined,
+            title: title || undefined,
+          });
+        }
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Could not start studyset task',
+          description: error?.message || 'Please refresh and try again.',
+        });
+      }
+    };
+
+    void runLaunch();
+  }, [handleGenerate, launchRequested, studysetId, taskId, toast]);
 
   useEffect(() => {
     if (savedRun?.output_payload && savedRun.status === 'succeeded') {
@@ -148,7 +208,14 @@ function QuizPageContent() {
           />
         </div>
         <div className="flex-1 min-h-0 overflow-auto">
-          <QuizTaker quiz={generatedQuiz} mode={quizMode} sourceText={sourceText} onRestart={handleRestart} />
+          <QuizTaker
+            quiz={generatedQuiz}
+            mode={quizMode}
+            sourceText={sourceText}
+            onRestart={handleRestart}
+            taskId={taskId || undefined}
+            studysetId={studysetId || undefined}
+          />
         </div>
       </div>
     );

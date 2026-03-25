@@ -8,7 +8,9 @@ import {
   BookOpen,
   Calculator,
   ChevronLeft,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Code2,
   Compass,
   Dna,
@@ -27,6 +29,7 @@ import {
   Route,
   Sigma,
   Upload,
+  FileText,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
@@ -116,12 +119,12 @@ const COLOR_OPTIONS: ColorOption[] = [
 ];
 
 const TYPING_PLACEHOLDERS = ['WW2 final prep', 'Chemistry exam sprint', 'Spanish oral practice'];
-const SOFT_ORANGE_SURFACE = 'border-orange-200/80 bg-orange-50/70 dark:border-orange-900/40 dark:bg-orange-950/25';
-const ORANGE_CALENDAR_CLASSES = {
+const SOFT_SURFACE = 'border border-[#e5e7eb] bg-[#f8fafc] dark:border-zinc-800 dark:bg-zinc-900/40';
+const CALENDAR_CLASSES = {
   day_selected:
-    'bg-[#f97316] text-white hover:bg-[#ea580c] hover:text-white focus:bg-[#ea580c] focus:text-white',
-  day_today: 'bg-orange-100 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100',
-  day_range_middle: 'aria-selected:bg-orange-100 aria-selected:text-orange-900 dark:aria-selected:bg-orange-900/40 dark:aria-selected:text-orange-100',
+    'bg-[#e5e7eb] text-[#111827] hover:bg-[#d1d5db] hover:text-[#111827] focus:bg-[#d1d5db] focus:text-[#111827] dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600',
+  day_today: 'bg-[#f1f5f9] text-[#0f172a] dark:bg-zinc-800 dark:text-zinc-100',
+  day_range_middle: 'aria-selected:bg-[#e5e7eb] aria-selected:text-[#111827] dark:aria-selected:bg-zinc-700 dark:aria-selected:text-zinc-100',
 };
 
 function toIsoLocalDate(date: Date) {
@@ -184,6 +187,9 @@ export default function StudysetPage() {
 
   const [creating, setCreating] = useState(false);
   const [typingPlaceholder, setTypingPlaceholder] = useState(TYPING_PLACEHOLDERS[0]);
+  const [showIconOptions, setShowIconOptions] = useState(false);
+  const [showColorOptions, setShowColorOptions] = useState(false);
+  const [showNotesInput, setShowNotesInput] = useState(false);
 
   const madeStudysets = useMemo(() => studysets.filter((row) => row.status !== 'archived'), [studysets]);
 
@@ -531,7 +537,7 @@ export default function StudysetPage() {
                     >
                       <p className="text-sm font-medium">{item.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {item.target_days} days · {item.minutes_per_day} min/day
+                        {item.target_days} days
                       </p>
                     </button>
                   ))}
@@ -573,55 +579,67 @@ export default function StudysetPage() {
                       value={name}
                       onChange={(event) => setName(event.target.value)}
                       placeholder={typingPlaceholder}
-                      className={`border-orange-200/80 bg-orange-50/70 text-zinc-900 placeholder:text-zinc-500 dark:border-orange-900/40 dark:bg-orange-950/25 dark:text-zinc-100 dark:placeholder:text-zinc-400`}
+                      className={`border-[#d1d5db] bg-[#f8fafc] text-zinc-900 placeholder:text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-100 dark:placeholder:text-zinc-400`}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Icon (optional)</Label>
-                    <div className="grid grid-cols-5 gap-2 md:grid-cols-10">
-                      {ICON_OPTIONS.map((option) => {
-                        const ActiveIcon = option.Icon;
-                        const selected = selectedIcon === option.id;
-                        return (
-                          <button
-                            key={option.id}
-                            type="button"
-                            onClick={() => setSelectedIcon(selected ? null : option.id)}
-                            aria-label={option.id}
-                            title={option.id}
-                            className={`flex h-10 items-center justify-center rounded-lg transition-colors ${
-                              selected
-                                ? 'bg-muted text-foreground ring-1 ring-foreground/70'
-                                : 'bg-background text-muted-foreground hover:bg-muted/70'
-                            }`}
-                          >
-                            <ActiveIcon className="h-4 w-4" />
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setShowIconOptions((v) => !v)}>
+                      Select icon
+                      {showIconOptions ? <ChevronUp className="ml-2 h-3 w-3" /> : <ChevronDown className="ml-2 h-3 w-3" />}
+                    </Button>
+                    {showIconOptions && (
+                      <div className="grid grid-cols-8 gap-1.5 rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-2 md:grid-cols-12 dark:border-zinc-800 dark:bg-zinc-900/40">
+                        {ICON_OPTIONS.map((option) => {
+                          const ActiveIcon = option.Icon;
+                          const selected = selectedIcon === option.id;
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              onClick={() => setSelectedIcon(selected ? null : option.id)}
+                              aria-label={option.id}
+                              title={option.id}
+                              className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
+                                selected
+                                  ? 'bg-[#e2e8f0] text-foreground ring-1 ring-[#94a3b8] dark:bg-zinc-700 dark:ring-zinc-500'
+                                  : 'bg-white text-muted-foreground hover:bg-[#f1f5f9] dark:bg-zinc-900 dark:hover:bg-zinc-800'
+                              }`}
+                            >
+                              <ActiveIcon className="h-3.5 w-3.5" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
                     <Label>Color (optional)</Label>
-                    <div className="grid grid-cols-7 gap-2 md:grid-cols-14">
-                      {COLOR_OPTIONS.map((color) => {
-                        const selected = selectedColor === color.id;
-                        return (
-                          <button
-                            key={color.id}
-                            type="button"
-                            aria-label={color.id}
-                            title={color.id}
-                            onClick={() => setSelectedColor(selected ? null : color.id)}
-                            className={`h-9 rounded-md transition-all ${color.swatchClass} ${
-                              selected ? 'ring-2 ring-foreground ring-offset-1 ring-offset-background' : 'hover:scale-[1.03]'
-                            }`}
-                          />
-                        );
-                      })}
-                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setShowColorOptions((v) => !v)}>
+                      Select color
+                      {showColorOptions ? <ChevronUp className="ml-2 h-3 w-3" /> : <ChevronDown className="ml-2 h-3 w-3" />}
+                    </Button>
+                    {showColorOptions && (
+                      <div className="grid grid-cols-10 gap-1.5 rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-2 md:grid-cols-14 dark:border-zinc-800 dark:bg-zinc-900/40">
+                        {COLOR_OPTIONS.map((color) => {
+                          const selected = selectedColor === color.id;
+                          return (
+                            <button
+                              key={color.id}
+                              type="button"
+                              aria-label={color.id}
+                              title={color.id}
+                              onClick={() => setSelectedColor(selected ? null : color.id)}
+                              className={`h-6 w-6 rounded-md transition-all ${color.swatchClass} ${
+                                selected ? 'ring-2 ring-[#334155] ring-offset-1 ring-offset-background' : 'hover:scale-[1.03]'
+                              }`}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       If you skip icon/color, we auto-pick an unused combo.
                     </p>
@@ -632,16 +650,16 @@ export default function StudysetPage() {
               {step === 1 && (
                 <div className="space-y-3">
                   <Label>Select available study days</Label>
-                  <div className={`rounded-xl p-2 ${SOFT_ORANGE_SURFACE}`}>
+                  <div className={`rounded-xl p-2 ${SOFT_SURFACE}`}>
                     <Calendar
                       mode="multiple"
                       selected={selectedDates}
                       onSelect={(value) => setSelectedDates(Array.isArray(value) ? value : [])}
                       className="mx-auto"
-                      classNames={ORANGE_CALENDAR_CLASSES}
+                      classNames={CALENDAR_CLASSES}
                     />
                   </div>
-                  <div className={`rounded-xl p-3 text-xs text-foreground/80 ${SOFT_ORANGE_SURFACE}`}>
+                  <div className={`rounded-xl p-3 text-xs text-foreground/80 ${SOFT_SURFACE}`}>
                     {selectedDateStrings.length === 0
                       ? 'Pick at least one day.'
                       : `${selectedDateStrings.length} day${selectedDateStrings.length === 1 ? '' : 's'} selected.`}
@@ -652,13 +670,21 @@ export default function StudysetPage() {
               {step === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <Label>Notes</Label>
-                    <Textarea
-                      value={notesText}
-                      onChange={(event) => setNotesText(event.target.value)}
-                      placeholder="What this studyset should focus on..."
-                      className={`min-h-[110px] ${SOFT_ORANGE_SURFACE}`}
-                    />
+                    <div className="flex items-center justify-between">
+                      <Label>Notes (optional)</Label>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setShowNotesInput((v) => !v)}>
+                        {showNotesInput ? 'Hide' : 'Add notes'}
+                        {showNotesInput ? <ChevronUp className="ml-1 h-3 w-3" /> : <ChevronDown className="ml-1 h-3 w-3" />}
+                      </Button>
+                    </div>
+                    {showNotesInput && (
+                      <Textarea
+                        value={notesText}
+                        onChange={(event) => setNotesText(event.target.value)}
+                        placeholder="What this studyset should focus on..."
+                        className={`min-h-[110px] ${SOFT_SURFACE}`}
+                      />
+                    )}
                   </div>
 
                   <div className="space-y-1">
@@ -667,13 +693,13 @@ export default function StudysetPage() {
                       value={pastedText}
                       onChange={(event) => setPastedText(event.target.value)}
                       placeholder="Paste chapters, summaries, requirements..."
-                      className={`min-h-[140px] ${SOFT_ORANGE_SURFACE}`}
+                      className={`min-h-[140px] ${SOFT_SURFACE}`}
                     />
                   </div>
 
-                  <div className={`rounded-xl p-3 ${SOFT_ORANGE_SURFACE}`}>
+                  <div className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
                     <p className="mb-2 text-sm font-medium">Files</p>
-                    <label className={`flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm ${SOFT_ORANGE_SURFACE}`}>
+                    <label className={`flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm ${SOFT_SURFACE}`}>
                       <Upload className="h-4 w-4" />
                       Add files
                       <input
@@ -685,17 +711,20 @@ export default function StudysetPage() {
                       />
                     </label>
                     {uploads.length > 0 && (
-                      <div className="mt-2 space-y-1">
+                      <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
                         {uploads.map((file) => (
-                          <div key={`${file.name}-${file.size}`} className={`rounded-md px-2 py-1 text-xs ${SOFT_ORANGE_SURFACE}`}>
-                            {file.name}
+                          <div key={`${file.name}-${file.size}`} className="rounded-lg border border-[#d1d5db] bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
+                            <div className="mb-2 flex h-14 items-center justify-center rounded-md bg-[#f1f5f9] dark:bg-zinc-800">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <p className="truncate text-xs">{file.name}</p>
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
 
-                  <div className={`rounded-xl p-3 ${SOFT_ORANGE_SURFACE}`}>
+                  <div className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-medium">Import from OneDrive</p>
                       {microsoftConnected ? (
@@ -709,7 +738,7 @@ export default function StudysetPage() {
                       <MicrosoftAppStrip returnTo="/tools/studyset?open=create&step=2" />
                     </div>
                     <div className="mt-3 grid grid-cols-1 gap-3">
-                      <div className={`rounded-lg p-2 ${SOFT_ORANGE_SURFACE}`}>
+                      <div className="rounded-lg border border-[#d1d5db] bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
                         <div className="mb-1 flex items-center justify-between gap-2">
                           <p className="text-xs font-medium">Selected OneDrive files</p>
                           {microsoftConnected && (
@@ -724,10 +753,13 @@ export default function StudysetPage() {
                         {microsoftConnected && sortedOneDriveFiles.length === 0 && (
                           <p className="text-xs text-muted-foreground">No OneDrive files selected yet.</p>
                         )}
-                        <div className="space-y-1">
+                        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                           {sortedOneDriveFiles.map((file) => (
-                            <div key={file.id} className={`rounded-md px-2 py-1 text-xs ${SOFT_ORANGE_SURFACE}`}>
-                              <span className="truncate">{file.name}</span>
+                            <div key={file.id} className="rounded-lg border border-[#d1d5db] bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
+                              <div className="mb-2 flex h-14 items-center justify-center rounded-md bg-[#f1f5f9] dark:bg-zinc-800">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                              <p className="truncate text-xs">{file.name}</p>
                             </div>
                           ))}
                         </div>

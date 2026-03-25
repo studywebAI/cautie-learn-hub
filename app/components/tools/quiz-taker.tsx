@@ -77,7 +77,27 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 
-function FinalResults({ quiz, answers, onRestart, mode, timeTaken = 0, setSessionRecap, strikes = 0 }: { quiz: Quiz, answers: AnswersState, onRestart: () => void, mode: QuizMode, timeTaken?: number, setSessionRecap: (data: SessionRecapData | null) => void, strikes?: number }) {
+function FinalResults({
+    quiz,
+    answers,
+    onRestart,
+    mode,
+    timeTaken = 0,
+    setSessionRecap,
+    strikes = 0,
+    taskId,
+    studysetId,
+}: {
+    quiz: Quiz,
+    answers: AnswersState,
+    onRestart: () => void,
+    mode: QuizMode,
+    timeTaken?: number,
+    setSessionRecap: (data: SessionRecapData | null) => void,
+    strikes?: number,
+    taskId?: string,
+    studysetId?: string,
+}) {
     const correctCount = quiz.questions.filter(q => {
         const selectedOptionId = answers[q.id];
         if (!selectedOptionId) return false;
@@ -90,6 +110,8 @@ function FinalResults({ quiz, answers, onRestart, mode, timeTaken = 0, setSessio
     const incorrectCount = totalQuestionsAnswered - correctCount;
     const scorePercentage = totalQuestionsAnswered > 0 ? Math.round((correctCount / totalQuestionsAnswered) * 100) : 0;
     
+    const reportedRef = useRef(false);
+
     useEffect(() => {
         setSessionRecap({
             score: scorePercentage,
@@ -125,9 +147,36 @@ function FinalResults({ quiz, answers, onRestart, mode, timeTaken = 0, setSessio
         };
         saveQuizResult();
 
+        if (taskId && studysetId && !reportedRef.current) {
+            reportedRef.current = true;
+            const weakTopics = quiz.questions
+                .filter((q) => {
+                    const selectedOptionId = answers[q.id];
+                    const correctOption = q.options.find((opt) => opt.isCorrect);
+                    return Boolean(selectedOptionId) && correctOption?.id !== selectedOptionId;
+                })
+                .slice(0, 5)
+                .map((q) => q.question.slice(0, 120));
+
+            fetch(`/api/studysets/plan-tasks/${taskId}/performance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    studysetId,
+                    toolId: 'quiz',
+                    score: scorePercentage,
+                    totalItems: totalQuestionsAnswered,
+                    correctItems: correctCount,
+                    timeSpentSeconds: timeTaken,
+                    weakTopics,
+                    markCompleted: true,
+                }),
+            }).catch(() => {});
+        }
+
         // Clear recap on unmount
         return () => setSessionRecap(null);
-    }, [setSessionRecap, scorePercentage, correctCount, totalQuestionsAnswered, timeTaken]);
+    }, [answers, correctCount, quiz.questions, scorePercentage, setSessionRecap, studysetId, taskId, timeTaken, totalQuestionsAnswered]);
 
 
     if (mode === 'survival') {
@@ -376,7 +425,21 @@ function Question({ question, onAnswer, disabled, selectedOptionId, isBoss }: { 
 }
 
 
-export function QuizTaker({ quiz, mode, sourceText, onRestart }: { quiz: Quiz; mode: QuizMode; sourceText: string, onRestart: () => void; }) {
+export function QuizTaker({
+    quiz,
+    mode,
+    sourceText,
+    onRestart,
+    taskId,
+    studysetId,
+}: {
+    quiz: Quiz;
+    mode: QuizMode;
+    sourceText: string;
+    onRestart: () => void;
+    taskId?: string;
+    studysetId?: string;
+}) {
     const [answers, setAnswers] = useState<AnswersState>({});
     const [isFinished, setIsFinished] = useState(false);
     const { toast } = useToast();
@@ -728,7 +791,19 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart }: { quiz: Quiz; m
         let finalTime = mainTimer;
         if(mode === 'exam') finalTime = (quiz.questions.length * 60) - examTimeLeft;
 
-        return <FinalResults quiz={{...quiz, questions: currentQuestions}} answers={answers} onRestart={onRestart} mode={mode} timeTaken={finalTime} setSessionRecap={setSessionRecap} strikes={strikes} />
+        return (
+            <FinalResults
+                quiz={{...quiz, questions: currentQuestions}}
+                answers={answers}
+                onRestart={onRestart}
+                mode={mode}
+                timeTaken={finalTime}
+                setSessionRecap={setSessionRecap}
+                strikes={strikes}
+                taskId={taskId}
+                studysetId={studysetId}
+            />
+        )
     }
     
     const formatTime = (seconds: number) => {

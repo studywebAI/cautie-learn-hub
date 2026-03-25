@@ -147,6 +147,11 @@ function buildMicrosoftContextBlock(input: {
   return lines.join('\n');
 }
 
+function extractContextFileName(block: string) {
+  const match = block.match(/^name:\s*(.+)$/im);
+  return match?.[1]?.trim() || 'Imported file';
+}
+
 export function SourceInput({
   value,
   onChange,
@@ -199,6 +204,7 @@ export function SourceInput({
   const initializedRef = useRef(false);
   const lastEmittedRef = useRef('');
   const integrationHydratedRef = useRef(false);
+  const integrationPollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [manualText, setManualText] = useState('');
   const [sources, setSources] = useState<SourceEntry[]>([]);
@@ -234,6 +240,10 @@ export function SourceInput({
     if (!response.ok) return;
     const json = await response.json();
     const items = Array.isArray(json?.items) ? json.items : [];
+    const pendingCount = items.filter((item: any) => {
+      const status = String(item?.extraction_status || '').toLowerCase();
+      return status === 'pending' || status === 'error';
+    }).length;
 
     const mapped: SourceEntry[] = items.map((item: any) => {
       const appKey = String(item?.app || '').toLowerCase();
@@ -241,18 +251,21 @@ export function SourceInput({
       const name = String(item?.name || 'Untitled');
       const extracted = typeof item?.extracted_text === 'string' ? item.extracted_text.trim() : '';
       const webUrl = typeof item?.web_url === 'string' ? item.web_url : '';
+      const extractionStatus = typeof item?.extraction_status === 'string' ? item.extraction_status : undefined;
       return {
         id: `integration-${String(item?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)}`,
         kind: 'file',
         label: `MICROSOFT (${appLabel})`,
-        text: buildMicrosoftContextBlock({
-          app: appKey || 'onedrive',
-          name,
-          mimeType: typeof item?.mime_type === 'string' ? item.mime_type : undefined,
-          webUrl,
-          extractedText: extracted,
-          extractionStatus: typeof item?.extraction_status === 'string' ? item.extraction_status : undefined,
-        }),
+        text: extracted
+          ? buildMicrosoftContextBlock({
+            app: appKey || 'onedrive',
+            name,
+            mimeType: typeof item?.mime_type === 'string' ? item.mime_type : undefined,
+            webUrl,
+            extractedText: extracted,
+            extractionStatus,
+          })
+          : '',
         selected: true,
       };
     });
@@ -267,6 +280,15 @@ export function SourceInput({
         title: 'Microsoft sources ready',
         description: `${mapped.length} selected file${mapped.length === 1 ? '' : 's'} loaded.`,
       });
+    }
+    if (integrationPollTimeoutRef.current) {
+      clearTimeout(integrationPollTimeoutRef.current);
+      integrationPollTimeoutRef.current = null;
+    }
+    if (pendingCount > 0 && typeof window !== 'undefined') {
+      integrationPollTimeoutRef.current = window.setTimeout(() => {
+        void hydrateIntegrationSources(true);
+      }, 1500);
     }
   }, [toast]);
 
@@ -290,18 +312,22 @@ export function SourceInput({
         const name = String(item?.name || 'Untitled');
         const mimeType = typeof item?.mimeType === 'string' ? item.mimeType : undefined;
         const webUrl = typeof item?.webUrl === 'string' ? item.webUrl : undefined;
+        const extractedText = typeof item?.extractedText === 'string' ? item.extractedText : '';
+        const extractionStatus = typeof item?.extractionStatus === 'string' ? item.extractionStatus : undefined;
         return {
           id: `integration-local-${id}`,
           kind: 'file',
           label: 'MICROSOFT (OneDrive)',
-          text: buildMicrosoftContextBlock({
-            app: 'onedrive',
-            name,
-            mimeType,
-            webUrl,
-            extractedText: '',
-            extractionStatus: 'pending',
-          }),
+          text: extractedText
+            ? buildMicrosoftContextBlock({
+              app: 'onedrive',
+              name,
+              mimeType,
+              webUrl,
+              extractedText,
+              extractionStatus: extractionStatus || 'ready',
+            })
+            : '',
           selected: true,
         };
       });
@@ -318,6 +344,10 @@ export function SourceInput({
       if (typeof window !== 'undefined') {
         window.removeEventListener('integration-sources-updated', onUpdated as EventListener);
         window.removeEventListener('integration-source-picked', onPicked as EventListener);
+      }
+      if (integrationPollTimeoutRef.current) {
+        clearTimeout(integrationPollTimeoutRef.current);
+        integrationPollTimeoutRef.current = null;
       }
     };
   }, [hydrateIntegrationSources]);
@@ -354,6 +384,13 @@ export function SourceInput({
 
   const captionSources = useMemo(
     () => sources.filter((source) => source.kind === 'caption'),
+    [sources]
+  );
+  const integrationFileCards = useMemo(
+    () =>
+      sources
+        .filter((source) => source.kind === 'file' && source.id.startsWith('integration-'))
+        .map((source) => ({ id: source.id, name: extractContextFileName(source.text) })),
     [sources]
   );
   const urlSources = useMemo(
@@ -972,6 +1009,19 @@ export function SourceInput({
       {topContent && (
         <div className="flex-1 min-h-[240px]">
           {topContent}
+        </div>
+      )}
+
+      {integrationFileCards.length > 0 && (
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {integrationFileCards.map((file) => (
+            <div key={file.id} className="rounded-lg border border-sidebar-border bg-sidebar-accent/50 p-2">
+              <div className="mb-2 flex h-12 items-center justify-center rounded-md bg-sidebar-accent/80">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="truncate text-xs">{file.name}</p>
+            </div>
+          ))}
         </div>
       )}
 

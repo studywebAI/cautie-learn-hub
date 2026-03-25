@@ -24,6 +24,12 @@ type StudysetAgendaItem = {
   tasks: StudysetAgendaTask[];
 };
 const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i;
+const TOOL_HREFS: Record<string, string> = {
+  notes: '/tools/notes',
+  flashcards: '/tools/flashcards',
+  quiz: '/tools/quiz',
+  wordweb: '/tools/notes',
+};
 
 function isoToday() {
   return new Date().toISOString().slice(0, 10);
@@ -108,16 +114,26 @@ export function TodaysStudysetTasks() {
                   {completed}/{total}
                 </Badge>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {item.estimated_minutes} min planned
-              </p>
               <div className="mt-3">
-                <Button asChild size="sm" variant="outline">
-                  <Link prefetch={false} href={`/tools/studyset/${item.studyset_id}`}>
-                    Open Studyset
-                    <ArrowRight className="ml-2 h-3.5 w-3.5" />
-                  </Link>
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button asChild size="sm" variant="outline">
+                    <Link prefetch={false} href={`/tools/studyset/${item.studyset_id}`}>
+                      Open Studyset
+                      <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                  {(() => {
+                    const nextTask = (item.tasks || []).find((task) => !task.completed && task.type !== 'review');
+                    if (!nextTask) return null;
+                    const base = TOOL_HREFS[nextTask.type] || '/tools/notes';
+                    const href = `${base}?studysetId=${item.studyset_id}&taskId=${nextTask.id}&launch=1`;
+                    return (
+                      <Button asChild size="sm">
+                        <Link prefetch={false} href={href}>Start now</Link>
+                      </Button>
+                    );
+                  })()}
+                </div>
               </div>
             </div>
           );

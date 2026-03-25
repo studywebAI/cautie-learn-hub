@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense, useContext, useCallback } from 'react';
+import React, { useState, useEffect, Suspense, useContext, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
 import { Loader2, Sparkles } from 'lucide-react';
@@ -27,6 +27,9 @@ function FlashcardsPageContent() {
   const searchParams = useSearchParams();
   const sourceTextFromParams = searchParams.get('sourceText');
   const runId = searchParams.get('runId');
+  const taskId = searchParams.get('taskId');
+  const studysetId = searchParams.get('studysetId');
+  const launchRequested = searchParams.get('launch') === '1';
   const context = searchParams.get('context');
   const classId = searchParams.get('classId');
   const isAssignmentContext = context === 'assignment';
@@ -44,27 +47,41 @@ function FlashcardsPageContent() {
   const [currentView, setCurrentView] = useState<'setup' | 'study'>('setup');
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const launchHandledRef = useRef(false);
   const { toast } = useToast();
 
-  const handleGenerate = useCallback(async (text: string) => {
+  const handleGenerate = useCallback(async (
+    text: string,
+    overrides?: Partial<{
+      mode: StudyMode;
+      count: number;
+      complexity: string;
+      title: string;
+    }>
+  ) => {
     if (!text.trim()) return;
     setIsLoading(true);
     setGeneratedCards(null);
     try {
+      const requestedMode = overrides?.mode || studyMode;
+      const requestedCount = overrides?.count ?? flashcardCount;
+      const requestedComplexity = overrides?.complexity || complexity;
+      const requestedTitle = overrides?.title || customTitle.trim() || 'Generated Flashcards';
+
       const run = await runToolFlowV2({
         toolId: 'flashcards',
         flowName: 'generateFlashcards',
-        mode: studyMode,
+        mode: requestedMode,
           artifactType: 'flashcards',
-          artifactTitle: customTitle.trim() || 'Generated Flashcards',
+          artifactTitle: requestedTitle,
           input: {
             sourceText: text,
             imageDataUri: imageDataUri || undefined,
-            count: flashcardCount,
+            count: requestedCount,
             language,
-            complexity,
+            complexity: requestedComplexity,
           },
-          computeClass: flashcardCount > 20 ? 'heavy' : 'standard',
+          computeClass: requestedCount > 20 ? 'heavy' : 'standard',
         });
       const response = run?.output_payload || run;
       setGeneratedCards(response.flashcards);
@@ -76,11 +93,50 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [complexity, flashcardCount, imageDataUri, language, studyMode]);
+  }, [complexity, customTitle, flashcardCount, imageDataUri, language, studyMode]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
   }, [sourceTextFromParams, handleGenerate]);
+
+  useEffect(() => {
+    if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
+    launchHandledRef.current = true;
+
+    const runLaunch = async () => {
+      try {
+        const response = await fetch(`/api/studysets/plan-tasks/${taskId}/launch`);
+        if (!response.ok) throw new Error('Could not load studyset task preset');
+        const payload = await response.json();
+        const source = String(payload?.launch?.sourceText || '').trim();
+        const preset = payload?.launch?.flashcardsPreset || {};
+        const title = String(payload?.launch?.artifactTitle || '').trim();
+
+        if (source) setSourceText(source);
+        if (preset?.mode) setStudyMode(preset.mode as StudyMode);
+        if (typeof preset?.count === 'number') setFlashcardCount(preset.count);
+        if (preset?.complexity) setComplexity(String(preset.complexity));
+        if (title) setCustomTitle(title);
+
+        if (source) {
+          await handleGenerate(source, {
+            mode: preset?.mode as StudyMode | undefined,
+            count: typeof preset?.count === 'number' ? preset.count : undefined,
+            complexity: preset?.complexity ? String(preset.complexity) : undefined,
+            title: title || undefined,
+          });
+        }
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Could not start studyset task',
+          description: error?.message || 'Please refresh and try again.',
+        });
+      }
+    };
+
+    void runLaunch();
+  }, [handleGenerate, launchRequested, studysetId, taskId, toast]);
 
   useEffect(() => {
     if (savedRun?.output_payload && savedRun.status === 'succeeded') {
@@ -129,7 +185,13 @@ function FlashcardsPageContent() {
           />
         </div>
         <div className="flex-1 min-h-0 overflow-auto">
-          <FlashcardViewer cards={generatedCards} mode={studyMode} onRestart={handleRestart} />
+          <FlashcardViewer
+            cards={generatedCards}
+            mode={studyMode}
+            onRestart={handleRestart}
+            taskId={taskId || undefined}
+            studysetId={studysetId || undefined}
+          />
         </div>
       </div>
     );

@@ -18,7 +18,7 @@ export async function GET(
 
     const { data: studyset, error: studysetError } = await (supabase as any)
       .from('studysets')
-      .select('id, name, confidence_level, target_days, minutes_per_day, status, created_at, updated_at')
+      .select('id, name, confidence_level, target_days, minutes_per_day, status, source_bundle, created_at, updated_at')
       .eq('id', studysetId)
       .eq('user_id', user.id)
       .maybeSingle()
@@ -63,9 +63,65 @@ export async function GET(
       0
     )
 
+    let adaptive: any = null
+    try {
+      const { data: recentAttempts } = await (supabase as any)
+        .from('studyset_task_attempts')
+        .select('score, created_at')
+        .eq('user_id', user.id)
+        .eq('studyset_id', studyset.id)
+        .order('created_at', { ascending: false })
+        .limit(8)
+
+      const { data: weakTopicRows } = await (supabase as any)
+        .from('studyset_mastery_topics')
+        .select('topic_label, weakness_score, mastery_score')
+        .eq('user_id', user.id)
+        .eq('studyset_id', studyset.id)
+        .order('weakness_score', { ascending: false })
+        .limit(5)
+
+      if (Array.isArray(recentAttempts) && recentAttempts.length > 0) {
+        const avgScore = Math.round(
+          recentAttempts.reduce((sum: number, row: any) => sum + Number(row.score || 0), 0) / recentAttempts.length
+        )
+        const weakTopics = Array.isArray(weakTopicRows)
+          ? weakTopicRows
+              .filter((row: any) => Number(row.weakness_score || 0) > Number(row.mastery_score || 0))
+              .map((row: any) => String(row.topic_label || '').trim())
+              .filter(Boolean)
+              .slice(0, 4)
+          : []
+        adaptive = {
+          avg_score: avgScore,
+          mastery_band: avgScore >= 85 ? 'strong' : avgScore < 60 ? 'weak' : 'developing',
+          last_issues: weakTopics.length > 0 ? [`Weak areas: ${weakTopics.join(', ')}`] : [],
+          updated_at: recentAttempts[0]?.created_at || null,
+        }
+      }
+    } catch {
+      // Normalized adaptive tables may not exist yet.
+    }
+
+    if (!adaptive) {
+    try {
+      const parsed = studyset?.source_bundle ? JSON.parse(studyset.source_bundle) : null
+      const runtimeAdaptive = parsed?.runtime?.adaptive
+      if (runtimeAdaptive && typeof runtimeAdaptive === 'object') {
+        adaptive = {
+          avg_score: Number(runtimeAdaptive.avg_score || 0),
+          mastery_band: String(runtimeAdaptive.mastery_band || ''),
+          last_issues: Array.isArray(runtimeAdaptive.last_issues) ? runtimeAdaptive.last_issues : [],
+          updated_at: runtimeAdaptive.updated_at || null,
+        }
+      }
+    } catch {}
+    }
+
     return NextResponse.json({
       studyset,
       days,
+      adaptive,
       progress: {
         total_tasks: totalTasks,
         completed_tasks: completedTasks,

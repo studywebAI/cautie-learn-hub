@@ -156,7 +156,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [fallbackMode, setFallbackMode] = useState<'none' | 'graph'>('none');
   const [fallbackFiles, setFallbackFiles] = useState<GraphListItem[]>([]);
   const [fallbackLoading, setFallbackLoading] = useState(false);
-  const [selectedFallbackId, setSelectedFallbackId] = useState<string | null>(null);
+  const [selectedFallbackIds, setSelectedFallbackIds] = useState<string[]>([]);
   const [fallbackSource, setFallbackSource] = useState<'all' | 'files' | 'recent'>('all');
 
   const currentReturnTo = useMemo(() => {
@@ -178,7 +178,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     setPickerStatus('Idle');
     setFallbackMode('none');
     setFallbackFiles([]);
-    setSelectedFallbackId(null);
+    setSelectedFallbackIds([]);
     setFallbackSource('all');
     if (portRef.current) {
       try {
@@ -209,7 +209,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         }))
         .filter((item: GraphListItem) => Boolean(item.id));
       setFallbackFiles(mapped);
-      setSelectedFallbackId(null);
+      setSelectedFallbackIds([]);
     } finally {
       setFallbackLoading(false);
     }
@@ -233,6 +233,43 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   }, []);
 
   const persistSelection = useCallback(async (items: OneDrivePickedItem[]) => {
+    const extractRes = await fetch('/api/integrations/microsoft/files/extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          kind: 'onedrive',
+          webUrl: item.webUrl,
+          mimeType: item.mimeType,
+        })),
+      }),
+    }).catch(() => null);
+    const extractJson = await extractRes?.json().catch(() => ({}));
+    const extractedMap = new Map<string, { extractedText?: string; mimeType?: string; webUrl?: string }>();
+    const extractedItems = Array.isArray(extractJson?.items) ? extractJson.items : [];
+    for (const extractedItem of extractedItems) {
+      const id = String(extractedItem?.id || '');
+      if (!id) continue;
+      extractedMap.set(id, {
+        extractedText: typeof extractedItem?.extractedText === 'string' ? extractedItem.extractedText : '',
+        mimeType: typeof extractedItem?.mimeType === 'string' ? extractedItem.mimeType : undefined,
+        webUrl: typeof extractedItem?.webUrl === 'string' ? extractedItem.webUrl : undefined,
+      });
+    }
+    const enrichedItems = items.map((item) => {
+      const extracted = extractedMap.get(item.id);
+      const extractedText = extracted?.extractedText || '';
+      return {
+        ...item,
+        mimeType: extracted?.mimeType || item.mimeType,
+        webUrl: extracted?.webUrl || item.webUrl,
+        extractedText,
+        extractionStatus: extractedText.trim() ? 'ready' : 'pending',
+      };
+    });
+
     const saveRes = await fetch('/api/integrations/context-sources', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -249,7 +286,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       const message = typeof payload?.error === 'string' ? payload.error : 'Failed to save selected file';
       if (message.toLowerCase().includes('integration source storage is not set up')) {
         window.dispatchEvent(new CustomEvent('integration-source-picked', {
-          detail: { provider: 'microsoft', app: 'onedrive', items },
+          detail: { provider: 'microsoft', app: 'onedrive', items: enrichedItems },
         }));
         window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft', localOnly: true } }));
         return;
@@ -263,6 +300,9 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       body: JSON.stringify({ provider: 'microsoft', app: 'onedrive', maxJobs: 25 }),
     }).catch(() => null);
 
+    window.dispatchEvent(new CustomEvent('integration-source-picked', {
+      detail: { provider: 'microsoft', app: 'onedrive', items: enrichedItems },
+    }));
     window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft' } }));
   }, []);
 
@@ -720,9 +760,13 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                             .map((file) => (
                               <tr
                                 key={file.id}
-                                onClick={() => setSelectedFallbackId(file.id)}
+                                onClick={() =>
+                                  setSelectedFallbackIds((prev) =>
+                                    prev.includes(file.id) ? prev.filter((id) => id !== file.id) : [...prev, file.id]
+                                  )
+                                }
                                 className={`cursor-pointer border-t border-[#f1f1f1] ${
-                                  selectedFallbackId === file.id ? 'bg-[#e8f2fc]' : 'hover:bg-[#f7f7f7]'
+                                  selectedFallbackIds.includes(file.id) ? 'bg-[#e8f2fc]' : 'hover:bg-[#f7f7f7]'
                                 }`}
                               >
                                 <td className="px-3 py-2">{file.name}</td>
@@ -745,21 +789,21 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                   </button>
                   <button
                     type="button"
-                    disabled={!selectedFallbackId}
+                    disabled={selectedFallbackIds.length === 0}
                     className="rounded border border-[#0f6cbd] bg-[#0f6cbd] px-3 py-1 text-sm text-white disabled:opacity-50"
                     onClick={async () => {
-                      const file = fallbackFiles.find((f) => f.id === selectedFallbackId);
-                      if (!file) return;
+                      const files = fallbackFiles.filter((f) => selectedFallbackIds.includes(f.id));
+                      if (files.length === 0) return;
                       setPickerStatus('Importing selected file');
                       try {
-                        await persistSelection([{
+                        await persistSelection(files.map((file) => ({
                           id: file.id,
                           name: file.name,
                           webUrl: file.webUrl,
                           mimeType: file.mimeType,
-                        }]);
+                        })));
                         setPickerStatus('Ready to use in Cautie');
-                        toast({ title: 'File imported', description: `${file.name} added as context.` });
+                        toast({ title: 'Files imported', description: `${files.length} file${files.length === 1 ? '' : 's'} added as context.` });
                         window.setTimeout(() => closePicker(), 180);
                       } catch (error: any) {
                         setPickerStatus('Import failed');

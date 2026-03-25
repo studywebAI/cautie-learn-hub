@@ -136,6 +136,7 @@ export function RecentsSidebar() {
   const displayCount = expanded ? recents.length : 3;
   const displayItems = recents.slice(0, displayCount);
   const hasMore = recents.length > 3;
+  const enableScroll = expanded && recents.length > 10;
 
   if (isLoading) {
     return (
@@ -173,7 +174,9 @@ export function RecentsSidebar() {
         <Clock className="h-3 w-3" />
         recents
       </p>
-      <div className="rounded-md bg-transparent space-y-0.5">
+      <div
+        className={`rounded-md bg-transparent space-y-0.5 ${enableScroll ? 'max-h-[300px] overflow-y-auto pr-1' : ''}`}
+      >
         {displayItems.map((item) => {
           const Icon = TYPE_ICONS[item.type] || FileSignature;
           const dateStr = format(new Date(item.date), 'MMM d, HH:mm');

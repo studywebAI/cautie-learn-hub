@@ -90,7 +90,19 @@ function FlipView({ card, isFlipped, setIsFlipped }: { card: Flashcard; isFlippe
 }
 
 // Main Viewer Component
-export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]; mode: StudyMode; onRestart: () => void; }) {
+export function FlashcardViewer({
+  cards,
+  mode,
+  onRestart,
+  taskId,
+  studysetId,
+}: {
+  cards: Flashcard[];
+  mode: StudyMode;
+  onRestart: () => void;
+  taskId?: string;
+  studysetId?: string;
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [direction, setDirection] = useState(0);
@@ -179,13 +191,14 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
   const saveFlashcardProgress = useCallback(async () => {
     const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
     const deckHealth = computeDeckHealth();
+    const completionScore = cards.length > 0 ? Math.round((cardsReviewed.size / cards.length) * 100) : 0;
     try {
       await fetch('/api/activity', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           activity_type: 'flashcard',
-          score: cards.length > 0 ? Math.round((cardsReviewed.size / cards.length) * 100) : 0,
+          score: completionScore,
           total_items: cards.length,
           correct_items: correctCards,
           time_spent_seconds: timeSpent,
@@ -200,10 +213,34 @@ export function FlashcardViewer({ cards, mode, onRestart }: { cards: Flashcard[]
         })
       });
       console.log('Flashcard session saved to database');
+
+      if (taskId && studysetId) {
+        const weakTopics: string[] = [];
+        if (deckHealth.dueCount > Math.max(2, Math.round(cards.length * 0.35))) {
+          weakTopics.push('memory retention');
+        }
+        if (deckHealth.lapseRate > 0.25) {
+          weakTopics.push('recall stability');
+        }
+        await fetch(`/api/studysets/plan-tasks/${taskId}/performance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studysetId,
+            toolId: 'flashcards',
+            score: completionScore,
+            totalItems: cards.length,
+            correctItems: correctCards,
+            timeSpentSeconds: timeSpent,
+            weakTopics,
+            markCompleted: true,
+          }),
+        });
+      }
     } catch (error) {
       console.error('Failed to save flashcard session:', error);
     }
-  }, [cards.length, cardsReviewed.size, correctCards, mode, computeDeckHealth]);
+  }, [cards.length, cardsReviewed.size, correctCards, mode, computeDeckHealth, studysetId, taskId]);
 
   const getQualityFromOutcome = (isCorrect: boolean, responseMs: number): 0 | 1 | 2 | 3 => {
     if (!isCorrect) return 0;

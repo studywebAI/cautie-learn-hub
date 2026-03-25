@@ -103,9 +103,14 @@ const appendTranscript = (existing: string, nextSegment: string) => {
   return existing ? `${existing} ${next}` : next;
 };
 
+const clampScore = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
+
 function NotesPageContent() {
   const searchParams = useSearchParams();
   const runId = searchParams.get('runId');
+  const taskId = searchParams.get('taskId');
+  const studysetId = searchParams.get('studysetId');
+  const launchRequested = searchParams.get('launch') === '1';
   const { run: savedRun } = useSavedRun(runId);
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
@@ -141,9 +146,41 @@ function NotesPageContent() {
   const lastAutoDraftAtRef = useRef(0);
   const lastAutoDraftLengthRef = useRef(0);
   const lastAcceptedChunkRef = useRef('');
+  const launchHandledRef = useRef(false);
+  const lastReportedSignatureRef = useRef('');
   const { toast } = useToast();
 
   const canGenerate = sourceText.trim().length > 0 && !isLoading;
+
+  const reportStudysetPerformance = useCallback(async (inputText: string) => {
+    if (!taskId || !studysetId) return;
+    const trimmed = inputText.trim();
+    if (!trimmed) return;
+    const signature = `${taskId}:${trimmed.length}:${style}:${length}:${audience}`;
+    if (lastReportedSignatureRef.current === signature) return;
+    lastReportedSignatureRef.current = signature;
+
+    const score = clampScore(
+      55 +
+      (trimmed.length > 1200 ? 15 : trimmed.length > 500 ? 10 : 4) +
+      (length === 'long' ? 6 : length === 'medium' ? 4 : 2)
+    );
+
+    await fetch(`/api/studysets/plan-tasks/${taskId}/performance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studysetId,
+        toolId: 'notes',
+        score,
+        totalItems: 1,
+        correctItems: 1,
+        timeSpentSeconds: Math.min(3600, Math.max(60, Math.round(trimmed.length / 6))),
+        weakTopics: score < 70 ? ['concept clarity'] : [],
+        markCompleted: true,
+      }),
+    }).catch(() => {});
+  }, [audience, length, style, studysetId, taskId]);
 
   useEffect(() => {
     if (savedRun?.output_payload && savedRun.status === 'succeeded') {
@@ -151,6 +188,48 @@ function NotesPageContent() {
       setGeneratedNotes((output.notes || null) as GenerateNotesOutput['notes'] | null);
     }
   }, [savedRun]);
+
+  useEffect(() => {
+    if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
+    launchHandledRef.current = true;
+
+    const runLaunch = async () => {
+      try {
+        const response = await fetch(`/api/studysets/plan-tasks/${taskId}/launch`);
+        if (!response.ok) throw new Error('Could not load studyset task preset');
+        const payload = await response.json();
+        const source = String(payload?.launch?.sourceText || '').trim();
+        const preset = payload?.launch?.notesPreset || {};
+        const title = String(payload?.launch?.artifactTitle || '').trim();
+
+        if (source) setSourceText(source);
+        if (preset?.length) setLength(preset.length as 'short' | 'medium' | 'long');
+        if (preset?.style) setStyle(String(preset.style));
+        if (preset?.audience) setAudience(String(preset.audience));
+        if (title) setCustomTitle(title);
+
+        if (source) {
+          await runNotesGeneration(source, {
+            background: false,
+            preset: {
+              length: preset?.length as 'short' | 'medium' | 'long' | undefined,
+              style: preset?.style ? String(preset.style) : undefined,
+              audience: preset?.audience ? String(preset.audience) : undefined,
+              title: title || undefined,
+            },
+          });
+        }
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Could not start studyset task',
+          description: error?.message || 'Please refresh and try again.',
+        });
+      }
+    };
+
+    void runLaunch();
+  }, [launchRequested, runNotesGeneration, studysetId, taskId, toast]);
 
   useEffect(() => {
     lectureFocusRef.current = lectureFocus;
@@ -182,11 +261,26 @@ function NotesPageContent() {
     localStorage.setItem('tools.notes.liveTranscript', liveTranscript);
   }, [liveTranscript]);
 
-  const runNotesGeneration = useCallback(async (inputText: string, options?: { background?: boolean }) => {
+  const runNotesGeneration = useCallback(async (
+    inputText: string,
+    options?: {
+      background?: boolean;
+      preset?: Partial<{
+        length: 'short' | 'medium' | 'long';
+        style: string;
+        audience: string;
+        title: string;
+      }>;
+    }
+  ) => {
     const text = inputText.trim();
     if (!text) return null;
 
     const background = options?.background === true;
+    const requestedLength = options?.preset?.length || length;
+    const requestedStyle = options?.preset?.style || style;
+    const requestedAudience = options?.preset?.audience || audience;
+    const requestedTitle = options?.preset?.title || customTitle.trim() || 'Generated Notes';
     if (background) setIsAutoDrafting(true);
     else setIsLoading(true);
 
@@ -194,17 +288,17 @@ function NotesPageContent() {
       const run = await runToolFlowV2({
         toolId: 'notes',
         flowName: 'generateNotes',
-        mode: style,
+        mode: requestedStyle,
         artifactType: 'notes',
-        artifactTitle: customTitle.trim() || 'Generated Notes',
+        artifactTitle: requestedTitle,
         input: {
           sourceText: text,
-          length,
-          style,
+          length: requestedLength,
+          style: requestedStyle,
           modePack: 'core',
           outputFocus: 'clarity',
           tone: 'neutral',
-          audience,
+          audience: requestedAudience,
           imageDataUri: imageDataUri || undefined,
           highlightTitles: false,
           fontFamily: 'default',
@@ -212,7 +306,10 @@ function NotesPageContent() {
       });
       const notes = (run?.output_payload?.notes || run?.notes || null) as GenerateNotesOutput['notes'] | null;
       if (background) setLiveDraftNotes(notes);
-      else setGeneratedNotes(notes);
+      else {
+        setGeneratedNotes(notes);
+        await reportStudysetPerformance(text);
+      }
       return notes;
     } catch (error: any) {
       if (!background) {
@@ -223,7 +320,7 @@ function NotesPageContent() {
       if (background) setIsAutoDrafting(false);
       else setIsLoading(false);
     }
-  }, [audience, customTitle, imageDataUri, length, style, t.notes.generatingTitle, toast]);
+  }, [audience, customTitle, imageDataUri, length, reportStudysetPerformance, style, t.notes.generatingTitle, toast]);
 
   const stopListening = useCallback(async (options?: { finalize?: boolean }) => {
     keepListeningRef.current = false;

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
-import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, RefreshCcw } from 'lucide-react';
+import { ArrowLeft, CalendarDays, CheckCircle2, RefreshCcw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -41,6 +41,13 @@ type StudysetDetail = {
   status: string;
 };
 
+type StudysetAdaptive = {
+  avg_score: number;
+  mastery_band: string;
+  last_issues: string[];
+  updated_at?: string | null;
+};
+
 const TOOL_HREFS: Record<string, string> = {
   notes: '/tools/notes',
   flashcards: '/tools/flashcards',
@@ -74,6 +81,7 @@ export default function StudysetDetailPage() {
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null);
   const [showAllDays, setShowAllDays] = useState(false);
   const [studyset, setStudyset] = useState<StudysetDetail | null>(null);
+  const [adaptive, setAdaptive] = useState<StudysetAdaptive | null>(null);
   const [days, setDays] = useState<StudysetDay[]>([]);
   const [progress, setProgress] = useState({ total_tasks: 0, completed_tasks: 0, percent: 0 });
 
@@ -85,6 +93,7 @@ export default function StudysetDetailPage() {
       if (!response.ok) throw new Error('Could not load studyset');
       const data = await response.json();
       setStudyset(data.studyset || null);
+      setAdaptive(data.adaptive || null);
       setDays(data.days || []);
       setProgress(data.progress || { total_tasks: 0, completed_tasks: 0, percent: 0 });
     } catch (error: any) {
@@ -192,9 +201,6 @@ export default function StudysetDetailPage() {
                 <CalendarDays className="h-3 w-3" /> {studyset?.target_days || 0} days
               </span>
               <span className="inline-flex items-center gap-1">
-                <Clock3 className="h-3 w-3" /> {studyset?.minutes_per_day || 0} min/day
-              </span>
-              <span className="inline-flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" /> {completedDays}/{days.length} days complete
               </span>
             </CardDescription>
@@ -225,6 +231,26 @@ export default function StudysetDetailPage() {
           </CardContent>
         </Card>
 
+        {adaptive && (adaptive.last_issues?.length > 0 || adaptive.avg_score > 0) && (
+          <Card className="border-none">
+            <CardHeader>
+              <CardTitle className="text-base">Adaptive coach</CardTitle>
+              <CardDescription>
+                Avg score: {adaptive.avg_score || 0}% {adaptive.mastery_band ? `· ${adaptive.mastery_band}` : ''}
+              </CardDescription>
+            </CardHeader>
+            {adaptive.last_issues?.length > 0 && (
+              <CardContent className="space-y-1 pt-0">
+                {adaptive.last_issues.slice(0, 4).map((issue, index) => (
+                  <p key={`${issue}-${index}`} className="text-xs text-muted-foreground">
+                    {issue}
+                  </p>
+                ))}
+              </CardContent>
+            )}
+          </Card>
+        )}
+
         {loading ? (
           <div className="flex min-h-[45vh] items-center justify-center">
             <CautieLoader label="Loading study plan" sublabel="Preparing day-by-day tasks" size="lg" />
@@ -254,7 +280,7 @@ export default function StudysetDetailPage() {
                     </Badge>
                   </CardTitle>
                   <CardDescription>
-                    {day.estimated_minutes} min · {day.summary || 'Study session'}
+                    {day.summary || 'Study session'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -265,7 +291,7 @@ export default function StudysetDetailPage() {
                       const href =
                         task.task_type === 'review'
                           ? `/tools/studyset/${studysetId}`
-                          : `${TOOL_HREFS[task.task_type] || '/tools/notes'}?studysetId=${studysetId}&taskId=${task.id}`;
+                          : `${TOOL_HREFS[task.task_type] || '/tools/notes'}?studysetId=${studysetId}&taskId=${task.id}&launch=1`;
 
                       return (
                         <div key={task.id} className="rounded-xl bg-background p-3">
@@ -287,9 +313,6 @@ export default function StudysetDetailPage() {
                                   {toolLabel(task.task_type)}
                                 </Badge>
                               </div>
-                              <p className="text-xs text-muted-foreground">
-                                {task.estimated_minutes} min
-                              </p>
                               {task.description && (
                                 <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
                               )}
