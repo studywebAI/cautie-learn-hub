@@ -51,6 +51,7 @@ type GraphListItem = {
   mimeType?: string;
   lastModifiedDateTime?: string;
   size?: number;
+  isFolder?: boolean;
 };
 
 type PickerStatus =
@@ -187,6 +188,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
           mimeType: item?.mimeType ? String(item.mimeType) : undefined,
           lastModifiedDateTime: item?.lastModifiedDateTime ? String(item.lastModifiedDateTime) : undefined,
           size: typeof item?.size === 'number' ? item.size : undefined,
+          isFolder: Boolean(item?.isFolder),
         }))
         .filter((item: GraphListItem) => Boolean(item.id));
       setFallbackFiles(mapped);
@@ -229,7 +231,6 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       setAuthTransitioning(false);
       void loadStatus();
       if (msPicker === 'embed') {
-        toast({ title: 'Microsoft connected', description: 'Opening OneDrive in Cautie.' });
         setOpenAfterConnect(true);
       }
     } else if (msError) {
@@ -642,7 +643,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
             {fallbackMode === 'graph' ? (
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b border-[#e1dfdd] px-3 py-2 text-xs text-muted-foreground">
-                  <span>Embedded OneDrive browser (Graph fallback)</span>
+                  <span>OneDrive files</span>
                   <button
                     type="button"
                     onClick={() => void loadFallbackFiles()}
@@ -665,6 +666,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                       </thead>
                       <tbody>
                         {fallbackFiles
+                          .filter((file) => !file.isFolder)
                           .filter((file) => matchesPickerFilter({
                             id: file.id,
                             name: file.name,
@@ -681,7 +683,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                             >
                               <td className="px-3 py-2">{file.name}</td>
                               <td className="px-3 py-2">{file.lastModifiedDateTime ? new Date(file.lastModifiedDateTime).toLocaleString() : '-'}</td>
-                              <td className="px-3 py-2">{file.mimeType || 'file'}</td>
+                              <td className="px-3 py-2">{file.isFolder ? 'folder' : (file.mimeType || 'file')}</td>
                             </tr>
                           ))}
                       </tbody>

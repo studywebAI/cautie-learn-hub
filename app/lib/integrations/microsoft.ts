@@ -129,6 +129,7 @@ export type MicrosoftFileItem = {
   lastModifiedDateTime?: string;
   kind: MicrosoftFileKind;
   mimeType?: string;
+  isFolder?: boolean;
 };
 
 function detectKind(name?: string, mimeType?: string): MicrosoftFileKind | null {
@@ -195,6 +196,7 @@ export async function listMicrosoftFiles(input: { accessToken: string; kind: Mic
         lastModifiedDateTime: item.lastModifiedDateTime ? String(item.lastModifiedDateTime) : undefined,
         kind: input.kind === 'onedrive' ? 'onedrive' : (detectedKind as MicrosoftFileKind),
         mimeType: item?.file?.mimeType ? String(item.file.mimeType) : undefined,
+        isFolder: Boolean(item?.folder),
       } as MicrosoftFileItem;
     })
     .filter(Boolean) as MicrosoftFileItem[];
