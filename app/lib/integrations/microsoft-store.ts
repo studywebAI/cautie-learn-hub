@@ -151,13 +151,7 @@ function normalizeResourceScope(resource: string) {
 function resourceScopeCandidates(resource: string) {
   const trimmed = String(resource || '').trim().replace(/\/+$/, '');
   if (!trimmed) return [] as string[];
-  if (trimmed === 'https://api.onedrive.com') {
-    return [
-      'OneDrive.ReadOnly offline_access',
-      'OneDrive.ReadWrite offline_access',
-      `${trimmed}/.default offline_access`,
-    ];
-  }
+  if (trimmed === 'https://api.onedrive.com') return [] as string[];
   return [`${trimmed}/.default offline_access`];
 }
 
@@ -173,6 +167,13 @@ export async function getMicrosoftAccessTokenForResource(
   if (!targetResource || targetResource.includes('graph.microsoft.com')) {
     return { ...base, tokenKind: 'base' as const };
   }
+  if (targetResource.replace(/\/+$/, '') === 'https://api.onedrive.com') {
+    console.info('[microsoft-token] consumer-resource-scope-unsupported-using-graph-token', {
+      userId,
+      resource: targetResource,
+    });
+    return { ...base, tokenKind: 'base' as const };
+  }
 
   const connection = base.connection;
   const refreshToken = connection?.refresh_token_encrypted ? decryptSecret(connection.refresh_token_encrypted) : '';
@@ -186,6 +187,9 @@ export async function getMicrosoftAccessTokenForResource(
   }
 
   const candidates = resourceScopeCandidates(targetResource);
+  if (candidates.length === 0) {
+    return { ...base, tokenKind: 'base' as const };
+  }
   for (const scopeCandidate of candidates) {
     try {
       const refreshed = await refreshMicrosoftTokenForScope(refreshToken, scopeCandidate);
