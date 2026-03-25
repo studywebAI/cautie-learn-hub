@@ -32,6 +32,15 @@ const QuizDuel = dynamic(
   { ssr: false }
 );
 
+const VALID_QUIZ_MODES: QuizMode[] = ['normal', 'practice', 'exam', 'survival', 'speedrun', 'adaptive', 'duel', 'boss-fight'];
+
+function normalizeQuizMode(value: string | null | undefined): QuizMode {
+  const next = String(value || '').trim().toLowerCase();
+  if (next === 'classic') return 'practice';
+  if ((VALID_QUIZ_MODES as string[]).includes(next)) return next as QuizMode;
+  return 'practice';
+}
+
 function QuizPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -132,7 +141,7 @@ function QuizPageContent() {
         const title = String(payload?.launch?.artifactTitle || '').trim();
 
         if (source) setSourceText(source);
-        if (preset?.mode) setQuizMode(preset.mode as QuizMode);
+        if (preset?.mode) setQuizMode(normalizeQuizMode(String(preset.mode)));
         if (typeof preset?.questionCount === 'number') setQuestionCount(preset.questionCount);
         if (preset?.difficultyProfile) setDifficultyProfile(String(preset.difficultyProfile));
         if (preset?.questionType) setQuestionType(String(preset.questionType));
@@ -140,7 +149,7 @@ function QuizPageContent() {
 
         if (source) {
           await handleGenerate(source, {
-            mode: preset?.mode as QuizMode | undefined,
+            mode: normalizeQuizMode(String(preset?.mode || 'practice')),
             questionCount: typeof preset?.questionCount === 'number' ? preset.questionCount : undefined,
             difficultyProfile: preset?.difficultyProfile ? String(preset.difficultyProfile) : undefined,
             questionType: preset?.questionType ? String(preset.questionType) : undefined,
@@ -165,13 +174,13 @@ function QuizPageContent() {
       setGeneratedQuiz(output as Quiz);
       setCurrentView('take');
       if (savedRun.input_payload?.sourceText) setSourceText(savedRun.input_payload.sourceText);
-      if (savedRun.mode) setQuizMode(savedRun.mode as QuizMode);
+      if (savedRun.mode) setQuizMode(normalizeQuizMode(savedRun.mode));
     }
   }, [savedRun]);
 
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`tools.quiz.${k}`);
-    if (s('mode')) setQuizMode(s('mode') as QuizMode);
+    if (s('mode')) setQuizMode(normalizeQuizMode(s('mode')));
     if (s('count') && !Number.isNaN(Number(s('count')))) setQuestionCount(Number(s('count')));
     if (s('difficulty')) setDifficultyProfile(s('difficulty')!);
     if (s('questionType')) setQuestionType(s('questionType')!);

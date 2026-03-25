@@ -50,6 +50,13 @@ type StudysetAgendaItem = {
   }>;
 };
 
+const STUDYSET_TOOL_HREFS: Record<string, string> = {
+  notes: '/tools/notes',
+  flashcards: '/tools/flashcards',
+  quiz: '/tools/quiz',
+  wordweb: '/tools/notes',
+};
+
 type AgendaApiItem = {
   id: string;
   class_id: string;
@@ -256,7 +263,7 @@ function AgendaPageContent() {
   }, [isLoading, isTeacher, isStudent, selectedClassId]);
 
   useEffect(() => {
-    if (isLoading || !isStudent) {
+    if (isLoading) {
       setStudysetAgendaItems([]);
       return;
     }
@@ -282,7 +289,7 @@ function AgendaPageContent() {
 
     void loadStudysetAgenda();
     return () => controller.abort();
-  }, [isLoading, isStudent]);
+  }, [isLoading]);
 
   useEffect(() => {
     if (!isTeacher || isLoading || overlayClassIds.length === 0) {
@@ -374,28 +381,49 @@ function AgendaPageContent() {
 
     const studysetEvents: CalendarEvent[] = studysetAgendaItems
       .filter((item) => Boolean(item.plan_date))
-      .map((item) => ({
-        id: `studyset-${item.id}`,
-        title: item.title,
-        subject: 'Studyset',
-        date: toDateWithTime(parseISO(item.plan_date), '18:00'),
-        type: 'study_plan' as const,
-        href: `/tools/studyset/${item.studyset_id}`,
-        estimated_duration: item.estimated_minutes || undefined,
-        description:
-          item.summary ||
-          item.tasks
-            .slice(0, 3)
-            .map((task) => task.title)
-            .join(', '),
-      }));
+      .flatMap((item) => {
+        const dayDate = parseISO(item.plan_date);
+        const tasks = (item.tasks || []).filter((task) => !task.completed);
+        if (tasks.length === 0) {
+          return [{
+            id: `studyset-${item.id}`,
+            title: item.title,
+            subject: 'Studyset',
+            date: toDateWithTime(dayDate, '18:00'),
+            type: 'study_plan' as const,
+            href: `/tools/studyset/${item.studyset_id}`,
+            estimated_duration: item.estimated_minutes || undefined,
+            description: item.summary || 'Studyset day',
+          }];
+        }
+
+        return tasks.map((task, index) => {
+          const hour = 17 + Math.floor(index / 2);
+          const minute = index % 2 === 0 ? 0 : 30;
+          const at = new Date(dayDate);
+          at.setHours(hour, minute, 0, 0);
+          const href = task.type === 'review'
+            ? `/tools/studyset/${item.studyset_id}`
+            : `${STUDYSET_TOOL_HREFS[task.type] || '/tools/notes'}?studysetId=${item.studyset_id}&taskId=${task.id}&launch=1`;
+          return {
+            id: `studyset-task-${task.id}`,
+            title: task.title,
+            subject: 'Studyset',
+            date: at,
+            type: 'study_plan' as const,
+            href,
+            estimated_duration: task.estimated_minutes || undefined,
+            description: task.description || item.summary || undefined,
+          };
+        });
+      });
 
     if (isTeacher) {
       const overlaySet = new Set(overlayClassIds);
       const agendaEvents = teacherAgendaItems
         .filter((item) => overlaySet.has(item.class_id))
         .map(agendaApiItemToEvent);
-      return [...agendaEvents, ...scheduleEvents];
+      return [...agendaEvents, ...scheduleEvents, ...studysetEvents];
     }
 
     const personalEvents = (personalTasks || []).map((task: PersonalTask) => ({

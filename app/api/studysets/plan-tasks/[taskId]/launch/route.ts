@@ -135,7 +135,7 @@ function buildQuizPreset(taskTitle: string, taskDescription: string, estimatedMi
   const copy = `${taskTitle} ${taskDescription}`.toLowerCase()
   const masteryBoost = bundle.adaptive.mastery_band === 'weak' ? 3 : bundle.adaptive.mastery_band === 'strong' ? -1 : 0
   const questionCount = Math.max(5, Math.min(18, Math.round((estimatedMinutes || 15) / 1.8) + masteryBoost))
-  const mode = copy.includes('checkpoint') || copy.includes('final') ? 'classic' : 'classic'
+  const mode = copy.includes('checkpoint') || copy.includes('final') ? 'practice' : 'practice'
   const difficultyProfile = bundle.adaptive.mastery_band === 'strong'
     ? 'hard'
     : copy.includes('final') || copy.includes('hard')
