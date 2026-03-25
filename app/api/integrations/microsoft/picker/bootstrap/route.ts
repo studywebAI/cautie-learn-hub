@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
     const pickerResource = kind === 'consumer' ? 'https://api.onedrive.com' : baseUrl;
     const resourceTokenState = await getMicrosoftAccessTokenForResource(supabase, user.id, pickerResource);
     const pickerAccessToken = resourceTokenState?.accessToken || tokenState.accessToken;
+    const fallbackMode = kind === 'consumer' && resourceTokenState?.tokenKind !== 'resource' ? 'graph' : null;
     const channelId = crypto.randomUUID();
     const origin = getOrigin(request);
     const pickerOptions = {
@@ -133,6 +134,7 @@ export async function GET(request: NextRequest) {
       rootChildrenCount,
       recentCount,
       useRecentEntry,
+      fallbackMode,
       scope: tokenState.connection?.scope || null,
       tokenExpiresAt: tokenState.connection?.expires_at || null,
     });
@@ -146,6 +148,7 @@ export async function GET(request: NextRequest) {
       accessToken: pickerAccessToken,
       scope: tokenState.connection?.scope || null,
       accountEmail: tokenState.connection?.account_email || null,
+      fallbackMode,
     });
   } catch (error: any) {
     console.error('[microsoft-picker-bootstrap] failed', {

@@ -171,7 +171,7 @@ export async function getMicrosoftAccessTokenForResource(
 
   const targetResource = String(resource || '').trim();
   if (!targetResource || targetResource.includes('graph.microsoft.com')) {
-    return base;
+    return { ...base, tokenKind: 'base' as const };
   }
 
   const connection = base.connection;
@@ -182,7 +182,7 @@ export async function getMicrosoftAccessTokenForResource(
       resource: targetResource,
       scope: connection?.scope || null,
     });
-    return base;
+    return { ...base, tokenKind: 'base' as const };
   }
 
   const candidates = resourceScopeCandidates(targetResource);
@@ -201,6 +201,7 @@ export async function getMicrosoftAccessTokenForResource(
           ...connection,
           scope: refreshed.scope || connection?.scope || null,
         },
+        tokenKind: 'resource' as const,
       };
     } catch (error: any) {
       console.warn('[microsoft-token] resource-token-attempt-failed', {
@@ -217,5 +218,5 @@ export async function getMicrosoftAccessTokenForResource(
     resource: targetResource,
     scopeRequested: candidates,
   });
-  return base;
+  return { ...base, tokenKind: 'base' as const };
 }

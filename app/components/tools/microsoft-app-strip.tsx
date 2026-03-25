@@ -32,6 +32,7 @@ type PickerBootstrapResponse = {
   accessToken: string;
   scope?: string | null;
   accountEmail?: string | null;
+  fallbackMode?: 'graph' | null;
 };
 
 type OneDrivePickedItem = {
@@ -42,6 +43,14 @@ type OneDrivePickedItem = {
   driveId?: string;
   parentId?: string;
   downloadUrl?: string;
+};
+type GraphListItem = {
+  id: string;
+  name: string;
+  webUrl?: string;
+  mimeType?: string;
+  lastModifiedDateTime?: string;
+  size?: number;
 };
 
 type PickerStatus =
@@ -129,6 +138,10 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [switchingAccount, setSwitchingAccount] = useState(false);
   const [openAfterConnect, setOpenAfterConnect] = useState(false);
   const [activeFilter, setActiveFilter] = useState<PickerFileFilter>('all');
+  const [fallbackMode, setFallbackMode] = useState<'none' | 'graph'>('none');
+  const [fallbackFiles, setFallbackFiles] = useState<GraphListItem[]>([]);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+  const [selectedFallbackId, setSelectedFallbackId] = useState<string | null>(null);
 
   const currentReturnTo = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -147,6 +160,9 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const closePicker = useCallback(() => {
     setPickerOpen(false);
     setPickerStatus('Idle');
+    setFallbackMode('none');
+    setFallbackFiles([]);
+    setSelectedFallbackId(null);
     if (portRef.current) {
       try {
         portRef.current.close();
@@ -154,6 +170,28 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         // no-op
       }
       portRef.current = null;
+    }
+  }, []);
+
+  const loadFallbackFiles = useCallback(async () => {
+    setFallbackLoading(true);
+    try {
+      const response = await fetch('/api/integrations/microsoft/files?kind=onedrive', { cache: 'no-store' });
+      const json = await response.json().catch(() => ({}));
+      const items = Array.isArray(json?.items) ? json.items : [];
+      const mapped: GraphListItem[] = items
+        .map((item: any) => ({
+          id: String(item?.id || ''),
+          name: String(item?.name || 'Untitled'),
+          webUrl: item?.webUrl ? String(item.webUrl) : undefined,
+          mimeType: item?.mimeType ? String(item.mimeType) : undefined,
+          lastModifiedDateTime: item?.lastModifiedDateTime ? String(item.lastModifiedDateTime) : undefined,
+          size: typeof item?.size === 'number' ? item.size : undefined,
+        }))
+        .filter((item: GraphListItem) => Boolean(item.id));
+      setFallbackFiles(mapped);
+    } finally {
+      setFallbackLoading(false);
     }
   }, []);
 
@@ -290,6 +328,13 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       }
       const bootstrap = await bootstrapRes.json() as PickerBootstrapResponse;
       bootstrapRef.current = bootstrap;
+      if (bootstrap.fallbackMode === 'graph') {
+        setFallbackMode('graph');
+        setPickerStatus('Ready to select');
+        await loadFallbackFiles();
+        return;
+      }
+      setFallbackMode('none');
       setPickerStatus('Fetching files');
 
       const frame = frameRef.current;
@@ -458,7 +503,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     } finally {
       setOpening(false);
     }
-  }, [activeFilter, closePicker, safeReturnTo, status.connected, toast]);
+  }, [activeFilter, closePicker, loadFallbackFiles, safeReturnTo, status.connected, toast]);
 
   useEffect(() => {
     if (!openAfterConnect) return;
@@ -594,12 +639,115 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
             </div>
           )}
           <div className="min-h-0 flex-1 bg-white">
-            <iframe
-              ref={frameRef}
-              title="Embedded OneDrive picker"
-              className="h-full w-full border-0"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
-            />
+            {fallbackMode === 'graph' ? (
+              <div className="flex h-full flex-col">
+                <div className="flex items-center justify-between border-b border-[#e1dfdd] px-3 py-2 text-xs text-muted-foreground">
+                  <span>Embedded OneDrive browser (Graph fallback)</span>
+                  <button
+                    type="button"
+                    onClick={() => void loadFallbackFiles()}
+                    className="rounded border border-[#d1d1d1] px-2 py-0.5"
+                  >
+                    Refresh
+                  </button>
+                </div>
+                <div className="min-h-0 flex-1 overflow-auto">
+                  {fallbackLoading ? (
+                    <div className="p-4 text-sm text-muted-foreground">Loading files...</div>
+                  ) : (
+                    <table className="w-full text-sm">
+                      <thead className="sticky top-0 bg-white text-left text-xs text-muted-foreground">
+                        <tr>
+                          <th className="px-3 py-2">Name</th>
+                          <th className="px-3 py-2">Modified</th>
+                          <th className="px-3 py-2">Type</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {fallbackFiles
+                          .filter((file) => matchesPickerFilter({
+                            id: file.id,
+                            name: file.name,
+                            mimeType: file.mimeType,
+                            webUrl: file.webUrl,
+                          }, activeFilter))
+                          .map((file) => (
+                            <tr
+                              key={file.id}
+                              onClick={() => setSelectedFallbackId(file.id)}
+                              className={`cursor-pointer border-t border-[#f1f1f1] ${
+                                selectedFallbackId === file.id ? 'bg-[#e8f2fc]' : 'hover:bg-[#f7f7f7]'
+                              }`}
+                            >
+                              <td className="px-3 py-2">{file.name}</td>
+                              <td className="px-3 py-2">{file.lastModifiedDateTime ? new Date(file.lastModifiedDateTime).toLocaleString() : '-'}</td>
+                              <td className="px-3 py-2">{file.mimeType || 'file'}</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+                <div className="flex items-center justify-end gap-2 border-t border-[#e1dfdd] px-3 py-2">
+                  <button
+                    type="button"
+                    className="rounded border border-[#d1d1d1] px-3 py-1 text-sm"
+                    onClick={closePicker}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!selectedFallbackId}
+                    className="rounded border border-[#0f6cbd] bg-[#0f6cbd] px-3 py-1 text-sm text-white disabled:opacity-50"
+                    onClick={async () => {
+                      const file = fallbackFiles.find((f) => f.id === selectedFallbackId);
+                      if (!file) return;
+                      setPickerStatus('Importing selected file');
+                      try {
+                        const saveRes = await fetch('/api/integrations/context-sources', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            provider: 'microsoft',
+                            app: 'onedrive',
+                            items: [{
+                              id: file.id,
+                              name: file.name,
+                              webUrl: file.webUrl,
+                              mimeType: file.mimeType,
+                            }],
+                            replaceSelection: true,
+                          }),
+                        });
+                        if (!saveRes.ok) throw new Error('Failed to save selected file');
+                        await fetch('/api/integrations/ingestion-jobs/process', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ provider: 'microsoft', app: 'onedrive', maxJobs: 25 }),
+                        }).catch(() => null);
+                        window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft' } }));
+                        setPickerStatus('Ready to use in Cautie');
+                        toast({ title: 'File imported', description: `${file.name} added as context.` });
+                        window.setTimeout(() => closePicker(), 180);
+                      } catch (error: any) {
+                        setPickerStatus('Import failed');
+                        toast({ variant: 'destructive', title: 'Import failed', description: String(error?.message || 'Failed to import selected file') });
+                      }
+                    }}
+                  >
+                    Select
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <iframe
+                ref={frameRef}
+                title="Embedded OneDrive picker"
+                className="h-full w-full border-0"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
+              />
+            )}
           </div>
         </div>
       )}

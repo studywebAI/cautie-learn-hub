@@ -161,7 +161,9 @@ function detectKind(name?: string, mimeType?: string): MicrosoftFileKind | null 
 export async function listMicrosoftFiles(input: { accessToken: string; kind: MicrosoftFileKind; query?: string }) {
   const endpointUrl = input.query?.trim()
     ? new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/root/search(q='${input.query.trim().replace(/'/g, "''")}')`)
-    : new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/recent`);
+    : input.kind === 'onedrive'
+      ? new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/root/children`)
+      : new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/recent`);
   endpointUrl.searchParams.set('$top', '40');
 
   const response = await fetch(endpointUrl.toString(), {
@@ -183,15 +185,15 @@ export async function listMicrosoftFiles(input: { accessToken: string; kind: Mic
   const values = Array.isArray(payload?.value) ? payload.value : [];
   const items: MicrosoftFileItem[] = values
     .map((item: any) => {
-      const kind = detectKind(item?.name, item?.file?.mimeType);
-      if (!kind) return null;
+      const detectedKind = detectKind(item?.name, item?.file?.mimeType);
+      if (input.kind !== 'onedrive' && !detectedKind) return null;
       return {
         id: String(item.id),
         name: String(item.name || 'Untitled'),
         webUrl: item.webUrl ? String(item.webUrl) : undefined,
         size: typeof item.size === 'number' ? item.size : undefined,
         lastModifiedDateTime: item.lastModifiedDateTime ? String(item.lastModifiedDateTime) : undefined,
-        kind,
+        kind: input.kind === 'onedrive' ? 'onedrive' : (detectedKind as MicrosoftFileKind),
         mimeType: item?.file?.mimeType ? String(item.file.mimeType) : undefined,
       } as MicrosoftFileItem;
     })
