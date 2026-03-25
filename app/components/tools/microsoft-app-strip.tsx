@@ -55,6 +55,7 @@ type PickerStatus =
   | 'Import failed';
 
 const ONEDRIVE_APP = ENABLED_INTEGRATION_APPS.find((app) => app.id === 'onedrive' && app.provider === 'microsoft');
+const RESUME_KEY = 'cautie.onedrive.embed.resume';
 
 function withQuery(path: string, params: Record<string, string>) {
   const [pathname, search = ''] = path.split('?');
@@ -101,6 +102,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [opening, setOpening] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerStatus, setPickerStatus] = useState<PickerStatus>('Idle');
+  const [authTransitioning, setAuthTransitioning] = useState(false);
 
   const currentReturnTo = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -157,6 +159,9 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     if (!ms && !msError && !msPicker) return;
 
     if (ms === 'connected') {
+      if (typeof window !== 'undefined') window.sessionStorage.removeItem(RESUME_KEY);
+      setStatus((prev) => ({ ...prev, connected: true }));
+      setAuthTransitioning(false);
       void loadStatus();
       if (msPicker === 'embed') {
         toast({ title: 'Microsoft connected', description: 'Opening OneDrive in Cautie.' });
@@ -165,6 +170,8 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         }, 40);
       }
     } else if (msError) {
+      if (typeof window !== 'undefined') window.sessionStorage.removeItem(RESUME_KEY);
+      setAuthTransitioning(false);
       toast({ title: 'Microsoft connection failed', description: msError, variant: 'destructive' });
     }
 
@@ -177,6 +184,27 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadStatus, pathname, router, searchParams, toast]);
 
+  useEffect(() => {
+    if (!status.connected || pickerOpen || opening) return;
+    if (typeof window === 'undefined') return;
+    const raw = window.sessionStorage.getItem(RESUME_KEY);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as { returnTo?: string; ts?: number };
+      const isFresh = typeof parsed?.ts === 'number' && Date.now() - parsed.ts < 5 * 60_000;
+      const sameTarget = typeof parsed?.returnTo === 'string' && parsed.returnTo === safeReturnTo;
+      if (isFresh && sameTarget) {
+        window.sessionStorage.removeItem(RESUME_KEY);
+        setAuthTransitioning(false);
+        window.setTimeout(() => {
+          void openEmbeddedPicker();
+        }, 50);
+      }
+    } catch {
+      window.sessionStorage.removeItem(RESUME_KEY);
+    }
+  }, [opening, pickerOpen, safeReturnTo, status.connected]);
+
   const openEmbeddedPicker = useCallback(async () => {
     if (!ONEDRIVE_APP) {
       toast({ variant: 'destructive', title: 'OneDrive is not enabled', description: 'Enable OneDrive in integration catalog.' });
@@ -184,11 +212,20 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     }
 
     if (!status.connected) {
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(RESUME_KEY, JSON.stringify({ returnTo: safeReturnTo, ts: Date.now() }));
+      }
+      setPickerOpen(true);
+      setAuthTransitioning(true);
+      setPickerStatus('Signing in to your account');
       const returnWithPicker = withQuery(safeReturnTo, { ms_picker: 'embed', app: 'onedrive' });
-      window.location.href = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`;
+      window.setTimeout(() => {
+        window.location.href = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`;
+      }, 180);
       return;
     }
 
+    setAuthTransitioning(false);
     setOpening(true);
     setPickerOpen(true);
     setPickerStatus('Signing in to your account');
@@ -377,13 +414,13 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
           type="button"
           onClick={() => void openEmbeddedPicker()}
           disabled={opening}
-          className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-sidebar-border bg-sidebar p-0 transition-transform hover:scale-[1.04] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-[#d1d1d1] bg-white p-0 transition-colors hover:bg-[#f6f6f6] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           title="OneDrive"
         >
           {opening ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
-            <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-9 w-9 object-contain" />
+            <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-6 w-6 object-contain" />
           )}
         </button>
 
@@ -398,8 +435,8 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       </div>
 
       {pickerOpen && (
-        <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-xl border border-sidebar-border bg-background">
-          <div className="flex items-center justify-between border-b border-sidebar-border px-3 py-2">
+        <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-lg border border-[#d9d9d9] bg-[#f3f2f1]">
+          <div className="flex items-center justify-between border-b border-[#e1dfdd] bg-white px-3 py-2">
             <div className="flex items-center gap-2">
               <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-4 w-4 object-contain" />
               <span className="text-sm font-medium">OneDrive</span>
@@ -415,10 +452,15 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex items-center gap-2 border-b border-sidebar-border px-3 py-1.5 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 border-b border-[#e1dfdd] bg-white px-3 py-1.5 text-xs text-muted-foreground">
             {pickerStatus === 'Ready to use in Cautie' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Loader2 className={`h-3.5 w-3.5 ${pickerStatus === 'Ready to select' || pickerStatus === 'Import failed' ? 'hidden' : 'animate-spin'}`} />}
             <span>{pickerStatus}</span>
           </div>
+          {authTransitioning && (
+            <div className="border-b border-[#e1dfdd] bg-[#faf9f8] px-3 py-2 text-xs text-[#605e5c]">
+              Continuing to Microsoft sign-in and returning here automatically.
+            </div>
+          )}
           <div className="min-h-0 flex-1 bg-white">
             <iframe
               ref={frameRef}

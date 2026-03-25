@@ -18,7 +18,6 @@ import {
   Landmark,
   Languages,
   Lightbulb,
-  Link2,
   Microscope,
   Music,
   Palette,
@@ -33,12 +32,11 @@ import type { LucideIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 
 type StudysetRow = {
   id: string;
@@ -182,10 +180,7 @@ export default function StudysetPage() {
 
   const [microsoftConnected, setMicrosoftConnected] = useState(false);
   const [microsoftEmail, setMicrosoftEmail] = useState('');
-  const [microsoftLoading, setMicrosoftLoading] = useState(false);
-  const [wordFiles, setWordFiles] = useState<MicrosoftFileItem[]>([]);
-  const [powerpointFiles, setPowerpointFiles] = useState<MicrosoftFileItem[]>([]);
-  const [selectedMicrosoftFileIds, setSelectedMicrosoftFileIds] = useState<string[]>([]);
+  const [selectedMicrosoftFiles, setSelectedMicrosoftFiles] = useState<MicrosoftFileItem[]>([]);
 
   const [creating, setCreating] = useState(false);
   const [typingPlaceholder, setTypingPlaceholder] = useState(TYPING_PLACEHOLDERS[0]);
@@ -204,10 +199,7 @@ export default function StudysetPage() {
   }, [studysets]);
 
   const selectedDateStrings = useMemo(() => normalizeDates(selectedDates), [selectedDates]);
-  const sortedOneDriveFiles = useMemo(() => wordFiles.slice(0, 24), [wordFiles]);
-  const selectedMicrosoftFiles = useMemo(() => {
-    return wordFiles.filter((item) => selectedMicrosoftFileIds.includes(item.id));
-  }, [wordFiles, selectedMicrosoftFileIds]);
+  const sortedOneDriveFiles = useMemo(() => selectedMicrosoftFiles.slice(0, 24), [selectedMicrosoftFiles]);
 
   const isStepOneReady = name.trim().length > 0;
   const isStepTwoReady = selectedDateStrings.length > 0;
@@ -226,7 +218,7 @@ export default function StudysetPage() {
     setNotesText('');
     setPastedText('');
     setUploads([]);
-    setSelectedMicrosoftFileIds([]);
+    setSelectedMicrosoftFiles([]);
   };
 
   const loadStudysets = async () => {
@@ -263,23 +255,29 @@ export default function StudysetPage() {
     }
   };
 
-  const loadMicrosoftFiles = async () => {
+  const loadMicrosoftSelectedFiles = async () => {
     if (!microsoftConnected) {
-      setWordFiles([]);
-      setPowerpointFiles([]);
+      setSelectedMicrosoftFiles([]);
       return;
     }
-    setMicrosoftLoading(true);
     try {
-      const response = await fetch('/api/integrations/microsoft/files?kind=onedrive', { cache: 'no-store' });
+      const response = await fetch('/api/integrations/context-sources?provider=microsoft&app=onedrive&selected=1', {
+        cache: 'no-store',
+      });
       const json = await response.json().catch(() => ({}));
-      setWordFiles(Array.isArray(json?.items) ? json.items : []);
-      setPowerpointFiles([]);
+      const items = Array.isArray(json?.items) ? json.items : [];
+      const mapped: MicrosoftFileItem[] = items.map((item: any) => ({
+        id: String(item?.provider_item_id || item?.id || ''),
+        name: String(item?.name || 'Untitled'),
+        webUrl: item?.web_url ? String(item.web_url) : undefined,
+        size: typeof item?.metadata?.size === 'number' ? item.metadata.size : undefined,
+        lastModifiedDateTime: typeof item?.metadata?.last_modified === 'string' ? item.metadata.last_modified : undefined,
+        kind: 'onedrive',
+        mimeType: item?.mime_type ? String(item.mime_type) : undefined,
+      })).filter((item: MicrosoftFileItem) => Boolean(item.id));
+      setSelectedMicrosoftFiles(mapped);
     } catch {
-      setWordFiles([]);
-      setPowerpointFiles([]);
-    } finally {
-      setMicrosoftLoading(false);
+      setSelectedMicrosoftFiles([]);
     }
   };
 
@@ -292,6 +290,7 @@ export default function StudysetPage() {
     if (searchParams.get('ms') === 'connected') {
       toast({ title: 'Microsoft connected', description: 'OneDrive files are ready.' });
       void loadMicrosoftStatus();
+      void loadMicrosoftSelectedFiles();
       const params = new URLSearchParams(searchParams.toString());
       params.delete('ms');
       params.delete('ms_error');
@@ -317,13 +316,22 @@ export default function StudysetPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    void loadMicrosoftFiles();
+    void loadMicrosoftSelectedFiles();
   }, [microsoftConnected]);
 
   useEffect(() => {
-    const validIds = new Set(wordFiles.map((file) => file.id));
-    setSelectedMicrosoftFileIds((prev) => prev.filter((id) => validIds.has(id)));
-  }, [wordFiles]);
+    const onUpdated = () => {
+      void loadMicrosoftSelectedFiles();
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('integration-sources-updated', onUpdated as EventListener);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('integration-sources-updated', onUpdated as EventListener);
+      }
+    };
+  }, [loadMicrosoftSelectedFiles]);
 
   const startCreate = () => {
     resetWizard();
@@ -387,20 +395,12 @@ export default function StudysetPage() {
     setUploads(mapped);
   };
 
-  const toggleMicrosoftFile = (fileId: string) => {
-    setSelectedMicrosoftFileIds((prev) =>
-      prev.includes(fileId) ? prev.filter((value) => value !== fileId) : [...prev, fileId]
-    );
-  };
-
   const disconnectMicrosoft = async () => {
     const response = await fetch('/api/integrations/microsoft/disconnect', { method: 'POST' });
     if (!response.ok) return;
     setMicrosoftConnected(false);
     setMicrosoftEmail('');
-    setWordFiles([]);
-    setPowerpointFiles([]);
-    setSelectedMicrosoftFileIds([]);
+    setSelectedMicrosoftFiles([]);
   };
 
   const createStudyset = async () => {
@@ -705,46 +705,41 @@ export default function StudysetPage() {
                       )}
                     </div>
 
-                    {!microsoftConnected ? (
-                      <Button asChild variant="outline" className="mt-2">
-                        <Link prefetch={false} href="/settings/integrations?returnTo=%2Ftools%2Fstudyset%3Fopen%3Dcreate%26step%3D2">
-                          <Link2 className="mr-2 h-4 w-4" />
-                          Connect Microsoft
-                        </Link>
-                      </Button>
-                    ) : (
-                      <div className="mt-2 flex gap-2">
-                        <Button type="button" variant="outline" onClick={() => void loadMicrosoftFiles()}>
-                          Refresh files
-                        </Button>
-                        <Button type="button" variant="outline" onClick={() => void disconnectMicrosoft()}>
-                          Disconnect
-                        </Button>
-                      </div>
-                    )}
-
-                    {microsoftConnected && (
-                      <div className="mt-3 grid grid-cols-1 gap-3">
-                        <div className={`rounded-lg p-2 ${SOFT_ORANGE_SURFACE}`}>
-                          <p className="mb-1 text-xs font-medium">OneDrive</p>
-                          {microsoftLoading && <p className="text-xs text-muted-foreground">Loading...</p>}
-                          {!microsoftLoading && sortedOneDriveFiles.length === 0 && (
-                            <p className="text-xs text-muted-foreground">No OneDrive files found.</p>
+                    <div className="mt-2 min-h-[260px]">
+                      <MicrosoftAppStrip returnTo="/tools/studyset?open=create&step=2" />
+                    </div>
+                    <div className="mt-3 grid grid-cols-1 gap-3">
+                      <div className={`rounded-lg p-2 ${SOFT_ORANGE_SURFACE}`}>
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <p className="text-xs font-medium">Selected OneDrive files</p>
+                          {microsoftConnected && (
+                            <Button type="button" variant="outline" size="sm" onClick={() => void loadMicrosoftSelectedFiles()}>
+                              Refresh
+                            </Button>
                           )}
-                          <div className="space-y-1">
-                            {sortedOneDriveFiles.map((file) => (
-                              <label key={file.id} className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs ${SOFT_ORANGE_SURFACE}`}>
-                                <Checkbox
-                                  checked={selectedMicrosoftFileIds.includes(file.id)}
-                                  onCheckedChange={() => toggleMicrosoftFile(file.id)}
-                                />
-                                <span className="truncate">{file.name}</span>
-                              </label>
-                            ))}
-                          </div>
                         </div>
+                        {!microsoftConnected && (
+                          <p className="text-xs text-muted-foreground">Connect Microsoft above to select files.</p>
+                        )}
+                        {microsoftConnected && sortedOneDriveFiles.length === 0 && (
+                          <p className="text-xs text-muted-foreground">No OneDrive files selected yet.</p>
+                        )}
+                        <div className="space-y-1">
+                          {sortedOneDriveFiles.map((file) => (
+                            <div key={file.id} className={`rounded-md px-2 py-1 text-xs ${SOFT_ORANGE_SURFACE}`}>
+                              <span className="truncate">{file.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {microsoftConnected && (
+                          <div className="mt-2">
+                            <Button type="button" variant="outline" onClick={() => void disconnectMicrosoft()}>
+                              Disconnect
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               )}
