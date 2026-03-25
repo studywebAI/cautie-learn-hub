@@ -578,7 +578,7 @@ function AgendaPageContent() {
       href: event.href || null,
       title: event.title,
     });
-    if (event.type === 'assignment' || event.type === 'agenda_item') {
+    if (event.type === 'assignment' || event.type === 'agenda_item' || event.type === 'study_plan') {
       setSelectedEvent(event);
       return;
     }

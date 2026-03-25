@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
-import { Loader2, Sparkles, Paintbrush, Mic, Square, WandSparkles, CircleSlash2, Link2 } from 'lucide-react';
+import { Loader2, Sparkles, Paintbrush, Mic, Square, WandSparkles, CircleSlash2, Link2, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
@@ -139,7 +139,7 @@ function NotesPageContent() {
   const [linkUrl, setLinkUrl] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [isFetchingLink, setIsFetchingLink] = useState(false);
-  const [showLaunchScreen, setShowLaunchScreen] = useState(false);
+  const [showLaunchScreen, setShowLaunchScreen] = useState(Boolean(launchRequested && taskId && studysetId));
   const [launchStageIndex, setLaunchStageIndex] = useState(0);
   const notesContentRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
@@ -154,12 +154,12 @@ function NotesPageContent() {
   const { toast } = useToast();
 
   const canGenerate = sourceText.trim().length > 0 && !isLoading;
-  const launchStages = [
-    'Opening study task',
-    'Retrieving context sources',
-    'Preparing note structure',
-    'Generating notes',
-    'Finalizing workspace',
+  const launchStages: Array<{ title: string; detail: string }> = [
+    { title: 'Opening study task', detail: 'Loading your saved studyset plan and task settings.' },
+    { title: 'Retrieving context sources', detail: 'Collecting source text and selected materials.' },
+    { title: 'Preparing note structure', detail: 'Applying title, style, audience, and length settings.' },
+    { title: 'Generating notes', detail: 'Building clean notes from your selected study content.' },
+    { title: 'Finalizing workspace', detail: 'Opening notes with the generated output ready to edit.' },
   ];
 
   const reportStudysetPerformance = useCallback(async (inputText: string) => {
@@ -579,13 +579,22 @@ function NotesPageContent() {
   const lengthLabels: Record<string, string> = { short: t.short, medium: t.medium, long: t.long };
 
   if (showLaunchScreen) {
+    const progressPct = Math.min(100, Math.round(((launchStageIndex + 1) / launchStages.length) * 100));
+    const currentStage = launchStages[Math.min(launchStageIndex, launchStages.length - 1)];
     return (
       <div className="h-full overflow-auto p-4 md:p-6">
         <div className="mx-auto flex min-h-[52vh] w-full max-w-3xl items-center justify-center">
           <div className="w-full rounded-2xl border border-border bg-card p-5 md:p-6">
             <div className="mb-4 flex items-center gap-2 text-sm text-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>{launchStages[Math.min(launchStageIndex, launchStages.length - 1)]}</span>
+              <span>{currentStage.title}</span>
+            </div>
+            <p className="mb-4 text-sm text-muted-foreground">{currentStage.detail}</p>
+            <div className="mb-4 h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+                style={{ width: `${progressPct}%` }}
+              />
             </div>
             <div className="space-y-2">
               {launchStages.map((stage, index) => {
@@ -593,15 +602,25 @@ function NotesPageContent() {
                 const active = index === launchStageIndex;
                 return (
                   <div
-                    key={stage}
+                    key={stage.title}
                     className={cn(
-                      'rounded-lg border px-3 py-2 text-sm transition-colors',
+                      'flex items-start gap-2 rounded-lg border px-3 py-2 text-sm transition-colors',
                       done && 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
                       active && 'border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-300',
                       !done && !active && 'border-border bg-background text-muted-foreground'
                     )}
                   >
-                    {stage}
+                    {done ? (
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                    ) : active ? (
+                      <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+                    ) : (
+                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-muted-foreground/50" />
+                    )}
+                    <div className="leading-tight">
+                      <div>{stage.title}</div>
+                      <div className="text-[11px] opacity-80">{stage.detail}</div>
+                    </div>
                   </div>
                 );
               })}

@@ -220,7 +220,7 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
             />
           )}
           <div className={`flex-shrink-0 h-8 w-8 rounded ${styleData.iconBg} flex items-center justify-center ${isCompleted ? 'opacity-50' : ''}`}>
-            {styleData.label === 'S' && styleData.accentWord ? (
+            {styleData.label === 'S' && styleData.accentWord && !compact ? (
               <div className="flex items-end leading-none">
                 <span className={`text-sm font-extrabold ${styleData.iconColor}`}>S</span>
                 <span className="text-[7px] text-slate-800">{styleData.accentWord}</span>

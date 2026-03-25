@@ -43,6 +43,9 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
 
   const assignmentType = (event as any).assignment_type || 'homework';
   const isAgendaItem = event.type === 'agenda_item';
+  const isStudysetPlan =
+    event.type === 'study_plan' &&
+    (event.subject === 'Studyset' || String(event.href || '').includes('studysetId='));
   const getClassChipColor = (classId?: string) => {
     if (!classId) return 'hsl(var(--muted))';
     let hash = 0;
@@ -52,6 +55,16 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
   };
 
   const getTypeStyle = () => {
+    if (isStudysetPlan) {
+      return {
+        borderColor: '#87A96B',
+        bgColor: 'rgba(135, 169, 107, 0.12)',
+        icon: BookCheck,
+        iconColor: 'text-[#87A96B]',
+        label: 'Studyset task',
+      };
+    }
+
     if (isAgendaItem) {
       const agendaType = (event.item_type || 'assignment') as string;
       if (agendaType === 'quiz') {
@@ -144,6 +157,11 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
     }
   };
 
+  const handleStartNow = () => {
+    if (!event.href) return;
+    router.push(event.href);
+  };
+
   return (
     <div className="h-full flex flex-col gap-4 overflow-y-auto">
       {/* Breadcrumb Navigation */}
@@ -193,41 +211,62 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
         </CardHeader>
       </Card>
 
+      {event.href && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Action</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={handleStartNow} className="w-full">
+              {isStudysetPlan ? 'Do now' : 'Open'}
+            </Button>
+            {isStudysetPlan && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Opens this studyset task and runs the guided setup steps automatically.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Details */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {event.description && (
-            <div>
-              <h4 className="text-sm font-medium mb-2">Description</h4>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{event.description}</p>
-            </div>
-          )}
-
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <h4 className="font-medium mb-1">Class</h4>
-              <p className="text-muted-foreground">{event.subject}</p>
+              <h4 className="font-medium mb-1">Title</h4>
+              <p className="text-muted-foreground">{event.title}</p>
+            </div>
+            <div>
+              <h4 className="font-medium mb-1">Subject</h4>
+              <p className="text-muted-foreground">{event.subject || 'Optional'}</p>
             </div>
             <div>
               <h4 className="font-medium mb-1">Date</h4>
               <p className="text-muted-foreground">{format(event.date, 'MMM d, yyyy')}</p>
             </div>
+            {typeof event.estimated_duration === 'number' && event.estimated_duration > 0 && (
+              <div>
+                <h4 className="font-medium mb-1">Duration</h4>
+                <p className="text-muted-foreground">{event.estimated_duration} min</p>
+              </div>
+            )}
           </div>
 
-          {event.chapter_title && (
+          <div>
+            <h4 className="text-sm font-medium mb-2">Description</h4>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+              {event.description?.trim() || 'Optional'}
+            </p>
+          </div>
+
+          {event.chapter_title && !isStudysetPlan && (
             <div>
               <h4 className="text-sm font-medium mb-1">Chapter</h4>
               <p className="text-sm text-muted-foreground">{event.chapter_title}</p>
-            </div>
-          )}
-
-          {event.subject && (
-            <div>
-              <h4 className="text-sm font-medium mb-1">Subject</h4>
-              <p className="text-sm text-muted-foreground">{event.subject}</p>
             </div>
           )}
 
