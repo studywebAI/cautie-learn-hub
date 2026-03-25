@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
 
     const returnToRaw = request.nextUrl.searchParams.get('returnTo') || '/tools/studyset';
     const returnTo = returnToRaw.startsWith('/') ? returnToRaw : '/tools/studyset';
+    const switchAccount = request.nextUrl.searchParams.get('switch_account') === '1';
 
     // If already connected with a usable token and required scopes, skip OAuth roundtrip.
     const existingToken = await getValidMicrosoftAccessToken(supabase, user.id).catch((error: any) => {
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
     const existingScopes = parseScopeSet(existingToken?.connection?.scope || '');
     const missingScopes = requiredScopes.filter((scope) => !existingScopes.has(scope));
     const needsScopeUpgrade = missingScopes.length > 0;
-    if (existingToken?.accessToken && !needsScopeUpgrade) {
+    if (existingToken?.accessToken && !needsScopeUpgrade && !switchAccount) {
       const doneUrl = new URL(returnTo, getOrigin(request));
       doneUrl.searchParams.set('ms', 'connected');
       console.info('[microsoft-connect] already-connected-short-circuit', {
@@ -92,10 +93,18 @@ export async function GET(request: NextRequest) {
     const state = randomBytes(24).toString('hex');
     const redirectUri = `${getOrigin(request)}/api/integrations/microsoft/callback`;
 
+    const prompt: 'consent' | 'select_account' | 'login' | undefined = switchAccount
+      ? 'select_account'
+      : needsScopeUpgrade
+        ? 'consent'
+        : existingToken?.accessToken
+          ? undefined
+          : 'select_account';
+
     const authUrl = buildMicrosoftAuthUrl({
       redirectUri,
       state,
-      prompt: needsScopeUpgrade ? 'consent' : undefined,
+      prompt,
     });
     const response = NextResponse.redirect(authUrl);
     response.cookies.set('ms_oauth_state', state, {
@@ -119,6 +128,8 @@ export async function GET(request: NextRequest) {
       userId: user.id,
       returnTo,
       redirectUri,
+      switchAccount,
+      prompt: prompt || null,
     });
     return response;
   } catch (error: any) {

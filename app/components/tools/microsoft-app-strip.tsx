@@ -103,6 +103,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerStatus, setPickerStatus] = useState<PickerStatus>('Idle');
   const [authTransitioning, setAuthTransitioning] = useState(false);
+  const [switchingAccount, setSwitchingAccount] = useState(false);
 
   const currentReturnTo = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -405,6 +406,27 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     }
   }, [closePicker, safeReturnTo, status.connected, toast]);
 
+  const handleSwitchAccount = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(RESUME_KEY, JSON.stringify({ returnTo: safeReturnTo, ts: Date.now() }));
+    }
+    setSwitchingAccount(true);
+    setPickerOpen(true);
+    setAuthTransitioning(true);
+    setPickerStatus('Signing in to your account');
+    const returnWithPicker = withQuery(safeReturnTo, { ms_picker: 'embed', app: 'onedrive' });
+    window.setTimeout(() => {
+      window.location.href = `/api/integrations/microsoft/connect?switch_account=1&returnTo=${encodeURIComponent(returnWithPicker)}`;
+    }, 140);
+  }, [safeReturnTo]);
+
+  useEffect(() => {
+    if (!switchingAccount) return;
+    if (searchParams.get('ms') === 'connected' || searchParams.get('ms_error')) {
+      setSwitchingAccount(false);
+    }
+  }, [searchParams, switchingAccount]);
+
   if (!ONEDRIVE_APP) return null;
 
   return (
@@ -431,6 +453,15 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
               ? `Connected${status.account_email ? ` as ${status.account_email}` : ''}`
               : 'Connect your Microsoft account to browse files'}
           </p>
+          {status.connected && (
+            <button
+              type="button"
+              onClick={handleSwitchAccount}
+              className="mt-1 text-xs text-[#0f6cbd] hover:underline"
+            >
+              {switchingAccount ? 'Switching account...' : 'Switch account'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -443,14 +474,28 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
               <span className="text-muted-foreground">|</span>
               <span className="text-xs text-muted-foreground">Opened in Cautie</span>
             </div>
-            <button
-              type="button"
-              onClick={closePicker}
-              className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Close picker"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              {status.account_email ? (
+                <span className="max-w-[220px] truncate text-xs text-muted-foreground">
+                  Connected as {status.account_email}
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleSwitchAccount}
+                className="rounded-md border border-[#d1d1d1] px-2 py-1 text-xs text-[#0f6cbd] hover:bg-[#f5f9fd]"
+              >
+                {switchingAccount ? 'Switching...' : 'Use another account'}
+              </button>
+              <button
+                type="button"
+                onClick={closePicker}
+                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label="Close picker"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-2 border-b border-[#e1dfdd] bg-white px-3 py-1.5 text-xs text-muted-foreground">
             {pickerStatus === 'Ready to use in Cautie' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Loader2 className={`h-3.5 w-3.5 ${pickerStatus === 'Ready to select' || pickerStatus === 'Import failed' ? 'hidden' : 'animate-spin'}`} />}
