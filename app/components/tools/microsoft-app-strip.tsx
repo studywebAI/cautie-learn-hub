@@ -104,6 +104,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [pickerStatus, setPickerStatus] = useState<PickerStatus>('Idle');
   const [authTransitioning, setAuthTransitioning] = useState(false);
   const [switchingAccount, setSwitchingAccount] = useState(false);
+  const [openAfterConnect, setOpenAfterConnect] = useState(false);
 
   const currentReturnTo = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -167,9 +168,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       void loadStatus();
       if (msPicker === 'embed') {
         toast({ title: 'Microsoft connected', description: 'Opening OneDrive in Cautie.' });
-        window.setTimeout(() => {
-          void openEmbeddedPicker();
-        }, 40);
+        setOpenAfterConnect(true);
       }
     } else if (msError) {
       if (typeof window !== 'undefined') window.sessionStorage.removeItem(RESUME_KEY);
@@ -209,13 +208,18 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     }
   }, [opening, pickerOpen, safeReturnTo, status.connected]);
 
-  const openEmbeddedPicker = useCallback(async () => {
+  const openEmbeddedPicker = useCallback(async (options?: { allowConnectRedirect?: boolean }) => {
+    const allowConnectRedirect = options?.allowConnectRedirect ?? true;
     if (!ONEDRIVE_APP) {
       toast({ variant: 'destructive', title: 'OneDrive is not enabled', description: 'Enable OneDrive in integration catalog.' });
       return;
     }
 
     if (!status.connected) {
+      if (!allowConnectRedirect) {
+        setPickerStatus('Import failed');
+        return;
+      }
       if (typeof window !== 'undefined') {
         window.sessionStorage.setItem(RESUME_KEY, JSON.stringify({ returnTo: safeReturnTo, ts: Date.now() }));
       }
@@ -408,6 +412,15 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       setOpening(false);
     }
   }, [closePicker, safeReturnTo, status.connected, toast]);
+
+  useEffect(() => {
+    if (!openAfterConnect) return;
+    if (!status.connected) return;
+    setOpenAfterConnect(false);
+    window.setTimeout(() => {
+      void openEmbeddedPicker({ allowConnectRedirect: false });
+    }, 40);
+  }, [openAfterConnect, openEmbeddedPicker, status.connected]);
 
   const handleSwitchAccount = useCallback(() => {
     if (typeof window !== 'undefined') {
