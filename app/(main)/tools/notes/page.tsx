@@ -25,6 +25,7 @@ import { PaintOverlay } from '@/components/tools/paint-overlay';
 import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -138,6 +139,8 @@ function NotesPageContent() {
   const [linkUrl, setLinkUrl] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [isFetchingLink, setIsFetchingLink] = useState(false);
+  const [showLaunchScreen, setShowLaunchScreen] = useState(false);
+  const [launchStageIndex, setLaunchStageIndex] = useState(0);
   const notesContentRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const keepListeningRef = useRef(false);
@@ -151,6 +154,13 @@ function NotesPageContent() {
   const { toast } = useToast();
 
   const canGenerate = sourceText.trim().length > 0 && !isLoading;
+  const launchStages = [
+    'Opening study task',
+    'Retrieving context sources',
+    'Preparing note structure',
+    'Generating notes',
+    'Finalizing workspace',
+  ];
 
   const reportStudysetPerformance = useCallback(async (inputText: string) => {
     if (!taskId || !studysetId) return;
@@ -283,6 +293,8 @@ function NotesPageContent() {
   useEffect(() => {
     if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
     launchHandledRef.current = true;
+    setShowLaunchScreen(true);
+    setLaunchStageIndex(0);
 
     console.info('[STUDYSET_LAUNCH][NOTES] launch requested', {
       taskId,
@@ -292,6 +304,7 @@ function NotesPageContent() {
 
     const runLaunch = async () => {
       try {
+        setLaunchStageIndex(1);
         const response = await fetch(`/api/studysets/plan-tasks/${taskId}/launch`);
         if (!response.ok) throw new Error(`Could not load studyset task preset (${response.status})`);
         const payload = await response.json();
@@ -307,6 +320,7 @@ function NotesPageContent() {
           hasTitle: Boolean(title),
         });
 
+        setLaunchStageIndex(2);
         if (source) setSourceText(source);
         if (preset?.length) setLength(preset.length as 'short' | 'medium' | 'long');
         if (preset?.style) setStyle(String(preset.style));
@@ -314,6 +328,7 @@ function NotesPageContent() {
         if (title) setCustomTitle(title);
 
         if (source) {
+          setLaunchStageIndex(3);
           await runNotesGeneration(source, {
             background: false,
             preset: {
@@ -323,8 +338,10 @@ function NotesPageContent() {
               title: title || undefined,
             },
           });
+          setLaunchStageIndex(4);
           console.info('[STUDYSET_LAUNCH][NOTES] generation completed', { taskId, studysetId });
         }
+        setTimeout(() => setShowLaunchScreen(false), 300);
       } catch (error: any) {
         console.error('[STUDYSET_LAUNCH][NOTES] launch failed', {
           taskId,
@@ -336,6 +353,7 @@ function NotesPageContent() {
           title: 'Could not start studyset task',
           description: error?.message || 'Please refresh and try again.',
         });
+        setShowLaunchScreen(false);
       }
     };
 
@@ -559,6 +577,40 @@ function NotesPageContent() {
   const lengthMap: Record<string, number> = { short: 0, medium: 1, long: 2 };
   const lengthFromSlider = (v: number) => (['short', 'medium', 'long'] as const)[v];
   const lengthLabels: Record<string, string> = { short: t.short, medium: t.medium, long: t.long };
+
+  if (showLaunchScreen) {
+    return (
+      <div className="h-full overflow-auto p-4 md:p-6">
+        <div className="mx-auto flex min-h-[52vh] w-full max-w-3xl items-center justify-center">
+          <div className="w-full rounded-2xl border border-border bg-card p-5 md:p-6">
+            <div className="mb-4 flex items-center gap-2 text-sm text-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>{launchStages[Math.min(launchStageIndex, launchStages.length - 1)]}</span>
+            </div>
+            <div className="space-y-2">
+              {launchStages.map((stage, index) => {
+                const done = index < launchStageIndex;
+                const active = index === launchStageIndex;
+                return (
+                  <div
+                    key={stage}
+                    className={cn(
+                      'rounded-lg border px-3 py-2 text-sm transition-colors',
+                      done && 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+                      active && 'border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-300',
+                      !done && !active && 'border-border bg-background text-muted-foreground'
+                    )}
+                  >
+                    {stage}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (generatedNotes) {
     return (

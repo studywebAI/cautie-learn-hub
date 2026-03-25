@@ -934,7 +934,7 @@ export function SourceInput({
       onDrop={handleDrop}
     >
       {captionsOpen && (
-        <div className="absolute right-0 top-0 z-20 h-full w-[360px] border bg-background p-3 flex flex-col gap-3">
+        <div className="absolute right-0 top-0 z-20 flex h-full w-full flex-col gap-3 border bg-background p-3 md:w-[360px]">
           <div className="flex items-center justify-between">
             <p className="text-sm">Captions</p>
             <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setCaptionsOpen(false)}>Close</Button>
@@ -1007,13 +1007,13 @@ export function SourceInput({
       )}
 
       {topContent && (
-        <div className="flex-1 min-h-[240px]">
+        <div className="min-h-[220px] flex-1 md:min-h-[240px]">
           {topContent}
         </div>
       )}
 
       {integrationFileCards.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {integrationFileCards.map((file) => (
             <div key={file.id} className="rounded-lg border border-sidebar-border bg-sidebar-accent/50 p-2">
               <div className="mb-2 flex h-12 items-center justify-center rounded-md bg-sidebar-accent/80">
@@ -1025,7 +1025,7 @@ export function SourceInput({
         </div>
       )}
 
-      <div className="mt-auto flex gap-2 items-stretch">
+      <div className="mt-auto flex flex-col gap-2 items-stretch md:flex-row">
         <div className="flex-1 flex flex-col gap-2">
           {linksOpen && (
             <div className="space-y-2">
@@ -1074,7 +1074,7 @@ export function SourceInput({
               }
             }}
             placeholder={placeholder}
-            className="min-h-[170px] resize-none text-sm flex-1 rounded-2xl border border-border bg-muted/70"
+            className="min-h-[170px] flex-1 resize-none rounded-2xl border border-border bg-muted/70 text-sm"
             disabled={disabled || isProcessing}
           />
 
@@ -1085,60 +1085,60 @@ export function SourceInput({
           )}
         </div>
 
-        <div className="flex flex-col gap-2 w-[100px] shrink-0">
+        <div className="grid w-full shrink-0 grid-flow-col auto-cols-fr gap-2 md:flex md:w-[100px] md:flex-col">
           <Button
             type="button"
             variant="outline"
-            className="flex-1 gap-1.5 text-xs rounded-full flex-col h-auto py-3 border-border bg-muted/80 hover:bg-muted"
+            className="h-11 gap-1 text-[11px] rounded-full border-border bg-muted/80 hover:bg-muted md:flex-1 md:h-auto md:py-3 md:text-xs"
             onClick={() => setLinksOpen((prev) => !prev)}
             disabled={disabled || isProcessing}
           >
             <Link2 className="h-4 w-4" />
-            Links
+            <span className="hidden md:inline">Links</span>
           </Button>
           <Button
             type="button"
             variant="outline"
-            className="flex-1 gap-1.5 text-xs rounded-full flex-col h-auto py-3 border-border bg-muted/80 hover:bg-muted"
+            className="h-11 gap-1 text-[11px] rounded-full border-border bg-muted/80 hover:bg-muted md:flex-1 md:h-auto md:py-3 md:text-xs"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || isProcessing}
           >
             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
-            Upload
+            <span className="hidden md:inline">Upload</span>
           </Button>
           {enableMic && (
             <Button
               type="button"
               variant="outline"
-              className="flex-1 gap-1.5 text-xs rounded-full flex-col h-auto py-3 border-border bg-muted/80 hover:bg-muted"
+              className="h-11 gap-1 text-[11px] rounded-full border-border bg-muted/80 hover:bg-muted md:flex-1 md:h-auto md:py-3 md:text-xs"
               onClick={() => (isFallbackRecording ? stopListening() : startListening())}
               disabled={disabled || isProcessing || !enableMic}
             >
               {isFallbackRecording ? <StopCircle className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              Mic
+              <span className="hidden md:inline">Mic</span>
             </Button>
           )}
           {enableCaptions && (
             <Button
               type="button"
               variant="outline"
-              className="flex-1 gap-1.5 text-xs rounded-full flex-col h-auto py-3 border-border bg-muted/80 hover:bg-muted"
+              className="h-11 gap-1 text-[11px] rounded-full border-border bg-muted/80 hover:bg-muted md:flex-1 md:h-auto md:py-3 md:text-xs"
               onClick={() => setCaptionsOpen((prev) => !prev)}
               disabled={disabled || !enableCaptions}
             >
               <Captions className="h-4 w-4" />
-              Captions
+              <span className="hidden md:inline">Captions</span>
             </Button>
           )}
           <Button
             type="button"
             variant="outline"
-            className="flex-1 gap-1.5 text-xs rounded-full flex-col h-auto py-3 border-border bg-muted/80 hover:bg-muted"
+            className="h-11 gap-1 text-[11px] rounded-full border-border bg-muted/80 hover:bg-muted md:flex-1 md:h-auto md:py-3 md:text-xs"
             onClick={() => onSubmit?.()}
             disabled={disabled || isProcessing || !canGenerate}
           >
             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            Generate
+            <span className="hidden md:inline">Generate</span>
           </Button>
         </div>
       </div>

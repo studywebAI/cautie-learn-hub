@@ -20,11 +20,11 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="h-full overflow-hidden relative">
+    <div className="relative h-full overflow-hidden">
       <div className="flex h-full">
         {/* Main content area */}
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="px-5 md:px-7 pt-5 pb-2 flex items-center justify-between">
+          <div className="flex items-center justify-between px-3 pb-2 pt-3 sm:px-5 md:px-7 md:pt-5">
             <div>
               <h1 className="text-lg font-normal">{title}</h1>
               {description && (
@@ -32,12 +32,12 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               )}
             </div>
             {isMobile && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSidebarOpen(true)}>
+              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => setSidebarOpen(true)}>
                 <Settings2 className="h-4 w-4" />
               </Button>
             )}
           </div>
-          <div className="flex-1 min-h-0 px-5 md:px-7 pb-7">
+          <div className="flex-1 min-h-0 px-3 pb-4 sm:px-5 md:px-7 md:pb-7">
             {topAccessory && <div className="mb-3">{topAccessory}</div>}
             {children}
           </div>
@@ -50,7 +50,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               <div className="fixed inset-0 bg-background/80 z-40" onClick={() => setSidebarOpen(false)} />
             )}
             <div className={cn(
-              "fixed top-0 right-0 h-full w-[280px] bg-sidebar border-l border-sidebar-border z-50 transition-transform duration-200",
+              "fixed right-0 top-0 z-50 h-full w-[88vw] max-w-[320px] border-l border-sidebar-border bg-sidebar transition-transform duration-200",
               sidebarOpen ? "translate-x-0" : "translate-x-full"
             )}>
               <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b">
