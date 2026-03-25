@@ -56,7 +56,7 @@ type MicrosoftFileItem = {
   webUrl?: string;
   size?: number;
   lastModifiedDateTime?: string;
-  kind: 'word' | 'powerpoint';
+  kind: 'onedrive';
   mimeType?: string;
 };
 
@@ -204,12 +204,10 @@ export default function StudysetPage() {
   }, [studysets]);
 
   const selectedDateStrings = useMemo(() => normalizeDates(selectedDates), [selectedDates]);
-  const sortedWordFiles = useMemo(() => wordFiles.slice(0, 12), [wordFiles]);
-  const sortedPowerpointFiles = useMemo(() => powerpointFiles.slice(0, 12), [powerpointFiles]);
+  const sortedOneDriveFiles = useMemo(() => wordFiles.slice(0, 24), [wordFiles]);
   const selectedMicrosoftFiles = useMemo(() => {
-    const all = [...wordFiles, ...powerpointFiles];
-    return all.filter((item) => selectedMicrosoftFileIds.includes(item.id));
-  }, [wordFiles, powerpointFiles, selectedMicrosoftFileIds]);
+    return wordFiles.filter((item) => selectedMicrosoftFileIds.includes(item.id));
+  }, [wordFiles, selectedMicrosoftFileIds]);
 
   const isStepOneReady = name.trim().length > 0;
   const isStepTwoReady = selectedDateStrings.length > 0;
@@ -273,14 +271,10 @@ export default function StudysetPage() {
     }
     setMicrosoftLoading(true);
     try {
-      const [wordRes, pptRes] = await Promise.all([
-        fetch('/api/integrations/microsoft/files?kind=word', { cache: 'no-store' }),
-        fetch('/api/integrations/microsoft/files?kind=powerpoint', { cache: 'no-store' }),
-      ]);
-      const wordJson = await wordRes.json().catch(() => ({}));
-      const pptJson = await pptRes.json().catch(() => ({}));
-      setWordFiles(Array.isArray(wordJson?.items) ? wordJson.items : []);
-      setPowerpointFiles(Array.isArray(pptJson?.items) ? pptJson.items : []);
+      const response = await fetch('/api/integrations/microsoft/files?kind=onedrive', { cache: 'no-store' });
+      const json = await response.json().catch(() => ({}));
+      setWordFiles(Array.isArray(json?.items) ? json.items : []);
+      setPowerpointFiles([]);
     } catch {
       setWordFiles([]);
       setPowerpointFiles([]);
@@ -296,7 +290,7 @@ export default function StudysetPage() {
 
   useEffect(() => {
     if (searchParams.get('ms') === 'connected') {
-      toast({ title: 'Microsoft connected', description: 'Word and PowerPoint files are ready.' });
+      toast({ title: 'Microsoft connected', description: 'OneDrive files are ready.' });
       void loadMicrosoftStatus();
       const params = new URLSearchParams(searchParams.toString());
       params.delete('ms');
@@ -327,9 +321,9 @@ export default function StudysetPage() {
   }, [microsoftConnected]);
 
   useEffect(() => {
-    const validIds = new Set([...wordFiles, ...powerpointFiles].map((file) => file.id));
+    const validIds = new Set(wordFiles.map((file) => file.id));
     setSelectedMicrosoftFileIds((prev) => prev.filter((id) => validIds.has(id)));
-  }, [wordFiles, powerpointFiles]);
+  }, [wordFiles]);
 
   const startCreate = () => {
     resetWizard();
@@ -427,8 +421,9 @@ export default function StudysetPage() {
           pasted_text: pastedText.trim(),
           uploaded_files: uploads,
           imports: {
-            word: selectedMicrosoftFiles.some((file) => file.kind === 'word'),
-            powerpoint: selectedMicrosoftFiles.some((file) => file.kind === 'powerpoint'),
+            word: false,
+            powerpoint: false,
+            onedrive: selectedMicrosoftFiles.length > 0,
             access_mode: 'read_only',
             microsoft_account: microsoftEmail || null,
             selected_documents: selectedMicrosoftFiles.map((file) => ({
@@ -702,7 +697,7 @@ export default function StudysetPage() {
 
                   <div className={`rounded-xl p-3 ${SOFT_ORANGE_SURFACE}`}>
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium">Import from Word/PowerPoint</p>
+                      <p className="text-sm font-medium">Import from OneDrive</p>
                       {microsoftConnected ? (
                         <span className="text-xs text-muted-foreground">{microsoftEmail || 'Connected'}</span>
                       ) : (
@@ -729,34 +724,15 @@ export default function StudysetPage() {
                     )}
 
                     {microsoftConnected && (
-                      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <div className="mt-3 grid grid-cols-1 gap-3">
                         <div className={`rounded-lg p-2 ${SOFT_ORANGE_SURFACE}`}>
-                          <p className="mb-1 text-xs font-medium">Word</p>
+                          <p className="mb-1 text-xs font-medium">OneDrive</p>
                           {microsoftLoading && <p className="text-xs text-muted-foreground">Loading...</p>}
-                          {!microsoftLoading && sortedWordFiles.length === 0 && (
-                            <p className="text-xs text-muted-foreground">No Word files found.</p>
+                          {!microsoftLoading && sortedOneDriveFiles.length === 0 && (
+                            <p className="text-xs text-muted-foreground">No OneDrive files found.</p>
                           )}
                           <div className="space-y-1">
-                            {sortedWordFiles.map((file) => (
-                              <label key={file.id} className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs ${SOFT_ORANGE_SURFACE}`}>
-                                <Checkbox
-                                  checked={selectedMicrosoftFileIds.includes(file.id)}
-                                  onCheckedChange={() => toggleMicrosoftFile(file.id)}
-                                />
-                                <span className="truncate">{file.name}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className={`rounded-lg p-2 ${SOFT_ORANGE_SURFACE}`}>
-                          <p className="mb-1 text-xs font-medium">PowerPoint</p>
-                          {microsoftLoading && <p className="text-xs text-muted-foreground">Loading...</p>}
-                          {!microsoftLoading && sortedPowerpointFiles.length === 0 && (
-                            <p className="text-xs text-muted-foreground">No PowerPoint files found.</p>
-                          )}
-                          <div className="space-y-1">
-                            {sortedPowerpointFiles.map((file) => (
+                            {sortedOneDriveFiles.map((file) => (
                               <label key={file.id} className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs ${SOFT_ORANGE_SURFACE}`}>
                                 <Checkbox
                                   checked={selectedMicrosoftFileIds.includes(file.id)}

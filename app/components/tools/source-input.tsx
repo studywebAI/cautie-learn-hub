@@ -898,10 +898,14 @@ export function SourceInput({
         </div>
       )}
 
+      {topContent && (
+        <div className="flex-1 min-h-[280px]">
+          {topContent}
+        </div>
+      )}
+
       <div className="mt-auto flex gap-2 items-stretch">
         <div className="flex-1 flex flex-col gap-2">
-          {topContent && <div className="pb-1">{topContent}</div>}
-
           {linksOpen && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ENABLED_INTEGRATION_APPS } from '@/lib/integrations/catalog';
 
@@ -15,39 +15,46 @@ type MicrosoftAppStripProps = {
   returnTo: string;
 };
 
-type OneDriveSdkSelection = {
-  id?: string;
-  name?: string;
-  webUrl?: string;
-  link?: string;
-  mimeType?: string;
-  file?: { mimeType?: string };
-};
-
-type PickerConfigResponse = {
-  clientId: string;
-  redirectUri: string;
-  accessToken?: string | null;
-  loginHint?: string | null;
-  endpointHint?: string | null;
-  scope?: string | null;
-  isConsumerAccount?: boolean | null;
-  tokenExpiresAt?: string | null;
-};
-
-declare global {
-  interface Window {
-    OneDrive?: {
-      open: (options: Record<string, any>) => void;
+type PickerBootstrapResponse = {
+  channelId: string;
+  kind: 'consumer' | 'sharepoint';
+  baseUrl: string;
+  action: string;
+  options: {
+    sdk: string;
+    entry: Record<string, any>;
+    authentication: Record<string, any>;
+    messaging: {
+      origin: string;
+      channelId: string;
     };
-  }
-}
+  };
+  accessToken: string;
+  scope?: string | null;
+  accountEmail?: string | null;
+};
 
-const APPS = ENABLED_INTEGRATION_APPS.filter((app) => app.provider === 'microsoft').map((app) => ({
-  id: app.id,
-  label: app.label,
-  logo: app.logoPath,
-}));
+type OneDrivePickedItem = {
+  id: string;
+  name: string;
+  webUrl?: string;
+  mimeType?: string;
+  driveId?: string;
+  parentId?: string;
+  downloadUrl?: string;
+};
+
+type PickerStatus =
+  | 'Idle'
+  | 'Signing in to your account'
+  | 'Fetching files'
+  | 'Loading picker'
+  | 'Ready to select'
+  | 'Importing selected file'
+  | 'Ready to use in Cautie'
+  | 'Import failed';
+
+const ONEDRIVE_APP = ENABLED_INTEGRATION_APPS.find((app) => app.id === 'onedrive' && app.provider === 'microsoft');
 
 function withQuery(path: string, params: Record<string, string>) {
   const [pathname, search = ''] = path.split('?');
@@ -59,138 +66,41 @@ function withQuery(path: string, params: Record<string, string>) {
   return encoded ? `${pathname}?${encoded}` : pathname;
 }
 
-function newTraceId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
+function extractItems(input: any): OneDrivePickedItem[] {
+  const candidates: any[] = [
+    ...(Array.isArray(input?.items) ? input.items : []),
+    ...(Array.isArray(input?.selection) ? input.selection : []),
+    ...(Array.isArray(input?.value) ? input.value : []),
+  ];
+  const out: OneDrivePickedItem[] = [];
+  for (const raw of candidates) {
+    const id = String(raw?.id || raw?.itemId || '').trim();
+    if (!id) continue;
+    const name = String(raw?.name || 'Untitled');
+    const mimeType = raw?.file?.mimeType || raw?.mimeType || raw?.type || undefined;
+    const webUrl = raw?.webUrl || raw?.link || raw?.url || undefined;
+    const driveId = raw?.parentReference?.driveId || raw?.driveId || undefined;
+    const parentId = raw?.parentReference?.id || raw?.parentId || undefined;
+    const downloadUrl = raw?.['@microsoft.graph.downloadUrl'] || raw?.downloadUrl || undefined;
+    out.push({ id, name, mimeType, webUrl, driveId, parentId, downloadUrl });
   }
-  return `trace-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function safeErrorMessage(error: any) {
-  return String(
-    error?.message ||
-    error?.error?.message ||
-    error?.error_description ||
-    error?.statusText ||
-    'Picker failed'
-  );
-}
-
-function isAllowedForApp(appId: string, name?: string, mimeType?: string) {
-  const lowerName = String(name || '').toLowerCase();
-  const lowerMime = String(mimeType || '').toLowerCase();
-  if (appId === 'word') {
-    return (
-      lowerName.endsWith('.doc') ||
-      lowerName.endsWith('.docx') ||
-      lowerMime.includes('wordprocessingml') ||
-      lowerMime === 'application/msword'
-    );
-  }
-  if (appId === 'powerpoint') {
-    return (
-      lowerName.endsWith('.ppt') ||
-      lowerName.endsWith('.pptx') ||
-      lowerMime.includes('presentationml') ||
-      lowerMime === 'application/vnd.ms-powerpoint'
-    );
-  }
-  return true;
-}
-
-function serializeUnknown(input: unknown, depth = 0): unknown {
-  if (input === null || input === undefined) return input ?? null;
-  if (typeof input === 'string') return input;
-  if (typeof input === 'number' || typeof input === 'boolean') return input;
-  if (typeof input === 'function') return `[function ${input.name || 'anonymous'}]`;
-  if (input instanceof Error) {
-    return {
-      name: input.name,
-      message: input.message,
-      stack: input.stack || null,
-    };
-  }
-  if (Array.isArray(input)) {
-    if (depth >= 2) return `[array:${input.length}]`;
-    return input.slice(0, 20).map((value) => serializeUnknown(value, depth + 1));
-  }
-  if (typeof input === 'object') {
-    const record = input as Record<string, unknown>;
-    if (depth >= 2) {
-      return { kind: 'object', keys: Object.keys(record).slice(0, 25) };
-    }
-    const out: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(record)) {
-      out[key] = serializeUnknown(value, depth + 1);
-    }
-    return out;
-  }
-  return String(input);
+  return out;
 }
 
 export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
-  const [status, setStatus] = useState<MicrosoftStatus>({ connected: false });
-  const [openingOfficialPicker, setOpeningOfficialPicker] = useState(false);
-  const [pendingPickerApp, setPendingPickerApp] = useState<string | null>(null);
-
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
-  const sessionTraceId = useRef(newTraceId());
-  const logSeq = useRef(0);
-  const bootAtMs = useRef(Date.now());
 
-  const reportServerLog = useCallback((level: 'info' | 'warn' | 'error', event: string, data: Record<string, unknown> = {}) => {
-    if (typeof window === 'undefined') return;
-    const payload = {
-      level,
-      event,
-      sessionTraceId: sessionTraceId.current,
-      pickerTraceId: typeof data.traceId === 'string' ? data.traceId : null,
-      appId: typeof data.appId === 'string' ? data.appId : null,
-      path: pathname,
-      at: new Date().toISOString(),
-      data,
-      client: {
-        href: window.location.href,
-        referrer: document.referrer || null,
-        userAgent: navigator.userAgent || null,
-        visibilityState: document.visibilityState,
-        online: navigator.onLine,
-        language: navigator.language || null,
-      },
-    };
-    fetch('/api/integrations/microsoft/picker-log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      keepalive: true,
-    }).catch(() => null);
-  }, [pathname]);
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const portRef = useRef<MessagePort | null>(null);
+  const bootstrapRef = useRef<PickerBootstrapResponse | null>(null);
 
-  const log = useCallback((event: string, data: Record<string, unknown> = {}, level: 'info' | 'warn' | 'error' = 'info') => {
-    const seq = ++logSeq.current;
-    const elapsedMs = Date.now() - bootAtMs.current;
-    const payload = {
-      event,
-      seq,
-      sessionTraceId: sessionTraceId.current,
-      path: pathname,
-      at: new Date().toISOString(),
-      elapsedMs,
-      ...data,
-    };
-
-    if (level === 'error') {
-      console.error('[ms-picker-client]', payload);
-    } else if (level === 'warn') {
-      console.warn('[ms-picker-client]', payload);
-    } else {
-      console.info('[ms-picker-client]', payload);
-    }
-    reportServerLog(level, event, { seq, elapsedMs, ...data });
-  }, [pathname, reportServerLog]);
+  const [status, setStatus] = useState<MicrosoftStatus>({ connected: false });
+  const [opening, setOpening] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerStatus, setPickerStatus] = useState<PickerStatus>('Idle');
 
   const currentReturnTo = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -206,455 +116,35 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     return currentReturnTo.startsWith('/') ? currentReturnTo : '/tools/quiz';
   }, [currentReturnTo, returnTo]);
 
-  useEffect(() => {
-    log('component-mounted', {
-      returnTo,
-      pathname,
-      search: searchParams.toString(),
-      appCount: APPS.length,
-    });
-
-    const onError = (event: ErrorEvent) => {
-      log('window-error', {
-        message: event.message || 'unknown',
-        filename: event.filename || null,
-        line: event.lineno || null,
-        col: event.colno || null,
-      }, 'error');
-    };
-
-    const onRejection = (event: PromiseRejectionEvent) => {
-      let reasonText = 'unknown';
+  const closePicker = useCallback(() => {
+    setPickerOpen(false);
+    setPickerStatus('Idle');
+    if (portRef.current) {
       try {
-        reasonText = typeof event.reason === 'string' ? event.reason : String(event.reason || 'unknown');
+        portRef.current.close();
       } catch {
-        reasonText = 'unknown';
+        // no-op
       }
-      log('window-unhandledrejection', {
-        reason: reasonText,
-        serializedReason: serializeUnknown(event.reason),
-      }, 'error');
-    };
-
-    window.addEventListener('error', onError);
-    window.addEventListener('unhandledrejection', onRejection as any);
-    return () => {
-      window.removeEventListener('error', onError);
-      window.removeEventListener('unhandledrejection', onRejection as any);
-      log('component-unmounted');
-    };
-  }, [log, pathname, returnTo, searchParams]);
+      portRef.current = null;
+    }
+  }, []);
 
   const loadStatus = useCallback(async () => {
     try {
-      log('status-load-start');
       const response = await fetch('/api/integrations/microsoft/status', { cache: 'no-store' });
       if (!response.ok) {
-        log('status-load-non-ok', { status: response.status });
         setStatus({ connected: false });
         return;
       }
       const json = await response.json();
-      const nextStatus = {
+      setStatus({
         connected: Boolean(json?.connected),
         account_email: json?.account_email ? String(json.account_email) : undefined,
-      };
-      setStatus(nextStatus);
-      log('status-load-success', { connected: nextStatus.connected, accountEmail: nextStatus.account_email || null });
-    } catch (error: any) {
-      log('status-load-error', { message: String(error?.message || 'unknown') });
+      });
+    } catch {
       setStatus({ connected: false });
     }
-  }, [log]);
-
-  const loadOneDriveSdk = useCallback(async (traceId: string) => {
-    if (typeof window === 'undefined') {
-      log('sdk-load-skip-ssr', { traceId });
-      return false;
-    }
-    if (window.OneDrive?.open) {
-      log('sdk-load-already-ready', { traceId });
-      return true;
-    }
-
-    const id = 'onedrive-sdk-v72';
-    const existing = document.getElementById(id) as HTMLScriptElement | null;
-    if (existing) {
-      log('sdk-load-existing-script', { traceId });
-      await new Promise<void>((resolve, reject) => {
-        if (window.OneDrive?.open) {
-          resolve();
-          return;
-        }
-        existing.addEventListener('load', () => resolve(), { once: true });
-        existing.addEventListener('error', () => reject(new Error('Failed to load OneDrive SDK')), { once: true });
-      });
-      const ready = Boolean(window.OneDrive?.open);
-      log('sdk-load-existing-script-finished', { traceId, ready });
-      return ready;
-    }
-
-    log('sdk-load-inject-start', { traceId });
-    await new Promise<void>((resolve, reject) => {
-      const script = document.createElement('script');
-      script.id = id;
-      script.src = 'https://js.live.net/v7.2/OneDrive.js';
-      script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Failed to load OneDrive SDK'));
-      document.head.appendChild(script);
-    });
-
-    const ready = Boolean(window.OneDrive?.open);
-    log('sdk-load-inject-finished', { traceId, ready });
-    return ready;
-  }, [log]);
-
-  const attachFromPickerItems = useCallback(async (appId: string, items: OneDriveSdkSelection[], traceId: string) => {
-    const normalized = items
-      .map((item) => ({
-        id: String(item.id || ''),
-        name: String(item.name || 'Untitled'),
-        mimeType: item.mimeType || item.file?.mimeType,
-        webUrl: item.webUrl || item.link,
-      }))
-      .filter((item) => item.id);
-    const filtered = normalized.filter((item) => isAllowedForApp(appId, item.name, item.mimeType));
-
-    log('attach-normalize-finished', {
-      traceId,
-      appId,
-      inputCount: items.length,
-      normalizedCount: normalized.length,
-      filteredCount: filtered.length,
-    });
-
-    if (filtered.length === 0) {
-      toast({ variant: 'destructive', title: 'No file selected', description: 'Picker returned no usable file items.' });
-      return;
-    }
-
-    const saveResponse = await fetch('/api/integrations/context-sources', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        provider: 'microsoft',
-        app: appId,
-        items: filtered,
-        replaceSelection: true,
-      }),
-    });
-
-    if (!saveResponse.ok) {
-      const payload = await saveResponse.json().catch(() => ({}));
-      const message = typeof payload?.error === 'string' ? payload.error : 'Failed to attach files';
-      log('attach-save-failed', { traceId, appId, status: saveResponse.status, message });
-      throw new Error(message);
-    }
-
-    log('attach-save-success', { traceId, appId, count: filtered.length });
-
-    await fetch('/api/integrations/ingestion-jobs/process', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider: 'microsoft', app: appId, maxJobs: 25 }),
-    }).catch((error: any) => {
-      log('attach-process-jobs-non-fatal-error', {
-        traceId,
-        appId,
-        message: String(error?.message || 'unknown'),
-      });
-      return null;
-    });
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft' } }));
-    }
-    toast({ title: 'Context attached', description: `${filtered.length} file${filtered.length === 1 ? '' : 's'} added.` });
-    log('attach-complete', { traceId, appId, count: filtered.length });
-  }, [log, toast]);
-
-  const openOfficialPicker = useCallback(async (appId: string) => {
-    const traceId = newTraceId();
-    setOpeningOfficialPicker(true);
-    log('open-picker-start', { traceId, appId, connected: status.connected });
-
-    try {
-      const sdkReady = await loadOneDriveSdk(traceId);
-      if (!sdkReady || !window.OneDrive?.open) {
-        throw new Error('OneDrive picker SDK unavailable');
-      }
-
-      log('picker-config-fetch-start', { traceId, appId });
-      const configUrl = `/api/integrations/microsoft/picker-config?traceId=${encodeURIComponent(traceId)}&app=${encodeURIComponent(appId)}`;
-      const configFetchStart = Date.now();
-      const configResponse = await fetch(configUrl, { cache: 'no-store' });
-      log('picker-config-fetch-response', {
-        traceId,
-        appId,
-        status: configResponse.status,
-        ok: configResponse.ok,
-        durationMs: Date.now() - configFetchStart,
-      });
-      if (!configResponse.ok) {
-        const payload = await configResponse.json().catch(() => ({}));
-        log('picker-config-fetch-non-ok-payload', {
-          traceId,
-          appId,
-          payloadKeys: Object.keys(payload || {}),
-        }, 'warn');
-        throw new Error(typeof payload?.error === 'string' ? payload.error : 'Failed to get Microsoft picker config');
-      }
-
-      const config = await configResponse.json() as PickerConfigResponse;
-      if (!config?.clientId || !config?.redirectUri) {
-        throw new Error('Microsoft picker config incomplete');
-      }
-      log('picker-config-fetch-success', {
-        traceId,
-        appId,
-        redirectUri: config.redirectUri,
-        hasClientId: Boolean(config.clientId),
-        hasAccessToken: Boolean(config.accessToken),
-        hasLoginHint: Boolean(config.loginHint),
-        hasEndpointHint: Boolean(config.endpointHint),
-        isConsumerAccount: config.isConsumerAccount ?? null,
-        tokenExpiresAt: config.tokenExpiresAt || null,
-      });
-
-      const scopeSet = new Set(
-        String(config.scope || '')
-          .split(/\s+/)
-          .map((scope) => scope.trim().toLowerCase())
-          .filter(Boolean)
-      );
-      const hasFilesRead = scopeSet.has('files.read') || scopeSet.has('files.read.all');
-      if (!hasFilesRead) {
-        const returnWithPicker = withQuery(safeReturnTo, { ms_picker: '1', app: appId });
-        log('picker-scope-upgrade-required', {
-          traceId,
-          appId,
-          scope: config.scope || null,
-          missing: 'Files.Read',
-          redirectTo: `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`,
-        }, 'warn');
-        toast({
-          title: 'Microsoft consent needed',
-          description: 'Please approve OneDrive file access once to continue.',
-        });
-        window.location.href = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`;
-        return;
-      }
-
-      const advancedBase: Record<string, any> = {
-        redirectUri: config.redirectUri,
-      };
-      // Keep picker options minimal/official to avoid provider-side login-hint edge cases.
-      if (typeof config.isConsumerAccount === 'boolean') advancedBase.isConsumerAccount = config.isConsumerAccount;
-
-      const tokenModeEnabled = false;
-      const canUseSuppliedToken = tokenModeEnabled && Boolean(config.accessToken && config.endpointHint);
-      const advancedWithToken: Record<string, any> = { ...advancedBase };
-      if (canUseSuppliedToken) {
-        advancedWithToken.accessToken = config.accessToken;
-        advancedWithToken.endpointHint = config.endpointHint;
-      } else {
-        log('picker-supplied-token-skipped', {
-          traceId,
-          appId,
-          reason: !tokenModeEnabled
-            ? 'token_mode_temporarily_disabled'
-            : (!config.accessToken ? 'missing_access_token' : 'missing_endpoint_hint'),
-          hasAccessToken: Boolean(config.accessToken),
-          hasEndpointHint: Boolean(config.endpointHint),
-        });
-      }
-
-      log('picker-open-options-ready', {
-        traceId,
-        appId,
-        openInNewWindow: true,
-        action: 'query',
-        multiSelect: true,
-        advancedKeysWithToken: Object.keys(advancedWithToken),
-        advancedKeysBase: Object.keys(advancedBase),
-        redirectUriHost: (() => {
-          try {
-            return new URL(config.redirectUri).host;
-          } catch {
-            return null;
-          }
-        })(),
-      });
-      log('picker-open-options-payload', {
-        traceId,
-        appId,
-        options: {
-          clientIdSuffix: String(config.clientId || '').slice(-6),
-          action: 'query',
-          multiSelect: true,
-          openInNewWindow: true,
-          advanced: {
-            ...advancedWithToken,
-            accessToken: advancedWithToken.accessToken ? `[present:${String(advancedWithToken.accessToken).length}]` : null,
-          },
-        },
-      });
-
-      const runPickerAttempt = async (attempt: 'with_token' | 'without_token', advanced: Record<string, any>) => {
-        log('picker-attempt-start', { traceId, appId, attempt, advancedKeys: Object.keys(advanced) });
-        await new Promise<void>((resolve, reject) => {
-          const attemptStart = Date.now();
-          const timeoutMs = 25_000;
-          let done = false;
-
-          const onMessage = (event: MessageEvent) => {
-            let dataPreview: string | null = null;
-            try {
-              dataPreview = typeof event.data === 'string'
-                ? event.data.slice(0, 220)
-                : JSON.stringify(event.data).slice(0, 220);
-            } catch {
-              dataPreview = '[unserializable]';
-            }
-            log('picker-popup-postmessage', {
-              traceId,
-              appId,
-              attempt,
-              origin: event.origin,
-              sourcePresent: Boolean(event.source),
-              dataPreview,
-            });
-          };
-          const onFocus = () => log('picker-window-focus', { traceId, appId, attempt });
-          const onBlur = () => log('picker-window-blur', { traceId, appId, attempt });
-          window.addEventListener('message', onMessage);
-          window.addEventListener('focus', onFocus);
-          window.addEventListener('blur', onBlur);
-
-          const finish = () => {
-            if (done) return;
-            done = true;
-            window.clearTimeout(timeout);
-            window.removeEventListener('message', onMessage);
-            window.removeEventListener('focus', onFocus);
-            window.removeEventListener('blur', onBlur);
-          };
-
-          const timeout = window.setTimeout(() => {
-            log('picker-timeout-no-callback', {
-              traceId,
-              appId,
-              attempt,
-              timeoutMs,
-              durationMs: Date.now() - attemptStart,
-              hint: 'no_success_cancel_or_error_callback_received',
-            }, 'error');
-            finish();
-            reject(new Error('Picker timeout (no callback from popup)'));
-          }, timeoutMs);
-
-          log('picker-open-invoked', {
-            traceId,
-            appId,
-            attempt,
-            durationSinceAttemptStartMs: Date.now() - attemptStart,
-          });
-          window.OneDrive?.open({
-            clientId: config.clientId,
-            action: 'query',
-            multiSelect: true,
-            openInNewWindow: true,
-            advanced,
-            success: async (result: any) => {
-              finish();
-              const values: OneDriveSdkSelection[] = Array.isArray(result?.value)
-                ? result.value
-                : Array.isArray(result?.files)
-                  ? result.files
-                  : Array.isArray(result)
-                    ? result
-                    : [];
-
-              log('picker-success-callback', {
-                traceId,
-                appId,
-                attempt,
-                returnedCount: values.length,
-                resultKeys: Object.keys(result || {}),
-                hasAccessTokenInResult: Boolean(result?.accessToken),
-                apiEndpoint: result?.apiEndpoint || null,
-                durationMs: Date.now() - attemptStart,
-              });
-
-              try {
-                await attachFromPickerItems(appId, values, traceId);
-                resolve();
-              } catch (error: any) {
-                reject(new Error(String(error?.message || 'Attach failed')));
-              }
-            },
-            cancel: () => {
-              finish();
-              log('picker-cancel-callback', { traceId, appId, attempt, durationMs: Date.now() - attemptStart });
-              resolve();
-            },
-            error: (error: any) => {
-              finish();
-              const message = safeErrorMessage(error);
-              log('picker-error-callback', {
-                traceId,
-                appId,
-                attempt,
-                message,
-                durationMs: Date.now() - attemptStart,
-                code: String(error?.code || error?.error?.code || ''),
-                status: String(error?.status || error?.error?.status || ''),
-                errorType: String(error?.error || ''),
-                errorCode: String(error?.errorCode || ''),
-                rawKeys: Object.keys(error || {}),
-                rawJson: (() => {
-                  try {
-                    return JSON.stringify(error);
-                  } catch {
-                    return '[unserializable]';
-                  }
-                })(),
-                serializedError: serializeUnknown(error),
-              }, 'error');
-              reject(new Error(message));
-            },
-          });
-        });
-      };
-
-      if (canUseSuppliedToken) {
-        try {
-          await runPickerAttempt('with_token', advancedWithToken);
-        } catch (error: any) {
-          log('picker-attempt-fallback-triggered', {
-            traceId,
-            appId,
-            from: 'with_token',
-            to: 'without_token',
-            message: String(error?.message || 'unknown'),
-          }, 'warn');
-          await runPickerAttempt('without_token', advancedBase);
-        }
-      } else {
-        await runPickerAttempt('without_token', advancedBase);
-      }
-
-      log('open-picker-finished', { traceId, appId });
-    } catch (error: any) {
-      const message = String(error?.message || 'Failed to open picker');
-      log('open-picker-failed', { traceId, appId, message }, 'error');
-      toast({ variant: 'destructive', title: 'Microsoft picker failed', description: message });
-      throw error;
-    } finally {
-      setOpeningOfficialPicker(false);
-    }
-  }, [attachFromPickerItems, loadOneDriveSdk, log, status.connected, toast]);
+  }, []);
 
   useEffect(() => {
     void loadStatus();
@@ -664,45 +154,18 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     const ms = searchParams.get('ms');
     const msError = searchParams.get('ms_error');
     const msPicker = searchParams.get('ms_picker');
-    const app = searchParams.get('app');
-    const selectedApp = app && APPS.some((entry) => entry.id === app) ? app : APPS[0]?.id || 'word';
-
     if (!ms && !msError && !msPicker) return;
 
-    log('oauth-return-query-detected', {
-      ms: ms || null,
-      msError: msError || null,
-      msPicker: msPicker || null,
-      app: app || null,
-    });
-
     if (ms === 'connected') {
-      toast({ title: 'Microsoft connected', description: 'Account linked.' });
       void loadStatus();
-      if (msPicker === '1') {
-        setPendingPickerApp(selectedApp);
-        log('picker-open-deferred-after-oauth', {
-          app: selectedApp,
-          reason: 'requires_direct_user_interaction_for_popup',
-        });
-        toast({
-          title: 'Ready to pick file',
-          description: 'Click the Microsoft app button again to open the official picker.',
-        });
+      if (msPicker === 'embed') {
+        toast({ title: 'Microsoft connected', description: 'Opening OneDrive in Cautie.' });
+        window.setTimeout(() => {
+          void openEmbeddedPicker();
+        }, 40);
       }
     } else if (msError) {
-      const map: Record<string, string> = {
-        access_denied: 'Microsoft login was canceled.',
-        invalid_state: 'Login session expired. Please try again.',
-        unauthorized: 'Please log in to Cautie first.',
-        integration_not_configured: 'Microsoft app credentials are missing on server.',
-        integration_storage_not_configured: 'Token encryption key is missing on server.',
-        token_exchange_failed: 'Microsoft token exchange failed.',
-        invalid_client: 'Microsoft app credentials are invalid.',
-        microsoft_connect_failed: 'Could not link Microsoft account.',
-      };
-      toast({ title: 'Microsoft connection failed', description: map[msError] || map.microsoft_connect_failed, variant: 'destructive' });
-      log('oauth-connect-failed', { msError });
+      toast({ title: 'Microsoft connection failed', description: msError, variant: 'destructive' });
     }
 
     const params = new URLSearchParams(searchParams.toString());
@@ -711,41 +174,261 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     params.delete('ms_picker');
     const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(next);
-  }, [loadStatus, log, pathname, router, searchParams, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadStatus, pathname, router, searchParams, toast]);
 
-  const openPicker = async (appId: string) => {
-    log('picker-button-click', { appId, connected: status.connected });
+  const openEmbeddedPicker = useCallback(async () => {
+    if (!ONEDRIVE_APP) {
+      toast({ variant: 'destructive', title: 'OneDrive is not enabled', description: 'Enable OneDrive in integration catalog.' });
+      return;
+    }
+
     if (!status.connected) {
-      const returnWithPicker = withQuery(safeReturnTo, { ms_picker: '1', app: appId });
-      log('oauth-connect-redirect', { appId, returnWithPicker });
+      const returnWithPicker = withQuery(safeReturnTo, { ms_picker: 'embed', app: 'onedrive' });
       window.location.href = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`;
       return;
     }
-    if (pendingPickerApp && pendingPickerApp === appId) {
-      log('picker-button-click-after-defer', { appId });
-      setPendingPickerApp(null);
+
+    setOpening(true);
+    setPickerOpen(true);
+    setPickerStatus('Signing in to your account');
+
+    try {
+      const bootstrapRes = await fetch('/api/integrations/microsoft/picker/bootstrap', { cache: 'no-store' });
+      if (!bootstrapRes.ok) {
+        const payload = await bootstrapRes.json().catch(() => ({}));
+        throw new Error(typeof payload?.error === 'string' ? payload.error : 'Failed to initialize picker');
+      }
+      const bootstrap = await bootstrapRes.json() as PickerBootstrapResponse;
+      bootstrapRef.current = bootstrap;
+      setPickerStatus('Fetching files');
+
+      const frame = frameRef.current;
+      if (!frame) throw new Error('Picker surface is unavailable');
+      const win = frame.contentWindow;
+      if (!win) throw new Error('Picker host window unavailable');
+
+      const initializeListener = async (event: MessageEvent) => {
+        if (!bootstrapRef.current) return;
+        if (event.source !== frame.contentWindow) return;
+        const payload = event.data;
+        if (payload?.type !== 'initialize') return;
+        if (payload?.channelId !== bootstrapRef.current.channelId) return;
+
+        const port = event.ports?.[0];
+        if (!port) return;
+        portRef.current = port;
+        port.start();
+        port.postMessage({ type: 'activate' });
+
+        port.addEventListener('message', async (portEvent: MessageEvent) => {
+          const envelope = portEvent.data;
+          if (!envelope) return;
+
+          if (envelope.type === 'notification') {
+            if (envelope.data?.notification === 'page-loaded') {
+              setPickerStatus('Ready to select');
+            }
+            return;
+          }
+
+          if (envelope.type !== 'command') return;
+          const commandEnvelopeId = envelope.id;
+          const command = envelope.data || {};
+
+          port.postMessage({ type: 'acknowledge', id: commandEnvelopeId });
+
+          if (command.command === 'authenticate') {
+            try {
+              const tokenRes = await fetch('/api/integrations/microsoft/picker/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  command: command.command,
+                  resource: command.resource || null,
+                  type: command.type || null,
+                }),
+              });
+              const tokenPayload = await tokenRes.json().catch(() => ({}));
+              if (!tokenRes.ok || !tokenPayload?.token) {
+                throw new Error(typeof tokenPayload?.error === 'string' ? tokenPayload.error : 'Unable to obtain token');
+              }
+              port.postMessage({
+                type: 'result',
+                id: commandEnvelopeId,
+                data: { result: 'token', token: tokenPayload.token },
+              });
+            } catch (error: any) {
+              port.postMessage({
+                type: 'result',
+                id: commandEnvelopeId,
+                data: {
+                  result: 'error',
+                  error: {
+                    code: 'unableToObtainToken',
+                    message: String(error?.message || 'Unable to obtain token'),
+                  },
+                },
+              });
+            }
+            return;
+          }
+
+          if (command.command === 'pick') {
+            setPickerStatus('Importing selected file');
+            try {
+              const items = extractItems(command);
+              if (items.length === 0) throw new Error('No files were returned from OneDrive picker.');
+
+              const saveRes = await fetch('/api/integrations/context-sources', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  provider: 'microsoft',
+                  app: 'onedrive',
+                  items,
+                  replaceSelection: true,
+                }),
+              });
+              if (!saveRes.ok) {
+                const payload = await saveRes.json().catch(() => ({}));
+                throw new Error(typeof payload?.error === 'string' ? payload.error : 'Failed to save selected file');
+              }
+
+              await fetch('/api/integrations/ingestion-jobs/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ provider: 'microsoft', app: 'onedrive', maxJobs: 25 }),
+              }).catch(() => null);
+
+              window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft' } }));
+              setPickerStatus('Ready to use in Cautie');
+              toast({ title: 'File imported', description: `${items[0].name} added as context.` });
+
+              port.postMessage({ type: 'result', id: commandEnvelopeId, data: { result: 'success' } });
+              window.setTimeout(() => closePicker(), 180);
+            } catch (error: any) {
+              setPickerStatus('Import failed');
+              const message = String(error?.message || 'Failed to import selected file');
+              toast({ variant: 'destructive', title: 'Import failed', description: message });
+              port.postMessage({
+                type: 'result',
+                id: commandEnvelopeId,
+                data: { result: 'error', error: { code: 'import_failed', message } },
+              });
+            }
+            return;
+          }
+
+          if (command.command === 'close') {
+            port.postMessage({ type: 'result', id: commandEnvelopeId, data: { result: 'success' } });
+            closePicker();
+            return;
+          }
+
+          port.postMessage({
+            type: 'result',
+            id: commandEnvelopeId,
+            data: { result: 'error', error: { code: 'unsupportedCommand', message: 'Unsupported command' } },
+          });
+        });
+      };
+
+      window.addEventListener('message', initializeListener as unknown as EventListener);
+      setPickerStatus('Loading picker');
+
+      // Load picker via POST into iframe to keep the browsing experience embedded.
+      win.document.open();
+      win.document.write('<!doctype html><html><body style="margin:0"></body></html>');
+      win.document.close();
+      const form = win.document.createElement('form');
+      form.setAttribute('method', 'POST');
+      form.setAttribute('action', bootstrap.action);
+      const tokenInput = win.document.createElement('input');
+      tokenInput.setAttribute('type', 'hidden');
+      tokenInput.setAttribute('name', 'access_token');
+      tokenInput.setAttribute('value', bootstrap.accessToken);
+      form.appendChild(tokenInput);
+      win.document.body.appendChild(form);
+      form.submit();
+
+      window.setTimeout(() => {
+        window.removeEventListener('message', initializeListener as unknown as EventListener);
+      }, 45_000);
+    } catch (error: any) {
+      setPickerStatus('Import failed');
+      toast({
+        variant: 'destructive',
+        title: 'OneDrive picker failed',
+        description: String(error?.message || 'Unable to open picker'),
+      });
+      closePicker();
+    } finally {
+      setOpening(false);
     }
-    await openOfficialPicker(appId);
-  };
+  }, [closePicker, safeReturnTo, status.connected, toast]);
+
+  if (!ONEDRIVE_APP) return null;
 
   return (
-    <div className="flex items-center gap-3">
-      {APPS.map((app) => (
+    <div className="flex h-full flex-col gap-3">
+      <div className="flex items-center gap-3">
         <button
-          key={app.id}
           type="button"
-          onClick={() => void openPicker(app.id)}
-          disabled={openingOfficialPicker}
+          onClick={() => void openEmbeddedPicker()}
+          disabled={opening}
           className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-sidebar-border bg-sidebar p-0 transition-transform hover:scale-[1.04] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          title={app.label}
+          title="OneDrive"
         >
-          {openingOfficialPicker ? (
+          {opening ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
-            <img src={app.logo} alt={app.label} className="h-9 w-9 object-contain" />
+            <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-9 w-9 object-contain" />
           )}
         </button>
-      ))}
+
+        <div className="min-w-0">
+          <p className="text-sm font-medium">OneDrive in Cautie</p>
+          <p className="text-xs text-muted-foreground">
+            {status.connected
+              ? `Connected${status.account_email ? ` as ${status.account_email}` : ''}`
+              : 'Connect your Microsoft account to browse files'}
+          </p>
+        </div>
+      </div>
+
+      {pickerOpen && (
+        <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-xl border border-sidebar-border bg-background">
+          <div className="flex items-center justify-between border-b border-sidebar-border px-3 py-2">
+            <div className="flex items-center gap-2">
+              <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-4 w-4 object-contain" />
+              <span className="text-sm font-medium">OneDrive</span>
+              <span className="text-muted-foreground">|</span>
+              <span className="text-xs text-muted-foreground">Opened in Cautie</span>
+            </div>
+            <button
+              type="button"
+              onClick={closePicker}
+              className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Close picker"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex items-center gap-2 border-b border-sidebar-border px-3 py-1.5 text-xs text-muted-foreground">
+            {pickerStatus === 'Ready to use in Cautie' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Loader2 className={`h-3.5 w-3.5 ${pickerStatus === 'Ready to select' || pickerStatus === 'Import failed' ? 'hidden' : 'animate-spin'}`} />}
+            <span>{pickerStatus}</span>
+          </div>
+          <div className="min-h-0 flex-1 bg-white">
+            <iframe
+              ref={frameRef}
+              title="Embedded OneDrive picker"
+              className="h-full w-full border-0"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

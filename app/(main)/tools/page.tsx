@@ -303,7 +303,7 @@ export default function ToolsPage() {
                     <Button asChild variant="outline" size="sm" className="h-8 text-xs">
                       <Link prefetch={false} href="/settings/integrations?returnTo=%2Ftools">
                         <Link2 className="mr-1 h-3.5 w-3.5" />
-                        Connect Word/PowerPoint
+                        Connect OneDrive
                       </Link>
                     </Button>
                   ) : (

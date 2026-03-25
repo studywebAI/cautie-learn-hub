@@ -22,6 +22,9 @@ const ItemSchema = z.object({
   name: z.string().min(1),
   mimeType: z.string().optional(),
   webUrl: z.string().optional(),
+  driveId: z.string().optional(),
+  parentId: z.string().optional(),
+  downloadUrl: z.string().optional(),
 });
 
 const PostBodySchema = z.object({
@@ -128,6 +131,9 @@ export async function POST(request: NextRequest) {
         isSelected: true,
         metadata: {
           imported_at: new Date().toISOString(),
+          drive_id: item.driveId || null,
+          parent_id: item.parentId || null,
+          download_url: item.downloadUrl || null,
         },
       });
       sourceIds.push(source.id);

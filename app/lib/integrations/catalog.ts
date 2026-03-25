@@ -25,7 +25,7 @@ export const INTEGRATION_APPS: IntegrationAppConfig[] = [
     label: 'Word',
     description: 'Read-only .doc/.docx access',
     logoPath: '/integrations/microsoft-word.svg',
-    enabled: true,
+    enabled: false,
   },
   {
     id: 'powerpoint',
@@ -33,7 +33,7 @@ export const INTEGRATION_APPS: IntegrationAppConfig[] = [
     label: 'PowerPoint',
     description: 'Read-only .ppt/.pptx access',
     logoPath: '/integrations/microsoft-powerpoint.svg',
-    enabled: true,
+    enabled: false,
   },
   {
     id: 'excel',

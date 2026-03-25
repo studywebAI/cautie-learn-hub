@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       try {
         const extractedText = await adapter.extractContent({
           accessToken: tokenState.accessToken,
-          app: source.app as 'word' | 'powerpoint' | 'excel',
+          app: source.app as 'word' | 'powerpoint' | 'excel' | 'onedrive',
           fileId: source.provider_item_id,
         });
         const nextStatus = extractedText.trim().length > 0 ? 'ready' : 'empty';
