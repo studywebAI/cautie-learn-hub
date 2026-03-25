@@ -866,12 +866,12 @@ export function AppSidebar() {
     return (
       <>
         {/* Mini sidebar - always visible on mobile */}
-        <div className={cn("fixed left-0 top-0 h-full w-14 bg-sidebar z-40 flex flex-col py-3 transition-opacity", openMobile && "pointer-events-none opacity-0")}>
+        <div className={cn("fixed left-0 top-0 z-40 flex h-full w-12 flex-col bg-sidebar py-2 transition-opacity", openMobile && "pointer-events-none opacity-0")}>
           {/* Hamburger button to open full drawer */}
           <Button
             variant="ghost"
             size="icon"
-            className="mx-auto mb-4 h-10 w-10"
+            className="mx-auto mb-2 h-8 w-8"
             onClick={() => setOpenMobile(true)}
             aria-label="Open menu"
           >
@@ -879,7 +879,7 @@ export function AppSidebar() {
           </Button>
 
           {/* Mini icon navigation */}
-          <nav className="flex-1 flex flex-col gap-1 px-2">
+          <nav className="flex-1 flex flex-col gap-1 px-1.5">
             {visibleMainItems.map((item) => (
               <div key={item.href} className="relative">
                 {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
@@ -891,28 +891,28 @@ export function AppSidebar() {
                       onMouseLeave={scheduleClose}
                       onClick={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
                       className={cn(
-                        "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
+                        "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                         isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)
                           ? "bg-[hsl(var(--sidebar-accent)/1)] text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                           : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                       )}
                       title={item.label}
                     >
-                      <item.icon className="h-5 w-5" />
+                      <item.icon className="h-4 w-4" />
                     </button>
                   </>
                 ) : (
                   <Link
                     href={item.href}
                     className={cn(
-                      "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
+                      "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                       isMenuItemActive(item.href)
                         ? "bg-[hsl(var(--sidebar-accent)/1)] text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                         : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                     )}
                     title={item.label}
                   >
-                    <item.icon className="h-5 w-5" />
+                    <item.icon className="h-4 w-4" />
                   </Link>
                 )}
               </div>
@@ -923,33 +923,33 @@ export function AppSidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
+                  "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                   isMenuItemActive(item.href)
                     ? "bg-[hsl(var(--sidebar-accent)/1)] text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                     : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                 )}
                 title={item.label}
               >
-                <item.icon className="h-5 w-5" />
+                <item.icon className="h-4 w-4" />
               </Link>
             ))}
           </nav>
 
           {/* Upgrade at bottom */}
-          <div className="px-2 mt-auto">
+          <div className="mt-auto px-1.5">
             <Link
               href="/upgrade"
-              className="flex items-center justify-center h-10 w-10 rounded-lg transition-colors text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-sidebar-foreground transition-colors hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
               title="Upgrade"
             >
-              <ArrowUpRight className="h-5 w-5" />
+              <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
 
         {/* Full drawer sidebar (when hamburger is clicked) */}
-        <Sidebar className="w-[min(22rem,calc(100vw-3.5rem))]">
-          <SidebarContent className="px-3.5 py-3.5 flex-1">
+        <Sidebar className="w-[min(17rem,calc(100vw-3rem))]">
+          <SidebarContent className="flex-1 px-2.5 py-2.5">
             {renderTeacherClassSwitcher()}
             {renderStudentLaneToggle()}
             {visibleMainItems.length > 0 && (
@@ -1014,7 +1014,7 @@ export function AppSidebar() {
               </>
             )}
           </SidebarContent>
-          <SidebarFooter className="px-3.5 pt-2.5 pb-3.5 flex flex-col gap-2">
+          <SidebarFooter className="flex flex-col gap-2 px-2.5 pb-2.5 pt-2">
             <RecentsSidebar />
             <SidebarProfile />
           </SidebarFooter>
