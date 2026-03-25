@@ -161,34 +161,71 @@ function detectKind(name?: string, mimeType?: string): MicrosoftFileKind | null 
 }
 
 export async function listMicrosoftFiles(input: { accessToken: string; kind: MicrosoftFileKind; query?: string }) {
-  const endpointUrl = input.query?.trim()
-    ? new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/root/search(q='${input.query.trim().replace(/'/g, "''")}')`)
-    : input.kind === 'onedrive'
-      ? new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/root/children`)
-      : new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/recent`);
-  endpointUrl.searchParams.set('$top', '40');
+  const source = (input as any).source as 'all' | 'files' | 'recent' | undefined;
+  const query = input.query?.trim();
+  const rootUrl = new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/root/children`);
+  rootUrl.searchParams.set('$top', '80');
+  const recentUrl = new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/recent`);
+  recentUrl.searchParams.set('$top', '80');
+  const searchUrl = query
+    ? new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/root/search(q='${query.replace(/'/g, "''")}')`)
+    : null;
+  if (searchUrl) searchUrl.searchParams.set('$top', '80');
 
-  const response = await fetch(endpointUrl.toString(), {
-    headers: { Authorization: `Bearer ${input.accessToken}` },
-    cache: 'no-store',
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const message = payload?.error?.message || 'Failed to list Microsoft files';
+  const fetchJson = async (url: URL) => {
+    const response = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${input.accessToken}` },
+      cache: 'no-store',
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = payload?.error?.message || 'Failed to list Microsoft files';
+      throw new Error(message);
+    }
+    return Array.isArray(payload?.value) ? payload.value : [];
+  };
+
+  let values: any[] = [];
+  try {
+    if (searchUrl) {
+      values = await fetchJson(searchUrl);
+    } else if (input.kind !== 'onedrive') {
+      values = await fetchJson(recentUrl);
+    } else {
+      const effectiveSource = source || 'all';
+      if (effectiveSource === 'files') {
+        values = await fetchJson(rootUrl);
+      } else if (effectiveSource === 'recent') {
+        values = await fetchJson(recentUrl);
+      } else {
+        const [rootValues, recentValues] = await Promise.all([fetchJson(rootUrl), fetchJson(recentUrl)]);
+        values = [...rootValues, ...recentValues];
+      }
+    }
+  } catch (error: any) {
     console.error('[microsoft-graph] list-files-failed', {
       kind: input.kind,
       query: input.query || '',
-      status: response.status,
-      message,
+      source: source || null,
+      message: String(error?.message || 'Failed to list Microsoft files'),
     });
-    throw new Error(message);
+    throw error;
   }
 
-  const values = Array.isArray(payload?.value) ? payload.value : [];
+  const dedup = new Map<string, any>();
+  for (const value of values) {
+    const id = String(value?.id || '').trim();
+    if (!id || dedup.has(id)) continue;
+    dedup.set(id, value);
+  }
+  values = Array.from(dedup.values());
+
   const items: MicrosoftFileItem[] = values
     .map((item: any) => {
       const detectedKind = detectKind(item?.name, item?.file?.mimeType);
       if (input.kind !== 'onedrive' && !detectedKind) return null;
+      const isFolder = Boolean(item?.folder || item?.remoteItem?.folder);
+      const isFile = Boolean(item?.file || item?.remoteItem?.file || (!isFolder && String(item?.name || '').includes('.')));
       return {
         id: String(item.id),
         name: String(item.name || 'Untitled'),
@@ -197,8 +234,8 @@ export async function listMicrosoftFiles(input: { accessToken: string; kind: Mic
         lastModifiedDateTime: item.lastModifiedDateTime ? String(item.lastModifiedDateTime) : undefined,
         kind: input.kind === 'onedrive' ? 'onedrive' : (detectedKind as MicrosoftFileKind),
         mimeType: item?.file?.mimeType ? String(item.file.mimeType) : undefined,
-        isFolder: Boolean(item?.folder || item?.remoteItem?.folder || item?.package),
-        isFile: Boolean(item?.file || item?.remoteItem?.file),
+        isFolder,
+        isFile,
       } as MicrosoftFileItem;
     })
     .filter(Boolean) as MicrosoftFileItem[];

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { CheckCircle2, Loader2, X } from 'lucide-react';
+import { CheckCircle2, Clock3, Folder, Layers, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ENABLED_INTEGRATION_APPS } from '@/lib/integrations/catalog';
 
@@ -156,6 +156,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   const [fallbackFiles, setFallbackFiles] = useState<GraphListItem[]>([]);
   const [fallbackLoading, setFallbackLoading] = useState(false);
   const [selectedFallbackId, setSelectedFallbackId] = useState<string | null>(null);
+  const [fallbackSource, setFallbackSource] = useState<'all' | 'files' | 'recent'>('all');
 
   const currentReturnTo = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -177,6 +178,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     setFallbackMode('none');
     setFallbackFiles([]);
     setSelectedFallbackId(null);
+    setFallbackSource('all');
     if (portRef.current) {
       try {
         portRef.current.close();
@@ -187,10 +189,10 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     }
   }, []);
 
-  const loadFallbackFiles = useCallback(async () => {
+  const loadFallbackFiles = useCallback(async (source: 'all' | 'files' | 'recent' = 'all') => {
     setFallbackLoading(true);
     try {
-      const response = await fetch('/api/integrations/microsoft/files?kind=onedrive', { cache: 'no-store' });
+      const response = await fetch(`/api/integrations/microsoft/files?kind=onedrive&source=${source}`, { cache: 'no-store' });
       const json = await response.json().catch(() => ({}));
       const items = Array.isArray(json?.items) ? json.items : [];
       const mapped: GraphListItem[] = items
@@ -206,6 +208,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         }))
         .filter((item: GraphListItem) => Boolean(item.id));
       setFallbackFiles(mapped);
+      setSelectedFallbackId(null);
     } finally {
       setFallbackLoading(false);
     }
@@ -346,7 +349,8 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       if (bootstrap.fallbackMode === 'graph') {
         setFallbackMode('graph');
         setPickerStatus('Ready to select');
-        await loadFallbackFiles();
+        setFallbackSource('all');
+        await loadFallbackFiles('all');
         return;
       }
       setFallbackMode('none');
@@ -570,7 +574,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         </button>
 
         <div className="min-w-0">
-          <p className="text-sm font-medium">OneDrive in Cautie</p>
+          <p className="text-sm font-medium">OneDrive X Cautie</p>
           <p className="text-xs text-muted-foreground">
             {status.connected
               ? `Connected${status.account_email ? ` as ${status.account_email}` : ''}`
@@ -595,7 +599,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
               <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-4 w-4 object-contain" />
               <span className="text-sm font-medium">OneDrive</span>
               <span className="text-muted-foreground">|</span>
-              <span className="text-xs text-muted-foreground">Opened in Cautie</span>
+              <span className="text-xs text-muted-foreground">OneDrive X Cautie</span>
             </div>
             <div className="flex items-center gap-2">
               {status.account_email ? (
@@ -620,10 +624,12 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
               </button>
             </div>
           </div>
-          <div className="flex items-center gap-2 border-b border-[#e1dfdd] bg-white px-3 py-1.5 text-xs text-muted-foreground">
-            {pickerStatus === 'Ready to use in Cautie' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Loader2 className={`h-3.5 w-3.5 ${pickerStatus === 'Ready to select' || pickerStatus === 'Import failed' ? 'hidden' : 'animate-spin'}`} />}
-            <span>{pickerStatus}</span>
-          </div>
+          {pickerStatus !== 'Ready to select' && (
+            <div className="flex items-center gap-2 border-b border-[#e1dfdd] bg-white px-3 py-1.5 text-xs text-muted-foreground">
+              {pickerStatus === 'Ready to use in Cautie' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Loader2 className={`h-3.5 w-3.5 ${pickerStatus === 'Import failed' ? 'hidden' : 'animate-spin'}`} />}
+              <span>{pickerStatus}</span>
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-1 border-b border-[#e1dfdd] bg-white px-3 py-1.5 text-xs">
             <span className="mr-1 text-muted-foreground">Filter:</span>
             {([
@@ -657,52 +663,78 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
             {fallbackMode === 'graph' ? (
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b border-[#e1dfdd] px-3 py-2 text-xs text-muted-foreground">
-                  <span>OneDrive files</span>
+                  <span />
                   <button
                     type="button"
-                    onClick={() => void loadFallbackFiles()}
+                    onClick={() => void loadFallbackFiles(fallbackSource)}
                     className="rounded border border-[#d1d1d1] px-2 py-0.5"
                   >
                     Refresh
                   </button>
                 </div>
-                <div className="min-h-0 flex-1 overflow-auto">
-                  {fallbackLoading ? (
-                    <div className="p-4 text-sm text-muted-foreground">Loading files...</div>
-                  ) : (
-                    <table className="w-full text-sm">
-                      <thead className="sticky top-0 bg-white text-left text-xs text-muted-foreground">
-                        <tr>
-                          <th className="px-3 py-2">Name</th>
-                          <th className="px-3 py-2">Modified</th>
-                          <th className="px-3 py-2">Type</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {fallbackFiles
-                          .filter((file) => file.isFile === true && !file.isFolder)
-                          .filter((file) => matchesPickerFilter({
-                            id: file.id,
-                            name: file.name,
-                            mimeType: file.mimeType,
-                            webUrl: file.webUrl,
-                          }, activeFilter))
-                          .map((file) => (
-                            <tr
-                              key={file.id}
-                              onClick={() => setSelectedFallbackId(file.id)}
-                              className={`cursor-pointer border-t border-[#f1f1f1] ${
-                                selectedFallbackId === file.id ? 'bg-[#e8f2fc]' : 'hover:bg-[#f7f7f7]'
-                              }`}
-                            >
-                              <td className="px-3 py-2">{file.name}</td>
-                              <td className="px-3 py-2">{file.lastModifiedDateTime ? new Date(file.lastModifiedDateTime).toLocaleString() : '-'}</td>
-                              <td className="px-3 py-2">{fallbackTypeLabel(file)}</td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  )}
+                <div className="min-h-0 flex flex-1">
+                  <aside className="flex w-14 flex-col items-center gap-1 border-r border-[#e1dfdd] bg-[#fbfbfb] py-2">
+                    {([
+                      ['all', 'All', Layers],
+                      ['files', 'Files', Folder],
+                      ['recent', 'Recent', Clock3],
+                    ] as Array<['all' | 'files' | 'recent', string, any]>).map(([value, label, Icon]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        title={label}
+                        onClick={() => {
+                          setFallbackSource(value);
+                          void loadFallbackFiles(value);
+                        }}
+                        className={`inline-flex h-9 w-9 items-center justify-center rounded-md border ${
+                          fallbackSource === value
+                            ? 'border-[#0f6cbd] bg-[#e8f2fc] text-[#0f6cbd]'
+                            : 'border-transparent text-[#605e5c] hover:bg-[#f3f2f1]'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </button>
+                    ))}
+                  </aside>
+                  <div className="min-h-0 flex-1 overflow-auto">
+                    {fallbackLoading ? (
+                      <div className="p-4 text-sm text-muted-foreground">Loading files...</div>
+                    ) : (
+                      <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-white text-left text-xs text-muted-foreground">
+                          <tr>
+                            <th className="px-3 py-2">Name</th>
+                            <th className="px-3 py-2">Modified</th>
+                            <th className="px-3 py-2">Type</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {fallbackFiles
+                            .filter((file) => file.isFile === true && !file.isFolder)
+                            .filter((file) => matchesPickerFilter({
+                              id: file.id,
+                              name: file.name,
+                              mimeType: file.mimeType,
+                              webUrl: file.webUrl,
+                            }, activeFilter))
+                            .map((file) => (
+                              <tr
+                                key={file.id}
+                                onClick={() => setSelectedFallbackId(file.id)}
+                                className={`cursor-pointer border-t border-[#f1f1f1] ${
+                                  selectedFallbackId === file.id ? 'bg-[#e8f2fc]' : 'hover:bg-[#f7f7f7]'
+                                }`}
+                              >
+                                <td className="px-3 py-2">{file.name}</td>
+                                <td className="px-3 py-2">{file.lastModifiedDateTime ? new Date(file.lastModifiedDateTime).toLocaleString() : '-'}</td>
+                                <td className="px-3 py-2">{fallbackTypeLabel(file)}</td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center justify-end gap-2 border-t border-[#e1dfdd] px-3 py-2">
                   <button

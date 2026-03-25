@@ -39,6 +39,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Query param 'kind' must be a supported Microsoft app" }, { status: 400 });
     }
     const query = request.nextUrl.searchParams.get('q') || '';
+    const sourceParam = (request.nextUrl.searchParams.get('source') || 'all').toLowerCase();
+    const source = sourceParam === 'files' || sourceParam === 'recent' ? sourceParam : 'all';
 
     const tokenState = await getValidMicrosoftAccessToken(supabase, user.id);
     if (!tokenState) {
@@ -50,6 +52,7 @@ export async function GET(request: NextRequest) {
       accessToken: tokenState.accessToken,
       kind: kind as MicrosoftFileKind,
       query,
+      ...(kind === 'onedrive' ? { source } : {}),
     });
 
     console.info('[microsoft-files] success', {
@@ -57,6 +60,7 @@ export async function GET(request: NextRequest) {
       userId: user.id,
       kind,
       query,
+      source,
       count: items.length,
     });
 
