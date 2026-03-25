@@ -47,6 +47,7 @@ type StudysetAgendaItem = {
     title: string;
     description?: string | null;
     estimated_minutes: number;
+    completed?: boolean;
   }>;
 };
 
@@ -179,6 +180,10 @@ function AgendaPageContent() {
   const isStudent = role === 'student';
   const isTeacher = role === 'teacher';
   const classIdFromQuery = searchParams.get('classId') || '';
+  const agendaDebugId = useMemo(
+    () => `ag-${Math.random().toString(36).slice(2, 9)}-${Date.now().toString(36)}`,
+    []
+  );
 
   useEffect(() => {
     if (!isTeacher) return;
@@ -225,18 +230,27 @@ function AgendaPageContent() {
 
     const loadSchedule = async () => {
       try {
+        console.info('[AGENDA] schedule load start', { agendaDebugId, isTeacher, isStudent, selectedClassId });
         if (isTeacher) {
           if (!selectedClassId) {
             setScheduleSlots([]);
+            console.info('[AGENDA] schedule skipped (teacher without selected class)', { agendaDebugId });
             return;
           }
           const response = await fetch(`/api/classes/${selectedClassId}/school-schedule`, { signal: controller.signal });
           if (!response.ok) {
             setScheduleSlots([]);
+            console.error('[AGENDA] schedule load failed', { agendaDebugId, status: response.status, scope: 'teacher' });
             return;
           }
           const data = await response.json();
           setScheduleSlots((data?.enabled ? data?.slots : []) || []);
+          console.info('[AGENDA] schedule load success', {
+            agendaDebugId,
+            scope: 'teacher',
+            enabled: Boolean(data?.enabled),
+            slots: Array.isArray(data?.slots) ? data.slots.length : 0,
+          });
           return;
         }
 
@@ -244,23 +258,31 @@ function AgendaPageContent() {
           const response = await fetch('/api/school-schedule', { signal: controller.signal });
           if (!response.ok) {
             setScheduleSlots([]);
+            console.error('[AGENDA] schedule load failed', { agendaDebugId, status: response.status, scope: 'student' });
             return;
           }
           const data = await response.json();
           setScheduleSlots(data?.slots || []);
+          console.info('[AGENDA] schedule load success', {
+            agendaDebugId,
+            scope: 'student',
+            slots: Array.isArray(data?.slots) ? data.slots.length : 0,
+          });
           return;
         }
 
         setScheduleSlots([]);
+        console.info('[AGENDA] schedule load skipped (role unsupported)', { agendaDebugId });
       } catch (error: any) {
         if (error?.name === 'AbortError') return;
         setScheduleSlots([]);
+        console.error('[AGENDA] schedule load exception', { agendaDebugId, message: error?.message || String(error) });
       }
     };
 
     void loadSchedule();
     return () => controller.abort();
-  }, [isLoading, isTeacher, isStudent, selectedClassId]);
+  }, [agendaDebugId, isLoading, isTeacher, isStudent, selectedClassId]);
 
   useEffect(() => {
     if (isLoading) {
@@ -274,22 +296,31 @@ function AgendaPageContent() {
 
     const loadStudysetAgenda = async () => {
       try {
+        console.info('[AGENDA] studyset agenda load start', { agendaDebugId, from, to });
         const response = await fetch(`/api/studysets/agenda?from=${from}&to=${to}`, { signal: controller.signal });
         if (!response.ok) {
           setStudysetAgendaItems([]);
+          console.error('[AGENDA] studyset agenda load failed', { agendaDebugId, status: response.status, from, to });
           return;
         }
         const data = await response.json();
         setStudysetAgendaItems(data?.items || []);
+        console.info('[AGENDA] studyset agenda load success', {
+          agendaDebugId,
+          from,
+          to,
+          items: Array.isArray(data?.items) ? data.items.length : 0,
+        });
       } catch (error: any) {
         if (error?.name === 'AbortError') return;
         setStudysetAgendaItems([]);
+        console.error('[AGENDA] studyset agenda load exception', { agendaDebugId, message: error?.message || String(error) });
       }
     };
 
     void loadStudysetAgenda();
     return () => controller.abort();
-  }, [isLoading]);
+  }, [agendaDebugId, isLoading]);
 
   useEffect(() => {
     if (!isTeacher || isLoading || overlayClassIds.length === 0) {
@@ -310,15 +341,21 @@ function AgendaPageContent() {
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Failed to load teacher agenda');
         setTeacherAgendaItems(data?.items || []);
+        console.info('[AGENDA] teacher overlay load success', {
+          agendaDebugId,
+          classCount: overlayClassIds.length,
+          items: Array.isArray(data?.items) ? data.items.length : 0,
+        });
       } catch (error: any) {
         if (error?.name === 'AbortError') return;
         setTeacherAgendaItems([]);
+        console.error('[AGENDA] teacher overlay load exception', { agendaDebugId, message: error?.message || String(error) });
       }
     };
 
     void load();
     return () => controller.abort();
-  }, [isTeacher, isLoading, overlayClassIds]);
+  }, [agendaDebugId, isTeacher, isLoading, overlayClassIds]);
 
   useEffect(() => {
     if (!isStudent || isLoading) {
@@ -336,15 +373,22 @@ function AgendaPageContent() {
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Failed to load agenda feed');
         setStudentAgendaItems(data?.items || []);
+        console.info('[AGENDA] student feed load success', {
+          agendaDebugId,
+          from,
+          to,
+          items: Array.isArray(data?.items) ? data.items.length : 0,
+        });
       } catch (error: any) {
         if (error?.name === 'AbortError') return;
         setStudentAgendaItems([]);
+        console.error('[AGENDA] student feed load exception', { agendaDebugId, message: error?.message || String(error) });
       }
     };
 
     void load();
     return () => controller.abort();
-  }, [isStudent, isLoading]);
+  }, [agendaDebugId, isStudent, isLoading]);
 
   const events: CalendarEvent[] = useMemo(() => {
     if (isLoading) return [];
@@ -423,7 +467,16 @@ function AgendaPageContent() {
       const agendaEvents = teacherAgendaItems
         .filter((item) => overlaySet.has(item.class_id))
         .map(agendaApiItemToEvent);
-      return [...agendaEvents, ...scheduleEvents, ...studysetEvents];
+      const merged = [...agendaEvents, ...scheduleEvents, ...studysetEvents];
+      console.info('[AGENDA] events computed', {
+        agendaDebugId,
+        role: 'teacher',
+        agendaEvents: agendaEvents.length,
+        scheduleEvents: scheduleEvents.length,
+        studysetEvents: studysetEvents.length,
+        merged: merged.length,
+      });
+      return merged;
     }
 
     const personalEvents = (personalTasks || []).map((task: PersonalTask) => ({
@@ -439,8 +492,18 @@ function AgendaPageContent() {
     }));
 
     const feedEvents = studentAgendaItems.map(agendaApiItemToEvent);
-    return [...feedEvents, ...personalEvents, ...scheduleEvents, ...studysetEvents];
-  }, [isLoading, isTeacher, isStudent, overlayClassIds, teacherAgendaItems, studentAgendaItems, personalTasks, scheduleSlots, studysetAgendaItems]);
+    const merged = [...feedEvents, ...personalEvents, ...scheduleEvents, ...studysetEvents];
+    console.info('[AGENDA] events computed', {
+      agendaDebugId,
+      role: 'student-or-other',
+      feedEvents: feedEvents.length,
+      personalEvents: personalEvents.length,
+      scheduleEvents: scheduleEvents.length,
+      studysetEvents: studysetEvents.length,
+      merged: merged.length,
+    });
+    return merged;
+  }, [agendaDebugId, isLoading, isTeacher, isStudent, overlayClassIds, teacherAgendaItems, studentAgendaItems, personalTasks, scheduleSlots, studysetAgendaItems]);
 
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -507,6 +570,14 @@ function AgendaPageContent() {
   };
 
   const handleEventClick = (event: CalendarEvent) => {
+    console.info('[AGENDA] event clicked', {
+      agendaDebugId,
+      eventId: event.id,
+      type: event.type,
+      itemType: (event as any).item_type || null,
+      href: event.href || null,
+      title: event.title,
+    });
     if (event.type === 'assignment' || event.type === 'agenda_item') {
       setSelectedEvent(event);
       return;

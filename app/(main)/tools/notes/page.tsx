@@ -190,48 +190,6 @@ function NotesPageContent() {
   }, [savedRun]);
 
   useEffect(() => {
-    if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
-    launchHandledRef.current = true;
-
-    const runLaunch = async () => {
-      try {
-        const response = await fetch(`/api/studysets/plan-tasks/${taskId}/launch`);
-        if (!response.ok) throw new Error('Could not load studyset task preset');
-        const payload = await response.json();
-        const source = String(payload?.launch?.sourceText || '').trim();
-        const preset = payload?.launch?.notesPreset || {};
-        const title = String(payload?.launch?.artifactTitle || '').trim();
-
-        if (source) setSourceText(source);
-        if (preset?.length) setLength(preset.length as 'short' | 'medium' | 'long');
-        if (preset?.style) setStyle(String(preset.style));
-        if (preset?.audience) setAudience(String(preset.audience));
-        if (title) setCustomTitle(title);
-
-        if (source) {
-          await runNotesGeneration(source, {
-            background: false,
-            preset: {
-              length: preset?.length as 'short' | 'medium' | 'long' | undefined,
-              style: preset?.style ? String(preset.style) : undefined,
-              audience: preset?.audience ? String(preset.audience) : undefined,
-              title: title || undefined,
-            },
-          });
-        }
-      } catch (error: any) {
-        toast({
-          variant: 'destructive',
-          title: 'Could not start studyset task',
-          description: error?.message || 'Please refresh and try again.',
-        });
-      }
-    };
-
-    void runLaunch();
-  }, [launchRequested, runNotesGeneration, studysetId, taskId, toast]);
-
-  useEffect(() => {
     lectureFocusRef.current = lectureFocus;
   }, [lectureFocus]);
 
@@ -321,6 +279,68 @@ function NotesPageContent() {
       else setIsLoading(false);
     }
   }, [audience, customTitle, imageDataUri, length, reportStudysetPerformance, style, t.notes.generatingTitle, toast]);
+
+  useEffect(() => {
+    if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
+    launchHandledRef.current = true;
+
+    console.info('[STUDYSET_LAUNCH][NOTES] launch requested', {
+      taskId,
+      studysetId,
+      launchRequested,
+    });
+
+    const runLaunch = async () => {
+      try {
+        const response = await fetch(`/api/studysets/plan-tasks/${taskId}/launch`);
+        if (!response.ok) throw new Error(`Could not load studyset task preset (${response.status})`);
+        const payload = await response.json();
+        const source = String(payload?.launch?.sourceText || '').trim();
+        const preset = payload?.launch?.notesPreset || {};
+        const title = String(payload?.launch?.artifactTitle || '').trim();
+
+        console.info('[STUDYSET_LAUNCH][NOTES] launch payload loaded', {
+          taskId,
+          studysetId,
+          sourceLength: source.length,
+          preset,
+          hasTitle: Boolean(title),
+        });
+
+        if (source) setSourceText(source);
+        if (preset?.length) setLength(preset.length as 'short' | 'medium' | 'long');
+        if (preset?.style) setStyle(String(preset.style));
+        if (preset?.audience) setAudience(String(preset.audience));
+        if (title) setCustomTitle(title);
+
+        if (source) {
+          await runNotesGeneration(source, {
+            background: false,
+            preset: {
+              length: preset?.length as 'short' | 'medium' | 'long' | undefined,
+              style: preset?.style ? String(preset.style) : undefined,
+              audience: preset?.audience ? String(preset.audience) : undefined,
+              title: title || undefined,
+            },
+          });
+          console.info('[STUDYSET_LAUNCH][NOTES] generation completed', { taskId, studysetId });
+        }
+      } catch (error: any) {
+        console.error('[STUDYSET_LAUNCH][NOTES] launch failed', {
+          taskId,
+          studysetId,
+          message: error?.message || String(error),
+        });
+        toast({
+          variant: 'destructive',
+          title: 'Could not start studyset task',
+          description: error?.message || 'Please refresh and try again.',
+        });
+      }
+    };
+
+    void runLaunch();
+  }, [launchRequested, runNotesGeneration, studysetId, taskId, toast]);
 
   const stopListening = useCallback(async (options?: { finalize?: boolean }) => {
     keepListeningRef.current = false;

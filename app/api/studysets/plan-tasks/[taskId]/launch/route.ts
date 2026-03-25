@@ -149,13 +149,18 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ taskId: string }> }
 ) {
+  const requestId = `studyset-launch-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
   try {
     const { taskId } = await params
+    console.info('[studyset-launch] start', { requestId, taskId })
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (userError || !user) {
+      console.warn('[studyset-launch] unauthorized', { requestId, taskId, message: userError?.message || null })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const { data: taskRow, error: taskError } = await (supabase as any)
       .from('studyset_plan_tasks')
@@ -183,12 +188,21 @@ export async function GET(
       .eq('studyset_plan_days.studysets.user_id', user.id)
       .maybeSingle()
 
-    if (taskError) return NextResponse.json({ error: taskError.message }, { status: 500 })
-    if (!taskRow) return NextResponse.json({ error: 'Task not found' }, { status: 404 })
+    if (taskError) {
+      console.error('[studyset-launch] task query failed', { requestId, taskId, userId: user.id, message: taskError.message })
+      return NextResponse.json({ error: taskError.message }, { status: 500 })
+    }
+    if (!taskRow) {
+      console.warn('[studyset-launch] task not found', { requestId, taskId, userId: user.id })
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 })
+    }
 
     const day = taskRow.studyset_plan_days
     const studyset = day?.studysets
-    if (!day || !studyset) return NextResponse.json({ error: 'Task relation invalid' }, { status: 500 })
+    if (!day || !studyset) {
+      console.error('[studyset-launch] invalid task relation', { requestId, taskId, userId: user.id })
+      return NextResponse.json({ error: 'Task relation invalid' }, { status: 500 })
+    }
 
     const tool = inferTool(String(taskRow.task_type || 'notes'))
     const taskTitle = String(taskRow.title || 'Study task')
@@ -231,6 +245,15 @@ export async function GET(
       // Normalized adaptive tables may not be migrated yet; JSON fallback already parsed.
     }
     const sourceText = buildSourceText(studyset.name, taskTitle, taskDescription, parsedBundle)
+    console.info('[studyset-launch] payload built', {
+      requestId,
+      taskId,
+      userId: user.id,
+      tool,
+      sourceLength: sourceText.length,
+      studysetId: studyset.id,
+      dayNumber: Number(day.day_number || 1),
+    })
 
     const baseResponse = {
       task: {
@@ -260,34 +283,40 @@ export async function GET(
     }
 
     if (tool === 'flashcards') {
-      return NextResponse.json({
+      const response = {
         ...baseResponse,
         launch: {
           ...baseResponse.launch,
           flashcardsPreset: buildFlashcardsPreset(taskTitle, estimatedMinutes, parsedBundle),
         },
-      })
+      }
+      console.info('[studyset-launch] success', { requestId, taskId, tool: 'flashcards' })
+      return NextResponse.json(response)
     }
 
     if (tool === 'quiz') {
-      return NextResponse.json({
+      const response = {
         ...baseResponse,
         launch: {
           ...baseResponse.launch,
           quizPreset: buildQuizPreset(taskTitle, taskDescription, estimatedMinutes, parsedBundle),
         },
-      })
+      }
+      console.info('[studyset-launch] success', { requestId, taskId, tool: 'quiz' })
+      return NextResponse.json(response)
     }
 
-    return NextResponse.json({
+    const response = {
       ...baseResponse,
       launch: {
         ...baseResponse.launch,
         notesPreset: buildNotesPreset(taskTitle, estimatedMinutes, parsedBundle),
       },
-    })
+    }
+    console.info('[studyset-launch] success', { requestId, taskId, tool: 'notes' })
+    return NextResponse.json(response)
   } catch (error) {
-    console.error('studyset launch GET failed', error)
+    console.error('[studyset-launch] exception', { requestId, message: (error as any)?.message || 'Internal server error' })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

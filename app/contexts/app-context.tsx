@@ -242,24 +242,35 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }, [role]);
 
   const fetchNavigationBundle = useCallback(async () => {
+    const preloadRequestId = `nav-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const params = new URLSearchParams();
     if (role === 'teacher' && typeof window !== 'undefined') {
       const activeClassId = window.localStorage.getItem('studyweb-last-class-id');
       if (activeClassId) params.set('classId', activeClassId);
     }
     const url = params.size > 0 ? `/api/preload/navigation?${params.toString()}` : '/api/preload/navigation';
+    console.info('[PRELOAD][NAV] request start', { preloadRequestId, role, url });
     const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
     if (!res.ok) {
       if (res.status === 401) {
         setClasses([]);
         setSubjects([]);
+        console.warn('[PRELOAD][NAV] unauthorized', { preloadRequestId, role, status: res.status });
         return;
       }
+      const body = await res.text().catch(() => '');
+      console.error('[PRELOAD][NAV] failed', { preloadRequestId, role, status: res.status, body });
       throw new Error(`navigation preload failed (${res.status})`);
     }
     const data = await res.json().catch(() => ({}));
     setClasses(Array.isArray(data?.classes) ? data.classes : []);
     setSubjects(Array.isArray(data?.subjects) ? data.subjects : []);
+    console.info('[PRELOAD][NAV] success', {
+      preloadRequestId,
+      role,
+      classCount: Array.isArray(data?.classes) ? data.classes.length : 0,
+      subjectCount: Array.isArray(data?.subjects) ? data.subjects.length : 0,
+    });
   }, [role]);
 
   const warmResource = useCallback(async (key: PreloadResourceKey) => {

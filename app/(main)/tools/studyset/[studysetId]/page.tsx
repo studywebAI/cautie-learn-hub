@@ -318,7 +318,20 @@ export default function StudysetDetailPage() {
                               )}
                             </div>
                             <Button asChild size="sm" variant="outline">
-                              <Link href={href}>Start now</Link>
+                              <Link
+                                href={href}
+                                onClick={() => {
+                                  console.info('[STUDYSET_TASK] start now clicked', {
+                                    studysetId,
+                                    taskId: task.id,
+                                    taskType: task.task_type,
+                                    href,
+                                    completed: task.completed,
+                                  });
+                                }}
+                              >
+                                Start now
+                              </Link>
                             </Button>
                           </div>
                         </div>

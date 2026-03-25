@@ -130,15 +130,27 @@ function QuizPageContent() {
   useEffect(() => {
     if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
     launchHandledRef.current = true;
+    console.info('[STUDYSET_LAUNCH][QUIZ] launch requested', {
+      taskId,
+      studysetId,
+      launchRequested,
+    });
 
     const runLaunch = async () => {
       try {
         const response = await fetch(`/api/studysets/plan-tasks/${taskId}/launch`);
-        if (!response.ok) throw new Error('Could not load studyset task preset');
+        if (!response.ok) throw new Error(`Could not load studyset task preset (${response.status})`);
         const payload = await response.json();
         const source = String(payload?.launch?.sourceText || '').trim();
         const preset = payload?.launch?.quizPreset || {};
         const title = String(payload?.launch?.artifactTitle || '').trim();
+        console.info('[STUDYSET_LAUNCH][QUIZ] launch payload loaded', {
+          taskId,
+          studysetId,
+          sourceLength: source.length,
+          preset,
+          hasTitle: Boolean(title),
+        });
 
         if (source) setSourceText(source);
         if (preset?.mode) setQuizMode(normalizeQuizMode(String(preset.mode)));
@@ -155,8 +167,14 @@ function QuizPageContent() {
             questionType: preset?.questionType ? String(preset.questionType) : undefined,
             title: title || undefined,
           });
+          console.info('[STUDYSET_LAUNCH][QUIZ] generation completed', { taskId, studysetId });
         }
       } catch (error: any) {
+        console.error('[STUDYSET_LAUNCH][QUIZ] launch failed', {
+          taskId,
+          studysetId,
+          message: error?.message || String(error),
+        });
         toast({
           variant: 'destructive',
           title: 'Could not start studyset task',

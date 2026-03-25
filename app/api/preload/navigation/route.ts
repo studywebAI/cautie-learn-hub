@@ -5,13 +5,22 @@ import { createClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+  const requestId = request.headers.get('x-request-id') || `preload-nav-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
   try {
     const startedAt = Date.now()
+    console.info('[preload-navigation] start', {
+      requestId,
+      path: request.nextUrl.pathname,
+      classId: request.nextUrl.searchParams.get('classId') || null,
+    })
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
     const { data: auth } = await supabase.auth.getUser()
     const user = auth?.user
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user) {
+      console.warn('[preload-navigation] unauthorized', { requestId })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const classIdFilter = request.nextUrl.searchParams.get('classId') || ''
 
@@ -29,6 +38,7 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
 
     if (membershipsError) {
+      console.error('[preload-navigation] memberships failed', { requestId, message: membershipsError.message })
       return NextResponse.json({ error: membershipsError.message }, { status: 500 })
     }
 
@@ -40,6 +50,7 @@ export async function GET(request: NextRequest) {
         : { data: [], error: null as any }
 
     if (classesResult.error) {
+      console.error('[preload-navigation] classes failed', { requestId, message: classesResult.error.message })
       return NextResponse.json({ error: classesResult.error.message }, { status: 500 })
     }
 
@@ -55,6 +66,7 @@ export async function GET(request: NextRequest) {
         : await ownSubjectsQuery
 
       if (ownSubjectsResult.error) {
+        console.error('[preload-navigation] own subjects failed', { requestId, message: ownSubjectsResult.error.message })
         return NextResponse.json({ error: ownSubjectsResult.error.message }, { status: 500 })
       }
 
@@ -90,15 +102,19 @@ export async function GET(request: NextRequest) {
 
         const subjectsResult = await subjectsQuery
         if (subjectsResult.error) {
-          return NextResponse.json({ error: subjectsResult.error.message }, { status: 500 })
+          console.error('[preload-navigation] teacher subjects query failed; returning empty subjects fallback', {
+            requestId,
+            message: subjectsResult.error.message,
+          })
+          subjects = []
+        } else {
+          subjects = (subjectsResult.data || []).map((s: any) => ({
+            ...s,
+            classes: Array.isArray(s.class_subjects)
+              ? s.class_subjects.map((cs: any) => cs.classes).filter(Boolean)
+              : [],
+          }))
         }
-
-        subjects = (subjectsResult.data || []).map((s: any) => ({
-          ...s,
-          classes: Array.isArray(s.class_subjects)
-            ? s.class_subjects.map((cs: any) => cs.classes).filter(Boolean)
-            : [],
-        }))
       } else {
         subjects = []
       }
@@ -110,9 +126,11 @@ export async function GET(request: NextRequest) {
         ])
 
         if (classSubjectsResult.error) {
+          console.error('[preload-navigation] class_subjects failed', { requestId, message: classSubjectsResult.error.message })
           return NextResponse.json({ error: classSubjectsResult.error.message }, { status: 500 })
         }
         if (directSubjectsResult.error) {
+          console.error('[preload-navigation] direct subjects failed', { requestId, message: directSubjectsResult.error.message })
           return NextResponse.json({ error: directSubjectsResult.error.message }, { status: 500 })
         }
 
@@ -130,19 +148,30 @@ export async function GET(request: NextRequest) {
             .in('id', subjectIds)
 
           if (subjectsResult.error) {
-            return NextResponse.json({ error: subjectsResult.error.message }, { status: 500 })
+            console.error('[preload-navigation] student subjects query failed; returning empty subjects fallback', {
+              requestId,
+              message: subjectsResult.error.message,
+            })
+            subjects = []
+          } else {
+            subjects = (subjectsResult.data || []).map((s: any) => ({
+              ...s,
+              classes: Array.isArray(s.class_subjects)
+                ? s.class_subjects.map((cs: any) => cs.classes).filter(Boolean)
+                : [],
+            }))
           }
-
-          subjects = (subjectsResult.data || []).map((s: any) => ({
-            ...s,
-            classes: Array.isArray(s.class_subjects)
-              ? s.class_subjects.map((cs: any) => cs.classes).filter(Boolean)
-              : [],
-          }))
         }
       }
     }
 
+    console.info('[preload-navigation] success', {
+      requestId,
+      durationMs: Date.now() - startedAt,
+      classCount: Array.isArray(classesResult.data) ? classesResult.data.length : 0,
+      subjectCount: subjects.length,
+      isTeacher,
+    })
     return NextResponse.json(
       {
         classes: classesResult.data || [],
@@ -154,6 +183,7 @@ export async function GET(request: NextRequest) {
       }
     )
   } catch (error: any) {
+    console.error('[preload-navigation] exception', { requestId, message: error?.message || 'Internal server error' })
     return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 })
   }
 }

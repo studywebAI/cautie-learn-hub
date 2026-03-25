@@ -25,6 +25,7 @@ function getClientKey(req: NextRequest): string {
 }
 
 export async function GET(req: NextRequest) {
+  const requestId = req.headers.get('x-request-id') || `studyset-agenda-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
   try {
     const userAgent = req.headers.get('user-agent') || ''
     const cookieHeader = req.headers.get('cookie') || ''
@@ -41,6 +42,7 @@ export async function GET(req: NextRequest) {
       }
       nonSessionRateState.set(key, now)
       if (looksLikeBot) {
+        console.info('[studysets-agenda] blocked bot request', { requestId, userAgent })
         return NextResponse.json({ items: [] }, { status: 200 })
       }
     }
@@ -49,7 +51,10 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (userError || !user) {
+      console.warn('[studysets-agenda] unauthorized', { requestId, message: userError?.message || null })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const from = req.nextUrl.searchParams.get('from')
     const to = req.nextUrl.searchParams.get('to')
@@ -89,7 +94,10 @@ export async function GET(req: NextRequest) {
       .order('plan_date', { ascending: true })
       .order('day_number', { ascending: true })
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[studysets-agenda] query failed', { requestId, message: error.message, fromDate, toDate, userId: user.id })
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
     const items = (days || []).flatMap((day: any) => {
       const studysetName = day.studysets?.name || 'Studyset'
@@ -117,9 +125,20 @@ export async function GET(req: NextRequest) {
       }
     })
 
+    console.info('[studysets-agenda] success', {
+      requestId,
+      userId: user.id,
+      fromDate,
+      toDate,
+      dayRows: Array.isArray(days) ? days.length : 0,
+      itemCount: items.length,
+    })
     return NextResponse.json({ items })
   } catch (error) {
-    console.error('studysets agenda GET failed', error)
+    console.error('[studysets-agenda] exception', {
+      requestId,
+      message: (error as any)?.message || 'Internal server error',
+    })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
