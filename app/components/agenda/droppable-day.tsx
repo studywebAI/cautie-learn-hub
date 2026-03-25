@@ -13,9 +13,10 @@ interface DroppableDayProps {
   isSelected?: boolean;
   onClick: () => void;
   onEventClick?: (event: CalendarEvent) => void;
+  compact?: boolean;
 }
 
-export function DroppableDay({ id, date, events, isSelected, onClick, onEventClick }: DroppableDayProps) {
+export function DroppableDay({ id, date, events, isSelected, onClick, onEventClick, compact = false }: DroppableDayProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
   });
@@ -24,12 +25,12 @@ export function DroppableDay({ id, date, events, isSelected, onClick, onEventCli
     <div
       ref={setNodeRef}
       onClick={onClick}
-      className={`min-h-[400px] p-3 border-x border-t border-b border-border/50 cursor-pointer transition-colors ${
+      className={`min-h-[280px] p-2 md:min-h-[340px] md:p-3 border-r border-border/40 cursor-pointer transition-colors ${
         isSelected
-          ? 'bg-primary/5 border-primary/30'
+          ? 'bg-primary/5 border-primary/25'
           : isOver
-          ? 'bg-muted/30 border-dashed'
-          : 'bg-card/50 hover:bg-muted/20'
+          ? 'bg-muted/15 border-dashed'
+          : 'bg-card/30 hover:bg-muted/10'
       }`}
     >
       <div className="mb-3">
@@ -39,7 +40,7 @@ export function DroppableDay({ id, date, events, isSelected, onClick, onEventCli
       <SortableContext items={events.map(e => e.id)} strategy={verticalListSortingStrategy}>
         <div className="space-y-2">
           {events.map((event) => (
-            <DraggableEvent key={event.id} event={event} onEventClick={onEventClick} />
+            <DraggableEvent key={event.id} event={event} onEventClick={onEventClick} compact={compact} />
           ))}
         </div>
       </SortableContext>

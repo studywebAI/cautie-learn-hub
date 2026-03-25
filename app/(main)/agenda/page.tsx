@@ -218,7 +218,7 @@ function AgendaPageContent() {
   }, [isTeacher, classes, classIdFromQuery, router]);
 
   useEffect(() => {
-    if (!isTeacher || overlayClassIds.length === 0) return;
+    if (!isTeacher) return;
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(OVERLAY_CLASSES_STORAGE_KEY, JSON.stringify(overlayClassIds));
     }
@@ -651,10 +651,9 @@ function AgendaPageContent() {
   const teacherClasses = (classes || []).filter((classItem) => classItem.status !== 'archived');
   const toggleOverlayClass = (classId: string, checked: boolean) => {
     setOverlayClassIds((prev) => {
-      const set = new Set(prev.length > 0 ? prev : [selectedClassId]);
+      const set = new Set(prev);
       if (checked) set.add(classId);
       else set.delete(classId);
-      if (!set.has(selectedClassId)) set.add(selectedClassId);
       return Array.from(set);
     });
   };
@@ -683,17 +682,12 @@ function AgendaPageContent() {
                   onChange={(event) => {
                     const nextClassId = event.target.value;
                     setSelectedClassId(nextClassId);
-                    setOverlayClassIds((prev) => {
-                      const set = new Set(prev);
-                      set.add(nextClassId);
-                      return Array.from(set);
-                    });
                     if (typeof window !== 'undefined') {
                       window.localStorage.setItem('studyweb-last-class-id', nextClassId);
                     }
                     router.replace(`/agenda?classId=${nextClassId}`);
                   }}
-                  className="h-9 min-w-[190px] rounded-md border border-border bg-background px-2 text-sm"
+                  className="h-9 min-w-[190px] rounded-md border border-border bg-white px-2 text-sm"
                 >
                   {teacherClasses.map((classItem) => (
                     <option key={classItem.id} value={classItem.id}>
@@ -704,23 +698,21 @@ function AgendaPageContent() {
 
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
+                    <Button variant="outline" size="sm" className="gap-2 bg-white">
                       <SlidersHorizontal className="h-4 w-4" />
-                      Overlay ({overlayClassIds.length})
+                      Classes ({overlayClassIds.length})
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-72">
                     <div className="space-y-3">
-                      <p className="text-sm font-medium">Additional classes</p>
+                      <p className="text-sm font-medium">Choose classes</p>
                       {teacherClasses.map((classItem) => {
                         const checked = overlayClassIds.includes(classItem.id);
-                        const locked = classItem.id === selectedClassId;
                         return (
                           <label key={classItem.id} className="flex items-center justify-between gap-2 rounded-lg border p-2">
                             <span className="text-sm">{classItem.name}</span>
                             <Checkbox
                               checked={checked}
-                              disabled={locked}
                               onCheckedChange={(value) => toggleOverlayClass(classItem.id, Boolean(value))}
                             />
                           </label>
@@ -748,7 +740,7 @@ function AgendaPageContent() {
             )}
 
             {isTeacher && (
-              <Button onClick={() => setIsTeacherDialogOpen(true)}>
+              <Button className="bg-white text-foreground hover:bg-white/95 border border-border" onClick={() => setIsTeacherDialogOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Agenda Item
               </Button>

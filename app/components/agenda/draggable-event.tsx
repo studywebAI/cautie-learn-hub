@@ -12,9 +12,10 @@ import { useRouter } from 'next/navigation';
 interface DraggableEventProps {
   event: CalendarEvent;
   onEventClick?: (event: CalendarEvent) => void;
+  compact?: boolean;
 }
 
-export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
+export function DraggableEvent({ event, onEventClick, compact = false }: DraggableEventProps) {
   const router = useRouter();
   const [isCompleted, setIsCompleted] = useState((event as any).completed || false);
   
@@ -41,6 +42,23 @@ export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
   };
 
   const getDeadlineStyle = () => {
+    const isStudyset =
+      event.subject === 'Studyset' ||
+      event.item_type === 'studyset' ||
+      String(event.href || '').includes('studysetId=');
+
+    if (isStudyset) {
+      return {
+        borderColor: '#87A96B',
+        bgColor: 'rgba(135, 169, 107, 0.08)',
+        icon: BookOpen,
+        iconColor: 'text-[#87A96B]',
+        iconBg: 'bg-[#f2f7ee]',
+        label: 'S',
+        accentWord: 'tudyset',
+      };
+    }
+
     if (event.type === 'agenda_item') {
       if (event.visibility_state === 'hidden') {
         return {
@@ -84,12 +102,13 @@ export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
 
     if (event.type !== 'assignment') {
       return {
-        borderColor: 'rgb(15, 23, 42)',
-        bgColor: 'rgba(15, 23, 42, 0.08)',
+        borderColor: 'rgb(148, 163, 184)',
+        bgColor: 'rgba(148, 163, 184, 0.10)',
         icon: BookOpen,
-        iconColor: 'text-slate-700',
+        iconColor: 'text-slate-600',
         iconBg: 'bg-slate-100',
-        label: 'S'
+        label: 'S',
+        accentWord: '',
       };
     }
 
@@ -103,7 +122,8 @@ export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
           icon: Home,
           iconColor: 'text-blue-500',
           iconBg: 'bg-blue-100',
-          label: 'H'
+          label: 'H',
+          accentWord: '',
         };
       case 'small_test':
         return {
@@ -112,7 +132,8 @@ export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
           icon: Circle,
           iconColor: 'text-orange-500',
           iconBg: 'bg-orange-100',
-          label: 't'
+          label: 't',
+          accentWord: '',
         };
       case 'big_test':
         return {
@@ -121,7 +142,8 @@ export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
           icon: Square,
           iconColor: 'text-red-500',
           iconBg: 'bg-red-100',
-          label: 'T'
+          label: 'T',
+          accentWord: '',
         };
       default:
         return {
@@ -130,13 +152,13 @@ export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
           icon: Home,
           iconColor: 'text-destructive',
           iconBg: 'bg-destructive/10',
-          label: '!'
+          label: '!',
+          accentWord: '',
         };
     }
   };
 
   const styleData = getDeadlineStyle();
-  const IconComponent = styleData.icon;
 
   const handleToggleComplete = async (checked: boolean | 'indeterminate') => {
     if (typeof checked !== 'boolean') return;
@@ -178,12 +200,12 @@ export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
       style={{
         ...style,
         borderLeftColor: styleData.borderColor,
-        backgroundColor: isCompleted ? 'rgba(0,0,0,0.05)' : styleData.bgColor,
+        backgroundColor: isCompleted ? 'rgba(148, 163, 184, 0.10)' : styleData.bgColor,
       }}
       {...attributes}
       {...listeners}
       className={`p-3 rounded-lg border-l-4 cursor-grab active:cursor-grabbing ${
-        isDragging ? 'opacity-50' : 'hover:bg-muted/20'
+        isDragging ? 'opacity-50' : 'hover:bg-muted/10'
       }`}
       onClick={handleClick}
     >
@@ -197,17 +219,24 @@ export function DraggableEvent({ event, onEventClick }: DraggableEventProps) {
               onClick={(e) => e.stopPropagation()}
             />
           )}
-          <div className={`flex-shrink-0 w-8 h-8 rounded ${styleData.iconBg} flex items-center justify-center ${isCompleted ? 'opacity-50' : ''}`}>
-            <span className={`text-xs font-bold ${styleData.iconColor}`}>{styleData.label}</span>
+          <div className={`flex-shrink-0 h-8 w-8 rounded ${styleData.iconBg} flex items-center justify-center ${isCompleted ? 'opacity-50' : ''}`}>
+            {styleData.label === 'S' && styleData.accentWord ? (
+              <div className="flex items-end leading-none">
+                <span className={`text-sm font-extrabold ${styleData.iconColor}`}>S</span>
+                <span className="text-[7px] text-slate-800">{styleData.accentWord}</span>
+              </div>
+            ) : (
+              <span className={`text-xs font-bold ${styleData.iconColor}`}>{styleData.label}</span>
+            )}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className={`font-medium truncate ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+          <div className={`flex-1 min-w-0 ${compact ? 'hidden xl:block' : ''}`}>
+            <p className={`truncate text-sm font-medium ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
               {event.title}
             </p>
-            <p className="text-sm text-muted-foreground">{event.subject}</p>
+            <p className="text-xs text-muted-foreground">{event.subject}</p>
             {event.class_name && (
               <span
-                className="inline-flex mt-1 text-[10px] rounded-full px-2 py-0.5 text-white"
+                className="mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] text-white"
                 style={{ backgroundColor: getClassChipColor(event.class_id) }}
               >
                 {event.class_name}

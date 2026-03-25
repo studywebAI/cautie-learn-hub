@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format, startOfWeek, addWeeks, isSameDay, parseISO } from 'date-fns';
 import type { CalendarEvent } from '@/lib/types';
 import { useDictionary } from '@/contexts/app-context';
@@ -14,10 +14,8 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { DraggableEvent } from './draggable-event';
 import { DroppableDay } from './droppable-day';
 
@@ -31,6 +29,8 @@ interface WeekViewProps {
 
 export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEventClick }: WeekViewProps) {
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [isCompact, setIsCompact] = useState(false);
   const { dictionary } = useDictionary();
 
   const sensors = useSensors(
@@ -41,32 +41,23 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
     })
   );
 
-  // Generate weeks for a full year (52 weeks)
-  const weeksToShow = 52; // Show 52 weeks for infinite scroll feel
-  
-  const weeks = useMemo(() => {
-    const weeksArray = [];
-    const today = new Date();
-    const firstWeekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday
-    
-    for (let weekIndex = 0; weekIndex < weeksToShow; weekIndex++) {
-      const weekStart = addWeeks(firstWeekStart, weekIndex);
-      const weekDays = [];
-      
-      // Monday to Friday
-      for (let i = 0; i < 5; i++) {
-        const day = new Date(weekStart);
-        day.setDate(weekStart.getDate() + i);
-        weekDays.push(day);
-      }
-      
-      weeksArray.push({
-        startDate: weekStart,
-        days: weekDays
-      });
-    }
-    return weeksArray;
+  useEffect(() => {
+    const update = () => setIsCompact(window.innerWidth < 1380);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
   }, []);
+
+  const activeWeek = useMemo(() => {
+    const anchor = selectedDay || new Date();
+    const weekStart = startOfWeek(addWeeks(anchor, weekOffset), { weekStartsOn: 1 });
+    const days = Array.from({ length: 5 }).map((_, i) => {
+      const day = new Date(weekStart);
+      day.setDate(weekStart.getDate() + i);
+      return day;
+    });
+    return { startDate: days[0], endDate: days[4], days };
+  }, [selectedDay, weekOffset]);
 
   // Group events by date for quick lookup
   const eventsByDate = useMemo(() => {
@@ -119,55 +110,76 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Sticky day name header at top */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b mb-6">
-        <div className="grid grid-cols-5 gap-0">
-          {dayNames.map((name, idx) => (
-            <div key={idx} className="text-center text-sm font-medium text-muted-foreground py-2">
-              {name}
-            </div>
-          ))}
+    <div className="space-y-3">
+      <div className="rounded-xl border border-border/60 bg-card/70 px-3 py-2">
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 bg-white"
+            onClick={() => setWeekOffset((prev) => prev - 1)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="text-sm font-medium">
+            Week {format(activeWeek.startDate, 'MMM d')} - {format(activeWeek.endDate, 'MMM d')}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 bg-white"
+            onClick={() => setWeekOffset((prev) => prev + 1)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
-      
-      {weeks.map((week, weekIndex) => (
-        <div key={weekIndex}>
-          <DndContext
-            sensors={sensors}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="grid grid-cols-5 gap-0">
-              {week.days.map((day) => {
-                const dateString = format(day, 'yyyy-MM-dd');
-                const dayEvents = eventsByDate.get(dateString) || [];
-                const isSelected = selectedDay && isSameDay(day, selectedDay);
 
-                return (
-                  <DroppableDay
-                    key={dateString}
-                    id={`day-${dateString}`}
-                    date={day}
-                    events={dayEvents}
-                    isSelected={isSelected}
-                    onClick={() => onDaySelect(day)}
-                    onEventClick={onEventClick}
-                  />
-                );
-              })}
-            </div>
-            <DragOverlay>
-              {activeEvent ? (
-                <div className="bg-background border rounded-md p-2 shadow-lg opacity-90">
-                  <div className="text-sm font-medium">{activeEvent.title}</div>
-                  <div className="text-xs text-muted-foreground">{activeEvent.subject}</div>
-                </div>
-              ) : null}
-              </DragOverlay>
-          </DndContext>
+      <div className="grid grid-cols-5 gap-0 rounded-xl border border-border/40 bg-card/40">
+        {dayNames.map((name, idx) => (
+          <div key={idx} className="border-b border-border/40 py-2 text-center text-sm font-medium text-muted-foreground">
+            {name}
+          </div>
+        ))}
+      </div>
+
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-5 gap-0 rounded-xl border border-border/50">
+          {activeWeek.days.map((day) => {
+            const dateString = format(day, 'yyyy-MM-dd');
+            const dayEvents = eventsByDate.get(dateString) || [];
+            const isSelected = selectedDay && isSameDay(day, selectedDay);
+
+            return (
+              <DroppableDay
+                key={dateString}
+                id={`day-${dateString}`}
+                date={day}
+                events={dayEvents}
+                isSelected={isSelected}
+                onClick={() => onDaySelect(day)}
+                onEventClick={onEventClick}
+                compact={isCompact}
+              />
+            );
+          })}
         </div>
-      ))}
+
+        <DragOverlay>
+          {activeEvent ? (
+            <div className="rounded-md border bg-background p-2 shadow-lg opacity-90">
+              <div className="text-sm font-medium">{activeEvent.title}</div>
+              <div className="text-xs text-muted-foreground">{activeEvent.subject}</div>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 }
