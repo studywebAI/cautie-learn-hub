@@ -112,6 +112,41 @@ const extractUrlsFromText = (text: string) => {
   return { cleanedText, urls: matches };
 };
 
+function buildMicrosoftContextBlock(input: {
+  app: string;
+  name: string;
+  mimeType?: string;
+  webUrl?: string;
+  extractedText?: string;
+  extractionStatus?: string;
+}) {
+  const appKey = String(input.app || '').toLowerCase();
+  const appLabel = appKey === 'powerpoint' ? 'PowerPoint' : appKey === 'onedrive' ? 'OneDrive' : 'Word';
+  const mime = input.mimeType?.trim() || 'unknown';
+  const url = input.webUrl?.trim() || 'not_available';
+  const status = input.extractionStatus?.trim() || (input.extractedText?.trim() ? 'ready' : 'pending');
+  const extracted = input.extractedText?.trim() || '';
+  const isImage = mime.startsWith('image/');
+
+  const lines = [
+    `MICROSOFT_CONTEXT_FILE`,
+    `provider: microsoft`,
+    `app: ${appLabel}`,
+    `name: ${input.name}`,
+    `mime_type: ${mime}`,
+    `web_url: ${url}`,
+    `extraction_status: ${status}`,
+    '',
+    extracted
+      ? `extracted_text:\n${extracted}`
+      : isImage
+        ? 'extracted_text: [none]\nimage_note: This source is an image file. Use file metadata and any available visual attachment context.'
+        : 'extracted_text: [none yet]',
+  ];
+
+  return lines.join('\n');
+}
+
 export function SourceInput({
   value,
   onChange,
@@ -206,14 +241,18 @@ export function SourceInput({
       const name = String(item?.name || 'Untitled');
       const extracted = typeof item?.extracted_text === 'string' ? item.extracted_text.trim() : '';
       const webUrl = typeof item?.web_url === 'string' ? item.web_url : '';
-      const lines = [`Microsoft ${appLabel} file: ${name}`];
-      if (extracted) lines.push(extracted);
-      if (webUrl) lines.push(`File URL: ${webUrl}`);
       return {
         id: `integration-${String(item?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)}`,
         kind: 'file',
         label: `MICROSOFT (${appLabel})`,
-        text: lines.join('\n\n'),
+        text: buildMicrosoftContextBlock({
+          app: appKey || 'onedrive',
+          name,
+          mimeType: typeof item?.mime_type === 'string' ? item.mime_type : undefined,
+          webUrl,
+          extractedText: extracted,
+          extractionStatus: typeof item?.extraction_status === 'string' ? item.extraction_status : undefined,
+        }),
         selected: true,
       };
     });
@@ -241,12 +280,44 @@ export function SourceInput({
     const onUpdated = () => {
       void hydrateIntegrationSources(true);
     };
+    const onPicked = (event: Event) => {
+      const custom = event as CustomEvent<any>;
+      const detail = custom?.detail || {};
+      const items = Array.isArray(detail?.items) ? detail.items : [];
+      if (items.length === 0) return;
+      const mapped: SourceEntry[] = items.map((item: any) => {
+        const id = String(item?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+        const name = String(item?.name || 'Untitled');
+        const mimeType = typeof item?.mimeType === 'string' ? item.mimeType : undefined;
+        const webUrl = typeof item?.webUrl === 'string' ? item.webUrl : undefined;
+        return {
+          id: `integration-local-${id}`,
+          kind: 'file',
+          label: 'MICROSOFT (OneDrive)',
+          text: buildMicrosoftContextBlock({
+            app: 'onedrive',
+            name,
+            mimeType,
+            webUrl,
+            extractedText: '',
+            extractionStatus: 'pending',
+          }),
+          selected: true,
+        };
+      });
+      setSources((prev) => {
+        const withoutOldLocal = prev.filter((source) => !source.id.startsWith('integration-local-'));
+        return [...withoutOldLocal, ...mapped];
+      });
+    };
     if (typeof window !== 'undefined') {
       window.addEventListener('integration-sources-updated', onUpdated as EventListener);
+      window.addEventListener('integration-source-picked', onPicked as EventListener);
     }
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('integration-sources-updated', onUpdated as EventListener);
+        window.removeEventListener('integration-source-picked', onPicked as EventListener);
       }
     };
   }, [hydrateIntegrationSources]);
@@ -899,7 +970,7 @@ export function SourceInput({
       )}
 
       {topContent && (
-        <div className="flex-1 min-h-[280px]">
+        <div className="flex-1 min-h-[240px]">
           {topContent}
         </div>
       )}

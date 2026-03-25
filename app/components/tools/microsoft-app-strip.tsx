@@ -68,6 +68,7 @@ type PickerFileFilter = 'all' | 'word' | 'powerpoint' | 'excel' | 'pdf' | 'image
 
 const ONEDRIVE_APP = ENABLED_INTEGRATION_APPS.find((app) => app.id === 'onedrive' && app.provider === 'microsoft');
 const RESUME_KEY = 'cautie.onedrive.embed.resume';
+const CAUTIE_LOGO_PATH = '/favicon.ico';
 
 function withQuery(path: string, params: Record<string, string>) {
   const [pathname, search = ''] = path.split('?');
@@ -229,6 +230,40 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     } catch {
       setStatus({ connected: false });
     }
+  }, []);
+
+  const persistSelection = useCallback(async (items: OneDrivePickedItem[]) => {
+    const saveRes = await fetch('/api/integrations/context-sources', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        provider: 'microsoft',
+        app: 'onedrive',
+        items,
+        replaceSelection: true,
+      }),
+    });
+
+    if (!saveRes.ok) {
+      const payload = await saveRes.json().catch(() => ({}));
+      const message = typeof payload?.error === 'string' ? payload.error : 'Failed to save selected file';
+      if (message.toLowerCase().includes('integration source storage is not set up')) {
+        window.dispatchEvent(new CustomEvent('integration-source-picked', {
+          detail: { provider: 'microsoft', app: 'onedrive', items },
+        }));
+        window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft', localOnly: true } }));
+        return;
+      }
+      throw new Error(message);
+    }
+
+    await fetch('/api/integrations/ingestion-jobs/process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider: 'microsoft', app: 'onedrive', maxJobs: 25 }),
+    }).catch(() => null);
+
+    window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft' } }));
   }, []);
 
   useEffect(() => {
@@ -436,28 +471,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                 throw new Error(`No selected files match filter: ${activeFilter}.`);
               }
 
-              const saveRes = await fetch('/api/integrations/context-sources', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  provider: 'microsoft',
-                  app: 'onedrive',
-                  items: filteredItems,
-                  replaceSelection: true,
-                }),
-              });
-              if (!saveRes.ok) {
-                const payload = await saveRes.json().catch(() => ({}));
-                throw new Error(typeof payload?.error === 'string' ? payload.error : 'Failed to save selected file');
-              }
-
-              await fetch('/api/integrations/ingestion-jobs/process', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ provider: 'microsoft', app: 'onedrive', maxJobs: 25 }),
-              }).catch(() => null);
-
-              window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft' } }));
+              await persistSelection(filteredItems);
               setPickerStatus('Ready to use in Cautie');
               toast({ title: 'File imported', description: `${filteredItems[0].name} added as context.` });
 
@@ -522,7 +536,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
     } finally {
       setOpening(false);
     }
-  }, [activeFilter, closePicker, loadFallbackFiles, safeReturnTo, status.connected, toast]);
+  }, [activeFilter, closePicker, loadFallbackFiles, persistSelection, safeReturnTo, status.connected, toast]);
 
   useEffect(() => {
     if (!openAfterConnect) return;
@@ -558,7 +572,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
 
   return (
     <div className="flex h-full flex-col gap-3">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => void openEmbeddedPicker()}
@@ -572,24 +586,6 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
             <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-6 w-6 object-contain" />
           )}
         </button>
-
-        <div className="min-w-0">
-          <p className="text-sm font-medium">OneDrive X Cautie</p>
-          <p className="text-xs text-muted-foreground">
-            {status.connected
-              ? `Connected${status.account_email ? ` as ${status.account_email}` : ''}`
-              : 'Connect your Microsoft account to browse files'}
-          </p>
-          {status.connected && (
-            <button
-              type="button"
-              onClick={handleSwitchAccount}
-              className="mt-1 text-xs text-[#0f6cbd] hover:underline"
-            >
-              {switchingAccount ? 'Switching account...' : 'Switch account'}
-            </button>
-          )}
-        </div>
       </div>
 
       {pickerOpen && (
@@ -599,7 +595,8 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
               <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-4 w-4 object-contain" />
               <span className="text-sm font-medium">OneDrive</span>
               <span className="text-muted-foreground">|</span>
-              <span className="text-xs text-muted-foreground">OneDrive X Cautie</span>
+              <span className="text-sm text-muted-foreground">Cautie</span>
+              <img src={CAUTIE_LOGO_PATH} alt="Cautie" className="h-4 w-4 rounded-sm object-contain" />
             </div>
             <div className="flex items-center gap-2">
               {status.account_email ? (
@@ -699,7 +696,9 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                   </aside>
                   <div className="min-h-0 flex-1 overflow-auto">
                     {fallbackLoading ? (
-                      <div className="p-4 text-sm text-muted-foreground">Loading files...</div>
+                      <div className="flex h-full items-center justify-center">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      </div>
                     ) : (
                       <table className="w-full text-sm">
                         <thead className="sticky top-0 bg-white text-left text-xs text-muted-foreground">
@@ -753,28 +752,12 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                       if (!file) return;
                       setPickerStatus('Importing selected file');
                       try {
-                        const saveRes = await fetch('/api/integrations/context-sources', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            provider: 'microsoft',
-                            app: 'onedrive',
-                            items: [{
-                              id: file.id,
-                              name: file.name,
-                              webUrl: file.webUrl,
-                              mimeType: file.mimeType,
-                            }],
-                            replaceSelection: true,
-                          }),
-                        });
-                        if (!saveRes.ok) throw new Error('Failed to save selected file');
-                        await fetch('/api/integrations/ingestion-jobs/process', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ provider: 'microsoft', app: 'onedrive', maxJobs: 25 }),
-                        }).catch(() => null);
-                        window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft' } }));
+                        await persistSelection([{
+                          id: file.id,
+                          name: file.name,
+                          webUrl: file.webUrl,
+                          mimeType: file.mimeType,
+                        }]);
                         setPickerStatus('Ready to use in Cautie');
                         toast({ title: 'File imported', description: `${file.name} added as context.` });
                         window.setTimeout(() => closePicker(), 180);
