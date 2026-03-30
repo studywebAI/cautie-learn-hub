@@ -16,8 +16,8 @@
     --card-foreground: 60 4% 9.8%;
     --popover: 0 0% 100%;
     --popover-foreground: 60 4% 9.8%;
-    --primary: 14.8 63.1% 59.6%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 50 16.7% 92.9%;
+    --primary-foreground: 60 4% 9.8%;
     --secondary: 50 16.7% 92.9%;
     --secondary-foreground: 60 3.4% 34.9%;
     --muted: 46.7 24.3% 92.7%;
@@ -30,15 +30,15 @@
     --success-foreground: 0 0% 100%;
     --border: 60 4% 9.8% / 0.1;
     --input: 60 4% 9.8% / 0.2;
-    --ring: 14.8 63.1% 59.6%;
+    --ring: 60 4% 9.8%;
     --radius: 0.75rem;
     --surface-1: 0 0% 100%;
     --surface-2: 50 16.7% 92.9%;
     --surface-3: 46.7 24.3% 92.7%;
     --interactive-hover: 60 4% 9.8% / 0.05;
     --interactive-active: 60 4% 9.8% / 0.1;
-    --focus-ring: 14.8 63.1% 59.6%;
-    --chart-1: 14.8 63.1% 59.6%;
+    --focus-ring: 60 4% 9.8%;
+    --chart-1: 60 4% 22%;
     --chart-2: 160.9 69% 36.7%;
     --chart-3: 36 86.2% 54.5%;
     --chart-4: 0.4 72.4% 58.8%;
@@ -46,13 +46,13 @@
 
     --sidebar-background: 30 10.5% 92.5%;
     --sidebar-foreground: 60 3.4% 34.9%;
-    --sidebar-primary: 14.8 63.1% 59.6%;
+    --sidebar-primary: 60 4% 9.8%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 50 16.7% 92.9%;
+    --sidebar-accent: 0 0% 100%;
     --sidebar-accent-foreground: 60 3.4% 34.9%;
-    --sidebar-active-foreground: 14.8 43.1% 38.6%;
+    --sidebar-active-foreground: 60 4% 9.8%;
     --sidebar-border: 60 4% 9.8% / 0.1;
-    --sidebar-ring: 14.8 63.1% 59.6%;
+    --sidebar-ring: 60 4% 9.8%;
 
     --bg-page: #f5f4ef;
     --bg-surface: #eeecea;
@@ -147,8 +147,8 @@
     --card-foreground: 60 4% 9.8%;
     --popover: 0 0% 100%;
     --popover-foreground: 60 4% 9.8%;
-    --primary: 14.8 63.1% 59.6%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 50 16.7% 92.9%;
+    --primary-foreground: 60 4% 9.8%;
     --secondary: 50 16.7% 92.9%;
     --secondary-foreground: 60 3.4% 34.9%;
     --muted: 46.7 24.3% 92.7%;
@@ -161,8 +161,8 @@
     --success-foreground: 0 0% 100%;
     --border: 60 4% 9.8% / 0.1;
     --input: 60 4% 9.8% / 0.2;
-    --ring: 14.8 63.1% 59.6%;
-    --chart-1: 14.8 63.1% 59.6%;
+    --ring: 60 4% 9.8%;
+    --chart-1: 60 4% 22%;
     --chart-2: 160.9 69% 36.7%;
     --chart-3: 36 86.2% 54.5%;
     --chart-4: 0.4 72.4% 58.8%;
@@ -173,16 +173,16 @@
     --surface-3: 46.7 24.3% 92.7%;
     --interactive-hover: 60 4% 9.8% / 0.05;
     --interactive-active: 60 4% 9.8% / 0.1;
-    --focus-ring: 14.8 63.1% 59.6%;
+    --focus-ring: 60 4% 9.8%;
     --sidebar-background: 30 10.5% 92.5%;
     --sidebar-foreground: 60 3.4% 34.9%;
-    --sidebar-primary: 14.8 63.1% 59.6%;
+    --sidebar-primary: 60 4% 9.8%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 50 16.7% 92.9%;
+    --sidebar-accent: 0 0% 100%;
     --sidebar-accent-foreground: 60 3.4% 34.9%;
-    --sidebar-active-foreground: 14.8 43.1% 38.6%;
+    --sidebar-active-foreground: 60 4% 9.8%;
     --sidebar-border: 60 4% 9.8% / 0.1;
-    --sidebar-ring: 14.8 63.1% 59.6%;
+    --sidebar-ring: 60 4% 9.8%;
   }
 
   .theme-legacy {
