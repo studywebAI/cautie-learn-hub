@@ -11,7 +11,7 @@ type ThemeOption = {
 };
 
 const THEMES: ThemeOption[] = [
-  { value: 'light', label: 'claude', colors: { bg: '#F5F4EF', fg: '#1A1A18', primary: '#7F77DD', card: '#FFFFFF', muted: '#F0EFEA' } },
+  { value: 'light', label: 'claude', colors: { bg: '#F5F4EF', fg: '#1A1A18', primary: '#D97757', card: '#FFFFFF', muted: '#EEECEA' } },
   { value: 'legacy', label: 'original', colors: { bg: '#f2f2f2', fg: '#1a1a1a', primary: '#f1f1f1', card: '#fbfbfb', muted: '#f7f7f7' } },
   { value: 'dark', label: 'dark', colors: { bg: '#121212', fg: '#ffffff', primary: '#e6e6e6', card: '#1c1c1c', muted: '#262626' } },
   { value: 'ocean', label: 'mist', colors: { bg: '#f2f6f8', fg: '#213945', primary: '#2a6787', card: '#e8eff3', muted: '#dfe8ed' } },

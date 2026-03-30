@@ -1,0 +1,44 @@
+/* Claude-inspired light tokens tuned against side-by-side screenshot review (2026-03-30) */
+
+:root.theme-light {
+  /* Layering */
+  --bg-page: #f5f4ef;
+  --bg-surface: #eeecea;
+  --bg-primary: #ffffff;
+
+  /* Text */
+  --text-primary: #1a1a18;
+  --text-secondary: #5c5c56;
+  --text-tertiary: #8c8b84;
+
+  /* Accent (muted coral-orange) */
+  --accent-coral: #d97757;
+
+  /* App token mapping */
+  --background: 50 23.1% 94.9%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
+  --foreground: 60 4% 9.8%;
+  --card-foreground: 60 4% 9.8%;
+  --popover-foreground: 60 4% 9.8%;
+  --primary: 14.8 63.1% 59.6%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 50 16.7% 92.9%;
+  --secondary-foreground: 60 3.4% 34.9%;
+  --muted: 46.7 24.3% 92.7%;
+  --muted-foreground: 52.5 3.4% 53.3%;
+  --border: 60 4% 9.8% / 0.1;
+  --input: 60 4% 9.8% / 0.2;
+  --ring: 14.8 63.1% 59.6%;
+  --sidebar-background: 30 10.5% 92.5%;
+  --sidebar-primary: 14.8 63.1% 59.6%;
+}
+
+/*
+Usage guidance:
+- Page background: var(--bg-page)
+- Sidebar background: var(--bg-surface)
+- Cards/panels: var(--bg-primary)
+- Accent use only for key interactive elements (active nav marker, primary CTA, selective icons)
+- Keep UI weights at 400/500 max for softer visual tone
+*/

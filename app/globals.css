@@ -16,7 +16,7 @@
     --card-foreground: 60 4% 9.8%;
     --popover: 0 0% 100%;
     --popover-foreground: 60 4% 9.8%;
-    --primary: 244.7 60% 66.7%;
+    --primary: 14.8 63.1% 59.6%;
     --primary-foreground: 0 0% 100%;
     --secondary: 50 16.7% 92.9%;
     --secondary-foreground: 60 3.4% 34.9%;
@@ -30,32 +30,32 @@
     --success-foreground: 0 0% 100%;
     --border: 60 4% 9.8% / 0.1;
     --input: 60 4% 9.8% / 0.2;
-    --ring: 244.7 60% 66.7%;
+    --ring: 14.8 63.1% 59.6%;
     --radius: 0.75rem;
     --surface-1: 0 0% 100%;
     --surface-2: 50 16.7% 92.9%;
     --surface-3: 46.7 24.3% 92.7%;
     --interactive-hover: 60 4% 9.8% / 0.05;
     --interactive-active: 60 4% 9.8% / 0.1;
-    --focus-ring: 244.7 60% 66.7%;
-    --chart-1: 244.7 60% 66.7%;
+    --focus-ring: 14.8 63.1% 59.6%;
+    --chart-1: 14.8 63.1% 59.6%;
     --chart-2: 160.9 69% 36.7%;
     --chart-3: 36 86.2% 54.5%;
     --chart-4: 0.4 72.4% 58.8%;
     --chart-5: 209.8 74.6% 37.1%;
 
-    --sidebar-background: 50 16.7% 92.9%;
+    --sidebar-background: 30 10.5% 92.5%;
     --sidebar-foreground: 60 3.4% 34.9%;
-    --sidebar-primary: 244.7 60% 66.7%;
+    --sidebar-primary: 14.8 63.1% 59.6%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 50 16.7% 92.9%;
     --sidebar-accent-foreground: 60 3.4% 34.9%;
-    --sidebar-active-foreground: 245.6 45% 37.1%;
+    --sidebar-active-foreground: 14.8 43.1% 38.6%;
     --sidebar-border: 60 4% 9.8% / 0.1;
-    --sidebar-ring: 244.7 60% 66.7%;
+    --sidebar-ring: 14.8 63.1% 59.6%;
 
     --bg-page: #f5f4ef;
-    --bg-surface: #f0efea;
+    --bg-surface: #eeecea;
     --bg-primary: #ffffff;
     --text-primary: #1a1a18;
     --text-secondary: #5c5c56;
@@ -67,7 +67,7 @@
     --border-subtle: rgba(26, 26, 24, 0.1);
     --border-default: rgba(26, 26, 24, 0.2);
     --border-strong: rgba(26, 26, 24, 0.35);
-    --accent-purple: #7f77dd;
+    --accent-purple: #d97757;
     --accent-teal: #1d9e75;
   }
 
@@ -147,7 +147,7 @@
     --card-foreground: 60 4% 9.8%;
     --popover: 0 0% 100%;
     --popover-foreground: 60 4% 9.8%;
-    --primary: 244.7 60% 66.7%;
+    --primary: 14.8 63.1% 59.6%;
     --primary-foreground: 0 0% 100%;
     --secondary: 50 16.7% 92.9%;
     --secondary-foreground: 60 3.4% 34.9%;
@@ -161,8 +161,8 @@
     --success-foreground: 0 0% 100%;
     --border: 60 4% 9.8% / 0.1;
     --input: 60 4% 9.8% / 0.2;
-    --ring: 244.7 60% 66.7%;
-    --chart-1: 244.7 60% 66.7%;
+    --ring: 14.8 63.1% 59.6%;
+    --chart-1: 14.8 63.1% 59.6%;
     --chart-2: 160.9 69% 36.7%;
     --chart-3: 36 86.2% 54.5%;
     --chart-4: 0.4 72.4% 58.8%;
@@ -173,16 +173,16 @@
     --surface-3: 46.7 24.3% 92.7%;
     --interactive-hover: 60 4% 9.8% / 0.05;
     --interactive-active: 60 4% 9.8% / 0.1;
-    --focus-ring: 244.7 60% 66.7%;
-    --sidebar-background: 50 16.7% 92.9%;
+    --focus-ring: 14.8 63.1% 59.6%;
+    --sidebar-background: 30 10.5% 92.5%;
     --sidebar-foreground: 60 3.4% 34.9%;
-    --sidebar-primary: 244.7 60% 66.7%;
+    --sidebar-primary: 14.8 63.1% 59.6%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 50 16.7% 92.9%;
     --sidebar-accent-foreground: 60 3.4% 34.9%;
-    --sidebar-active-foreground: 245.6 45% 37.1%;
+    --sidebar-active-foreground: 14.8 43.1% 38.6%;
     --sidebar-border: 60 4% 9.8% / 0.1;
-    --sidebar-ring: 244.7 60% 66.7%;
+    --sidebar-ring: 14.8 63.1% 59.6%;
   }
 
   .theme-legacy {
