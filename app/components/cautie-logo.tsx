@@ -2,9 +2,7 @@ import { useMemo } from 'react';
 import { SHOW_CAUTIE_LOGO } from '@/lib/branding';
 
 const HIGHLIGHT_COLORS = [
-  '#FFE066', '#7EC8E3', '#FF9A9E', '#A8E6CF', '#FFB347',
-  '#C3B1E1', '#87CEEB', '#F0E68C', '#FF6B6B', '#98D8C8',
-  '#FFA07A', '#B5EAD7', '#E2B0FF', '#FFDAC1', '#9DE0AD',
+  '#D97757',
 ];
 
 // Generate horizontal scribble strokes like someone went back and forth with a highlighter

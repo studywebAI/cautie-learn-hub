@@ -320,7 +320,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
           {/* Send buttons - both options */}
           {validStudentEmails.length > 0 && (
             <div className="flex gap-2">
-              <Button onClick={sendInvites} disabled={isSending} className="flex-1 gap-2 bg-black hover:bg-black/80">
+              <Button onClick={sendInvites} disabled={isSending} className="flex-1 gap-2 btn-send-coral">
                 {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
                 {isSending ? 'Sending...' : 'Send Now'}
               </Button>
@@ -448,7 +448,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
             {/* Teacher send buttons - both options */}
             {teacherEmails.filter(e => e.trim() !== '').length > 0 && (
               <div className="flex gap-2">
-                <Button onClick={sendInvites} disabled={isSending} className="flex-1 gap-2 bg-black hover:bg-black/80">
+                <Button onClick={sendInvites} disabled={isSending} className="flex-1 gap-2 btn-send-coral">
                   {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
                   {isSending ? 'Sending...' : 'Send Now'}
                 </Button>

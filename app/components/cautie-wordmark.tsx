@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { SHOW_CAUTIE_LOGO } from '@/lib/branding';
 
 const HIGHLIGHT_COLORS = [
-  'rgba(123, 165, 64, 0.9)',
+  'rgba(217, 119, 87, 0.38)',
 ];
 
 const LIGHT_THEME_SET = new Set(['light', 'ocean', 'forest', 'sunset', 'rose']);

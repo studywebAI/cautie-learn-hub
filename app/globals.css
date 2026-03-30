@@ -69,6 +69,7 @@
     --border-strong: rgba(26, 26, 24, 0.35);
     --accent-purple: #d97757;
     --accent-teal: #1d9e75;
+    --brand-coral: #d97757;
   }
 
   .dark {
@@ -244,6 +245,7 @@
     --border-strong: hsl(0 0% 90%);
     --accent-purple: #262626;
     --accent-teal: #22c55e;
+    --brand-coral: #d97757;
   }
 
   .theme-dark {
@@ -894,6 +896,28 @@
 
   .studyset-day-card {
     animation: studyset-card-pop 280ms ease-out both;
+  }
+
+  .brand-coral-text {
+    color: var(--brand-coral);
+  }
+
+  .brand-coral-bg {
+    background-color: var(--brand-coral);
+    color: #ffffff;
+  }
+
+  .brand-coral-border {
+    border-color: var(--brand-coral);
+  }
+
+  .btn-send-coral {
+    background-color: var(--brand-coral);
+    color: #ffffff;
+  }
+
+  .btn-send-coral:hover {
+    filter: brightness(0.95);
   }
 }
 

@@ -39,6 +39,10 @@ Usage guidance:
 - Page background: var(--bg-page)
 - Sidebar background: var(--bg-surface)
 - Cards/panels: var(--bg-primary)
-- Accent use only for key interactive elements (active nav marker, primary CTA, selective icons)
+- Accent use is opt-in only via utility classes:
+  - .brand-coral-text
+  - .brand-coral-bg
+  - .brand-coral-border
+  - .btn-send-coral (for send-style buttons)
 - Keep UI weights at 400/500 max for softer visual tone
 */
