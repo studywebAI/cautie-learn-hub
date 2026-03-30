@@ -10,7 +10,7 @@ import { GlobalRequestLogger } from "@/components/debug/global-request-logger";
 const fontInter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-  weight: ['400', '500', '600'],
+  weight: ['400', '500'],
   display: 'swap',
 });
 
@@ -42,13 +42,16 @@ export const viewport: Viewport = {
 const themeBootstrapScript = `
 (() => {
   try {
-    const themes = ['light', 'dark', 'ocean', 'forest', 'sunset', 'rose'];
+    const themes = ['light', 'legacy', 'dark', 'ocean', 'forest', 'sunset', 'rose'];
     const saved = localStorage.getItem('studyweb-theme');
+    const savedFont = localStorage.getItem('studyweb-font');
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const resolved = themes.includes(saved || '') ? saved : (systemDark ? 'dark' : 'light');
     const root = document.documentElement;
-    root.classList.remove('theme-light', 'theme-dark', 'theme-ocean', 'theme-forest', 'theme-sunset', 'theme-rose');
+    root.classList.remove('theme-light', 'theme-legacy', 'theme-dark', 'theme-ocean', 'theme-forest', 'theme-sunset', 'theme-rose');
     root.classList.add('theme-' + resolved);
+    root.classList.remove('ui-font-inter', 'ui-font-legacy');
+    root.classList.add(savedFont === 'legacy' ? 'ui-font-legacy' : 'ui-font-inter');
   } catch {}
 })();
 `;

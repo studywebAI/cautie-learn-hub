@@ -10,7 +10,8 @@ import { getDictionary } from '@/lib/get-dictionary';
 import type { Dictionary, Locale } from '@/lib/get-dictionary';
 
 export type UserRole = 'student' | 'teacher';
-export type ThemeType = 'light' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
+export type ThemeType = 'light' | 'legacy' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
+export type FontType = 'inter' | 'legacy';
 export type PreloadResourceKey = 'classes:list' | 'subjects:list';
 export type PreloadStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type PreloadSnapshot = Record<PreloadResourceKey, {
@@ -82,6 +83,8 @@ export type AppContextType = {
   setReducedMotion: (enabled: boolean) => void;
   theme: ThemeType;
   setTheme: (theme: ThemeType) => void;
+  font: FontType;
+  setFont: (font: FontType) => void;
   sessionRecap: SessionRecapData | null;
   setSessionRecap: (data: SessionRecapData | null) => void;
   classes: ClassInfo[];
@@ -105,10 +108,15 @@ export type AppContextType = {
 
 export const AppContext = createContext<AppContextType | null>(null);
 
-const THEME_VALUES: ThemeType[] = ['light', 'dark', 'ocean', 'forest', 'sunset', 'rose'];
+const THEME_VALUES: ThemeType[] = ['light', 'legacy', 'dark', 'ocean', 'forest', 'sunset', 'rose'];
+const FONT_VALUES: FontType[] = ['inter', 'legacy'];
 
 const isThemeType = (value: string | null): value is ThemeType => {
   return value !== null && THEME_VALUES.includes(value as ThemeType);
+};
+
+const isFontType = (value: string | null): value is FontType => {
+  return value !== null && FONT_VALUES.includes(value as FontType);
 };
 
 const getSystemTheme = (): ThemeType => {
@@ -121,6 +129,13 @@ const getInitialTheme = (): ThemeType => {
   const savedTheme = window.localStorage.getItem('studyweb-theme');
   if (isThemeType(savedTheme)) return savedTheme;
   return getSystemTheme();
+};
+
+const getInitialFont = (): FontType => {
+  if (typeof window === 'undefined') return 'inter';
+  const savedFont = window.localStorage.getItem('studyweb-font');
+  if (isFontType(savedFont)) return savedFont;
+  return 'inter';
 };
 
 // Fast localStorage helpers - synchronous, instant
@@ -154,6 +169,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [dyslexiaFont, setDyslexiaFontState] = useState(false);
   const [reducedMotion, setReducedMotionState] = useState(false);
   const [theme, setThemeState] = useState<ThemeType>(() => getInitialTheme());
+  const [font, setFontState] = useState<FontType>(() => getInitialFont());
   
   const [sessionRecap, setSessionRecap] = useState<SessionRecapData | null>(null);
   const [classes, setClasses] = useState<ClassInfo[]>([]);
@@ -187,6 +203,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const root = document.documentElement;
     root.classList.remove(
       'theme-light',
+      'theme-legacy',
       'theme-dark',
       'theme-ocean',
       'theme-forest',
@@ -194,6 +211,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       'theme-rose',
     );
     root.classList.add(`theme-${currentTheme}`);
+  }, []);
+
+  const applyFont = useCallback((currentFont: FontType) => {
+    if (typeof window === 'undefined') return;
+    const root = document.documentElement;
+    root.classList.remove('ui-font-inter', 'ui-font-legacy');
+    root.classList.add(currentFont === 'legacy' ? 'ui-font-legacy' : 'ui-font-inter');
   }, []);
 
   const setPreloadState = useCallback((key: PreloadResourceKey, next: Partial<PreloadSnapshot[PreloadResourceKey]>) => {
@@ -439,6 +463,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const resolvedTheme = getInitialTheme();
     setThemeState(resolvedTheme);
     applyAppearance(resolvedTheme);
+    const resolvedFont = getInitialFont();
+    setFontState(resolvedFont);
+    applyFont(resolvedFont);
 
     const init = async () => {
       const tier0StartedAt = Date.now();
@@ -501,7 +528,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [applyAppearance, warmResources, applyDashboardData, fetchDashboardSnapshot, supabase.auth]);
+  }, [applyAppearance, applyFont, warmResources, applyDashboardData, fetchDashboardSnapshot, supabase.auth]);
 
   const setLanguage = (newLanguage: Locale) => {
     setLanguageState(newLanguage);
@@ -540,6 +567,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setThemeState(newTheme);
     saveToLocalStorage('studyweb-theme', newTheme);
     applyAppearance(newTheme);
+  };
+
+  const setFont = (newFont: FontType) => {
+    setFontState(newFont);
+    saveToLocalStorage('studyweb-font', newFont);
+    applyFont(newFont);
   };
 
   const refetchClasses = useCallback(async () => {
@@ -637,12 +670,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const contextValue = useMemo(() => ({
     session, isLoading, appReady, isTier0Ready, language, setLanguage, dictionary, role, setRole,
     highContrast, setHighContrast, dyslexiaFont, setDyslexiaFont,
-    reducedMotion, setReducedMotion, theme, setTheme, sessionRecap, setSessionRecap,
+    reducedMotion, setReducedMotion, theme, setTheme, font, setFont, sessionRecap, setSessionRecap,
     classes, subjects, createClass, isCreatingClass, refetchClasses,
     assignments, createAssignment, deleteAssignment, refetchAssignments,
     students, personalTasks, createPersonalTask, updatePersonalTask,
     materials, refetchMaterials, preloadSnapshot, warmResources,
-  }), [session, isLoading, appReady, isTier0Ready, language, dictionary, role, highContrast, dyslexiaFont, reducedMotion, theme, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials, preloadSnapshot, warmResources]);
+  }), [session, isLoading, appReady, isTier0Ready, language, dictionary, role, highContrast, dyslexiaFont, reducedMotion, theme, font, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials, preloadSnapshot, warmResources]);
 
   return (
     <AppContext.Provider value={contextValue}>

@@ -5,70 +5,52 @@
 @layer base {
   :root {
     --type-micro: 12px;
-    --type-body: 16px;
-    --type-section: 18px;
-    --type-page: 22px;
-    --font-ui: var(--font-inter), Inter, system-ui, sans-serif;
-    --font-ui-legacy: "Segoe UI Variable Text", "Segoe UI", Inter, "SF Pro Text", Helvetica, Arial, sans-serif;
-    --background: 50 23.1% 94.9%;
-    --foreground: 60 4% 9.8%;
-    --card: 0 0% 100%;
-    --card-foreground: 60 4% 9.8%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 60 4% 9.8%;
-    --primary: 244.7 60% 66.7%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 50 16.7% 92.9%;
-    --secondary-foreground: 60 3.4% 34.9%;
-    --muted: 46.7 24.3% 92.7%;
-    --muted-foreground: 52.5 3.4% 53.3%;
-    --accent: 50 16.7% 92.9%;
-    --accent-foreground: 60 4% 9.8%;
-    --destructive: 0 56.7% 40.8%;
+    --type-body: 13px;
+    --type-section: 14px;
+    --type-page: 24px;
+    --background: 0 0% 94.8%;
+    --foreground: 0 0% 10.2%;
+    --card: 0 0% 98.6%;
+    --card-foreground: 0 0% 23.92%;
+    --popover: 0 0% 98.6%;
+    --popover-foreground: 0 0% 23.92%;
+    --primary: 0 0% 94.51%;
+    --primary-foreground: 0 0% 10.2%;
+    --secondary: 0 0% 97.6%;
+    --secondary-foreground: 0 0% 23.92%;
+    --muted: 0 0% 97.8%;
+    --muted-foreground: 0 0% 23.92%;
+    --accent: 0 0% 97.4%;
+    --accent-foreground: 0 0% 23.92%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --success: 164.8 76% 24.5%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --border: 60 4% 9.8% / 0.1;
-    --input: 60 4% 9.8% / 0.2;
-    --ring: 244.7 60% 66.7%;
+    --border: 0 0% 94.9%;
+    --input: 0 0% 94.9%;
+    --ring: 240 7% 18%;
     --radius: 0.75rem;
-    --surface-1: 0 0% 100%;
-    --surface-2: 50 16.7% 92.9%;
-    --surface-3: 46.7 24.3% 92.7%;
-    --interactive-hover: 60 4% 9.8% / 0.05;
-    --interactive-active: 60 4% 9.8% / 0.1;
-    --focus-ring: 244.7 60% 66.7%;
-    --chart-1: 244.7 60% 66.7%;
-    --chart-2: 160.9 69% 36.7%;
-    --chart-3: 36 86.2% 54.5%;
-    --chart-4: 0.4 72.4% 58.8%;
-    --chart-5: 209.8 74.6% 37.1%;
+    --surface-1: 0 0% 98.6%;
+    --surface-2: 0 0% 97.8%;
+    --surface-3: 0 0% 97.2%;
+    --interactive-hover: 0 0% 95.6%;
+    --interactive-active: 0 0% 94.9%;
+    --focus-ring: 0 0% 26%;
+    --chart-1: 0 0% 22%;
+    --chart-2: 0 0% 36%;
+    --chart-3: 0 0% 50%;
+    --chart-4: 0 0% 64%;
+    --chart-5: 0 0% 78%;
 
-    --sidebar-background: 50 16.7% 92.9%;
-    --sidebar-foreground: 60 3.4% 34.9%;
-    --sidebar-primary: 244.7 60% 66.7%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 50 16.7% 92.9%;
-    --sidebar-accent-foreground: 60 3.4% 34.9%;
-    --sidebar-active-foreground: 245.6 45% 37.1%;
-    --sidebar-border: 60 4% 9.8% / 0.1;
-    --sidebar-ring: 244.7 60% 66.7%;
-
-    --bg-page: #f5f4ef;
-    --bg-surface: #f0efea;
-    --bg-primary: #ffffff;
-    --text-primary: #1a1a18;
-    --text-secondary: #5c5c56;
-    --text-tertiary: #8c8b84;
-    --text-info: #185fa5;
-    --text-success: #0f6e56;
-    --text-warning: #854f0b;
-    --text-danger: #a32d2d;
-    --border-subtle: rgba(26, 26, 24, 0.1);
-    --border-default: rgba(26, 26, 24, 0.2);
-    --border-strong: rgba(26, 26, 24, 0.35);
-    --accent-purple: #7f77dd;
-    --accent-teal: #1d9e75;
+    --sidebar-background: 0 0% 98.6%;
+    --sidebar-foreground: 0 0% 52.5%;
+    --sidebar-primary: 0 0% 98.0%;
+    --sidebar-primary-foreground: 0 0% 10.2%;
+    --sidebar-accent: 0 0% 95.6%;
+    --sidebar-accent-foreground: 0 0% 10.2%;
+    --sidebar-active-foreground: 0 0% 10.2%;
+    --sidebar-border: 0 0% 97.2%;
+    --sidebar-ring: 0 0% 26%;
   }
 
   .dark {
@@ -141,51 +123,6 @@
   }
 
   .theme-light {
-    --background: 50 23.1% 94.9%;
-    --foreground: 60 4% 9.8%;
-    --card: 0 0% 100%;
-    --card-foreground: 60 4% 9.8%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 60 4% 9.8%;
-    --primary: 244.7 60% 66.7%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 50 16.7% 92.9%;
-    --secondary-foreground: 60 3.4% 34.9%;
-    --muted: 46.7 24.3% 92.7%;
-    --muted-foreground: 52.5 3.4% 53.3%;
-    --accent: 50 16.7% 92.9%;
-    --accent-foreground: 60 4% 9.8%;
-    --destructive: 0 56.7% 40.8%;
-    --destructive-foreground: 0 0% 100%;
-    --success: 164.8 76% 24.5%;
-    --success-foreground: 0 0% 100%;
-    --border: 60 4% 9.8% / 0.1;
-    --input: 60 4% 9.8% / 0.2;
-    --ring: 244.7 60% 66.7%;
-    --chart-1: 244.7 60% 66.7%;
-    --chart-2: 160.9 69% 36.7%;
-    --chart-3: 36 86.2% 54.5%;
-    --chart-4: 0.4 72.4% 58.8%;
-    --chart-5: 209.8 74.6% 37.1%;
-
-    --surface-1: 0 0% 100%;
-    --surface-2: 50 16.7% 92.9%;
-    --surface-3: 46.7 24.3% 92.7%;
-    --interactive-hover: 60 4% 9.8% / 0.05;
-    --interactive-active: 60 4% 9.8% / 0.1;
-    --focus-ring: 244.7 60% 66.7%;
-    --sidebar-background: 50 16.7% 92.9%;
-    --sidebar-foreground: 60 3.4% 34.9%;
-    --sidebar-primary: 244.7 60% 66.7%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 50 16.7% 92.9%;
-    --sidebar-accent-foreground: 60 3.4% 34.9%;
-    --sidebar-active-foreground: 245.6 45% 37.1%;
-    --sidebar-border: 60 4% 9.8% / 0.1;
-    --sidebar-ring: 244.7 60% 66.7%;
-  }
-
-  .theme-legacy {
     --background: 0 0% 94.8%;
     --foreground: 0 0% 10.2%;
     --card: 0 0% 98.6%;
@@ -228,22 +165,6 @@
     --sidebar-active-foreground: 0 0% 10.2%;
     --sidebar-border: 0 0% 97.2%;
     --sidebar-ring: 0 0% 26%;
-
-    --bg-page: #f2f2f2;
-    --bg-surface: #fcfcfc;
-    --bg-primary: #fbfbfb;
-    --text-primary: #1a1a1a;
-    --text-secondary: #3d3d3d;
-    --text-tertiary: #868686;
-    --text-info: #1f1f1f;
-    --text-success: #22c55e;
-    --text-warning: #f59e0b;
-    --text-danger: #ef4444;
-    --border-subtle: hsl(0 0% 94.9%);
-    --border-default: hsl(0 0% 94.9%);
-    --border-strong: hsl(0 0% 90%);
-    --accent-purple: #262626;
-    --accent-teal: #22c55e;
   }
 
   .theme-dark {
@@ -480,43 +401,43 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-ui);
+    font-family: "Segoe UI Variable Text", "Segoe UI", Inter, "SF Pro Text", Helvetica, Arial, sans-serif;
     font-size: var(--type-body);
-    line-height: 1.7;
-    letter-spacing: 0;
-    font-weight: 400;
+    line-height: 1.42;
+    letter-spacing: -0.003em;
+    font-weight: 550;
     -webkit-font-smoothing: auto;
     -moz-osx-font-smoothing: auto;
-    text-rendering: optimizeLegibility;
+    text-rendering: geometricPrecision;
   }
   button, input, textarea, select, option {
-    font-family: var(--font-ui);
+    font-family: "Segoe UI Variable Text", "Segoe UI", Inter, "SF Pro Text", Helvetica, Arial, sans-serif;
     font-size: var(--type-body);
-    line-height: 1.5;
-    font-weight: 400;
+    line-height: 1.42;
+    font-weight: 550;
   }
   h1 {
     font-size: var(--type-page);
-    line-height: 1.3;
-    letter-spacing: -0.01em;
-    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.016em;
+    font-weight: 560;
   }
   h2 {
-    font-size: var(--type-section);
-    line-height: 1.3;
-    letter-spacing: -0.008em;
-    font-weight: 500;
+    font-size: 17px;
+    line-height: 1.25;
+    letter-spacing: -0.012em;
+    font-weight: 540;
   }
   h3 {
-    font-size: 16px;
-    line-height: 1.3;
-    letter-spacing: -0.006em;
-    font-weight: 500;
+    font-size: var(--type-section);
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    font-weight: 520;
   }
   h4, h5, h6 {
     font-size: var(--type-body);
-    line-height: 1.3;
-    font-weight: 500;
+    line-height: 1.35;
+    font-weight: 560;
   }
   small, .text-xs {
     font-size: var(--type-micro) !important;
@@ -527,19 +448,11 @@
   .font-semibold,
   .font-medium,
   .font-normal {
-    font-weight: 500 !important;
+    font-weight: 560 !important;
   }
   b,
   strong {
-    font-weight: 500;
-  }
-  :root.ui-font-legacy body,
-  :root.ui-font-legacy button,
-  :root.ui-font-legacy input,
-  :root.ui-font-legacy textarea,
-  :root.ui-font-legacy select,
-  :root.ui-font-legacy option {
-    font-family: var(--font-ui-legacy);
+    font-weight: 560;
   }
   body[data-reduced-motion="true"] * {
     @apply transition-none animate-none !important;
