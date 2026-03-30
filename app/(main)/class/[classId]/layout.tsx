@@ -35,19 +35,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex h-full flex-col gap-2.5">
       <div className="rounded-2xl bg-[hsl(var(--surface-1))] p-3">
-        <div className="flex flex-col gap-3">
-          <div className="flex justify-end">
-          <button
-            type="button"
-            className="inline-flex h-11 items-center rounded-xl bg-[hsl(var(--surface-2))] px-4 text-[13px] text-muted-foreground hover:text-foreground"
-            onClick={() => {
-              window.dispatchEvent(new Event('cautie:open-class-dropdown'));
-            }}
-          >
-            Select different class
-          </button>
-        </div>
-        <nav className="flex flex-wrap gap-2">
+        <nav className="flex flex-wrap items-center gap-2">
           {visibleTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = currentTab === tab.id;
@@ -69,8 +57,16 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
               </Link>
             );
           })}
+          <button
+            type="button"
+            className="ml-auto inline-flex h-9 items-center rounded-xl bg-[hsl(var(--surface-2))] px-3 text-[12px] text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              window.dispatchEvent(new Event('cautie:open-class-dropdown'));
+            }}
+          >
+            Select different class
+          </button>
         </nav>
-        </div>
       </div>
 
       <main className="flex-1 overflow-auto p-0">

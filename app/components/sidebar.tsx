@@ -778,14 +778,14 @@ export function AppSidebar() {
     }
 
     return (
-      <div className="mb-2 px-2">
-        <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
+      <div className="mb-1.5 px-2">
+        <label className="mb-1 block text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
           class
         </label>
         <Button
           size="sm"
           variant="outline"
-          className="mb-1 h-8 w-full justify-start rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[12px] font-medium text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
+          className="mb-1 h-7 w-full justify-start rounded-xl border-sidebar-border/80 bg-sidebar-accent px-2.5 text-[11px] font-normal text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
           onClick={(event) => {
             openDropdownFor('classes', event.currentTarget);
             setNewClassMenuOpen(true);
@@ -806,7 +806,7 @@ export function AppSidebar() {
             openDropdownFor('classes', event.currentTarget);
           }}
           disabled={classDropdownItems.length === 0}
-          className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-3 text-left text-[12px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-sidebar-accent/90 disabled:opacity-60"
+          className="h-7 w-full rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-2.5 text-left text-[11px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-sidebar-accent/90 disabled:opacity-60"
         >
           <span className="flex items-center justify-between gap-2">
             <span className="truncate">
@@ -843,14 +843,14 @@ export function AppSidebar() {
     };
 
     return (
-      <div className="mb-2 px-2">
-        <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
+      <div className="mb-1.5 px-2">
+        <label className="mb-1 block text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
           mode
         </label>
         <button
           type="button"
           onClick={() => switchStudentLane(studentLane === 'school' ? 'tools' : 'school')}
-          className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-3 text-left text-[12px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-sidebar-accent/90"
+          className="h-7 w-full rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-2.5 text-left text-[11px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-sidebar-accent/90"
         >
           <span className="flex items-center justify-between">
             <span>{studentLane === 'school' ? 'school mode' : 'tools mode'}</span>
@@ -954,7 +954,7 @@ export function AppSidebar() {
             {renderStudentLaneToggle()}
             {visibleMainItems.length > 0 && (
               <>
-                 <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">main</p>
+                 <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">main</p>
                 <SidebarMenu>
                   {visibleMainItems.map((item) => (
                     <SidebarMenuItem key={item.label} className="relative">
@@ -969,7 +969,7 @@ export function AppSidebar() {
                             tooltip={item.label}
                           >
                             <item.icon className="h-4 w-4" />
-                            <span className="text-[13px] leading-5">{item.label}</span>
+                            <span className="text-[12px] leading-4">{item.label}</span>
                           </SidebarMenuButton>
                         </>
                       ) : (
@@ -980,7 +980,7 @@ export function AppSidebar() {
                         >
                           <Link href={item.href} onClick={() => setOpenMobile(false)}>
                             <item.icon className="h-4 w-4" />
-                            <span className="text-[13px] leading-5">{item.label}</span>
+                            <span className="text-[12px] leading-4">{item.label}</span>
                           </Link>
                         </SidebarMenuButton>
                       )}
@@ -994,7 +994,7 @@ export function AppSidebar() {
             {visibleToolsItems.length > 0 && (
               <>
                 {visibleMainItems.length > 0 && <div className="h-5" />}
-                  <p className="px-2 pb-1.5 text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">tools</p>
+                  <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">tools</p>
                 <SidebarMenu>
                   {visibleToolsItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
@@ -1005,7 +1005,7 @@ export function AppSidebar() {
                       >
                         <Link href={item.href} onClick={() => setOpenMobile(false)}>
                           <item.icon className="h-4 w-4" />
-                          <span className="text-[13px] leading-5">{item.label}</span>
+                          <span className="text-[12px] leading-4">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -1026,16 +1026,16 @@ export function AppSidebar() {
 
   // Desktop: Regular sidebar with trigger
   return (
-    <Sidebar className="w-[20rem] lg:w-[24.75rem]" collapsible="icon">
+    <Sidebar className="w-[17rem] lg:w-[19.5rem]" collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
-      <SidebarContent className="px-3.5 py-3.5 flex-1">
+      <SidebarContent className="px-2.5 py-2.5 flex-1">
         {renderTeacherClassSwitcher()}
         {renderStudentLaneToggle()}
         {visibleMainItems.length > 0 && (
           <>
-            <p className="px-2 pb-1.5 pt-1 text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">main</p>
+            <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">main</p>
             <SidebarMenu>
               {visibleMainItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
@@ -1050,7 +1050,7 @@ export function AppSidebar() {
                         tooltip={item.label}
                       >
                         <item.icon className="h-4 w-4" />
-                        <span className="text-[13px] leading-5">{item.label}</span>
+                        <span className="text-[12px] leading-4">{item.label}</span>
                       </SidebarMenuButton>
                     </>
                   ) : (
@@ -1061,7 +1061,7 @@ export function AppSidebar() {
                     >
                       <Link href={item.href}>
                         <item.icon className="h-4 w-4" />
-                        <span className="text-[13px] leading-5">{item.label}</span>
+                        <span className="text-[12px] leading-4">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   )}
@@ -1074,7 +1074,7 @@ export function AppSidebar() {
         {visibleToolsItems.length > 0 && (
           <>
             {visibleMainItems.length > 0 && <div className="h-5" />}
-            <p className="px-2 pb-1.5 text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">tools</p>
+            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">tools</p>
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -1085,7 +1085,7 @@ export function AppSidebar() {
                   >
                     <Link href={item.href}>
                       <item.icon className="h-4 w-4" />
-                      <span className="text-[13px] leading-5">{item.label}</span>
+                      <span className="text-[12px] leading-4">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -1094,7 +1094,7 @@ export function AppSidebar() {
           </>
         )}
       </SidebarContent>
-      <SidebarFooter className="px-3.5 pt-2.5 pb-3.5 flex flex-col gap-2">
+      <SidebarFooter className="px-2.5 pt-2 pb-2.5 flex flex-col gap-2">
         <RecentsSidebar />
         <SidebarProfile />
       </SidebarFooter>

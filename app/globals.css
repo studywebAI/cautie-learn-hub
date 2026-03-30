@@ -44,7 +44,7 @@
     --chart-4: 0.4 72.4% 58.8%;
     --chart-5: 209.8 74.6% 37.1%;
 
-    --sidebar-background: 30 10.5% 92.5%;
+    --sidebar-background: 50 16.7% 92.9%;
     --sidebar-foreground: 60 3.4% 34.9%;
     --sidebar-primary: 60 4% 9.8%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -175,7 +175,7 @@
     --interactive-hover: 60 4% 9.8% / 0.05;
     --interactive-active: 60 4% 9.8% / 0.1;
     --focus-ring: 60 4% 9.8%;
-    --sidebar-background: 30 10.5% 92.5%;
+    --sidebar-background: 50 16.7% 92.9%;
     --sidebar-foreground: 60 3.4% 34.9%;
     --sidebar-primary: 60 4% 9.8%;
     --sidebar-primary-foreground: 0 0% 100%;

@@ -241,10 +241,9 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
   const validStudentEmails = studentEmails.filter(e => e.trim() !== '');
 
   return (
-    <div className="space-y-6">
-      {/* Student Invite Section - Black border box */}
-      <Card className="border-2 border-black/20 bg-card">
-        <CardHeader className="pb-4">
+    <div className="mx-auto w-full max-w-5xl space-y-4">
+      <Card className="bg-card">
+        <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />
             Invite Students
@@ -253,221 +252,176 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
             Share the join code, QR code, or invite link with students to join your class.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-5">
-          {/* QR Code and Join Code Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/30 rounded-lg">
-            {/* QR Code */}
-            {studentQrCodeUrl && (
-              <div className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-black/10">
-                <img src={studentQrCodeUrl} alt="QR Code" width={140} height={140} className="rounded" />
-                <p className="text-xs text-muted-foreground">Scan to join</p>
-              </div>
-            )}
-
-            {/* Join Code & Link */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Join Code</Label>
-                <div className="flex gap-2">
-                  <Input type="text" value={joinCode || 'Loading...'} readOnly className="font-mono text-lg font-bold border-2 border-black/20 text-foreground" />
-                  <Button variant="outline" size="icon" onClick={() => copyToClipboard(joinCode || '', 'code')}>
-                    {copiedStudent ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                  </Button>
+        <CardContent className="space-y-4">
+          <section className="rounded-xl bg-[hsl(var(--surface-2))] p-4">
+            <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+              {studentQrCodeUrl ? (
+                <div className="flex flex-col items-center gap-2 rounded-lg bg-[hsl(var(--surface-1))] p-3">
+                  <img src={studentQrCodeUrl} alt="QR Code" width={140} height={140} className="rounded" />
+                  <p className="text-xs text-muted-foreground">Scan to join</p>
                 </div>
-              </div>
-              {studentInviteLink && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Invite Link</Label>
+              ) : null}
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Join Code</Label>
                   <div className="flex gap-2">
-                    <Input type="text" value={studentInviteLink} readOnly className="text-sm border-2 border-black/20 text-foreground" />
-                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(studentInviteLink, 'link')}>
-                      {copiedLink ? <Check className="h-4 w-4 text-green-600" /> : <LinkIcon className="h-4 w-4" />}
+                    <Input type="text" value={joinCode || 'Loading...'} readOnly className="font-mono text-base" />
+                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(joinCode || '', 'code')}>
+                      {copiedStudent ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
-              )}
+                {studentInviteLink ? (
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Invite Link</Label>
+                    <div className="flex gap-2">
+                      <Input type="text" value={studentInviteLink} readOnly className="text-sm" />
+                      <Button variant="outline" size="icon" onClick={() => copyToClipboard(studentInviteLink, 'link')}>
+                        {copiedLink ? <Check className="h-4 w-4 text-green-600" /> : <LinkIcon className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
-          </div>
+          </section>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4">
-            <div className="h-px flex-1 bg-black/20" />
-            <span className="text-xs font-medium uppercase text-muted-foreground">Or send by email</span>
-            <div className="h-px flex-1 bg-black/20" />
-          </div>
-
-          {/* Email inputs */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold">Email Invites (optional)</Label>
+          <section className="rounded-xl bg-[hsl(var(--surface-2))] p-4 space-y-3">
+            <Label className="text-sm">Email Invites (optional)</Label>
             {studentEmails.map((email, index) => (
               <div key={index} className="flex gap-2">
-                <Input type="email" placeholder="student@example.com" value={email} onChange={(e) => updateStudentEmail(index, e.target.value)} className="flex-1 border-2 border-black/20 text-foreground" />
-                {studentEmails.length > 1 && <Button variant="ghost" size="icon" onClick={() => removeStudentEmail(index)}><X className="h-4 w-4" /></Button>}
+                <Input type="email" placeholder="student@example.com" value={email} onChange={(e) => updateStudentEmail(index, e.target.value)} className="flex-1" />
+                {studentEmails.length > 1 ? (
+                  <Button variant="ghost" size="icon" onClick={() => removeStudentEmail(index)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                ) : null}
               </div>
             ))}
-            <Button variant="outline" size="sm" onClick={addStudentEmail} className="gap-1 border-2 border-black/20">
+            <Button variant="outline" size="sm" onClick={addStudentEmail} className="gap-1">
               <Plus className="h-4 w-4" /> Add Another Email
             </Button>
-          </div>
+          </section>
 
-          {/* Scheduled time */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4" /> Schedule (optional)</Label>
-            <Input type="datetime-local" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="border-2 border-black/20 text-foreground" />
-            {scheduledTime && <p className="text-xs text-muted-foreground">Will be sent at {format(new Date(scheduledTime), 'PPp')}</p>}
-          </div>
-
-          {/* Send buttons - both options */}
-          {validStudentEmails.length > 0 && (
-            <div className="flex gap-2">
-              <Button onClick={sendInvites} disabled={isSending} className="flex-1 gap-2 btn-send-coral">
-                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-                {isSending ? 'Sending...' : 'Send Now'}
-              </Button>
-              {scheduledTime && (
-                <Button onClick={sendInvites} disabled={isSending} variant="outline" className="flex-1 gap-2 border-2 border-black/20">
-                  {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
-                  {isSending ? 'Scheduling...' : `Schedule for ${format(new Date(scheduledTime), 'PPp')}`}
-                </Button>
-              )}
+          <section className="rounded-xl bg-[hsl(var(--surface-2))] p-4 space-y-3">
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-2 text-sm">
+                <Clock className="h-4 w-4" />
+                Schedule (optional)
+              </Label>
+              <Input type="datetime-local" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} />
+              {scheduledTime ? <p className="text-xs text-muted-foreground">Will be sent at {format(new Date(scheduledTime), 'PPp')}</p> : null}
             </div>
-          )}
-          
-          {/* Always show Send button even without schedule if emails exist */}
-          {validStudentEmails.length > 0 && !scheduledTime && (
-            <p className="text-xs text-muted-foreground text-center">
-              Click "Send Now" to send invites immediately, or set a schedule to send later.
-            </p>
-          )}
+            {validStudentEmails.length > 0 ? (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button onClick={sendInvites} disabled={isSending} className="gap-2 btn-send-coral sm:min-w-[180px]">
+                  {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                  {isSending ? 'Sending...' : 'Send Now'}
+                </Button>
+                {scheduledTime ? (
+                  <Button onClick={sendInvites} disabled={isSending} variant="outline" className="gap-2">
+                    {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+                    {isSending ? 'Scheduling...' : `Schedule for ${format(new Date(scheduledTime), 'PPp')}`}
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+          </section>
         </CardContent>
       </Card>
 
-      {/* Teacher Invite Section - Same as student */}
-      <Card className="border-2 border-black/20 bg-card">
-        <CardHeader className="pb-4">
+      <Card className="bg-card">
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
               <BookUser className="h-5 w-5" />
               Invite Teachers
             </CardTitle>
-            {preferences.invite_allow_teacher_invites && (
+            {preferences.invite_allow_teacher_invites ? (
               <Button variant="ghost" size="sm" onClick={() => setShowTeacherSection(!showTeacherSection)} className="gap-1">
                 {showTeacherSection ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 {showTeacherSection ? 'Hide' : 'Show'}
               </Button>
-            )}
+            ) : null}
           </div>
           <CardDescription className="text-sm">
             Invite other teachers to collaborate. {preferences.invite_allow_teacher_invites ? 'Teacher invites are enabled.' : 'Teacher invites are disabled in Manage settings.'}
           </CardDescription>
         </CardHeader>
-        
-        {preferences.invite_allow_teacher_invites && showTeacherSection && (
-          <CardContent className="space-y-5">
-            {/* QR Code and Join Code Row - Same as student */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/30 rounded-lg">
-              {/* QR Code */}
-              {teacherQrCodeUrl && (
-                <div className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-black/10">
-                  <img src={teacherQrCodeUrl} alt="Teacher QR Code" width={140} height={140} className="rounded" />
-                  <p className="text-xs text-muted-foreground">Scan to join as teacher</p>
-                </div>
-              )}
 
-              {/* Join Code & Link */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">One-Time Teacher Join Code</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="text"
-                      value={oneTimeTeacherCode || ''}
-                      readOnly
-                      placeholder="Generate one-time code"
-                      className="font-mono text-lg font-bold border-2 border-black/20 text-foreground"
-                    />
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => copyToClipboard(oneTimeTeacherCode || '', 'teacher')}
-                      disabled={!oneTimeTeacherCode}
-                    >
-                      {copiedTeacher ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                    </Button>
+        {preferences.invite_allow_teacher_invites && showTeacherSection ? (
+          <CardContent className="space-y-4">
+            <section className="rounded-xl bg-[hsl(var(--surface-2))] p-4">
+              <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+                {teacherQrCodeUrl ? (
+                  <div className="flex flex-col items-center gap-2 rounded-lg bg-[hsl(var(--surface-1))] p-3">
+                    <img src={teacherQrCodeUrl} alt="Teacher QR Code" width={140} height={140} className="rounded" />
+                    <p className="text-xs text-muted-foreground">Scan to join as teacher</p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={generateOneTimeTeacherCode}
-                    disabled={isGeneratingTeacherCode}
-                    className="w-full"
-                  >
-                    {isGeneratingTeacherCode ? 'Generating...' : 'Generate 1-hour one-time code'}
-                  </Button>
-                  {oneTimeTeacherCodeExpiresAt && (
-                    <p className="text-xs text-muted-foreground">
-                      Expires at {new Date(oneTimeTeacherCodeExpiresAt).toLocaleString()}
-                    </p>
-                  )}
-                </div>
-                {teacherInviteLink && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold">Teacher Invite Link</Label>
+                ) : null}
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">One-Time Teacher Join Code</Label>
                     <div className="flex gap-2">
-                      <Input type="text" value={teacherInviteLink} readOnly className="text-sm border-2 border-black/20 text-foreground" />
-                      <Button variant="outline" size="icon" onClick={() => copyToClipboard(teacherInviteLink, 'teacherLink')}>
-                        {copiedTeacherLink ? <Check className="h-4 w-4 text-green-600" /> : <LinkIcon className="h-4 w-4" />}
+                      <Input type="text" value={oneTimeTeacherCode || ''} readOnly placeholder="Generate one-time code" className="font-mono text-base" />
+                      <Button variant="outline" size="icon" onClick={() => copyToClipboard(oneTimeTeacherCode || '', 'teacher')} disabled={!oneTimeTeacherCode}>
+                        {copiedTeacher ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                       </Button>
                     </div>
+                    <Button variant="outline" size="sm" onClick={generateOneTimeTeacherCode} disabled={isGeneratingTeacherCode}>
+                      {isGeneratingTeacherCode ? 'Generating...' : 'Generate 1-hour one-time code'}
+                    </Button>
+                    {oneTimeTeacherCodeExpiresAt ? (
+                      <p className="text-xs text-muted-foreground">Expires at {new Date(oneTimeTeacherCodeExpiresAt).toLocaleString()}</p>
+                    ) : null}
                   </div>
-                )}
+                  {teacherInviteLink ? (
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Teacher Invite Link</Label>
+                      <div className="flex gap-2">
+                        <Input type="text" value={teacherInviteLink} readOnly className="text-sm" />
+                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(teacherInviteLink, 'teacherLink')}>
+                          {copiedTeacherLink ? <Check className="h-4 w-4 text-green-600" /> : <LinkIcon className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               </div>
-            </div>
+            </section>
 
-            {/* Divider */}
-            <div className="flex items-center gap-4">
-              <div className="h-px flex-1 bg-black/20" />
-              <span className="text-xs font-medium uppercase text-muted-foreground">Or send by email</span>
-              <div className="h-px flex-1 bg-black/20" />
-            </div>
-
-            {/* Email inputs */}
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold">Email Invites</Label>
+            <section className="rounded-xl bg-[hsl(var(--surface-2))] p-4 space-y-3">
+              <Label className="text-sm">Email Invites</Label>
               {teacherEmails.map((email, index) => (
                 <div key={index} className="flex gap-2">
-                  <Input type="email" placeholder="teacher@example.com" value={email} onChange={(e) => updateTeacherEmail(index, e.target.value)} className="flex-1 border-2 border-black/20 text-foreground" />
-                  {teacherEmails.length > 1 && <Button variant="ghost" size="icon" onClick={() => removeTeacherEmail(index)}><X className="h-4 w-4" /></Button>}
+                  <Input type="email" placeholder="teacher@example.com" value={email} onChange={(e) => updateTeacherEmail(index, e.target.value)} className="flex-1" />
+                  {teacherEmails.length > 1 ? (
+                    <Button variant="ghost" size="icon" onClick={() => removeTeacherEmail(index)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  ) : null}
                 </div>
               ))}
-              <Button variant="outline" size="sm" onClick={addTeacherEmail} className="gap-1 border-2 border-black/20">
+              <Button variant="outline" size="sm" onClick={addTeacherEmail} className="gap-1">
                 <Plus className="h-4 w-4" /> Add Another Teacher
               </Button>
-            </div>
-
-            {/* Teacher send buttons - both options */}
-            {teacherEmails.filter(e => e.trim() !== '').length > 0 && (
-              <div className="flex gap-2">
-                <Button onClick={sendInvites} disabled={isSending} className="flex-1 gap-2 btn-send-coral">
-                  {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-                  {isSending ? 'Sending...' : 'Send Now'}
-                </Button>
-                {scheduledTime && (
-                  <Button onClick={sendInvites} disabled={isSending} variant="outline" className="flex-1 gap-2 border-2 border-black/20">
-                    {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
-                    {isSending ? 'Scheduling...' : `Schedule for ${format(new Date(scheduledTime), 'PPp')}`}
+              {teacherEmails.filter(e => e.trim() !== '').length > 0 ? (
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button onClick={sendInvites} disabled={isSending} className="gap-2 btn-send-coral sm:min-w-[180px]">
+                    {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                    {isSending ? 'Sending...' : 'Send Now'}
                   </Button>
-                )}
-              </div>
-            )}
-            
-            {teacherEmails.filter(e => e.trim() !== '').length > 0 && !scheduledTime && (
-              <p className="text-xs text-muted-foreground text-center">
-                Click "Send Now" to send invites immediately, or set a schedule to send later.
-              </p>
-            )}
+                  {scheduledTime ? (
+                    <Button onClick={sendInvites} disabled={isSending} variant="outline" className="gap-2">
+                      {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+                      {isSending ? 'Scheduling...' : `Schedule for ${format(new Date(scheduledTime), 'PPp')}`}
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
+            </section>
           </CardContent>
-        )}
+        ) : null}
       </Card>
     </div>
   );
