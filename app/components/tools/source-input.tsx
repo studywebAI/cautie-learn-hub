@@ -182,7 +182,7 @@ export function SourceInput({
   const initializedRef = useRef(false);
   const lastEmittedRef = useRef('');
   const integrationHydratedRef = useRef(false);
-  const integrationPollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const integrationPollTimeoutRef = useRef<number | null>(null);
 
   const [manualText, setManualText] = useState('');
   const [sources, setSources] = useState<SourceEntry[]>([]);
@@ -524,7 +524,11 @@ export function SourceInput({
       });
 
       if (!extractedText.trim()) {
-        toast({ title: 'File added', description: 'File was added, but text extraction returned empty.' });
+        toast({
+          variant: 'destructive',
+          title: 'Could not read file text',
+          description: 'This file was uploaded, but readable text could not be extracted. Re-upload or use another file.',
+        });
       }
     } catch {
       addSource({
@@ -535,7 +539,11 @@ export function SourceInput({
         selected: true,
         error: 'Could not extract text automatically.',
       });
-      toast({ title: 'File added', description: 'Could not extract text automatically.' });
+      toast({
+        variant: 'destructive',
+        title: 'Could not read file text',
+        description: 'Automatic extraction failed. Re-upload or paste the important text directly.',
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -894,7 +902,11 @@ export function SourceInput({
   const isImage = uploadedFile?.type.startsWith('image/');
   const wordCount = manualText.trim() ? manualText.trim().split(/\s+/).length : 0;
   const charCount = manualText.length;
-  const canGenerate = compiledSource.trim().length > 0;
+  const hasPendingSource = sources.some((source) => Boolean(source.loading));
+  const hasFileSourceWithoutText = sources.some(
+    (source) => source.kind === 'file' && !source.loading && !source.text.trim()
+  );
+  const canGenerate = compiledSource.trim().length > 0 && !hasPendingSource && !hasFileSourceWithoutText;
 
   const tips = [
     'Paste lecture notes, textbook chapters, or articles',
@@ -1057,6 +1069,16 @@ export function SourceInput({
           {charCount > 0 && (
             <span className="text-[10px] text-muted-foreground font-mono tabular-nums pl-1">
               {wordCount} words - {charCount} chars
+            </span>
+          )}
+          {hasPendingSource && (
+            <span className="text-[11px] text-muted-foreground pl-1">
+              Still extracting text from selected source...
+            </span>
+          )}
+          {hasFileSourceWithoutText && (
+            <span className="text-[11px] text-destructive pl-1">
+              File text extraction failed or returned empty. Re-upload the file so full content can be used.
             </span>
           )}
         </div>

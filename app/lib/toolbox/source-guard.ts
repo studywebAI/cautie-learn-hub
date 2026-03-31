@@ -38,9 +38,8 @@ export function enforceSourceOnlyGuard(payload: {
   if (!SOURCE_ONLY_TOOLS.has(payload.toolId)) return;
 
   const sourceText = String(payload.inputPayload?.sourceText || "").trim();
-  const sourceTokenCount = tokenize(sourceText).length;
-  if (sourceTokenCount < 40) {
-    const err = new Error("Not enough grounded source content. Add more real study material before generating.");
+  if (!sourceText) {
+    const err = new Error("No grounded source content found. Add real study material before generating.");
     (err as any).code = "SOURCE_GUARD_FAILED";
     throw err;
   }

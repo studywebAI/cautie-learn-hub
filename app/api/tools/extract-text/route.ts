@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import mammoth from "mammoth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -154,46 +155,9 @@ function decodePdfString(s: string): string {
  * Extract text from DOCX by reading the document.xml inside the zip.
  */
 async function extractTextFromDocx(buffer: Buffer): Promise<string> {
-  // DOCX is a ZIP file. We look for PK signature and find document.xml
   try {
-    // Use a simple approach: find the XML content within the zip
-    const content = buffer.toString("utf-8", 0, buffer.length);
-
-    // Try to find word/document.xml content
-    // Simple XML text extraction from the raw buffer
-    const utf8Content = buffer.toString("utf-8");
-
-    // Extract text from <w:t> tags
-    const textParts: string[] = [];
-    const wtRegex = /<w:t[^>]*>([^<]*)<\/w:t>/g;
-    let match;
-
-    while ((match = wtRegex.exec(utf8Content)) !== null) {
-      textParts.push(match[1]);
-    }
-
-    if (textParts.length > 0) {
-      return textParts.join(" ");
-    }
-
-    // Fallback: try to get any readable text
-    const paragraphRegex = /<w:p\b[^>]*>([\s\S]*?)<\/w:p>/g;
-    const results: string[] = [];
-
-    while ((match = paragraphRegex.exec(utf8Content)) !== null) {
-      const paraContent = match[1];
-      const innerTexts: string[] = [];
-      const innerRegex = /<w:t[^>]*>([^<]*)<\/w:t>/g;
-      let innerMatch;
-      while ((innerMatch = innerRegex.exec(paraContent)) !== null) {
-        innerTexts.push(innerMatch[1]);
-      }
-      if (innerTexts.length > 0) {
-        results.push(innerTexts.join(""));
-      }
-    }
-
-    return results.join("\n");
+    const result = await mammoth.extractRawText({ buffer });
+    return (result.value || "").replace(/\r\n/g, "\n").trim();
   } catch {
     return "";
   }
