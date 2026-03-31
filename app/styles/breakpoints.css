@@ -1,0 +1,92 @@
+/*
+  Responsive tier system for navigation and shell layout.
+  Tiers:
+  1) phone: 0-767
+  2) ipad-portrait: 768-1023
+  3) compact-desktop / ipad-landscape / split-screen: 1024-1279
+  4) desktop-wide: 1280+
+*/
+
+:root {
+  --tier-name: desktop-wide;
+  --app-shell-gutter: 24px;
+  --app-content-max: 1200px;
+
+  /* Navigation model tokens */
+  --nav-mode: rail-hover-expand;
+  --nav-icon-rail-width: 56px;
+  --nav-panel-width: 240px;
+  --nav-bottom-bar-height: 0px;
+}
+
+/* Phone */
+@media (max-width: 767px) {
+  :root {
+    --tier-name: phone;
+    --app-shell-gutter: 12px;
+    --app-content-max: 100%;
+    --nav-mode: bottom-tabs;
+    --nav-icon-rail-width: 0px;
+    --nav-panel-width: 0px;
+    --nav-bottom-bar-height: 64px;
+  }
+
+  [data-app-nav="sidebar"] {
+    display: none !important;
+  }
+
+  [data-app-nav="bottom-tabs"] {
+    display: flex !important;
+  }
+}
+
+/* iPad portrait */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --tier-name: ipad-portrait;
+    --app-shell-gutter: 16px;
+    --app-content-max: 100%;
+    --nav-mode: icon-rail-overlay;
+    --nav-icon-rail-width: 44px;
+    --nav-panel-width: min(320px, 88vw);
+    --nav-bottom-bar-height: 0px;
+  }
+
+  [data-app-nav="bottom-tabs"] {
+    display: none !important;
+  }
+}
+
+/* iPad landscape + desktop split-screen */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  :root {
+    --tier-name: compact-desktop;
+    --app-shell-gutter: 16px;
+    --app-content-max: 100%;
+    --nav-mode: rail-hover-expand;
+    --nav-icon-rail-width: 56px;
+    --nav-panel-width: 220px;
+    --nav-bottom-bar-height: 0px;
+  }
+
+  [data-app-nav="bottom-tabs"] {
+    display: none !important;
+  }
+}
+
+/* Desktop wide */
+@media (min-width: 1280px) {
+  :root {
+    --tier-name: desktop-wide;
+    --app-shell-gutter: 24px;
+    --app-content-max: 1280px;
+    --nav-mode: rail-hover-expand;
+    --nav-icon-rail-width: 56px;
+    --nav-panel-width: 240px;
+    --nav-bottom-bar-height: 0px;
+  }
+
+  [data-app-nav="bottom-tabs"] {
+    display: none !important;
+  }
+}

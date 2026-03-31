@@ -13,9 +13,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-baskerville)", "Georgia", "Times New Roman", "serif"],
-        body: ["var(--font-baskerville)", "Georgia", "Times New Roman", "serif"],
-        headline: ["var(--font-baskerville)", "Georgia", "Times New Roman", "serif"],
+        sans: ["Georgia", "Times New Roman", "Times", "serif"],
+        body: ["Georgia", "Times New Roman", "Times", "serif"],
+        headline: ["Georgia", "Times New Roman", "Times", "serif"],
         dyslexia: ["var(--font-atkinson-hyperlegible)", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
       },
       colors: {

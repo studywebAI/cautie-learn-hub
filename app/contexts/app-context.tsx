@@ -11,7 +11,7 @@ import type { Dictionary, Locale } from '@/lib/get-dictionary';
 
 export type UserRole = 'student' | 'teacher';
 export type ThemeType = 'light' | 'legacy' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
-export type FontType = 'inter' | 'legacy';
+export type FontType = 'georgia';
 export type PreloadResourceKey = 'classes:list' | 'subjects:list';
 export type PreloadStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type PreloadSnapshot = Record<PreloadResourceKey, {
@@ -109,14 +109,9 @@ export type AppContextType = {
 export const AppContext = createContext<AppContextType | null>(null);
 
 const THEME_VALUES: ThemeType[] = ['light', 'legacy', 'dark', 'ocean', 'forest', 'sunset', 'rose'];
-const FONT_VALUES: FontType[] = ['inter', 'legacy'];
 
 const isThemeType = (value: string | null): value is ThemeType => {
   return value !== null && THEME_VALUES.includes(value as ThemeType);
-};
-
-const isFontType = (value: string | null): value is FontType => {
-  return value !== null && FONT_VALUES.includes(value as FontType);
 };
 
 const getSystemTheme = (): ThemeType => {
@@ -132,10 +127,7 @@ const getInitialTheme = (): ThemeType => {
 };
 
 const getInitialFont = (): FontType => {
-  if (typeof window === 'undefined') return 'inter';
-  const savedFont = window.localStorage.getItem('studyweb-font');
-  if (isFontType(savedFont)) return savedFont;
-  return 'inter';
+  return 'georgia';
 };
 
 // Fast localStorage helpers - synchronous, instant
@@ -213,11 +205,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     root.classList.add(`theme-${currentTheme}`);
   }, []);
 
-  const applyFont = useCallback((currentFont: FontType) => {
+  const applyFont = useCallback((_currentFont: FontType) => {
     if (typeof window === 'undefined') return;
     const root = document.documentElement;
-    root.classList.remove('ui-font-inter', 'ui-font-legacy');
-    root.classList.add(currentFont === 'legacy' ? 'ui-font-legacy' : 'ui-font-inter');
+    root.classList.remove('ui-font-georgia', 'ui-font-legacy');
+    root.classList.add('ui-font-georgia');
   }, []);
 
   const setPreloadState = useCallback((key: PreloadResourceKey, next: Partial<PreloadSnapshot[PreloadResourceKey]>) => {
@@ -569,10 +561,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     applyAppearance(newTheme);
   };
 
-  const setFont = (newFont: FontType) => {
-    setFontState(newFont);
-    saveToLocalStorage('studyweb-font', newFont);
-    applyFont(newFont);
+  const setFont = (_newFont: FontType) => {
+    setFontState('georgia');
+    saveToLocalStorage('studyweb-font', 'georgia');
+    applyFont('georgia');
   };
 
   const refetchClasses = useCallback(async () => {

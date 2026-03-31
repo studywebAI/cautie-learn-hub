@@ -13,9 +13,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "SF Pro Text", "Segoe UI", "Helvetica", "Arial", ...fontFamily.sans],
-        body: ["Inter", "SF Pro Text", "Segoe UI", "Helvetica", "Arial", ...fontFamily.sans],
-        headline: ["Inter", "SF Pro Text", "Segoe UI", "Helvetica", "Arial", ...fontFamily.sans],
+        sans: ["Georgia", "Times New Roman", "Times", ...fontFamily.serif],
+        body: ["Georgia", "Times New Roman", "Times", ...fontFamily.serif],
+        headline: ["Georgia", "Times New Roman", "Times", ...fontFamily.serif],
         dyslexia: ["var(--font-atkinson-hyperlegible)", ...fontFamily.sans],
       },
       colors: {
