@@ -94,6 +94,33 @@ export function StudentClasses() {
       return false;
     }
   };
+
+  const handleLeaveClass = async (classId: string, className: string) => {
+    const confirmed = window.confirm(`Leave "${className}"?`);
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/classes/${classId}/members`, {
+        method: 'DELETE',
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.error || 'Failed to leave class.');
+      }
+
+      toast({
+        title: 'Left class',
+        description: `You left ${className}.`,
+      });
+      await refetchClasses();
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not leave class',
+        description: error?.message || 'Try again.',
+      });
+    }
+  };
   
   // For students, the /api/classes endpoint already returns only classes they're members of.
   // No need to filter by user_id — just apply search filter.
@@ -157,7 +184,16 @@ export function StudentClasses() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {enrolledClasses.map((classInfo) => (
-            <ClassCard key={classInfo.id} classInfo={classInfo} isArchived={false} />
+            <div key={classInfo.id} className="space-y-2">
+              <ClassCard classInfo={classInfo} isArchived={false} />
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => handleLeaveClass(classInfo.id, classInfo.name)}
+              >
+                Leave class
+              </Button>
+            </div>
           ))}
         </div>
       )}

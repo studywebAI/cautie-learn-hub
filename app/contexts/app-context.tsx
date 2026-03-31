@@ -11,7 +11,7 @@ import type { Dictionary, Locale } from '@/lib/get-dictionary';
 
 export type UserRole = 'student' | 'teacher';
 export type ThemeType = 'light' | 'sand' | 'legacy' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
-export type FontType = 'georgia';
+export type FontType = 'ibm-plex';
 export type PreloadResourceKey = 'classes:list' | 'subjects:list';
 export type PreloadStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type PreloadSnapshot = Record<PreloadResourceKey, {
@@ -127,7 +127,7 @@ const getInitialTheme = (): ThemeType => {
 };
 
 const getInitialFont = (): FontType => {
-  return 'georgia';
+  return 'ibm-plex';
 };
 
 // Fast localStorage helpers - synchronous, instant
@@ -210,7 +210,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     if (typeof window === 'undefined') return;
     const root = document.documentElement;
     root.classList.remove('ui-font-georgia', 'ui-font-legacy');
-    root.classList.add('ui-font-georgia');
+    root.classList.add('ui-font-legacy');
   }, []);
 
   const setPreloadState = useCallback((key: PreloadResourceKey, next: Partial<PreloadSnapshot[PreloadResourceKey]>) => {
@@ -563,9 +563,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const setFont = (_newFont: FontType) => {
-    setFontState('georgia');
-    saveToLocalStorage('studyweb-font', 'georgia');
-    applyFont('georgia');
+    setFontState('ibm-plex');
+    saveToLocalStorage('studyweb-font', 'ibm-plex');
+    applyFont('ibm-plex');
   };
 
   const refetchClasses = useCallback(async () => {

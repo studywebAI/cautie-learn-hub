@@ -483,9 +483,9 @@
   * {
     @apply border-border;
     font-family: var(--font-ui) !important;
-    font-weight: 350 !important;
+    font-weight: 420 !important;
     font-stretch: 90% !important;
-    font-variation-settings: "wght" 350, "wdth" 90;
+    font-variation-settings: "wght" 420, "wdth" 90;
   }
   body {
     @apply bg-background text-foreground;
@@ -493,7 +493,7 @@
     font-size: var(--type-body);
     line-height: 1.4667;
     letter-spacing: 0;
-    font-weight: 350;
+    font-weight: 420;
     -webkit-font-smoothing: auto;
     -moz-osx-font-smoothing: auto;
     text-rendering: optimizeLegibility;
@@ -502,30 +502,30 @@
     font-family: var(--font-ui);
     font-size: var(--type-body);
     line-height: 1.4667;
-    font-weight: 350;
+    font-weight: 420;
   }
   h1 {
     font-size: var(--type-page);
     line-height: 1.3636;
     letter-spacing: -0.01em;
-    font-weight: 350;
+    font-weight: 420;
   }
   h2 {
     font-size: var(--type-section);
     line-height: 1.3889;
     letter-spacing: -0.008em;
-    font-weight: 350;
+    font-weight: 420;
   }
   h3 {
     font-size: 16px;
     line-height: 1.375;
     letter-spacing: -0.006em;
-    font-weight: 350;
+    font-weight: 420;
   }
   h4, h5, h6 {
     font-size: var(--type-body);
     line-height: 1.4667;
-    font-weight: 350;
+    font-weight: 420;
   }
   small, .text-xs {
     font-size: var(--type-micro) !important;
@@ -552,11 +552,11 @@
   .font-semibold,
   .font-medium,
   .font-normal {
-    font-weight: 350 !important;
+    font-weight: 420 !important;
   }
   b,
   strong {
-    font-weight: 350;
+    font-weight: 420;
   }
   body[data-reduced-motion="true"] * {
     @apply transition-none animate-none !important;
@@ -1035,3 +1035,4 @@
 * {
   scrollbar-width: none;
 }
+

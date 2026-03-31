@@ -43,7 +43,7 @@ const themeBootstrapScript = `
     root.classList.remove('theme-light', 'theme-sand', 'theme-legacy', 'theme-dark', 'theme-ocean', 'theme-forest', 'theme-sunset', 'theme-rose');
     root.classList.add('theme-' + resolved);
     root.classList.remove('ui-font-georgia', 'ui-font-legacy');
-    root.classList.add('ui-font-georgia');
+    root.classList.add('ui-font-legacy');
   } catch {}
 })();
 `;

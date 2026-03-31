@@ -145,3 +145,50 @@ export async function PATCH(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+// DELETE - Leave class (student self-leave)
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ classId: string }> }
+) {
+  try {
+    const { classId } = await params
+    const cookieStore = cookies()
+    const supabase = await createClient(cookieStore)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const perm = await getClassPermission(supabase, classId, user.id)
+    if (!perm.isMember) {
+      return NextResponse.json({ error: 'You are not a member of this class' }, { status: 403 })
+    }
+
+    if (!perm.isStudent) {
+      return NextResponse.json({ error: 'Only students can leave classes from this flow' }, { status: 403 })
+    }
+
+    const { error: deleteError } = await supabase
+      .from('class_members')
+      .delete()
+      .eq('class_id', classId)
+      .eq('user_id', user.id)
+
+    if (deleteError) {
+      return NextResponse.json({ error: deleteError.message }, { status: 500 })
+    }
+
+    await logAuditEntry(supabase, {
+      userId: user.id,
+      classId,
+      action: 'leave',
+      entityType: 'class_member',
+      entityId: user.id,
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('❌ [MEMBERS_DELETE] Unexpected error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

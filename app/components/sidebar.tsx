@@ -103,6 +103,7 @@ export function AppSidebar() {
     : [
         { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
         { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
+        { href: '/classes', label: 'Manage', icon: School },
         { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
       ];
 
