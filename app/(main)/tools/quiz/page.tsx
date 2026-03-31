@@ -22,6 +22,7 @@ import { quizToMarkdown, quizToHtml } from '@/lib/export-formatters';
 import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseQuizFromMarkdown, parseQuizFromHtml } from '@/lib/import-parsers';
 import { getToolStrings } from '@/lib/tool-i18n';
+import { Switch } from '@/components/ui/switch';
 
 const QuizTaker = dynamic(
   () => import('@/components/tools/quiz-taker').then((m) => m.QuizTaker),
@@ -67,6 +68,7 @@ function QuizPageContent() {
   const [currentView, setCurrentView] = useState<'setup' | 'take' | 'duel'>('setup');
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const [saveToRecents, setSaveToRecents] = useState(true);
   const launchHandledRef = useRef(false);
   const { toast } = useToast();
 
@@ -100,6 +102,8 @@ function QuizPageContent() {
           mode: requestedMode,
           artifactType: 'quiz',
           artifactTitle: requestedTitle,
+          options: { saveToRecents },
+          persistArtifact: saveToRecents,
           input: {
             sourceText: text,
             imageDataUri: imageDataUri || undefined,
@@ -121,7 +125,7 @@ function QuizPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [customTitle, difficultyProfile, imageDataUri, language, questionCount, questionType, quizMode]);
+  }, [customTitle, difficultyProfile, imageDataUri, language, questionCount, questionType, quizMode, saveToRecents]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
@@ -202,12 +206,14 @@ function QuizPageContent() {
     if (s('count') && !Number.isNaN(Number(s('count')))) setQuestionCount(Number(s('count')));
     if (s('difficulty')) setDifficultyProfile(s('difficulty')!);
     if (s('questionType')) setQuestionType(s('questionType')!);
+    if (s('saveToRecents') === 'false') setSaveToRecents(false);
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.quiz.mode', quizMode); }, [quizMode]);
   useEffect(() => { localStorage.setItem('tools.quiz.count', String(questionCount)); }, [questionCount]);
   useEffect(() => { localStorage.setItem('tools.quiz.difficulty', difficultyProfile); }, [difficultyProfile]);
   useEffect(() => { localStorage.setItem('tools.quiz.questionType', questionType); }, [questionType]);
+  useEffect(() => { localStorage.setItem('tools.quiz.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
 
   const handleRestart = () => {
     setGeneratedQuiz(null);
@@ -283,6 +289,11 @@ function QuizPageContent() {
         <Sparkles className="mr-2 h-4 w-4" />
         {t.quiz.generate}
       </Button>
+
+      <div className="flex items-center justify-between rounded-md bg-sidebar-accent/55 px-2.5 py-2">
+        <p className="text-xs text-muted-foreground">Save to recents</p>
+        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} />
+      </div>
 
       <ImportToolbar
         toolType="quiz"

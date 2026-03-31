@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { ClassInfo } from '@/contexts/app-context';
 
 type DeadlineType = 'assignment' | 'quiz' | 'studyset' | 'event' | 'other';
@@ -39,6 +40,8 @@ type AgendaLink = {
 type SubjectOption = {
   id: string;
   title: string;
+  classId: string;
+  className: string;
 };
 
 type LinkSourceOption = {
@@ -81,12 +84,13 @@ export function TeacherDeadlineDialog({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<Date | undefined>(initialDate);
-  const [selectedClassId, setSelectedClassId] = useState<string>(defaultClassId || '');
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('none');
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>(defaultClassId ? [defaultClassId] : []);
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
   const [itemType, setItemType] = useState<DeadlineType>('assignment');
   const [isVisibleToStudents, setIsVisibleToStudents] = useState(true);
-  const [publishAtLocal, setPublishAtLocal] = useState('');
-  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
+  const [publishDate, setPublishDate] = useState('');
+  const [publishTime, setPublishTime] = useState('09:00');
+  const [subjectsByClass, setSubjectsByClass] = useState<Record<string, SubjectOption[]>>({});
   const [isLoadingSubjects, setIsLoadingSubjects] = useState(false);
   const [links, setLinks] = useState<AgendaLink[]>([]);
   const [sourceQuery, setSourceQuery] = useState('');
@@ -97,15 +101,15 @@ export function TeacherDeadlineDialog({
   const { toast } = useToast();
 
   useEffect(() => {
-    if (defaultClassId) setSelectedClassId(defaultClassId);
+    if (defaultClassId) setSelectedClassIds([defaultClassId]);
   }, [defaultClassId]);
 
   useEffect(() => {
     if (!isOpen) return;
-    if (selectedClassId) return;
+    if (selectedClassIds.length > 0) return;
     const fallbackClass = (classes || []).find((classItem) => classItem.status !== 'archived');
-    if (fallbackClass) setSelectedClassId(fallbackClass.id);
-  }, [isOpen, classes, selectedClassId]);
+    if (fallbackClass) setSelectedClassIds([fallbackClass.id]);
+  }, [isOpen, classes, selectedClassIds]);
 
   useEffect(() => {
     setDate(initialDate);
@@ -113,42 +117,52 @@ export function TeacherDeadlineDialog({
 
   useEffect(() => {
     const loadSubjects = async () => {
-      if (!selectedClassId) {
-        setSubjects([]);
-        setSelectedSubjectId('none');
+      if (selectedClassIds.length === 0) {
+        setSubjectsByClass({});
+        setSelectedSubjectIds([]);
         return;
       }
       setIsLoadingSubjects(true);
       try {
-        const response = await fetch(`/api/classes/${selectedClassId}/subjects`);
-        const data = await response.json();
-        if (!response.ok) throw new Error(data?.error || 'Failed to load subjects');
-        const rows = (data?.subjects || []).map((subject: any) => ({
-          id: subject.id,
-          title: subject.title,
-        }));
-        setSubjects(rows);
-        if (rows.length === 0) setSelectedSubjectId('none');
+        const entries = await Promise.all(
+          selectedClassIds.map(async (classId) => {
+            const response = await fetch(`/api/classes/${classId}/subjects`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data?.error || 'Failed to load subjects');
+            const className = (classes || []).find((classItem) => classItem.id === classId)?.name || 'Class';
+            const rows = (data?.subjects || []).map((subject: any) => ({
+              id: subject.id,
+              title: subject.title,
+              classId,
+              className,
+            }));
+            return [classId, rows] as const;
+          })
+        );
+        const map = Object.fromEntries(entries) as Record<string, SubjectOption[]>;
+        setSubjectsByClass(map);
+        const validSubjectIds = new Set(Object.values(map).flat().map((subject) => subject.id));
+        setSelectedSubjectIds((prev) => prev.filter((subjectId) => validSubjectIds.has(subjectId)));
       } catch {
-        setSubjects([]);
-        setSelectedSubjectId('none');
+        setSubjectsByClass({});
+        setSelectedSubjectIds([]);
       } finally {
         setIsLoadingSubjects(false);
       }
     };
 
     void loadSubjects();
-  }, [selectedClassId]);
+  }, [classes, selectedClassIds]);
 
   useEffect(() => {
-    if (!sourcesOpen || !selectedClassId) return;
+    if (!sourcesOpen || selectedClassIds.length === 0) return;
 
     const controller = new AbortController();
     const run = async () => {
       setLoadingSources(true);
       try {
         const params = new URLSearchParams();
-        params.set('classIds', selectedClassId);
+        params.set('classIds', selectedClassIds.join(','));
         if (sourceQuery.trim()) params.set('q', sourceQuery.trim());
         const response = await fetch(`/api/classes/agenda/link-sources?${params.toString()}`, { signal: controller.signal });
         const data = await response.json();
@@ -170,12 +184,36 @@ export function TeacherDeadlineDialog({
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [sourcesOpen, selectedClassId, sourceQuery]);
+  }, [selectedClassIds, sourceQuery, sourcesOpen]);
 
-  const selectedSubject = useMemo(
-    () => subjects.find((subject) => subject.id === selectedSubjectId) || null,
-    [subjects, selectedSubjectId]
+  const selectedClasses = useMemo(
+    () =>
+      (classes || [])
+        .filter((classItem) => selectedClassIds.includes(classItem.id))
+        .map((classItem) => ({ id: classItem.id, name: classItem.name })),
+    [classes, selectedClassIds]
   );
+
+  const allSubjects = useMemo(() => Object.values(subjectsByClass).flat(), [subjectsByClass]);
+
+  const selectedSubjects = useMemo(
+    () => allSubjects.filter((subject) => selectedSubjectIds.includes(subject.id)),
+    [allSubjects, selectedSubjectIds]
+  );
+
+  const toggleClassSelection = (classId: string) => {
+    setSelectedClassIds((prev) => {
+      if (prev.includes(classId)) return prev.filter((id) => id !== classId);
+      return [...prev, classId];
+    });
+  };
+
+  const toggleSubjectSelection = (subjectId: string) => {
+    setSelectedSubjectIds((prev) => {
+      if (prev.includes(subjectId)) return prev.filter((id) => id !== subjectId);
+      return [...prev, subjectId];
+    });
+  };
 
   const addSourceAsLink = (source: LinkSourceOption) => {
     const next: AgendaLink = {
@@ -200,10 +238,10 @@ export function TeacherDeadlineDialog({
   };
 
   const handleCreate = async () => {
-    if (!title.trim() || !date || !selectedClassId) {
+    if (!title.trim() || !date || selectedClassIds.length === 0) {
       toast({
         title: 'Missing information',
-        description: 'Please provide title, date, and class.',
+        description: 'Please provide title, date, and at least one class.',
         variant: 'destructive',
       });
       return;
@@ -213,20 +251,46 @@ export function TeacherDeadlineDialog({
     try {
       const dueAt = new Date(date);
       dueAt.setHours(12, 0, 0, 0);
-      const publishAtIso = publishAtLocal ? new Date(publishAtLocal).toISOString() : null;
+      const publishAtIso = !isVisibleToStudents && publishDate
+        ? new Date(`${publishDate}T${publishTime || '09:00'}`).toISOString()
+        : null;
 
-      await onDeadlineCreated({
-        title: title.trim(),
-        description: description.trim(),
-        class_id: selectedClassId,
-        subject_id: selectedSubject?.id || null,
-        item_type: itemType,
-        starts_at: dueAt.toISOString(),
-        due_at: dueAt.toISOString(),
-        visible: isVisibleToStudents,
-        publish_at: isVisibleToStudents ? null : publishAtIso,
-        links,
-      });
+      for (const classId of selectedClassIds) {
+        const classSubjectIds = selectedSubjectIds.filter((subjectId) =>
+          (subjectsByClass[classId] || []).some((subject) => subject.id === subjectId)
+        );
+
+        if (classSubjectIds.length === 0) {
+          await onDeadlineCreated({
+            title: title.trim(),
+            description: description.trim(),
+            class_id: classId,
+            subject_id: null,
+            item_type: itemType,
+            starts_at: dueAt.toISOString(),
+            due_at: dueAt.toISOString(),
+            visible: isVisibleToStudents,
+            publish_at: isVisibleToStudents ? null : publishAtIso,
+            links,
+          });
+          continue;
+        }
+
+        for (const subjectId of classSubjectIds) {
+          await onDeadlineCreated({
+            title: title.trim(),
+            description: description.trim(),
+            class_id: classId,
+            subject_id: subjectId,
+            item_type: itemType,
+            starts_at: dueAt.toISOString(),
+            due_at: dueAt.toISOString(),
+            visible: isVisibleToStudents,
+            publish_at: isVisibleToStudents ? null : publishAtIso,
+            links,
+          });
+        }
+      }
 
       toast({
         title: 'Agenda item created',
@@ -248,10 +312,12 @@ export function TeacherDeadlineDialog({
     setTitle('');
     setDescription('');
     setDate(initialDate);
-    setSelectedSubjectId('none');
+    setSelectedClassIds(defaultClassId ? [defaultClassId] : []);
+    setSelectedSubjectIds([]);
     setItemType('assignment');
     setIsVisibleToStudents(true);
-    setPublishAtLocal('');
+    setPublishDate('');
+    setPublishTime('09:00');
     setLinks([]);
     setSourceQuery('');
     setSourceResults([]);
@@ -289,20 +355,39 @@ export function TeacherDeadlineDialog({
           <div className="grid gap-2 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="class">Class</Label>
-              <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                <SelectTrigger id="class">
-                  <SelectValue placeholder="Select class" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(classes || [])
-                    .filter((classItem) => classItem.status !== 'archived')
-                    .map((classItem) => (
-                      <SelectItem key={classItem.id} value={classItem.id}>
-                        {classItem.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button id="class" variant="outline" className="justify-between">
+                    {selectedClasses.length > 0
+                      ? `${selectedClasses.length} class${selectedClasses.length === 1 ? '' : 'es'} selected`
+                      : 'Select classes'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[320px] p-2">
+                  <div className="space-y-1">
+                    {(classes || [])
+                      .filter((classItem) => classItem.status !== 'archived')
+                      .map((classItem) => {
+                        const checked = selectedClassIds.includes(classItem.id);
+                        return (
+                          <button
+                            key={classItem.id}
+                            type="button"
+                            onClick={() => toggleClassSelection(classItem.id)}
+                            className="flex w-full items-center justify-between rounded-md border px-2.5 py-2 text-left"
+                          >
+                            <span className="text-sm">{classItem.name}</span>
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={() => toggleClassSelection(classItem.id)}
+                              onClick={(event) => event.stopPropagation()}
+                            />
+                          </button>
+                        );
+                      })}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="grid gap-2">
@@ -325,19 +410,49 @@ export function TeacherDeadlineDialog({
           <div className="grid gap-2 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="subject">Subject (optional)</Label>
-              <Select value={selectedSubjectId} onValueChange={setSelectedSubjectId}>
-                <SelectTrigger id="subject">
-                  <SelectValue placeholder={isLoadingSubjects ? 'Loading subjects...' : 'No subject'} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No subject</SelectItem>
-                  {subjects.map((subject) => (
-                    <SelectItem key={subject.id} value={subject.id}>
-                      {subject.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button id="subject" variant="outline" className="justify-between">
+                    {selectedSubjects.length > 0
+                      ? `${selectedSubjects.length} subject${selectedSubjects.length === 1 ? '' : 's'} selected`
+                      : isLoadingSubjects
+                        ? 'Loading subjects...'
+                        : 'No subject'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[340px] p-2">
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSubjectIds([])}
+                      className="w-full rounded-md border px-2.5 py-2 text-left text-sm"
+                    >
+                      No subject
+                    </button>
+                    {allSubjects.map((subject) => {
+                      const checked = selectedSubjectIds.includes(subject.id);
+                      return (
+                        <button
+                          key={`${subject.classId}-${subject.id}`}
+                          type="button"
+                          onClick={() => toggleSubjectSelection(subject.id)}
+                          className="flex w-full items-center justify-between rounded-md border px-2.5 py-2 text-left"
+                        >
+                          <span className="text-sm">
+                            {subject.title}
+                            <span className="ml-1 text-xs text-muted-foreground">({subject.className})</span>
+                          </span>
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleSubjectSelection(subject.id)}
+                            onClick={(event) => event.stopPropagation()}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="grid gap-2">
@@ -371,32 +486,48 @@ export function TeacherDeadlineDialog({
           </div>
 
           <div
-            className={cn(
-              'rounded-xl border px-3 py-3',
-              isVisibleToStudents ? 'bg-muted/30 border-border' : 'bg-red-100/50 border-red-300'
-            )}
+            className="relative rounded-xl border border-border bg-muted/30 px-3 py-3"
           >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium">Visible to students</p>
-                <p className="text-xs text-muted-foreground">
-                  Turn off to keep hidden. You can optionally schedule publish time.
-                </p>
+            <span
+              className={cn(
+                'absolute inset-y-2 left-2 w-1 rounded-full',
+                isVisibleToStudents ? 'bg-emerald-500/70' : 'bg-rose-400/75'
+              )}
+            />
+            <div className="pl-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Visible to students</p>
+                  <p className="text-xs text-muted-foreground">
+                    Turn off to keep hidden. You can optionally schedule publish time.
+                  </p>
+                </div>
+                <Switch checked={isVisibleToStudents} onCheckedChange={setIsVisibleToStudents} />
               </div>
-              <Switch checked={isVisibleToStudents} onCheckedChange={setIsVisibleToStudents} />
-            </div>
 
-            {!isVisibleToStudents && (
-              <div className="mt-3 grid gap-2">
-                <Label htmlFor="publishAt">Publish at (optional)</Label>
-                <Input
-                  id="publishAt"
-                  type="datetime-local"
-                  value={publishAtLocal}
-                  onChange={(event) => setPublishAtLocal(event.target.value)}
-                />
-              </div>
-            )}
+              {!isVisibleToStudents && (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="publishDate">Publish date</Label>
+                    <Input
+                      id="publishDate"
+                      type="date"
+                      value={publishDate}
+                      onChange={(event) => setPublishDate(event.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="publishTime">Publish time</Label>
+                    <Input
+                      id="publishTime"
+                      type="time"
+                      value={publishTime}
+                      onChange={(event) => setPublishTime(event.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3 border-t pt-4">

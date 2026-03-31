@@ -116,22 +116,13 @@ function buildDayTasks(
   context: SourceBundleContext,
   feedback: string
 ): TaskTemplate[] {
-  const feedbackLower = feedback.toLowerCase()
   const noteContext = context.contextText?.slice(0, 120).trim()
   const hasWord = context.imports?.word === true
   const hasPowerpoint = context.imports?.powerpoint === true
 
-  const quizBias =
-    feedbackLower.includes('quiz') ||
-    feedbackLower.includes('test') ||
-    feedbackLower.includes('questions')
-  const flashcardBias =
-    feedbackLower.includes('flashcard') ||
-    feedbackLower.includes('memory') ||
-    feedbackLower.includes('recall')
-  const notesBias =
-    feedbackLower.includes('notes') ||
-    feedbackLower.includes('summary')
+  // Security/quality: do not let free-form feedback text dictate task type.
+  // Plans stay grounded in source material + predictable pedagogy.
+  void feedback;
 
   const coreMinutes = Math.max(10, Math.floor(minutesPerDay * 0.4))
   const recallMinutes = Math.max(10, Math.floor(minutesPerDay * 0.25))
@@ -152,7 +143,7 @@ function buildDayTasks(
     estimated_minutes: coreMinutes,
   })
 
-  if (flashcardBias || (!quizBias && dayNumber % 2 === 1)) {
+  if (dayNumber % 2 === 1) {
     tasks.push({
       task_type: 'flashcards',
       title: dayNumber === 1 ? 'Baseline flashcards' : 'Recall deck build',
@@ -168,7 +159,7 @@ function buildDayTasks(
     })
   }
 
-  if (notesBias || dayNumber === totalDays) {
+  if (dayNumber === totalDays) {
     tasks.push({
       task_type: 'review',
       title: dayNumber === totalDays ? 'Final review' : 'Consolidation review',
@@ -177,11 +168,9 @@ function buildDayTasks(
     })
   } else {
     tasks.push({
-      task_type: quizBias ? 'quiz' : 'wordweb',
-      title: quizBias ? 'Practice question set' : 'Concept map',
-      description: quizBias
-        ? 'Do short-form practice questions and inspect mistakes.'
-        : 'Connect terms and concepts into one structured overview.',
+      task_type: 'wordweb',
+      title: 'Concept map',
+      description: 'Connect terms and concepts into one structured overview.',
       estimated_minutes: practiceMinutes,
     })
   }

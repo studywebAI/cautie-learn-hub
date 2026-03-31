@@ -11,65 +11,65 @@
     --type-page: 22px;
     --font-ui: Georgia, "Times New Roman", Times, serif;
     --font-ui-legacy: Georgia, "Times New Roman", Times, serif;
-    --background: 50 23.1% 94.9%;
-    --foreground: 60 4% 9.8%;
-    --card: 0 0% 100%;
-    --card-foreground: 60 4% 9.8%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 60 4% 9.8%;
-    --primary: 50 16.7% 92.9%;
-    --primary-foreground: 60 4% 9.8%;
-    --secondary: 50 16.7% 92.9%;
-    --secondary-foreground: 60 3.4% 34.9%;
-    --muted: 46.7 24.3% 92.7%;
-    --muted-foreground: 52.5 3.4% 53.3%;
-    --accent: 50 16.7% 92.9%;
-    --accent-foreground: 60 4% 9.8%;
-    --destructive: 0 56.7% 40.8%;
+    --background: 0 0% 94.8%;
+    --foreground: 0 0% 10.2%;
+    --card: 0 0% 98.6%;
+    --card-foreground: 0 0% 23.92%;
+    --popover: 0 0% 98.6%;
+    --popover-foreground: 0 0% 23.92%;
+    --primary: 0 0% 94.51%;
+    --primary-foreground: 0 0% 10.2%;
+    --secondary: 0 0% 97.6%;
+    --secondary-foreground: 0 0% 23.92%;
+    --muted: 0 0% 97.8%;
+    --muted-foreground: 0 0% 23.92%;
+    --accent: 0 0% 97.4%;
+    --accent-foreground: 0 0% 23.92%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --success: 164.8 76% 24.5%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --border: 60 4% 9.8% / 0.1;
-    --input: 60 4% 9.8% / 0.2;
-    --ring: 60 4% 9.8%;
+    --border: 0 0% 94.9%;
+    --input: 0 0% 94.9%;
+    --ring: 240 7% 18%;
     --radius: 0.75rem;
-    --surface-1: 0 0% 100%;
-    --surface-2: 50 16.7% 92.9%;
-    --surface-3: 46.7 24.3% 92.7%;
-    --interactive-hover: 60 4% 9.8% / 0.05;
-    --interactive-active: 60 4% 9.8% / 0.1;
-    --focus-ring: 60 4% 9.8%;
+    --surface-1: 0 0% 98.6%;
+    --surface-2: 0 0% 97.8%;
+    --surface-3: 0 0% 97.2%;
+    --interactive-hover: 0 0% 95.6%;
+    --interactive-active: 0 0% 94.9%;
+    --focus-ring: 0 0% 26%;
     --chart-1: 60 4% 22%;
     --chart-2: 160.9 69% 36.7%;
     --chart-3: 36 86.2% 54.5%;
     --chart-4: 0.4 72.4% 58.8%;
     --chart-5: 209.8 74.6% 37.1%;
 
-    --sidebar-background: 50 16.7% 92.9%;
-    --sidebar-foreground: 60 3.4% 34.9%;
-    --sidebar-primary: 60 4% 9.8%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 100%;
-    --sidebar-accent-foreground: 60 3.4% 34.9%;
-    --sidebar-active-foreground: 60 4% 9.8%;
-    --sidebar-border: 60 4% 9.8% / 0.1;
-    --sidebar-ring: 60 4% 9.8%;
+    --sidebar-background: 0 0% 98.6%;
+    --sidebar-foreground: 0 0% 52.5%;
+    --sidebar-primary: 0 0% 98.0%;
+    --sidebar-primary-foreground: 0 0% 10.2%;
+    --sidebar-accent: 0 0% 95.6%;
+    --sidebar-accent-foreground: 0 0% 10.2%;
+    --sidebar-active-foreground: 0 0% 10.2%;
+    --sidebar-border: 0 0% 97.2%;
+    --sidebar-ring: 0 0% 26%;
 
-    --bg-page: #f5f4ef;
-    --bg-surface: #eeecea;
-    --bg-primary: #ffffff;
-    --text-primary: #1a1a18;
-    --text-secondary: #5c5c56;
-    --text-tertiary: #8c8b84;
-    --text-info: #185fa5;
-    --text-success: #0f6e56;
-    --text-warning: #854f0b;
-    --text-danger: #a32d2d;
-    --border-subtle: rgba(26, 26, 24, 0.1);
-    --border-default: rgba(26, 26, 24, 0.2);
-    --border-strong: rgba(26, 26, 24, 0.35);
-    --accent-purple: #d97757;
-    --accent-teal: #1d9e75;
+    --bg-page: #f2f2f2;
+    --bg-surface: #fcfcfc;
+    --bg-primary: #fbfbfb;
+    --text-primary: #1a1a1a;
+    --text-secondary: #3d3d3d;
+    --text-tertiary: #868686;
+    --text-info: #1f1f1f;
+    --text-success: #22c55e;
+    --text-warning: #f59e0b;
+    --text-danger: #ef4444;
+    --border-subtle: hsl(0 0% 94.9%);
+    --border-default: hsl(0 0% 94.9%);
+    --border-strong: hsl(0 0% 90%);
+    --accent-purple: #262626;
+    --accent-teal: #22c55e;
     --brand-coral: #d97757;
   }
 
@@ -142,7 +142,7 @@
     --ring: 0 0% 0%;
   }
 
-  .theme-light {
+  .theme-sand {
     --background: 50 23.1% 94.9%;
     --foreground: 60 4% 9.8%;
     --card: 0 0% 100%;
@@ -187,6 +187,7 @@
     --sidebar-ring: 60 4% 9.8%;
   }
 
+  .theme-light,
   .theme-legacy {
     --background: 0 0% 94.8%;
     --foreground: 0 0% 10.2%;
@@ -487,7 +488,7 @@
     font-size: var(--type-body);
     line-height: 1.4667;
     letter-spacing: 0;
-    font-weight: 400;
+    font-weight: 500;
     -webkit-font-smoothing: auto;
     -moz-osx-font-smoothing: auto;
     text-rendering: optimizeLegibility;
@@ -496,30 +497,30 @@
     font-family: var(--font-ui);
     font-size: var(--type-body);
     line-height: 1.4667;
-    font-weight: 400;
+    font-weight: 500;
   }
   h1 {
     font-size: var(--type-page);
     line-height: 1.3636;
     letter-spacing: -0.01em;
-    font-weight: 500;
+    font-weight: 600;
   }
   h2 {
     font-size: var(--type-section);
     line-height: 1.3889;
     letter-spacing: -0.008em;
-    font-weight: 500;
+    font-weight: 600;
   }
   h3 {
     font-size: 16px;
     line-height: 1.375;
     letter-spacing: -0.006em;
-    font-weight: 500;
+    font-weight: 600;
   }
   h4, h5, h6 {
     font-size: var(--type-body);
     line-height: 1.4667;
-    font-weight: 500;
+    font-weight: 600;
   }
   small, .text-xs {
     font-size: var(--type-micro) !important;

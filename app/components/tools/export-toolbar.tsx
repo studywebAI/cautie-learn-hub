@@ -12,11 +12,13 @@ type ExportToolbarProps = {
   getMarkdown: () => string;
   /** Function that returns HTML string for print/PDF */
   getHtml: () => string;
+  /** Optional function that returns current rendered HTML for print (e.g. with highlights) */
+  getPrintHtml?: () => string;
   /** Optional title for the export */
   title?: string;
 };
 
-export function ExportToolbar({ toolType, getMarkdown, getHtml, title }: ExportToolbarProps) {
+export function ExportToolbar({ toolType, getMarkdown, getHtml, getPrintHtml, title }: ExportToolbarProps) {
   const [copied, setCopied] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const { toast } = useToast();
@@ -35,7 +37,7 @@ export function ExportToolbar({ toolType, getMarkdown, getHtml, title }: ExportT
   };
 
   const handlePrint = () => {
-    const html = getHtml();
+    const html = (getPrintHtml?.() || getHtml());
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       toast({ variant: 'destructive', title: 'Popup blocked', description: 'Allow popups to use print.' });
@@ -188,6 +190,17 @@ export function ExportToolbar({ toolType, getMarkdown, getHtml, title }: ExportT
     .note-section {
       page-break-inside: avoid;
     }
+
+    mark {
+      background: #fde68a;
+      color: inherit;
+      padding: 0 1px;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
     
     @media print {
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -206,7 +219,7 @@ export function ExportToolbar({ toolType, getMarkdown, getHtml, title }: ExportT
     setIsGeneratingPdf(true);
     try {
       // Use print-to-PDF approach via a hidden iframe
-      const html = getHtml();
+      const html = (getPrintHtml?.() || getHtml());
       const blob = new Blob([`<!DOCTYPE html>
 <html>
 <head>
@@ -230,6 +243,8 @@ export function ExportToolbar({ toolType, getMarkdown, getHtml, title }: ExportT
     .flashcard-item { border: 1px solid #d4d4d4; border-radius: 4pt; padding: 10pt 12pt; }
     .flashcard-item .term { font-weight: 600; font-size: 10pt; margin-bottom: 4pt; }
     .flashcard-item .definition { font-size: 9.5pt; color: #444; }
+    mark { background: #fde68a; color: inherit; padding: 0 1px; }
+    canvas { max-width: 100%; height: auto; }
   </style>
 </head>
 <body>${html}</body>

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Home, Circle, Square, BookOpen } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
 import { Checkbox } from '../ui/checkbox';
 import { toast } from '@/hooks/use-toast';
@@ -18,7 +17,7 @@ interface DraggableEventProps {
 export function DraggableEvent({ event, onEventClick, compact = false }: DraggableEventProps) {
   const router = useRouter();
   const [isCompleted, setIsCompleted] = useState((event as any).completed || false);
-  
+
   const {
     attributes,
     listeners,
@@ -49,11 +48,7 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
 
     if (isStudyset) {
       return {
-        borderColor: '#87A96B',
-        bgColor: 'rgba(135, 169, 107, 0.08)',
-        icon: BookOpen,
-        iconColor: 'text-[#87A96B]',
-        iconBg: 'bg-[#f2f7ee]',
+        accentColor: '#7FA36A',
         label: 'S',
         accentWord: 'tudyset',
       };
@@ -61,100 +56,37 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
 
     if (event.type === 'agenda_item') {
       if (event.visibility_state === 'hidden') {
-        return {
-          borderColor: 'rgb(239, 68, 68)',
-          bgColor: 'rgba(239, 68, 68, 0.12)',
-          icon: Square,
-          iconColor: 'text-red-500',
-          iconBg: 'bg-red-100',
-          label: 'H',
-        };
+        return { accentColor: '#C07A7A', label: 'H', accentWord: 'idden' };
       }
       if (event.item_type === 'quiz') {
-        return {
-          borderColor: 'rgb(245, 158, 11)',
-          bgColor: 'rgba(245, 158, 11, 0.12)',
-          icon: Circle,
-          iconColor: 'text-amber-500',
-          iconBg: 'bg-amber-100',
-          label: 'Q',
-        };
+        return { accentColor: '#B8895A', label: 'Q', accentWord: 'uiz' };
       }
       if (event.item_type === 'studyset') {
-        return {
-          borderColor: 'rgb(139, 92, 246)',
-          bgColor: 'rgba(139, 92, 246, 0.12)',
-          icon: BookOpen,
-          iconColor: 'text-violet-500',
-          iconBg: 'bg-violet-100',
-          label: 'S',
-        };
+        return { accentColor: '#7FA36A', label: 'S', accentWord: 'tudyset' };
       }
-      return {
-        borderColor: 'rgb(59, 130, 246)',
-        bgColor: 'rgba(59, 130, 246, 0.12)',
-        icon: Home,
-        iconColor: 'text-blue-500',
-        iconBg: 'bg-blue-100',
-        label: 'A',
-      };
+      if (event.item_type === 'event') {
+        return { accentColor: '#6F95B3', label: 'E', accentWord: 'vent' };
+      }
+      if (event.item_type === 'other') {
+        return { accentColor: '#927EAA', label: 'O', accentWord: 'ther' };
+      }
+      return { accentColor: '#6F95B3', label: 'A', accentWord: 'ssignment' };
     }
 
     if (event.type !== 'assignment') {
-      return {
-        borderColor: 'rgb(148, 163, 184)',
-        bgColor: 'rgba(148, 163, 184, 0.10)',
-        icon: BookOpen,
-        iconColor: 'text-slate-600',
-        iconBg: 'bg-slate-100',
-        label: 'S',
-        accentWord: '',
-      };
+      return { accentColor: '#8C96A1', label: 'S', accentWord: 'tudy' };
     }
 
     const assignmentType = (event as any).assignment_type || 'homework';
-    
     switch (assignmentType) {
       case 'homework':
-        return {
-          borderColor: 'rgb(59, 130, 246)', // blue-500
-          bgColor: 'rgba(59, 130, 246, 0.1)',
-          icon: Home,
-          iconColor: 'text-blue-500',
-          iconBg: 'bg-blue-100',
-          label: 'H',
-          accentWord: '',
-        };
+        return { accentColor: '#6F95B3', label: 'H', accentWord: 'omework' };
       case 'small_test':
-        return {
-          borderColor: 'rgb(249, 115, 22)', // orange-500
-          bgColor: 'rgba(249, 115, 22, 0.1)',
-          icon: Circle,
-          iconColor: 'text-orange-500',
-          iconBg: 'bg-orange-100',
-          label: 't',
-          accentWord: '',
-        };
+        return { accentColor: '#B8895A', label: 'T', accentWord: 'est' };
       case 'big_test':
-        return {
-          borderColor: 'rgb(239, 68, 68)', // red-500
-          bgColor: 'rgba(239, 68, 68, 0.1)',
-          icon: Square,
-          iconColor: 'text-red-500',
-          iconBg: 'bg-red-100',
-          label: 'T',
-          accentWord: '',
-        };
+        return { accentColor: '#A86B6B', label: 'B', accentWord: 'ig test' };
       default:
-        return {
-          borderColor: 'hsl(var(--destructive))',
-          bgColor: 'hsl(var(--destructive) / 0.1)',
-          icon: Home,
-          iconColor: 'text-destructive',
-          iconBg: 'bg-destructive/10',
-          label: '!',
-          accentWord: '',
-        };
+        return { accentColor: '#927EAA', label: 'I', accentWord: 'tem' };
     }
   };
 
@@ -162,22 +94,22 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
 
   const handleToggleComplete = async (checked: boolean | 'indeterminate') => {
     if (typeof checked !== 'boolean') return;
-    
+
     try {
       const response = await fetch(`/api/assignments/${event.id}/toggle-completed`, {
         method: 'POST',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to update completion status');
       }
-      
+
       setIsCompleted(checked);
       toast({
         title: 'Status updated',
         description: `Marked as ${checked ? 'complete' : 'incomplete'}`,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to update completion status',
@@ -199,17 +131,17 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
       ref={setNodeRef}
       style={{
         ...style,
-        borderLeftColor: styleData.borderColor,
-        backgroundColor: isCompleted ? 'rgba(148, 163, 184, 0.10)' : styleData.bgColor,
+        borderLeftColor: styleData.accentColor,
+        backgroundColor: isCompleted ? 'hsl(var(--surface-3))' : 'hsl(var(--surface-2))',
       }}
       {...attributes}
       {...listeners}
-      className={`p-3 rounded-lg border-l-4 cursor-grab active:cursor-grabbing ${
-        isDragging ? 'opacity-50' : 'hover:bg-muted/10'
+      className={`rounded-lg border-l-4 p-3 cursor-grab active:cursor-grabbing ${
+        isDragging ? 'opacity-50' : 'hover:bg-muted/40'
       }`}
       onClick={handleClick}
     >
-      <div className='flex justify-between items-start gap-3'>
+      <div className="flex justify-between items-start gap-3">
         <div className="flex items-start gap-3 flex-1">
           {event.type === 'assignment' && (
             <Checkbox
@@ -219,14 +151,14 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
               onClick={(e) => e.stopPropagation()}
             />
           )}
-          <div className={`flex-shrink-0 h-8 w-8 rounded ${styleData.iconBg} flex items-center justify-center ${isCompleted ? 'opacity-50' : ''}`}>
-            {styleData.label === 'S' && styleData.accentWord && !compact ? (
-              <div className="flex items-end leading-none">
-                <span className={`text-sm font-extrabold ${styleData.iconColor}`}>S</span>
-                <span className="text-[7px] text-slate-800">{styleData.accentWord}</span>
+          <div className={`flex-shrink-0 h-8 w-8 rounded border border-border/70 bg-[hsl(var(--surface-1))] flex items-center justify-center ${isCompleted ? 'opacity-50' : ''}`}>
+            {styleData.accentWord && !compact ? (
+              <div className="flex items-baseline leading-none">
+                <span className="text-[26px] leading-none font-semibold" style={{ color: styleData.accentColor }}>{styleData.label}</span>
+                <span className="-ml-[1px] text-[10px] leading-none text-foreground">{styleData.accentWord}</span>
               </div>
             ) : (
-              <span className={`text-xs font-bold ${styleData.iconColor}`}>{styleData.label}</span>
+              <span className="text-[20px] leading-none font-semibold" style={{ color: styleData.accentColor }}>{styleData.label}</span>
             )}
           </div>
           <div className={`flex-1 min-w-0 ${compact ? 'hidden xl:block' : ''}`}>
@@ -243,7 +175,7 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
               </span>
             )}
             {event.chapter_title && (
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {event.chapter_title}
               </p>
             )}

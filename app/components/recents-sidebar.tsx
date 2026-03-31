@@ -80,6 +80,7 @@ export function RecentsSidebar() {
         ]);
 
         const toolItems: RecentItem[] = (Array.isArray(runsRes) ? runsRes : [])
+          .filter((r: any) => r?.options_payload?.saveToRecents !== false)
           .filter((r: any) => r.status === 'succeeded')
           .map((r: any) => ({
             id: r.id,

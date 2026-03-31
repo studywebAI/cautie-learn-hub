@@ -1,4 +1,4 @@
-const SOURCE_ONLY_TOOLS = new Set(["notes", "quiz"]);
+const SOURCE_ONLY_TOOLS = new Set(["notes", "quiz", "flashcards"]);
 
 // No blocked patterns — users can paste anything (Wikipedia, URLs, etc.).
 // The guard only ensures AI output is grounded in user-provided text, not that
@@ -38,6 +38,12 @@ export function enforceSourceOnlyGuard(payload: {
   if (!SOURCE_ONLY_TOOLS.has(payload.toolId)) return;
 
   const sourceText = String(payload.inputPayload?.sourceText || "").trim();
+  const sourceTokenCount = tokenize(sourceText).length;
+  if (sourceTokenCount < 40) {
+    const err = new Error("Not enough grounded source content. Add more real study material before generating.");
+    (err as any).code = "SOURCE_GUARD_FAILED";
+    throw err;
+  }
 
   const outputText = collectText(payload.outputPayload).join(" ");
   if (!outputText.trim()) {
@@ -54,7 +60,7 @@ export function enforceSourceOnlyGuard(payload: {
   }
 
   const ratio = overlapRatio(sourceText, outputText);
-  if (ratio < 0.06) {
+  if (ratio < 0.12) {
     const err = new Error("Generated output is not sufficiently grounded in provided source text.");
     (err as any).code = "SOURCE_GUARD_FAILED";
     throw err;

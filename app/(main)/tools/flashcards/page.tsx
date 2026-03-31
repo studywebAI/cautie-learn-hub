@@ -21,6 +21,7 @@ import { flashcardsToMarkdown, flashcardsToHtml } from '@/lib/export-formatters'
 import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/import-parsers';
 import { getToolStrings } from '@/lib/tool-i18n';
+import { Switch } from '@/components/ui/switch';
 
 function FlashcardsPageContent() {
   const router = useRouter();
@@ -47,6 +48,7 @@ function FlashcardsPageContent() {
   const [currentView, setCurrentView] = useState<'setup' | 'study'>('setup');
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const [saveToRecents, setSaveToRecents] = useState(true);
   const launchHandledRef = useRef(false);
   const { toast } = useToast();
 
@@ -74,6 +76,8 @@ function FlashcardsPageContent() {
         mode: requestedMode,
           artifactType: 'flashcards',
           artifactTitle: requestedTitle,
+          options: { saveToRecents },
+          persistArtifact: saveToRecents,
           input: {
             sourceText: text,
             imageDataUri: imageDataUri || undefined,
@@ -93,7 +97,7 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [complexity, customTitle, flashcardCount, imageDataUri, language, studyMode]);
+  }, [complexity, customTitle, flashcardCount, imageDataUri, language, saveToRecents, studyMode]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
@@ -171,11 +175,13 @@ function FlashcardsPageContent() {
     if (s('mode')) setStudyMode(s('mode') as StudyMode);
     if (s('count') && !Number.isNaN(Number(s('count')))) setFlashcardCount(Number(s('count')));
     if (s('complexity')) setComplexity(s('complexity')!);
+    if (s('saveToRecents') === 'false') setSaveToRecents(false);
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.flashcards.mode', studyMode); }, [studyMode]);
   useEffect(() => { localStorage.setItem('tools.flashcards.count', String(flashcardCount)); }, [flashcardCount]);
   useEffect(() => { localStorage.setItem('tools.flashcards.complexity', complexity); }, [complexity]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
 
   const handleRestart = () => {
     setGeneratedCards(null);
@@ -245,6 +251,11 @@ function FlashcardsPageContent() {
         <Sparkles className="mr-2 h-4 w-4" />
         {t.flashcards.generate}
       </Button>
+
+      <div className="flex items-center justify-between rounded-md bg-sidebar-accent/55 px-2.5 py-2">
+        <p className="text-xs text-muted-foreground">Save to recents</p>
+        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} />
+      </div>
 
       <ImportToolbar
         toolType="flashcards"

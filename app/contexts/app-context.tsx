@@ -10,7 +10,7 @@ import { getDictionary } from '@/lib/get-dictionary';
 import type { Dictionary, Locale } from '@/lib/get-dictionary';
 
 export type UserRole = 'student' | 'teacher';
-export type ThemeType = 'light' | 'legacy' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
+export type ThemeType = 'light' | 'sand' | 'legacy' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
 export type FontType = 'georgia';
 export type PreloadResourceKey = 'classes:list' | 'subjects:list';
 export type PreloadStatus = 'idle' | 'loading' | 'ready' | 'error';
@@ -108,7 +108,7 @@ export type AppContextType = {
 
 export const AppContext = createContext<AppContextType | null>(null);
 
-const THEME_VALUES: ThemeType[] = ['light', 'legacy', 'dark', 'ocean', 'forest', 'sunset', 'rose'];
+const THEME_VALUES: ThemeType[] = ['light', 'sand', 'legacy', 'dark', 'ocean', 'forest', 'sunset', 'rose'];
 
 const isThemeType = (value: string | null): value is ThemeType => {
   return value !== null && THEME_VALUES.includes(value as ThemeType);
@@ -195,6 +195,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const root = document.documentElement;
     root.classList.remove(
       'theme-light',
+      'theme-sand',
       'theme-legacy',
       'theme-dark',
       'theme-ocean',

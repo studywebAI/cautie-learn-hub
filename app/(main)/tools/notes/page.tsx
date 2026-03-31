@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
-import { Loader2, Sparkles, Paintbrush, Mic, Square, WandSparkles, CircleSlash2, Link2, CheckCircle2 } from 'lucide-react';
+import { Loader2, Sparkles, Paintbrush } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
@@ -23,9 +23,7 @@ import { AppContext } from '@/contexts/app-context';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { PaintOverlay } from '@/components/tools/paint-overlay';
 import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { cn } from '@/lib/utils';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -141,6 +139,7 @@ function NotesPageContent() {
   const [isFetchingLink, setIsFetchingLink] = useState(false);
   const [showLaunchScreen, setShowLaunchScreen] = useState(Boolean(launchRequested && taskId && studysetId));
   const [launchStageIndex, setLaunchStageIndex] = useState(0);
+  const [saveToRecents, setSaveToRecents] = useState(true);
   const notesContentRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const keepListeningRef = useRef(false);
@@ -212,6 +211,7 @@ function NotesPageContent() {
     if (s('length') === 'short' || s('length') === 'medium' || s('length') === 'long') setLength(s('length') as any);
     if (s('style')) setStyle(s('style')!);
     if (s('audience')) setAudience(s('audience')!);
+    if (s('saveToRecents') === 'false') setSaveToRecents(false);
 
     const cachedTranscript = localStorage.getItem('tools.notes.liveTranscript');
     if (cachedTranscript) {
@@ -259,6 +259,10 @@ function NotesPageContent() {
         mode: requestedStyle,
         artifactType: 'notes',
         artifactTitle: requestedTitle,
+        options: {
+          saveToRecents,
+        },
+        persistArtifact: saveToRecents,
         input: {
           sourceText: text,
           length: requestedLength,
@@ -288,7 +292,7 @@ function NotesPageContent() {
       if (background) setIsAutoDrafting(false);
       else setIsLoading(false);
     }
-  }, [audience, customTitle, imageDataUri, length, reportStudysetPerformance, style, t.notes.generatingTitle, toast]);
+  }, [audience, customTitle, imageDataUri, length, reportStudysetPerformance, saveToRecents, style, t.notes.generatingTitle, toast]);
 
   useEffect(() => {
     if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
@@ -527,6 +531,7 @@ function NotesPageContent() {
   useEffect(() => { localStorage.setItem('tools.notes.length', length); }, [length]);
   useEffect(() => { localStorage.setItem('tools.notes.style', style); }, [style]);
   useEffect(() => { localStorage.setItem('tools.notes.audience', audience); }, [audience]);
+  useEffect(() => { localStorage.setItem('tools.notes.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
 
   useEffect(() => {
     if (!isListening || !autoDraftEnabled || isLoading || isAutoDrafting) return;
@@ -579,52 +584,16 @@ function NotesPageContent() {
   const lengthLabels: Record<string, string> = { short: t.short, medium: t.medium, long: t.long };
 
   if (showLaunchScreen) {
-    const progressPct = Math.min(100, Math.round(((launchStageIndex + 1) / launchStages.length) * 100));
     const currentStage = launchStages[Math.min(launchStageIndex, launchStages.length - 1)];
     return (
       <div className="h-full overflow-auto p-4 md:p-6">
         <div className="mx-auto flex min-h-[52vh] w-full max-w-3xl items-center justify-center">
           <div className="w-full rounded-2xl border border-border bg-card p-5 md:p-6">
-            <div className="mb-4 flex items-center gap-2 text-sm text-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>{currentStage.title}</span>
+            <div className="mb-3 flex items-center gap-3 text-sm text-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span className="font-medium">{currentStage.title}</span>
             </div>
-            <p className="mb-4 text-sm text-muted-foreground">{currentStage.detail}</p>
-            <div className="mb-4 h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-            <div className="space-y-2">
-              {launchStages.map((stage, index) => {
-                const done = index < launchStageIndex;
-                const active = index === launchStageIndex;
-                return (
-                  <div
-                    key={stage.title}
-                    className={cn(
-                      'flex items-start gap-2 rounded-lg border px-3 py-2 text-sm transition-colors',
-                      done && 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-                      active && 'border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-300',
-                      !done && !active && 'border-border bg-background text-muted-foreground'
-                    )}
-                  >
-                    {done ? (
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-                    ) : active ? (
-                      <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
-                    ) : (
-                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-muted-foreground/50" />
-                    )}
-                    <div className="leading-tight">
-                      <div>{stage.title}</div>
-                      <div className="text-[11px] opacity-80">{stage.detail}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <p className="text-sm text-muted-foreground">{currentStage.detail}</p>
           </div>
         </div>
       </div>
@@ -659,6 +628,7 @@ function NotesPageContent() {
                 title={customTitle.trim() || undefined}
                 getMarkdown={() => notesToMarkdown(generatedNotes)}
                 getHtml={() => notesToHtml(generatedNotes)}
+                getPrintHtml={() => notesContentRef.current?.innerHTML || notesToHtml(generatedNotes)}
               />
             </div>
           </div>
@@ -694,6 +664,11 @@ function NotesPageContent() {
           <span className="text-xs font-mono capitalize">{lengthLabels[length]}</span>
         </div>
         <Slider value={[lengthMap[length]]} onValueChange={([v]) => setLength(lengthFromSlider(v))} min={0} max={2} step={1} disabled={isLoading} />
+      </div>
+
+      <div className="flex items-center justify-between rounded-md bg-sidebar-accent/55 px-2.5 py-2">
+        <p className="text-xs text-muted-foreground">Save to recents</p>
+        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} />
       </div>
 
       <Button variant="outline" onClick={handleGenerate} disabled={!canGenerate} className="w-full rounded-full border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent">

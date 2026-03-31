@@ -97,6 +97,77 @@ export function flashcardsToHtml(cards: Flashcard[]): string {
 
 type NoteSection = { title: string; content: string | string[] };
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function inlineFormat(value: string) {
+  return escapeHtml(value)
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>');
+}
+
+function markdownishToHtml(raw: string) {
+  const lines = raw.split(/\r?\n/);
+  const out: string[] = [];
+  let inList = false;
+
+  const closeList = () => {
+    if (inList) {
+      out.push('</ul>');
+      inList = false;
+    }
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      closeList();
+      continue;
+    }
+
+    const h3 = trimmed.match(/^###\s+(.+)/);
+    const h2 = trimmed.match(/^##\s+(.+)/);
+    const h1 = trimmed.match(/^#\s+(.+)/);
+    const bullet = trimmed.match(/^[-*]\s+(.+)/);
+
+    if (h3) {
+      closeList();
+      out.push(`<h3>${inlineFormat(h3[1])}</h3>`);
+      continue;
+    }
+    if (h2) {
+      closeList();
+      out.push(`<h2>${inlineFormat(h2[1])}</h2>`);
+      continue;
+    }
+    if (h1) {
+      closeList();
+      out.push(`<h2>${inlineFormat(h1[1])}</h2>`);
+      continue;
+    }
+    if (bullet) {
+      if (!inList) {
+        out.push('<ul>');
+        inList = true;
+      }
+      out.push(`<li>${inlineFormat(bullet[1])}</li>`);
+      continue;
+    }
+
+    closeList();
+    out.push(`<p>${inlineFormat(trimmed)}</p>`);
+  }
+
+  closeList();
+  return out.join('\n');
+}
+
 export function notesToMarkdown(notes: NoteSection[]): string {
   const lines: string[] = ['# Notes\n'];
 
@@ -119,14 +190,9 @@ export function notesToHtml(notes: NoteSection[]): string {
   const sections = notes.map((section) => {
     let content: string;
     if (Array.isArray(section.content)) {
-      content = '<ul>' + section.content.map((item) => `<li>${item}</li>`).join('') + '</ul>';
+      content = '<ul>' + section.content.map((item) => `<li>${inlineFormat(String(item))}</li>`).join('') + '</ul>';
     } else {
-      // Convert markdown-ish content to basic HTML
-      content = section.content
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/\n/g, '<br/>');
-      content = `<p>${content}</p>`;
+      content = markdownishToHtml(String(section.content || ''));
     }
 
     return `<div class="note-section">

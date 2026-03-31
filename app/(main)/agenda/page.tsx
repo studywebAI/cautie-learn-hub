@@ -649,11 +649,11 @@ function AgendaPageContent() {
   };
 
   const teacherClasses = (classes || []).filter((classItem) => classItem.status !== 'archived');
-  const toggleOverlayClass = (classId: string, checked: boolean) => {
+  const toggleOverlayClass = (classId: string) => {
     setOverlayClassIds((prev) => {
       const set = new Set(prev);
-      if (checked) set.add(classId);
-      else set.delete(classId);
+      if (set.has(classId)) set.delete(classId);
+      else set.add(classId);
       return Array.from(set);
     });
   };
@@ -709,13 +709,19 @@ function AgendaPageContent() {
                       {teacherClasses.map((classItem) => {
                         const checked = overlayClassIds.includes(classItem.id);
                         return (
-                          <label key={classItem.id} className="flex items-center justify-between gap-2 rounded-lg border p-2">
+                          <button
+                            key={classItem.id}
+                            type="button"
+                            onClick={() => toggleOverlayClass(classItem.id)}
+                            className="flex w-full items-center justify-between gap-2 rounded-lg border p-2 text-left"
+                          >
                             <span className="text-sm">{classItem.name}</span>
                             <Checkbox
                               checked={checked}
-                              onCheckedChange={(value) => toggleOverlayClass(classItem.id, Boolean(value))}
+                              onCheckedChange={() => toggleOverlayClass(classItem.id)}
+                              onClick={(event) => event.stopPropagation()}
                             />
-                          </label>
+                          </button>
                         );
                       })}
                     </div>
