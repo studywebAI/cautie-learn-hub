@@ -13,9 +13,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Georgia", "Times New Roman", "Times", "serif"],
-        body: ["Georgia", "Times New Roman", "Times", "serif"],
-        headline: ["Georgia", "Times New Roman", "Times", "serif"],
+        sans: ['"IBM Plex Sans"', "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
+        body: ['"IBM Plex Sans"', "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
+        headline: ['"IBM Plex Sans"', "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
         dyslexia: ["var(--font-atkinson-hyperlegible)", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
       },
       colors: {
