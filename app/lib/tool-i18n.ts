@@ -193,15 +193,11 @@ const en: ToolStrings = {
     generatingTitle: 'Generating Flashcards',
     createFlashcards: 'Create Flashcards',
     parseError: 'The content could not be recognized as flashcards.',
-    labels: { pack: 'Pack', studyMode: 'Study Mode', retention: 'Retention', cardStyle: 'Card Style', complexity: 'Complexity' },
+    labels: { pack: 'Pack', studyMode: 'Mode', retention: 'Retention', cardStyle: 'Card Style', complexity: 'Complexity' },
     studyModeOptions: [
-      { value: 'flip', label: 'Flip', description: 'Classic card flip — tap to reveal the answer' },
+      { value: 'flip', label: 'Standard', description: 'Classic flip card mode' },
       { value: 'type', label: 'Type', description: 'Type your answer before revealing the correct one' },
-      { value: 'multiple-choice', label: 'Multiple Choice', description: 'Choose the correct answer from options' },
-      { value: 'write', label: 'Write', description: 'Write the full answer from memory, then compare' },
-      { value: 'speak', label: 'Speak', description: 'Say the answer out loud, then check yourself' },
-      { value: 'match', label: 'Match', description: 'Match terms to definitions in a timed game' },
-      { value: 'scatter', label: 'Scatter', description: 'Drag terms onto their matching definitions' },
+      { value: 'multiple-choice', label: 'Multiple Choice', description: 'Choose the correct answer from 3 related options' },
     ],
     packOptions: [
       { value: 'core', label: 'Essentials', description: 'Essential terms and definitions from the material' },
@@ -388,13 +384,9 @@ const nl: ToolStrings = {
     parseError: 'De inhoud kon niet worden herkend als flashcards.',
     labels: { pack: 'Pakket', studyMode: 'Studiemodus', retention: 'Onthouden', cardStyle: 'Kaartstijl', complexity: 'Complexiteit' },
     studyModeOptions: [
-      { value: 'flip', label: 'Omdraaien', description: 'Klassiek kaart omdraaien — tik om te onthullen' },
-      { value: 'type', label: 'Typen', description: 'Typ je antwoord voordat je het juiste ziet' },
-      { value: 'multiple-choice', label: 'Meerkeuze', description: 'Kies het juiste antwoord uit opties' },
-      { value: 'write', label: 'Schrijven', description: 'Schrijf het volledige antwoord uit je geheugen' },
-      { value: 'speak', label: 'Spreken', description: 'Zeg het antwoord hardop en controleer jezelf' },
-      { value: 'match', label: 'Koppelen', description: 'Koppel termen aan definities in een spel' },
-      { value: 'scatter', label: 'Scatter', description: 'Sleep termen naar hun bijpassende definities' },
+      { value: 'flip', label: 'Standard', description: 'Classic flip card mode' },
+      { value: 'type', label: 'Type', description: 'Type your answer before revealing the correct one' },
+      { value: 'multiple-choice', label: 'Multiple Choice', description: 'Choose the correct answer from 3 related options' },
     ],
     packOptions: [
       { value: 'core', label: 'Basis', description: 'Essentiële termen en definities uit het materiaal' },
@@ -581,13 +573,9 @@ const de: ToolStrings = {
     parseError: 'Inhalt konnte nicht als Karteikarten erkannt werden.',
     labels: { pack: 'Paket', studyMode: 'Lernmodus', retention: 'Behalten', cardStyle: 'Kartenstil', complexity: 'Komplexität' },
     studyModeOptions: [
-      { value: 'flip', label: 'Umdrehen', description: 'Klassisches Umdrehen — tippe zum Aufdecken' },
-      { value: 'type', label: 'Tippen', description: 'Tippe deine Antwort ein, bevor du die Lösung siehst' },
-      { value: 'multiple-choice', label: 'Multiple Choice', description: 'Wähle die richtige Antwort aus Optionen' },
-      { value: 'write', label: 'Schreiben', description: 'Schreibe die vollständige Antwort aus dem Gedächtnis' },
-      { value: 'speak', label: 'Sprechen', description: 'Sag die Antwort laut und überprüfe dich' },
-      { value: 'match', label: 'Zuordnen', description: 'Ordne Begriffe Definitionen zu im Zeitspiel' },
-      { value: 'scatter', label: 'Scatter', description: 'Ziehe Begriffe auf ihre passenden Definitionen' },
+      { value: 'flip', label: 'Standard', description: 'Classic flip card mode' },
+      { value: 'type', label: 'Type', description: 'Type your answer before revealing the correct one' },
+      { value: 'multiple-choice', label: 'Multiple Choice', description: 'Choose the correct answer from 3 related options' },
     ],
     packOptions: [
       { value: 'core', label: 'Grundlagen', description: 'Wesentliche Begriffe und Definitionen' },
@@ -774,13 +762,9 @@ const fr: ToolStrings = {
     parseError: 'Le contenu n\'a pas pu être reconnu comme des flashcards.',
     labels: { pack: 'Pack', studyMode: 'Mode d\'étude', retention: 'Rétention', cardStyle: 'Style de carte', complexity: 'Complexité' },
     studyModeOptions: [
-      { value: 'flip', label: 'Retourner', description: 'Retournement classique — tapez pour révéler' },
-      { value: 'type', label: 'Saisir', description: 'Saisissez votre réponse avant de voir la solution' },
-      { value: 'multiple-choice', label: 'Choix multiple', description: 'Choisissez la bonne réponse' },
-      { value: 'write', label: 'Écrire', description: 'Écrivez la réponse complète de mémoire' },
-      { value: 'speak', label: 'Parler', description: 'Dites la réponse à voix haute et vérifiez' },
-      { value: 'match', label: 'Associer', description: 'Associez termes et définitions dans un jeu chronométré' },
-      { value: 'scatter', label: 'Scatter', description: 'Faites glisser les termes vers leurs définitions' },
+      { value: 'flip', label: 'Standard', description: 'Classic flip card mode' },
+      { value: 'type', label: 'Type', description: 'Type your answer before revealing the correct one' },
+      { value: 'multiple-choice', label: 'Multiple Choice', description: 'Choose the correct answer from 3 related options' },
     ],
     packOptions: [
       { value: 'core', label: 'Essentiels', description: 'Termes et définitions essentiels du matériel' },
@@ -967,13 +951,9 @@ const es: ToolStrings = {
     parseError: 'El contenido no pudo ser reconocido como flashcards.',
     labels: { pack: 'Pack', studyMode: 'Modo de estudio', retention: 'Retención', cardStyle: 'Estilo de tarjeta', complexity: 'Complejidad' },
     studyModeOptions: [
-      { value: 'flip', label: 'Voltear', description: 'Volteo clásico — toca para revelar' },
-      { value: 'type', label: 'Escribir', description: 'Escribe tu respuesta antes de ver la correcta' },
-      { value: 'multiple-choice', label: 'Opción múltiple', description: 'Elige la respuesta correcta' },
-      { value: 'write', label: 'Redactar', description: 'Escribe la respuesta completa de memoria' },
-      { value: 'speak', label: 'Hablar', description: 'Di la respuesta en voz alta y comprueba' },
-      { value: 'match', label: 'Emparejar', description: 'Empareja términos con definiciones' },
-      { value: 'scatter', label: 'Scatter', description: 'Arrastra términos a sus definiciones' },
+      { value: 'flip', label: 'Standard', description: 'Classic flip card mode' },
+      { value: 'type', label: 'Type', description: 'Type your answer before revealing the correct one' },
+      { value: 'multiple-choice', label: 'Multiple Choice', description: 'Choose the correct answer from 3 related options' },
     ],
     packOptions: [
       { value: 'core', label: 'Esenciales', description: 'Términos y definiciones esenciales' },
@@ -1160,13 +1140,9 @@ const ru: ToolStrings = {
     parseError: 'Содержимое не распознано как карточки.',
     labels: { pack: 'Пакет', studyMode: 'Режим изучения', retention: 'Запоминание', cardStyle: 'Стиль карточки', complexity: 'Сложность' },
     studyModeOptions: [
-      { value: 'flip', label: 'Перевернуть', description: 'Классическое переворачивание — нажмите для ответа' },
-      { value: 'type', label: 'Ввести', description: 'Введите ответ перед просмотром правильного' },
-      { value: 'multiple-choice', label: 'Выбор ответа', description: 'Выберите правильный ответ из вариантов' },
-      { value: 'write', label: 'Написать', description: 'Напишите полный ответ по памяти' },
-      { value: 'speak', label: 'Произнести', description: 'Скажите ответ вслух и проверьте' },
-      { value: 'match', label: 'Сопоставить', description: 'Сопоставьте термины с определениями' },
-      { value: 'scatter', label: 'Scatter', description: 'Перетащите термины к определениям' },
+      { value: 'flip', label: 'Standard', description: 'Classic flip card mode' },
+      { value: 'type', label: 'Type', description: 'Type your answer before revealing the correct one' },
+      { value: 'multiple-choice', label: 'Multiple Choice', description: 'Choose the correct answer from 3 related options' },
     ],
     packOptions: [
       { value: 'core', label: 'Основы', description: 'Ключевые термины и определения' },
@@ -1353,13 +1329,9 @@ const zh: ToolStrings = {
     parseError: '内容无法识别为闪卡。',
     labels: { pack: '包', studyMode: '学习模式', retention: '记忆', cardStyle: '卡片样式', complexity: '复杂度' },
     studyModeOptions: [
-      { value: 'flip', label: '翻转', description: '经典翻卡——点击揭示答案' },
-      { value: 'type', label: '输入', description: '先输入答案再查看正确答案' },
-      { value: 'multiple-choice', label: '选择题', description: '从选项中选择正确答案' },
-      { value: 'write', label: '书写', description: '凭记忆写出完整答案再对比' },
-      { value: 'speak', label: '口述', description: '大声说出答案然后核对' },
-      { value: 'match', label: '匹配', description: '在计时游戏中匹配术语和定义' },
-      { value: 'scatter', label: '散布', description: '将术语拖拽到对应的定义上' },
+      { value: 'flip', label: 'Standard', description: 'Classic flip card mode' },
+      { value: 'type', label: 'Type', description: 'Type your answer before revealing the correct one' },
+      { value: 'multiple-choice', label: 'Multiple Choice', description: 'Choose the correct answer from 3 related options' },
     ],
     packOptions: [
       { value: 'core', label: '基础', description: '材料中的核心术语和定义' },
@@ -1576,3 +1548,4 @@ export function getToolStrings(locale: Locale): ToolStrings {
 }
 
 export type { ToolStrings };
+

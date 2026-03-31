@@ -23,6 +23,13 @@ import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/impo
 import { getToolStrings } from '@/lib/tool-i18n';
 import { Switch } from '@/components/ui/switch';
 
+const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
+  if (!value) return 'flip';
+  if (value === 'write') return 'type';
+  if (value === 'flip' || value === 'type' || value === 'multiple-choice') return value;
+  return 'flip';
+};
+
 function FlashcardsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -49,6 +56,8 @@ function FlashcardsPageContent() {
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [saveToRecents, setSaveToRecents] = useState(true);
+  const [learningLevel, setLearningLevel] = useState(2);
+  const [studyCompleted, setStudyCompleted] = useState(false);
   const launchHandledRef = useRef(false);
   const { toast } = useToast();
 
@@ -84,12 +93,16 @@ function FlashcardsPageContent() {
             count: requestedCount,
             language,
             complexity: requestedComplexity,
+            educationLevel: learningLevel,
+            regionCode: String(language || 'en').toUpperCase(),
+            studyMode: requestedMode,
           },
           computeClass: requestedCount > 20 ? 'heavy' : 'standard',
         });
       const response = run?.output_payload || run;
       setGeneratedCards(response.flashcards);
       setCurrentView('study');
+      setStudyCompleted(false);
     } catch (error) {
       console.error('Error generating flashcards:', error);
       toast({ variant: 'destructive', title: t.flashcards.generatingTitle, description: (error as any)?.message || 'Unable to generate flashcards' });
@@ -97,7 +110,7 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [complexity, customTitle, flashcardCount, imageDataUri, language, saveToRecents, studyMode]);
+  }, [complexity, customTitle, flashcardCount, imageDataUri, language, learningLevel, saveToRecents, studyMode]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
@@ -129,14 +142,14 @@ function FlashcardsPageContent() {
         });
 
         if (source) setSourceText(source);
-        if (preset?.mode) setStudyMode(preset.mode as StudyMode);
+        if (preset?.mode) setStudyMode(normalizeStudyMode(String(preset.mode)));
         if (typeof preset?.count === 'number') setFlashcardCount(preset.count);
         if (preset?.complexity) setComplexity(String(preset.complexity));
         if (title) setCustomTitle(title);
 
         if (source) {
           await handleGenerate(source, {
-            mode: preset?.mode as StudyMode | undefined,
+            mode: normalizeStudyMode(typeof preset?.mode === 'string' ? preset.mode : undefined),
             count: typeof preset?.count === 'number' ? preset.count : undefined,
             complexity: preset?.complexity ? String(preset.complexity) : undefined,
             title: title || undefined,
@@ -166,13 +179,13 @@ function FlashcardsPageContent() {
       setGeneratedCards(output.flashcards || null);
       setCurrentView('study');
       if (savedRun.input_payload?.sourceText) setSourceText(savedRun.input_payload.sourceText);
-      if (savedRun.mode) setStudyMode(savedRun.mode as StudyMode);
+      if (savedRun.mode) setStudyMode(normalizeStudyMode(String(savedRun.mode)));
     }
   }, [savedRun]);
 
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`tools.flashcards.${k}`);
-    if (s('mode')) setStudyMode(s('mode') as StudyMode);
+    if (s('mode')) setStudyMode(normalizeStudyMode(s('mode')));
     if (s('count') && !Number.isNaN(Number(s('count')))) setFlashcardCount(Number(s('count')));
     if (s('complexity')) setComplexity(s('complexity')!);
     if (s('saveToRecents') === 'false') setSaveToRecents(false);
@@ -201,12 +214,14 @@ function FlashcardsPageContent() {
       <div className="h-full flex flex-col">
         <div className="px-4 md:px-6 pt-3 flex items-center justify-between">
           <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">{t.back}</Button>
-          <ExportToolbar
-            toolType="flashcards"
-            title={customTitle.trim() || undefined}
-            getMarkdown={() => flashcardsToMarkdown(generatedCards)}
-            getHtml={() => flashcardsToHtml(generatedCards)}
-          />
+          {studyCompleted && (
+            <ExportToolbar
+              toolType="flashcards"
+              title={customTitle.trim() || undefined}
+              getMarkdown={() => flashcardsToMarkdown(generatedCards)}
+              getHtml={() => flashcardsToHtml(generatedCards)}
+            />
+          )}
         </div>
         <div className="flex-1 min-h-0 overflow-auto">
           <FlashcardViewer
@@ -215,6 +230,7 @@ function FlashcardsPageContent() {
             onRestart={handleRestart}
             taskId={taskId || undefined}
             studysetId={studysetId || undefined}
+            onCompletionChange={setStudyCompleted}
           />
         </div>
       </div>
@@ -235,7 +251,7 @@ function FlashcardsPageContent() {
         />
       </div>
 
-      <PillSelector label={t.flashcards.labels.studyMode} options={t.flashcards.studyModeOptions} value={studyMode} onChange={(v) => setStudyMode(v as StudyMode)} disabled={isLoading} />
+      <PillSelector label={t.flashcards.labels.studyMode} options={t.flashcards.studyModeOptions} value={studyMode} onChange={(v) => setStudyMode(normalizeStudyMode(v))} disabled={isLoading} />
 
       <PillSelector label={t.flashcards.labels.complexity} options={t.flashcards.complexityOptions} value={complexity} onChange={setComplexity} disabled={isLoading} />
 
@@ -245,6 +261,18 @@ function FlashcardsPageContent() {
           <span className="text-xs font-mono tabular-nums">{flashcardCount}</span>
         </div>
         <Slider value={[flashcardCount]} onValueChange={([v]) => setFlashcardCount(v)} min={1} max={50} step={1} disabled={isLoading} />
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Education level</p>
+          <span className="text-xs font-mono tabular-nums">{learningLevel}</span>
+        </div>
+        <Slider value={[learningLevel]} onValueChange={([v]) => setLearningLevel(v)} min={1} max={4} step={1} disabled={isLoading} />
+        <p className="text-[11px] text-muted-foreground">
+          {learningLevel === 1 ? 'Foundation' : learningLevel === 2 ? 'Middle/High School' : learningLevel === 3 ? 'College' : 'Advanced'}
+          {' '}style for your region ({String(language || 'en').toUpperCase()}).
+        </p>
       </div>
 
       <Button variant="outline" onClick={() => handleGenerate(sourceText)} disabled={isLoading || !sourceText.trim()} className="w-full rounded-full border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent">

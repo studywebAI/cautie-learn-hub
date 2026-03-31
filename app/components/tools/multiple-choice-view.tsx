@@ -68,7 +68,7 @@ export function MultipleChoiceView({ card, onAnswered }: MultipleChoiceViewProps
   
   if (isLoading) {
     return (
-        <div className="w-full max-w-md space-y-4">
+        <div className="w-full max-w-4xl space-y-4">
             <Skeleton className="h-8 w-3/4 mx-auto" />
             <div className="space-y-3">
                 <Skeleton className="h-12 w-full" />
@@ -84,10 +84,10 @@ export function MultipleChoiceView({ card, onAnswered }: MultipleChoiceViewProps
   }
 
   return (
-    <div className="w-full max-w-md">
-      <p className="font-semibold mb-4 text-lg text-center">{mcq.question}</p>
+    <div className="w-full max-w-4xl">
+      <p className="font-semibold mb-4 text-3xl leading-[1.3] text-center">{mcq.question}</p>
       <RadioGroup onValueChange={handleSelectOption} value={selectedOptionId || ''} disabled={isAnswered}>
-        <div className="space-y-3">
+        <div className="space-y-3 max-w-3xl mx-auto">
           {mcq.options.map((opt: { id: string; text: string }) => { // Explicitly type opt
             const isTheCorrectAnswer = mcq.correctOptionId === opt.id;
             const isSelected = selectedOptionId === opt.id;
@@ -97,7 +97,7 @@ export function MultipleChoiceView({ card, onAnswered }: MultipleChoiceViewProps
                 key={opt.id}
                 htmlFor={`${mcq.question}-${opt.id}`}
                 className={cn(
-                  'flex items-center gap-3 p-3 rounded-md text-sm border transition-all',
+                  'flex items-center gap-3 p-4 rounded-xl text-base border transition-all',
                   isAnswered && isTheCorrectAnswer ? 'bg-green-100 dark:bg-green-900/30 border-green-500/50' : '',
                   isAnswered && isSelected && !isTheCorrectAnswer ? 'bg-red-100 dark:bg-red-900/30 border-red-500/50' : '',
                   !isAnswered ? 'cursor-pointer hover:bg-muted/80' : 'cursor-default',

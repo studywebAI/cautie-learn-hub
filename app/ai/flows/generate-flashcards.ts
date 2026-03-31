@@ -14,6 +14,11 @@ const GenerateFlashcardsInputSchema = z.object({
   sourceText: z.string().describe('The source text from which to generate flashcards.'),
   imageDataUri: z.string().optional().describe('Optional image context as data URI.'),
   count: z.number().optional().default(10).describe('The number of flashcards to generate.'),
+  complexity: z.string().optional().describe('Requested complexity profile: simple, medium, complex, expert.'),
+  language: z.string().optional().describe('Language/locale hint for output language.'),
+  educationLevel: z.number().optional().describe('Education level from 1-4 (foundation to advanced).'),
+  regionCode: z.string().optional().describe('Region code used to localize level naming and examples.'),
+  studyMode: z.string().optional().describe('Selected study mode in the UI.'),
   existingFlashcardIds: z.array(z.string()).optional().describe('An array of flashcard front texts that should not be regenerated.'),
   groundingInstruction: z.string().optional().describe('Mandatory grounding constraints for factual outputs.'),
 });
@@ -52,6 +57,19 @@ Never cite Wikipedia or any external source.
 {{/if}}
 
 Your task is to generate a set of flashcards based on the provided source text. Create exactly {{{count}}} flashcards.
+
+Output style rules:
+- Keep language direct and practical. Avoid overly academic, lecture-like, or inflated wording.
+- Prefer short answers: normally 1-2 sentences on the back, max 3 only if unavoidable.
+- Keep one idea per card. Avoid long multi-part cards.
+- Match wording to this profile:
+  - Complexity: {{{complexity}}}
+  - Education level (1-4): {{{educationLevel}}}
+  - Region: {{{regionCode}}}
+  - UI study mode: {{{studyMode}}}
+  - Output language: {{{language}}}
+- Adapt examples/terminology to region conventions when possible (e.g., grade naming and local curriculum wording).
+- If any profile value is missing, default to concise medium-level student language.
 
 For each flashcard, you must provide:
 1.  **id**: a unique, short, kebab-case string based on the front of the card.

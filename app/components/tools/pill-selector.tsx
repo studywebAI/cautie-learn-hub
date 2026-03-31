@@ -43,7 +43,7 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
       </div>
 
       {showInfo && (
-        <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/60 p-2.5 space-y-1.5 text-[11px] leading-snug animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="rounded-lg bg-sidebar-accent/60 p-2.5 space-y-1.5 text-[11px] leading-snug animate-in fade-in slide-in-from-top-1 duration-150">
           {options.map((opt) => (
             <div key={opt.value}>
               <span className="font-medium text-foreground">{opt.label}</span>

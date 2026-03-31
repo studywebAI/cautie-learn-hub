@@ -40,11 +40,12 @@ The flashcard has a "front" and a "back".
 Your task:
 1.  Create a clear question based on the flashcard's "front". The ID for the question should be a unique kebab-case string.
 2.  The "back" of the flashcard is the correct answer. Include it as one of the options.
-3.  Generate 2 or 3 plausible but incorrect "distractor" options. They should be related to the topic but clearly wrong.
-4.  The total number of options should be 3 or 4.
-5.  Each option needs a unique ID (e.g., "a", "b", "c").
-6.  Shuffle the options so the correct answer is not always in the same position.
-7.  Return the ID of the correct option in the 'correctOptionId' field.
+3.  Generate exactly 2 plausible but incorrect "distractor" options.
+4.  Distractors must be in the same topic domain and logically confusable, but still clearly incorrect.
+5.  The total number of options must be exactly 3 (1 correct + 2 distractors).
+6.  Each option needs a unique ID (e.g., "a", "b", "c").
+7.  Shuffle the options so the correct answer is not always in the same position.
+8.  Return the ID of the correct option in the 'correctOptionId' field.
 `,
 });
 

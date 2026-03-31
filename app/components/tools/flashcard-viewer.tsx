@@ -1,18 +1,39 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { type Flashcard } from '@/lib/types';
-// import { explainAnswer } from '@/ai/flows/explain-answer'; // Removed direct import
 import { useToast } from '@/hooks/use-toast';
-import { ChevronsLeftRight, ArrowLeft, ArrowRight, RefreshCw, Lightbulb, Loader2, Shield, Pause } from 'lucide-react';
+import {
+  ChevronsLeftRight,
+  ArrowLeft,
+  ArrowRight,
+  RefreshCw,
+  Lightbulb,
+  Loader2,
+  Shield,
+  Pause,
+  CheckCircle2,
+  XCircle,
+  Sparkles,
+  FileText,
+  ListChecks,
+  BookOpen,
+} from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TypeView } from './type-view';
 import { MultipleChoiceView } from './multiple-choice-view';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export type StudyMode = 'flip' | 'type' | 'multiple-choice';
 
@@ -29,20 +50,9 @@ type CardSRSState = {
 };
 
 const cardVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 50 : -50,
-    opacity: 0,
-  }),
-  center: {
-    zIndex: 1,
-    x: 0,
-    opacity: 1,
-  },
-  exit: (direction: number) => ({
-    zIndex: 0,
-    x: direction < 0 ? 50 : -50,
-    opacity: 0,
-  }),
+  enter: { opacity: 0, scale: 0.995 },
+  center: { opacity: 1, scale: 1 },
+  exit: { opacity: 0, scale: 1.005 },
 };
 
 const defaultSRSState = (): CardSRSState => ({
@@ -61,57 +71,67 @@ const deckStorageKey = (cards: Flashcard[]) => `tools.flashcards.srs.${cards.map
 const isDueNow = (dueAt: string) => new Date(dueAt).getTime() <= Date.now();
 const isBuriedNow = (buriedUntil: string | null) => !!buriedUntil && new Date(buriedUntil).getTime() > Date.now();
 
-// Sub-component for Classic Flip Mode
+const computeAdaptiveHeight = (front: string, back: string) => {
+  const totalChars = `${front} ${back}`.trim().length;
+  const estimatedLines = Math.ceil(totalChars / 36);
+  const base = 360;
+  const perLine = 9;
+  return Math.max(360, Math.min(620, base + estimatedLines * perLine));
+};
+
 function FlipView({ card, isFlipped, setIsFlipped }: { card: Flashcard; isFlipped: boolean; setIsFlipped: (f: boolean) => void; }) {
+  const adaptiveHeight = computeAdaptiveHeight(card.front, card.back);
+
   return (
-    <div className='flex flex-col items-center justify-center gap-6'>
-      <div className="w-full max-w-lg h-80 [perspective:1000px]">
+    <div className='flex w-full flex-col items-center justify-center gap-4'>
+      <div className="w-[min(94vw,980px)] [perspective:1200px]" style={{ height: `${adaptiveHeight}px` }}>
         <div
-          className="relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d]"
+          className="relative h-full w-full cursor-pointer transition-transform duration-500 [transform-style:preserve-3d]"
           style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
           onClick={() => setIsFlipped(!isFlipped)}
         >
-          <div className="absolute flex items-center justify-center p-6 w-full h-full bg-card border rounded-lg [backface-visibility:hidden]">
-            <p className="text-center text-xl font-medium">{card.front}</p>
+          <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-10 py-8 shadow-sm [backface-visibility:hidden]">
+            <p className="max-w-[90%] text-center text-4xl leading-[1.28] text-foreground">{card.front}</p>
           </div>
-          <div className="absolute flex items-center justify-center p-6 w-full h-full bg-card border rounded-lg [transform:rotateY(180deg)] [backface-visibility:hidden]">
-            <p className="text-center text-muted-foreground">{card.back}</p>
+          <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-10 py-8 shadow-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+            <p className="max-w-[90%] text-center text-3xl leading-[1.35] text-muted-foreground">{card.back}</p>
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-center">
-        <Button variant="secondary" onClick={() => setIsFlipped(!isFlipped)}>
-          <ChevronsLeftRight className="mr-2 h-4 w-4" />
-          Flip Card
-        </Button>
-      </div>
+      <Button variant="secondary" onClick={() => setIsFlipped(!isFlipped)} className="rounded-full px-6">
+        <ChevronsLeftRight className="mr-2 h-4 w-4" />
+        Flip Card
+      </Button>
     </div>
   );
 }
 
-// Main Viewer Component
 export function FlashcardViewer({
   cards,
   mode,
   onRestart,
   taskId,
   studysetId,
+  onCompletionChange,
 }: {
   cards: Flashcard[];
   mode: StudyMode;
   onRestart: () => void;
   taskId?: string;
   studysetId?: string;
+  onCompletionChange?: (completed: boolean) => void;
 }) {
+  const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [direction, setDirection] = useState(0);
   const [isAnswered, setIsAnswered] = useState(false);
   const [answerCorrectness, setAnswerCorrectness] = useState<boolean | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [isExplanationLoading, setIsExplanationLoading] = useState(false);
+  const [isExplanationOpen, setIsExplanationOpen] = useState(false);
   const [cardsReviewed, setCardsReviewed] = useState<Set<string>>(new Set());
   const [correctCards, setCorrectCards] = useState(0);
+  const [sessionComplete, setSessionComplete] = useState(false);
   const [srsState, setSrsState] = useState<Record<string, CardSRSState>>({});
   const startTimeRef = React.useRef(Date.now());
   const cardStartedAtRef = React.useRef(Date.now());
@@ -121,6 +141,7 @@ export function FlashcardViewer({
     const due: Flashcard[] = [];
     const fresh: Flashcard[] = [];
     const rest: Flashcard[] = [];
+
     for (const card of cards) {
       const state = srsState[card.id] || defaultSRSState();
       if (state.suspended || isBuriedNow(state.buriedUntil)) continue;
@@ -128,6 +149,7 @@ export function FlashcardViewer({
       else if (state.reps === 0) fresh.push(card);
       else rest.push(card);
     }
+
     if (due.length > 0) return due;
     if (fresh.length > 0) return fresh;
     return rest;
@@ -139,9 +161,7 @@ export function FlashcardViewer({
       const raw = localStorage.getItem(key);
       const parsed = raw ? (JSON.parse(raw) as Record<string, CardSRSState>) : {};
       const hydrated: Record<string, CardSRSState> = {};
-      for (const card of cards) {
-        hydrated[card.id] = parsed[card.id] || defaultSRSState();
-      }
+      for (const card of cards) hydrated[card.id] = parsed[card.id] || defaultSRSState();
       setSrsState(hydrated);
     } catch {
       const initial: Record<string, CardSRSState> = {};
@@ -156,22 +176,24 @@ export function FlashcardViewer({
   }, [cards, srsState]);
 
   useEffect(() => {
-    if (currentIndex >= queue.length) {
-      setCurrentIndex(Math.max(0, queue.length - 1));
-    }
+    if (currentIndex >= queue.length) setCurrentIndex(Math.max(0, queue.length - 1));
   }, [queue.length, currentIndex]);
 
   useEffect(() => {
     cardStartedAtRef.current = Date.now();
     setAnswerCorrectness(null);
+    setExplanation(null);
+    setIsExplanationOpen(false);
   }, [currentIndex]);
 
-  // Track card as reviewed when moving forward
-  const markCurrentReviewed = useCallback(() => {
-    const id = queue[currentIndex]?.id;
-    if (!id) return;
-    setCardsReviewed(prev => new Set(prev).add(id));
-  }, [currentIndex, queue]);
+  useEffect(() => {
+    const completed = cards.length > 0 && cardsReviewed.size >= cards.length;
+    if (completed !== sessionComplete) setSessionComplete(completed);
+  }, [cards.length, cardsReviewed.size, sessionComplete]);
+
+  useEffect(() => {
+    onCompletionChange?.(sessionComplete);
+  }, [onCompletionChange, sessionComplete]);
 
   const computeDeckHealth = useCallback(() => {
     const states = cards.map((c) => srsState[c.id] || defaultSRSState());
@@ -187,7 +209,6 @@ export function FlashcardViewer({
     return { health, dueCount, matureCount, lapseRate };
   }, [cards, srsState]);
 
-  // Save flashcard session to database
   const saveFlashcardProgress = useCallback(async () => {
     const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
     const deckHealth = computeDeckHealth();
@@ -209,19 +230,15 @@ export function FlashcardViewer({
             due_cards: deckHealth.dueCount,
             mature_cards: deckHealth.matureCount,
             lapse_rate: deckHealth.lapseRate,
-          }
-        })
+          },
+        }),
       });
-      console.log('Flashcard session saved to database');
 
       if (taskId && studysetId) {
         const weakTopics: string[] = [];
-        if (deckHealth.dueCount > Math.max(2, Math.round(cards.length * 0.35))) {
-          weakTopics.push('memory retention');
-        }
-        if (deckHealth.lapseRate > 0.25) {
-          weakTopics.push('recall stability');
-        }
+        if (deckHealth.dueCount > Math.max(2, Math.round(cards.length * 0.35))) weakTopics.push('memory retention');
+        if (deckHealth.lapseRate > 0.25) weakTopics.push('recall stability');
+
         await fetch(`/api/studysets/plan-tasks/${taskId}/performance`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -252,6 +269,7 @@ export function FlashcardViewer({
   const applyOutcome = (isCorrect: boolean) => {
     const card = queue[currentIndex];
     if (!card) return;
+
     const responseMs = Math.max(0, Date.now() - cardStartedAtRef.current);
     const quality = getQualityFromOutcome(isCorrect, responseMs);
     const prev = srsState[card.id] || defaultSRSState();
@@ -295,120 +313,112 @@ export function FlashcardViewer({
         lastReviewedAt: now.toISOString(),
       },
     }));
-    setCardsReviewed((prevSet) => new Set(prevSet).add(card.id));
-    if (isCorrect) {
-      setCorrectCards((prevCount) => prevCount + 1);
-    }
 
-    if (currentIndex >= queue.length - 1) {
-      saveFlashcardProgress();
-      toast({ title: 'Review queue complete', description: 'Queue updated using spaced repetition.' });
+    setCardsReviewed((prevSet) => new Set(prevSet).add(card.id));
+    if (isCorrect) setCorrectCards((prevCount) => prevCount + 1);
+
+    const isLast = currentIndex >= queue.length - 1;
+    if (isLast) {
+      void saveFlashcardProgress();
+      setIsFlipped(false);
+      setIsAnswered(false);
+      setAnswerCorrectness(null);
       return;
     }
-    setDirection(1);
+
     setIsFlipped(false);
     setIsAnswered(false);
     setAnswerCorrectness(null);
-    setExplanation(null);
     setCurrentIndex((prevIndex) => prevIndex + 1);
   };
 
   const handleNext = () => {
-    if (currentIndex === queue.length - 1) {
-      // Last card - save progress
-      markCurrentReviewed();
-      saveFlashcardProgress();
-      return;
-    }
-    markCurrentReviewed();
-    setDirection(1);
+    if (currentIndex >= queue.length - 1) return;
     setIsFlipped(false);
     setIsAnswered(false);
     setAnswerCorrectness(null);
-    setExplanation(null);
-    setCurrentIndex((prev) => (prev + 1));
+    setCurrentIndex((prev) => prev + 1);
   };
 
   const handlePrev = () => {
     if (currentIndex === 0) return;
-    setDirection(-1);
     setIsFlipped(false);
     setIsAnswered(false);
     setAnswerCorrectness(null);
-    setExplanation(null);
-    setCurrentIndex((prev) => (prev - 1));
+    setCurrentIndex((prev) => prev - 1);
   };
-  
+
   const handleFlipOrCheck = () => {
     if (mode === 'flip') {
-        setIsFlipped(f => !f);
-    } else if (mode === 'type') {
-        // Find the button and click it to trigger submission within TypeView
-        const checkButton = (document.getElementById('check-answer-btn') as HTMLButtonElement);
-        checkButton?.click();
+      setIsFlipped((f) => !f);
+      return;
     }
-  }
-  
+    if (mode === 'type') {
+      const checkButton = document.getElementById('check-answer-btn') as HTMLButtonElement | null;
+      checkButton?.click();
+    }
+  };
+
   const handleGetExplanation = async () => {
     const card = queue[currentIndex];
     if (!card) return;
-    setIsExplanationLoading(true);
-    setExplanation(null);
-    try {
-        const response = await fetch('/api/ai/handle', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                flowName: 'explainAnswer',
-                input: {
-                    question: card.front,
-                    selectedAnswer: card.back,
-                    correctAnswer: card.back,
-                    isFlashcard: true,
-                },
-            }),
-        });
-        if (!response.ok) {
-            throw new Error(`API call failed: ${response.statusText}`);
-        }
-        const result = await response.json();
-        setExplanation(result.explanation);
-    } catch (error) {
-        toast({
-            variant: 'destructive',
-            title: 'Could not get explanation',
-            description: 'The AI failed to generate an explanation. Please try again.',
-        });
-    } finally {
-        setIsExplanationLoading(false);
+
+    if (explanation) {
+      setIsExplanationOpen(true);
+      return;
     }
-  }
+
+    setIsExplanationLoading(true);
+    try {
+      const response = await fetch('/api/ai/handle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          flowName: 'explainAnswer',
+          input: {
+            question: card.front,
+            selectedAnswer: card.back,
+            correctAnswer: card.back,
+            isFlashcard: true,
+          },
+        }),
+      });
+
+      if (!response.ok) throw new Error(`API call failed: ${response.statusText}`);
+      const result = await response.json();
+      setExplanation(result.explanation || 'No explanation generated.');
+      setIsExplanationOpen(true);
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: 'Could not get explanation',
+        description: 'The AI failed to generate an explanation. Please try again.',
+      });
+    } finally {
+      setIsExplanationLoading(false);
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-        // Prevent shortcuts when user is typing in an input
-        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-            return;
-        }
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-        switch (e.key) {
-            case 'ArrowRight':
-                if (mode === 'flip' || isAnswered) handleNext();
-                break;
-            case 'ArrowLeft':
-                handlePrev();
-                break;
-            case ' ': // Spacebar
-                e.preventDefault();
-                if(mode === 'flip' || mode === 'type') handleFlipOrCheck();
-                break;
-        }
+      switch (e.key) {
+        case 'ArrowRight':
+          if (mode === 'flip' || isAnswered) handleNext();
+          break;
+        case 'ArrowLeft':
+          handlePrev();
+          break;
+        case ' ':
+          e.preventDefault();
+          if (mode === 'flip' || mode === 'type') handleFlipOrCheck();
+          break;
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => document.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, queue.length, mode, isAnswered]);
 
@@ -439,21 +449,10 @@ export function FlashcardViewer({
   const unsuspendAll = () => {
     setSrsState((prev) => {
       const next = { ...prev };
-      for (const id of Object.keys(next)) {
-        next[id] = { ...next[id], suspended: false, buriedUntil: null };
-      }
+      for (const id of Object.keys(next)) next[id] = { ...next[id], suspended: false, buriedUntil: null };
       return next;
     });
   };
-
-  const getModeDescription = () => {
-    switch (mode) {
-        case 'flip': return 'Flip, then mark correct or incorrect.';
-        case 'type': return 'Answer, then confirm correct or incorrect.';
-        case 'multiple-choice': return 'Choose an answer, then confirm correct or incorrect.';
-        default: return '';
-    }
-  }
 
   const weakestCards = React.useMemo(() => {
     return cards
@@ -463,9 +462,9 @@ export function FlashcardViewer({
         return {
           id: cardItem.id,
           front: cardItem.front,
+          back: cardItem.back,
           weakness,
           lapses: state.lapses,
-          ease: state.ease,
           due: isDueNow(state.dueAt),
         };
       })
@@ -473,32 +472,54 @@ export function FlashcardViewer({
       .slice(0, 5);
   }, [cards, srsState]);
 
+  const strongestCards = React.useMemo(() => {
+    return cards
+      .map((cardItem) => {
+        const state = srsState[cardItem.id] || defaultSRSState();
+        const weakness = (state.lapses * 2) + (isDueNow(state.dueAt) ? 1 : 0) + Math.max(0, 2.5 - state.ease);
+        return {
+          id: cardItem.id,
+          front: cardItem.front,
+          back: cardItem.back,
+          weakness,
+          lapses: state.lapses,
+          due: isDueNow(state.dueAt),
+        };
+      })
+      .sort((a, b) => a.weakness - b.weakness)
+      .slice(0, 5);
+  }, [cards, srsState]);
+
+  const openToolFromWeakCards = (tool: 'notes' | 'quiz' | 'flashcards') => {
+    const source = weakestCards.map((item, index) => `${index + 1}. ${item.front}\nAnswer: ${item.back}`).join('\n\n');
+    router.push(`/tools/${tool}?sourceText=${encodeURIComponent(source)}`);
+  };
+
   const handleCardAnswered = useCallback((isCorrect?: boolean) => {
     setIsAnswered(true);
     setAnswerCorrectness(Boolean(isCorrect));
   }, []);
 
   const renderCardContent = () => {
-    switch(mode) {
-        case 'flip':
-            return <FlipView card={card} isFlipped={isFlipped} setIsFlipped={setIsFlipped} />;
-        case 'type':
-            return <TypeView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
-        case 'multiple-choice':
-            return <MultipleChoiceView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
-        default:
-            return null;
-    }
-  }
-  
+    if (!card) return null;
+    if (mode === 'flip') return <FlipView card={card} isFlipped={isFlipped} setIsFlipped={setIsFlipped} />;
+    if (mode === 'type') return <TypeView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
+    return <MultipleChoiceView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
+  };
+
   const showExplanationButton = (mode === 'flip' && isFlipped) || (mode !== 'flip' && isAnswered);
+  const explanationButtonLabel = isExplanationLoading
+    ? 'Generating...'
+    : explanation
+      ? 'Show explanation'
+      : 'Explain this';
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="h-full border-0 bg-transparent shadow-none">
+      <CardHeader className="px-4 md:px-6 pb-2">
         <CardTitle className="font-headline">Study Flashcards</CardTitle>
         <CardDescription>
-          Card {queue.length === 0 ? 0 : currentIndex + 1} of {queue.length}. {getModeDescription()}
+          Card {queue.length === 0 ? 0 : currentIndex + 1} of {queue.length}. {mode === 'multiple-choice' ? 'Choose the correct answer, then mark result.' : mode === 'type' ? 'Type answer, then mark result.' : 'Flip, then mark result.'}
         </CardDescription>
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <Badge variant="outline">Deck Health {deckHealth.health}%</Badge>
@@ -507,70 +528,63 @@ export function FlashcardViewer({
           <Badge variant="secondary">Lapse {(deckHealth.lapseRate * 100).toFixed(0)}%</Badge>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col items-center gap-6 overflow-hidden min-h-[24rem]">
+
+      <CardContent className="flex min-h-[42rem] flex-col items-center gap-6 px-4 md:px-6 pb-0">
         {queue.length === 0 && (
-          <div className="w-full rounded-md border p-4 text-sm text-muted-foreground">
+          <div className="w-full rounded-md border border-border/80 p-4 text-sm text-muted-foreground">
             All cards are suspended or buried for now.
             <div className="mt-3">
               <Button size="sm" variant="outline" onClick={unsuspendAll}>Unsuspend/Unbury All</Button>
             </div>
           </div>
         )}
+
         {queue.length > 0 && (
-        <AnimatePresence initial={false} custom={direction}>
-          <motion.div
-            key={currentIndex}
-            custom={direction}
-            variants={cardVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: 'tween', duration: 0.3 },
-              opacity: { duration: 0.2 },
-            }}
-            className="w-full"
-          >
-            <div className="flex flex-col items-center justify-center">
-              {renderCardContent()}
-               {showExplanationButton && (
-                    <div className="mt-6">
-                         <Button variant="outline" size="sm" onClick={handleGetExplanation} disabled={isExplanationLoading}>
-                            {isExplanationLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lightbulb className="mr-2 h-4 w-4" />}
-                            {isExplanationLoading ? 'Generating...' : 'Explain this'}
-                        </Button>
-                    </div>
-                )}
-            </div>
-          </motion.div>
-        </AnimatePresence>
+          <div className="w-full">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={currentIndex}
+                variants={cardVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ opacity: { duration: 0.16 }, scale: { duration: 0.16 } }}
+                className="w-full"
+              >
+                <div className="flex flex-col items-center justify-center">
+                  {renderCardContent()}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
         )}
-        {explanation && (
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-md"
-            >
-                <Alert className="border-blue-500/50 text-blue-500 dark:text-blue-400 [&>svg]:text-blue-500 dark:[&>svg]:text-blue-400">
-                    <Lightbulb className="h-4 w-4" />
-                    <AlertTitle>Explanation</AlertTitle>
-                    <AlertDescription>
-                        {explanation}
-                    </AlertDescription>
-                </Alert>
-            </motion.div>
+
+        {showExplanationButton && (
+          <div className="w-full max-w-2xl text-center">
+            <Button variant="outline" size="sm" onClick={handleGetExplanation} disabled={isExplanationLoading} className="rounded-full">
+              {isExplanationLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lightbulb className="mr-2 h-4 w-4" />}
+              {explanationButtonLabel}
+            </Button>
+          </div>
         )}
+
         {canRate && (
-          <div className="w-full max-w-md space-y-2">
-            <p className="text-xs text-muted-foreground text-center">Mark result. Scheduling uses result + response time.</p>
+          <div className="w-full max-w-xl space-y-3 pb-2">
+            <p className="text-xs text-muted-foreground text-center">Mark result with a quick tap.</p>
             {answerCorrectness !== null && (
               <p className="text-[11px] text-muted-foreground text-center">
-                Auto-detected answer: {answerCorrectness ? 'Correct' : 'Incorrect'} (you can override)
+                Auto-detected: {answerCorrectness ? 'Correct' : 'Incorrect'}
               </p>
             )}
             <div className="grid grid-cols-2 gap-2">
-              <Button size="sm" variant="destructive" onClick={() => applyOutcome(false)}>Incorrect</Button>
-              <Button size="sm" onClick={() => applyOutcome(true)}>Correct</Button>
+              <Button size="sm" className="bg-red-600 text-white hover:bg-red-700" onClick={() => applyOutcome(false)}>
+                <XCircle className="mr-2 h-4 w-4" />
+                Incorrect
+              </Button>
+              <Button size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => applyOutcome(true)}>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Correct
+              </Button>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Button size="sm" variant="outline" onClick={buryCurrentToday}>
@@ -584,45 +598,91 @@ export function FlashcardViewer({
             </div>
           </div>
         )}
-        <div className="w-full space-y-3 rounded-md border p-3">
-          <div className="space-y-1">
-            <p className="text-sm font-medium">Weakest cards</p>
-            <p className="text-xs text-muted-foreground">Sorted by misses and overdue pressure.</p>
-          </div>
-          <div className="space-y-2">
-            {weakestCards.length === 0 && <p className="text-xs text-muted-foreground">No weak cards yet.</p>}
-            {weakestCards.map((item) => (
-              <div key={item.id} className="flex items-center justify-between rounded border p-2">
-                <p className="truncate pr-2 text-xs">{item.front}</p>
-                <div className="flex items-center gap-1">
-                  {item.due && <Badge variant="outline" className="text-[10px]">Due</Badge>}
-                  <Badge variant="secondary" className="text-[10px]">Lapses {item.lapses}</Badge>
-                </div>
+
+        {sessionComplete && (
+          <div className="w-full space-y-4 rounded-xl border border-border/80 bg-card p-4">
+            <div>
+              <p className="text-base">Best and Worst Cards</p>
+              <p className="text-xs text-muted-foreground">Your weakest cards are listed first so you can regenerate focused material.</p>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="space-y-2">
+                <p className="text-sm text-red-700">Worst cards</p>
+                {weakestCards.map((item) => (
+                  <div key={item.id} className="rounded-md border border-red-200/70 bg-red-50/50 p-2 text-xs">
+                    <p className="truncate">{item.front}</p>
+                    <p className="text-muted-foreground">Lapses: {item.lapses} {item.due ? '· Due' : ''}</p>
+                  </div>
+                ))}
               </div>
-            ))}
+              <div className="space-y-2">
+                <p className="text-sm text-emerald-700">Best cards</p>
+                {strongestCards.map((item) => (
+                  <div key={item.id} className="rounded-md border border-emerald-200/70 bg-emerald-50/40 p-2 text-xs">
+                    <p className="truncate">{item.front}</p>
+                    <p className="text-muted-foreground">Lapses: {item.lapses} {item.due ? '· Due' : ''}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+              <Button variant="outline" onClick={() => openToolFromWeakCards('flashcards')}>
+                <BookOpen className="mr-2 h-4 w-4" />
+                New Flashcards
+              </Button>
+              <Button variant="outline" onClick={() => openToolFromWeakCards('notes')}>
+                <FileText className="mr-2 h-4 w-4" />
+                Notes from Weak Cards
+              </Button>
+              <Button variant="outline" onClick={() => openToolFromWeakCards('quiz')}>
+                <ListChecks className="mr-2 h-4 w-4" />
+                Quiz from Weak Cards
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
-      <CardFooter className="justify-between">
-        <Button variant="ghost" onClick={() => { saveFlashcardProgress(); onRestart(); }}>
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Start Over
-        </Button>
-        <div className="flex items-center justify-center gap-4">
-          <Button variant="outline" size="icon" onClick={handlePrev} aria-label="Previous Card" disabled={currentIndex === 0}>
-            <ArrowLeft className="h-5 w-5" />
+
+      <CardFooter className="mt-4 border-t border-border/70 px-4 py-3 md:px-6">
+        <div className="flex w-full items-center justify-between">
+          <Button variant="outline" onClick={handlePrev} disabled={currentIndex === 0} className="rounded-full">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
           </Button>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={handleNext} 
-            aria-label="Next Card" 
-            disabled={currentIndex === queue.length - 1 || (mode !== 'flip' && !isAnswered)}
-          >
-            <ArrowRight className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => { void saveFlashcardProgress(); onRestart(); }}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Start Over
+            </Button>
+            <Button variant="outline" onClick={handleNext} disabled={currentIndex === queue.length - 1 || (mode !== 'flip' && !isAnswered)} className="rounded-full">
+              Next
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardFooter>
+
+      <Dialog open={isExplanationOpen} onOpenChange={setIsExplanationOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              Explanation
+            </DialogTitle>
+            <DialogDescription>
+              Short explanation for the current card.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[52vh] overflow-auto rounded-md bg-muted/60 p-3 text-sm leading-6">
+            {explanation}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsExplanationOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

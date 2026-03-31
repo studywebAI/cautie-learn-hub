@@ -186,6 +186,9 @@ FINAL INSTRUCTIONS:
 - Include practical examples and applications where relevant
 - Focus on clarity, accuracy, and educational impact
 - For visual styles, ensure the JSON is valid and matches the specified format exactly
+- Avoid filler text, motivational fluff, and generic introductions
+- Keep sections actionable and concise by default
+- Do not copy markdown markers like #, ##, ### into plain prose content unless the chosen style explicitly requires markdown headings
 
 `,
     });
