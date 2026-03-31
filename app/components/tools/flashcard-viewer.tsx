@@ -1,4 +1,4 @@
-'use client';
+ï»¿'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -79,12 +79,10 @@ const computeAdaptiveHeight = (front: string, back: string) => {
   return Math.max(360, Math.min(620, base + estimatedLines * perLine));
 };
 
-function FlipView({ card, isFlipped, setIsFlipped }: { card: Flashcard; isFlipped: boolean; setIsFlipped: (f: boolean) => void; }) {
-  const adaptiveHeight = computeAdaptiveHeight(card.front, card.back);
-
+function FlipView({ card, isFlipped, setIsFlipped, height }: { card: Flashcard; isFlipped: boolean; setIsFlipped: (f: boolean) => void; height: number; }) {
   return (
     <div className='flex w-full flex-col items-center justify-center gap-4'>
-      <div className="w-[min(94vw,980px)] [perspective:1200px]" style={{ height: `${adaptiveHeight}px` }}>
+      <div className="w-[min(94vw,980px)] [perspective:1200px]" style={{ height: `${height}px` }}>
         <div
           className="relative h-full w-full cursor-pointer transition-transform duration-500 [transform-style:preserve-3d]"
           style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
@@ -425,6 +423,10 @@ export function FlashcardViewer({
   const card = queue[currentIndex];
   const deckHealth = computeDeckHealth();
   const canRate = !!card && ((mode === 'flip' && isFlipped) || (mode !== 'flip' && isAnswered));
+  const stableFlipHeight = React.useMemo(
+    () => Math.max(360, ...queue.map((item) => computeAdaptiveHeight(item.front, item.back))),
+    [queue]
+  );
 
   const suspendCurrent = () => {
     if (!card) return;
@@ -502,7 +504,7 @@ export function FlashcardViewer({
 
   const renderCardContent = () => {
     if (!card) return null;
-    if (mode === 'flip') return <FlipView card={card} isFlipped={isFlipped} setIsFlipped={setIsFlipped} />;
+    if (mode === 'flip') return <FlipView card={card} isFlipped={isFlipped} setIsFlipped={setIsFlipped} height={stableFlipHeight} />;
     if (mode === 'type') return <TypeView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
     return <MultipleChoiceView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
   };
@@ -577,11 +579,11 @@ export function FlashcardViewer({
               </p>
             )}
             <div className="grid grid-cols-2 gap-2">
-              <Button size="sm" className="bg-red-600 text-white hover:bg-red-700" onClick={() => applyOutcome(false)}>
+              <Button size="sm" className="!bg-red-700 !text-white hover:!bg-red-800" onClick={() => applyOutcome(false)}>
                 <XCircle className="mr-2 h-4 w-4" />
                 Incorrect
               </Button>
-              <Button size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => applyOutcome(true)}>
+              <Button size="sm" className="!bg-emerald-700 !text-white hover:!bg-emerald-800" onClick={() => applyOutcome(true)}>
                 <CheckCircle2 className="mr-2 h-4 w-4" />
                 Correct
               </Button>
@@ -612,7 +614,7 @@ export function FlashcardViewer({
                 {weakestCards.map((item) => (
                   <div key={item.id} className="rounded-md border border-red-200/70 bg-red-50/50 p-2 text-xs">
                     <p className="truncate">{item.front}</p>
-                    <p className="text-muted-foreground">Lapses: {item.lapses} {item.due ? '· Due' : ''}</p>
+                    <p className="text-muted-foreground">Lapses: {item.lapses} {item.due ? 'Â· Due' : ''}</p>
                   </div>
                 ))}
               </div>
@@ -621,7 +623,7 @@ export function FlashcardViewer({
                 {strongestCards.map((item) => (
                   <div key={item.id} className="rounded-md border border-emerald-200/70 bg-emerald-50/40 p-2 text-xs">
                     <p className="truncate">{item.front}</p>
-                    <p className="text-muted-foreground">Lapses: {item.lapses} {item.due ? '· Due' : ''}</p>
+                    <p className="text-muted-foreground">Lapses: {item.lapses} {item.due ? 'Â· Due' : ''}</p>
                   </div>
                 ))}
               </div>
@@ -686,3 +688,4 @@ export function FlashcardViewer({
     </Card>
   );
 }
+

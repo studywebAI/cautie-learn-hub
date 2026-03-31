@@ -60,6 +60,19 @@ function FlashcardsPageContent() {
   const [studyCompleted, setStudyCompleted] = useState(false);
   const launchHandledRef = useRef(false);
   const { toast } = useToast();
+  const modeOptions = React.useMemo(
+    () =>
+      t.flashcards.studyModeOptions
+        .filter((option) => option.value === 'flip' || option.value === 'type' || option.value === 'multiple-choice')
+        .map((option) =>
+          option.value === 'flip'
+            ? { ...option, label: 'Standard' }
+            : option.value === 'type'
+              ? { ...option, label: 'Type' }
+              : option
+        ),
+    [t.flashcards.studyModeOptions]
+  );
 
   const handleGenerate = useCallback(async (
     text: string,
@@ -251,7 +264,7 @@ function FlashcardsPageContent() {
         />
       </div>
 
-      <PillSelector label={t.flashcards.labels.studyMode} options={t.flashcards.studyModeOptions} value={studyMode} onChange={(v) => setStudyMode(normalizeStudyMode(v))} disabled={isLoading} />
+      <PillSelector label={t.flashcards.labels.studyMode} options={modeOptions} value={studyMode} onChange={(v) => setStudyMode(normalizeStudyMode(v))} disabled={isLoading} />
 
       <PillSelector label={t.flashcards.labels.complexity} options={t.flashcards.complexityOptions} value={complexity} onChange={setComplexity} disabled={isLoading} />
 
@@ -282,7 +295,7 @@ function FlashcardsPageContent() {
 
       <div className="flex items-center justify-between rounded-md bg-sidebar-accent/55 px-2.5 py-2">
         <p className="text-xs text-muted-foreground">Save to recents</p>
-        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} />
+        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} className="data-[state=checked]:!bg-emerald-700 data-[state=unchecked]:!bg-red-700" />
       </div>
 
       <ImportToolbar

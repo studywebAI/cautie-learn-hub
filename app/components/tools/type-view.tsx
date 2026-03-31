@@ -22,7 +22,7 @@ export function TypeView({ card, onAnswered }: TypeViewProps) {
         setIsSubmitted(false);
         setUserAnswer('');
         setIsCorrect(false);
-        inputRef.current?.focus();
+        inputRef.current?.focus({ preventScroll: true });
     }, [card]);
 
 
