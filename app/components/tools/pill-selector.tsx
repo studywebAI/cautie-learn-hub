@@ -63,12 +63,13 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
             disabled={disabled}
             onClick={() => onChange(opt.value)}
             className={cn(
-              'px-3 py-1 text-xs rounded-full transition-colors',
-              'hover:bg-sidebar-accent',
+              'px-3 py-1 text-xs rounded-full border-0 outline-none transition-colors',
+              'hover:bg-[hsl(var(--surface-3))]',
+              'focus-visible:ring-1 focus-visible:ring-ring',
               'disabled:opacity-50 disabled:pointer-events-none',
               value === opt.value
                 ? 'bg-white text-foreground'
-                : 'bg-sidebar-accent/65 text-foreground'
+                : 'bg-[hsl(var(--surface-2))] text-foreground'
             )}
           >
             {opt.label}
