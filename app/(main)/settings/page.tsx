@@ -17,6 +17,10 @@ export default function SettingsPage() {
   const {
     language,
     setLanguage,
+    region,
+    setRegion,
+    schoolingLevel,
+    setSchoolingLevel,
     highContrast,
     setHighContrast,
     dyslexiaFont,
@@ -153,6 +157,41 @@ export default function SettingsPage() {
                           <SelectItem value="hi">🇮🇳 हिंदी (Hindi)</SelectItem>
                           <SelectItem value="bn">🇧🇩 বাংলা (Bengali)</SelectItem>
                           <SelectItem value="zh">🇨🇳 中文 (Chinese)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="region">Region</Label>
+                      <Select value={region} onValueChange={(value) => setRegion(value as any)}>
+                        <SelectTrigger id="region" className="w-[320px]">
+                          <SelectValue placeholder="Select region" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="global">Global</SelectItem>
+                          <SelectItem value="us">United States</SelectItem>
+                          <SelectItem value="eu">Europe</SelectItem>
+                          <SelectItem value="uk">United Kingdom</SelectItem>
+                          <SelectItem value="de">Germany</SelectItem>
+                          <SelectItem value="fr">France</SelectItem>
+                          <SelectItem value="es">Spain</SelectItem>
+                          <SelectItem value="nl">Netherlands</SelectItem>
+                          <SelectItem value="in">India</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="schooling-level">Degree of schooling</Label>
+                      <Select value={String(schoolingLevel)} onValueChange={(value) => setSchoolingLevel(Number(value) as any)}>
+                        <SelectTrigger id="schooling-level" className="w-[320px]">
+                          <SelectValue placeholder="Select schooling level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Foundation</SelectItem>
+                          <SelectItem value="2">Middle / High School</SelectItem>
+                          <SelectItem value="3">College</SelectItem>
+                          <SelectItem value="4">Advanced</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

@@ -44,6 +44,8 @@ function FlashcardsPageContent() {
   const { run: savedRun } = useSavedRun(runId);
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
+  const region = appContext?.region ?? 'global';
+  const schoolingLevel = appContext?.schoolingLevel ?? 2;
   const t = getToolStrings(language);
 
   const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
@@ -56,7 +58,6 @@ function FlashcardsPageContent() {
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [saveToRecents, setSaveToRecents] = useState(true);
-  const [learningLevel, setLearningLevel] = useState(2);
   const [studyCompleted, setStudyCompleted] = useState(false);
   const launchHandledRef = useRef(false);
   const { toast } = useToast();
@@ -106,8 +107,8 @@ function FlashcardsPageContent() {
             count: requestedCount,
             language,
             complexity: requestedComplexity,
-            educationLevel: learningLevel,
-            regionCode: String(language || 'en').toUpperCase(),
+            educationLevel: schoolingLevel,
+            regionCode: String(region || 'global').toUpperCase(),
             studyMode: requestedMode,
           },
           computeClass: requestedCount > 20 ? 'heavy' : 'standard',
@@ -123,7 +124,7 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [complexity, customTitle, flashcardCount, imageDataUri, language, learningLevel, saveToRecents, studyMode]);
+  }, [complexity, customTitle, flashcardCount, imageDataUri, language, region, schoolingLevel, saveToRecents, studyMode]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
@@ -276,15 +277,9 @@ function FlashcardsPageContent() {
         <Slider value={[flashcardCount]} onValueChange={([v]) => setFlashcardCount(v)} min={1} max={50} step={1} disabled={isLoading} />
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Education level</p>
-          <span className="text-xs font-mono tabular-nums">{learningLevel}</span>
-        </div>
-        <Slider value={[learningLevel]} onValueChange={([v]) => setLearningLevel(v)} min={1} max={4} step={1} disabled={isLoading} />
-        <p className="text-[11px] text-muted-foreground">
-          {learningLevel === 1 ? 'Foundation' : learningLevel === 2 ? 'Middle/High School' : learningLevel === 3 ? 'College' : 'Advanced'}
-          {' '}style for your region ({String(language || 'en').toUpperCase()}).
+      <div className="rounded-md bg-sidebar-accent/55 px-2.5 py-2">
+        <p className="text-xs text-muted-foreground">
+          Using global settings: level {schoolingLevel}, region {String(region).toUpperCase()}.
         </p>
       </div>
 
