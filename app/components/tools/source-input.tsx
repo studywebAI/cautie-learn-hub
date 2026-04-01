@@ -50,7 +50,12 @@ type SourceEntry = {
   url?: string;
   urlKey?: string;
   extractionStatus?: string;
+  loadingSince?: number;
 };
+
+const EXTRACTION_REQUEST_TIMEOUT_MS = 30_000;
+const INTEGRATION_PENDING_MAX_POLLS = 20;
+const SOURCE_LOADING_FAILSAFE_MS = 45_000;
 
 const URL_REGEX = /\b((?:https?:\/\/|www\.)[^\s<>"]+)/gi;
 
@@ -184,6 +189,7 @@ export function SourceInput({
   const lastEmittedRef = useRef('');
   const integrationHydratedRef = useRef(false);
   const integrationPollTimeoutRef = useRef<number | null>(null);
+  const integrationPendingPollCountRef = useRef(0);
 
   const [manualText, setManualText] = useState('');
   const [sources, setSources] = useState<SourceEntry[]>([]);
@@ -256,8 +262,19 @@ export function SourceInput({
     });
 
     setSources((prev) => {
+      const byId = new Map(prev.map((source) => [source.id, source]));
       const localOnly = prev.filter((source) => !source.id.startsWith('integration-'));
-      return [...localOnly, ...mapped];
+      const merged = mapped.map((source) => {
+        const previous = byId.get(source.id);
+        if (source.loading) {
+          return {
+            ...source,
+            loadingSince: previous?.loadingSince || Date.now(),
+          };
+        }
+        return { ...source, loadingSince: undefined };
+      });
+      return [...localOnly, ...merged];
     });
 
     if (!quiet) {
@@ -271,9 +288,34 @@ export function SourceInput({
       integrationPollTimeoutRef.current = null;
     }
     if (pendingCount > 0 && typeof window !== 'undefined') {
+      integrationPendingPollCountRef.current += 1;
+      if (integrationPendingPollCountRef.current >= INTEGRATION_PENDING_MAX_POLLS) {
+        setSources((prev) =>
+          prev.map((source) =>
+            source.id.startsWith('integration-') && source.loading
+              ? {
+                  ...source,
+                  loading: false,
+                  extractionStatus: 'error',
+                  error: 'Extraction timed out. Re-upload the file to try again.',
+                }
+              : source
+          )
+        );
+        if (!quiet) {
+          toast({
+            variant: 'destructive',
+            title: 'File extraction timed out',
+            description: 'Please re-upload the file. Extraction took too long.',
+          });
+        }
+        return;
+      }
       integrationPollTimeoutRef.current = window.setTimeout(() => {
         void hydrateIntegrationSources(true);
       }, 1500);
+    } else {
+      integrationPendingPollCountRef.current = 0;
     }
   }, [toast]);
 
@@ -320,6 +362,7 @@ export function SourceInput({
           loading: isLoading,
           error: hasError ? 'Could not extract text from this file yet.' : undefined,
           extractionStatus: normalizedStatus || undefined,
+          loadingSince: isLoading ? Date.now() : undefined,
         };
       });
       setSources((prev) => {
@@ -342,6 +385,34 @@ export function SourceInput({
       }
     };
   }, [hydrateIntegrationSources]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const timer = window.setInterval(() => {
+      setSources((prev) => {
+        let changed = false;
+        const now = Date.now();
+        const next = prev.map((source) => {
+          if (!source.loading) return source;
+          const startedAt = source.loadingSince || now;
+          if (now - startedAt < SOURCE_LOADING_FAILSAFE_MS) return source;
+          changed = true;
+          return {
+            ...source,
+            loading: false,
+            loadingSince: undefined,
+            extractionStatus: 'error',
+            error: 'Extraction timed out. Re-upload the file to try again.',
+          };
+        });
+        return changed ? next : prev;
+      });
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const compiledSource = useMemo(() => {
     let next = '';
@@ -438,11 +509,15 @@ export function SourceInput({
 
     setIsFetchingUrl(true);
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), EXTRACTION_REQUEST_TIMEOUT_MS);
       const res = await fetch('/api/tools/extract-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: normalized }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       if (!res.ok) throw new Error('import_failed');
 
@@ -525,7 +600,10 @@ export function SourceInput({
       } else {
         const formData = new FormData();
         formData.append('file', file);
-        const res = await fetch('/api/tools/extract-text', { method: 'POST', body: formData });
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), EXTRACTION_REQUEST_TIMEOUT_MS);
+        const res = await fetch('/api/tools/extract-text', { method: 'POST', body: formData, signal: controller.signal });
+        clearTimeout(timeout);
         if (res.ok) {
           const data = await res.json();
           extractedText =
