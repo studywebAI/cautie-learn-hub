@@ -60,6 +60,8 @@ export async function POST(request: NextRequest) {
           accessToken: tokenState.accessToken,
           fileId: item.id,
           kind: item.kind as 'word' | 'powerpoint' | 'excel' | 'onedrive',
+          fileName: item.name,
+          mimeType: item.mimeType,
         }).catch(() => '');
         return {
           id: item.id,

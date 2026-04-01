@@ -90,6 +90,8 @@ export async function POST(request: NextRequest) {
           accessToken: tokenState.accessToken,
           app: source.app as 'word' | 'powerpoint' | 'excel' | 'onedrive',
           fileId: source.provider_item_id,
+          fileName: source.name,
+          mimeType: source.mime_type,
         });
         const nextStatus = extractedText.trim().length > 0 ? 'ready' : 'empty';
         await updateIntegrationSourceExtraction(supabase, {

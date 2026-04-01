@@ -24,6 +24,8 @@ export const microsoftProviderAdapter: IntegrationProviderAdapter = {
       accessToken: input.accessToken,
       fileId: input.fileId,
       kind: toMicrosoftKind(input.app),
+      fileName: input.fileName,
+      mimeType: input.mimeType || undefined,
     });
   },
 };

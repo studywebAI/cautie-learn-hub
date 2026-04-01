@@ -17,6 +17,8 @@ export type ProviderExtractInput = {
   accessToken: string;
   app: IntegrationApp;
   fileId: string;
+  fileName?: string;
+  mimeType?: string | null;
 };
 
 export interface IntegrationProviderAdapter {

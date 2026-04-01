@@ -1,3 +1,5 @@
+import mammoth from 'mammoth';
+
 type MicrosoftTokenResponse = {
   token_type: string;
   scope?: string;
@@ -262,23 +264,100 @@ export async function extractMicrosoftFileText(input: {
   accessToken: string;
   fileId: string;
   kind: MicrosoftFileKind;
+  fileName?: string;
+  mimeType?: string;
 }) {
   const fileId = encodeURIComponent(input.fileId);
-  const textEndpoint = `${MICROSOFT_GRAPH_BASE}/me/drive/items/${fileId}/content?format=text`;
+  const headers = { Authorization: `Bearer ${input.accessToken}` };
 
-  const textResponse = await fetch(textEndpoint, {
-    headers: { Authorization: `Bearer ${input.accessToken}` },
-    cache: 'no-store',
-  });
+  const normalize = (value: string) => value.replace(/\r\n/g, '\n').replace(/\u0000/g, '').trim();
 
-  if (textResponse.ok) {
-    const asText = await textResponse.text();
-    return asText.trim();
+  const tagPlainText = (text: string, kind: MicrosoftFileKind, name: string) => {
+    const clean = normalize(text);
+    if (!clean) return '';
+    const lines = clean.split('\n').map((line) => line.trim()).filter(Boolean);
+    const out: string[] = [];
+    out.push(`[file] ${name || 'Untitled'}`);
+    out.push(`[type] ${kind}`);
+    if (kind === 'powerpoint') {
+      let slide = 1;
+      for (const line of lines) {
+        const looksLikeSlideTitle =
+          /^slide\s*\d+/i.test(line) ||
+          (line.length <= 80 && line === line.toUpperCase());
+        if (looksLikeSlideTitle) {
+          out.push(`[slide ${slide}]`);
+          out.push(`[header][font 22] ${line}`);
+          slide += 1;
+          continue;
+        }
+        const isBullet = /^[-*•]\s+/.test(line) || /^\d+[\.\)]\s+/.test(line);
+        out.push(isBullet ? `[bullet][font 14] ${line}` : `[text][font 15] ${line}`);
+      }
+      return out.join('\n').trim();
+    }
+
+    for (const line of lines) {
+      const isHeader = (line.length <= 90 && line === line.toUpperCase()) || /^[A-Z][^.!?]{0,90}:$/.test(line);
+      const isBullet = /^[-*•]\s+/.test(line) || /^\d+[\.\)]\s+/.test(line);
+      if (isHeader) out.push(`[header][font 20] ${line}`);
+      else if (isBullet) out.push(`[bullet][font 14] ${line}`);
+      else out.push(`[text][font 15] ${line}`);
+    }
+    return out.join('\n').trim();
+  };
+
+  const stripHtml = (html: string) =>
+    html
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<\/(h1|h2|h3|p|li|div)>/gi, '\n')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
+  const fetchAsTextFormat = async (format: 'text' | 'txt' | 'html') => {
+    const url = `${MICROSOFT_GRAPH_BASE}/me/drive/items/${fileId}/content?format=${format}`;
+    const response = await fetch(url, { headers, cache: 'no-store' });
+    if (!response.ok) return '';
+    const body = await response.text();
+    if (!body.trim()) return '';
+    return format === 'html' ? stripHtml(body) : body;
+  };
+
+  const detectFileName = async () => {
+    if (input.fileName?.trim()) return input.fileName.trim();
+    const metaRes = await fetch(`${MICROSOFT_GRAPH_BASE}/me/drive/items/${fileId}?$select=name,file`, {
+      headers,
+      cache: 'no-store',
+    });
+    if (!metaRes.ok) return 'Untitled';
+    const meta = await metaRes.json().catch(() => ({}));
+    return String(meta?.name || 'Untitled').trim() || 'Untitled';
+  };
+
+  const name = await detectFileName();
+  const lowerName = name.toLowerCase();
+  const lowerMime = String(input.mimeType || '').toLowerCase();
+
+  // 1) Fast conversion endpoints first.
+  for (const format of ['text', 'txt', 'html'] as const) {
+    const extracted = await fetchAsTextFormat(format);
+    if (extracted.trim()) {
+      return tagPlainText(extracted, input.kind, name);
+    }
   }
 
-  // Fallback: attempt normal content fetch and best-effort text decode.
+  // 2) Binary fallback.
   const binaryResponse = await fetch(`${MICROSOFT_GRAPH_BASE}/me/drive/items/${fileId}/content`, {
-    headers: { Authorization: `Bearer ${input.accessToken}` },
+    headers,
     cache: 'no-store',
   });
   if (!binaryResponse.ok) {
@@ -288,9 +367,52 @@ export async function extractMicrosoftFileText(input: {
   }
 
   const contentType = (binaryResponse.headers.get('content-type') || '').toLowerCase();
+
   if (contentType.startsWith('text/')) {
-    return (await binaryResponse.text()).trim();
+    const text = await binaryResponse.text();
+    return tagPlainText(text, input.kind, name);
   }
 
-  return '';
+  const buffer = Buffer.from(await binaryResponse.arrayBuffer());
+
+  const isDocx =
+    lowerName.endsWith('.docx') ||
+    lowerMime.includes('wordprocessingml') ||
+    contentType.includes('wordprocessingml');
+  if (isDocx) {
+    try {
+      const raw = (await mammoth.extractRawText({ buffer })).value || '';
+      const html = (await mammoth.convertToHtml({ buffer })).value || '';
+      const imageCount = (html.match(/<img\b/gi) || []).length;
+      if (raw.trim()) {
+        const tagged = tagPlainText(raw, 'word', name);
+        return imageCount > 0 ? `${tagged}\n[image] ${imageCount} embedded image(s)` : tagged;
+      }
+    } catch {
+      // Fall through to minimal structured fallback.
+    }
+  }
+
+  const isPptx =
+    lowerName.endsWith('.pptx') ||
+    lowerMime.includes('presentationml') ||
+    contentType.includes('presentationml');
+  if (isPptx) {
+    // Keep this intentionally simple and stable: if Graph cannot convert, return slide scaffold.
+    return [
+      `[file] ${name}`,
+      '[type] powerpoint',
+      '[slide 1]',
+      '[header][font 22] Slide content imported',
+      '[text][font 15] Text extraction fallback used. Re-upload as PDF for richer per-slide text if needed.',
+      '[image] preserved in original deck',
+    ].join('\n');
+  }
+
+  return [
+    `[file] ${name}`,
+    `[type] ${input.kind}`,
+    '[header][font 20] File imported',
+    '[text][font 15] Content format is not directly readable as plain text in fallback mode.',
+  ].join('\n');
 }
