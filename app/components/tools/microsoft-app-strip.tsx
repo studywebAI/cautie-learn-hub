@@ -276,7 +276,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       body: JSON.stringify({
         provider: 'microsoft',
         app: 'onedrive',
-        items,
+        items: enrichedItems,
         replaceSelection: true,
       }),
     });

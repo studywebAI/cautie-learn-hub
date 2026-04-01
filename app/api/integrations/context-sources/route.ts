@@ -25,6 +25,8 @@ const ItemSchema = z.object({
   driveId: z.string().optional(),
   parentId: z.string().optional(),
   downloadUrl: z.string().optional(),
+  extractedText: z.string().optional(),
+  extractionStatus: z.enum(['pending', 'ready', 'empty', 'error']).optional(),
 });
 
 const PostBodySchema = z.object({
@@ -118,6 +120,9 @@ export async function POST(request: NextRequest) {
     const results = [];
     const sourceIds: string[] = [];
     for (const item of body.items) {
+      const normalizedExtractedText = (item.extractedText || '').trim();
+      const normalizedExtractionStatus = item.extractionStatus
+        || (normalizedExtractedText ? 'ready' : 'pending');
       const source = await upsertIntegrationSource(supabase, {
         userId: user.id,
         provider: body.provider,
@@ -126,8 +131,8 @@ export async function POST(request: NextRequest) {
         name: item.name,
         mimeType: item.mimeType || null,
         webUrl: item.webUrl || null,
-        extractedText: null,
-        extractionStatus: 'pending',
+        extractedText: normalizedExtractedText || null,
+        extractionStatus: normalizedExtractionStatus,
         isSelected: true,
         metadata: {
           imported_at: new Date().toISOString(),
@@ -140,11 +145,15 @@ export async function POST(request: NextRequest) {
       results.push(source);
     }
 
+    const pendingSourceIds = results
+      .filter((source: any) => source.extraction_status === 'pending')
+      .map((source: any) => source.id);
+
     await enqueueIntegrationIngestionJobs(supabase, {
       userId: user.id,
       provider: body.provider,
       app: body.app,
-      sourceIds,
+      sourceIds: pendingSourceIds,
     });
 
     return NextResponse.json({ items: results });
