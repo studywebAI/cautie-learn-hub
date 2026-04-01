@@ -52,6 +52,7 @@ function FlashcardsPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedCards, setGeneratedCards] = useState<Flashcard[] | null>(null);
   const [studyMode, setStudyMode] = useState<StudyMode>('flip');
+  const [cardStartSide, setCardStartSide] = useState<'term' | 'explanation'>('term');
   const [flashcardCount, setFlashcardCount] = useState(10);
   const [complexity, setComplexity] = useState('medium');
   const [currentView, setCurrentView] = useState<'setup' | 'study'>('setup');
@@ -73,6 +74,13 @@ function FlashcardsPageContent() {
               : option
         ),
     [t.flashcards.studyModeOptions]
+  );
+  const startSideOptions = React.useMemo(
+    () => [
+      { value: 'term', label: 'Term first' },
+      { value: 'explanation', label: 'Explanation first' },
+    ],
+    []
   );
 
   const handleGenerate = useCallback(async (
@@ -200,12 +208,14 @@ function FlashcardsPageContent() {
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`tools.flashcards.${k}`);
     if (s('mode')) setStudyMode(normalizeStudyMode(s('mode')));
+    if (s('cardStartSide') === 'explanation') setCardStartSide('explanation');
     if (s('count') && !Number.isNaN(Number(s('count')))) setFlashcardCount(Number(s('count')));
     if (s('complexity')) setComplexity(s('complexity')!);
     if (s('saveToRecents') === 'false') setSaveToRecents(false);
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.flashcards.mode', studyMode); }, [studyMode]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.cardStartSide', cardStartSide); }, [cardStartSide]);
   useEffect(() => { localStorage.setItem('tools.flashcards.count', String(flashcardCount)); }, [flashcardCount]);
   useEffect(() => { localStorage.setItem('tools.flashcards.complexity', complexity); }, [complexity]);
   useEffect(() => { localStorage.setItem('tools.flashcards.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
@@ -241,6 +251,7 @@ function FlashcardsPageContent() {
           <FlashcardViewer
             cards={generatedCards}
             mode={studyMode}
+            cardStartSide={cardStartSide}
             onRestart={handleRestart}
             taskId={taskId || undefined}
             studysetId={studysetId || undefined}
@@ -266,6 +277,13 @@ function FlashcardsPageContent() {
       </div>
 
       <PillSelector label="Mode" options={modeOptions} value={studyMode} onChange={(v) => setStudyMode(normalizeStudyMode(v))} disabled={isLoading} />
+      <PillSelector
+        label="Card side"
+        options={startSideOptions}
+        value={cardStartSide}
+        onChange={(v) => setCardStartSide(v === 'explanation' ? 'explanation' : 'term')}
+        disabled={isLoading}
+      />
 
       <PillSelector label={t.flashcards.labels.complexity} options={t.flashcards.complexityOptions} value={complexity} onChange={setComplexity} disabled={isLoading} />
 
@@ -281,7 +299,6 @@ function FlashcardsPageContent() {
           max={50}
           step={1}
           disabled={isLoading}
-          className="[&_.bg-secondary]:bg-sidebar-accent [&_.bg-primary]:bg-foreground/70 [&_[role=slider]]:border-sidebar-border [&_[role=slider]]:bg-sidebar-accent [&_[role=slider]]:shadow-sm"
         />
       </div>
 

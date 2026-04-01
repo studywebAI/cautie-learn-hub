@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Info, X } from 'lucide-react';
 
@@ -20,7 +20,12 @@ type PillSelectorProps = {
 
 export function PillSelector({ label, options, value, onChange, disabled }: PillSelectorProps) {
   const [showInfo, setShowInfo] = useState(false);
+  const [activeValue, setActiveValue] = useState(value);
   const hasDescriptions = options.some((o) => o.description);
+
+  useEffect(() => {
+    setActiveValue(value);
+  }, [value]);
 
   return (
     <div className="space-y-1.5">
@@ -61,15 +66,18 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
             key={opt.value}
             type="button"
             disabled={disabled}
-            onClick={() => onChange(opt.value)}
+            onClick={() => {
+              setActiveValue(opt.value);
+              onChange(opt.value);
+            }}
             className={cn(
-              'px-3 py-1 text-xs rounded-full border-0 outline-none transition-colors',
-              'hover:bg-[hsl(var(--surface-3))]',
+              'px-3 py-1 text-xs rounded-full border-0 outline-none transition-none',
+              'hover:bg-[hsl(var(--surface-1))]',
               'focus-visible:ring-1 focus-visible:ring-ring',
               'disabled:opacity-50 disabled:pointer-events-none',
-              value === opt.value
+              activeValue === opt.value
                 ? 'bg-white text-foreground'
-                : 'bg-[hsl(var(--surface-2))] text-foreground'
+                : 'bg-[hsl(var(--background))] text-foreground'
             )}
           >
             {opt.label}

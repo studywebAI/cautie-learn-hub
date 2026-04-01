@@ -293,7 +293,6 @@ function QuizPageContent() {
           max={50}
           step={1}
           disabled={isLoading}
-          className="[&_.bg-secondary]:bg-sidebar-accent [&_.bg-primary]:bg-foreground/70 [&_[role=slider]]:border-sidebar-border [&_[role=slider]]:bg-sidebar-accent [&_[role=slider]]:shadow-sm"
         />
       </div>
 

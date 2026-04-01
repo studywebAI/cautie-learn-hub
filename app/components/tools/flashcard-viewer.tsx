@@ -107,6 +107,7 @@ function FlipView({ card, isFlipped, setIsFlipped, height }: { card: Flashcard; 
 export function FlashcardViewer({
   cards,
   mode,
+  cardStartSide = 'term',
   onRestart,
   taskId,
   studysetId,
@@ -114,6 +115,7 @@ export function FlashcardViewer({
 }: {
   cards: Flashcard[];
   mode: StudyMode;
+  cardStartSide?: 'term' | 'explanation';
   onRestart: () => void;
   taskId?: string;
   studysetId?: string;
@@ -421,12 +423,19 @@ export function FlashcardViewer({
   }, [currentIndex, queue.length, mode, isAnswered]);
 
   const card = queue[currentIndex];
+  const displayCard = React.useMemo(() => {
+    if (!card) return null;
+    if (cardStartSide === 'explanation') {
+      return { ...card, front: card.back, back: card.front };
+    }
+    return card;
+  }, [card, cardStartSide]);
   const deckHealth = computeDeckHealth();
   const canRate = !!card && ((mode === 'flip' && isFlipped) || (mode !== 'flip' && isAnswered));
   const currentFlipHeight = React.useMemo(() => {
-    if (!card) return 460;
-    return computeAdaptiveHeight(card.front, card.back);
-  }, [card]);
+    if (!displayCard) return 460;
+    return computeAdaptiveHeight(displayCard.front, displayCard.back);
+  }, [displayCard]);
 
   const suspendCurrent = () => {
     if (!card) return;
@@ -504,7 +513,7 @@ export function FlashcardViewer({
 
   const renderCardContent = () => {
     if (!card) return null;
-    if (mode === 'flip') return <FlipView card={card} isFlipped={isFlipped} setIsFlipped={setIsFlipped} height={currentFlipHeight} />;
+    if (mode === 'flip' && displayCard) return <FlipView card={displayCard} isFlipped={isFlipped} setIsFlipped={setIsFlipped} height={currentFlipHeight} />;
     if (mode === 'type') return <TypeView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
     return <MultipleChoiceView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
   };
