@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
-import { Loader2, Sparkles, Paintbrush } from 'lucide-react';
+import { Loader2, Paintbrush } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
@@ -162,7 +162,6 @@ function NotesPageContent() {
   const lastReportedSignatureRef = useRef('');
   const { toast } = useToast();
 
-  const canGenerate = sourceText.trim().length > 0 && !isLoading;
   const launchStages: Array<{ title: string; detail: string }> = [
     { title: 'Opening study task', detail: 'Loading your saved studyset plan and task settings.' },
     { title: 'Retrieving context sources', detail: 'Collecting source text and selected materials.' },
@@ -674,24 +673,25 @@ function NotesPageContent() {
           <p className="text-xs text-muted-foreground">{t.length}</p>
           <span className="text-xs font-mono capitalize">{lengthLabels[length]}</span>
         </div>
-        <Slider value={[lengthMap[length]]} onValueChange={([v]) => setLength(lengthFromSlider(v))} min={0} max={2} step={1} disabled={isLoading} />
+        <Slider
+          value={[lengthMap[length]]}
+          onValueChange={([v]) => setLength(lengthFromSlider(v))}
+          min={0}
+          max={2}
+          step={1}
+          disabled={isLoading}
+          className="[&_.bg-secondary]:bg-sidebar-accent [&_.bg-primary]:bg-foreground/70 [&_[role=slider]]:border-sidebar-border [&_[role=slider]]:bg-sidebar-accent [&_[role=slider]]:shadow-sm"
+        />
       </div>
 
-      <div className="rounded-md bg-sidebar-accent/55 px-2.5 py-2">
-        <p className="text-xs text-muted-foreground">
-          Using global settings: level {schoolingLevel}, region {String(region).toUpperCase()}.
-        </p>
-      </div>
-
-      <div className="flex items-center justify-between rounded-md bg-sidebar-accent/55 px-2.5 py-2">
+      <div className="flex items-center justify-between rounded-md bg-sidebar-accent/35 px-2 py-1.5">
         <p className="text-xs text-muted-foreground">Save to recents</p>
-        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} className="data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800" />
+        <Switch
+          checked={saveToRecents}
+          onCheckedChange={setSaveToRecents}
+          className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
+        />
       </div>
-
-      <Button variant="outline" onClick={handleGenerate} disabled={!canGenerate} className="w-full rounded-full border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent">
-        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-        {t.notes.generate}
-      </Button>
 
       <ImportToolbar
         toolType="notes"

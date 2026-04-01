@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import React, { useState, useEffect, Suspense, useCallback, useContext, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { FunLoader } from '@/components/tools/fun-loader';
 import type { QuizMode } from '@/components/tools/quiz-taker';
 import { AppContext } from '@/contexts/app-context';
@@ -286,23 +286,24 @@ function QuizPageContent() {
           <p className="text-xs text-muted-foreground">{t.questions}</p>
           <span className="text-xs font-mono tabular-nums">{questionCount}</span>
         </div>
-        <Slider value={[questionCount]} onValueChange={([v]) => setQuestionCount(v)} min={1} max={50} step={1} disabled={isLoading} />
+        <Slider
+          value={[questionCount]}
+          onValueChange={([v]) => setQuestionCount(v)}
+          min={1}
+          max={50}
+          step={1}
+          disabled={isLoading}
+          className="[&_.bg-secondary]:bg-sidebar-accent [&_.bg-primary]:bg-foreground/70 [&_[role=slider]]:border-sidebar-border [&_[role=slider]]:bg-sidebar-accent [&_[role=slider]]:shadow-sm"
+        />
       </div>
 
-      <div className="rounded-md bg-sidebar-accent/55 px-2.5 py-2">
-        <p className="text-xs text-muted-foreground">
-          Using global settings: level {schoolingLevel}, region {String(region).toUpperCase()}.
-        </p>
-      </div>
-
-      <Button variant="outline" onClick={() => handleGenerate(sourceText)} disabled={isLoading || !sourceText.trim()} className="w-full rounded-full border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent">
-        <Sparkles className="mr-2 h-4 w-4" />
-        {t.quiz.generate}
-      </Button>
-
-      <div className="flex items-center justify-between rounded-md bg-sidebar-accent/55 px-2.5 py-2">
+      <div className="flex items-center justify-between rounded-md bg-sidebar-accent/35 px-2 py-1.5">
         <p className="text-xs text-muted-foreground">Save to recents</p>
-        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} className="data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800" />
+        <Switch
+          checked={saveToRecents}
+          onCheckedChange={setSaveToRecents}
+          className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
+        />
       </div>
 
       <ImportToolbar
