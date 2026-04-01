@@ -113,6 +113,8 @@ function NotesPageContent() {
   const { run: savedRun } = useSavedRun(runId);
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
+  const region = appContext?.region ?? 'global';
+  const schoolingLevel = appContext?.schoolingLevel ?? 2;
   const t = getToolStrings(language);
   const noteStyleOptions = [
     { value: 'structured', label: 'Structured', description: 'Clear headings and concise key points' },
@@ -279,6 +281,8 @@ function NotesPageContent() {
           outputFocus: 'clarity',
           tone: 'neutral',
           audience: requestedAudience,
+          regionCode: String(region || 'global').toUpperCase(),
+          educationLevel: schoolingLevel,
           imageDataUri: imageDataUri || undefined,
           highlightTitles: false,
           fontFamily: 'default',
@@ -300,7 +304,7 @@ function NotesPageContent() {
       if (background) setIsAutoDrafting(false);
       else setIsLoading(false);
     }
-  }, [audience, customTitle, imageDataUri, length, reportStudysetPerformance, saveToRecents, style, t.notes.generatingTitle, toast]);
+  }, [audience, customTitle, imageDataUri, length, region, schoolingLevel, reportStudysetPerformance, saveToRecents, style, t.notes.generatingTitle, toast]);
 
   useEffect(() => {
     if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
@@ -671,6 +675,12 @@ function NotesPageContent() {
           <span className="text-xs font-mono capitalize">{lengthLabels[length]}</span>
         </div>
         <Slider value={[lengthMap[length]]} onValueChange={([v]) => setLength(lengthFromSlider(v))} min={0} max={2} step={1} disabled={isLoading} />
+      </div>
+
+      <div className="rounded-md bg-sidebar-accent/55 px-2.5 py-2">
+        <p className="text-xs text-muted-foreground">
+          Using global settings: level {schoolingLevel}, region {String(region).toUpperCase()}.
+        </p>
       </div>
 
       <div className="flex items-center justify-between rounded-md bg-sidebar-accent/55 px-2.5 py-2">

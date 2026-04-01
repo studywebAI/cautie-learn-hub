@@ -14,6 +14,11 @@ const GenerateQuizInputSchema = z.object({
   sourceText: z.string().describe('The source text from which to generate the quiz.'),
   imageDataUri: z.string().optional().describe('Optional image context as data URI.'),
   questionCount: z.number().optional().default(7).describe('The desired number of questions.'),
+  language: z.string().optional().describe('Language/locale hint for output language.'),
+  regionCode: z.string().optional().describe('Region code used for local curriculum wording.'),
+  educationLevel: z.number().optional().describe('Education level from 1-4 (foundation to advanced).'),
+  difficultyProfile: z.string().optional().describe('Quiz difficulty profile selected in UI.'),
+  questionType: z.string().optional().describe('Question type preference selected in UI.'),
   existingQuestionIds: z.array(z.string()).optional().describe('An array of question IDs that should not be regenerated.'),
   groundingInstruction: z.string().optional().describe('Mandatory grounding constraints for factual outputs.'),
 });
@@ -55,6 +60,12 @@ The quiz should have a concise and relevant title (without phrases like "a compr
 Create exactly {{{questionCount}}} questions.
 Each question must have 3 or 4 answer options.
 Exactly one option for each question must be correct.
+Adapt language and framing to:
+- Output language: {{{language}}}
+- Region: {{{regionCode}}}
+- Education level (1-4): {{{educationLevel}}}
+- Difficulty profile: {{{difficultyProfile}}}
+- Question type preference: {{{questionType}}}
 {{#if existingQuestionIds}}
 Do not generate questions that are identical or very similar to the questions represented by these IDs: {{{existingQuestionIds}}}.
 {{/if}}

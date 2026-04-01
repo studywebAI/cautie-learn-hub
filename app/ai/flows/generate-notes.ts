@@ -20,6 +20,8 @@ const GenerateNotesInputSchema = z.object({
   topic: z.string().optional().describe('The main topic to focus on.'),
   length: z.string().optional().describe('The desired length of the notes: short, medium, long.'),
   style: z.string().optional().describe('The style of notes: structured, bullet-points, standard, mindmap, timeline, chart, venndiagram, vocabulary, flowchart.'),
+  regionCode: z.string().optional().describe('Region code used to localize examples and terminology.'),
+  educationLevel: z.number().optional().describe('Education level from 1-4 (foundation to advanced).'),
   highlightTitles: z.boolean().optional().describe('Whether to highlight titles with colors.'),
   fontFamily: z.string().optional().describe('The font family to use: default, serif, sans-serif, monospace.'),
 });
@@ -173,6 +175,11 @@ For "images" style:
 Example: {"type": "vocabulary", "words": [{"term": "Key Concept", "definition": "Definition from text", "example": "Example usage"}]}
 
 {{/if}}
+
+Localization profile:
+- Region: {{{regionCode}}}
+- Education level (1-4): {{{educationLevel}}}
+- Output language: keep aligned with source language unless explicitly specified otherwise.
 
 {{#if highlightTitles}}
 Use HTML <span style="background-color: lightblue;">text</span> for highlighting.

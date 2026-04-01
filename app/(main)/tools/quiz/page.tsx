@@ -56,6 +56,8 @@ function QuizPageContent() {
   const { run: savedRun, isLoading: isLoadingRun } = useSavedRun(runId);
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
+  const region = appContext?.region ?? 'global';
+  const schoolingLevel = appContext?.schoolingLevel ?? 2;
   const t = getToolStrings(language);
 
   const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
@@ -109,6 +111,8 @@ function QuizPageContent() {
             imageDataUri: imageDataUri || undefined,
             questionCount: count,
             language,
+            regionCode: String(region || 'global').toUpperCase(),
+            educationLevel: schoolingLevel,
             difficultyProfile: requestedDifficulty,
             questionType: requestedQuestionType,
           },
@@ -125,7 +129,7 @@ function QuizPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [customTitle, difficultyProfile, imageDataUri, language, questionCount, questionType, quizMode, saveToRecents]);
+  }, [customTitle, difficultyProfile, imageDataUri, language, region, schoolingLevel, questionCount, questionType, quizMode, saveToRecents]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
@@ -283,6 +287,12 @@ function QuizPageContent() {
           <span className="text-xs font-mono tabular-nums">{questionCount}</span>
         </div>
         <Slider value={[questionCount]} onValueChange={([v]) => setQuestionCount(v)} min={1} max={50} step={1} disabled={isLoading} />
+      </div>
+
+      <div className="rounded-md bg-sidebar-accent/55 px-2.5 py-2">
+        <p className="text-xs text-muted-foreground">
+          Using global settings: level {schoolingLevel}, region {String(region).toUpperCase()}.
+        </p>
       </div>
 
       <Button variant="outline" onClick={() => handleGenerate(sourceText)} disabled={isLoading || !sourceText.trim()} className="w-full rounded-full border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent">
