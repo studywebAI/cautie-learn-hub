@@ -157,7 +157,21 @@ function decodePdfString(s: string): string {
 async function extractTextFromDocx(buffer: Buffer): Promise<string> {
   try {
     const result = await mammoth.extractRawText({ buffer });
-    return (result.value || "").replace(/\r\n/g, "\n").trim();
+    const raw = (result.value || "").replace(/\r\n/g, "\n").trim();
+    if (raw) return raw;
+
+    // Fallback: convert to HTML and strip tags when raw extractor returns empty.
+    const htmlResult = await mammoth.convertToHtml({ buffer });
+    const html = (htmlResult.value || "").trim();
+    if (!html) return "";
+
+    const text = html
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return text;
   } catch {
     return "";
   }

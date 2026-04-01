@@ -292,7 +292,7 @@ function QuizPageContent() {
 
       <div className="flex items-center justify-between rounded-md bg-sidebar-accent/55 px-2.5 py-2">
         <p className="text-xs text-muted-foreground">Save to recents</p>
-        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} />
+        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} className="data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800" />
       </div>
 
       <ImportToolbar

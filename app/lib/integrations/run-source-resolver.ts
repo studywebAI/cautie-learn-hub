@@ -7,7 +7,9 @@ function mergeSourceText(base: string, additions: string[]) {
   const cleanBase = (base || '').trim();
   const cleanAdditions = additions.map((v) => v.trim()).filter(Boolean);
   if (cleanAdditions.length === 0) return cleanBase;
-  const merged = [cleanBase, ...cleanAdditions].filter(Boolean).join('\n\n');
+  // Put extracted/imported sources first so generation is grounded in real materials.
+  // Keep manual text at the end as optional hints.
+  const merged = [...cleanAdditions, cleanBase].filter(Boolean).join('\n\n');
   return merged.slice(0, MAX_INTEGRATION_SOURCE_TEXT_CHARS);
 }
 

@@ -74,31 +74,31 @@ const isBuriedNow = (buriedUntil: string | null) => !!buriedUntil && new Date(bu
 const computeAdaptiveHeight = (front: string, back: string) => {
   const totalChars = `${front} ${back}`.trim().length;
   const estimatedLines = Math.ceil(totalChars / 36);
-  const base = 360;
-  const perLine = 9;
-  return Math.max(360, Math.min(620, base + estimatedLines * perLine));
+  const base = 400;
+  const perLine = 10;
+  return Math.max(400, Math.min(700, base + estimatedLines * perLine));
 };
 
 function FlipView({ card, isFlipped, setIsFlipped, height }: { card: Flashcard; isFlipped: boolean; setIsFlipped: (f: boolean) => void; height: number; }) {
   return (
     <div className='flex w-full flex-col items-center justify-center gap-4'>
-      <div className="w-[min(94vw,980px)] [perspective:1200px]" style={{ height: `${height}px` }}>
+      <div className="w-[min(96vw,1080px)] [perspective:1200px]" style={{ height: `${height}px` }}>
         <div
           className="relative h-full w-full cursor-pointer transition-transform duration-500 [transform-style:preserve-3d]"
           style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
           onClick={() => setIsFlipped(!isFlipped)}
         >
-          <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-10 py-8 shadow-sm [backface-visibility:hidden]">
-            <p className="max-w-[90%] text-center text-4xl leading-[1.28] text-foreground">{card.front}</p>
+          <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-12 py-10 shadow-sm [backface-visibility:hidden]">
+            <p className="max-w-[92%] text-center text-4xl leading-[1.28] text-foreground">{card.front}</p>
           </div>
-          <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-10 py-8 shadow-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
-            <p className="max-w-[90%] text-center text-3xl leading-[1.35] text-muted-foreground">{card.back}</p>
+          <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-12 py-10 shadow-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+            <p className="max-w-[92%] text-center text-3xl leading-[1.35] text-muted-foreground">{card.back}</p>
           </div>
         </div>
       </div>
       <Button variant="secondary" onClick={() => setIsFlipped(!isFlipped)} className="rounded-full px-6">
         <ChevronsLeftRight className="mr-2 h-4 w-4" />
-        Flip Card
+        Flip card
       </Button>
     </div>
   );
@@ -423,10 +423,10 @@ export function FlashcardViewer({
   const card = queue[currentIndex];
   const deckHealth = computeDeckHealth();
   const canRate = !!card && ((mode === 'flip' && isFlipped) || (mode !== 'flip' && isAnswered));
-  const stableFlipHeight = React.useMemo(
-    () => Math.max(360, ...queue.map((item) => computeAdaptiveHeight(item.front, item.back))),
-    [queue]
-  );
+  const currentFlipHeight = React.useMemo(() => {
+    if (!card) return 460;
+    return computeAdaptiveHeight(card.front, card.back);
+  }, [card]);
 
   const suspendCurrent = () => {
     if (!card) return;
@@ -504,7 +504,7 @@ export function FlashcardViewer({
 
   const renderCardContent = () => {
     if (!card) return null;
-    if (mode === 'flip') return <FlipView card={card} isFlipped={isFlipped} setIsFlipped={setIsFlipped} height={stableFlipHeight} />;
+    if (mode === 'flip') return <FlipView card={card} isFlipped={isFlipped} setIsFlipped={setIsFlipped} height={currentFlipHeight} />;
     if (mode === 'type') return <TypeView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
     return <MultipleChoiceView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
   };
@@ -517,7 +517,7 @@ export function FlashcardViewer({
       : 'Explain this';
 
   return (
-    <Card className="h-full border-0 bg-transparent shadow-none">
+    <Card className="h-full border-0 bg-transparent shadow-none flex flex-col">
       <CardHeader className="px-4 md:px-6 pb-2">
         <CardTitle className="font-headline">Study Flashcards</CardTitle>
         <CardDescription>
@@ -531,7 +531,7 @@ export function FlashcardViewer({
         </div>
       </CardHeader>
 
-      <CardContent className="flex min-h-[42rem] flex-col items-center gap-6 px-4 md:px-6 pb-0">
+      <CardContent className="flex-1 min-h-0 flex flex-col items-center gap-6 px-4 md:px-6 pb-2 overflow-auto">
         {queue.length === 0 && (
           <div className="w-full rounded-md border border-border/80 p-4 text-sm text-muted-foreground">
             All cards are suspended or buried for now.
@@ -579,11 +579,11 @@ export function FlashcardViewer({
               </p>
             )}
             <div className="grid grid-cols-2 gap-2">
-              <Button size="sm" className="!bg-red-700 !text-white hover:!bg-red-800" onClick={() => applyOutcome(false)}>
+              <Button size="sm" className="!bg-red-800 !text-white hover:!bg-red-900" onClick={() => applyOutcome(false)}>
                 <XCircle className="mr-2 h-4 w-4" />
                 Incorrect
               </Button>
-              <Button size="sm" className="!bg-emerald-700 !text-white hover:!bg-emerald-800" onClick={() => applyOutcome(true)}>
+              <Button size="sm" className="!bg-emerald-800 !text-white hover:!bg-emerald-900" onClick={() => applyOutcome(true)}>
                 <CheckCircle2 className="mr-2 h-4 w-4" />
                 Correct
               </Button>
@@ -647,7 +647,7 @@ export function FlashcardViewer({
         )}
       </CardContent>
 
-      <CardFooter className="mt-4 border-t border-border/70 px-4 py-3 md:px-6">
+      <CardFooter className="mt-auto sticky bottom-0 z-10 border-t border-border/70 bg-background/95 backdrop-blur px-4 py-3 md:px-6">
         <div className="flex w-full items-center justify-between">
           <Button variant="outline" onClick={handlePrev} disabled={currentIndex === 0} className="rounded-full">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -658,11 +658,11 @@ export function FlashcardViewer({
               <RefreshCw className="mr-2 h-4 w-4" />
               Start Over
             </Button>
-            <Button variant="outline" onClick={handleNext} disabled={currentIndex === queue.length - 1 || (mode !== 'flip' && !isAnswered)} className="rounded-full">
-              Next
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
           </div>
+          <Button variant="outline" onClick={handleNext} disabled={currentIndex === queue.length - 1 || (mode !== 'flip' && !isAnswered)} className="rounded-full">
+            Next
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       </CardFooter>
 

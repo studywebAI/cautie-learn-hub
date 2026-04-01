@@ -114,6 +114,14 @@ function NotesPageContent() {
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
   const t = getToolStrings(language);
+  const noteStyleOptions = [
+    { value: 'structured', label: 'Structured', description: 'Clear headings and concise key points' },
+    { value: 'standard', label: 'Standard', description: 'Balanced summary style for general studying' },
+    { value: 'cornell', label: 'Cornell', description: 'Cue + note + summary study layout' },
+    { value: 'outline', label: 'Outline', description: 'Hierarchical bullet structure for fast review' },
+    { value: 'mindmap', label: 'Mindmap', description: 'Concept relationship visual structure' },
+    { value: 'timeline', label: 'Timeline', description: 'Chronological sequence of events or steps' },
+  ];
 
   const [sourceText, setSourceText] = useState('');
   const [length, setLength] = useState<'short' | 'medium' | 'long'>('medium');
@@ -655,8 +663,7 @@ function NotesPageContent() {
         />
       </div>
 
-      <PillSelector label={t.notes.labels.style} options={t.notes.styleOptions} value={style} onChange={setStyle} disabled={isLoading} />
-      <PillSelector label={t.notes.labels.audience} options={t.notes.audienceOptions} value={audience} onChange={setAudience} disabled={isLoading} />
+      <PillSelector label="Format" options={noteStyleOptions} value={style} onChange={setStyle} disabled={isLoading} />
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -668,7 +675,7 @@ function NotesPageContent() {
 
       <div className="flex items-center justify-between rounded-md bg-sidebar-accent/55 px-2.5 py-2">
         <p className="text-xs text-muted-foreground">Save to recents</p>
-        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} />
+        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} className="data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800" />
       </div>
 
       <Button variant="outline" onClick={handleGenerate} disabled={!canGenerate} className="w-full rounded-full border-sidebar-border bg-sidebar-accent/70 hover:bg-sidebar-accent">

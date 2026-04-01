@@ -39,7 +39,7 @@ export function enforceSourceOnlyGuard(payload: {
 
   const sourceText = String(payload.inputPayload?.sourceText || "").trim();
   if (!sourceText) {
-    const err = new Error("No grounded source content found. Add real study material before generating.");
+    const err = new Error("No grounded source content found. Upload/paste real study material first, then generate again.");
     (err as any).code = "SOURCE_GUARD_FAILED";
     throw err;
   }
@@ -60,7 +60,7 @@ export function enforceSourceOnlyGuard(payload: {
 
   const ratio = overlapRatio(sourceText, outputText);
   if (ratio < 0.12) {
-    const err = new Error("Generated output is not sufficiently grounded in provided source text.");
+    const err = new Error("Generated output is not sufficiently grounded in your provided study material.");
     (err as any).code = "SOURCE_GUARD_FAILED";
     throw err;
   }

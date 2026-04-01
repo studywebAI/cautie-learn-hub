@@ -264,7 +264,7 @@ function FlashcardsPageContent() {
         />
       </div>
 
-      <PillSelector label={t.flashcards.labels.studyMode} options={modeOptions} value={studyMode} onChange={(v) => setStudyMode(normalizeStudyMode(v))} disabled={isLoading} />
+      <PillSelector label="Mode" options={modeOptions} value={studyMode} onChange={(v) => setStudyMode(normalizeStudyMode(v))} disabled={isLoading} />
 
       <PillSelector label={t.flashcards.labels.complexity} options={t.flashcards.complexityOptions} value={complexity} onChange={setComplexity} disabled={isLoading} />
 
@@ -295,7 +295,7 @@ function FlashcardsPageContent() {
 
       <div className="flex items-center justify-between rounded-md bg-sidebar-accent/55 px-2.5 py-2">
         <p className="text-xs text-muted-foreground">Save to recents</p>
-        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} className="data-[state=checked]:!bg-emerald-700 data-[state=unchecked]:!bg-red-700" />
+        <Switch checked={saveToRecents} onCheckedChange={setSaveToRecents} className="data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800" />
       </div>
 
       <ImportToolbar
