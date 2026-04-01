@@ -266,9 +266,14 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         mimeType: extracted?.mimeType || item.mimeType,
         webUrl: extracted?.webUrl || item.webUrl,
         extractedText,
-        extractionStatus: extractedText.trim() ? 'ready' : 'pending',
+        extractionStatus: extractedText.trim() ? 'ready' : 'error',
       };
     });
+
+    // Reflect extraction result in UI immediately (no refresh required).
+    window.dispatchEvent(new CustomEvent('integration-source-picked', {
+      detail: { provider: 'microsoft', app: 'onedrive', items: enrichedItems },
+    }));
 
     const saveRes = await fetch('/api/integrations/context-sources', {
       method: 'POST',
@@ -300,9 +305,6 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       body: JSON.stringify({ provider: 'microsoft', app: 'onedrive', maxJobs: 25 }),
     }).catch(() => null);
 
-    window.dispatchEvent(new CustomEvent('integration-source-picked', {
-      detail: { provider: 'microsoft', app: 'onedrive', items: enrichedItems },
-    }));
     window.dispatchEvent(new CustomEvent('integration-sources-updated', { detail: { provider: 'microsoft' } }));
   }, []);
 
