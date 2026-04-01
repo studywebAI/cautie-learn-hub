@@ -1,6 +1,99 @@
 import { NextRequest, NextResponse } from "next/server";
 import mammoth from "mammoth";
 
+function decodeHtmlEntities(input: string): string {
+  return input
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+function stripHtml(input: string): string {
+  return decodeHtmlEntities(
+    input
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+}
+
+function annotateLayoutFromPlainText(text: string): string {
+  const lines = text
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.trim());
+  const out: string[] = [];
+
+  for (const rawLine of lines) {
+    if (!rawLine) {
+      out.push("");
+      continue;
+    }
+
+    const isUpperShort = rawLine === rawLine.toUpperCase() && rawLine.length <= 90;
+    const isBullet = /^[-*•]\s+/.test(rawLine) || /^\d+[\.\)]\s+/.test(rawLine);
+    const isSection = /^[A-Z][^.!?]{0,90}:$/.test(rawLine);
+
+    if (isUpperShort) {
+      out.push(`{font=21}{weight=700}${rawLine}`);
+    } else if (isSection) {
+      out.push(`{font=18}{weight=600}${rawLine}`);
+    } else if (isBullet) {
+      out.push(`{font=12}{list=1}${rawLine}`);
+    } else {
+      out.push(`{font=13}${rawLine}`);
+    }
+  }
+
+  return out.join("\n").trim();
+}
+
+function annotateLayoutFromDocxHtml(html: string): string {
+  const blocks = html
+    .replace(/\r\n/g, "\n")
+    .replace(/<\/p>/gi, "</p>\n")
+    .replace(/<\/h1>/gi, "</h1>\n")
+    .replace(/<\/h2>/gi, "</h2>\n")
+    .replace(/<\/h3>/gi, "</h3>\n")
+    .replace(/<\/li>/gi, "</li>\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const out: string[] = [];
+
+  for (const block of blocks) {
+    const text = stripHtml(block);
+    if (!text) continue;
+
+    if (/^<h1[\s>]/i.test(block)) {
+      out.push(`{font=24}{weight=700}${text}`);
+      continue;
+    }
+    if (/^<h2[\s>]/i.test(block)) {
+      out.push(`{font=20}{weight=650}${text}`);
+      continue;
+    }
+    if (/^<h3[\s>]/i.test(block)) {
+      out.push(`{font=17}{weight=600}${text}`);
+      continue;
+    }
+    if (/^<li[\s>]/i.test(block)) {
+      out.push(`{font=12}{list=1}• ${text}`);
+      continue;
+    }
+
+    out.push(`{font=13}${text}`);
+  }
+
+  return out.join("\n").trim();
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -12,42 +105,40 @@ export async function POST(req: NextRequest) {
 
     const type = file.type;
 
-    // Plain text files – read directly
     if (type === "text/plain") {
       const text = await file.text();
-      return NextResponse.json({ text });
+      return NextResponse.json({ text, layoutText: annotateLayoutFromPlainText(text) });
     }
 
-    // PDF – extract text with a lightweight approach
     if (type === "application/pdf") {
       const buffer = Buffer.from(await file.arrayBuffer());
       const text = extractTextFromPdfBuffer(buffer);
       if (text && text.trim().length > 0) {
-        return NextResponse.json({ text });
+        return NextResponse.json({ text, layoutText: annotateLayoutFromPlainText(text) });
       }
       return NextResponse.json({
         text: "",
-        note: "Kon geen tekst uit PDF extraheren. Probeer de tekst te kopiëren en plakken.",
+        layoutText: "",
+        note: "Could not extract text from PDF. Re-upload or paste text directly.",
       });
     }
 
-    // DOCX – extract text from XML inside the zip
     if (
       type ===
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ) {
       const buffer = Buffer.from(await file.arrayBuffer());
-      const text = await extractTextFromDocx(buffer);
+      const { text, layoutText } = await extractTextFromDocx(buffer);
       if (text && text.trim().length > 0) {
-        return NextResponse.json({ text });
+        return NextResponse.json({ text, layoutText: layoutText || annotateLayoutFromPlainText(text) });
       }
       return NextResponse.json({
         text: "",
-        note: "Kon geen tekst uit DOCX extraheren.",
+        layoutText: "",
+        note: "Could not extract text from DOCX.",
       });
     }
 
-    // Images – if Gemini API key available, use vision; otherwise return empty
     if (type.startsWith("image/")) {
       const apiKey = process.env.GEMINI_API_KEY;
       if (apiKey) {
@@ -68,7 +159,7 @@ export async function POST(req: NextRequest) {
                       inlineData: { mimeType, data: base64 },
                     },
                     {
-                      text: "Extract ALL text visible in this image. Return only the extracted text, nothing else. If there is no text, return an empty string.",
+                      text: "Extract all visible text from this image. Return only extracted text.",
                     },
                   ],
                 },
@@ -81,13 +172,17 @@ export async function POST(req: NextRequest) {
           const geminiData = await geminiRes.json();
           const extractedText =
             geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-          return NextResponse.json({ text: extractedText });
+          return NextResponse.json({
+            text: extractedText,
+            layoutText: annotateLayoutFromPlainText(extractedText),
+          });
         }
       }
 
       return NextResponse.json({
         text: "",
-        note: "Afbeelding tekst extractie niet beschikbaar.",
+        layoutText: "",
+        note: "Image text extraction unavailable.",
       });
     }
 
@@ -104,34 +199,27 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/**
- * Basic PDF text extraction – pulls text from stream objects.
- * Not perfect for all PDFs but works for most text-based ones.
- */
 function extractTextFromPdfBuffer(buffer: Buffer): string {
   const content = buffer.toString("latin1");
   const textParts: string[] = [];
 
-  // Find text between BT and ET markers (text objects)
   const btEtRegex = /BT\s([\s\S]*?)ET/g;
-  let match;
+  let match: RegExpExecArray | null;
 
   while ((match = btEtRegex.exec(content)) !== null) {
     const block = match[1];
-    // Extract text from Tj and TJ operators
     const tjRegex = /\(([^)]*)\)\s*Tj/g;
-    let tjMatch;
+    let tjMatch: RegExpExecArray | null;
     while ((tjMatch = tjRegex.exec(block)) !== null) {
       textParts.push(decodePdfString(tjMatch[1]));
     }
 
-    // TJ arrays
     const tjArrayRegex = /\[([^\]]*)\]\s*TJ/g;
-    let tjArrayMatch;
+    let tjArrayMatch: RegExpExecArray | null;
     while ((tjArrayMatch = tjArrayRegex.exec(block)) !== null) {
       const arrayContent = tjArrayMatch[1];
       const strRegex = /\(([^)]*)\)/g;
-      let strMatch;
+      let strMatch: RegExpExecArray | null;
       while ((strMatch = strRegex.exec(arrayContent)) !== null) {
         textParts.push(decodePdfString(strMatch[1]));
       }
@@ -151,28 +239,29 @@ function decodePdfString(s: string): string {
     .replace(/\\\\/g, "\\");
 }
 
-/**
- * Extract text from DOCX by reading the document.xml inside the zip.
- */
-async function extractTextFromDocx(buffer: Buffer): Promise<string> {
+async function extractTextFromDocx(buffer: Buffer): Promise<{ text: string; layoutText: string }> {
   try {
     const result = await mammoth.extractRawText({ buffer });
     const raw = (result.value || "").replace(/\r\n/g, "\n").trim();
-    if (raw) return raw;
 
-    // Fallback: convert to HTML and strip tags when raw extractor returns empty.
     const htmlResult = await mammoth.convertToHtml({ buffer });
     const html = (htmlResult.value || "").trim();
-    if (!html) return "";
+    const htmlLayout = html ? annotateLayoutFromDocxHtml(html) : "";
 
-    const text = html
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    return text;
+    if (raw) {
+      return {
+        text: raw,
+        layoutText: htmlLayout || annotateLayoutFromPlainText(raw),
+      };
+    }
+
+    if (!html) return { text: "", layoutText: "" };
+    const text = stripHtml(html);
+    return {
+      text,
+      layoutText: htmlLayout || annotateLayoutFromPlainText(text),
+    };
   } catch {
-    return "";
+    return { text: "", layoutText: "" };
   }
 }

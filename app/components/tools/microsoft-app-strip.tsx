@@ -511,12 +511,28 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                 throw new Error(`No selected files match filter: ${activeFilter}.`);
               }
 
-              await persistSelection(filteredItems);
-              setPickerStatus('Ready to use in Cautie');
-              toast({ title: 'File imported', description: `${filteredItems[0].name} added as context.` });
-
               port.postMessage({ type: 'result', id: commandEnvelopeId, data: { result: 'success' } });
-              window.setTimeout(() => closePicker(), 180);
+              // Close picker immediately and let extraction continue in the background.
+              window.dispatchEvent(new CustomEvent('integration-source-picked', {
+                detail: {
+                  provider: 'microsoft',
+                  app: 'onedrive',
+                  items: filteredItems.map((item) => ({
+                    ...item,
+                    extractedText: '',
+                    extractionStatus: 'pending',
+                  })),
+                },
+              }));
+              closePicker();
+              void persistSelection(filteredItems)
+                .then(() => {
+                  toast({ title: 'File imported', description: `${filteredItems[0].name} added as context.` });
+                })
+                .catch((error: any) => {
+                  const message = String(error?.message || 'Failed to import selected file');
+                  toast({ variant: 'destructive', title: 'Import failed', description: message });
+                });
             } catch (error: any) {
               setPickerStatus('Import failed');
               const message = String(error?.message || 'Failed to import selected file');
@@ -796,6 +812,21 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                       if (files.length === 0) return;
                       setPickerStatus('Importing selected file');
                       try {
+                        window.dispatchEvent(new CustomEvent('integration-source-picked', {
+                          detail: {
+                            provider: 'microsoft',
+                            app: 'onedrive',
+                            items: files.map((file) => ({
+                              id: file.id,
+                              name: file.name,
+                              webUrl: file.webUrl,
+                              mimeType: file.mimeType,
+                              extractedText: '',
+                              extractionStatus: 'pending',
+                            })),
+                          },
+                        }));
+                        closePicker();
                         await persistSelection(files.map((file) => ({
                           id: file.id,
                           name: file.name,
@@ -804,7 +835,6 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                         })));
                         setPickerStatus('Ready to use in Cautie');
                         toast({ title: 'Files imported', description: `${files.length} file${files.length === 1 ? '' : 's'} added as context.` });
-                        window.setTimeout(() => closePicker(), 180);
                       } catch (error: any) {
                         setPickerStatus('Import failed');
                         toast({ variant: 'destructive', title: 'Import failed', description: String(error?.message || 'Failed to import selected file') });

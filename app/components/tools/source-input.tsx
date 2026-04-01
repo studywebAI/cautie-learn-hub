@@ -49,6 +49,7 @@ type SourceEntry = {
   error?: string;
   url?: string;
   urlKey?: string;
+  extractionStatus?: string;
 };
 
 const URL_REGEX = /\b((?:https?:\/\/|www\.)[^\s<>"]+)/gi;
@@ -220,7 +221,7 @@ export function SourceInput({
     const items = Array.isArray(json?.items) ? json.items : [];
     const pendingCount = items.filter((item: any) => {
       const status = String(item?.extraction_status || '').toLowerCase();
-      return status === 'pending' || status === 'error';
+      return status === 'pending';
     }).length;
 
     const mapped: SourceEntry[] = items.map((item: any) => {
@@ -230,6 +231,9 @@ export function SourceInput({
       const extracted = typeof item?.extracted_text === 'string' ? item.extracted_text.trim() : '';
       const webUrl = typeof item?.web_url === 'string' ? item.web_url : '';
       const extractionStatus = typeof item?.extraction_status === 'string' ? item.extraction_status : undefined;
+      const normalizedStatus = String(extractionStatus || '').toLowerCase();
+      const isLoading = normalizedStatus === 'pending' || (normalizedStatus === '' && !extracted);
+      const hasError = normalizedStatus === 'error' || normalizedStatus === 'empty';
       return {
         id: `integration-${String(item?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)}`,
         kind: 'file',
@@ -245,6 +249,9 @@ export function SourceInput({
           })
           : '',
         selected: true,
+        loading: isLoading,
+        error: hasError ? 'Could not extract text from this file yet.' : undefined,
+        extractionStatus: normalizedStatus || undefined,
       };
     });
 
@@ -292,6 +299,9 @@ export function SourceInput({
         const webUrl = typeof item?.webUrl === 'string' ? item.webUrl : undefined;
         const extractedText = typeof item?.extractedText === 'string' ? item.extractedText : '';
         const extractionStatus = typeof item?.extractionStatus === 'string' ? item.extractionStatus : undefined;
+        const normalizedStatus = String(extractionStatus || '').toLowerCase();
+        const isLoading = normalizedStatus === 'pending' || (normalizedStatus === '' && !extractedText.trim());
+        const hasError = normalizedStatus === 'error' || normalizedStatus === 'empty';
         return {
           id: `integration-local-${id}`,
           kind: 'file',
@@ -307,6 +317,9 @@ export function SourceInput({
             })
             : '',
           selected: true,
+          loading: isLoading,
+          error: hasError ? 'Could not extract text from this file yet.' : undefined,
+          extractionStatus: normalizedStatus || undefined,
         };
       });
       setSources((prev) => {
@@ -368,7 +381,12 @@ export function SourceInput({
     () =>
       sources
         .filter((source) => source.kind === 'file' && source.id.startsWith('integration-'))
-        .map((source) => ({ id: source.id, name: source.label || extractContextFileName(source.text) })),
+        .map((source) => ({
+          id: source.id,
+          name: source.label || extractContextFileName(source.text),
+          loading: Boolean(source.loading),
+          error: source.error,
+        })),
     [sources]
   );
   const urlSources = useMemo(
@@ -510,7 +528,9 @@ export function SourceInput({
         const res = await fetch('/api/tools/extract-text', { method: 'POST', body: formData });
         if (res.ok) {
           const data = await res.json();
-          extractedText = typeof data?.text === 'string' ? data.text : '';
+          extractedText =
+            (typeof data?.layoutText === 'string' && data.layoutText.trim()) ||
+            (typeof data?.text === 'string' ? data.text : '');
         }
       }
 
@@ -980,6 +1000,7 @@ export function SourceInput({
         <div className="flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1.5 text-xs">
           {isImage ? <ImageIcon className="h-3.5 w-3.5 shrink-0 text-primary" /> : <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />}
           <span className="truncate">{uploadedFile.name}</span>
+          {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
           <Button
             variant="ghost"
             size="icon"
@@ -1005,9 +1026,15 @@ export function SourceInput({
           {integrationFileCards.map((file) => (
             <div key={file.id} className="rounded-lg border border-sidebar-border bg-sidebar-accent/50 p-2">
               <div className="mb-2 flex h-12 items-center justify-center rounded-md bg-sidebar-accent/80">
-                <FileText className="h-4 w-4 text-muted-foreground" />
+                {file.loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                ) : (
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                )}
               </div>
               <p className="truncate text-xs">{file.name}</p>
+              {file.loading && <p className="mt-1 text-[10px] text-muted-foreground">Loading text + images…</p>}
+              {!file.loading && file.error && <p className="mt-1 text-[10px] text-destructive">Extraction failed</p>}
             </div>
           ))}
         </div>
