@@ -201,6 +201,7 @@ export function SourceInput({
   const [urlInput, setUrlInput] = useState('');
   const [linksOpen, setLinksOpen] = useState(false);
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
+  const [removingSourceIds, setRemovingSourceIds] = useState<string[]>([]);
 
   const [micError, setMicError] = useState<string | null>(null);
   const [isFallbackRecording, setIsFallbackRecording] = useState(false);
@@ -457,6 +458,7 @@ export function SourceInput({
           name: source.label || extractContextFileName(source.text),
           loading: Boolean(source.loading),
           error: source.error,
+          isRemote: source.id.startsWith('integration-') && !source.id.startsWith('integration-local-'),
         })),
     [sources]
   );
@@ -555,6 +557,39 @@ export function SourceInput({
   const removeSource = (id: string) => {
     setSources((prev) => prev.filter((s) => s.id !== id));
   };
+
+  const removeIntegrationSource = useCallback(async (sourceId: string) => {
+    const query = new URLSearchParams({ sourceId }).toString();
+    const res = await fetch(`/api/integrations/context-sources?${query}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}));
+      const message = typeof payload?.error === 'string' ? payload.error : 'Could not remove selected file.';
+      throw new Error(message);
+    }
+  }, []);
+
+  const handleRemoveFileCard = useCallback(
+    async (fileId: string, isRemote: boolean) => {
+      setSources((prev) => prev.filter((s) => s.id !== fileId));
+      if (!isRemote) return;
+
+      setRemovingSourceIds((prev) => (prev.includes(fileId) ? prev : [...prev, fileId]));
+      try {
+        const remoteSourceId = fileId.replace(/^integration-/, '');
+        await removeIntegrationSource(remoteSourceId);
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Could not remove file',
+          description: String(error?.message || 'Try again.'),
+        });
+        void hydrateIntegrationSources(true);
+      } finally {
+        setRemovingSourceIds((prev) => prev.filter((id) => id !== fileId));
+      }
+    },
+    [hydrateIntegrationSources, removeIntegrationSource, toast]
+  );
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1098,21 +1133,39 @@ export function SourceInput({
           {topContent}
         </div>
       )}
-
       {integrationFileCards.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        <div className="space-y-2">
           {integrationFileCards.map((file) => (
-            <div key={file.id} className="rounded-lg border border-sidebar-border bg-sidebar-accent/50 p-2">
-              <div className="mb-2 flex h-12 items-center justify-center rounded-md bg-sidebar-accent/80">
-                {file.loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                ) : (
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                )}
+            <div key={file.id} className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/40 px-2.5 py-2 md:px-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sidebar-accent/80 md:h-9 md:w-9">
+                  {file.loading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                  ) : (
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[11px] md:text-xs">{file.name}</p>
+                  {file.loading && <p className="mt-0.5 text-[10px] text-muted-foreground">Loading text + images...</p>}
+                  {!file.loading && file.error && <p className="mt-0.5 text-[10px] text-destructive">Extraction failed</p>}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0 rounded-full hover:bg-sidebar-accent"
+                  onClick={() => void handleRemoveFileCard(file.id, file.isRemote)}
+                  disabled={removingSourceIds.includes(file.id)}
+                  aria-label="Remove file"
+                >
+                  {removingSourceIds.includes(file.id) ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                </Button>
               </div>
-              <p className="truncate text-xs">{file.name}</p>
-              {file.loading && <p className="mt-1 text-[10px] text-muted-foreground">Loading text + images…</p>}
-              {!file.loading && file.error && <p className="mt-1 text-[10px] text-destructive">Extraction failed</p>}
             </div>
           ))}
         </div>

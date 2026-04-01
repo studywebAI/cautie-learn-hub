@@ -162,3 +162,46 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const sameOrigin = verifySameOrigin(request);
+    if (!sameOrigin.ok) {
+      return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    }
+
+    const rateLimit = checkRateLimit(request, { key: 'integration-sources-delete', limit: 40, windowMs: 60_000 });
+    if (!rateLimit.ok) return rateLimit.response;
+
+    const cookieStore = cookies();
+    const supabase = await createClient(cookieStore);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const sourceId = request.nextUrl.searchParams.get('sourceId');
+    if (!sourceId) {
+      return NextResponse.json({ error: 'Missing sourceId' }, { status: 400 });
+    }
+
+    const { error } = await (supabase as any)
+      .from('external_integration_sources')
+      .update({ is_selected: false, updated_at: new Date().toISOString() })
+      .eq('user_id', user.id)
+      .eq('id', sourceId);
+
+    if (error) {
+      return NextResponse.json({ error: normalizeSourceStoreError(error.message || 'Failed to remove source') }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error: any) {
+    const message = normalizeSourceStoreError(String(error?.message || 'Failed to remove source'));
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
