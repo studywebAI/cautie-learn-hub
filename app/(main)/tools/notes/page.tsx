@@ -128,10 +128,16 @@ const NOTE_BLOCK_OPTIONS = [
   { value: 'summary', label: 'Summary Box' },
 ];
 
-const AUTO_HIGHLIGHT_TARGETS = [
-  { value: 'terms', label: 'Terms / Begrippen', regex: /\b(term|concept|definition|begrip|definitie|model|theory)\b/gi },
-  { value: 'causes', label: 'Causes / Oorzaken', regex: /\b(because|due to|therefore|cause|effect|oorzaak|gevolg|leidde)\b/gi },
-  { value: 'dates', label: 'Dates / Data', regex: /\b(?:\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}|(?:19|20)\d{2})\b/g },
+type AutoHighlightTarget = {
+  value: string;
+  label: string;
+  regex: RegExp;
+};
+
+const BASE_AUTO_HIGHLIGHT_TARGETS: AutoHighlightTarget[] = [
+  { value: 'terms', label: 'Key terms', regex: /\b(term|concept|definition|model|theory|keyword|formula)\b/gi },
+  { value: 'causes', label: 'Causes and effects', regex: /\b(because|due to|therefore|cause|effect|resulted in|led to)\b/gi },
+  { value: 'dates', label: 'Dates and years', regex: /\b(?:\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}|(?:19|20)\d{2})\b/g },
 ];
 
 function NotesPageContent() {
@@ -213,6 +219,66 @@ function NotesPageContent() {
     { title: 'Generating notes', detail: 'Building clean notes from your selected study content.' },
     { title: 'Finalizing workspace', detail: 'Opening notes with the generated output ready to edit.' },
   ];
+
+  const autoHighlightTargets = useMemo(() => {
+    const code = String(region || 'global').toUpperCase();
+    const languageCode = String(language || 'en').toLowerCase();
+    const targets = [...BASE_AUTO_HIGHLIGHT_TARGETS];
+
+    if (languageCode === 'nl') {
+      targets[0] = {
+        ...targets[0],
+        label: 'Begrippen',
+        regex: /\b(term|concept|definition|begrip|definitie|model|theorie|formule)\b/gi,
+      };
+      targets[1] = {
+        ...targets[1],
+        label: 'Oorzaken en gevolgen',
+        regex: /\b(because|due to|therefore|cause|effect|resulted in|led to|oorzaak|oorzaken|gevolg|gevolgen|daardoor)\b/gi,
+      };
+      targets[2] = { ...targets[2], label: 'Datums en jaren' };
+    }
+
+    if (code === 'DE') {
+      targets.push({
+        value: 'curriculum',
+        label: 'Prüfung / Abitur',
+        regex: /\b(abitur|klausur|prüfung|prüfungsstoff|lernziel)\b/gi,
+      });
+    } else if (code === 'NL') {
+      targets.push({
+        value: 'curriculum',
+        label: 'Examen / Niveau',
+        regex: /\b(havo|vwo|vmbo|mavo|examen|leerstof|samenvatting)\b/gi,
+      });
+    } else if (code === 'UK') {
+      targets.push({
+        value: 'curriculum',
+        label: 'Exam board terms',
+        regex: /\b(gcse|a-level|as level|ofqual|past paper|mark scheme)\b/gi,
+      });
+    } else if (code === 'US') {
+      targets.push({
+        value: 'curriculum',
+        label: 'School assessment terms',
+        regex: /\b(gpa|sat|act|ap course|rubric|midterm|final exam)\b/gi,
+      });
+    } else if (code === 'IN') {
+      targets.push({
+        value: 'curriculum',
+        label: 'Board / entrance terms',
+        regex: /\b(cbse|icse|jee|neet|board exam|syllabus)\b/gi,
+      });
+    } else {
+      targets.push({
+        value: 'curriculum',
+        label: 'Assessment terms',
+        regex: /\b(exam|assessment|syllabus|learning objective|grading criteria)\b/gi,
+      });
+    }
+
+    return targets;
+  }, [language, region]);
 
   const reportStudysetPerformance = useCallback(async (inputText: string) => {
     if (!taskId || !studysetId) return;
@@ -318,7 +384,7 @@ function NotesPageContent() {
   const applyAutoHighlights = useCallback(() => {
     const container = notesContentRef.current;
     if (!container) return;
-    const activeTargets = AUTO_HIGHLIGHT_TARGETS.filter((target) => selectedAutoHighlightTargets.includes(target.value));
+    const activeTargets = autoHighlightTargets.filter((target) => selectedAutoHighlightTargets.includes(target.value));
     if (activeTargets.length === 0) return;
 
     const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
@@ -351,7 +417,7 @@ function NotesPageContent() {
     const nextHtml = container.innerHTML;
     setNoteHtml(nextHtml);
     persistNotesState(nextHtml);
-  }, [autoHighlightColor, persistNotesState, selectedAutoHighlightTargets]);
+  }, [autoHighlightColor, autoHighlightTargets, persistNotesState, selectedAutoHighlightTargets]);
 
   useEffect(() => {
     if (savedRun?.output_payload && savedRun.status === 'succeeded') {
@@ -433,6 +499,14 @@ function NotesPageContent() {
     selectedNoteBlocks,
     persistNotesState,
   ]);
+
+  useEffect(() => {
+    const allowed = new Set(autoHighlightTargets.map((target) => target.value));
+    setSelectedAutoHighlightTargets((prev) => {
+      const next = prev.filter((value) => allowed.has(value));
+      return next.length > 0 ? next : ['terms'];
+    });
+  }, [autoHighlightTargets]);
 
   const runNotesGeneration = useCallback(async (
     inputText: string,
@@ -966,7 +1040,7 @@ function NotesPageContent() {
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">Auto highlight targets</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {AUTO_HIGHLIGHT_TARGETS.map((target) => (
+                    {autoHighlightTargets.map((target) => (
                       <button
                         key={target.value}
                         type="button"
