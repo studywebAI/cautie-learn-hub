@@ -1,16 +1,15 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
-import { Loader2, Paintbrush } from 'lucide-react';
+import { Bold, Italic, Loader2, Paintbrush, PanelsRightBottom, Underline } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
-import { NoteViewer } from '@/components/material-viewers/note-viewer';
 import type { GenerateNotesOutput } from '@/ai/flows/generate-notes';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { PillSelector } from '@/components/tools/pill-selector';
@@ -24,6 +23,7 @@ import { getToolStrings } from '@/lib/tool-i18n';
 import { PaintOverlay } from '@/components/tools/paint-overlay';
 import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
 import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -104,6 +104,36 @@ const appendTranscript = (existing: string, nextSegment: string) => {
 
 const clampScore = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
 
+type DrawingPath = {
+  id: string;
+  points: { x: number; y: number }[];
+  color: string;
+  width: number;
+  opacity: number;
+};
+
+const NOTE_FONTS = [
+  { value: 'IBM Plex Sans', label: 'IBM Plex Sans' },
+  { value: 'Inter', label: 'Inter' },
+  { value: 'Arial', label: 'Arial' },
+  { value: 'Georgia', label: 'Georgia' },
+];
+
+const NOTE_BLOCK_OPTIONS = [
+  { value: 'bullets', label: 'Bullets' },
+  { value: 'arrows', label: 'Arrows / Flow' },
+  { value: 'key-terms', label: 'Key Terms' },
+  { value: 'causes', label: 'Causes' },
+  { value: 'definitions', label: 'Definitions' },
+  { value: 'summary', label: 'Summary Box' },
+];
+
+const AUTO_HIGHLIGHT_TARGETS = [
+  { value: 'terms', label: 'Terms / Begrippen', regex: /\b(term|concept|definition|begrip|definitie|model|theory)\b/gi },
+  { value: 'causes', label: 'Causes / Oorzaken', regex: /\b(because|due to|therefore|cause|effect|oorzaak|gevolg|leidde)\b/gi },
+  { value: 'dates', label: 'Dates / Data', regex: /\b(?:\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}|(?:19|20)\d{2})\b/g },
+];
+
 function NotesPageContent() {
   const searchParams = useSearchParams();
   const runId = searchParams.get('runId');
@@ -135,6 +165,19 @@ function NotesPageContent() {
   const [customTitle, setCustomTitle] = useState('');
   const [paintActive, setPaintActive] = useState(false);
   const [highlightActive, setHighlightActive] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [showNotesPanel, setShowNotesPanel] = useState(true);
+  const [noteHtml, setNoteHtml] = useState('');
+  const [noteFontFamily, setNoteFontFamily] = useState('IBM Plex Sans');
+  const [noteFontSize, setNoteFontSize] = useState(18);
+  const [noteFontWeight, setNoteFontWeight] = useState(420);
+  const [noteLineHeight, setNoteLineHeight] = useState(1.65);
+  const [noteTextColor, setNoteTextColor] = useState('#181818');
+  const [selectedNoteBlocks, setSelectedNoteBlocks] = useState<string[]>(['bullets', 'key-terms', 'summary']);
+  const [selectedAutoHighlightTargets, setSelectedAutoHighlightTargets] = useState<string[]>(['terms']);
+  const [autoHighlightColor, setAutoHighlightColor] = useState('rgba(250, 204, 21, 0.38)');
+  const [annotationPaths, setAnnotationPaths] = useState<DrawingPath[]>([]);
+  const [artifactId, setArtifactId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
@@ -151,6 +194,7 @@ function NotesPageContent() {
   const [launchStageIndex, setLaunchStageIndex] = useState(0);
   const [saveToRecents, setSaveToRecents] = useState(true);
   const notesContentRef = useRef<HTMLDivElement>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const keepListeningRef = useRef(false);
   const lectureFocusRef = useRef(true);
@@ -200,6 +244,115 @@ function NotesPageContent() {
     }).catch(() => {});
   }, [audience, length, style, studysetId, taskId]);
 
+  const toggleMulti = useCallback((value: string, setValue: (updater: (prev: string[]) => string[]) => void) => {
+    setValue((prev) => (prev.includes(value) ? prev.filter((entry) => entry !== value) : [...prev, value]));
+  }, []);
+
+  const persistNotesState = useCallback((nextHtml?: string, nextPaths?: DrawingPath[]) => {
+    const htmlToSave = typeof nextHtml === 'string' ? nextHtml : noteHtml;
+    const pathsToSave = Array.isArray(nextPaths) ? nextPaths : annotationPaths;
+    const payload = {
+      html: htmlToSave,
+      annotationPaths: pathsToSave,
+      fontFamily: noteFontFamily,
+      fontSize: noteFontSize,
+      fontWeight: noteFontWeight,
+      lineHeight: noteLineHeight,
+      textColor: noteTextColor,
+      selectedNoteBlocks,
+      selectedAutoHighlightTargets,
+      autoHighlightColor,
+      updatedAt: Date.now(),
+    };
+    localStorage.setItem('tools.notes.editorState', JSON.stringify(payload));
+
+    if (!saveToRecents || !htmlToSave.trim()) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const parsed = parseNotesFromHtml(htmlToSave);
+      const content = parsed && parsed.length > 0 ? parsed : notesToMarkdown(generatedNotes || []);
+      try {
+        const response = await fetch('/api/tools/v2/artifacts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            artifactId: artifactId || undefined,
+            toolId: 'notes',
+            artifactType: 'notes',
+            title: customTitle.trim() || 'Notes',
+            content,
+            metadata: {
+              editor: payload,
+            },
+          }),
+        });
+        const json = await response.json().catch(() => ({}));
+        const returnedId =
+          (typeof json?.id === 'string' && json.id) ||
+          (typeof json?.artifact?.id === 'string' && json.artifact.id) ||
+          null;
+        if (returnedId && returnedId !== artifactId) {
+          setArtifactId(returnedId);
+        }
+      } catch {
+        // Keep editing flow resilient; local state is still saved.
+      }
+    }, 600);
+  }, [
+    annotationPaths,
+    artifactId,
+    autoHighlightColor,
+    customTitle,
+    generatedNotes,
+    noteFontFamily,
+    noteFontSize,
+    noteFontWeight,
+    noteHtml,
+    noteLineHeight,
+    noteTextColor,
+    saveToRecents,
+    selectedAutoHighlightTargets,
+    selectedNoteBlocks,
+  ]);
+
+  const applyAutoHighlights = useCallback(() => {
+    const container = notesContentRef.current;
+    if (!container) return;
+    const activeTargets = AUTO_HIGHLIGHT_TARGETS.filter((target) => selectedAutoHighlightTargets.includes(target.value));
+    if (activeTargets.length === 0) return;
+
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    const textNodes: Text[] = [];
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      if (!node?.textContent?.trim()) continue;
+      const parentTag = node.parentElement?.tagName?.toLowerCase();
+      if (parentTag === 'mark') continue;
+      textNodes.push(node);
+    }
+
+    textNodes.forEach((node) => {
+      let html = node.textContent || '';
+      let changed = false;
+      activeTargets.forEach((target) => {
+        html = html.replace(target.regex, (match) => {
+          changed = true;
+          return `<mark style="background:${autoHighlightColor};border-radius:2px;padding:0 1px;">${match}</mark>`;
+        });
+      });
+      if (!changed) return;
+      const wrapper = document.createElement('span');
+      wrapper.innerHTML = html;
+      const parent = node.parentNode;
+      if (!parent) return;
+      parent.replaceChild(wrapper, node);
+    });
+
+    const nextHtml = container.innerHTML;
+    setNoteHtml(nextHtml);
+    persistNotesState(nextHtml);
+  }, [autoHighlightColor, persistNotesState, selectedAutoHighlightTargets]);
+
   useEffect(() => {
     if (savedRun?.output_payload && savedRun.status === 'succeeded') {
       const output = savedRun.output_payload;
@@ -228,7 +381,34 @@ function NotesPageContent() {
       setSourceText(cachedTranscript);
       lastAutoDraftLengthRef.current = cachedTranscript.length;
     }
+
+    const rawEditorState = localStorage.getItem('tools.notes.editorState');
+    if (rawEditorState) {
+      try {
+        const parsed = JSON.parse(rawEditorState);
+        if (typeof parsed?.html === 'string') setNoteHtml(parsed.html);
+        if (Array.isArray(parsed?.annotationPaths)) setAnnotationPaths(parsed.annotationPaths as DrawingPath[]);
+        if (typeof parsed?.fontFamily === 'string') setNoteFontFamily(parsed.fontFamily);
+        if (typeof parsed?.fontSize === 'number') setNoteFontSize(parsed.fontSize);
+        if (typeof parsed?.fontWeight === 'number') setNoteFontWeight(parsed.fontWeight);
+        if (typeof parsed?.lineHeight === 'number') setNoteLineHeight(parsed.lineHeight);
+        if (typeof parsed?.textColor === 'string') setNoteTextColor(parsed.textColor);
+        if (Array.isArray(parsed?.selectedNoteBlocks)) setSelectedNoteBlocks(parsed.selectedNoteBlocks);
+        if (Array.isArray(parsed?.selectedAutoHighlightTargets)) setSelectedAutoHighlightTargets(parsed.selectedAutoHighlightTargets);
+        if (typeof parsed?.autoHighlightColor === 'string') setAutoHighlightColor(parsed.autoHighlightColor);
+      } catch {
+        // Ignore bad local state.
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    if (!generatedNotes) return;
+    const nextHtml = notesToHtml(generatedNotes);
+    if (!noteHtml.trim()) {
+      setNoteHtml(nextHtml);
+    }
+  }, [generatedNotes, noteHtml]);
 
   useEffect(() => {
     if (!liveTranscript.trim()) {
@@ -237,6 +417,22 @@ function NotesPageContent() {
     }
     localStorage.setItem('tools.notes.liveTranscript', liveTranscript);
   }, [liveTranscript]);
+
+  useEffect(() => {
+    if (!generatedNotes) return;
+    persistNotesState();
+  }, [
+    autoHighlightColor,
+    generatedNotes,
+    noteFontFamily,
+    noteFontSize,
+    noteFontWeight,
+    noteLineHeight,
+    noteTextColor,
+    selectedAutoHighlightTargets,
+    selectedNoteBlocks,
+    persistNotesState,
+  ]);
 
   const runNotesGeneration = useCallback(async (
     inputText: string,
@@ -252,6 +448,10 @@ function NotesPageContent() {
   ) => {
     const text = inputText.trim();
     if (!text) return null;
+    const blockDirective = selectedNoteBlocks.length > 0
+      ? `\n\n[Requested note blocks: ${selectedNoteBlocks.join(', ')}]`
+      : '';
+    const textWithDirectives = `${text}${blockDirective}`;
 
     const background = options?.background === true;
     const requestedLength = options?.preset?.length || length;
@@ -273,7 +473,7 @@ function NotesPageContent() {
         },
         persistArtifact: saveToRecents,
         input: {
-          sourceText: text,
+          sourceText: textWithDirectives,
           length: requestedLength,
           style: requestedStyle,
           modePack: 'core',
@@ -288,10 +488,15 @@ function NotesPageContent() {
         },
       });
       const notes = (run?.output_payload?.notes || run?.notes || null) as GenerateNotesOutput['notes'] | null;
+      if (typeof run?.output_artifact_id === 'string' && run.output_artifact_id) {
+        setArtifactId(run.output_artifact_id);
+      }
       if (background) setLiveDraftNotes(notes);
       else {
         setGeneratedNotes(notes);
-        await reportStudysetPerformance(text);
+        setNoteHtml(notes ? notesToHtml(notes) : '');
+        setAnnotationPaths([]);
+        await reportStudysetPerformance(textWithDirectives);
       }
       return notes;
     } catch (error: any) {
@@ -303,7 +508,7 @@ function NotesPageContent() {
       if (background) setIsAutoDrafting(false);
       else setIsLoading(false);
     }
-  }, [audience, customTitle, imageDataUri, length, region, schoolingLevel, reportStudysetPerformance, saveToRecents, style, t.notes.generatingTitle, toast]);
+  }, [audience, customTitle, imageDataUri, length, region, schoolingLevel, selectedNoteBlocks, reportStudysetPerformance, saveToRecents, style, t.notes.generatingTitle, toast]);
 
   useEffect(() => {
     if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
@@ -582,6 +787,9 @@ function NotesPageContent() {
     if (autoDraftTimerRef.current) {
       clearTimeout(autoDraftTimerRef.current);
     }
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
   }, [stopListening]);
 
   useEffect(() => {
@@ -593,6 +801,21 @@ function NotesPageContent() {
   const lengthMap: Record<string, number> = { short: 0, medium: 1, long: 2 };
   const lengthFromSlider = (v: number) => (['short', 'medium', 'long'] as const)[v];
   const lengthLabels: Record<string, string> = { short: t.short, medium: t.medium, long: t.long };
+  const editableSections = useMemo(() => {
+    const parsed = parseNotesFromHtml(noteHtml);
+    return parsed && parsed.length > 0 ? parsed : generatedNotes || [];
+  }, [generatedNotes, noteHtml]);
+
+  const applyInlineFormat = useCallback((command: 'bold' | 'italic' | 'underline') => {
+    if (typeof document === 'undefined') return;
+    if (!editMode) setEditMode(true);
+    document.execCommand(command);
+    const container = notesContentRef.current;
+    if (!container) return;
+    const nextHtml = container.innerHTML;
+    setNoteHtml(nextHtml);
+    persistNotesState(nextHtml);
+  }, [editMode, persistNotesState]);
 
   if (showLaunchScreen) {
     const currentStage = launchStages[Math.min(launchStageIndex, launchStages.length - 1)];
@@ -614,16 +837,40 @@ function NotesPageContent() {
   if (generatedNotes) {
     return (
       <div className="h-full overflow-auto p-4 md:p-6">
-        <div className="max-w-4xl mx-auto space-y-4">
+        <div className="mx-auto max-w-6xl space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <Button variant="ghost" onClick={() => { setGeneratedNotes(null); setPaintActive(false); setHighlightActive(false); }} className="rounded-full">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setGeneratedNotes(null);
+                setPaintActive(false);
+                setHighlightActive(false);
+                setEditMode(false);
+              }}
+              className="rounded-full"
+            >
               {t.back}
             </Button>
             <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant={showNotesPanel ? 'default' : 'outline'}
+                size="sm"
+                className="rounded-full h-8 gap-1.5"
+                onClick={() => setShowNotesPanel((value) => !value)}
+              >
+                <PanelsRightBottom className="h-3.5 w-3.5" />
+                <span className="text-xs">Edit panel</span>
+              </Button>
               <TextHighlighterToolbar
                 active={highlightActive}
                 onToggle={() => { setHighlightActive(h => !h); if (paintActive) setPaintActive(false); }}
                 containerRef={notesContentRef}
+                singleUse
+                onApplied={() => setHighlightActive(false)}
+                onContentChanged={(html) => {
+                  setNoteHtml(html);
+                  persistNotesState(html);
+                }}
               />
               <Button
                 variant={paintActive ? 'default' : 'outline'}
@@ -634,18 +881,192 @@ function NotesPageContent() {
                 <Paintbrush className="h-3.5 w-3.5" />
                 <span className="text-xs">Annotate</span>
               </Button>
+              <Button
+                variant={editMode ? 'default' : 'outline'}
+                size="sm"
+                className="rounded-full h-8 gap-1.5"
+                onClick={() => setEditMode((v) => !v)}
+              >
+                <span className="text-xs">{editMode ? 'Stop edit' : 'Edit text'}</span>
+              </Button>
               <ExportToolbar
                 toolType="notes"
                 title={customTitle.trim() || undefined}
-                getMarkdown={() => notesToMarkdown(generatedNotes)}
-                getHtml={() => notesToHtml(generatedNotes)}
-                getPrintHtml={() => notesContentRef.current?.innerHTML || notesToHtml(generatedNotes)}
+                getMarkdown={() => notesToMarkdown(editableSections)}
+                getHtml={() => noteHtml || notesToHtml(generatedNotes)}
+                getPrintHtml={() => notesContentRef.current?.innerHTML || noteHtml || notesToHtml(generatedNotes)}
               />
             </div>
           </div>
-          <div className="relative" ref={notesContentRef}>
-            <NoteViewer notes={generatedNotes} />
-            <PaintOverlay active={paintActive} onClose={() => setPaintActive(false)} />
+
+          <div className={cn('grid gap-4', showNotesPanel ? 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px]' : 'grid-cols-1')}>
+            <div
+              className="relative rounded-2xl border bg-card p-5 md:p-6"
+              style={{
+                fontFamily: noteFontFamily,
+                fontSize: `${noteFontSize}px`,
+                fontWeight: noteFontWeight,
+                lineHeight: noteLineHeight,
+                color: noteTextColor,
+              }}
+            >
+              <div
+                ref={notesContentRef}
+                className={cn(
+                  'prose prose-sm md:prose-base max-w-none focus:outline-none',
+                  editMode ? 'rounded-xl border border-dashed border-border p-3' : ''
+                )}
+                contentEditable={editMode}
+                suppressContentEditableWarning
+                dangerouslySetInnerHTML={{ __html: noteHtml || notesToHtml(generatedNotes) }}
+                onInput={(event) => {
+                  const html = (event.currentTarget as HTMLDivElement).innerHTML;
+                  setNoteHtml(html);
+                  persistNotesState(html);
+                }}
+                onBlur={(event) => {
+                  const html = (event.currentTarget as HTMLDivElement).innerHTML;
+                  setNoteHtml(html);
+                  persistNotesState(html);
+                }}
+              />
+              <PaintOverlay
+                active={paintActive}
+                onClose={() => setPaintActive(false)}
+                singleUse
+                initialPaths={annotationPaths}
+                onPathsChange={(nextPaths) => {
+                  setAnnotationPaths(nextPaths);
+                  persistNotesState(noteHtml, nextPaths);
+                }}
+              />
+            </div>
+
+            {showNotesPanel && (
+              <aside className="rounded-2xl border bg-card p-4 space-y-4 h-fit xl:sticky xl:top-4">
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Include blocks (multi-select)</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {NOTE_BLOCK_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={cn(
+                          'px-3 py-1 rounded-full text-xs border-0',
+                          selectedNoteBlocks.includes(option.value) ? 'bg-white text-foreground' : 'bg-[hsl(var(--background))] text-foreground'
+                        )}
+                        onClick={() => toggleMulti(option.value, setSelectedNoteBlocks)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Auto highlight targets</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {AUTO_HIGHLIGHT_TARGETS.map((target) => (
+                      <button
+                        key={target.value}
+                        type="button"
+                        className={cn(
+                          'px-3 py-1 rounded-full text-xs border-0',
+                          selectedAutoHighlightTargets.includes(target.value) ? 'bg-white text-foreground' : 'bg-[hsl(var(--background))] text-foreground'
+                        )}
+                        onClick={() => toggleMulti(target.value, setSelectedAutoHighlightTargets)}
+                      >
+                        {target.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={autoHighlightColor.startsWith('#') ? autoHighlightColor : '#facc15'}
+                      onChange={(e) => setAutoHighlightColor(e.target.value)}
+                      className="h-7 w-10 rounded border border-border bg-transparent"
+                    />
+                    <Button type="button" variant="outline" className="h-7 rounded-full text-xs" onClick={applyAutoHighlights}>
+                      Apply highlights
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Text formatting</p>
+                  <div className="flex items-center gap-1.5">
+                    <Button type="button" size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => applyInlineFormat('bold')}>
+                      <Bold className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button type="button" size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => applyInlineFormat('italic')}>
+                      <Italic className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button type="button" size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => applyInlineFormat('underline')}>
+                      <Underline className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] text-muted-foreground">Font</p>
+                    <select
+                      value={noteFontFamily}
+                      onChange={(e) => { setNoteFontFamily(e.target.value); persistNotesState(); }}
+                      className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs"
+                    >
+                      {NOTE_FONTS.map((font) => <option key={font.value} value={font.value}>{font.label}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>Size</span>
+                      <span>{noteFontSize}px</span>
+                    </div>
+                    <Slider
+                      value={[noteFontSize]}
+                      onValueChange={([value]) => { setNoteFontSize(value); persistNotesState(); }}
+                      min={14}
+                      max={28}
+                      step={1}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>Weight</span>
+                      <span>{noteFontWeight}</span>
+                    </div>
+                    <Slider
+                      value={[noteFontWeight]}
+                      onValueChange={([value]) => { setNoteFontWeight(value); persistNotesState(); }}
+                      min={300}
+                      max={700}
+                      step={10}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>Line height</span>
+                      <span>{noteLineHeight.toFixed(2)}</span>
+                    </div>
+                    <Slider
+                      value={[Math.round(noteLineHeight * 100)]}
+                      onValueChange={([value]) => { setNoteLineHeight(value / 100); persistNotesState(); }}
+                      min={120}
+                      max={220}
+                      step={5}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] text-muted-foreground">Text color</p>
+                    <input
+                      type="color"
+                      value={noteTextColor}
+                      onChange={(e) => { setNoteTextColor(e.target.value); persistNotesState(); }}
+                      className="h-7 w-10 rounded border border-border bg-transparent"
+                    />
+                  </div>
+                </div>
+              </aside>
+            )}
           </div>
         </div>
       </div>
@@ -698,6 +1119,8 @@ function NotesPageContent() {
           const notes = text.includes('<') ? parseNotesFromHtml(text) : parseNotesFromMarkdown(text);
           if (notes && notes.length > 0) {
             setGeneratedNotes(notes as any);
+            setNoteHtml(notesToHtml(notes as any));
+            setAnnotationPaths([]);
           } else {
             toast({ variant: 'destructive', title: t.couldNotParse, description: t.notes.parseError });
           }

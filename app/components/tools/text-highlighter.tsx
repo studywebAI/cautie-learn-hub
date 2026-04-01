@@ -26,9 +26,19 @@ type TextHighlighterProps = {
   active: boolean;
   onToggle: () => void;
   containerRef: React.RefObject<HTMLDivElement | null>;
+  singleUse?: boolean;
+  onApplied?: () => void;
+  onContentChanged?: (html: string) => void;
 };
 
-export function TextHighlighterToolbar({ active, onToggle, containerRef }: TextHighlighterProps) {
+export function TextHighlighterToolbar({
+  active,
+  onToggle,
+  containerRef,
+  singleUse = false,
+  onApplied,
+  onContentChanged,
+}: TextHighlighterProps) {
   const [color, setColor] = useState(HIGHLIGHT_COLORS[0]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
 
@@ -56,6 +66,8 @@ export function TextHighlighterToolbar({ active, onToggle, containerRef }: TextH
         endOffset: 0,
         parentSelector: '',
       }]);
+      onContentChanged?.(containerRef.current.innerHTML);
+      if (singleUse) onApplied?.();
     } catch {
       // Can't wrap across element boundaries — wrap each text node individually
       const fragment = range.cloneContents();
@@ -93,8 +105,10 @@ export function TextHighlighterToolbar({ active, onToggle, containerRef }: TextH
       });
 
       selection.removeAllRanges();
+      onContentChanged?.(containerRef.current.innerHTML);
+      if (singleUse) onApplied?.();
     }
-  }, [color, containerRef]);
+  }, [color, containerRef, onApplied, onContentChanged, singleUse]);
 
   // Listen for mouseup when active to apply highlights
   useEffect(() => {
@@ -124,6 +138,7 @@ export function TextHighlighterToolbar({ active, onToggle, containerRef }: TextH
       }
     });
     setHighlights([]);
+    onContentChanged?.(containerRef.current.innerHTML);
   }, [containerRef]);
 
   return (

@@ -29,9 +29,18 @@ const HIGHLIGHTER_COLORS = [
 type PaintOverlayProps = {
   active: boolean;
   onClose: () => void;
+  singleUse?: boolean;
+  initialPaths?: DrawingPath[];
+  onPathsChange?: (paths: DrawingPath[]) => void;
 };
 
-export function PaintOverlay({ active, onClose }: PaintOverlayProps) {
+export function PaintOverlay({
+  active,
+  onClose,
+  singleUse = false,
+  initialPaths,
+  onPathsChange,
+}: PaintOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -41,6 +50,11 @@ export function PaintOverlay({ active, onClose }: PaintOverlayProps) {
   const [brushSize, setBrushSize] = useState(3);
   const [paths, setPaths] = useState<DrawingPath[]>([]);
   const [currentPath, setCurrentPath] = useState<DrawingPath | null>(null);
+
+  useEffect(() => {
+    if (!Array.isArray(initialPaths)) return;
+    setPaths(initialPaths);
+  }, [initialPaths]);
 
   // Resize canvas to match container
   useEffect(() => {
@@ -84,6 +98,10 @@ export function PaintOverlay({ active, onClose }: PaintOverlayProps) {
     paths.forEach(drawPath);
     if (currentPath) drawPath(currentPath);
   }, [paths, currentPath]);
+
+  useEffect(() => {
+    onPathsChange?.(paths);
+  }, [onPathsChange, paths]);
 
   const getCoords = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
@@ -136,21 +154,30 @@ export function PaintOverlay({ active, onClose }: PaintOverlayProps) {
 
   const endDraw = useCallback(() => {
     if (currentPath) {
-      setPaths(prev => [...prev, currentPath]);
+      setPaths(prev => {
+        const next = [...prev, currentPath];
+        return next;
+      });
       setCurrentPath(null);
+      if (singleUse) onClose();
     }
     setIsDrawing(false);
-  }, [currentPath]);
-
-  if (!active) return null;
+  }, [currentPath, onClose, singleUse]);
 
   const activeColors = tool === 'highlighter' ? HIGHLIGHTER_COLORS : PEN_COLORS;
   const activeColor = tool === 'highlighter' ? highlighterColor : penColor;
   const setActiveColor = tool === 'highlighter' ? setHighlighterColor : setPenColor;
 
   return (
-    <div ref={containerRef} className="absolute inset-0 z-20">
+    <div
+      ref={containerRef}
+      className={cn(
+        'absolute inset-0 z-20',
+        active ? 'pointer-events-auto' : 'pointer-events-none'
+      )}
+    >
       {/* Toolbar */}
+      {active && (
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 rounded-full border bg-card/95 backdrop-blur-sm shadow-lg px-3 py-1.5">
         <Button
           variant={tool === 'pen' ? 'default' : 'ghost'}
@@ -221,13 +248,16 @@ export function PaintOverlay({ active, onClose }: PaintOverlayProps) {
           <X className="h-3.5 w-3.5" />
         </Button>
       </div>
+      )}
 
       {/* Canvas */}
       <canvas
         ref={canvasRef}
         className={cn(
           'absolute inset-0 w-full h-full',
-          tool === 'eraser' ? 'cursor-cell' : 'cursor-crosshair'
+          active
+            ? (tool === 'eraser' ? 'cursor-cell' : 'cursor-crosshair')
+            : 'pointer-events-none'
         )}
         onMouseDown={startDraw}
         onMouseMove={moveDraw}
