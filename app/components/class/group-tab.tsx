@@ -296,7 +296,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
     return <Clock className="h-3 w-3 text-foreground/60" />;
   };
 
-  if (loading || parentLoading) {
+  if ((loading || parentLoading) && !data) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <CautieLoader label="Loading group" sublabel="Fetching teachers and students" size="md" />

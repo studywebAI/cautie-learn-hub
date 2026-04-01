@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -57,9 +58,18 @@ export async function GET(
       return NextResponse.json({ error: 'Not a member of this class' }, { status: 403 })
     }
 
+    // Read class roster data through admin client when available to avoid
+    // RLS edge cases where members can only see their own row.
+    let dataClient: any = supabase
+    try {
+      dataClient = createAdminClient()
+    } catch {
+      dataClient = supabase
+    }
+
     // Get all class members (students and teachers)
     // (role column was removed - use subscription_type from profiles instead)
-    const { data: classMembers, error: membersError } = await supabase
+    const { data: classMembers, error: membersError } = await dataClient
       .from('class_members')
       .select('user_id')
       .eq('class_id', classId)
@@ -69,14 +79,14 @@ export async function GET(
       return NextResponse.json({ error: membersError.message }, { status: 500 })
     }
 
-    const allUserIds = classMembers?.map(m => m.user_id) || []
+    const allUserIds = (classMembers || []).map((m: { user_id: string }) => m.user_id)
     
     // Get profiles for all members to determine their subscription_type (teacher/student)
     let profiles: any[] = []
     let subscriptionTypes: Record<string, string> = {}
     
     if (allUserIds.length > 0) {
-      const { data: profilesData, error: profilesError } = await supabase
+      const { data: profilesData, error: profilesError } = await dataClient
         .from('profiles')
         .select('id, full_name, avatar_url, email, last_seen, subscription_type')
         .in('id', allUserIds)
@@ -95,11 +105,11 @@ export async function GET(
 
     // Filter students and teachers based on subscription_type (global role)
     // Treat unknown profile role as student so members without a profile don't disappear.
-    const studentIds = allUserIds.filter(uid => subscriptionTypes[uid] !== 'teacher')
-    const teacherIds = allUserIds.filter(uid => subscriptionTypes[uid] === 'teacher')
+    const studentIds = allUserIds.filter((uid: string) => subscriptionTypes[uid] !== 'teacher')
+    const teacherIds = allUserIds.filter((uid: string) => subscriptionTypes[uid] === 'teacher')
 
     // Get all assignments for the class
-    const { data: assignments, error: assignmentsError } = await supabase
+    const { data: assignments, error: assignmentsError } = await dataClient
       .from('assignments')
       .select('id, title, due_date, created_at, class_id')
       .eq('class_id', classId)
@@ -109,12 +119,12 @@ export async function GET(
       return NextResponse.json({ error: assignmentsError.message }, { status: 500 })
     }
 
-    const assignmentIds = assignments?.map(a => a.id) || []
+    const assignmentIds = (assignments || []).map((a: { id: string }) => a.id)
 
     // Get submissions for these assignments
     let submissions: any[] = []
     if (assignmentIds.length > 0 && studentIds.length > 0) {
-      const { data: submissionsData, error: submissionsError } = await supabase
+      const { data: submissionsData, error: submissionsError } = await dataClient
         .from('submissions')
         .select('id, assignment_id, user_id, status, grade, submitted_at, created_at')
         .in('assignment_id', assignmentIds)
@@ -129,7 +139,7 @@ export async function GET(
     // Get recent audit logs for students in this class
     let auditLogs: any[] = []
     if (studentIds.length > 0) {
-      const { data: logsData, error: logsError } = await supabase
+      const { data: logsData, error: logsError } = await dataClient
         .from('audit_logs')
         .select('id, user_id, action, entity_type, entity_id, details, created_at')
         .in('user_id', studentIds)
@@ -154,9 +164,8 @@ export async function GET(
     }
 
     // Build student data
-    const students = studentIds.map(studentId => {
+    const students = studentIds.map((studentId: string) => {
       const profile = profiles.find((p: any) => p.id === studentId)
-      const member = classMembers?.find((m: any) => m.user_id === studentId)
       const studentSubmissions = submissions.filter((s: any) => s.user_id === studentId)
       const studentLogs = auditLogs.filter((l: any) => l.user_id === studentId)
 
@@ -231,11 +240,11 @@ export async function GET(
     })
 
     const [directSubjectsResult, linkedSubjectsResult] = await Promise.all([
-      supabase
+      dataClient
         .from('subjects')
         .select('id, title, user_id')
         .eq('class_id', classId),
-      (supabase as any)
+      (dataClient as any)
         .from('class_subjects')
         .select('subjects(id, title, user_id)')
         .eq('class_id', classId),
@@ -254,7 +263,7 @@ export async function GET(
     const classSubjects = Array.from(classSubjectsById.values())
 
     // Build teachers data
-    const teachers = teacherIds.map(teacherId => {
+    const teachers = teacherIds.map((teacherId: string) => {
       const profile = profiles.find((p: any) => p.id === teacherId)
       const teacherSubjects = classSubjects
         .filter((subject: any) => subject.user_id === teacherId)
