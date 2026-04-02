@@ -36,6 +36,10 @@ export type RelevantControlKey =
   | 'references'
   | 'appendix';
 
+export type ControlTier = 'primary' | 'secondary' | 'advanced';
+
+export type ConfigFieldSource = 'user_locked' | 'user_selected' | 'ai_suggested' | 'default';
+
 export type PresentationUiConfig = {
   platform: PresentationPlatform;
   tone: 'academic' | 'professional' | 'simple' | 'persuasive';
@@ -73,6 +77,53 @@ export type SourceAnalysis = {
   reasons: string[];
 };
 
+export type ThemeTokens = {
+  palette: {
+    background: string;
+    surface: string;
+    accent: string;
+    textPrimary: string;
+    textMuted: string;
+  };
+  typography: {
+    titleScale: 'compact' | 'balanced' | 'expressive';
+    bodyScale: 'compact' | 'balanced';
+  };
+  backgroundStyle: 'clean' | 'gradient' | 'patterned';
+};
+
+export type SlidePlanItem = {
+  id: string;
+  index: number;
+  type: PresentationSlide['type'];
+  objective: string;
+};
+
+export type PresentationPlanResult = {
+  analysis: SourceAnalysis;
+  effectiveConfig: PresentationUiConfig;
+  configFieldSources: Partial<Record<keyof PresentationUiConfig, ConfigFieldSource>>;
+  relevanceRankedControls: {
+    primary: RelevantControlKey[];
+    secondary: RelevantControlKey[];
+    advanced: RelevantControlKey[];
+  };
+  hiddenControls: RelevantControlKey[];
+  reasons: string[];
+  slidePlan: SlidePlanItem[];
+  themeTokens: ThemeTokens;
+};
+
+export type VisualAsset = {
+  kind: 'source_image' | 'internet_image' | 'chart' | 'icon';
+  query: string;
+  rationale: string;
+  sourceUrl?: string;
+  sourceDomain?: string;
+  license?: string;
+  relevanceScore: number;
+};
+
 export type SlideQualityCheck = {
   slideId: string;
   passed: boolean;
@@ -108,6 +159,8 @@ export type PresentationBlueprint = {
   settings: PresentationUiConfig & {
     aiGeneratedImagesAllowed: false;
   };
+  themeTokens?: ThemeTokens;
+  visualAssets?: VisualAsset[];
   slides: PresentationSlide[];
 };
 

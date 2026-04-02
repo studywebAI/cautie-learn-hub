@@ -1,22 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { request1ConfigAndPlan, request2BuildPresentation } from '@/lib/presentation/two-step';
-import {
-  createPresentationVersion,
-  getNextProjectVersionNumber,
-  getPresentationProject,
-  listPresentationSources,
-} from '@/lib/presentation/store';
 import { getAuthedToolboxContext } from '@/lib/toolbox/server';
+import { getPresentationProject, listPresentationSources } from '@/lib/presentation/store';
+import { request1ConfigAndPlan } from '@/lib/presentation/two-step';
+import { RelevantControlKey } from '@/lib/presentation/types';
 
 export const dynamic = 'force-dynamic';
 
 const RequestSchema = z.object({
-  title: z.string().optional(),
   prompt: z.string().optional(),
-  language: z.string().optional(),
   autoMode: z.boolean().optional(),
   uiConfig: z.record(z.any()).optional(),
+  lockedControls: z.array(z.string()).optional(),
 });
 
 function buildSourceCorpus(input: {
@@ -42,70 +37,44 @@ export async function POST(
     const { projectId } = await params;
     const payload = RequestSchema.parse(await request.json());
     const { supabase, user } = await getAuthedToolboxContext();
-
     const project = await getPresentationProject({ supabase, userId: user.id, projectId });
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    }
-
-    await supabase
-      .from('presentation_projects')
-      .update({ status: 'processing', updated_at: new Date().toISOString() })
-      .eq('id', projectId)
-      .eq('user_id', user.id);
-
+    if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     const sources = await listPresentationSources({ supabase, userId: user.id, projectId });
     const sourceText = buildSourceCorpus({
       prompt: payload.prompt || project.prompt,
       sources,
     });
     if (!sourceText.trim()) {
-      return NextResponse.json({ error: 'No source material found for generation' }, { status: 400 });
+      return NextResponse.json({ error: 'No source material found for planning' }, { status: 400 });
     }
 
+    const lockedControls = (payload.lockedControls || []).filter(Boolean) as RelevantControlKey[];
     const plan = request1ConfigAndPlan({
       sourceText,
       userConfig: {
         ...(project.ui_config || {}),
         ...(payload.uiConfig || {}),
         platform: project.selected_platform,
-      } as any,
+      },
+      lockedControls,
       autoMode: payload.autoMode,
-      lockedControls: [],
-    });
-    const built = request2BuildPresentation({
-      sourceText,
-      title: payload.title || project.title,
-      language: payload.language || project.language || 'en',
-      plan,
-      overrides: payload.uiConfig || {},
-      lockedControls: [],
     });
 
-    const versionNumber = await getNextProjectVersionNumber({ supabase, projectId });
-    const version = await createPresentationVersion({
-      supabase,
-      userId: user.id,
-      projectId,
-      versionNumber,
-      blueprint: built.blueprint,
-      analysis: plan.analysis,
-      quality: built.quality,
-      previewManifest: built.previewManifest,
-      generationSummary: `Generated ${built.previewManifest.slideCount} slides from ${sources.length} source(s).`,
-    });
+    await supabase
+      .from('presentation_projects')
+      .update({
+        ai_suggested_config: plan.analysis.recommendedSettings || {},
+        effective_config: plan.effectiveConfig,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', projectId)
+      .eq('user_id', user.id);
 
     return NextResponse.json({
       ok: true,
       projectId,
-      versionId: version.id,
-      versionNumber: version.version_number,
-      analysis: plan.analysis,
-      effectiveConfig: plan.effectiveConfig,
+      sourceText,
       plan,
-      blueprint: built.blueprint,
-      previewManifest: built.previewManifest,
-      quality: built.quality,
     });
   } catch (error: any) {
     if (error?.message === 'Unauthorized') {
@@ -114,6 +83,6 @@ export async function POST(
     if (error?.issues) {
       return NextResponse.json({ error: 'Invalid payload', details: error.issues }, { status: 400 });
     }
-    return NextResponse.json({ error: error?.message || 'Failed to generate presentation' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to plan presentation' }, { status: 500 });
   }
 }

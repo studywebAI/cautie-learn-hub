@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { request1ConfigAndPlan, request2BuildPresentation } from '@/lib/presentation/two-step';
+import { getAuthedToolboxContext } from '@/lib/toolbox/server';
 import {
   createPresentationVersion,
   getNextProjectVersionNumber,
   getPresentationProject,
   listPresentationSources,
 } from '@/lib/presentation/store';
-import { getAuthedToolboxContext } from '@/lib/toolbox/server';
+import { request1ConfigAndPlan, request2BuildPresentation } from '@/lib/presentation/two-step';
+import { RelevantControlKey } from '@/lib/presentation/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,8 @@ const RequestSchema = z.object({
   language: z.string().optional(),
   autoMode: z.boolean().optional(),
   uiConfig: z.record(z.any()).optional(),
+  lockedControls: z.array(z.string()).optional(),
+  plan: z.any().optional(),
 });
 
 function buildSourceCorpus(input: {
@@ -42,11 +45,8 @@ export async function POST(
     const { projectId } = await params;
     const payload = RequestSchema.parse(await request.json());
     const { supabase, user } = await getAuthedToolboxContext();
-
     const project = await getPresentationProject({ supabase, userId: user.id, projectId });
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    }
+    if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
 
     await supabase
       .from('presentation_projects')
@@ -63,23 +63,27 @@ export async function POST(
       return NextResponse.json({ error: 'No source material found for generation' }, { status: 400 });
     }
 
-    const plan = request1ConfigAndPlan({
-      sourceText,
-      userConfig: {
-        ...(project.ui_config || {}),
-        ...(payload.uiConfig || {}),
-        platform: project.selected_platform,
-      } as any,
-      autoMode: payload.autoMode,
-      lockedControls: [],
-    });
+    const lockedControls = (payload.lockedControls || []).filter(Boolean) as RelevantControlKey[];
+    const plan = payload.plan && typeof payload.plan === 'object'
+      ? payload.plan
+      : request1ConfigAndPlan({
+          sourceText,
+          userConfig: {
+            ...(project.ui_config || {}),
+            ...(payload.uiConfig || {}),
+            platform: project.selected_platform,
+          },
+          lockedControls,
+          autoMode: payload.autoMode,
+        });
+
     const built = request2BuildPresentation({
       sourceText,
       title: payload.title || project.title,
       language: payload.language || project.language || 'en',
       plan,
       overrides: payload.uiConfig || {},
-      lockedControls: [],
+      lockedControls,
     });
 
     const versionNumber = await getNextProjectVersionNumber({ supabase, projectId });
@@ -92,7 +96,7 @@ export async function POST(
       analysis: plan.analysis,
       quality: built.quality,
       previewManifest: built.previewManifest,
-      generationSummary: `Generated ${built.previewManifest.slideCount} slides from ${sources.length} source(s).`,
+      generationSummary: `Generated ${built.previewManifest.slideCount} slides from ${sources.length} source(s) with 2-step pipeline.`,
     });
 
     return NextResponse.json({
@@ -100,8 +104,6 @@ export async function POST(
       projectId,
       versionId: version.id,
       versionNumber: version.version_number,
-      analysis: plan.analysis,
-      effectiveConfig: plan.effectiveConfig,
       plan,
       blueprint: built.blueprint,
       previewManifest: built.previewManifest,
@@ -114,6 +116,6 @@ export async function POST(
     if (error?.issues) {
       return NextResponse.json({ error: 'Invalid payload', details: error.issues }, { status: 400 });
     }
-    return NextResponse.json({ error: error?.message || 'Failed to generate presentation' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to build presentation' }, { status: 500 });
   }
 }

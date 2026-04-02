@@ -11,7 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { PresentationUiConfig, PreviewManifest, SourceAnalysis } from '@/lib/presentation/types';
+import {
+  PresentationPlanResult,
+  PresentationUiConfig,
+  PreviewManifest,
+  RelevantControlKey,
+  SourceAnalysis,
+} from '@/lib/presentation/types';
 import { AdaptiveSettingsSidebar } from '@/components/presentation/adaptive-settings-sidebar';
 import { SourceAnalysisCard } from '@/components/presentation/source-analysis-card';
 import { PresentationPreview } from '@/components/presentation/presentation-preview';
@@ -37,12 +43,6 @@ type PresentationPrototype = {
   effectiveConfig: PresentationUiConfig;
   slides: PresentationSlide[];
   previewManifest: PreviewManifest;
-  estimatedCostHint: {
-    strategy: string;
-    estimatedPromptTokens: number;
-    estimatedCompletionTokens: number;
-    note: string;
-  };
   timeline: Array<{ step: string; status: 'done' | 'pending' }>;
   quality?: {
     averageScore: number;
@@ -51,16 +51,22 @@ type PresentationPrototype = {
   };
 };
 
-function mapProjectGenerateToPrototype(payload: any): PresentationPrototype {
+function mapBuildToPrototype(payload: any): PresentationPrototype {
   const blueprint = payload?.blueprint || {};
   const slides = Array.isArray(blueprint?.slides) ? blueprint.slides : [];
-  const previewManifest = payload?.previewManifest || { slides: [], slideCount: 0, title: blueprint?.presentation?.title || 'Presentation', aspectRatio: '16:9' };
+  const previewManifest = payload?.previewManifest || {
+    slides: [],
+    slideCount: 0,
+    title: blueprint?.presentation?.title || 'Presentation',
+    aspectRatio: '16:9',
+  };
+  const plan: PresentationPlanResult | undefined = payload?.plan;
   return {
     platform: (blueprint?.presentation?.platform || 'powerpoint') as PresentationPlatform,
     title: String(blueprint?.presentation?.title || 'Presentation'),
     slideCount: Number(previewManifest?.slideCount || slides.length || 0),
-    analysis: payload?.analysis || {},
-    effectiveConfig: payload?.effectiveConfig || {},
+    analysis: (plan?.analysis || payload?.analysis || {}) as SourceAnalysis,
+    effectiveConfig: (plan?.effectiveConfig || payload?.effectiveConfig || {}) as PresentationUiConfig,
     slides: slides.map((slide: any, idx: number) => ({
       id: String(slide?.id || `slide_${idx + 1}`),
       index: Number(slide?.index || idx + 1),
@@ -70,19 +76,10 @@ function mapProjectGenerateToPrototype(payload: any): PresentationPrototype {
     })),
     previewManifest,
     timeline: [
-      { step: 'sources analyzed', status: 'done' },
-      { step: 'adaptive config generated', status: 'done' },
-      { step: 'presentation planned', status: 'done' },
-      { step: 'slides written', status: 'done' },
-      { step: 'preview rendered', status: 'done' },
+      { step: 'request 1: config + plan', status: 'done' },
+      { step: 'request 2: build + assets', status: 'done' },
       { step: payload?.quality?.passed ? 'quality checks passed' : 'quality checks need review', status: 'done' },
     ],
-    estimatedCostHint: {
-      strategy: 'source-first adaptive pipeline',
-      estimatedPromptTokens: Math.ceil(String(payload?.sourceText || '').length / 4),
-      estimatedCompletionTokens: Math.max(1, slides.length) * 120,
-      note: 'No AI-generated images. Source visuals first, internet visuals optional.',
-    },
     quality: payload?.quality || undefined,
   };
 }
@@ -101,6 +98,8 @@ function PresentationPageContent() {
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
   const [isSlideshow, setIsSlideshow] = useState(false);
   const [analysis, setAnalysis] = useState<SourceAnalysis | null>(null);
+  const [plan, setPlan] = useState<PresentationPlanResult | null>(null);
+  const [lockedControls, setLockedControls] = useState<RelevantControlKey[]>([]);
   const [uiConfig, setUiConfig] = useState<Partial<PresentationUiConfig>>({
     includeSpeakerNotes: false,
     includeAgenda: true,
@@ -123,8 +122,8 @@ function PresentationPageContent() {
   const [prototype, setPrototype] = useState<PresentationPrototype | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [lastSyncedSourceText, setLastSyncedSourceText] = useState<string>('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isPlanning, setIsPlanning] = useState(false);
+  const [isBuilding, setIsBuilding] = useState(false);
   const [isExportingCloud, setIsExportingCloud] = useState(false);
   const [activeShareToken, setActiveShareToken] = useState<string | null>(null);
   const [activeShareUrl, setActiveShareUrl] = useState<string | null>(null);
@@ -135,10 +134,14 @@ function PresentationPageContent() {
   } | null>(null);
   const { toast } = useToast();
 
-  const hasAnalysis = Boolean(analysis);
+  const hasPlan = Boolean(plan);
 
   const applyConfig = useCallback((patch: Partial<PresentationUiConfig>) => {
     setUiConfig((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const toggleLock = useCallback((key: RelevantControlKey) => {
+    setLockedControls((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   }, []);
 
   const ensureProjectAndSources = useCallback(async () => {
@@ -193,45 +196,68 @@ function PresentationPageContent() {
     return currentProjectId;
   }, [customTitle, language, lastSyncedSourceText, platform, projectId, sourceText, uiConfig]);
 
-  const analyzeSources = useCallback(async () => {
+  const requestPlan = useCallback(async () => {
     if (!sourceText.trim()) return;
-    setIsAnalyzing(true);
+    setIsPlanning(true);
     try {
-      await ensureProjectAndSources();
-      const response = await fetch('/api/tools/presentation/analyze', {
+      const pid = await ensureProjectAndSources();
+      const response = await fetch(`/api/presentation/${pid}/plan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sourceText,
-          currentConfig: { ...uiConfig, platform },
+          prompt: sourceText,
           autoMode,
+          uiConfig: { ...uiConfig, platform },
+          lockedControls,
         }),
       });
+      const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err?.error || `Failed to analyze sources (${response.status})`);
+        throw new Error(String(payload?.error || `Failed to create plan (${response.status})`));
       }
-      const payload = await response.json();
-      setAnalysis(payload.analysis || null);
-      if (payload?.effectiveConfig) setUiConfig(payload.effectiveConfig);
-      toast({ title: 'Sources analyzed', description: 'Adaptive settings are now available.' });
+      const nextPlan = payload?.plan as PresentationPlanResult;
+      setPlan(nextPlan);
+      setAnalysis(nextPlan?.analysis || null);
+      if (nextPlan?.effectiveConfig) setUiConfig(nextPlan.effectiveConfig);
+      toast({ title: 'Plan ready', description: 'Important settings were selected and ranked.' });
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Could not analyze sources',
+        title: 'Could not plan presentation',
         description: error?.message || 'Please try again.',
       });
     } finally {
-      setIsAnalyzing(false);
+      setIsPlanning(false);
     }
-  }, [autoMode, ensureProjectAndSources, platform, sourceText, toast, uiConfig]);
+  }, [autoMode, ensureProjectAndSources, lockedControls, platform, sourceText, toast, uiConfig]);
 
-  const generatePresentation = useCallback(async () => {
+  const buildPresentation = useCallback(async () => {
     if (!sourceText.trim()) return;
-    setIsGenerating(true);
+    setIsBuilding(true);
     try {
       const pid = await ensureProjectAndSources();
-      const response = await fetch(`/api/presentation/${pid}/generate`, {
+      let effectivePlan = plan;
+      if (!effectivePlan) {
+        const planResponse = await fetch(`/api/presentation/${pid}/plan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: sourceText,
+            autoMode,
+            uiConfig: { ...uiConfig, platform },
+            lockedControls,
+          }),
+        });
+        const planPayload = await planResponse.json().catch(() => ({}));
+        if (!planResponse.ok) {
+          throw new Error(String(planPayload?.error || `Failed to create plan (${planResponse.status})`));
+        }
+        effectivePlan = planPayload?.plan as PresentationPlanResult;
+        setPlan(effectivePlan || null);
+        setAnalysis(effectivePlan?.analysis || null);
+      }
+
+      const response = await fetch(`/api/presentation/${pid}/build`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -240,16 +266,18 @@ function PresentationPageContent() {
           language,
           autoMode,
           uiConfig: { ...uiConfig, platform },
+          lockedControls,
+          plan: effectivePlan,
         }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(String(payload?.error || `Failed to generate presentation (${response.status})`));
+        throw new Error(String(payload?.error || `Failed to build presentation (${response.status})`));
       }
-      setPrototype(mapProjectGenerateToPrototype({ ...payload, sourceText }));
-      setAnalysis(payload?.analysis || analysis);
+      setPrototype(mapBuildToPrototype(payload));
       setSelectedSlideIndex(0);
       setShowComposer(false);
+      toast({ title: 'Presentation built', description: 'Request 2 completed successfully.' });
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -257,13 +285,13 @@ function PresentationPageContent() {
         description: error?.message || 'Please try again.',
       });
     } finally {
-      setIsGenerating(false);
+      setIsBuilding(false);
     }
-  }, [analysis, autoMode, customTitle, ensureProjectAndSources, language, platform, sourceText, toast, uiConfig]);
+  }, [autoMode, customTitle, ensureProjectAndSources, language, lockedControls, plan, platform, sourceText, toast, uiConfig]);
 
   useEffect(() => {
-    if (sourceTextFromParams?.trim()) void analyzeSources();
-  }, [analyzeSources, sourceTextFromParams]);
+    if (sourceTextFromParams?.trim()) void requestPlan();
+  }, [requestPlan, sourceTextFromParams]);
 
   const downloadPresentation = useCallback(async () => {
     if (!prototype || !projectId) return;
@@ -306,12 +334,10 @@ function PresentationPageContent() {
           : platform === 'powerpoint'
             ? 'microsoft'
             : 'download';
-
       if (destinationKind === 'download') {
         await downloadPresentation();
         return;
       }
-
       const response = await fetch(`/api/presentation/${projectId}/export`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -323,19 +349,13 @@ function PresentationPageContent() {
                   kind: 'microsoft',
                   targetApp: 'powerpoint',
                   microsoftFolder: onedriveExportFolder
-                    ? {
-                        folderId: onedriveExportFolder.folderId,
-                        driveId: onedriveExportFolder.driveId,
-                      }
+                    ? { folderId: onedriveExportFolder.folderId, driveId: onedriveExportFolder.driveId }
                     : undefined,
                 },
         }),
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const message = String(payload?.error || `Export failed (${response.status})`);
-        throw new Error(message);
-      }
+      if (!response.ok) throw new Error(String(payload?.error || `Export failed (${response.status})`));
       if (payload?.webUrl) window.open(payload.webUrl, '_blank', 'noopener,noreferrer');
       toast({
         title: destinationKind === 'google' ? 'Exported to Google' : 'Exported to Microsoft',
@@ -422,7 +442,10 @@ function PresentationPageContent() {
       onPlatformChange={setPlatform}
       uiConfig={uiConfig}
       onPatch={applyConfig}
-      disabled={isAnalyzing || isGenerating}
+      controlTiers={plan?.relevanceRankedControls || null}
+      lockedControls={lockedControls}
+      onToggleLock={toggleLock}
+      disabled={isPlanning || isBuilding}
     />
   );
 
@@ -438,9 +461,9 @@ function PresentationPageContent() {
   }, [platform]);
 
   return (
-    <WorkbenchShell title="Presentation" description="Source-first adaptive presentation builder with cloud export." sidebar={sidebar}>
+    <WorkbenchShell title="Presentation" description="2-step AI pipeline: plan first, then build." sidebar={sidebar}>
       <div className="relative flex h-full flex-col gap-4">
-        {(isAnalyzing || isGenerating) && (
+        {(isPlanning || isBuilding) && (
           <div className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-background/70 backdrop-blur-[1px]">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
@@ -456,10 +479,7 @@ function PresentationPageContent() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {platform === 'powerpoint' && (
-                    <OneDriveExportFolderPicker
-                      value={onedriveExportFolder}
-                      onChange={setOnedriveExportFolder}
-                    />
+                    <OneDriveExportFolderPicker value={onedriveExportFolder} onChange={setOnedriveExportFolder} />
                   )}
                   <ActionBar
                     onDownload={() => void downloadPresentation()}
@@ -480,7 +500,7 @@ function PresentationPageContent() {
         {!prototype && (
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">AI images: disabled</Badge>
-            <Badge variant="outline">Canonical output: .pptx</Badge>
+            <Badge variant="outline">2 AI requests: plan + build</Badge>
             <Badge variant="outline">Cloud export: Microsoft + Google</Badge>
             {projectId && <Badge variant="secondary">Project persisted</Badge>}
           </div>
@@ -503,14 +523,14 @@ function PresentationPageContent() {
             toolId="presentation"
             value={initialSourceSeed}
             onChange={setSourceText}
-            onSubmit={() => (hasAnalysis ? void generatePresentation() : void analyzeSources())}
+            onSubmit={() => (hasPlan ? void buildPresentation() : void requestPlan())}
             placeholder="Add your source material: notes, docs, screenshots, links, or cloud files..."
             topContent={<MicrosoftAppStrip returnTo="/tools/presentation" />}
             speechLanguage={language}
             enableMic={false}
             enableCaptions={false}
             sourceMergeMode="append_labeled"
-            submitLabel={hasAnalysis ? 'Generate presentation' : 'Analyze sources'}
+            submitLabel={hasPlan ? 'Build presentation' : 'Analyze + plan'}
           />
         )}
 
@@ -518,12 +538,12 @@ function PresentationPageContent() {
           <>
             <SourceAnalysisCard analysis={analysis} />
             <div className="flex flex-wrap gap-2">
-              <Button onClick={() => void generatePresentation()}>
+              <Button onClick={() => void buildPresentation()}>
                 <Sparkles className="mr-2 h-4 w-4" />
-                Generate presentation
+                Build presentation (request 2)
               </Button>
-              <Button variant="outline" onClick={() => void analyzeSources()}>
-                Re-analyze
+              <Button variant="outline" onClick={() => void requestPlan()}>
+                Re-run plan (request 1)
               </Button>
             </div>
           </>
@@ -541,7 +561,11 @@ function PresentationPageContent() {
             onShare={() => void sharePreview()}
             exportingCloud={isExportingCloud}
             cloudLabel={cloudLabel}
-            costHint={prototype.estimatedCostHint}
+            costHint={{
+              strategy: 'two-step pipeline',
+              estimatedPromptTokens: Math.ceil(sourceText.length / 4),
+              estimatedCompletionTokens: Math.max(1, prototype.slideCount) * 120,
+            }}
             quality={prototype.quality}
           />
         )}
