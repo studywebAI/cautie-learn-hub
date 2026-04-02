@@ -12,13 +12,22 @@ const RequestSchema = z.object({
 
 const cleanLine = (line: string) => line.replace(/\s+/g, ' ').trim();
 
+const stripLayoutTags = (input: string): string => {
+  return input
+    .replace(/\{[^}]+\}/g, ' ')
+    .replace(/\[(?:file|type|text|header|bullet|font|image|link|link-count|slide)\s*[^\]]*\]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 const splitIntoSections = (text: string): string[] => {
-  const blocks = text
+  const normalizedText = stripLayoutTags(text);
+  const blocks = normalizedText
     .split(/\n{2,}/g)
     .map((part) => cleanLine(part))
     .filter(Boolean);
   if (blocks.length > 0) return blocks;
-  return text
+  return normalizedText
     .split(/[.!?]\s+/g)
     .map((part) => cleanLine(part))
     .filter(Boolean);
@@ -72,4 +81,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to build presentation prototype' }, { status: 500 });
   }
 }
-
