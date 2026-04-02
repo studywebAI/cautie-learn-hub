@@ -105,6 +105,27 @@ function relevantControlsFor(archetype: SourceArchetype): RelevantControlKey[] {
   }
 }
 
+const ALL_CONTROLS: RelevantControlKey[] = [
+  'audience',
+  'goal',
+  'tone',
+  'slideCount',
+  'density',
+  'imageRichness',
+  'speakerNotes',
+  'agenda',
+  'summary',
+  'qa',
+  'quiz',
+  'citations',
+  'stepByStep',
+  'chartPreference',
+  'captionStyle',
+  'layoutStyle',
+  'references',
+  'appendix',
+];
+
 export function analyzeSources(input: {
   sourceText: string;
   currentConfig?: Partial<PresentationUiConfig>;
@@ -126,6 +147,7 @@ export function analyzeSources(input: {
   const slideMin = Math.max(6, Math.round(wordCount / 140));
   const slideMax = Math.min(24, Math.max(slideMin + 2, Math.round(wordCount / 90)));
   const recommendedSlideCount = Math.round((slideMin + slideMax) / 2);
+  const relevantControls = relevantControlsFor(archetype);
 
   const recommendedSettings: Partial<PresentationUiConfig> = {
     slideCount: recommendedSlideCount,
@@ -166,7 +188,8 @@ export function analyzeSources(input: {
     recommendedSlideCountMin: slideMin,
     recommendedSlideCountMax: slideMax,
     recommendedSettings,
-    relevantControls: relevantControlsFor(archetype),
+    relevantControls,
+    hiddenControls: ALL_CONTROLS.filter((key) => !relevantControls.includes(key)),
     warnings,
     reasons: [
       `Detected archetype: ${archetype.replace(/_/g, ' ')}`,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getShareSnapshot } from '@/lib/presentation/share-store';
+import { getShareSnapshot, revokeShareSnapshot } from '@/lib/presentation/share-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,4 +20,16 @@ export async function GET(
     createdAt: snapshot.createdAt,
     expiresAt: snapshot.expiresAt || null,
   });
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ token: string }> }
+) {
+  const { token } = await params;
+  const revoked = revokeShareSnapshot(token);
+  if (!revoked) {
+    return NextResponse.json({ error: 'Share link not found' }, { status: 404 });
+  }
+  return NextResponse.json({ ok: true, revoked: true });
 }

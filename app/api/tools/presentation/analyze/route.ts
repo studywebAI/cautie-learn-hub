@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
       suggestedSetup: {
         recommendedSettings: analysis.recommendedSettings,
         relevantControls: analysis.relevantControls,
+        hiddenControls: analysis.hiddenControls,
         reasons: analysis.reasons,
       },
       effectiveConfig,

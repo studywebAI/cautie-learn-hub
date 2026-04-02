@@ -68,8 +68,16 @@ export type SourceAnalysis = {
   recommendedSlideCountMax: number;
   recommendedSettings: Partial<PresentationUiConfig>;
   relevantControls: RelevantControlKey[];
+  hiddenControls: RelevantControlKey[];
   warnings: string[];
   reasons: string[];
+};
+
+export type SlideQualityCheck = {
+  slideId: string;
+  passed: boolean;
+  score: number;
+  issues: string[];
 };
 
 export type PresentationSlide = {

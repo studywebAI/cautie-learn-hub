@@ -7,6 +7,7 @@ import {
   getDefaultConfig,
   resolveEffectiveConfig,
 } from '@/lib/presentation/pipeline';
+import { scoreBlueprint } from '@/lib/presentation/quality';
 import {
   ADAPTIVE_CONFIG_PROMPT,
   PRESENTATION_ARCHITECT_PROMPT,
@@ -56,6 +57,7 @@ export async function POST(req: NextRequest) {
       config: effectiveConfig,
     });
     const previewManifest = buildPreviewManifest(blueprint);
+    const quality = scoreBlueprint(blueprint);
 
     const estimatedPromptTokens = Math.ceil(parsed.data.sourceText.length / 4);
     const estimatedCompletionTokens = blueprint.slides.length * 120;
@@ -76,6 +78,7 @@ export async function POST(req: NextRequest) {
           { step: 'presentation planned', status: 'done' },
           { step: 'slides written', status: 'done' },
           { step: 'preview rendered', status: 'done' },
+          { step: quality.passed ? 'quality checks passed' : 'quality checks need review', status: 'done' },
         ],
         policy: {
           aiGeneratedImagesAllowed: false,
@@ -95,6 +98,7 @@ export async function POST(req: NextRequest) {
           estimatedCompletionTokens,
           note: 'No AI-generated images. Source visuals first, internet visuals optional.',
         },
+        quality,
       },
     });
   } catch {

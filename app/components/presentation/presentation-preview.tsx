@@ -20,6 +20,11 @@ type PresentationPreviewProps = {
     estimatedPromptTokens: number;
     estimatedCompletionTokens: number;
   };
+  quality?: {
+    averageScore: number;
+    totalIssues: number;
+    passed: boolean;
+  };
 };
 
 export function PresentationPreview({
@@ -33,6 +38,7 @@ export function PresentationPreview({
   onShare,
   exportingMicrosoft = false,
   costHint,
+  quality,
 }: PresentationPreviewProps) {
   const active = manifest.slides[Math.max(0, Math.min(selectedSlideIndex, manifest.slides.length - 1))];
 
@@ -59,6 +65,11 @@ export function PresentationPreview({
               {entry.step}
             </Badge>
           ))}
+          {quality && (
+            <Badge variant={quality.passed ? 'secondary' : 'destructive'}>
+              Quality {quality.averageScore}/100 ({quality.totalIssues} issues)
+            </Badge>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">

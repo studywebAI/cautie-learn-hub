@@ -43,6 +43,11 @@ type PresentationPrototype = {
     note: string;
   };
   timeline: Array<{ step: string; status: 'done' | 'pending' }>;
+  quality?: {
+    averageScore: number;
+    totalIssues: number;
+    passed: boolean;
+  };
 };
 
 function PresentationPageContent() {
@@ -82,6 +87,8 @@ function PresentationPageContent() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExportingMicrosoft, setIsExportingMicrosoft] = useState(false);
+  const [activeShareToken, setActiveShareToken] = useState<string | null>(null);
+  const [activeShareUrl, setActiveShareUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   const hasAnalysis = Boolean(analysis);
@@ -259,6 +266,8 @@ function PresentationPageContent() {
       }
       if (payload?.shareUrl) {
         await navigator.clipboard.writeText(payload.shareUrl);
+        setActiveShareToken(typeof payload?.token === 'string' ? payload.token : null);
+        setActiveShareUrl(payload.shareUrl);
       }
       toast({
         title: 'Preview link copied',
@@ -272,6 +281,26 @@ function PresentationPageContent() {
       });
     }
   }, [prototype, toast]);
+
+  const revokeSharePreview = useCallback(async () => {
+    if (!activeShareToken) return;
+    try {
+      const response = await fetch(`/api/tools/presentation/share/${activeShareToken}`, { method: 'DELETE' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(String(payload?.error || 'Failed to revoke share link'));
+      }
+      setActiveShareToken(null);
+      setActiveShareUrl(null);
+      toast({ title: 'Share link revoked', description: 'Public preview access has been disabled.' });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not revoke share link',
+        description: error?.message || 'Please try again.',
+      });
+    }
+  }, [activeShareToken, toast]);
 
   useEffect(() => {
     if (!isSlideshow || !prototype) return;
@@ -353,6 +382,18 @@ function PresentationPageContent() {
           </div>
         )}
 
+        {prototype && activeShareUrl && (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-muted/35 p-2">
+            <Badge variant="secondary">Public preview active</Badge>
+            <a href={activeShareUrl} target="_blank" rel="noreferrer" className="text-xs underline underline-offset-2">
+              {activeShareUrl}
+            </a>
+            <Button size="sm" variant="outline" onClick={() => void revokeSharePreview()}>
+              Revoke link
+            </Button>
+          </div>
+        )}
+
         {showComposer && (
           <SourceInput
             toolId="presentation"
@@ -396,6 +437,7 @@ function PresentationPageContent() {
             onShare={() => void sharePreview()}
             exportingMicrosoft={isExportingMicrosoft}
             costHint={prototype.estimatedCostHint}
+            quality={prototype.quality}
           />
         )}
       </div>
