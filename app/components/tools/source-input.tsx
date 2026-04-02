@@ -1135,48 +1135,50 @@ export function SourceInput({
         </div>
       )}
       {integrationFileCards.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="max-h-[292px] overflow-y-auto pr-1">
+          <div className="flex flex-wrap gap-1.5">
           {integrationFileCards.map((file) => (
             <div
               key={file.id}
-              className="w-[160px] sm:w-[180px] md:w-[200px] rounded-xl border border-sidebar-border/80 bg-sidebar-accent/40 p-2.5"
+              className="h-[136px] w-[128px] sm:h-[142px] sm:w-[136px] md:h-[150px] md:w-[148px] rounded-xl border border-sidebar-border/80 bg-sidebar-accent/40 p-2"
             >
-              <div className="mb-2 h-[84px] rounded-lg bg-sidebar-accent/70 p-2">
-                <div className="mb-1.5 flex items-center gap-1.5">
+              <div className="mb-1.5 h-[82px] sm:h-[86px] md:h-[90px] rounded-lg bg-sidebar-accent/70 p-1.5">
+                <div className="mb-1 flex items-center gap-1">
                   {file.loading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                   ) : (
-                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                    <FileText className="h-3 w-3 text-muted-foreground" />
                   )}
-                  <span className="text-[10px] text-muted-foreground">Preview</span>
+                  <span className="text-[9px] text-muted-foreground">Preview</span>
                 </div>
-                <p className="max-h-[48px] overflow-hidden text-[10px] leading-snug text-muted-foreground">
+                <p className="max-h-[58px] overflow-hidden text-[9px] leading-snug text-muted-foreground">
                   {file.loading ? 'Extracting text + first-page preview...' : (file.preview || 'No text preview available yet.')}
                 </p>
               </div>
-              <div className="flex items-start gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[11px] md:text-xs">{file.name}</p>
-                  {!file.loading && file.error && <p className="mt-0.5 text-[10px] text-destructive">Extraction failed</p>}
+              <div className="flex items-start gap-1">
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <p className="max-h-[30px] overflow-hidden text-[10px] leading-snug md:text-[11px]">{file.name}</p>
+                  {!file.loading && file.error && <p className="text-[9px] text-destructive">Extraction failed</p>}
                 </div>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0 rounded-full hover:bg-sidebar-accent -mt-1"
+                  className="h-6 w-6 shrink-0 rounded-full hover:bg-sidebar-accent -mt-0.5"
                   onClick={() => void handleRemoveFileCard(file.id, file.isRemote)}
                   disabled={removingSourceIds.includes(file.id)}
                   aria-label="Remove file"
                 >
                   {removingSourceIds.includes(file.id) ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-3 w-3" />
                   )}
                 </Button>
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
 
