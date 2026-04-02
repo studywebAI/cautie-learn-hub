@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import { Lock, LockOpen } from 'lucide-react';
+﻿import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PillSelector } from '@/components/tools/pill-selector';
 import { Slider } from '@/components/ui/slider';
@@ -22,8 +21,6 @@ type AdaptiveSettingsSidebarProps = {
     secondary: RelevantControlKey[];
     advanced: RelevantControlKey[];
   } | null;
-  lockedControls?: RelevantControlKey[];
-  onToggleLock?: (key: RelevantControlKey) => void;
   disabled?: boolean;
 };
 
@@ -88,25 +85,6 @@ const layoutOptions = [
   { value: 'text_first', label: 'Text first' },
 ];
 
-function LockButton(props: {
-  control: RelevantControlKey;
-  locked: boolean;
-  onToggle?: (key: RelevantControlKey) => void;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      className="h-6 w-6"
-      onClick={() => props.onToggle?.(props.control)}
-      title={props.locked ? 'Unlock setting for AI tuning' : 'Lock setting so AI cannot override'}
-    >
-      {props.locked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5 text-muted-foreground" />}
-    </Button>
-  );
-}
-
 export function AdaptiveSettingsSidebar({
   analysis,
   autoMode,
@@ -118,12 +96,9 @@ export function AdaptiveSettingsSidebar({
   uiConfig,
   onPatch,
   controlTiers,
-  lockedControls = [],
-  onToggleLock,
   disabled = false,
 }: AdaptiveSettingsSidebarProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const locked = useMemo(() => new Set(lockedControls), [lockedControls]);
   const hasAnalysis = Boolean(analysis);
   const tiers = controlTiers || {
     primary: analysis?.relevantControls || [],
@@ -169,7 +144,7 @@ export function AdaptiveSettingsSidebar({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">AI analysis</CardTitle>
             <CardDescription>
-              {analysis.dominantArchetype.replace(/_/g, ' ')} • {analysis.contentMode.replace(/_/g, ' ')}
+              {analysis.dominantArchetype.replace(/_/g, ' ')} - {analysis.contentMode.replace(/_/g, ' ')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-1.5 text-xs">
@@ -184,32 +159,22 @@ export function AdaptiveSettingsSidebar({
         <p className="text-xs font-medium">Important settings</p>
 
         {inTier('audience', 'primary') && (
-          <div className="space-y-1">
-            <div className="flex items-center justify-end">
-              <LockButton control="audience" locked={locked.has('audience')} onToggle={onToggleLock} />
-            </div>
-            <PillSelector
-              label="Audience"
-              options={audienceOptions}
-              value={String(uiConfig.audience || 'general')}
-              onChange={(v) => onPatch({ audience: v as PresentationUiConfig['audience'] })}
-              disabled={disabled}
-            />
-          </div>
+          <PillSelector
+            label="Audience"
+            options={audienceOptions}
+            value={String(uiConfig.audience || 'general')}
+            onChange={(v) => onPatch({ audience: v as PresentationUiConfig['audience'] })}
+            disabled={disabled}
+          />
         )}
         {inTier('goal', 'primary') && (
-          <div className="space-y-1">
-            <div className="flex items-center justify-end">
-              <LockButton control="goal" locked={locked.has('goal')} onToggle={onToggleLock} />
-            </div>
-            <PillSelector
-              label="Goal"
-              options={goalOptions}
-              value={String(uiConfig.goal || 'teach')}
-              onChange={(v) => onPatch({ goal: v as PresentationUiConfig['goal'] })}
-              disabled={disabled}
-            />
-          </div>
+          <PillSelector
+            label="Goal"
+            options={goalOptions}
+            value={String(uiConfig.goal || 'teach')}
+            onChange={(v) => onPatch({ goal: v as PresentationUiConfig['goal'] })}
+            disabled={disabled}
+          />
         )}
         {inTier('tone', 'primary') && (
           <PillSelector
@@ -345,3 +310,4 @@ export function AdaptiveSettingsSidebar({
     </>
   );
 }
+

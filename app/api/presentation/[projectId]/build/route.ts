@@ -6,6 +6,7 @@ import {
   getNextProjectVersionNumber,
   getPresentationProject,
   listPresentationSources,
+  updatePresentationProject,
 } from '@/lib/presentation/store';
 import { request1ConfigAndPlan, request2BuildPresentation } from '@/lib/presentation/two-step';
 import { RelevantControlKey } from '@/lib/presentation/types';
@@ -20,6 +21,16 @@ const RequestSchema = z.object({
   uiConfig: z.record(z.any()).optional(),
   lockedControls: z.array(z.string()).optional(),
   plan: z.any().optional(),
+  slideSubjects: z.array(z.string()).optional(),
+  setupPreset: z
+    .object({
+      title: z.string().optional(),
+      themePreset: z.string().optional(),
+      fontPreset: z.string().optional(),
+      layoutPreset: z.string().optional(),
+      bulletPreset: z.string().optional(),
+    })
+    .optional(),
 });
 
 function buildSourceCorpus(input: {
@@ -37,6 +48,45 @@ function buildSourceCorpus(input: {
   return chunks.join('\n\n').trim();
 }
 
+function buildGenerationDirectives(input: {
+  sourceText: string;
+  slideSubjects?: string[];
+  setupPreset?: {
+    title?: string;
+    themePreset?: string;
+    fontPreset?: string;
+    layoutPreset?: string;
+    bulletPreset?: string;
+  };
+}) {
+  const subjects = (input.slideSubjects || [])
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 60);
+  const styleLines = [
+    input.setupPreset?.title ? `Preset title: ${input.setupPreset.title}` : null,
+    input.setupPreset?.themePreset ? `Theme preset: ${input.setupPreset.themePreset}` : null,
+    input.setupPreset?.fontPreset ? `Font preset: ${input.setupPreset.fontPreset}` : null,
+    input.setupPreset?.layoutPreset ? `Layout preset: ${input.setupPreset.layoutPreset}` : null,
+    input.setupPreset?.bulletPreset ? `Bullet preset: ${input.setupPreset.bulletPreset}` : null,
+  ].filter(Boolean);
+
+  if (subjects.length === 0 && styleLines.length === 0) return input.sourceText;
+
+  const directives: string[] = [];
+  if (subjects.length > 0) {
+    directives.push(
+      'Slide subjects (must guide structure and order):',
+      ...subjects.map((subject, idx) => `${idx + 1}. ${subject}`)
+    );
+  }
+  if (styleLines.length > 0) {
+    directives.push('Style directives:', ...styleLines.map((line) => String(line)));
+  }
+
+  return `${input.sourceText}\n\n[GENERATION_DIRECTIVES]\n${directives.join('\n')}`;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
@@ -48,20 +98,35 @@ export async function POST(
     const project = await getPresentationProject({ supabase, userId: user.id, projectId });
     if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
 
-    await supabase
-      .from('presentation_projects')
-      .update({ status: 'processing', updated_at: new Date().toISOString() })
-      .eq('id', projectId)
-      .eq('user_id', user.id);
+    await updatePresentationProject({
+      supabase,
+      userId: user.id,
+      projectId,
+      patch: {
+        status: 'processing',
+        workflow_state: {
+          ...(project.workflow_state || {}),
+          stage: 'building',
+          slideSubjects: payload.slideSubjects || project.workflow_state?.slideSubjects || [],
+          setupPreset: payload.setupPreset || project.workflow_state?.setupPreset || {},
+          updatedAt: new Date().toISOString(),
+        },
+      },
+    });
 
     const sources = await listPresentationSources({ supabase, userId: user.id, projectId });
-    const sourceText = buildSourceCorpus({
+    const sourceTextBase = buildSourceCorpus({
       prompt: payload.prompt || project.prompt,
       sources,
     });
-    if (!sourceText.trim()) {
+    if (!sourceTextBase.trim()) {
       return NextResponse.json({ error: 'No source material found for generation' }, { status: 400 });
     }
+    const sourceText = buildGenerationDirectives({
+      sourceText: sourceTextBase,
+      slideSubjects: payload.slideSubjects,
+      setupPreset: payload.setupPreset,
+    });
 
     const lockedControls = (payload.lockedControls || []).filter(Boolean) as RelevantControlKey[];
     const plan = payload.plan && typeof payload.plan === 'object'
@@ -97,6 +162,21 @@ export async function POST(
       quality: built.quality,
       previewManifest: built.previewManifest,
       generationSummary: `Generated ${built.previewManifest.slideCount} slides from ${sources.length} source(s) with 2-step pipeline.`,
+    });
+
+    await updatePresentationProject({
+      supabase,
+      userId: user.id,
+      projectId,
+      patch: {
+        workflow_state: {
+          ...(project.workflow_state || {}),
+          stage: 'result',
+          slideSubjects: payload.slideSubjects || project.workflow_state?.slideSubjects || [],
+          setupPreset: payload.setupPreset || project.workflow_state?.setupPreset || {},
+          updatedAt: new Date().toISOString(),
+        },
+      },
     });
 
     return NextResponse.json({

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getAuthedToolboxContext } from '@/lib/toolbox/server';
-import { getPresentationProject, listPresentationSources } from '@/lib/presentation/store';
+import { getPresentationProject, listPresentationSources, updatePresentationProject } from '@/lib/presentation/store';
 import { request1ConfigAndPlan } from '@/lib/presentation/two-step';
 import { RelevantControlKey } from '@/lib/presentation/types';
 
@@ -60,15 +60,20 @@ export async function POST(
       autoMode: payload.autoMode,
     });
 
-    await supabase
-      .from('presentation_projects')
-      .update({
+    await updatePresentationProject({
+      supabase,
+      userId: user.id,
+      projectId,
+      patch: {
         ai_suggested_config: plan.analysis.recommendedSettings || {},
         effective_config: plan.effectiveConfig,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', projectId)
-      .eq('user_id', user.id);
+        workflow_state: {
+          ...(project.workflow_state || {}),
+          stage: 'subjects',
+          updatedAt: new Date().toISOString(),
+        },
+      },
+    });
 
     return NextResponse.json({
       ok: true,

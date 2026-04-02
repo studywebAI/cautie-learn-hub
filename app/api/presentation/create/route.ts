@@ -13,6 +13,7 @@ const RequestSchema = z.object({
   language: z.string().optional(),
   uiConfig: z.record(z.any()).optional(),
   platform: z.enum(['powerpoint', 'google-slides', 'keynote']).optional(),
+  workflowState: z.record(z.any()).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
       selectedPlatform,
       language: payload.language || 'en',
       uiConfig: { ...defaultConfig, ...(payload.uiConfig || {}), platform: selectedPlatform },
+      workflowState: payload.workflowState || {},
     });
     return NextResponse.json({ ok: true, project });
   } catch (error: any) {

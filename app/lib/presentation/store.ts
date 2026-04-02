@@ -12,6 +12,7 @@ export type PresentationProjectRecord = {
   ui_config: Record<string, any>;
   ai_suggested_config: Record<string, any>;
   effective_config: Record<string, any>;
+  workflow_state: Record<string, any>;
   source_ids: string[];
   latest_version_id: string | null;
   created_at: string;
@@ -61,6 +62,7 @@ export async function createPresentationProject(input: {
   selectedPlatform: 'powerpoint' | 'google-slides' | 'keynote';
   language: string;
   uiConfig: Partial<PresentationUiConfig>;
+  workflowState?: Record<string, any>;
 }) {
   const { data, error } = await input.supabase
     .from('presentation_projects')
@@ -74,12 +76,41 @@ export async function createPresentationProject(input: {
       ui_config: input.uiConfig || {},
       effective_config: input.uiConfig || {},
       ai_suggested_config: {},
+      workflow_state: input.workflowState || {},
       status: 'draft',
     })
     .select('*')
     .single();
 
   if (error || !data) throw new Error(error?.message || 'Failed to create project');
+  return data as PresentationProjectRecord;
+}
+
+export async function updatePresentationProject(input: {
+  supabase: any;
+  userId: string;
+  projectId: string;
+  patch: {
+    title?: string;
+    prompt?: string;
+    selected_platform?: 'powerpoint' | 'google-slides' | 'keynote';
+    language?: string;
+    ui_config?: Record<string, any>;
+    ai_suggested_config?: Record<string, any>;
+    effective_config?: Record<string, any>;
+    workflow_state?: Record<string, any>;
+    status?: 'draft' | 'processing' | 'ready' | 'failed' | 'exporting';
+  };
+}) {
+  const updatePayload = { ...input.patch, updated_at: new Date().toISOString() } as Record<string, any>;
+  const { data, error } = await input.supabase
+    .from('presentation_projects')
+    .update(updatePayload)
+    .eq('id', input.projectId)
+    .eq('user_id', input.userId)
+    .select('*')
+    .single();
+  if (error || !data) throw new Error(error?.message || 'Failed to update presentation project');
   return data as PresentationProjectRecord;
 }
 

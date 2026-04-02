@@ -1,5 +1,4 @@
 import { Play } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PreviewManifest } from '@/lib/presentation/types';
@@ -7,7 +6,6 @@ import { ActionBar } from '@/components/presentation/action-bar';
 
 type PresentationPreviewProps = {
   manifest: PreviewManifest;
-  timeline: Array<{ step: string; status: 'done' | 'pending' }>;
   selectedSlideIndex: number;
   onSelectSlide: (index: number) => void;
   onStartSlideshow: () => void;
@@ -16,21 +14,10 @@ type PresentationPreviewProps = {
   onShare: () => void;
   exportingCloud?: boolean;
   cloudLabel: string;
-  costHint?: {
-    strategy: string;
-    estimatedPromptTokens: number;
-    estimatedCompletionTokens: number;
-  };
-  quality?: {
-    averageScore: number;
-    totalIssues: number;
-    passed: boolean;
-  };
 };
 
 export function PresentationPreview({
   manifest,
-  timeline,
   selectedSlideIndex,
   onSelectSlide,
   onStartSlideshow,
@@ -39,8 +26,6 @@ export function PresentationPreview({
   onShare,
   exportingCloud = false,
   cloudLabel,
-  costHint,
-  quality,
 }: PresentationPreviewProps) {
   const active = manifest.slides[Math.max(0, Math.min(selectedSlideIndex, manifest.slides.length - 1))];
 
@@ -52,28 +37,9 @@ export function PresentationPreview({
             <CardTitle className="text-base">Preview</CardTitle>
             <CardDescription>Read-only slide preview. Editing happens in external apps.</CardDescription>
           </div>
-          {costHint && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant="secondary">{costHint.strategy}</Badge>
-              <Badge variant="outline">~{costHint.estimatedPromptTokens + costHint.estimatedCompletionTokens} tokens</Badge>
-            </div>
-          )}
         </div>
       </CardHeader>
       <CardContent>
-        <div className="mb-3 flex flex-wrap gap-2">
-          {timeline.map((entry) => (
-            <Badge key={entry.step} variant={entry.status === 'done' ? 'secondary' : 'outline'}>
-              {entry.step}
-            </Badge>
-          ))}
-          {quality && (
-            <Badge variant={quality.passed ? 'secondary' : 'destructive'}>
-              Quality {quality.averageScore}/100 ({quality.totalIssues} issues)
-            </Badge>
-          )}
-        </div>
-
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
           <div className="max-h-[540px] overflow-auto rounded-xl bg-muted/35 p-2">
             {manifest.slides.map((slide, idx) => (
