@@ -45,13 +45,15 @@ const platformOptions = [
 function PresentationPageContent() {
   const searchParams = useSearchParams();
   const sourceTextFromParams = searchParams.get('sourceText');
+  const initialSourceSeed = sourceTextFromParams || '';
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
-  const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
+  const [sourceText, setSourceText] = useState(initialSourceSeed);
   const [customTitle, setCustomTitle] = useState('');
   const [platform, setPlatform] = useState<PresentationPlatform>('powerpoint');
   const [slideCount, setSlideCount] = useState(8);
   const [prototype, setPrototype] = useState<PresentationPrototype | null>(null);
+  const [showComposer, setShowComposer] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -73,6 +75,7 @@ function PresentationPageContent() {
       if (!response.ok) throw new Error(`Failed to generate prototype (${response.status})`);
       const payload = await response.json();
       setPrototype(payload?.prototype || null);
+      setShowComposer(false);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -171,18 +174,52 @@ function PresentationPageContent() {
           </div>
         )}
 
-        <SourceInput
-          toolId="presentation"
-          value={sourceText}
-          onChange={setSourceText}
-          onSubmit={() => void generatePrototype()}
-          placeholder="Paste or type your source material for slides..."
-          topContent={<MicrosoftAppStrip returnTo="/tools/presentation" />}
-          speechLanguage={language}
-          enableMic={false}
-          enableCaptions={false}
-          sourceMergeMode="append_labeled"
-        />
+        {prototype && (
+          <Card className="border border-border/70">
+            <CardContent className="py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{prototype.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {prototype.slideCount} slides ready for export
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => void downloadPresentation(false)}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download .pptx
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => void downloadPresentation(true)}>
+                    <Presentation className="mr-2 h-4 w-4" />
+                    Open in PowerPoint
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowComposer((prev) => !prev)}
+                  >
+                    {showComposer ? 'Hide source' : 'Edit source'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {showComposer && (
+          <SourceInput
+            toolId="presentation"
+            value={initialSourceSeed}
+            onChange={setSourceText}
+            onSubmit={() => void generatePrototype()}
+            placeholder="Paste or type your source material for slides..."
+            topContent={<MicrosoftAppStrip returnTo="/tools/presentation" />}
+            speechLanguage={language}
+            enableMic={false}
+            enableCaptions={false}
+            sourceMergeMode="append_labeled"
+          />
+        )}
 
         {prototype && (
           <div className="space-y-4">
