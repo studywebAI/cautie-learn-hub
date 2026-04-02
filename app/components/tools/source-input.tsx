@@ -461,7 +461,7 @@ export function SourceInput({
         .map((source) => ({
           id: source.id,
           name: source.label || extractContextFileName(source.text),
-          preview: source.text ? source.text.replace(/\s+/g, ' ').trim().slice(0, 180) : '',
+          preview: '',
           previewUrl: source.previewUrl,
           loading: Boolean(source.loading),
           error: source.error,
@@ -1171,7 +1171,7 @@ export function SourceInput({
                       <span className="text-[9px] text-muted-foreground">Preview</span>
                     </div>
                     <p className="max-h-[58px] overflow-hidden text-[9px] leading-snug text-muted-foreground">
-                      {file.loading ? 'Extracting first-page screenshot...' : (file.preview || 'No preview image available yet.')}
+                      {file.loading ? 'Extracting first-page screenshot...' : 'No preview image available yet.'}
                     </p>
                   </div>
                 )}

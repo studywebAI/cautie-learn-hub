@@ -22,6 +22,33 @@ function stripHtml(input: string): string {
   );
 }
 
+function extractHtmlLinks(input: string): string[] {
+  const matches = input.match(/href=["']([^"']+)["']/gi) || [];
+  const links = matches
+    .map((match) => {
+      const capture = match.match(/href=["']([^"']+)["']/i);
+      return capture?.[1] || "";
+    })
+    .map((link) => link.trim())
+    .filter(Boolean);
+  return Array.from(new Set(links));
+}
+
+function countHtmlImages(input: string): number {
+  return (input.match(/<img\b/gi) || []).length;
+}
+
+function appendMediaMetadata(base: string, input: { imageCount?: number; links?: string[] }): string {
+  const out = [base.trim()].filter(Boolean);
+  if ((input.imageCount || 0) > 0) out.push(`[image] ${input.imageCount} embedded image(s)`);
+  const links = input.links || [];
+  if (links.length > 0) {
+    out.push(`[link-count] ${links.length}`);
+    for (const link of links.slice(0, 10)) out.push(`[link] ${link}`);
+  }
+  return out.join("\n").trim();
+}
+
 function annotateLayoutFromPlainText(text: string): string {
   const lines = text
     .replace(/\r\n/g, "\n")
@@ -172,9 +199,13 @@ export async function POST(req: NextRequest) {
           const geminiData = await geminiRes.json();
           const extractedText =
             geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          const withMedia = appendMediaMetadata(
+            annotateLayoutFromPlainText(extractedText),
+            { imageCount: 1 }
+          );
           return NextResponse.json({
             text: extractedText,
-            layoutText: annotateLayoutFromPlainText(extractedText),
+            layoutText: withMedia,
           });
         }
       }
@@ -247,11 +278,16 @@ async function extractTextFromDocx(buffer: Buffer): Promise<{ text: string; layo
     const htmlResult = await mammoth.convertToHtml({ buffer });
     const html = (htmlResult.value || "").trim();
     const htmlLayout = html ? annotateLayoutFromDocxHtml(html) : "";
+    const imageCount = html ? countHtmlImages(html) : 0;
+    const links = html ? extractHtmlLinks(html) : [];
 
     if (raw) {
       return {
         text: raw,
-        layoutText: htmlLayout || annotateLayoutFromPlainText(raw),
+        layoutText: appendMediaMetadata(
+          htmlLayout || annotateLayoutFromPlainText(raw),
+          { imageCount, links }
+        ),
       };
     }
 
@@ -259,7 +295,10 @@ async function extractTextFromDocx(buffer: Buffer): Promise<{ text: string; layo
     const text = stripHtml(html);
     return {
       text,
-      layoutText: htmlLayout || annotateLayoutFromPlainText(text),
+      layoutText: appendMediaMetadata(
+        htmlLayout || annotateLayoutFromPlainText(text),
+        { imageCount, links }
+      ),
     };
   } catch {
     return { text: "", layoutText: "" };
