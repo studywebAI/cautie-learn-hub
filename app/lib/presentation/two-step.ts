@@ -85,17 +85,27 @@ function buildThemeTokens(config: PresentationUiConfig): ThemeTokens {
   };
 }
 
-function buildSlidePlan(config: PresentationUiConfig): SlidePlanItem[] {
+function buildSlidePlan(config: PresentationUiConfig, preferredSubjects?: string[]): SlidePlanItem[] {
   const items: SlidePlanItem[] = [];
   let index = 1;
   if (config.includeAgenda) {
     items.push({ id: `plan_${index}`, index, type: 'agenda', objective: 'Set expectations and structure.' });
     index += 1;
   }
-  const coreCount = Math.max(3, config.slideCount - (config.includeSummary ? 1 : 0) - (config.includeQA ? 1 : 0) - (config.includeQuiz ? 1 : 0));
-  for (let i = 0; i < coreCount; i += 1) {
-    items.push({ id: `plan_${index}`, index, type: 'concept_explanation', objective: `Explain key point ${i + 1} clearly.` });
-    index += 1;
+  const normalizedSubjects = (preferredSubjects || [])
+    .map((item) => String(item || '').trim())
+    .filter(Boolean);
+  if (normalizedSubjects.length > 0) {
+    for (const subject of normalizedSubjects) {
+      items.push({ id: `plan_${index}`, index, type: 'concept_explanation', objective: subject });
+      index += 1;
+    }
+  } else {
+    const coreCount = Math.max(3, config.slideCount - (config.includeSummary ? 1 : 0) - (config.includeQA ? 1 : 0) - (config.includeQuiz ? 1 : 0));
+    for (let i = 0; i < coreCount; i += 1) {
+      items.push({ id: `plan_${index}`, index, type: 'concept_explanation', objective: `Explain key point ${i + 1} clearly.` });
+      index += 1;
+    }
   }
   if (config.includeSummary) {
     items.push({ id: `plan_${index}`, index, type: 'summary', objective: 'Recap key takeaways.' });
@@ -162,6 +172,7 @@ export function request1ConfigAndPlan(input: {
   userConfig?: Partial<PresentationUiConfig>;
   lockedControls?: RelevantControlKey[];
   autoMode?: boolean;
+  preferredSubjects?: string[];
 }): PresentationPlanResult {
   const defaultConfig = getDefaultConfig();
   const analysis = analyzeSources({
@@ -206,9 +217,13 @@ export function request1ConfigAndPlan(input: {
     userConfig: { ...userConfig, ...lockedFieldOverrides },
     autoMode: input.autoMode,
   });
+  if ((input.preferredSubjects || []).length > 0) {
+    effectiveConfig.slideCount = Math.max(3, Math.min(60, (input.preferredSubjects || []).length));
+  }
+
   const relevanceRankedControls = buildRelevanceTiers(analysis.relevantControls);
   const themeTokens = buildThemeTokens(effectiveConfig);
-  const slidePlan = buildSlidePlan(effectiveConfig);
+  const slidePlan = buildSlidePlan(effectiveConfig, input.preferredSubjects);
   const configFieldSources = deriveFieldSources({
     defaultConfig,
     effectiveConfig,
@@ -266,6 +281,14 @@ export function request2BuildPresentation(input: {
   plan: PresentationPlanResult;
   overrides?: Partial<PresentationUiConfig>;
   lockedControls?: RelevantControlKey[];
+  slideSubjects?: string[];
+  setupPreset?: {
+    title?: string;
+    themePreset?: string;
+    fontPreset?: string;
+    layoutPreset?: string;
+    bulletPreset?: string;
+  };
 }): {
   blueprint: PresentationBlueprint;
   previewManifest: ReturnType<typeof buildPreviewManifest>;
@@ -306,8 +329,42 @@ export function request2BuildPresentation(input: {
     title: input.title,
     language: input.language,
     config: merged,
+    slideSubjects: input.slideSubjects,
+    setupPreset: input.setupPreset,
   });
-  blueprint.themeTokens = input.plan.themeTokens;
+  const themeTokens: ThemeTokens = {
+    ...input.plan.themeTokens,
+    palette: { ...input.plan.themeTokens.palette },
+    typography: { ...input.plan.themeTokens.typography },
+  };
+  const themePreset = String(input.setupPreset?.themePreset || '').toLowerCase();
+  if (themePreset === 'clean-classic') {
+    themeTokens.palette.background = '#f5f4ef';
+    themeTokens.palette.surface = '#ffffff';
+    themeTokens.palette.accent = '#2f6f58';
+    themeTokens.backgroundStyle = 'clean';
+  } else if (themePreset === 'vibrant-gradient') {
+    themeTokens.palette.background = '#eaf3ff';
+    themeTokens.palette.surface = '#ffffff';
+    themeTokens.palette.accent = '#0f6cbd';
+    themeTokens.backgroundStyle = 'gradient';
+    themeTokens.typography.titleScale = 'expressive';
+  } else if (themePreset === 'studio-editorial') {
+    themeTokens.palette.background = '#f3efe8';
+    themeTokens.palette.surface = '#fffaf3';
+    themeTokens.palette.accent = '#8b3d2e';
+    themeTokens.backgroundStyle = 'patterned';
+    themeTokens.typography.titleScale = 'expressive';
+  } else if (themePreset === 'academic-focus') {
+    themeTokens.palette.background = '#f1f4f8';
+    themeTokens.palette.surface = '#ffffff';
+    themeTokens.palette.accent = '#2a4f7a';
+    themeTokens.backgroundStyle = 'clean';
+    themeTokens.typography.titleScale = 'balanced';
+    themeTokens.typography.bodyScale = 'compact';
+  }
+
+  blueprint.themeTokens = themeTokens;
   blueprint.visualAssets = buildVisualAssets({
     blueprint,
     sourceText: input.sourceText,

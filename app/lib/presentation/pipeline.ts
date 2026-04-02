@@ -1,4 +1,4 @@
-import {
+﻿import {
   PresentationBlueprint,
   PresentationSlide,
   PresentationUiConfig,
@@ -221,15 +221,38 @@ export function buildBlueprint(input: {
   title?: string;
   language?: string;
   config: PresentationUiConfig;
+  slideSubjects?: string[];
+  setupPreset?: {
+    title?: string;
+    themePreset?: string;
+    fontPreset?: string;
+    layoutPreset?: string;
+    bulletPreset?: string;
+  };
 }): PresentationBlueprint {
   const normalized = stripTags(input.sourceText || '');
   const sentences = sentenceSplit(normalized);
   const effectiveSentences = sentences.length > 0 ? sentences : [clean(normalized || 'Presentation content')];
-  const bulletsPerSlide = input.config.density === 'light' ? 3 : input.config.density === 'dense' ? 6 : 4;
+  const presetBulletMode = String(input.setupPreset?.bulletPreset || '').toLowerCase();
+  const bulletsPerSlide =
+    presetBulletMode === 'concise'
+      ? 3
+      : presetBulletMode === 'expanded'
+        ? 6
+        : input.config.density === 'light'
+          ? 3
+          : input.config.density === 'dense'
+            ? 6
+            : 4;
   const slides: PresentationSlide[] = [];
 
   const requestedTitle = clean(input.title || '');
   const deckTitle = truncateWords(requestedTitle || toTitle(effectiveSentences[0] || 'Presentation'), 10);
+
+  const normalizedSubjects = (input.slideSubjects || [])
+    .map((item) => clean(String(item || '')))
+    .filter(Boolean)
+    .slice(0, 60);
 
   if (input.config.includeAgenda) {
     slides.push({
@@ -243,28 +266,52 @@ export function buildBlueprint(input: {
     });
   }
 
-  for (let i = 0; i < input.config.slideCount; i += 1) {
-    const start = i * bulletsPerSlide;
-    const chunk = effectiveSentences.slice(start, start + bulletsPerSlide + 1);
-    if (chunk.length === 0) break;
+  if (normalizedSubjects.length > 0) {
+    for (let i = 0; i < normalizedSubjects.length; i += 1) {
+      const heading = toTitle(normalizedSubjects[i]);
+      const start = i * bulletsPerSlide;
+      const chunk = effectiveSentences.slice(start, start + bulletsPerSlide + 1);
+      const bullets = (chunk.length > 0 ? chunk : effectiveSentences)
+        .slice(0, bulletsPerSlide)
+        .map((line) => truncateWords(clean(line), 18))
+        .filter(Boolean);
 
-    const heading = toTitle(chunk[0]);
-    const bullets = (chunk.slice(1).length > 0 ? chunk.slice(1) : chunk)
-      .map((line) => truncateWords(clean(line), 18))
-      .filter(Boolean)
-      .slice(0, bulletsPerSlide);
+      slides.push({
+        id: `slide_${slides.length + 1}`,
+        index: slides.length + 1,
+        type: slides.length === 0 ? 'title' : 'concept_explanation',
+        heading,
+        bullets: bullets.length > 0 ? bullets : ['Core point', 'Supporting point', 'Example'],
+        imageHints: [`${heading} source visual`, `${heading} internet visual`],
+        speakerNotes: input.config.includeSpeakerNotes
+          ? `Explain "${heading}" with one concrete example.`
+          : undefined,
+      });
+    }
+  } else {
+    for (let i = 0; i < input.config.slideCount; i += 1) {
+      const start = i * bulletsPerSlide;
+      const chunk = effectiveSentences.slice(start, start + bulletsPerSlide + 1);
+      if (chunk.length === 0) break;
 
-    slides.push({
-      id: `slide_${slides.length + 1}`,
-      index: slides.length + 1,
-      type: slides.length === 0 ? 'title' : 'concept_explanation',
-      heading,
-      bullets,
-      imageHints: [`${heading} source visual`, `${heading} internet visual`],
-      speakerNotes: input.config.includeSpeakerNotes
-        ? `Explain "${heading}" with one concrete example.`
-        : undefined,
-    });
+      const heading = toTitle(chunk[0]);
+      const bullets = (chunk.slice(1).length > 0 ? chunk.slice(1) : chunk)
+        .map((line) => truncateWords(clean(line), 18))
+        .filter(Boolean)
+        .slice(0, bulletsPerSlide);
+
+      slides.push({
+        id: `slide_${slides.length + 1}`,
+        index: slides.length + 1,
+        type: slides.length === 0 ? 'title' : 'concept_explanation',
+        heading,
+        bullets,
+        imageHints: [`${heading} source visual`, `${heading} internet visual`],
+        speakerNotes: input.config.includeSpeakerNotes
+          ? `Explain "${heading}" with one concrete example.`
+          : undefined,
+      });
+    }
   }
 
   if (input.config.includeSummary) {
@@ -330,6 +377,7 @@ export function buildBlueprint(input: {
     },
     settings: {
       ...input.config,
+      slideCount: normalizedSubjects.length > 0 ? normalizedSubjects.length : input.config.slideCount,
       aiGeneratedImagesAllowed: false,
     },
     slides: normalizedSlides,
@@ -349,28 +397,82 @@ function svgDataUri(svg: string) {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
-function renderSlideToSvg(title: string, heading: string, bullets: string[], index: number) {
+function renderSlideToSvg(
+  title: string,
+  heading: string,
+  bullets: string[],
+  index: number,
+  style?: {
+    background: string;
+    surface: string;
+    accent: string;
+    textPrimary: string;
+    textMuted: string;
+    titleScale: 'compact' | 'balanced' | 'expressive';
+    bodyScale: 'compact' | 'balanced';
+    backgroundStyle: 'clean' | 'gradient' | 'patterned';
+  }
+) {
+  const titleSize = style?.titleScale === 'expressive' ? 62 : style?.titleScale === 'compact' ? 50 : 56;
+  const bodySize = style?.bodyScale === 'compact' ? 30 : 34;
+  const bulletGap = style?.bodyScale === 'compact' ? 50 : 58;
+  const background = style?.background || '#f5f4ef';
+  const surface = style?.surface || '#ffffff';
+  const accent = style?.accent || '#2f6f58';
+  const textPrimary = style?.textPrimary || '#121212';
+  const textMuted = style?.textMuted || '#666760';
+  const defs =
+    style?.backgroundStyle === 'gradient'
+      ? `
+      <defs>
+        <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="${background}" />
+          <stop offset="100%" stop-color="${surface}" />
+        </linearGradient>
+      </defs>`
+      : '';
+  const bgFill = style?.backgroundStyle === 'gradient' ? 'url(#bgGrad)' : background;
+  const patterned =
+    style?.backgroundStyle === 'patterned'
+      ? `<g opacity="0.08">${Array.from({ length: 28 }, (_, i) => `<circle cx="${80 + i * 56}" cy="${70 + (i % 5) * 160}" r="10" fill="${accent}" />`).join('')}</g>`
+      : '';
+
   const bulletLines = bullets
     .slice(0, 6)
-    .map((line, i) => `<text x="92" y="${228 + i * 58}" font-size="34" fill="#1c1c1c">• ${escapeXml(line)}</text>`)
+    .map((line, i) => `<text x="112" y="${228 + i * bulletGap}" font-size="${bodySize}" fill="${textPrimary}">- ${escapeXml(line)}</text>`)
     .join('');
   return `
   <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
-    <rect width="1600" height="900" fill="#f5f4ef"/>
-    <text x="78" y="66" font-size="24" fill="#666760">${escapeXml(title)}</text>
-    <text x="78" y="146" font-size="56" font-weight="700" fill="#121212">${escapeXml(heading)}</text>
+    ${defs}
+    <rect width="1600" height="900" fill="${bgFill}"/>
+    ${patterned}
+    <rect x="56" y="86" width="1488" height="764" rx="28" fill="${surface}" stroke="${accent}" stroke-opacity="0.18"/>
+    <rect x="56" y="86" width="1488" height="14" rx="7" fill="${accent}" fill-opacity="0.6"/>
+    <text x="92" y="145" font-size="24" fill="${textMuted}">${escapeXml(title)}</text>
+    <text x="92" y="222" font-size="${titleSize}" font-weight="700" fill="${textPrimary}">${escapeXml(heading)}</text>
     ${bulletLines}
-    <text x="1510" y="860" text-anchor="end" font-size="20" fill="#7c7d76">Slide ${index}</text>
+    <text x="1510" y="830" text-anchor="end" font-size="20" fill="${textMuted}">Slide ${index}</text>
   </svg>`;
 }
 
 export function buildPreviewManifest(blueprint: PresentationBlueprint): PreviewManifest {
+  const style = {
+    background: blueprint.themeTokens?.palette?.background || '#f5f4ef',
+    surface: blueprint.themeTokens?.palette?.surface || '#ffffff',
+    accent: blueprint.themeTokens?.palette?.accent || '#2f6f58',
+    textPrimary: blueprint.themeTokens?.palette?.textPrimary || '#111111',
+    textMuted: blueprint.themeTokens?.palette?.textMuted || '#5f6368',
+    titleScale: blueprint.themeTokens?.typography?.titleScale || 'balanced',
+    bodyScale: blueprint.themeTokens?.typography?.bodyScale || 'balanced',
+    backgroundStyle: blueprint.themeTokens?.backgroundStyle || 'clean',
+  } as const;
   const slides = blueprint.slides.map((slide) => {
     const svg = renderSlideToSvg(
       blueprint.presentation.title,
       slide.heading,
       slide.bullets,
-      slide.index
+      slide.index,
+      style
     );
     const imageUrl = svgDataUri(svg);
     return {

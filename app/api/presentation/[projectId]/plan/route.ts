@@ -12,6 +12,7 @@ const RequestSchema = z.object({
   autoMode: z.boolean().optional(),
   uiConfig: z.record(z.any()).optional(),
   lockedControls: z.array(z.string()).optional(),
+  slideSubjects: z.array(z.string()).optional(),
 });
 
 function buildSourceCorpus(input: {
@@ -58,6 +59,7 @@ export async function POST(
       },
       lockedControls,
       autoMode: payload.autoMode,
+      preferredSubjects: payload.slideSubjects || project.workflow_state?.slideSubjects || [],
     });
 
     await updatePresentationProject({

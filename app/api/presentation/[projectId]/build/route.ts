@@ -140,6 +140,7 @@ export async function POST(
           },
           lockedControls,
           autoMode: payload.autoMode,
+          preferredSubjects: payload.slideSubjects || project.workflow_state?.slideSubjects || [],
         });
 
     const built = request2BuildPresentation({
@@ -149,6 +150,8 @@ export async function POST(
       plan,
       overrides: payload.uiConfig || {},
       lockedControls,
+      slideSubjects: payload.slideSubjects || project.workflow_state?.slideSubjects || [],
+      setupPreset: payload.setupPreset || project.workflow_state?.setupPreset || {},
     });
 
     const versionNumber = await getNextProjectVersionNumber({ supabase, projectId });

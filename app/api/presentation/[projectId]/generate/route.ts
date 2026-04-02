@@ -17,6 +17,16 @@ const RequestSchema = z.object({
   language: z.string().optional(),
   autoMode: z.boolean().optional(),
   uiConfig: z.record(z.any()).optional(),
+  slideSubjects: z.array(z.string()).optional(),
+  setupPreset: z
+    .object({
+      title: z.string().optional(),
+      themePreset: z.string().optional(),
+      fontPreset: z.string().optional(),
+      layoutPreset: z.string().optional(),
+      bulletPreset: z.string().optional(),
+    })
+    .optional(),
 });
 
 function buildSourceCorpus(input: {
@@ -72,6 +82,7 @@ export async function POST(
       } as any,
       autoMode: payload.autoMode,
       lockedControls: [],
+      preferredSubjects: payload.slideSubjects || project.workflow_state?.slideSubjects || [],
     });
     const built = request2BuildPresentation({
       sourceText,
@@ -80,6 +91,8 @@ export async function POST(
       plan,
       overrides: payload.uiConfig || {},
       lockedControls: [],
+      slideSubjects: payload.slideSubjects || project.workflow_state?.slideSubjects || [],
+      setupPreset: payload.setupPreset || project.workflow_state?.setupPreset || {},
     });
 
     const versionNumber = await getNextProjectVersionNumber({ supabase, projectId });

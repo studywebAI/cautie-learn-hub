@@ -119,6 +119,11 @@ function StageProgress({ stage }: { stage: WorkflowStage }) {
           style={{ width: `${((currentIndex + 1) / steps.length) * 100}%` }}
         />
       </div>
+      {stage !== 'result' && (
+        <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-muted/80">
+          <div className="h-full w-1/3 animate-pulse rounded-full bg-foreground/80" />
+        </div>
+      )}
       <div className="flex flex-wrap gap-1.5 text-[11px]">
         {steps.map((item, idx) => (
           <Badge key={item} variant={idx <= currentIndex ? 'secondary' : 'outline'}>
@@ -189,6 +194,10 @@ function PresentationPageContent() {
     driveId?: string;
   } | null>(null);
   const { toast } = useToast();
+  const allSubjectsNamed = useMemo(
+    () => slideSubjects.every((subject) => subject.trim().length > 0),
+    [slideSubjects]
+  );
 
   const persistWorkflowSnapshot = useCallback(
     async (overrides?: Partial<{
@@ -426,6 +435,7 @@ function PresentationPageContent() {
         prompt: sourceText,
         autoMode,
         uiConfig: { ...uiConfig, platform },
+        slideSubjects: slideSubjects.map((item) => item.trim()).filter(Boolean),
       }),
     });
     const payload = await response.json().catch(() => ({}));
@@ -446,7 +456,7 @@ function PresentationPageContent() {
       }
     }
     return pid;
-  }, [autoMode, ensureProjectAndSources, platform, sourceText, uiConfig]);
+  }, [autoMode, ensureProjectAndSources, platform, slideSubjects, sourceText, uiConfig]);
 
   const continueToSubjects = useCallback(async () => {
     if (!sourceText.trim()) {
@@ -474,6 +484,14 @@ function PresentationPageContent() {
 
   const buildPresentation = useCallback(async () => {
     if (!sourceText.trim()) return;
+    if (!allSubjectsNamed) {
+      toast({
+        variant: 'destructive',
+        title: 'Fill in all slide subjects',
+        description: 'Each slide needs a subject/title before generation.',
+      });
+      return;
+    }
     setIsBuilding(true);
     goToStage('building');
     try {
@@ -539,6 +557,7 @@ function PresentationPageContent() {
     toast,
     uiConfig,
     goToStage,
+    allSubjectsNamed,
   ]);
 
   const downloadPresentation = useCallback(async () => {
@@ -816,6 +835,14 @@ function PresentationPageContent() {
                       if (activeSubjectIndex < slideSubjects.length - 1) {
                         setActiveSubjectIndex((prev) => prev + 1);
                       } else {
+                        if (!slideSubjects.every((subject) => subject.trim().length > 0)) {
+                          toast({
+                            variant: 'destructive',
+                            title: 'Fill in all slide subjects',
+                            description: 'Each slide needs a subject/title before continuing.',
+                          });
+                          return;
+                        }
                         goToStage('style');
                       }
                     }}
@@ -837,7 +864,7 @@ function PresentationPageContent() {
                     <Trash2 className="mr-2 h-4 w-4" />
                     Remove current slide
                   </Button>
-                  <Button onClick={() => goToStage('style')}>
+                  <Button onClick={() => goToStage('style')} disabled={!allSubjectsNamed}>
                     Continue to style setup
                   </Button>
                 </div>
