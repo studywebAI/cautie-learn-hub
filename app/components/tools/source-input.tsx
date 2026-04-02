@@ -456,6 +456,7 @@ export function SourceInput({
         .map((source) => ({
           id: source.id,
           name: source.label || extractContextFileName(source.text),
+          preview: source.text ? source.text.replace(/\s+/g, ' ').trim().slice(0, 180) : '',
           loading: Boolean(source.loading),
           error: source.error,
           isRemote: source.id.startsWith('integration-') && !source.id.startsWith('integration-local-'),
@@ -1134,27 +1135,35 @@ export function SourceInput({
         </div>
       )}
       {integrationFileCards.length > 0 && (
-        <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
           {integrationFileCards.map((file) => (
-            <div key={file.id} className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/40 px-2.5 py-2 md:px-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sidebar-accent/80 md:h-9 md:w-9">
+            <div
+              key={file.id}
+              className="w-[160px] sm:w-[180px] md:w-[200px] rounded-xl border border-sidebar-border/80 bg-sidebar-accent/40 p-2.5"
+            >
+              <div className="mb-2 h-[84px] rounded-lg bg-sidebar-accent/70 p-2">
+                <div className="mb-1.5 flex items-center gap-1.5">
                   {file.loading ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
                   ) : (
                     <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                   )}
+                  <span className="text-[10px] text-muted-foreground">Preview</span>
                 </div>
+                <p className="max-h-[48px] overflow-hidden text-[10px] leading-snug text-muted-foreground">
+                  {file.loading ? 'Extracting text + first-page preview...' : (file.preview || 'No text preview available yet.')}
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[11px] md:text-xs">{file.name}</p>
-                  {file.loading && <p className="mt-0.5 text-[10px] text-muted-foreground">Loading text + images...</p>}
                   {!file.loading && file.error && <p className="mt-0.5 text-[10px] text-destructive">Extraction failed</p>}
                 </div>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0 rounded-full hover:bg-sidebar-accent"
+                  className="h-7 w-7 shrink-0 rounded-full hover:bg-sidebar-accent -mt-1"
                   onClick={() => void handleRemoveFileCard(file.id, file.isRemote)}
                   disabled={removingSourceIds.includes(file.id)}
                   aria-label="Remove file"
