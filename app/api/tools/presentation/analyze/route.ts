@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { analyzeSources, getDefaultConfig, resolveEffectiveConfig } from '@/lib/presentation/pipeline';
 import { PresentationUiConfig } from '@/lib/presentation/types';
+import { ADAPTIVE_CONFIG_PROMPT, PRESENTATION_CORE_POLICY_PROMPT, SOURCE_ANALYZER_PROMPT } from '@/lib/presentation/prompts';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +48,11 @@ export async function POST(req: NextRequest) {
           'internet_visuals',
           'icons_shapes_charts',
         ],
+      },
+      prompts: {
+        corePolicy: PRESENTATION_CORE_POLICY_PROMPT.trim(),
+        sourceAnalyzer: SOURCE_ANALYZER_PROMPT.trim(),
+        adaptiveConfig: ADAPTIVE_CONFIG_PROMPT.trim(),
       },
     });
   } catch {

@@ -7,6 +7,14 @@ import {
   getDefaultConfig,
   resolveEffectiveConfig,
 } from '@/lib/presentation/pipeline';
+import {
+  ADAPTIVE_CONFIG_PROMPT,
+  PRESENTATION_ARCHITECT_PROMPT,
+  PRESENTATION_CORE_POLICY_PROMPT,
+  PRESENTATION_WRITER_PROMPT,
+  RENDERER_MAPPER_PROMPT,
+  SOURCE_ANALYZER_PROMPT,
+} from '@/lib/presentation/prompts';
 import { PresentationUiConfig } from '@/lib/presentation/types';
 
 export const dynamic = 'force-dynamic';
@@ -72,6 +80,14 @@ export async function POST(req: NextRequest) {
         policy: {
           aiGeneratedImagesAllowed: false,
           speakerNotesOptional: true,
+        },
+        prompts: {
+          corePolicy: PRESENTATION_CORE_POLICY_PROMPT.trim(),
+          sourceAnalyzer: SOURCE_ANALYZER_PROMPT.trim(),
+          adaptiveConfig: ADAPTIVE_CONFIG_PROMPT.trim(),
+          architect: PRESENTATION_ARCHITECT_PROMPT.trim(),
+          writer: PRESENTATION_WRITER_PROMPT.trim(),
+          rendererMapper: RENDERER_MAPPER_PROMPT.trim(),
         },
         estimatedCostHint: {
           strategy: 'source-first adaptive pipeline',
