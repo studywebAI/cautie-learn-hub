@@ -694,21 +694,96 @@ function PresentationPageContent() {
     return () => window.removeEventListener('keydown', onKey);
   }, [isSlideshow, prototype]);
 
-  const sidebar = (
-    <AdaptiveSettingsSidebar
-      analysis={analysis}
-      autoMode={autoMode}
-      onAutoModeChange={setAutoMode}
-      customTitle={customTitle}
-      onTitleChange={setCustomTitle}
-      platform={platform}
-      onPlatformChange={setPlatform}
-      uiConfig={uiConfig}
-      onPatch={applyConfig}
-      controlTiers={plan?.relevanceRankedControls || null}
-      disabled={isPlanning || isBuilding}
-    />
-  );
+  const sidebar =
+    stage === 'style' ? (
+      <AdaptiveSettingsSidebar
+        analysis={analysis}
+        autoMode={autoMode}
+        onAutoModeChange={setAutoMode}
+        customTitle={customTitle}
+        onTitleChange={setCustomTitle}
+        platform={platform}
+        onPlatformChange={setPlatform}
+        uiConfig={uiConfig}
+        onPatch={applyConfig}
+        controlTiers={plan?.relevanceRankedControls || null}
+        disabled={isPlanning || isBuilding}
+      />
+    ) : stage === 'subjects' ? (
+      <div className="space-y-3">
+        <Card className="border border-sidebar-border/60 bg-sidebar-accent/35">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Slide Setup</CardTitle>
+            <CardDescription>Define title/subject for each slide in order.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-1.5 text-xs">
+            <p>Slides: {slideSubjects.length}</p>
+            <p>Filled: {slideSubjects.filter((s) => s.trim().length > 0).length}</p>
+            <p>{allSubjectsNamed ? 'All subjects ready' : 'Complete every subject before style stage'}</p>
+          </CardContent>
+        </Card>
+        <Card className="border border-sidebar-border/50 bg-sidebar-accent/25">
+          <CardContent className="py-3 text-xs text-muted-foreground">
+            Focus mode: only slide sequencing is active in this step.
+          </CardContent>
+        </Card>
+      </div>
+    ) : stage === 'upload' ? (
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <p className="text-xs text-muted-foreground">Title</p>
+          <input
+            type="text"
+            value={customTitle}
+            onChange={(e) => setCustomTitle(e.target.value)}
+            placeholder="e.g. Biology Chapter 3"
+            className="h-8 w-full rounded-md border border-sidebar-border bg-sidebar-accent/70 px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            disabled={isPlanning || isBuilding}
+          />
+        </div>
+        <Card className="border border-sidebar-border/60 bg-sidebar-accent/35">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Step 1: Upload Sources</CardTitle>
+            <CardDescription>Upload/paste all source material first.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-xs">
+            <p>Next step unlocks only after source input.</p>
+            <p>Platform for final export is selected here.</p>
+          </CardContent>
+        </Card>
+        <div className="space-y-1.5">
+          <p className="text-xs text-muted-foreground">Platform</p>
+          <div className="flex flex-wrap gap-1.5">
+            {(['powerpoint', 'google-slides', 'keynote'] as const).map((item) => (
+              <Button
+                key={item}
+                type="button"
+                size="sm"
+                variant={platform === item ? 'default' : 'outline'}
+                onClick={() => setPlatform(item)}
+                disabled={isPlanning || isBuilding}
+              >
+                {item === 'powerpoint' ? 'PowerPoint' : item === 'google-slides' ? 'Google Slides' : 'Keynote'}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+    ) : (
+      <div className="space-y-3">
+        <Card className="border border-sidebar-border/60 bg-sidebar-accent/35">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Result</CardTitle>
+            <CardDescription>Preview and export your presentation.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-1.5 text-xs">
+            <p>Slides: {prototype?.slideCount || slideSubjects.length}</p>
+            <p>Platform: {platform}</p>
+            <p>Subjects locked into generation plan.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
 
   const previewMeta = useMemo(() => {
     if (!prototype) return null;
