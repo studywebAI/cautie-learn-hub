@@ -17,6 +17,7 @@ import { SourceAnalysisCard } from '@/components/presentation/source-analysis-ca
 import { PresentationPreview } from '@/components/presentation/presentation-preview';
 import { SlideshowView } from '@/components/presentation/slideshow-view';
 import { ActionBar } from '@/components/presentation/action-bar';
+import { OneDriveExportFolderPicker } from '@/components/presentation/onedrive-export-folder-picker';
 
 type PresentationPlatform = 'powerpoint' | 'google-slides' | 'keynote';
 
@@ -127,6 +128,11 @@ function PresentationPageContent() {
   const [isExportingCloud, setIsExportingCloud] = useState(false);
   const [activeShareToken, setActiveShareToken] = useState<string | null>(null);
   const [activeShareUrl, setActiveShareUrl] = useState<string | null>(null);
+  const [onedriveExportFolder, setOnedriveExportFolder] = useState<{
+    folderId: string;
+    folderName: string;
+    driveId?: string;
+  } | null>(null);
   const { toast } = useToast();
 
   const hasAnalysis = Boolean(analysis);
@@ -313,7 +319,16 @@ function PresentationPageContent() {
           destination:
             destinationKind === 'google'
               ? { kind: 'google', targetApp: 'google-slides' }
-              : { kind: 'microsoft', targetApp: 'powerpoint' },
+              : {
+                  kind: 'microsoft',
+                  targetApp: 'powerpoint',
+                  microsoftFolder: onedriveExportFolder
+                    ? {
+                        folderId: onedriveExportFolder.folderId,
+                        driveId: onedriveExportFolder.driveId,
+                      }
+                    : undefined,
+                },
         }),
       });
       const payload = await response.json().catch(() => ({}));
@@ -340,7 +355,7 @@ function PresentationPageContent() {
     } finally {
       setIsExportingCloud(false);
     }
-  }, [downloadPresentation, platform, projectId, prototype, toast]);
+  }, [downloadPresentation, onedriveExportFolder, platform, projectId, prototype, toast]);
 
   const sharePreview = useCallback(async () => {
     if (!projectId) return;
@@ -440,6 +455,12 @@ function PresentationPageContent() {
                   <p className="text-xs text-muted-foreground">{previewMeta}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  {platform === 'powerpoint' && (
+                    <OneDriveExportFolderPicker
+                      value={onedriveExportFolder}
+                      onChange={setOnedriveExportFolder}
+                    />
+                  )}
                   <ActionBar
                     onDownload={() => void downloadPresentation()}
                     onExportCloud={() => void exportToCloud()}
