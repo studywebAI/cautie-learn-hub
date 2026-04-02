@@ -4,6 +4,7 @@ import { z } from 'zod';
 import PptxGenJS from 'pptxgenjs';
 import { createClient } from '@/lib/supabase/server';
 import { getValidMicrosoftAccessToken } from '@/lib/integrations/microsoft-store';
+import { getValidGoogleAccessToken } from '@/lib/integrations/google-store';
 import { checkRateLimit } from '@/lib/security/request-guards';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,12 @@ const RequestSchema = z.object({
     .object({
       kind: z.enum(['download', 'microsoft', 'google']),
       targetApp: z.enum(['powerpoint', 'sharepoint', 'google-slides']).optional(),
+      microsoftFolder: z
+        .object({
+          folderId: z.string().optional(),
+          driveId: z.string().optional(),
+        })
+        .optional(),
     })
     .optional(),
 });
@@ -121,9 +128,17 @@ async function uploadToMicrosoftDrive(input: {
   accessToken: string;
   filename: string;
   data: Buffer;
+  folderId?: string;
+  driveId?: string;
 }) {
-  const path = encodeURIComponent(`Cautie Exports/${input.filename}`).replace(/%2F/g, '/');
-  const response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/${path}:/content`, {
+  const hasFolderTarget = Boolean(input.folderId);
+  const encodedFile = encodeURIComponent(input.filename);
+  const endpoint = hasFolderTarget
+    ? input.driveId
+      ? `https://graph.microsoft.com/v1.0/drives/${encodeURIComponent(input.driveId)}/items/${encodeURIComponent(input.folderId || '')}:/${encodedFile}:/content`
+      : `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(input.folderId || '')}:/${encodedFile}:/content`
+    : `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(`Cautie Exports/${input.filename}`).replace(/%2F/g, '/')}:/content`;
+  const response = await fetch(endpoint, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${input.accessToken}`,
@@ -142,6 +157,101 @@ async function uploadToMicrosoftDrive(input: {
     id: typeof payload?.id === 'string' ? payload.id : '',
     webUrl: typeof payload?.webUrl === 'string' ? payload.webUrl : '',
     name: typeof payload?.name === 'string' ? payload.name : input.filename,
+  };
+}
+
+async function getPreferredMicrosoftFolder(input: {
+  supabase: any;
+  userId: string;
+}) {
+  const { data, error } = await input.supabase
+    .from('external_integration_sources')
+    .select('metadata, updated_at')
+    .eq('user_id', input.userId)
+    .eq('provider', 'microsoft')
+    .eq('app', 'onedrive')
+    .eq('is_selected', true)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  const metadata = (data.metadata || {}) as Record<string, any>;
+  const folderId = typeof metadata.parent_id === 'string' ? metadata.parent_id : '';
+  const driveId = typeof metadata.drive_id === 'string' ? metadata.drive_id : '';
+  if (!folderId) return null;
+  return { folderId, driveId: driveId || undefined };
+}
+
+async function uploadToGoogle(input: {
+  accessToken: string;
+  filename: string;
+  data: Buffer;
+  targetApp?: 'google-slides';
+}) {
+  const boundary = `cautie-${crypto.randomUUID()}`;
+  const metadata =
+    input.targetApp === 'google-slides'
+      ? {
+          name: input.filename.replace(/\.pptx$/i, ''),
+          mimeType: 'application/vnd.google-apps.presentation',
+        }
+      : {
+          name: input.filename,
+          mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        };
+
+  const prefix =
+    `--${boundary}\r\n` +
+    `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+    `${JSON.stringify(metadata)}\r\n` +
+    `--${boundary}\r\n` +
+    `Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation\r\n\r\n`;
+  const suffix = `\r\n--${boundary}--`;
+
+  const body = Buffer.concat([
+    Buffer.from(prefix, 'utf8'),
+    input.data,
+    Buffer.from(suffix, 'utf8'),
+  ]);
+
+  const response = await fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,webViewLink',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${input.accessToken}`,
+        'Content-Type': `multipart/related; boundary=${boundary}`,
+      },
+      body: new Uint8Array(body),
+      cache: 'no-store',
+    }
+  );
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message =
+      payload?.error?.message ||
+      payload?.error_description ||
+      'Google cloud export failed';
+    throw new Error(message);
+  }
+
+  const id = typeof payload?.id === 'string' ? payload.id : '';
+  const mimeType = typeof payload?.mimeType === 'string' ? payload.mimeType : '';
+  const webViewLink = typeof payload?.webViewLink === 'string' ? payload.webViewLink : '';
+  const openUrl =
+    webViewLink ||
+    (mimeType === 'application/vnd.google-apps.presentation' && id
+      ? `https://docs.google.com/presentation/d/${id}/edit`
+      : id
+        ? `https://drive.google.com/file/d/${id}/view`
+        : '');
+
+  return {
+    id,
+    name: typeof payload?.name === 'string' ? payload.name : input.filename,
+    mimeType,
+    webUrl: openUrl,
   };
 }
 
@@ -179,13 +289,44 @@ export async function POST(req: NextRequest) {
     }
 
     if (destination === 'google') {
-      return NextResponse.json(
-        {
-          error: 'Google cloud export is not configured in this workspace yet. Use Microsoft export or download.',
-          fallback: 'download',
-        },
-        { status: 501 }
-      );
+      const cookieStore = cookies();
+      const supabase = await createClient(cookieStore);
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+      if (authError || !user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const tokenState = await getValidGoogleAccessToken(supabase, user.id);
+      if (!tokenState?.accessToken) {
+        return NextResponse.json(
+          {
+            error: 'Google account not connected',
+            code: 'google_not_connected',
+            fallback: 'download',
+          },
+          { status: 409 }
+        );
+      }
+
+      const uploaded = await uploadToGoogle({
+        accessToken: tokenState.accessToken,
+        filename,
+        data: buffer,
+        targetApp: parsed.data.destination?.targetApp === 'google-slides' ? 'google-slides' : undefined,
+      });
+
+      return NextResponse.json({
+        ok: true,
+        destination: 'google',
+        targetApp: parsed.data.destination?.targetApp || 'google-slides',
+        fileName: uploaded.name,
+        fileId: uploaded.id,
+        webUrl: uploaded.webUrl,
+        openLabel: 'Open in Google Slides',
+        fallback: 'download',
+      });
     }
 
     const cookieStore = cookies();
@@ -210,10 +351,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const pickerFolder = await getPreferredMicrosoftFolder({
+      supabase,
+      userId: user.id,
+    });
+    const folderFromPayload = parsed.data.destination?.microsoftFolder;
+    const targetFolder = {
+      folderId: folderFromPayload?.folderId || pickerFolder?.folderId,
+      driveId: folderFromPayload?.driveId || pickerFolder?.driveId,
+    };
+
     const uploaded = await uploadToMicrosoftDrive({
       accessToken: tokenState.accessToken,
       filename,
       data: buffer,
+      folderId: targetFolder.folderId,
+      driveId: targetFolder.driveId,
     });
 
     return NextResponse.json({
@@ -227,6 +380,7 @@ export async function POST(req: NextRequest) {
         parsed.data.destination?.targetApp === 'sharepoint'
           ? 'Open in SharePoint'
           : 'Open in PowerPoint',
+      folderTarget: targetFolder.folderId ? 'picker_selected_folder' : 'default_cautie_exports',
       fallback: 'download',
     });
   } catch (error: any) {

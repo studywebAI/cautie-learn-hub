@@ -2,7 +2,7 @@
 
 import React, { Suspense, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ExternalLink, Loader2, PanelsLeftRight, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
@@ -50,6 +50,42 @@ type PresentationPrototype = {
   };
 };
 
+function mapProjectGenerateToPrototype(payload: any): PresentationPrototype {
+  const blueprint = payload?.blueprint || {};
+  const slides = Array.isArray(blueprint?.slides) ? blueprint.slides : [];
+  const previewManifest = payload?.previewManifest || { slides: [], slideCount: 0, title: blueprint?.presentation?.title || 'Presentation', aspectRatio: '16:9' };
+  return {
+    platform: (blueprint?.presentation?.platform || 'powerpoint') as PresentationPlatform,
+    title: String(blueprint?.presentation?.title || 'Presentation'),
+    slideCount: Number(previewManifest?.slideCount || slides.length || 0),
+    analysis: payload?.analysis || {},
+    effectiveConfig: payload?.effectiveConfig || {},
+    slides: slides.map((slide: any, idx: number) => ({
+      id: String(slide?.id || `slide_${idx + 1}`),
+      index: Number(slide?.index || idx + 1),
+      heading: String(slide?.heading || slide?.title || `Slide ${idx + 1}`),
+      bullets: Array.isArray(slide?.bullets) ? slide.bullets.map((b: any) => String(b)) : [],
+      speakerNotes: typeof slide?.speakerNotes === 'string' ? slide.speakerNotes : undefined,
+    })),
+    previewManifest,
+    timeline: [
+      { step: 'sources analyzed', status: 'done' },
+      { step: 'adaptive config generated', status: 'done' },
+      { step: 'presentation planned', status: 'done' },
+      { step: 'slides written', status: 'done' },
+      { step: 'preview rendered', status: 'done' },
+      { step: payload?.quality?.passed ? 'quality checks passed' : 'quality checks need review', status: 'done' },
+    ],
+    estimatedCostHint: {
+      strategy: 'source-first adaptive pipeline',
+      estimatedPromptTokens: Math.ceil(String(payload?.sourceText || '').length / 4),
+      estimatedCompletionTokens: Math.max(1, slides.length) * 120,
+      note: 'No AI-generated images. Source visuals first, internet visuals optional.',
+    },
+    quality: payload?.quality || undefined,
+  };
+}
+
 function PresentationPageContent() {
   const searchParams = useSearchParams();
   const sourceTextFromParams = searchParams.get('sourceText');
@@ -84,9 +120,11 @@ function PresentationPageContent() {
     layoutStyle: 'mixed',
   });
   const [prototype, setPrototype] = useState<PresentationPrototype | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [lastSyncedSourceText, setLastSyncedSourceText] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isExportingMicrosoft, setIsExportingMicrosoft] = useState(false);
+  const [isExportingCloud, setIsExportingCloud] = useState(false);
   const [activeShareToken, setActiveShareToken] = useState<string | null>(null);
   const [activeShareUrl, setActiveShareUrl] = useState<string | null>(null);
   const { toast } = useToast();
@@ -97,10 +135,63 @@ function PresentationPageContent() {
     setUiConfig((prev) => ({ ...prev, ...patch }));
   }, []);
 
+  const ensureProjectAndSources = useCallback(async () => {
+    const normalized = sourceText.trim();
+    if (!normalized) throw new Error('Add source material first.');
+    let currentProjectId = projectId;
+
+    if (!currentProjectId) {
+      const createResponse = await fetch('/api/presentation/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: customTitle.trim() || 'Untitled presentation',
+          prompt: normalized,
+          language,
+          platform,
+          uiConfig: { ...uiConfig, platform },
+        }),
+      });
+      const createPayload = await createResponse.json().catch(() => ({}));
+      if (!createResponse.ok) {
+        throw new Error(String(createPayload?.error || `Failed to create project (${createResponse.status})`));
+      }
+      currentProjectId = String(createPayload?.project?.id || '');
+      if (!currentProjectId) throw new Error('Project creation returned no id');
+      setProjectId(currentProjectId);
+    }
+
+    if (normalized !== lastSyncedSourceText) {
+      const sourceResponse = await fetch(`/api/presentation/${currentProjectId}/sources`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          replaceExistingTextSources: true,
+          sources: [
+            {
+              sourceType: 'text',
+              content: normalized,
+              extractedText: normalized,
+              parsedMetadata: { origin: 'presentation_input' },
+            },
+          ],
+        }),
+      });
+      const sourcePayload = await sourceResponse.json().catch(() => ({}));
+      if (!sourceResponse.ok) {
+        throw new Error(String(sourcePayload?.error || `Failed to sync sources (${sourceResponse.status})`));
+      }
+      setLastSyncedSourceText(normalized);
+    }
+
+    return currentProjectId;
+  }, [customTitle, language, lastSyncedSourceText, platform, projectId, sourceText, uiConfig]);
+
   const analyzeSources = useCallback(async () => {
     if (!sourceText.trim()) return;
     setIsAnalyzing(true);
     try {
+      await ensureProjectAndSources();
       const response = await fetch('/api/tools/presentation/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -116,13 +207,8 @@ function PresentationPageContent() {
       }
       const payload = await response.json();
       setAnalysis(payload.analysis || null);
-      if (payload?.effectiveConfig) {
-        setUiConfig(payload.effectiveConfig);
-      }
-      toast({
-        title: 'Sources analyzed',
-        description: 'Adaptive settings are now available.',
-      });
+      if (payload?.effectiveConfig) setUiConfig(payload.effectiveConfig);
+      toast({ title: 'Sources analyzed', description: 'Adaptive settings are now available.' });
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -132,31 +218,30 @@ function PresentationPageContent() {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [autoMode, platform, sourceText, toast, uiConfig]);
+  }, [autoMode, ensureProjectAndSources, platform, sourceText, toast, uiConfig]);
 
   const generatePresentation = useCallback(async () => {
     if (!sourceText.trim()) return;
     setIsGenerating(true);
     try {
-      const response = await fetch('/api/tools/presentation/prototype', {
+      const pid = await ensureProjectAndSources();
+      const response = await fetch(`/api/presentation/${pid}/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sourceText,
           title: customTitle.trim() || undefined,
+          prompt: sourceText,
           language,
           autoMode,
-          analysis,
           uiConfig: { ...uiConfig, platform },
         }),
       });
+      const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err?.error || `Failed to generate presentation (${response.status})`);
+        throw new Error(String(payload?.error || `Failed to generate presentation (${response.status})`));
       }
-      const payload = await response.json();
-      const next = payload?.prototype || null;
-      setPrototype(next ? { ...next, slides: next.blueprint?.slides || [] } : null);
+      setPrototype(mapProjectGenerateToPrototype({ ...payload, sourceText }));
+      setAnalysis(payload?.analysis || analysis);
       setSelectedSlideIndex(0);
       setShowComposer(false);
     } catch (error: any) {
@@ -168,24 +253,19 @@ function PresentationPageContent() {
     } finally {
       setIsGenerating(false);
     }
-  }, [analysis, autoMode, customTitle, language, platform, sourceText, toast, uiConfig]);
+  }, [analysis, autoMode, customTitle, ensureProjectAndSources, language, platform, sourceText, toast, uiConfig]);
 
   useEffect(() => {
     if (sourceTextFromParams?.trim()) void analyzeSources();
   }, [analyzeSources, sourceTextFromParams]);
 
   const downloadPresentation = useCallback(async () => {
-    if (!prototype) return;
+    if (!prototype || !projectId) return;
     try {
-      const response = await fetch('/api/tools/presentation/export', {
+      const response = await fetch(`/api/presentation/${projectId}/export`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: prototype.title,
-          slides: prototype.slides,
-          includeSpeakerNotes: prototype.effectiveConfig.includeSpeakerNotes,
-          destination: { kind: 'download' },
-        }),
+        body: JSON.stringify({ destination: { kind: 'download' } }),
       });
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
@@ -208,71 +288,76 @@ function PresentationPageContent() {
         description: error?.message || 'Please try again.',
       });
     }
-  }, [prototype, toast]);
+  }, [projectId, prototype, toast]);
 
-  const exportToMicrosoft = useCallback(async () => {
-    if (!prototype) return;
-    setIsExportingMicrosoft(true);
+  const exportToCloud = useCallback(async () => {
+    if (!prototype || !projectId) return;
+    setIsExportingCloud(true);
     try {
-      const response = await fetch('/api/tools/presentation/export', {
+      const destinationKind =
+        platform === 'google-slides'
+          ? 'google'
+          : platform === 'powerpoint'
+            ? 'microsoft'
+            : 'download';
+
+      if (destinationKind === 'download') {
+        await downloadPresentation();
+        return;
+      }
+
+      const response = await fetch(`/api/presentation/${projectId}/export`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: prototype.title,
-          slides: prototype.slides,
-          includeSpeakerNotes: prototype.effectiveConfig.includeSpeakerNotes,
-          destination: { kind: 'microsoft', targetApp: 'powerpoint' },
+          destination:
+            destinationKind === 'google'
+              ? { kind: 'google', targetApp: 'google-slides' }
+              : { kind: 'microsoft', targetApp: 'powerpoint' },
         }),
       });
-
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = String(payload?.error || `Export failed (${response.status})`);
         throw new Error(message);
       }
-      if (payload?.webUrl) {
-        window.open(payload.webUrl, '_blank', 'noopener,noreferrer');
-      }
+      if (payload?.webUrl) window.open(payload.webUrl, '_blank', 'noopener,noreferrer');
       toast({
-        title: 'Exported to Microsoft',
-        description: payload?.webUrl ? 'Opening in PowerPoint / OneDrive.' : 'Export complete.',
+        title: destinationKind === 'google' ? 'Exported to Google' : 'Exported to Microsoft',
+        description:
+          payload?.webUrl
+            ? destinationKind === 'google'
+              ? 'Opening in Google Slides / Drive.'
+              : 'Opening in PowerPoint / OneDrive.'
+            : 'Export complete.',
       });
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Microsoft export failed',
-        description: `${error?.message || 'Could not export to Microsoft.'} Download is still available.`,
+        title: platform === 'google-slides' ? 'Google export failed' : 'Microsoft export failed',
+        description: `${error?.message || 'Could not export to cloud.'} Download is still available.`,
       });
     } finally {
-      setIsExportingMicrosoft(false);
+      setIsExportingCloud(false);
     }
-  }, [prototype, toast]);
+  }, [downloadPresentation, platform, projectId, prototype, toast]);
 
   const sharePreview = useCallback(async () => {
-    if (!prototype?.previewManifest) return;
+    if (!projectId) return;
     try {
-      const response = await fetch('/api/tools/presentation/share', {
+      const response = await fetch(`/api/presentation/${projectId}/publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: prototype.title,
-          previewManifest: prototype.previewManifest,
-          expiresInHours: 72,
-        }),
+        body: JSON.stringify({ expiresInHours: 72 }),
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(String(payload?.error || `Share failed (${response.status})`));
-      }
+      if (!response.ok) throw new Error(String(payload?.error || `Share failed (${response.status})`));
       if (payload?.shareUrl) {
         await navigator.clipboard.writeText(payload.shareUrl);
         setActiveShareToken(typeof payload?.token === 'string' ? payload.token : null);
         setActiveShareUrl(payload.shareUrl);
       }
-      toast({
-        title: 'Preview link copied',
-        description: 'Public snapshot link copied to clipboard.',
-      });
+      toast({ title: 'Preview link copied', description: 'Public snapshot link copied to clipboard.' });
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -280,16 +365,14 @@ function PresentationPageContent() {
         description: error?.message || 'Please try again.',
       });
     }
-  }, [prototype, toast]);
+  }, [projectId, toast]);
 
   const revokeSharePreview = useCallback(async () => {
     if (!activeShareToken) return;
     try {
       const response = await fetch(`/api/tools/presentation/share/${activeShareToken}`, { method: 'DELETE' });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(String(payload?.error || 'Failed to revoke share link'));
-      }
+      if (!response.ok) throw new Error(String(payload?.error || 'Failed to revoke share link'));
       setActiveShareToken(null);
       setActiveShareUrl(null);
       toast({ title: 'Share link revoked', description: 'Public preview access has been disabled.' });
@@ -306,12 +389,8 @@ function PresentationPageContent() {
     if (!isSlideshow || !prototype) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setIsSlideshow(false);
-      if (event.key === 'ArrowRight') {
-        setSelectedSlideIndex((prev) => Math.min(prev + 1, prototype.previewManifest.slides.length - 1));
-      }
-      if (event.key === 'ArrowLeft') {
-        setSelectedSlideIndex((prev) => Math.max(prev - 1, 0));
-      }
+      if (event.key === 'ArrowRight') setSelectedSlideIndex((prev) => Math.min(prev + 1, prototype.previewManifest.slides.length - 1));
+      if (event.key === 'ArrowLeft') setSelectedSlideIndex((prev) => Math.max(prev - 1, 0));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -334,15 +413,17 @@ function PresentationPageContent() {
 
   const previewMeta = useMemo(() => {
     if (!prototype) return null;
-    return `${prototype.slideCount} slides • ${prototype.analysis.dominantArchetype.replace(/_/g, ' ')}`;
+    return `${prototype.slideCount} slides • ${prototype.analysis.dominantArchetype?.replace(/_/g, ' ') || 'presentation'}`;
   }, [prototype]);
 
+  const cloudLabel = useMemo(() => {
+    if (platform === 'google-slides') return 'Export + open Google Slides';
+    if (platform === 'powerpoint') return 'Export + open PowerPoint';
+    return 'Download .pptx';
+  }, [platform]);
+
   return (
-    <WorkbenchShell
-      title="Presentation"
-      description="Source-first adaptive presentation builder with Microsoft export."
-      sidebar={sidebar}
-    >
+    <WorkbenchShell title="Presentation" description="Source-first adaptive presentation builder with cloud export." sidebar={sidebar}>
       <div className="relative flex h-full flex-col gap-4">
         {(isAnalyzing || isGenerating) && (
           <div className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-background/70 backdrop-blur-[1px]">
@@ -361,9 +442,10 @@ function PresentationPageContent() {
                 <div className="flex flex-wrap gap-2">
                   <ActionBar
                     onDownload={() => void downloadPresentation()}
-                    onExportMicrosoft={() => void exportToMicrosoft()}
+                    onExportCloud={() => void exportToCloud()}
                     onShare={() => void sharePreview()}
-                    exportingMicrosoft={isExportingMicrosoft}
+                    exportingCloud={isExportingCloud}
+                    cloudLabel={cloudLabel}
                   />
                   <Button size="sm" variant="ghost" onClick={() => setShowComposer((prev) => !prev)}>
                     {showComposer ? 'Hide setup' : 'Show setup'}
@@ -378,7 +460,8 @@ function PresentationPageContent() {
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">AI images: disabled</Badge>
             <Badge variant="outline">Canonical output: .pptx</Badge>
-            <Badge variant="outline">Cloud export: Microsoft</Badge>
+            <Badge variant="outline">Cloud export: Microsoft + Google</Badge>
+            {projectId && <Badge variant="secondary">Project persisted</Badge>}
           </div>
         )}
 
@@ -433,9 +516,10 @@ function PresentationPageContent() {
             onSelectSlide={setSelectedSlideIndex}
             onStartSlideshow={() => setIsSlideshow(true)}
             onDownload={() => void downloadPresentation()}
-            onExportMicrosoft={() => void exportToMicrosoft()}
+            onExportCloud={() => void exportToCloud()}
             onShare={() => void sharePreview()}
-            exportingMicrosoft={isExportingMicrosoft}
+            exportingCloud={isExportingCloud}
+            cloudLabel={cloudLabel}
             costHint={prototype.estimatedCostHint}
             quality={prototype.quality}
           />
@@ -449,13 +533,6 @@ function PresentationPageContent() {
           onSelect={setSelectedSlideIndex}
           onClose={() => setIsSlideshow(false)}
         />
-      )}
-
-      {prototype?.platform === 'google-slides' && (
-        <div className="mt-2 rounded-md border border-amber-300/40 bg-amber-100/40 p-2 text-xs text-amber-900">
-          Google cloud export is not configured in this workspace yet. Use Microsoft export or download.
-          <ExternalLink className="ml-1 inline h-3.5 w-3.5" />
-        </div>
       )}
     </WorkbenchShell>
   );

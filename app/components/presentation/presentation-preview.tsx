@@ -12,9 +12,10 @@ type PresentationPreviewProps = {
   onSelectSlide: (index: number) => void;
   onStartSlideshow: () => void;
   onDownload: () => void;
-  onExportMicrosoft: () => void;
+  onExportCloud: () => void;
   onShare: () => void;
-  exportingMicrosoft?: boolean;
+  exportingCloud?: boolean;
+  cloudLabel: string;
   costHint?: {
     strategy: string;
     estimatedPromptTokens: number;
@@ -34,9 +35,10 @@ export function PresentationPreview({
   onSelectSlide,
   onStartSlideshow,
   onDownload,
-  onExportMicrosoft,
+  onExportCloud,
   onShare,
-  exportingMicrosoft = false,
+  exportingCloud = false,
+  cloudLabel,
   costHint,
   quality,
 }: PresentationPreviewProps) {
@@ -99,9 +101,10 @@ export function PresentationPreview({
         <div className="mt-4 flex flex-wrap gap-2">
           <ActionBar
             onDownload={onDownload}
-            onExportMicrosoft={onExportMicrosoft}
+            onExportCloud={onExportCloud}
             onShare={onShare}
-            exportingMicrosoft={exportingMicrosoft}
+            exportingCloud={exportingCloud}
+            cloudLabel={cloudLabel}
           />
           <Button variant="outline" onClick={onStartSlideshow}>
             <Play className="mr-2 h-4 w-4" />

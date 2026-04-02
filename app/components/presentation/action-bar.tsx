@@ -3,16 +3,18 @@ import { Button } from '@/components/ui/button';
 
 type ActionBarProps = {
   onDownload: () => void;
-  onExportMicrosoft: () => void;
+  onExportCloud: () => void;
   onShare: () => void;
-  exportingMicrosoft?: boolean;
+  exportingCloud?: boolean;
+  cloudLabel: string;
 };
 
 export function ActionBar({
   onDownload,
-  onExportMicrosoft,
+  onExportCloud,
   onShare,
-  exportingMicrosoft = false,
+  exportingCloud = false,
+  cloudLabel,
 }: ActionBarProps) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -20,9 +22,9 @@ export function ActionBar({
         <Download className="mr-2 h-4 w-4" />
         Download .pptx
       </Button>
-      <Button variant="outline" onClick={onExportMicrosoft} disabled={exportingMicrosoft}>
+      <Button variant="outline" onClick={onExportCloud} disabled={exportingCloud}>
         <ExternalLink className="mr-2 h-4 w-4" />
-        Export + open Microsoft
+        {cloudLabel}
       </Button>
       <Button variant="outline" onClick={onShare}>
         <Share2 className="mr-2 h-4 w-4" />
