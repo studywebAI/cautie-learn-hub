@@ -215,7 +215,7 @@ function PresentationPageContent() {
                       <ul className="mt-2 space-y-1">
                         {slide.bullets.map((bullet, bulletIndex) => (
                           <li key={`${slide.index}-${bulletIndex}`} className="text-xs text-muted-foreground">
-                            â€¢ {bullet}
+                            - {bullet}
                           </li>
                         ))}
                       </ul>
