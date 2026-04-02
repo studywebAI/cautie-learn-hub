@@ -35,6 +35,7 @@ interface SourceInputProps {
   enableBackendFallback?: boolean;
   sourceMergeMode?: 'append_labeled';
   topContent?: ReactNode;
+  submitLabel?: string;
 }
 
 type SourceKind = 'url' | 'file' | 'caption';
@@ -152,6 +153,7 @@ export function SourceInput({
   enableBackendFallback: _enableBackendFallback = true,
   sourceMergeMode = 'append_labeled',
   topContent,
+  submitLabel = 'Generate',
 }: SourceInputProps) {
   const { toast } = useToast();
   const micSessionIdRef = useRef<string>('');
@@ -1326,7 +1328,7 @@ export function SourceInput({
             disabled={disabled || isProcessing || !canGenerate}
           >
             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            <span className="hidden md:inline">Generate</span>
+            <span className="hidden md:inline">{submitLabel}</span>
           </Button>
         </div>
       </div>
