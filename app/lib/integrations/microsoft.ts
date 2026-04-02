@@ -337,6 +337,18 @@ export async function extractMicrosoftFileText(input: {
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
+  const extractHtmlLinks = (html: string): string[] => {
+    const matches = html.match(/href=["']([^"']+)["']/gi) || [];
+    const links = matches
+      .map((match) => {
+        const linkMatch = match.match(/href=["']([^"']+)["']/i);
+        return linkMatch?.[1] || '';
+      })
+      .map((link) => link.trim())
+      .filter(Boolean);
+    return Array.from(new Set(links));
+  };
+
   const fetchAsTextFormat = async (format: 'text' | 'txt' | 'html') => {
     const url = `${MICROSOFT_GRAPH_BASE}/me/drive/items/${fileId}/content?format=${format}`;
     const response = await fetch(url, { headers, cache: 'no-store' });
@@ -398,9 +410,18 @@ export async function extractMicrosoftFileText(input: {
       const raw = (await mammoth.extractRawText({ buffer })).value || '';
       const html = (await mammoth.convertToHtml({ buffer })).value || '';
       const imageCount = (html.match(/<img\b/gi) || []).length;
-      if (raw.trim()) {
-        const tagged = tagPlainText(raw, 'word', name);
-        return imageCount > 0 ? `${tagged}\n[image] ${imageCount} embedded image(s)` : tagged;
+      const linkList = extractHtmlLinks(html);
+      const fallbackFromHtml = stripHtml(html);
+      const usableText = raw.trim() ? raw : fallbackFromHtml;
+      if (usableText.trim()) {
+        const tagged = tagPlainText(usableText, 'word', name);
+        const mediaTags: string[] = [];
+        if (imageCount > 0) mediaTags.push(`[image] ${imageCount} embedded image(s)`);
+        if (linkList.length > 0) {
+          mediaTags.push(`[link-count] ${linkList.length}`);
+          for (const link of linkList.slice(0, 8)) mediaTags.push(`[link] ${link}`);
+        }
+        return mediaTags.length > 0 ? `${tagged}\n${mediaTags.join('\n')}` : tagged;
       }
     } catch {
       // Fall through to minimal structured fallback.

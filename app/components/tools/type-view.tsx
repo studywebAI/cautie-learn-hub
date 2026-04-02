@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { isTypedAnswerCorrect } from '@/lib/study-grading';
 
 interface TypeViewProps {
   card: Flashcard;
@@ -28,7 +29,7 @@ export function TypeView({ card, onAnswered }: TypeViewProps) {
 
     const handleCheckAnswer = () => {
         if (!userAnswer || isSubmitted) return;
-        const correct = userAnswer.trim().toLowerCase() === card.back.trim().toLowerCase();
+        const correct = isTypedAnswerCorrect(userAnswer, card.back);
         setIsCorrect(correct);
         setIsSubmitted(true);
         onAnswered(correct);

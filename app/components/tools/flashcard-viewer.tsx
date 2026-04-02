@@ -26,6 +26,7 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import { TypeView } from './type-view';
 import { MultipleChoiceView } from './multiple-choice-view';
+import { normalizeForCompare } from '@/lib/study-grading';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +48,27 @@ type CardSRSState = {
   buriedUntil: string | null;
   lastScore: number | null;
   lastReviewedAt: string | null;
+};
+
+type SessionCardMetrics = {
+  attempts: number;
+  correct: number;
+  incorrect: number;
+  totalResponseMs: number;
+  lastResponseMs: number;
+};
+
+const TOPIC_STOP_WORDS = new Set([
+  'what', 'which', 'when', 'where', 'does', 'from', 'into', 'your', 'that', 'this', 'with',
+  'have', 'been', 'were', 'will', 'would', 'could', 'about', 'after', 'before', 'under',
+  'term', 'definition', 'answer', 'question', 'defined', 'provide', 'provided', 'following',
+]);
+
+const extractTopicTokens = (text: string): string[] => {
+  return normalizeForCompare(text)
+    .split(' ')
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 4 && !TOPIC_STOP_WORDS.has(token));
 };
 
 const cardVariants = {
@@ -131,6 +153,7 @@ export function FlashcardViewer({
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
   const [cardsReviewed, setCardsReviewed] = useState<Set<string>>(new Set());
   const [correctCards, setCorrectCards] = useState(0);
+  const [sessionMetrics, setSessionMetrics] = useState<Record<string, SessionCardMetrics>>({});
   const [sessionComplete, setSessionComplete] = useState(false);
   const [srsState, setSrsState] = useState<Record<string, CardSRSState>>({});
   const startTimeRef = React.useRef(Date.now());
@@ -209,6 +232,37 @@ export function FlashcardViewer({
     return { health, dueCount, matureCount, lapseRate };
   }, [cards, srsState]);
 
+  const computeTopicAnalytics = useCallback(() => {
+    const wrongTopicScores = new Map<string, number>();
+    const correctTopicScores = new Map<string, number>();
+
+    for (const cardItem of cards) {
+      const metrics = sessionMetrics[cardItem.id];
+      if (!metrics || metrics.attempts === 0) continue;
+      const tokens = extractTopicTokens(cardItem.front);
+      for (const token of tokens) {
+        if (metrics.incorrect > 0) {
+          wrongTopicScores.set(token, (wrongTopicScores.get(token) || 0) + metrics.incorrect);
+        }
+        if (metrics.correct > 0) {
+          correctTopicScores.set(token, (correctTopicScores.get(token) || 0) + metrics.correct);
+        }
+      }
+    }
+
+    const weakTopics = [...wrongTopicScores.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([topic]) => topic);
+
+    const strongTopics = [...correctTopicScores.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([topic]) => topic);
+
+    return { weakTopics, strongTopics };
+  }, [cards, sessionMetrics]);
+
   const saveFlashcardProgress = useCallback(async () => {
     const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
     const deckHealth = computeDeckHealth();
@@ -235,9 +289,10 @@ export function FlashcardViewer({
       });
 
       if (taskId && studysetId) {
-        const weakTopics: string[] = [];
-        if (deckHealth.dueCount > Math.max(2, Math.round(cards.length * 0.35))) weakTopics.push('memory retention');
-        if (deckHealth.lapseRate > 0.25) weakTopics.push('recall stability');
+        const { weakTopics } = computeTopicAnalytics();
+        const topicsToSave = [...weakTopics];
+        if (deckHealth.dueCount > Math.max(2, Math.round(cards.length * 0.35))) topicsToSave.push('memory retention');
+        if (deckHealth.lapseRate > 0.25) topicsToSave.push('recall stability');
 
         await fetch(`/api/studysets/plan-tasks/${taskId}/performance`, {
           method: 'POST',
@@ -249,7 +304,7 @@ export function FlashcardViewer({
             totalItems: cards.length,
             correctItems: correctCards,
             timeSpentSeconds: timeSpent,
-            weakTopics,
+            weakTopics: Array.from(new Set(topicsToSave)).slice(0, 8),
             markCompleted: true,
           }),
         });
@@ -257,7 +312,7 @@ export function FlashcardViewer({
     } catch (error) {
       console.error('Failed to save flashcard session:', error);
     }
-  }, [cards.length, cardsReviewed.size, correctCards, mode, computeDeckHealth, studysetId, taskId]);
+  }, [cards.length, cardsReviewed.size, correctCards, mode, computeDeckHealth, computeTopicAnalytics, studysetId, taskId]);
 
   const getQualityFromOutcome = (isCorrect: boolean, responseMs: number): 0 | 1 | 2 | 3 => {
     if (!isCorrect) return 0;
@@ -316,6 +371,25 @@ export function FlashcardViewer({
 
     setCardsReviewed((prevSet) => new Set(prevSet).add(card.id));
     if (isCorrect) setCorrectCards((prevCount) => prevCount + 1);
+    setSessionMetrics((prevMetrics) => {
+      const currentMetrics = prevMetrics[card.id] || {
+        attempts: 0,
+        correct: 0,
+        incorrect: 0,
+        totalResponseMs: 0,
+        lastResponseMs: 0,
+      };
+      return {
+        ...prevMetrics,
+        [card.id]: {
+          attempts: currentMetrics.attempts + 1,
+          correct: currentMetrics.correct + (isCorrect ? 1 : 0),
+          incorrect: currentMetrics.incorrect + (isCorrect ? 0 : 1),
+          totalResponseMs: currentMetrics.totalResponseMs + responseMs,
+          lastResponseMs: responseMs,
+        },
+      };
+    });
 
     const isLast = currentIndex >= queue.length - 1;
     if (isLast) {
@@ -483,23 +557,60 @@ export function FlashcardViewer({
       .slice(0, 5);
   }, [cards, srsState]);
 
-  const strongestCards = React.useMemo(() => {
-    return cards
+  const sessionAnalytics = React.useMemo(() => {
+    const reviewedCount = cardsReviewed.size;
+    const incorrectCount = Math.max(0, reviewedCount - correctCards);
+    const accuracy = reviewedCount > 0 ? Math.round((correctCards / reviewedCount) * 100) : 0;
+    const allMetrics = Object.values(sessionMetrics);
+    const avgResponseMs = allMetrics.length > 0
+      ? Math.round(allMetrics.reduce((sum, item) => sum + item.totalResponseMs, 0) / Math.max(1, allMetrics.reduce((sum, item) => sum + item.attempts, 0)))
+      : 0;
+
+    const quickCount = allMetrics.filter((item) => item.lastResponseMs > 0 && item.lastResponseMs <= 4500).length;
+    const mediumCount = allMetrics.filter((item) => item.lastResponseMs > 4500 && item.lastResponseMs <= 12000).length;
+    const slowCount = allMetrics.filter((item) => item.lastResponseMs > 12000).length;
+
+    const recallRiskCards = cards
       .map((cardItem) => {
         const state = srsState[cardItem.id] || defaultSRSState();
-        const weakness = (state.lapses * 2) + (isDueNow(state.dueAt) ? 1 : 0) + Math.max(0, 2.5 - state.ease);
+        const metrics = sessionMetrics[cardItem.id];
         return {
           id: cardItem.id,
           front: cardItem.front,
-          back: cardItem.back,
-          weakness,
-          lapses: state.lapses,
-          due: isDueNow(state.dueAt),
+          riskScore: state.lapses * 2 + (isDueNow(state.dueAt) ? 2 : 0) + (metrics?.incorrect || 0),
         };
       })
-      .sort((a, b) => a.weakness - b.weakness)
+      .sort((a, b) => b.riskScore - a.riskScore)
       .slice(0, 5);
-  }, [cards, srsState]);
+
+    const confidenceCards = cards
+      .map((cardItem) => {
+        const state = srsState[cardItem.id] || defaultSRSState();
+        const metrics = sessionMetrics[cardItem.id];
+        return {
+          id: cardItem.id,
+          front: cardItem.front,
+          confidenceScore: Math.max(0, (metrics?.correct || 0) * 2 + state.ease - state.lapses),
+        };
+      })
+      .sort((a, b) => b.confidenceScore - a.confidenceScore)
+      .slice(0, 5);
+
+    const { weakTopics, strongTopics } = computeTopicAnalytics();
+    return {
+      reviewedCount,
+      incorrectCount,
+      accuracy,
+      avgResponseMs,
+      quickCount,
+      mediumCount,
+      slowCount,
+      weakTopics,
+      strongTopics,
+      recallRiskCards,
+      confidenceCards,
+    };
+  }, [cards, cardsReviewed.size, correctCards, sessionMetrics, srsState, computeTopicAnalytics]);
 
   const openToolFromWeakCards = (tool: 'notes' | 'quiz' | 'flashcards') => {
     const source = weakestCards.map((item, index) => `${index + 1}. ${item.front}\nAnswer: ${item.back}`).join('\n\n');
@@ -611,30 +722,89 @@ export function FlashcardViewer({
         )}
 
         {sessionComplete && (
-          <div className="w-full space-y-4 rounded-xl border border-border/80 bg-card p-4">
-            <div>
-              <p className="text-base">Best and Worst Cards</p>
-              <p className="text-xs text-muted-foreground">Your weakest cards are listed first so you can regenerate focused material.</p>
+          <div className="w-full space-y-4 px-1">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl bg-card/80 p-3">
+                <p className="text-xs text-muted-foreground">Accuracy</p>
+                <p className="text-xl font-semibold">{sessionAnalytics.accuracy}%</p>
+              </div>
+              <div className="rounded-xl bg-card/80 p-3">
+                <p className="text-xs text-muted-foreground">Reviewed</p>
+                <p className="text-xl font-semibold">{sessionAnalytics.reviewedCount}</p>
+              </div>
+              <div className="rounded-xl bg-card/80 p-3">
+                <p className="text-xs text-muted-foreground">Incorrect</p>
+                <p className="text-xl font-semibold">{sessionAnalytics.incorrectCount}</p>
+              </div>
+              <div className="rounded-xl bg-card/80 p-3">
+                <p className="text-xs text-muted-foreground">Avg response</p>
+                <p className="text-xl font-semibold">{Math.max(1, Math.round(sessionAnalytics.avgResponseMs / 1000))}s</p>
+              </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div className="space-y-2">
-                <p className="text-sm text-red-700">Worst cards</p>
-                {weakestCards.map((item) => (
-                  <div key={item.id} className="rounded-md border border-red-200/70 bg-red-50/50 p-2 text-xs">
-                    <p className="truncate">{item.front}</p>
-                    <p className="text-muted-foreground">Lapses: {item.lapses} {item.due ? '· Due' : ''}</p>
+            <div className="grid gap-3 lg:grid-cols-2">
+              <div className="rounded-xl bg-card/80 p-3">
+                <p className="text-sm">Response speed</p>
+                <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                  <div className="rounded-md bg-background p-2">
+                    <p className="text-muted-foreground">Quick</p>
+                    <p className="text-base font-semibold">{sessionAnalytics.quickCount}</p>
                   </div>
-                ))}
+                  <div className="rounded-md bg-background p-2">
+                    <p className="text-muted-foreground">Medium</p>
+                    <p className="text-base font-semibold">{sessionAnalytics.mediumCount}</p>
+                  </div>
+                  <div className="rounded-md bg-background p-2">
+                    <p className="text-muted-foreground">Slow</p>
+                    <p className="text-base font-semibold">{sessionAnalytics.slowCount}</p>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm text-emerald-700">Best cards</p>
-                {strongestCards.map((item) => (
-                  <div key={item.id} className="rounded-md border border-emerald-200/70 bg-emerald-50/40 p-2 text-xs">
-                    <p className="truncate">{item.front}</p>
-                    <p className="text-muted-foreground">Lapses: {item.lapses} {item.due ? '· Due' : ''}</p>
+
+              <div className="rounded-xl bg-card/80 p-3">
+                <p className="text-sm">Topic signals</p>
+                <div className="mt-2 space-y-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Needs retry</p>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {(sessionAnalytics.weakTopics.length > 0 ? sessionAnalytics.weakTopics : ['No weak topic detected']).map((topic) => (
+                        <Badge key={`weak-${topic}`} variant="secondary">{topic}</Badge>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                  <div>
+                    <p className="text-xs text-muted-foreground">Strong topics</p>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {(sessionAnalytics.strongTopics.length > 0 ? sessionAnalytics.strongTopics : ['No strong topic detected']).map((topic) => (
+                        <Badge key={`strong-${topic}`} variant="secondary">{topic}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-2">
+              <div className="rounded-xl bg-card/80 p-3">
+                <p className="text-sm">Retry first</p>
+                <div className="mt-2 space-y-2">
+                  {sessionAnalytics.recallRiskCards.map((item) => (
+                    <div key={item.id} className="rounded-md bg-background p-2 text-xs">
+                      <p className="truncate">{item.front}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-card/80 p-3">
+                <p className="text-sm">Most stable cards</p>
+                <div className="mt-2 space-y-2">
+                  {sessionAnalytics.confidenceCards.map((item) => (
+                    <div key={item.id} className="rounded-md bg-background p-2 text-xs">
+                      <p className="truncate">{item.front}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -656,22 +826,35 @@ export function FlashcardViewer({
         )}
       </CardContent>
 
-      <CardFooter className="mt-auto sticky bottom-0 z-10 border-t border-border/70 bg-background/95 backdrop-blur px-4 py-3 md:px-6">
-        <div className="flex w-full items-center justify-between">
-          <Button variant="outline" onClick={handlePrev} disabled={currentIndex === 0} className="rounded-full">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => { void saveFlashcardProgress(); onRestart(); }}>
+      <CardFooter className="mt-auto sticky bottom-0 z-10 bg-background/95 backdrop-blur px-4 py-3 md:px-6">
+        <div className="grid w-full grid-cols-3 items-center">
+          <div className="flex justify-start">
+            <Button variant="outline" onClick={handlePrev} disabled={currentIndex === 0} className="h-10 min-w-[120px] rounded-full">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+          </div>
+          <div className="flex justify-center">
+            <Button
+              variant="ghost"
+              onClick={() => { void saveFlashcardProgress(); onRestart(); }}
+              className="h-10 min-w-[120px] rounded-full"
+            >
               <RefreshCw className="mr-2 h-4 w-4" />
               Start Over
             </Button>
           </div>
-          <Button variant="outline" onClick={handleNext} disabled={currentIndex === queue.length - 1 || (mode !== 'flip' && !isAnswered)} className="rounded-full">
-            Next
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={handleNext}
+              disabled={currentIndex === queue.length - 1 || (mode !== 'flip' && !isAnswered)}
+              className="h-10 min-w-[120px] rounded-full"
+            >
+              Next
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardFooter>
 

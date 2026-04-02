@@ -20,6 +20,7 @@ import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '
 import { Pie, PieChart } from 'recharts';
 import { Progress } from '../ui/progress';
 import type { Quiz, QuizQuestion, SessionRecapData } from '@/lib/types';
+import { normalizeForCompare } from '@/lib/study-grading';
 
 
 type AnswersState = { [questionId: string]: string };
@@ -75,6 +76,18 @@ const chartConfig = {
     color: "hsl(var(--chart-5))",
   },
 } satisfies ChartConfig;
+
+const QUIZ_TOPIC_STOP_WORDS = new Set([
+  'what', 'which', 'when', 'where', 'with', 'from', 'into', 'your', 'this', 'that', 'about', 'question',
+  'following', 'correct', 'incorrect', 'answer', 'option', 'true', 'false', 'best', 'most', 'least',
+]);
+
+const extractQuizTopicTokens = (text: string): string[] => {
+  return normalizeForCompare(text)
+    .split(' ')
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 4 && !QUIZ_TOPIC_STOP_WORDS.has(token));
+};
 
 
 function FinalResults({
@@ -278,6 +291,51 @@ function FinalResults({
         );
     }
 
+    const answeredQuestions = quiz.questions
+        .map((q) => {
+            const selectedOptionId = answers[q.id];
+            const selectedOption = q.options.find((opt) => opt.id === selectedOptionId);
+            const correctOption = q.options.find((opt) => opt.isCorrect);
+            if (!selectedOptionId || !selectedOption || !correctOption) return null;
+            return {
+                id: q.id,
+                question: q.question,
+                selectedText: selectedOption.text,
+                correctText: correctOption.text,
+                isCorrect: selectedOption.id === correctOption.id,
+            };
+        })
+        .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+    const topicMisses = new Map<string, number>();
+    const topicHits = new Map<string, number>();
+    const confusionPairs = new Map<string, number>();
+
+    for (const item of answeredQuestions) {
+        const topicTokens = extractQuizTopicTokens(item.question);
+        for (const token of topicTokens) {
+            if (item.isCorrect) topicHits.set(token, (topicHits.get(token) || 0) + 1);
+            else topicMisses.set(token, (topicMisses.get(token) || 0) + 1);
+        }
+        if (!item.isCorrect) {
+            const confusionKey = `${item.selectedText} -> ${item.correctText}`;
+            confusionPairs.set(confusionKey, (confusionPairs.get(confusionKey) || 0) + 1);
+        }
+    }
+
+    const weakTopics = [...topicMisses.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([topic]) => topic);
+    const strongTopics = [...topicHits.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([topic]) => topic);
+    const topConfusions = [...confusionPairs.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const completionRate = totalQuestionsInQuiz > 0 ? Math.round((totalQuestionsAnswered / totalQuestionsInQuiz) * 100) : 0;
+    const retryNow = quiz.questions
+        .filter((q) => {
+            const selectedOptionId = answers[q.id];
+            const correctOption = q.options.find((opt) => opt.isCorrect);
+            return Boolean(selectedOptionId) && Boolean(correctOption) && selectedOptionId !== correctOption?.id;
+        })
+        .slice(0, 5)
+        .map((q) => q.question);
+
     const chartData = [
         { name: 'correct', value: correctCount, fill: 'var(--color-correct)' },
         { name: 'incorrect', value: incorrectCount, fill: 'var(--color-incorrect)' },
@@ -327,6 +385,68 @@ function FinalResults({
                             <p className="text-sm">Incorrect</p>
                         </div>
                      </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    <div className="rounded-lg bg-muted/50 p-3">
+                        <p className="text-xs text-muted-foreground">Completion</p>
+                        <p className="text-xl font-semibold">{completionRate}%</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3">
+                        <p className="text-xs text-muted-foreground">Weak topics</p>
+                        <p className="text-xl font-semibold">{weakTopics.length}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3">
+                        <p className="text-xs text-muted-foreground">Confusion patterns</p>
+                        <p className="text-xl font-semibold">{topConfusions.length}</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div className="rounded-lg bg-muted/50 p-3">
+                        <p className="text-sm font-medium">Topics to retry</p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                            {(weakTopics.length ? weakTopics : ['No weak topic detected']).map((topic) => (
+                                <span key={`weak-topic-${topic}`} className="rounded-full bg-background px-2 py-1 text-xs">
+                                    {topic}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3">
+                        <p className="text-sm font-medium">Topics done well</p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                            {(strongTopics.length ? strongTopics : ['No strong topic detected']).map((topic) => (
+                                <span key={`strong-topic-${topic}`} className="rounded-full bg-background px-2 py-1 text-xs">
+                                    {topic}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div className="rounded-lg bg-muted/50 p-3">
+                        <p className="text-sm font-medium">Most common confusion</p>
+                        <div className="mt-2 space-y-2">
+                            {(topConfusions.length > 0 ? topConfusions : [['No confusion pattern detected', 0] as const]).map(([pair, count], index) => (
+                                <div key={`confusion-${pair}-${index}`} className="rounded-md bg-background p-2 text-xs">
+                                    <p>{pair}</p>
+                                    {count > 0 && <p className="text-muted-foreground">Count: {count}</p>}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3">
+                        <p className="text-sm font-medium">Retry these questions first</p>
+                        <div className="mt-2 space-y-2">
+                            {(retryNow.length > 0 ? retryNow : ['No retry list needed']).map((item, index) => (
+                                <div key={`retry-${index}`} className="rounded-md bg-background p-2 text-xs">
+                                    {item}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="space-y-4">
