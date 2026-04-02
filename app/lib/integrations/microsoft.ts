@@ -127,6 +127,7 @@ export type MicrosoftFileItem = {
   id: string;
   name: string;
   webUrl?: string;
+  previewUrl?: string;
   size?: number;
   lastModifiedDateTime?: string;
   kind: MicrosoftFileKind;
@@ -167,12 +168,17 @@ export async function listMicrosoftFiles(input: { accessToken: string; kind: Mic
   const query = input.query?.trim();
   const rootUrl = new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/root/children`);
   rootUrl.searchParams.set('$top', '80');
+  rootUrl.searchParams.set('$expand', 'thumbnails($select=small,medium,large)');
   const recentUrl = new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/recent`);
   recentUrl.searchParams.set('$top', '80');
+  recentUrl.searchParams.set('$expand', 'thumbnails($select=small,medium,large)');
   const searchUrl = query
     ? new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/root/search(q='${query.replace(/'/g, "''")}')`)
     : null;
-  if (searchUrl) searchUrl.searchParams.set('$top', '80');
+  if (searchUrl) {
+    searchUrl.searchParams.set('$top', '80');
+    searchUrl.searchParams.set('$expand', 'thumbnails($select=small,medium,large)');
+  }
 
   const fetchJson = async (url: URL) => {
     const response = await fetch(url.toString(), {
@@ -232,6 +238,14 @@ export async function listMicrosoftFiles(input: { accessToken: string; kind: Mic
         id: String(item.id),
         name: String(item.name || 'Untitled'),
         webUrl: item.webUrl ? String(item.webUrl) : undefined,
+        previewUrl:
+          item?.thumbnails?.[0]?.large?.url
+          || item?.thumbnails?.[0]?.medium?.url
+          || item?.thumbnails?.[0]?.small?.url
+          || item?.remoteItem?.thumbnails?.[0]?.large?.url
+          || item?.remoteItem?.thumbnails?.[0]?.medium?.url
+          || item?.remoteItem?.thumbnails?.[0]?.small?.url
+          || undefined,
         size: typeof item.size === 'number' ? item.size : undefined,
         lastModifiedDateTime: item.lastModifiedDateTime ? String(item.lastModifiedDateTime) : undefined,
         kind: input.kind === 'onedrive' ? 'onedrive' : (detectedKind as MicrosoftFileKind),

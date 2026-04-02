@@ -1154,7 +1154,7 @@ export function SourceInput({
                     <img
                       src={file.previewUrl}
                       alt={`${file.name} preview`}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover object-top [transform:scale(1.14)] [transform-origin:top_center]"
                     />
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent p-1">
                       <p className="text-[9px] text-white/95 font-medium tracking-wide">CAUTIE PREVIEW</p>

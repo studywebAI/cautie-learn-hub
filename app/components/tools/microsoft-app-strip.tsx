@@ -50,6 +50,7 @@ type GraphListItem = {
   name: string;
   webUrl?: string;
   mimeType?: string;
+  previewUrl?: string;
   lastModifiedDateTime?: string;
   size?: number;
   isFolder?: boolean;
@@ -208,6 +209,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
           name: String(item?.name || 'Untitled'),
           webUrl: item?.webUrl ? String(item.webUrl) : undefined,
           mimeType: item?.mimeType ? String(item.mimeType) : undefined,
+          previewUrl: item?.previewUrl ? String(item.previewUrl) : undefined,
           lastModifiedDateTime: item?.lastModifiedDateTime ? String(item.lastModifiedDateTime) : undefined,
           size: typeof item?.size === 'number' ? item.size : undefined,
           isFolder: Boolean(item?.isFolder),
@@ -431,7 +433,8 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       }
       const bootstrap = await bootstrapRes.json() as PickerBootstrapResponse;
       bootstrapRef.current = bootstrap;
-      if (bootstrap.fallbackMode === 'graph') {
+      const forceGraphPreviewPicker = true;
+      if (forceGraphPreviewPicker || bootstrap.fallbackMode === 'graph') {
         setFallbackMode('graph');
         setPickerStatus('Ready to select');
         setFallbackSource('all');
@@ -760,48 +763,64 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                       </button>
                     ))}
                   </aside>
-                  <div className="min-h-0 flex-1 overflow-auto">
+                  <div className="min-h-0 flex-1 overflow-auto p-2">
                     {fallbackLoading ? (
                       <div className="flex h-full items-center justify-center">
                         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                       </div>
                     ) : (
-                      <table className="w-full text-sm">
-                        <thead className="sticky top-0 bg-white text-left text-xs text-muted-foreground">
-                          <tr>
-                            <th className="px-3 py-2">Name</th>
-                            <th className="px-3 py-2">Modified</th>
-                            <th className="px-3 py-2">Type</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {fallbackFiles
-                            .filter((file) => file.isFile === true && !file.isFolder)
-                            .filter((file) => matchesPickerFilter({
-                              id: file.id,
-                              name: file.name,
-                              mimeType: file.mimeType,
-                              webUrl: file.webUrl,
-                            }, activeFilter))
-                            .map((file) => (
-                              <tr
+                      <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
+                        {fallbackFiles
+                          .filter((file) => file.isFile === true && !file.isFolder)
+                          .filter((file) => matchesPickerFilter({
+                            id: file.id,
+                            name: file.name,
+                            mimeType: file.mimeType,
+                            webUrl: file.webUrl,
+                          }, activeFilter))
+                          .map((file) => {
+                            const selected = selectedFallbackIds.includes(file.id);
+                            return (
+                              <button
                                 key={file.id}
+                                type="button"
                                 onClick={() =>
                                   setSelectedFallbackIds((prev) =>
                                     prev.includes(file.id) ? prev.filter((id) => id !== file.id) : [...prev, file.id]
                                   )
                                 }
-                                className={`cursor-pointer border-t border-[#f1f1f1] ${
-                                  selectedFallbackIds.includes(file.id) ? 'bg-[#e8f2fc]' : 'hover:bg-[#f7f7f7]'
+                                className={`text-left rounded-lg border p-2 transition ${
+                                  selected
+                                    ? 'border-[#0f6cbd] bg-[#e8f2fc]'
+                                    : 'border-[#e1dfdd] bg-white hover:bg-[#f7f7f7]'
                                 }`}
                               >
-                                <td className="px-3 py-2">{file.name}</td>
-                                <td className="px-3 py-2">{file.lastModifiedDateTime ? new Date(file.lastModifiedDateTime).toLocaleString() : '-'}</td>
-                                <td className="px-3 py-2">{fallbackTypeLabel(file)}</td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
+                                <div className="relative mb-2 h-24 overflow-hidden rounded-md bg-[#f3f2f1]">
+                                  {file.previewUrl ? (
+                                    <>
+                                      <img
+                                        src={file.previewUrl}
+                                        alt={`${file.name} preview`}
+                                        className="h-full w-full object-cover object-top [transform:scale(1.1)] [transform-origin:top_center]"
+                                      />
+                                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/35 to-transparent px-1 py-0.5">
+                                        <span className="text-[9px] font-medium text-white/95">CAUTIE</span>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">
+                                      No preview
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="truncate text-xs font-medium">{file.name}</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {fallbackTypeLabel(file)} • {file.lastModifiedDateTime ? new Date(file.lastModifiedDateTime).toLocaleDateString() : '-'}
+                                </p>
+                              </button>
+                            );
+                          })}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -831,6 +850,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                               name: file.name,
                               webUrl: file.webUrl,
                               mimeType: file.mimeType,
+                              previewUrl: file.previewUrl,
                               extractedText: '',
                               extractionStatus: 'pending',
                             })),
@@ -842,6 +862,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                           name: file.name,
                           webUrl: file.webUrl,
                           mimeType: file.mimeType,
+                          previewUrl: file.previewUrl,
                         })));
                         setPickerStatus('Ready to use in Cautie');
                         toast({ title: 'Files imported', description: `${files.length} file${files.length === 1 ? '' : 's'} added as context.` });
