@@ -13,6 +13,8 @@ type MicrosoftStatus = {
 
 type MicrosoftAppStripProps = {
   returnTo: string;
+  autoOpen?: boolean;
+  hideLauncher?: boolean;
 };
 
 type PickerBootstrapResponse = {
@@ -142,7 +144,7 @@ function fallbackTypeLabel(item: GraphListItem) {
   return 'File';
 }
 
-export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
+export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = false }: MicrosoftAppStripProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -608,6 +610,12 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
   }, [activeFilter, closePicker, loadFallbackFiles, persistSelection, safeReturnTo, status.connected, toast]);
 
   useEffect(() => {
+    if (!autoOpen) return;
+    if (pickerOpen || opening) return;
+    void openEmbeddedPicker();
+  }, [autoOpen, openEmbeddedPicker, opening, pickerOpen]);
+
+  useEffect(() => {
     if (!openAfterConnect) return;
     if (!status.connected) return;
     setOpenAfterConnect(false);
@@ -641,24 +649,26 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
 
   return (
     <div className="flex h-full flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => void openEmbeddedPicker()}
-          disabled={opening}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-[#d1d1d1] bg-white p-0 transition-colors hover:bg-[#f6f6f6] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          title="OneDrive"
-        >
-          {opening ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-6 w-6 object-contain" />
-          )}
-        </button>
-      </div>
+      {!hideLauncher && (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void openEmbeddedPicker()}
+            disabled={opening}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#d1d1d1] bg-white p-0 transition-colors hover:bg-[#f6f6f6] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            title="OneDrive"
+          >
+            {opening ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-5 w-5 object-contain" />
+            )}
+          </button>
+        </div>
+      )}
 
       {pickerOpen && (
-        <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-lg border border-[#d9d9d9] bg-[#f3f2f1]">
+        <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-lg border border-[#d9d9d9] bg-[#f3f2f1]">
           <div className="flex items-center justify-between border-b border-[#e1dfdd] bg-white px-3 py-2">
             <div className="flex items-center gap-2">
               <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-4 w-4 object-contain" />

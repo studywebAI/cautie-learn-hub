@@ -13,9 +13,10 @@ type WorkbenchShellProps = {
   children: ReactNode;
   sidebar: ReactNode;
   topAccessory?: ReactNode;
+  hideSidebar?: boolean;
 };
 
-export function WorkbenchShell({ title, description, children, sidebar, topAccessory }: WorkbenchShellProps) {
+export function WorkbenchShell({ title, description, children, sidebar, topAccessory, hideSidebar = false }: WorkbenchShellProps) {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -31,7 +32,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
                 <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
               )}
             </div>
-            {isMobile && (
+            {isMobile && !hideSidebar && (
               <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => setSidebarOpen(true)}>
                 <Settings2 className="h-4 w-4" />
               </Button>
@@ -44,35 +45,36 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
         </div>
 
         {/* Settings sidebar — desktop: always visible, mobile: slide-over */}
-        {isMobile ? (
-          <>
-            {sidebarOpen && (
-              <div className="fixed inset-0 bg-background/80 z-40" onClick={() => setSidebarOpen(false)} />
-            )}
-            <div className={cn(
-              "fixed right-0 top-0 z-50 h-full w-[88vw] max-w-[320px] border-l border-sidebar-border bg-sidebar transition-transform duration-200",
-              sidebarOpen ? "translate-x-0" : "translate-x-full"
-            )}>
-              <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Settings</p>
-                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setSidebarOpen(false)}>Done</Button>
-              </div>
-              <ScrollArea className="h-[calc(100%-44px)]">
-                <div className="p-4 space-y-5">
-                  {sidebar}
+        {!hideSidebar &&
+          (isMobile ? (
+            <>
+              {sidebarOpen && (
+                <div className="fixed inset-0 bg-background/80 z-40" onClick={() => setSidebarOpen(false)} />
+              )}
+              <div
+                className={cn(
+                  "fixed right-0 top-0 z-50 h-full w-[88vw] max-w-[320px] border-l border-sidebar-border bg-sidebar transition-transform duration-200",
+                  sidebarOpen ? "translate-x-0" : "translate-x-full"
+                )}
+              >
+                <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Settings</p>
+                  <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setSidebarOpen(false)}>
+                    Done
+                  </Button>
                 </div>
+                <ScrollArea className="h-[calc(100%-44px)]">
+                  <div className="p-4 space-y-5">{sidebar}</div>
+                </ScrollArea>
+              </div>
+            </>
+          ) : (
+            <div className="w-[280px] shrink-0 border-l border-sidebar-border bg-sidebar">
+              <ScrollArea className="h-full">
+                <div className="p-4 space-y-5">{sidebar}</div>
               </ScrollArea>
             </div>
-          </>
-        ) : (
-          <div className="w-[280px] shrink-0 border-l border-sidebar-border bg-sidebar">
-            <ScrollArea className="h-full">
-              <div className="p-4 space-y-5">
-                {sidebar}
-              </div>
-            </ScrollArea>
-          </div>
-        )}
+          ))}
       </div>
     </div>
   );

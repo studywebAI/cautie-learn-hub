@@ -2,11 +2,10 @@
 
 import React, { Suspense, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Loader2, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { ChevronDown, FileUp, Loader2, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
-import { SourceInput } from '@/components/tools/source-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +13,6 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { PresentationPlanResult, PresentationUiConfig, PreviewManifest, SourceAnalysis } from '@/lib/presentation/types';
 import { AdaptiveSettingsSidebar } from '@/components/presentation/adaptive-settings-sidebar';
-import { SourceAnalysisCard } from '@/components/presentation/source-analysis-card';
 import { PresentationPreview } from '@/components/presentation/presentation-preview';
 import { SlideshowView } from '@/components/presentation/slideshow-view';
 import { ActionBar } from '@/components/presentation/action-bar';
@@ -22,6 +20,7 @@ import { OneDriveExportFolderPicker } from '@/components/presentation/onedrive-e
 
 type PresentationPlatform = 'powerpoint' | 'google-slides' | 'keynote';
 type WorkflowStage = 'upload' | 'subjects' | 'style' | 'building' | 'result';
+type SlideSetupItem = { title: string; subject: string };
 
 type PresentationSlide = {
   id: string;
@@ -106,30 +105,35 @@ function StageProgress({ stage }: { stage: WorkflowStage }) {
   const steps: WorkflowStage[] = ['upload', 'subjects', 'style', 'result'];
   const currentIndex = stage === 'building' ? 2 : Math.max(0, steps.indexOf(stage));
   return (
-    <div className="rounded-xl border border-border/70 bg-card/80 p-3">
-      <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-        <p>Presentation builder</p>
-        <p>{stage === 'building' ? 'Building...' : steps[currentIndex]}</p>
+    <div className="rounded-2xl border border-border/70 bg-card/90 p-4">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <p>Presentation flow</p>
+        <p>{stage === 'building' ? 'building' : steps[currentIndex]}</p>
       </div>
-      <div className="mb-2 h-2 overflow-hidden rounded-full bg-muted">
-        <div
-          className={`h-full rounded-full bg-foreground transition-all duration-500 ${
-            stage === 'building' ? 'animate-pulse' : ''
-          }`}
-          style={{ width: `${((currentIndex + 1) / steps.length) * 100}%` }}
-        />
-      </div>
-      {stage !== 'result' && (
-        <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-muted/80">
-          <div className="h-full w-1/3 animate-pulse rounded-full bg-foreground/80" />
-        </div>
-      )}
-      <div className="flex flex-wrap gap-1.5 text-[11px]">
-        {steps.map((item, idx) => (
-          <Badge key={item} variant={idx <= currentIndex ? 'secondary' : 'outline'}>
-            {item}
-          </Badge>
-        ))}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {steps.map((item, idx) => {
+          const active = idx <= currentIndex;
+          const current = idx === currentIndex;
+          return (
+            <React.Fragment key={item}>
+              <button
+                type="button"
+                className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                  current
+                    ? 'bg-foreground text-background'
+                    : active
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {item}
+              </button>
+              {idx < steps.length - 1 && (
+                <div className={`h-[2px] w-8 rounded-full transition-colors ${active ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
+              )}
+            </React.Fragment>
+          );
+        })}
       </div>
     </div>
   );
@@ -173,7 +177,9 @@ function PresentationPageContent() {
     layoutStyle: 'mixed',
   });
 
-  const [slideSubjects, setSlideSubjects] = useState<string[]>(defaultSubjectSeed(8));
+  const [slideSetup, setSlideSetup] = useState<SlideSetupItem[]>(
+    defaultSubjectSeed(8).map((subject, idx) => ({ title: `Slide ${idx + 1}`, subject }))
+  );
   const [presetTitle, setPresetTitle] = useState('My preset');
   const [themePreset, setThemePreset] = useState<(typeof THEME_PRESETS)[number]['id']>('clean-classic');
   const [fontPreset, setFontPreset] = useState<(typeof FONT_PRESETS)[number]['id']>('modern-sans');
@@ -188,15 +194,18 @@ function PresentationPageContent() {
   const [isExportingCloud, setIsExportingCloud] = useState(false);
   const [activeShareToken, setActiveShareToken] = useState<string | null>(null);
   const [activeShareUrl, setActiveShareUrl] = useState<string | null>(null);
+  const [connectMenuOpen, setConnectMenuOpen] = useState(false);
+  const [connectMicrosoftOpen, setConnectMicrosoftOpen] = useState(false);
   const [onedriveExportFolder, setOnedriveExportFolder] = useState<{
     folderId: string;
     folderName: string;
     driveId?: string;
   } | null>(null);
   const { toast } = useToast();
+  const uploadInputRef = React.useRef<HTMLInputElement | null>(null);
   const allSubjectsNamed = useMemo(
-    () => slideSubjects.every((subject) => subject.trim().length > 0),
-    [slideSubjects]
+    () => slideSetup.every((item) => item.title.trim().length > 0 && item.subject.trim().length > 0),
+    [slideSetup]
   );
 
   const persistWorkflowSnapshot = useCallback(
@@ -218,7 +227,7 @@ function PresentationPageContent() {
       if (!projectId) return;
       const body = {
         stage: overrides?.stage ?? stage,
-        slideSubjects: overrides?.slideSubjects ?? slideSubjects,
+        slideSubjects: overrides?.slideSubjects ?? slideSetup.map((item) => `${item.title}: ${item.subject}`),
         setupPreset: overrides?.setupPreset ?? {
           title: presetTitle.trim() || 'Custom preset',
           themePreset,
@@ -240,7 +249,7 @@ function PresentationPageContent() {
     [
       projectId,
       stage,
-      slideSubjects,
+      slideSetup,
       presetTitle,
       themePreset,
       fontPreset,
@@ -265,12 +274,62 @@ function PresentationPageContent() {
     setUiConfig((prev) => ({ ...prev, ...patch }));
   }, []);
 
+  const appendSourceChunk = useCallback((chunk: string) => {
+    const normalized = chunk.trim();
+    if (!normalized) return;
+    setSourceText((prev) => (prev.trim() ? `${prev.trim()}\n\n${normalized}` : normalized));
+  }, []);
+
+  const importRecentSources = useCallback(async () => {
+    try {
+      const response = await fetch('/api/integrations/context-sources?provider=microsoft&selected=1', { cache: 'no-store' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(String(payload?.error || 'Could not import recent files'));
+      const items = Array.isArray(payload?.items) ? payload.items : [];
+      const chunks = items
+        .map((item: any) => String(item?.extracted_text || '').trim())
+        .filter(Boolean);
+      if (chunks.length === 0) {
+        toast({ variant: 'destructive', title: 'No recent files ready', description: 'Select files with Connect first.' });
+        return;
+      }
+      appendSourceChunk(chunks.join('\n\n'));
+      toast({ title: 'Imported recents', description: `${chunks.length} file(s) merged into source.` });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Import failed', description: error?.message || 'Try again.' });
+    }
+  }, [appendSourceChunk, toast]);
+
+  const onUploadFiles = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const collected: string[] = [];
+    for (const file of Array.from(files)) {
+      const textLike = file.type.startsWith('text/') || /\.(txt|md|csv|json|xml|html)$/i.test(file.name);
+      if (textLike) {
+        const text = await file.text().catch(() => '');
+        if (text.trim()) {
+          collected.push(`[${file.name}]\n${text.trim()}`);
+          continue;
+        }
+      }
+      collected.push(`[${file.name}]\nUploaded file included as source.`);
+    }
+    appendSourceChunk(collected.join('\n\n'));
+    if (uploadInputRef.current) uploadInputRef.current.value = '';
+  }, [appendSourceChunk]);
+
   useEffect(() => {
     const target = Math.max(4, Math.min(20, uiConfig.slideCount || 10));
-    setSlideSubjects((prev) => {
+    setSlideSetup((prev) => {
       if (prev.length === target) return prev;
       if (prev.length > target) return prev.slice(0, target);
-      return [...prev, ...Array.from({ length: target - prev.length }, (_, i) => `Subject ${prev.length + i + 1}`)];
+      return [
+        ...prev,
+        ...Array.from({ length: target - prev.length }, (_, i) => ({
+          title: `Slide ${prev.length + i + 1}`,
+          subject: `Subject ${prev.length + i + 1}`,
+        })),
+      ];
     });
   }, [uiConfig.slideCount]);
 
@@ -295,7 +354,22 @@ function PresentationPageContent() {
           setUiConfig((prev) => ({ ...prev, ...(project.ui_config || {}) }));
         }
         if (Array.isArray(workflow.slideSubjects) && workflow.slideSubjects.length > 0) {
-          setSlideSubjects(workflow.slideSubjects.map((item: any, idx: number) => normalizeSubject(String(item || ''), idx)));
+          setSlideSetup(
+            workflow.slideSubjects.map((item: any, idx: number) => {
+              const raw = String(item || '');
+              const split = raw.split(':');
+              if (split.length >= 2) {
+                return {
+                  title: normalizeSubject(split.shift() || `Slide ${idx + 1}`, idx),
+                  subject: normalizeSubject(split.join(':') || `Subject ${idx + 1}`, idx),
+                };
+              }
+              return {
+                title: `Slide ${idx + 1}`,
+                subject: normalizeSubject(raw, idx),
+              };
+            })
+          );
         }
         if (workflow.setupPreset && typeof workflow.setupPreset === 'object') {
           const preset = workflow.setupPreset;
@@ -326,6 +400,25 @@ function PresentationPageContent() {
   }, [projectIdFromParams]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onPicked = (event: Event) => {
+      const custom = event as CustomEvent<any>;
+      const items = Array.isArray(custom?.detail?.items) ? custom.detail.items : [];
+      const chunks = items
+        .map((item: any) => String(item?.extractedText || '').trim())
+        .filter(Boolean);
+      if (chunks.length > 0) {
+        appendSourceChunk(chunks.join('\n\n'));
+        toast({ title: 'Microsoft files imported', description: `${chunks.length} file(s) added to source.` });
+      }
+      setConnectMicrosoftOpen(false);
+      setConnectMenuOpen(false);
+    };
+    window.addEventListener('integration-source-picked', onPicked as EventListener);
+    return () => window.removeEventListener('integration-source-picked', onPicked as EventListener);
+  }, [appendSourceChunk, toast]);
+
+  useEffect(() => {
     if (!projectId) return;
     const handle = window.setTimeout(() => {
       void persistWorkflowSnapshot();
@@ -334,7 +427,7 @@ function PresentationPageContent() {
   }, [
     projectId,
     stage,
-    slideSubjects,
+    slideSetup,
     presetTitle,
     themePreset,
     fontPreset,
@@ -364,7 +457,7 @@ function PresentationPageContent() {
           uiConfig: { ...uiConfig, platform },
           workflowState: {
             stage,
-            slideSubjects,
+            slideSubjects: slideSetup.map((item) => `${item.title}: ${item.subject}`),
             setupPreset: {
               title: presetTitle.trim() || 'Custom preset',
               themePreset,
@@ -419,7 +512,7 @@ function PresentationPageContent() {
     platform,
     presetTitle,
     projectId,
-    slideSubjects,
+    slideSetup,
     sourceText,
     stage,
     themePreset,
@@ -435,7 +528,7 @@ function PresentationPageContent() {
         prompt: sourceText,
         autoMode,
         uiConfig: { ...uiConfig, platform },
-        slideSubjects: slideSubjects.map((item) => item.trim()).filter(Boolean),
+        slideSubjects: slideSetup.map((item) => `${item.title}: ${item.subject}`).filter(Boolean),
       }),
     });
     const payload = await response.json().catch(() => ({}));
@@ -448,15 +541,16 @@ function PresentationPageContent() {
       setAnalysis(nextPlan.analysis || null);
       setUiConfig((prev) => ({ ...prev, ...nextPlan.effectiveConfig }));
       if (Array.isArray(nextPlan.slidePlan) && nextPlan.slidePlan.length > 0) {
-        setSlideSubjects(
-          nextPlan.slidePlan.map((item, idx) =>
-            normalizeSubject(item.objective?.replace(/^Explain\s*/i, '').replace(/\.$/, ''), idx)
-          )
+        setSlideSetup(
+          nextPlan.slidePlan.map((item, idx) => ({
+            title: `Slide ${idx + 1}`,
+            subject: normalizeSubject(item.objective?.replace(/^Explain\s*/i, '').replace(/\.$/, ''), idx),
+          }))
         );
       }
     }
     return pid;
-  }, [autoMode, ensureProjectAndSources, platform, slideSubjects, sourceText, uiConfig]);
+  }, [autoMode, ensureProjectAndSources, platform, slideSetup, sourceText, uiConfig]);
 
   const continueToSubjects = useCallback(async () => {
     if (!sourceText.trim()) {
@@ -510,7 +604,7 @@ function PresentationPageContent() {
             layoutStyle: layoutPreset === 'visual-first' ? 'visual_first' : layoutPreset === 'text-first' ? 'text_first' : 'mixed',
             captionStyle: bulletPreset === 'concise' ? 'short' : bulletPreset === 'expanded' ? 'detailed' : 'balanced',
           },
-          slideSubjects: slideSubjects.map((s, i) => normalizeSubject(s, i)),
+          slideSubjects: slideSetup.map((item, i) => `${normalizeSubject(item.title, i)}: ${normalizeSubject(item.subject, i)}`),
           setupPreset: {
             title: presetTitle.trim() || 'Custom preset',
             themePreset,
@@ -551,7 +645,7 @@ function PresentationPageContent() {
     layoutPreset,
     platform,
     presetTitle,
-    slideSubjects,
+    slideSetup,
     sourceText,
     themePreset,
     toast,
@@ -694,96 +788,7 @@ function PresentationPageContent() {
     return () => window.removeEventListener('keydown', onKey);
   }, [isSlideshow, prototype]);
 
-  const sidebar =
-    stage === 'style' ? (
-      <AdaptiveSettingsSidebar
-        analysis={analysis}
-        autoMode={autoMode}
-        onAutoModeChange={setAutoMode}
-        customTitle={customTitle}
-        onTitleChange={setCustomTitle}
-        platform={platform}
-        onPlatformChange={setPlatform}
-        uiConfig={uiConfig}
-        onPatch={applyConfig}
-        controlTiers={plan?.relevanceRankedControls || null}
-        disabled={isPlanning || isBuilding}
-      />
-    ) : stage === 'subjects' ? (
-      <div className="space-y-3">
-        <Card className="border border-sidebar-border/60 bg-sidebar-accent/35">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Slide Setup</CardTitle>
-            <CardDescription>Define title/subject for each slide in order.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-1.5 text-xs">
-            <p>Slides: {slideSubjects.length}</p>
-            <p>Filled: {slideSubjects.filter((s) => s.trim().length > 0).length}</p>
-            <p>{allSubjectsNamed ? 'All subjects ready' : 'Complete every subject before style stage'}</p>
-          </CardContent>
-        </Card>
-        <Card className="border border-sidebar-border/50 bg-sidebar-accent/25">
-          <CardContent className="py-3 text-xs text-muted-foreground">
-            Focus mode: only slide sequencing is active in this step.
-          </CardContent>
-        </Card>
-      </div>
-    ) : stage === 'upload' ? (
-      <div className="space-y-3">
-        <div className="space-y-1.5">
-          <p className="text-xs text-muted-foreground">Title</p>
-          <input
-            type="text"
-            value={customTitle}
-            onChange={(e) => setCustomTitle(e.target.value)}
-            placeholder="e.g. Biology Chapter 3"
-            className="h-8 w-full rounded-md border border-sidebar-border bg-sidebar-accent/70 px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-            disabled={isPlanning || isBuilding}
-          />
-        </div>
-        <Card className="border border-sidebar-border/60 bg-sidebar-accent/35">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Step 1: Upload Sources</CardTitle>
-            <CardDescription>Upload/paste all source material first.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-xs">
-            <p>Next step unlocks only after source input.</p>
-            <p>Platform for final export is selected here.</p>
-          </CardContent>
-        </Card>
-        <div className="space-y-1.5">
-          <p className="text-xs text-muted-foreground">Platform</p>
-          <div className="flex flex-wrap gap-1.5">
-            {(['powerpoint', 'google-slides', 'keynote'] as const).map((item) => (
-              <Button
-                key={item}
-                type="button"
-                size="sm"
-                variant={platform === item ? 'default' : 'outline'}
-                onClick={() => setPlatform(item)}
-                disabled={isPlanning || isBuilding}
-              >
-                {item === 'powerpoint' ? 'PowerPoint' : item === 'google-slides' ? 'Google Slides' : 'Keynote'}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div>
-    ) : (
-      <div className="space-y-3">
-        <Card className="border border-sidebar-border/60 bg-sidebar-accent/35">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Result</CardTitle>
-            <CardDescription>Preview and export your presentation.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-1.5 text-xs">
-            <p>Slides: {prototype?.slideCount || slideSubjects.length}</p>
-            <p>Platform: {platform}</p>
-            <p>Subjects locked into generation plan.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  const sidebar = <></>;
 
   const previewMeta = useMemo(() => {
     if (!prototype) return null;
@@ -797,7 +802,7 @@ function PresentationPageContent() {
   }, [platform]);
 
   return (
-    <WorkbenchShell title="Presentation" description="Upload > slide setup > style presets > generate." sidebar={sidebar}>
+    <WorkbenchShell title="Presentation" description="Upload > slide setup > style presets > generate." sidebar={sidebar} hideSidebar>
       <div className="relative flex h-full flex-col gap-4">
         {(isPlanning || isBuilding) && (
           <div className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-background/70 backdrop-blur-[1px]">
@@ -845,103 +850,178 @@ function PresentationPageContent() {
         )}
 
         {stage === 'upload' && (
-          <SourceInput
-            toolId="presentation"
-            value={sourceText}
-            onChange={setSourceText}
-            onSubmit={() => void continueToSubjects()}
-            placeholder="Upload or paste all source material: files, notes, links, screenshots, media..."
-            topContent={<MicrosoftAppStrip returnTo="/tools/presentation" />}
-            speechLanguage={language}
-            enableMic={false}
-            enableCaptions={false}
-            sourceMergeMode="append_labeled"
-            submitLabel="Continue to slide setup"
-          />
+          <div className="flex min-h-[68vh] flex-col gap-4">
+            <input
+              ref={uploadInputRef}
+              type="file"
+              className="hidden"
+              multiple
+              onChange={(event) => void onUploadFiles(event.target.files)}
+            />
+
+            <Card className="border border-border/60">
+              <CardContent className="pt-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  {(['upload', 'sources', 'connect', 'import', 'plan'] as const).map((node, idx, arr) => (
+                    <React.Fragment key={node}>
+                      <button
+                        type="button"
+                        className="rounded-full border border-border/60 bg-background px-3 py-1 text-xs transition-colors hover:bg-emerald-50 hover:text-emerald-700"
+                      >
+                        {node}
+                      </button>
+                      {idx < arr.length - 1 && <div className="h-[2px] w-8 rounded-full bg-muted-foreground/40 transition-colors hover:bg-emerald-500" />}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="mt-auto rounded-2xl border border-border/60 bg-card/90 p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button size="sm" className="h-8 px-3 text-xs" onClick={() => void continueToSubjects()} disabled={!sourceText.trim() || isPlanning || isBuilding}>
+                    <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                    Generate
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
+                    <Upload className="mr-1.5 h-3.5 w-3.5" />
+                    Upload
+                  </Button>
+                  <div className="relative">
+                    <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => setConnectMenuOpen((prev) => !prev)}>
+                      Connect
+                      <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
+                    </Button>
+                    {connectMenuOpen && (
+                      <div className="absolute left-0 top-9 z-20 w-44 rounded-md border border-border bg-card p-1 shadow-md">
+                        <button
+                          type="button"
+                          className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-muted"
+                          onClick={() => {
+                            setConnectMicrosoftOpen(true);
+                            setConnectMenuOpen(false);
+                          }}
+                        >
+                          Microsoft
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => void importRecentSources()}>
+                    Import
+                  </Button>
+                </div>
+                <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
+                  <FileUp className="mr-1.5 h-3.5 w-3.5" />
+                  Upload
+                </Button>
+              </div>
+              <textarea
+                value={sourceText}
+                onChange={(event) => setSourceText(event.target.value)}
+                placeholder="Upload or paste source material here..."
+                className="h-28 w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
+
+            {connectMicrosoftOpen && (
+              <Card className="border border-border/60">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Microsoft Connect</CardTitle>
+                  <CardDescription>Choose files to import into source.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <MicrosoftAppStrip returnTo="/tools/presentation" autoOpen hideLauncher />
+                  <div className="flex justify-end">
+                    <Button size="sm" variant="outline" onClick={() => setConnectMicrosoftOpen(false)}>
+                      Close
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         )}
 
         {stage === 'subjects' && (
           <Card className="border border-border/70">
-            <CardHeader>
-              <CardTitle className="text-base">Slide setup</CardTitle>
-              <CardDescription>
-                Define subject/title per slide. Press Enter to jump to the next slide input.
-              </CardDescription>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <Button variant="outline" size="sm" onClick={() => goToStage('upload')}>
+                  Back
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSlideSetup((prev) => [...prev, { title: `Slide ${prev.length + 1}`, subject: '' }])}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add slide
+                  </Button>
+                  <Button size="sm" onClick={() => goToStage('style')} disabled={!allSubjectsNamed}>
+                    Next
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 lg:grid-cols-[230px_minmax(0,1fr)]">
+            <CardContent className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
               <div className="max-h-[560px] overflow-auto rounded-xl border border-border/60 bg-muted/35 p-2">
-                {slideSubjects.map((subject, idx) => (
+                {slideSetup.map((slide, idx) => (
                   <button
                     key={`subject-${idx}`}
                     type="button"
                     onClick={() => setActiveSubjectIndex(idx)}
-                    className={`mb-2 w-full rounded-lg border p-2 text-left ${
-                      idx === activeSubjectIndex ? 'border-foreground/50 bg-background' : 'border-border/50 bg-card/70 hover:bg-background/70'
+                    className={`mb-2 w-full rounded-lg border p-2 text-left transition ${
+                      idx === activeSubjectIndex ? 'scale-[1.02] border-foreground/50 bg-background' : 'border-border/50 bg-card/70 hover:bg-background/70'
                     }`}
                   >
                     <p className="text-[11px] text-muted-foreground">Slide {idx + 1}</p>
-                    <p className="truncate text-xs font-medium">{normalizeSubject(subject, idx)}</p>
+                    <p className="truncate text-xs font-medium">{normalizeSubject(slide.title, idx)}</p>
                   </button>
                 ))}
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() =>
-                    setSlideSubjects((prev) => [...prev, `Subject ${prev.length + 1}`])
-                  }
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add slide
-                </Button>
               </div>
 
-              <div className="space-y-4 rounded-xl border border-border/60 bg-card/70 p-4">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Slide {activeSubjectIndex + 1} subject</p>
-                  <Input
-                    value={slideSubjects[activeSubjectIndex] || ''}
-                    onChange={(e) =>
-                      setSlideSubjects((prev) => prev.map((item, idx) => (idx === activeSubjectIndex ? e.target.value : item)))
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key !== 'Enter') return;
-                      if (activeSubjectIndex < slideSubjects.length - 1) {
-                        setActiveSubjectIndex((prev) => prev + 1);
-                      } else {
-                        if (!slideSubjects.every((subject) => subject.trim().length > 0)) {
-                          toast({
-                            variant: 'destructive',
-                            title: 'Fill in all slide subjects',
-                            description: 'Each slide needs a subject/title before continuing.',
-                          });
-                          return;
-                        }
-                        goToStage('style');
-                      }
-                    }}
-                    placeholder="Type the specific topic for this slide..."
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => goToStage('upload')}>
-                    Back
-                  </Button>
+              <div className="rounded-xl border border-border/60 bg-card/70 p-5 transition-all duration-300">
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-sm font-medium">Slide {activeSubjectIndex + 1}</p>
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => {
-                      setSlideSubjects((prev) => prev.filter((_, idx) => idx !== activeSubjectIndex));
-                      setActiveSubjectIndex((prev) => Math.max(0, Math.min(prev, slideSubjects.length - 2)));
+                      setSlideSetup((prev) => prev.filter((_, idx) => idx !== activeSubjectIndex));
+                      setActiveSubjectIndex((prev) => Math.max(0, Math.min(prev, slideSetup.length - 2)));
                     }}
-                    disabled={slideSubjects.length <= 1}
+                    disabled={slideSetup.length <= 1}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Remove current slide
+                    Remove
                   </Button>
-                  <Button onClick={() => goToStage('style')} disabled={!allSubjectsNamed}>
-                    Continue to style setup
-                  </Button>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <p className="mb-1 text-xs text-muted-foreground">Title</p>
+                    <Input
+                      value={slideSetup[activeSubjectIndex]?.title || ''}
+                      onChange={(e) =>
+                        setSlideSetup((prev) => prev.map((item, idx) => (idx === activeSubjectIndex ? { ...item, title: e.target.value } : item)))
+                      }
+                      placeholder="Slide title"
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs text-muted-foreground">Subject explanation</p>
+                    <textarea
+                      value={slideSetup[activeSubjectIndex]?.subject || ''}
+                      onChange={(e) =>
+                        setSlideSetup((prev) => prev.map((item, idx) => (idx === activeSubjectIndex ? { ...item, subject: e.target.value } : item)))
+                      }
+                      placeholder="Explain the subject of this slide..."
+                      className="h-28 w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -949,7 +1029,27 @@ function PresentationPageContent() {
         )}
 
         {stage === 'style' && (
-          <div className="space-y-4">
+          <div className="space-y-4 transition-all duration-300">
+            <div className="flex items-center justify-between">
+              <Button variant="outline" onClick={() => goToStage('subjects')}>
+                Back
+              </Button>
+              <div className="flex items-center gap-2">
+                <Input value={customTitle} onChange={(e) => setCustomTitle(e.target.value)} placeholder="Presentation title" className="h-8 w-64" />
+                <div className="flex gap-1">
+                  {(['powerpoint', 'google-slides', 'keynote'] as const).map((item) => (
+                    <Button
+                      key={item}
+                      size="sm"
+                      variant={platform === item ? 'default' : 'outline'}
+                      onClick={() => setPlatform(item)}
+                    >
+                      {item === 'powerpoint' ? 'PowerPoint' : item === 'google-slides' ? 'Google Slides' : 'Keynote'}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <Card className="border border-border/70">
                 <CardHeader>
@@ -1023,12 +1123,29 @@ function PresentationPageContent() {
               </Card>
             </div>
 
-            {analysis && <SourceAnalysisCard analysis={analysis} />}
+            <Card className="border border-border/70">
+              <CardHeader>
+                <CardTitle className="text-base">Detailed settings</CardTitle>
+                <CardDescription>All platform and layout controls for this deck.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdaptiveSettingsSidebar
+                  analysis={analysis}
+                  autoMode={autoMode}
+                  onAutoModeChange={setAutoMode}
+                  customTitle={customTitle}
+                  onTitleChange={setCustomTitle}
+                  platform={platform}
+                  onPlatformChange={setPlatform}
+                  uiConfig={uiConfig}
+                  onPatch={applyConfig}
+                  controlTiers={plan?.relevanceRankedControls || null}
+                  disabled={isPlanning || isBuilding}
+                />
+              </CardContent>
+            </Card>
 
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => goToStage('subjects')}>
-                Back to slide setup
-              </Button>
               <Button onClick={() => void buildPresentation()}>
                 <Sparkles className="mr-2 h-4 w-4" />
                 Generate presentation
