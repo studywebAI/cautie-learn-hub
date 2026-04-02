@@ -101,44 +101,6 @@ function defaultSubjectSeed(count: number) {
   return Array.from({ length: Math.max(4, Math.min(12, count || 8)) }, (_, i) => `Subject ${i + 1}`);
 }
 
-function StageProgress({ stage }: { stage: WorkflowStage }) {
-  const steps: WorkflowStage[] = ['upload', 'subjects', 'style', 'result'];
-  const currentIndex = stage === 'building' ? 2 : Math.max(0, steps.indexOf(stage));
-  return (
-    <div className="rounded-2xl border border-border/70 bg-card/90 p-4">
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <p>Presentation flow</p>
-        <p>{stage === 'building' ? 'building' : steps[currentIndex]}</p>
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {steps.map((item, idx) => {
-          const active = idx <= currentIndex;
-          const current = idx === currentIndex;
-          return (
-            <React.Fragment key={item}>
-              <button
-                type="button"
-                className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                  current
-                    ? 'bg-foreground text-background'
-                    : active
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {item}
-              </button>
-              {idx < steps.length - 1 && (
-                <div className={`h-[2px] w-8 rounded-full transition-colors ${active ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
-              )}
-            </React.Fragment>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function PresentationPageContent() {
   const searchParams = useSearchParams();
   const projectIdFromParams = searchParams.get('projectId');
@@ -802,15 +764,13 @@ function PresentationPageContent() {
   }, [platform]);
 
   return (
-    <WorkbenchShell title="Presentation" description="Upload > slide setup > style presets > generate." sidebar={sidebar} hideSidebar>
+    <WorkbenchShell title="Presentation" sidebar={sidebar} hideSidebar>
       <div className="relative flex h-full flex-col gap-4">
         {(isPlanning || isBuilding) && (
           <div className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-background/70 backdrop-blur-[1px]">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         )}
-
-        <StageProgress stage={stage} />
 
         {prototype && (
           <Card className="border border-border/70">
