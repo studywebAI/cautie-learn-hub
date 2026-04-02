@@ -18,6 +18,7 @@ const COMMANDS: CommandItem[] = [
   { id: 'quiz', label: 'Open Quiz Studio', href: '/tools/quiz', description: 'Generate and run quizzes' },
   { id: 'flashcards', label: 'Open Flashcards Studio', href: '/tools/flashcards', description: 'Build decks and study cards' },
   { id: 'notes', label: 'Open Notes Studio', href: '/tools/notes', description: 'Generate structured notes' },
+  { id: 'presentation', label: 'Open Presentation Studio', href: '/tools/presentation', description: 'Build slide deck prototypes' },
   { id: 'materials', label: 'Open Material Library', href: '/material', description: 'Browse and manage saved output' },
 ];
 

@@ -20,6 +20,7 @@ import {
   BrainCircuit,
   Copy,
   FileSignature,
+  MonitorPlay,
   Route,
   School,
   Calendar,
@@ -112,6 +113,7 @@ export function AppSidebar() {
     { href: '/tools/quiz', label: dictionary.sidebar.tools.quizGenerator, icon: BrainCircuit },
     { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: Copy },
     { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: FileSignature },
+    { href: '/tools/presentation', label: (dictionary.sidebar.tools as any).presentation || 'Presentation', icon: MonitorPlay },
   ];
 
   useEffect(() => {
@@ -379,6 +381,7 @@ export function AppSidebar() {
         '/tools/quiz',
         '/tools/flashcards',
         '/tools/notes',
+        '/tools/presentation',
       ])
     ).slice(0, 10);
 

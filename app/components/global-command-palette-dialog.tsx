@@ -66,6 +66,7 @@ export function GlobalCommandPaletteDialog({ open, onOpenChange }: GlobalCommand
       { id: 'tool-quiz', label: 'quiz tool', href: '/tools/quiz', section: 'tools' },
       { id: 'tool-flashcards', label: 'flashcards tool', href: '/tools/flashcards', section: 'tools' },
       { id: 'tool-notes', label: 'notes tool', href: '/tools/notes', section: 'tools' },
+      { id: 'tool-presentation', label: 'presentation tool', href: '/tools/presentation', section: 'tools' },
     ];
 
     return [...core, ...classCommands, ...subjectCommands, ...tools];

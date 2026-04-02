@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BrainCircuit, Copy, FileSignature, Sparkles, Clock3, Wand2, Route, Link2 } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Copy, FileSignature, Sparkles, Clock3, Wand2, Route, Link2, MonitorPlay } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,12 +43,13 @@ const TOOL_LABELS: Record<string, string> = {
   quiz: 'Quiz',
   flashcards: 'Flashcards',
   notes: 'Notes',
+  presentation: 'Presentation',
 };
 
 function extractRecommendedTool(input: string) {
-  const marker = input.match(/\[TOOL_REC:(studyset|quiz|flashcards|notes)\]/i);
+  const marker = input.match(/\[TOOL_REC:(studyset|quiz|flashcards|notes|presentation)\]/i);
   if (marker?.[1]) return marker[1].toLowerCase();
-  const urlHint = input.match(/\/tools\/(studyset|quiz|flashcards|notes)\b/i);
+  const urlHint = input.match(/\/tools\/(studyset|quiz|flashcards|notes|presentation)\b/i);
   if (urlHint?.[1]) return urlHint[1].toLowerCase();
   return null;
 }
@@ -110,6 +111,13 @@ export default function ToolsPage() {
         description: dictionary.tools.material?.description || 'Generate structured study notes.',
         icon: FileSignature,
         href: '/tools/notes',
+      },
+      {
+        key: 'presentation',
+        title: (sidebarTools as any).presentation || 'Presentation',
+        description: 'Build a slide-deck prototype from your source material.',
+        icon: MonitorPlay,
+        href: '/tools/presentation',
       },
     ],
     [dictionary, sidebarTools]

@@ -48,6 +48,7 @@ export function AppHeader() {
       'quiz': 'Quiz',
       'flashcards': 'Flashcards',
       'notes': 'Notes',
+      'presentation': 'Presentation',
     };
     
     return segmentMap[lastSegment] || lastSegment?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Cautie';

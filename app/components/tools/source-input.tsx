@@ -27,7 +27,7 @@ interface SourceInputProps {
   onSubmit?: () => void;
   placeholder?: string;
   disabled?: boolean;
-  toolId?: 'notes' | 'quiz' | 'flashcards';
+  toolId?: 'notes' | 'quiz' | 'flashcards' | 'presentation';
   enableMic?: boolean;
   enableCaptions?: boolean;
   speechLanguage?: string;
