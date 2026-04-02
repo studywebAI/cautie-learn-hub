@@ -416,3 +416,26 @@ export async function extractMicrosoftFileText(input: {
     '[text][font 15] Content format is not directly readable as plain text in fallback mode.',
   ].join('\n');
 }
+
+export async function fetchMicrosoftFileThumbnail(input: {
+  accessToken: string;
+  fileId: string;
+}) {
+  const fileId = encodeURIComponent(input.fileId);
+  const response = await fetch(
+    `${MICROSOFT_GRAPH_BASE}/me/drive/items/${fileId}/thumbnails/0?$select=small,medium,large`,
+    {
+      headers: { Authorization: `Bearer ${input.accessToken}` },
+      cache: 'no-store',
+    }
+  );
+
+  if (!response.ok) return '';
+  const payload = await response.json().catch(() => ({}));
+  const candidate =
+    payload?.large?.url ||
+    payload?.medium?.url ||
+    payload?.small?.url ||
+    '';
+  return typeof candidate === 'string' ? candidate : '';
+}

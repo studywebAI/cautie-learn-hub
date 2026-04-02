@@ -40,6 +40,7 @@ type OneDrivePickedItem = {
   name: string;
   webUrl?: string;
   mimeType?: string;
+  previewUrl?: string;
   driveId?: string;
   parentId?: string;
   downloadUrl?: string;
@@ -93,10 +94,15 @@ function extractItems(input: any): OneDrivePickedItem[] {
     const name = String(raw?.name || 'Untitled');
     const mimeType = raw?.file?.mimeType || raw?.mimeType || raw?.type || undefined;
     const webUrl = raw?.webUrl || raw?.link || raw?.url || undefined;
+    const previewUrl =
+      raw?.thumbnails?.[0]?.large?.url ||
+      raw?.thumbnails?.[0]?.medium?.url ||
+      raw?.thumbnails?.[0]?.small?.url ||
+      undefined;
     const driveId = raw?.parentReference?.driveId || raw?.driveId || undefined;
     const parentId = raw?.parentReference?.id || raw?.parentId || undefined;
     const downloadUrl = raw?.['@microsoft.graph.downloadUrl'] || raw?.downloadUrl || undefined;
-    out.push({ id, name, mimeType, webUrl, driveId, parentId, downloadUrl });
+    out.push({ id, name, mimeType, webUrl, previewUrl, driveId, parentId, downloadUrl });
   }
   return out;
 }
@@ -247,7 +253,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
       }),
     }).catch(() => null);
     const extractJson = await extractRes?.json().catch(() => ({}));
-    const extractedMap = new Map<string, { extractedText?: string; mimeType?: string; webUrl?: string }>();
+    const extractedMap = new Map<string, { extractedText?: string; mimeType?: string; webUrl?: string; previewUrl?: string }>();
     const extractedItems = Array.isArray(extractJson?.items) ? extractJson.items : [];
     for (const extractedItem of extractedItems) {
       const id = String(extractedItem?.id || '');
@@ -256,6 +262,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         extractedText: typeof extractedItem?.extractedText === 'string' ? extractedItem.extractedText : '',
         mimeType: typeof extractedItem?.mimeType === 'string' ? extractedItem.mimeType : undefined,
         webUrl: typeof extractedItem?.webUrl === 'string' ? extractedItem.webUrl : undefined,
+        previewUrl: typeof extractedItem?.previewUrl === 'string' ? extractedItem.previewUrl : undefined,
       });
     }
     const enrichedItems = items.map((item) => {
@@ -266,6 +273,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
         mimeType: extracted?.mimeType || item.mimeType,
         webUrl: extracted?.webUrl || item.webUrl,
         extractedText,
+        previewUrl: extracted?.previewUrl || item.previewUrl,
         extractionStatus: extractedText.trim() ? 'ready' : 'error',
       };
     });

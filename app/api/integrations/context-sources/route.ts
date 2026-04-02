@@ -22,6 +22,7 @@ const ItemSchema = z.object({
   name: z.string().min(1),
   mimeType: z.string().optional(),
   webUrl: z.string().optional(),
+  previewUrl: z.string().optional(),
   driveId: z.string().optional(),
   parentId: z.string().optional(),
   downloadUrl: z.string().optional(),
@@ -139,6 +140,7 @@ export async function POST(request: NextRequest) {
           drive_id: item.driveId || null,
           parent_id: item.parentId || null,
           download_url: item.downloadUrl || null,
+          preview_url: item.previewUrl || null,
         },
       });
       sourceIds.push(source.id);

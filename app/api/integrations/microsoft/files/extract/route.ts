@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getIntegrationAppById, isEnabledIntegrationAppId } from '@/lib/integrations/catalog';
 import { createClient } from '@/lib/supabase/server';
 import { getValidMicrosoftAccessToken } from '@/lib/integrations/microsoft-store';
-import { extractMicrosoftFileText } from '@/lib/integrations/microsoft';
+import { extractMicrosoftFileText, fetchMicrosoftFileThumbnail } from '@/lib/integrations/microsoft';
 import { checkRateLimit } from '@/lib/security/request-guards';
 
 export const dynamic = 'force-dynamic';
@@ -56,13 +56,19 @@ export async function POST(request: NextRequest) {
 
     const extracted = await Promise.all(
       parsed.data.items.map(async (item) => {
-        const text = await extractMicrosoftFileText({
-          accessToken: tokenState.accessToken,
-          fileId: item.id,
-          kind: item.kind as 'word' | 'powerpoint' | 'excel' | 'onedrive',
-          fileName: item.name,
-          mimeType: item.mimeType,
-        }).catch(() => '');
+        const [text, previewUrl] = await Promise.all([
+          extractMicrosoftFileText({
+            accessToken: tokenState.accessToken,
+            fileId: item.id,
+            kind: item.kind as 'word' | 'powerpoint' | 'excel' | 'onedrive',
+            fileName: item.name,
+            mimeType: item.mimeType,
+          }).catch(() => ''),
+          fetchMicrosoftFileThumbnail({
+            accessToken: tokenState.accessToken,
+            fileId: item.id,
+          }).catch(() => ''),
+        ]);
         return {
           id: item.id,
           name: item.name,
@@ -70,6 +76,7 @@ export async function POST(request: NextRequest) {
           webUrl: item.webUrl || null,
           mimeType: item.mimeType || null,
           extractedText: text,
+          previewUrl: previewUrl || null,
         };
       })
     );

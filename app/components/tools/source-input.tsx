@@ -49,6 +49,7 @@ type SourceEntry = {
   error?: string;
   url?: string;
   urlKey?: string;
+  previewUrl?: string;
   extractionStatus?: string;
   loadingSince?: number;
 };
@@ -237,6 +238,7 @@ export function SourceInput({
       const name = String(item?.name || 'Untitled');
       const extracted = typeof item?.extracted_text === 'string' ? item.extracted_text.trim() : '';
       const webUrl = typeof item?.web_url === 'string' ? item.web_url : '';
+      const previewUrl = typeof item?.metadata?.preview_url === 'string' ? item.metadata.preview_url : undefined;
       const extractionStatus = typeof item?.extraction_status === 'string' ? item.extraction_status : undefined;
       const normalizedStatus = String(extractionStatus || '').toLowerCase();
       const isLoading = normalizedStatus === 'pending' || (normalizedStatus === '' && !extracted);
@@ -258,6 +260,7 @@ export function SourceInput({
         selected: true,
         loading: isLoading,
         error: hasError ? 'Could not extract text from this file yet.' : undefined,
+        previewUrl,
         extractionStatus: normalizedStatus || undefined,
       };
     });
@@ -341,6 +344,7 @@ export function SourceInput({
         const mimeType = typeof item?.mimeType === 'string' ? item.mimeType : undefined;
         const webUrl = typeof item?.webUrl === 'string' ? item.webUrl : undefined;
         const extractedText = typeof item?.extractedText === 'string' ? item.extractedText : '';
+        const previewUrl = typeof item?.previewUrl === 'string' ? item.previewUrl : undefined;
         const extractionStatus = typeof item?.extractionStatus === 'string' ? item.extractionStatus : undefined;
         const normalizedStatus = String(extractionStatus || '').toLowerCase();
         const isLoading = normalizedStatus === 'pending' || (normalizedStatus === '' && !extractedText.trim());
@@ -362,6 +366,7 @@ export function SourceInput({
           selected: true,
           loading: isLoading,
           error: hasError ? 'Could not extract text from this file yet.' : undefined,
+          previewUrl,
           extractionStatus: normalizedStatus || undefined,
           loadingSince: isLoading ? Date.now() : undefined,
         };
@@ -457,6 +462,7 @@ export function SourceInput({
           id: source.id,
           name: source.label || extractContextFileName(source.text),
           preview: source.text ? source.text.replace(/\s+/g, ' ').trim().slice(0, 180) : '',
+          previewUrl: source.previewUrl,
           loading: Boolean(source.loading),
           error: source.error,
           isRemote: source.id.startsWith('integration-') && !source.id.startsWith('integration-local-'),
@@ -1140,20 +1146,35 @@ export function SourceInput({
           {integrationFileCards.map((file) => (
             <div
               key={file.id}
-              className="h-[136px] w-[128px] sm:h-[142px] sm:w-[136px] md:h-[150px] md:w-[148px] rounded-xl border border-sidebar-border/80 bg-sidebar-accent/40 p-2"
+              className="group h-[146px] w-[132px] sm:h-[154px] sm:w-[142px] md:h-[164px] md:w-[154px] rounded-xl bg-sidebar-accent/35 p-2 shadow-sm transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-md"
             >
-              <div className="mb-1.5 h-[82px] sm:h-[86px] md:h-[90px] rounded-lg bg-sidebar-accent/70 p-1.5">
-                <div className="mb-1 flex items-center gap-1">
-                  {file.loading ? (
-                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                  ) : (
-                    <FileText className="h-3 w-3 text-muted-foreground" />
-                  )}
-                  <span className="text-[9px] text-muted-foreground">Preview</span>
-                </div>
-                <p className="max-h-[58px] overflow-hidden text-[9px] leading-snug text-muted-foreground">
-                  {file.loading ? 'Extracting text + first-page preview...' : (file.preview || 'No text preview available yet.')}
-                </p>
+              <div className="relative mb-1.5 h-[90px] sm:h-[96px] md:h-[104px] rounded-lg bg-sidebar-accent/75 overflow-hidden">
+                {file.previewUrl && !file.loading ? (
+                  <>
+                    <img
+                      src={file.previewUrl}
+                      alt={`${file.name} preview`}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent p-1">
+                      <p className="text-[9px] text-white/95 font-medium tracking-wide">CAUTIE PREVIEW</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-full w-full p-1.5">
+                    <div className="mb-1 flex items-center gap-1">
+                      {file.loading ? (
+                        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                      ) : (
+                        <FileText className="h-3 w-3 text-muted-foreground" />
+                      )}
+                      <span className="text-[9px] text-muted-foreground">Preview</span>
+                    </div>
+                    <p className="max-h-[58px] overflow-hidden text-[9px] leading-snug text-muted-foreground">
+                      {file.loading ? 'Extracting first-page screenshot...' : (file.preview || 'No preview image available yet.')}
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="flex items-start gap-1">
                 <div className="min-w-0 flex-1 space-y-0.5">
@@ -1164,7 +1185,7 @@ export function SourceInput({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 shrink-0 rounded-full hover:bg-sidebar-accent -mt-0.5"
+                  className="h-6 w-6 shrink-0 rounded-full hover:bg-sidebar-accent/90 -mt-0.5"
                   onClick={() => void handleRemoveFileCard(file.id, file.isRemote)}
                   disabled={removingSourceIds.includes(file.id)}
                   aria-label="Remove file"
