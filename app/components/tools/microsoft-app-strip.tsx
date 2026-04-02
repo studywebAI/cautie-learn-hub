@@ -865,7 +865,7 @@ export function MicrosoftAppStrip({ returnTo }: MicrosoftAppStripProps) {
                           previewUrl: file.previewUrl,
                         })));
                         setPickerStatus('Ready to use in Cautie');
-                        toast({ title: 'Files imported', description: `${files.length} file${files.length === 1 ? '' : 's'} added as context.` });
+                        // Silent success: context files are reflected in the source cards without a toast.
                       } catch (error: any) {
                         setPickerStatus('Import failed');
                         toast({ variant: 'destructive', title: 'Import failed', description: String(error?.message || 'Failed to import selected file') });
