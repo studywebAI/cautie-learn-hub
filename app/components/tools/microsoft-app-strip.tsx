@@ -668,7 +668,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
       )}
 
       {pickerOpen && (
-        <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-lg border border-[#d9d9d9] bg-[#f3f2f1]">
+        <div className="mx-auto flex min-h-[620px] max-h-[78vh] w-full max-w-[1020px] flex-1 flex-col overflow-hidden rounded-lg border border-[#d9d9d9] bg-[#f3f2f1]">
           <div className="flex items-center justify-between border-b border-[#e1dfdd] bg-white px-3 py-2">
             <div className="flex items-center gap-2">
               <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-4 w-4 object-contain" />
@@ -749,7 +749,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                   </button>
                 </div>
                 <div className="min-h-0 flex flex-1">
-                  <aside className="flex w-14 flex-col items-center gap-1 border-r border-[#e1dfdd] bg-[#fbfbfb] py-2">
+                  <aside className="flex w-20 flex-col items-center gap-2 border-r border-[#e1dfdd] bg-[#fbfbfb] py-2">
                     {([
                       ['all', 'All', Layers],
                       ['files', 'Files', Folder],
@@ -763,7 +763,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                           setFallbackSource(value);
                           void loadFallbackFiles(value);
                         }}
-                        className={`inline-flex h-9 w-9 items-center justify-center rounded-md border ${
+                        className={`inline-flex h-11 w-11 items-center justify-center rounded-md border ${
                           fallbackSource === value
                             ? 'border-[#0f6cbd] bg-[#e8f2fc] text-[#0f6cbd]'
                             : 'border-transparent text-[#605e5c] hover:bg-[#f3f2f1]'
@@ -779,7 +779,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
+                      <div className="grid grid-cols-2 gap-2">
                         {fallbackFiles
                           .filter((file) => file.isFile === true && !file.isFolder)
                           .filter((file) => matchesPickerFilter({

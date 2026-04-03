@@ -4,6 +4,7 @@ import { getAuthedToolboxContext } from '@/lib/toolbox/server';
 import { getPresentationProject, listPresentationSources, updatePresentationProject } from '@/lib/presentation/store';
 import { request1ConfigAndPlan } from '@/lib/presentation/two-step';
 import { RelevantControlKey } from '@/lib/presentation/types';
+import { buildSourceCorpus } from '@/lib/presentation/source-corpus';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,21 +15,6 @@ const RequestSchema = z.object({
   lockedControls: z.array(z.string()).optional(),
   slideSubjects: z.array(z.string()).optional(),
 });
-
-function buildSourceCorpus(input: {
-  prompt?: string;
-  sources: Array<{ extracted_text?: string | null; content?: string | null; file_name?: string | null }>;
-}) {
-  const chunks: string[] = [];
-  if (input.prompt?.trim()) chunks.push(input.prompt.trim());
-  for (const source of input.sources) {
-    const text = String(source.extracted_text || source.content || '').trim();
-    if (!text) continue;
-    const label = source.file_name ? `[${source.file_name}]` : '[source]';
-    chunks.push(`${label}\n${text}`);
-  }
-  return chunks.join('\n\n').trim();
-}
 
 export async function POST(
   request: NextRequest,

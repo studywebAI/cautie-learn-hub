@@ -28,6 +28,7 @@ const SourceSchema = z.object({
 
 const RequestSchema = z.object({
   replaceExistingTextSources: z.boolean().optional(),
+  replaceExistingNonTextSources: z.boolean().optional(),
   sources: z.array(SourceSchema).min(1),
 });
 
@@ -50,6 +51,7 @@ export async function POST(
       userId: user.id,
       projectId,
       replaceTextSources: payload.replaceExistingTextSources,
+      replaceNonTextSources: payload.replaceExistingNonTextSources,
       sources: payload.sources,
     });
 

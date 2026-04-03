@@ -21,6 +21,18 @@ import { OneDriveExportFolderPicker } from '@/components/presentation/onedrive-e
 type PresentationPlatform = 'powerpoint' | 'google-slides' | 'keynote';
 type WorkflowStage = 'upload' | 'subjects' | 'style' | 'building' | 'result';
 type SlideSetupItem = { title: string; subject: string };
+type SourceAttachment = {
+  key: string;
+  sourceType: 'file' | 'image' | 'cloud_file';
+  fileName: string;
+  mimeType?: string;
+  externalProvider?: 'onedrive' | 'sharepoint' | 'google_drive' | 'dropbox';
+  externalFileId?: string;
+  extractedText?: string;
+  content?: string;
+  thumbnailUrl?: string;
+  parsedMetadata?: Record<string, any>;
+};
 
 type PresentationSlide = {
   id: string;
@@ -101,6 +113,13 @@ function defaultSubjectSeed(count: number) {
   return Array.from({ length: Math.max(4, Math.min(12, count || 8)) }, (_, i) => `Subject ${i + 1}`);
 }
 
+function mergeAttachments(prev: SourceAttachment[], next: SourceAttachment[]) {
+  const map = new Map<string, SourceAttachment>();
+  for (const item of prev) map.set(item.key, item);
+  for (const item of next) map.set(item.key, item);
+  return Array.from(map.values());
+}
+
 function PresentationPageContent() {
   const searchParams = useSearchParams();
   const projectIdFromParams = searchParams.get('projectId');
@@ -111,6 +130,7 @@ function PresentationPageContent() {
 
   const [stage, setStage] = useState<WorkflowStage>('upload');
   const [sourceText, setSourceText] = useState(initialSourceSeed);
+  const [sourceAttachments, setSourceAttachments] = useState<SourceAttachment[]>([]);
   const [customTitle, setCustomTitle] = useState('');
   const [platform, setPlatform] = useState<PresentationPlatform>('powerpoint');
   const [autoMode, setAutoMode] = useState(true);
@@ -151,6 +171,7 @@ function PresentationPageContent() {
   const [prototype, setPrototype] = useState<PresentationPrototype | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [lastSyncedSourceText, setLastSyncedSourceText] = useState<string>('');
+  const [lastSyncedAttachmentSignature, setLastSyncedAttachmentSignature] = useState<string>('');
   const [isPlanning, setIsPlanning] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
   const [isExportingCloud, setIsExportingCloud] = useState(false);
@@ -168,6 +189,21 @@ function PresentationPageContent() {
   const allSubjectsNamed = useMemo(
     () => slideSetup.every((item) => item.title.trim().length > 0 && item.subject.trim().length > 0),
     [slideSetup]
+  );
+  const attachmentSignature = useMemo(
+    () =>
+      JSON.stringify(
+        sourceAttachments.map((item) => ({
+          key: item.key,
+          sourceType: item.sourceType,
+          fileName: item.fileName,
+          mimeType: item.mimeType || '',
+          externalProvider: item.externalProvider || '',
+          externalFileId: item.externalFileId || '',
+          thumbnailUrl: item.thumbnailUrl || '',
+        }))
+      ),
+    [sourceAttachments]
   );
 
   const persistWorkflowSnapshot = useCallback(
@@ -251,6 +287,21 @@ function PresentationPageContent() {
       const chunks = items
         .map((item: any) => String(item?.extracted_text || '').trim())
         .filter(Boolean);
+      const attachments: SourceAttachment[] = items.map((item: any, idx: number) => ({
+        key: `recent:${String(item?.id || idx)}`,
+        sourceType: 'cloud_file',
+        fileName: String(item?.name || 'Cloud file'),
+        mimeType: typeof item?.mime_type === 'string' ? item.mime_type : undefined,
+        externalProvider: 'onedrive',
+        externalFileId: typeof item?.external_file_id === 'string' ? item.external_file_id : undefined,
+        extractedText: typeof item?.extracted_text === 'string' ? item.extracted_text : undefined,
+        thumbnailUrl: typeof item?.metadata?.preview_url === 'string' ? item.metadata.preview_url : undefined,
+        parsedMetadata: {
+          webUrl: typeof item?.web_url === 'string' ? item.web_url : undefined,
+          containsVisuals: true,
+        },
+      }));
+      setSourceAttachments((prev) => mergeAttachments(prev, attachments));
       if (chunks.length === 0) {
         toast({ variant: 'destructive', title: 'No recent files ready', description: 'Select files with Connect first.' });
         return;
@@ -265,18 +316,45 @@ function PresentationPageContent() {
   const onUploadFiles = useCallback(async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const collected: string[] = [];
+    const attachments: SourceAttachment[] = [];
     for (const file of Array.from(files)) {
       const textLike = file.type.startsWith('text/') || /\.(txt|md|csv|json|xml|html)$/i.test(file.name);
+      const imageLike = file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(file.name);
+      const key = `local:${file.name}:${file.size}:${file.lastModified}`;
       if (textLike) {
         const text = await file.text().catch(() => '');
         if (text.trim()) {
           collected.push(`[${file.name}]\n${text.trim()}`);
+          attachments.push({
+            key,
+            sourceType: 'file',
+            fileName: file.name,
+            mimeType: file.type || undefined,
+            extractedText: text.trim(),
+            parsedMetadata: {
+              localUpload: true,
+              size: file.size,
+              containsVisuals: false,
+            },
+          });
           continue;
         }
       }
-      collected.push(`[${file.name}]\nUploaded file included as source.`);
+      collected.push(`[${file.name}]\nUploaded file included as source shell with metadata.`);
+      attachments.push({
+        key,
+        sourceType: imageLike ? 'image' : 'file',
+        fileName: file.name,
+        mimeType: file.type || undefined,
+        parsedMetadata: {
+          localUpload: true,
+          size: file.size,
+          containsVisuals: imageLike,
+        },
+      });
     }
     appendSourceChunk(collected.join('\n\n'));
+    setSourceAttachments((prev) => mergeAttachments(prev, attachments));
     if (uploadInputRef.current) uploadInputRef.current.value = '';
   }, [appendSourceChunk]);
 
@@ -306,6 +384,7 @@ function PresentationPageContent() {
         if (cancelled) return;
 
         const project = payload.project;
+        const projectSources = Array.isArray(payload.sources) ? payload.sources : [];
         const workflow = project.workflow_state || {};
         setProjectId(project.id);
         setCustomTitle(typeof project.title === 'string' ? project.title : '');
@@ -352,6 +431,36 @@ function PresentationPageContent() {
         if (typeof workflow.stage === 'string') {
           setStage(workflow.stage as WorkflowStage);
         }
+        if (projectSources.length > 0) {
+          const attachments: SourceAttachment[] = projectSources
+            .filter((source: any) => String(source?.source_type || '') !== 'text')
+            .map((source: any, idx: number) => ({
+              key: String(source?.id || `${source?.external_provider || 'file'}:${source?.external_file_id || source?.file_name || idx}`),
+              sourceType: (String(source?.source_type || 'file') as 'file' | 'image' | 'cloud_file'),
+              fileName: String(source?.file_name || 'Untitled file'),
+              mimeType: typeof source?.mime_type === 'string' ? source.mime_type : undefined,
+              externalProvider: source?.external_provider || undefined,
+              externalFileId: source?.external_file_id || undefined,
+              extractedText: typeof source?.extracted_text === 'string' ? source.extracted_text : undefined,
+              content: typeof source?.content === 'string' ? source.content : undefined,
+              thumbnailUrl: typeof source?.thumbnail_url === 'string' ? source.thumbnail_url : undefined,
+              parsedMetadata: source?.parsed_metadata || {},
+            }));
+          setSourceAttachments(attachments);
+          setLastSyncedAttachmentSignature(
+            JSON.stringify(
+              attachments.map((item) => ({
+                key: item.key,
+                sourceType: item.sourceType,
+                fileName: item.fileName,
+                mimeType: item.mimeType || '',
+                externalProvider: item.externalProvider || '',
+                externalFileId: item.externalFileId || '',
+                thumbnailUrl: item.thumbnailUrl || '',
+              }))
+            )
+          );
+        }
       } catch {
         // Keep local defaults if loading persisted project fails.
       }
@@ -373,6 +482,21 @@ function PresentationPageContent() {
         appendSourceChunk(chunks.join('\n\n'));
         toast({ title: 'Microsoft files imported', description: `${chunks.length} file(s) added to source.` });
       }
+      const attachments: SourceAttachment[] = items.map((item: any, idx: number) => ({
+        key: `onedrive:${String(item?.id || idx)}`,
+        sourceType: 'cloud_file',
+        fileName: String(item?.name || 'Cloud file'),
+        mimeType: typeof item?.mimeType === 'string' ? item.mimeType : undefined,
+        externalProvider: 'onedrive',
+        externalFileId: typeof item?.id === 'string' ? item.id : undefined,
+        extractedText: typeof item?.extractedText === 'string' ? item.extractedText : undefined,
+        thumbnailUrl: typeof item?.previewUrl === 'string' ? item.previewUrl : undefined,
+        parsedMetadata: {
+          webUrl: typeof item?.webUrl === 'string' ? item.webUrl : undefined,
+          containsVisuals: true,
+        },
+      }));
+      setSourceAttachments((prev) => mergeAttachments(prev, attachments));
       setConnectMicrosoftOpen(false);
       setConnectMenuOpen(false);
     };
@@ -440,12 +564,13 @@ function PresentationPageContent() {
       setProjectId(currentProjectId);
     }
 
-    if (normalized !== lastSyncedSourceText) {
+    if (normalized !== lastSyncedSourceText || attachmentSignature !== lastSyncedAttachmentSignature) {
       const sourceResponse = await fetch(`/api/presentation/${currentProjectId}/sources`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           replaceExistingTextSources: true,
+          replaceExistingNonTextSources: true,
           sources: [
             {
               sourceType: 'text',
@@ -453,6 +578,17 @@ function PresentationPageContent() {
               extractedText: normalized,
               parsedMetadata: { origin: 'presentation_input' },
             },
+            ...sourceAttachments.map((attachment) => ({
+              sourceType: attachment.sourceType,
+              mimeType: attachment.mimeType,
+              fileName: attachment.fileName,
+              externalProvider: attachment.externalProvider,
+              externalFileId: attachment.externalFileId,
+              content: attachment.content,
+              extractedText: attachment.extractedText,
+              parsedMetadata: attachment.parsedMetadata || {},
+              thumbnailUrl: attachment.thumbnailUrl,
+            })),
           ],
         }),
       });
@@ -461,6 +597,7 @@ function PresentationPageContent() {
         throw new Error(String(sourcePayload?.error || `Failed to sync sources (${sourceResponse.status})`));
       }
       setLastSyncedSourceText(normalized);
+      setLastSyncedAttachmentSignature(attachmentSignature);
     }
 
     return currentProjectId;
@@ -469,16 +606,19 @@ function PresentationPageContent() {
     customTitle,
     fontPreset,
     language,
+    lastSyncedAttachmentSignature,
     lastSyncedSourceText,
     layoutPreset,
     platform,
     presetTitle,
     projectId,
     slideSetup,
+    sourceAttachments,
     sourceText,
     stage,
     themePreset,
     uiConfig,
+    attachmentSignature,
   ]);
 
   const runPlanningStep = useCallback(async () => {
@@ -886,7 +1026,7 @@ function PresentationPageContent() {
             </div>
 
             {connectMicrosoftOpen && (
-              <Card className="border border-border/60">
+              <Card className="mx-auto w-full max-w-[1080px] border border-border/60">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">Microsoft Connect</CardTitle>
                   <CardDescription>Choose files to import into source.</CardDescription>

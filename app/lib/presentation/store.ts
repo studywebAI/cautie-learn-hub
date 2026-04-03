@@ -149,6 +149,7 @@ export async function addPresentationSources(input: {
   userId: string;
   projectId: string;
   replaceTextSources?: boolean;
+  replaceNonTextSources?: boolean;
   sources: Array<{
     sourceType: string;
     mimeType?: string;
@@ -168,6 +169,15 @@ export async function addPresentationSources(input: {
       .eq('project_id', input.projectId)
       .eq('user_id', input.userId)
       .eq('source_type', 'text');
+  }
+
+  if (input.replaceNonTextSources) {
+    await input.supabase
+      .from('presentation_sources')
+      .delete()
+      .eq('project_id', input.projectId)
+      .eq('user_id', input.userId)
+      .neq('source_type', 'text');
   }
 
   const rows = input.sources.map((source) => ({

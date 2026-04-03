@@ -251,6 +251,27 @@ function buildVisualAssets(input: {
   const assets: VisualAsset[] = [];
   const lower = input.sourceText.toLowerCase();
   const domainHint = lower.includes('wikipedia') ? 'wikipedia.org' : 'trusted-source';
+
+  const shellBlocks = Array.from(input.sourceText.matchAll(/\[FILE_SHELL\]([\s\S]*?)\[\/FILE_SHELL\]/g));
+  for (const block of shellBlocks) {
+    const payload = String(block[1] || '');
+    const name = payload.match(/name:\s*(.+)/i)?.[1]?.trim() || 'Uploaded file';
+    const mime = payload.match(/mime:\s*(.+)/i)?.[1]?.trim() || '';
+    const thumb = payload.match(/thumbnail_url:\s*(.+)/i)?.[1]?.trim();
+    const webUrl = payload.match(/web_url:\s*(.+)/i)?.[1]?.trim();
+    const containsVisuals = /contains_visuals:\s*true/i.test(payload) || mime.startsWith('image/');
+    assets.push({
+      kind: containsVisuals ? 'source_image' : 'icon',
+      query: name,
+      rationale: containsVisuals
+        ? 'Use uploaded/source visual directly where relevant.'
+        : 'Use uploaded file context as supporting source.',
+      sourceUrl: webUrl || thumb || undefined,
+      sourceDomain: domainHint,
+      relevanceScore: containsVisuals ? 0.91 : 0.7,
+    });
+  }
+
   for (const slide of input.blueprint.slides) {
     if (slide.type === 'agenda' || slide.type === 'qa') continue;
     assets.push({
