@@ -16,6 +16,7 @@ import {
   Captions,
   StopCircle,
   Trash2,
+  Clock3,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ReactNode } from 'react';
@@ -55,9 +56,21 @@ type SourceEntry = {
   loadingSince?: number;
 };
 
+type RecentCatalogItem = {
+  id: string;
+  name: string;
+  mimeType?: string;
+  webUrl?: string;
+  previewUrl?: string;
+  lastModifiedDateTime?: string;
+  isFile?: boolean;
+  isFolder?: boolean;
+};
+
 const EXTRACTION_REQUEST_TIMEOUT_MS = 30_000;
 const INTEGRATION_PENDING_MAX_POLLS = 20;
 const SOURCE_LOADING_FAILSAFE_MS = 45_000;
+const RECENTS_USAGE_STORAGE_KEY = 'tools.source_input.recents_usage.v1';
 
 const URL_REGEX = /\b((?:https?:\/\/|www\.)[^\s<>"]+)/gi;
 
@@ -203,6 +216,12 @@ export function SourceInput({
 
   const [urlInput, setUrlInput] = useState('');
   const [linksOpen, setLinksOpen] = useState(false);
+  const [recentsOpen, setRecentsOpen] = useState(false);
+  const [recentsCatalog, setRecentsCatalog] = useState<RecentCatalogItem[]>([]);
+  const [recentsLoading, setRecentsLoading] = useState(false);
+  const [recentsSourceFilter, setRecentsSourceFilter] = useState<'recent' | 'files' | 'all'>('recent');
+  const [recentsSort, setRecentsSort] = useState<'newest' | 'oldest' | 'most_used' | 'name'>('newest');
+  const [recentsSearch, setRecentsSearch] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [removingSourceIds, setRemovingSourceIds] = useState<string[]>([]);
 
@@ -324,6 +343,114 @@ export function SourceInput({
       integrationPendingPollCountRef.current = 0;
     }
   }, [toast]);
+
+  const getRecentsUsageMap = useCallback((): Record<string, number> => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const raw = window.localStorage.getItem(RECENTS_USAGE_STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const bumpRecentsUsage = useCallback((ids: string[]) => {
+    if (typeof window === 'undefined' || ids.length === 0) return;
+    const usage = getRecentsUsageMap();
+    for (const id of ids) usage[id] = Number(usage[id] || 0) + 1;
+    window.localStorage.setItem(RECENTS_USAGE_STORAGE_KEY, JSON.stringify(usage));
+  }, [getRecentsUsageMap]);
+
+  const loadRecentsCatalog = useCallback(async () => {
+    setRecentsLoading(true);
+    try {
+      const response = await fetch(`/api/integrations/microsoft/files?kind=onedrive&source=${recentsSourceFilter}`, {
+        cache: 'no-store',
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(String(payload?.error || 'Could not load recents'));
+      const items: RecentCatalogItem[] = (Array.isArray(payload?.items) ? payload.items : [])
+        .map((item: any) => ({
+          id: String(item?.id || ''),
+          name: String(item?.name || 'Untitled'),
+          mimeType: typeof item?.mimeType === 'string' ? item.mimeType : undefined,
+          webUrl: typeof item?.webUrl === 'string' ? item.webUrl : undefined,
+          previewUrl: typeof item?.previewUrl === 'string' ? item.previewUrl : undefined,
+          lastModifiedDateTime: typeof item?.lastModifiedDateTime === 'string' ? item.lastModifiedDateTime : undefined,
+          isFile: Boolean(item?.isFile),
+          isFolder: Boolean(item?.isFolder),
+        }))
+        .filter((item: RecentCatalogItem) => item.id && item.isFile && !item.isFolder);
+      setRecentsCatalog(items);
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Recents failed',
+        description: error?.message || 'Could not load recents.',
+      });
+    } finally {
+      setRecentsLoading(false);
+    }
+  }, [recentsSourceFilter, toast]);
+
+  const importRecentsItems = useCallback(async (items: RecentCatalogItem[]) => {
+    if (items.length === 0) return;
+    try {
+      const response = await fetch('/api/integrations/microsoft/files/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            kind: 'onedrive',
+            webUrl: item.webUrl,
+            mimeType: item.mimeType,
+          })),
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(String(payload?.error || 'Could not extract selected recents'));
+
+      const extractedItems = Array.isArray(payload?.items) ? payload.items : [];
+      const byId = new Map<string, any>();
+      for (const extracted of extractedItems) {
+        const id = String(extracted?.id || '');
+        if (!id) continue;
+        byId.set(id, extracted);
+      }
+
+      const recentsAsSources: SourceEntry[] = items.map((item, idx) => {
+        const extracted = byId.get(item.id);
+        const extractedText = typeof extracted?.extractedText === 'string' ? extracted.extractedText.trim() : '';
+        return {
+          id: `recents-${item.id}-${idx}`,
+          kind: 'file',
+          label: `${item.name} (OneDrive)`,
+          text: extractedText || `[FILE] ${item.name}\nCloud file attached as source.`,
+          selected: true,
+          loading: false,
+          previewUrl: item.previewUrl,
+          extractionStatus: extractedText ? 'ready' : 'empty',
+          error: extractedText ? undefined : undefined,
+        };
+      });
+      setSources((prev) => [...prev.filter((entry) => !entry.id.startsWith('recents-')), ...recentsAsSources]);
+      bumpRecentsUsage(items.map((item) => item.id));
+      toast({
+        title: 'Recents imported',
+        description: `${items.length} file${items.length === 1 ? '' : 's'} imported.`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Recents import failed',
+        description: error?.message || 'Could not import selected recents.',
+      });
+    }
+  }, [bumpRecentsUsage, toast]);
 
   useEffect(() => {
     if (integrationHydratedRef.current) return;
@@ -475,6 +602,24 @@ export function SourceInput({
     () => sources.filter((source) => source.kind === 'url'),
     [sources]
   );
+  const visibleRecents = useMemo(() => {
+    const usage = getRecentsUsageMap();
+    const query = recentsSearch.trim().toLowerCase();
+    const filtered = recentsCatalog.filter((item) => (query ? item.name.toLowerCase().includes(query) : true));
+    const sorted = [...filtered].sort((a, b) => {
+      if (recentsSort === 'name') return a.name.localeCompare(b.name);
+      if (recentsSort === 'most_used') return Number(usage[b.id] || 0) - Number(usage[a.id] || 0);
+      const aTime = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
+      const bTime = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
+      return recentsSort === 'oldest' ? aTime - bTime : bTime - aTime;
+    });
+    return sorted;
+  }, [getRecentsUsageMap, recentsCatalog, recentsSearch, recentsSort]);
+
+  useEffect(() => {
+    if (!recentsOpen) return;
+    void loadRecentsCatalog();
+  }, [loadRecentsCatalog, recentsOpen, recentsSourceFilter]);
 
   const addSource = useCallback((entry: SourceEntry) => {
     setSources((prev) => [...prev, entry]);
@@ -1244,6 +1389,77 @@ export function SourceInput({
             </div>
           )}
 
+          {recentsOpen && (
+            <div className="space-y-2 rounded-xl border border-sidebar-border bg-sidebar-accent/40 p-2.5">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                <input
+                  value={recentsSearch}
+                  onChange={(e) => setRecentsSearch(e.target.value)}
+                  placeholder="Search recents..."
+                  className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
+                />
+                <select
+                  value={recentsSourceFilter}
+                  onChange={(e) => setRecentsSourceFilter(e.target.value as 'recent' | 'files' | 'all')}
+                  className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-2 text-xs"
+                >
+                  <option value="recent">Recent</option>
+                  <option value="files">Files</option>
+                  <option value="all">All</option>
+                </select>
+                <select
+                  value={recentsSort}
+                  onChange={(e) => setRecentsSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')}
+                  className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-2 text-xs"
+                >
+                  <option value="newest">Time: Newest</option>
+                  <option value="oldest">Time: Oldest</option>
+                  <option value="most_used">Most used</option>
+                  <option value="name">Name</option>
+                </select>
+              </div>
+              <div className="max-h-36 space-y-1 overflow-auto pr-1">
+                {recentsLoading ? (
+                  <div className="flex h-20 items-center justify-center">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                ) : visibleRecents.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No recents found.</p>
+                ) : (
+                  visibleRecents.slice(0, 24).map((item) => (
+                    <div key={item.id} className="flex items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/45 px-2 py-1.5 text-xs">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate">{item.name}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleDateString() : '-'}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 rounded-full border-sidebar-border bg-sidebar-accent/70 px-2 text-[10px] hover:bg-sidebar-accent"
+                        onClick={() => void importRecentsItems([item])}
+                      >
+                        Import
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 rounded-full border-sidebar-border bg-sidebar-accent/70 px-3 text-xs hover:bg-sidebar-accent"
+                  disabled={recentsLoading || visibleRecents.length === 0}
+                  onClick={() => void importRecentsItems(visibleRecents.slice(0, 10))}
+                >
+                  Import visible
+                </Button>
+              </div>
+            </div>
+          )}
+
           <Textarea
             value={manualText}
             onChange={(e) => handleManualTextChange(e.target.value)}
@@ -1295,6 +1511,16 @@ export function SourceInput({
           >
             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
             <span className="hidden md:inline">Upload</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 gap-1 text-[11px] rounded-full border-border bg-muted/80 hover:bg-muted md:flex-1 md:h-auto md:py-3 md:text-xs"
+            onClick={() => setRecentsOpen((prev) => !prev)}
+            disabled={disabled || isProcessing}
+          >
+            <Clock3 className="h-4 w-4" />
+            <span className="hidden md:inline">Recents</span>
           </Button>
           {enableMic && (
             <Button
