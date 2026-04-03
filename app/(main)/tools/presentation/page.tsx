@@ -20,6 +20,7 @@ import { OneDriveExportFolderPicker } from '@/components/presentation/onedrive-e
 
 type PresentationPlatform = 'powerpoint' | 'google-slides' | 'keynote';
 type WorkflowStage = 'upload' | 'subjects' | 'style' | 'building' | 'result';
+type UploadFlowNode = 'upload' | 'sources' | 'connect' | 'recents' | 'plan';
 type SlideSetupItem = { title: string; subject: string };
 type SourceAttachment = {
   key: string;
@@ -36,6 +37,10 @@ type SourceAttachment = {
 type ImportCatalogItem = {
   id: string;
   name: string;
+  source: 'sidebar_recent';
+  recentType: 'tool_run' | 'material';
+  runId?: string;
+  materialId?: string;
   mimeType?: string;
   webUrl?: string;
   previewUrl?: string;
@@ -124,12 +129,49 @@ function defaultSubjectSeed(count: number) {
 }
 
 const IMPORT_USAGE_STORAGE_KEY = 'presentation.import.usage.v1';
+const RECENT_TYPE_LABELS: Record<string, string> = {
+  flashcards: 'Flashcards',
+  notes: 'Notes',
+  quiz: 'Quiz',
+  subject: 'Subject',
+  assignment: 'Assignment',
+  presentation: 'Presentation',
+};
 
 function mergeAttachments(prev: SourceAttachment[], next: SourceAttachment[]) {
   const map = new Map<string, SourceAttachment>();
   for (const item of prev) map.set(item.key, item);
   for (const item of next) map.set(item.key, item);
   return Array.from(map.values());
+}
+
+function toPlainText(value: any): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => toPlainText(item))
+      .filter(Boolean)
+      .join('\n')
+      .trim();
+  }
+  if (typeof value === 'object') {
+    const preferredKeys = ['text', 'content', 'markdown', 'summary', 'notes', 'title'];
+    const preferredParts = preferredKeys
+      .map((key) => {
+        const normalized = toPlainText(value?.[key]);
+        return normalized ? `${key}: ${normalized}` : '';
+      })
+      .filter(Boolean);
+    if (preferredParts.length > 0) return preferredParts.join('\n\n').trim();
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return '';
+    }
+  }
+  return '';
 }
 
 function PresentationPageContent() {
@@ -189,11 +231,12 @@ function PresentationPageContent() {
   const [isExportingCloud, setIsExportingCloud] = useState(false);
   const [activeShareToken, setActiveShareToken] = useState<string | null>(null);
   const [activeShareUrl, setActiveShareUrl] = useState<string | null>(null);
+  const [uploadFlowNode, setUploadFlowNode] = useState<UploadFlowNode>('upload');
   const [connectMenuOpen, setConnectMenuOpen] = useState(false);
   const [connectMicrosoftOpen, setConnectMicrosoftOpen] = useState(false);
   const [importCatalog, setImportCatalog] = useState<ImportCatalogItem[]>([]);
   const [importCatalogLoading, setImportCatalogLoading] = useState(false);
-  const [importSourceFilter, setImportSourceFilter] = useState<'all' | 'files' | 'recent'>('recent');
+  const [importSourceFilter, setImportSourceFilter] = useState<'all' | 'tool_runs' | 'materials'>('all');
   const [importSort, setImportSort] = useState<'newest' | 'oldest' | 'most_used' | 'name'>('newest');
   const [importSearch, setImportSearch] = useState('');
   const [onedriveExportFolder, setOnedriveExportFolder] = useState<{
@@ -354,23 +397,54 @@ function PresentationPageContent() {
   const loadRecentsCatalog = useCallback(async () => {
     setImportCatalogLoading(true);
     try {
-      const response = await fetch(`/api/integrations/microsoft/files?kind=onedrive&source=${importSourceFilter}`, {
-        cache: 'no-store',
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(String(payload?.error || 'Could not load recents'));
-      const items: ImportCatalogItem[] = (Array.isArray(payload?.items) ? payload.items : [])
-        .map((item: any) => ({
-          id: String(item?.id || ''),
-          name: String(item?.name || 'Untitled'),
-          mimeType: typeof item?.mimeType === 'string' ? item.mimeType : undefined,
-          webUrl: typeof item?.webUrl === 'string' ? item.webUrl : undefined,
-          previewUrl: typeof item?.previewUrl === 'string' ? item.previewUrl : undefined,
-          lastModifiedDateTime: typeof item?.lastModifiedDateTime === 'string' ? item.lastModifiedDateTime : undefined,
-          isFile: Boolean(item?.isFile),
-          isFolder: Boolean(item?.isFolder),
+      const [runsRes, materialsRes] = await Promise.all([
+        fetch('/api/tools/v2/runs', { cache: 'no-store' }),
+        fetch('/api/materials?limit=50', { cache: 'no-store' }),
+      ]);
+      const runsPayload = await runsRes.json().catch(() => []);
+      const materialsPayload = await materialsRes.json().catch(() => ({ materials: [] }));
+      if (!runsRes.ok || !materialsRes.ok) {
+        throw new Error('Could not load sidebar recents');
+      }
+
+      const runItems: ImportCatalogItem[] = (Array.isArray(runsPayload) ? runsPayload : [])
+        .filter((run: any) => run?.status === 'succeeded')
+        .filter((run: any) => run?.options_payload?.saveToRecents !== false)
+        .map((run: any) => {
+          const toolId = String(run?.tool_id || 'tool');
+          const mode = typeof run?.mode === 'string' ? run.mode : '';
+          const toolLabel = RECENT_TYPE_LABELS[toolId] || toolId;
+          return {
+            id: `run:${String(run?.id || '')}`,
+            name: mode ? `${toolLabel} - ${mode}` : toolLabel,
+            source: 'sidebar_recent' as const,
+            recentType: 'tool_run' as const,
+            runId: String(run?.id || ''),
+            lastModifiedDateTime: typeof run?.finished_at === 'string' ? run.finished_at : String(run?.created_at || ''),
+            isFile: true,
+            isFolder: false,
+          };
+        })
+        .filter((item) => item.runId);
+
+      const materialItems: ImportCatalogItem[] = (Array.isArray(materialsPayload?.materials) ? materialsPayload.materials : [])
+        .map((material: any) => ({
+          id: `material:${String(material?.id || '')}`,
+          name: String(material?.title || RECENT_TYPE_LABELS[String(material?.type || '').toLowerCase()] || 'Material'),
+          source: 'sidebar_recent' as const,
+          recentType: 'material' as const,
+          materialId: String(material?.id || ''),
+          lastModifiedDateTime: typeof material?.updated_at === 'string' ? material.updated_at : '',
+          isFile: true,
+          isFolder: false,
         }))
-        .filter((item: ImportCatalogItem) => item.id && item.isFile && !item.isFolder);
+        .filter((item: ImportCatalogItem) => item.materialId);
+
+      const items = [...runItems, ...materialItems].filter((item: ImportCatalogItem) => {
+        if (importSourceFilter === 'tool_runs') return item.recentType === 'tool_run';
+        if (importSourceFilter === 'materials') return item.recentType === 'material';
+        return true;
+      });
       setImportCatalog(items);
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Recents failed', description: error?.message || 'Try again.' });
@@ -382,60 +456,64 @@ function PresentationPageContent() {
   const importRecentsFiles = useCallback(async (items: ImportCatalogItem[]) => {
     if (items.length === 0) return;
     try {
-      const extractResponse = await fetch('/api/integrations/microsoft/files/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: items.map((item) => ({
-            id: item.id,
-            name: item.name,
-            kind: 'onedrive',
-            webUrl: item.webUrl,
-            mimeType: item.mimeType,
-          })),
-        }),
-      });
-      const extractPayload = await extractResponse.json().catch(() => ({}));
-      if (!extractResponse.ok) {
-        throw new Error(String(extractPayload?.error || 'Could not extract selected files'));
-      }
-      const extractedItems = Array.isArray(extractPayload?.items) ? extractPayload.items : [];
-      const byId = new Map<string, any>();
-      for (const extracted of extractedItems) {
-        const id = String(extracted?.id || '');
-        if (id) byId.set(id, extracted);
-      }
+      const resolved = await Promise.all(
+        items.map(async (item) => {
+          if (item.recentType === 'tool_run' && item.runId) {
+            const response = await fetch(`/api/tools/v2/runs/${item.runId}`, { cache: 'no-store' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              throw new Error(`Could not import run: ${item.name}`);
+            }
+            const extracted = toPlainText(payload?.output_payload || payload?.input_payload || payload);
+            return {
+              item,
+              text: extracted,
+            };
+          }
 
-      const attachments: SourceAttachment[] = items.map((item) => {
-        const extracted = byId.get(item.id);
-        return {
-          key: `recent:${item.id}`,
-          sourceType: 'cloud_file',
-          fileName: item.name,
-          mimeType: item.mimeType,
-          externalProvider: 'onedrive',
-          externalFileId: item.id,
-          extractedText: typeof extracted?.extractedText === 'string' ? extracted.extractedText : '',
-          thumbnailUrl: item.previewUrl,
-          parsedMetadata: {
-            webUrl: item.webUrl,
-            containsVisuals: true,
-            lastModifiedDateTime: item.lastModifiedDateTime,
-          },
-        };
-      });
+          if (item.recentType === 'material' && item.materialId) {
+            const response = await fetch(`/api/materials/${item.materialId}`, { cache: 'no-store' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              throw new Error(`Could not import material: ${item.name}`);
+            }
+            const extracted = toPlainText(payload?.content || payload?.source_text || payload);
+            return {
+              item,
+              text: extracted,
+            };
+          }
+
+          return { item, text: '' };
+        })
+      );
+
+      const attachments: SourceAttachment[] = resolved.map(({ item, text }) => ({
+        key: `recent:${item.id}`,
+        sourceType: 'file',
+        fileName: item.name,
+        extractedText: text,
+        parsedMetadata: {
+          source: 'sidebar_recents',
+          recentType: item.recentType,
+          runId: item.runId,
+          materialId: item.materialId,
+          lastModifiedDateTime: item.lastModifiedDateTime,
+        },
+      }));
       setSourceAttachments((prev) => mergeAttachments(prev, attachments));
 
-      const chunks = attachments
-        .map((item) => String(item.extractedText || '').trim())
+      const chunks = resolved
+        .map(({ item, text }) => {
+          const normalized = text.trim();
+          if (!normalized) return `[${item.name}]\nRecent item attached as source context.`;
+          return `[${item.name}]\n${normalized}`;
+        })
         .filter(Boolean);
-      if (chunks.length > 0) appendSourceChunk(chunks.join('\n\n'));
-      if (chunks.length === 0) {
-        appendSourceChunk(items.map((item) => `[${item.name}]\nCloud file attached as multimodal source.`).join('\n\n'));
-      }
+      appendSourceChunk(chunks.join('\n\n'));
 
       bumpImportUsage(items.map((item) => item.id));
-      toast({ title: 'Recents imported', description: `${items.length} file(s) added.` });
+      toast({ title: 'Recents imported', description: `${items.length} recent item(s) added.` });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Recents import failed', description: error?.message || 'Try again.' });
     }
@@ -633,9 +711,9 @@ function PresentationPageContent() {
   }, [appendSourceChunk, toast]);
 
   useEffect(() => {
-    if (stage !== 'upload') return;
+    if (stage !== 'upload' || uploadFlowNode !== 'recents') return;
     void loadRecentsCatalog();
-  }, [stage, importSourceFilter, loadRecentsCatalog]);
+  }, [stage, uploadFlowNode, importSourceFilter, loadRecentsCatalog]);
 
   useEffect(() => {
     if (!projectId) return;
@@ -1115,7 +1193,12 @@ function PresentationPageContent() {
                     <React.Fragment key={node}>
                       <button
                         type="button"
-                        className="rounded-full border border-border/60 bg-background px-3 py-1 text-xs transition-colors hover:bg-emerald-50 hover:text-emerald-700"
+                        onClick={() => setUploadFlowNode(node)}
+                        className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                          uploadFlowNode === node
+                            ? 'border-emerald-600/60 bg-emerald-50 text-emerald-700'
+                            : 'border-border/60 bg-background hover:bg-emerald-50 hover:text-emerald-700'
+                        }`}
                       >
                         {node}
                       </button>
@@ -1164,69 +1247,71 @@ function PresentationPageContent() {
                 </Button>
               </div>
 
-              <div className="mb-3 rounded-xl border border-border/60 bg-background p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-sm font-medium">Recents</p>
-                  <Badge variant="secondary">{sourceAttachments.length} attached</Badge>
-                </div>
-                <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3">
-                  <Input
-                    value={importSearch}
-                    onChange={(e) => setImportSearch(e.target.value)}
-                    placeholder="Search recents..."
-                    className="h-8"
-                  />
-                  <select
-                    value={importSourceFilter}
-                    onChange={(e) => setImportSourceFilter(e.target.value as 'all' | 'files' | 'recent')}
-                    className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-                  >
-                    <option value="recent">Recent</option>
-                    <option value="files">Files</option>
-                    <option value="all">All</option>
-                  </select>
-                  <select
-                    value={importSort}
-                    onChange={(e) => setImportSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')}
-                    className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-                  >
-                    <option value="newest">Time: Newest</option>
-                    <option value="oldest">Time: Oldest</option>
-                    <option value="most_used">Most used</option>
-                    <option value="name">Name</option>
-                  </select>
-                </div>
-                <div className="mb-2 max-h-44 overflow-auto rounded-md border border-border/60 p-2">
-                  {importCatalogLoading ? (
-                    <div className="flex h-20 items-center justify-center">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    </div>
-                  ) : visibleRecents.length === 0 ? (
-                    <p className="px-1 py-2 text-xs text-muted-foreground">No recents found.</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {visibleRecents.slice(0, 40).map((item) => (
-                        <div key={item.id} className="flex items-center justify-between gap-2 rounded border border-border/50 px-2 py-1.5">
-                          <div className="min-w-0">
-                            <p className="truncate text-xs font-medium">{item.name}</p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleDateString() : '-'}
-                            </p>
+              {uploadFlowNode === 'recents' && (
+                <div className="mb-3 rounded-xl border border-border/60 bg-background p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-sm font-medium">Recents</p>
+                    <Badge variant="secondary">{sourceAttachments.length} attached</Badge>
+                  </div>
+                  <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+                    <Input
+                      value={importSearch}
+                      onChange={(e) => setImportSearch(e.target.value)}
+                      placeholder="Search recents..."
+                      className="h-8"
+                    />
+                    <select
+                      value={importSourceFilter}
+                      onChange={(e) => setImportSourceFilter(e.target.value as 'all' | 'tool_runs' | 'materials')}
+                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                    >
+                      <option value="all">All recents</option>
+                      <option value="tool_runs">Tool runs</option>
+                      <option value="materials">Materials</option>
+                    </select>
+                    <select
+                      value={importSort}
+                      onChange={(e) => setImportSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')}
+                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                    >
+                      <option value="newest">Time: Newest</option>
+                      <option value="oldest">Time: Oldest</option>
+                      <option value="most_used">Most used</option>
+                      <option value="name">Name</option>
+                    </select>
+                  </div>
+                  <div className="mb-2 max-h-44 overflow-auto rounded-md border border-border/60 p-2">
+                    {importCatalogLoading ? (
+                      <div className="flex h-20 items-center justify-center">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    ) : visibleRecents.length === 0 ? (
+                      <p className="px-1 py-2 text-xs text-muted-foreground">No recents found.</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {visibleRecents.slice(0, 40).map((item) => (
+                          <div key={item.id} className="flex items-center justify-between gap-2 rounded border border-border/50 px-2 py-1.5">
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-medium">{item.name}</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleDateString() : '-'}
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 text-[11px]"
+                              onClick={() => void importRecentsFiles([item])}
+                            >
+                              Import
+                            </Button>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-[11px]"
-                            onClick={() => void importRecentsFiles([item])}
-                          >
-                            Import
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <textarea
                 value={sourceText}
