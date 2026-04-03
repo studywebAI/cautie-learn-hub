@@ -1226,28 +1226,6 @@ function PresentationPageContent() {
                     </div>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-3 text-xs"
-                    onClick={() => void importRecentsFiles(visibleRecents.slice(0, 10))}
-                    disabled={visibleRecents.length === 0 || importCatalogLoading}
-                  >
-                    Import visible
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-3 text-xs"
-                    onClick={() => {
-                      setConnectMicrosoftOpen(true);
-                      setConnectMenuOpen(false);
-                    }}
-                  >
-                    Open Microsoft
-                  </Button>
-                </div>
               </div>
 
               <textarea

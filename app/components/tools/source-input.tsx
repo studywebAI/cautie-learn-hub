@@ -16,7 +16,6 @@ import {
   Captions,
   StopCircle,
   Trash2,
-  Clock3,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ReactNode } from 'react';
@@ -216,7 +215,6 @@ export function SourceInput({
 
   const [urlInput, setUrlInput] = useState('');
   const [linksOpen, setLinksOpen] = useState(false);
-  const [recentsOpen, setRecentsOpen] = useState(false);
   const [recentsCatalog, setRecentsCatalog] = useState<RecentCatalogItem[]>([]);
   const [recentsLoading, setRecentsLoading] = useState(false);
   const [recentsSourceFilter, setRecentsSourceFilter] = useState<'recent' | 'files' | 'all'>('recent');
@@ -617,9 +615,8 @@ export function SourceInput({
   }, [getRecentsUsageMap, recentsCatalog, recentsSearch, recentsSort]);
 
   useEffect(() => {
-    if (!recentsOpen) return;
     void loadRecentsCatalog();
-  }, [loadRecentsCatalog, recentsOpen, recentsSourceFilter]);
+  }, [loadRecentsCatalog, recentsSourceFilter]);
 
   const addSource = useCallback((entry: SourceEntry) => {
     setSources((prev) => [...prev, entry]);
@@ -1389,76 +1386,63 @@ export function SourceInput({
             </div>
           )}
 
-          {recentsOpen && (
-            <div className="space-y-2 rounded-xl border border-sidebar-border bg-sidebar-accent/40 p-2.5">
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                <input
-                  value={recentsSearch}
-                  onChange={(e) => setRecentsSearch(e.target.value)}
-                  placeholder="Search recents..."
-                  className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
-                />
-                <select
-                  value={recentsSourceFilter}
-                  onChange={(e) => setRecentsSourceFilter(e.target.value as 'recent' | 'files' | 'all')}
-                  className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-2 text-xs"
-                >
-                  <option value="recent">Recent</option>
-                  <option value="files">Files</option>
-                  <option value="all">All</option>
-                </select>
-                <select
-                  value={recentsSort}
-                  onChange={(e) => setRecentsSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')}
-                  className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-2 text-xs"
-                >
-                  <option value="newest">Time: Newest</option>
-                  <option value="oldest">Time: Oldest</option>
-                  <option value="most_used">Most used</option>
-                  <option value="name">Name</option>
-                </select>
-              </div>
-              <div className="max-h-36 space-y-1 overflow-auto pr-1">
-                {recentsLoading ? (
-                  <div className="flex h-20 items-center justify-center">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  </div>
-                ) : visibleRecents.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No recents found.</p>
-                ) : (
-                  visibleRecents.slice(0, 24).map((item) => (
-                    <div key={item.id} className="flex items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/45 px-2 py-1.5 text-xs">
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate">{item.name}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleDateString() : '-'}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-6 rounded-full border-sidebar-border bg-sidebar-accent/70 px-2 text-[10px] hover:bg-sidebar-accent"
-                        onClick={() => void importRecentsItems([item])}
-                      >
-                        Import
-                      </Button>
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 rounded-full border-sidebar-border bg-sidebar-accent/70 px-3 text-xs hover:bg-sidebar-accent"
-                  disabled={recentsLoading || visibleRecents.length === 0}
-                  onClick={() => void importRecentsItems(visibleRecents.slice(0, 10))}
-                >
-                  Import visible
-                </Button>
-              </div>
+          <div className="space-y-2 rounded-xl border border-sidebar-border bg-sidebar-accent/40 p-2.5">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+              <input
+                value={recentsSearch}
+                onChange={(e) => setRecentsSearch(e.target.value)}
+                placeholder="Search recents..."
+                className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
+              />
+              <select
+                value={recentsSourceFilter}
+                onChange={(e) => setRecentsSourceFilter(e.target.value as 'recent' | 'files' | 'all')}
+                className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-2 text-xs"
+              >
+                <option value="recent">Recent</option>
+                <option value="files">Files</option>
+                <option value="all">All</option>
+              </select>
+              <select
+                value={recentsSort}
+                onChange={(e) => setRecentsSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')}
+                className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-2 text-xs"
+              >
+                <option value="newest">Time: Newest</option>
+                <option value="oldest">Time: Oldest</option>
+                <option value="most_used">Most used</option>
+                <option value="name">Name</option>
+              </select>
             </div>
-          )}
+            <div className="max-h-36 space-y-1 overflow-auto pr-1">
+              {recentsLoading ? (
+                <div className="flex h-20 items-center justify-center">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : visibleRecents.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No recents found.</p>
+              ) : (
+                visibleRecents.slice(0, 24).map((item) => (
+                  <div key={item.id} className="flex items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/45 px-2 py-1.5 text-xs">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate">{item.name}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleDateString() : '-'}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-6 rounded-full border-sidebar-border bg-sidebar-accent/70 px-2 text-[10px] hover:bg-sidebar-accent"
+                      onClick={() => void importRecentsItems([item])}
+                    >
+                      Import
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
 
           <Textarea
             value={manualText}
@@ -1511,16 +1495,6 @@ export function SourceInput({
           >
             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
             <span className="hidden md:inline">Upload</span>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 gap-1 text-[11px] rounded-full border-border bg-muted/80 hover:bg-muted md:flex-1 md:h-auto md:py-3 md:text-xs"
-            onClick={() => setRecentsOpen((prev) => !prev)}
-            disabled={disabled || isProcessing}
-          >
-            <Clock3 className="h-4 w-4" />
-            <span className="hidden md:inline">Recents</span>
           </Button>
           {enableMic && (
             <Button
