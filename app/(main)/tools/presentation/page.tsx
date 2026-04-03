@@ -798,7 +798,7 @@ function PresentationPageContent() {
   }, [appendSourceChunk, ingestUploadedFiles, toast]);
 
   useEffect(() => {
-    if (stage !== 'source' || !importOpen) return;
+    if ((stage !== 'source' && stage !== 'settings') || !importOpen) return;
     void loadRecentsCatalog();
   }, [stage, importOpen, importSourceFilter, loadRecentsCatalog]);
 
@@ -1436,6 +1436,77 @@ function PresentationPageContent() {
             </div>
 
             <Card className="border border-border/60">
+              <CardContent className="pt-4">
+                <div className="flex flex-wrap gap-2">
+                  {sourceAttachments.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No sources attached yet.</p>
+                  ) : (
+                    sourceAttachments.map((source) => (
+                      <div key={source.key} className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-xs">
+                        <p className="max-w-[260px] truncate font-medium">{source.fileName}</p>
+                        <p className="text-[11px] text-muted-foreground">{source.sourceType.replace('_', ' ')}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {importOpen && (
+              <Card className="border border-border/60">
+                <CardContent className="pt-4">
+                  <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+                    <Input value={importSearch} onChange={(e) => setImportSearch(e.target.value)} placeholder="Search recents..." className="h-8" />
+                    <select
+                      value={importSourceFilter}
+                      onChange={(e) => setImportSourceFilter(e.target.value as 'all' | 'tool_runs' | 'materials')}
+                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                    >
+                      <option value="all">All recents</option>
+                      <option value="tool_runs">Tool runs</option>
+                      <option value="materials">Materials</option>
+                    </select>
+                    <select
+                      value={importSort}
+                      onChange={(e) => setImportSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')}
+                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                    >
+                      <option value="newest">Time: Newest</option>
+                      <option value="oldest">Time: Oldest</option>
+                      <option value="most_used">Most used</option>
+                      <option value="name">Name</option>
+                    </select>
+                  </div>
+                  <div className="max-h-44 overflow-auto rounded-md border border-border/60 p-2">
+                    {importCatalogLoading ? (
+                      <div className="flex h-20 items-center justify-center">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    ) : visibleRecents.length === 0 ? (
+                      <p className="px-1 py-2 text-xs text-muted-foreground">No recents found.</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {visibleRecents.slice(0, 40).map((item) => (
+                          <div key={item.id} className="flex items-center justify-between gap-2 rounded border border-border/50 px-2 py-1.5">
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-medium">{item.name}</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleDateString() : '-'}
+                              </p>
+                            </div>
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => void importRecentsFiles([item])}>
+                              Import
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card className="border border-border/60">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">Detected from your material</CardTitle>
                 <CardDescription>Recommended setup</CardDescription>
@@ -1448,6 +1519,16 @@ function PresentationPageContent() {
                 <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => plan?.effectiveConfig && setUiConfig((prev) => ({ ...prev, ...plan.effectiveConfig }))}>
                   Apply suggestions
                 </Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAdvancedOpen(true)}>
+                  Fine-tune manually
+                </Button>
+                {Array.isArray(analysis?.warnings) && analysis!.warnings.length > 0 && (
+                  <div className="w-full pt-1 text-[11px] text-muted-foreground">
+                    {analysis!.warnings.slice(0, 2).map((warning, idx) => (
+                      <p key={`warn-${idx}`}>- {warning}</p>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -1611,6 +1692,23 @@ function PresentationPageContent() {
             exportingCloud={isExportingCloud}
             cloudLabel={cloudLabel}
           />
+        )}
+
+        {connectMicrosoftOpen && stage !== 'source' && (
+          <Card className="mx-auto w-full max-w-[960px] border border-border/60">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Microsoft Connect</CardTitle>
+              <CardDescription>Choose files to import into source.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <MicrosoftAppStrip returnTo="/tools/presentation" autoOpen hideLauncher />
+              <div className="flex justify-end">
+                <Button size="sm" variant="outline" onClick={() => setConnectMicrosoftOpen(false)}>
+                  Close
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
 
