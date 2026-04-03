@@ -2,7 +2,7 @@
 
 import React, { Suspense, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ChevronDown, FileUp, Loader2, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
+import { ChevronDown, FileUp, Loader2, Sparkles, Upload } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
@@ -12,15 +12,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { PresentationPlanResult, PresentationUiConfig, PreviewManifest, SourceAnalysis } from '@/lib/presentation/types';
-import { AdaptiveSettingsSidebar } from '@/components/presentation/adaptive-settings-sidebar';
 import { PresentationPreview } from '@/components/presentation/presentation-preview';
 import { SlideshowView } from '@/components/presentation/slideshow-view';
 import { ActionBar } from '@/components/presentation/action-bar';
 import { OneDriveExportFolderPicker } from '@/components/presentation/onedrive-export-folder-picker';
 
 type PresentationPlatform = 'powerpoint' | 'google-slides' | 'keynote';
-type WorkflowStage = 'upload' | 'subjects' | 'style' | 'building' | 'result';
-type UploadFlowNode = 'upload' | 'sources' | 'connect' | 'recents' | 'plan';
+type WorkflowStage = 'source' | 'settings' | 'building' | 'preview';
 type SlideSetupItem = { title: string; subject: string };
 type SourceAttachment = {
   key: string;
@@ -124,6 +122,17 @@ function normalizeSubject(input: string, fallbackIndex: number) {
   return trimmed || `Slide ${fallbackIndex + 1}`;
 }
 
+function serializeSlideSetup(items: SlideSetupItem[]) {
+  return items.map((item, idx) => {
+    const title = String(item?.title || '').trim();
+    const subject = String(item?.subject || '').trim();
+    if (title && subject) return `${title}: ${subject}`;
+    if (title) return title;
+    if (subject) return subject;
+    return `Slide ${idx + 1}`;
+  });
+}
+
 function defaultSubjectSeed(count: number) {
   return Array.from({ length: Math.max(4, Math.min(12, count || 8)) }, (_, i) => `Subject ${i + 1}`);
 }
@@ -182,14 +191,16 @@ function PresentationPageContent() {
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
 
-  const [stage, setStage] = useState<WorkflowStage>('upload');
+  const [stage, setStage] = useState<WorkflowStage>('source');
   const [sourceText, setSourceText] = useState(initialSourceSeed);
   const [sourceAttachments, setSourceAttachments] = useState<SourceAttachment[]>([]);
   const [customTitle, setCustomTitle] = useState('');
   const [platform, setPlatform] = useState<PresentationPlatform>('powerpoint');
   const [autoMode, setAutoMode] = useState(true);
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
-  const [activeSubjectIndex, setActiveSubjectIndex] = useState(0);
+  const [outputLanguage, setOutputLanguage] = useState<'auto' | 'nl' | 'en'>('auto');
+  const [importOpen, setImportOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [isSlideshow, setIsSlideshow] = useState(false);
   const [analysis, setAnalysis] = useState<SourceAnalysis | null>(null);
   const [plan, setPlan] = useState<PresentationPlanResult | null>(null);
@@ -231,7 +242,6 @@ function PresentationPageContent() {
   const [isExportingCloud, setIsExportingCloud] = useState(false);
   const [activeShareToken, setActiveShareToken] = useState<string | null>(null);
   const [activeShareUrl, setActiveShareUrl] = useState<string | null>(null);
-  const [uploadFlowNode, setUploadFlowNode] = useState<UploadFlowNode>('upload');
   const [connectMenuOpen, setConnectMenuOpen] = useState(false);
   const [connectMicrosoftOpen, setConnectMicrosoftOpen] = useState(false);
   const [importCatalog, setImportCatalog] = useState<ImportCatalogItem[]>([]);
@@ -246,10 +256,6 @@ function PresentationPageContent() {
   } | null>(null);
   const { toast } = useToast();
   const uploadInputRef = React.useRef<HTMLInputElement | null>(null);
-  const allSubjectsNamed = useMemo(
-    () => slideSetup.every((item) => item.title.trim().length > 0 && item.subject.trim().length > 0),
-    [slideSetup]
-  );
   const attachmentSignature = useMemo(
     () =>
       JSON.stringify(
@@ -285,7 +291,7 @@ function PresentationPageContent() {
       if (!projectId) return;
       const body = {
         stage: overrides?.stage ?? stage,
-        slideSubjects: overrides?.slideSubjects ?? slideSetup.map((item) => `${item.title}: ${item.subject}`),
+        slideSubjects: overrides?.slideSubjects ?? serializeSlideSetup(slideSetup),
         setupPreset: overrides?.setupPreset ?? {
           title: presetTitle.trim() || 'Custom preset',
           themePreset,
@@ -663,7 +669,12 @@ function PresentationPageContent() {
           }
         }
         if (typeof workflow.stage === 'string') {
-          setStage(workflow.stage as WorkflowStage);
+          const saved = String(workflow.stage);
+          if (saved === 'upload') setStage('source');
+          else if (saved === 'subjects' || saved === 'style') setStage('settings');
+          else if (saved === 'result') setStage('preview');
+          else if (saved === 'building') setStage('building');
+          else setStage(saved as WorkflowStage);
         }
         if (projectSources.length > 0) {
           const attachments: SourceAttachment[] = projectSources
@@ -787,9 +798,9 @@ function PresentationPageContent() {
   }, [appendSourceChunk, ingestUploadedFiles, toast]);
 
   useEffect(() => {
-    if (stage !== 'upload' || uploadFlowNode !== 'recents') return;
+    if (stage !== 'source' || !importOpen) return;
     void loadRecentsCatalog();
-  }, [stage, uploadFlowNode, importSourceFilter, loadRecentsCatalog]);
+  }, [stage, importOpen, importSourceFilter, loadRecentsCatalog]);
 
   useEffect(() => {
     if (!projectId) return;
@@ -830,7 +841,7 @@ function PresentationPageContent() {
           uiConfig: { ...uiConfig, platform },
           workflowState: {
             stage,
-            slideSubjects: slideSetup.map((item) => `${item.title}: ${item.subject}`),
+            slideSubjects: serializeSlideSetup(slideSetup),
             setupPreset: {
               title: presetTitle.trim() || 'Custom preset',
               themePreset,
@@ -917,7 +928,7 @@ function PresentationPageContent() {
         prompt: sourceText,
         autoMode,
         uiConfig: { ...uiConfig, platform },
-        slideSubjects: slideSetup.map((item) => `${item.title}: ${item.subject}`).filter(Boolean),
+        slideSubjects: serializeSlideSetup(slideSetup),
       }),
     });
     const payload = await response.json().catch(() => ({}));
@@ -941,23 +952,23 @@ function PresentationPageContent() {
     return pid;
   }, [autoMode, ensureProjectAndSources, platform, slideSetup, sourceText, uiConfig]);
 
-  const continueToSubjects = useCallback(async () => {
+  const continueToSettings = useCallback(async () => {
     if (!sourceText.trim()) {
       toast({
         variant: 'destructive',
         title: 'Add source material first',
-        description: 'Upload or paste your source material before continuing.',
+        description: 'Upload, import, connect, or type your prompt before Analyze.',
       });
       return;
     }
     setIsPlanning(true);
     try {
       await runPlanningStep();
-      goToStage('subjects');
+      goToStage('settings');
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Could not prepare setup',
+        title: 'Analyze failed',
         description: error?.message || 'Please try again.',
       });
     } finally {
@@ -967,14 +978,6 @@ function PresentationPageContent() {
 
   const buildPresentation = useCallback(async () => {
     if (!sourceText.trim()) return;
-    if (!allSubjectsNamed) {
-      toast({
-        variant: 'destructive',
-        title: 'Fill in all slide subjects',
-        description: 'Each slide needs a subject/title before generation.',
-      });
-      return;
-    }
     setIsBuilding(true);
     goToStage('building');
     try {
@@ -985,7 +988,7 @@ function PresentationPageContent() {
         body: JSON.stringify({
           title: customTitle.trim() || undefined,
           prompt: sourceText,
-          language,
+          language: outputLanguage === 'auto' ? language : outputLanguage,
           autoMode,
           uiConfig: {
             ...uiConfig,
@@ -993,7 +996,7 @@ function PresentationPageContent() {
             layoutStyle: layoutPreset === 'visual-first' ? 'visual_first' : layoutPreset === 'text-first' ? 'text_first' : 'mixed',
             captionStyle: bulletPreset === 'concise' ? 'short' : bulletPreset === 'expanded' ? 'detailed' : 'balanced',
           },
-          slideSubjects: slideSetup.map((item, i) => `${normalizeSubject(item.title, i)}: ${normalizeSubject(item.subject, i)}`),
+          slideSubjects: serializeSlideSetup(slideSetup),
           setupPreset: {
             title: presetTitle.trim() || 'Custom preset',
             themePreset,
@@ -1012,10 +1015,10 @@ function PresentationPageContent() {
       setAnalysis(nextPlan?.analysis || null);
       setPrototype(mapBuildToPrototype(payload));
       setSelectedSlideIndex(0);
-      goToStage('result');
-      toast({ title: 'Presentation built', description: 'Deck generated with your slide subjects and style setup.' });
+      goToStage('preview');
+      toast({ title: 'Presentation built', description: 'Deck generated successfully.' });
     } catch (error: any) {
-      goToStage('style');
+      goToStage('settings');
       toast({
         variant: 'destructive',
         title: 'Could not build presentation',
@@ -1031,6 +1034,7 @@ function PresentationPageContent() {
     ensureProjectAndSources,
     fontPreset,
     language,
+    outputLanguage,
     layoutPreset,
     platform,
     presetTitle,
@@ -1040,7 +1044,6 @@ function PresentationPageContent() {
     toast,
     uiConfig,
     goToStage,
-    allSubjectsNamed,
   ]);
 
   const downloadPresentation = useCallback(async () => {
@@ -1208,14 +1211,21 @@ function PresentationPageContent() {
 
   return (
     <WorkbenchShell title="Presentation" sidebar={sidebar} hideSidebar>
-      <div className="relative flex h-full flex-col gap-4">
+      <div className="relative mx-auto flex h-full w-full max-w-[1280px] flex-col gap-5 px-2 pb-6 pt-2 md:px-4 lg:px-6">
+        <input
+          ref={uploadInputRef}
+          type="file"
+          className="hidden"
+          multiple
+          onChange={(event) => void onUploadFiles(event.target.files)}
+        />
         {(isPlanning || isBuilding) && (
           <div className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-background/70 backdrop-blur-[1px]">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         )}
 
-        {prototype && (
+        {stage === 'preview' && prototype && (
           <Card className="border border-border/70">
             <CardContent className="py-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1240,7 +1250,7 @@ function PresentationPageContent() {
           </Card>
         )}
 
-        {activeShareUrl && (
+        {stage === 'preview' && activeShareUrl && (
           <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-muted/35 p-2">
             <Badge variant="secondary">Public preview active</Badge>
             <a href={activeShareUrl} target="_blank" rel="noreferrer" className="text-xs underline underline-offset-2">
@@ -1252,90 +1262,36 @@ function PresentationPageContent() {
           </div>
         )}
 
-        {stage === 'upload' && (
-          <div className="flex min-h-[68vh] flex-col gap-4">
-            <input
-              ref={uploadInputRef}
-              type="file"
-              className="hidden"
-              multiple
-              onChange={(event) => void onUploadFiles(event.target.files)}
-            />
-
+        {stage === 'source' && (
+          <div className="flex min-h-[68vh] flex-col gap-5">
             <Card className="border border-border/60">
               <CardContent className="pt-5">
-                <div className="flex flex-wrap items-center gap-2">
-                  {(['upload', 'sources', 'connect', 'recents', 'plan'] as const).map((node, idx, arr) => (
-                    <React.Fragment key={node}>
-                      <button
-                        type="button"
-                        onClick={() => setUploadFlowNode(node)}
-                        className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                          uploadFlowNode === node
-                            ? 'border-emerald-600/60 bg-emerald-50 text-emerald-700'
-                            : 'border-border/60 bg-background hover:bg-emerald-50 hover:text-emerald-700'
-                        }`}
+                {sourceAttachments.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-5 py-7 text-center">
+                    <p className="text-sm font-medium">Add material to start</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Upload files, import recents, or connect Microsoft</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {sourceAttachments.map((source) => (
+                      <div
+                        key={source.key}
+                        className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-xs transition-colors hover:border-emerald-500/60"
                       >
-                        {node}
-                      </button>
-                      {idx < arr.length - 1 && <div className="h-[2px] w-8 rounded-full bg-muted-foreground/40 transition-colors hover:bg-emerald-500" />}
-                    </React.Fragment>
-                  ))}
-                </div>
+                        <p className="max-w-[260px] truncate font-medium">{source.fileName}</p>
+                        <p className="text-[11px] text-muted-foreground">{source.sourceType.replace('_', ' ')}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            <div className="mt-auto rounded-2xl border border-border/60 bg-card/90 p-3">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button size="sm" className="h-8 px-3 text-xs" onClick={() => void continueToSubjects()} disabled={!sourceText.trim() || isPlanning || isBuilding}>
-                    <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                    Generate
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
-                    <Upload className="mr-1.5 h-3.5 w-3.5" />
-                    Upload
-                  </Button>
-                  <div className="relative">
-                    <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => setConnectMenuOpen((prev) => !prev)}>
-                      Connect
-                      <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
-                    </Button>
-                    {connectMenuOpen && (
-                      <div className="absolute left-0 top-9 z-20 w-44 rounded-md border border-border bg-card p-1 shadow-md">
-                        <button
-                          type="button"
-                          className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-muted"
-                          onClick={() => {
-                            setConnectMicrosoftOpen(true);
-                            setConnectMenuOpen(false);
-                          }}
-                        >
-                          Microsoft
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
-                  <FileUp className="mr-1.5 h-3.5 w-3.5" />
-                  Upload
-                </Button>
-              </div>
-
-              {uploadFlowNode === 'recents' && (
-                <div className="mb-3 rounded-xl border border-border/60 bg-background p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-medium">Recents</p>
-                    <Badge variant="secondary">{sourceAttachments.length} attached</Badge>
-                  </div>
+            {importOpen && (
+              <Card className="border border-border/60">
+                <CardContent className="pt-4">
                   <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <Input
-                      value={importSearch}
-                      onChange={(e) => setImportSearch(e.target.value)}
-                      placeholder="Search recents..."
-                      className="h-8"
-                    />
+                    <Input value={importSearch} onChange={(e) => setImportSearch(e.target.value)} placeholder="Search recents..." className="h-8" />
                     <select
                       value={importSourceFilter}
                       onChange={(e) => setImportSourceFilter(e.target.value as 'all' | 'tool_runs' | 'materials')}
@@ -1356,7 +1312,7 @@ function PresentationPageContent() {
                       <option value="name">Name</option>
                     </select>
                   </div>
-                  <div className="mb-2 max-h-44 overflow-auto rounded-md border border-border/60 p-2">
+                  <div className="max-h-44 overflow-auto rounded-md border border-border/60 p-2">
                     {importCatalogLoading ? (
                       <div className="flex h-20 items-center justify-center">
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -1373,12 +1329,7 @@ function PresentationPageContent() {
                                 {item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleDateString() : '-'}
                               </p>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 px-2 text-[11px]"
-                              onClick={() => void importRecentsFiles([item])}
-                            >
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => void importRecentsFiles([item])}>
                               Import
                             </Button>
                           </div>
@@ -1386,19 +1337,63 @@ function PresentationPageContent() {
                       </div>
                     )}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="mt-auto rounded-2xl border border-border/60 bg-card/90 p-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
+                    <Upload className="mr-1.5 h-3.5 w-3.5" />
+                    Upload
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => setImportOpen((prev) => !prev)}>
+                    <FileUp className="mr-1.5 h-3.5 w-3.5" />
+                    Import
+                  </Button>
+                  <div className="relative">
+                    <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => setConnectMenuOpen((prev) => !prev)}>
+                      Connect
+                      <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
+                    </Button>
+                    {connectMenuOpen && (
+                      <div className="absolute left-0 top-10 z-20 w-44 rounded-md border border-border bg-card p-1 shadow-md">
+                        <button
+                          type="button"
+                          className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-muted"
+                          onClick={() => {
+                            setConnectMicrosoftOpen(true);
+                            setConnectMenuOpen(false);
+                          }}
+                        >
+                          Microsoft
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
+                <Button
+                  size="sm"
+                  className="h-9 px-4 text-xs"
+                  onClick={() => void continueToSettings()}
+                  disabled={(!sourceText.trim() && sourceAttachments.length === 0) || isPlanning || isBuilding}
+                >
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  Analyze
+                </Button>
+              </div>
 
               <textarea
                 value={sourceText}
                 onChange={(event) => setSourceText(event.target.value)}
-                placeholder="Upload or paste source material here..."
-                className="h-28 w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
+                placeholder="Describe your presentation or add material..."
+                className="min-h-[56px] max-h-[124px] w-full resize-y rounded-xl border border-border/70 bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
 
             {connectMicrosoftOpen && (
-              <Card className="mx-auto w-full max-w-[1080px] border border-border/60">
+              <Card className="mx-auto w-full max-w-[960px] border border-border/60">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">Microsoft Connect</CardTitle>
                   <CardDescription>Choose files to import into source.</CardDescription>
@@ -1416,209 +1411,174 @@ function PresentationPageContent() {
           </div>
         )}
 
-        {stage === 'subjects' && (
-          <Card className="border border-border/70">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <Button variant="outline" size="sm" onClick={() => goToStage('upload')}>
-                  Back
+        {stage === 'settings' && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-border/60 bg-card/90 p-3">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
+                  <Upload className="mr-1.5 h-3.5 w-3.5" />
+                  Upload
                 </Button>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setSlideSetup((prev) => [...prev, { title: `Slide ${prev.length + 1}`, subject: '' }])}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add slide
-                  </Button>
-                  <Button size="sm" onClick={() => goToStage('style')} disabled={!allSubjectsNamed}>
-                    Next
-                  </Button>
-                </div>
+                <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => setImportOpen((prev) => !prev)}>
+                  <FileUp className="mr-1.5 h-3.5 w-3.5" />
+                  Import
+                </Button>
+                <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => setConnectMicrosoftOpen(true)}>
+                  Connect
+                </Button>
               </div>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-              <div className="max-h-[560px] overflow-auto rounded-xl border border-border/60 bg-muted/35 p-2">
-                {slideSetup.map((slide, idx) => (
-                  <button
-                    key={`subject-${idx}`}
-                    type="button"
-                    onClick={() => setActiveSubjectIndex(idx)}
-                    className={`mb-2 w-full rounded-lg border p-2 text-left transition ${
-                      idx === activeSubjectIndex ? 'scale-[1.02] border-foreground/50 bg-background' : 'border-border/50 bg-card/70 hover:bg-background/70'
-                    }`}
-                  >
-                    <p className="text-[11px] text-muted-foreground">Slide {idx + 1}</p>
-                    <p className="truncate text-xs font-medium">{normalizeSubject(slide.title, idx)}</p>
-                  </button>
-                ))}
-              </div>
-
-              <div className="rounded-xl border border-border/60 bg-card/70 p-5 transition-all duration-300">
-                <div className="mb-4 flex items-center justify-between">
-                  <p className="text-sm font-medium">Slide {activeSubjectIndex + 1}</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSlideSetup((prev) => prev.filter((_, idx) => idx !== activeSubjectIndex));
-                      setActiveSubjectIndex((prev) => Math.max(0, Math.min(prev, slideSetup.length - 2)));
-                    }}
-                    disabled={slideSetup.length <= 1}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Remove
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <p className="mb-1 text-xs text-muted-foreground">Title</p>
-                    <Input
-                      value={slideSetup[activeSubjectIndex]?.title || ''}
-                      onChange={(e) =>
-                        setSlideSetup((prev) => prev.map((item, idx) => (idx === activeSubjectIndex ? { ...item, title: e.target.value } : item)))
-                      }
-                      placeholder="Slide title"
-                    />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-xs text-muted-foreground">Subject explanation</p>
-                    <textarea
-                      value={slideSetup[activeSubjectIndex]?.subject || ''}
-                      onChange={(e) =>
-                        setSlideSetup((prev) => prev.map((item, idx) => (idx === activeSubjectIndex ? { ...item, subject: e.target.value } : item)))
-                      }
-                      placeholder="Explain the subject of this slide..."
-                      className="h-28 w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {stage === 'style' && (
-          <div className="space-y-4 transition-all duration-300">
-            <div className="flex items-center justify-between">
-              <Button variant="outline" onClick={() => goToStage('subjects')}>
-                Back
-              </Button>
-              <div className="flex items-center gap-2">
-                <Input value={customTitle} onChange={(e) => setCustomTitle(e.target.value)} placeholder="Presentation title" className="h-8 w-64" />
-                <div className="flex gap-1">
-                  {(['powerpoint', 'google-slides', 'keynote'] as const).map((item) => (
-                    <Button
-                      key={item}
-                      size="sm"
-                      variant={platform === item ? 'default' : 'outline'}
-                      onClick={() => setPlatform(item)}
-                    >
-                      {item === 'powerpoint' ? 'PowerPoint' : item === 'google-slides' ? 'Google Slides' : 'Keynote'}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <Card className="border border-border/70">
-                <CardHeader>
-                  <CardTitle className="text-base">Preset identity</CardTitle>
-                  <CardDescription>Name and reuse your setup style.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Input value={presetTitle} onChange={(e) => setPresetTitle(e.target.value)} placeholder="Preset name" />
-                  <div className="flex flex-wrap gap-2">
-                    {THEME_PRESETS.map((preset) => (
-                      <Button
-                        key={preset.id}
-                        type="button"
-                        variant={themePreset === preset.id ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setThemePreset(preset.id)}
-                      >
-                        {preset.label}
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-border/70">
-                <CardHeader>
-                  <CardTitle className="text-base">Typography & layout</CardTitle>
-                  <CardDescription>Control fonts, bullet style, and structure behavior.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    {FONT_PRESETS.map((preset) => (
-                      <Button
-                        key={preset.id}
-                        type="button"
-                        variant={fontPreset === preset.id ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setFontPreset(preset.id)}
-                      >
-                        {preset.label}
-                      </Button>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {LAYOUT_PRESETS.map((preset) => (
-                      <Button
-                        key={preset.id}
-                        type="button"
-                        variant={layoutPreset === preset.id ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setLayoutPreset(preset.id)}
-                      >
-                        {preset.label}
-                      </Button>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {BULLET_PRESETS.map((preset) => (
-                      <Button
-                        key={preset.id}
-                        type="button"
-                        variant={bulletPreset === preset.id ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setBulletPreset(preset.id)}
-                      >
-                        {preset.label}
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <textarea
+                value={sourceText}
+                onChange={(event) => setSourceText(event.target.value)}
+                placeholder="What should this presentation be about?"
+                className="min-h-[56px] max-h-[124px] w-full resize-y rounded-xl border border-border/70 bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
+              />
             </div>
 
-            <Card className="border border-border/70">
-              <CardHeader>
-                <CardTitle className="text-base">Detailed settings</CardTitle>
-                <CardDescription>All platform and layout controls for this deck.</CardDescription>
+            <Card className="border border-border/60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Detected from your material</CardTitle>
+                <CardDescription>Recommended setup</CardDescription>
               </CardHeader>
-              <CardContent>
-                <AdaptiveSettingsSidebar
-                  analysis={analysis}
-                  autoMode={autoMode}
-                  onAutoModeChange={setAutoMode}
-                  customTitle={customTitle}
-                  onTitleChange={setCustomTitle}
-                  platform={platform}
-                  onPlatformChange={setPlatform}
-                  uiConfig={uiConfig}
-                  onPatch={applyConfig}
-                  controlTiers={plan?.relevanceRankedControls || null}
-                  disabled={isPlanning || isBuilding}
-                />
+              <CardContent className="flex flex-wrap items-center gap-2 text-xs">
+                <Badge variant="secondary">Type: {analysis?.dominantArchetype?.replace(/_/g, ' ') || 'mixed'}</Badge>
+                <Badge variant="secondary">Audience: {analysis?.audienceGuess || 'general'}</Badge>
+                <Badge variant="secondary">Slides: {analysis?.recommendedSlideCountMin || 8}-{analysis?.recommendedSlideCountMax || 12}</Badge>
+                <Badge variant="secondary">Visuals: {analysis?.visualPotential || 'medium'}</Badge>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => plan?.effectiveConfig && setUiConfig((prev) => ({ ...prev, ...plan.effectiveConfig }))}>
+                  Apply suggestions
+                </Button>
               </CardContent>
             </Card>
 
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={() => void buildPresentation()}>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <Card className="border border-border/60">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Structure</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <div className="mb-1 flex items-center justify-between text-xs">
+                      <span>Slides</span>
+                      <span>{uiConfig.slideCount || 10}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={4}
+                      max={30}
+                      value={Number(uiConfig.slideCount || 10)}
+                      onChange={(e) => applyConfig({ slideCount: Number(e.target.value) })}
+                      className="w-full"
+                    />
+                  </div>
+                  <label className="flex items-center justify-between text-xs"><span>Summary slide</span><input type="checkbox" checked={Boolean(uiConfig.includeSummary)} onChange={(e) => applyConfig({ includeSummary: e.target.checked })} /></label>
+                  <label className="flex items-center justify-between text-xs"><span>Q&A slide</span><input type="checkbox" checked={Boolean(uiConfig.includeQA)} onChange={(e) => applyConfig({ includeQA: e.target.checked })} /></label>
+                  <label className="flex items-center justify-between text-xs"><span>Speaker notes</span><input type="checkbox" checked={Boolean(uiConfig.includeSpeakerNotes)} onChange={(e) => applyConfig({ includeSpeakerNotes: e.target.checked })} /></label>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-border/60">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Style</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Tone</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(['simple', 'academic', 'professional'] as const).map((tone) => (
+                        <Button key={tone} type="button" size="sm" variant={uiConfig.tone === tone ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => applyConfig({ tone })}>
+                          {tone[0].toUpperCase() + tone.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Density</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(['light', 'balanced', 'dense'] as const).map((density) => (
+                        <Button key={density} type="button" size="sm" variant={uiConfig.density === density ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => applyConfig({ density })}>
+                          {density[0].toUpperCase() + density.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-border/60">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Visuals</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Image usage</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(['low', 'medium', 'high'] as const).map((richness) => (
+                        <Button key={richness} type="button" size="sm" variant={uiConfig.imageRichness === richness ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => applyConfig({ imageRichness: richness })}>
+                          {richness[0].toUpperCase() + richness.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Visual source</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Button type="button" size="sm" variant={uiConfig.imageRichness === 'source_only' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => applyConfig({ imageRichness: 'source_only' })}>
+                        Source only
+                      </Button>
+                      <Button type="button" size="sm" variant={uiConfig.imageRichness !== 'source_only' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => applyConfig({ imageRichness: 'medium' })}>
+                        Allow internet
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-border/60">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Output</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Platform</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(['powerpoint', 'google-slides'] as const).map((item) => (
+                        <Button key={item} type="button" size="sm" variant={platform === item ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setPlatform(item)}>
+                          {item === 'powerpoint' ? 'PowerPoint' : 'Google Slides'}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Language</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Button type="button" size="sm" variant={outputLanguage === 'nl' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setOutputLanguage('nl')}>Dutch</Button>
+                      <Button type="button" size="sm" variant={outputLanguage === 'en' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setOutputLanguage('en')}>English</Button>
+                      <Button type="button" size="sm" variant={outputLanguage === 'auto' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setOutputLanguage('auto')}>Auto</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="border border-border/60">
+              <CardContent className="py-3">
+                <button type="button" className="w-full text-left text-sm" onClick={() => setAdvancedOpen((prev) => !prev)}>
+                  {advancedOpen ? 'Hide options' : 'More options'}
+                </button>
+                {advancedOpen && (
+                  <div className="mt-3 grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
+                    <label className="flex items-center justify-between"><span>References</span><input type="checkbox" checked={Boolean(uiConfig.includeReferences)} onChange={(e) => applyConfig({ includeReferences: e.target.checked })} /></label>
+                    <label className="flex items-center justify-between"><span>Appendix</span><input type="checkbox" checked={Boolean(uiConfig.includeAppendix)} onChange={(e) => applyConfig({ includeAppendix: e.target.checked })} /></label>
+                    <label className="flex items-center justify-between"><span>Strict citations</span><input type="checkbox" checked={uiConfig.citations === 'strict'} onChange={(e) => applyConfig({ citations: e.target.checked ? 'strict' : 'minimal' })} /></label>
+                    <label className="flex items-center justify-between"><span>Preserve terminology</span><input type="checkbox" checked={Boolean(uiConfig.stepByStep)} onChange={(e) => applyConfig({ stepByStep: e.target.checked })} /></label>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="flex">
+              <Button size="lg" onClick={() => void buildPresentation()} disabled={isBuilding || isPlanning}>
                 <Sparkles className="mr-2 h-4 w-4" />
                 Generate presentation
               </Button>
@@ -1639,7 +1599,7 @@ function PresentationPageContent() {
           </Card>
         )}
 
-        {stage === 'result' && prototype && (
+        {stage === 'preview' && prototype && (
           <PresentationPreview
             manifest={prototype.previewManifest}
             selectedSlideIndex={selectedSlideIndex}
