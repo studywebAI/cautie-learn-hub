@@ -14,11 +14,19 @@ const SlideSchema = z.object({
   heading: z.string().min(1),
   bullets: z.array(z.string()).default([]),
   speakerNotes: z.string().optional(),
+  imageUrl: z.string().optional(),
+});
+
+const VisualAssetSchema = z.object({
+  kind: z.enum(['source_image', 'internet_image', 'chart', 'icon']).optional(),
+  query: z.string().optional(),
+  sourceUrl: z.string().optional(),
 });
 
 const RequestSchema = z.object({
   title: z.string().min(1).max(2000),
   slides: z.array(SlideSchema).min(1).max(120),
+  visualAssets: z.array(VisualAssetSchema).optional(),
   includeSpeakerNotes: z.boolean().optional(),
   destination: z
     .object({
@@ -45,9 +53,31 @@ const cleanTitle = (value: string): string => value.replace(/\s+/g, ' ').trim().
 
 const cleanBullet = (value: string): string => value.replace(/\s+/g, ' ').trim().slice(0, 180);
 
+function isHttpUrl(value: string) {
+  return /^https?:\/\//i.test(value);
+}
+
+async function fetchImageAsDataUri(url: string) {
+  if (!url) return null;
+  if (url.startsWith('data:image/')) return url;
+  if (!isHttpUrl(url)) return null;
+  try {
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) return null;
+    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+    if (!contentType.startsWith('image/')) return null;
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const base64 = buffer.toString('base64');
+    return `data:${contentType};base64,${base64}`;
+  } catch {
+    return null;
+  }
+}
+
 async function renderPptxBuffer(input: {
   title: string;
-  slides: Array<{ index: number; heading: string; bullets: string[]; speakerNotes?: string }>;
+  slides: Array<{ index: number; heading: string; bullets: string[]; speakerNotes?: string; imageUrl?: string }>;
+  visualAssets?: Array<{ kind?: string; query?: string; sourceUrl?: string }>;
   includeSpeakerNotes: boolean;
 }) {
   const pptx = new PptxGenJS();
@@ -57,9 +87,28 @@ async function renderPptxBuffer(input: {
   pptx.subject = input.title;
   pptx.title = input.title;
 
+  const visualPool = (input.visualAssets || [])
+    .filter((asset) => String(asset.kind || '').toLowerCase() === 'source_image')
+    .map((asset) => String(asset.sourceUrl || '').trim())
+    .filter(Boolean);
+
+  const imageCache = new Map<string, string | null>();
+  const resolveImage = async (candidate?: string) => {
+    const key = String(candidate || '').trim();
+    if (!key) return null;
+    if (imageCache.has(key)) return imageCache.get(key) || null;
+    const dataUri = await fetchImageAsDataUri(key);
+    imageCache.set(key, dataUri);
+    return dataUri;
+  };
+
   for (const slideItem of input.slides) {
     const slide = pptx.addSlide();
     slide.background = { color: 'F4F3EE' };
+
+    const fallbackVisual = visualPool.length > 0 ? visualPool[(slideItem.index - 1) % visualPool.length] : '';
+    const imageData = await resolveImage(slideItem.imageUrl || fallbackVisual);
+    const hasImage = Boolean(imageData);
 
     slide.addText(input.title, {
       x: 0.6,
@@ -83,6 +132,16 @@ async function renderPptxBuffer(input: {
       breakLine: true,
     });
 
+    if (hasImage && imageData) {
+      slide.addImage({
+        data: imageData,
+        x: 7.15,
+        y: 1.88,
+        w: 5.35,
+        h: 3.95,
+      });
+    }
+
     const bullets = slideItem.bullets
       .map((line) => cleanBullet(line))
       .filter(Boolean)
@@ -93,7 +152,7 @@ async function renderPptxBuffer(input: {
       slide.addText(bullets, {
         x: 1.02,
         y: 2.0,
-        w: 10.8,
+        w: hasImage ? 5.85 : 10.8,
         h: 4.4,
         fontFace: 'Calibri',
         fontSize: 20,
@@ -274,6 +333,7 @@ export async function POST(req: NextRequest) {
     const buffer = await renderPptxBuffer({
       title,
       slides,
+      visualAssets: parsed.data.visualAssets || [],
       includeSpeakerNotes,
     });
 

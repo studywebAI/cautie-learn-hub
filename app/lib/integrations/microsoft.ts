@@ -474,3 +474,25 @@ export async function fetchMicrosoftFileThumbnail(input: {
     '';
   return typeof candidate === 'string' ? candidate : '';
 }
+
+export async function downloadMicrosoftFile(input: {
+  accessToken: string;
+  fileId: string;
+}) {
+  const fileId = encodeURIComponent(input.fileId);
+  const response = await fetch(`${MICROSOFT_GRAPH_BASE}/me/drive/items/${fileId}/content`, {
+    headers: { Authorization: `Bearer ${input.accessToken}` },
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    const message = payload?.error?.message || 'Failed to download Microsoft file';
+    throw new Error(message);
+  }
+  const mimeType = response.headers.get('content-type') || 'application/octet-stream';
+  const buffer = Buffer.from(await response.arrayBuffer());
+  return {
+    buffer,
+    mimeType,
+  };
+}

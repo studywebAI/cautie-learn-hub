@@ -519,50 +519,78 @@ function PresentationPageContent() {
     }
   }, [appendSourceChunk, bumpImportUsage, toast]);
 
-  const onUploadFiles = useCallback(async (files: FileList | null) => {
+  const extractTextFromFile = useCallback(async (file: File) => {
+    const textLike = file.type.startsWith('text/') || /\.(txt|md|csv|json|xml|html)$/i.test(file.name);
+    if (textLike) {
+      return (await file.text().catch(() => '')).trim();
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch('/api/tools/extract-text', {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) return '';
+    const payload = await response.json().catch(() => ({}));
+    return (
+      (typeof payload?.layoutText === 'string' && payload.layoutText.trim()) ||
+      (typeof payload?.text === 'string' ? payload.text.trim() : '')
+    );
+  }, []);
+
+  const ingestUploadedFiles = useCallback(async (
+    files: File[],
+    options?: {
+      origin?: 'local' | 'microsoft';
+      metadataByName?: Map<string, {
+        id?: string;
+        mimeType?: string;
+        webUrl?: string;
+        previewUrl?: string;
+      }>;
+    }
+  ) => {
     if (!files || files.length === 0) return;
     const collected: string[] = [];
     const attachments: SourceAttachment[] = [];
-    for (const file of Array.from(files)) {
-      const textLike = file.type.startsWith('text/') || /\.(txt|md|csv|json|xml|html)$/i.test(file.name);
+    for (const file of files) {
       const imageLike = file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(file.name);
+      const extracted = await extractTextFromFile(file).catch(() => '');
       const key = `local:${file.name}:${file.size}:${file.lastModified}`;
-      if (textLike) {
-        const text = await file.text().catch(() => '');
-        if (text.trim()) {
-          collected.push(`[${file.name}]\n${text.trim()}`);
-          attachments.push({
-            key,
-            sourceType: 'file',
-            fileName: file.name,
-            mimeType: file.type || undefined,
-            extractedText: text.trim(),
-            parsedMetadata: {
-              localUpload: true,
-              size: file.size,
-              containsVisuals: false,
-            },
-          });
-          continue;
-        }
+      const cloudMeta = options?.metadataByName?.get(file.name);
+      if (extracted) {
+        collected.push(`[${file.name}]\n${extracted}`);
       }
-      collected.push(`[${file.name}]\nUploaded file included as source shell with metadata.`);
+      if (!extracted) {
+        collected.push(`[${file.name}]\nBinary file attached as source.`);
+      }
       attachments.push({
         key,
-        sourceType: imageLike ? 'image' : 'file',
+        sourceType: options?.origin === 'microsoft' ? 'cloud_file' : imageLike ? 'image' : 'file',
         fileName: file.name,
-        mimeType: file.type || undefined,
+        mimeType: cloudMeta?.mimeType || file.type || undefined,
+        externalProvider: options?.origin === 'microsoft' ? 'onedrive' : undefined,
+        externalFileId: options?.origin === 'microsoft' ? cloudMeta?.id : undefined,
+        extractedText: extracted || undefined,
+        thumbnailUrl: cloudMeta?.previewUrl,
         parsedMetadata: {
-          localUpload: true,
+          localUpload: options?.origin !== 'microsoft',
+          microsoftDownloaded: options?.origin === 'microsoft',
           size: file.size,
           containsVisuals: imageLike,
+          webUrl: cloudMeta?.webUrl,
         },
       });
     }
     appendSourceChunk(collected.join('\n\n'));
     setSourceAttachments((prev) => mergeAttachments(prev, attachments));
     if (uploadInputRef.current) uploadInputRef.current.value = '';
-  }, [appendSourceChunk]);
+  }, [appendSourceChunk, extractTextFromFile]);
+
+  const onUploadFiles = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    await ingestUploadedFiles(Array.from(files), { origin: 'local' });
+  }, [ingestUploadedFiles]);
 
   useEffect(() => {
     const target = Math.max(4, Math.min(20, uiConfig.slideCount || 10));
@@ -678,16 +706,63 @@ function PresentationPageContent() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const onPicked = (event: Event) => {
+    const onPicked = async (event: Event) => {
       const custom = event as CustomEvent<any>;
       const items = Array.isArray(custom?.detail?.items) ? custom.detail.items : [];
-      const chunks = items
-        .map((item: any) => String(item?.extractedText || '').trim())
-        .filter(Boolean);
-      if (chunks.length > 0) {
-        appendSourceChunk(chunks.join('\n\n'));
-        toast({ title: 'Microsoft files imported', description: `${chunks.length} file(s) added to source.` });
+      if (items.length === 0) return;
+
+      const metadataByName = new Map<string, {
+        id?: string;
+        mimeType?: string;
+        webUrl?: string;
+        previewUrl?: string;
+      }>();
+      for (const item of items) {
+        const name = String(item?.name || '').trim();
+        if (!name) continue;
+        metadataByName.set(name, {
+          id: typeof item?.id === 'string' ? item.id : undefined,
+          mimeType: typeof item?.mimeType === 'string' ? item.mimeType : undefined,
+          webUrl: typeof item?.webUrl === 'string' ? item.webUrl : undefined,
+          previewUrl: typeof item?.previewUrl === 'string' ? item.previewUrl : undefined,
+        });
       }
+
+      const downloadedFiles: File[] = [];
+      const fallbackChunks: string[] = [];
+      for (const item of items) {
+        try {
+          const response = await fetch('/api/integrations/microsoft/files/download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: String(item?.id || ''),
+              name: String(item?.name || 'Cloud file'),
+              kind: 'onedrive',
+            }),
+          });
+          if (!response.ok) throw new Error('download_failed');
+          const blob = await response.blob();
+          const file = new File([blob], String(item?.name || 'Cloud file'), {
+            type: blob.type || String(item?.mimeType || 'application/octet-stream'),
+          });
+          downloadedFiles.push(file);
+        } catch {
+          const fallbackText = String(item?.extractedText || '').trim();
+          if (fallbackText) fallbackChunks.push(`[${String(item?.name || 'Cloud file')}]\n${fallbackText}`);
+        }
+      }
+
+      if (downloadedFiles.length > 0) {
+        await ingestUploadedFiles(downloadedFiles, {
+          origin: 'microsoft',
+          metadataByName,
+        });
+      }
+      if (fallbackChunks.length > 0) {
+        appendSourceChunk(fallbackChunks.join('\n\n'));
+      }
+
       const attachments: SourceAttachment[] = items.map((item: any, idx: number) => ({
         key: `onedrive:${String(item?.id || idx)}`,
         sourceType: 'cloud_file',
@@ -705,10 +780,11 @@ function PresentationPageContent() {
       setSourceAttachments((prev) => mergeAttachments(prev, attachments));
       setConnectMicrosoftOpen(false);
       setConnectMenuOpen(false);
+      toast({ title: 'Microsoft files imported', description: `${items.length} file(s) ingested.` });
     };
     window.addEventListener('integration-source-picked', onPicked as EventListener);
     return () => window.removeEventListener('integration-source-picked', onPicked as EventListener);
-  }, [appendSourceChunk, toast]);
+  }, [appendSourceChunk, ingestUploadedFiles, toast]);
 
   useEffect(() => {
     if (stage !== 'upload' || uploadFlowNode !== 'recents') return;

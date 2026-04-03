@@ -266,7 +266,7 @@ function buildVisualAssets(input: {
       rationale: containsVisuals
         ? 'Use uploaded/source visual directly where relevant.'
         : 'Use uploaded file context as supporting source.',
-      sourceUrl: webUrl || thumb || undefined,
+      sourceUrl: thumb || webUrl || undefined,
       sourceDomain: domainHint,
       relevanceScore: containsVisuals ? 0.91 : 0.7,
     });

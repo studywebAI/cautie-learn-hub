@@ -32,6 +32,30 @@ export async function POST(
       return NextResponse.json({ error: 'No generated version found for this project' }, { status: 404 });
     }
 
+    const blueprint = (version.blueprint_json as any) || {};
+    const visualAssets = Array.isArray(blueprint?.visualAssets) ? blueprint.visualAssets : [];
+    const sourceVisuals = visualAssets
+      .filter((asset: any) => String(asset?.kind || '').toLowerCase() === 'source_image')
+      .filter((asset: any) => typeof asset?.sourceUrl === 'string' && asset.sourceUrl.trim().length > 0);
+
+    const slides = Array.isArray(blueprint?.slides) ? blueprint.slides : [];
+    const mappedSlides = slides.map((slide: any, idx: number) => {
+      const heading = String(slide?.heading || slide?.title || `Slide ${idx + 1}`);
+      const headingLower = heading.toLowerCase();
+      const matched = sourceVisuals.find((asset: any) =>
+        String(asset?.query || '').toLowerCase().includes(headingLower)
+      );
+      const fallback = sourceVisuals.length > 0 ? sourceVisuals[idx % sourceVisuals.length] : null;
+      const selectedVisual = matched || fallback;
+      return {
+        index: Number(slide?.index || idx + 1),
+        heading,
+        bullets: Array.isArray(slide?.bullets) ? slide.bullets.map((b: any) => String(b)) : [],
+        speakerNotes: typeof slide?.speakerNotes === 'string' ? slide.speakerNotes : undefined,
+        imageUrl: typeof selectedVisual?.sourceUrl === 'string' ? selectedVisual.sourceUrl : undefined,
+      };
+    });
+
     const internalResponse = await fetch(new URL('/api/tools/presentation/export', request.nextUrl.origin), {
       method: 'POST',
       headers: {
@@ -40,13 +64,13 @@ export async function POST(
       },
       body: JSON.stringify({
         title: project.title,
-        slides: ((version.blueprint_json as any)?.slides || []).map((slide: any, idx: number) => ({
-          index: Number(slide?.index || idx + 1),
-          heading: String(slide?.heading || slide?.title || `Slide ${idx + 1}`),
-          bullets: Array.isArray(slide?.bullets) ? slide.bullets.map((b: any) => String(b)) : [],
-          speakerNotes: typeof slide?.speakerNotes === 'string' ? slide.speakerNotes : undefined,
+        slides: mappedSlides,
+        visualAssets: sourceVisuals.map((asset: any) => ({
+          kind: typeof asset?.kind === 'string' ? asset.kind : undefined,
+          query: typeof asset?.query === 'string' ? asset.query : undefined,
+          sourceUrl: typeof asset?.sourceUrl === 'string' ? asset.sourceUrl : undefined,
         })),
-        includeSpeakerNotes: Boolean((version.blueprint_json as any)?.settings?.includeSpeakerNotes),
+        includeSpeakerNotes: Boolean(blueprint?.settings?.includeSpeakerNotes),
         destination: payload.destination || { kind: 'download' },
       }),
     });
