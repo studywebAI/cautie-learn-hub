@@ -5,7 +5,15 @@ const MAX_INTEGRATION_SOURCE_TEXT_CHARS = 40_000;
 
 function mergeSourceText(base: string, additions: string[]) {
   const cleanBase = (base || '').trim();
-  const cleanAdditions = additions.map((v) => v.trim()).filter(Boolean);
+  const seen = new Set<string>();
+  const cleanAdditions = additions
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .filter((block) => {
+      if (seen.has(block)) return false;
+      seen.add(block);
+      return true;
+    });
   if (cleanAdditions.length === 0) return cleanBase;
   // Put extracted/imported sources first so generation is grounded in real materials.
   // Keep manual text at the end as optional hints.
@@ -66,8 +74,14 @@ export async function resolveSelectedSourcesForRun(
     .filter(Boolean);
 
   const mediaBlocks = selectedSources
-    .filter((source) => isLikelyImageSource(source) && source.web_url)
-    .map((source) => `{{media url=${source.web_url}}}`);
+    .map((source) => {
+      const previewUrl = typeof source?.metadata?.preview_url === 'string' ? source.metadata.preview_url : '';
+      if (previewUrl) return previewUrl;
+      if (isLikelyImageSource(source) && source.web_url) return String(source.web_url);
+      return '';
+    })
+    .filter(Boolean)
+    .map((url) => `{{media url=${url}}}`);
 
   const existingSourceText = typeof input.baseInput?.sourceText === 'string' ? input.baseInput.sourceText : '';
   const mergedSourceText = mergeSourceText(existingSourceText, [...mediaBlocks, ...extractedBlocks]);

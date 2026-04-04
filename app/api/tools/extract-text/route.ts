@@ -1,5 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import mammoth from "mammoth";
+import { createHash } from "crypto";
+
+const EXTRACTION_CACHE_TTL_MS = 30 * 60 * 1000;
+const extractionCache = new Map<string, { text: string; layoutText: string; expiresAt: number }>();
+
+function getCacheKey(type: string, buffer: Buffer) {
+  return createHash('sha256').update(type).update(buffer).digest('hex');
+}
+
+function getFromExtractionCache(key: string) {
+  const hit = extractionCache.get(key);
+  if (!hit) return null;
+  if (Date.now() > hit.expiresAt) {
+    extractionCache.delete(key);
+    return null;
+  }
+  return hit;
+}
+
+function setExtractionCache(key: string, value: { text: string; layoutText: string }) {
+  extractionCache.set(key, {
+    ...value,
+    expiresAt: Date.now() + EXTRACTION_CACHE_TTL_MS,
+  });
+}
 
 function decodeHtmlEntities(input: string): string {
   return input
@@ -134,14 +159,20 @@ export async function POST(req: NextRequest) {
 
     if (type === "text/plain") {
       const text = await file.text();
-      return NextResponse.json({ text, layoutText: annotateLayoutFromPlainText(text) });
+      const layoutText = annotateLayoutFromPlainText(text);
+      return NextResponse.json({ text, layoutText });
     }
 
     if (type === "application/pdf") {
       const buffer = Buffer.from(await file.arrayBuffer());
+      const cacheKey = getCacheKey(type, buffer);
+      const cached = getFromExtractionCache(cacheKey);
+      if (cached) return NextResponse.json({ text: cached.text, layoutText: cached.layoutText, cached: true });
       const text = extractTextFromPdfBuffer(buffer);
       if (text && text.trim().length > 0) {
-        return NextResponse.json({ text, layoutText: annotateLayoutFromPlainText(text) });
+        const payload = { text, layoutText: annotateLayoutFromPlainText(text) };
+        setExtractionCache(cacheKey, payload);
+        return NextResponse.json(payload);
       }
       return NextResponse.json({
         text: "",
@@ -155,9 +186,14 @@ export async function POST(req: NextRequest) {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ) {
       const buffer = Buffer.from(await file.arrayBuffer());
+      const cacheKey = getCacheKey(type, buffer);
+      const cached = getFromExtractionCache(cacheKey);
+      if (cached) return NextResponse.json({ text: cached.text, layoutText: cached.layoutText, cached: true });
       const { text, layoutText } = await extractTextFromDocx(buffer);
       if (text && text.trim().length > 0) {
-        return NextResponse.json({ text, layoutText: layoutText || annotateLayoutFromPlainText(text) });
+        const payload = { text, layoutText: layoutText || annotateLayoutFromPlainText(text) };
+        setExtractionCache(cacheKey, payload);
+        return NextResponse.json(payload);
       }
       return NextResponse.json({
         text: "",
@@ -167,53 +203,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (type.startsWith("image/")) {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (apiKey) {
-        const arrayBuf = await file.arrayBuffer();
-        const base64 = Buffer.from(arrayBuf).toString("base64");
-        const mimeType = type;
-
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    {
-                      inlineData: { mimeType, data: base64 },
-                    },
-                    {
-                      text: "Extract all visible text from this image. Return only extracted text.",
-                    },
-                  ],
-                },
-              ],
-            }),
-          }
-        );
-
-        if (geminiRes.ok) {
-          const geminiData = await geminiRes.json();
-          const extractedText =
-            geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-          const withMedia = appendMediaMetadata(
-            annotateLayoutFromPlainText(extractedText),
-            { imageCount: 1 }
-          );
-          return NextResponse.json({
-            text: extractedText,
-            layoutText: withMedia,
-          });
-        }
-      }
-
       return NextResponse.json({
         text: "",
         layoutText: "",
-        note: "Image text extraction unavailable.",
+        note: "Image received as raw visual context. OCR extraction is intentionally disabled.",
       });
     }
 

@@ -278,7 +278,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
         webUrl: extracted?.webUrl || item.webUrl,
         extractedText,
         previewUrl: extracted?.previewUrl || item.previewUrl,
-        extractionStatus: extractedText.trim() ? 'ready' : 'error',
+        extractionStatus: extractedText.trim() ? 'ready' : 'empty',
       };
     });
 
@@ -614,6 +614,21 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
     if (pickerOpen || opening) return;
     void openEmbeddedPicker();
   }, [autoOpen, openEmbeddedPicker, opening, pickerOpen]);
+
+  useEffect(() => {
+    const onOpen = () => {
+      if (pickerOpen || opening) return;
+      void openEmbeddedPicker();
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cautie:open-microsoft-picker', onOpen);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('cautie:open-microsoft-picker', onOpen);
+      }
+    };
+  }, [openEmbeddedPicker, opening, pickerOpen]);
 
   useEffect(() => {
     if (!openAfterConnect) return;

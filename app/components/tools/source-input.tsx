@@ -4,13 +4,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import {
+  ChevronDown,
+  Clock3,
+  File as FileIcon,
   UploadCloud,
+  FolderOpen,
   FileText,
+  Image,
   ImageIcon,
+  Layers,
+  Search,
   X,
   Loader2,
   Link2,
-  Lightbulb,
   Sparkles,
   Mic,
   Captions,
@@ -19,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ReactNode } from 'react';
+import { SOURCE_PLACEHOLDER_EXAMPLES } from '@/lib/tools/source-placeholder-examples';
 
 interface SourceInputProps {
   value: string;
@@ -38,7 +45,7 @@ interface SourceInputProps {
   submitLabel?: string;
 }
 
-type SourceKind = 'url' | 'file' | 'caption';
+type SourceKind = 'url' | 'file' | 'caption' | 'image';
 
 type SourceEntry = {
   id: string;
@@ -66,12 +73,30 @@ type RecentCatalogItem = {
   isFolder?: boolean;
 };
 
+type MaterialKind = 'text' | 'file' | 'image' | 'onedrive';
+
+type MaterialEntry = {
+  id: string;
+  title: string;
+  type: MaterialKind;
+  preview: string;
+  detail: string;
+  dateIso: string;
+};
+
 const EXTRACTION_REQUEST_TIMEOUT_MS = 30_000;
 const INTEGRATION_PENDING_MAX_POLLS = 20;
 const SOURCE_LOADING_FAILSAFE_MS = 45_000;
 const RECENTS_USAGE_STORAGE_KEY = 'tools.source_input.recents_usage.v1';
+const MATERIALS_STORAGE_KEY = 'tools.source_input.materials.v1';
 
 const URL_REGEX = /\b((?:https?:\/\/|www\.)[^\s<>"]+)/gi;
+
+function isImageLike(name?: string, mimeType?: string) {
+  const lowerName = String(name || '').toLowerCase();
+  const lowerMime = String(mimeType || '').toLowerCase();
+  return lowerMime.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|svg)$/.test(lowerName);
+}
 
 const normalizeText = (value: string) => value.replace(/\s+/g, ' ').trim();
 
@@ -193,6 +218,7 @@ export function SourceInput({
     }
   }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const fallbackRecorderRef = useRef<MediaRecorder | null>(null);
   const fallbackStreamRef = useRef<MediaStream | null>(null);
   const fallbackAudioChunksRef = useRef<Blob[]>([]);
@@ -215,6 +241,9 @@ export function SourceInput({
 
   const [urlInput, setUrlInput] = useState('');
   const [linksOpen, setLinksOpen] = useState(false);
+  const [recentsOpen, setRecentsOpen] = useState(false);
+  const [otherOpen, setOtherOpen] = useState(false);
+  const [materialsOpen, setMaterialsOpen] = useState(false);
   const [recentsCatalog, setRecentsCatalog] = useState<RecentCatalogItem[]>([]);
   const [recentsLoading, setRecentsLoading] = useState(false);
   const [recentsSourceFilter, setRecentsSourceFilter] = useState<'recent' | 'files' | 'all'>('recent');
@@ -222,6 +251,10 @@ export function SourceInput({
   const [recentsSearch, setRecentsSearch] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [removingSourceIds, setRemovingSourceIds] = useState<string[]>([]);
+  const [materialsSearch, setMaterialsSearch] = useState('');
+  const [materials, setMaterials] = useState<MaterialEntry[]>([]);
+  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
+  const [typedPlaceholder, setTypedPlaceholder] = useState('');
 
   const [micError, setMicError] = useState<string | null>(null);
   const [isFallbackRecording, setIsFallbackRecording] = useState(false);
@@ -238,6 +271,81 @@ export function SourceInput({
     initializedRef.current = true;
     if (value.trim()) setManualText(value);
   }, [value]);
+
+  const upsertMaterial = useCallback((entry: Omit<MaterialEntry, 'id' | 'dateIso'>) => {
+    setMaterials((prev) => {
+      const normalizedTitle = entry.title.trim().toLowerCase();
+      const normalizedDetail = entry.detail.trim().toLowerCase();
+      const existing = prev.find((item) =>
+        item.type === entry.type &&
+        item.title.trim().toLowerCase() === normalizedTitle &&
+        item.detail.trim().toLowerCase() === normalizedDetail
+      );
+      if (existing) {
+        return prev.map((item) =>
+          item.id === existing.id ? { ...item, preview: entry.preview, dateIso: new Date().toISOString() } : item
+        );
+      }
+      const next: MaterialEntry = {
+        id: `material-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        title: entry.title,
+        type: entry.type,
+        preview: entry.preview,
+        detail: entry.detail,
+        dateIso: new Date().toISOString(),
+      };
+      return [next, ...prev].slice(0, 500);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(MATERIALS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return;
+      const safe = parsed.filter((item: any) => item && typeof item.id === 'string');
+      setMaterials(safe);
+    } catch {
+      // ignore invalid persisted data
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(MATERIALS_STORAGE_KEY, JSON.stringify(materials));
+  }, [materials]);
+
+  useEffect(() => {
+    if (manualText.trim().length < 24) return;
+    const timer = window.setTimeout(() => {
+      const preview = manualText.trim().slice(0, 220);
+      const firstWords = manualText.trim().split(/\s+/).slice(0, 8).join(' ');
+      upsertMaterial({
+        type: 'text',
+        title: firstWords || 'Text source',
+        preview,
+        detail: manualText.trim(),
+      });
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [manualText, upsertMaterial]);
+
+  useEffect(() => {
+    if (SOURCE_PLACEHOLDER_EXAMPLES.length === 0) return;
+    const sample = SOURCE_PLACEHOLDER_EXAMPLES[Math.floor(Math.random() * SOURCE_PLACEHOLDER_EXAMPLES.length)];
+    let index = 0;
+    setTypedPlaceholder('');
+    const interval = window.setInterval(() => {
+      index += 1;
+      setTypedPlaceholder(sample.slice(0, index));
+      if (index >= sample.length) {
+        window.clearInterval(interval);
+      }
+    }, 18);
+    return () => window.clearInterval(interval);
+  }, [toolId]);
 
   const hydrateIntegrationSources = useCallback(async (quiet = false) => {
     const response = await fetch('/api/integrations/context-sources?provider=microsoft&selected=1', {
@@ -261,7 +369,7 @@ export function SourceInput({
       const extractionStatus = typeof item?.extraction_status === 'string' ? item.extraction_status : undefined;
       const normalizedStatus = String(extractionStatus || '').toLowerCase();
       const isLoading = normalizedStatus === 'pending' || (normalizedStatus === '' && !extracted);
-      const hasError = normalizedStatus === 'error' || normalizedStatus === 'empty';
+      const hasError = normalizedStatus === 'error';
       return {
         id: `integration-${String(item?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)}`,
         kind: 'file',
@@ -423,16 +531,23 @@ export function SourceInput({
       const recentsAsSources: SourceEntry[] = items.map((item, idx) => {
         const extracted = byId.get(item.id);
         const extractedText = typeof extracted?.extractedText === 'string' ? extracted.extractedText.trim() : '';
+        const imageLike = isImageLike(item.name, item.mimeType);
+        upsertMaterial({
+          type: 'onedrive',
+          title: item.name || 'OneDrive file',
+          preview: extractedText.slice(0, 220) || item.name,
+          detail: extractedText || item.webUrl || item.name,
+        });
         return {
           id: `recents-${item.id}-${idx}`,
-          kind: 'file',
+          kind: imageLike ? 'image' : 'file',
           label: `${item.name} (OneDrive)`,
-          text: extractedText || `[FILE] ${item.name}\nCloud file attached as source.`,
+          text: extractedText || (imageLike ? `[IMAGE] ${item.name}\nAttached as raw visual context.` : ''),
           selected: true,
           loading: false,
           previewUrl: item.previewUrl,
           extractionStatus: extractedText ? 'ready' : 'empty',
-          error: extractedText ? undefined : undefined,
+          error: undefined,
         };
       });
       setSources((prev) => [...prev.filter((entry) => !entry.id.startsWith('recents-')), ...recentsAsSources]);
@@ -448,7 +563,7 @@ export function SourceInput({
         description: error?.message || 'Could not import selected recents.',
       });
     }
-  }, [bumpRecentsUsage, toast]);
+  }, [bumpRecentsUsage, toast, upsertMaterial]);
 
   useEffect(() => {
     if (integrationHydratedRef.current) return;
@@ -465,6 +580,17 @@ export function SourceInput({
       const detail = custom?.detail || {};
       const items = Array.isArray(detail?.items) ? detail.items : [];
       if (items.length === 0) return;
+      for (const item of items) {
+        const name = String(item?.name || 'OneDrive file');
+        const extractedText = typeof item?.extractedText === 'string' ? item.extractedText : '';
+        const webUrl = typeof item?.webUrl === 'string' ? item.webUrl : '';
+        upsertMaterial({
+          type: 'onedrive',
+          title: name,
+          preview: extractedText.slice(0, 220) || name,
+          detail: extractedText || webUrl || name,
+        });
+      }
       const mapped: SourceEntry[] = items.map((item: any) => {
         const id = String(item?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
         const name = String(item?.name || 'Untitled');
@@ -475,7 +601,7 @@ export function SourceInput({
         const extractionStatus = typeof item?.extractionStatus === 'string' ? item.extractionStatus : undefined;
         const normalizedStatus = String(extractionStatus || '').toLowerCase();
         const isLoading = normalizedStatus === 'pending' || (normalizedStatus === '' && !extractedText.trim());
-        const hasError = normalizedStatus === 'error' || normalizedStatus === 'empty';
+        const hasError = normalizedStatus === 'error';
         return {
           id: `integration-local-${id}`,
           kind: 'file',
@@ -517,7 +643,7 @@ export function SourceInput({
         integrationPollTimeoutRef.current = null;
       }
     };
-  }, [hydrateIntegrationSources]);
+  }, [hydrateIntegrationSources, upsertMaterial]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -742,21 +868,23 @@ export function SourceInput({
     [hydrateIntegrationSources, removeIntegrationSource, toast]
   );
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, pickerKind: 'file' | 'image' = 'file') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const supported = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain',
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-    ];
+    const supported = pickerKind === 'image'
+      ? ['image/jpeg', 'image/png', 'image/webp']
+      : [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+      ];
 
     if (!supported.includes(file.type)) {
-      toast({ variant: 'destructive', title: 'Unsupported file type', description: 'Upload a PDF, DOCX, TXT, JPG, PNG or WebP file.' });
+      toast({ variant: 'destructive', title: 'Unsupported file type', description: pickerKind === 'image' ? 'Upload JPG, PNG or WebP.' : 'Upload a PDF, DOCX, TXT, JPG, PNG or WebP file.' });
       return;
     }
 
@@ -765,12 +893,19 @@ export function SourceInput({
       return;
     }
 
+    const isUploadedImage = file.type.startsWith('image/');
     setUploadedFile(file);
-    if (file.type.startsWith('image/')) {
+    if (isUploadedImage) {
       const reader = new FileReader();
       reader.onload = () => {
         const dataUri = typeof reader.result === 'string' ? reader.result : null;
         setUploadedImageDataUri(dataUri);
+        upsertMaterial({
+          type: 'image',
+          title: file.name,
+          preview: dataUri || file.name,
+          detail: file.name,
+        });
       };
       reader.onerror = () => setUploadedImageDataUri(null);
       reader.readAsDataURL(file);
@@ -781,6 +916,17 @@ export function SourceInput({
 
     try {
       let extractedText = '';
+      if (isUploadedImage) {
+        addSource({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          kind: 'image',
+          label: `IMAGE (${file.name})`,
+          text: `[IMAGE] ${file.name}\nAttached as raw visual context.`,
+          selected: true,
+        });
+        return;
+      }
+
       if (file.type === 'text/plain') {
         extractedText = await file.text();
       } else {
@@ -806,6 +952,12 @@ export function SourceInput({
         selected: true,
         error: extractedText.trim() ? undefined : 'Could not extract text automatically.',
       });
+      upsertMaterial({
+        type: 'file',
+        title: file.name,
+        preview: extractedText.slice(0, 220) || file.name,
+        detail: extractedText || file.name,
+      });
 
       if (!extractedText.trim()) {
         toast({
@@ -815,14 +967,16 @@ export function SourceInput({
         });
       }
     } catch {
-      addSource({
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        kind: 'file',
-        label: `FILE (${file.name})`,
-        text: '',
-        selected: true,
-        error: 'Could not extract text automatically.',
-      });
+      if (!isUploadedImage) {
+        addSource({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          kind: 'file',
+          label: `FILE (${file.name})`,
+          text: '',
+          selected: true,
+          error: 'Could not extract text automatically.',
+        });
+      }
       toast({
         variant: 'destructive',
         title: 'Could not read file text',
@@ -833,6 +987,7 @@ export function SourceInput({
     }
 
     if (fileInputRef.current) fileInputRef.current.value = '';
+    if (imageInputRef.current) imageInputRef.current.value = '';
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -1188,16 +1343,38 @@ export function SourceInput({
   const charCount = manualText.length;
   const hasPendingSource = sources.some((source) => Boolean(source.loading));
   const hasFileSourceWithoutText = sources.some(
-    (source) => source.kind === 'file' && !source.loading && !source.text.trim()
+    (source) => source.kind === 'file' && !source.loading && !source.text.trim() && !source.previewUrl
   );
   const canGenerate = compiledSource.trim().length > 0 && !hasPendingSource && !hasFileSourceWithoutText;
+  const visibleMaterials = useMemo(() => {
+    const q = materialsSearch.trim().toLowerCase();
+    const base = q
+      ? materials.filter((item) => item.title.toLowerCase().includes(q) || item.detail.toLowerCase().includes(q))
+      : materials;
+    return [...base].sort((a, b) => new Date(b.dateIso).getTime() - new Date(a.dateIso).getTime());
+  }, [materials, materialsSearch]);
+  const selectedMaterial = useMemo(
+    () => materials.find((item) => item.id === selectedMaterialId) || null,
+    [materials, selectedMaterialId]
+  );
 
-  const tips = [
-    'Paste lecture notes, textbook chapters, or articles',
-    'Upload a PDF, DOCX, or image with text',
-    'Paste links in text and they are auto-imported',
-    'Use Mic and captions are auto-added while recording',
-  ];
+  const openMicrosoftPicker = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('cautie:open-microsoft-picker'));
+  }, []);
+
+  const submitAndSave = useCallback(() => {
+    if (manualText.trim()) {
+      const firstWords = manualText.trim().split(/\s+/).slice(0, 8).join(' ');
+      upsertMaterial({
+        type: 'text',
+        title: firstWords || 'Text source',
+        preview: manualText.trim().slice(0, 220),
+        detail: manualText.trim(),
+      });
+    }
+    onSubmit?.();
+  }, [manualText, onSubmit, upsertMaterial]);
 
   return (
     <div
@@ -1248,17 +1425,7 @@ export function SourceInput({
         </div>
       )}
 
-      <div className="flex items-start pt-1">
-        <div className="space-y-2 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5 text-foreground/70">
-            <Lightbulb className="h-3.5 w-3.5" />
-            <span className="font-medium">Tips {toolId ? `(${toolId})` : ''}</span>
-          </div>
-          {tips.map((tip, i) => (
-            <p key={i} className="pl-5">- {tip}</p>
-          ))}
-        </div>
-      </div>
+      {topContent && <div className="sr-only">{topContent}</div>}
 
       {uploadedFile && (
         <div className="flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1.5 text-xs">
@@ -1279,11 +1446,6 @@ export function SourceInput({
         </div>
       )}
 
-      {topContent && (
-        <div className="min-h-[220px] flex-1 md:min-h-[240px]">
-          {topContent}
-        </div>
-      )}
       {integrationFileCards.length > 0 && (
         <div className="max-h-[292px] overflow-y-auto pr-1">
           <div className="flex flex-wrap gap-1.5">
@@ -1347,198 +1509,276 @@ export function SourceInput({
         </div>
       )}
 
-      <div className="mt-auto flex flex-col gap-2 items-stretch md:flex-row">
-        <div className="flex-1 flex flex-col gap-2">
-          {linksOpen && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <input
-                  value={urlInput}
-                  onChange={(e) => setUrlInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') void handleAddLink(); }}
-                  placeholder="Paste a link and press Enter"
-                  className="flex-1 border border-sidebar-border rounded-full bg-sidebar-accent/65 px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
-                  disabled={isFetchingUrl}
-                />
-                <Button variant="outline" size="sm" onClick={() => void handleAddLink()} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-full border-sidebar-border bg-sidebar-accent/70 text-xs h-7 px-3 hover:bg-sidebar-accent">
-                  {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
-                </Button>
+      <div className="mt-auto flex flex-col gap-2">
+        <div className="relative z-10 -mb-1 flex flex-wrap items-center gap-1.5 rounded-lg border border-sidebar-border bg-sidebar-accent/35 px-2 py-1.5">
+          <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={openMicrosoftPicker} disabled={disabled || isProcessing}>
+            <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
+            Import
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
+            <Image className="mr-1.5 h-3.5 w-3.5" />
+            Photo
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
+            <FileIcon className="mr-1.5 h-3.5 w-3.5" />
+            Files
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => setRecentsOpen(true)} disabled={disabled || isProcessing}>
+            <Clock3 className="mr-1.5 h-3.5 w-3.5" />
+            Recents
+          </Button>
+          <div className="relative">
+            <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => setOtherOpen((prev) => !prev)} disabled={disabled || isProcessing}>
+              <Layers className="mr-1.5 h-3.5 w-3.5" />
+              Other
+              <ChevronDown className="ml-1 h-3 w-3" />
+            </Button>
+            {otherOpen && (
+              <div className="absolute left-0 top-8 z-30 min-w-[128px] rounded-md border border-sidebar-border bg-background p-1 shadow-md">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs hover:bg-sidebar-accent/40"
+                  onClick={() => {
+                    setMaterialsOpen(true);
+                    setOtherOpen(false);
+                  }}
+                >
+                  <FolderOpen className="h-3.5 w-3.5" />
+                  Materials
+                </button>
               </div>
-              {urlSources.length > 0 && (
-                <div className="max-h-28 space-y-1 overflow-auto pr-1">
-                  {urlSources.map((source) => (
-                    <div key={source.id} className="flex items-center gap-2 rounded-full border border-sidebar-border bg-sidebar-accent/55 px-3 py-1 text-xs">
-                      <span className="flex-1 truncate">{source.url || source.label}</span>
-                      {source.loading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
-                      {source.error && <span className="text-destructive">Error</span>}
-                      <button
-                        type="button"
-                        onClick={() => removeSource(source.id)}
-                        className="rounded-full p-0.5 hover:bg-muted"
-                        aria-label="Remove link"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="space-y-2 rounded-xl border border-sidebar-border bg-sidebar-accent/40 p-2.5">
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-              <input
-                value={recentsSearch}
-                onChange={(e) => setRecentsSearch(e.target.value)}
-                placeholder="Search recents..."
-                className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
-              />
-              <select
-                value={recentsSourceFilter}
-                onChange={(e) => setRecentsSourceFilter(e.target.value as 'recent' | 'files' | 'all')}
-                className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-2 text-xs"
-              >
-                <option value="recent">Recent</option>
-                <option value="files">Files</option>
-                <option value="all">All</option>
-              </select>
-              <select
-                value={recentsSort}
-                onChange={(e) => setRecentsSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')}
-                className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-2 text-xs"
-              >
-                <option value="newest">Time: Newest</option>
-                <option value="oldest">Time: Oldest</option>
-                <option value="most_used">Most used</option>
-                <option value="name">Name</option>
-              </select>
-            </div>
-            <div className="max-h-36 space-y-1 overflow-auto pr-1">
-              {recentsLoading ? (
-                <div className="flex h-20 items-center justify-center">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </div>
-              ) : visibleRecents.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No recents found.</p>
-              ) : (
-                visibleRecents.slice(0, 24).map((item) => (
-                  <div key={item.id} className="flex items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/45 px-2 py-1.5 text-xs">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate">{item.name}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleDateString() : '-'}
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-6 rounded-full border-sidebar-border bg-sidebar-accent/70 px-2 text-[10px] hover:bg-sidebar-accent"
-                      onClick={() => void importRecentsItems([item])}
-                    >
-                      Import
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
+            )}
           </div>
+          <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => setLinksOpen((prev) => !prev)} disabled={disabled || isProcessing}>
+            <Link2 className="mr-1.5 h-3.5 w-3.5" />
+            Links
+          </Button>
+          {enableMic && (
+            <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
+              {isFallbackRecording ? <StopCircle className="mr-1.5 h-3.5 w-3.5" /> : <Mic className="mr-1.5 h-3.5 w-3.5" />}
+              Mic
+            </Button>
+          )}
+          {enableCaptions && (
+            <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => setCaptionsOpen((prev) => !prev)} disabled={disabled || !enableCaptions}>
+              <Captions className="mr-1.5 h-3.5 w-3.5" />
+              Captions
+            </Button>
+          )}
+        </div>
 
+        {linksOpen && (
+          <div className="space-y-2 rounded-xl border border-sidebar-border bg-sidebar-accent/20 p-2">
+            <div className="flex items-center gap-2">
+              <input
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') void handleAddLink(); }}
+                placeholder="Paste a link and press Enter"
+                className="flex-1 border border-sidebar-border rounded-md bg-sidebar-accent/65 px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+                disabled={isFetchingUrl}
+              />
+              <Button variant="outline" size="sm" onClick={() => void handleAddLink()} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-md border-sidebar-border bg-sidebar-accent/70 text-xs h-7 px-3 hover:bg-sidebar-accent">
+                {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
+              </Button>
+            </div>
+            {urlSources.length > 0 && (
+              <div className="max-h-24 space-y-1 overflow-auto pr-1">
+                {urlSources.map((source) => (
+                  <div key={source.id} className="flex items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/45 px-2 py-1 text-xs">
+                    <span className="flex-1 truncate">{source.url || source.label}</span>
+                    {source.loading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                    {source.error && <span className="text-destructive">Error</span>}
+                    <button type="button" onClick={() => removeSource(source.id)} className="rounded-sm p-0.5 hover:bg-muted" aria-label="Remove link">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex items-stretch gap-2">
           <Textarea
             value={manualText}
             onChange={(e) => handleManualTextChange(e.target.value)}
             onKeyDown={(e) => {
               if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                 e.preventDefault();
-                onSubmit?.();
+                submitAndSave();
               }
             }}
-            placeholder={placeholder}
-            className="min-h-[170px] flex-1 resize-none rounded-2xl border border-border bg-muted/70 text-sm"
+            placeholder={typedPlaceholder || placeholder}
+            className="min-h-[190px] flex-1 resize-none rounded-2xl border border-border bg-muted/70 text-sm"
             disabled={disabled || isProcessing}
           />
-
-          {charCount > 0 && (
-            <span className="text-[10px] text-muted-foreground font-mono tabular-nums pl-1">
-              {wordCount} words - {charCount} chars
-            </span>
-          )}
-          {hasPendingSource && (
-            <span className="text-[11px] text-muted-foreground pl-1">
-              Still extracting text from selected source...
-            </span>
-          )}
-          {hasFileSourceWithoutText && (
-            <span className="text-[11px] text-destructive pl-1">
-              File text extraction failed or returned empty. Re-upload the file so full content can be used.
-            </span>
-          )}
-        </div>
-
-        <div className="grid w-full shrink-0 grid-flow-col auto-cols-fr gap-2 md:flex md:w-[100px] md:flex-col">
           <Button
             type="button"
             variant="outline"
-            className="h-11 gap-1 text-[11px] rounded-full border-border bg-muted/80 hover:bg-muted md:flex-1 md:h-auto md:py-3 md:text-xs"
-            onClick={() => setLinksOpen((prev) => !prev)}
-            disabled={disabled || isProcessing}
-          >
-            <Link2 className="h-4 w-4" />
-            <span className="hidden md:inline">Links</span>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 gap-1 text-[11px] rounded-full border-border bg-muted/80 hover:bg-muted md:flex-1 md:h-auto md:py-3 md:text-xs"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={disabled || isProcessing}
-          >
-            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
-            <span className="hidden md:inline">Upload</span>
-          </Button>
-          {enableMic && (
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 gap-1 text-[11px] rounded-full border-border bg-muted/80 hover:bg-muted md:flex-1 md:h-auto md:py-3 md:text-xs"
-              onClick={() => (isFallbackRecording ? stopListening() : startListening())}
-              disabled={disabled || isProcessing || !enableMic}
-            >
-              {isFallbackRecording ? <StopCircle className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              <span className="hidden md:inline">Mic</span>
-            </Button>
-          )}
-          {enableCaptions && (
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 gap-1 text-[11px] rounded-full border-border bg-muted/80 hover:bg-muted md:flex-1 md:h-auto md:py-3 md:text-xs"
-              onClick={() => setCaptionsOpen((prev) => !prev)}
-              disabled={disabled || !enableCaptions}
-            >
-              <Captions className="h-4 w-4" />
-              <span className="hidden md:inline">Captions</span>
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 gap-1 text-[11px] rounded-full border-border bg-muted/80 hover:bg-muted md:flex-1 md:h-auto md:py-3 md:text-xs"
-            onClick={() => onSubmit?.()}
+            className="w-[112px] rounded-2xl border-border bg-muted/80 text-xs hover:bg-muted"
+            onClick={submitAndSave}
             disabled={disabled || isProcessing || !canGenerate}
           >
-            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            <span className="hidden md:inline">{submitLabel}</span>
+            {isProcessing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+            {submitLabel}
           </Button>
         </div>
+
+        {charCount > 0 && (
+          <span className="text-[10px] text-muted-foreground font-mono tabular-nums pl-1">
+            {wordCount} words - {charCount} chars
+          </span>
+        )}
+        {hasPendingSource && (
+          <span className="text-[11px] text-muted-foreground pl-1">
+            Still extracting text from selected source...
+          </span>
+        )}
+        {hasFileSourceWithoutText && (
+          <span className="text-[11px] text-destructive pl-1">
+            File text extraction failed or returned empty. Re-upload the file so full content can be used.
+          </span>
+        )}
       </div>
+
+      {recentsOpen && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/35 p-3">
+          <div className="flex h-[72vh] w-full max-w-3xl flex-col rounded-xl border border-sidebar-border bg-background p-3 shadow-xl">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm font-medium">Recents</p>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setRecentsOpen(false)}>Close</Button>
+            </div>
+            <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+              <div className="relative md:col-span-1">
+                <Search className="pointer-events-none absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  value={recentsSearch}
+                  onChange={(e) => setRecentsSearch(e.target.value)}
+                  placeholder="Search by name..."
+                  className="h-8 w-full rounded-md border border-sidebar-border bg-sidebar-accent/50 pl-7 pr-2 text-xs outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <select value={recentsSourceFilter} onChange={(e) => setRecentsSourceFilter(e.target.value as 'recent' | 'files' | 'all')} className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs">
+                <option value="recent">Recent</option>
+                <option value="files">Files</option>
+                <option value="all">All</option>
+              </select>
+              <select value={recentsSort} onChange={(e) => setRecentsSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')} className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs">
+                <option value="newest">Time: Newest</option>
+                <option value="oldest">Time: Oldest</option>
+                <option value="most_used">Most used</option>
+                <option value="name">Name</option>
+              </select>
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-sidebar-border bg-sidebar-accent/20 p-2">
+              {recentsLoading ? (
+                <div className="flex h-full items-center justify-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
+              ) : visibleRecents.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No recents found.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {visibleRecents.slice(0, 50).map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-md border border-sidebar-border bg-background px-2 py-1.5 text-left hover:bg-sidebar-accent/30"
+                      onClick={() => {
+                        void importRecentsItems([item]);
+                        setRecentsOpen(false);
+                      }}
+                    >
+                      <FileText className="h-4 w-4 shrink-0 text-primary" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs">{toolId || 'tool'} | {item.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleString() : '-'}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {materialsOpen && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/35 p-3">
+          <div className="flex h-[78vh] w-full max-w-5xl gap-3 rounded-xl border border-sidebar-border bg-background p-3 shadow-xl">
+            <div className="flex min-w-0 flex-1 flex-col">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-medium">Materials</p>
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setMaterialsOpen(false)}>Close</Button>
+              </div>
+              <input
+                value={materialsSearch}
+                onChange={(e) => setMaterialsSearch(e.target.value)}
+                placeholder="Search materials..."
+                className="mb-2 h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
+              />
+              <div className="min-h-0 flex-1 overflow-auto">
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
+                  {visibleMaterials.map((material) => (
+                    <button
+                      key={material.id}
+                      type="button"
+                      className="rounded-xl border border-sidebar-border bg-sidebar-accent/25 p-2 text-left hover:bg-sidebar-accent/40"
+                      onClick={() => setSelectedMaterialId(material.id)}
+                    >
+                      <p className="mb-1 truncate text-xs font-medium">{material.title}</p>
+                      <div className="rounded-lg border border-sidebar-border bg-background p-2">
+                        <div className="h-16 overflow-hidden rounded-md bg-sidebar-accent/20 p-2 text-[10px] text-muted-foreground">
+                          {material.type === 'image' && material.preview.startsWith('data:image') ? (
+                            <img src={material.preview} alt={material.title} className="h-full w-full object-cover" />
+                          ) : (
+                            material.preview
+                          )}
+                        </div>
+                      </div>
+                      <p className="mt-1 text-[10px] text-muted-foreground">{material.type}</p>
+                      <p className="text-[10px] text-muted-foreground">{new Date(material.dateIso).toLocaleString()}</p>
+                    </button>
+                  ))}
+                </div>
+                {visibleMaterials.length === 0 && <p className="text-xs text-muted-foreground">No materials yet.</p>}
+              </div>
+            </div>
+            <div className="hidden w-[36%] min-w-[280px] rounded-xl border border-sidebar-border bg-sidebar-accent/20 p-3 lg:block">
+              {selectedMaterial ? (
+                <div className="h-full space-y-2 overflow-auto">
+                  <p className="text-sm font-medium">{selectedMaterial.title}</p>
+                  <p className="text-xs text-muted-foreground">Type: {selectedMaterial.type}</p>
+                  <p className="text-xs text-muted-foreground">Date: {new Date(selectedMaterial.dateIso).toLocaleString()}</p>
+                  <div className="rounded-lg border border-sidebar-border bg-background p-2 text-xs">
+                    {selectedMaterial.type === 'image' && selectedMaterial.preview.startsWith('data:image') ? (
+                      <img src={selectedMaterial.preview} alt={selectedMaterial.title} className="max-h-[260px] w-full rounded object-contain" />
+                    ) : (
+                      <pre className="whitespace-pre-wrap break-words font-sans">{selectedMaterial.detail}</pre>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Select a material to view details.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <input
         ref={fileInputRef}
         type="file"
         className="sr-only"
         accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp"
-        onChange={handleFileChange}
+        onChange={(e) => void handleFileChange(e, 'file')}
+        disabled={disabled || isProcessing}
+      />
+      <input
+        ref={imageInputRef}
+        type="file"
+        className="sr-only"
+        accept=".png,.jpg,.jpeg,.webp"
+        onChange={(e) => void handleFileChange(e, 'image')}
         disabled={disabled || isProcessing}
       />
     </div>
