@@ -1,166 +1,215 @@
-const handcrafted = [
-  'main causes that started World War I',
-  'alliances and turning points in World War I',
-  'timeline of events from the start of World War II',
-  'how the Berlin Wall changed life in Europe',
-  'organs of a dog and what each one does',
-  'digestive system of a cat in simple words',
-  'difference between arteries and veins with examples',
-  'how insulin works in the human body',
-  'mitosis versus meiosis with clear comparison',
-  'photosynthesis explained with one real-life analogy',
-  'Newton first law with daily life examples',
-  'why the sky is blue in plain language',
-  'steps to balance chemical equations quickly',
-  'acid base reactions with easy practice problems',
-  'the water cycle and why it matters for farming',
-  'plate tectonics and major earthquake zones',
-  'causes of inflation with real market examples',
-  'supply and demand using coffee prices',
-  'how compound interest grows over 10 years',
-  'Pythagorean theorem with triangle word problems',
-  'probability basics using dice and cards',
-  'Shakespeare themes in Macbeth',
-  'character growth in To Kill a Mockingbird',
-  'French Revolution key events and outcomes',
-  'Industrial Revolution effects on workers and cities',
-  'civil rights movement milestones in the US',
-  'cold war proxy conflicts overview',
-  'Python loops and conditionals with beginner examples',
-  'SQL joins explained with one school database',
-  'binary search versus linear search',
-  'stack versus queue in simple terms',
-  'how DNS works when opening a website',
-  'internet safety rules for students',
-  'climate change evidence and common misconceptions',
-  'greenhouse gases and energy balance',
-  'renewable energy tradeoffs by source',
-  'how vaccines train immune memory',
-  'endocrine system glands and hormones',
-  'kidney function and fluid balance',
-  'causes and symptoms of dehydration',
-  'map reading with scale and contour lines',
-  'monsoon climate pattern in South Asia',
-  'river erosion and landform creation',
-  'ethical questions around AI in schools',
-  'how to structure a persuasive paragraph',
-  'strong thesis statement examples',
-  'common grammar mistakes and quick fixes',
-  'difference between metaphor and simile',
-  'basic trigonometry identities and use cases',
-  'how to solve linear equations step by step',
-];
+type ToolPlaceholderId = 'notes' | 'quiz' | 'flashcards' | 'presentation';
 
-const actions = [
-  'explain',
-  'break down',
-  'summarize',
-  'compare',
-  'map out',
-  'outline',
-  'clarify',
-  'simplify',
-  'analyze',
-  'connect',
-];
-
-const topics = [
-  'the causes of the fall of the Roman Empire',
-  'how the printing press changed knowledge sharing',
-  'ecosystems and food webs in wetlands',
-  'carbon cycle interactions in forests',
-  'electric circuits with series and parallel examples',
-  'Ohm law with three practical calculations',
-  'oxidation and reduction in batteries',
-  'protein synthesis from DNA to ribosome',
-  'human respiratory system and gas exchange',
-  'statistical mean median mode with tricky datasets',
-  'quadratic equations and graph interpretation',
-  'slope intercept form from real world data',
-  'fractions to percentages conversion shortcuts',
-  'parts of a flower and pollination path',
-  'difference between plant and animal cells',
-  'types of government with country examples',
-  'United Nations role in conflict resolution',
-  'causes and consequences of deforestation',
-  'sustainable farming methods and impact',
-  'time complexity basics with code snippets',
-  'recursion using factorial and Fibonacci examples',
-  'TCP versus UDP for online games',
-  'photosynthesis limiting factors in experiments',
-  'human skeleton major bones and functions',
-  'memory and learning models in psychology',
-  'classical conditioning versus operant conditioning',
-  'market structures perfect competition to monopoly',
-  'opportunity cost in daily decisions',
-  'supply chain bottlenecks and price spikes',
-  'geometric proofs with clear reasoning steps',
-  'proof by contradiction with one theorem',
-  'language register formal versus informal writing',
-  'critical reading strategy for dense articles',
-  'poetry meter and rhyme scheme recognition',
-  'rhetorical devices in political speeches',
-  'colonial trade routes and economic motives',
-  'causes of the Great Depression',
-  'postwar reconstruction in Europe after 1945',
-  'genetics Punnett squares with probability',
-  'mutations and natural selection over generations',
-  'volcano types and eruption behavior',
-  'weather fronts and forecast interpretation',
-  'cloud types and what they signal',
-  'ocean currents and climate influence',
-  'earth layers and seismic wave evidence',
-];
-
-const modifiers = [
-  'using plain language',
-  'for quick revision',
-  'with one strong real-world example',
-  'with a short timeline',
-  'in concise bullet points',
-  'step by step',
-  'with common mistakes highlighted',
-  'with mnemonic ideas',
-  'with exam-style wording',
-  'with definitions first',
-  'with a cause-effect structure',
-  'with comparison table style',
-  'with a question-first approach',
-  'with practice prompts at the end',
-  'with a memory-friendly structure',
-];
-
-const endings = [
-  'for tomorrow exam',
-  'for a beginner student',
-  'for grade 9 level',
-  'for high school level',
-  'for first-year university level',
-  'for someone who missed the lesson',
-  'for fast catch-up',
-  'for strong conceptual understanding',
-  'for oral test prep',
-  'for written test prep',
-];
-
-const generated: string[] = [];
-
-for (const action of actions) {
-  for (const topic of topics) {
-    for (const modifier of modifiers) {
-      for (const ending of endings) {
-        generated.push(`${action} ${topic} ${modifier} ${ending}`);
+const buildPool = (parts: {
+  intents: string[];
+  topics: string[];
+  styles: string[];
+  audiences: string[];
+  constraints: string[];
+}) => {
+  const out: string[] = [];
+  for (const intent of parts.intents) {
+    for (const topic of parts.topics) {
+      for (const style of parts.styles) {
+        for (const audience of parts.audiences) {
+          for (const constraint of parts.constraints) {
+            out.push(`${intent} ${topic} ${style} ${audience} ${constraint}`.replace(/\s+/g, ' ').trim());
+          }
+        }
       }
     }
   }
-}
+  return Array.from(new Set(out));
+};
 
-const combined = [...handcrafted, ...generated];
+const NOTES_TOPICS = [
+  'the start of WW1',
+  'the causes of the Great Depression',
+  'cell respiration and ATP production',
+  'organs of a dog and their function',
+  'plate tectonics and earthquake zones',
+  'supply and demand with coffee prices',
+  'DNA replication and mutation types',
+  'photosynthesis in C3 vs C4 plants',
+  'the French Revolution timeline',
+  'Shakespeare themes in Macbeth',
+  'SQL joins with school database examples',
+  'Ohm law with practical circuits',
+];
 
-// Fisher-Yates shuffle for non-pattern ordering
-for (let i = combined.length - 1; i > 0; i -= 1) {
-  const j = Math.floor(Math.random() * (i + 1));
-  [combined[i], combined[j]] = [combined[j], combined[i]];
-}
+const QUIZ_TOPICS = [
+  'WW2 turning points and alliances',
+  'human endocrine system hormones',
+  'probability with dice and cards',
+  'acid base reactions in chemistry',
+  'colonial trade routes and motives',
+  'kidney function and filtration',
+  'linear equations from word problems',
+  'internet safety and phishing',
+  'weather fronts and forecast clues',
+  'operant vs classical conditioning',
+  'market structures and competition',
+  'ecosystems and food webs',
+];
 
-export const SOURCE_PLACEHOLDER_EXAMPLES = combined.slice(0, 1000);
+const FLASHCARD_TOPICS = [
+  'major events leading to WW1',
+  'anatomy terms for the canine digestive system',
+  'key formulas for basic trigonometry',
+  'Python data structures and use cases',
+  'French Revolution key names and dates',
+  'cardiology terms: arteries vs veins',
+  'cell cycle phases and checkpoints',
+  'geography capitals and landmark facts',
+  'supply chain terms and definitions',
+  'biochemistry enzymes and substrates',
+  'rhetorical devices with examples',
+  'constitutional law core concepts',
+];
+
+const PRESENTATION_TOPICS = [
+  'the causes and impact of WW1',
+  'dog organ systems for vet basics',
+  'intro to climate change evidence',
+  'how insulin works in the body',
+  'French Revolution in 8 milestones',
+  'plate tectonics and volcano types',
+  'internet protocol layers explained',
+  'market inflation and interest rates',
+  'photosynthesis and cellular respiration',
+  'DNA to protein process flow',
+  'ethical AI use in schools',
+  'sustainable farming techniques',
+];
+
+const notesPool = buildPool({
+  intents: [
+    'make clean study notes on',
+    'create structured lecture notes for',
+    'summarize class material about',
+    'turn this topic into clear notes on',
+    'write revision notes about',
+  ],
+  topics: NOTES_TOPICS,
+  styles: [
+    'in bullet points',
+    'with short section headers',
+    'with concept-first structure',
+    'with examples and definitions',
+    'with cause and effect grouping',
+  ],
+  audiences: [
+    'for high school',
+    'for first-year university',
+    'for exam revision',
+    'for someone who missed class',
+  ],
+  constraints: [
+    'keep it concise',
+    'include common mistakes',
+    'add memory hooks',
+  ],
+});
+
+const quizPool = buildPool({
+  intents: [
+    'generate mixed-difficulty questions on',
+    'create a timed practice set for',
+    'build exam-style questions about',
+    'make a checkpoint test for',
+    'write concept-check questions on',
+  ],
+  topics: QUIZ_TOPICS,
+  styles: [
+    'with multiple choice and short answer',
+    'with increasing difficulty',
+    'with one scenario question per section',
+    'with trick-vs-core balance',
+    'with clear answer keys',
+  ],
+  audiences: [
+    'for high school level',
+    'for first-year university',
+    'for final exam prep',
+    'for weekly revision',
+  ],
+  constraints: [
+    'focus on weak spots',
+    'avoid duplicate wording',
+    'prioritize conceptual understanding',
+  ],
+});
+
+const flashcardsPool = buildPool({
+  intents: [
+    'create term-definition cards for',
+    'build recall cards from',
+    'generate active-recall prompts about',
+    'make quick revision cards on',
+    'convert this into memory cards for',
+  ],
+  topics: FLASHCARD_TOPICS,
+  styles: [
+    'with concise backs',
+    'with one clue per card',
+    'with easy-to-hard progression',
+    'with misconception checks',
+    'with clear keyword emphasis',
+  ],
+  audiences: [
+    'for exam week',
+    'for beginner learners',
+    'for intermediate level',
+    'for rapid daily review',
+  ],
+  constraints: [
+    'avoid duplicates',
+    'keep each prompt specific',
+    'include only testable facts',
+  ],
+});
+
+const presentationPool = buildPool({
+  intents: [
+    'outline a slide deck on',
+    'create a presentation narrative for',
+    'turn this topic into a talk on',
+    'build a lesson deck about',
+    'draft a classroom presentation for',
+  ],
+  topics: PRESENTATION_TOPICS,
+  styles: [
+    'with a clear opener-body-close flow',
+    'with one key point per slide',
+    'with examples then summary',
+    'with timeline and key takeaways',
+    'with comparison and conclusion',
+  ],
+  audiences: [
+    'for a 5-minute class presentation',
+    'for a 10-minute student talk',
+    'for an introductory lesson',
+    'for exam recap session',
+  ],
+  constraints: [
+    'keep language simple',
+    'include speaker cue notes',
+    'add a short Q&A slide',
+  ],
+});
+
+const take250 = (pool: string[]) => pool.slice(0, 250);
+
+export const SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL: Record<ToolPlaceholderId, string[]> = {
+  notes: take250(notesPool),
+  quiz: take250(quizPool),
+  flashcards: take250(flashcardsPool),
+  presentation: take250(presentationPool),
+};
+
+export const SOURCE_PLACEHOLDER_EXAMPLES = [
+  ...SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL.notes,
+  ...SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL.quiz,
+  ...SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL.flashcards,
+  ...SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL.presentation,
+];

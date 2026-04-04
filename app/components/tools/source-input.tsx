@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ReactNode } from 'react';
-import { SOURCE_PLACEHOLDER_EXAMPLES } from '@/lib/tools/source-placeholder-examples';
+import { SOURCE_PLACEHOLDER_EXAMPLES, SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL } from '@/lib/tools/source-placeholder-examples';
 
 interface SourceInputProps {
   value: string;
@@ -331,18 +331,19 @@ export function SourceInput({
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (SOURCE_PLACEHOLDER_EXAMPLES.length === 0) return;
+    const pool = toolId ? SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL[toolId] : SOURCE_PLACEHOLDER_EXAMPLES;
+    if (pool.length === 0) return;
 
     let active = true;
     let previous = '';
     const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
     const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
     const pickExample = () => {
-      if (SOURCE_PLACEHOLDER_EXAMPLES.length === 1) return SOURCE_PLACEHOLDER_EXAMPLES[0];
-      let next = SOURCE_PLACEHOLDER_EXAMPLES[randomInt(0, SOURCE_PLACEHOLDER_EXAMPLES.length - 1)];
+      if (pool.length === 1) return pool[0];
+      let next = pool[randomInt(0, pool.length - 1)];
       let tries = 0;
       while (next === previous && tries < 8) {
-        next = SOURCE_PLACEHOLDER_EXAMPLES[randomInt(0, SOURCE_PLACEHOLDER_EXAMPLES.length - 1)];
+        next = pool[randomInt(0, pool.length - 1)];
         tries += 1;
       }
       previous = next;
