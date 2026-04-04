@@ -23,6 +23,7 @@ import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseQuizFromMarkdown, parseQuizFromHtml } from '@/lib/import-parsers';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { Switch } from '@/components/ui/switch';
+import { CommunityPublishButton } from '@/components/tools/community-publish-button';
 
 const QuizTaker = dynamic(
   () => import('@/components/tools/quiz-taker').then((m) => m.QuizTaker),
@@ -71,6 +72,7 @@ function QuizPageContent() {
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [saveToRecents, setSaveToRecents] = useState(true);
+  const [latestArtifactId, setLatestArtifactId] = useState<string | null>(null);
   const launchHandledRef = useRef(false);
   const { toast } = useToast();
 
@@ -120,6 +122,7 @@ function QuizPageContent() {
         });
         const response = run?.output_payload || run;
         setGeneratedQuiz(response as Quiz);
+        setLatestArtifactId(typeof run?.output_artifact_id === 'string' ? run.output_artifact_id : null);
         setCurrentView('take');
       }
     } catch (error) {
@@ -198,6 +201,7 @@ function QuizPageContent() {
     if (savedRun?.output_payload && savedRun.status === 'succeeded') {
       const output = savedRun.output_payload;
       setGeneratedQuiz(output as Quiz);
+      setLatestArtifactId(typeof (savedRun as any)?.output_artifact_id === 'string' ? (savedRun as any).output_artifact_id : null);
       setCurrentView('take');
       if (savedRun.input_payload?.sourceText) setSourceText(savedRun.input_payload.sourceText);
       if (savedRun.mode) setQuizMode(normalizeQuizMode(savedRun.mode));
@@ -304,6 +308,14 @@ function QuizPageContent() {
           className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
         />
       </div>
+
+      <CommunityPublishButton
+        artifactId={latestArtifactId}
+        toolId="quiz"
+        defaultTitle={customTitle.trim() || 'Quiz set'}
+        defaultDescription={sourceText.trim().slice(0, 240)}
+        defaultLanguage={language}
+      />
 
       <ImportToolbar
         toolType="quiz"

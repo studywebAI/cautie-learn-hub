@@ -124,6 +124,15 @@ function FinalResults({
     const scorePercentage = totalQuestionsAnswered > 0 ? Math.round((correctCount / totalQuestionsAnswered) * 100) : 0;
     
     const reportedRef = useRef(false);
+    const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+    const [recommendations, setRecommendations] = useState<Array<{
+        id: string;
+        toolId: string;
+        title: string;
+        description: string;
+        difficulty: string | null;
+        artifactId: string;
+    }>>([]);
 
     useEffect(() => {
         setSessionRecap({
@@ -190,6 +199,35 @@ function FinalResults({
         // Clear recap on unmount
         return () => setSessionRecap(null);
     }, [answers, correctCount, quiz.questions, scorePercentage, setSessionRecap, studysetId, taskId, timeTaken, totalQuestionsAnswered]);
+
+    useEffect(() => {
+        const run = async () => {
+            setRecommendationsLoading(true);
+            try {
+                const seed = quiz.title.split(/\s+/).slice(0, 6).join(' ').trim();
+                const response = await fetch(`/api/community/feed?q=${encodeURIComponent(seed)}&limit=80`, { cache: 'no-store' });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    setRecommendations([]);
+                    return;
+                }
+                const items = Array.isArray(payload?.items) ? payload.items : [];
+                setRecommendations(
+                    items.map((item: any) => ({
+                        id: String(item.id),
+                        toolId: String(item.toolId || ''),
+                        title: String(item.title || ''),
+                        description: String(item.description || ''),
+                        difficulty: item.difficulty ? String(item.difficulty) : null,
+                        artifactId: String(item.artifactId || ''),
+                    }))
+                );
+            } finally {
+                setRecommendationsLoading(false);
+            }
+        };
+        void run();
+    }, [quiz.title]);
 
 
     if (mode === 'survival') {
@@ -341,6 +379,18 @@ function FinalResults({
         { name: 'incorrect', value: incorrectCount, fill: 'var(--color-incorrect)' },
     ]
 
+    const desiredDifficulty = scorePercentage >= 75 ? 'hard' : 'easy';
+    const similarQuizzes = recommendations
+        .filter((item) => item.toolId === 'quiz')
+        .slice(0, 4);
+    const harderOrEasier = recommendations
+        .filter((item) => item.toolId === 'quiz')
+        .filter((item) => String(item.difficulty || '').toLowerCase().includes(desiredDifficulty))
+        .slice(0, 4);
+    const relatedFlashcards = recommendations
+        .filter((item) => item.toolId === 'flashcards')
+        .slice(0, 4);
+
     return (
         <Card>
             <CardHeader>
@@ -482,6 +532,53 @@ function FinalResults({
                             </div>
                         )
                     })}
+                </div>
+
+                <div className="rounded-lg bg-muted/50 p-3">
+                    <p className="text-base font-semibold">What next?</p>
+                    <p className="text-xs text-muted-foreground">Similar quizzes, {scorePercentage >= 75 ? 'harder' : 'easier'} sets, and related flashcards from community.</p>
+                    {recommendationsLoading ? (
+                        <div className="mt-2 text-xs text-muted-foreground">
+                            <Loader2 className="mr-1.5 inline h-3.5 w-3.5 animate-spin" />
+                            Loading recommendations...
+                        </div>
+                    ) : (
+                        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
+                            <div className="rounded-md bg-background p-2">
+                                <p className="text-xs font-medium">Similar quizzes</p>
+                                <div className="mt-1 space-y-1">
+                                    {(similarQuizzes.length > 0 ? similarQuizzes : []).map((item) => (
+                                        <a key={`sim-${item.id}`} href={`/other/community/${item.id}`} className="block rounded px-2 py-1 text-xs hover:bg-muted">
+                                            {item.title}
+                                        </a>
+                                    ))}
+                                    {similarQuizzes.length === 0 && <p className="text-[11px] text-muted-foreground">No suggestions yet.</p>}
+                                </div>
+                            </div>
+                            <div className="rounded-md bg-background p-2">
+                                <p className="text-xs font-medium">{scorePercentage >= 75 ? 'Harder version' : 'Easier version'}</p>
+                                <div className="mt-1 space-y-1">
+                                    {(harderOrEasier.length > 0 ? harderOrEasier : []).map((item) => (
+                                        <a key={`diff-${item.id}`} href={`/other/community/${item.id}`} className="block rounded px-2 py-1 text-xs hover:bg-muted">
+                                            {item.title}
+                                        </a>
+                                    ))}
+                                    {harderOrEasier.length === 0 && <p className="text-[11px] text-muted-foreground">No suggestions yet.</p>}
+                                </div>
+                            </div>
+                            <div className="rounded-md bg-background p-2">
+                                <p className="text-xs font-medium">Same topic flashcards</p>
+                                <div className="mt-1 space-y-1">
+                                    {(relatedFlashcards.length > 0 ? relatedFlashcards : []).map((item) => (
+                                        <a key={`fc-${item.id}`} href={`/other/community/${item.id}`} className="block rounded px-2 py-1 text-xs hover:bg-muted">
+                                            {item.title}
+                                        </a>
+                                    ))}
+                                    {relatedFlashcards.length === 0 && <p className="text-[11px] text-muted-foreground">No suggestions yet.</p>}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </CardContent>
             <CardFooter className="justify-end">

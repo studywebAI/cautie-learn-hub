@@ -24,6 +24,7 @@ import { PaintOverlay } from '@/components/tools/paint-overlay';
 import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { CommunityPublishButton } from '@/components/tools/community-publish-button';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -1186,6 +1187,14 @@ function NotesPageContent() {
           className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
         />
       </div>
+
+      <CommunityPublishButton
+        artifactId={artifactId}
+        toolId="notes"
+        defaultTitle={customTitle.trim() || 'Notes'}
+        defaultDescription={sourceText.trim().slice(0, 240)}
+        defaultLanguage={language}
+      />
 
       <ImportToolbar
         toolType="notes"

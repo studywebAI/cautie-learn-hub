@@ -22,6 +22,7 @@ import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/import-parsers';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { Switch } from '@/components/ui/switch';
+import { CommunityPublishButton } from '@/components/tools/community-publish-button';
 
 const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
   if (!value) return 'flip';
@@ -59,6 +60,7 @@ function FlashcardsPageContent() {
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [saveToRecents, setSaveToRecents] = useState(true);
+  const [latestArtifactId, setLatestArtifactId] = useState<string | null>(null);
   const [studyCompleted, setStudyCompleted] = useState(false);
   const launchHandledRef = useRef(false);
   const { toast } = useToast();
@@ -123,6 +125,7 @@ function FlashcardsPageContent() {
         });
       const response = run?.output_payload || run;
       setGeneratedCards(response.flashcards);
+      setLatestArtifactId(typeof run?.output_artifact_id === 'string' ? run.output_artifact_id : null);
       setCurrentView('study');
       setStudyCompleted(false);
     } catch (error) {
@@ -199,6 +202,7 @@ function FlashcardsPageContent() {
     if (savedRun?.output_payload && savedRun.status === 'succeeded') {
       const output = savedRun.output_payload;
       setGeneratedCards(output.flashcards || null);
+      setLatestArtifactId(typeof (savedRun as any)?.output_artifact_id === 'string' ? (savedRun as any).output_artifact_id : null);
       setCurrentView('study');
       if (savedRun.input_payload?.sourceText) setSourceText(savedRun.input_payload.sourceText);
       if (savedRun.mode) setStudyMode(normalizeStudyMode(String(savedRun.mode)));
@@ -310,6 +314,14 @@ function FlashcardsPageContent() {
           className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
         />
       </div>
+
+      <CommunityPublishButton
+        artifactId={latestArtifactId}
+        toolId="flashcards"
+        defaultTitle={customTitle.trim() || 'Flashcards set'}
+        defaultDescription={sourceText.trim().slice(0, 240)}
+        defaultLanguage={language}
+      />
 
       <ImportToolbar
         toolType="flashcards"
