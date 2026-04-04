@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PillSelector } from '@/components/tools/pill-selector';
 import { Slider } from '@/components/ui/slider';
@@ -25,7 +25,6 @@ type AdaptiveSettingsSidebarProps = {
 };
 
 const platformOptions = [
-  { value: 'powerpoint', label: 'PowerPoint' },
   { value: 'google-slides', label: 'Google Slides' },
   { value: 'keynote', label: 'Keynote' },
 ];
@@ -99,6 +98,13 @@ export function AdaptiveSettingsSidebar({
   disabled = false,
 }: AdaptiveSettingsSidebarProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  useEffect(() => {
+    if (platform === 'powerpoint') {
+      onPlatformChange('google-slides');
+    }
+  }, [platform, onPlatformChange]);
+
   const hasAnalysis = Boolean(analysis);
   const tiers = controlTiers || {
     primary: analysis?.relevantControls || [],
