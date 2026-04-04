@@ -4,15 +4,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import {
-  ChevronDown,
   Clock3,
   File as FileIcon,
   UploadCloud,
-  FolderOpen,
   FileText,
   Image,
   ImageIcon,
-  Layers,
   Search,
   X,
   Loader2,
@@ -90,8 +87,6 @@ const SOURCE_LOADING_FAILSAFE_MS = 45_000;
 const RECENTS_USAGE_STORAGE_KEY = 'tools.source_input.recents_usage.v1';
 const MATERIALS_STORAGE_KEY = 'tools.source_input.materials.v1';
 
-const URL_REGEX = /\b((?:https?:\/\/|www\.)[^\s<>"]+)/gi;
-
 function isImageLike(name?: string, mimeType?: string) {
   const lowerName = String(name || '').toLowerCase();
   const lowerMime = String(mimeType || '').toLowerCase();
@@ -145,16 +140,21 @@ const cleanupCaptionText = (value: string) => {
 };
 
 const extractUrlsFromText = (text: string) => {
-  const matches = Array.from(text.matchAll(URL_REGEX)).map((m) => m[0]);
-  if (matches.length === 0) return { cleanedText: text, urls: [] as string[] };
+  // Auto-import links only after a trailing space/newline was typed.
+  const trailingWhitespaceUrlRegex = /((?:https?:\/\/|www\.)[^\s<>"]+)(?=\s+)/gi;
+  const urls = Array.from(text.matchAll(trailingWhitespaceUrlRegex))
+    .map((m) => m[1])
+    .filter(Boolean);
+  if (urls.length === 0) return { cleanedText: text, urls: [] as string[] };
 
+  const uniqueUrls = Array.from(new Set(urls));
   const cleanedText = text
-    .replace(URL_REGEX, ' ')
+    .replace(trailingWhitespaceUrlRegex, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]{2,}/g, ' ')
     .trimStart();
 
-  return { cleanedText, urls: matches };
+  return { cleanedText, urls: uniqueUrls };
 };
 
 function buildMicrosoftContextBlock(input: {
@@ -242,8 +242,6 @@ export function SourceInput({
   const [urlInput, setUrlInput] = useState('');
   const [linksOpen, setLinksOpen] = useState(false);
   const [recentsOpen, setRecentsOpen] = useState(false);
-  const [otherOpen, setOtherOpen] = useState(false);
-  const [materialsOpen, setMaterialsOpen] = useState(false);
   const [recentsCatalog, setRecentsCatalog] = useState<RecentCatalogItem[]>([]);
   const [recentsLoading, setRecentsLoading] = useState(false);
   const [recentsSourceFilter, setRecentsSourceFilter] = useState<'recent' | 'files' | 'all'>('recent');
@@ -251,10 +249,9 @@ export function SourceInput({
   const [recentsSearch, setRecentsSearch] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [removingSourceIds, setRemovingSourceIds] = useState<string[]>([]);
-  const [materialsSearch, setMaterialsSearch] = useState('');
   const [materials, setMaterials] = useState<MaterialEntry[]>([]);
-  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
   const [typedPlaceholder, setTypedPlaceholder] = useState('');
+  const [placeholderCursorVisible, setPlaceholderCursorVisible] = useState(true);
 
   const [micError, setMicError] = useState<string | null>(null);
   const [isFallbackRecording, setIsFallbackRecording] = useState(false);
@@ -333,19 +330,73 @@ export function SourceInput({
   }, [manualText, upsertMaterial]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     if (SOURCE_PLACEHOLDER_EXAMPLES.length === 0) return;
-    const sample = SOURCE_PLACEHOLDER_EXAMPLES[Math.floor(Math.random() * SOURCE_PLACEHOLDER_EXAMPLES.length)];
-    let index = 0;
-    setTypedPlaceholder('');
-    const interval = window.setInterval(() => {
-      index += 1;
-      setTypedPlaceholder(sample.slice(0, index));
-      if (index >= sample.length) {
-        window.clearInterval(interval);
+
+    let active = true;
+    let previous = '';
+    const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+    const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const pickExample = () => {
+      if (SOURCE_PLACEHOLDER_EXAMPLES.length === 1) return SOURCE_PLACEHOLDER_EXAMPLES[0];
+      let next = SOURCE_PLACEHOLDER_EXAMPLES[randomInt(0, SOURCE_PLACEHOLDER_EXAMPLES.length - 1)];
+      let tries = 0;
+      while (next === previous && tries < 8) {
+        next = SOURCE_PLACEHOLDER_EXAMPLES[randomInt(0, SOURCE_PLACEHOLDER_EXAMPLES.length - 1)];
+        tries += 1;
       }
-    }, 18);
-    return () => window.clearInterval(interval);
-  }, [toolId]);
+      previous = next;
+      return next;
+    };
+
+    const run = async () => {
+      while (active) {
+        if (manualText.trim()) {
+          setTypedPlaceholder('');
+          setPlaceholderCursorVisible(false);
+          await sleep(180);
+          continue;
+        }
+
+        const sample = pickExample();
+        setTypedPlaceholder('');
+        setPlaceholderCursorVisible(true);
+
+        for (let i = 1; i <= sample.length && active; i += 1) {
+          if (manualText.trim()) break;
+          setTypedPlaceholder(sample.slice(0, i));
+          await sleep(randomInt(14, 28));
+        }
+
+        if (!active || manualText.trim()) continue;
+
+        // 3 regular cursor blinks before deleting.
+        for (let i = 0; i < 3 && active; i += 1) {
+          setPlaceholderCursorVisible(false);
+          await sleep(360);
+          if (!active) break;
+          setPlaceholderCursorVisible(true);
+          await sleep(360);
+        }
+
+        if (!active || manualText.trim()) continue;
+
+        // Slow backspace effect.
+        for (let i = sample.length; i >= 0 && active; i -= 1) {
+          if (manualText.trim()) break;
+          setTypedPlaceholder(sample.slice(0, i));
+          await sleep(randomInt(34, 56));
+        }
+
+        await sleep(180);
+      }
+    };
+
+    void run();
+    return () => {
+      active = false;
+    };
+  }, [manualText, toolId]);
 
   const hydrateIntegrationSources = useCallback(async (quiet = false) => {
     const response = await fetch('/api/integrations/context-sources?provider=microsoft&selected=1', {
@@ -798,7 +849,11 @@ export function SourceInput({
       });
       clearTimeout(timeout);
 
-      if (!res.ok) throw new Error('import_failed');
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        const message = typeof payload?.error === 'string' ? payload.error : 'Could not fetch this URL right now.';
+        throw new Error(message);
+      }
 
       const data = await res.json();
       const extracted = typeof data?.text === 'string' ? data.text.trim() : '';
@@ -814,11 +869,12 @@ export function SourceInput({
       if (extracted) {
         toast({ title: 'Content imported', description: `Extracted text from ${host}` });
       }
-    } catch {
+    } catch (error: any) {
+      const message = String(error?.message || 'Could not fetch this URL right now.');
       setSources((prev) => prev.map((s) => (
-        s.id === id ? { ...s, loading: false, error: 'Could not fetch this URL right now.' } : s
+        s.id === id ? { ...s, loading: false, error: message } : s
       )));
-      toast({ variant: 'destructive', title: 'Import failed', description: 'Could not fetch content from this URL.' });
+      toast({ variant: 'destructive', title: 'Import failed', description: message });
     } finally {
       setIsFetchingUrl(false);
     }
@@ -1346,17 +1402,6 @@ export function SourceInput({
     (source) => source.kind === 'file' && !source.loading && !source.text.trim() && !source.previewUrl
   );
   const canGenerate = compiledSource.trim().length > 0 && !hasPendingSource && !hasFileSourceWithoutText;
-  const visibleMaterials = useMemo(() => {
-    const q = materialsSearch.trim().toLowerCase();
-    const base = q
-      ? materials.filter((item) => item.title.toLowerCase().includes(q) || item.detail.toLowerCase().includes(q))
-      : materials;
-    return [...base].sort((a, b) => new Date(b.dateIso).getTime() - new Date(a.dateIso).getTime());
-  }, [materials, materialsSearch]);
-  const selectedMaterial = useMemo(
-    () => materials.find((item) => item.id === selectedMaterialId) || null,
-    [materials, selectedMaterialId]
-  );
 
   const openMicrosoftPicker = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -1510,57 +1555,35 @@ export function SourceInput({
       )}
 
       <div className="mt-auto flex flex-col gap-2">
-        <div className="relative z-10 -mb-1 flex flex-wrap items-center gap-1.5 rounded-lg border border-sidebar-border bg-sidebar-accent/35 px-2 py-1.5">
-          <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={openMicrosoftPicker} disabled={disabled || isProcessing}>
+        <div className="relative z-10 -mb-1 flex flex-wrap items-center gap-1.5 rounded-xl border border-sidebar-border bg-sidebar-accent/35 px-2 py-1.5">
+          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={openMicrosoftPicker} disabled={disabled || isProcessing}>
             <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
             Import
           </Button>
-          <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
+          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
             <Image className="mr-1.5 h-3.5 w-3.5" />
             Photo
           </Button>
-          <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
+          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
             <FileIcon className="mr-1.5 h-3.5 w-3.5" />
             Files
           </Button>
-          <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => setRecentsOpen(true)} disabled={disabled || isProcessing}>
+          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => setRecentsOpen(true)} disabled={disabled || isProcessing}>
             <Clock3 className="mr-1.5 h-3.5 w-3.5" />
             Recents
           </Button>
-          <div className="relative">
-            <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => setOtherOpen((prev) => !prev)} disabled={disabled || isProcessing}>
-              <Layers className="mr-1.5 h-3.5 w-3.5" />
-              Other
-              <ChevronDown className="ml-1 h-3 w-3" />
-            </Button>
-            {otherOpen && (
-              <div className="absolute left-0 top-8 z-30 min-w-[128px] rounded-md border border-sidebar-border bg-background p-1 shadow-md">
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs hover:bg-sidebar-accent/40"
-                  onClick={() => {
-                    setMaterialsOpen(true);
-                    setOtherOpen(false);
-                  }}
-                >
-                  <FolderOpen className="h-3.5 w-3.5" />
-                  Materials
-                </button>
-              </div>
-            )}
-          </div>
-          <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => setLinksOpen((prev) => !prev)} disabled={disabled || isProcessing}>
+          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => setLinksOpen((prev) => !prev)} disabled={disabled || isProcessing}>
             <Link2 className="mr-1.5 h-3.5 w-3.5" />
             Links
           </Button>
           {enableMic && (
-            <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
+            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
               {isFallbackRecording ? <StopCircle className="mr-1.5 h-3.5 w-3.5" /> : <Mic className="mr-1.5 h-3.5 w-3.5" />}
               Mic
             </Button>
           )}
           {enableCaptions && (
-            <Button type="button" variant="ghost" size="sm" className="h-7 rounded-md px-2 text-xs" onClick={() => setCaptionsOpen((prev) => !prev)} disabled={disabled || !enableCaptions}>
+            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => setCaptionsOpen((prev) => !prev)} disabled={disabled || !enableCaptions}>
               <Captions className="mr-1.5 h-3.5 w-3.5" />
               Captions
             </Button>
@@ -1600,19 +1623,27 @@ export function SourceInput({
         )}
 
         <div className="flex items-stretch gap-2">
-          <Textarea
-            value={manualText}
-            onChange={(e) => handleManualTextChange(e.target.value)}
-            onKeyDown={(e) => {
-              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                e.preventDefault();
-                submitAndSave();
-              }
-            }}
-            placeholder={typedPlaceholder || placeholder}
-            className="min-h-[190px] flex-1 resize-none rounded-2xl border border-border bg-muted/70 text-sm"
-            disabled={disabled || isProcessing}
-          />
+          <div className="relative flex-1">
+            <Textarea
+              value={manualText}
+              onChange={(e) => handleManualTextChange(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                  e.preventDefault();
+                  submitAndSave();
+                }
+              }}
+              placeholder={manualText ? placeholder : ''}
+              className="min-h-[190px] flex-1 resize-none rounded-2xl border border-border bg-muted/70 text-sm"
+              disabled={disabled || isProcessing}
+            />
+            {!manualText && typedPlaceholder && (
+              <div className="pointer-events-none absolute left-3 top-3 right-3 overflow-hidden text-sm text-muted-foreground/90">
+                <span>{typedPlaceholder}</span>
+                <span className={`ml-0.5 ${placeholderCursorVisible ? 'opacity-100' : 'opacity-0'}`}>|</span>
+              </div>
+            )}
+          </div>
           <Button
             type="button"
             variant="outline"
@@ -1643,7 +1674,7 @@ export function SourceInput({
       </div>
 
       {recentsOpen && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/35 p-3">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-3">
           <div className="flex h-[72vh] w-full max-w-3xl flex-col rounded-xl border border-sidebar-border bg-background p-3 shadow-xl">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-sm font-medium">Recents</p>
@@ -1696,69 +1727,6 @@ export function SourceInput({
                     </button>
                   ))}
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {materialsOpen && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/35 p-3">
-          <div className="flex h-[78vh] w-full max-w-5xl gap-3 rounded-xl border border-sidebar-border bg-background p-3 shadow-xl">
-            <div className="flex min-w-0 flex-1 flex-col">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-sm font-medium">Materials</p>
-                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setMaterialsOpen(false)}>Close</Button>
-              </div>
-              <input
-                value={materialsSearch}
-                onChange={(e) => setMaterialsSearch(e.target.value)}
-                placeholder="Search materials..."
-                className="mb-2 h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
-              />
-              <div className="min-h-0 flex-1 overflow-auto">
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
-                  {visibleMaterials.map((material) => (
-                    <button
-                      key={material.id}
-                      type="button"
-                      className="rounded-xl border border-sidebar-border bg-sidebar-accent/25 p-2 text-left hover:bg-sidebar-accent/40"
-                      onClick={() => setSelectedMaterialId(material.id)}
-                    >
-                      <p className="mb-1 truncate text-xs font-medium">{material.title}</p>
-                      <div className="rounded-lg border border-sidebar-border bg-background p-2">
-                        <div className="h-16 overflow-hidden rounded-md bg-sidebar-accent/20 p-2 text-[10px] text-muted-foreground">
-                          {material.type === 'image' && material.preview.startsWith('data:image') ? (
-                            <img src={material.preview} alt={material.title} className="h-full w-full object-cover" />
-                          ) : (
-                            material.preview
-                          )}
-                        </div>
-                      </div>
-                      <p className="mt-1 text-[10px] text-muted-foreground">{material.type}</p>
-                      <p className="text-[10px] text-muted-foreground">{new Date(material.dateIso).toLocaleString()}</p>
-                    </button>
-                  ))}
-                </div>
-                {visibleMaterials.length === 0 && <p className="text-xs text-muted-foreground">No materials yet.</p>}
-              </div>
-            </div>
-            <div className="hidden w-[36%] min-w-[280px] rounded-xl border border-sidebar-border bg-sidebar-accent/20 p-3 lg:block">
-              {selectedMaterial ? (
-                <div className="h-full space-y-2 overflow-auto">
-                  <p className="text-sm font-medium">{selectedMaterial.title}</p>
-                  <p className="text-xs text-muted-foreground">Type: {selectedMaterial.type}</p>
-                  <p className="text-xs text-muted-foreground">Date: {new Date(selectedMaterial.dateIso).toLocaleString()}</p>
-                  <div className="rounded-lg border border-sidebar-border bg-background p-2 text-xs">
-                    {selectedMaterial.type === 'image' && selectedMaterial.preview.startsWith('data:image') ? (
-                      <img src={selectedMaterial.preview} alt={selectedMaterial.title} className="max-h-[260px] w-full rounded object-contain" />
-                    ) : (
-                      <pre className="whitespace-pre-wrap break-words font-sans">{selectedMaterial.detail}</pre>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">Select a material to view details.</p>
               )}
             </div>
           </div>

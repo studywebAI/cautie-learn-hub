@@ -20,7 +20,6 @@ import {
   BrainCircuit,
   Copy,
   FileSignature,
-  MonitorPlay,
   Route,
   School,
   Calendar,
@@ -28,6 +27,8 @@ import {
   ArrowUpRight,
   ChevronDown,
   Check,
+  FolderOpen,
+  Users,
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
@@ -113,7 +114,11 @@ export function AppSidebar() {
     { href: '/tools/quiz', label: dictionary.sidebar.tools.quizGenerator, icon: BrainCircuit },
     { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: Copy },
     { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: FileSignature },
-    { href: '/tools/presentation', label: (dictionary.sidebar.tools as any).presentation || 'Presentation', icon: MonitorPlay },
+  ];
+
+  const otherMenuItems = [
+    { href: '/other/materials', label: 'Materials', icon: FolderOpen },
+    { href: '/other/community', label: 'Community', icon: Users },
   ];
 
   useEffect(() => {
@@ -160,7 +165,14 @@ export function AppSidebar() {
       return;
     }
 
-    if (pathname?.startsWith('/classes') || pathname?.startsWith('/subjects') || pathname?.startsWith('/agenda') || pathname === '/' || pathname?.startsWith('/material')) {
+    if (
+      pathname?.startsWith('/classes') ||
+      pathname?.startsWith('/subjects') ||
+      pathname?.startsWith('/agenda') ||
+      pathname === '/' ||
+      pathname?.startsWith('/material') ||
+      pathname?.startsWith('/other')
+    ) {
       if (studentLane !== 'school') {
         setStudentLane('school');
       }
@@ -365,6 +377,7 @@ export function AppSidebar() {
 
   const visibleMainItems = isTeacher || studentLane === 'school' ? menuItems : [];
   const visibleToolsItems = isTeacher || studentLane === 'tools' ? toolsMenuItems : [];
+  const visibleOtherItems = isTeacher || studentLane === 'tools' ? otherMenuItems : [];
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -381,7 +394,8 @@ export function AppSidebar() {
         '/tools/quiz',
         '/tools/flashcards',
         '/tools/notes',
-        '/tools/presentation',
+        '/other/materials',
+        '/other/community',
       ])
     ).slice(0, 10);
 
@@ -921,8 +935,24 @@ export function AppSidebar() {
                 )}
               </div>
             ))}
-            {visibleMainItems.length > 0 && visibleToolsItems.length > 0 && <div className="h-px bg-sidebar-border my-2" />}
+            {visibleMainItems.length > 0 && (visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-px bg-sidebar-border my-2" />}
             {visibleToolsItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+                  isMenuItemActive(item.href)
+                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                    : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
+                )}
+                title={item.label}
+              >
+                <item.icon className="h-4 w-4" />
+              </Link>
+            ))}
+            {visibleToolsItems.length > 0 && visibleOtherItems.length > 0 && <div className="h-px bg-sidebar-border my-2" />}
+            {visibleOtherItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -998,9 +1028,32 @@ export function AppSidebar() {
             {visibleToolsItems.length > 0 && (
               <>
                 {visibleMainItems.length > 0 && <div className="h-5" />}
-                  <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">tools</p>
+                <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">tools</p>
                 <SidebarMenu>
                   {visibleToolsItems.map((item) => (
+                    <SidebarMenuItem key={item.label}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isMenuItemActive(item.href)}
+                        tooltip={item.label}
+                      >
+                        <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                          <item.icon className="h-4 w-4" />
+                          <span className="text-[12px] leading-4">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </>
+            )}
+
+            {visibleOtherItems.length > 0 && (
+              <>
+                {(visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
+                <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">other</p>
+                <SidebarMenu>
+                  {visibleOtherItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
                       <SidebarMenuButton
                         asChild
@@ -1081,6 +1134,29 @@ export function AppSidebar() {
             <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">tools</p>
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
+                <SidebarMenuItem key={item.label}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isMenuItemActive(item.href)}
+                    tooltip={item.label}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span className="text-[12px] leading-4">{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </>
+        )}
+
+        {visibleOtherItems.length > 0 && (
+          <>
+            {(visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
+            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">other</p>
+            <SidebarMenu>
+              {visibleOtherItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton
                     asChild

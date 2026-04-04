@@ -84,8 +84,8 @@ export function MultipleChoiceView({ card, onAnswered }: MultipleChoiceViewProps
   }
 
   return (
-    <div className="w-full max-w-4xl">
-      <p className="font-semibold mb-4 text-3xl leading-[1.3] text-center">{mcq.question}</p>
+    <div className="w-full max-w-5xl">
+      <p className="mb-4 text-center text-xl font-semibold leading-[1.35] md:text-3xl">{mcq.question}</p>
       <RadioGroup onValueChange={handleSelectOption} value={selectedOptionId || ''} disabled={isAnswered}>
         <div className="space-y-3 max-w-3xl mx-auto">
           {mcq.options.map((opt: { id: string; text: string }) => { // Explicitly type opt

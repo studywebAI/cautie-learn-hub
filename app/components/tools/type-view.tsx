@@ -45,9 +45,9 @@ export function TypeView({ card, onAnswered }: TypeViewProps) {
     const [before, after] = clozeSentence.split('____');
 
     return (
-        <div className="w-full max-w-4xl min-h-[26rem] flex flex-col items-center justify-center gap-5">
-            <div className="flex items-center justify-center p-8 w-full min-h-[16rem] bg-card border rounded-2xl">
-                 <p className="text-center text-3xl leading-[1.35]">
+        <div className="w-full max-w-5xl min-h-[18rem] flex flex-col items-center justify-center gap-4">
+            <div className="flex items-center justify-center p-6 w-full min-h-[10rem] bg-card border rounded-2xl">
+                 <p className="text-center text-xl leading-[1.35] md:text-3xl">
                     {before}
                     <span className='inline-block w-40 border-b-2 border-dashed align-middle mx-2'></span>
                     {after}
@@ -63,7 +63,7 @@ export function TypeView({ card, onAnswered }: TypeViewProps) {
                     onKeyDown={handleKeyDown}
                     disabled={isSubmitted}
                     className={cn(
-                        'text-center text-xl h-14',
+                        'text-center text-lg h-12',
                         isSubmitted && isCorrect && 'border-green-500 focus-visible:ring-green-500',
                         isSubmitted && !isCorrect && 'border-red-500 focus-visible:ring-red-500'
                     )}

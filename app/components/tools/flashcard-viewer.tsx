@@ -14,14 +14,11 @@ import {
   RefreshCw,
   Lightbulb,
   Loader2,
-  Shield,
-  Pause,
   CheckCircle2,
   XCircle,
   Sparkles,
   FileText,
   ListChecks,
-  BookOpen,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TypeView } from './type-view';
@@ -95,26 +92,26 @@ const isBuriedNow = (buriedUntil: string | null) => !!buriedUntil && new Date(bu
 
 const computeAdaptiveHeight = (front: string, back: string) => {
   const totalChars = `${front} ${back}`.trim().length;
-  const estimatedLines = Math.ceil(totalChars / 36);
-  const base = 400;
-  const perLine = 10;
-  return Math.max(400, Math.min(700, base + estimatedLines * perLine));
+  const estimatedLines = Math.ceil(totalChars / 44);
+  const base = 260;
+  const perLine = 8;
+  return Math.max(260, Math.min(460, base + estimatedLines * perLine));
 };
 
 function FlipView({ card, isFlipped, setIsFlipped, height }: { card: Flashcard; isFlipped: boolean; setIsFlipped: (f: boolean) => void; height: number; }) {
   return (
     <div className='flex w-full flex-col items-center justify-center gap-4'>
-      <div className="w-[min(96vw,1080px)] [perspective:1200px]" style={{ height: `${height}px` }}>
+      <div className="w-full max-w-5xl [perspective:1200px]" style={{ height: `${height}px` }}>
         <div
           className="relative h-full w-full cursor-pointer transition-transform duration-500 [transform-style:preserve-3d]"
           style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
           onClick={() => setIsFlipped(!isFlipped)}
         >
           <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-12 py-10 shadow-sm [backface-visibility:hidden]">
-            <p className="max-w-[92%] text-center text-4xl leading-[1.28] text-foreground">{card.front}</p>
+            <p className="max-w-[92%] text-center text-2xl leading-[1.35] text-foreground md:text-4xl">{card.front}</p>
           </div>
           <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-12 py-10 shadow-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
-            <p className="max-w-[92%] text-center text-3xl leading-[1.35] text-muted-foreground">{card.back}</p>
+            <p className="max-w-[92%] text-center text-xl leading-[1.4] text-muted-foreground md:text-3xl">{card.back}</p>
           </div>
         </div>
       </div>
@@ -156,11 +153,12 @@ export function FlashcardViewer({
   const [sessionMetrics, setSessionMetrics] = useState<Record<string, SessionCardMetrics>>({});
   const [sessionComplete, setSessionComplete] = useState(false);
   const [srsState, setSrsState] = useState<Record<string, CardSRSState>>({});
+  const [sessionQueueIds, setSessionQueueIds] = useState<string[]>([]);
   const startTimeRef = React.useRef(Date.now());
   const cardStartedAtRef = React.useRef(Date.now());
   const { toast } = useToast();
 
-  const queue = React.useMemo(() => {
+  const initialQueue = React.useMemo(() => {
     const due: Flashcard[] = [];
     const fresh: Flashcard[] = [];
     const rest: Flashcard[] = [];
@@ -178,6 +176,11 @@ export function FlashcardViewer({
     return rest;
   }, [cards, srsState]);
 
+  const queue = React.useMemo(() => {
+    const map = new Map(cards.map((card) => [card.id, card]));
+    return sessionQueueIds.map((id) => map.get(id)).filter(Boolean) as Flashcard[];
+  }, [cards, sessionQueueIds]);
+
   useEffect(() => {
     const key = deckStorageKey(cards);
     try {
@@ -194,11 +197,32 @@ export function FlashcardViewer({
   }, [cards]);
 
   useEffect(() => {
+    setSessionQueueIds([]);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setIsAnswered(false);
+    setAnswerCorrectness(null);
+    setCardsReviewed(new Set());
+    setCorrectCards(0);
+    setSessionMetrics({});
+    setSessionComplete(false);
+    startTimeRef.current = Date.now();
+  }, [cards]);
+
+  useEffect(() => {
+    if (sessionQueueIds.length > 0) return;
+    if (!cards.length || Object.keys(srsState).length === 0) return;
+    const ids = initialQueue.map((card) => card.id);
+    setSessionQueueIds(ids);
+  }, [cards.length, initialQueue, sessionQueueIds.length, srsState]);
+
+  useEffect(() => {
     if (!cards.length || !Object.keys(srsState).length) return;
     localStorage.setItem(deckStorageKey(cards), JSON.stringify(srsState));
   }, [cards, srsState]);
 
   useEffect(() => {
+    if (queue.length === 0) return;
     if (currentIndex >= queue.length) setCurrentIndex(Math.max(0, queue.length - 1));
   }, [queue.length, currentIndex]);
 
@@ -210,9 +234,9 @@ export function FlashcardViewer({
   }, [currentIndex]);
 
   useEffect(() => {
-    const completed = cards.length > 0 && cardsReviewed.size >= cards.length;
+    const completed = queue.length > 0 && cardsReviewed.size >= queue.length;
     if (completed !== sessionComplete) setSessionComplete(completed);
-  }, [cards.length, cardsReviewed.size, sessionComplete]);
+  }, [queue.length, cardsReviewed.size, sessionComplete]);
 
   useEffect(() => {
     onCompletionChange?.(sessionComplete);
@@ -266,7 +290,8 @@ export function FlashcardViewer({
   const saveFlashcardProgress = useCallback(async () => {
     const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
     const deckHealth = computeDeckHealth();
-    const completionScore = cards.length > 0 ? Math.round((cardsReviewed.size / cards.length) * 100) : 0;
+    const sessionTotal = Math.max(1, queue.length);
+    const completionScore = queue.length > 0 ? Math.round((cardsReviewed.size / sessionTotal) * 100) : 0;
     try {
       await fetch('/api/activity', {
         method: 'POST',
@@ -274,7 +299,7 @@ export function FlashcardViewer({
         body: JSON.stringify({
           activity_type: 'flashcard',
           score: completionScore,
-          total_items: cards.length,
+          total_items: sessionTotal,
           correct_items: correctCards,
           time_spent_seconds: timeSpent,
           metadata: {
@@ -301,7 +326,7 @@ export function FlashcardViewer({
             studysetId,
             toolId: 'flashcards',
             score: completionScore,
-            totalItems: cards.length,
+            totalItems: sessionTotal,
             correctItems: correctCards,
             timeSpentSeconds: timeSpent,
             weakTopics: Array.from(new Set(topicsToSave)).slice(0, 8),
@@ -312,7 +337,7 @@ export function FlashcardViewer({
     } catch (error) {
       console.error('Failed to save flashcard session:', error);
     }
-  }, [cards.length, cardsReviewed.size, correctCards, mode, computeDeckHealth, computeTopicAnalytics, studysetId, taskId]);
+  }, [cards.length, queue.length, cardsReviewed.size, correctCards, mode, computeDeckHealth, computeTopicAnalytics, studysetId, taskId]);
 
   const getQualityFromOutcome = (isCorrect: boolean, responseMs: number): 0 | 1 | 2 | 3 => {
     if (!isCorrect) return 0;
@@ -511,34 +536,6 @@ export function FlashcardViewer({
     return computeAdaptiveHeight(displayCard.front, displayCard.back);
   }, [displayCard]);
 
-  const suspendCurrent = () => {
-    if (!card) return;
-    setSrsState((prev) => ({
-      ...prev,
-      [card.id]: { ...(prev[card.id] || defaultSRSState()), suspended: true },
-    }));
-    toast({ title: 'Card suspended', description: 'This card is removed from active review queue.' });
-  };
-
-  const buryCurrentToday = () => {
-    if (!card) return;
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-    setSrsState((prev) => ({
-      ...prev,
-      [card.id]: { ...(prev[card.id] || defaultSRSState()), buriedUntil: endOfDay.toISOString() },
-    }));
-    toast({ title: 'Card buried for today' });
-  };
-
-  const unsuspendAll = () => {
-    setSrsState((prev) => {
-      const next = { ...prev };
-      for (const id of Object.keys(next)) next[id] = { ...next[id], suspended: false, buriedUntil: null };
-      return next;
-    });
-  };
-
   const weakestCards = React.useMemo(() => {
     return cards
       .map((cardItem) => {
@@ -570,31 +567,47 @@ export function FlashcardViewer({
     const mediumCount = allMetrics.filter((item) => item.lastResponseMs > 4500 && item.lastResponseMs <= 12000).length;
     const slowCount = allMetrics.filter((item) => item.lastResponseMs > 12000).length;
 
-    const recallRiskCards = cards
+    const perQuestionBreakdown = cards
       .map((cardItem) => {
         const state = srsState[cardItem.id] || defaultSRSState();
         const metrics = sessionMetrics[cardItem.id];
+        const attempts = metrics?.attempts || 0;
+        const avgResponseMs = attempts > 0 ? Math.round((metrics?.totalResponseMs || 0) / attempts) : 0;
+        const incorrect = metrics?.incorrect || 0;
+        const tokens = extractTopicTokens(cardItem.front).slice(0, 4);
+        const responseSpeed = avgResponseMs === 0 ? 'n/a' : avgResponseMs <= 4500 ? 'fast' : avgResponseMs <= 12000 ? 'medium' : 'slow';
+        let reason = 'Stable';
+        if (incorrect > 0 && avgResponseMs > 12000) reason = 'Incorrect + slow recall';
+        else if (incorrect > 0) reason = 'Incorrect answers';
+        else if (avgResponseMs > 12000) reason = 'Slow recall';
         return {
           id: cardItem.id,
           front: cardItem.front,
-          riskScore: state.lapses * 2 + (isDueNow(state.dueAt) ? 2 : 0) + (metrics?.incorrect || 0),
+          topics: tokens,
+          attempts,
+          incorrect,
+          avgResponseMs,
+          responseSpeed,
+          reason,
+          struggled: incorrect > 0 || avgResponseMs > 12000 || state.lapses > 0 || isDueNow(state.dueAt),
         };
       })
-      .sort((a, b) => b.riskScore - a.riskScore)
-      .slice(0, 5);
+      .sort((a, b) => Number(b.struggled) - Number(a.struggled) || b.avgResponseMs - a.avgResponseMs);
 
-    const confidenceCards = cards
-      .map((cardItem) => {
-        const state = srsState[cardItem.id] || defaultSRSState();
-        const metrics = sessionMetrics[cardItem.id];
-        return {
-          id: cardItem.id,
-          front: cardItem.front,
-          confidenceScore: Math.max(0, (metrics?.correct || 0) * 2 + state.ease - state.lapses),
-        };
-      })
-      .sort((a, b) => b.confidenceScore - a.confidenceScore)
-      .slice(0, 5);
+    const topicLinkMap = new Map<string, number>();
+    for (const row of perQuestionBreakdown) {
+      const uniqueTopics = Array.from(new Set(row.topics));
+      for (let i = 0; i < uniqueTopics.length; i += 1) {
+        for (let j = i + 1; j < uniqueTopics.length; j += 1) {
+          const key = [uniqueTopics[i], uniqueTopics[j]].sort().join(' <-> ');
+          topicLinkMap.set(key, (topicLinkMap.get(key) || 0) + 1);
+        }
+      }
+    }
+    const topicLinks = [...topicLinkMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12)
+      .map(([link, weight]) => ({ link, weight }));
 
     const { weakTopics, strongTopics } = computeTopicAnalytics();
     return {
@@ -607,12 +620,12 @@ export function FlashcardViewer({
       slowCount,
       weakTopics,
       strongTopics,
-      recallRiskCards,
-      confidenceCards,
+      perQuestionBreakdown,
+      topicLinks,
     };
   }, [cards, cardsReviewed.size, correctCards, sessionMetrics, srsState, computeTopicAnalytics]);
 
-  const openToolFromWeakCards = (tool: 'notes' | 'quiz' | 'flashcards') => {
+  const openToolFromWeakCards = (tool: 'notes' | 'quiz') => {
     const source = weakestCards.map((item, index) => `${index + 1}. ${item.front}\nAnswer: ${item.back}`).join('\n\n');
     router.push(`/tools/${tool}?sourceText=${encodeURIComponent(source)}`);
   };
@@ -654,10 +667,7 @@ export function FlashcardViewer({
       <CardContent className="flex-1 min-h-0 flex flex-col items-center gap-6 px-4 md:px-6 pb-2 overflow-auto">
         {queue.length === 0 && (
           <div className="w-full rounded-md border border-border/80 p-4 text-sm text-muted-foreground">
-            All cards are suspended or buried for now.
-            <div className="mt-3">
-              <Button size="sm" variant="outline" onClick={unsuspendAll}>Unsuspend/Unbury All</Button>
-            </div>
+            No cards available in this study set.
           </div>
         )}
 
@@ -706,16 +716,6 @@ export function FlashcardViewer({
               <Button size="sm" className="!bg-emerald-800 !text-white hover:!bg-emerald-900" onClick={() => applyOutcome(true)}>
                 <CheckCircle2 className="mr-2 h-4 w-4" />
                 Correct
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button size="sm" variant="outline" onClick={buryCurrentToday}>
-                <Pause className="mr-2 h-4 w-4" />
-                Bury Today
-              </Button>
-              <Button size="sm" variant="outline" onClick={suspendCurrent}>
-                <Shield className="mr-2 h-4 w-4" />
-                Suspend Card
               </Button>
             </div>
           </div>
@@ -784,35 +784,43 @@ export function FlashcardViewer({
               </div>
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-2">
-              <div className="rounded-xl bg-card/80 p-3">
-                <p className="text-sm">Retry first</p>
-                <div className="mt-2 space-y-2">
-                  {sessionAnalytics.recallRiskCards.map((item) => (
-                    <div key={item.id} className="rounded-md bg-background p-2 text-xs">
-                      <p className="truncate">{item.front}</p>
+            <div className="rounded-xl bg-card/80 p-3">
+              <p className="text-sm">Per-card breakdown</p>
+              <div className="mt-2 space-y-2">
+                {sessionAnalytics.perQuestionBreakdown.map((item, idx) => (
+                  <div key={item.id} className="rounded-md bg-background p-2">
+                    <p className="truncate text-xs font-medium">{idx + 1}. {item.front}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      {item.topics.length > 0 && item.topics.map((topic) => (
+                        <Badge key={`${item.id}-${topic}`} variant="secondary">{topic}</Badge>
+                      ))}
+                      <Badge variant="outline">Attempts {item.attempts}</Badge>
+                      <Badge variant="outline">Incorrect {item.incorrect}</Badge>
+                      <Badge variant="outline">Avg {item.avgResponseMs > 0 ? `${Math.max(1, Math.round(item.avgResponseMs / 1000))}s` : '-'}</Badge>
+                      <Badge variant="outline">Speed {item.responseSpeed}</Badge>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-xl bg-card/80 p-3">
-                <p className="text-sm">Most stable cards</p>
-                <div className="mt-2 space-y-2">
-                  {sessionAnalytics.confidenceCards.map((item) => (
-                    <div key={item.id} className="rounded-md bg-background p-2 text-xs">
-                      <p className="truncate">{item.front}</p>
-                    </div>
-                  ))}
-                </div>
+                    <p className="mt-1 text-[11px] text-muted-foreground">Reason: {item.reason}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-              <Button variant="outline" onClick={() => openToolFromWeakCards('flashcards')}>
-                <BookOpen className="mr-2 h-4 w-4" />
-                New Flashcards
-              </Button>
+            <details className="rounded-xl bg-card/80 p-3">
+              <summary className="cursor-pointer text-sm">Topic web (optional)</summary>
+              <div className="mt-2 space-y-1 text-xs">
+                {sessionAnalytics.topicLinks.length === 0 ? (
+                  <p className="text-muted-foreground">Not enough topic overlap yet.</p>
+                ) : (
+                  sessionAnalytics.topicLinks.map((item) => (
+                    <div key={item.link} className="rounded-md bg-background p-2">
+                      {item.link} ({item.weight})
+                    </div>
+                  ))
+                )}
+              </div>
+            </details>
+
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               <Button variant="outline" onClick={() => openToolFromWeakCards('notes')}>
                 <FileText className="mr-2 h-4 w-4" />
                 Notes from Weak Cards
