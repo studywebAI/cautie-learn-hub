@@ -31,16 +31,16 @@ const LANGUAGE_OPTIONS: Array<{ value: LanguageOption; label: string }> = [
   { value: 'en', label: 'English' },
   { value: 'nl', label: 'Nederlands' },
   { value: 'de', label: 'Deutsch' },
-  { value: 'fr', label: 'Français' },
-  { value: 'es', label: 'Español' },
-  { value: 'pt', label: 'Português' },
+  { value: 'fr', label: 'Francais' },
+  { value: 'es', label: 'Espanol' },
+  { value: 'pt', label: 'Portugues' },
   { value: 'pl', label: 'Polski' },
-  { value: 'ru', label: '???????' },
-  { value: 'ar', label: '???????' },
-  { value: 'ur', label: '????' },
-  { value: 'hi', label: '??????' },
-  { value: 'bn', label: '?????' },
-  { value: 'zh', label: '??' },
+  { value: 'ru', label: 'Russian' },
+  { value: 'ar', label: 'Arabic' },
+  { value: 'ur', label: 'Urdu' },
+  { value: 'hi', label: 'Hindi' },
+  { value: 'bn', label: 'Bangla' },
+  { value: 'zh', label: 'Chinese' },
 ];
 
 const THEME_OPTIONS: Array<{ value: ThemeType; label: string }> = [
@@ -64,16 +64,16 @@ function firstTimePromptForLanguage(language: LanguageOption): string {
     en: 'First time here?',
     nl: 'Eerste keer hier?',
     de: 'Zum ersten Mal hier?',
-    fr: 'Première fois ici ?',
-    es: '¿Primera vez aquí?',
+    fr: 'Premiere fois ici?',
+    es: 'Primera vez aqui?',
     pt: 'Primeira vez aqui?',
     pl: 'Pierwszy raz tutaj?',
-    ru: '??????? ??????',
-    ar: '??? ??? ????',
-    ur: '??? ?? ???? ??? ???? ????',
-    hi: '???? ?? ???? ??? ???? ????',
-    bn: '???????? ??????',
-    zh: '????????',
+    ru: 'First time here?',
+    ar: 'First time here?',
+    ur: 'First time here?',
+    hi: 'First time here?',
+    bn: 'First time here?',
+    zh: 'First time here?',
   };
   return map[language] || map.en;
 }
@@ -99,6 +99,7 @@ export function FirstTimeSetupGate() {
   const [teacherCode, setTeacherCode] = useState('');
   const [typedPrompt, setTypedPrompt] = useState('');
   const [cursorVisible, setCursorVisible] = useState(true);
+  const [draftSaving, setDraftSaving] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -179,7 +180,7 @@ export function FirstTimeSetupGate() {
 
   useEffect(() => {
     if (!visible) return;
-    const prompt = firstTimePromptForLanguage(resolveBrowserLanguage());
+    const prompt = firstTimePromptForLanguage(language);
     let active = true;
     const run = async () => {
       setTypedPrompt('');
@@ -195,7 +196,52 @@ export function FirstTimeSetupGate() {
       active = false;
       window.clearInterval(blink);
     };
-  }, [visible]);
+  }, [language, visible]);
+
+  const persistSetupDraft = useCallback(async () => {
+    if (!session?.user?.id) return;
+    setDraftSaving(true);
+    try {
+      const draft = {
+        mode,
+        step,
+        role,
+        language,
+        theme,
+        displayName: displayName.trim() || null,
+        teacherCode: teacherCode.trim() || null,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await supabase.from('profiles').upsert({
+        id: session.user.id,
+        language,
+        theme,
+        full_name: displayName.trim() || null,
+      });
+
+      await supabase.from('user_preferences').upsert(
+        {
+          user_id: session.user.id,
+          preference_key: 'first_time_setup_draft',
+          preference_value: draft,
+        },
+        { onConflict: 'user_id,preference_key' }
+      );
+    } catch {
+      // Draft backup is best-effort.
+    } finally {
+      setDraftSaving(false);
+    }
+  }, [displayName, language, mode, role, session?.user?.id, step, supabase, teacherCode, theme]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const timer = window.setTimeout(() => {
+      void persistSetupDraft();
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [displayName, language, mode, persistSetupDraft, role, step, teacherCode, theme, visible]);
 
   const persistAndRedirectToLogin = useCallback((nextStep: SetupStep) => {
     if (typeof window === 'undefined') return;
@@ -239,9 +285,26 @@ export function FirstTimeSetupGate() {
       try {
         await supabase.from('profiles').upsert({
           id: session.user.id,
-          display_name: displayName.trim() || null,
+          full_name: displayName.trim() || null,
           language,
+          theme,
         });
+        await supabase.from('user_preferences').upsert(
+          {
+            user_id: session.user.id,
+            preference_key: 'first_time_setup_final',
+            preference_value: {
+              mode,
+              role,
+              language,
+              theme,
+              displayName: displayName.trim() || null,
+              teacherCode: teacherCode.trim() || null,
+              completedAt: new Date().toISOString(),
+            },
+          },
+          { onConflict: 'user_id,preference_key' }
+        );
       } catch {
         // Best-effort profile sync; local setup completion still succeeds.
       }
@@ -252,11 +315,28 @@ export function FirstTimeSetupGate() {
 
   if (!hydrated || !visible) return null;
 
+  const stepIndexMap: Record<SetupStep, number> = {
+    entry: 1,
+    language: 2,
+    role: 3,
+    teacherCode: 4,
+    appearance: 5,
+    displayName: 6,
+  };
+
   return (
-    <div className="fixed inset-0 z-[240] flex items-center justify-center bg-background/97 p-4">
-      <div className="w-full max-w-xl rounded-2xl border bg-card p-5 shadow-lg">
-        <div className="mb-5 text-center">
-          <h2 className="text-xl font-semibold">{typedPrompt}<span className={cursorVisible ? 'opacity-100' : 'opacity-0'}>|</span></h2>
+    <div className="fixed inset-0 z-[240] flex items-center justify-center bg-black/45 p-5 backdrop-blur-[2px]">
+      <div className="w-full max-w-4xl rounded-3xl border bg-card p-7 shadow-2xl">
+        <div className="mb-5 flex items-start justify-between">
+          <div>
+            <h2 className="text-3xl font-semibold">{typedPrompt}<span className={cursorVisible ? 'opacity-100' : 'opacity-0'}>|</span></h2>
+            <p className="mt-1 text-sm text-muted-foreground">Step {stepIndexMap[step]} of 6</p>
+          </div>
+          {session?.user?.id ? (
+            <p className="text-xs text-muted-foreground">{draftSaving ? 'Saving setup draft...' : 'Draft saved'}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">Draft saved locally</p>
+          )}
         </div>
 
         {step === 'entry' && (
@@ -283,7 +363,10 @@ export function FirstTimeSetupGate() {
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setLanguageChoice(option.value)}
+                  onClick={() => {
+                    setLanguageChoice(option.value);
+                    setLanguage(option.value);
+                  }}
                   className={`rounded-full border px-3 py-1.5 text-xs ${language === option.value ? 'border-primary bg-primary/10' : 'border-border'}`}
                 >
                   {option.label}
@@ -338,7 +421,10 @@ export function FirstTimeSetupGate() {
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setThemeChoice(option.value)}
+                  onClick={() => {
+                    setThemeChoice(option.value);
+                    setTheme(option.value);
+                  }}
                   className={`rounded-full border px-3 py-1.5 text-xs ${theme === option.value ? 'border-primary bg-primary/10' : 'border-border'}`}
                 >
                   {option.label}
