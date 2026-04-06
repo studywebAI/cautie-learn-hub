@@ -101,39 +101,71 @@ export function FirstTimeSetupGate() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const browserLanguage = resolveBrowserLanguage();
-    const raw = window.localStorage.getItem(SETUP_STORAGE_KEY);
-    const parsed: PersistedSetup = raw ? JSON.parse(raw) : {};
-    if (parsed?.completed) {
-      setHydrated(true);
-      setVisible(false);
-      return;
-    }
+    try {
+      const browserLanguage = resolveBrowserLanguage();
+      const raw = window.localStorage.getItem(SETUP_STORAGE_KEY);
+      const parsed: PersistedSetup = raw ? JSON.parse(raw) : {};
+      if (parsed?.completed) {
+        setHydrated(true);
+        setVisible(false);
+        return;
+      }
 
-    setMode(parsed.mode || null);
-    setStep(parsed.step || 'entry');
-    setRole(parsed.role || 'student');
-    setLanguageChoice(parsed.language || browserLanguage);
-    setThemeChoice(parsed.theme || currentTheme || 'light');
-    setDisplayName(parsed.displayName || window.localStorage.getItem(DISPLAY_NAME_KEY) || '');
-    setTeacherCode(parsed.teacherCode || '');
-    setVisible(true);
-    setHydrated(true);
+      const safeStep: SetupStep = (
+        ['entry', 'language', 'role', 'teacherCode', 'appearance', 'displayName'].includes(String(parsed.step))
+          ? (parsed.step as SetupStep)
+          : 'entry'
+      );
+      const safeMode: SetupMode | null =
+        parsed.mode === 'new' || parsed.mode === 'account' ? parsed.mode : null;
+      const safeRole: SetupRole = parsed.role === 'teacher' ? 'teacher' : 'student';
+      const safeTheme: ThemeType = THEME_OPTIONS.some((item) => item.value === parsed.theme)
+        ? (parsed.theme as ThemeType)
+        : (currentTheme || 'light');
+      const safeLanguage: LanguageOption = LANGUAGE_OPTIONS.some((item) => item.value === parsed.language)
+        ? (parsed.language as LanguageOption)
+        : browserLanguage;
+
+      setMode(safeMode);
+      setStep(safeStep);
+      setRole(safeRole);
+      setLanguageChoice(safeLanguage);
+      setThemeChoice(safeTheme);
+      setDisplayName(parsed.displayName || window.localStorage.getItem(DISPLAY_NAME_KEY) || '');
+      setTeacherCode(parsed.teacherCode || '');
+      setVisible(true);
+      setHydrated(true);
+    } catch {
+      window.localStorage.removeItem(SETUP_STORAGE_KEY);
+      setMode(null);
+      setStep('entry');
+      setRole('student');
+      setLanguageChoice(resolveBrowserLanguage());
+      setThemeChoice(currentTheme || 'light');
+      setDisplayName(window.localStorage.getItem(DISPLAY_NAME_KEY) || '');
+      setTeacherCode('');
+      setVisible(true);
+      setHydrated(true);
+    }
   }, [currentTheme]);
 
   useEffect(() => {
     if (!hydrated || !visible || typeof window === 'undefined') return;
-    const payload: PersistedSetup = {
-      completed: false,
-      mode: mode || undefined,
-      step,
-      role,
-      language,
-      theme,
-      displayName,
-      teacherCode,
-    };
-    window.localStorage.setItem(SETUP_STORAGE_KEY, JSON.stringify(payload));
+    try {
+      const payload: PersistedSetup = {
+        completed: false,
+        mode: mode || undefined,
+        step,
+        role,
+        language,
+        theme,
+        displayName,
+        teacherCode,
+      };
+      window.localStorage.setItem(SETUP_STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // Ignore storage issues and keep flow usable in-memory.
+    }
   }, [displayName, hydrated, language, mode, role, step, teacherCode, theme, visible]);
 
   useEffect(() => {
@@ -158,17 +190,21 @@ export function FirstTimeSetupGate() {
 
   const persistAndRedirectToLogin = useCallback((nextStep: SetupStep) => {
     if (typeof window === 'undefined') return;
-    const payload: PersistedSetup = {
-      completed: false,
-      mode: mode || undefined,
-      step: nextStep,
-      role,
-      language,
-      theme,
-      displayName,
-      teacherCode,
-    };
-    window.localStorage.setItem(SETUP_STORAGE_KEY, JSON.stringify(payload));
+    try {
+      const payload: PersistedSetup = {
+        completed: false,
+        mode: mode || undefined,
+        step: nextStep,
+        role,
+        language,
+        theme,
+        displayName,
+        teacherCode,
+      };
+      window.localStorage.setItem(SETUP_STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // Redirect still works without persisted state.
+    }
     window.location.href = '/login?message=Sign in to continue setup&type=info';
   }, [displayName, language, mode, role, teacherCode, theme]);
 

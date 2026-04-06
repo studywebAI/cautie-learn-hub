@@ -185,10 +185,10 @@ export function AppSidebar() {
   const classDropdownItems = useMemo(() => {
     return [...classItems]
       .filter((classItem) => classItem.status !== 'archived')
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || '')))
       .map((classItem) => ({
         id: classItem.id,
-        label: classItem.name,
+        label: String(classItem?.name || 'Untitled class'),
         href: `/class/${classItem.id}`,
       }));
   }, [classItems]);
@@ -196,10 +196,10 @@ export function AppSidebar() {
   const subjectDropdownItems = useMemo(
     () =>
       [...subjectItems]
-        .sort((a, b) => a.title.localeCompare(b.title))
+        .sort((a, b) => String(a?.title || '').localeCompare(String(b?.title || '')))
         .map((subject) => ({
           id: subject.id,
-          label: subject.title,
+          label: String(subject?.title || 'Untitled subject'),
           href: `/subjects/${subject.id}`,
         })),
     [subjectItems]

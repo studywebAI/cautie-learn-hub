@@ -770,7 +770,7 @@ export function SourceInput({
     const query = recentsSearch.trim().toLowerCase();
     const filtered = recentsCatalog.filter((item) => (query ? item.name.toLowerCase().includes(query) : true));
     const sorted = [...filtered].sort((a, b) => {
-      if (recentsSort === 'name') return a.name.localeCompare(b.name);
+      if (recentsSort === 'name') return String(a?.name || '').localeCompare(String(b?.name || ''));
       if (recentsSort === 'most_used') return Number(usage[b.id] || 0) - Number(usage[a.id] || 0);
       const aTime = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
       const bTime = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
