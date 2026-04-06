@@ -80,6 +80,125 @@ export function FirstTimeSetupGate() {
   const [cursorVisible, setCursorVisible] = useState(true);
   const [savingFinal, setSavingFinal] = useState(false);
 
+  const uiText = useMemo(() => {
+    const byLang: Record<LanguageOption, Record<string, string>> = {
+      en: {
+        firstTime: 'First time here?',
+        iAmNew: "I'm new",
+        iHaveAccount: 'I have an account',
+        step: 'Step',
+        of: 'of',
+        selectLanguage: 'Select language',
+        selectRole: 'Select role',
+        selectAppearance: 'Select appearance',
+        teacherCode: 'Teacher code',
+        enterTeacherCode: 'Enter teacher code',
+        enterDisplayName: 'Enter display name',
+        yourDisplayName: 'Your display name',
+        student: 'Student',
+        teacher: 'Teacher',
+        next: 'Next',
+        finish: 'Finish',
+        createAccount: 'Create account',
+        continueGuest: 'Continue as guest',
+        saving: 'Saving...',
+      },
+      nl: {
+        firstTime: 'Eerste keer hier?',
+        iAmNew: 'Ik ben nieuw',
+        iHaveAccount: 'Ik heb een account',
+        step: 'Stap',
+        of: 'van',
+        selectLanguage: 'Kies taal',
+        selectRole: 'Kies rol',
+        selectAppearance: 'Kies uiterlijk',
+        teacherCode: 'Docentcode',
+        enterTeacherCode: 'Voer docentcode in',
+        enterDisplayName: 'Voer weergavenaam in',
+        yourDisplayName: 'Jouw weergavenaam',
+        student: 'Leerling',
+        teacher: 'Docent',
+        next: 'Volgende',
+        finish: 'Afronden',
+        createAccount: 'Account maken',
+        continueGuest: 'Doorgaan als gast',
+        saving: 'Opslaan...',
+      },
+      de: {
+        firstTime: 'Zum ersten Mal hier?',
+        iAmNew: 'Ich bin neu',
+        iHaveAccount: 'Ich habe ein Konto',
+        step: 'Schritt',
+        of: 'von',
+        selectLanguage: 'Sprache wählen',
+        selectRole: 'Rolle wählen',
+        selectAppearance: 'Design wählen',
+        teacherCode: 'Lehrercode',
+        enterTeacherCode: 'Lehrercode eingeben',
+        enterDisplayName: 'Anzeigename eingeben',
+        yourDisplayName: 'Dein Anzeigename',
+        student: 'Schüler',
+        teacher: 'Lehrer',
+        next: 'Weiter',
+        finish: 'Fertig',
+        createAccount: 'Konto erstellen',
+        continueGuest: 'Als Gast fortfahren',
+        saving: 'Speichern...',
+      },
+      fr: {
+        firstTime: 'Premiere fois ici?',
+        iAmNew: 'Je suis nouveau',
+        iHaveAccount: "J'ai un compte",
+        step: 'Etape',
+        of: 'sur',
+        selectLanguage: 'Choisir la langue',
+        selectRole: 'Choisir le role',
+        selectAppearance: "Choisir l'apparence",
+        teacherCode: 'Code enseignant',
+        enterTeacherCode: 'Entrer le code enseignant',
+        enterDisplayName: "Entrer le nom d'affichage",
+        yourDisplayName: "Votre nom d'affichage",
+        student: 'Etudiant',
+        teacher: 'Enseignant',
+        next: 'Suivant',
+        finish: 'Terminer',
+        createAccount: 'Creer un compte',
+        continueGuest: 'Continuer en invite',
+        saving: 'Enregistrement...',
+      },
+      es: {
+        firstTime: 'Primera vez aqui?',
+        iAmNew: 'Soy nuevo',
+        iHaveAccount: 'Tengo una cuenta',
+        step: 'Paso',
+        of: 'de',
+        selectLanguage: 'Seleccionar idioma',
+        selectRole: 'Seleccionar rol',
+        selectAppearance: 'Seleccionar apariencia',
+        teacherCode: 'Codigo docente',
+        enterTeacherCode: 'Ingresa el codigo docente',
+        enterDisplayName: 'Ingresa nombre visible',
+        yourDisplayName: 'Tu nombre visible',
+        student: 'Estudiante',
+        teacher: 'Docente',
+        next: 'Siguiente',
+        finish: 'Finalizar',
+        createAccount: 'Crear cuenta',
+        continueGuest: 'Continuar como invitado',
+        saving: 'Guardando...',
+      },
+      pt: { firstTime: 'Primeira vez aqui?', iAmNew: 'Sou novo', iHaveAccount: 'Tenho conta', step: 'Passo', of: 'de', selectLanguage: 'Selecionar idioma', selectRole: 'Selecionar papel', selectAppearance: 'Selecionar aparencia', teacherCode: 'Codigo do professor', enterTeacherCode: 'Digite o codigo do professor', enterDisplayName: 'Digite nome de exibicao', yourDisplayName: 'Seu nome de exibicao', student: 'Aluno', teacher: 'Professor', next: 'Proximo', finish: 'Concluir', createAccount: 'Criar conta', continueGuest: 'Continuar como convidado', saving: 'Salvando...' },
+      pl: { firstTime: 'Pierwszy raz tutaj?', iAmNew: 'Jestem nowy', iHaveAccount: 'Mam konto', step: 'Krok', of: 'z', selectLanguage: 'Wybierz jezyk', selectRole: 'Wybierz role', selectAppearance: 'Wybierz wyglad', teacherCode: 'Kod nauczyciela', enterTeacherCode: 'Wpisz kod nauczyciela', enterDisplayName: 'Wpisz nazwe wyswietlana', yourDisplayName: 'Twoja nazwa wyswietlana', student: 'Uczen', teacher: 'Nauczyciel', next: 'Dalej', finish: 'Zakoncz', createAccount: 'Utworz konto', continueGuest: 'Kontynuuj jako gosc', saving: 'Zapisywanie...' },
+      ru: { firstTime: 'Первый раз здесь?', iAmNew: 'Я новый', iHaveAccount: 'У меня есть аккаунт', step: 'Шаг', of: 'из', selectLanguage: 'Выберите язык', selectRole: 'Выберите роль', selectAppearance: 'Выберите тему', teacherCode: 'Код учителя', enterTeacherCode: 'Введите код учителя', enterDisplayName: 'Введите отображаемое имя', yourDisplayName: 'Ваше отображаемое имя', student: 'Ученик', teacher: 'Учитель', next: 'Далее', finish: 'Завершить', createAccount: 'Создать аккаунт', continueGuest: 'Продолжить как гость', saving: 'Сохранение...' },
+      ar: { firstTime: 'اول مرة هنا؟', iAmNew: 'انا جديد', iHaveAccount: 'لدي حساب', step: 'الخطوة', of: 'من', selectLanguage: 'اختر اللغة', selectRole: 'اختر الدور', selectAppearance: 'اختر المظهر', teacherCode: 'رمز المعلم', enterTeacherCode: 'ادخل رمز المعلم', enterDisplayName: 'ادخل اسم العرض', yourDisplayName: 'اسم العرض', student: 'طالب', teacher: 'معلم', next: 'التالي', finish: 'انهاء', createAccount: 'انشاء حساب', continueGuest: 'المتابعة كضيف', saving: 'جار الحفظ...' },
+      ur: { firstTime: 'پہلی بار یہاں؟', iAmNew: 'میں نیا ہوں', iHaveAccount: 'میرے پاس اکاؤنٹ ہے', step: 'مرحلہ', of: 'میں سے', selectLanguage: 'زبان منتخب کریں', selectRole: 'کردار منتخب کریں', selectAppearance: 'ظاہری شکل منتخب کریں', teacherCode: 'استاد کوڈ', enterTeacherCode: 'استاد کوڈ درج کریں', enterDisplayName: 'ڈسپلے نام درج کریں', yourDisplayName: 'آپ کا ڈسپلے نام', student: 'طالب علم', teacher: 'استاد', next: 'اگلا', finish: 'مکمل کریں', createAccount: 'اکاؤنٹ بنائیں', continueGuest: 'بطور مہمان جاری رکھیں', saving: 'محفوظ ہو رہا ہے...' },
+      hi: { firstTime: 'पहली बार यहां?', iAmNew: 'मैं नया हूं', iHaveAccount: 'मेरे पास अकाउंट है', step: 'चरण', of: 'का', selectLanguage: 'भाषा चुनें', selectRole: 'भूमिका चुनें', selectAppearance: 'रूप चुनें', teacherCode: 'शिक्षक कोड', enterTeacherCode: 'शिक्षक कोड दर्ज करें', enterDisplayName: 'डिस्प्ले नाम दर्ज करें', yourDisplayName: 'आपका डिस्प्ले नाम', student: 'छात्र', teacher: 'शिक्षक', next: 'अगला', finish: 'पूरा करें', createAccount: 'अकाउंट बनाएं', continueGuest: 'मेहमान के रूप में जारी रखें', saving: 'सहेजा जा रहा है...' },
+      bn: { firstTime: 'প্রথমবার এখানে?', iAmNew: 'আমি নতুন', iHaveAccount: 'আমার অ্যাকাউন্ট আছে', step: 'ধাপ', of: 'এর', selectLanguage: 'ভাষা বাছুন', selectRole: 'ভূমিকা বাছুন', selectAppearance: 'থিম বাছুন', teacherCode: 'শিক্ষক কোড', enterTeacherCode: 'শিক্ষক কোড লিখুন', enterDisplayName: 'ডিসপ্লে নাম লিখুন', yourDisplayName: 'আপনার ডিসপ্লে নাম', student: 'শিক্ষার্থী', teacher: 'শিক্ষক', next: 'পরবর্তী', finish: 'শেষ করুন', createAccount: 'অ্যাকাউন্ট তৈরি করুন', continueGuest: 'অতিথি হিসেবে চালিয়ে যান', saving: 'সংরক্ষণ হচ্ছে...' },
+      zh: { firstTime: '第一次来这里？', iAmNew: '我是新用户', iHaveAccount: '我有账号', step: '步骤', of: '共', selectLanguage: '选择语言', selectRole: '选择身份', selectAppearance: '选择外观', teacherCode: '教师代码', enterTeacherCode: '输入教师代码', enterDisplayName: '输入显示名称', yourDisplayName: '你的显示名称', student: '学生', teacher: '老师', next: '下一步', finish: '完成', createAccount: '创建账号', continueGuest: '以访客继续', saving: '正在保存...' },
+    };
+    return byLang[language] || byLang.en;
+  }, [language]);
+
   useEffect(() => {
     let alive = true;
     const init = async () => {
@@ -149,11 +268,11 @@ export function FirstTimeSetupGate() {
     return () => {
       alive = false;
     };
-  }, [currentTheme, session?.user?.id, setLanguage, setTheme, supabase]);
+  }, [session?.user?.id, supabase]);
 
   useEffect(() => {
     if (!visible) return;
-    const prompt = firstTimePromptForLanguage(language);
+    const prompt = uiText.firstTime || firstTimePromptForLanguage(language);
     let active = true;
     const run = async () => {
       setTypedPrompt('');
@@ -169,7 +288,7 @@ export function FirstTimeSetupGate() {
       active = false;
       window.clearInterval(blink);
     };
-  }, [language, visible]);
+  }, [language, uiText.firstTime, visible]);
 
   const persistAndRedirectToLogin = useCallback(() => {
     window.location.href = '/login?message=Sign in to continue setup&type=info';
@@ -228,19 +347,27 @@ export function FirstTimeSetupGate() {
   return (
     <div className="fixed inset-0 z-[260] bg-background">
       <div className="flex h-full w-full flex-col p-6 md:p-10">
-        <div className="mx-auto flex h-full w-full max-w-6xl flex-col rounded-3xl border bg-card p-6 shadow-xl md:p-8">
+        <div className="mx-auto flex h-full w-full max-w-6xl flex-col rounded-3xl border border-sidebar-border bg-sidebar/35 p-6 shadow-xl md:p-8">
           <div className="mb-6 flex items-start justify-between">
             <div>
               <h2 className="text-3xl font-semibold">{typedPrompt}<span className={cursorVisible ? 'opacity-100' : 'opacity-0'}>|</span></h2>
-              <p className="mt-1 text-sm text-muted-foreground">Step {stepIndexMap[step]} of 6</p>
+              <p className="mt-1 text-sm text-muted-foreground">{uiText.step} {stepIndexMap[step]} {uiText.of} 6</p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {(Object.keys(stepIndexMap) as SetupStep[]).map((stepKey) => (
+                  <span
+                    key={stepKey}
+                    className={`h-2.5 w-12 rounded-full ${stepIndexMap[stepKey] <= stepIndexMap[step] ? 'bg-primary' : 'bg-sidebar-accent'}`}
+                  />
+                ))}
+              </div>
             </div>
-            {savingFinal && <p className="text-xs text-muted-foreground">Saving...</p>}
+            {savingFinal && <p className="text-xs text-muted-foreground">{uiText.saving}</p>}
           </div>
 
           <div className="flex-1 overflow-auto">
             {step === 'entry' && (
               <div className="mx-auto flex max-w-md flex-col gap-3">
-                <Button className="h-11" onClick={() => { setMode('new'); setStep('language'); }}>I'm new</Button>
+                <Button className="h-11 bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90" onClick={() => { setMode('new'); setStep('language'); }}>{uiText.iAmNew}</Button>
                 <Button className="h-11" variant="outline" onClick={() => {
                   setMode('account');
                   if (!session) {
@@ -249,14 +376,14 @@ export function FirstTimeSetupGate() {
                   }
                   setStep('language');
                 }}>
-                  I have an account
+                  {uiText.iHaveAccount}
                 </Button>
               </div>
             )}
 
             {step === 'language' && (
               <div className="mx-auto max-w-4xl space-y-4">
-                <Label>Select language</Label>
+                <Label>{uiText.selectLanguage}</Label>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                   {LANGUAGE_OPTIONS.map((option) => (
                     <button
@@ -266,35 +393,35 @@ export function FirstTimeSetupGate() {
                         setLanguageChoice(option.value);
                         setLanguage(option.value);
                       }}
-                      className={`rounded-full border px-3 py-2 text-sm ${language === option.value ? 'border-primary bg-primary/10' : 'border-border'}`}
+                      className={`rounded-full border px-3 py-2 text-sm ${language === option.value ? 'border-primary bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]' : 'border-sidebar-border bg-background hover:bg-sidebar-accent/60'}`}
                     >
                       {option.label}
                     </button>
                   ))}
                 </div>
                 <div className="flex justify-end">
-                  <Button onClick={() => setStep(mode === 'new' ? 'role' : 'appearance')}>Next</Button>
+                  <Button className="bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90" onClick={() => setStep(mode === 'new' ? 'role' : 'appearance')}>{uiText.next}</Button>
                 </div>
               </div>
             )}
 
             {step === 'role' && (
               <div className="mx-auto max-w-md space-y-4">
-                <Label>Select role</Label>
+                <Label>{uiText.selectRole}</Label>
                 <div className="flex gap-2">
-                  <Button className="h-10 flex-1" variant={role === 'student' ? 'default' : 'outline'} onClick={() => setRole('student')}>Student</Button>
-                  <Button className="h-10 flex-1" variant={role === 'teacher' ? 'default' : 'outline'} onClick={() => setRole('teacher')}>Teacher</Button>
+                  <Button className="h-10 flex-1" variant={role === 'student' ? 'default' : 'outline'} onClick={() => setRole('student')}>{uiText.student}</Button>
+                  <Button className="h-10 flex-1" variant={role === 'teacher' ? 'default' : 'outline'} onClick={() => setRole('teacher')}>{uiText.teacher}</Button>
                 </div>
                 <div className="flex justify-end">
-                  <Button onClick={() => setStep(role === 'teacher' ? 'teacherCode' : 'appearance')}>Next</Button>
+                  <Button className="bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90" onClick={() => setStep(role === 'teacher' ? 'teacherCode' : 'appearance')}>{uiText.next}</Button>
                 </div>
               </div>
             )}
 
             {step === 'teacherCode' && (
               <div className="mx-auto max-w-md space-y-4">
-                <Label htmlFor="teacher-code">Teacher code</Label>
-                <Input id="teacher-code" value={teacherCode} onChange={(event) => setTeacherCode(event.target.value)} placeholder="Enter teacher code" />
+                <Label htmlFor="teacher-code">{uiText.teacherCode}</Label>
+                <Input id="teacher-code" value={teacherCode} onChange={(event) => setTeacherCode(event.target.value)} placeholder={uiText.enterTeacherCode} />
                 <div className="flex justify-end">
                   <Button
                     disabled={!teacherCode.trim()}
@@ -306,7 +433,7 @@ export function FirstTimeSetupGate() {
                       setStep('appearance');
                     }}
                   >
-                    Next
+                    {uiText.next}
                   </Button>
                 </div>
               </div>
@@ -314,7 +441,7 @@ export function FirstTimeSetupGate() {
 
             {step === 'appearance' && (
               <div className="mx-auto max-w-4xl space-y-4">
-                <Label>Select appearance</Label>
+                <Label>{uiText.selectAppearance}</Label>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {THEME_OPTIONS.map((option) => (
                     <button
@@ -324,40 +451,40 @@ export function FirstTimeSetupGate() {
                         setThemeChoice(option.value);
                         setTheme(option.value);
                       }}
-                      className={`rounded-full border px-3 py-2 text-sm ${theme === option.value ? 'border-primary bg-primary/10' : 'border-border'}`}
+                      className={`rounded-full border px-3 py-2 text-sm ${theme === option.value ? 'border-primary bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]' : 'border-sidebar-border bg-background hover:bg-sidebar-accent/60'}`}
                     >
                       {option.label}
                     </button>
                   ))}
                 </div>
                 <div className="flex justify-end">
-                  <Button onClick={() => setStep('displayName')}>Next</Button>
+                  <Button className="bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90" onClick={() => setStep('displayName')}>{uiText.next}</Button>
                 </div>
               </div>
             )}
 
             {step === 'displayName' && (
               <div className="mx-auto max-w-md space-y-4">
-                <Label htmlFor="display-name">Enter display name</Label>
+                <Label htmlFor="display-name">{uiText.enterDisplayName}</Label>
                 <Input
                   id="display-name"
                   value={displayName}
                   onChange={(event) => setDisplayName(event.target.value)}
-                  placeholder="Your display name"
+                  placeholder={uiText.yourDisplayName}
                 />
 
                 {mode === 'new' && role === 'student' && !session ? (
                   <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                    <Button variant="outline" onClick={() => void finishSetup()}>Continue as guest</Button>
-                    <Button onClick={() => persistAndRedirectToLogin()}>Create account</Button>
+                    <Button variant="outline" onClick={() => void finishSetup()}>{uiText.continueGuest}</Button>
+                    <Button onClick={() => persistAndRedirectToLogin()}>{uiText.createAccount}</Button>
                   </div>
                 ) : !session ? (
                   <div className="flex justify-end">
-                    <Button onClick={() => persistAndRedirectToLogin()}>Create account</Button>
+                    <Button onClick={() => persistAndRedirectToLogin()}>{uiText.createAccount}</Button>
                   </div>
                 ) : (
                   <div className="flex justify-end">
-                    <Button onClick={() => void finishSetup()} disabled={savingFinal}>Finish</Button>
+                    <Button onClick={() => void finishSetup()} disabled={savingFinal}>{uiText.finish}</Button>
                   </div>
                 )}
               </div>
