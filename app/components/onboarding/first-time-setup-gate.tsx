@@ -64,7 +64,7 @@ function firstTimePromptForLanguage(language: LanguageOption): string {
 }
 
 export function FirstTimeSetupGate() {
-  const { session, setLanguage, setTheme, theme: currentTheme } = useContext(AppContext) as AppContextType;
+  const { session, isLoading, setLanguage, setTheme, theme: currentTheme } = useContext(AppContext) as AppContextType;
   const supabase = useMemo(() => createClient(), []);
 
   const [hydrated, setHydrated] = useState(false);
@@ -200,6 +200,7 @@ export function FirstTimeSetupGate() {
   }, [language]);
 
   useEffect(() => {
+    if (isLoading) return;
     let alive = true;
     const init = async () => {
       const browserLanguage = resolveBrowserLanguage();
@@ -268,7 +269,7 @@ export function FirstTimeSetupGate() {
     return () => {
       alive = false;
     };
-  }, [session?.user?.id, supabase]);
+  }, [isLoading, session?.user?.id, supabase]);
 
   useEffect(() => {
     if (!visible) return;
