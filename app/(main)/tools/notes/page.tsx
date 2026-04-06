@@ -1222,7 +1222,7 @@ function NotesPageContent() {
         onImageDataUriChange={setImageDataUri}
         onSubmit={handleGenerate}
         placeholder={t.sourceInputPlaceholder}
-        topContent={<MicrosoftAppStrip returnTo="/tools/notes" />}
+        topContent={<MicrosoftAppStrip returnTo="/tools/notes" hideLauncher />}
         speechLanguage={language}
         enableMic={false}
         enableCaptions={false}

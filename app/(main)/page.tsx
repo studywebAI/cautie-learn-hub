@@ -28,6 +28,7 @@ function isLikelyBotClient(): boolean {
 function StudentDashboard() {
   const { isLoading, session, assignments, classes, personalTasks, subjects: dashboardSubjects } = useContext(AppContext) as AppContextType;
   const [schoolSlots, setSchoolSlots] = useState<any[]>([]);
+  const [displayName, setDisplayName] = useState<string>('');
 
   useEffect(() => {
     if (isLikelyBotClient()) return;
@@ -44,6 +45,14 @@ function StudentDashboard() {
     };
     void loadSchoolSchedule();
   }, [session]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = window.localStorage.getItem('studyweb-display-name') || '';
+    if (saved.trim()) {
+      setDisplayName(saved.trim());
+    }
+  }, []);
 
   if (isLoading && !session) {
      return (
@@ -69,7 +78,7 @@ function StudentDashboard() {
   const alerts: Alert[] = [];
 
   const email = session?.user?.email || '';
-  const welcomeName = email ? email.split('@')[0] : 'guest';
+  const welcomeName = displayName || (email ? email.split('@')[0] : 'guest');
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">

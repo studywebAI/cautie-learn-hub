@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Crown, CreditCard, User, BookUser, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { createClient } from '@/lib/supabase/client';
 
 export default function SettingsPage() {
   const {
@@ -37,8 +39,39 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
   const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
   const [subscriptionType, setSubscriptionType] = useState<string>('student');
+  const [displayName, setDisplayName] = useState('');
+  const [displayNameSaving, setDisplayNameSaving] = useState(false);
   const SUBSCRIPTION_CACHE_KEY = 'studyweb-subscription-cache-v1';
   const SUBSCRIPTION_CACHE_TTL_MS = 300_000;
+  const supabase = createClient();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = window.localStorage.getItem('studyweb-display-name') || '';
+    if (saved.trim()) {
+      setDisplayName(saved.trim());
+      return;
+    }
+    const fallback = session?.user?.email?.split('@')[0] || '';
+    setDisplayName(fallback);
+  }, [session?.user?.email]);
+
+  const saveDisplayName = async () => {
+    const next = displayName.trim();
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('studyweb-display-name', next || 'guest');
+    }
+    if (!session?.user?.id) return;
+    setDisplayNameSaving(true);
+    try {
+      await supabase
+        .from('profiles')
+        .upsert({ id: session.user.id, display_name: next || null });
+    } catch {
+      // Best-effort profile sync; local preference is still saved.
+    }
+    setDisplayNameSaving(false);
+  };
 
   // Fetch subscription status
   useEffect(() => {
@@ -288,7 +321,21 @@ export default function SettingsPage() {
                       {dictionary.settings.personalization.description}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="px-0">
+                  <CardContent className="px-0 space-y-5">
+                    <div className="max-w-[320px] space-y-2">
+                      <Label htmlFor="display-name">Display name</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="display-name"
+                          value={displayName}
+                          onChange={(event) => setDisplayName(event.target.value)}
+                          placeholder="Your display name"
+                        />
+                        <Button onClick={() => void saveDisplayName()} disabled={displayNameSaving}>
+                          {displayNameSaving ? 'Saving...' : 'Save'}
+                        </Button>
+                      </div>
+                    </div>
                     <ThemePicker
                       theme={theme}
                       setTheme={setTheme}

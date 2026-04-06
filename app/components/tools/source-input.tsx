@@ -170,11 +170,6 @@ function buildMicrosoftContextBlock(input: {
   return extracted;
 }
 
-function extractContextFileName(block: string) {
-  const match = block.match(/^name:\s*(.+)$/im);
-  return match?.[1]?.trim() || 'Imported file';
-}
-
 export function SourceInput({
   value,
   onChange,
@@ -235,12 +230,9 @@ export function SourceInput({
   const [manualText, setManualText] = useState('');
   const [sources, setSources] = useState<SourceEntry[]>([]);
 
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedImageDataUri, setUploadedImageDataUri] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const [urlInput, setUrlInput] = useState('');
-  const [linksOpen, setLinksOpen] = useState(false);
   const [recentsOpen, setRecentsOpen] = useState(false);
   const [recentsCatalog, setRecentsCatalog] = useState<RecentCatalogItem[]>([]);
   const [recentsLoading, setRecentsLoading] = useState(false);
@@ -417,25 +409,29 @@ export function SourceInput({
       const name = String(item?.name || 'Untitled');
       const extracted = typeof item?.extracted_text === 'string' ? item.extracted_text.trim() : '';
       const webUrl = typeof item?.web_url === 'string' ? item.web_url : '';
+      const mimeType = typeof item?.mime_type === 'string' ? item.mime_type : undefined;
       const previewUrl = typeof item?.metadata?.preview_url === 'string' ? item.metadata.preview_url : undefined;
       const extractionStatus = typeof item?.extraction_status === 'string' ? item.extraction_status : undefined;
       const normalizedStatus = String(extractionStatus || '').toLowerCase();
-      const isLoading = normalizedStatus === 'pending' || (normalizedStatus === '' && !extracted);
+      const imageLike = isImageLike(name, mimeType);
+      const isLoading = !imageLike && (normalizedStatus === 'pending' || (normalizedStatus === '' && !extracted));
       const hasError = normalizedStatus === 'error';
       return {
         id: `integration-${String(item?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)}`,
-        kind: 'file',
+        kind: imageLike ? 'image' : 'file',
         label: `${name} (${appLabel})`,
-        text: extracted
+        text: imageLike
+          ? ''
+          : (extracted
           ? buildMicrosoftContextBlock({
             app: appKey || 'onedrive',
             name,
-            mimeType: typeof item?.mime_type === 'string' ? item.mime_type : undefined,
+            mimeType,
             webUrl,
             extractedText: extracted,
             extractionStatus,
           })
-          : '',
+          : ''),
         selected: true,
         loading: isLoading,
         error: hasError ? 'Could not extract text from this file yet.' : undefined,
@@ -585,16 +581,16 @@ export function SourceInput({
         const extractedText = typeof extracted?.extractedText === 'string' ? extracted.extractedText.trim() : '';
         const imageLike = isImageLike(item.name, item.mimeType);
         upsertMaterial({
-          type: 'onedrive',
+          type: imageLike ? 'image' : 'onedrive',
           title: item.name || 'OneDrive file',
-          preview: extractedText.slice(0, 220) || item.name,
-          detail: extractedText || item.webUrl || item.name,
+          preview: imageLike ? (item.previewUrl || item.name) : (extractedText.slice(0, 220) || item.name),
+          detail: imageLike ? (item.webUrl || item.name) : (extractedText || item.webUrl || item.name),
         });
         return {
           id: `recents-${item.id}-${idx}`,
           kind: imageLike ? 'image' : 'file',
           label: `${item.name} (OneDrive)`,
-          text: extractedText || (imageLike ? `[IMAGE] ${item.name}\nAttached as raw visual context.` : ''),
+          text: imageLike ? '' : extractedText,
           selected: true,
           loading: false,
           previewUrl: item.previewUrl,
@@ -636,11 +632,14 @@ export function SourceInput({
         const name = String(item?.name || 'OneDrive file');
         const extractedText = typeof item?.extractedText === 'string' ? item.extractedText : '';
         const webUrl = typeof item?.webUrl === 'string' ? item.webUrl : '';
+        const mimeType = typeof item?.mimeType === 'string' ? item.mimeType : undefined;
+        const previewUrl = typeof item?.previewUrl === 'string' ? item.previewUrl : '';
+        const imageLike = isImageLike(name, mimeType);
         upsertMaterial({
-          type: 'onedrive',
+          type: imageLike ? 'image' : 'onedrive',
           title: name,
-          preview: extractedText.slice(0, 220) || name,
-          detail: extractedText || webUrl || name,
+          preview: imageLike ? (previewUrl || name) : (extractedText.slice(0, 220) || name),
+          detail: imageLike ? (webUrl || name) : (extractedText || webUrl || name),
         });
       }
       const mapped: SourceEntry[] = items.map((item: any) => {
@@ -652,13 +651,16 @@ export function SourceInput({
         const previewUrl = typeof item?.previewUrl === 'string' ? item.previewUrl : undefined;
         const extractionStatus = typeof item?.extractionStatus === 'string' ? item.extractionStatus : undefined;
         const normalizedStatus = String(extractionStatus || '').toLowerCase();
-        const isLoading = normalizedStatus === 'pending' || (normalizedStatus === '' && !extractedText.trim());
+        const imageLike = isImageLike(name, mimeType);
+        const isLoading = !imageLike && (normalizedStatus === 'pending' || (normalizedStatus === '' && !extractedText.trim()));
         const hasError = normalizedStatus === 'error';
         return {
           id: `integration-local-${id}`,
-          kind: 'file',
+          kind: imageLike ? 'image' : 'file',
           label: `${name} (OneDrive)`,
-          text: extractedText
+          text: imageLike
+            ? ''
+            : (extractedText
             ? buildMicrosoftContextBlock({
               app: 'onedrive',
               name,
@@ -667,7 +669,7 @@ export function SourceInput({
               extractedText,
               extractionStatus: extractionStatus || 'ready',
             })
-            : '',
+            : ''),
           selected: true,
           loading: isLoading,
           error: hasError ? 'Could not extract text from this file yet.' : undefined,
@@ -759,23 +761,8 @@ export function SourceInput({
     () => sources.filter((source) => source.kind === 'caption'),
     [sources]
   );
-  const integrationFileCards = useMemo(
-    () =>
-      sources
-        .filter((source) => source.kind === 'file' && source.id.startsWith('integration-'))
-        .map((source) => ({
-          id: source.id,
-          name: source.label || extractContextFileName(source.text),
-          preview: '',
-          previewUrl: source.previewUrl,
-          loading: Boolean(source.loading),
-          error: source.error,
-          isRemote: source.id.startsWith('integration-') && !source.id.startsWith('integration-local-'),
-        })),
-    [sources]
-  );
-  const urlSources = useMemo(
-    () => sources.filter((source) => source.kind === 'url'),
+  const attachmentSources = useMemo(
+    () => sources.filter((source) => source.kind === 'url' || source.kind === 'file' || source.kind === 'image'),
     [sources]
   );
   const visibleRecents = useMemo(() => {
@@ -806,9 +793,6 @@ export function SourceInput({
       toast({ variant: 'destructive', title: 'Invalid URL', description: 'Enter a valid website URL.' });
       return;
     }
-    setUrlInput(normalized);
-    setLinksOpen(true);
-
     const host = new URL(normalized).hostname;
     const key = urlKey(normalized);
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -881,15 +865,20 @@ export function SourceInput({
     }
   }, [toast]);
 
-  const handleAddLink = async () => {
-    const raw = urlInput.trim();
+  const handleAddLink = async (rawInput?: string) => {
+    const raw = String(rawInput || '').trim();
     if (!raw) return;
     await upsertUrlSource(raw);
-    setUrlInput('');
   };
 
   const removeSource = (id: string) => {
-    setSources((prev) => prev.filter((s) => s.id !== id));
+    setSources((prev) => {
+      const target = prev.find((s) => s.id === id);
+      if (target?.kind === 'image') {
+        setUploadedImageDataUri(null);
+      }
+      return prev.filter((s) => s.id !== id);
+    });
   };
 
   const removeIntegrationSource = useCallback(async (sourceId: string) => {
@@ -951,35 +940,32 @@ export function SourceInput({
     }
 
     const isUploadedImage = file.type.startsWith('image/');
-    setUploadedFile(file);
-    if (isUploadedImage) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUri = typeof reader.result === 'string' ? reader.result : null;
-        setUploadedImageDataUri(dataUri);
-        upsertMaterial({
-          type: 'image',
-          title: file.name,
-          preview: dataUri || file.name,
-          detail: file.name,
-        });
-      };
-      reader.onerror = () => setUploadedImageDataUri(null);
-      reader.readAsDataURL(file);
-    } else {
-      setUploadedImageDataUri(null);
-    }
+    if (!isUploadedImage) setUploadedImageDataUri(null);
     setIsProcessing(true);
 
     try {
       let extractedText = '';
       if (isUploadedImage) {
+        const imageDataUri = await new Promise<string | null>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : null);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(file);
+        });
+        setUploadedImageDataUri(imageDataUri);
         addSource({
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           kind: 'image',
-          label: `IMAGE (${file.name})`,
-          text: `[IMAGE] ${file.name}\nAttached as raw visual context.`,
+          label: file.name,
+          text: '',
           selected: true,
+          previewUrl: imageDataUri || undefined,
+        });
+        upsertMaterial({
+          type: 'image',
+          title: file.name,
+          preview: imageDataUri || file.name,
+          detail: file.name,
         });
         return;
       }
@@ -1004,7 +990,7 @@ export function SourceInput({
       addSource({
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         kind: 'file',
-        label: `FILE (${file.name})`,
+        label: file.name,
         text: extractedText,
         selected: true,
         error: extractedText.trim() ? undefined : 'Could not extract text automatically.',
@@ -1028,7 +1014,7 @@ export function SourceInput({
         addSource({
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           kind: 'file',
-          label: `FILE (${file.name})`,
+          label: file.name,
           text: '',
           selected: true,
           error: 'Could not extract text automatically.',
@@ -1384,25 +1370,20 @@ export function SourceInput({
   const handleManualTextChange = (raw: string) => {
     const { cleanedText, urls } = extractUrlsFromText(raw);
     setManualText(cleanedText);
-    if (uploadedFile) {
-      setUploadedFile(null);
-      setUploadedImageDataUri(null);
-    }
 
     if (urls.length > 0) {
-      setLinksOpen(true);
       void Promise.all(urls.map((u) => upsertUrlSource(u)));
     }
   };
 
-  const isImage = uploadedFile?.type.startsWith('image/');
   const wordCount = manualText.trim() ? manualText.trim().split(/\s+/).length : 0;
   const charCount = manualText.length;
+  const hasImageContext = Boolean(uploadedImageDataUri) || sources.some((source) => source.kind === 'image');
   const hasPendingSource = sources.some((source) => Boolean(source.loading));
   const hasFileSourceWithoutText = sources.some(
     (source) => source.kind === 'file' && !source.loading && !source.text.trim() && !source.previewUrl
   );
-  const canGenerate = compiledSource.trim().length > 0 && !hasPendingSource && !hasFileSourceWithoutText;
+  const canGenerate = (compiledSource.trim().length > 0 || hasImageContext) && !hasPendingSource && !hasFileSourceWithoutText;
 
   const openMicrosoftPicker = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -1471,92 +1452,47 @@ export function SourceInput({
         </div>
       )}
 
-      {topContent && <div className="sr-only">{topContent}</div>}
-
-      {uploadedFile && (
-        <div className="flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1.5 text-xs">
-          {isImage ? <ImageIcon className="h-3.5 w-3.5 shrink-0 text-primary" /> : <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />}
-          <span className="truncate">{uploadedFile.name}</span>
-          {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="ml-auto h-4 w-4 shrink-0"
-            onClick={() => {
-              setUploadedFile(null);
-              setUploadedImageDataUri(null);
-            }}
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
-      )}
-
-      {integrationFileCards.length > 0 && (
-        <div className="max-h-[292px] overflow-y-auto pr-1">
-          <div className="flex flex-wrap gap-1.5">
-          {integrationFileCards.map((file) => (
-            <div
-              key={file.id}
-              className="group h-[146px] w-[132px] sm:h-[154px] sm:w-[142px] md:h-[164px] md:w-[154px] rounded-xl bg-sidebar-accent/35 p-2 shadow-sm transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <div className="relative mb-1.5 h-[90px] sm:h-[96px] md:h-[104px] rounded-lg bg-sidebar-accent/75 overflow-hidden">
-                {file.previewUrl && !file.loading ? (
-                  <>
-                    <img
-                      src={file.previewUrl}
-                      alt={`${file.name} preview`}
-                      className="h-full w-full object-cover object-top [transform:scale(1.14)] [transform-origin:top_center]"
-                    />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent p-1">
-                      <p className="text-[9px] text-white/95 font-medium tracking-wide">CAUTIE PREVIEW</p>
-                    </div>
-                  </>
-                ) : (
-                  <div className="h-full w-full p-1.5">
-                    <div className="mb-1 flex items-center gap-1">
-                      {file.loading ? (
-                        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                      ) : (
-                        <FileText className="h-3 w-3 text-muted-foreground" />
-                      )}
-                      <span className="text-[9px] text-muted-foreground">Preview</span>
-                    </div>
-                    <p className="max-h-[58px] overflow-hidden text-[9px] leading-snug text-muted-foreground">
-                      {file.loading ? 'Extracting first-page screenshot...' : 'No preview image available yet.'}
-                    </p>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-start gap-1">
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <p className="max-h-[30px] overflow-hidden text-[10px] leading-snug md:text-[11px]">{file.name}</p>
-                  {!file.loading && file.error && <p className="text-[9px] text-destructive">Extraction failed</p>}
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 shrink-0 rounded-full hover:bg-sidebar-accent/90 -mt-0.5"
-                  onClick={() => void handleRemoveFileCard(file.id, file.isRemote)}
-                  disabled={removingSourceIds.includes(file.id)}
-                  aria-label="Remove file"
-                >
-                  {removingSourceIds.includes(file.id) ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-3 w-3" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          ))}
-          </div>
-        </div>
-      )}
+      {topContent}
 
       <div className="mt-auto flex flex-col gap-2">
-        <div className="relative z-10 -mb-1 flex flex-wrap items-center gap-1.5 rounded-xl border border-sidebar-border bg-sidebar-accent/35 px-2 py-1.5">
+        {attachmentSources.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {attachmentSources.map((source) => {
+              const icon =
+                source.kind === 'image'
+                  ? <ImageIcon className="h-3.5 w-3.5 shrink-0" />
+                  : source.kind === 'url'
+                    ? <Link2 className="h-3.5 w-3.5 shrink-0" />
+                    : <FileText className="h-3.5 w-3.5 shrink-0" />;
+              const label = source.url || source.label;
+              const isRemote = source.id.startsWith('integration-') && !source.id.startsWith('integration-local-');
+              return (
+                <div key={source.id} className="flex max-w-full items-center gap-2 rounded-full border border-sidebar-border bg-background px-3 py-1.5 text-xs">
+                  {icon}
+                  <span className="truncate">{label}</span>
+                  {source.loading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+                  {source.error && <span className="text-destructive">Error</span>}
+                  <button
+                    type="button"
+                    className="rounded-full p-0.5 hover:bg-muted"
+                    onClick={() => {
+                      if (isRemote) {
+                        void handleRemoveFileCard(source.id, true);
+                      } else {
+                        removeSource(source.id);
+                      }
+                    }}
+                    aria-label="Remove attachment"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="relative z-10 flex flex-wrap items-center gap-1.5">
           <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={openMicrosoftPicker} disabled={disabled || isProcessing}>
             <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
             Import
@@ -1573,7 +1509,19 @@ export function SourceInput({
             <Clock3 className="mr-1.5 h-3.5 w-3.5" />
             Recents
           </Button>
-          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => setLinksOpen((prev) => !prev)} disabled={disabled || isProcessing}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40"
+            onClick={() => {
+              const raw = typeof window === 'undefined' ? '' : window.prompt('Paste a link to import') || '';
+              if (raw.trim()) {
+                void handleAddLink(raw);
+              }
+            }}
+            disabled={disabled || isProcessing || isFetchingUrl}
+          >
             <Link2 className="mr-1.5 h-3.5 w-3.5" />
             Links
           </Button>
@@ -1590,38 +1538,6 @@ export function SourceInput({
             </Button>
           )}
         </div>
-
-        {linksOpen && (
-          <div className="space-y-2 rounded-xl border border-sidebar-border bg-sidebar-accent/20 p-2">
-            <div className="flex items-center gap-2">
-              <input
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') void handleAddLink(); }}
-                placeholder="Paste a link and press Enter"
-                className="flex-1 border border-sidebar-border rounded-md bg-sidebar-accent/65 px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
-                disabled={isFetchingUrl}
-              />
-              <Button variant="outline" size="sm" onClick={() => void handleAddLink()} disabled={isFetchingUrl || !urlInput.trim()} className="rounded-md border-sidebar-border bg-sidebar-accent/70 text-xs h-7 px-3 hover:bg-sidebar-accent">
-                {isFetchingUrl ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Import'}
-              </Button>
-            </div>
-            {urlSources.length > 0 && (
-              <div className="max-h-24 space-y-1 overflow-auto pr-1">
-                {urlSources.map((source) => (
-                  <div key={source.id} className="flex items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/45 px-2 py-1 text-xs">
-                    <span className="flex-1 truncate">{source.url || source.label}</span>
-                    {source.loading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
-                    {source.error && <span className="text-destructive">Error</span>}
-                    <button type="button" onClick={() => removeSource(source.id)} className="rounded-sm p-0.5 hover:bg-muted" aria-label="Remove link">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         <div className="flex items-stretch gap-2">
           <div className="relative flex-1">

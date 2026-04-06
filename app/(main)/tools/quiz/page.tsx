@@ -345,7 +345,7 @@ function QuizPageContent() {
         onImageDataUriChange={setImageDataUri}
         onSubmit={() => handleGenerate(sourceText)}
         placeholder={t.sourceInputPlaceholder}
-        topContent={<MicrosoftAppStrip returnTo="/tools/quiz" />}
+        topContent={<MicrosoftAppStrip returnTo="/tools/quiz" hideLauncher />}
         speechLanguage={language}
         enableMic={false}
         enableCaptions={false}

@@ -4,7 +4,9 @@ import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useDeviceTier } from "@/hooks/use-device-tier";
 import { usePathname } from "next/navigation";
+import { FirstTimeSetupGate } from "@/components/onboarding/first-time-setup-gate";
 
 const AppSidebar = dynamic(
     () => import("@/components/sidebar").then((m) => m.AppSidebar),
@@ -18,10 +20,13 @@ const GlobalCommandPalette = dynamic(
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     const isMobile = useIsMobile();
+    const deviceTier = useDeviceTier();
     const pathname = usePathname();
     const [routePulseVisible, setRoutePulseVisible] = useState(false);
 
     const isClassPage = pathname?.startsWith('/class/');
+    const isTablet = deviceTier === "tablet";
+    const isPhone = deviceTier === "phone";
 
     useEffect(() => {
         setRoutePulseVisible(true);
@@ -30,7 +35,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     }, [pathname]);
 
     return (
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={!isTablet}>
+            <FirstTimeSetupGate />
             <GlobalCommandPalette />
             {routePulseVisible && (
                 <div className="pointer-events-none fixed inset-x-0 top-0 z-[210] h-[2px] bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
@@ -39,7 +45,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <AppSidebar />
             </Suspense>
             <SidebarInset className={`h-screen bg-background ${isMobile ? 'ml-12' : ''} relative text-[hsl(var(--sidebar-active-foreground))]`}>
-                <div className={`${isClassPage ? "h-full overflow-hidden p-3" : "h-full overflow-auto p-3"}`}>
+                <div
+                  className={`${
+                    isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto"
+                  } ${isPhone ? "p-2" : isTablet ? "p-3" : "p-4"}`}
+                >
                     {children}
                 </div>
             </SidebarInset>

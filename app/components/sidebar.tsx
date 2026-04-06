@@ -30,7 +30,7 @@ import {
   FolderOpen,
   Users,
 } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useDeviceTier } from '@/hooks/use-device-tier';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -60,7 +60,9 @@ export function AppSidebar() {
   const { dictionary } = useDictionary();
   const context = useContext(AppContext) as AppContextType | null;
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  const deviceTier = useDeviceTier();
+  const isPhone = deviceTier === 'phone';
+  const isTablet = deviceTier === 'tablet';
   const { setOpenMobile, openMobile } = useSidebar();
   const [dropdown, setDropdown] = useState<DropdownState>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -760,7 +762,7 @@ export function AppSidebar() {
   const renderTeacherClassSwitcher = () => {
     if (!isTeacher) return null;
 
-    if (isMobile) {
+    if (isPhone) {
       return (
         <div className="mb-2 px-2">
           <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
@@ -879,8 +881,8 @@ export function AppSidebar() {
     );
   };
 
-  // Mobile: Show mini sidebar with icons only + hamburger button
-  if (isMobile) {
+  // Phone: show mini sidebar with icons + hamburger drawer
+  if (isPhone) {
     return (
       <>
         {/* Mini sidebar - always visible on mobile */}
@@ -1081,9 +1083,9 @@ export function AppSidebar() {
     );
   }
 
-  // Desktop: Regular sidebar with trigger
+  // Tablet + desktop: regular sidebar with trigger
   return (
-    <Sidebar className="w-[17rem] lg:w-[19.5rem]" collapsible="icon">
+    <Sidebar className={cn(isTablet ? "w-[15rem]" : "w-[17rem] lg:w-[19.5rem]")} collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>

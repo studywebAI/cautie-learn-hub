@@ -351,7 +351,7 @@ function FlashcardsPageContent() {
         onImageDataUriChange={setImageDataUri}
         onSubmit={() => handleGenerate(sourceText)}
         placeholder={t.sourceInputPlaceholder}
-        topContent={<MicrosoftAppStrip returnTo="/tools/flashcards" />}
+        topContent={<MicrosoftAppStrip returnTo="/tools/flashcards" hideLauncher />}
         speechLanguage={language}
         enableMic={false}
         enableCaptions={false}
