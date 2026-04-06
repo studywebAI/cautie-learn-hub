@@ -65,7 +65,6 @@ function QuizPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedQuiz, setGeneratedQuiz] = useState<Quiz | null>(null);
   const [quizMode, setQuizMode] = useState<QuizMode>('practice');
-  const [difficultyProfile, setDifficultyProfile] = useState('balanced');
   const [questionCount, setQuestionCount] = useState(7);
   const [questionType, setQuestionType] = useState('mixed');
   const [currentView, setCurrentView] = useState<'setup' | 'take' | 'duel'>('setup');
@@ -81,7 +80,6 @@ function QuizPageContent() {
     overrides?: Partial<{
       mode: QuizMode;
       questionCount: number;
-      difficultyProfile: string;
       questionType: string;
       title: string;
     }>
@@ -92,7 +90,6 @@ function QuizPageContent() {
     try {
       const requestedMode = overrides?.mode || quizMode;
       const requestedQuestionCount = overrides?.questionCount ?? questionCount;
-      const requestedDifficulty = overrides?.difficultyProfile || difficultyProfile;
       const requestedQuestionType = overrides?.questionType || questionType;
       const requestedTitle = overrides?.title || customTitle.trim() || 'Generated Quiz';
 
@@ -115,7 +112,6 @@ function QuizPageContent() {
             language,
             regionCode: String(region || 'global').toUpperCase(),
             educationLevel: schoolingLevel,
-            difficultyProfile: requestedDifficulty,
             questionType: requestedQuestionType,
           },
           computeClass: count > 20 ? 'heavy' : 'standard',
@@ -132,7 +128,7 @@ function QuizPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [customTitle, difficultyProfile, imageDataUri, language, region, schoolingLevel, questionCount, questionType, quizMode, saveToRecents]);
+  }, [customTitle, imageDataUri, language, region, schoolingLevel, questionCount, questionType, quizMode, saveToRecents]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
@@ -166,7 +162,6 @@ function QuizPageContent() {
         if (source) setSourceText(source);
         if (preset?.mode) setQuizMode(normalizeQuizMode(String(preset.mode)));
         if (typeof preset?.questionCount === 'number') setQuestionCount(preset.questionCount);
-        if (preset?.difficultyProfile) setDifficultyProfile(String(preset.difficultyProfile));
         if (preset?.questionType) setQuestionType(String(preset.questionType));
         if (title) setCustomTitle(title);
 
@@ -174,7 +169,6 @@ function QuizPageContent() {
           await handleGenerate(source, {
             mode: normalizeQuizMode(String(preset?.mode || 'practice')),
             questionCount: typeof preset?.questionCount === 'number' ? preset.questionCount : undefined,
-            difficultyProfile: preset?.difficultyProfile ? String(preset.difficultyProfile) : undefined,
             questionType: preset?.questionType ? String(preset.questionType) : undefined,
             title: title || undefined,
           });
@@ -212,14 +206,12 @@ function QuizPageContent() {
     const s = (k: string) => localStorage.getItem(`tools.quiz.${k}`);
     if (s('mode')) setQuizMode(normalizeQuizMode(s('mode')));
     if (s('count') && !Number.isNaN(Number(s('count')))) setQuestionCount(Number(s('count')));
-    if (s('difficulty')) setDifficultyProfile(s('difficulty')!);
     if (s('questionType')) setQuestionType(s('questionType')!);
     if (s('saveToRecents') === 'false') setSaveToRecents(false);
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.quiz.mode', quizMode); }, [quizMode]);
   useEffect(() => { localStorage.setItem('tools.quiz.count', String(questionCount)); }, [questionCount]);
-  useEffect(() => { localStorage.setItem('tools.quiz.difficulty', difficultyProfile); }, [difficultyProfile]);
   useEffect(() => { localStorage.setItem('tools.quiz.questionType', questionType); }, [questionType]);
   useEffect(() => { localStorage.setItem('tools.quiz.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
 
@@ -280,8 +272,6 @@ function QuizPageContent() {
       </div>
 
       <PillSelector label={t.quiz.labels.mode} options={t.quiz.modeOptions} value={quizMode} onChange={(v) => setQuizMode(v as QuizMode)} disabled={isLoading} />
-
-      <PillSelector label={t.quiz.labels.difficulty} options={t.quiz.difficultyOptions} value={difficultyProfile} onChange={setDifficultyProfile} disabled={isLoading} />
 
       <PillSelector label={t.quiz.labels.questionType} options={t.quiz.questionTypeOptions} value={questionType} onChange={setQuestionType} disabled={isLoading} />
 

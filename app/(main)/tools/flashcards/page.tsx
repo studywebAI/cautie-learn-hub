@@ -55,7 +55,6 @@ function FlashcardsPageContent() {
   const [studyMode, setStudyMode] = useState<StudyMode>('flip');
   const [cardStartSide, setCardStartSide] = useState<'term' | 'explanation'>('term');
   const [flashcardCount, setFlashcardCount] = useState(10);
-  const [complexity, setComplexity] = useState('medium');
   const [currentView, setCurrentView] = useState<'setup' | 'study'>('setup');
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
@@ -90,7 +89,6 @@ function FlashcardsPageContent() {
     overrides?: Partial<{
       mode: StudyMode;
       count: number;
-      complexity: string;
       title: string;
     }>
   ) => {
@@ -100,7 +98,6 @@ function FlashcardsPageContent() {
     try {
       const requestedMode = overrides?.mode || studyMode;
       const requestedCount = overrides?.count ?? flashcardCount;
-      const requestedComplexity = overrides?.complexity || complexity;
       const requestedTitle = overrides?.title || customTitle.trim() || 'Generated Flashcards';
 
       const run = await runToolFlowV2({
@@ -116,7 +113,6 @@ function FlashcardsPageContent() {
             imageDataUri: imageDataUri || undefined,
             count: requestedCount,
             language,
-            complexity: requestedComplexity,
             educationLevel: schoolingLevel,
             regionCode: String(region || 'global').toUpperCase(),
             studyMode: requestedMode,
@@ -135,7 +131,7 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [complexity, customTitle, flashcardCount, imageDataUri, language, region, schoolingLevel, saveToRecents, studyMode]);
+  }, [customTitle, flashcardCount, imageDataUri, language, region, schoolingLevel, saveToRecents, studyMode]);
 
   useEffect(() => {
     if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
@@ -169,14 +165,12 @@ function FlashcardsPageContent() {
         if (source) setSourceText(source);
         if (preset?.mode) setStudyMode(normalizeStudyMode(String(preset.mode)));
         if (typeof preset?.count === 'number') setFlashcardCount(preset.count);
-        if (preset?.complexity) setComplexity(String(preset.complexity));
         if (title) setCustomTitle(title);
 
         if (source) {
           await handleGenerate(source, {
             mode: normalizeStudyMode(typeof preset?.mode === 'string' ? preset.mode : undefined),
             count: typeof preset?.count === 'number' ? preset.count : undefined,
-            complexity: preset?.complexity ? String(preset.complexity) : undefined,
             title: title || undefined,
           });
           console.info('[STUDYSET_LAUNCH][FLASHCARDS] generation completed', { taskId, studysetId });
@@ -214,14 +208,12 @@ function FlashcardsPageContent() {
     if (s('mode')) setStudyMode(normalizeStudyMode(s('mode')));
     if (s('cardStartSide') === 'explanation') setCardStartSide('explanation');
     if (s('count') && !Number.isNaN(Number(s('count')))) setFlashcardCount(Number(s('count')));
-    if (s('complexity')) setComplexity(s('complexity')!);
     if (s('saveToRecents') === 'false') setSaveToRecents(false);
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.flashcards.mode', studyMode); }, [studyMode]);
   useEffect(() => { localStorage.setItem('tools.flashcards.cardStartSide', cardStartSide); }, [cardStartSide]);
   useEffect(() => { localStorage.setItem('tools.flashcards.count', String(flashcardCount)); }, [flashcardCount]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.complexity', complexity); }, [complexity]);
   useEffect(() => { localStorage.setItem('tools.flashcards.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
 
   const handleRestart = () => {
@@ -288,8 +280,6 @@ function FlashcardsPageContent() {
         onChange={(v) => setCardStartSide(v === 'explanation' ? 'explanation' : 'term')}
         disabled={isLoading}
       />
-
-      <PillSelector label={t.flashcards.labels.complexity} options={t.flashcards.complexityOptions} value={complexity} onChange={setComplexity} disabled={isLoading} />
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">

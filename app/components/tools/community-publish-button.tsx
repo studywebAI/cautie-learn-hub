@@ -40,7 +40,6 @@ export function CommunityPublishButton({
   const [title, setTitle] = useState(defaultTitle);
   const [description, setDescription] = useState(defaultDescription);
   const [subject, setSubject] = useState('');
-  const [difficulty, setDifficulty] = useState('');
   const [language, setLanguage] = useState(defaultLanguage || 'en');
   const [tagsRaw, setTagsRaw] = useState('');
 
@@ -79,7 +78,6 @@ export function CommunityPublishButton({
           title: title.trim(),
           description: description.trim(),
           subject: subject.trim(),
-          difficulty: difficulty.trim(),
           language: language.trim() || defaultLanguage || 'en',
           tags: tagsPreview,
         }),
@@ -131,14 +129,10 @@ export function CommunityPublishButton({
               <p className="text-xs text-muted-foreground">Description</p>
               <Textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={1200} />
             </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Subject</p>
                 <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="history" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Difficulty</p>
-                <Input value={difficulty} onChange={(e) => setDifficulty(e.target.value)} placeholder="easy/medium/hard" />
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Language</p>
