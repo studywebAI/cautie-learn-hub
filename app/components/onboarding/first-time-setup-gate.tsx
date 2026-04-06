@@ -294,6 +294,17 @@ export function FirstTimeSetupGate() {
     window.location.href = '/login?message=Sign in to continue setup&type=info';
   }, []);
 
+  const redirectToCreateAccount = useCallback(async () => {
+    try {
+      if (session?.user?.id) {
+        await supabase.auth.signOut();
+      }
+    } catch {
+      // Continue to auth page even if sign-out fails.
+    }
+    window.location.href = '/login?message=Create your account&type=info';
+  }, [session?.user?.id, supabase.auth]);
+
   const finishSetup = useCallback(async () => {
     setLanguage(language);
     setTheme(theme);
@@ -426,10 +437,6 @@ export function FirstTimeSetupGate() {
                   <Button
                     disabled={!teacherCode.trim()}
                     onClick={() => {
-                      if (!session) {
-                        persistAndRedirectToLogin();
-                        return;
-                      }
                       setStep('appearance');
                     }}
                   >
@@ -473,10 +480,20 @@ export function FirstTimeSetupGate() {
                   placeholder={uiText.yourDisplayName}
                 />
 
-                {mode === 'new' && role === 'student' && !session ? (
+                {mode === 'new' && role === 'student' ? (
                   <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                     <Button variant="outline" onClick={() => void finishSetup()}>{uiText.continueGuest}</Button>
-                    <Button onClick={() => persistAndRedirectToLogin()}>{uiText.createAccount}</Button>
+                    {session ? (
+                      <Button variant="outline" onClick={() => void finishSetup()}>{uiText.finish}</Button>
+                    ) : null}
+                    <Button onClick={() => void redirectToCreateAccount()}>{uiText.createAccount}</Button>
+                  </div>
+                ) : mode === 'new' && role === 'teacher' ? (
+                  <div className="flex justify-end gap-2">
+                    {session ? (
+                      <Button variant="outline" onClick={() => void finishSetup()}>{uiText.finish}</Button>
+                    ) : null}
+                    <Button onClick={() => void redirectToCreateAccount()}>{uiText.createAccount}</Button>
                   </div>
                 ) : !session ? (
                   <div className="flex justify-end">
