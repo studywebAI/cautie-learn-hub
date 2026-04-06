@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 
 const SETUP_STORAGE_KEY = 'studyweb-first-time-setup-v2';
+const SETUP_SEEN_KEY = 'studyweb-first-time-setup-seen-v1';
 const DISPLAY_NAME_KEY = 'studyweb-display-name';
 
 type SetupMode = 'new' | 'account';
@@ -102,6 +103,14 @@ export function FirstTimeSetupGate() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
+      const seen = window.localStorage.getItem(SETUP_SEEN_KEY) === '1';
+      if (seen) {
+        setHydrated(true);
+        setVisible(false);
+        return;
+      }
+      window.localStorage.setItem(SETUP_SEEN_KEY, '1');
+
       const browserLanguage = resolveBrowserLanguage();
       const raw = window.localStorage.getItem(SETUP_STORAGE_KEY);
       const parsed: PersistedSetup = raw ? JSON.parse(raw) : {};
@@ -213,6 +222,7 @@ export function FirstTimeSetupGate() {
     setTheme(theme);
 
     if (typeof window !== 'undefined') {
+      window.localStorage.setItem(SETUP_SEEN_KEY, '1');
       window.localStorage.setItem(DISPLAY_NAME_KEY, displayName.trim() || 'guest');
       const payload: PersistedSetup = {
         completed: true,
