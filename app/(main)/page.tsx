@@ -77,13 +77,12 @@ function StudentDashboard() {
 
   const alerts: Alert[] = [];
 
-  const email = session?.user?.email || '';
-  const welcomeName = displayName || (email ? email.split('@')[0] : 'guest');
+  const welcomeName = displayName.trim() ? displayName.trim() : '...';
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
         <div className="lg:col-span-3 mb-2">
-          <h1 className="text-xl tracking-tight text-foreground lowercase">welcome, {welcomeName}</h1>
+          <h1 className="text-xl tracking-tight text-foreground">Welcome, {welcomeName}</h1>
         </div>
         <div className="lg:col-span-2 flex flex-col gap-6 md:gap-8">
             <NextSchoolSlot slots={schoolSlots} />
