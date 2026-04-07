@@ -63,7 +63,7 @@ export function AppSidebar() {
   const deviceTier = useDeviceTier();
   const isPhone = deviceTier === 'phone';
   const isTablet = deviceTier === 'tablet';
-  const { setOpenMobile, openMobile } = useSidebar();
+  const { setOpenMobile, openMobile, state: sidebarState } = useSidebar();
   const [dropdown, setDropdown] = useState<DropdownState>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didWarmTeacherResourcesRef = useRef(false);
@@ -92,6 +92,7 @@ export function AppSidebar() {
   });
 
   const isTeacher = context?.role === 'teacher';
+  const isRailCollapsed = !isPhone && sidebarState === 'collapsed';
   const activeClassTab = searchParams?.get('tab') || '';
   const teacherSubjectsHref = isTeacher && activeTeacherClassId ? `/subjects?classId=${activeTeacherClassId}` : '/subjects';
   const teacherManageHref = isTeacher && activeTeacherClassId ? `/class/${activeTeacherClassId}?tab=group` : '/classes';
@@ -761,6 +762,7 @@ export function AppSidebar() {
 
   const renderTeacherClassSwitcher = () => {
     if (!isTeacher) return null;
+    if (isRailCollapsed) return null;
 
     if (isPhone) {
       return (
@@ -841,6 +843,7 @@ export function AppSidebar() {
 
   const renderStudentLaneToggle = () => {
     if (isTeacher) return null;
+    if (isRailCollapsed) return null;
 
     const switchStudentLane = (nextLane: StudentLane) => {
       setStudentLane(nextLane);
@@ -886,7 +889,7 @@ export function AppSidebar() {
     return (
       <>
         {/* Mini sidebar - always visible on mobile */}
-        <div className={cn("fixed left-0 top-0 z-40 flex h-full w-12 flex-col bg-sidebar py-2 transition-opacity", openMobile && "pointer-events-none opacity-0")}>
+        <div className={cn("fixed left-0 top-0 z-40 flex h-full w-11 flex-col bg-sidebar py-2 transition-opacity", openMobile && "pointer-events-none opacity-0")}>
           {/* Hamburger button to open full drawer */}
           <Button
             variant="ghost"
@@ -1085,7 +1088,7 @@ export function AppSidebar() {
 
   // Tablet + desktop: regular sidebar with trigger
   return (
-    <Sidebar className={cn(isTablet ? "w-[15rem]" : "w-[17rem] lg:w-[19.5rem]")} collapsible="icon">
+    <Sidebar className={cn(isTablet ? "w-[14.25rem]" : "w-[17rem] lg:w-[19.5rem]")} collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
@@ -1094,7 +1097,7 @@ export function AppSidebar() {
         {renderStudentLaneToggle()}
         {visibleMainItems.length > 0 && (
           <>
-            <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">main</p>
+            <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">main</p>
             <SidebarMenu>
               {visibleMainItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
@@ -1133,7 +1136,7 @@ export function AppSidebar() {
         {visibleToolsItems.length > 0 && (
           <>
             {visibleMainItems.length > 0 && <div className="h-5" />}
-            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">tools</p>
+            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">tools</p>
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -1156,7 +1159,7 @@ export function AppSidebar() {
         {visibleOtherItems.length > 0 && (
           <>
             {(visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
-            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">other</p>
+            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">other</p>
             <SidebarMenu>
               {visibleOtherItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -1177,7 +1180,7 @@ export function AppSidebar() {
         )}
       </SidebarContent>
       <SidebarFooter className="px-2.5 pt-2 pb-2.5 flex flex-col gap-2">
-        <RecentsSidebar />
+        {!isRailCollapsed ? <RecentsSidebar /> : null}
         <SidebarProfile />
       </SidebarFooter>
       {renderFloatingDropdown()}

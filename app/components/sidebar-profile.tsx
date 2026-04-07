@@ -115,6 +115,45 @@ export function SidebarProfile() {
     window.location.reload();
   };
 
+  if (isCollapsed) {
+    return (
+      <div className="flex flex-col items-center gap-1.5 px-1.5 py-1.5">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-md"
+          asChild
+        >
+          <Link href="/upgrade" aria-label="Upgrade">
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md" aria-label="Account menu">
+              {isPremium ? <Crown className="h-4 w-4" /> : <User className="h-4 w-4" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" side="right" className="min-w-[180px]">
+            <DropdownMenuItem onClick={() => router.push('/settings')}>
+              <Settings className="h-4 w-4 mr-2" />
+              settings
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.open('https://cautie-learn-hub.vercel.app/help', '_blank')}>
+              <HelpCircle className="h-4 w-4 mr-2" />
+              help & faq
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+              <LogOut className="h-4 w-4 mr-2" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  }
+
   return (
     <div className="px-2 py-1.5 space-y-1.5">
       {/* Upgrade button for logged in users */}
