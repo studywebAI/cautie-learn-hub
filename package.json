@@ -11,7 +11,7 @@
     "perf:budget": "node scripts/check-client-bundle-budget.mjs",
     "perf:analyze": "npm run build:analyze && npm run perf:budget",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --quiet",
     "typecheck": "tsc --noEmit",
     "db:setup": "psql -f complete-hierarchy-setup-fixed-final.sql",
     "supabase:types": "npx supabase gen types typescript --project-id lrcaoisrfragkvmofeyg --schema public --out app/types/supabase.ts"
@@ -73,14 +73,20 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^16.1.4",
+    "@next/eslint-plugin-next": "^16.0.7",
+    "@eslint/js": "^9.39.1",
     "@types/marked": "^6.0.0",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.4.0",
     "genkit-cli": "^1.25.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "typescript-eslint": "^8.46.1",
     "typescript": "^5"
   }
 }
