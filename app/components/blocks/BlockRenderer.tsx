@@ -70,17 +70,6 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
           </div>
         );
 
-      case 'rich_text':
-      case 'executable_code':
-        // New types - will implement components for these
-        return (
-          <div className={`p-4 border ${className || ''}`}>
-            <div className="text-sm text-muted-foreground">{block.type.replace('_', ' ').toUpperCase()} Block</div>
-            <pre className="whitespace-pre-wrap font-mono text-xs mt-2">
-              {JSON.stringify(block.data, null, 2)}
-            </pre>
-          </div>
-        );
       default:
         return (
           <div className="p-4 border rounded-lg bg-muted/50 text-muted-foreground">
