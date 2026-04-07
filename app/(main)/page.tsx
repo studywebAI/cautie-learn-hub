@@ -103,15 +103,28 @@ function StudentDashboard() {
 
 function TeacherSummaryDashboard() {
     const { classes, assignments, students, isLoading, session } = useContext(AppContext) as AppContextType;
+    const [displayName, setDisplayName] = useState<string>('');
+
+    useEffect(() => {
+      if (typeof window === 'undefined') return;
+      const saved = window.localStorage.getItem('studyweb-display-name') || '';
+      if (saved.trim()) {
+        setDisplayName(saved.trim());
+      }
+    }, []);
 
     if (isLoading || !classes) return <DashboardSkeleton />;
 
     const teacherClasses = (Array.isArray(classes) ? classes : []).filter((c: any) => c?.status !== 'archived');
     const totalStudents = students?.length || 0;
     const activeAssignments = (Array.isArray(assignments) ? assignments : []).length;
+    const welcomeName = displayName || (session?.user?.email ? session.user.email.split('@')[0] : '...');
 
     return (
         <div className="flex flex-col gap-8">
+            <div>
+              <h1 className="text-xl tracking-tight text-foreground">Welcome, {welcomeName}</h1>
+            </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
