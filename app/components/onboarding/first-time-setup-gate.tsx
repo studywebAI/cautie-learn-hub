@@ -430,16 +430,19 @@ export function FirstTimeSetupGate() {
   if (!hydrated || !visible) return null;
 
   return (
-    <div className="fixed inset-0 z-[260] bg-background">
+    <div className="fixed inset-0 z-[260] bg-[hsl(var(--background))]">
       <div className="grid h-full w-full grid-cols-1 lg:grid-cols-[minmax(320px,38vw)_1fr]">
-        <aside className="border-b border-border/60 bg-gradient-to-br from-background via-muted/20 to-background p-6 lg:border-b-0 lg:border-r lg:p-10">
+        <aside className="border-b border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] p-6 lg:border-b-0 lg:border-r lg:p-10">
           <div className="mx-auto flex h-full w-full max-w-xl flex-col justify-between gap-8">
             <div className="space-y-3">
               <h2 className="text-4xl font-semibold tracking-tight">{typedPrompt}<span className={cursorVisible ? 'opacity-100' : 'opacity-0'}>|</span></h2>
               <p className="text-sm text-muted-foreground">{uiText.step} {currentStepIndex + 1} {uiText.of} {totalSteps}</p>
               <div className="flex flex-wrap gap-2">
                 {flowSteps.map((stepKey, index) => (
-                  <span key={stepKey} className={`h-2.5 w-14 rounded-full transition-colors ${index <= currentStepIndex ? 'bg-primary' : 'bg-muted'}`} />
+                  <span
+                    key={stepKey}
+                    className={`h-2.5 w-14 rounded-full border transition-colors ${index <= currentStepIndex ? 'border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-accent))]' : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-3))]'}`}
+                  />
                 ))}
               </div>
             </div>
@@ -450,7 +453,7 @@ export function FirstTimeSetupGate() {
           </div>
         </aside>
 
-        <main className="overflow-auto p-6 md:p-10">
+        <main className="overflow-auto bg-[hsl(var(--surface-1))] p-6 md:p-10">
           <div key={step} className="setup-step-anim mx-auto w-full max-w-5xl space-y-5">
             {step === 'language' && (
               <div className="space-y-5">
@@ -464,7 +467,7 @@ export function FirstTimeSetupGate() {
                         setLanguageChoice(option.value);
                         setLanguage(option.value);
                       }}
-                      className={`setup-option rounded-2xl border px-4 py-3 text-left text-sm transition ${language === option.value ? 'border-primary bg-primary text-primary-foreground shadow-sm' : 'border-border bg-card hover:bg-muted/60'}`}
+                      className={`setup-option rounded-2xl border px-4 py-3 text-left text-sm transition ${language === option.value ? 'border-[hsl(var(--sidebar-ring))] bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-active-foreground))] shadow-sm' : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))]'}`}
                       style={{ animationDelay: `${index * 28}ms` }}
                     >
                       {typedOptionLabel(option.label)}
@@ -514,8 +517,9 @@ export function FirstTimeSetupGate() {
                       type="button"
                       onClick={() => {
                         setThemeChoice(option.value);
+                        setTheme(option.value);
                       }}
-                      className={`setup-option rounded-2xl border px-4 py-3 text-left text-sm transition ${theme === option.value ? 'border-primary bg-primary text-primary-foreground shadow-sm' : 'border-border bg-card hover:bg-muted/60'}`}
+                      className={`setup-option rounded-2xl border px-4 py-3 text-left text-sm transition ${theme === option.value ? 'border-[hsl(var(--sidebar-ring))] bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-active-foreground))] shadow-sm' : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))]'}`}
                       style={{ animationDelay: `${index * 28}ms` }}
                     >
                       {typedOptionLabel(option.label)}
