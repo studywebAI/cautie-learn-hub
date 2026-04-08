@@ -474,9 +474,18 @@ export function FirstTimeSetupGate() {
                     </button>
                   ))}
                 </div>
-                <div className="flex justify-end">
-                  <Button onClick={goNext}>{uiText.next}</Button>
-                </div>
+                {!session ? (
+                  <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:justify-end">
+                    <Button variant="outline" onClick={() => persistAndRedirectToLogin()}>
+                      Log in
+                    </Button>
+                    <Button onClick={goNext}>{uiText.createAccount}</Button>
+                  </div>
+                ) : (
+                  <div className="flex justify-end">
+                    <Button onClick={goNext}>{uiText.next}</Button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -543,9 +552,20 @@ export function FirstTimeSetupGate() {
                 />
 
                 {mode === 'new' && role === 'student' ? (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                    <Button variant="outline" onClick={() => void finishSetup()}>{uiText.continueGuest}</Button>
-                    <Button onClick={() => void redirectToCreateAccount()}>{uiText.createAccount}</Button>
+                  <div className="space-y-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                      <Button className="min-w-[11rem]" onClick={() => void redirectToCreateAccount()}>{uiText.createAccount}</Button>
+                      <Button variant="outline" onClick={() => persistAndRedirectToLogin()}>Log in</Button>
+                    </div>
+                    <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+                        onClick={() => void finishSetup()}
+                      >
+                        {uiText.continueGuest}
+                      </Button>
+                    </div>
                   </div>
                 ) : mode === 'new' && role === 'teacher' ? (
                   <div className="flex justify-end gap-2">
