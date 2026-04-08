@@ -124,7 +124,7 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
           <span>{event.subject}</span>
           {event.class_name && (
             <>
-              <span>�</span>
+              <span>·</span>
               <span
                 className="inline-flex rounded-full px-2 py-0.5 text-white text-[10px]"
                 style={{ backgroundColor: getClassChipColor(event.class_id) }}
@@ -135,14 +135,14 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
           )}
           {event.chapter_title && (
             <>
-              <span>›</span>
+              <span>â€º</span>
               <span className="truncate">{event.chapter_title}</span>
             </>
           )}
         </div>
         {event.linked_path && (
           <div className="text-xs text-primary mt-1 truncate">
-            → {event.linked_path}
+            â†’ {event.linked_path}
           </div>
         )}
       </div>
