@@ -150,8 +150,8 @@
     --card-foreground: 60 4% 9.8%;
     --popover: 0 0% 100%;
     --popover-foreground: 60 4% 9.8%;
-    --primary: 50 16.7% 92.9%;
-    --primary-foreground: 60 4% 9.8%;
+    --primary: 38 14% 72%;
+    --primary-foreground: 30 20% 16%;
     --secondary: 50 16.7% 92.9%;
     --secondary-foreground: 60 3.4% 34.9%;
     --muted: 46.7 24.3% 92.7%;
@@ -164,7 +164,7 @@
     --success-foreground: 0 0% 100%;
     --border: 60 4% 9.8% / 0.1;
     --input: 60 4% 9.8% / 0.2;
-    --ring: 60 4% 9.8%;
+    --ring: 38 20% 38%;
     --chart-1: 60 4% 22%;
     --chart-2: 160.9 69% 36.7%;
     --chart-3: 36 86.2% 54.5%;
@@ -179,8 +179,8 @@
     --focus-ring: 60 4% 9.8%;
     --sidebar-background: 50 16.7% 92.9%;
     --sidebar-foreground: 60 3.4% 34.9%;
-    --sidebar-primary: 60 4% 9.8%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 38 14% 72%;
+    --sidebar-primary-foreground: 30 20% 16%;
     --sidebar-accent: 0 0% 100%;
     --sidebar-accent-foreground: 60 3.4% 34.9%;
     --sidebar-active-foreground: 60 4% 9.8%;
@@ -386,49 +386,49 @@
     --sidebar-ring: 134 34% 30%;
   }
 
-  /* Sand: warm off-white and subtle amber accents */
+  /* Legacy alias of sunset now maps to sand palette for backward compatibility. */
   .theme-sunset {
-    --background: 34 24% 93.1%;
-    --foreground: 28 30% 15%;
-    --card: 34 28% 95.7%;
-    --card-foreground: 28 30% 15%;
-    --popover: 34 28% 95.7%;
-    --popover-foreground: 28 30% 15%;
-    --primary: 26 58% 40%;
-    --primary-foreground: 34 36% 98%;
-    --secondary: 34 28% 95.7%;
-    --secondary-foreground: 28 28% 16.5%;
-    --muted: 34 18% 95.7%;
-    --muted-foreground: 24 16% 38%;
-    --accent: 34 18% 95.7%;
-    --accent-foreground: 28 28% 16.5%;
-    --destructive: 0 84% 60%;
+    --background: 50 23.1% 94.9%;
+    --foreground: 60 4% 9.8%;
+    --card: 0 0% 100%;
+    --card-foreground: 60 4% 9.8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 60 4% 9.8%;
+    --primary: 38 14% 72%;
+    --primary-foreground: 30 20% 16%;
+    --secondary: 50 16.7% 92.9%;
+    --secondary-foreground: 60 3.4% 34.9%;
+    --muted: 46.7 24.3% 92.7%;
+    --muted-foreground: 52.5 3.4% 53.3%;
+    --accent: 50 16.7% 92.9%;
+    --accent-foreground: 60 4% 9.8%;
+    --destructive: 0 56.7% 40.8%;
     --destructive-foreground: 0 0% 100%;
-    --success: 146 36% 34%;
+    --success: 164.8 76% 24.5%;
     --success-foreground: 0 0% 100%;
-    --border: 34 28% 95.4%;
-    --input: 34 28% 95.4%;
-    --ring: 26 58% 40%;
-    --chart-1: 26 58% 40%;
-    --chart-2: 14 46% 46%;
-    --chart-3: 38 44% 44%;
-    --chart-4: 52 36% 50%;
-    --chart-5: 20 28% 58%;
-    --surface-1: 34 28% 95.7%;
-    --surface-2: 34 20% 95.4%;
-    --surface-3: 34 18% 95.1%;
-    --interactive-hover: 34 20% 89.2%;
-    --interactive-active: 34 20% 87%;
-    --focus-ring: 26 58% 40%;
-    --sidebar-background: 34 28% 95.7%;
-    --sidebar-foreground: 28 28% 16.5%;
-    --sidebar-primary: 26 58% 40%;
-    --sidebar-primary-foreground: 34 36% 98%;
-    --sidebar-accent: 34 28% 95.7%;
-    --sidebar-accent-foreground: 28 28% 16.5%;
+    --border: 60 4% 9.8% / 0.1;
+    --input: 60 4% 9.8% / 0.2;
+    --ring: 38 20% 38%;
+    --chart-1: 60 4% 22%;
+    --chart-2: 160.9 69% 36.7%;
+    --chart-3: 36 86.2% 54.5%;
+    --chart-4: 0.4 72.4% 58.8%;
+    --chart-5: 209.8 74.6% 37.1%;
+    --surface-1: 0 0% 100%;
+    --surface-2: 50 16.7% 92.9%;
+    --surface-3: 46.7 24.3% 92.7%;
+    --interactive-hover: 60 4% 9.8% / 0.05;
+    --interactive-active: 60 4% 9.8% / 0.1;
+    --focus-ring: 38 20% 38%;
+    --sidebar-background: 50 16.7% 92.9%;
+    --sidebar-foreground: 60 3.4% 34.9%;
+    --sidebar-primary: 38 14% 72%;
+    --sidebar-primary-foreground: 30 20% 16%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 60 3.4% 34.9%;
     --sidebar-active-foreground: var(--sidebar-accent-foreground);
-    --sidebar-border: 34 28% 95.4%;
-    --sidebar-ring: 26 58% 40%;
+    --sidebar-border: 60 4% 9.8% / 0.1;
+    --sidebar-ring: 38 20% 38%;
   }
 
   /* Blossom: soft rose neutrals */

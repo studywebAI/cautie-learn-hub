@@ -539,11 +539,20 @@ export function SourceInput({
         .filter((item: RecentCatalogItem) => item.id && item.isFile && !item.isFolder);
       setRecentsCatalog(items);
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Recents failed',
-        description: error?.message || 'Could not load recents.',
-      });
+      const message = String(error?.message || '').toLowerCase();
+      const isDisabledIntegrationError =
+        message.includes('not configured') ||
+        message.includes('integration') ||
+        message.includes('unsupported') ||
+        message.includes('unauthorized');
+      setRecentsCatalog([]);
+      if (!isDisabledIntegrationError) {
+        toast({
+          variant: 'destructive',
+          title: 'Could not load recents',
+          description: error?.message || 'Try again in a moment.',
+        });
+      }
     } finally {
       setRecentsLoading(false);
     }
@@ -796,12 +805,21 @@ export function SourceInput({
     const host = new URL(normalized).hostname;
     const key = urlKey(normalized);
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    let inserted = false;
+    let targetId = id;
+    let shouldFetch = true;
 
     setSources((prev) => {
-      const exists = prev.some((s) => s.kind === 'url' && s.urlKey === key);
-      if (exists) return prev;
-      inserted = true;
+      const existing = prev.find((s) => s.kind === 'url' && s.urlKey === key);
+      if (existing) {
+        targetId = existing.id;
+        if (existing.loading) {
+          shouldFetch = false;
+          return prev;
+        }
+        return prev.map((source) =>
+          source.id === existing.id ? { ...source, loading: true, error: undefined } : source
+        );
+      }
       return [
         ...prev,
         {
@@ -817,8 +835,7 @@ export function SourceInput({
       ];
     });
 
-    if (!inserted) {
-      toast({ title: 'Link already added', description: 'That exact link is already in the list.' });
+    if (!shouldFetch) {
       return;
     }
 
@@ -844,7 +861,7 @@ export function SourceInput({
       const extracted = typeof data?.text === 'string' ? data.text.trim() : '';
 
       setSources((prev) => prev.map((s) => {
-        if (s.id !== id) return s;
+        if (s.id !== targetId) return s;
         if (!extracted) {
           return { ...s, loading: false, error: 'No readable text was found on this page.' };
         }
@@ -857,7 +874,7 @@ export function SourceInput({
     } catch (error: any) {
       const message = String(error?.message || 'Could not fetch this URL right now.');
       setSources((prev) => prev.map((s) => (
-        s.id === id ? { ...s, loading: false, error: message } : s
+        s.id === targetId ? { ...s, loading: false, error: message } : s
       )));
       toast({ variant: 'destructive', title: 'Import failed', description: message });
     } finally {

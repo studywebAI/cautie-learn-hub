@@ -55,19 +55,32 @@ export function AuthForm({
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-background">
-      <div className="mx-auto max-w-md w-full space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Welcome to cautie</h1>
+    <div className="min-h-screen w-full bg-[hsl(var(--surface-1))] p-4 md:p-8">
+      <div className="mx-auto grid min-h-[calc(100vh-2rem)] w-full max-w-6xl grid-cols-1 overflow-hidden rounded-3xl border border-border bg-card md:grid-cols-[1.15fr_1fr] md:min-h-[calc(100vh-4rem)]">
+        <div className="hidden border-r border-border bg-[hsl(var(--surface-2))] p-10 md:flex md:flex-col md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">cautie</p>
+            <h1 className="mt-4 text-4xl font-semibold leading-tight">Learn faster with clean workflows.</h1>
+            <p className="mt-3 max-w-md text-sm text-muted-foreground">
+              One account for your classes, tools, agenda, and personalized setup.
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">Secure sign-in and account creation</p>
+        </div>
+
+        <div className="flex items-center justify-center p-6 md:p-12">
+          <div className="w-full max-w-md space-y-6">
+            <div className="text-center md:text-left">
+              <h2 className="text-3xl font-bold">Welcome to cautie</h2>
           <p className="text-base text-muted-foreground mt-2">
             {step === 'credentials'
               ? `Enter your email and password to ${isSignUp ? 'create an account' : 'sign in'}`
               : 'Enter the verification code sent to your email'
             }
           </p>
-        </div>
+            </div>
 
-        <div className="space-y-4">
+            <div className="space-y-4">
           {step === 'credentials' ? (
             <form onSubmit={handleCredentialsSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -156,21 +169,23 @@ export function AuthForm({
             </form>
           )}
 
-          {searchParams?.message && (
-            <div className="p-4 bg-muted text-foreground text-center rounded-lg">
-              <p
-                className={
-                  searchParams.type === 'info'
-                    ? 'text-blue-500'
-                    : searchParams.type === 'warning'
-                    ? 'text-yellow-500'
-                    : 'text-red-500'
-                }
-              >
-                {searchParams.message}
-              </p>
+              {searchParams?.message && (
+                <div className="rounded-lg border border-border bg-muted/35 p-4 text-foreground">
+                  <p
+                    className={
+                      searchParams.type === 'info'
+                        ? 'text-blue-500'
+                        : searchParams.type === 'warning'
+                        ? 'text-yellow-600'
+                        : 'text-red-500'
+                    }
+                  >
+                    {searchParams.message}
+                  </p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

@@ -47,14 +47,14 @@ function SubjectsPageContent() {
 
   if (isTeacher) {
     return (
-      <div className="h-full px-4 py-4 md:px-6 md:py-5">
+      <div className="mx-auto h-full w-full max-w-6xl px-4 py-4 md:px-6 md:py-5">
         <SubjectsGrid isTeacher={true} classId={teacherClassId} />
       </div>
     );
   }
 
   return (
-    <div className="h-full px-4 py-4 md:px-6 md:py-5">
+    <div className="mx-auto h-full w-full max-w-6xl px-4 py-4 md:px-6 md:py-5">
       <SubjectsGrid isTeacher={isTeacher} classId={isTeacher ? teacherClassId : undefined} />
     </div>
   );

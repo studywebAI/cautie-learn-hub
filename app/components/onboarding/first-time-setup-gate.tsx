@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 
 type SetupMode = 'new' | 'account';
 type SetupRole = 'student' | 'teacher';
-type SetupStep = 'language' | 'role' | 'teacherCode' | 'appearance' | 'displayName';
+type SetupStep = 'language' | 'role' | 'auth' | 'appearance' | 'displayName';
 type LanguageOption = 'en' | 'nl' | 'de' | 'fr' | 'es' | 'pt' | 'pl' | 'ru' | 'ar' | 'ur' | 'hi' | 'bn' | 'zh';
 
 const LANGUAGE_OPTIONS: Array<{ value: LanguageOption; label: string }> = [
@@ -30,10 +30,10 @@ const LANGUAGE_OPTIONS: Array<{ value: LanguageOption; label: string }> = [
 
 const THEME_OPTIONS: Array<{ value: ThemeType; label: string }> = [
   { value: 'light', label: 'Light' },
+  { value: 'sand', label: 'Sand' },
   { value: 'dark', label: 'Dark' },
   { value: 'ocean', label: 'Ocean' },
   { value: 'forest', label: 'Forest' },
-  { value: 'sunset', label: 'Sunset' },
   { value: 'rose', label: 'Rose' },
 ];
 
@@ -86,11 +86,9 @@ export function FirstTimeSetupGate() {
   const [language, setLanguageChoice] = useState<LanguageOption>('en');
   const [theme, setThemeChoice] = useState<ThemeType>('light');
   const [displayName, setDisplayName] = useState('');
-  const [teacherCode, setTeacherCode] = useState('');
   const [typedPrompt, setTypedPrompt] = useState('');
   const [cursorVisible, setCursorVisible] = useState(true);
   const [savingFinal, setSavingFinal] = useState(false);
-  const [forceDisplayNameOnly, setForceDisplayNameOnly] = useState(false);
   const [optionTypeTick, setOptionTypeTick] = useState(0);
 
   const uiText = useMemo(() => {
@@ -103,6 +101,7 @@ export function FirstTimeSetupGate() {
         of: 'of',
         selectLanguage: 'Select language',
         selectRole: 'Select role',
+        selectAuth: 'Sign in or create your account',
         selectAppearance: 'Select appearance',
         teacherCode: 'Teacher code',
         enterTeacherCode: 'Enter teacher code',
@@ -113,6 +112,7 @@ export function FirstTimeSetupGate() {
         next: 'Next',
         finish: 'Finish',
         createAccount: 'Create account',
+        signIn: 'Sign in',
         continueGuest: 'Continue as guest',
         saving: 'Saving...',
       },
@@ -124,6 +124,7 @@ export function FirstTimeSetupGate() {
         of: 'van',
         selectLanguage: 'Kies taal',
         selectRole: 'Kies rol',
+        selectAuth: 'Inloggen of account maken',
         selectAppearance: 'Kies uiterlijk',
         teacherCode: 'Docentcode',
         enterTeacherCode: 'Voer docentcode in',
@@ -134,6 +135,7 @@ export function FirstTimeSetupGate() {
         next: 'Volgende',
         finish: 'Afronden',
         createAccount: 'Account maken',
+        signIn: 'Inloggen',
         continueGuest: 'Doorgaan als gast',
         saving: 'Opslaan...',
       },
@@ -223,8 +225,6 @@ export function FirstTimeSetupGate() {
       setMode(session?.user?.id ? 'account' : 'new');
       setRole('student');
       setDisplayName('');
-      setTeacherCode('');
-      setForceDisplayNameOnly(false);
 
       if (!session?.user?.id) {
         if (typeof window !== 'undefined' && window.localStorage.getItem(GUEST_SETUP_DONE_KEY) === 'true') {
@@ -274,16 +274,10 @@ export function FirstTimeSetupGate() {
           setDisplayName(resolvedDisplayName);
         }
 
-        if (hasCompletedSetup && resolvedDisplayName) {
+        if (hasCompletedSetup) {
           setVisible(false);
           setHydrated(true);
           return;
-        }
-
-        if (hasCompletedSetup && !resolvedDisplayName) {
-          setForceDisplayNameOnly(true);
-          setMode('account');
-          setStep('displayName');
         }
 
         setVisible(true);
@@ -364,7 +358,6 @@ export function FirstTimeSetupGate() {
               language,
               theme,
               displayName: displayName.trim() || null,
-              teacherCode: teacherCode.trim() || null,
               completedAt: new Date().toISOString(),
             },
           },
@@ -378,15 +371,11 @@ export function FirstTimeSetupGate() {
     }
 
     setVisible(false);
-  }, [displayName, language, mode, role, session?.user?.id, setLanguage, setTheme, supabase, teacherCode, theme]);
+  }, [displayName, language, mode, role, session?.user?.id, setLanguage, setTheme, supabase, theme]);
 
-  const flowSteps: SetupStep[] = forceDisplayNameOnly
-    ? ['displayName']
-    : mode === 'account'
-      ? ['language', 'appearance', 'displayName']
-      : role === 'teacher'
-        ? ['language', 'role', 'teacherCode', 'appearance', 'displayName']
-        : ['language', 'role', 'appearance', 'displayName'];
+  const flowSteps: SetupStep[] = mode === 'account'
+    ? ['language', 'role', 'appearance', 'displayName']
+    : ['language', 'role', 'auth', 'appearance', 'displayName'];
   const currentStepIndex = Math.max(0, flowSteps.indexOf(step));
   const totalSteps = flowSteps.length;
 
@@ -474,18 +463,9 @@ export function FirstTimeSetupGate() {
                     </button>
                   ))}
                 </div>
-                {!session ? (
-                  <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:justify-end">
-                    <Button variant="outline" onClick={() => persistAndRedirectToLogin()}>
-                      Log in
-                    </Button>
-                    <Button onClick={goNext}>{uiText.createAccount}</Button>
-                  </div>
-                ) : (
-                  <div className="flex justify-end">
-                    <Button onClick={goNext}>{uiText.next}</Button>
-                  </div>
-                )}
+                <div className="flex justify-end">
+                  <Button onClick={goNext}>{uiText.next}</Button>
+                </div>
               </div>
             )}
 
@@ -506,13 +486,24 @@ export function FirstTimeSetupGate() {
               </div>
             )}
 
-            {step === 'teacherCode' && (
+            {step === 'auth' && (
               <div className="max-w-xl space-y-5">
-                <Label htmlFor="teacher-code">{uiText.teacherCode}</Label>
-                <Input id="teacher-code" value={teacherCode} onChange={(event) => setTeacherCode(event.target.value)} placeholder={uiText.enterTeacherCode} />
-                <div className="flex justify-end">
-                  <Button disabled={!teacherCode.trim()} onClick={goNext}>{uiText.next}</Button>
+                <Label>{uiText.selectAuth || 'Sign in or create your account'}</Label>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Button className="h-12" onClick={() => void redirectToCreateAccount()}>
+                    {uiText.createAccount}
+                  </Button>
+                  <Button className="h-12" variant="outline" onClick={() => persistAndRedirectToLogin()}>
+                    {uiText.signIn || 'Sign in'}
+                  </Button>
                 </div>
+                {role === 'student' && (
+                  <div className="flex justify-end">
+                    <Button variant="ghost" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={goNext}>
+                      {uiText.continueGuest}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -543,6 +534,9 @@ export function FirstTimeSetupGate() {
 
             {step === 'displayName' && (
               <div className="max-w-xl space-y-5">
+                <p className="text-sm text-muted-foreground">
+                  {`Welcome, ${(displayName || uiText.yourDisplayName || 'there').trim()}.`}
+                </p>
                 <Label htmlFor="display-name">{uiText.enterDisplayName}</Label>
                 <Input
                   id="display-name"
@@ -555,7 +549,7 @@ export function FirstTimeSetupGate() {
                   <div className="space-y-2">
                     <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                       <Button className="min-w-[11rem]" onClick={() => void redirectToCreateAccount()}>{uiText.createAccount}</Button>
-                      <Button variant="outline" onClick={() => persistAndRedirectToLogin()}>Log in</Button>
+                      <Button variant="outline" onClick={() => persistAndRedirectToLogin()}>{uiText.signIn || 'Sign in'}</Button>
                     </div>
                     <div className="flex justify-end">
                       <Button

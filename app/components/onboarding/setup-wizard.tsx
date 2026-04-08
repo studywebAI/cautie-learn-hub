@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 import { getDictionary } from '@/lib/get-dictionary';
 
 type Language = 'nl' | 'en' | 'es' | 'ru' | 'zh';
-type Theme = 'light' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
+type Theme = 'light' | 'dark' | 'sand' | 'ocean' | 'forest' | 'rose';
 type Role = 'student' | 'teacher';
 
 interface SetupWizardProps {
@@ -51,10 +51,10 @@ const THEMES = [
     description: 'grounded and calm'
   },
   {
-    id: 'sunset' as Theme,
-    nameKey: 'sunset',
-    colors: 'bg-gradient-to-br from-orange-100 to-rose-200 border-rose-300',
-    description: 'warm and vivid'
+    id: 'sand' as Theme,
+    nameKey: 'sand',
+    colors: 'bg-gradient-to-br from-stone-100 to-amber-50 border-stone-300',
+    description: 'soft and neutral'
   },
   {
     id: 'rose' as Theme,

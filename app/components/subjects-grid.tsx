@@ -231,7 +231,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2">
         {[...Array(6)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-0">
@@ -268,7 +268,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2">
             {subjects.map((subject) => (
               <SubjectCard key={subject.id} subject={subject} />
             ))}

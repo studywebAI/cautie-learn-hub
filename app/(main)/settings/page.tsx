@@ -1,21 +1,24 @@
 'use client';
 
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
+import { ThemePicker } from '@/components/settings/theme-picker';
+import { createClient } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ThemePicker } from '@/components/settings/theme-picker';
-import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Crown, CreditCard, User, BookUser, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
 import { Input } from '@/components/ui/input';
-import { createClient } from '@/lib/supabase/client';
+import { ArrowLeft, ArrowUpRight } from 'lucide-react';
+
+const SUBSCRIPTION_CACHE_KEY = 'studyweb-subscription-cache-v1';
+const SUBSCRIPTION_CACHE_TTL_MS = 300_000;
+const AI_PROVIDER_KEY = 'studyweb-ai-provider';
 
 export default function SettingsPage() {
+  const router = useRouter();
   const {
     language,
     setLanguage,
@@ -23,27 +26,20 @@ export default function SettingsPage() {
     setRegion,
     schoolingLevel,
     setSchoolingLevel,
-    highContrast,
-    setHighContrast,
-    dyslexiaFont,
-    setDyslexiaFont,
-    reducedMotion,
-    setReducedMotion,
     theme,
     setTheme,
-    session
+    session,
   } = useContext(AppContext) as AppContextType;
 
   const { dictionary } = useDictionary();
-  const userId = session?.user?.id ?? null;
-  const [activeTab, setActiveTab] = useState('general');
+  const supabase = createClient();
+
+  const [activeTab, setActiveTab] = useState('personalization');
   const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
   const [subscriptionType, setSubscriptionType] = useState<string>('student');
   const [displayName, setDisplayName] = useState('');
   const [displayNameSaving, setDisplayNameSaving] = useState(false);
-  const SUBSCRIPTION_CACHE_KEY = 'studyweb-subscription-cache-v1';
-  const SUBSCRIPTION_CACHE_TTL_MS = 300_000;
-  const supabase = createClient();
+  const [aiProvider, setAiProvider] = useState<'gemini' | 'openai' | 'auto'>('auto');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -56,6 +52,14 @@ export default function SettingsPage() {
     setDisplayName(fallback);
   }, [session?.user?.email]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const raw = window.localStorage.getItem(AI_PROVIDER_KEY);
+    if (raw === 'gemini' || raw === 'openai' || raw === 'auto') {
+      setAiProvider(raw);
+    }
+  }, []);
+
   const saveDisplayName = async () => {
     const next = displayName.trim();
     if (typeof window !== 'undefined') {
@@ -64,19 +68,16 @@ export default function SettingsPage() {
     if (!session?.user?.id) return;
     setDisplayNameSaving(true);
     try {
-      await supabase
-        .from('profiles')
-        .upsert({ id: session.user.id, display_name: next || null });
+      await supabase.from('profiles').upsert({ id: session.user.id, display_name: next || null });
     } catch {
-      // Best-effort profile sync; local preference is still saved.
+      // Keep local state as source of truth even when profile sync fails.
     }
     setDisplayNameSaving(false);
   };
 
-  // Fetch subscription status
   useEffect(() => {
     const fetchSubscription = async () => {
-      if (!userId) return;
+      if (!session?.user?.id) return;
       try {
         if (typeof window !== 'undefined') {
           const raw = window.sessionStorage.getItem(SUBSCRIPTION_CACHE_KEY);
@@ -90,298 +91,218 @@ export default function SettingsPage() {
           }
         }
 
-        const res = await fetch('/api/subscription/upgrade');
-        if (res.ok) {
-          const data = await res.json();
-          setSubscriptionTier(data.tier || 'free');
-          setSubscriptionType(data.type || 'student');
-          if (typeof window !== 'undefined') {
-            window.sessionStorage.setItem(
-              SUBSCRIPTION_CACHE_KEY,
-              JSON.stringify({
-                updatedAt: Date.now(),
-                tier: data.tier || 'free',
-                type: data.type || 'student',
-              })
-            );
-          }
+        const response = await fetch('/api/subscription/upgrade');
+        if (!response.ok) return;
+        const data = await response.json();
+        const nextTier = data.tier || 'free';
+        const nextType = data.type || 'student';
+        setSubscriptionTier(nextTier);
+        setSubscriptionType(nextType);
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem(
+            SUBSCRIPTION_CACHE_KEY,
+            JSON.stringify({
+              updatedAt: Date.now(),
+              tier: nextTier,
+              type: nextType,
+            })
+          );
         }
-      } catch (e) {
-        console.error('Failed to fetch subscription:', e);
+      } catch {
+        // best effort
       }
     };
-    fetchSubscription();
-  }, [userId]);
 
-  const isPremium = subscriptionTier === 'premium' || subscriptionTier === 'pro';
+    void fetchSubscription();
+  }, [session?.user?.id]);
 
   return (
-    <div className="flex flex-col gap-8 h-full">
-      <div className="flex-1 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-          <div className="flex h-full">
-            {/* Left sidebar with tabs */}
-            <div className="w-64 border-r bg-muted/20">
-              <TabsList className="flex flex-col h-full w-full bg-transparent p-2 gap-1">
-                <TabsTrigger
-                  value="general"
-                  className="w-full justify-start lowercase text-[13px] data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
-                  {dictionary.settings.general.title}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="subscription"
-                  className="w-full justify-start lowercase text-[13px] data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
-                  subscription
-                </TabsTrigger>
-                <TabsTrigger
-                  value="personalization"
-                  className="w-full justify-start lowercase text-[13px] data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
-                  {dictionary.settings.personalization.title}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="accessibility"
-                  className="w-full justify-start lowercase text-[13px] data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
-                  {dictionary.settings.accessibility.title}
-                </TabsTrigger>
-                <Link prefetch={false} href="/settings/integrations" className="w-full">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full justify-start lowercase text-[13px] text-muted-foreground hover:text-foreground"
-                  >
-                    integrations
-                  </Button>
-                </Link>
-              </TabsList>
-            </div>
+    <div className="h-full w-full overflow-auto bg-[hsl(var(--surface-1))] p-4 md:p-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
+        <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-3 md:p-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 rounded-xl"
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+                return;
+              }
+              router.push('/');
+            }}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Return
+          </Button>
+          <h1 className="text-sm font-medium md:text-base">Settings</h1>
+        </div>
 
-            {/* Main content area */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <TabsContent value="general" className="mt-0">
-                <Card className="border-0 shadow-none">
-                  <CardHeader className="px-0">
-                    <CardTitle>{dictionary.settings.general.title}</CardTitle>
-                    <CardDescription>
-                      {dictionary.settings.general.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-0 space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="language">{dictionary.settings.general.language}</Label>
-                      <Select value={language} onValueChange={setLanguage}>
-                        <SelectTrigger id="language" className="w-[320px]">
-                          <SelectValue placeholder="Select language" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="en">🇺🇸 English</SelectItem>
-                          <SelectItem value="nl">🇳🇱 Nederlands (Dutch)</SelectItem>
-                          <SelectItem value="de">🇩🇪 Deutsch (German)</SelectItem>
-                          <SelectItem value="fr">🇫🇷 Français (French)</SelectItem>
-                          <SelectItem value="es">🇪🇸 Español (Spanish)</SelectItem>
-                          <SelectItem value="pt">🇧🇷 Português (Portuguese)</SelectItem>
-                          <SelectItem value="pl">🇵🇱 Polski (Polish)</SelectItem>
-                          <SelectItem value="ru">🇷🇺 Русский (Russian)</SelectItem>
-                          <SelectItem value="ar">🇸🇦 العربية (Arabic)</SelectItem>
-                          <SelectItem value="ur">🇵🇰 اردو (Urdu)</SelectItem>
-                          <SelectItem value="hi">🇮🇳 हिंदी (Hindi)</SelectItem>
-                          <SelectItem value="bn">🇧🇩 বাংলা (Bengali)</SelectItem>
-                          <SelectItem value="zh">🇨🇳 中文 (Chinese)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+        <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
+            <TabsList className="flex w-full flex-wrap justify-start gap-2 bg-transparent p-0">
+              <TabsTrigger value="personalization" className="rounded-xl border border-border px-3 py-2 text-[13px] data-[state=active]:bg-muted">
+                personalization
+              </TabsTrigger>
+              <TabsTrigger value="general" className="rounded-xl border border-border px-3 py-2 text-[13px] data-[state=active]:bg-muted">
+                general
+              </TabsTrigger>
+              <TabsTrigger value="subscription" className="rounded-xl border border-border px-3 py-2 text-[13px] data-[state=active]:bg-muted">
+                subscription
+              </TabsTrigger>
+            </TabsList>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="region">Region</Label>
-                      <Select value={region} onValueChange={(value) => setRegion(value as any)}>
-                        <SelectTrigger id="region" className="w-[320px]">
-                          <SelectValue placeholder="Select region" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="global">Global</SelectItem>
-                          <SelectItem value="us">United States</SelectItem>
-                          <SelectItem value="eu">Europe</SelectItem>
-                          <SelectItem value="uk">United Kingdom</SelectItem>
-                          <SelectItem value="de">Germany</SelectItem>
-                          <SelectItem value="fr">France</SelectItem>
-                          <SelectItem value="es">Spain</SelectItem>
-                          <SelectItem value="nl">Netherlands</SelectItem>
-                          <SelectItem value="in">India</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+            <TabsContent value="personalization" className="mt-0">
+              <Card className="border-border shadow-none">
+                <CardHeader>
+                  <CardTitle>{dictionary.settings.personalization.title}</CardTitle>
+                  <CardDescription>{dictionary.settings.personalization.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="language">Language</Label>
+                    <Select value={language} onValueChange={setLanguage}>
+                      <SelectTrigger id="language">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="nl">Nederlands</SelectItem>
+                        <SelectItem value="de">Deutsch</SelectItem>
+                        <SelectItem value="fr">Francais</SelectItem>
+                        <SelectItem value="es">Espanol</SelectItem>
+                        <SelectItem value="pt">Portugues</SelectItem>
+                        <SelectItem value="pl">Polski</SelectItem>
+                        <SelectItem value="ru">Russkiy</SelectItem>
+                        <SelectItem value="ar">Arabic</SelectItem>
+                        <SelectItem value="ur">Urdu</SelectItem>
+                        <SelectItem value="hi">Hindi</SelectItem>
+                        <SelectItem value="bn">Bangla</SelectItem>
+                        <SelectItem value="zh">Chinese</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="schooling-level">Degree of schooling</Label>
-                      <Select value={String(schoolingLevel)} onValueChange={(value) => setSchoolingLevel(Number(value) as any)}>
-                        <SelectTrigger id="schooling-level" className="w-[320px]">
-                          <SelectValue placeholder="Select schooling level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">Foundation</SelectItem>
-                          <SelectItem value="2">Middle / High School</SelectItem>
-                          <SelectItem value="3">College</SelectItem>
-                          <SelectItem value="4">Advanced</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="subscription" className="mt-0">
-                <Card className="border-0 shadow-none">
-                  <CardHeader className="px-0">
-                    <CardTitle>Subscription</CardTitle>
-                    <CardDescription>
-                      View your current subscription plan
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-0 space-y-6">
-                    {/* Current Plan Status */}
-                    <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${isPremium ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-muted'}`}>
-                          <Crown className={`h-5 w-5 ${isPremium ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`} />
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            Current Plan: <span className="capitalize">{subscriptionTier}</span> {subscriptionType === 'teacher' ? 'Teacher' : 'Student'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {subscriptionType === 'teacher' 
-                              ? subscriptionTier === 'free' ? '0 classes allowed' : subscriptionTier === 'premium' ? '5 classes allowed' : '20 classes allowed'
-                              : subscriptionTier === 'free' ? '5 AI tools/day' : subscriptionTier === 'premium' ? '30 AI tools/day' : 'Unlimited AI tools'
-                            }
-                          </p>
-                        </div>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={async () => {
-                          try {
-                            const res = await fetch('/api/subscription/upgrade');
-                            if (res.ok) {
-                              const data = await res.json();
-                              setSubscriptionTier(data.tier || 'free');
-                              setSubscriptionType(data.type || 'student');
-                              if (typeof window !== 'undefined') {
-                                window.sessionStorage.setItem(
-                                  SUBSCRIPTION_CACHE_KEY,
-                                  JSON.stringify({
-                                    updatedAt: Date.now(),
-                                    tier: data.tier || 'free',
-                                    type: data.type || 'student',
-                                  })
-                                );
-                              }
-                            }
-                          } catch (e) {
-                            console.error('Failed to refresh subscription:', e);
-                          }
-                        }}
-                      >
-                        Refresh
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="display-name">Display name</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="display-name"
+                        value={displayName}
+                        onChange={(event) => setDisplayName(event.target.value)}
+                        placeholder="Your display name"
+                      />
+                      <Button onClick={() => void saveDisplayName()} disabled={displayNameSaving}>
+                        {displayNameSaving ? 'Saving...' : 'Save'}
                       </Button>
                     </div>
+                  </div>
 
-                    {/* Upgrade Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Upgrade Your Plan</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Link prefetch={false} href="/upgrade" className="block">
-                          <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <CreditCard className="h-5 w-5 text-amber-600" />
-                                <span className="font-medium">Upgrade to Premium</span>
-                              </div>
-                              <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              Get access to premium features and advanced tools
-                            </p>
-                          </div>
-                        </Link>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  <ThemePicker theme={theme} setTheme={setTheme} />
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-              <TabsContent value="personalization" className="mt-0">
-                <Card className="border-0 shadow-none">
-                  <CardHeader className="px-0">
-                    <CardTitle>{dictionary.settings.personalization.title}</CardTitle>
-                    <CardDescription>
-                      {dictionary.settings.personalization.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-0 space-y-5">
-                    <div className="max-w-[320px] space-y-2">
-                      <Label htmlFor="display-name">Display name</Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          id="display-name"
-                          value={displayName}
-                          onChange={(event) => setDisplayName(event.target.value)}
-                          placeholder="Your display name"
-                        />
-                        <Button onClick={() => void saveDisplayName()} disabled={displayNameSaving}>
-                          {displayNameSaving ? 'Saving...' : 'Save'}
-                        </Button>
-                      </div>
-                    </div>
-                    <ThemePicker
-                      theme={theme}
-                      setTheme={setTheme}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
+            <TabsContent value="general" className="mt-0">
+              <Card className="border-border shadow-none">
+                <CardHeader>
+                  <CardTitle>{dictionary.settings.general.title}</CardTitle>
+                  <CardDescription>{dictionary.settings.general.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="region">Region</Label>
+                    <Select value={region} onValueChange={(value) => setRegion(value as any)}>
+                      <SelectTrigger id="region">
+                        <SelectValue placeholder="Select region" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="global">Global</SelectItem>
+                        <SelectItem value="us">United States</SelectItem>
+                        <SelectItem value="ca">Canada</SelectItem>
+                        <SelectItem value="uk">United Kingdom</SelectItem>
+                        <SelectItem value="eu">Europe</SelectItem>
+                        <SelectItem value="nl">Netherlands</SelectItem>
+                        <SelectItem value="de">Germany</SelectItem>
+                        <SelectItem value="fr">France</SelectItem>
+                        <SelectItem value="es">Spain</SelectItem>
+                        <SelectItem value="pl">Poland</SelectItem>
+                        <SelectItem value="it">Italy</SelectItem>
+                        <SelectItem value="au">Australia</SelectItem>
+                        <SelectItem value="nz">New Zealand</SelectItem>
+                        <SelectItem value="in">India</SelectItem>
+                        <SelectItem value="sg">Singapore</SelectItem>
+                        <SelectItem value="jp">Japan</SelectItem>
+                        <SelectItem value="kr">South Korea</SelectItem>
+                        <SelectItem value="br">Brazil</SelectItem>
+                        <SelectItem value="mx">Mexico</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Now: influences localized wording and defaults. Target: also drives curriculum and exam format defaults per region.</p>
+                  </div>
 
-              <TabsContent value="accessibility" className="mt-0">
-                <Card className="border-0 shadow-none">
-                  <CardHeader className="px-0">
-                    <CardTitle>{dictionary.settings.accessibility.title}</CardTitle>
-                    <CardDescription>
-                      {dictionary.settings.accessibility.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-0 space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="high-contrast">{dictionary.settings.accessibility.highContrast}</Label>
-                        <p className='text-sm text-muted-foreground'>{dictionary.settings.accessibility.highContrastDescription}</p>
-                      </div>
-                      <Switch id="high-contrast" checked={highContrast} onCheckedChange={setHighContrast} />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="dyslexia-font">{dictionary.settings.accessibility.dyslexiaFont}</Label>
-                        <p className='text-sm text-muted-foreground'>{dictionary.settings.accessibility.dyslexiaFontDescription}</p>
-                      </div>
-                      <Switch id="dyslexia-font" checked={dyslexiaFont} onCheckedChange={setDyslexiaFont} />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="reduced-motion">{dictionary.settings.accessibility.reducedMotion}</Label>
-                        <p className='text-sm text-muted-foreground'>{dictionary.settings.accessibility.reducedMotionDescription}</p>
-                      </div>
-                      <Switch id="reduced-motion" checked={reducedMotion} onCheckedChange={setReducedMotion} />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </div>
-          </div>
-        </Tabs>
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="schooling-level">Degree of schooling</Label>
+                    <Select value={String(schoolingLevel)} onValueChange={(value) => setSchoolingLevel(Number(value) as any)}>
+                      <SelectTrigger id="schooling-level">
+                        <SelectValue placeholder="Select schooling level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Primary / Foundation</SelectItem>
+                        <SelectItem value="2">Middle / High School</SelectItem>
+                        <SelectItem value="3">College / University</SelectItem>
+                        <SelectItem value="4">Advanced / Professional</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Now: adjusts tool difficulty baseline. Target: should also drive pace, vocabulary, and assessment complexity by default.</p>
+                  </div>
+
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="provider">AI provider</Label>
+                    <Select
+                      value={aiProvider}
+                      onValueChange={(value) => {
+                        const next = (value as 'gemini' | 'openai' | 'auto');
+                        setAiProvider(next);
+                        if (typeof window !== 'undefined') {
+                          window.localStorage.setItem(AI_PROVIDER_KEY, next);
+                        }
+                      }}
+                    >
+                      <SelectTrigger id="provider">
+                        <SelectValue placeholder="Select provider" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Auto (Recommended)</SelectItem>
+                        <SelectItem value="gemini">Gemini</SelectItem>
+                        <SelectItem value="openai">OpenAI</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="subscription" className="mt-0">
+              <Card className="border-border shadow-none">
+                <CardHeader>
+                  <CardTitle>Subscription</CardTitle>
+                  <CardDescription>
+                    Current: {subscriptionTier} {subscriptionType === 'teacher' ? 'Teacher' : 'Student'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="rounded-xl">
+                    <a href="/upgrade">
+                      Upgrade subscription here
+                      <ArrowUpRight className="ml-2 h-4 w-4" />
+                    </a>
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );

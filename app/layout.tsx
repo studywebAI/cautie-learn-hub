@@ -35,10 +35,11 @@ export const viewport: Viewport = {
 const themeBootstrapScript = `
 (() => {
   try {
-    const themes = ['light', 'sand', 'legacy', 'dark', 'ocean', 'forest', 'sunset', 'rose'];
+    const themes = ['light', 'sand', 'legacy', 'dark', 'ocean', 'forest', 'rose'];
     const saved = localStorage.getItem('studyweb-theme');
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const resolved = themes.includes(saved || '') ? saved : (systemDark ? 'dark' : 'light');
+    const resolvedSaved = saved === 'sunset' ? 'sand' : saved;
+    const resolved = themes.includes(resolvedSaved || '') ? resolvedSaved : (systemDark ? 'dark' : 'light');
     const root = document.documentElement;
     root.classList.remove('theme-light', 'theme-sand', 'theme-legacy', 'theme-dark', 'theme-ocean', 'theme-forest', 'theme-sunset', 'theme-rose');
     root.classList.add('theme-' + resolved);

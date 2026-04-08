@@ -7,7 +7,7 @@ const HIGHLIGHT_COLORS = [
   'rgba(217, 119, 87, 0.38)',
 ];
 
-const LIGHT_THEME_SET = new Set(['light', 'ocean', 'forest', 'sunset', 'rose']);
+const LIGHT_THEME_SET = new Set(['light', 'sand', 'ocean', 'forest', 'rose']);
 const DARK_THEME_SET = new Set(['dark']);
 
 type CautieWordmarkProps = {

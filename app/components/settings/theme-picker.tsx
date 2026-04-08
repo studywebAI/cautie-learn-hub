@@ -12,12 +12,11 @@ type ThemeOption = {
 
 const THEMES: ThemeOption[] = [
   { value: 'light', label: 'light', colors: { bg: '#f2f2f2', fg: '#1a1a1a', primary: '#262626', card: '#fbfbfb', muted: '#f7f7f7' } },
-  { value: 'sand', label: 'sand', colors: { bg: '#F5F4EF', fg: '#1A1A18', primary: '#D97757', card: '#FFFFFF', muted: '#EEECEA' } },
+  { value: 'sand', label: 'sand', colors: { bg: '#F5F4EF', fg: '#1A1A18', primary: '#6E6452', card: '#FFFFFF', muted: '#EEECEA' } },
   { value: 'legacy', label: 'legacy', colors: { bg: '#f2f2f2', fg: '#1a1a1a', primary: '#262626', card: '#fbfbfb', muted: '#f7f7f7' } },
   { value: 'dark', label: 'dark', colors: { bg: '#121212', fg: '#ffffff', primary: '#e6e6e6', card: '#1c1c1c', muted: '#262626' } },
   { value: 'ocean', label: 'mist', colors: { bg: '#f2f6f8', fg: '#213945', primary: '#2a6787', card: '#e8eff3', muted: '#dfe8ed' } },
   { value: 'forest', label: 'sage', colors: { bg: '#f3f7f1', fg: '#243628', primary: '#3b6f48', card: '#e9efe6', muted: '#e0e8dc' } },
-  { value: 'sunset', label: 'sand', colors: { bg: '#faf5ee', fg: '#3b2a1e', primary: '#b06633', card: '#f1e7da', muted: '#e8ddcf' } },
   { value: 'rose', label: 'blossom', colors: { bg: '#faf2f4', fg: '#412734', primary: '#9f4f71', card: '#f1e5e9', muted: '#e7d9df' } },
 ];
 
@@ -66,7 +65,7 @@ export function ThemePicker({
 }) {
   return (
     <div className="space-y-3">
-      <label className="text-sm text-foreground lowercase">theme</label>
+      <label className="text-sm text-foreground lowercase">appearance</label>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3">
         {THEMES.map((t) => (
           <ThemeCard key={t.value} option={t} selected={theme === t.value} onClick={() => setTheme(t.value)} />

@@ -16,8 +16,8 @@ import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dial
 import { TeacherDeadlinesPanel } from '@/components/agenda/teacher-deadlines-panel';
 import { AssignmentDetailsPanel } from '@/components/agenda/assignment-details-panel';
 import { CautieLoader } from '@/components/ui/cautie-loader';
-import { PlusCircle, Sparkles, SlidersHorizontal } from 'lucide-react';
-import type { AiSuggestion, CalendarEvent } from '@/lib/types';
+import { PlusCircle, SlidersHorizontal } from 'lucide-react';
+import type { CalendarEvent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 type ViewMode = 'week' | 'list';
@@ -166,9 +166,6 @@ function AgendaPageContent() {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isTeacherDialogOpen, setIsTeacherDialogOpen] = useState(false);
-  const [showAiPanel, setShowAiPanel] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<AiSuggestion | null>(null);
-  const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [overlayClassIds, setOverlayClassIds] = useState<string[]>([]);
@@ -518,53 +515,6 @@ function AgendaPageContent() {
   const selectedDayString = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : '';
   const eventsForSelectedDay = eventsByDate.get(selectedDayString) || [];
 
-  const handleGenerateAiSuggestion = async () => {
-    if (!selectedDay || !eventsForSelectedDay.length) {
-      toast({
-        title: 'No events',
-        description: 'Select a day with events to get AI suggestions.',
-      });
-      return;
-    }
-
-    setIsGeneratingSuggestion(true);
-    setAiSuggestion(null);
-    setShowAiPanel(true);
-
-    const relevantEvents = eventsForSelectedDay.filter((event) => event.type === 'assignment' || event.type === 'personal' || event.type === 'agenda_item');
-    const tasksForAI = relevantEvents.map((event) => `Title: ${event.title}, Due: ${format(event.date, 'PPP')}, Type: ${event.type}`).join('\n');
-    if (!tasksForAI) {
-      setIsGeneratingSuggestion(false);
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/ai/handle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          flowName: 'generatePersonalizedStudyPlan',
-          input: {
-            deadlines: tasksForAI,
-            learningHabits: 'The student prefers to study in the evenings and focuses on one subject at a time.',
-            calendar: "The student's calendar includes classes from 9 AM to 3 PM on weekdays, and weekends are free.",
-          },
-        }),
-      });
-      if (!response.ok) throw new Error(response.statusText);
-      const result = await response.json();
-      setAiSuggestion({ id: 'ai-plan', title: result.studyPlan, content: result.studyPlan, icon: 'BrainCircuit' });
-    } catch {
-      toast({
-        variant: 'destructive',
-        title: 'AI Suggestion Failed',
-        description: 'Could not generate a study plan. Please try again later.',
-      });
-    } finally {
-      setIsGeneratingSuggestion(false);
-    }
-  };
-
   const handleTaskCreated = async (newTask: Omit<PersonalTask, 'id' | 'created_at' | 'user_id'>) => {
     await createPersonalTask(newTask);
   };
@@ -734,10 +684,6 @@ function AgendaPageContent() {
 
             {isStudent && (
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleGenerateAiSuggestion} disabled={isGeneratingSuggestion}>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  AI Help
-                </Button>
                 <Button onClick={() => setIsCreateTaskOpen(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Activity
@@ -776,8 +722,8 @@ function AgendaPageContent() {
               <TodayPanel
                 selectedDay={selectedDay}
                 events={eventsForSelectedDay}
-                suggestion={showAiPanel ? aiSuggestion : null}
-                isGeneratingSuggestion={isGeneratingSuggestion}
+                suggestion={null}
+                isGeneratingSuggestion={false}
                 personalTasks={personalTasks || []}
                 assignments={assignments || []}
                 classes={classes || []}

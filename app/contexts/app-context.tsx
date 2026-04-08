@@ -10,9 +10,28 @@ import { getDictionary } from '@/lib/get-dictionary';
 import type { Dictionary, Locale } from '@/lib/get-dictionary';
 
 export type UserRole = 'student' | 'teacher';
-export type ThemeType = 'light' | 'sand' | 'legacy' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'rose';
+export type ThemeType = 'light' | 'sand' | 'legacy' | 'dark' | 'ocean' | 'forest' | 'rose';
 export type FontType = 'ibm-plex';
-export type RegionCode = 'global' | 'us' | 'eu' | 'uk' | 'de' | 'fr' | 'es' | 'nl' | 'in';
+export type RegionCode =
+  | 'global'
+  | 'us'
+  | 'ca'
+  | 'uk'
+  | 'eu'
+  | 'nl'
+  | 'de'
+  | 'fr'
+  | 'es'
+  | 'pl'
+  | 'it'
+  | 'au'
+  | 'nz'
+  | 'in'
+  | 'sg'
+  | 'jp'
+  | 'kr'
+  | 'br'
+  | 'mx';
 export type SchoolingLevel = 1 | 2 | 3 | 4;
 export type PreloadResourceKey = 'classes:list' | 'subjects:list';
 export type PreloadStatus = 'idle' | 'loading' | 'ready' | 'error';
@@ -114,7 +133,7 @@ export type AppContextType = {
 
 export const AppContext = createContext<AppContextType | null>(null);
 
-const THEME_VALUES: ThemeType[] = ['light', 'sand', 'legacy', 'dark', 'ocean', 'forest', 'sunset', 'rose'];
+const THEME_VALUES: ThemeType[] = ['light', 'sand', 'legacy', 'dark', 'ocean', 'forest', 'rose'];
 
 const isThemeType = (value: string | null): value is ThemeType => {
   return value !== null && THEME_VALUES.includes(value as ThemeType);
@@ -128,6 +147,7 @@ const getSystemTheme = (): ThemeType => {
 const getInitialTheme = (): ThemeType => {
   if (typeof window === 'undefined') return 'light';
   const savedTheme = window.localStorage.getItem('studyweb-theme');
+  if (savedTheme === 'sunset') return 'sand';
   if (isThemeType(savedTheme)) return savedTheme;
   return getSystemTheme();
 };
@@ -453,7 +473,31 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setLanguageState(savedLanguage);
     setDictionary(getDictionary(savedLanguage));
     const savedRegion = getFromLocalStorage('studyweb-region', 'global');
-    setRegionState((['global', 'us', 'eu', 'uk', 'de', 'fr', 'es', 'nl', 'in'].includes(savedRegion) ? savedRegion : 'global') as RegionCode);
+    setRegionState((
+      [
+        'global',
+        'us',
+        'ca',
+        'uk',
+        'eu',
+        'nl',
+        'de',
+        'fr',
+        'es',
+        'pl',
+        'it',
+        'au',
+        'nz',
+        'in',
+        'sg',
+        'jp',
+        'kr',
+        'br',
+        'mx',
+      ].includes(savedRegion)
+        ? savedRegion
+        : 'global'
+    ) as RegionCode);
     const savedSchoolingLevelRaw = Number(getFromLocalStorage('studyweb-schooling-level', 2));
     const savedSchoolingLevel = [1, 2, 3, 4].includes(savedSchoolingLevelRaw) ? savedSchoolingLevelRaw : 2;
     setSchoolingLevelState(savedSchoolingLevel as SchoolingLevel);

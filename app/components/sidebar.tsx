@@ -28,7 +28,6 @@ import {
   ChevronDown,
   Check,
   FolderOpen,
-  Users,
 } from 'lucide-react';
 import { useDeviceTier } from '@/hooks/use-device-tier';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
@@ -41,7 +40,6 @@ type DropdownKind = 'classes' | 'subjects';
 type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
 type DropdownClassItem = { id: string; name: string; status?: string | null };
 type DropdownSubjectItem = { id: string; title: string; classIds: string[] };
-type StudentLane = 'school' | 'tools';
 
 const RecentsSidebar = dynamic(
   () => import('./recents-sidebar').then((m) => m.RecentsSidebar),
@@ -83,13 +81,7 @@ export function AppSidebar() {
   const [joinSubjectTitle, setJoinSubjectTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTeacherClassId, setActiveTeacherClassId] = useState('');
-  const [studentLane, setStudentLane] = useState<StudentLane>(() => {
-    if (typeof window === 'undefined') return 'school';
-    const savedLane = window.localStorage.getItem('studyweb-student-lane');
-    if (savedLane === 'tools') return 'tools';
-    if (savedLane === 'school' || savedLane === 'assigned') return 'school';
-    return 'school';
-  });
+  const [otherExpanded, setOtherExpanded] = useState(false);
 
   const isTeacher = context?.role === 'teacher';
   const isRailCollapsed = !isPhone && sidebarState === 'collapsed';
@@ -121,7 +113,6 @@ export function AppSidebar() {
 
   const otherMenuItems = [
     { href: '/other/materials', label: 'Materials', icon: FolderOpen },
-    { href: '/other/community', label: 'Community', icon: Users },
   ];
 
   useEffect(() => {
@@ -150,38 +141,6 @@ export function AppSidebar() {
     }
   }, [isTeacher, context?.warmResources]);
 
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('studyweb-student-lane', studentLane);
-  }, [studentLane]);
-
-  useEffect(() => {
-    if (isTeacher || typeof window === 'undefined') return;
-    const currentPathWithSearch = `${window.location.pathname}${window.location.search}`;
-
-    if (pathname?.startsWith('/tools')) {
-      if (studentLane !== 'tools') {
-        setStudentLane('tools');
-      }
-      window.localStorage.setItem('studyweb-last-tools-route', currentPathWithSearch);
-      return;
-    }
-
-    if (
-      pathname?.startsWith('/classes') ||
-      pathname?.startsWith('/subjects') ||
-      pathname?.startsWith('/agenda') ||
-      pathname === '/' ||
-      pathname?.startsWith('/material') ||
-      pathname?.startsWith('/other')
-    ) {
-      if (studentLane !== 'school') {
-        setStudentLane('school');
-      }
-      window.localStorage.setItem('studyweb-last-school-route', currentPathWithSearch);
-    }
-  }, [pathname, isTeacher, studentLane]);
 
   const classDropdownItems = useMemo(() => {
     return [...classItems]
@@ -355,10 +314,6 @@ export function AppSidebar() {
     const left = Math.min(rect.right + 8, window.innerWidth - estimatedPanelWidth - 8);
     const top = Math.min(Math.max(8, rect.top), window.innerHeight - estimatedPanelHeight - 8);
     resetInlinePanels();
-    void loadDropdownData(kind);
-    if (kind === 'subjects' && isTeacher) {
-      void loadDropdownData('classes');
-    }
     setDropdown({ kind, left, top });
   };
 
@@ -378,9 +333,9 @@ export function AppSidebar() {
     return pathname === basePath;
   };
 
-  const visibleMainItems = isTeacher || studentLane === 'school' ? menuItems : [];
-  const visibleToolsItems = isTeacher || studentLane === 'tools' ? toolsMenuItems : [];
-  const visibleOtherItems = isTeacher || studentLane === 'tools' ? otherMenuItems : [];
+  const visibleMainItems = menuItems;
+  const visibleToolsItems = toolsMenuItems;
+  const visibleOtherItems = otherMenuItems;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -398,7 +353,6 @@ export function AppSidebar() {
         '/tools/flashcards',
         '/tools/notes',
         '/other/materials',
-        '/other/community',
       ])
     ).slice(0, 10);
 
@@ -783,7 +737,7 @@ export function AppSidebar() {
               setOpenMobile(false);
             }}
             disabled={classDropdownItems.length === 0}
-            className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-3 text-[12px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-sidebar-accent/90 disabled:opacity-60"
+            className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-3 text-[12px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))] disabled:opacity-60"
           >
             {classDropdownItems.length === 0 ? (
               <option value="">no classes</option>
@@ -807,7 +761,7 @@ export function AppSidebar() {
         <Button
           size="sm"
           variant="outline"
-          className="mb-1 h-7 w-full justify-start rounded-xl border-sidebar-border/80 bg-sidebar-accent px-2.5 text-[11px] font-normal text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
+          className="mb-1 h-7 w-full justify-start rounded-xl border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-2.5 text-[11px] font-normal text-[hsl(var(--sidebar-active-foreground))] hover:bg-[hsl(var(--surface-2))]"
           onClick={(event) => {
             openDropdownFor('classes', event.currentTarget);
             setNewClassMenuOpen(true);
@@ -828,56 +782,13 @@ export function AppSidebar() {
             openDropdownFor('classes', event.currentTarget);
           }}
           disabled={classDropdownItems.length === 0}
-          className="h-7 w-full rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-2.5 text-left text-[11px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-sidebar-accent/90 disabled:opacity-60"
+          className="h-7 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-2.5 text-left text-[11px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))] disabled:opacity-60"
         >
           <span className="flex items-center justify-between gap-2">
             <span className="truncate">
               {classDropdownItems.find((classItem) => classItem.id === activeTeacherClassId)?.label || 'no classes'}
             </span>
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          </span>
-        </button>
-      </div>
-    );
-  };
-
-  const renderStudentLaneToggle = () => {
-    if (isTeacher) return null;
-    if (isRailCollapsed) return null;
-
-    const switchStudentLane = (nextLane: StudentLane) => {
-      setStudentLane(nextLane);
-      if (typeof window === 'undefined') return;
-
-      const lastSchoolRoute = window.localStorage.getItem('studyweb-last-school-route') || '/agenda';
-      const lastToolsRoute = window.localStorage.getItem('studyweb-last-tools-route') || '/tools';
-      const isOnToolsRoute = pathname?.startsWith('/tools');
-
-      if (nextLane === 'tools' && !isOnToolsRoute) {
-        router.push(lastToolsRoute);
-        setOpenMobile(false);
-        return;
-      }
-
-      if (nextLane === 'school' && isOnToolsRoute) {
-        router.push(lastSchoolRoute);
-        setOpenMobile(false);
-      }
-    };
-
-    return (
-      <div className="mb-1.5 px-2">
-        <label className="mb-1 block text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
-          mode
-        </label>
-        <button
-          type="button"
-          onClick={() => switchStudentLane(studentLane === 'school' ? 'tools' : 'school')}
-          className="h-7 w-full rounded-xl border border-sidebar-border/80 bg-sidebar-accent px-2.5 text-left text-[11px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-sidebar-accent/90"
-        >
-          <span className="flex items-center justify-between">
-            <span>{studentLane === 'school' ? 'school mode' : 'tools mode'}</span>
-            <span className="text-sidebar-foreground/70">{studentLane === 'school' ? 'switch to tools' : 'switch to school'}</span>
           </span>
         </button>
       </div>
@@ -990,7 +901,6 @@ export function AppSidebar() {
         <Sidebar className="w-[min(17rem,calc(100vw-3rem))]">
           <SidebarContent className="flex-1 px-2.5 py-2.5">
             {renderTeacherClassSwitcher()}
-            {renderStudentLaneToggle()}
             {visibleMainItems.length > 0 && (
               <>
                  <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">main</p>
@@ -1056,28 +966,39 @@ export function AppSidebar() {
             {visibleOtherItems.length > 0 && (
               <>
                 {(visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
-                <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">other</p>
-                <SidebarMenu>
-                  {visibleOtherItems.map((item) => (
-                    <SidebarMenuItem key={item.label}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isMenuItemActive(item.href)}
-                        tooltip={item.label}
-                      >
-                        <Link href={item.href} onClick={() => setOpenMobile(false)}>
-                          <item.icon className="h-4 w-4" />
-                          <span className="text-[12px] leading-4">{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
+                <button
+                  type="button"
+                  onClick={() => setOtherExpanded((value) => !value)}
+                  className="mb-1 flex h-8 w-full items-center justify-between rounded-lg px-2 text-left text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase hover:bg-sidebar-accent/45"
+                >
+                  other
+                  <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', otherExpanded ? 'rotate-180' : '')} />
+                </button>
+                {otherExpanded ? (
+                  <div className="space-y-2">
+                    <SidebarMenu>
+                      {visibleOtherItems.map((item) => (
+                        <SidebarMenuItem key={item.label}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isMenuItemActive(item.href)}
+                            tooltip={item.label}
+                          >
+                            <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                              <item.icon className="h-4 w-4" />
+                              <span className="text-[12px] leading-4">{item.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                    <RecentsSidebar />
+                  </div>
+                ) : null}
               </>
             )}
           </SidebarContent>
           <SidebarFooter className="flex flex-col gap-2 px-2.5 pb-2.5 pt-2">
-            <RecentsSidebar />
             <SidebarProfile />
           </SidebarFooter>
         </Sidebar>
@@ -1094,7 +1015,6 @@ export function AppSidebar() {
       </div>
       <SidebarContent className="px-2.5 py-2.5 flex-1">
         {renderTeacherClassSwitcher()}
-        {renderStudentLaneToggle()}
         {visibleMainItems.length > 0 && (
           <>
             <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">main</p>
@@ -1159,28 +1079,39 @@ export function AppSidebar() {
         {visibleOtherItems.length > 0 && (
           <>
             {(visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
-            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">other</p>
-            <SidebarMenu>
-              {visibleOtherItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isMenuItemActive(item.href)}
-                    tooltip={item.label}
-                  >
-                    <Link href={item.href}>
-                      <item.icon className="h-4 w-4" />
-                      <span className="text-[12px] leading-4">{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            <button
+              type="button"
+              onClick={() => setOtherExpanded((value) => !value)}
+              className="mb-1 flex h-8 w-full items-center justify-between rounded-lg px-2 text-left text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase hover:bg-sidebar-accent/45 group-data-[collapsible=icon]:hidden"
+            >
+              other
+              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', otherExpanded ? 'rotate-180' : '')} />
+            </button>
+            {otherExpanded ? (
+              <div className="space-y-2 group-data-[collapsible=icon]:hidden">
+                <SidebarMenu>
+                  {visibleOtherItems.map((item) => (
+                    <SidebarMenuItem key={item.label}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isMenuItemActive(item.href)}
+                        tooltip={item.label}
+                      >
+                        <Link href={item.href}>
+                          <item.icon className="h-4 w-4" />
+                          <span className="text-[12px] leading-4">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+                <RecentsSidebar />
+              </div>
+            ) : null}
           </>
         )}
       </SidebarContent>
       <SidebarFooter className="px-2.5 pt-2 pb-2.5 flex flex-col gap-2">
-        {!isRailCollapsed ? <RecentsSidebar /> : null}
         <SidebarProfile />
       </SidebarFooter>
       {renderFloatingDropdown()}

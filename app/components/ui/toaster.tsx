@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -9,6 +10,25 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
+
+function ExpandableDescription({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = text.length > 180
+  const shown = expanded || !isLong ? text : `${text.slice(0, 180)}...`
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (isLong) setExpanded((value) => !value)
+      }}
+      className="w-full text-left"
+      aria-label={isLong ? "Expand notification message" : "Notification message"}
+    >
+      <ToastDescription>{shown}</ToastDescription>
+    </button>
+  )
+}
 
 export function Toaster() {
   const { toasts } = useToast()
@@ -20,9 +40,7 @@ export function Toaster() {
           <Toast key={id} {...props}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
-                <ToastDescription>{description}</ToastDescription>
-              )}
+              {typeof description === "string" ? <ExpandableDescription text={description} /> : description ? <ToastDescription>{description}</ToastDescription> : null}
             </div>
             {action}
             <ToastClose />

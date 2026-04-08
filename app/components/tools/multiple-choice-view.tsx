@@ -16,6 +16,27 @@ interface MultipleChoiceViewProps {
   onAnswered: (isCorrect: boolean) => void;
 }
 
+function buildFallbackQuestion(card: Flashcard): McqQuestion {
+  const correct = (card.back || '').trim() || 'Correct answer';
+  const front = (card.front || '').trim() || 'this concept';
+  const distractors = [
+    'Not this one',
+    'Alternative explanation',
+    'Unrelated answer',
+  ];
+  return {
+    id: `fallback-${Math.random().toString(36).slice(2, 10)}`,
+    question: `What is the best match for: ${front}?`,
+    options: [
+      { id: 'a', text: correct },
+      { id: 'b', text: distractors[0] },
+      { id: 'c', text: distractors[1] },
+      { id: 'd', text: distractors[2] },
+    ],
+    correctOptionId: 'a',
+  };
+}
+
 export function MultipleChoiceView({ card, onAnswered }: MultipleChoiceViewProps) {
   const [mcq, setMcq] = useState<McqQuestion | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,13 +65,18 @@ export function MultipleChoiceView({ card, onAnswered }: MultipleChoiceViewProps
             throw new Error(`API call failed: ${response.statusText}`);
         }
         const result = await response.json();
-        setMcq(result);
+        const normalized = (result?.question && Array.isArray(result?.options) && result?.correctOptionId)
+          ? result
+          : (result?.output?.question && Array.isArray(result?.output?.options) && result?.output?.correctOptionId)
+            ? result.output
+            : null;
+        setMcq(normalized || buildFallbackQuestion(card));
       } catch (error) {
         console.error('Failed to generate multiple choice question', error);
+        setMcq(buildFallbackQuestion(card));
         toast({
-          variant: 'destructive',
-          title: 'AI Error',
-          description: 'Could not generate a multiple-choice question for this card.',
+          title: 'Fallback question used',
+          description: 'AI question generation failed, so a local question was created.',
         });
       } finally {
         setIsLoading(false);
