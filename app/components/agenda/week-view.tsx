@@ -111,13 +111,13 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
 
   return (
     <div className="space-y-3">
-      <div className="rounded-xl border border-border/60 bg-card/70 px-3 py-2">
+      <div className="rounded-xl bg-card/80 px-3 py-2 shadow-sm ring-1 ring-border/25">
         <div className="flex items-center justify-between gap-2">
           <Button
             type="button"
             variant="secondary"
             size="icon"
-            className="h-8 w-8 bg-white"
+            className="h-8 w-8 bg-card hover:bg-muted/60"
             onClick={() => setWeekOffset((prev) => prev - 1)}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -129,7 +129,7 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
             type="button"
             variant="secondary"
             size="icon"
-            className="h-8 w-8 bg-white"
+            className="h-8 w-8 bg-card hover:bg-muted/60"
             onClick={() => setWeekOffset((prev) => prev + 1)}
           >
             <ChevronRight className="h-4 w-4" />
@@ -137,9 +137,9 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
         </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-0 rounded-xl border border-border/40 bg-card/40">
+      <div className="grid grid-cols-5 gap-0 divide-x divide-border/20 overflow-hidden rounded-xl bg-card/60 shadow-sm ring-1 ring-border/20">
         {dayNames.map((name, idx) => (
-          <div key={idx} className="border-b border-border/40 py-2 text-center text-sm font-medium text-muted-foreground">
+          <div key={idx} className="border-b border-border/20 py-2 text-center text-sm font-medium text-muted-foreground">
             {name}
           </div>
         ))}
@@ -150,7 +150,7 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-5 gap-0 rounded-xl border border-border/50">
+        <div className="grid grid-cols-5 gap-0 divide-x divide-border/20 overflow-hidden rounded-xl bg-card/50 shadow-sm ring-1 ring-border/20">
           {activeWeek.days.map((day) => {
             const dateString = format(day, 'yyyy-MM-dd');
             const dayEvents = eventsByDate.get(dateString) || [];
@@ -173,7 +173,7 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
 
         <DragOverlay>
           {activeEvent ? (
-            <div className="rounded-md border bg-background p-2 shadow-lg opacity-90">
+            <div className="rounded-md bg-background p-2 shadow-lg ring-1 ring-border/25 opacity-90">
               <div className="text-sm font-medium">{activeEvent.title}</div>
               <div className="text-xs text-muted-foreground">{activeEvent.subject}</div>
             </div>

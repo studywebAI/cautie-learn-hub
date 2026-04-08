@@ -25,12 +25,12 @@ export function DroppableDay({ id, date, events, isSelected, onClick, onEventCli
     <div
       ref={setNodeRef}
       onClick={onClick}
-      className={`min-h-[280px] p-2 md:min-h-[340px] md:p-3 border-r border-border/40 cursor-pointer transition-colors ${
+      className={`min-h-[280px] p-2 md:min-h-[340px] md:p-3 cursor-pointer transition-colors ${
         isSelected
-          ? 'bg-primary/5 border-primary/25'
+          ? 'bg-primary/10'
           : isOver
-          ? 'bg-muted/15 border-dashed'
-          : 'bg-card/30 hover:bg-muted/10'
+          ? 'bg-muted/35'
+          : 'bg-card/35 hover:bg-muted/20'
       }`}
     >
       <div className="mb-3">

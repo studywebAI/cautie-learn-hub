@@ -81,7 +81,6 @@ export function AppSidebar() {
   const [joinSubjectTitle, setJoinSubjectTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTeacherClassId, setActiveTeacherClassId] = useState('');
-  const [otherExpanded, setOtherExpanded] = useState(false);
 
   const isTeacher = context?.role === 'teacher';
   const isRailCollapsed = !isPhone && sidebarState === 'collapsed';
@@ -966,37 +965,31 @@ export function AppSidebar() {
             {visibleOtherItems.length > 0 && (
               <>
                 {(visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
-                <button
-                  type="button"
-                  onClick={() => setOtherExpanded((value) => !value)}
-                  className="mb-1 flex h-8 w-full items-center justify-between rounded-lg px-2 text-left text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase hover:bg-sidebar-accent/45"
-                >
-                  other
-                  <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', otherExpanded ? 'rotate-180' : '')} />
-                </button>
-                {otherExpanded ? (
-                  <div className="space-y-2">
-                    <SidebarMenu>
-                      {visibleOtherItems.map((item) => (
-                        <SidebarMenuItem key={item.label}>
-                          <SidebarMenuButton
-                            asChild
-                            isActive={isMenuItemActive(item.href)}
-                            tooltip={item.label}
-                          >
-                            <Link href={item.href} onClick={() => setOpenMobile(false)}>
-                              <item.icon className="h-4 w-4" />
-                              <span className="text-[12px] leading-4">{item.label}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                    <RecentsSidebar />
-                  </div>
-                ) : null}
+                <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">other</p>
+                <SidebarMenu>
+                  {visibleOtherItems.map((item) => (
+                    <SidebarMenuItem key={item.label}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isMenuItemActive(item.href)}
+                        tooltip={item.label}
+                      >
+                        <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                          <item.icon className="h-4 w-4" />
+                          <span className="text-[12px] leading-4">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
               </>
             )}
+
+            <div className="space-y-2">
+              {(visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
+              <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">recents</p>
+              <RecentsSidebar />
+            </div>
           </SidebarContent>
           <SidebarFooter className="flex flex-col gap-2 px-2.5 pb-2.5 pt-2">
             <SidebarProfile />
@@ -1079,37 +1072,31 @@ export function AppSidebar() {
         {visibleOtherItems.length > 0 && (
           <>
             {(visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
-            <button
-              type="button"
-              onClick={() => setOtherExpanded((value) => !value)}
-              className="mb-1 flex h-8 w-full items-center justify-between rounded-lg px-2 text-left text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase hover:bg-sidebar-accent/45 group-data-[collapsible=icon]:hidden"
-            >
-              other
-              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', otherExpanded ? 'rotate-180' : '')} />
-            </button>
-            {otherExpanded ? (
-              <div className="space-y-2 group-data-[collapsible=icon]:hidden">
-                <SidebarMenu>
-                  {visibleOtherItems.map((item) => (
-                    <SidebarMenuItem key={item.label}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isMenuItemActive(item.href)}
-                        tooltip={item.label}
-                      >
-                        <Link href={item.href}>
-                          <item.icon className="h-4 w-4" />
-                          <span className="text-[12px] leading-4">{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-                <RecentsSidebar />
-              </div>
-            ) : null}
+            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">other</p>
+            <SidebarMenu className="group-data-[collapsible=icon]:hidden">
+              {visibleOtherItems.map((item) => (
+                <SidebarMenuItem key={item.label}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isMenuItemActive(item.href)}
+                    tooltip={item.label}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span className="text-[12px] leading-4">{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
           </>
         )}
+
+        <div className="space-y-2 group-data-[collapsible=icon]:hidden">
+          {(visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
+          <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">recents</p>
+          <RecentsSidebar />
+        </div>
       </SidebarContent>
       <SidebarFooter className="px-2.5 pt-2 pb-2.5 flex flex-col gap-2">
         <SidebarProfile />

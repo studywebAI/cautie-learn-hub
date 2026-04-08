@@ -576,6 +576,21 @@
 }
 
 @layer utilities {
+  .agenda-clean :is([class*="border"], [class*="divide-"]) {
+    border-color: transparent !important;
+  }
+
+  .agenda-clean :is([class*="ring-"], [class*="outline-"]) {
+    --tw-ring-color: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  .agenda-clean .bg-white {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
   @keyframes scan {
     0% {
       transform: translateY(-10%);

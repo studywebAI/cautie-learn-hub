@@ -163,15 +163,21 @@ function detectKind(name?: string, mimeType?: string): MicrosoftFileKind | null 
   return null;
 }
 
-export async function listMicrosoftFiles(input: { accessToken: string; kind: MicrosoftFileKind; query?: string }) {
-  const source = (input as any).source as 'all' | 'files' | 'recent' | undefined;
+export async function listMicrosoftFiles(input: {
+  accessToken: string;
+  kind: MicrosoftFileKind;
+  query?: string;
+  source?: 'all' | 'files' | 'recent';
+}) {
+  const source = input.source;
   const query = input.query?.trim();
   const rootUrl = new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/root/children`);
   rootUrl.searchParams.set('$top', '80');
   rootUrl.searchParams.set('$expand', 'thumbnails($select=small,medium,large)');
   const recentUrl = new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/recent`);
   recentUrl.searchParams.set('$top', '80');
-  recentUrl.searchParams.set('$expand', 'thumbnails($select=small,medium,large)');
+  // /me/drive/recent does not support thumbnail/children expansion.
+  recentUrl.searchParams.set('$select', 'id,name,webUrl,size,lastModifiedDateTime,file,folder,remoteItem');
   const searchUrl = query
     ? new URL(`${MICROSOFT_GRAPH_BASE}/me/drive/root/search(q='${query.replace(/'/g, "''")}')`)
     : null;

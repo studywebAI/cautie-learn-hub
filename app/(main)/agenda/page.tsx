@@ -617,7 +617,7 @@ function AgendaPageContent() {
   }
 
   return (
-    <div className="h-full p-2 md:p-3">
+    <div className="agenda-clean h-full p-2 md:p-3">
       <div className="flex h-full flex-col gap-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="text-xs text-muted-foreground">
@@ -637,7 +637,7 @@ function AgendaPageContent() {
                     }
                     router.replace(`/agenda?classId=${nextClassId}`);
                   }}
-                  className="h-9 min-w-[190px] rounded-md border border-border bg-white px-2 text-sm"
+                  className="h-9 min-w-[190px] rounded-md bg-card px-2 text-sm text-foreground shadow-sm"
                 >
                   {teacherClasses.map((classItem) => (
                     <option key={classItem.id} value={classItem.id}>
@@ -648,7 +648,7 @@ function AgendaPageContent() {
 
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="secondary" size="sm" className="gap-2 bg-white">
+                    <Button variant="secondary" size="sm" className="gap-2 bg-card hover:bg-muted/70 shadow-sm">
                       <SlidersHorizontal className="h-4 w-4" />
                       Classes ({overlayClassIds.length})
                     </Button>
@@ -663,7 +663,7 @@ function AgendaPageContent() {
                             key={classItem.id}
                             type="button"
                             onClick={() => toggleOverlayClass(classItem.id)}
-                            className="flex w-full items-center justify-between gap-2 rounded-lg border p-2 text-left"
+                            className="flex w-full items-center justify-between gap-2 rounded-lg bg-card p-2 text-left shadow-sm"
                           >
                             <span className="text-sm">{classItem.name}</span>
                             <Checkbox
@@ -692,7 +692,7 @@ function AgendaPageContent() {
             )}
 
             {isTeacher && (
-              <Button className="bg-white text-foreground hover:bg-white/95 border border-border" onClick={() => setIsTeacherDialogOpen(true)}>
+              <Button className="bg-card text-foreground hover:bg-muted/70 shadow-sm" onClick={() => setIsTeacherDialogOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Agenda Item
               </Button>

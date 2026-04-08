@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Readability } from '@mozilla/readability';
+import { JSDOM } from 'jsdom';
 
 const MIN_MEANINGFUL_TEXT_LENGTH = 140;
 
@@ -54,6 +56,21 @@ const cleanupExtractedText = (text: string) => {
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
+};
+
+const extractReadableArticleText = (html: string, pageUrl: string) => {
+  try {
+    const dom = new JSDOM(html, { url: pageUrl });
+    const reader = new Readability(dom.window.document);
+    const article = reader.parse();
+    const title = cleanupExtractedText(String(article?.title || ''));
+    const byline = cleanupExtractedText(String(article?.byline || ''));
+    const body = cleanupExtractedText(String(article?.textContent || ''));
+    const combined = cleanupExtractedText([title, byline, body].filter(Boolean).join('\n\n'));
+    return combined;
+  } catch {
+    return '';
+  }
 };
 
 const decodeHtmlEntities = (value: string) => {
@@ -227,12 +244,18 @@ export async function POST(req: NextRequest) {
     if (contentType.includes('text/plain')) {
       extracted = cleanupExtractedText(raw);
     } else {
-      const title = extractTitle(raw);
-      const ogTitle = extractMeta(raw, 'og:title');
-      const description = extractMeta(raw, 'description') || extractMeta(raw, 'og:description');
-      const bodyText = cleanupExtractedText(stripHtmlToText(raw));
-      const header = [ogTitle || title, description].filter(Boolean).join('\n\n');
-      extracted = cleanupExtractedText([header, bodyText].filter(Boolean).join('\n\n'));
+      // Primary article extraction path for random websites.
+      const readabilityText = extractReadableArticleText(raw, parsedUrl.toString());
+      if (readabilityText.length >= MIN_MEANINGFUL_TEXT_LENGTH) {
+        extracted = readabilityText;
+      } else {
+        const title = extractTitle(raw);
+        const ogTitle = extractMeta(raw, 'og:title');
+        const description = extractMeta(raw, 'description') || extractMeta(raw, 'og:description');
+        const bodyText = cleanupExtractedText(stripHtmlToText(raw));
+        const header = [ogTitle || title, description].filter(Boolean).join('\n\n');
+        extracted = cleanupExtractedText([header, bodyText].filter(Boolean).join('\n\n'));
+      }
     }
 
     // YouTube commonly blocks usable transcript extraction from page HTML.
