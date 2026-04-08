@@ -24,7 +24,7 @@ import { PaintOverlay } from '@/components/tools/paint-overlay';
 import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { CommunityPublishButton } from '@/components/tools/community-publish-button';
+import { ToolContextPanel } from '@/components/tools/tool-context-panel';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -144,6 +144,7 @@ const BASE_AUTO_HIGHLIGHT_TARGETS: AutoHighlightTarget[] = [
 function NotesPageContent() {
   const searchParams = useSearchParams();
   const runId = searchParams.get('runId');
+  const classId = searchParams.get('classId');
   const taskId = searchParams.get('taskId');
   const studysetId = searchParams.get('studysetId');
   const launchRequested = searchParams.get('launch') === '1';
@@ -576,7 +577,12 @@ function NotesPageContent() {
       return notes;
     } catch (error: any) {
       if (!background) {
-        toast({ variant: 'destructive', title: t.notes.generatingTitle, description: error?.message || 'Unable to generate notes' });
+        toast({
+          variant: 'destructive',
+          title: t.notes.generatingTitle,
+          description: error?.message || 'Unable to generate notes',
+          errorCode: error?.code ? String(error.code) : undefined,
+        });
       }
       return null;
     } finally {
@@ -647,6 +653,7 @@ function NotesPageContent() {
           variant: 'destructive',
           title: 'Could not start studyset task',
           description: error?.message || 'Please refresh and try again.',
+          errorCode: error?.code ? String(error.code) : undefined,
         });
         setShowLaunchScreen(false);
       }
@@ -1150,6 +1157,8 @@ function NotesPageContent() {
 
   const sidebar = (
     <>
+      <ToolContextPanel currentTool="notes" classId={classId} />
+
       <div className="space-y-1.5">
         <p className="text-xs text-muted-foreground">{t.title}</p>
         <input
@@ -1187,14 +1196,6 @@ function NotesPageContent() {
           className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
         />
       </div>
-
-      <CommunityPublishButton
-        artifactId={artifactId}
-        toolId="notes"
-        defaultTitle={customTitle.trim() || 'Notes'}
-        defaultDescription={sourceText.trim().slice(0, 240)}
-        defaultLanguage={language}
-      />
 
       <ImportToolbar
         toolType="notes"

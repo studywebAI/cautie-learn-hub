@@ -1,4 +1,14 @@
 type FlowHandler = (input: any) => Promise<any> | any;
+import {
+  canUseOpenAIFallback,
+  executeOpenAIFallbackFlow,
+  shouldFallbackToOpenAI,
+} from "@/lib/ai/openai-fallback";
+
+export type AIExecutionOptions = {
+  providerPreference?: "auto" | "gemini" | "openai";
+  openaiApiKey?: string;
+};
 
 const SOURCE_GROUNDED_FLOWS = new Set(["generateNotes", "generateQuiz", "generateFlashcards"]);
 const SOURCE_GROUNDING_INSTRUCTION = [
@@ -84,7 +94,11 @@ export function getSupportedFlows() {
   return Object.keys(flowMap);
 }
 
-export async function executeAIFlow(flowName: string, input: any) {
+export async function executeAIFlow(
+  flowName: string,
+  input: any,
+  options?: AIExecutionOptions
+) {
   const loader = flowMap[flowName];
   if (!loader) {
     throw new Error(`Flow '${flowName}' not found`);
@@ -100,5 +114,20 @@ export async function executeAIFlow(flowName: string, input: any) {
       ? { ...input, groundingInstruction: SOURCE_GROUNDING_INSTRUCTION }
       : input;
 
-  return flow(enrichedInput);
+  const providerPreference = options?.providerPreference || "auto";
+  const openaiApiKey = options?.openaiApiKey || process.env.OPENAI_API_KEY || "";
+  const canFallback = canUseOpenAIFallback(flowName) && !!openaiApiKey;
+
+  if (providerPreference === "openai" && canFallback) {
+    return executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey);
+  }
+
+  try {
+    return await flow(enrichedInput);
+  } catch (error) {
+    if (canFallback && providerPreference !== "gemini" && shouldFallbackToOpenAI(error)) {
+      return executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey);
+    }
+    throw error;
+  }
 }

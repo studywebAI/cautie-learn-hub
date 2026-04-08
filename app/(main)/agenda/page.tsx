@@ -648,7 +648,7 @@ function AgendaPageContent() {
 
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2 bg-white">
+                    <Button variant="secondary" size="sm" className="gap-2 bg-white">
                       <SlidersHorizontal className="h-4 w-4" />
                       Classes ({overlayClassIds.length})
                     </Button>
@@ -764,3 +764,4 @@ function AgendaPageContent() {
     </div>
   );
 }
+

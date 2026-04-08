@@ -316,7 +316,7 @@ export function LinkPickerDialog({ isOpen, onClose, onSelect, classId }: LinkPic
         )}
 
         <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button onClick={handleSelect} disabled={!selectedItem}>
             Add Link
           </Button>
@@ -325,3 +325,4 @@ export function LinkPickerDialog({ isOpen, onClose, onSelect, classId }: LinkPic
     </Dialog>
   );
 }
+

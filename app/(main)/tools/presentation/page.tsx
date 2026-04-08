@@ -16,6 +16,7 @@ import { PresentationPreview } from '@/components/presentation/presentation-prev
 import { SlideshowView } from '@/components/presentation/slideshow-view';
 import { ActionBar } from '@/components/presentation/action-bar';
 import { OneDriveExportFolderPicker } from '@/components/presentation/onedrive-export-folder-picker';
+import { ToolContextPanel } from '@/components/tools/tool-context-panel';
 
 type PresentationPlatform = 'powerpoint' | 'google-slides' | 'keynote';
 type WorkflowStage = 'source' | 'settings' | 'building' | 'preview';
@@ -187,6 +188,7 @@ function PresentationPageContent() {
   const searchParams = useSearchParams();
   const projectIdFromParams = searchParams.get('projectId');
   const sourceTextFromParams = searchParams.get('sourceText');
+  const classId = searchParams.get('classId');
   const initialSourceSeed = sourceTextFromParams || '';
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
@@ -1219,6 +1221,11 @@ function PresentationPageContent() {
           multiple
           onChange={(event) => void onUploadFiles(event.target.files)}
         />
+        <Card className="border border-border/70">
+          <CardContent className="p-3">
+            <ToolContextPanel currentTool="presentation" classId={classId} compact={false} />
+          </CardContent>
+        </Card>
         {(isPlanning || isBuilding) && (
           <div className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-background/70 backdrop-blur-[1px]">
             <Loader2 className="h-8 w-8 animate-spin" />

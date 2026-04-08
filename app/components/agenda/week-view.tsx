@@ -115,7 +115,7 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
         <div className="flex items-center justify-between gap-2">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="icon"
             className="h-8 w-8 bg-white"
             onClick={() => setWeekOffset((prev) => prev - 1)}
@@ -127,7 +127,7 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
           </div>
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="icon"
             className="h-8 w-8 bg-white"
             onClick={() => setWeekOffset((prev) => prev + 1)}
@@ -183,3 +183,4 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -187,7 +187,7 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
             <div className="flex-1 min-w-0">
               <CardTitle className="text-lg truncate">{event.title}</CardTitle>
               <CardDescription className="flex items-center gap-2 mt-1">
-                <Badge variant="outline">{typeStyle.label}</Badge>
+                <Badge variant="secondary">{typeStyle.label}</Badge>
                 {event.class_name && (
                   <Badge
                     variant="secondary"
@@ -274,7 +274,7 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
             <div className="pt-4 border-t">
               <h4 className="text-sm font-medium mb-3">Actions</h4>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={handleEdit}>
+                <Button variant="secondary" size="sm" onClick={handleEdit}>
                   <FileText className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
@@ -304,7 +304,7 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
                 >
                   <FileText className="h-4 w-4 text-primary" />
                   <span className="text-sm truncate">{link.title}</span>
-                  <Badge variant="outline" className="text-xs ml-auto">{link.type}</Badge>
+                  <Badge variant="secondary" className="text-xs ml-auto">{link.type}</Badge>
                 </Link>
               ))}
             </div>
@@ -314,4 +314,5 @@ export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, o
     </div>
   );
 }
+
 

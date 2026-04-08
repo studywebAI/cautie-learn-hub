@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { format, isToday, isTomorrow, isThisWeek } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
@@ -124,7 +124,7 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
           <span>{event.subject}</span>
           {event.class_name && (
             <>
-              <span>·</span>
+              <span>�</span>
               <span
                 className="inline-flex rounded-full px-2 py-0.5 text-white text-[10px]"
                 style={{ backgroundColor: getClassChipColor(event.class_id) }}
@@ -135,14 +135,14 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
           )}
           {event.chapter_title && (
             <>
-              <span>â€º</span>
+              <span>›</span>
               <span className="truncate">{event.chapter_title}</span>
             </>
           )}
         </div>
         {event.linked_path && (
           <div className="text-xs text-primary mt-1 truncate">
-            â†’ {event.linked_path}
+            → {event.linked_path}
           </div>
         )}
       </div>
@@ -158,7 +158,7 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
         <div className="text-right">
           <p className="text-sm">{format(event.date, 'EEE, MMM d')}</p>
           {event.priority && (
-            <Badge variant="outline" className={`text-xs ${
+            <Badge variant="secondary" className={`text-xs ${
               event.priority === 'high' ? 'text-destructive' :
               event.priority === 'medium' ? 'text-yellow-600' : 'text-green-600'
             }`}>
@@ -197,4 +197,5 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
 
   return content;
 }
+
 

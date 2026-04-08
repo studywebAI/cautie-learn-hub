@@ -357,7 +357,7 @@ export function TeacherDeadlineDialog({
               <Label htmlFor="class">Class</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button id="class" variant="outline" className="justify-between">
+                  <Button id="class" variant="secondary" className="justify-between">
                     {selectedClasses.length > 0
                       ? `${selectedClasses.length} class${selectedClasses.length === 1 ? '' : 'es'} selected`
                       : 'Select classes'}
@@ -412,7 +412,7 @@ export function TeacherDeadlineDialog({
               <Label htmlFor="subject">Subject (optional)</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button id="subject" variant="outline" className="justify-between">
+                  <Button id="subject" variant="secondary" className="justify-between">
                     {selectedSubjects.length > 0
                       ? `${selectedSubjects.length} subject${selectedSubjects.length === 1 ? '' : 's'} selected`
                       : isLoadingSubjects
@@ -460,7 +460,7 @@ export function TeacherDeadlineDialog({
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     className={cn('justify-start text-left', !date && 'text-muted-foreground')}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -538,7 +538,7 @@ export function TeacherDeadlineDialog({
                   Search recents and attach context links.
                 </p>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => setSourcesOpen((open) => !open)}>
+              <Button type="button" variant="secondary" size="sm" onClick={() => setSourcesOpen((open) => !open)}>
                 <LinkIcon className="h-4 w-4 mr-2" />
                 {sourcesOpen ? 'Close search' : 'Link from recents'}
               </Button>
@@ -581,7 +581,7 @@ export function TeacherDeadlineDialog({
               <div className="space-y-2">
                 {links.map((link, index) => (
                   <div key={`${link.link_type}-${link.link_ref_id || index}`} className="flex items-center gap-2 rounded-lg border p-2">
-                    <Badge variant="outline">{link.link_type}</Badge>
+                    <Badge variant="secondary">{link.link_type}</Badge>
                     <span className="text-sm truncate flex-1">{link.label}</span>
                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeLink(index)}>
                       <X className="h-3.5 w-3.5" />
@@ -594,7 +594,7 @@ export function TeacherDeadlineDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={resetAndClose}>
+          <Button variant="secondary" onClick={resetAndClose}>
             Cancel
           </Button>
           <Button onClick={handleCreate} disabled={isLoading}>
@@ -606,3 +606,4 @@ export function TeacherDeadlineDialog({
     </Dialog>
   );
 }
+

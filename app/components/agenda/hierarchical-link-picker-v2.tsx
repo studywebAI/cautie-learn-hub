@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import {
@@ -179,7 +179,7 @@ export function HierarchicalLinkPickerV2({
         type: 'assignment',
         url: item.path || '',
         title: item.title,
-        path: `${item.subjectName} â€º ${item.chapterTitle} â€º ${item.paragraphTitle} â€º ${item.assignmentIndex}`,
+        path: `${item.subjectName} › ${item.chapterTitle} › ${item.paragraphTitle} › ${item.assignmentIndex}`,
       });
       onClose();
       return;
@@ -255,10 +255,10 @@ export function HierarchicalLinkPickerV2({
 
   const getItemDescription = (item: LinkItem) => {
     if (item.type === 'assignment') {
-      return `${item.subjectName} â€º ${item.chapterTitle} â€º ${item.paragraphTitle}`;
+      return `${item.subjectName} › ${item.chapterTitle} › ${item.paragraphTitle}`;
     }
     if (item.type === 'paragraph') {
-      return `${item.subjectName} â€º ${item.chapterTitle}`;
+      return `${item.subjectName} › ${item.chapterTitle}`;
     }
     if (item.type === 'chapter') {
       return item.subjectName;
@@ -351,10 +351,11 @@ export function HierarchicalLinkPickerV2({
         )}
 
         <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
 

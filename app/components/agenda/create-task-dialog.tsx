@@ -140,7 +140,7 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
-                  variant={"outline"}
+                  variant={"secondary"}
                   className={cn(
                     "justify-start text-left font-normal",
                     !date && "text-muted-foreground"
@@ -167,7 +167,7 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
+          <Button variant="secondary" onClick={resetAndClose}>Cancel</Button>
           <Button onClick={handleCreateTask} disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Add Task
@@ -177,3 +177,4 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
     </Dialog>
   );
 }
+

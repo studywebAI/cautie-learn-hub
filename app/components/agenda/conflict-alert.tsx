@@ -41,21 +41,21 @@ export function ConflictAlert({ conflicts, onResolveConflict }: ConflictAlertPro
                   <>
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="secondary"
                       onClick={() => onResolveConflict(conflict, 'reschedule_first')}
                     >
                       Reschedule Task 1
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="secondary"
                       onClick={() => onResolveConflict(conflict, 'reschedule_second')}
                     >
                       Reschedule Task 2
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="secondary"
                       onClick={() => onResolveConflict(conflict, 'extend_duration')}
                     >
                       Extend Duration

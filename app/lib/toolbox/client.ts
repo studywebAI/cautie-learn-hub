@@ -32,7 +32,12 @@ export async function runToolFlowV2(payload: RunToolFlowInput) {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data?.error || "Tool execution failed");
+    const message = data?.error || "Tool execution failed";
+    const code = data?.code ? String(data.code) : "";
+    const enriched = code ? `${message} (code: ${code})` : message;
+    const error = new Error(enriched) as Error & { code?: string };
+    if (code) error.code = code;
+    throw error;
   }
   return data;
 }

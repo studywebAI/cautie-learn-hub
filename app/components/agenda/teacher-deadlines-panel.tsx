@@ -127,7 +127,7 @@ export function TeacherDeadlinesPanel({ events, selectedDay, onEventClick }: Tea
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="secondary" className="text-xs">
                       {format(event.date, 'MMM d')}
                     </Badge>
                   </div>
@@ -144,3 +144,4 @@ export function TeacherDeadlinesPanel({ events, selectedDay, onEventClick }: Tea
     </Card>
   );
 }
+

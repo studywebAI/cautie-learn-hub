@@ -15,7 +15,6 @@ import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 
 const SUBSCRIPTION_CACHE_KEY = 'studyweb-subscription-cache-v1';
 const SUBSCRIPTION_CACHE_TTL_MS = 300_000;
-const AI_PROVIDER_KEY = 'studyweb-ai-provider';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -40,6 +39,12 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState('');
   const [displayNameSaving, setDisplayNameSaving] = useState(false);
   const [aiProvider, setAiProvider] = useState<'gemini' | 'openai' | 'auto'>('auto');
+  const [openaiApiKeyDraft, setOpenaiApiKeyDraft] = useState('');
+  const [aiSettingsLoading, setAiSettingsLoading] = useState(true);
+  const [aiSettingsSaving, setAiSettingsSaving] = useState(false);
+  const [aiSettingsStatus, setAiSettingsStatus] = useState('');
+  const [hasOpenAIKey, setHasOpenAIKey] = useState(false);
+  const [usesDefaultOpenAIKey, setUsesDefaultOpenAIKey] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -53,12 +58,50 @@ export default function SettingsPage() {
   }, [session?.user?.email]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const raw = window.localStorage.getItem(AI_PROVIDER_KEY);
-    if (raw === 'gemini' || raw === 'openai' || raw === 'auto') {
-      setAiProvider(raw);
-    }
+    const loadAiSettings = async () => {
+      setAiSettingsLoading(true);
+      try {
+        const response = await fetch('/api/user/ai-settings', { cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data?.providerPreference === 'gemini' || data?.providerPreference === 'openai' || data?.providerPreference === 'auto') {
+          setAiProvider(data.providerPreference);
+        }
+        setHasOpenAIKey(Boolean(data?.hasOpenAIKey));
+        setUsesDefaultOpenAIKey(Boolean(data?.usesDefaultOpenAIKey));
+      } catch {
+        // silent fallback
+      } finally {
+        setAiSettingsLoading(false);
+      }
+    };
+    void loadAiSettings();
   }, []);
+
+  const saveAiSettings = async () => {
+    setAiSettingsSaving(true);
+    setAiSettingsStatus('');
+    try {
+      const response = await fetch('/api/user/ai-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          providerPreference: aiProvider,
+          openaiApiKey: openaiApiKeyDraft.trim(),
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || 'Could not save AI settings');
+      setHasOpenAIKey(Boolean(data?.hasOpenAIKey));
+      setUsesDefaultOpenAIKey(Boolean(data?.usesDefaultOpenAIKey));
+      setOpenaiApiKeyDraft('');
+      setAiSettingsStatus('Saved');
+    } catch (error: any) {
+      setAiSettingsStatus(error?.message || 'Save failed');
+    } finally {
+      setAiSettingsSaving(false);
+    }
+  };
 
   const saveDisplayName = async () => {
     const next = displayName.trim();
@@ -264,9 +307,6 @@ export default function SettingsPage() {
                       onValueChange={(value) => {
                         const next = (value as 'gemini' | 'openai' | 'auto');
                         setAiProvider(next);
-                        if (typeof window !== 'undefined') {
-                          window.localStorage.setItem(AI_PROVIDER_KEY, next);
-                        }
                       }}
                     >
                       <SelectTrigger id="provider">
@@ -278,6 +318,35 @@ export default function SettingsPage() {
                         <SelectItem value="openai">OpenAI</SelectItem>
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">Auto uses Gemini first and switches to OpenAI on token/context-limit failures.</p>
+                  </div>
+
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="openai-user-key">OpenAI API key (optional)</Label>
+                    <Input
+                      id="openai-user-key"
+                      type="password"
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={openaiApiKeyDraft}
+                      onChange={(event) => setOpenaiApiKeyDraft(event.target.value)}
+                      placeholder="sk-..."
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {hasOpenAIKey ? 'Custom OpenAI key saved for your account.' : usesDefaultOpenAIKey ? 'Using platform default OpenAI key.' : 'No OpenAI key available yet.'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Your key is encrypted server-side and never returned to the client after saving.</p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => void saveAiSettings()}
+                        disabled={aiSettingsSaving || aiSettingsLoading}
+                      >
+                        {aiSettingsSaving ? 'Saving...' : 'Save AI settings'}
+                      </Button>
+                      {aiSettingsStatus ? <span className="text-xs text-muted-foreground">{aiSettingsStatus}</span> : null}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

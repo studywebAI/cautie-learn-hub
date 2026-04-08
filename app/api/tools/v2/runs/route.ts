@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { z } from "zod";
 import { executeAIFlow } from "@/lib/ai/flow-executor";
+import { readUserAIRuntimeOptions } from "@/lib/ai/runtime-settings";
 import type { ComputeClass, ToolRunStatus } from "@/lib/toolbox/contracts";
 import { enforceSourceOnlyGuard } from "@/lib/toolbox/source-guard";
 import {
@@ -132,7 +133,8 @@ export async function POST(request: NextRequest) {
 
     try {
       const inputPayload = enriched.input;
-      const output = await executeAIFlow(payload.flowName, inputPayload);
+      const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id);
+      const output = await executeAIFlow(payload.flowName, inputPayload, runtimeOptions);
       enforceSourceOnlyGuard({
         toolId: payload.toolId,
         inputPayload,

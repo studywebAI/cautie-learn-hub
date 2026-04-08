@@ -487,6 +487,11 @@
     font-stretch: 90% !important;
     font-variation-settings: "wght" 420, "wdth" 90;
   }
+  *:focus,
+  *:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-ui);

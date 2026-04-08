@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ChevronRight, Search, Loader2, BookOpen, Check, Keyboard } from 'lucide-react';
@@ -31,9 +31,9 @@ type HierarchicalLinkPickerProps = { isOpen: boolean; onClose: () => void; onSel
 function KeyboardHint() {
   return (
     <div className="flex items-center gap-3 text-xs text-muted-foreground px-2 py-1 border-t bg-muted/30">
-      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">â†‘</kbd><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">â†“</kbd> Navigate</span>
-      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">â†µ</kbd> Select</span>
-      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">â†</kbd> Back</span>
+      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">↑</kbd><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">↓</kbd> Navigate</span>
+      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">↵</kbd> Select</span>
+      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">←</kbd> Back</span>
       <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">esc</kbd> Close</span>
     </div>
   );
@@ -170,7 +170,7 @@ export function HierarchicalLinkPicker({ isOpen, onClose, onSelect, classId }: H
     const link: LinkedContent = {
       type: 'paragraph',
       url: `/subjects/${subject?.id}/chapters/${chapter?.id}/paragraphs/${paragraph.id}`,
-      title: `${subject?.title || 'Subject'} â€º ${chapter?.title || 'Chapter'} â€º ${paragraph.title}`,
+      title: `${subject?.title || 'Subject'} › ${chapter?.title || 'Chapter'} › ${paragraph.title}`,
       level: 'paragraphs',
     };
     handleSelect(link);
@@ -185,7 +185,7 @@ export function HierarchicalLinkPicker({ isOpen, onClose, onSelect, classId }: H
       type: 'assignment',
       url: `/subjects/${subject?.id}/chapters/${chapter?.id}/paragraphs/${paragraph?.id}/assignments/${assignment.id}`,
       title: assignment.title || `Assignment ${letter}`,
-      path: `${subject?.title} â€º ${chapter?.title} â€º ${paragraph?.title} â€º ${letter}`,
+      path: `${subject?.title} › ${chapter?.title} › ${paragraph?.title} › ${letter}`,
       level: 'assignments',
     };
     handleSelect(link);
@@ -318,10 +318,11 @@ export function HierarchicalLinkPicker({ isOpen, onClose, onSelect, classId }: H
           <KeyboardHint />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
 
