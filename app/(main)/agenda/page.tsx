@@ -8,12 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CreateTaskDialog } from '@/components/agenda/create-task-dialog';
-import { TodayPanel } from '@/components/agenda/today-panel';
 import { WeekView } from '@/components/agenda/week-view';
 import { ListView } from '@/components/agenda/list-view';
 import { ViewToggle } from '@/components/agenda/view-toggle';
 import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dialog';
-import { TeacherDeadlinesPanel } from '@/components/agenda/teacher-deadlines-panel';
 import { AssignmentDetailsPanel } from '@/components/agenda/assignment-details-panel';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { PlusCircle, SlidersHorizontal } from 'lucide-react';
@@ -502,19 +500,6 @@ function AgendaPageContent() {
     return merged;
   }, [agendaDebugId, isLoading, isTeacher, isStudent, overlayClassIds, teacherAgendaItems, studentAgendaItems, personalTasks, scheduleSlots, studysetAgendaItems]);
 
-  const eventsByDate = useMemo(() => {
-    const map = new Map<string, CalendarEvent[]>();
-    events.forEach((event) => {
-      const dateString = format(event.date, 'yyyy-MM-dd');
-      if (!map.has(dateString)) map.set(dateString, []);
-      map.get(dateString)?.push(event);
-    });
-    return map;
-  }, [events]);
-
-  const selectedDayString = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : '';
-  const eventsForSelectedDay = eventsByDate.get(selectedDayString) || [];
-
   const handleTaskCreated = async (newTask: Omit<PersonalTask, 'id' | 'created_at' | 'user_id'>) => {
     await createPersonalTask(newTask);
   };
@@ -617,35 +602,11 @@ function AgendaPageContent() {
   }
 
   return (
-    <div className="agenda-clean h-full p-2 md:p-3">
-      <div className="flex h-full flex-col gap-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="text-xs text-muted-foreground">
-            {isTeacher ? 'Plan once, overlay multiple classes, publish when ready.' : 'Your agenda combines class items, schedule, and personal tasks.'}
-          </div>
-
-          <div className="flex items-center gap-3">
+    <div className="agenda-clean h-full pt-4 pl-4 pr-2 pb-2 md:pt-5 md:pl-5 md:pr-2.5 md:pb-2.5">
+      <div className="flex h-full flex-col gap-6">
+        <div className="flex flex-wrap items-center gap-3">
             {isTeacher && (
               <>
-                <select
-                  value={selectedClassId}
-                  onChange={(event) => {
-                    const nextClassId = event.target.value;
-                    setSelectedClassId(nextClassId);
-                    if (typeof window !== 'undefined') {
-                      window.localStorage.setItem('studyweb-last-class-id', nextClassId);
-                    }
-                    router.replace(`/agenda?classId=${nextClassId}`);
-                  }}
-                  className="h-9 min-w-[190px] rounded-md bg-card px-2 text-sm text-foreground shadow-sm"
-                >
-                  {teacherClasses.map((classItem) => (
-                    <option key={classItem.id} value={classItem.id}>
-                      {classItem.name}
-                    </option>
-                  ))}
-                </select>
-
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="secondary" size="sm" className="gap-2 bg-card hover:bg-muted/70 shadow-sm">
@@ -697,11 +658,10 @@ function AgendaPageContent() {
                 Add Agenda Item
               </Button>
             )}
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start flex-1">
-          <div className="md:col-span-8 lg:col-span-9">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start flex-1">
+          <div className={selectedEvent ? 'md:col-span-8 lg:col-span-9' : 'md:col-span-12'}>
             {viewMode === 'week' ? (
               <WeekView
                 events={events}
@@ -715,30 +675,14 @@ function AgendaPageContent() {
             )}
           </div>
 
-          <div className="md:col-span-4 lg:col-span-3">
-            {selectedEvent ? (
+          {selectedEvent && (
+            <div className="md:col-span-4 lg:col-span-3">
               <AssignmentDetailsPanel event={selectedEvent} classes={classes || []} isTeacher={isTeacher} isStudent={isStudent} />
-            ) : isStudent ? (
-              <TodayPanel
-                selectedDay={selectedDay}
-                events={eventsForSelectedDay}
-                suggestion={null}
-                isGeneratingSuggestion={false}
-                personalTasks={personalTasks || []}
-                assignments={assignments || []}
-                classes={classes || []}
-                onEventClick={handleEventClick}
-              />
-            ) : (
-              <TeacherDeadlinesPanel events={events || []} selectedDay={selectedDay} onEventClick={handleEventClick} />
-            )}
-
-            {selectedEvent && (
               <Button variant="ghost" size="sm" className="mt-2 w-full" onClick={() => setSelectedEvent(null)}>
                 Back to {isTeacher ? 'Agenda' : 'Today'}
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

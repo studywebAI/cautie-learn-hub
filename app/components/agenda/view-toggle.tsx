@@ -12,7 +12,7 @@ interface ViewToggleProps {
 
 export function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
   return (
-    <div className="flex items-center rounded-lg border bg-white p-1">
+    <div className="flex items-center rounded-xl bg-card p-1 shadow-sm">
       <Button
         variant={currentView === 'week' ? 'default' : 'ghost'}
         size="sm"

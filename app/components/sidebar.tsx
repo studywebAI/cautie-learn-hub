@@ -83,6 +83,7 @@ export function AppSidebar() {
   const [activeTeacherClassId, setActiveTeacherClassId] = useState('');
 
   const isTeacher = context?.role === 'teacher';
+  const isAgendaRoute = pathname === '/agenda' || pathname?.startsWith('/agenda?');
   const isRailCollapsed = !isPhone && sidebarState === 'collapsed';
   const activeClassTab = searchParams?.get('tab') || '';
   const teacherSubjectsHref = isTeacher && activeTeacherClassId ? `/subjects?classId=${activeTeacherClassId}` : '/subjects';
@@ -715,6 +716,7 @@ export function AppSidebar() {
 
   const renderTeacherClassSwitcher = () => {
     if (!isTeacher) return null;
+    if (isAgendaRoute) return null;
     if (isRailCollapsed) return null;
 
     if (isPhone) {
