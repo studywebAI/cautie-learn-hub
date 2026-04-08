@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { format, startOfWeek, addWeeks, isSameDay, parseISO } from 'date-fns';
+import { format, startOfWeek, addWeeks, parseISO } from 'date-fns';
 import type { CalendarEvent } from '@/lib/types';
 import { useDictionary } from '@/contexts/app-context';
 import {
@@ -137,7 +137,7 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
 
       <div className="grid grid-cols-5 gap-2">
         {dayNames.map((name, idx) => (
-          <div key={idx} className="rounded-xl bg-muted/35 py-2.5 text-center text-sm font-medium text-muted-foreground">
+          <div key={idx} className="rounded-xl bg-white py-2.5 text-center text-sm font-medium text-muted-foreground">
             {name}
           </div>
         ))}
@@ -152,7 +152,6 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
           {activeWeek.days.map((day) => {
             const dateString = format(day, 'yyyy-MM-dd');
             const dayEvents = eventsByDate.get(dateString) || [];
-            const isSelected = selectedDay && isSameDay(day, selectedDay);
 
             return (
               <DroppableDay
@@ -160,7 +159,6 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
                 id={`day-${dateString}`}
                 date={day}
                 events={dayEvents}
-                isSelected={isSelected}
                 onClick={() => onDaySelect(day)}
                 onEventClick={onEventClick}
                 compact={isCompact}

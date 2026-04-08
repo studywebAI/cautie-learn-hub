@@ -10,14 +10,13 @@ interface DroppableDayProps {
   id: string;
   date: Date;
   events: CalendarEvent[];
-  isSelected?: boolean;
   onClick: () => void;
   onEventClick?: (event: CalendarEvent) => void;
   compact?: boolean;
 }
 
-export function DroppableDay({ id, date, events, isSelected, onClick, onEventClick, compact = false }: DroppableDayProps) {
-  const { setNodeRef, isOver } = useDroppable({
+export function DroppableDay({ id, date, events, onClick, onEventClick, compact = false }: DroppableDayProps) {
+  const { setNodeRef } = useDroppable({
     id,
   });
 
@@ -25,13 +24,7 @@ export function DroppableDay({ id, date, events, isSelected, onClick, onEventCli
     <div
       ref={setNodeRef}
       onClick={onClick}
-      className={`min-h-[360px] rounded-xl p-3 md:min-h-[520px] md:p-4 cursor-pointer transition-colors ${
-        isSelected
-          ? 'bg-primary/12'
-          : isOver
-          ? 'bg-muted/45'
-          : 'bg-card/45 hover:bg-muted/28'
-      }`}
+      className="min-h-[360px] rounded-xl bg-white p-3 md:min-h-[520px] md:p-4 cursor-pointer transition-colors hover:bg-white"
     >
       <div className="mb-3">
         <div className="text-sm font-medium text-left">{format(date, 'd')}</div>
