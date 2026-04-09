@@ -40,7 +40,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
-import { ToolContextPanel } from '@/components/tools/tool-context-panel';
 
 type StudysetRow = {
   id: string;
@@ -581,12 +580,6 @@ export default function StudysetPage() {
             </CardTitle>
             <CardDescription>Build once, follow day-by-day. Changes auto-save.</CardDescription>
           </CardHeader>
-        </Card>
-
-        <Card className="border-none">
-          <CardContent className="pt-1">
-            <ToolContextPanel currentTool="studyset" compact={false} />
-          </CardContent>
         </Card>
 
         {view === 'home' && (

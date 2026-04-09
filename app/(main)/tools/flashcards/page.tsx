@@ -12,6 +12,7 @@ import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { SourceInput } from '@/components/tools/source-input';
 import { PillSelector } from '@/components/tools/pill-selector';
 import { Slider } from '@/components/ui/slider';
@@ -22,7 +23,6 @@ import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/import-parsers';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { Switch } from '@/components/ui/switch';
-import { ToolContextPanel } from '@/components/tools/tool-context-panel';
 
 const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
   if (!value) return 'flip';
@@ -263,16 +263,12 @@ function FlashcardsPageContent() {
 
   const sidebar = (
     <>
-      <ToolContextPanel currentTool="flashcards" classId={classId} />
-
       <div className="space-y-1.5">
         <p className="text-xs text-muted-foreground">{t.title}</p>
-        <input
-          type="text"
+        <Input
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
-          placeholder={t.titlePlaceholder}
-          className="w-full h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-9 text-sm"
           disabled={isLoading}
         />
       </div>
@@ -301,7 +297,7 @@ function FlashcardsPageContent() {
         />
       </div>
 
-      <div className="flex items-center justify-between rounded-md bg-sidebar-accent/35 px-2 py-1.5">
+      <div className="flex items-center justify-between rounded-lg bg-sidebar-accent/30 px-2.5 py-2">
         <p className="text-xs text-muted-foreground">Save to recents</p>
         <Switch
           checked={saveToRecents}

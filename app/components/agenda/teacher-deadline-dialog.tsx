@@ -486,9 +486,7 @@ export function TeacherDeadlineDialog({
             />
           </div>
 
-          <div
-            className="relative rounded-xl border border-border bg-muted/30 px-3 py-3"
-          >
+          <div className="relative rounded-xl border border-border bg-muted/30 px-3 py-2.5">
             <span
               className={cn(
                 'absolute inset-y-2 left-2 w-1 rounded-full',
@@ -499,9 +497,11 @@ export function TeacherDeadlineDialog({
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">Visible to students</p>
-                  <p className="text-xs text-muted-foreground">
-                    Turn off to keep hidden. You can optionally schedule publish time.
-                  </p>
+                  {!isVisibleToStudents && (
+                    <p className="text-xs text-muted-foreground">
+                      Turned off: students cannot see this yet.
+                    </p>
+                  )}
                 </div>
                 <Switch checked={isVisibleToStudents} onCheckedChange={setIsVisibleToStudents} />
               </div>

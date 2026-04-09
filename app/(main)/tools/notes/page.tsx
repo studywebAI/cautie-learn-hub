@@ -23,8 +23,8 @@ import { getToolStrings } from '@/lib/tool-i18n';
 import { PaintOverlay } from '@/components/tools/paint-overlay';
 import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { ToolContextPanel } from '@/components/tools/tool-context-panel';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -1157,16 +1157,12 @@ function NotesPageContent() {
 
   const sidebar = (
     <>
-      <ToolContextPanel currentTool="notes" classId={classId} />
-
       <div className="space-y-1.5">
         <p className="text-xs text-muted-foreground">{t.title}</p>
-        <input
-          type="text"
+        <Input
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
-          placeholder={t.titlePlaceholder}
-          className="w-full h-8 rounded-md border border-sidebar-border bg-sidebar-accent/70 px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-9 text-sm"
           disabled={isLoading}
         />
       </div>
@@ -1188,7 +1184,7 @@ function NotesPageContent() {
         />
       </div>
 
-      <div className="flex items-center justify-between rounded-md bg-sidebar-accent/35 px-2 py-1.5">
+      <div className="flex items-center justify-between rounded-lg bg-sidebar-accent/30 px-2.5 py-2">
         <p className="text-xs text-muted-foreground">Save to recents</p>
         <Switch
           checked={saveToRecents}
