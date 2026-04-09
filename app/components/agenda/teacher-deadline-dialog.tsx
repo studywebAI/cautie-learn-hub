@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { InputWithTypingPlaceholder } from '@/components/ui/input-with-typing-placeholder';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -25,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { ClassInfo } from '@/contexts/app-context';
+import { HierarchicalLinkPickerV2 } from './hierarchical-link-picker-v2';
 
 type DeadlineType = 'assignment' | 'quiz' | 'studyset' | 'event' | 'other';
 
@@ -97,6 +97,7 @@ export function TeacherDeadlineDialog({
   const [sourceResults, setSourceResults] = useState<LinkSourceOption[]>([]);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [loadingSources, setLoadingSources] = useState(false);
+  const [hierarchyOpen, setHierarchyOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -231,6 +232,8 @@ export function TeacherDeadlineDialog({
     );
     if (duplicate) return;
     setLinks((prev) => [...prev, next]);
+    setSourceQuery('');
+    setSourcesOpen(false);
   };
 
   const removeLink = (index: number) => {
@@ -238,10 +241,10 @@ export function TeacherDeadlineDialog({
   };
 
   const handleCreate = async () => {
-    if (!title.trim() || !date || selectedClassIds.length === 0) {
+    if (!date || selectedClassIds.length === 0) {
       toast({
         title: 'Missing information',
-        description: 'Please provide title, date, and at least one class.',
+        description: 'Please provide date and at least one class.',
         variant: 'destructive',
       });
       return;
@@ -255,6 +258,7 @@ export function TeacherDeadlineDialog({
         ? new Date(`${publishDate}T${publishTime || '09:00'}`).toISOString()
         : null;
 
+      const safeTitle = title.trim() || 'Agenda item';
       for (const classId of selectedClassIds) {
         const classSubjectIds = selectedSubjectIds.filter((subjectId) =>
           (subjectsByClass[classId] || []).some((subject) => subject.id === subjectId)
@@ -262,7 +266,7 @@ export function TeacherDeadlineDialog({
 
         if (classSubjectIds.length === 0) {
           await onDeadlineCreated({
-            title: title.trim(),
+            title: safeTitle,
             description: description.trim(),
             class_id: classId,
             subject_id: null,
@@ -278,7 +282,7 @@ export function TeacherDeadlineDialog({
 
         for (const subjectId of classSubjectIds) {
           await onDeadlineCreated({
-            title: title.trim(),
+            title: safeTitle,
             description: description.trim(),
             class_id: classId,
             subject_id: subjectId,
@@ -294,7 +298,7 @@ export function TeacherDeadlineDialog({
 
       toast({
         title: 'Agenda item created',
-        description: `"${title.trim()}" was added.`,
+        description: `"${safeTitle}" was added.`,
       });
       resetAndClose();
     } catch {
@@ -344,11 +348,10 @@ export function TeacherDeadlineDialog({
         <div className="grid gap-5 py-2 max-h-[70vh] overflow-y-auto pr-1">
           <div className="grid gap-2">
             <Label htmlFor="title">Title</Label>
-            <InputWithTypingPlaceholder
+            <Input
               id="title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholders={['Chapter 3 quiz review', 'Read pages 50-70', 'Prepare lab report']}
             />
           </div>
 
@@ -397,10 +400,9 @@ export function TeacherDeadlineDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="assignment">Assignment</SelectItem>
-                  <SelectItem value="quiz">Quiz</SelectItem>
-                  <SelectItem value="studyset">Studyset</SelectItem>
-                  <SelectItem value="event">Event</SelectItem>
+                  <SelectItem value="assignment">Homework</SelectItem>
+                  <SelectItem value="quiz">Test</SelectItem>
+                  <SelectItem value="event">Big Test</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
@@ -480,7 +482,6 @@ export function TeacherDeadlineDialog({
               id="description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Add instructions or context"
               rows={3}
             />
           </div>
@@ -506,7 +507,7 @@ export function TeacherDeadlineDialog({
               </div>
 
               {!isVisibleToStudents && (
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   <div className="grid gap-2">
                     <Label htmlFor="publishDate">Publish date</Label>
                     <Input
@@ -535,13 +536,18 @@ export function TeacherDeadlineDialog({
               <div>
                 <Label>Linked Context</Label>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Search recents and attach context links.
+                  Add recents or subject/chapter/paragraph/assignment links.
                 </p>
               </div>
-              <Button type="button" variant="secondary" size="sm" onClick={() => setSourcesOpen((open) => !open)}>
-                <LinkIcon className="h-4 w-4 mr-2" />
-                {sourcesOpen ? 'Close search' : 'Link from recents'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="secondary" size="sm" onClick={() => setHierarchyOpen(true)}>
+                  Add from subjects
+                </Button>
+                <Button type="button" variant="secondary" size="sm" onClick={() => setSourcesOpen((open) => !open)}>
+                  <LinkIcon className="h-4 w-4 mr-2" />
+                  {sourcesOpen ? 'Close recents' : 'Add from recents'}
+                </Button>
+              </div>
             </div>
 
             {sourcesOpen && (
@@ -551,7 +557,6 @@ export function TeacherDeadlineDialog({
                   <Input
                     value={sourceQuery}
                     onChange={(event) => setSourceQuery(event.target.value)}
-                    placeholder="Search assignments, materials, runs, studysets"
                     className="pl-8"
                   />
                 </div>
@@ -581,7 +586,7 @@ export function TeacherDeadlineDialog({
               <div className="space-y-2">
                 {links.map((link, index) => (
                   <div key={`${link.link_type}-${link.link_ref_id || index}`} className="flex items-center gap-2 rounded-lg border p-2">
-                    <Badge variant="secondary">{link.link_type}</Badge>
+                    <Badge variant="secondary">{link.link_type.replace('_', ' ')}</Badge>
                     <span className="text-sm truncate flex-1">{link.label}</span>
                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeLink(index)}>
                       <X className="h-3.5 w-3.5" />
@@ -603,6 +608,29 @@ export function TeacherDeadlineDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <HierarchicalLinkPickerV2
+        isOpen={hierarchyOpen}
+        onClose={() => setHierarchyOpen(false)}
+        classId={selectedClassIds[0]}
+        onSelect={(picked) => {
+          const duplicate = links.find(
+            (link) =>
+              link.link_type === picked.type &&
+              (link.link_ref_id || '') === '' &&
+              link.label === picked.title
+          );
+          if (duplicate) return;
+          setLinks((prev) => [
+            ...prev,
+            {
+              link_type: picked.type,
+              label: picked.path ? `${picked.title} | ${picked.path}` : picked.title,
+              metadata_json: { path: picked.path || null, url: picked.url || null },
+              position: prev.length,
+            },
+          ]);
+        }}
+      />
     </Dialog>
   );
 }

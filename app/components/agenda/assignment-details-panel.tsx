@@ -1,318 +1,299 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { X, ExternalLink, Pencil, Save, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useDictionary } from '@/contexts/app-context';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  Home,
-  Circle,
-  Square,
-  BookCheck,
-  ChevronRight,
-  BookOpen,
-  FileText
-} from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
 import type { ClassInfo } from '@/contexts/app-context';
+
+type EditableType = 'assignment' | 'quiz' | 'event' | 'other';
+
+type AgendaLink = {
+  id?: string;
+  link_type: string;
+  link_ref_id?: string | null;
+  label: string;
+  metadata_json?: Record<string, any>;
+  position?: number;
+};
 
 interface AssignmentDetailsPanelProps {
   event: CalendarEvent | null;
   classes: ClassInfo[];
   isTeacher: boolean;
   isStudent: boolean;
-  onEdit?: (assignmentId: string) => void;
+  onClose?: () => void;
+  onRefresh?: () => Promise<void> | void;
 }
 
-export function AssignmentDetailsPanel({ event, classes, isTeacher, isStudent, onEdit }: AssignmentDetailsPanelProps) {
-  const { dictionary } = useDictionary();
-  const { toast } = useToast();
+function getAccentColor(event: CalendarEvent) {
+  if (event.visibility_state === 'hidden') return '#c56f6f';
+  if (event.item_type === 'quiz') return '#c38843';
+  if (event.item_type === 'event') return '#c56f6f';
+  if (event.item_type === 'other') return '#8f7bb0';
+  if (event.item_type === 'studyset') return '#5fa771';
+  return '#4f86c0';
+}
+
+export function AssignmentDetailsPanel({ event, isTeacher, onClose, onRefresh }: AssignmentDetailsPanelProps) {
   const router = useRouter();
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [type, setType] = useState<EditableType>('assignment');
+  const [visible, setVisible] = useState(true);
+  const [links, setLinks] = useState<AgendaLink[]>([]);
 
-  if (!event) {
-    return (
-      <div className="h-full flex items-center justify-center text-muted-foreground">
-        <p className="text-sm">Select an item to view details</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!event) return;
+    setTitle(event.title || '');
+    setDescription(event.description || '');
+    setType(((event.item_type as EditableType) || 'assignment') as EditableType);
+    setVisible(event.visibility_state !== 'hidden');
+    setLinks((event.links || []).map((link, idx) => ({ ...link, position: idx })));
+    setIsEditing(false);
+  }, [event?.id]);
 
-  const assignmentType = (event as any).assignment_type || 'homework';
-  const isAgendaItem = event.type === 'agenda_item';
-  const isStudysetPlan =
-    event.type === 'study_plan' &&
-    (event.subject === 'Studyset' || String(event.href || '').includes('studysetId='));
-  const getClassChipColor = (classId?: string) => {
-    if (!classId) return 'hsl(var(--muted))';
-    let hash = 0;
-    for (let i = 0; i < classId.length; i += 1) hash = (hash * 31 + classId.charCodeAt(i)) | 0;
-    const hue = Math.abs(hash) % 360;
-    return `hsl(${hue} 65% 52%)`;
-  };
+  const resourceLinks = useMemo(() => {
+    if (!event) return [];
+    const rows = (links.length > 0 ? links : (event.links || [])).map((link) => {
+      const meta = link.metadata_json || {};
+      let href = meta.url || '#';
 
-  const getTypeStyle = () => {
-    if (isStudysetPlan) {
+      if (link.link_type === 'tool_run') {
+        const toolId = String(meta.tool_id || 'notes');
+        href = `/tools/${toolId}?runId=${link.link_ref_id || ''}`;
+      } else if (link.link_type === 'studyset' && link.link_ref_id) {
+        href = `/tools/studyset/${link.link_ref_id}`;
+      } else if (link.link_type === 'material' && link.link_ref_id) {
+        href = `/material/${link.link_ref_id}`;
+      } else if (link.link_type === 'assignment') {
+        const classId = String(meta.class_id || event.class_id || '');
+        href = classId ? `/class/${classId}?tab=assignments` : '/classes';
+      } else if (['subject', 'chapter', 'paragraph', 'assignment'].includes(link.link_type) && typeof meta.url === 'string') {
+        href = meta.url;
+      }
+
       return {
-        borderColor: '#87A96B',
-        bgColor: 'rgba(135, 169, 107, 0.12)',
-        icon: BookCheck,
-        iconColor: 'text-[#87A96B]',
-        label: 'Studyset task',
+        ...link,
+        href,
       };
+    });
+
+    return rows;
+  }, [event, links]);
+
+  useEffect(() => {
+    resourceLinks.forEach((link) => {
+      if (link.href && link.href.startsWith('/')) router.prefetch(link.href);
+    });
+    if (event?.href && event.href.startsWith('/')) router.prefetch(event.href);
+  }, [resourceLinks, event?.href, router]);
+
+  if (!event) return null;
+
+  const accent = getAccentColor(event);
+  const subjectLine = `${event.subject || 'General'}${event.class_name ? ` | ${event.class_name}` : ''}`;
+
+  const saveChanges = async () => {
+    if (!event.class_id || event.type !== 'agenda_item') {
+      setIsEditing(false);
+      return;
     }
 
-    if (isAgendaItem) {
-      const agendaType = (event.item_type || 'assignment') as string;
-      if (agendaType === 'quiz') {
-        return {
-          borderColor: 'rgb(245, 158, 11)',
-          bgColor: 'rgba(245, 158, 11, 0.1)',
-          icon: Circle,
-          iconColor: 'text-amber-500',
-          label: 'Quiz',
-        };
-      }
-      if (agendaType === 'studyset') {
-        return {
-          borderColor: 'rgb(139, 92, 246)',
-          bgColor: 'rgba(139, 92, 246, 0.1)',
-          icon: BookCheck,
-          iconColor: 'text-violet-500',
-          label: 'Studyset',
-        };
-      }
-      if (agendaType === 'event') {
-        return {
-          borderColor: 'rgb(14, 165, 233)',
-          bgColor: 'rgba(14, 165, 233, 0.1)',
-          icon: Square,
-          iconColor: 'text-sky-500',
-          label: 'Event',
-        };
-      }
-      return {
-        borderColor: 'rgb(59, 130, 246)',
-        bgColor: 'rgba(59, 130, 246, 0.1)',
-        icon: Home,
-        iconColor: 'text-blue-500',
-        label: 'Agenda',
-      };
-    }
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/classes/${event.class_id}/agenda/${event.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim() || 'Agenda item',
+          description: description.trim(),
+          item_type: type,
+          visible,
+          links,
+        }),
+      });
 
-    switch (assignmentType) {
-      case 'homework':
-        return {
-          borderColor: 'rgb(59, 130, 246)',
-          bgColor: 'rgba(59, 130, 246, 0.1)',
-          icon: Home,
-          iconColor: 'text-blue-500',
-          label: 'Homework'
-        };
-      case 'small_test':
-        return {
-          borderColor: 'rgb(249, 115, 22)',
-          bgColor: 'rgba(249, 115, 22, 0.1)',
-          icon: Circle,
-          iconColor: 'text-orange-500',
-          label: 'Small Test'
-        };
-      case 'big_test':
-        return {
-          borderColor: 'rgb(239, 68, 68)',
-          bgColor: 'rgba(239, 68, 68, 0.1)',
-          icon: Square,
-          iconColor: 'text-red-500',
-          label: 'Big Test'
-        };
-      default:
-        return {
-          borderColor: 'hsl(var(--muted))',
-          bgColor: 'hsl(var(--muted) / 0.1)',
-          icon: BookCheck,
-          iconColor: 'text-muted-foreground',
-          label: 'Assignment'
-        };
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.error || 'Failed to save item');
+      }
+
+      toast({ title: 'Updated', description: 'Agenda item updated.' });
+      setIsEditing(false);
+      await onRefresh?.();
+    } catch (error: any) {
+      toast({ title: 'Error', description: error?.message || 'Failed to save item', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const typeStyle = getTypeStyle();
-  const IconComponent = typeStyle.icon;
+  const deleteItem = async () => {
+    if (!event.class_id || event.type !== 'agenda_item') return;
 
-  // Simple breadcrumb
-  const breadcrumbs = [
-    { label: event.subject, href: event.href, icon: BookOpen },
-  ];
-
-  const handleEdit = () => {
-    if (onEdit) {
-      onEdit(event.id);
-    } else if (event.type === 'assignment') {
-      router.push(`/class/${event.href.replace('/class/', '')}/assignments/${event.id}/edit`);
-    } else if (event.type === 'agenda_item' && event.class_id) {
-      router.push(`/agenda?classId=${event.class_id}`);
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/classes/${event.class_id}/agenda/${event.id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete item');
+      toast({ title: 'Deleted', description: 'Agenda item deleted.' });
+      onClose?.();
+      await onRefresh?.();
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete item', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleStartNow = () => {
-    if (!event.href) return;
-    router.push(event.href);
+  const toggleVisible = async () => {
+    if (!event.class_id || event.type !== 'agenda_item') return;
+
+    const nextVisible = !visible;
+    setVisible(nextVisible);
+    try {
+      const response = await fetch(`/api/classes/${event.class_id}/agenda/${event.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visible: nextVisible }),
+      });
+      if (!response.ok) throw new Error('Failed visibility update');
+      await onRefresh?.();
+    } catch {
+      setVisible(!nextVisible);
+      toast({ title: 'Error', description: 'Failed visibility update', variant: 'destructive' });
+    }
   };
 
   return (
-    <div className="h-full flex flex-col gap-4 overflow-y-auto">
-      {/* Breadcrumb Navigation */}
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-        {breadcrumbs.map((crumb, index) => (
-          <div key={index} className="flex items-center gap-2">
-            {index > 0 && <ChevronRight className="h-4 w-4" />}
-            {crumb.icon && <crumb.icon className="h-4 w-4" />}
-            <Link prefetch={false} href={crumb.href} className="hover:underline">
-              {crumb.label}
-            </Link>
-          </div>
-        ))}
-      </nav>
+    <Card className="relative overflow-hidden rounded-xl border-0 bg-card p-4 shadow-sm">
+      <span className="absolute left-0 top-0 h-full w-1" style={{ backgroundColor: accent }} />
 
-      {/* Header */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-start gap-3">
-            <div className={`flex-shrink-0 w-10 h-10 rounded-lg ${typeStyle.bgColor} flex items-center justify-center border-2`} style={{ borderColor: typeStyle.borderColor }}>
-              <IconComponent className={`h-5 w-5 ${typeStyle.iconColor}`} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg truncate">{event.title}</CardTitle>
-              <CardDescription className="flex items-center gap-2 mt-1">
-                <Badge variant="secondary">{typeStyle.label}</Badge>
-                {event.class_name && (
-                  <Badge
-                    variant="secondary"
-                    className="text-white border-transparent"
-                    style={{ backgroundColor: getClassChipColor(event.class_id) }}
-                  >
-                    {event.class_name}
-                  </Badge>
-                )}
-                {event.visibility_state && (
-                  <Badge variant={event.visibility_state === 'visible' ? 'default' : 'outline'}>
-                    {event.visibility_state}
-                  </Badge>
-                )}
-                <span className="text-xs">
-                  {format(event.date, 'PPP')}
-                </span>
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {event.href && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Action</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={handleStartNow} className="w-full">
-              {isStudysetPlan ? 'Do now' : 'Open'}
-            </Button>
-            {isStudysetPlan && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Opens this studyset task and runs the guided setup steps automatically.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Details */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <h4 className="font-medium mb-1">Title</h4>
-              <p className="text-muted-foreground">{event.title}</p>
-            </div>
-            <div>
-              <h4 className="font-medium mb-1">Subject</h4>
-              <p className="text-muted-foreground">{event.subject || 'Optional'}</p>
-            </div>
-            <div>
-              <h4 className="font-medium mb-1">Date</h4>
-              <p className="text-muted-foreground">{format(event.date, 'MMM d, yyyy')}</p>
-            </div>
-            {typeof event.estimated_duration === 'number' && event.estimated_duration > 0 && (
-              <div>
-                <h4 className="font-medium mb-1">Duration</h4>
-                <p className="text-muted-foreground">{event.estimated_duration} min</p>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <h4 className="text-sm font-medium mb-2">Description</h4>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {event.description?.trim() || 'Optional'}
-            </p>
-          </div>
-
-          {event.chapter_title && !isStudysetPlan && (
-            <div>
-              <h4 className="text-sm font-medium mb-1">Chapter</h4>
-              <p className="text-sm text-muted-foreground">{event.chapter_title}</p>
-            </div>
+      <div className="mb-3 flex items-start justify-between gap-2 pl-2">
+        <div className="min-w-0">
+          <button
+            type="button"
+            className="truncate text-[11px] uppercase tracking-[0.03em] text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              if (event.href) router.push(event.href);
+            }}
+          >
+            {subjectLine}
+          </button>
+          {isEditing ? (
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1 h-9" />
+          ) : (
+            <p className="mt-1 text-base text-foreground">{event.title}</p>
           )}
-
+        </div>
+        <div className="flex items-center gap-2">
           {isTeacher && (
-            <div className="pt-4 border-t">
-              <h4 className="text-sm font-medium mb-3">Actions</h4>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" size="sm" onClick={handleEdit}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              </div>
-            </div>
+            <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => setIsEditing((v) => !v)}>
+              <Pencil className="mr-1 h-3.5 w-3.5" />
+              Edit
+            </Button>
           )}
-        </CardContent>
-      </Card>
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
-      {/* Linked Content */}
-      {((event as any).linked_content && (event as any).linked_content.length > 0) || (event.links && event.links.length > 0) ? (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Resources</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {((event.links || []).map((link) => ({
-                url: '#',
-                title: link.label,
-                type: link.link_type,
-              })) as any[]).concat((event as any).linked_content || []).map((link: any, idx: number) => (
-                <Link prefetch={false}
-                  key={idx}
-                  href={link.url || '#'}
-                  className="flex items-center gap-2 p-2 rounded-lg border hover:bg-muted/50 transition-colors"
+      <div className="space-y-3 pl-2">
+        <p className="text-sm text-muted-foreground">{format(event.date, 'EEEE d MMMM yyyy')}</p>
+
+        {isEditing ? (
+          <div className="space-y-2">
+            <Select value={type} onValueChange={(value) => setType(value as EditableType)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="assignment">Homework</SelectItem>
+                <SelectItem value="quiz">Test</SelectItem>
+                <SelectItem value="event">Big Test</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="min-h-[88px]" />
+          </div>
+        ) : (
+          <p className="whitespace-pre-wrap text-sm text-muted-foreground">{event.description?.trim() || '-'}</p>
+        )}
+
+        {event.href && (
+          <Button type="button" variant="secondary" className="h-9 w-full justify-between" onClick={() => router.push(event.href)}>
+            Open
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+        )}
+
+        {resourceLinks.length > 0 && (
+          <div className="space-y-1.5 pt-1">
+            <p className="text-xs uppercase tracking-[0.03em] text-muted-foreground">Resources</p>
+            {resourceLinks.map((link, index) => (
+              <div key={`${link.link_type}-${link.link_ref_id || index}`} className="flex items-center gap-2 rounded-lg bg-muted/25 px-2.5 py-2">
+                <button
+                  type="button"
+                  className="min-w-0 flex-1 text-left"
+                  onClick={() => {
+                    if (!link.href || link.href === '#') return;
+                    router.push(link.href);
+                  }}
                 >
-                  <FileText className="h-4 w-4 text-primary" />
-                  <span className="text-sm truncate">{link.title}</span>
-                  <Badge variant="secondary" className="text-xs ml-auto">{link.type}</Badge>
-                </Link>
-              ))}
+                  <p className="truncate text-sm">{link.label}</p>
+                  <p className="text-[11px] text-muted-foreground">{link.link_type.replace('_', ' ')}</p>
+                </button>
+                {isEditing && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setLinks((prev) => prev.filter((_, idx) => idx !== index).map((row, idx) => ({ ...row, position: idx })))}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {isTeacher && (
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <div className="flex items-center gap-2 rounded-md bg-muted/35 px-2.5 py-1.5">
+              <Switch checked={visible} onCheckedChange={toggleVisible} />
+              <span className="text-xs">Visible to students</span>
             </div>
-          </CardContent>
-        </Card>
-      ) : null}
-    </div>
+            {isEditing && (
+              <Button type="button" size="sm" className="h-8" disabled={isSaving} onClick={saveChanges}>
+                <Save className="mr-1 h-3.5 w-3.5" />
+                Save
+              </Button>
+            )}
+            {isEditing && (
+              <Button type="button" size="sm" variant="destructive" className="h-8" disabled={isSaving} onClick={deleteItem}>
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                Delete
+              </Button>
+            )}
+            {!visible && <Badge variant="secondary">Hidden</Badge>}
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
-
-

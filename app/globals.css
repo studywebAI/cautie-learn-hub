@@ -576,6 +576,12 @@
 }
 
 @layer utilities {
+  input::placeholder,
+  textarea::placeholder {
+    color: transparent !important;
+    opacity: 0 !important;
+  }
+
   .agenda-clean :is([class*="border"], [class*="divide-"]) {
     border-color: transparent !important;
     border-width: 0 !important;

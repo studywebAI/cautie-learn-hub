@@ -71,8 +71,10 @@ export async function GET(req: NextRequest) {
         id: `tool:${run.id}`,
         link_type: 'tool_run',
         link_ref_id: run.id,
-        label: run.mode ? `${run.tool_id} · ${run.mode}` : run.tool_id,
-        subtitle: 'Tool run',
+        label: run.mode ? `${run.tool_id} | ${run.mode}` : run.tool_id,
+        subtitle: run.finished_at || run.created_at
+          ? `Created ${new Date(run.finished_at || run.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+          : 'Tool run',
         sort_at: run.finished_at || run.created_at,
         metadata_json: { tool_id: run.tool_id, mode: run.mode || null },
       })),

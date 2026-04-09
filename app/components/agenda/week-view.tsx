@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { format, startOfWeek, addWeeks, parseISO } from 'date-fns';
 import type { CalendarEvent } from '@/lib/types';
-import { useDictionary } from '@/contexts/app-context';
 import {
   DndContext,
   DragEndEvent,
@@ -31,7 +30,6 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const [isCompact, setIsCompact] = useState(false);
-  const { dictionary } = useDictionary();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -100,15 +98,6 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
     }
   };
 
-  // Day names for Monday-Friday
-  const dayNames = [
-    dictionary.agenda.monday || 'Mon',
-    dictionary.agenda.tuesday || 'Tue',
-    dictionary.agenda.wednesday || 'Wed',
-    dictionary.agenda.thursday || 'Thu',
-    dictionary.agenda.friday || 'Fri'
-  ];
-
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3 py-1">
@@ -136,9 +125,9 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
       </div>
 
       <div className="grid grid-cols-5 gap-2">
-        {dayNames.map((name, idx) => (
-          <div key={idx} className="rounded-xl bg-white py-2.5 text-center text-sm font-medium text-muted-foreground">
-            {name}
+        {activeWeek.days.map((day) => (
+          <div key={`label-${format(day, 'yyyy-MM-dd')}`} className="rounded-xl bg-white py-2.5 text-center text-sm font-medium text-muted-foreground">
+            {format(day, 'EEEE')}
           </div>
         ))}
       </div>

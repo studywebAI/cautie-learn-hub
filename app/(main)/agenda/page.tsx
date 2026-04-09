@@ -171,6 +171,7 @@ function AgendaPageContent() {
   const [studysetAgendaItems, setStudysetAgendaItems] = useState<StudysetAgendaItem[]>([]);
   const [teacherAgendaItems, setTeacherAgendaItems] = useState<AgendaApiItem[]>([]);
   const [studentAgendaItems, setStudentAgendaItems] = useState<AgendaApiItem[]>([]);
+  const [agendaReloadKey, setAgendaReloadKey] = useState(0);
 
   const isStudent = role === 'student';
   const isTeacher = role === 'teacher';
@@ -350,7 +351,7 @@ function AgendaPageContent() {
 
     void load();
     return () => controller.abort();
-  }, [agendaDebugId, isTeacher, isLoading, overlayClassIds]);
+  }, [agendaDebugId, isTeacher, isLoading, overlayClassIds, agendaReloadKey]);
 
   useEffect(() => {
     if (!isStudent || isLoading) {
@@ -383,7 +384,7 @@ function AgendaPageContent() {
 
     void load();
     return () => controller.abort();
-  }, [agendaDebugId, isStudent, isLoading]);
+  }, [agendaDebugId, isStudent, isLoading, agendaReloadKey]);
 
   const events: CalendarEvent[] = useMemo(() => {
     if (isLoading) return [];
@@ -677,10 +678,14 @@ function AgendaPageContent() {
 
           {selectedEvent && (
             <div className="md:col-span-4 lg:col-span-3">
-              <AssignmentDetailsPanel event={selectedEvent} classes={classes || []} isTeacher={isTeacher} isStudent={isStudent} />
-              <Button variant="ghost" size="sm" className="mt-2 w-full" onClick={() => setSelectedEvent(null)}>
-                Back to {isTeacher ? 'Agenda' : 'Today'}
-              </Button>
+              <AssignmentDetailsPanel
+                event={selectedEvent}
+                classes={classes || []}
+                isTeacher={isTeacher}
+                isStudent={isStudent}
+                onClose={() => setSelectedEvent(null)}
+                onRefresh={() => setAgendaReloadKey((prev) => prev + 1)}
+              />
             </div>
           )}
         </div>

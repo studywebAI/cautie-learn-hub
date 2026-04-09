@@ -26,8 +26,10 @@ export function DroppableDay({ id, date, events, onClick, onEventClick, compact 
       onClick={onClick}
       className="min-h-[360px] rounded-xl bg-white p-3 md:min-h-[520px] md:p-4 cursor-pointer transition-colors hover:bg-white"
     >
-      <div className="mb-3">
-        <div className="text-sm font-medium text-left">{format(date, 'd')}</div>
+      <div className="mb-2 flex items-start justify-end">
+        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-muted/70 px-1.5 text-xs font-medium">
+          {format(date, 'd')}
+        </span>
       </div>
 
       <SortableContext items={events.map(e => e.id)} strategy={verticalListSortingStrategy}>
