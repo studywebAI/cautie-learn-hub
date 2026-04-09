@@ -26,8 +26,8 @@ import { Switch } from '@/components/ui/switch';
 
 const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
   if (!value) return 'flip';
-  if (value === 'write') return 'type';
-  if (value === 'flip' || value === 'type' || value === 'multiple-choice') return value;
+  if (value === 'write' || value === 'type') return 'multiple-choice';
+  if (value === 'flip' || value === 'multiple-choice') return value;
   return 'flip';
 };
 
@@ -65,12 +65,12 @@ function FlashcardsPageContent() {
   const modeOptions = React.useMemo(
     () =>
       t.flashcards.studyModeOptions
-        .filter((option) => option.value === 'flip' || option.value === 'type' || option.value === 'multiple-choice')
+        .filter((option) => option.value === 'flip' || option.value === 'multiple-choice')
         .map((option) =>
           option.value === 'flip'
             ? { ...option, label: 'Standard' }
-            : option.value === 'type'
-              ? { ...option, label: 'Type' }
+            : option.value === 'multiple-choice'
+              ? { ...option, label: 'Multiple choice' }
               : option
         ),
     [t.flashcards.studyModeOptions]

@@ -21,7 +21,6 @@ import {
   ListChecks,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { TypeView } from './type-view';
 import { MultipleChoiceView } from './multiple-choice-view';
 import { normalizeForCompare } from '@/lib/study-grading';
 import {
@@ -33,7 +32,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-export type StudyMode = 'flip' | 'type' | 'multiple-choice';
+export type StudyMode = 'flip' | 'multiple-choice';
 
 type CardSRSState = {
   intervalDays: number;
@@ -452,10 +451,7 @@ export function FlashcardViewer({
       setIsFlipped((f) => !f);
       return;
     }
-    if (mode === 'type') {
-      const checkButton = document.getElementById('check-answer-btn') as HTMLButtonElement | null;
-      checkButton?.click();
-    }
+    if (!isFlipped) setIsFlipped(true);
   };
 
   const handleGetExplanation = async () => {
@@ -511,7 +507,7 @@ export function FlashcardViewer({
           break;
         case ' ':
           e.preventDefault();
-          if (mode === 'flip' || mode === 'type') handleFlipOrCheck();
+          if (mode === 'flip' || mode === 'multiple-choice') handleFlipOrCheck();
           break;
       }
     };
@@ -638,8 +634,15 @@ export function FlashcardViewer({
   const renderCardContent = () => {
     if (!card) return null;
     if (mode === 'flip' && displayCard) return <FlipView card={displayCard} isFlipped={isFlipped} setIsFlipped={setIsFlipped} height={currentFlipHeight} />;
-    if (mode === 'type') return <TypeView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
-    return <MultipleChoiceView card={card} onAnswered={(correct) => handleCardAnswered(correct)} />;
+    return (
+      <MultipleChoiceView
+        card={card}
+        allCards={queue}
+        isFlipped={isFlipped}
+        setIsFlipped={setIsFlipped}
+        onAnswered={(correct) => handleCardAnswered(correct)}
+      />
+    );
   };
 
   const showExplanationButton = (mode === 'flip' && isFlipped) || (mode !== 'flip' && isAnswered);
@@ -654,7 +657,7 @@ export function FlashcardViewer({
       <CardHeader className="px-4 md:px-6 pb-2">
         <CardTitle className="font-headline">Study Flashcards</CardTitle>
         <CardDescription>
-          Card {queue.length === 0 ? 0 : currentIndex + 1} of {queue.length}. {mode === 'multiple-choice' ? 'Choose the correct answer, then mark result.' : mode === 'type' ? 'Type answer, then mark result.' : 'Flip, then mark result.'}
+          Card {queue.length === 0 ? 0 : currentIndex + 1} of {queue.length}. {mode === 'multiple-choice' ? 'Flip, pick the correct mini card, then mark result.' : 'Flip, then mark result.'}
         </CardDescription>
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <Badge variant="outline">Deck Health {deckHealth.health}%</Badge>

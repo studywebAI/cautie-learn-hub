@@ -1,143 +1,156 @@
-
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { type Flashcard, type McqQuestion } from '@/lib/types'; // Import McqQuestion from types
-// import { generateMultipleChoiceFromFlashcard, type McqQuestion } from '@/ai/flows/generate-multiple-choice-from-flashcard'; // Removed direct import
-import { useToast } from '@/hooks/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import React, { useEffect, useMemo, useState } from 'react';
+import { type Flashcard } from '@/lib/types';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, ChevronsLeftRight, XCircle } from 'lucide-react';
 
 interface MultipleChoiceViewProps {
   card: Flashcard;
+  allCards: Flashcard[];
+  isFlipped: boolean;
+  setIsFlipped: (flipped: boolean) => void;
   onAnswered: (isCorrect: boolean) => void;
 }
 
-function buildFallbackQuestion(card: Flashcard): McqQuestion {
-  const correct = (card.back || '').trim() || 'Correct answer';
-  const front = (card.front || '').trim() || 'this concept';
-  const distractors = [
-    'Not this one',
-    'Alternative explanation',
-    'Unrelated answer',
-  ];
-  return {
-    id: `fallback-${Math.random().toString(36).slice(2, 10)}`,
-    question: `What is the best match for: ${front}?`,
-    options: [
-      { id: 'a', text: correct },
-      { id: 'b', text: distractors[0] },
-      { id: 'c', text: distractors[1] },
-      { id: 'd', text: distractors[2] },
-    ],
-    correctOptionId: 'a',
-  };
-}
+type ChoiceOption = {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+};
 
-export function MultipleChoiceView({ card, onAnswered }: MultipleChoiceViewProps) {
-  const [mcq, setMcq] = useState<McqQuestion | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
-  const [isAnswered, setIsAnswered] = useState(false);
-  const { toast } = useToast();
+const hashString = (value: string) => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+};
 
-  useEffect(() => {
-    const generateQuestion = async () => {
-      setIsLoading(true);
-      setIsAnswered(false);
-      setSelectedOptionId(null);
-      try {
-        const response = await fetch('/api/ai/handle', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                flowName: 'generateMultipleChoiceFromFlashcard',
-                input: {
-                    front: card.front,
-                    back: card.back,
-                },
-            }),
-        });
-        if (!response.ok) {
-            throw new Error(`API call failed: ${response.statusText}`);
-        }
-        const result = await response.json();
-        const normalized = (result?.question && Array.isArray(result?.options) && result?.correctOptionId)
-          ? result
-          : (result?.output?.question && Array.isArray(result?.output?.options) && result?.output?.correctOptionId)
-            ? result.output
-            : null;
-        setMcq(normalized || buildFallbackQuestion(card));
-      } catch (error) {
-        console.error('Failed to generate multiple choice question', error);
-        setMcq(buildFallbackQuestion(card));
-        toast({
-          title: 'Fallback question used',
-          description: 'AI question generation failed, so a local question was created.',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    generateQuestion();
-  }, [card, toast]);
+function buildChoices(card: Flashcard, allCards: Flashcard[]): ChoiceOption[] {
+  const pool = allCards.filter((item) => item.id !== card.id && item.back?.trim());
 
-  const handleSelectOption = (optionId: string) => {
-    if (isAnswered) return;
-    setSelectedOptionId(optionId);
-    setIsAnswered(true);
-    onAnswered(optionId === mcq?.correctOptionId);
-  };
-  
-  if (isLoading) {
-    return (
-        <div className="w-full max-w-4xl space-y-4">
-            <Skeleton className="h-8 w-3/4 mx-auto" />
-            <div className="space-y-3">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-            </div>
-        </div>
-    )
+  const sortedPool = [...pool].sort((a, b) => {
+    const scoreA = hashString(`${card.id}:${a.id}`);
+    const scoreB = hashString(`${card.id}:${b.id}`);
+    return scoreA - scoreB;
+  });
+
+  const distractors = sortedPool.slice(0, 2).map((item, idx) => ({
+    id: `d-${item.id}-${idx}`,
+    text: item.back,
+    isCorrect: false,
+  }));
+
+  while (distractors.length < 2) {
+    distractors.push({
+      id: `fallback-${distractors.length}`,
+      text: distractors.length === 0 ? 'Not this answer' : 'Another option',
+      isCorrect: false,
+    });
   }
 
-  if (!mcq) {
-    return <p className="text-destructive text-center">Failed to load question.</p>;
+  const options: ChoiceOption[] = [
+    {
+      id: `c-${card.id}`,
+      text: card.back,
+      isCorrect: true,
+    },
+    ...distractors,
+  ];
+
+  return options.sort((a, b) => {
+    const scoreA = hashString(`${card.id}:${a.id}:slot`);
+    const scoreB = hashString(`${card.id}:${b.id}:slot`);
+    return scoreA - scoreB;
+  });
+}
+
+export function MultipleChoiceView({ card, allCards, isFlipped, setIsFlipped, onAnswered }: MultipleChoiceViewProps) {
+  const [isAnswered, setIsAnswered] = useState(false);
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
+
+  const choices = useMemo(() => buildChoices(card, allCards), [card, allCards]);
+
+  useEffect(() => {
+    setIsAnswered(false);
+    setSelectedOptionId(null);
+  }, [card.id]);
+
+  const handleSelect = (option: ChoiceOption) => {
+    if (!isFlipped || isAnswered) return;
+    setSelectedOptionId(option.id);
+    setIsAnswered(true);
+    onAnswered(option.isCorrect);
+  };
+
+  const selectedOption = choices.find((option) => option.id === selectedOptionId);
+
+  if (!isFlipped) {
+    return (
+      <div className="flex w-full flex-col items-center justify-center gap-4">
+        <div className="flex min-h-[260px] w-full max-w-5xl items-center justify-center rounded-2xl border border-border/80 bg-card px-12 py-10 shadow-sm">
+          <p className="max-w-[92%] text-center text-2xl leading-[1.35] text-foreground md:text-4xl">{card.front}</p>
+        </div>
+        <Button variant="secondary" onClick={() => setIsFlipped(true)} className="rounded-full px-6">
+          <ChevronsLeftRight className="mr-2 h-4 w-4" />
+          Reveal choices
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full max-w-5xl">
-      <p className="mb-4 text-center text-xl font-semibold leading-[1.35] md:text-3xl">{mcq.question}</p>
-      <RadioGroup onValueChange={handleSelectOption} value={selectedOptionId || ''} disabled={isAnswered}>
-        <div className="space-y-3 max-w-3xl mx-auto">
-          {mcq.options.map((opt: { id: string; text: string }) => { // Explicitly type opt
-            const isTheCorrectAnswer = mcq.correctOptionId === opt.id;
-            const isSelected = selectedOptionId === opt.id;
+    <div className="w-full max-w-5xl space-y-4">
+      <div className="rounded-2xl border border-border/80 bg-card px-8 py-6 shadow-sm">
+        <p className="text-center text-lg leading-[1.35] text-muted-foreground md:text-2xl">{card.front}</p>
+      </div>
 
-            return (
-              <Label
-                key={opt.id}
-                htmlFor={`${mcq.question}-${opt.id}`}
-                className={cn(
-                  'flex items-center gap-3 p-4 rounded-xl text-base border transition-all',
-                  isAnswered && isTheCorrectAnswer ? 'bg-green-100 dark:bg-green-900/30 border-green-500/50' : '',
-                  isAnswered && isSelected && !isTheCorrectAnswer ? 'bg-red-100 dark:bg-red-900/30 border-red-500/50' : '',
-                  !isAnswered ? 'cursor-pointer hover:bg-muted/80' : 'cursor-default',
-                  isAnswered && !isSelected && !isTheCorrectAnswer ? 'bg-muted/50 opacity-70' : ''
-                )}
-              >
-                <RadioGroupItem value={opt.id} id={`${mcq.question}-${opt.id}`} className="flex-shrink-0" />
-                <span>{opt.text}</span>
-                {isAnswered && (isSelected || isTheCorrectAnswer) && (isTheCorrectAnswer ? <CheckCircle className="h-5 w-5 text-green-600 ml-auto" /> : <XCircle className="h-5 w-5 text-red-600 ml-auto" />)}
-              </Label>
-            );
-          })}
-        </div>
-      </RadioGroup>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {choices.map((option) => {
+          const isSelected = selectedOptionId === option.id;
+          const showCorrect = isAnswered && option.isCorrect;
+          const showIncorrect = isAnswered && isSelected && !option.isCorrect;
+
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => handleSelect(option)}
+              className={cn(
+                'min-h-[130px] rounded-xl border px-4 py-3 text-left transition-colors',
+                'bg-card/90 hover:bg-muted/30',
+                !isAnswered && 'cursor-pointer',
+                isAnswered && 'cursor-default',
+                showCorrect && 'border-emerald-500/60 bg-emerald-500/10',
+                showIncorrect && 'border-red-500/60 bg-red-500/10'
+              )}
+              disabled={isAnswered}
+            >
+              <p className="line-clamp-4 text-sm leading-6">{option.text}</p>
+              {showCorrect && (
+                <span className="mt-3 inline-flex items-center text-xs text-emerald-600">
+                  <CheckCircle className="mr-1 h-3.5 w-3.5" />
+                  Correct
+                </span>
+              )}
+              {showIncorrect && (
+                <span className="mt-3 inline-flex items-center text-xs text-red-600">
+                  <XCircle className="mr-1 h-3.5 w-3.5" />
+                  Incorrect
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {isAnswered && selectedOption && !selectedOption.isCorrect && (
+        <p className="text-center text-sm text-muted-foreground">
+          Correct answer: <span className="text-foreground">{card.back}</span>
+        </p>
+      )}
     </div>
   );
 }
