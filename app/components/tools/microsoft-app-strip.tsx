@@ -225,36 +225,10 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
     closeAuthPopup();
   }, [closeAuthPopup]);
 
-  const beginAuthInPopup = useCallback((options?: { switchAccount?: boolean }) => {
-    if (typeof window === 'undefined') return false;
-    const switchAccount = Boolean(options?.switchAccount);
-    const popupReturnTo = withQuery('/auth/microsoft-popup', {
-      target: safeReturnTo,
-      ms_picker: 'embed',
-      app: 'onedrive',
-    });
-    const connectUrl = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(popupReturnTo)}${switchAccount ? '&switch_account=1' : ''}`;
-    const popupWidth = 560;
-    const popupHeight = 700;
-    const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - popupWidth) / 2));
-    const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - popupHeight) / 2));
-    const features = `popup=yes,width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`;
-    const popup = window.open(connectUrl, 'cautie-microsoft-oauth', features);
-    if (!popup) return false;
-    authPopupRef.current = popup;
-    if (authPopupPollRef.current) window.clearInterval(authPopupPollRef.current);
-    authPopupPollRef.current = window.setInterval(() => {
-      if (!authPopupRef.current || authPopupRef.current.closed) {
-        if (authPopupPollRef.current) {
-          window.clearInterval(authPopupPollRef.current);
-          authPopupPollRef.current = null;
-        }
-        authPopupRef.current = null;
-        setAuthTransitioning(false);
-      }
-    }, 350);
+  const beginAuthInPopup = useCallback(() => {
+    // Forced single-tab mode for reliability; avoids popup/new-tab client issues.
     return true;
-  }, [safeReturnTo]);
+  }, []);
 
   const loadFallbackFiles = useCallback(async (source: 'all' | 'files' | 'recent' = 'all') => {
     setFallbackLoading(true);
@@ -495,17 +469,14 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
       setPickerOpen(true);
       setAuthTransitioning(true);
       setPickerStatus('Signing in to your account');
-      const popupStarted = beginAuthInPopup();
-      if (!popupStarted) {
-        // Popup blocked: fallback to same-tab OAuth redirect.
-        if (typeof window !== 'undefined') {
-          window.sessionStorage.setItem(RESUME_KEY, JSON.stringify({ returnTo: safeReturnTo, ts: Date.now() }));
-        }
-        const returnWithPicker = withQuery(safeReturnTo, { ms_picker: 'embed', app: 'onedrive' });
-        window.setTimeout(() => {
-          window.location.href = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`;
-        }, 180);
+      void beginAuthInPopup();
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(RESUME_KEY, JSON.stringify({ returnTo: safeReturnTo, ts: Date.now() }));
       }
+      const returnWithPicker = withQuery(safeReturnTo, { ms_picker: 'embed', app: 'onedrive' });
+      window.setTimeout(() => {
+        window.location.href = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`;
+      }, 180);
       return;
     }
 
@@ -694,7 +665,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
     } finally {
       setOpening(false);
     }
-  }, [activeFilter, beginAuthInPopup, closePicker, loadFallbackFiles, persistSelection, safeReturnTo, status.connected, toast]);
+  }, [activeFilter, closePicker, loadFallbackFiles, persistSelection, safeReturnTo, status.connected, toast]);
 
   useEffect(() => {
     if (!autoOpen) return;
@@ -731,17 +702,15 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
     setPickerOpen(true);
     setAuthTransitioning(true);
     setPickerStatus('Signing in to your account');
-    const popupStarted = beginAuthInPopup({ switchAccount: true });
-    if (!popupStarted) {
-      if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem(RESUME_KEY, JSON.stringify({ returnTo: safeReturnTo, ts: Date.now() }));
-      }
-      const returnWithPicker = withQuery(safeReturnTo, { ms_picker: 'embed', app: 'onedrive' });
-      window.setTimeout(() => {
-        window.location.href = `/api/integrations/microsoft/connect?switch_account=1&returnTo=${encodeURIComponent(returnWithPicker)}`;
-      }, 140);
+    void beginAuthInPopup();
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(RESUME_KEY, JSON.stringify({ returnTo: safeReturnTo, ts: Date.now() }));
     }
-  }, [beginAuthInPopup, safeReturnTo]);
+    const returnWithPicker = withQuery(safeReturnTo, { ms_picker: 'embed', app: 'onedrive' });
+    window.setTimeout(() => {
+      window.location.href = `/api/integrations/microsoft/connect?switch_account=1&returnTo=${encodeURIComponent(returnWithPicker)}`;
+    }, 140);
+  }, [safeReturnTo]);
 
   useEffect(() => {
     if (!switchingAccount) return;
@@ -861,7 +830,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
           </div>
           {authTransitioning && (
             <div className="border-b border-border bg-[hsl(var(--surface-2))] px-4 py-2 text-xs text-muted-foreground">
-              Continue sign-in in the secure popup window. This picker stays open.
+              Redirecting to Microsoft sign-in in this tab and returning automatically.
             </div>
           )}
           <div className="min-h-0 flex-1 bg-[hsl(var(--surface-1))]">
