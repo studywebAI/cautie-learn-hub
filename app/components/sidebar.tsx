@@ -295,6 +295,115 @@ export function AppSidebar() {
     }
   };
 
+  const submitCreateClass = async () => {
+    if (!className.trim() || !classSubjectTitle.trim()) return;
+    setSubmitting(true);
+    try {
+      const response = await fetch('/api/classes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: className.trim(),
+          description: classDescription.trim() || null,
+          subject_title: classSubjectTitle.trim(),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || 'Failed to create class');
+      toast({ title: 'Class created' });
+      if (data?.id) {
+        setActiveTeacherClassId(data.id);
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('studyweb-last-class-id', data.id);
+        }
+        router.push(resolveTeacherClassRoute(data.id));
+      }
+      setClassName('');
+      setClassDescription('');
+      setClassSubjectTitle('');
+      setCreateClassOpen(false);
+      setNewClassMenuOpen(false);
+      await loadDropdownData('classes');
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Could not create class', description: error?.message || 'Try again.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitCreateSubject = async () => {
+    if (!subjectTitle.trim()) return;
+    if (!selectedSubjectClassId) {
+      toast({ variant: 'destructive', title: 'Select a class first' });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const response = await fetch('/api/subjects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: subjectTitle.trim(),
+          description: undefined,
+          class_ids: [selectedSubjectClassId],
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || 'Failed to create subject');
+      toast({ title: 'Subject created' });
+      setSubjectTitle('');
+      setCreateSubjectOpen(false);
+      await loadDropdownData('subjects');
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Could not create subject', description: error?.message || 'Try again.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitJoinClass = async () => {
+    if (!joinCode.trim()) return;
+    if (isTeacher && !joinSubjectTitle.trim()) return;
+    setSubmitting(true);
+    try {
+      const response = await fetch('/api/classes/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          class_code: joinCode.trim(),
+          subject_title: isTeacher ? joinSubjectTitle.trim() : undefined,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || 'Failed to join class');
+      toast({ title: data?.message || 'Joined class' });
+      if (data?.pendingApproval) {
+        setJoinCode('');
+        setJoinSubjectTitle('');
+        setJoinClassOpen(false);
+        setNewClassMenuOpen(false);
+        return;
+      }
+      const joinedClassId = data?.class?.id;
+      if (joinedClassId) {
+        setActiveTeacherClassId(joinedClassId);
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('studyweb-last-class-id', joinedClassId);
+        }
+        router.push(resolveTeacherClassRoute(joinedClassId));
+      }
+      setJoinCode('');
+      setJoinSubjectTitle('');
+      setJoinClassOpen(false);
+      setNewClassMenuOpen(false);
+      await loadDropdownData('classes');
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Could not join class', description: error?.message || 'Try again.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const clearCloseTimer = () => {
     if (closeTimerRef.current) {
       clearTimeout(closeTimerRef.current);
@@ -391,115 +500,6 @@ export function AppSidebar() {
       dropdown.kind === 'classes'
         ? context?.preloadSnapshot['classes:list']?.status === 'loading'
         : context?.preloadSnapshot['subjects:list']?.status === 'loading';
-
-    const submitCreateClass = async () => {
-      if (!className.trim() || !classSubjectTitle.trim()) return;
-      setSubmitting(true);
-      try {
-        const response = await fetch('/api/classes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: className.trim(),
-            description: classDescription.trim() || null,
-            subject_title: classSubjectTitle.trim(),
-          }),
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data?.error || 'Failed to create class');
-        toast({ title: 'Class created' });
-        if (data?.id) {
-          setActiveTeacherClassId(data.id);
-          if (typeof window !== 'undefined') {
-            window.localStorage.setItem('studyweb-last-class-id', data.id);
-          }
-          router.push(resolveTeacherClassRoute(data.id));
-        }
-        setClassName('');
-        setClassDescription('');
-        setClassSubjectTitle('');
-        setCreateClassOpen(false);
-        setNewClassMenuOpen(false);
-        await loadDropdownData('classes');
-      } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Could not create class', description: error?.message || 'Try again.' });
-      } finally {
-        setSubmitting(false);
-      }
-    };
-
-    const submitCreateSubject = async () => {
-      if (!subjectTitle.trim()) return;
-      if (!selectedSubjectClassId) {
-        toast({ variant: 'destructive', title: 'Select a class first' });
-        return;
-      }
-      setSubmitting(true);
-      try {
-        const response = await fetch('/api/subjects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: subjectTitle.trim(),
-            description: undefined,
-            class_ids: [selectedSubjectClassId]
-          }),
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data?.error || 'Failed to create subject');
-        toast({ title: 'Subject created' });
-        setSubjectTitle('');
-        setCreateSubjectOpen(false);
-        await loadDropdownData('subjects');
-      } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Could not create subject', description: error?.message || 'Try again.' });
-      } finally {
-        setSubmitting(false);
-      }
-    };
-
-    const submitJoinClass = async () => {
-      if (!joinCode.trim()) return;
-      if (isTeacher && !joinSubjectTitle.trim()) return;
-      setSubmitting(true);
-      try {
-        const response = await fetch('/api/classes/join', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            class_code: joinCode.trim(),
-            subject_title: isTeacher ? joinSubjectTitle.trim() : undefined,
-          }),
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data?.error || 'Failed to join class');
-        toast({ title: data?.message || 'Joined class' });
-        if (data?.pendingApproval) {
-          setJoinCode('');
-          setJoinSubjectTitle('');
-          setJoinClassOpen(false);
-          setNewClassMenuOpen(false);
-          return;
-        }
-        const joinedClassId = data?.class?.id;
-        if (joinedClassId) {
-          setActiveTeacherClassId(joinedClassId);
-          if (typeof window !== 'undefined') {
-            window.localStorage.setItem('studyweb-last-class-id', joinedClassId);
-          }
-          router.push(resolveTeacherClassRoute(joinedClassId));
-        }
-        setJoinCode('');
-        setJoinSubjectTitle('');
-        setJoinClassOpen(false);
-        setNewClassMenuOpen(false);
-        await loadDropdownData('classes');
-      } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Could not join class', description: error?.message || 'Try again.' });
-      } finally {
-        setSubmitting(false);
-      }
-    };
 
     return (
       <div
