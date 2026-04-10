@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,10 +38,21 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 export default function ClassDetailsPage() {
   const params = useParams();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { classId } = params as { classId: string };
   const { classes, assignments, isLoading: isAppLoading, materials, refetchMaterials, role, students: allStudents } = useContext(AppContext) as AppContextType;
-  const tab = searchParams.get('tab') || (role === 'teacher' ? 'subjects' : 'invite');
+  const requestedTab = searchParams.get('tab');
+  const defaultTab = role === 'teacher' ? 'subjects' : 'invite';
+  const allowedTabs = useMemo(
+    () => (
+      role === 'teacher'
+        ? ['subjects', 'assignments', 'materials', 'group', 'invite']
+        : ['invite', 'assignments', 'materials', 'group']
+    ),
+    [role]
+  );
+  const tab = requestedTab && allowedTabs.includes(requestedTab) ? requestedTab : defaultTab;
 
   const students = allStudents || [];
   const [directClassInfo, setDirectClassInfo] = useState<ClassInfo | null>(null);
@@ -200,6 +211,12 @@ export default function ClassDetailsPage() {
       void loadTabData(tab);
     }
   }, [classId, isAppLoading, loadTabData, tab]);
+
+  useEffect(() => {
+    if (!requestedTab) return;
+    if (allowedTabs.includes(requestedTab)) return;
+    router.replace(`/class/${classId}?tab=${tab}`);
+  }, [requestedTab, allowedTabs, router, classId, tab]);
 
   // Force refresh specific tab data
   const refreshTabData = useCallback((tabName: string) => {

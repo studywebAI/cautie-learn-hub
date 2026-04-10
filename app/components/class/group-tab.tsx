@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Users, Clock, TrendingUp, FileText, CheckCircle, Activity, Star, ChevronDown, ChevronRight, ClipboardCheck, CalendarDays, Library } from 'lucide-react';
+import { Users, Clock, TrendingUp, FileText, CheckCircle, Activity, Star, ChevronDown, ChevronRight, ClipboardCheck, CalendarDays, Library, UserPlus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Link from 'next/link';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
@@ -137,9 +137,8 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
     viewSchedule: isDutch ? 'Bekijk rooster' : 'View schedule',
     viewSubjects: isDutch ? 'Bekijk vakken' : 'View subjects',
     manageGroup: isDutch ? 'Beheer groep' : 'Manage group',
-    viewAnalytics: isDutch ? 'Bekijk analytics' : 'View analytics',
-    viewSettings: isDutch ? 'Bekijk instellingen' : 'View settings',
-    viewLogs: isDutch ? 'Bekijk logs' : 'View logs',
+    viewMaterials: isDutch ? 'Bekijk materiaal' : 'View materials',
+    invitePeople: isDutch ? 'Nodig uit' : 'Invite people',
   };
 
   const [data, setData] = useState<GroupData | null>(cachedData || null);
@@ -569,9 +568,9 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                 {isTeacher && (
                   <div className="grid grid-cols-1 gap-2 pt-4 md:grid-cols-2">
                     <Button variant="outline" className="flex-1" asChild>
-                      <Link prefetch={false} href={`/class/${classId}?tab=grades&studentId=${selectedStudent.id}`}>
+                      <Link prefetch={false} href={`/class/${classId}?tab=subjects`}>
                         <ClipboardCheck className="h-4 w-4 mr-2" />
-                        {t.viewGrades}
+                        {t.viewSubjects}
                       </Link>
                     </Button>
                     <Button variant="outline" className="flex-1" asChild>
@@ -581,15 +580,15 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                       </Link>
                     </Button>
                     <Button variant="outline" className="flex-1" asChild>
-                      <Link prefetch={false} href={`/class/${classId}?tab=progress&studentId=${selectedStudent.id}`}>
+                      <Link prefetch={false} href={`/class/${classId}?tab=group&studentId=${selectedStudent.id}`}>
                         <TrendingUp className="h-4 w-4 mr-2" />
-                        {t.viewProgress}
+                        {t.manageGroup}
                       </Link>
                     </Button>
                     <Button variant="outline" className="flex-1" asChild>
-                      <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}`}>
+                      <Link prefetch={false} href={`/class/${classId}?tab=materials`}>
                         <CalendarDays className="h-4 w-4 mr-2" />
-                        {t.viewAttendance}
+                        {t.viewMaterials}
                       </Link>
                     </Button>
                     {scheduleEnabled && (
@@ -619,7 +618,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   <Button variant="outline" asChild>
-                <Link prefetch={false} href={`/class/${classId}?tab=group`}>
+                <Link prefetch={false} href={`/class/${classId}?tab=subjects`}>
                       <Library className="h-4 w-4 mr-2" />
                       {t.viewSubjects}
                     </Link>
@@ -631,21 +630,21 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=analytics`}>
-                      <TrendingUp className="h-4 w-4 mr-2" />
-                      {t.viewAnalytics}
+                    <Link prefetch={false} href={`/class/${classId}?tab=assignments`}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      {t.viewAssignments}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=settings`}>
+                    <Link prefetch={false} href={`/class/${classId}?tab=materials`}>
                       <Activity className="h-4 w-4 mr-2" />
-                      {t.viewSettings}
+                      {t.viewMaterials}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=logs`}>
-                      <Clock className="h-4 w-4 mr-2" />
-                      {t.viewLogs}
+                    <Link prefetch={false} href={`/class/${classId}?tab=invite`}>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      {t.invitePeople}
                     </Link>
                   </Button>
                   {scheduleEnabled && (

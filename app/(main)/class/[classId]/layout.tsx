@@ -4,21 +4,24 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { 
-  BookOpen, Users, FileText, Settings, GraduationCap, Bell, 
-  BarChart3, Library, Calendar, UserPlus, Layers,
-  ClipboardCheck, History
+  Users, FileText, Library, Calendar, UserPlus
 } from 'lucide-react';
 import Link from 'next/link';
 import { AppContext } from '@/contexts/app-context';
 
-const tabs = [
-  { id: 'invite', label: 'Invite', icon: UserPlus, href: '?tab=invite' },
+const teacherTabs = [
+  { id: 'subjects', label: 'Subjects', icon: Library, href: '?tab=subjects' },
+  { id: 'assignments', label: 'Assignments', icon: FileText, href: '?tab=assignments' },
+  { id: 'materials', label: 'Materials', icon: Calendar, href: '?tab=materials' },
   { id: 'group', label: 'Group', icon: Users, href: '?tab=group' },
-  { id: 'attendance', label: 'Attendance', icon: Calendar, href: '?tab=attendance' },
-  { id: 'grades', label: 'Grades', icon: ClipboardCheck, href: '?tab=grades' },
-  { id: 'analytics', label: 'Analytics', icon: Layers, href: '?tab=analytics' },
-  { id: 'logs', label: 'Logs', icon: History, href: '?tab=logs' },
-  { id: 'settings', label: 'Settings', icon: Settings, href: '?tab=settings' },
+  { id: 'invite', label: 'Invite', icon: UserPlus, href: '?tab=invite' },
+];
+
+const studentTabs = [
+  { id: 'invite', label: 'Invite', icon: UserPlus, href: '?tab=invite' },
+  { id: 'assignments', label: 'Assignments', icon: FileText, href: '?tab=assignments' },
+  { id: 'materials', label: 'Materials', icon: Calendar, href: '?tab=materials' },
+  { id: 'group', label: 'Group', icon: Users, href: '?tab=group' },
 ];
 
 export default function ClassLayout({ children }: { children: React.ReactNode }) {
@@ -30,7 +33,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   // Use useSearchParams properly - this will re-render when URL changes
   const currentTab = searchParams?.get('tab') || (role === 'teacher' ? 'subjects' : 'invite');
 
-  const visibleTabs = tabs;
+  const visibleTabs = role === 'teacher' ? teacherTabs : studentTabs;
 
   return (
     <div className="flex h-full flex-col gap-2.5">
