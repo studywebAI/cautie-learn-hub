@@ -7,7 +7,6 @@ import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import type { Student } from '@/lib/teacher-types';
-import { GraduationCap } from 'lucide-react';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 
 const AssignmentList = dynamic(
@@ -19,24 +18,6 @@ const StudentList = dynamic(
 const MaterialList = dynamic(
   () => import('@/components/dashboard/teacher/material-list').then((m) => m.MaterialList)
 );
-const ClassSettings = dynamic(
-  () => import('@/components/dashboard/teacher/class-settings').then((m) => m.ClassSettings)
-);
-const AnnouncementManager = dynamic(
-  () => import('@/components/dashboard/teacher/announcement-manager').then((m) => m.AnnouncementManager)
-);
-const ClassAnalyticsDashboard = dynamic(
-  () => import('@/components/dashboard/teacher/class-analytics-dashboard').then((m) => m.ClassAnalyticsDashboard)
-);
-const ChapterNavigation = dynamic(
-  () => import('@/components/class/ChapterNavigation').then((m) => m.ChapterNavigation)
-);
-const ChapterContentViewer = dynamic(
-  () => import('@/components/class/ChapterContentViewer').then((m) => m.ChapterContentViewer)
-);
-const ChapterEditor = dynamic(
-  () => import('@/components/class/ChapterEditor').then((m) => m.ChapterEditor)
-);
 const QuickGrader = dynamic(
   () => import('@/components/dashboard/teacher/quick-grader').then((m) => m.QuickGrader),
   { ssr: false }
@@ -44,23 +25,11 @@ const QuickGrader = dynamic(
 const SubjectOverview = dynamic(
   () => import('@/components/dashboard/teacher/subject-overview').then((m) => m.SubjectOverview)
 );
-const StudentProgressPanel = dynamic(
-  () => import('@/components/dashboard/teacher/student-progress').then((m) => m.StudentProgressPanel)
-);
 const InviteTab = dynamic(
   () => import('@/components/class/invite-tab').then((m) => m.InviteTab)
 );
 const GroupTab = dynamic(
   () => import('@/components/class/group-tab').then((m) => m.GroupTab)
-);
-const AttendanceTab = dynamic(
-  () => import('@/components/class/attendance-tab').then((m) => m.AttendanceTab)
-);
-const GradesTab = dynamic(
-  () => import('@/components/class/grades-tab').then((m) => m.GradesTab)
-);
-const LogsTab = dynamic(
-  () => import('@/components/class/logs-tab').then((m) => m.LogsTab)
 );
 
 // Cache for tab data - persists across tab switches
@@ -76,7 +45,6 @@ export default function ClassDetailsPage() {
 
   const students = allStudents || [];
   const [directClassInfo, setDirectClassInfo] = useState<ClassInfo | null>(null);
-  const [selectedChapterId, setSelectedChapterId] = useState<string | undefined>(undefined);
   const [isQuickGraderOpen, setIsQuickGraderOpen] = useState(false);
   
   // Centralized tab data cache
@@ -157,20 +125,8 @@ export default function ClassDetailsPage() {
         case 'group':
           url = `/api/classes/${classId}/group`;
           break;
-        case 'attendance':
-          url = `/api/classes/${classId}/attendance`;
-          break;
-        case 'announcements':
-          url = `/api/classes/${classId}/announcements`;
-          break;
-        case 'progress':
-          url = `/api/classes/${classId}/progress`;
-          break;
         case 'subjects':
           url = `/api/classes/${classId}/subjects`;
-          break;
-        case 'analytics':
-          url = `/api/classes/${classId}/analytics`;
           break;
         default:
           return null;
@@ -311,12 +267,6 @@ export default function ClassDetailsPage() {
             <AssignmentList assignments={classAssignments} classId={classId} isTeacher={isTeacher} />
           </>
         );
-      case 'announcements':
-        return <AnnouncementManager classId={classId} isTeacher={isTeacher} />;
-      case 'grades':
-        return isTeacher ? <GradesTab classId={classId} /> : null;
-      case 'progress':
-        return isTeacher ? <StudentProgressPanel classId={classId} /> : null;
       case 'subjects':
         return isTeacher ? (
           <SubjectOverview 
@@ -324,36 +274,6 @@ export default function ClassDetailsPage() {
             cachedSubjects={cachedTabData['subjects']?.subjects}
           />
         ) : null;
-      case 'analytics':
-        return isTeacher ? <ClassAnalyticsDashboard classId={classId} /> : null;
-      case 'attendance':
-        return isTeacher ? <AttendanceTab classId={classId} /> : null;
-      case 'settings':
-        return isTeacher ? (
-          <ClassSettings classId={classId} className={classInfo.name} isArchived={classInfo.status === 'archived'} onArchive={() => window.location.href = '/classes'} />
-        ) : null;
-      case 'logs':
-        return isTeacher ? <LogsTab classId={classId} /> : null;
-      case 'chapters':
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-1">
-              <ChapterNavigation classId={classId} selectedChapterId={selectedChapterId} onChapterSelect={setSelectedChapterId} onCreateChapter={() => setSelectedChapterId('new')} isTeacher={isTeacher} />
-            </div>
-            <div className="lg:col-span-3">
-              {isTeacher ? (
-                <ChapterEditor classId={classId} chapterId={selectedChapterId || 'new'} onChapterUpdated={() => setSelectedChapterId(undefined)} />
-              ) : selectedChapterId ? (
-                <ChapterContentViewer classId={classId} chapterId={selectedChapterId} isTeacher={isTeacher} />
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <GraduationCap className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p>Select a chapter from the sidebar to view its content.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        );
       case 'materials':
         return <MaterialList materials={materials} classId={classId} isLoading={!!isLoading} isTeacher={isTeacher} />;
       case 'students':

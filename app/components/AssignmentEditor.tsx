@@ -18,16 +18,13 @@ import {
   GripVertical,
   PenTool,
   ArrowLeft,
+  Undo2,
+  Redo2,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
   Download,
   Upload,
   X,
-  Lock,
-  Unlock,
   Check,
-  Settings,
   Sparkles
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -57,7 +54,6 @@ interface AssignmentBlock {
   column?: 'left' | 'right';
   rowId: string; // Group blocks in same row
   data: any;
-  locked?: boolean; // Whether this block's answer is locked as correct
   showFeedback?: boolean; // Whether to show correct/incorrect feedback
   aiGradingOverride?: Partial<GradingPresetSettings>; // Per-block AI grading settings
 }
@@ -70,6 +66,8 @@ interface AssignmentEditorProps {
   initialBlocks?: AssignmentBlock[];
   answersEnabled?: boolean;
   isVisible?: boolean;
+  answerMode?: 'view_only' | 'editable' | 'self_grade';
+  aiGradingEnabled?: boolean;
   onSave?: (blocks: AssignmentBlock[]) => void;
   onPreview?: () => void;
   onSettingsChange?: (settings: { answersEnabled: boolean; isVisible: boolean }) => void;
@@ -81,14 +79,14 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     id: 'text',
     type: 'text',
     icon: <Type className="h-4 w-4" />,
-    label: 'text',
+    label: 'Text',
     defaultData: { content: '', style: 'normal' }
   },
   {
     id: 'multiple_choice',
     type: 'multiple_choice',
     icon: <CheckSquare className="h-4 w-4" />,
-    label: 'multiple choice',
+    label: 'Multiple Choice',
     defaultData: {
       question: '',
       options: [
@@ -105,7 +103,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     id: 'open_question',
     type: 'open_question',
     icon: <MessageSquare className="h-4 w-4" />,
-    label: 'open question',
+    label: 'Open Question',
     defaultData: {
       question: '',
       correct_answer: '',
@@ -118,7 +116,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     id: 'fill_in_blank',
     type: 'fill_in_blank',
     icon: <FileText className="h-4 w-4" />,
-    label: 'fill blank',
+    label: 'Fill Blank',
     defaultData: {
       text: 'My shoes ___ 100 euros.',
       answers: ['cost'],
@@ -129,7 +127,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     id: 'drag_drop',
     type: 'drag_drop',
     icon: <Move className="h-4 w-4" />,
-    label: 'drag & drop',
+    label: 'Drag & Drop',
     defaultData: {
       prompt: '',
       pairs: [
@@ -142,7 +140,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     id: 'ordering',
     type: 'ordering',
     icon: <ListOrdered className="h-4 w-4" />,
-    label: 'ordering',
+    label: 'Ordering',
     defaultData: {
       prompt: '',
       items: ['', '', ''],
@@ -153,7 +151,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     id: 'media_embed',
     type: 'media_embed',
     icon: <Link className="h-4 w-4" />,
-    label: 'media',
+    label: 'Media',
     defaultData: {
       embed_url: '',
       description: ''
@@ -172,6 +170,8 @@ export function AssignmentEditor({
   initialBlocks = [],
   answersEnabled = false,
   isVisible = true,
+  answerMode = 'view_only',
+  aiGradingEnabled = false,
   onSave,
   onPreview,
   onSettingsChange,
@@ -184,7 +184,6 @@ export function AssignmentEditor({
     width: b.width || 'full' as const,
     size: b.size || 3,
     position: b.position ?? i,
-    locked: b.locked ?? false,
     showFeedback: b.showFeedback ?? false,
   }));
 
@@ -192,7 +191,6 @@ export function AssignmentEditor({
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [history, setHistory] = useState<AssignmentBlock[][]>([normalizedInitialBlocks]);
@@ -204,14 +202,12 @@ export function AssignmentEditor({
   const [dropTarget, setDropTarget] = useState<{ rowIndex: number; column?: 'left' | 'right' } | null>(null);
   
   // Settings state
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [aiSettingsBlockId, setAiSettingsBlockId] = useState<string | null>(null);
   const [isStudentPreview, setIsStudentPreview] = useState(false);
   const [localAnswersEnabled, setLocalAnswersEnabled] = useState(answersEnabled);
   const [localIsVisible, setLocalIsVisible] = useState(isVisible);
-  const [localIsLocked, setLocalIsLocked] = useState(false);
-  const [localAnswerMode, setLocalAnswerMode] = useState<'view_only' | 'editable' | 'self_grade'>('view_only');
-  const [localAiGradingEnabled, setLocalAiGradingEnabled] = useState(false);
+  const [localAnswerMode, setLocalAnswerMode] = useState<'view_only' | 'editable' | 'self_grade'>(answerMode);
+  const [localAiGradingEnabled, setLocalAiGradingEnabled] = useState(aiGradingEnabled);
   
   // AI Grading presets (stored locally for now - would come from API)
   const [gradingPresets, setGradingPresets] = useState<GradingPreset[]>([
@@ -237,16 +233,21 @@ export function AssignmentEditor({
   const router = useRouter();
   const showTeacherControls = isTeacher && !isStudentPreview;
 
-  // Toggle lock state for a block
-  const toggleBlockLock = (blockId: string) => {
-    setBlocks(prev => {
-      const newBlocks = prev.map(block =>
-        block.id === blockId ? { ...block, locked: !block.locked } : block
-      );
-      saveToHistory(newBlocks);
-      return newBlocks;
-    });
-  };
+  useEffect(() => {
+    setLocalAnswersEnabled(answersEnabled);
+  }, [answersEnabled]);
+
+  useEffect(() => {
+    setLocalIsVisible(isVisible);
+  }, [isVisible]);
+
+  useEffect(() => {
+    setLocalAnswerMode(answerMode);
+  }, [answerMode]);
+
+  useEffect(() => {
+    setLocalAiGradingEnabled(aiGradingEnabled);
+  }, [aiGradingEnabled]);
 
   // Toggle feedback visibility for a block
   const toggleBlockFeedback = (blockId: string) => {
@@ -274,15 +275,14 @@ export function AssignmentEditor({
   const handleSettingsChange = (updates: {
     answersEnabled?: boolean;
     isVisible?: boolean;
-    isLocked?: boolean;
     answerMode?: 'view_only' | 'editable' | 'self_grade';
     aiGradingEnabled?: boolean;
   }) => {
     if (updates.answersEnabled !== undefined) setLocalAnswersEnabled(updates.answersEnabled);
     if (updates.isVisible !== undefined) setLocalIsVisible(updates.isVisible);
-    if (updates.isLocked !== undefined) setLocalIsLocked(updates.isLocked);
     if (updates.answerMode !== undefined) setLocalAnswerMode(updates.answerMode);
     if (updates.aiGradingEnabled !== undefined) setLocalAiGradingEnabled(updates.aiGradingEnabled);
+    setHasUnsavedChanges(true);
     onSettingsChange?.({
       answersEnabled: updates.answersEnabled ?? localAnswersEnabled,
       isVisible: updates.isVisible ?? localIsVisible,
@@ -393,6 +393,12 @@ export function AssignmentEditor({
       saveToHistory(newBlocks);
       return newBlocks;
     });
+  };
+
+  const cycleBlockSize = (blockId: string) => {
+    const currentSize = blocks.find((block) => block.id === blockId)?.size ?? 3;
+    const nextSize = currentSize === 3 ? 2 : currentSize === 2 ? 1 : 3;
+    setBlockSize(blockId, nextSize);
   };
 
   const getBlockWidthPercent = (block: AssignmentBlock) => {
@@ -775,7 +781,6 @@ export function AssignmentEditor({
             type: block.type,
             position: block.position,
             data: block.data,
-            locked: block.locked || false,
             show_feedback: block.showFeedback || false,
             ai_grading_override: block.aiGradingOverride || null,
           };
@@ -797,6 +802,20 @@ export function AssignmentEditor({
           }
         })
       );
+
+      const assignmentSettingsRes = await fetch(`/api/assignments/${assignmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          is_visible: localIsVisible,
+          answers_enabled: localAnswersEnabled,
+          answer_mode: localAnswerMode,
+          ai_grading_enabled: localAiGradingEnabled,
+        }),
+      });
+      if (!assignmentSettingsRes.ok) {
+        throw new Error('Failed to save assignment settings');
+      }
 
       setHasUnsavedChanges(false);
       if (onSave) onSave(blocks);
@@ -1110,7 +1129,7 @@ export function AssignmentEditor({
     }
   };
 
-  // Render block action icons (lock, check, AI settings)
+  // Render block action icons (feedback, AI settings)
   // Always visible for teachers on question blocks (hover or selected)
   const renderBlockIcons = (block: AssignmentBlock, isHovered: boolean = false) => {
     if (!showTeacherControls) return null;
@@ -1122,22 +1141,6 @@ export function AssignmentEditor({
     
     return (
       <div className={`flex items-center gap-1 mt-2 justify-center transition-opacity ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-        {/* Lock icon */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => { e.stopPropagation(); toggleBlockLock(block.id); }}
-          className={`h-7 px-2 text-xs ${block.locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-          title={block.locked ? 'unlock answer' : 'lock as correct answer'}
-        >
-          {block.locked ? (
-            <Lock className="h-3 w-3 mr-1" />
-          ) : (
-            <Unlock className="h-3 w-3 mr-1" />
-          )}
-          {block.locked ? 'locked' : 'lock'}
-        </Button>
-        
         {/* Check icon - only show when answers enabled */}
         {localAnswersEnabled && (
           <Button
@@ -1202,68 +1205,42 @@ export function AssignmentEditor({
   const rows = getRows();
 
   return (
-    <div 
-      className="h-screen flex flex-col bg-sidebar select-none"
+    <div
+      className="h-screen flex flex-col bg-sidebar select-none font-sans"
       onPointerMove={handlePointerMove}
       style={{ touchAction: isDragging ? 'none' : 'auto' }}
     >
       {/* Top toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-sidebar-border/70 bg-sidebar">
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={() => router.back()} className="h-8 px-2">
+      <div className="flex items-center justify-between px-5 py-2.5 border-b border-sidebar-border/70 bg-sidebar">
+        <div className="flex items-center gap-1.5">
+          <Button variant="ghost" size="sm" onClick={() => router.back()} className="h-9 px-2.5 rounded-lg">
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-8 px-2" title="undo">
-            undo
+          <Button variant="ghost" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-9 w-9 p-0 rounded-lg" title="Undo">
+            <Undo2 className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-8 px-2" title="redo">
-            redo
+          <Button variant="ghost" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-9 w-9 p-0 rounded-lg" title="Redo">
+            <Redo2 className="h-4 w-4" />
           </Button>
-          <div className="w-px h-4 bg-border mx-1" />
-          <Button variant="ghost" size="sm" onClick={handleExport} className="h-8 px-2" title="export">
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="sm" onClick={handleExport} className="h-9 w-9 p-0 rounded-lg" title="Export">
             <Download className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleImport} className="h-8 px-2" title="import">
+          <Button variant="ghost" size="sm" onClick={handleImport} className="h-9 w-9 p-0 rounded-lg" title="Import">
             <Upload className="h-4 w-4" />
           </Button>
-          {showTeacherControls && (
-            <>
-              <div className="w-px h-4 bg-border mx-1" />
-              <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 px-2" title="assignment settings">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="p-0 w-auto">
-                  <AssignmentSettingsOverlay
-                    isVisible={localIsVisible}
-                    answersEnabled={localAnswersEnabled}
-                    isLocked={localIsLocked}
-                    answerMode={localAnswerMode}
-                    aiGradingEnabled={localAiGradingEnabled}
-                    onVisibilityChange={(v) => handleSettingsChange({ isVisible: v })}
-                    onAnswersEnabledChange={(e) => handleSettingsChange({ answersEnabled: e })}
-                    onLockedChange={(v) => handleSettingsChange({ isLocked: v })}
-                    onAnswerModeChange={(m) => handleSettingsChange({ answerMode: m })}
-                    onAiGradingChange={(v) => handleSettingsChange({ aiGradingEnabled: v })}
-                  />
-                </PopoverContent>
-              </Popover>
-            </>
-          )}
         </div>
         
-                <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           {isSaving && <span className="text-xs text-muted-foreground animate-pulse">saving...</span>}
           {isTeacher && (
             <Button
-              variant={isStudentPreview ? 'default' : 'outline'}
+              variant={isStudentPreview ? 'default' : 'secondary'}
               size="sm"
-              className="h-8"
+              className="h-9 rounded-lg px-3 text-sm"
               onClick={() => setIsStudentPreview((prev) => !prev)}
             >
-              {isStudentPreview ? 'exit student view' : 'student view'}
+              {isStudentPreview ? 'Exit Student View' : 'Student View'}
             </Button>
           )}
         </div>
@@ -1271,64 +1248,21 @@ export function AssignmentEditor({
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Block sidebar */}
-        <div className={`${showTeacherControls ? 'border-r border-sidebar-border/70 bg-sidebar-accent/35' : 'w-0 overflow-hidden border-r-0'} transition-all duration-200 flex flex-col ${isSidebarOpen ? 'w-44' : 'w-12'}`}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="h-10 w-full rounded-none border-b"
-          >
-            {isSidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          </Button>
-          
-          <div className="flex-1 overflow-y-auto p-2">
-            {isSidebarOpen ? (
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground px-2 py-1">blocks</div>
-                {BLOCK_TEMPLATES.map((template) => (
-                  <div
-                    key={template.id}
-                    className="flex items-center gap-2 p-2 rounded cursor-grab hover:bg-muted border border-transparent hover:border-border"
-                    onPointerDown={(e) => handleTemplatePointerDown(e, template.id)}
-                  >
-                    {template.icon}
-                    <span className="text-sm">{template.label}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-1">
-                {BLOCK_TEMPLATES.map((template) => (
-                  <div
-                    key={template.id}
-                    className="p-2 rounded cursor-grab hover:bg-muted"
-                    onPointerDown={(e) => handleTemplatePointerDown(e, template.id)}
-                    title={template.label}
-                  >
-                    {template.icon}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Paper area */}
         <div className="flex-1 overflow-auto p-4 bg-sidebar">
           <div
             ref={paperRef}
-            className="bg-sidebar-accent/25 border border-sidebar-border/70 rounded-2xl shadow-sm min-h-[calc(100vh-120px)] max-w-5xl p-6 relative"
+            className="bg-sidebar-accent/20 border border-sidebar-border/70 rounded-2xl shadow-sm min-h-[calc(100vh-130px)] p-5 relative mx-auto w-full max-w-6xl"
           >
-            {rows.length === 0 ? (
-              <div className="flex items-center justify-center h-64 text-muted-foreground">
-                <div className="text-center">
-                  <p className="mb-2">no content yet</p>
-                  <p className="text-sm">drag blocks from the sidebar</p>
+              {rows.length === 0 ? (
+                <div className="flex items-center justify-center h-64 text-muted-foreground">
+                  <div className="text-center">
+                    <p className="mb-2">No content yet</p>
+                    <p className="text-sm">Use the right panel to add blocks</p>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
+              ) : (
+              <div className="space-y-3">
                 {rows.map((row, rowIndex) => (
                   <React.Fragment key={row.rowId}>
                     {/* Drop indicator before row */}
@@ -1339,7 +1273,7 @@ export function AssignmentEditor({
                     )}
                     
                     {/* Row */}
-                    <div className={`flex gap-2 ${row.blocks.some(b => b.width === 'half') ? '' : ''}`}>
+                    <div className="flex gap-3">
                       {row.blocks[0]?.width === 'full' ? (
                         // Full width block
                         <div className="flex-1 relative group">
@@ -1358,12 +1292,10 @@ export function AssignmentEditor({
                           
                           <div
                             className={`p-3 border rounded-xl transition-all duration-200 ease-out ${
-                              row.blocks[0].locked 
-                                ? 'border-primary/50 bg-primary/5'
-                              : selectedBlock === row.blocks[0].id 
-                                  ? 'border-primary bg-sidebar-accent' 
-                                  : 'border-sidebar-border/65 bg-sidebar-accent/40 hover:bg-sidebar-accent/65'
-                            } ${!row.blocks[0].locked ? 'opacity-80' : ''}`}
+                              selectedBlock === row.blocks[0].id 
+                                ? 'border-primary bg-sidebar-accent' 
+                                : 'border-sidebar-border/65 bg-sidebar-accent/40 hover:bg-sidebar-accent/65'
+                            }`}
                             style={{
                               width: `${getBlockWidthPercent(row.blocks[0])}%`,
                               marginLeft: 'auto',
@@ -1371,53 +1303,27 @@ export function AssignmentEditor({
                             }}
                             onClick={(e) => {
                               if (!showTeacherControls) return;
-                              // Only select if clicking near the edge (within 8px of border)
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              const x = e.clientX - rect.left;
-                              const y = e.clientY - rect.top;
-                              const edgeThreshold = 12;
-                              const isNearEdge = x < edgeThreshold || x > rect.width - edgeThreshold || 
-                                                 y < edgeThreshold || y > rect.height - edgeThreshold;
-                              if (isNearEdge) {
-                                setSelectedBlock(selectedBlock === row.blocks[0].id ? null : row.blocks[0].id);
-                              }
+                              setSelectedBlock(selectedBlock === row.blocks[0].id ? null : row.blocks[0].id);
                             }}
                             onMouseEnter={() => setHoveredBlock(row.blocks[0].id)}
                             onMouseLeave={() => setHoveredBlock(null)}
                           >
-                            {/* Locked indicator */}
-                            {row.blocks[0].locked && (
-                              <div className="absolute -top-2 left-2 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                                <Lock className="h-2.5 w-2.5" />
-                                <span>locked</span>
-                              </div>
-                            )}
-                            
                             {/* Controls */}
                             {showTeacherControls && (
-                            <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
+                            <div className={`absolute top-2 right-2 flex items-center gap-1 bg-background/95 border border-sidebar-border/70 rounded-lg px-1.5 py-1 shadow-sm transition-opacity ${
                               selectedBlock === row.blocks[0].id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                             }`}>
-                              <div className="flex items-center gap-0.5 px-0.5">
-                                {[1, 2, 3].map((size) => (
-                                  <Button
-                                    key={size}
-                                    type="button"
-                                    variant={row.blocks[0].size === size ? 'default' : 'ghost'}
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setBlockSize(row.blocks[0].id, size as 1 | 2 | 3);
-                                    }}
-                                    className="h-5 min-w-5 px-1 text-[10px]"
-                                    title={`width ${size}/3`}
-                                  >
-                                    {size}
-                                  </Button>
-                                ))}
-                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); cycleBlockSize(row.blocks[0].id); }}
+                                className="h-6 px-2 text-[11px]"
+                                title="Cycle width"
+                              >
+                                {row.blocks[0].size === 1 ? 'S' : row.blocks[0].size === 2 ? 'M' : 'L'}
+                              </Button>
                               <div 
-                                className="h-5 w-5 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
+                                className="h-6 w-6 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
                                 onPointerDown={(e) => handleGripPointerDown(e, row.blocks[0].id)}
                               >
                                 <GripVertical className="h-3 w-3" />
@@ -1426,8 +1332,7 @@ export function AssignmentEditor({
                                 variant="ghost"
                                 size="sm"
                                 onClick={(e) => { e.stopPropagation(); setEditingBlock(row.blocks[0].id); }}
-                                className="h-5 w-5 p-0"
-                                disabled={row.blocks[0].locked}
+                                className="h-6 w-6 p-0"
                               >
                                 <PenTool className="h-3 w-3" />
                               </Button>
@@ -1435,7 +1340,7 @@ export function AssignmentEditor({
                                 variant="ghost"
                                 size="sm"
                                 onClick={(e) => { e.stopPropagation(); deleteBlock(row.blocks[0].id); }}
-                                className="h-5 w-5 p-0 text-destructive"
+                                className="h-6 w-6 p-0 text-destructive"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
@@ -1465,12 +1370,10 @@ export function AssignmentEditor({
                                 {block ? (
                                   <div
                                     className={`h-full p-3 border rounded-xl transition-all duration-200 ease-out ${
-                                      block.locked 
-                                        ? 'border-primary/50 bg-primary/5'
-                                      : selectedBlock === block.id 
-                                          ? 'border-primary bg-sidebar-accent' 
-                                          : 'border-sidebar-border/65 bg-sidebar-accent/40 hover:bg-sidebar-accent/65'
-                                    } ${!block.locked ? 'opacity-90' : ''}`}
+                                      selectedBlock === block.id 
+                                        ? 'border-primary bg-sidebar-accent' 
+                                        : 'border-sidebar-border/65 bg-sidebar-accent/40 hover:bg-sidebar-accent/65'
+                                    }`}
                                     style={{
                                       width: `${getBlockWidthPercent(block)}%`,
                                       marginLeft: 'auto',
@@ -1478,52 +1381,27 @@ export function AssignmentEditor({
                                     }}
                                     onClick={(e) => {
                                       if (!showTeacherControls) return;
-                                      const rect = e.currentTarget.getBoundingClientRect();
-                                      const x = e.clientX - rect.left;
-                                      const y = e.clientY - rect.top;
-                                      const edgeThreshold = 12;
-                                      const isNearEdge = x < edgeThreshold || x > rect.width - edgeThreshold || 
-                                                         y < edgeThreshold || y > rect.height - edgeThreshold;
-                                      if (isNearEdge) {
-                                        setSelectedBlock(selectedBlock === block.id ? null : block.id);
-                                      }
+                                      setSelectedBlock(selectedBlock === block.id ? null : block.id);
                                     }}
                                     onMouseEnter={() => setHoveredBlock(block.id)}
                                     onMouseLeave={() => setHoveredBlock(null)}
                                   >
-                                    {/* Locked indicator */}
-                                    {block.locked && (
-                                      <div className="absolute -top-2 left-2 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                                        <Lock className="h-2.5 w-2.5" />
-                                        <span>locked</span>
-                                      </div>
-                                    )}
-                                    
                                     {/* Controls */}
                                     {showTeacherControls && (
-                                    <div className={`absolute -top-2 right-2 flex gap-1 bg-background border rounded-full px-1 py-0.5 shadow-sm transition-opacity ${
+                                    <div className={`absolute top-2 right-2 flex items-center gap-1 bg-background/95 border border-sidebar-border/70 rounded-lg px-1.5 py-1 shadow-sm transition-opacity ${
                                       selectedBlock === block.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                                     }`}>
-                                      <div className="flex items-center gap-0.5 px-0.5">
-                                        {[1, 2, 3].map((size) => (
-                                          <Button
-                                            key={size}
-                                            type="button"
-                                            variant={block.size === size ? 'default' : 'ghost'}
-                                            size="sm"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setBlockSize(block.id, size as 1 | 2 | 3);
-                                            }}
-                                            className="h-5 min-w-5 px-1 text-[10px]"
-                                            title={`width ${size}/3`}
-                                          >
-                                            {size}
-                                          </Button>
-                                        ))}
-                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => { e.stopPropagation(); cycleBlockSize(block.id); }}
+                                        className="h-6 px-2 text-[11px]"
+                                        title="Cycle width"
+                                      >
+                                        {block.size === 1 ? 'S' : block.size === 2 ? 'M' : 'L'}
+                                      </Button>
                                       <div 
-                                        className="h-5 w-5 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
+                                        className="h-6 w-6 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
                                         onPointerDown={(e) => handleGripPointerDown(e, block.id)}
                                       >
                                         <GripVertical className="h-3 w-3" />
@@ -1532,8 +1410,7 @@ export function AssignmentEditor({
                                         variant="ghost"
                                         size="sm"
                                         onClick={(e) => { e.stopPropagation(); setEditingBlock(block.id); }}
-                                        className="h-5 w-5 p-0"
-                                        disabled={block.locked}
+                                        className="h-6 w-6 p-0"
                                       >
                                         <PenTool className="h-3 w-3" />
                                       </Button>
@@ -1541,7 +1418,7 @@ export function AssignmentEditor({
                                         variant="ghost"
                                         size="sm"
                                         onClick={(e) => { e.stopPropagation(); deleteBlock(block.id); }}
-                                        className="h-5 w-5 p-0 text-destructive"
+                                        className="h-6 w-6 p-0 text-destructive"
                                       >
                                         <Trash2 className="h-3 w-3" />
                                       </Button>
@@ -1554,8 +1431,8 @@ export function AssignmentEditor({
                                     {renderBlockIcons(block, hoveredBlock === block.id)}
                                   </div>
                                 ) : (
-                                  <div className="h-full border border-dashed border-muted-foreground/30 rounded flex items-center justify-center text-xs text-muted-foreground">
-                                    drop here
+                                  <div className="h-full border border-dashed border-sidebar-border/80 rounded-lg flex items-center justify-center text-xs text-muted-foreground bg-sidebar-accent/20">
+                                    Drop Here
                                   </div>
                                 )}
                               </div>
@@ -1578,12 +1455,46 @@ export function AssignmentEditor({
             
             {/* Empty drop zone at bottom */}
             {isDragging && rows.length > 0 && (
-              <div className="h-16 mt-4 border-2 border-dashed border-muted-foreground/30 rounded flex items-center justify-center text-sm text-muted-foreground">
-                drop here for new row
+              <div className="h-16 mt-4 border-2 border-dashed border-sidebar-border/80 rounded-lg flex items-center justify-center text-sm text-muted-foreground bg-sidebar-accent/20">
+                Drop Here For New Row
               </div>
             )}
           </div>
         </div>
+
+        {showTeacherControls && (
+          <aside className="w-[320px] border-l border-sidebar-border/70 bg-sidebar-accent/30 p-3 overflow-y-auto">
+            <div className="space-y-3">
+              <div className="rounded-xl border border-sidebar-border/70 bg-background/80 p-3">
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-2">Blocks</div>
+                <div className="space-y-1.5">
+                  {BLOCK_TEMPLATES.map((template) => (
+                    <div
+                      key={template.id}
+                      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-grab hover:bg-sidebar-accent border border-transparent hover:border-sidebar-border/60"
+                      onPointerDown={(e) => handleTemplatePointerDown(e, template.id)}
+                    >
+                      {template.icon}
+                      <span className="text-sm">{template.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl border border-sidebar-border/70 bg-background/80 p-1">
+                <AssignmentSettingsOverlay
+                  isVisible={localIsVisible}
+                  answersEnabled={localAnswersEnabled}
+                  answerMode={localAnswerMode}
+                  aiGradingEnabled={localAiGradingEnabled}
+                  onVisibilityChange={(v) => handleSettingsChange({ isVisible: v })}
+                  onAnswersEnabledChange={(e) => handleSettingsChange({ answersEnabled: e })}
+                  onAnswerModeChange={(m) => handleSettingsChange({ answerMode: m })}
+                  onAiGradingChange={(v) => handleSettingsChange({ aiGradingEnabled: v })}
+                />
+              </div>
+            </div>
+          </aside>
+        )}
       </div>
 
       {/* Edit modal */}

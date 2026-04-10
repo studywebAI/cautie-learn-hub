@@ -157,6 +157,10 @@ export async function POST(
     }
 
     const { title } = await request.json();
+    const normalizedTitle = typeof title === 'string' ? title.trim() : '';
+    if (!normalizedTitle) {
+      return NextResponse.json({ error: 'Chapter title is required' }, { status: 400 });
+    }
 
     // Get max chapter number
     const { data: existingChapters } = await (supabase as any)
@@ -173,7 +177,7 @@ export async function POST(
       .insert({
         subject_id: resolvedParams.subjectId,
         chapter_number: nextNumber,
-        title,
+        title: normalizedTitle,
         ai_summary: null,
         summary_overridden: false
       })

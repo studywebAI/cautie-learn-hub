@@ -414,7 +414,7 @@ export function TeacherDashboard() {
                         </div>
                         <div className="text-right">
                           <Button asChild size="sm" variant="ghost" className="h-8">
-                            <Link prefetch={false} href={`/class/${classInfo.id}?tab=subjects`}>
+                        <Link prefetch={false} href={`/class/${classInfo.id}?tab=group`}>
                               open
                               <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
                             </Link>

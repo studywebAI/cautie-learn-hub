@@ -49,7 +49,7 @@ export function GlobalCommandPaletteDialog({ open, onOpenChange }: GlobalCommand
       .map((classItem) => ({
         id: `class-${classItem.id}`,
         label: classItem.name.toLowerCase(),
-        href: `/class/${classItem.id}?tab=subjects`,
+            href: `/class/${classItem.id}?tab=group`,
         description: 'open class workspace',
         section: 'classes',
       }));

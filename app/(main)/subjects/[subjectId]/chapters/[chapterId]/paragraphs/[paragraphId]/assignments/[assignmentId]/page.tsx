@@ -21,6 +21,9 @@ type Assignment = {
   title: string;
   assignment_index: number;
   answers_enabled: boolean;
+  is_visible?: boolean | null;
+  answer_mode?: 'view_only' | 'editable' | 'self_grade' | null;
+  ai_grading_enabled?: boolean | null;
 };
 
 type Block = {
@@ -147,6 +150,10 @@ export default function AssignmentDetailPage() {
         chapterId={chapterId}
         paragraphId={paragraphId}
         initialBlocks={blocks as any}
+        answersEnabled={Boolean(assignment.answers_enabled)}
+        isVisible={assignment.is_visible !== false}
+        answerMode={(assignment.answer_mode as any) || 'view_only'}
+        aiGradingEnabled={Boolean(assignment.ai_grading_enabled)}
         onSave={(savedBlocks) => {
           // Refresh blocks after save
           setBlocks(savedBlocks as any);

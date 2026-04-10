@@ -88,7 +88,7 @@ function ClassesPageContent() {
     const preferredClass = activeClasses.find((classItem) => classItem.id === preferredClassId) || activeClasses[0];
     if (!preferredClass?.id) return;
 
-    const target = `/class/${preferredClass.id}?tab=subjects`;
+    const target = `/class/${preferredClass.id}?tab=group`;
     if (typeof window !== 'undefined') {
       const current = `${window.location.pathname}${window.location.search}`;
       if (current === target) return;

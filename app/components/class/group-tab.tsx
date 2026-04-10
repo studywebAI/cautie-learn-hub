@@ -619,7 +619,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=subjects`}>
+                <Link prefetch={false} href={`/class/${classId}?tab=group`}>
                       <Library className="h-4 w-4 mr-2" />
                       {t.viewSubjects}
                     </Link>

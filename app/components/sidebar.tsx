@@ -28,6 +28,7 @@ import {
   ChevronDown,
   Check,
   FolderOpen,
+  Loader2,
 } from 'lucide-react';
 import { useDeviceTier } from '@/hooks/use-device-tier';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
@@ -257,7 +258,7 @@ export function AppSidebar() {
   };
 
   const resolveTeacherClassRoute = (nextClassId: string) => {
-    const defaultRoute = `/class/${nextClassId}?tab=subjects`;
+    const defaultRoute = `/class/${nextClassId}?tab=group`;
     if (!pathname) return defaultRoute;
 
     const classRouteMatch = pathname.match(/^\/class\/[^/?#]+(?<suffix>.*)$/);
@@ -270,8 +271,8 @@ export function AppSidebar() {
       return `/class/${nextClassId}${suffix}${currentQuery}`;
     }
 
-    if (pathname === '/subjects') return `/class/${nextClassId}?tab=subjects`;
-    if (pathname.startsWith('/subjects/')) return `/class/${nextClassId}?tab=subjects`;
+    if (pathname === '/subjects') return `/class/${nextClassId}?tab=group`;
+    if (pathname.startsWith('/subjects/')) return `/class/${nextClassId}?tab=group`;
     if (pathname === '/agenda') return `/agenda?classId=${nextClassId}`;
     if (pathname === '/' || pathname === '/classes') return defaultRoute;
 
@@ -310,20 +311,20 @@ export function AppSidebar() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || 'Failed to create class');
-      toast({ title: 'Class created' });
       if (data?.id) {
         setActiveTeacherClassId(data.id);
         if (typeof window !== 'undefined') {
           window.localStorage.setItem('studyweb-last-class-id', data.id);
         }
-        router.push(resolveTeacherClassRoute(data.id));
+        await loadDropdownData('classes');
+        router.replace(`/class/${data.id}?tab=group`);
       }
+      toast({ title: 'Class created' });
       setClassName('');
       setClassDescription('');
       setClassSubjectTitle('');
       setCreateClassOpen(false);
       setNewClassMenuOpen(false);
-      await loadDropdownData('classes');
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Could not create class', description: error?.message || 'Try again.' });
     } finally {
@@ -736,13 +737,13 @@ export function AppSidebar() {
       </div>
       {(createClassOpen || joinClassOpen) && (
         <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-3xl rounded-3xl border border-border bg-[hsl(var(--surface-1))] shadow-2xl">
+          <div className="font-sans w-full max-w-3xl rounded-3xl border border-border bg-[hsl(var(--surface-1))] shadow-2xl">
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
               <div>
-                <h3 className="text-xl font-semibold">
+                <h3 className="text-xl font-semibold leading-tight">
                   {createClassOpen ? 'Create New Class' : 'Join Class as Teacher'}
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mt-1">
                   {createClassOpen
                     ? 'Set up your class with name, optional description, and first subject.'
                     : 'Join an existing class using a code and define your subject in that class.'}
@@ -763,7 +764,7 @@ export function AppSidebar() {
               {createClassOpen && (
                 <>
                   <div className="space-y-1.5">
-                    <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Class Name</p>
+                    <p className="text-sm text-muted-foreground">Class name</p>
                     <Input
                       placeholder="Class name"
                       value={className}
@@ -772,7 +773,7 @@ export function AppSidebar() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Description (Optional)</p>
+                    <p className="text-sm text-muted-foreground">Description (optional)</p>
                     <Input
                       placeholder="Short class description"
                       value={classDescription}
@@ -781,7 +782,7 @@ export function AppSidebar() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">First Subject</p>
+                    <p className="text-sm text-muted-foreground">First subject</p>
                     <Input
                       placeholder="Your subject (e.g. Wiskunde)"
                       value={classSubjectTitle}
@@ -803,7 +804,7 @@ export function AppSidebar() {
                       onClick={submitCreateClass}
                       disabled={submitting || !className.trim() || !classSubjectTitle.trim()}
                     >
-                      {submitting ? 'Creating...' : 'Create Class'}
+                      {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating class...</> : 'Create Class'}
                     </Button>
                   </div>
                 </>
@@ -811,7 +812,7 @@ export function AppSidebar() {
               {joinClassOpen && (
                 <>
                   <div className="space-y-1.5">
-                    <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Join Code</p>
+                    <p className="text-sm text-muted-foreground">Join code</p>
                     <Input
                       placeholder="Enter join code"
                       value={joinCode}
@@ -821,7 +822,7 @@ export function AppSidebar() {
                   </div>
                   {isTeacher && (
                     <div className="space-y-1.5">
-                      <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Your Subject</p>
+                      <p className="text-sm text-muted-foreground">Your subject</p>
                       <Input
                         placeholder="Your subject (e.g. Wiskunde)"
                         value={joinSubjectTitle}

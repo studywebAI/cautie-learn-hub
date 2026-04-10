@@ -100,12 +100,6 @@ export type AppContextType = {
   dictionary: Dictionary;
   role: UserRole;
   setRole: (role: UserRole) => void;
-  highContrast: boolean;
-  setHighContrast: (enabled: boolean) => void;
-  dyslexiaFont: boolean;
-  setDyslexiaFont: (enabled: boolean) => void;
-  reducedMotion: boolean;
-  setReducedMotion: (enabled: boolean) => void;
   theme: ThemeType;
   setTheme: (theme: ThemeType) => void;
   font: FontType;
@@ -185,9 +179,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [schoolingLevel, setSchoolingLevelState] = useState<SchoolingLevel>(2);
   const [dictionary, setDictionary] = useState<Dictionary>(() => getDictionary(language));
   const [role, setRoleState] = useState<UserRole>('student');
-  const [highContrast, setHighContrastState] = useState(false);
-  const [dyslexiaFont, setDyslexiaFontState] = useState(false);
-  const [reducedMotion, setReducedMotionState] = useState(false);
   const [theme, setThemeState] = useState<ThemeType>(() => getInitialTheme());
   const [font, setFontState] = useState<FontType>(() => getInitialFont());
   
@@ -501,15 +492,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const savedSchoolingLevelRaw = Number(getFromLocalStorage('studyweb-schooling-level', 2));
     const savedSchoolingLevel = [1, 2, 3, 4].includes(savedSchoolingLevelRaw) ? savedSchoolingLevelRaw : 2;
     setSchoolingLevelState(savedSchoolingLevel as SchoolingLevel);
-    const hc = getFromLocalStorage('studyweb-high-contrast', false);
-    setHighContrastState(hc);
-    if(hc) document.documentElement.classList.add('high-contrast');
-    const df = getFromLocalStorage('studyweb-dyslexia-font', false);
-    setDyslexiaFontState(df);
-    if(df) document.body.classList.add('font-dyslexia');
-    const rm = getFromLocalStorage('studyweb-reduced-motion', false);
-    setReducedMotionState(rm);
-    if(rm) document.body.setAttribute('data-reduced-motion', 'true');
     const resolvedTheme = getInitialTheme();
     setThemeState(resolvedTheme);
     applyAppearance(resolvedTheme);
@@ -593,24 +575,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   // setRole only updates local state (does nothing - kept for API compatibility)
   const setRole = (newRole: UserRole) => {
     // Role is controlled by subscription_type - this function is kept for backward compatibility but does nothing
-  };
-
-  const setHighContrast = (enabled: boolean) => {
-    setHighContrastState(enabled);
-    saveToLocalStorage('studyweb-high-contrast', enabled);
-    enabled ? document.documentElement.classList.add('high-contrast') : document.documentElement.classList.remove('high-contrast');
-  };
-
-  const setDyslexiaFont = (enabled: boolean) => {
-    setDyslexiaFontState(enabled);
-    saveToLocalStorage('studyweb-dyslexia-font', enabled);
-    enabled ? document.body.classList.add('font-dyslexia') : document.body.classList.remove('font-dyslexia');
-  };
-
-  const setReducedMotion = (enabled: boolean) => {
-    setReducedMotionState(enabled);
-    saveToLocalStorage('studyweb-reduced-motion', enabled);
-    enabled ? document.body.setAttribute('data-reduced-motion', 'true') : document.body.removeAttribute('data-reduced-motion');
   };
 
   const setTheme = (newTheme: ThemeType) => {
@@ -729,13 +693,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   const contextValue = useMemo(() => ({
     session, isLoading, appReady, isTier0Ready, language, setLanguage, region, setRegion, schoolingLevel, setSchoolingLevel, dictionary, role, setRole,
-    highContrast, setHighContrast, dyslexiaFont, setDyslexiaFont,
-    reducedMotion, setReducedMotion, theme, setTheme, font, setFont, sessionRecap, setSessionRecap,
+    theme, setTheme, font, setFont, sessionRecap, setSessionRecap,
     classes, subjects, createClass, isCreatingClass, refetchClasses,
     assignments, createAssignment, deleteAssignment, refetchAssignments,
     students, personalTasks, createPersonalTask, updatePersonalTask,
     materials, refetchMaterials, preloadSnapshot, warmResources,
-  }), [session, isLoading, appReady, isTier0Ready, language, region, schoolingLevel, dictionary, role, highContrast, dyslexiaFont, reducedMotion, theme, font, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials, preloadSnapshot, warmResources]);
+  }), [session, isLoading, appReady, isTier0Ready, language, region, schoolingLevel, dictionary, role, theme, font, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials, preloadSnapshot, warmResources]);
 
   return (
     <AppContext.Provider value={contextValue}>

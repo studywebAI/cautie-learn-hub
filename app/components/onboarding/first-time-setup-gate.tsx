@@ -38,6 +38,7 @@ const THEME_OPTIONS: Array<{ value: ThemeType; label: string }> = [
 ];
 
 const GUEST_SETUP_DONE_KEY = 'studyweb-first-time-setup-guest-final-v1';
+const TEACHER_CODE_CACHE_KEY = 'studyweb-setup-teacher-code-v1';
 
 function normalizeDisplayName(value: unknown): string {
   if (typeof value !== 'string') return '';
@@ -86,6 +87,8 @@ export function FirstTimeSetupGate() {
   const [language, setLanguageChoice] = useState<LanguageOption>('en');
   const [theme, setThemeChoice] = useState<ThemeType>('light');
   const [displayName, setDisplayName] = useState('');
+  const [teacherCode, setTeacherCode] = useState('');
+  const [teacherCodeError, setTeacherCodeError] = useState('');
   const [typedPrompt, setTypedPrompt] = useState('');
   const [cursorVisible, setCursorVisible] = useState(true);
   const [savingFinal, setSavingFinal] = useState(false);
@@ -225,6 +228,8 @@ export function FirstTimeSetupGate() {
       setMode(session?.user?.id ? 'account' : 'new');
       setRole('student');
       setDisplayName('');
+      setTeacherCode(typeof window !== 'undefined' ? (window.localStorage.getItem(TEACHER_CODE_CACHE_KEY) || '') : '');
+      setTeacherCodeError('');
 
       if (!session?.user?.id) {
         if (typeof window !== 'undefined' && window.localStorage.getItem(GUEST_SETUP_DONE_KEY) === 'true') {
@@ -336,6 +341,11 @@ export function FirstTimeSetupGate() {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('studyweb-display-name', displayName.trim());
       window.localStorage.setItem(GUEST_SETUP_DONE_KEY, 'true');
+      if (teacherCode.trim()) {
+        window.localStorage.setItem(TEACHER_CODE_CACHE_KEY, teacherCode.trim());
+      } else {
+        window.localStorage.removeItem(TEACHER_CODE_CACHE_KEY);
+      }
     }
 
     if (session?.user?.id) {
@@ -345,6 +355,7 @@ export function FirstTimeSetupGate() {
           id: session.user.id,
           full_name: displayName.trim() || null,
           display_name: displayName.trim() || null,
+          subscription_type: role,
           language,
           theme,
         });
@@ -355,6 +366,7 @@ export function FirstTimeSetupGate() {
             preference_value: {
               mode,
               role,
+              teacherCode: teacherCode.trim() || null,
               language,
               theme,
               displayName: displayName.trim() || null,
@@ -363,6 +375,17 @@ export function FirstTimeSetupGate() {
           },
           { onConflict: 'user_id,preference_key' }
         );
+
+        if (role === 'teacher' && teacherCode.trim()) {
+          await fetch('/api/classes/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              class_code: teacherCode.trim(),
+              subject_title: 'Joined subject',
+            }),
+          });
+        }
       } catch {
         // Keep UX moving even if backend save fails.
       } finally {
@@ -371,7 +394,7 @@ export function FirstTimeSetupGate() {
     }
 
     setVisible(false);
-  }, [displayName, language, mode, role, session?.user?.id, setLanguage, setTheme, supabase, theme]);
+  }, [displayName, language, mode, role, session?.user?.id, setLanguage, setTheme, supabase, teacherCode, theme]);
 
   const flowSteps: SetupStep[] = mode === 'account'
     ? ['language', 'role', 'appearance', 'displayName']
@@ -407,6 +430,11 @@ export function FirstTimeSetupGate() {
   const typedOptionLabel = (label: string) => label.slice(0, Math.max(1, optionTypeTick));
 
   const goNext = () => {
+    if (step === 'role' && role === 'teacher' && !teacherCode.trim()) {
+      setTeacherCodeError(uiText.enterTeacherCode || 'Enter teacher code');
+      return;
+    }
+    setTeacherCodeError('');
     if (currentStepIndex >= totalSteps - 1) return;
     setStep(flowSteps[currentStepIndex + 1]);
   };
@@ -485,6 +513,20 @@ export function FirstTimeSetupGate() {
                     {typedOptionLabel(uiText.teacher)}
                   </Button>
                 </div>
+                {role === 'teacher' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="teacher-code">{uiText.teacherCode || 'Teacher code'}</Label>
+                    <Input
+                      id="teacher-code"
+                      value={teacherCode}
+                      onChange={(event) => {
+                        setTeacherCode(event.target.value);
+                        if (teacherCodeError) setTeacherCodeError('');
+                      }}
+                    />
+                    {teacherCodeError && <p className="text-xs text-destructive">{teacherCodeError}</p>}
+                  </div>
+                )}
               </div>
             )}
 

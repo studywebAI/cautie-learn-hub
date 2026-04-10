@@ -177,6 +177,10 @@ export async function POST(request: NextRequest) {
       return validation.error;
     }
     const { title, paragraph_id, class_id, assignment_index, type, scheduled_start_at, scheduled_end_at, answers_enabled, description, linked_content } = validation.data;
+    const normalizedTitle = String(title || '').trim();
+    if (!normalizedTitle) {
+      return NextResponse.json({ error: 'Assignment title is required' }, { status: 400 });
+    }
 
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
@@ -235,7 +239,7 @@ export async function POST(request: NextRequest) {
       .insert({
         paragraph_id: paragraph_id,
         assignment_index: nextIndex,
-        title: title?.trim() || 'Untitled Assignment',
+        title: normalizedTitle,
         answers_enabled: answers_enabled ?? false,
         scheduled_start_at: scheduled_start_at,
         scheduled_end_at: scheduled_end_at,

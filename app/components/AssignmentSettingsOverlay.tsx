@@ -12,8 +12,6 @@ import {
   EyeOff,
   Check,
   X,
-  Lock,
-  Unlock,
   Timer,
   Sparkles,
 } from 'lucide-react';
@@ -35,20 +33,16 @@ interface AiGradingConfig {
 interface AssignmentSettingsOverlayProps {
   isVisible: boolean;
   answersEnabled: boolean;
-  isLocked: boolean;
   answerMode: 'view_only' | 'editable' | 'self_grade';
   visibilityTimer?: TimerConfig;
   answersTimer?: TimerConfig;
-  lockTimer?: TimerConfig;
   aiGradingEnabled: boolean;
   aiGradingConfig?: AiGradingConfig;
   onVisibilityChange: (visible: boolean) => void;
   onAnswersEnabledChange: (enabled: boolean) => void;
-  onLockedChange: (locked: boolean) => void;
   onAnswerModeChange: (mode: 'view_only' | 'editable' | 'self_grade') => void;
   onVisibilityTimerChange?: (timer: TimerConfig) => void;
   onAnswersTimerChange?: (timer: TimerConfig) => void;
-  onLockTimerChange?: (timer: TimerConfig) => void;
   onAiGradingChange?: (enabled: boolean) => void;
   onAiGradingConfigChange?: (config: AiGradingConfig) => void;
   isLoading?: boolean;
@@ -107,20 +101,16 @@ function TimerRow({
 export function AssignmentSettingsOverlay({
   isVisible,
   answersEnabled,
-  isLocked,
   answerMode,
   visibilityTimer,
   answersTimer,
-  lockTimer,
   aiGradingEnabled,
   aiGradingConfig,
   onVisibilityChange,
   onAnswersEnabledChange,
-  onLockedChange,
   onAnswerModeChange,
   onVisibilityTimerChange,
   onAnswersTimerChange,
-  onLockTimerChange,
   onAiGradingChange,
   onAiGradingConfigChange,
   isLoading = false,
@@ -216,33 +206,6 @@ export function AssignmentSettingsOverlay({
           label="Auto-answers"
           timer={answersTimer}
           onChange={onAnswersTimerChange}
-          disabled={isLoading}
-        />
-      </div>
-
-      <Separator />
-
-      {/* Lock */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            {isLocked ? (
-              <Lock className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <Unlock className="h-4 w-4 text-muted-foreground" />
-            )}
-            <Label className="text-sm font-normal">Lock assignment</Label>
-          </div>
-          <Switch
-            checked={isLocked}
-            onCheckedChange={onLockedChange}
-            disabled={isLoading}
-          />
-        </div>
-        <TimerRow
-          label="Auto-lock"
-          timer={lockTimer}
-          onChange={onLockTimerChange}
           disabled={isLoading}
         />
       </div>

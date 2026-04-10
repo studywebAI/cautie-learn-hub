@@ -44,12 +44,6 @@ export type AppContextType = {
   dictionary: Dictionary;
   role: UserRole;
   setRole: (role: UserRole) => void;
-  highContrast: boolean;
-  setHighContrast: (enabled: boolean) => void;
-  dyslexiaFont: boolean;
-  setDyslexiaFont: (enabled: boolean) => void;
-  reducedMotion: boolean;
-  setReducedMotion: (enabled: boolean) => void;
   theme: ThemeType;
   setTheme: (theme: ThemeType) => void;
   sessionRecap: SessionRecapData | null;
@@ -122,9 +116,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Locale>('en');
   const [dictionary, setDictionary] = useState<Dictionary>(() => getDictionary(language));
   const [role, setRoleState] = useState<UserRole>('student');
-  const [highContrast, setHighContrastState] = useState(false);
-  const [dyslexiaFont, setDyslexiaFontState] = useState(false);
-  const [reducedMotion, setReducedMotionState] = useState(false);
   const [theme, setThemeState] = useState<ThemeType>('pastel');
   const [sessionRecap, setSessionRecap] = useState<SessionRecapData | null>(null);
 
@@ -401,30 +392,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setDictionary(newDict);
   };
 
-  const setHighContrast = (enabled: boolean) => {
-    setHighContrastState(enabled);
-    saveToLocalStorage('studyweb-high-contrast', enabled);
-    const html = document.documentElement;
-    if (enabled) html.classList.add('high-contrast');
-    else html.classList.remove('high-contrast');
-  };
-
-  const setDyslexiaFont = (enabled: boolean) => {
-    setDyslexiaFontState(enabled);
-    saveToLocalStorage('studyweb-dyslexia-font', enabled);
-    const body = document.body;
-    if (enabled) body.classList.add('font-dyslexia');
-    else body.classList.remove('font-dyslexia');
-  };
-
-  const setReducedMotion = (enabled: boolean) => {
-    setReducedMotionState(enabled);
-    saveToLocalStorage('studyweb-reduced-motion', enabled);
-    const body = document.body;
-    if (enabled) body.setAttribute('data-reduced-motion', 'true');
-    else body.removeAttribute('data-reduced-motion');
-  };
-
   const setTheme = (newTheme: ThemeType) => {
     setThemeState(newTheme);
     saveToLocalStorage('studyweb-theme', newTheme);
@@ -434,18 +401,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   // Initialize settings
   useEffect(() => {
     setLanguageState(getFromLocalStorage('studyweb-language', 'en'));
-    const hc = getFromLocalStorage('studyweb-high-contrast', false);
-    setHighContrastState(hc);
-    if (hc) document.documentElement.classList.add('high-contrast');
-
-    const df = getFromLocalStorage('studyweb-dyslexia-font', false);
-    setDyslexiaFontState(df);
-    if (df) document.body.classList.add('font-dyslexia');
-
-    const rm = getFromLocalStorage('studyweb-reduced-motion', false);
-    setReducedMotionState(rm);
-    if (rm) document.body.setAttribute('data-reduced-motion', 'true');
-
     const savedTheme = getFromLocalStorage('studyweb-theme', 'light');
     setThemeState(savedTheme);
     applyTheme(savedTheme);
@@ -520,12 +475,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     dictionary,
     role,
     setRole,
-    highContrast,
-    setHighContrast,
-    dyslexiaFont,
-    setDyslexiaFont,
-    reducedMotion,
-    setReducedMotion,
     theme,
     setTheme,
     sessionRecap,

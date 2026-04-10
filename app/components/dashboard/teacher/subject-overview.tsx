@@ -62,7 +62,7 @@ export function SubjectOverview({ classId, cachedSubjects }: SubjectOverviewProp
           </CardTitle>
         </div>
         <Button size="sm" asChild>
-          <Link prefetch={false} href={`/class/${classId}?tab=subjects`}>
+          <Link prefetch={false} href={`/class/${classId}?tab=group`}>
             <Plus className="mr-2 h-4 w-4" />
             Add Subject
           </Link>

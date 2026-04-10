@@ -136,6 +136,10 @@ export async function POST(
     const resolvedParams = await params;
 
     const { title, answers_enabled = false } = await request.json()
+    const normalizedTitle = typeof title === 'string' ? title.trim() : ''
+    if (!normalizedTitle) {
+      return NextResponse.json({ error: 'Assignment title is required' }, { status: 400 })
+    }
 
     // Get max assignment index for this paragraph
     const { data: existingAssignments } = await supabase
@@ -154,7 +158,7 @@ export async function POST(
       .insert({
         paragraph_id: resolvedParams.paragraphId,
         assignment_index: nextIndex,
-        title: title?.trim() || 'Untitled Assignment',
+        title: normalizedTitle,
         answers_enabled: answers_enabled ?? false,
       })
       .select()
