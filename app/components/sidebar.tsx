@@ -74,6 +74,7 @@ export function AppSidebar() {
   const [joinClassOpen, setJoinClassOpen] = useState(false);
   const [newClassMenuOpen, setNewClassMenuOpen] = useState(false);
   const [className, setClassName] = useState('');
+  const [classDescription, setClassDescription] = useState('');
   const [classSubjectTitle, setClassSubjectTitle] = useState('');
   const [subjectTitle, setSubjectTitle] = useState('');
   const [selectedSubjectClassId, setSelectedSubjectClassId] = useState('');
@@ -247,6 +248,7 @@ export function AppSidebar() {
     setJoinClassOpen(false);
     setNewClassMenuOpen(false);
     setClassName('');
+    setClassDescription('');
     setClassSubjectTitle('');
     setSubjectTitle('');
     setSelectedSubjectClassId('');
@@ -397,7 +399,11 @@ export function AppSidebar() {
         const response = await fetch('/api/classes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: className.trim(), description: null, subject_title: classSubjectTitle.trim() }),
+          body: JSON.stringify({
+            name: className.trim(),
+            description: classDescription.trim() || null,
+            subject_title: classSubjectTitle.trim(),
+          }),
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Failed to create class');
@@ -410,6 +416,7 @@ export function AppSidebar() {
           router.push(resolveTeacherClassRoute(data.id));
         }
         setClassName('');
+        setClassDescription('');
         setClassSubjectTitle('');
         setCreateClassOpen(false);
         setNewClassMenuOpen(false);
@@ -515,9 +522,10 @@ export function AppSidebar() {
                 variant="outline"
                 className="h-8 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[12px] font-medium text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
                 onClick={() => {
-                  setNewClassMenuOpen((v) => !v);
+                  setNewClassMenuOpen(false);
                   setCreateClassOpen(false);
                   setJoinClassOpen(false);
+                  setCreateClassOpen(true);
                 }}
               >
                 + New class
@@ -548,38 +556,6 @@ export function AppSidebar() {
             )}
           </div>
 
-          {createClassOpen && (
-             <div className="mb-1 space-y-1 rounded-2xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
-              <button
-                type="button"
-                className="text-[12px] text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  setCreateClassOpen(false);
-                  setNewClassMenuOpen(true);
-                }}
-              >
-                Back
-              </button>
-              <Input
-                placeholder="Class name"
-                value={className}
-                onChange={(e) => setClassName(e.target.value)}
-                className="h-8 text-sm"
-              />
-              <Input
-                placeholder="Your subject (e.g. Wiskunde)"
-                value={classSubjectTitle}
-                onChange={(e) => setClassSubjectTitle(e.target.value)}
-                className="h-8 text-sm"
-              />
-              <div className="flex justify-end">
-                <Button size="sm" className="h-7 text-xs" onClick={submitCreateClass} disabled={submitting || !className.trim() || !classSubjectTitle.trim()}>
-                  Create
-                </Button>
-              </div>
-            </div>
-          )}
-
           {createSubjectOpen && (
             <div className="mb-1 space-y-1 rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
               <select
@@ -608,40 +584,6 @@ export function AppSidebar() {
                   disabled={submitting || !subjectTitle.trim() || !selectedSubjectClassId}
                 >
                   Create
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {joinClassOpen && (
-            <div className="mb-1 space-y-1 rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
-              <button
-                type="button"
-                className="text-[12px] text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  setJoinClassOpen(false);
-                  setNewClassMenuOpen(true);
-                }}
-              >
-                Back
-              </button>
-              <Input
-                placeholder="Enter join code"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
-                className="h-8 text-sm"
-              />
-              {isTeacher && (
-                <Input
-                  placeholder="Your subject (e.g. Wiskunde)"
-                  value={joinSubjectTitle}
-                  onChange={(e) => setJoinSubjectTitle(e.target.value)}
-                  className="h-8 text-sm"
-                />
-              )}
-              <div className="flex justify-end">
-                <Button size="sm" className="h-7 text-xs" onClick={submitJoinClass} disabled={submitting || !joinCode.trim() || (isTeacher && !joinSubjectTitle.trim())}>
-                  Join
                 </Button>
               </div>
             </div>
@@ -753,6 +695,7 @@ export function AppSidebar() {
     }
 
     return (
+      <>
       <div className="mb-1.5 px-2">
         <label className="mb-1 block text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
           class
@@ -763,9 +706,9 @@ export function AppSidebar() {
           className="mb-1 h-7 w-full justify-start rounded-xl border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-2.5 text-[11px] font-normal text-[hsl(var(--sidebar-active-foreground))] hover:bg-[hsl(var(--surface-2))]"
           onClick={(event) => {
             openDropdownFor('classes', event.currentTarget);
-            setNewClassMenuOpen(true);
-            setCreateClassOpen(false);
+            setNewClassMenuOpen(false);
             setJoinClassOpen(false);
+            setCreateClassOpen(true);
           }}
         >
           + New class
@@ -791,6 +734,126 @@ export function AppSidebar() {
           </span>
         </button>
       </div>
+      {(createClassOpen || joinClassOpen) && (
+        <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/45 p-4">
+          <div className="w-full max-w-3xl rounded-3xl border border-border bg-[hsl(var(--surface-1))] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <div>
+                <h3 className="text-xl font-semibold">
+                  {createClassOpen ? 'Create New Class' : 'Join Class as Teacher'}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {createClassOpen
+                    ? 'Set up your class with name, optional description, and first subject.'
+                    : 'Join an existing class using a code and define your subject in that class.'}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                className="h-8 px-3"
+                onClick={() => {
+                  setCreateClassOpen(false);
+                  setJoinClassOpen(false);
+                }}
+              >
+                Close
+              </Button>
+            </div>
+            <div className="space-y-5 px-6 py-5">
+              {createClassOpen && (
+                <>
+                  <div className="space-y-1.5">
+                    <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Class Name</p>
+                    <Input
+                      placeholder="Class name"
+                      value={className}
+                      onChange={(e) => setClassName(e.target.value)}
+                      className="h-11 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Description (Optional)</p>
+                    <Input
+                      placeholder="Short class description"
+                      value={classDescription}
+                      onChange={(e) => setClassDescription(e.target.value)}
+                      className="h-11 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">First Subject</p>
+                    <Input
+                      placeholder="Your subject (e.g. Wiskunde)"
+                      value={classSubjectTitle}
+                      onChange={(e) => setClassSubjectTitle(e.target.value)}
+                      className="h-11 text-sm"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <Button
+                      variant="outline"
+                      className="h-10 px-4"
+                      onClick={() => setCreateClassOpen(false)}
+                      disabled={submitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className="h-10 px-4"
+                      onClick={submitCreateClass}
+                      disabled={submitting || !className.trim() || !classSubjectTitle.trim()}
+                    >
+                      {submitting ? 'Creating...' : 'Create Class'}
+                    </Button>
+                  </div>
+                </>
+              )}
+              {joinClassOpen && (
+                <>
+                  <div className="space-y-1.5">
+                    <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Join Code</p>
+                    <Input
+                      placeholder="Enter join code"
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value)}
+                      className="h-11 text-sm"
+                    />
+                  </div>
+                  {isTeacher && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Your Subject</p>
+                      <Input
+                        placeholder="Your subject (e.g. Wiskunde)"
+                        value={joinSubjectTitle}
+                        onChange={(e) => setJoinSubjectTitle(e.target.value)}
+                        className="h-11 text-sm"
+                      />
+                    </div>
+                  )}
+                  <div className="flex justify-end gap-2 pt-1">
+                    <Button
+                      variant="outline"
+                      className="h-10 px-4"
+                      onClick={() => setJoinClassOpen(false)}
+                      disabled={submitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className="h-10 px-4"
+                      onClick={submitJoinClass}
+                      disabled={submitting || !joinCode.trim() || (isTeacher && !joinSubjectTitle.trim())}
+                    >
+                      {submitting ? 'Joining...' : 'Join Class'}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      </>
     );
   };
 

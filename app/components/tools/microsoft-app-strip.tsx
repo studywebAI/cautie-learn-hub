@@ -47,6 +47,13 @@ type OneDrivePickedItem = {
   parentId?: string;
   downloadUrl?: string;
 };
+
+type MicrosoftOAuthPopupMessage = {
+  type: 'microsoft-oauth-result';
+  status: 'connected' | 'error';
+  message?: string;
+  code?: string;
+};
 type GraphListItem = {
   id: string;
   name: string;
@@ -153,6 +160,8 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const portRef = useRef<MessagePort | null>(null);
   const bootstrapRef = useRef<PickerBootstrapResponse | null>(null);
+  const authPopupRef = useRef<Window | null>(null);
+  const authPopupPollRef = useRef<number | null>(null);
 
   const [status, setStatus] = useState<MicrosoftStatus>({ connected: false });
   const [opening, setOpening] = useState(false);
@@ -182,6 +191,21 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
     return currentReturnTo.startsWith('/') ? currentReturnTo : '/tools/quiz';
   }, [currentReturnTo, returnTo]);
 
+  const closeAuthPopup = useCallback(() => {
+    if (authPopupPollRef.current) {
+      window.clearInterval(authPopupPollRef.current);
+      authPopupPollRef.current = null;
+    }
+    if (authPopupRef.current && !authPopupRef.current.closed) {
+      try {
+        authPopupRef.current.close();
+      } catch {
+        // no-op
+      }
+    }
+    authPopupRef.current = null;
+  }, []);
+
   const closePicker = useCallback(() => {
     setPickerOpen(false);
     setPickerStatus('Idle');
@@ -197,7 +221,39 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
       }
       portRef.current = null;
     }
-  }, []);
+    closeAuthPopup();
+  }, [closeAuthPopup]);
+
+  const beginAuthInPopup = useCallback((options?: { switchAccount?: boolean }) => {
+    if (typeof window === 'undefined') return false;
+    const switchAccount = Boolean(options?.switchAccount);
+    const popupReturnTo = withQuery('/auth/microsoft-popup', {
+      target: safeReturnTo,
+      ms_picker: 'embed',
+      app: 'onedrive',
+    });
+    const connectUrl = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(popupReturnTo)}${switchAccount ? '&switch_account=1' : ''}`;
+    const popupWidth = 560;
+    const popupHeight = 700;
+    const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - popupWidth) / 2));
+    const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - popupHeight) / 2));
+    const features = `popup=yes,width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`;
+    const popup = window.open(connectUrl, 'cautie-microsoft-oauth', features);
+    if (!popup) return false;
+    authPopupRef.current = popup;
+    if (authPopupPollRef.current) window.clearInterval(authPopupPollRef.current);
+    authPopupPollRef.current = window.setInterval(() => {
+      if (!authPopupRef.current || authPopupRef.current.closed) {
+        if (authPopupPollRef.current) {
+          window.clearInterval(authPopupPollRef.current);
+          authPopupPollRef.current = null;
+        }
+        authPopupRef.current = null;
+        setAuthTransitioning(false);
+      }
+    }, 350);
+    return true;
+  }, [safeReturnTo]);
 
   const loadFallbackFiles = useCallback(async (source: 'all' | 'files' | 'recent' = 'all') => {
     setFallbackLoading(true);
@@ -325,6 +381,32 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
   }, [loadStatus]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const payload = event.data as MicrosoftOAuthPopupMessage | null;
+      if (!payload || payload.type !== 'microsoft-oauth-result') return;
+
+      closeAuthPopup();
+      setAuthTransitioning(false);
+
+      if (payload.status === 'connected') {
+        setStatus((prev) => ({ ...prev, connected: true }));
+        setOpenAfterConnect(true);
+        void loadStatus();
+        return;
+      }
+
+      const message = payload.message || 'Microsoft sign-in failed';
+      const codeSuffix = payload.code ? ` (${payload.code})` : '';
+      toast({ title: 'Microsoft connection failed', description: `${message}${codeSuffix}`, variant: 'destructive' });
+    };
+
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [closeAuthPopup, loadStatus, toast]);
+
+  useEffect(() => {
     const ms = searchParams.get('ms');
     const msError = searchParams.get('ms_error');
     const msErrorCode = searchParams.get('ms_error_code');
@@ -409,16 +491,20 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
         setPickerStatus('Import failed');
         return;
       }
-      if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem(RESUME_KEY, JSON.stringify({ returnTo: safeReturnTo, ts: Date.now() }));
-      }
       setPickerOpen(true);
       setAuthTransitioning(true);
       setPickerStatus('Signing in to your account');
-      const returnWithPicker = withQuery(safeReturnTo, { ms_picker: 'embed', app: 'onedrive' });
-      window.setTimeout(() => {
-        window.location.href = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`;
-      }, 180);
+      const popupStarted = beginAuthInPopup();
+      if (!popupStarted) {
+        // Popup blocked: fallback to same-tab OAuth redirect.
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem(RESUME_KEY, JSON.stringify({ returnTo: safeReturnTo, ts: Date.now() }));
+        }
+        const returnWithPicker = withQuery(safeReturnTo, { ms_picker: 'embed', app: 'onedrive' });
+        window.setTimeout(() => {
+          window.location.href = `/api/integrations/microsoft/connect?returnTo=${encodeURIComponent(returnWithPicker)}`;
+        }, 180);
+      }
       return;
     }
 
@@ -607,7 +693,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
     } finally {
       setOpening(false);
     }
-  }, [activeFilter, closePicker, loadFallbackFiles, persistSelection, safeReturnTo, status.connected, toast]);
+  }, [activeFilter, beginAuthInPopup, closePicker, loadFallbackFiles, persistSelection, safeReturnTo, status.connected, toast]);
 
   useEffect(() => {
     if (!autoOpen) return;
@@ -640,18 +726,21 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
   }, [openAfterConnect, openEmbeddedPicker, status.connected]);
 
   const handleSwitchAccount = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem(RESUME_KEY, JSON.stringify({ returnTo: safeReturnTo, ts: Date.now() }));
-    }
     setSwitchingAccount(true);
     setPickerOpen(true);
     setAuthTransitioning(true);
     setPickerStatus('Signing in to your account');
-    const returnWithPicker = withQuery(safeReturnTo, { ms_picker: 'embed', app: 'onedrive' });
-    window.setTimeout(() => {
-      window.location.href = `/api/integrations/microsoft/connect?switch_account=1&returnTo=${encodeURIComponent(returnWithPicker)}`;
-    }, 140);
-  }, [safeReturnTo]);
+    const popupStarted = beginAuthInPopup({ switchAccount: true });
+    if (!popupStarted) {
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(RESUME_KEY, JSON.stringify({ returnTo: safeReturnTo, ts: Date.now() }));
+      }
+      const returnWithPicker = withQuery(safeReturnTo, { ms_picker: 'embed', app: 'onedrive' });
+      window.setTimeout(() => {
+        window.location.href = `/api/integrations/microsoft/connect?switch_account=1&returnTo=${encodeURIComponent(returnWithPicker)}`;
+      }, 140);
+    }
+  }, [beginAuthInPopup, safeReturnTo]);
 
   useEffect(() => {
     if (!switchingAccount) return;
@@ -659,6 +748,12 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
       setSwitchingAccount(false);
     }
   }, [searchParams, switchingAccount]);
+
+  useEffect(() => {
+    return () => {
+      closeAuthPopup();
+    };
+  }, [closeAuthPopup]);
 
   if (!ONEDRIVE_APP) return null;
 
@@ -670,7 +765,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
             type="button"
             onClick={() => void openEmbeddedPicker()}
             disabled={opening}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#d1d1d1] bg-white p-0 transition-colors hover:bg-[#f6f6f6] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-[hsl(var(--surface-1))] p-0 transition-colors hover:bg-[hsl(var(--surface-2))] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="OneDrive"
           >
             {opening ? (
@@ -683,8 +778,8 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
       )}
 
       {pickerOpen && (
-        <div className="mx-auto flex min-h-[620px] max-h-[78vh] w-full max-w-[1020px] flex-1 flex-col overflow-hidden rounded-lg border border-[#d9d9d9] bg-[#f3f2f1]">
-          <div className="flex items-center justify-between border-b border-[#e1dfdd] bg-white px-3 py-2">
+        <div className="mx-auto flex min-h-[620px] max-h-[78vh] w-full max-w-[1040px] flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-[hsl(var(--surface-1))] shadow-xl">
+          <div className="flex items-center justify-between border-b border-border bg-[hsl(var(--surface-1))] px-4 py-3">
             <div className="flex items-center gap-2">
               <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-4 w-4 object-contain" />
               <span className="text-sm font-medium">OneDrive</span>
@@ -701,7 +796,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
               <button
                 type="button"
                 onClick={handleSwitchAccount}
-                className="rounded-md border border-[#d1d1d1] px-2 py-1 text-xs text-[#0f6cbd] hover:bg-[#f5f9fd]"
+                className="rounded-lg border border-border bg-[hsl(var(--surface-2))] px-2.5 py-1 text-xs text-foreground hover:bg-[hsl(var(--surface-3))]"
               >
                 {switchingAccount ? 'Switching...' : 'Use another account'}
               </button>
@@ -716,12 +811,12 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
             </div>
           </div>
           {pickerStatus !== 'Ready to select' && (
-            <div className="flex items-center gap-2 border-b border-[#e1dfdd] bg-white px-3 py-1.5 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 border-b border-border bg-[hsl(var(--surface-1))] px-4 py-2 text-xs text-muted-foreground">
               {pickerStatus === 'Ready to use in Cautie' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Loader2 className={`h-3.5 w-3.5 ${pickerStatus === 'Import failed' ? 'hidden' : 'animate-spin'}`} />}
               <span>{pickerStatus}</span>
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-1 border-b border-[#e1dfdd] bg-white px-3 py-1.5 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-border bg-[hsl(var(--surface-1))] px-4 py-2 text-xs">
             <span className="mr-1 text-muted-foreground">Filter:</span>
             {([
               ['all', 'All'],
@@ -735,10 +830,10 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                 key={value}
                 type="button"
                 onClick={() => setActiveFilter(value)}
-                className={`rounded-full border px-2 py-0.5 ${
+                className={`rounded-full border px-2.5 py-1 transition-colors ${
                   activeFilter === value
-                    ? 'border-[#0f6cbd] bg-[#e8f2fc] text-[#0f6cbd]'
-                    : 'border-[#d1d1d1] bg-white text-[#323130]'
+                    ? 'border-primary/40 bg-primary/10 text-primary'
+                    : 'border-border bg-[hsl(var(--surface-2))] text-muted-foreground hover:bg-[hsl(var(--surface-3))]'
                 }`}
               >
                 {label}
@@ -746,25 +841,25 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
             ))}
           </div>
           {authTransitioning && (
-            <div className="border-b border-[#e1dfdd] bg-[#faf9f8] px-3 py-2 text-xs text-[#605e5c]">
-              Continuing to Microsoft sign-in and returning here automatically.
+            <div className="border-b border-border bg-[hsl(var(--surface-2))] px-4 py-2 text-xs text-muted-foreground">
+              Continue sign-in in the secure popup window. This picker stays open.
             </div>
           )}
-          <div className="min-h-0 flex-1 bg-white">
+          <div className="min-h-0 flex-1 bg-[hsl(var(--surface-1))]">
             {fallbackMode === 'graph' ? (
               <div className="flex h-full flex-col">
-                <div className="flex items-center justify-between border-b border-[#e1dfdd] px-3 py-2 text-xs text-muted-foreground">
+                <div className="flex items-center justify-between border-b border-border px-4 py-2 text-xs text-muted-foreground">
                   <span />
                   <button
                     type="button"
                     onClick={() => void loadFallbackFiles(fallbackSource)}
-                    className="rounded border border-[#d1d1d1] px-2 py-0.5"
+                    className="rounded-lg border border-border bg-[hsl(var(--surface-2))] px-2.5 py-1 hover:bg-[hsl(var(--surface-3))]"
                   >
                     Refresh
                   </button>
                 </div>
                 <div className="min-h-0 flex flex-1">
-                  <aside className="flex w-20 flex-col items-center gap-2 border-r border-[#e1dfdd] bg-[#fbfbfb] py-2">
+                  <aside className="flex w-20 flex-col items-center gap-2 border-r border-border bg-[hsl(var(--surface-2))] py-2">
                     {([
                       ['all', 'All', Layers],
                       ['files', 'Files', Folder],
@@ -778,10 +873,10 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                           setFallbackSource(value);
                           void loadFallbackFiles(value);
                         }}
-                        className={`inline-flex h-11 w-11 items-center justify-center rounded-md border ${
+                        className={`inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors ${
                           fallbackSource === value
-                            ? 'border-[#0f6cbd] bg-[#e8f2fc] text-[#0f6cbd]'
-                            : 'border-transparent text-[#605e5c] hover:bg-[#f3f2f1]'
+                            ? 'border-primary/40 bg-primary/10 text-primary'
+                            : 'border-transparent text-muted-foreground hover:bg-[hsl(var(--surface-3))]'
                         }`}
                       >
                         <Icon className="h-4 w-4" />
@@ -814,13 +909,13 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                                     prev.includes(file.id) ? prev.filter((id) => id !== file.id) : [...prev, file.id]
                                   )
                                 }
-                                className={`text-left rounded-lg border p-2 transition ${
+                                className={`text-left rounded-xl border p-2.5 transition ${
                                   selected
-                                    ? 'border-[#0f6cbd] bg-[#e8f2fc]'
-                                    : 'border-[#e1dfdd] bg-white hover:bg-[#f7f7f7]'
+                                    ? 'border-primary/40 bg-primary/10'
+                                    : 'border-border bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))]'
                                 }`}
                               >
-                                <div className="relative mb-2 h-24 overflow-hidden rounded-md bg-[#f3f2f1]">
+                                <div className="relative mb-2 h-24 overflow-hidden rounded-lg bg-[hsl(var(--surface-2))]">
                                   {file.previewUrl ? (
                                     <>
                                       <img
@@ -840,7 +935,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                                 </div>
                                 <p className="truncate text-xs font-medium">{file.name}</p>
                                 <p className="text-[10px] text-muted-foreground">
-                                  {fallbackTypeLabel(file)} • {file.lastModifiedDateTime ? new Date(file.lastModifiedDateTime).toLocaleDateString() : '-'}
+                                  {fallbackTypeLabel(file)} | {file.lastModifiedDateTime ? new Date(file.lastModifiedDateTime).toLocaleDateString() : '-'}
                                 </p>
                               </button>
                             );
@@ -849,10 +944,10 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                     )}
                   </div>
                 </div>
-                <div className="flex items-center justify-end gap-2 border-t border-[#e1dfdd] px-3 py-2">
+                <div className="flex items-center justify-end gap-2 border-t border-border px-4 py-2">
                   <button
                     type="button"
-                    className="rounded border border-[#d1d1d1] px-3 py-1 text-sm"
+                    className="rounded-lg border border-border bg-[hsl(var(--surface-2))] px-3 py-1.5 text-sm hover:bg-[hsl(var(--surface-3))]"
                     onClick={closePicker}
                   >
                     Cancel
@@ -860,7 +955,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                   <button
                     type="button"
                     disabled={selectedFallbackIds.length === 0}
-                    className="rounded border border-[#0f6cbd] bg-[#0f6cbd] px-3 py-1 text-sm text-white disabled:opacity-50"
+                    className="rounded-lg border border-primary bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50"
                     onClick={async () => {
                       const files = fallbackFiles.filter((f) => selectedFallbackIds.includes(f.id));
                       if (files.length === 0) return;
