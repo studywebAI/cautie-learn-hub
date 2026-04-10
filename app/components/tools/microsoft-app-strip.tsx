@@ -176,6 +176,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
   const [fallbackLoading, setFallbackLoading] = useState(false);
   const [selectedFallbackIds, setSelectedFallbackIds] = useState<string[]>([]);
   const [fallbackSource, setFallbackSource] = useState<'all' | 'files' | 'recent'>('all');
+  const [fallbackSearch, setFallbackSearch] = useState('');
 
   const currentReturnTo = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -755,6 +756,24 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
     };
   }, [closeAuthPopup]);
 
+  const visibleFallbackFiles = useMemo(() => {
+    const query = fallbackSearch.trim().toLowerCase();
+    return fallbackFiles
+      .filter((file) => file.isFile === true && !file.isFolder)
+      .filter((file) =>
+        matchesPickerFilter(
+          {
+            id: file.id,
+            name: file.name,
+            mimeType: file.mimeType,
+            webUrl: file.webUrl,
+          },
+          activeFilter
+        )
+      )
+      .filter((file) => (query ? file.name.toLowerCase().includes(query) : true));
+  }, [activeFilter, fallbackFiles, fallbackSearch]);
+
   if (!ONEDRIVE_APP) return null;
 
   return (
@@ -848,15 +867,29 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
           <div className="min-h-0 flex-1 bg-[hsl(var(--surface-1))]">
             {fallbackMode === 'graph' ? (
               <div className="flex h-full flex-col">
-                <div className="flex items-center justify-between border-b border-border px-4 py-2 text-xs text-muted-foreground">
-                  <span />
-                  <button
-                    type="button"
-                    onClick={() => void loadFallbackFiles(fallbackSource)}
-                    className="rounded-lg border border-border bg-[hsl(var(--surface-2))] px-2.5 py-1 hover:bg-[hsl(var(--surface-3))]"
-                  >
-                    Refresh
-                  </button>
+                <div className="space-y-2 border-b border-border px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">Microsoft Files</p>
+                      <p className="text-xs text-muted-foreground">
+                        {visibleFallbackFiles.length} results · {selectedFallbackIds.length} selected
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void loadFallbackFiles(fallbackSource)}
+                      className="rounded-lg border border-border bg-[hsl(var(--surface-2))] px-2.5 py-1 text-xs hover:bg-[hsl(var(--surface-3))]"
+                    >
+                      Refresh
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={fallbackSearch}
+                    onChange={(event) => setFallbackSearch(event.target.value)}
+                    placeholder="Search files..."
+                    className="h-9 w-full rounded-xl border border-border bg-[hsl(var(--surface-2))] px-3 text-xs outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                  />
                 </div>
                 <div className="min-h-0 flex flex-1">
                   <aside className="flex w-20 flex-col items-center gap-2 border-r border-border bg-[hsl(var(--surface-2))] py-2">
@@ -888,58 +921,59 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                       <div className="flex h-full items-center justify-center">
                         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                       </div>
+                    ) : visibleFallbackFiles.length === 0 ? (
+                      <div className="flex h-full min-h-[220px] items-center justify-center rounded-xl border border-dashed border-border bg-[hsl(var(--surface-2))] text-xs text-muted-foreground">
+                        No files match this filter.
+                      </div>
                     ) : (
-                      <div className="grid grid-cols-2 gap-2">
-                        {fallbackFiles
-                          .filter((file) => file.isFile === true && !file.isFolder)
-                          .filter((file) => matchesPickerFilter({
-                            id: file.id,
-                            name: file.name,
-                            mimeType: file.mimeType,
-                            webUrl: file.webUrl,
-                          }, activeFilter))
-                          .map((file) => {
-                            const selected = selectedFallbackIds.includes(file.id);
-                            return (
-                              <button
-                                key={file.id}
-                                type="button"
-                                onClick={() =>
-                                  setSelectedFallbackIds((prev) =>
-                                    prev.includes(file.id) ? prev.filter((id) => id !== file.id) : [...prev, file.id]
-                                  )
-                                }
-                                className={`text-left rounded-xl border p-2.5 transition ${
-                                  selected
-                                    ? 'border-primary/40 bg-primary/10'
-                                    : 'border-border bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))]'
-                                }`}
-                              >
-                                <div className="relative mb-2 h-24 overflow-hidden rounded-lg bg-[hsl(var(--surface-2))]">
-                                  {file.previewUrl ? (
-                                    <>
-                                      <img
-                                        src={file.previewUrl}
-                                        alt={`${file.name} preview`}
-                                        className="h-full w-full object-cover object-top [transform:scale(1.1)] [transform-origin:top_center]"
-                                      />
-                                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/35 to-transparent px-1 py-0.5">
-                                        <span className="text-[9px] font-medium text-white/95">CAUTIE</span>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">
-                                      No preview
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                        {visibleFallbackFiles.map((file) => {
+                          const selected = selectedFallbackIds.includes(file.id);
+                          return (
+                            <button
+                              key={file.id}
+                              type="button"
+                              onClick={() =>
+                                setSelectedFallbackIds((prev) =>
+                                  prev.includes(file.id) ? prev.filter((id) => id !== file.id) : [...prev, file.id]
+                                )
+                              }
+                              className={`text-left rounded-xl border p-2.5 transition ${
+                                selected
+                                  ? 'border-primary/50 bg-primary/10 shadow-sm'
+                                  : 'border-border bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))]'
+                              }`}
+                            >
+                              <div className="relative mb-2 h-24 overflow-hidden rounded-lg bg-[hsl(var(--surface-2))]">
+                                {selected && (
+                                  <div className="absolute right-1.5 top-1.5 z-10 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
+                                    Selected
+                                  </div>
+                                )}
+                                {file.previewUrl ? (
+                                  <>
+                                    <img
+                                      src={file.previewUrl}
+                                      alt={`${file.name} preview`}
+                                      className="h-full w-full object-cover object-top [transform:scale(1.1)] [transform-origin:top_center]"
+                                    />
+                                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/35 to-transparent px-1 py-0.5">
+                                      <span className="text-[9px] font-medium text-white/95">CAUTIE</span>
                                     </div>
-                                  )}
-                                </div>
-                                <p className="truncate text-xs font-medium">{file.name}</p>
-                                <p className="text-[10px] text-muted-foreground">
-                                  {fallbackTypeLabel(file)} | {file.lastModifiedDateTime ? new Date(file.lastModifiedDateTime).toLocaleDateString() : '-'}
-                                </p>
-                              </button>
-                            );
-                          })}
+                                  </>
+                                ) : (
+                                  <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">
+                                    No preview
+                                  </div>
+                                )}
+                              </div>
+                              <p className="truncate text-xs font-medium">{file.name}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {fallbackTypeLabel(file)} | {file.lastModifiedDateTime ? new Date(file.lastModifiedDateTime).toLocaleDateString() : '-'}
+                              </p>
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
