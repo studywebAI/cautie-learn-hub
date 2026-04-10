@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Users, Clock, TrendingUp, FileText, CheckCircle, Activity, Star, ChevronDown, ChevronRight, ClipboardCheck, CalendarDays, Library, UserPlus } from 'lucide-react';
+import { Users, Clock, TrendingUp, FileText, CheckCircle, Activity, Star, ChevronDown, ChevronRight, ClipboardCheck, CalendarDays, Library, UserPlus, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Link from 'next/link';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
@@ -137,7 +137,9 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
     viewSchedule: isDutch ? 'Bekijk rooster' : 'View schedule',
     viewSubjects: isDutch ? 'Bekijk vakken' : 'View subjects',
     manageGroup: isDutch ? 'Beheer groep' : 'Manage group',
-    viewMaterials: isDutch ? 'Bekijk materiaal' : 'View materials',
+    viewAnalytics: isDutch ? 'Bekijk analytics' : 'View analytics',
+    viewSettings: isDutch ? 'Bekijk instellingen' : 'View settings',
+    viewLogs: isDutch ? 'Bekijk logs' : 'View logs',
     invitePeople: isDutch ? 'Nodig uit' : 'Invite people',
   };
 
@@ -568,15 +570,15 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                 {isTeacher && (
                   <div className="grid grid-cols-1 gap-2 pt-4 md:grid-cols-2">
                     <Button variant="outline" className="flex-1" asChild>
-                      <Link prefetch={false} href={`/class/${classId}?tab=subjects`}>
+                      <Link prefetch={false} href={`/class/${classId}?tab=grades&studentId=${selectedStudent.id}`}>
                         <ClipboardCheck className="h-4 w-4 mr-2" />
-                        {t.viewSubjects}
+                        {t.viewGrades}
                       </Link>
                     </Button>
                     <Button variant="outline" className="flex-1" asChild>
-                      <Link prefetch={false} href={`/class/${classId}?tab=assignments&studentId=${selectedStudent.id}`}>
+                      <Link prefetch={false} href={`/class/${classId}?tab=analytics&studentId=${selectedStudent.id}`}>
                         <FileText className="h-4 w-4 mr-2" />
-                        {t.viewAssignments}
+                        {t.viewAnalytics}
                       </Link>
                     </Button>
                     <Button variant="outline" className="flex-1" asChild>
@@ -586,9 +588,9 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                       </Link>
                     </Button>
                     <Button variant="outline" className="flex-1" asChild>
-                      <Link prefetch={false} href={`/class/${classId}?tab=materials`}>
+                      <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}`}>
                         <CalendarDays className="h-4 w-4 mr-2" />
-                        {t.viewMaterials}
+                        {t.viewAttendance}
                       </Link>
                     </Button>
                     {scheduleEnabled && (
@@ -618,9 +620,9 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   <Button variant="outline" asChild>
-                <Link prefetch={false} href={`/class/${classId}?tab=subjects`}>
+                <Link prefetch={false} href={`/class/${classId}?tab=grades`}>
                       <Library className="h-4 w-4 mr-2" />
-                      {t.viewSubjects}
+                      {t.viewGrades}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
@@ -630,15 +632,21 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=assignments`}>
+                    <Link prefetch={false} href={`/class/${classId}?tab=analytics`}>
                       <FileText className="h-4 w-4 mr-2" />
-                      {t.viewAssignments}
+                      {t.viewAnalytics}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=materials`}>
-                      <Activity className="h-4 w-4 mr-2" />
-                      {t.viewMaterials}
+                    <Link prefetch={false} href={`/class/${classId}?tab=settings`}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      {t.viewSettings}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link prefetch={false} href={`/class/${classId}?tab=logs`}>
+                      <Clock className="h-4 w-4 mr-2" />
+                      {t.viewLogs}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>

@@ -4,32 +4,33 @@ import dynamic from 'next/dynamic';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
-import { Skeleton } from '@/components/ui/skeleton';
 import { CautieLoader } from '@/components/ui/cautie-loader';
-import type { Student } from '@/lib/teacher-types';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 
-const AssignmentList = dynamic(
-  () => import('@/components/dashboard/teacher/assignment-list').then((m) => m.AssignmentList)
-);
-const StudentList = dynamic(
-  () => import('@/components/dashboard/teacher/student-list').then((m) => m.StudentList)
-);
-const MaterialList = dynamic(
-  () => import('@/components/dashboard/teacher/material-list').then((m) => m.MaterialList)
-);
 const QuickGrader = dynamic(
   () => import('@/components/dashboard/teacher/quick-grader').then((m) => m.QuickGrader),
   { ssr: false }
-);
-const SubjectOverview = dynamic(
-  () => import('@/components/dashboard/teacher/subject-overview').then((m) => m.SubjectOverview)
 );
 const InviteTab = dynamic(
   () => import('@/components/class/invite-tab').then((m) => m.InviteTab)
 );
 const GroupTab = dynamic(
   () => import('@/components/class/group-tab').then((m) => m.GroupTab)
+);
+const AttendanceTab = dynamic(
+  () => import('@/components/class/attendance-tab').then((m) => m.AttendanceTab)
+);
+const GradesTab = dynamic(
+  () => import('@/components/class/grades-tab').then((m) => m.GradesTab)
+);
+const LogsTab = dynamic(
+  () => import('@/components/class/logs-tab').then((m) => m.LogsTab)
+);
+const ClassAnalyticsDashboard = dynamic(
+  () => import('@/components/dashboard/teacher/class-analytics-dashboard').then((m) => m.ClassAnalyticsDashboard)
+);
+const ClassSettings = dynamic(
+  () => import('@/components/dashboard/teacher/class-settings').then((m) => m.ClassSettings)
 );
 
 // Cache for tab data - persists across tab switches
@@ -41,20 +42,18 @@ export default function ClassDetailsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { classId } = params as { classId: string };
-  const { classes, assignments, isLoading: isAppLoading, materials, refetchMaterials, role, students: allStudents } = useContext(AppContext) as AppContextType;
+  const { classes, isLoading: isAppLoading, refetchMaterials, role } = useContext(AppContext) as AppContextType;
   const requestedTab = searchParams.get('tab');
-  const defaultTab = role === 'teacher' ? 'subjects' : 'invite';
+  const defaultTab = role === 'teacher' ? 'group' : 'invite';
   const allowedTabs = useMemo(
     () => (
       role === 'teacher'
-        ? ['subjects', 'assignments', 'materials', 'group', 'invite']
-        : ['invite', 'assignments', 'materials', 'group']
+        ? ['invite', 'group', 'attendance', 'grades', 'analytics', 'logs', 'settings']
+        : ['invite', 'group']
     ),
     [role]
   );
   const tab = requestedTab && allowedTabs.includes(requestedTab) ? requestedTab : defaultTab;
-
-  const students = allStudents || [];
   const [directClassInfo, setDirectClassInfo] = useState<ClassInfo | null>(null);
   const [isQuickGraderOpen, setIsQuickGraderOpen] = useState(false);
   
@@ -69,8 +68,6 @@ export default function ClassDetailsPage() {
     return directClassInfo || undefined;
   }, [classes, classId, directClassInfo]);
   
-  const classAssignments = useMemo(() => assignments.filter((a: any) => a.class_id === classId), [assignments, classId]);
-
   useEffect(() => {
     if (classId && !classId.startsWith('local-')) {
         refetchMaterials(classId);
@@ -136,8 +133,8 @@ export default function ClassDetailsPage() {
         case 'group':
           url = `/api/classes/${classId}/group`;
           break;
-        case 'subjects':
-          url = `/api/classes/${classId}/subjects`;
+        case 'analytics':
+          url = `/api/classes/${classId}/analytics`;
           break;
         default:
           return null;
@@ -218,20 +215,6 @@ export default function ClassDetailsPage() {
     router.replace(`/class/${classId}?tab=${tab}`);
   }, [requestedTab, allowedTabs, router, classId, tab]);
 
-  // Force refresh specific tab data
-  const refreshTabData = useCallback((tabName: string) => {
-    const cacheKey = `${classId}-${tabName}`;
-    delete tabDataCache[cacheKey];
-    void logClassTabEvent({
-      classId,
-      tab: tabName,
-      event: 'refresh_requested',
-      stage: 'manual',
-      level: 'info',
-    });
-    return loadTabData(tabName);
-  }, [classId, loadTabData]);
-
   const isLoading = !!isAppLoading;
   const isTeacher = role === 'teacher';
 
@@ -271,30 +254,22 @@ export default function ClassDetailsPage() {
             parentLoading={!!loadingTabs['group']}
           />
         );
-      case 'assignments':
-        return (
-          <>
-            {isTeacher && (
-              <div className="mb-4">
-                <button onClick={() => setIsQuickGraderOpen(true)} className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
-                  Quick Grade
-                </button>
-              </div>
-            )}
-            <AssignmentList assignments={classAssignments} classId={classId} isTeacher={isTeacher} />
-          </>
-        );
-      case 'subjects':
+      case 'attendance':
+        return isTeacher ? <AttendanceTab classId={classId} /> : null;
+      case 'grades':
+        return isTeacher ? <GradesTab classId={classId} /> : null;
+      case 'analytics':
+        return isTeacher ? <ClassAnalyticsDashboard classId={classId} /> : null;
+      case 'logs':
+        return isTeacher ? <LogsTab classId={classId} /> : null;
+      case 'settings':
         return isTeacher ? (
-          <SubjectOverview 
-            classId={classId} 
-            cachedSubjects={cachedTabData['subjects']?.subjects}
+          <ClassSettings
+            classId={classId}
+            className={(classInfo as any)?.name || 'Class'}
+            isArchived={Boolean((classInfo as any)?.isArchived || (classInfo as any)?.is_archived)}
           />
         ) : null;
-      case 'materials':
-        return <MaterialList materials={materials} classId={classId} isLoading={!!isLoading} isTeacher={isTeacher} />;
-      case 'students':
-        return <StudentList students={students} isLoading={!!isLoading} classInfo={classInfo as any} />;
       default:
         return (
           <InviteTab 

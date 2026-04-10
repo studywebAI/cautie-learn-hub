@@ -80,7 +80,7 @@ export function AssignmentDetailsPanel({ event, isTeacher, onClose, onRefresh }:
         href = `/material/${link.link_ref_id}`;
       } else if (link.link_type === 'assignment') {
         const classId = String(meta.class_id || event.class_id || '');
-        href = classId ? `/class/${classId}?tab=assignments` : '/classes';
+        href = classId ? `/class/${classId}?tab=grades` : '/classes';
       } else if (['subject', 'chapter', 'paragraph', 'assignment'].includes(link.link_type) && typeof meta.url === 'string') {
         href = meta.url;
       }
