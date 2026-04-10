@@ -415,6 +415,7 @@ export function FirstTimeSetupGate() {
     if (currentStepIndex <= 0) return;
     setStep(flowSteps[currentStepIndex - 1]);
   };
+  const showLinearNext = step === 'language' || step === 'role' || step === 'appearance';
 
   if (!hydrated || !visible) return null;
 
@@ -437,7 +438,14 @@ export function FirstTimeSetupGate() {
             </div>
             <div className="flex items-center justify-between">
               <Button variant="outline" onClick={goBack} disabled={currentStepIndex === 0 || savingFinal}>Back</Button>
-              {savingFinal && <p className="text-xs text-muted-foreground">{uiText.saving}</p>}
+              <div className="flex items-center gap-3">
+                {savingFinal && <p className="text-xs text-muted-foreground">{uiText.saving}</p>}
+                {showLinearNext && (
+                  <Button onClick={goNext} disabled={savingFinal}>
+                    {uiText.next}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </aside>
@@ -463,9 +471,6 @@ export function FirstTimeSetupGate() {
                     </button>
                   ))}
                 </div>
-                <div className="flex justify-end">
-                  <Button onClick={goNext}>{uiText.next}</Button>
-                </div>
               </div>
             )}
 
@@ -479,9 +484,6 @@ export function FirstTimeSetupGate() {
                   <Button className="h-12" variant={role === 'teacher' ? 'default' : 'outline'} onClick={() => setRole('teacher')}>
                     {typedOptionLabel(uiText.teacher)}
                   </Button>
-                </div>
-                <div className="flex justify-end">
-                  <Button onClick={goNext}>{uiText.next}</Button>
                 </div>
               </div>
             )}
@@ -525,9 +527,6 @@ export function FirstTimeSetupGate() {
                       {typedOptionLabel(option.label)}
                     </button>
                   ))}
-                </div>
-                <div className="flex justify-end">
-                  <Button onClick={goNext}>{uiText.next}</Button>
                 </div>
               </div>
             )}

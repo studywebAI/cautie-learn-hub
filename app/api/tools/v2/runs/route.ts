@@ -36,6 +36,67 @@ async function writeRunEvent(supabase: any, runId: string, eventType: string, pa
   });
 }
 
+function sanitizeErrorText(value: unknown, max = 2000) {
+  const raw = String(value || "");
+  if (!raw) return "";
+  // Redact obvious key-like values before persisting.
+  const redacted = raw
+    .replace(/sk-[a-z0-9-_]{16,}/gi, "[REDACTED_KEY]")
+    .replace(/api[_-]?key\s*[:=]\s*['"]?[a-z0-9._-]{8,}['"]?/gi, "api_key=[REDACTED]");
+  return redacted.slice(0, max);
+}
+
+async function writeAIErrorLog(
+  supabase: any,
+  input: {
+    runId?: string | null;
+    userId: string;
+    toolId: string;
+    flowName: string;
+    providerPreference: "auto" | "gemini" | "openai";
+    providerAttempted: "gemini" | "openai";
+    stage: "primary_error" | "fallback_error" | "run_failed";
+    fallbackAttempted: boolean;
+    fallbackSucceeded: boolean;
+    code?: string;
+    message?: string;
+  }
+) {
+  const payload = {
+    run_id: input.runId || null,
+    user_id: input.userId,
+    tool_id: input.toolId,
+    flow_name: input.flowName,
+    provider_preference: input.providerPreference,
+    provider_attempted: input.providerAttempted,
+    stage: input.stage,
+    fallback_attempted: input.fallbackAttempted,
+    fallback_succeeded: input.fallbackSucceeded,
+    error_code: input.code ? String(input.code).slice(0, 120) : null,
+    error_message: sanitizeErrorText(input.message, 8000) || "Unknown AI error",
+    fingerprint: createHash("sha256")
+      .update(
+        [
+          input.flowName,
+          input.providerAttempted,
+          input.stage,
+          input.code || "",
+          sanitizeErrorText(input.message, 512),
+        ].join("|")
+      )
+      .digest("hex"),
+  };
+
+  const { error } = await supabase.from("ai_error_logs").insert(payload);
+  if (error) {
+    // Non-blocking; keep tool execution result path stable.
+    console.error("[ai_error_logs] insert failed", {
+      message: error.message,
+      code: error.code,
+    });
+  }
+}
+
 async function writeRunSources(supabase: any, runId: string, userId: string, sources: any[]) {
   if (!Array.isArray(sources) || sources.length === 0) return;
   const rows = sources.map((source) => {
@@ -134,7 +195,43 @@ export async function POST(request: NextRequest) {
     try {
       const inputPayload = enriched.input;
       const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id);
-      const output = await executeAIFlow(payload.flowName, inputPayload, runtimeOptions);
+      const aiEvents: Array<{
+        type: "primary_error" | "fallback_attempt" | "fallback_success" | "fallback_error";
+        provider: "gemini" | "openai";
+        flowName: string;
+        message?: string;
+        code?: string;
+      }> = [];
+      const output = await executeAIFlow(payload.flowName, inputPayload, {
+        ...runtimeOptions,
+        onEvent: (event) => aiEvents.push(event),
+      });
+
+      for (const event of aiEvents) {
+        await writeRunEvent(supabase, createdRun.id, `ai_${event.type}`, {
+          provider: event.provider,
+          flowName: event.flowName,
+          code: event.code || null,
+          message: sanitizeErrorText(event.message, 1000) || null,
+        });
+
+        if (event.type === "primary_error" || event.type === "fallback_error") {
+          await writeAIErrorLog(supabase, {
+            runId: createdRun.id,
+            userId: user.id,
+            toolId: payload.toolId,
+            flowName: payload.flowName,
+            providerPreference: runtimeOptions.providerPreference || "auto",
+            providerAttempted: event.provider,
+            stage: event.type,
+            fallbackAttempted: aiEvents.some((item) => item.type === "fallback_attempt"),
+            fallbackSucceeded: aiEvents.some((item) => item.type === "fallback_success"),
+            code: event.code,
+            message: event.message,
+          });
+        }
+      }
+
       enforceSourceOnlyGuard({
         toolId: payload.toolId,
         inputPayload,
@@ -198,6 +295,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(finalRun || createdRun);
     } catch (err: any) {
       const errorCode = err?.code || "RUN_FAILED";
+      const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id).catch(() => ({ providerPreference: "auto" as const }));
       await supabase
         .from("tool_runs")
         .update({
@@ -209,6 +307,19 @@ export async function POST(request: NextRequest) {
       await writeRunEvent(supabase, createdRun.id, "failed", {
         error: err?.message || "Run failed",
         code: errorCode,
+      });
+      await writeAIErrorLog(supabase, {
+        runId: createdRun.id,
+        userId: user.id,
+        toolId: payload.toolId,
+        flowName: payload.flowName,
+        providerPreference: runtimeOptions.providerPreference || "auto",
+        providerAttempted: "gemini",
+        stage: "run_failed",
+        fallbackAttempted: String(err?.message || "").toLowerCase().includes("fallback"),
+        fallbackSucceeded: false,
+        code: errorCode,
+        message: err?.message || "Run failed",
       });
       return NextResponse.json(
         { error: err?.message || "Tool execution failed", code: errorCode, runId: createdRun.id },
