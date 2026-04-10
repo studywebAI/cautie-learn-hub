@@ -174,7 +174,7 @@ export function AuthForm({
                   <p
                     className={
                       searchParams.type === 'info'
-                        ? 'text-blue-500'
+                        ? 'text-foreground'
                         : searchParams.type === 'warning'
                         ? 'text-yellow-600'
                         : 'text-red-500'

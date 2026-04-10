@@ -83,7 +83,6 @@ export function AppSidebar() {
   const [activeTeacherClassId, setActiveTeacherClassId] = useState('');
 
   const isTeacher = context?.role === 'teacher';
-  const isAgendaRoute = pathname === '/agenda' || pathname?.startsWith('/agenda?');
   const isRailCollapsed = !isPhone && sidebarState === 'collapsed';
   const activeClassTab = searchParams?.get('tab') || '';
   const teacherSubjectsHref = isTeacher && activeTeacherClassId ? `/subjects?classId=${activeTeacherClassId}` : '/subjects';
@@ -238,9 +237,9 @@ export function AppSidebar() {
     );
   }, [context?.subjects]);
 
-  const isDropdownTrigger = (href: string) => href === '/subjects';
-  const canUseDropdownFor = (href: string) => href === '/subjects';
-  const getDropdownKind = (href: string) => 'subjects' as const;
+  const isDropdownTrigger = (_href: string) => false;
+  const canUseDropdownFor = (_href: string) => false;
+  const getDropdownKind = (_href: string) => 'subjects' as const;
 
   const resetInlinePanels = () => {
     setCreateClassOpen(false);
@@ -716,7 +715,6 @@ export function AppSidebar() {
 
   const renderTeacherClassSwitcher = () => {
     if (!isTeacher) return null;
-    if (isAgendaRoute) return null;
     if (isRailCollapsed) return null;
 
     if (isPhone) {

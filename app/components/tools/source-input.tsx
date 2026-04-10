@@ -62,12 +62,12 @@ type SourceEntry = {
 type RecentCatalogItem = {
   id: string;
   name: string;
-  mimeType?: string;
+  sourceType: 'tool_run' | 'material';
+  materialType?: MaterialKind;
+  text?: string;
   webUrl?: string;
   previewUrl?: string;
   lastModifiedDateTime?: string;
-  isFile?: boolean;
-  isFolder?: boolean;
 };
 
 type MaterialKind = 'text' | 'file' | 'image' | 'onedrive';
@@ -236,7 +236,7 @@ export function SourceInput({
   const [recentsOpen, setRecentsOpen] = useState(false);
   const [recentsCatalog, setRecentsCatalog] = useState<RecentCatalogItem[]>([]);
   const [recentsLoading, setRecentsLoading] = useState(false);
-  const [recentsSourceFilter, setRecentsSourceFilter] = useState<'recent' | 'files' | 'all'>('recent');
+  const [recentsSourceFilter, setRecentsSourceFilter] = useState<'all' | 'tool_runs' | 'materials'>('all');
   const [recentsSort, setRecentsSort] = useState<'newest' | 'oldest' | 'most_used' | 'name'>('newest');
   const [recentsSearch, setRecentsSearch] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
@@ -520,39 +520,87 @@ export function SourceInput({
   const loadRecentsCatalog = useCallback(async () => {
     setRecentsLoading(true);
     try {
-      const response = await fetch(`/api/integrations/microsoft/files?kind=onedrive&source=${recentsSourceFilter}`, {
-        cache: 'no-store',
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(String(payload?.error || 'Could not load recents'));
-      const items: RecentCatalogItem[] = (Array.isArray(payload?.items) ? payload.items : [])
-        .map((item: any) => ({
-          id: String(item?.id || ''),
-          name: String(item?.name || 'Untitled'),
-          mimeType: typeof item?.mimeType === 'string' ? item.mimeType : undefined,
-          webUrl: typeof item?.webUrl === 'string' ? item.webUrl : undefined,
-          previewUrl: typeof item?.previewUrl === 'string' ? item.previewUrl : undefined,
-          lastModifiedDateTime: typeof item?.lastModifiedDateTime === 'string' ? item.lastModifiedDateTime : undefined,
-          isFile: Boolean(item?.isFile),
-          isFolder: Boolean(item?.isFolder),
-        }))
-        .filter((item: RecentCatalogItem) => item.id && item.isFile && !item.isFolder);
-      setRecentsCatalog(items);
-    } catch (error: any) {
-      const message = String(error?.message || '').toLowerCase();
-      const isDisabledIntegrationError =
-        message.includes('not configured') ||
-        message.includes('integration') ||
-        message.includes('unsupported') ||
-        message.includes('unauthorized');
-      setRecentsCatalog([]);
-      if (!isDisabledIntegrationError) {
-        toast({
-          variant: 'destructive',
-          title: 'Could not load recents',
-          description: error?.message || 'Try again in a moment.',
-        });
+      const [runsRes, materialsRes] = await Promise.all([
+        fetch('/api/tools/v2/runs', { cache: 'no-store' }).then(async (response) => {
+          if (!response.ok) throw new Error('Could not load tool runs');
+          return response.json();
+        }),
+        fetch('/api/materials?limit=50', { cache: 'no-store' }).then(async (response) => {
+          if (!response.ok) throw new Error('Could not load materials');
+          return response.json();
+        }),
+      ]);
+
+      const runs: RecentCatalogItem[] = (Array.isArray(runsRes) ? runsRes : [])
+        .filter((run: any) => run?.status === 'succeeded')
+        .filter((run: any) => run?.options_payload?.saveToRecents !== false)
+        .map((run: any) => {
+          const tool = String(run?.tool_id || 'tool');
+          const mode = String(run?.mode || '').trim();
+          const title = mode ? `${tool} | ${mode}` : tool;
+          const sourceText = String(
+            run?.input_payload?.sourceText ||
+            run?.input_payload?.source_text ||
+            run?.input_payload?.text ||
+            run?.input_payload?.content ||
+            ''
+          ).trim();
+          const description = String(
+            run?.output_payload?.description ||
+            run?.output_payload?.summary ||
+            ''
+          ).trim();
+          return {
+            id: `tool-run:${String(run?.id || '')}`,
+            name: title,
+            sourceType: 'tool_run' as const,
+            text: sourceText || description,
+            webUrl: `/tools/${tool}?runId=${String(run?.id || '')}`,
+            lastModifiedDateTime: String(run?.finished_at || run?.created_at || ''),
+          };
+        })
+        .filter((item) => item.id !== 'tool-run:');
+
+      const materialRows = Array.isArray(materialsRes?.materials) ? materialsRes.materials : [];
+      const materials: RecentCatalogItem[] = materialRows.map((material: any) => {
+        const type = String(material?.type || 'file').toLowerCase();
+        const materialType: MaterialKind =
+          type === 'image' ? 'image' : type === 'text' ? 'text' : type === 'onedrive' ? 'onedrive' : 'file';
+        const content = String(
+          material?.source_text ||
+          material?.content ||
+          material?.description ||
+          ''
+        ).trim();
+        return {
+          id: `material:${String(material?.id || '')}`,
+          name: String(material?.title || material?.type || 'Material'),
+          sourceType: 'material' as const,
+          materialType,
+          text: content,
+          lastModifiedDateTime: String(material?.updated_at || material?.created_at || ''),
+        };
+      }).filter((item) => item.id !== 'material:');
+
+      let merged = [...runs, ...materials];
+      if (recentsSourceFilter === 'tool_runs') {
+        merged = merged.filter((item) => item.sourceType === 'tool_run');
+      } else if (recentsSourceFilter === 'materials') {
+        merged = merged.filter((item) => item.sourceType === 'material');
       }
+      merged.sort((a, b) => {
+        const aTime = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
+        const bTime = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
+        return bTime - aTime;
+      });
+      setRecentsCatalog(merged);
+    } catch (error: any) {
+      setRecentsCatalog([]);
+      toast({
+        variant: 'destructive',
+        title: 'Could not load recents',
+        description: error?.message || 'Try again in a moment.',
+      });
     } finally {
       setRecentsLoading(false);
     }
@@ -561,49 +609,24 @@ export function SourceInput({
   const importRecentsItems = useCallback(async (items: RecentCatalogItem[]) => {
     if (items.length === 0) return;
     try {
-      const response = await fetch('/api/integrations/microsoft/files/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: items.map((item) => ({
-            id: item.id,
-            name: item.name,
-            kind: 'onedrive',
-            webUrl: item.webUrl,
-            mimeType: item.mimeType,
-          })),
-        }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(String(payload?.error || 'Could not extract selected recents'));
-
-      const extractedItems = Array.isArray(payload?.items) ? payload.items : [];
-      const byId = new Map<string, any>();
-      for (const extracted of extractedItems) {
-        const id = String(extracted?.id || '');
-        if (!id) continue;
-        byId.set(id, extracted);
-      }
-
       const recentsAsSources: SourceEntry[] = items.map((item, idx) => {
-        const extracted = byId.get(item.id);
-        const extractedText = typeof extracted?.extractedText === 'string' ? extracted.extractedText.trim() : '';
-        const imageLike = isImageLike(item.name, item.mimeType);
+        const textBody = String(item.text || item.webUrl || '').trim();
+        const imageLike = item.materialType === 'image';
         upsertMaterial({
-          type: imageLike ? 'image' : 'onedrive',
-          title: item.name || 'OneDrive file',
-          preview: imageLike ? (item.previewUrl || item.name) : (extractedText.slice(0, 220) || item.name),
-          detail: imageLike ? (item.webUrl || item.name) : (extractedText || item.webUrl || item.name),
+          type: item.materialType || (imageLike ? 'image' : 'text'),
+          title: item.name || 'Recent item',
+          preview: imageLike ? (item.previewUrl || item.name) : (textBody.slice(0, 220) || item.name),
+          detail: imageLike ? (item.webUrl || item.name) : (textBody || item.name),
         });
         return {
           id: `recents-${item.id}-${idx}`,
           kind: imageLike ? 'image' : 'file',
-          label: `${item.name} (OneDrive)`,
-          text: imageLike ? '' : extractedText,
+          label: item.sourceType === 'tool_run' ? `${item.name} (Tool run)` : `${item.name} (Material)`,
+          text: imageLike ? '' : textBody,
           selected: true,
           loading: false,
           previewUrl: item.previewUrl,
-          extractionStatus: extractedText ? 'ready' : 'empty',
+          extractionStatus: textBody ? 'ready' : 'empty',
           error: undefined,
         };
       });
@@ -1624,10 +1647,10 @@ export function SourceInput({
                   className="h-8 w-full rounded-md border border-sidebar-border bg-sidebar-accent/50 pl-7 pr-2 text-xs outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
-              <select value={recentsSourceFilter} onChange={(e) => setRecentsSourceFilter(e.target.value as 'recent' | 'files' | 'all')} className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs">
-                <option value="recent">Recent</option>
-                <option value="files">Files</option>
+              <select value={recentsSourceFilter} onChange={(e) => setRecentsSourceFilter(e.target.value as 'all' | 'tool_runs' | 'materials')} className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs">
                 <option value="all">All</option>
+                <option value="tool_runs">Tool runs</option>
+                <option value="materials">Materials</option>
               </select>
               <select value={recentsSort} onChange={(e) => setRecentsSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')} className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs">
                 <option value="newest">Time: Newest</option>
@@ -1655,7 +1678,7 @@ export function SourceInput({
                     >
                       <FileText className="h-4 w-4 shrink-0 text-primary" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs">{toolId || 'tool'} | {item.name}</p>
+                        <p className="truncate text-xs">{item.name}</p>
                         <p className="text-[10px] text-muted-foreground">{item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleString() : '-'}</p>
                       </div>
                     </button>
