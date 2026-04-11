@@ -62,6 +62,8 @@ export default function SubjectDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [expandedParagraphs, setExpandedParagraphs] = useState<Set<string>>(new Set());
+  const [isCreatingChapter, setIsCreatingChapter] = useState(false);
+  const [isCreatingParagraph, setIsCreatingParagraph] = useState(false);
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
@@ -117,21 +119,42 @@ export default function SubjectDetailPage() {
 
   const handleCreateChapter = async () => {
     if (!newChapterTitle.trim()) return;
+    if (isCreatingChapter) return;
+
+    const tempId = `temp-chapter-${Date.now()}`;
+    const nextNumber = chapters.length > 0 ? Math.max(...chapters.map((c) => c.chapter_number || 0)) + 1 : 1;
+    const optimisticChapter: Chapter = {
+      id: tempId,
+      title: newChapterTitle.trim(),
+      chapter_number: nextNumber,
+      paragraphs: [],
+    };
+
+    setIsCreatingChapter(true);
+    setChapters((prev) => [...prev, optimisticChapter]);
+    setNewChapterTitle('');
+    setIsCreateChapterOpen(false);
+
     try {
       const response = await fetch(`/api/subjects/${subjectId}/chapters`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newChapterTitle.trim() }),
+        body: JSON.stringify({ title: optimisticChapter.title }),
       });
-      if (response.ok) {
-        const newChapter = await response.json();
-        setChapters(prev => [...prev, { ...newChapter, paragraphs: [] }]);
-        setNewChapterTitle('');
-        setIsCreateChapterOpen(false);
-        toast({ title: 'Chapter created' });
+      if (!response.ok) {
+        throw new Error('Failed to create chapter');
       }
+      const newChapter = await response.json();
+      setChapters((prev) =>
+        prev.map((chapter) =>
+          chapter.id === tempId ? { ...newChapter, paragraphs: [] } : chapter
+        )
+      );
     } catch (error) {
+      setChapters((prev) => prev.filter((chapter) => chapter.id !== tempId));
       toast({ title: 'Error', description: 'Failed to create chapter', variant: 'destructive' });
+    } finally {
+      setIsCreatingChapter(false);
     }
   };
 
@@ -142,28 +165,82 @@ export default function SubjectDetailPage() {
       toast({ title: 'Error', description: 'Paragraph title is required', variant: 'destructive' });
       return;
     }
+    if (isCreatingParagraph) return;
+
+    const targetChapter = chapters.find((chapter) => chapter.id === selectedChapterId);
+    const nextNumber = targetChapter?.paragraphs?.length
+      ? Math.max(...targetChapter.paragraphs.map((p) => p.paragraph_number || 0)) + 1
+      : 1;
+    const tempId = `temp-paragraph-${Date.now()}`;
+    const optimisticParagraph: Paragraph = {
+      id: tempId,
+      title: resolvedTitle,
+      paragraph_number: nextNumber,
+      assignment_count: 0,
+      progress_percent: 0,
+      answers_enabled: false,
+    };
+
+    setIsCreatingParagraph(true);
+    setChapters((prev) =>
+      prev.map((chapter) =>
+        chapter.id === selectedChapterId
+          ? { ...chapter, paragraphs: [...(chapter.paragraphs || []), optimisticParagraph] }
+          : chapter
+      )
+    );
+    setNewParagraphTitle('');
+    setSelectedChapterId(null);
+    setIsCreateParagraphOpen(false);
+
     try {
       const response = await fetch(`/api/subjects/${subjectId}/chapters/${selectedChapterId}/paragraphs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: resolvedTitle }),
       });
-      if (response.ok) {
-        await loadSubjectOverview();
-        setNewParagraphTitle('');
-        setSelectedChapterId(null);
-        setIsCreateParagraphOpen(false);
-        toast({ title: 'Paragraph created' });
-      } else {
+      if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        toast({
-          title: 'Error',
-          description: errorData?.details || errorData?.error || 'Failed to create paragraph',
-          variant: 'destructive',
-        });
+        throw new Error(errorData?.details || errorData?.error || 'Failed to create paragraph');
       }
+      const createdParagraph = await response.json();
+      setChapters((prev) =>
+        prev.map((chapter) =>
+          chapter.id === selectedChapterId
+            ? {
+                ...chapter,
+                paragraphs: (chapter.paragraphs || []).map((paragraph) =>
+                  paragraph.id === tempId
+                    ? {
+                        ...paragraph,
+                        ...createdParagraph,
+                        assignment_count: createdParagraph.assignment_count ?? 0,
+                        progress_percent: createdParagraph.progress_percent ?? 0,
+                      }
+                    : paragraph
+                ),
+              }
+            : chapter
+        )
+      );
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to create paragraph', variant: 'destructive' });
+      setChapters((prev) =>
+        prev.map((chapter) =>
+          chapter.id === selectedChapterId
+            ? {
+                ...chapter,
+                paragraphs: (chapter.paragraphs || []).filter((paragraph) => paragraph.id !== tempId),
+              }
+            : chapter
+        )
+      );
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to create paragraph',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingParagraph(false);
     }
   };
 
@@ -371,7 +448,9 @@ export default function SubjectDetailPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateChapterOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateChapter} disabled={!newChapterTitle.trim()}>Create</Button>
+            <Button onClick={handleCreateChapter} disabled={!newChapterTitle.trim() || isCreatingChapter}>
+              {isCreatingChapter ? 'Creating...' : 'Create'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -414,7 +493,9 @@ export default function SubjectDetailPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateParagraphOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateParagraph} disabled={!selectedChapterId || !newParagraphTitle.trim()}>Create</Button>
+            <Button onClick={handleCreateParagraph} disabled={!selectedChapterId || !newParagraphTitle.trim() || isCreatingParagraph}>
+              {isCreatingParagraph ? 'Creating...' : 'Create'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

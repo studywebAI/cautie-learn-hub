@@ -177,6 +177,14 @@ export function AssignmentEditor({
   onSettingsChange,
   isTeacher = true
 }: AssignmentEditorProps) {
+  const getTemplateDefaults = (type: string) => {
+    const template = BLOCK_TEMPLATES.find((item) => item.type === type);
+    if (!template || typeof template.defaultData !== 'object' || template.defaultData === null) {
+      return {};
+    }
+    return template.defaultData;
+  };
+
   // Normalize initialBlocks to have rowId
   const normalizedInitialBlocks = initialBlocks.map((b, i) => ({
     ...b,
@@ -185,6 +193,10 @@ export function AssignmentEditor({
     size: b.size || 3,
     position: b.position ?? i,
     showFeedback: b.showFeedback ?? false,
+    data: {
+      ...getTemplateDefaults(b.type),
+      ...(typeof b.data === 'object' && b.data !== null ? b.data : {}),
+    },
   }));
 
   const [blocks, setBlocks] = useState<AssignmentBlock[]>(normalizedInitialBlocks);

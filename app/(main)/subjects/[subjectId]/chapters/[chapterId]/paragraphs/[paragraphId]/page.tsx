@@ -38,6 +38,7 @@ type Assignment = {
   ai_grading_enabled: boolean;
   progress_percent?: number;
   correct_percent?: number;
+  is_pending?: boolean;
 };
 
 type Paragraph = {
@@ -74,6 +75,7 @@ export default function ParagraphDetailPage() {
   const [settingsOpen, setSettingsOpen] = useState<string | null>(null);
   const [bulkSettingsOpen, setBulkSettingsOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
   const [resolvedChapterId, setResolvedChapterId] = useState(chapterId);
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
@@ -174,35 +176,74 @@ export default function ParagraphDetailPage() {
 
   const handleCreateAssignment = async () => {
     if (!newAssignmentTitle.trim()) return;
+    if (isCreatingAssignment) return;
+
+    const title = newAssignmentTitle.trim();
+    const nextIndex = assignments.length > 0
+      ? Math.max(...assignments.map((assignment) => assignment.assignment_index || 0)) + 1
+      : 0;
+    const tempId = `temp-assignment-${Date.now()}`;
+    const optimisticAssignment: Assignment = {
+      id: tempId,
+      title,
+      letter_index: indexToLetter(nextIndex),
+      assignment_index: nextIndex,
+      block_count: 0,
+      answers_enabled: false,
+      is_visible: true,
+      is_locked: false,
+      answer_mode: 'view_only',
+      ai_grading_enabled: false,
+      progress_percent: 0,
+      correct_percent: 0,
+      is_pending: true,
+    };
+
+    setIsCreatingAssignment(true);
+    setAssignments((prev) => [...prev, optimisticAssignment]);
+    setNewAssignmentTitle('');
+    setIsCreateAssignmentOpen(false);
 
     try {
-        const response = await fetch(
-          `/api/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: newAssignmentTitle.trim(), answers_enabled: false }),
+      const response = await fetch(
+        `/api/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, answers_enabled: false }),
         }
       );
 
       if (response.ok) {
         const newAssignment = await response.json();
-        setAssignments(prev => [...prev, {
-          ...newAssignment,
-          is_visible: true,
-          is_locked: false,
-          answer_mode: 'view_only' as const,
-          ai_grading_enabled: false,
-        }]);
-        setNewAssignmentTitle('');
-        setIsCreateAssignmentOpen(false);
-        toast({ title: 'Assignment created' });
+        setAssignments((prev) =>
+          prev.map((assignment) =>
+            assignment.id === tempId
+              ? {
+                  ...assignment,
+                  ...newAssignment,
+                  is_visible: newAssignment.is_visible ?? true,
+                  is_locked: newAssignment.is_locked ?? false,
+                  answer_mode: newAssignment.answer_mode ?? ('view_only' as const),
+                  ai_grading_enabled: newAssignment.ai_grading_enabled ?? false,
+                  is_pending: false,
+                }
+              : assignment
+          )
+        );
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        toast({ title: 'Error', description: errorData.error || 'Failed to create assignment', variant: 'destructive' });
+        throw new Error(errorData.error || 'Failed to create assignment');
       }
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to create assignment', variant: 'destructive' });
+      setAssignments((prev) => prev.filter((assignment) => assignment.id !== tempId));
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to create assignment',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingAssignment(false);
     }
   };
 
@@ -326,12 +367,18 @@ export default function ParagraphDetailPage() {
                 </span>
 
                 {/* Title */}
-                <Link prefetch={false}
-                  href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments/${assignment.id}`}
-                  className="text-sm flex-1 hover:underline truncate"
-                >
-                  {assignment.title}
-                </Link>
+                {assignment.is_pending ? (
+                  <span className="text-sm flex-1 truncate text-muted-foreground">
+                    {assignment.title} (creating...)
+                  </span>
+                ) : (
+                  <Link prefetch={false}
+                    href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments/${assignment.id}`}
+                    className="text-sm flex-1 hover:underline truncate"
+                  >
+                    {assignment.title}
+                  </Link>
+                )}
 
                 {/* Status indicators */}
                 <div className="flex items-center gap-2 shrink-0">
@@ -368,7 +415,7 @@ export default function ParagraphDetailPage() {
                   </div>
 
                   {/* Per-assignment settings (teachers only) */}
-                  {isTeacher && (
+                  {isTeacher && !assignment.is_pending && (
                     <Popover
                       open={settingsOpen === assignment.id}
                       onOpenChange={(open) => setSettingsOpen(open ? assignment.id : null)}
@@ -447,7 +494,9 @@ export default function ParagraphDetailPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateAssignmentOpen(false)} className="lowercase">cancel</Button>
-            <Button onClick={handleCreateAssignment} disabled={!newAssignmentTitle.trim()} className="lowercase">create</Button>
+            <Button onClick={handleCreateAssignment} disabled={!newAssignmentTitle.trim() || isCreatingAssignment} className="lowercase">
+              {isCreatingAssignment ? 'creating...' : 'create'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

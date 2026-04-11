@@ -33,6 +33,21 @@ type Block = {
   data: any;
 };
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchWithRetry(url: string, attempts = 5): Promise<Response> {
+  let lastResponse: Response | null = null;
+  for (let i = 0; i < attempts; i += 1) {
+    const response = await fetch(url, { cache: 'no-store' });
+    lastResponse = response;
+    if (response.ok) return response;
+    if (response.status !== 404) break;
+    await sleep(120 * (i + 1));
+  }
+  if (lastResponse) return lastResponse;
+  throw new Error('Request failed');
+}
+
 export default function AssignmentDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -62,8 +77,8 @@ export default function AssignmentDetailPage() {
 
     const fetchData = async () => {
       try {
-        // Fetch assignment
-        const assignmentResponse = await fetch(
+        // Retry assignment fetch for a short time so just-created items don't throw client-side errors.
+        const assignmentResponse = await fetchWithRetry(
           `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}`
         );
         if (assignmentResponse.ok) {
@@ -72,10 +87,11 @@ export default function AssignmentDetailPage() {
           setLoadError(null);
         } else {
           setLoadError('Assignment not found.');
+          return;
         }
 
         // Fetch paragraph assignments for prev/next navigation
-        const listResponse = await fetch(
+        const listResponse = await fetchWithRetry(
           `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments`
         );
         if (listResponse.ok) {
@@ -87,7 +103,7 @@ export default function AssignmentDetailPage() {
         }
 
         // Fetch blocks
-        const blocksResponse = await fetch(
+        const blocksResponse = await fetchWithRetry(
           `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`
         );
         if (blocksResponse.ok) {
