@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { InputWithTypingPlaceholder } from '@/components/ui/input-with-typing-placeholder';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -184,17 +184,17 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
           <div className="grid gap-6 py-4">
             <div className="grid gap-2">
               <Label htmlFor="title">Assignment Title</Label>
-              <InputWithTypingPlaceholder 
+              <Input 
                 id="title" 
                 value={title} 
                 onChange={e => setTitle(e.target.value)} 
-                placeholders={["Chapter 5 Reading", "Weekly Quiz", "Research Project", "Lab Report"]}
+                placeholder=""
               />
             </div>
             
              <div className="grid gap-2">
               <Label htmlFor="description">Content (Optional)</Label>
-              <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} placeholder="Add any extra instructions or context for your students." />
+              <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} placeholder="" />
             </div>
 
             <div className="grid gap-2">

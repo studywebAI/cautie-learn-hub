@@ -32,10 +32,9 @@ export async function GET(
     const { classId } = resolvedParams
 
     // Check if user is a member of the class
-    // (role column was removed - use subscription_type from profiles instead)
     const { data: classMember, error: memberError } = await supabase
       .from('class_members')
-      .select('user_id')
+      .select('user_id, role')
       .eq('class_id', classId)
       .eq('user_id', user.id)
       .maybeSingle()
@@ -68,10 +67,9 @@ export async function GET(
     }
 
     // Get all class members (students and teachers)
-    // (role column was removed - use subscription_type from profiles instead)
     const { data: classMembers, error: membersError } = await dataClient
       .from('class_members')
-      .select('user_id')
+      .select('user_id, role')
       .eq('class_id', classId)
 
     if (membersError) {
@@ -97,16 +95,22 @@ export async function GET(
       }
       profiles = profilesData || []
       
-      // Build subscription_type lookup
+    // Build subscription_type lookup
       profiles.forEach(p => {
         subscriptionTypes[p.id] = p.subscription_type || 'student'
       })
     }
 
-    // Filter students and teachers based on subscription_type (global role)
-    // Treat unknown profile role as student so members without a profile don't disappear.
-    const studentIds = allUserIds.filter((uid: string) => subscriptionTypes[uid] !== 'teacher')
-    const teacherIds = allUserIds.filter((uid: string) => subscriptionTypes[uid] === 'teacher')
+    const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
+    const memberRoleByUserId = new Map(
+      (classMembers || []).map((m: any) => [m.user_id, String(m.role || '').toLowerCase()])
+    )
+    const teacherIds = allUserIds.filter((uid: string) => {
+      const classRole = memberRoleByUserId.get(uid) || ''
+      if (teacherRoles.has(classRole)) return true
+      return subscriptionTypes[uid] === 'teacher'
+    })
+    const studentIds = allUserIds.filter((uid: string) => !teacherIds.includes(uid))
 
     // Get all assignments for the class
     const { data: assignments, error: assignmentsError } = await dataClient

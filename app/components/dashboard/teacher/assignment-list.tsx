@@ -33,6 +33,8 @@ export function AssignmentList({ assignments, classId, isTeacher = true }: Assig
   const [selectedAssignment, setSelectedAssignment] = useState<ClassAssignment | null>(null);
   const [submissionStatuses, setSubmissionStatuses] = useState<Record<string, string>>({});
   const [submissionCounts, setSubmissionCounts] = useState<Record<string, number>>({});
+  const [submissionRates, setSubmissionRates] = useState<Record<string, number>>({});
+  const [totalStudents, setTotalStudents] = useState<number>(0);
   const [showSubmissions, setShowSubmissions] = useState(false);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
   const { deleteAssignment } = useContext(AppContext) || {};
@@ -97,15 +99,18 @@ export function AssignmentList({ assignments, classId, isTeacher = true }: Assig
     if (!isTeacher) return;
 
     try {
-      // For teachers, fetch all submissions for their assignments
-      const response = await fetch('/api/submissions');
+      const response = await fetch(`/api/classes/${classId}/assignments/stats`);
       if (response.ok) {
-        const submissions = await response.json();
+        const payload = await response.json();
         const countMap: Record<string, number> = {};
-        submissions.forEach((sub: any) => {
-          countMap[sub.assignment_id] = (countMap[sub.assignment_id] || 0) + 1;
+        const rateMap: Record<string, number> = {};
+        (payload.assignmentStats || []).forEach((row: any) => {
+          countMap[row.assignmentId] = Number(row.submissions || 0);
+          rateMap[row.assignmentId] = Number(row.submissionRate || 0);
         });
         setSubmissionCounts(countMap);
+        setSubmissionRates(rateMap);
+        setTotalStudents(Number(payload.totalStudents || 0));
       }
     } catch (error) {
       console.error('Failed to fetch submission counts:', error);
@@ -118,7 +123,7 @@ export function AssignmentList({ assignments, classId, isTeacher = true }: Assig
     } else {
       fetchSubmissionCounts();
     }
-  }, [assignments, isTeacher]);
+  }, [assignments, isTeacher, classId]);
 
   return (
     <>
@@ -157,7 +162,7 @@ export function AssignmentList({ assignments, classId, isTeacher = true }: Assig
             <TableBody>
               {assignments.map((assignment) => {
                   const submissionCount = submissionCounts[assignment.id] || 0;
-                  const submissionRate = 0; // We don't have total student count yet, so keep placeholder
+                  const submissionRate = submissionRates[assignment.id] || 0;
                   const studentSubmissionStatus = isTeacher ? null : (submissionStatuses[assignment.id] || "Not submitted");
 
                   return (
@@ -166,8 +171,11 @@ export function AssignmentList({ assignments, classId, isTeacher = true }: Assig
                           <TableCell>{assignment.due_date ? format(parseISO(assignment.due_date), 'MMM d, yyyy') : 'No due date'}</TableCell>
                           <TableCell>
                             {isTeacher ? (
-                              <div className="text-sm text-muted-foreground">
-                                {submissionCount} submission{submissionCount !== 1 ? 's' : ''}
+                              <div className="space-y-1">
+                                <div className="text-sm text-muted-foreground">
+                                  {submissionCount}/{totalStudents} submitted
+                                </div>
+                                <Progress value={submissionRate} className="h-1.5" />
                               </div>
                             ) : (
                               <span className={`text-sm px-2 py-1 rounded-full ${
