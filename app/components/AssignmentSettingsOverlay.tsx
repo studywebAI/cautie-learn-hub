@@ -1,321 +1,229 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Eye,
-  EyeOff,
-  Check,
-  X,
-  Timer,
-  Sparkles,
-} from 'lucide-react';
-
-interface TimerConfig {
-  enabled: boolean;
-  datetime: string;
-}
-
-interface AiGradingConfig {
-  strictness: number;
-  partial_credit: boolean;
-  spelling_matters: boolean;
-  grammar_matters: boolean;
-  case_sensitive: boolean;
-  custom_instructions: string;
-}
+import { AssignmentSettings } from '@/lib/assignments/settings';
 
 interface AssignmentSettingsOverlayProps {
-  isVisible: boolean;
-  answersEnabled: boolean;
-  answerMode: 'view_only' | 'editable' | 'self_grade';
-  visibilityTimer?: TimerConfig;
-  answersTimer?: TimerConfig;
-  aiGradingEnabled: boolean;
-  aiGradingConfig?: AiGradingConfig;
-  onVisibilityChange: (visible: boolean) => void;
-  onAnswersEnabledChange: (enabled: boolean) => void;
-  onAnswerModeChange: (mode: 'view_only' | 'editable' | 'self_grade') => void;
-  onVisibilityTimerChange?: (timer: TimerConfig) => void;
-  onAnswersTimerChange?: (timer: TimerConfig) => void;
-  onAiGradingChange?: (enabled: boolean) => void;
-  onAiGradingConfigChange?: (config: AiGradingConfig) => void;
+  settings: AssignmentSettings;
+  onSettingsChange: (settings: AssignmentSettings) => void;
   isLoading?: boolean;
-  isBulk?: boolean;
 }
 
-const DEFAULT_AI_CONFIG: AiGradingConfig = {
-  strictness: 5,
-  partial_credit: true,
-  spelling_matters: false,
-  grammar_matters: false,
-  case_sensitive: false,
-  custom_instructions: '',
-};
-
-function TimerRow({
-  label,
-  timer,
-  onChange,
-  disabled,
-}: {
-  label: string;
-  timer?: TimerConfig;
-  onChange?: (timer: TimerConfig) => void;
-  disabled?: boolean;
-}) {
-  const isEnabled = timer?.enabled ?? false;
-
+function NumberInput({ value, onChange, min, step = 1, disabled }: { value: number | null; onChange: (v: number | null) => void; min?: number; step?: number; disabled?: boolean }) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          <Timer className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">{label} timer</span>
-        </div>
-        <Switch
-          checked={isEnabled}
-          onCheckedChange={(v) => onChange?.({ enabled: v, datetime: timer?.datetime || '' })}
-          disabled={disabled}
-          className="scale-75"
-        />
-      </div>
-      {isEnabled && (
-        <Input
-          type="datetime-local"
-          value={timer?.datetime ? timer.datetime.slice(0, 16) : ''}
-          onChange={(e) => onChange?.({ enabled: true, datetime: new Date(e.target.value).toISOString() })}
-          className="h-7 text-xs"
-          disabled={disabled}
-        />
-      )}
-    </div>
+    <Input
+      type="number"
+      value={value ?? ''}
+      min={min}
+      step={step}
+      onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
+      disabled={disabled}
+      className="h-8"
+    />
   );
 }
 
-export function AssignmentSettingsOverlay({
-  isVisible,
-  answersEnabled,
-  answerMode,
-  visibilityTimer,
-  answersTimer,
-  aiGradingEnabled,
-  aiGradingConfig,
-  onVisibilityChange,
-  onAnswersEnabledChange,
-  onAnswerModeChange,
-  onVisibilityTimerChange,
-  onAnswersTimerChange,
-  onAiGradingChange,
-  onAiGradingConfigChange,
-  isLoading = false,
-  isBulk = false,
-}: AssignmentSettingsOverlayProps) {
-  const config = aiGradingConfig || DEFAULT_AI_CONFIG;
-
-  const updateConfig = (key: keyof AiGradingConfig, value: any) => {
-    onAiGradingConfigChange?.({ ...config, [key]: value });
+export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoading = false }: AssignmentSettingsOverlayProps) {
+  const update = (patch: Partial<AssignmentSettings>) => {
+    onSettingsChange({ ...settings, ...patch });
   };
 
   return (
-    <div className="bg-popover border rounded-lg shadow-lg p-4 min-w-[280px] max-w-[320px] space-y-3 max-h-[80vh] overflow-y-auto">
-      <div className="text-sm font-medium text-foreground">
-        {isBulk ? 'All Assignments Settings' : 'Assignment Settings'}
+    <div className="bg-popover rounded-lg p-4 space-y-4 max-h-[82vh] overflow-y-auto">
+      <div>
+        <h3 className="text-sm font-medium">Assignment Settings</h3>
       </div>
 
-      {/* Visibility */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            {isVisible ? (
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <EyeOff className="h-4 w-4 text-muted-foreground" />
-            )}
-            <Label className="text-sm font-normal">Visible to students</Label>
-          </div>
-          <Switch
-            checked={isVisible}
-            onCheckedChange={onVisibilityChange}
+        <Label className="text-xs text-muted-foreground">Start / End</Label>
+        <Input
+          type="datetime-local"
+          value={settings.time.startAt ? settings.time.startAt.slice(0, 16) : ''}
+          onChange={(e) => update({ time: { ...settings.time, startAt: e.target.value ? new Date(e.target.value).toISOString() : null } })}
+          disabled={isLoading}
+          className="h-8"
+        />
+        <Input
+          type="datetime-local"
+          value={settings.time.endAt ? settings.time.endAt.slice(0, 16) : ''}
+          onChange={(e) => update({ time: { ...settings.time, endAt: e.target.value ? new Date(e.target.value).toISOString() : null } })}
+          disabled={isLoading}
+          className="h-8"
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <NumberInput
+            value={settings.time.durationMinutes}
+            min={1}
+            onChange={(v) => update({ time: { ...settings.time, durationMinutes: v } })}
+            disabled={isLoading}
+          />
+          <select
+            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            value={settings.time.timerMode}
+            onChange={(e) => update({ time: { ...settings.time, timerMode: e.target.value as any } })}
+            disabled={isLoading}
+          >
+            <option value="deadline">Deadline</option>
+            <option value="per_student">Per student timer</option>
+          </select>
+        </div>
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Auto submit on timeout</Label>
+          <Switch checked={settings.time.autoSubmitOnTimeout} onCheckedChange={(v) => update({ time: { ...settings.time, autoSubmitOnTimeout: v } })} disabled={isLoading} />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Show timer</Label>
+          <Switch checked={settings.time.showTimer} onCheckedChange={(v) => update({ time: { ...settings.time, showTimer: v } })} disabled={isLoading} />
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <Label className="text-xs text-muted-foreground">Attempts</Label>
+        <NumberInput
+          value={settings.attempts.maxAttempts}
+          min={1}
+          onChange={(v) => update({ attempts: { ...settings.attempts, maxAttempts: v } })}
+          disabled={isLoading}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            value={settings.attempts.scoreMode}
+            onChange={(e) => update({ attempts: { ...settings.attempts, scoreMode: e.target.value as any } })}
+            disabled={isLoading}
+          >
+            <option value="best">Best score</option>
+            <option value="latest">Latest score</option>
+          </select>
+          <NumberInput
+            value={settings.attempts.cooldownMinutes}
+            min={0}
+            onChange={(v) => update({ attempts: { ...settings.attempts, cooldownMinutes: v ?? 0 } })}
             disabled={isLoading}
           />
         </div>
-        <TimerRow
-          label="Auto-show"
-          timer={visibilityTimer}
-          onChange={onVisibilityTimerChange}
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <Label className="text-xs text-muted-foreground">Access & randomization</Label>
+        <Input
+          value={settings.access.accessCode || ''}
+          onChange={(e) => update({ access: { ...settings.access, accessCode: e.target.value || null } })}
+          placeholder="Access code"
           disabled={isLoading}
+          className="h-8"
+        />
+        <Input
+          value={settings.access.allowedClassIds.join(',')}
+          onChange={(e) => update({ access: { ...settings.access, allowedClassIds: e.target.value.split(',').map((v) => v.trim()).filter(Boolean) } })}
+          placeholder="Allowed class IDs (comma separated)"
+          disabled={isLoading}
+          className="h-8"
+        />
+        <div className="flex items-center justify-between"><Label className="text-xs">Shuffle questions</Label><Switch checked={settings.access.shuffleQuestions} onCheckedChange={(v) => update({ access: { ...settings.access, shuffleQuestions: v } })} disabled={isLoading} /></div>
+        <div className="flex items-center justify-between"><Label className="text-xs">Shuffle answers</Label><Switch checked={settings.access.shuffleAnswers} onCheckedChange={(v) => update({ access: { ...settings.access, shuffleAnswers: v } })} disabled={isLoading} /></div>
+        <div className="flex items-center justify-between"><Label className="text-xs">Per-student shuffle</Label><Switch checked={settings.access.shuffleQuestionsPerStudent} onCheckedChange={(v) => update({ access: { ...settings.access, shuffleQuestionsPerStudent: v } })} disabled={isLoading} /></div>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <Label className="text-xs text-muted-foreground">Feedback & grading</Label>
+        <div className="flex items-center justify-between"><Label className="text-xs">Auto grade</Label><Switch checked={settings.grading.autoGrade} onCheckedChange={(v) => update({ grading: { ...settings.grading, autoGrade: v } })} disabled={isLoading} /></div>
+        <div className="flex items-center justify-between"><Label className="text-xs">Manual review open questions</Label><Switch checked={settings.grading.manualReviewOpenQuestions} onCheckedChange={(v) => update({ grading: { ...settings.grading, manualReviewOpenQuestions: v } })} disabled={isLoading} /></div>
+        <select
+          className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+          value={settings.grading.feedbackReleaseMode}
+          onChange={(e) => update({ grading: { ...settings.grading, feedbackReleaseMode: e.target.value as any } })}
+          disabled={isLoading}
+        >
+          <option value="per_question">Feedback per question</option>
+          <option value="after_submit">Feedback after submit</option>
+          <option value="after_deadline">Feedback after deadline</option>
+        </select>
+        <div className="flex items-center justify-between"><Label className="text-xs">Show correct answers</Label><Switch checked={settings.grading.showCorrectAnswers} onCheckedChange={(v) => update({ grading: { ...settings.grading, showCorrectAnswers: v } })} disabled={isLoading} /></div>
+        <div className="flex items-center justify-between"><Label className="text-xs">Show points</Label><Switch checked={settings.grading.showPoints} onCheckedChange={(v) => update({ grading: { ...settings.grading, showPoints: v } })} disabled={isLoading} /></div>
+        <div className="grid grid-cols-2 gap-2">
+          <NumberInput value={settings.grading.totalPoints} min={1} onChange={(v) => update({ grading: { ...settings.grading, totalPoints: v ?? 100 } })} disabled={isLoading} />
+          <NumberInput value={settings.grading.weight} min={0} step={0.1} onChange={(v) => update({ grading: { ...settings.grading, weight: v ?? 1 } })} disabled={isLoading} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            value={settings.grading.gradeDisplayMode}
+            onChange={(e) => update({ grading: { ...settings.grading, gradeDisplayMode: e.target.value as any } })}
+            disabled={isLoading}
+          >
+            <option value="score">Grade</option>
+            <option value="points">Points</option>
+          </select>
+          <NumberInput value={settings.grading.roundingDecimals} min={0} onChange={(v) => update({ grading: { ...settings.grading, roundingDecimals: v ?? 1 } })} disabled={isLoading} />
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <Label className="text-xs text-muted-foreground">Anti-cheat</Label>
+        <div className="flex items-center justify-between"><Label className="text-xs">Require fullscreen</Label><Switch checked={settings.antiCheat.requireFullscreen} onCheckedChange={(v) => update({ antiCheat: { ...settings.antiCheat, requireFullscreen: v } })} disabled={isLoading} /></div>
+        <div className="flex items-center justify-between"><Label className="text-xs">Detect tab switches</Label><Switch checked={settings.antiCheat.detectTabSwitch} onCheckedChange={(v) => update({ antiCheat: { ...settings.antiCheat, detectTabSwitch: v } })} disabled={isLoading} /></div>
+        <div className="flex items-center justify-between"><Label className="text-xs">Restrict IP/device</Label><Switch checked={settings.antiCheat.restrictIpOrDevice} onCheckedChange={(v) => update({ antiCheat: { ...settings.antiCheat, restrictIpOrDevice: v } })} disabled={isLoading} /></div>
+        <NumberInput value={settings.antiCheat.perQuestionTimeLimitSeconds} min={1} onChange={(v) => update({ antiCheat: { ...settings.antiCheat, perQuestionTimeLimitSeconds: v } })} disabled={isLoading} />
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <Label className="text-xs text-muted-foreground">Delivery</Label>
+        <div className="flex items-center justify-between"><Label className="text-xs">Autosave</Label><Switch checked={settings.delivery.autosave} onCheckedChange={(v) => update({ delivery: { ...settings.delivery, autosave: v } })} disabled={isLoading} /></div>
+        <div className="flex items-center justify-between"><Label className="text-xs">Allow resume</Label><Switch checked={settings.delivery.allowResume} onCheckedChange={(v) => update({ delivery: { ...settings.delivery, allowResume: v } })} disabled={isLoading} /></div>
+        <Textarea
+          value={settings.delivery.instructionText}
+          onChange={(e) => update({ delivery: { ...settings.delivery, instructionText: e.target.value } })}
+          rows={3}
+          disabled={isLoading}
+          className="text-sm"
         />
       </div>
 
       <Separator />
 
-      {/* Answers */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            {answersEnabled ? (
-              <Check className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <X className="h-4 w-4 text-muted-foreground" />
-            )}
-            <Label className="text-sm font-normal">Answers enabled</Label>
-          </div>
-          <Switch
-            checked={answersEnabled}
-            onCheckedChange={onAnswersEnabledChange}
-            disabled={isLoading}
-          />
-        </div>
-
-        {answersEnabled && (
-          <div className="space-y-2 pl-2 border-l-2 border-muted">
-            <Label className="text-xs text-muted-foreground">Answer mode</Label>
-            <div className="space-y-1.5">
-              {[
-                { value: 'view_only' as const, label: 'View only (locked after reveal)' },
-                { value: 'editable' as const, label: 'Editable (can change answers)' },
-                { value: 'self_grade' as const, label: 'Self-grade (correct / semi / incorrect)' },
-              ].map((mode) => (
-                <label
-                  key={mode.value}
-                  className="flex items-center gap-2 cursor-pointer text-xs"
-                >
-                  <input
-                    type="radio"
-                    name={`answer_mode_${isBulk ? 'bulk' : 'single'}`}
-                    value={mode.value}
-                    checked={answerMode === mode.value}
-                    onChange={() => onAnswerModeChange(mode.value)}
-                    className="accent-primary"
-                    disabled={isLoading}
-                  />
-                  {mode.label}
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <TimerRow
-          label="Auto-answers"
-          timer={answersTimer}
-          onChange={onAnswersTimerChange}
+        <Label className="text-xs text-muted-foreground">Advanced</Label>
+        <NumberInput value={settings.advanced.questionPoolSize} min={1} onChange={(v) => update({ advanced: { ...settings.advanced, questionPoolSize: v } })} disabled={isLoading} />
+        <div className="flex items-center justify-between"><Label className="text-xs">Adaptive logic</Label><Switch checked={settings.advanced.adaptiveEnabled} onCheckedChange={(v) => update({ advanced: { ...settings.advanced, adaptiveEnabled: v } })} disabled={isLoading} /></div>
+        <Textarea
+          value={settings.advanced.adaptiveRules.map((r) => `${r.when}=>${r.then}`).join('\n')}
+          onChange={(e) => update({
+            advanced: {
+              ...settings.advanced,
+              adaptiveRules: e.target.value
+                .split('\n')
+                .map((line) => line.trim())
+                .filter(Boolean)
+                .map((line) => {
+                  const [when, then] = line.split('=>');
+                  return { when: (when || '').trim(), then: (then || '').trim() };
+                }),
+            },
+          })}
+          rows={3}
           disabled={isLoading}
+          className="text-sm"
         />
+        <div className="flex items-center justify-between"><Label className="text-xs">Review mode</Label><Switch checked={settings.advanced.reviewModeEnabled} onCheckedChange={(v) => update({ advanced: { ...settings.advanced, reviewModeEnabled: v } })} disabled={isLoading} /></div>
+        <div className="flex items-center justify-between"><Label className="text-xs">Reflection enabled</Label><Switch checked={settings.advanced.reflectionEnabled} onCheckedChange={(v) => update({ advanced: { ...settings.advanced, reflectionEnabled: v } })} disabled={isLoading} /></div>
+        <div className="flex items-center justify-between"><Label className="text-xs">Improvement attempt</Label><Switch checked={settings.advanced.improvementAttemptEnabled} onCheckedChange={(v) => update({ advanced: { ...settings.advanced, improvementAttemptEnabled: v } })} disabled={isLoading} /></div>
       </div>
-
-      <Separator />
-
-      {/* AI Grading */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
-            <Label className="text-sm font-normal">AI grading (open questions)</Label>
-          </div>
-          <Switch
-            checked={aiGradingEnabled}
-            onCheckedChange={onAiGradingChange}
-            disabled={isLoading}
-          />
-        </div>
-
-        {aiGradingEnabled && (
-          <div className="space-y-3 pl-2 border-l-2 border-muted">
-            {/* Strictness slider */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between">
-                <Label className="text-xs text-muted-foreground">Strictness</Label>
-                <span className="text-xs text-muted-foreground">{config.strictness}/10</span>
-              </div>
-              <Slider
-                value={[config.strictness]}
-                min={1}
-                max={10}
-                step={1}
-                onValueChange={([v]) => updateConfig('strictness', v)}
-                disabled={isLoading}
-              />
-              <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>Lenient</span>
-                <span>Strict</span>
-              </div>
-            </div>
-
-            {/* Toggles */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-normal">Partial credit</Label>
-                <Switch
-                  checked={config.partial_credit}
-                  onCheckedChange={(v) => updateConfig('partial_credit', v)}
-                  disabled={isLoading}
-                  className="scale-75"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-normal">Spelling matters</Label>
-                <Switch
-                  checked={config.spelling_matters}
-                  onCheckedChange={(v) => updateConfig('spelling_matters', v)}
-                  disabled={isLoading}
-                  className="scale-75"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-normal">Grammar matters</Label>
-                <Switch
-                  checked={config.grammar_matters}
-                  onCheckedChange={(v) => updateConfig('grammar_matters', v)}
-                  disabled={isLoading}
-                  className="scale-75"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-normal">Case sensitive</Label>
-                <Switch
-                  checked={config.case_sensitive}
-                  onCheckedChange={(v) => updateConfig('case_sensitive', v)}
-                  disabled={isLoading}
-                  className="scale-75"
-                />
-              </div>
-            </div>
-
-            {/* Custom instructions */}
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Custom grading instructions</Label>
-              <Textarea
-                value={config.custom_instructions}
-                onChange={(e) => updateConfig('custom_instructions', e.target.value)}
-                placeholder="e.g., Accept synonyms, focus on key concepts..."
-                rows={2}
-                className="text-xs resize-none"
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      <p className="text-xs text-muted-foreground pt-2 border-t">
-        {!isVisible && 'Students cannot see this assignment. '}
-        {isLocked && 'Students cannot submit answers. '}
-        {answersEnabled
-          ? answerMode === 'self_grade'
-            ? 'Students grade their own answers.'
-            : answerMode === 'editable'
-              ? 'Students can view and edit answers.'
-              : 'Students can view answers (locked).'
-          : 'Self-check is disabled.'}
-        {aiGradingEnabled && ` AI grades open questions (strictness ${config.strictness}/10).`}
-      </p>
     </div>
   );
 }

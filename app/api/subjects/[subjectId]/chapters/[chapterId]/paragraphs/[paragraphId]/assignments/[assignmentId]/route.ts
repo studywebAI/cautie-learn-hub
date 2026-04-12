@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { normalizeAssignmentSettings } from '@/lib/assignments/settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -69,7 +70,10 @@ export async function GET(
         return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
       }
 
-      return NextResponse.json(fallbackAssignment);
+      return NextResponse.json({
+        ...fallbackAssignment,
+        settings: normalizeAssignmentSettings((fallbackAssignment as any).settings || {}),
+      });
     }
 
     if (error) {
@@ -77,7 +81,60 @@ export async function GET(
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
     }
 
-    return NextResponse.json(assignment);
+    const normalizedSettings = normalizeAssignmentSettings(assignment?.settings || {
+      time: {
+        startAt: assignment?.scheduled_start_at ?? null,
+        endAt: assignment?.scheduled_end_at ?? null,
+        timerMode: assignment?.timer_mode ?? 'deadline',
+        durationMinutes: assignment?.duration_minutes ?? null,
+        autoSubmitOnTimeout: assignment?.auto_submit_on_timeout ?? true,
+        showTimer: assignment?.show_timer ?? true,
+      },
+      attempts: {
+        maxAttempts: assignment?.max_attempts ?? 1,
+        scoreMode: assignment?.attempt_score_mode ?? 'best',
+        cooldownMinutes: assignment?.cooldown_minutes ?? 0,
+      },
+      access: {
+        accessCode: assignment?.access_code ?? null,
+        allowedClassIds: assignment?.allowed_class_ids ?? [],
+        shuffleQuestions: assignment?.shuffle_questions ?? false,
+        shuffleAnswers: assignment?.shuffle_answers ?? false,
+        shuffleQuestionsPerStudent: assignment?.shuffle_questions_per_student ?? false,
+      },
+      grading: {
+        showCorrectAnswers: assignment?.show_correct_answers ?? true,
+        showPoints: assignment?.show_points ?? true,
+        totalPoints: assignment?.total_points ?? 100,
+        weight: assignment?.assignment_weight ?? 1,
+        gradeDisplayMode: assignment?.grade_display_mode ?? 'score',
+        roundingDecimals: assignment?.rounding_decimals ?? 1,
+      },
+      antiCheat: {
+        requireFullscreen: assignment?.require_fullscreen ?? false,
+        detectTabSwitch: assignment?.detect_tab_switch ?? false,
+        perQuestionTimeLimitSeconds: assignment?.per_question_time_limit_seconds ?? null,
+        restrictIpOrDevice: assignment?.restrict_ip_or_device ?? false,
+      },
+      delivery: {
+        autosave: assignment?.autosave_enabled ?? true,
+        allowResume: assignment?.allow_resume ?? true,
+        instructionText: assignment?.instruction_text ?? assignment?.description ?? '',
+      },
+      advanced: {
+        questionPoolSize: assignment?.question_pool_size ?? null,
+        adaptiveEnabled: assignment?.adaptive_enabled ?? false,
+        adaptiveRules: assignment?.adaptive_rules ?? [],
+        reviewModeEnabled: assignment?.review_mode_enabled ?? true,
+        reflectionEnabled: assignment?.reflection_enabled ?? false,
+        improvementAttemptEnabled: assignment?.improvement_attempt_enabled ?? false,
+      },
+    });
+
+    return NextResponse.json({
+      ...assignment,
+      settings: normalizedSettings,
+    });
 
   } catch (err) {
     console.error('Unexpected error:', err);

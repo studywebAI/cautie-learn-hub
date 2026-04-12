@@ -25,6 +25,7 @@ export interface BaseBlock {
   id: string;
   type: BlockType;
   data: any; // JSON data specific to each block type
+  settings?: any;
   position: number;
   locked?: boolean;
   show_feedback?: boolean;

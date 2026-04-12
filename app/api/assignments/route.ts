@@ -4,6 +4,7 @@ import { NextResponse, NextRequest } from 'next/server'
 
 import { createAssignmentSchema } from '@/lib/validation/schemas'
 import { validateBody } from '@/lib/validation/validate'
+import { normalizeAssignmentSettings } from '@/lib/assignments/settings'
 
 
 export const dynamic = 'force-dynamic'
@@ -176,7 +177,7 @@ export async function POST(request: NextRequest) {
     if ('error' in validation) {
       return validation.error;
     }
-    const { title, paragraph_id, class_id, assignment_index, type, scheduled_start_at, scheduled_end_at, answers_enabled, description, linked_content } = validation.data;
+    const { title, paragraph_id, class_id, assignment_index, type, scheduled_start_at, scheduled_end_at, answers_enabled, description, linked_content, settings } = validation.data as any;
     const normalizedTitle = String(title || '').trim();
     if (!normalizedTitle) {
       return NextResponse.json({ error: 'Assignment title is required' }, { status: 400 });
@@ -234,6 +235,13 @@ export async function POST(request: NextRequest) {
       ? (existingAssignments[0].assignment_index ?? -1) + 1
       : 0
 
+    const normalizedSettings = normalizeAssignmentSettings(settings || {
+      time: {
+        startAt: scheduled_start_at || null,
+        endAt: scheduled_end_at || null,
+      },
+    });
+
     const { data: assignment, error: insertError } = await (supabase
       .from('assignments') as any)
       .insert({
@@ -241,13 +249,45 @@ export async function POST(request: NextRequest) {
         assignment_index: nextIndex,
         title: normalizedTitle,
         answers_enabled: answers_enabled ?? false,
-        scheduled_start_at: scheduled_start_at,
-        scheduled_end_at: scheduled_end_at,
-        scheduled_answer_release_at: scheduled_end_at,
+        scheduled_start_at: normalizedSettings.time.startAt,
+        scheduled_end_at: normalizedSettings.time.endAt,
+        scheduled_answer_release_at: normalizedSettings.time.endAt,
         description: description,
         linked_content: linked_content,
         type: type || 'homework',
         class_id: class_id,
+        settings: normalizedSettings,
+        access_code: normalizedSettings.access.accessCode,
+        timer_mode: normalizedSettings.time.timerMode,
+        duration_minutes: normalizedSettings.time.durationMinutes,
+        auto_submit_on_timeout: normalizedSettings.time.autoSubmitOnTimeout,
+        max_attempts: normalizedSettings.attempts.maxAttempts,
+        attempt_score_mode: normalizedSettings.attempts.scoreMode,
+        cooldown_minutes: normalizedSettings.attempts.cooldownMinutes,
+        show_correct_answers: normalizedSettings.grading.showCorrectAnswers,
+        show_points: normalizedSettings.grading.showPoints,
+        total_points: normalizedSettings.grading.totalPoints,
+        assignment_weight: normalizedSettings.grading.weight,
+        grade_display_mode: normalizedSettings.grading.gradeDisplayMode,
+        rounding_decimals: normalizedSettings.grading.roundingDecimals,
+        require_fullscreen: normalizedSettings.antiCheat.requireFullscreen,
+        detect_tab_switch: normalizedSettings.antiCheat.detectTabSwitch,
+        per_question_time_limit_seconds: normalizedSettings.antiCheat.perQuestionTimeLimitSeconds,
+        restrict_ip_or_device: normalizedSettings.antiCheat.restrictIpOrDevice,
+        shuffle_questions: normalizedSettings.access.shuffleQuestions,
+        shuffle_answers: normalizedSettings.access.shuffleAnswers,
+        shuffle_questions_per_student: normalizedSettings.access.shuffleQuestionsPerStudent,
+        autosave_enabled: normalizedSettings.delivery.autosave,
+        allow_resume: normalizedSettings.delivery.allowResume,
+        instruction_text: normalizedSettings.delivery.instructionText,
+        show_timer: normalizedSettings.time.showTimer,
+        question_pool_size: normalizedSettings.advanced.questionPoolSize,
+        adaptive_enabled: normalizedSettings.advanced.adaptiveEnabled,
+        adaptive_rules: normalizedSettings.advanced.adaptiveRules,
+        review_mode_enabled: normalizedSettings.advanced.reviewModeEnabled,
+        reflection_enabled: normalizedSettings.advanced.reflectionEnabled,
+        improvement_attempt_enabled: normalizedSettings.advanced.improvementAttemptEnabled,
+        allowed_class_ids: normalizedSettings.access.allowedClassIds,
       })
       .select()
       .single()

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { normalizeAssignmentSettings } from '@/lib/assignments/settings'
 
 import type { Database } from '@/lib/supabase/database.types'
 
@@ -96,7 +97,14 @@ export async function PATCH(
   const resolvedParams = await params;
   const { assignmentId } = resolvedParams;
   const body = await request.json();
-  const { is_visible, answers_enabled, is_locked, answer_mode, ai_grading_enabled } = body;
+  const {
+    is_visible,
+    answers_enabled,
+    is_locked,
+    answer_mode,
+    ai_grading_enabled,
+    settings,
+  } = body;
 
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
@@ -108,6 +116,41 @@ export async function PATCH(
   if (typeof is_locked === 'boolean') updateData.is_locked = is_locked;
   if (typeof answer_mode === 'string') updateData.answer_mode = answer_mode;
   if (typeof ai_grading_enabled === 'boolean') updateData.ai_grading_enabled = ai_grading_enabled;
+  if (settings !== undefined) {
+    const normalized = normalizeAssignmentSettings(settings);
+    updateData.settings = normalized as any;
+    updateData.access_code = normalized.access.accessCode;
+    updateData.timer_mode = normalized.time.timerMode;
+    updateData.duration_minutes = normalized.time.durationMinutes;
+    updateData.auto_submit_on_timeout = normalized.time.autoSubmitOnTimeout;
+    updateData.max_attempts = normalized.attempts.maxAttempts;
+    updateData.attempt_score_mode = normalized.attempts.scoreMode;
+    updateData.cooldown_minutes = normalized.attempts.cooldownMinutes;
+    updateData.show_correct_answers = normalized.grading.showCorrectAnswers;
+    updateData.show_points = normalized.grading.showPoints;
+    updateData.total_points = normalized.grading.totalPoints;
+    updateData.assignment_weight = normalized.grading.weight;
+    updateData.grade_display_mode = normalized.grading.gradeDisplayMode;
+    updateData.rounding_decimals = normalized.grading.roundingDecimals;
+    updateData.require_fullscreen = normalized.antiCheat.requireFullscreen;
+    updateData.detect_tab_switch = normalized.antiCheat.detectTabSwitch;
+    updateData.per_question_time_limit_seconds = normalized.antiCheat.perQuestionTimeLimitSeconds;
+    updateData.restrict_ip_or_device = normalized.antiCheat.restrictIpOrDevice;
+    updateData.shuffle_questions = normalized.access.shuffleQuestions;
+    updateData.shuffle_answers = normalized.access.shuffleAnswers;
+    updateData.shuffle_questions_per_student = normalized.access.shuffleQuestionsPerStudent;
+    updateData.autosave_enabled = normalized.delivery.autosave;
+    updateData.allow_resume = normalized.delivery.allowResume;
+    updateData.instruction_text = normalized.delivery.instructionText;
+    updateData.show_timer = normalized.time.showTimer;
+    updateData.question_pool_size = normalized.advanced.questionPoolSize;
+    updateData.adaptive_enabled = normalized.advanced.adaptiveEnabled;
+    updateData.adaptive_rules = normalized.advanced.adaptiveRules as any;
+    updateData.review_mode_enabled = normalized.advanced.reviewModeEnabled;
+    updateData.reflection_enabled = normalized.advanced.reflectionEnabled;
+    updateData.improvement_attempt_enabled = normalized.advanced.improvementAttemptEnabled;
+    updateData.allowed_class_ids = normalized.access.allowedClassIds as any;
+  }
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });

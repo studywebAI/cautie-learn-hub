@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { normalizeBlockSettings } from '@/lib/assignments/settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -82,7 +83,11 @@ export async function GET(
       return NextResponse.json([]); // Return empty array to prevent infinite loading
     }
 
-    return NextResponse.json(blocks || []);
+    const normalized = (blocks || []).map((b: any) => ({
+      ...b,
+      settings: normalizeBlockSettings(b.settings || b.data?.settings || {}),
+    }));
+    return NextResponse.json(normalized);
   } catch (error) {
     console.error('Unexpected error in blocks GET:', error);
     return NextResponse.json([], { status: 200 }); // Graceful fallback
@@ -109,7 +114,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { type, position, data: blockData, locked, show_feedback, ai_grading_override } = body
+    const { type, position, data: blockData, locked, show_feedback, ai_grading_override, settings } = body
 
     if (!type || position === undefined || !blockData) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -148,6 +153,7 @@ export async function POST(
         type,
         position,
         data: blockData,
+        settings: normalizedSettings,
         locked: locked || false,
         show_feedback: show_feedback || false,
         ai_grading_override: ai_grading_override || null
@@ -167,3 +173,4 @@ export async function POST(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+    const normalizedSettings = normalizeBlockSettings(settings || blockData?.settings || {});

@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { normalizeBlockSettings } from '@/lib/assignments/settings';
 
 interface GradingResult {
   score: number;
@@ -32,6 +33,9 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
   const [pasteCount, setPasteCount] = useState(0);
   const [pasteChars, setPasteChars] = useState(0);
   const [typedChars, setTypedChars] = useState(0);
+  const settings = normalizeBlockSettings((block as any).settings || block.data?.settings || {});
+  const maxChars = settings.openQuestion.maxChars;
+  const maxWords = settings.openQuestion.maxWords;
 
   const handleSubmit = () => {
     const answerData = {
@@ -73,17 +77,23 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
           }}
           disabled={isSubmitted}
           rows={6}
-          maxLength={block.data.max_score ? undefined : 1000}
+          maxLength={maxChars || (block.data.max_score ? undefined : 1000)}
         />
         <div className="text-sm text-muted-foreground">
           {answer.length} characters
+          {maxChars ? ` / ${maxChars}` : ''}
+          {maxWords ? ` - ${answer.trim().split(/\\s+/).filter(Boolean).length}/${maxWords} words` : ''}
         </div>
       </div>
 
       {!isSubmitted && (
         <Button
           onClick={handleSubmit}
-          disabled={!answer.trim()}
+          disabled={
+            !answer.trim() ||
+            (maxChars ? answer.length > maxChars : false) ||
+            (maxWords ? answer.trim().split(/\\s+/).filter(Boolean).length > maxWords : false)
+          }
           className="mt-4"
         >
           Submit Answer

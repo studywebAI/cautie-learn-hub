@@ -2,6 +2,14 @@ import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { updateProgressSnapshot } from '@/lib/progress'
+import {
+  calculateMcqScore,
+  canReleaseFeedback,
+  getAssignmentAvailabilityState,
+  normalizeAssignmentSettings,
+  normalizeBlockSettings,
+} from '@/lib/assignments/settings'
+import { getOrCreateAttempt, isAttemptExpired } from '@/lib/assignments/attempts'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,12 +28,13 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { answerData } = await request.json()
+    const body = await request.json()
+    const answerData = body.answerData ?? body.answer_data
 
     // Verify the block belongs to this assignment
     const { data: block, error: blockError } = await supabase
       .from('blocks')
-      .select('assignment_id, type, data')
+      .select('assignment_id, type, data, settings')
       .eq('id', resolvedParams.blockId)
       .single()
 
@@ -58,6 +67,27 @@ export async function POST(
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
     }
 
+    const assignmentSettings = normalizeAssignmentSettings((assignment as any).settings || {});
+    const availability = getAssignmentAvailabilityState(assignmentSettings);
+    if (!availability.available) {
+      return NextResponse.json(
+        { error: availability.reason === 'not_started' ? 'Assignment not started yet' : 'Assignment is closed' },
+        { status: 403 }
+      );
+    }
+
+    const attempt = await getOrCreateAttempt(supabase, resolvedParams.assignmentId, user.id, assignmentSettings);
+    if ((attempt as any)?.blocked) {
+      return NextResponse.json({ error: (attempt as any).reason, details: attempt }, { status: 429 });
+    }
+    if (await isAttemptExpired(attempt)) {
+      await supabase
+        .from('assignment_attempts')
+        .update({ status: assignmentSettings.time.autoSubmitOnTimeout ? 'auto_submitted' : 'expired' })
+        .eq('id', (attempt as any).id);
+      return NextResponse.json({ error: 'Attempt expired' }, { status: 403 });
+    }
+
     let classId = assignment.paragraphs.chapters.subjects.class_id as string | null;
     if (!classId) {
       const { data: linkRow } = await (supabase as any)
@@ -85,14 +115,43 @@ export async function POST(
       return NextResponse.json({ error: 'Access denied - not a class member' }, { status: 403 })
     }
 
+    const blockSettings = normalizeBlockSettings((block as any).settings || (block as any).data?.settings || {});
+    if (blockSettings.required && !answerData) {
+      return NextResponse.json({ error: 'Answer is required' }, { status: 400 });
+    }
+    if (blockSettings.openQuestion.maxChars && typeof answerData?.text === 'string' && answerData.text.length > blockSettings.openQuestion.maxChars) {
+      return NextResponse.json({ error: 'Answer exceeds max characters' }, { status: 400 });
+    }
+    if (blockSettings.openQuestion.maxWords && typeof answerData?.text === 'string') {
+      const words = answerData.text.trim().split(/\s+/).filter(Boolean).length;
+      if (words > blockSettings.openQuestion.maxWords) {
+        return NextResponse.json({ error: 'Answer exceeds max words' }, { status: 400 });
+      }
+    }
+
+    let score: number | null = null;
+    let isCorrect: boolean | null = null;
+    let feedback: string | null = null;
+    if (block.type === 'multiple_choice') {
+      const selected = answerData?.selected_answers || answerData?.selectedAnswers || [];
+      const options = (block as any).data?.options || [];
+      const result = calculateMcqScore(Array.isArray(selected) ? selected : [], options, blockSettings);
+      score = result.score;
+      isCorrect = result.isCorrect;
+      feedback = blockSettings.feedbackText || null;
+    }
+
     // Insert student answer
     const { data: studentAnswer, error: insertError } = await supabase
       .from('student_answers')
       .insert({
         student_id: user.id,
+        assignment_id: resolvedParams.assignmentId,
         block_id: resolvedParams.blockId,
         answer_data: answerData,
-        is_correct: null, // Will be set by grading
+        is_correct: isCorrect,
+        score,
+        feedback,
         graded_by_ai: false
       })
       .select()
@@ -102,6 +161,21 @@ export async function POST(
       console.error('Error inserting student answer:', insertError)
       return NextResponse.json({ error: 'Failed to submit answer' }, { status: 500 })
     }
+
+    await supabase
+      .from('assignment_events')
+      .insert({
+        assignment_id: resolvedParams.assignmentId,
+        attempt_id: (attempt as any).id,
+        student_id: user.id,
+        event_type: 'answer_saved',
+        event_payload: {
+          block_id: resolvedParams.blockId,
+          assignment_id: resolvedParams.assignmentId,
+        },
+      })
+      .then(() => undefined)
+      .catch(() => undefined);
 
     // If OpenQuestionBlock with AI grading, queue grading job
     if (block.type === 'open_question' && (block.data as any)?.ai_grading) {
@@ -120,9 +194,12 @@ export async function POST(
     // Update progress_snapshots
     await updateProgressSnapshot(resolvedParams.paragraphId, user.id)
 
+    const hasSubmitted = false;
+    const canShowFeedback = canReleaseFeedback(assignmentSettings, hasSubmitted);
     return NextResponse.json({
       message: 'Answer submitted successfully',
-      answer: studentAnswer
+      answer: studentAnswer,
+      feedback_visible: canShowFeedback,
     })
 
   } catch (error) {
@@ -146,7 +223,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: newData } = await request.json()
+    const { data: newData, settings } = await request.json()
     // Extract new fields if present
     const { locked, show_feedback, ai_grading_override } = newData;
 
@@ -208,7 +285,8 @@ export async function PUT(
     }
 
     // Update the block
-    const updatePayload: any = { data: newData };
+    const normalizedSettings = normalizeBlockSettings(settings || (newData as any)?.settings || {});
+    const updatePayload: any = { data: newData, settings: normalizedSettings };
     if (locked !== undefined) updatePayload.locked = locked;
     if (show_feedback !== undefined) updatePayload.show_feedback = show_feedback;
     if (ai_grading_override !== undefined) updatePayload.ai_grading_override = ai_grading_override;

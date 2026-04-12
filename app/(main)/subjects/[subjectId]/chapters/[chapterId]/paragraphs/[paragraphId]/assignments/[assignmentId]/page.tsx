@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { AppContext } from '@/contexts/app-context';
 import { useContext } from 'react';
+import { AssignmentSettings, normalizeAssignmentSettings } from '@/lib/assignments/settings';
 
 const AssignmentEditor = dynamic(
   () => import('@/components/AssignmentEditor').then((m) => m.AssignmentEditor),
@@ -24,6 +25,7 @@ type Assignment = {
   is_visible?: boolean | null;
   answer_mode?: 'view_only' | 'editable' | 'self_grade' | null;
   ai_grading_enabled?: boolean | null;
+  settings?: AssignmentSettings | null;
 };
 
 type Block = {
@@ -170,6 +172,7 @@ export default function AssignmentDetailPage() {
         isVisible={assignment.is_visible !== false}
         answerMode={(assignment.answer_mode as any) || 'view_only'}
         aiGradingEnabled={Boolean(assignment.ai_grading_enabled)}
+        initialSettings={normalizeAssignmentSettings(assignment.settings || {})}
         onSave={(savedBlocks) => {
           // Refresh blocks after save
           setBlocks(savedBlocks as any);

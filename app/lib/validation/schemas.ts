@@ -96,7 +96,8 @@ export const createAssignmentSchema = z.object({
   scheduled_end_at: z.string().datetime().optional().nullable(),
   answers_enabled: z.boolean().default(false),
   description: z.string().optional().nullable(),
-  linked_content: z.any().optional().nullable()
+  linked_content: z.any().optional().nullable(),
+  settings: z.record(z.any()).optional().nullable()
 });
 
 // ============================================
@@ -167,7 +168,8 @@ export const updateAssignmentSchema = z.object({
   scheduled_start_at: z.string().datetime().optional().nullable(),
   scheduled_end_at: z.string().datetime().optional().nullable(),
   answers_enabled: z.boolean().optional(),
-  description: z.string().optional().nullable()
+  description: z.string().optional().nullable(),
+  settings: z.record(z.any()).optional().nullable()
 });
 
 export const toggleAssignmentCompletedSchema = z.object({

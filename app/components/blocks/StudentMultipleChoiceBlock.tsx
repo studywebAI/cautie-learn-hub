@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { normalizeBlockSettings } from '@/lib/assignments/settings';
 
 interface StudentMultipleChoiceBlockProps {
   block: BaseBlock & { data: MultipleChoiceContent };
@@ -18,6 +19,11 @@ export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProp
 }) => {
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const settings = normalizeBlockSettings((block as any).settings || block.data?.settings || {});
+  const shouldShuffleOptions = settings.multipleChoice.shuffleOptions || block.data.shuffle;
+  const displayOptions = shouldShuffleOptions
+    ? [...(block.data.options as Array<{id: string, text: string, correct: boolean}> || [])].sort(() => Math.random() - 0.5)
+    : (block.data.options as Array<{id: string, text: string, correct: boolean}> || []);
 
   const handleAnswerChange = (value: string, checked: boolean) => {
     if (block.data.multiple_correct) {
@@ -49,7 +55,7 @@ export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProp
       {block.data.multiple_correct ? (
         // Multiple choice with checkboxes
         <div className="space-y-2">
-          {(block.data.options as Array<{id: string, text: string, correct: boolean}>).map((option) => (
+      {displayOptions.map((option) => (
             <div key={option.id} className="flex items-center space-x-2">
               <Checkbox
                 id={option.id}
@@ -70,7 +76,7 @@ export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProp
           onValueChange={(value) => setSelectedAnswers([value])}
           disabled={isSubmitted}
         >
-          {(block.data.options as Array<{id: string, text: string, correct: boolean}>).map((option) => (
+          {displayOptions.map((option) => (
             <div key={option.id} className="flex items-center space-x-2">
               <RadioGroupItem value={option.id} id={option.id} />
               <Label htmlFor={option.id} className="cursor-pointer">

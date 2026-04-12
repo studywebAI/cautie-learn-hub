@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/popover';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 import { AIGradingPresets, GradingPreset, GradingPresetSettings } from '@/components/AIGradingPresets';
+import { AssignmentSettings, DEFAULT_ASSIGNMENT_SETTINGS, DEFAULT_BLOCK_SETTINGS, normalizeAssignmentSettings, normalizeBlockSettings } from '@/lib/assignments/settings';
 
 interface BlockTemplate {
   id: string;
@@ -56,6 +57,7 @@ interface AssignmentBlock {
   data: any;
   showFeedback?: boolean; // Whether to show correct/incorrect feedback
   aiGradingOverride?: Partial<GradingPresetSettings>; // Per-block AI grading settings
+  settings?: any;
 }
 
 interface AssignmentEditorProps {
@@ -68,9 +70,10 @@ interface AssignmentEditorProps {
   isVisible?: boolean;
   answerMode?: 'view_only' | 'editable' | 'self_grade';
   aiGradingEnabled?: boolean;
+  initialSettings?: AssignmentSettings | null;
   onSave?: (blocks: AssignmentBlock[]) => void;
   onPreview?: () => void;
-  onSettingsChange?: (settings: { answersEnabled: boolean; isVisible: boolean }) => void;
+  onSettingsChange?: (settings: { answersEnabled: boolean; isVisible: boolean; settings: AssignmentSettings }) => void;
   isTeacher?: boolean;
 }
 
@@ -172,6 +175,7 @@ export function AssignmentEditor({
   isVisible = true,
   answerMode = 'view_only',
   aiGradingEnabled = false,
+  initialSettings = null,
   onSave,
   onPreview,
   onSettingsChange,
@@ -193,6 +197,7 @@ export function AssignmentEditor({
     size: b.size || 3,
     position: b.position ?? i,
     showFeedback: b.showFeedback ?? false,
+    settings: normalizeBlockSettings((b as any).settings || (b as any).data?.settings || {}),
     data: {
       ...getTemplateDefaults(b.type),
       ...(typeof b.data === 'object' && b.data !== null ? b.data : {}),
@@ -220,6 +225,9 @@ export function AssignmentEditor({
   const [localIsVisible, setLocalIsVisible] = useState(isVisible);
   const [localAnswerMode, setLocalAnswerMode] = useState<'view_only' | 'editable' | 'self_grade'>(answerMode);
   const [localAiGradingEnabled, setLocalAiGradingEnabled] = useState(aiGradingEnabled);
+  const [localSettings, setLocalSettings] = useState<AssignmentSettings>(
+    normalizeAssignmentSettings(initialSettings || DEFAULT_ASSIGNMENT_SETTINGS)
+  );
   
   // AI Grading presets (stored locally for now - would come from API)
   const [gradingPresets, setGradingPresets] = useState<GradingPreset[]>([
@@ -261,6 +269,10 @@ export function AssignmentEditor({
     setLocalAiGradingEnabled(aiGradingEnabled);
   }, [aiGradingEnabled]);
 
+  useEffect(() => {
+    setLocalSettings(normalizeAssignmentSettings(initialSettings || DEFAULT_ASSIGNMENT_SETTINGS));
+  }, [initialSettings]);
+
   // Toggle feedback visibility for a block
   const toggleBlockFeedback = (blockId: string) => {
     setBlocks(prev => {
@@ -298,6 +310,18 @@ export function AssignmentEditor({
     onSettingsChange?.({
       answersEnabled: updates.answersEnabled ?? localAnswersEnabled,
       isVisible: updates.isVisible ?? localIsVisible,
+      settings: localSettings,
+    });
+  };
+
+  const handleAdvancedSettingsChange = (next: AssignmentSettings) => {
+    const normalized = normalizeAssignmentSettings(next);
+    setLocalSettings(normalized);
+    setHasUnsavedChanges(true);
+    onSettingsChange?.({
+      answersEnabled: localAnswersEnabled,
+      isVisible: localIsVisible,
+      settings: normalized,
     });
   };
 
@@ -397,6 +421,18 @@ export function AssignmentEditor({
     });
   };
 
+  const updateBlockSettings = (blockId: string, updater: (prev: any) => any) => {
+    setBlocks((prev) => {
+      const newBlocks = prev.map((block) => {
+        if (block.id !== blockId) return block;
+        const nextSettings = normalizeBlockSettings(updater(block.settings || DEFAULT_BLOCK_SETTINGS));
+        return { ...block, settings: nextSettings };
+      });
+      saveToHistory(newBlocks);
+      return newBlocks;
+    });
+  };
+
   const setBlockSize = (blockId: string, size: 1 | 2 | 3) => {
     setBlocks(prev => {
       const newBlocks = prev.map(block =>
@@ -478,7 +514,8 @@ export function AssignmentEditor({
             width: 'half',
             column,
             rowId: targetRow.rowId,
-            data: { ...template.defaultData }
+            data: { ...template.defaultData },
+            settings: normalizeBlockSettings(DEFAULT_BLOCK_SETTINGS),
           };
           
           // Find insert position for replaced block (after current row)
@@ -512,7 +549,8 @@ export function AssignmentEditor({
               width: 'half',
               column,
               rowId: targetRow.rowId,
-              data: { ...template.defaultData }
+              data: { ...template.defaultData },
+              settings: normalizeBlockSettings(DEFAULT_BLOCK_SETTINGS),
             };
             newBlocks.push(newBlock);
           } else {
@@ -524,7 +562,8 @@ export function AssignmentEditor({
               width: 'half',
               column,
               rowId: targetRow.rowId,
-              data: { ...template.defaultData }
+              data: { ...template.defaultData },
+              settings: normalizeBlockSettings(DEFAULT_BLOCK_SETTINGS),
             };
             newBlocks.push(newBlock);
           }
@@ -538,7 +577,8 @@ export function AssignmentEditor({
           position: rowIndex,
           width: 'full',
           rowId: newRowId,
-          data: { ...template.defaultData }
+          data: { ...template.defaultData },
+          settings: normalizeBlockSettings(DEFAULT_BLOCK_SETTINGS),
         };
         
         // Insert at correct position
@@ -793,11 +833,13 @@ export function AssignmentEditor({
             type: block.type,
             position: block.position,
             data: block.data,
+            settings: block.settings || DEFAULT_BLOCK_SETTINGS,
             show_feedback: block.showFeedback || false,
             ai_grading_override: block.aiGradingOverride || null,
           };
 
-          if (block.id) {
+          const isLocalId = String(block.id || '').startsWith('block-');
+          if (block.id && !isLocalId) {
             // Update existing block
             await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${block.id}`, {
               method: 'PUT',
@@ -806,11 +848,15 @@ export function AssignmentEditor({
             });
           } else {
             // Create new block
-            await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`, {
+            const createRes = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload),
             });
+            if (createRes.ok) {
+              const created = await createRes.json();
+              setBlocks((prev) => prev.map((b) => (b.id === block.id ? { ...b, id: created.id } : b)));
+            }
           }
         })
       );
@@ -823,6 +869,7 @@ export function AssignmentEditor({
           answers_enabled: localAnswersEnabled,
           answer_mode: localAnswerMode,
           ai_grading_enabled: localAiGradingEnabled,
+          settings: localSettings,
         }),
       });
       if (!assignmentSettingsRes.ok) {
@@ -1494,16 +1541,101 @@ export function AssignmentEditor({
               </div>
               <div className="rounded-xl border border-sidebar-border/70 bg-background/80 p-1">
                 <AssignmentSettingsOverlay
-                  isVisible={localIsVisible}
-                  answersEnabled={localAnswersEnabled}
-                  answerMode={localAnswerMode}
-                  aiGradingEnabled={localAiGradingEnabled}
-                  onVisibilityChange={(v) => handleSettingsChange({ isVisible: v })}
-                  onAnswersEnabledChange={(e) => handleSettingsChange({ answersEnabled: e })}
-                  onAnswerModeChange={(m) => handleSettingsChange({ answerMode: m })}
-                  onAiGradingChange={(v) => handleSettingsChange({ aiGradingEnabled: v })}
+                  settings={localSettings}
+                  onSettingsChange={handleAdvancedSettingsChange}
                 />
               </div>
+              {selectedBlock && (() => {
+                const block = blocks.find((b) => b.id === selectedBlock);
+                if (!block) return null;
+                const s = normalizeBlockSettings(block.settings || {});
+                return (
+                  <div className="rounded-xl border border-sidebar-border/70 bg-background/80 p-3 space-y-2">
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.08em]">Question Settings</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.1}
+                        value={s.points}
+                        onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, points: Number(e.target.value || 0) }))}
+                        className="h-8"
+                      />
+                      <Input
+                        value={s.tags.join(',')}
+                        onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, tags: e.target.value.split(',').map((v: string) => v.trim()).filter(Boolean) }))}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Required</Label>
+                      <Checkbox
+                        checked={s.required}
+                        onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, required: !!checked }))}
+                      />
+                    </div>
+                    <Textarea
+                      value={s.feedbackText}
+                      onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, feedbackText: e.target.value }))}
+                      className="text-xs min-h-[52px]"
+                    />
+                    <Input
+                      type="number"
+                      min={0}
+                      value={s.timeLimitSeconds ?? ''}
+                      onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, timeLimitSeconds: e.target.value ? Number(e.target.value) : null }))}
+                      className="h-8"
+                      placeholder="Question time limit (s)"
+                    />
+                    {block.type === 'open_question' && (
+                      <div className="space-y-2 border-t pt-2">
+                        <Input
+                          value={s.openQuestion.modelAnswer}
+                          onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, modelAnswer: e.target.value } }))}
+                          className="h-8"
+                          placeholder="Model answer"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            type="number"
+                            min={1}
+                            value={s.openQuestion.maxWords ?? ''}
+                            onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, maxWords: e.target.value ? Number(e.target.value) : null } }))}
+                            className="h-8"
+                            placeholder="Max words"
+                          />
+                          <Input
+                            type="number"
+                            min={1}
+                            value={s.openQuestion.maxChars ?? ''}
+                            onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, maxChars: e.target.value ? Number(e.target.value) : null } }))}
+                            className="h-8"
+                            placeholder="Max chars"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between"><Label className="text-xs">Spellcheck</Label><Checkbox checked={s.openQuestion.spellcheck} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, spellcheck: !!checked } }))} /></div>
+                        <div className="flex items-center justify-between"><Label className="text-xs">Allow file upload</Label><Checkbox checked={s.openQuestion.allowFileUpload} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, allowFileUpload: !!checked } }))} /></div>
+                        <div className="flex items-center justify-between"><Label className="text-xs">Plagiarism check</Label><Checkbox checked={s.openQuestion.plagiarismCheck} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, plagiarismCheck: !!checked } }))} /></div>
+                      </div>
+                    )}
+                    {block.type === 'multiple_choice' && (
+                      <div className="space-y-2 border-t pt-2">
+                        <div className="flex items-center justify-between"><Label className="text-xs">Shuffle options</Label><Checkbox checked={s.multipleChoice.shuffleOptions} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, shuffleOptions: !!checked } }))} /></div>
+                        <div className="flex items-center justify-between"><Label className="text-xs">Partial credit</Label><Checkbox checked={s.multipleChoice.partialCredit} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, partialCredit: !!checked } }))} /></div>
+                        <div className="flex items-center justify-between"><Label className="text-xs">Negative scoring</Label><Checkbox checked={s.multipleChoice.negativeScoring} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, negativeScoring: !!checked } }))} /></div>
+                        <select
+                          className="h-8 rounded-md border border-input bg-background px-2 text-sm w-full"
+                          value={s.multipleChoice.scoringMode}
+                          onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, scoringMode: e.target.value } }))}
+                        >
+                          <option value="partial">Partial</option>
+                          <option value="all_or_nothing">All or nothing</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </aside>
         )}

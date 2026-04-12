@@ -15,7 +15,9 @@ import {
   AlertCircle,
   FileText,
   BookOpen,
+  Timer,
 } from 'lucide-react';
+import { AssignmentSettings, getAssignmentAvailabilityState, normalizeAssignmentSettings } from '@/lib/assignments/settings';
 
 interface Block {
   id: string;
@@ -41,6 +43,7 @@ interface Assignment {
     title: string;
     path?: string;
   }>;
+  settings?: AssignmentSettings | null;
 }
 
 interface StudentAssignmentViewProps {
@@ -72,9 +75,11 @@ export function StudentAssignmentView({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [completionPercent, setCompletionPercent] = useState(0);
+  const [timeLeftSeconds, setTimeLeftSeconds] = useState<number | null>(null);
   const assignmentOpenedAtRef = useRef<number>(Date.now());
 
   const { user } = useContext(AppContext) as any;
+  const settings = normalizeAssignmentSettings(assignment?.settings || {});
 
   // Auto-save queue
   const pendingSaves = useRef<Record<string, any>>({});
@@ -146,6 +151,11 @@ export function StudentAssignmentView({
         }
         const assignmentData = await assignmentResponse.json();
         setAssignment(assignmentData);
+        const normalizedSettings = normalizeAssignmentSettings(assignmentData?.settings || {});
+        const availability = getAssignmentAvailabilityState(normalizedSettings);
+        if (!availability.available) {
+          throw new Error(availability.reason === 'not_started' ? 'Assignment is not available yet' : 'Assignment deadline has passed');
+        }
         assignmentOpenedAtRef.current = Date.now();
         void fetch('/api/activity', {
           method: 'POST',
@@ -175,7 +185,10 @@ export function StudentAssignmentView({
         } else {
           console.warn('Blocks fetch returned non-OK status, using empty array');
         }
-        const sortedBlocks = (Array.isArray(blocksData) ? blocksData : []).sort((a: Block, b: Block) => a.position - b.position);
+        let sortedBlocks = (Array.isArray(blocksData) ? blocksData : []).sort((a: Block, b: Block) => a.position - b.position);
+        if (normalizedSettings.access.shuffleQuestions) {
+          sortedBlocks = [...sortedBlocks].sort(() => Math.random() - 0.5);
+        }
         setBlocks(sortedBlocks);
 
         // Fetch existing student answers
@@ -215,6 +228,29 @@ export function StudentAssignmentView({
 
     fetchAssignmentData();
   }, [subjectId, chapterId, paragraphId, assignmentId, user]);
+
+  useEffect(() => {
+    if (!assignment) return;
+    const s = normalizeAssignmentSettings(assignment.settings || {});
+    if (!s.time.showTimer) {
+      setTimeLeftSeconds(null);
+      return;
+    }
+    const getTimeLeft = () => {
+      if (s.time.endAt) {
+        return Math.max(0, Math.floor((new Date(s.time.endAt).getTime() - Date.now()) / 1000));
+      }
+      if (s.time.durationMinutes) {
+        return Math.max(0, Math.floor(s.time.durationMinutes * 60 - (Date.now() - assignmentOpenedAtRef.current) / 1000));
+      }
+      return null;
+    };
+    setTimeLeftSeconds(getTimeLeft());
+    const timer = setInterval(() => {
+      setTimeLeftSeconds(getTimeLeft());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [assignment]);
 
   const handleAnswerChange = (blockId: string, answer: any) => {
     const newAnswers = {
@@ -293,10 +329,10 @@ export function StudentAssignmentView({
   return (
     <div className={className}>
       {/* Deadline Context Banner - shows when coming from a deadline link */}
-      {(assignment?.description || instructions) && (
+      {(assignment?.description || instructions || settings.delivery.instructionText) && (
         <div className="mb-6 p-4 rounded-lg bg-muted border-l-4 border-primary">
           <p className="text-sm text-muted-foreground mb-1">assignment instructions:</p>
-          <p className="text-base">{assignment?.description || instructions}</p>
+          <p className="text-base">{settings.delivery.instructionText || assignment?.description || instructions}</p>
         </div>
       )}
 
@@ -350,6 +386,12 @@ export function StudentAssignmentView({
                 <Progress value={completionPercent} className="w-24 h-2" />
                 <span className="text-sm text-muted-foreground">{completionPercent}%</span>
               </div>
+              {timeLeftSeconds !== null && (
+                <div className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Timer className="h-4 w-4" />
+                  {Math.floor(timeLeftSeconds / 60)}:{String(timeLeftSeconds % 60).padStart(2, '0')}
+                </div>
+              )}
             </div>
           </div>
         </div>
