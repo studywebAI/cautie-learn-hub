@@ -31,6 +31,26 @@ async function userHasSubjectAccess(supabase: any, userId: string, subjectId: st
   return !!(links && links.length > 0);
 }
 
+async function userCanEditSubject(supabase: any, userId: string, subjectId: string): Promise<boolean> {
+  const { data: subject } = await (supabase as any)
+    .from('subjects')
+    .select('id, user_id, class_id')
+    .eq('id', subjectId)
+    .maybeSingle();
+  if (!subject) return false;
+  if (subject.user_id === userId) return true;
+
+  if (!subject.class_id) return false;
+  const { data: membership } = await supabase
+    .from('class_members')
+    .select('role')
+    .eq('class_id', subject.class_id)
+    .eq('user_id', userId)
+    .maybeSingle();
+  const role = String(membership?.role || '').toLowerCase();
+  return role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
+}
+
 // GET blocks for an assignment
 export async function GET(
   request: Request,
@@ -100,14 +120,12 @@ export async function POST(
   { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string; assignmentId: string }> }
 ) {
   const resolvedParams = await params
-  console.log(`POST /api/subjects/[subjectId]/chapters/[chapterId]/paragraphs/[paragraphId]/assignments/${resolvedParams.assignmentId}/blocks - Called`);
 
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    console.log(`Auth check: user=${user?.id}, error=${authError?.message}`);
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -115,6 +133,7 @@ export async function POST(
 
     const body = await request.json()
     const { type, position, data: blockData, locked, show_feedback, ai_grading_override, settings } = body
+    const normalizedSettings = normalizeBlockSettings(settings || blockData?.settings || {});
 
     if (!type || position === undefined || !blockData) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -127,23 +146,14 @@ export async function POST(
       .eq('id', resolvedParams.assignmentId)
       .single()
 
-    console.log(`Simple assignment check: id=${resolvedParams.assignmentId}, error=${simpleError?.message}, found=${!!simpleAssignment}`);
-
     if (simpleError || !simpleAssignment) {
-      console.log(`Assignment not found in database`);
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
     }
 
-    // Skip complex auth for now - assume user has access if assignment exists
-    console.log(`Skipping complex auth checks - assuming user has access to assignment ${resolvedParams.assignmentId}`);
-    const isTeacher = true; // Assume teacher access for block management
-
-    if (!isTeacher) {
-      console.log(`User ${user.id} is not a teacher for this assignment`);
-      return NextResponse.json({ error: 'Access denied - only teachers can create blocks' }, { status: 403 })
+    const canEdit = await userCanEditSubject(supabase, user.id, resolvedParams.subjectId);
+    if (!canEdit) {
+      return NextResponse.json({ error: 'Access denied - subject not found' }, { status: 404 })
     }
-
-    console.log(`Teacher access granted for user ${user.id} to create blocks in assignment ${resolvedParams.assignmentId}`);
 
     // Insert the new block
     const { data: newBlock, error: insertError } = await supabase
@@ -166,11 +176,9 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to create block' }, { status: 500 })
     }
 
-    console.log(`Block created successfully: ${newBlock.id}`);
     return NextResponse.json(newBlock)
   } catch (error) {
     console.error('Unexpected error in blocks POST:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-    const normalizedSettings = normalizeBlockSettings(settings || blockData?.settings || {});

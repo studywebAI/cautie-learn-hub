@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { BaseBlock, OpenQuestionContent } from './types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,7 +18,7 @@ interface GradingResult {
 
 interface StudentOpenQuestionBlockProps {
   block: BaseBlock & { data: OpenQuestionContent };
-  onSubmit: (answerData: any) => void;
+  onSubmit: (answerData: any) => Promise<{ ok: boolean; error?: string }>;
   gradingResult?: GradingResult;
   isSubmitted?: boolean;
 }
@@ -30,22 +30,33 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
   isSubmitted = false,
 }) => {
   const [answer, setAnswer] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [pasteCount, setPasteCount] = useState(0);
   const [pasteChars, setPasteChars] = useState(0);
   const [typedChars, setTypedChars] = useState(0);
+  const startedAtRef = useRef<string>(new Date().toISOString());
   const settings = normalizeBlockSettings((block as any).settings || block.data?.settings || {});
   const maxChars = settings.openQuestion.maxChars;
   const maxWords = settings.openQuestion.maxWords;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setError(null);
     const answerData = {
       text: answer,
       ai_grading: block.data.ai_grading,
       paste_count: pasteCount,
       paste_chars: pasteChars,
       typed_chars: typedChars,
+      started_at: startedAtRef.current,
+      submitted_at: new Date().toISOString(),
     };
-    onSubmit(answerData);
+    const result = await onSubmit(answerData);
+    if (!result.ok) {
+      setError(result.error || 'Failed to submit answer');
+    }
+    setIsSubmitting(false);
   };
 
   return (
@@ -62,7 +73,6 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
         <Label htmlFor="answer">Your Answer</Label>
         <Textarea
           id="answer"
-          placeholder="Type your answer here..."
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           onKeyDown={(e) => {
@@ -75,7 +85,7 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
             setPasteCount((prev) => prev + 1);
             setPasteChars((prev) => prev + pasted.length);
           }}
-          disabled={isSubmitted}
+          disabled={isSubmitted || isSubmitting}
           rows={6}
           maxLength={maxChars || (block.data.max_score ? undefined : 1000)}
         />
@@ -92,11 +102,12 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
           disabled={
             !answer.trim() ||
             (maxChars ? answer.length > maxChars : false) ||
-            (maxWords ? answer.trim().split(/\\s+/).filter(Boolean).length > maxWords : false)
+            (maxWords ? answer.trim().split(/\\s+/).filter(Boolean).length > maxWords : false) ||
+            isSubmitting
           }
           className="mt-4"
         >
-          Submit Answer
+          {isSubmitting ? 'Submitting...' : 'Submit Answer'}
         </Button>
       )}
 
@@ -137,6 +148,7 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
           )}
         </div>
       )}
+      {error && <div className="text-sm text-destructive">{error}</div>}
     </div>
   );
 };

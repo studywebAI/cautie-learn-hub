@@ -70,9 +70,20 @@ export async function GET(
         return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
       }
 
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('subscription_type')
+        .eq('id', user.id)
+        .maybeSingle();
+      const isTeacher = profile?.subscription_type === 'teacher';
+      const fallbackSettings = normalizeAssignmentSettings((fallbackAssignment as any).settings || {});
+      if (!isTeacher && fallbackSettings.access.accessCode) {
+        fallbackSettings.access.accessCode = '__required__';
+      }
+
       return NextResponse.json({
         ...fallbackAssignment,
-        settings: normalizeAssignmentSettings((fallbackAssignment as any).settings || {}),
+        settings: fallbackSettings,
       });
     }
 
@@ -130,6 +141,16 @@ export async function GET(
         improvementAttemptEnabled: assignment?.improvement_attempt_enabled ?? false,
       },
     });
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', user.id)
+      .maybeSingle();
+    const isTeacher = profile?.subscription_type === 'teacher';
+    if (!isTeacher && normalizedSettings.access.accessCode) {
+      normalizedSettings.access.accessCode = '__required__';
+    }
 
     return NextResponse.json({
       ...assignment,

@@ -347,3 +347,65 @@ export function calculateMcqScore(
   const isCorrect = selectedCorrect === totalCorrect && selectedIncorrect === 0;
   return { score, isCorrect };
 }
+
+export function calculateFillInBlankScore(
+  answers: string[],
+  accepted: string[],
+  caseSensitive: boolean,
+  settings: BlockSettings,
+): { score: number; isCorrect: boolean } {
+  const normalize = (v: string) => caseSensitive ? v.trim() : v.trim().toLowerCase();
+  const safeAnswers = answers.map((a) => normalize(String(a || '')));
+  const safeAccepted = accepted.map((a) => normalize(String(a || '')));
+  if (safeAccepted.length === 0) return { score: 0, isCorrect: false };
+  let correct = 0;
+  for (let i = 0; i < safeAccepted.length; i += 1) {
+    if (safeAnswers[i] && safeAnswers[i] === safeAccepted[i]) correct += 1;
+  }
+  const fraction = correct / safeAccepted.length;
+  const score = settings.multipleChoice.partialCredit ? settings.points * fraction : (fraction === 1 ? settings.points : 0);
+  return { score: Math.round(score * 1000) / 1000, isCorrect: fraction === 1 };
+}
+
+export function calculateOrderingScore(
+  selectedOrder: number[],
+  correctOrder: number[],
+  settings: BlockSettings,
+): { score: number; isCorrect: boolean } {
+  if (!Array.isArray(correctOrder) || correctOrder.length === 0) return { score: 0, isCorrect: false };
+  let correct = 0;
+  for (let i = 0; i < correctOrder.length; i += 1) {
+    if (selectedOrder[i] === correctOrder[i]) correct += 1;
+  }
+  const fraction = correct / correctOrder.length;
+  const score = settings.matching.partialScoring ? settings.points * fraction : (fraction === 1 ? settings.points : 0);
+  return { score: Math.round(score * 1000) / 1000, isCorrect: fraction === 1 };
+}
+
+export function calculateDragDropScore(
+  matches: Array<{ left: string; right: string }>,
+  correctPairs: Array<{ left: string; right: string }>,
+  settings: BlockSettings,
+): { score: number; isCorrect: boolean } {
+  if (!Array.isArray(correctPairs) || correctPairs.length === 0) return { score: 0, isCorrect: false };
+  const normalizedMatches = new Set(matches.map((p) => `${String(p.left)}=>${String(p.right)}`));
+  const normalizedCorrect = correctPairs.map((p) => `${String(p.left)}=>${String(p.right)}`);
+  const correct = normalizedCorrect.filter((k) => normalizedMatches.has(k)).length;
+  const fraction = correct / normalizedCorrect.length;
+  const score = settings.matching.partialScoring ? settings.points * fraction : (fraction === 1 ? settings.points : 0);
+  return { score: Math.round(score * 1000) / 1000, isCorrect: fraction === 1 };
+}
+
+export function calculateNumericScore(
+  answer: string | number,
+  expected: string | number,
+  settings: BlockSettings,
+): { score: number; isCorrect: boolean } {
+  const ans = Number(answer);
+  const exp = Number(expected);
+  if (!Number.isFinite(ans) || !Number.isFinite(exp)) return { score: 0, isCorrect: false };
+  const tolerance = settings.numeric.exactMatch ? 0 : Number(settings.numeric.tolerance || 0);
+  const diff = Math.abs(ans - exp);
+  const isCorrect = diff <= tolerance;
+  return { score: isCorrect ? settings.points : 0, isCorrect };
+}

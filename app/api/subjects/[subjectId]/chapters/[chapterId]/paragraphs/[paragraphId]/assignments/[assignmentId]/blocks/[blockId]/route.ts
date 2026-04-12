@@ -4,6 +4,10 @@ import { NextResponse } from 'next/server'
 import { updateProgressSnapshot } from '@/lib/progress'
 import {
   calculateMcqScore,
+  calculateFillInBlankScore,
+  calculateOrderingScore,
+  calculateDragDropScore,
+  calculateNumericScore,
   canReleaseFeedback,
   getAssignmentAvailabilityState,
   normalizeAssignmentSettings,
@@ -30,6 +34,7 @@ export async function POST(
 
     const body = await request.json()
     const answerData = body.answerData ?? body.answer_data
+    const providedAccessCode = typeof body.access_code === 'string' ? body.access_code.trim() : ''
 
     // Verify the block belongs to this assignment
     const { data: block, error: blockError } = await supabase
@@ -76,7 +81,11 @@ export async function POST(
       );
     }
 
-    const attempt = await getOrCreateAttempt(supabase, resolvedParams.assignmentId, user.id, assignmentSettings);
+    const clientMeta = {
+      ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
+      userAgent: request.headers.get('user-agent') || null,
+    };
+    const attempt = await getOrCreateAttempt(supabase, resolvedParams.assignmentId, user.id, assignmentSettings, clientMeta);
     if ((attempt as any)?.blocked) {
       return NextResponse.json({ error: (attempt as any).reason, details: attempt }, { status: 429 });
     }
@@ -115,6 +124,13 @@ export async function POST(
       return NextResponse.json({ error: 'Access denied - not a class member' }, { status: 403 })
     }
 
+    if (assignmentSettings.access.allowedClassIds.length > 0 && !assignmentSettings.access.allowedClassIds.includes(classId)) {
+      return NextResponse.json({ error: 'Assignment not available for this class' }, { status: 403 });
+    }
+    if (assignmentSettings.access.accessCode && assignmentSettings.access.accessCode.trim() !== providedAccessCode) {
+      return NextResponse.json({ error: 'Invalid access code' }, { status: 403 });
+    }
+
     const blockSettings = normalizeBlockSettings((block as any).settings || (block as any).data?.settings || {});
     if (blockSettings.required && !answerData) {
       return NextResponse.json({ error: 'Answer is required' }, { status: 400 });
@@ -126,6 +142,16 @@ export async function POST(
       const words = answerData.text.trim().split(/\s+/).filter(Boolean).length;
       if (words > blockSettings.openQuestion.maxWords) {
         return NextResponse.json({ error: 'Answer exceeds max words' }, { status: 400 });
+      }
+    }
+    const perQuestionLimit = blockSettings.timeLimitSeconds || assignmentSettings.antiCheat.perQuestionTimeLimitSeconds;
+    if (perQuestionLimit && typeof answerData?.started_at === 'string') {
+      const started = new Date(answerData.started_at).getTime();
+      if (Number.isFinite(started)) {
+        const elapsedSec = (Date.now() - started) / 1000;
+        if (elapsedSec > perQuestionLimit) {
+          return NextResponse.json({ error: 'Question time limit exceeded' }, { status: 403 });
+        }
       }
     }
 
@@ -140,22 +166,100 @@ export async function POST(
       isCorrect = result.isCorrect;
       feedback = blockSettings.feedbackText || null;
     }
+    if (block.type === 'fill_in_blank') {
+      const result = calculateFillInBlankScore(
+        answerData?.answers || [],
+        (block as any).data?.answers || [],
+        !!(block as any).data?.case_sensitive,
+        blockSettings,
+      );
+      score = result.score;
+      isCorrect = result.isCorrect;
+      feedback = blockSettings.feedbackText || null;
+    }
+    if (block.type === 'ordering') {
+      const result = calculateOrderingScore(
+        answerData?.order || [],
+        (block as any).data?.correct_order || [],
+        blockSettings,
+      );
+      score = result.score;
+      isCorrect = result.isCorrect;
+      feedback = blockSettings.feedbackText || null;
+    }
+    if (block.type === 'drag_drop') {
+      const result = calculateDragDropScore(
+        answerData?.pairs || [],
+        (block as any).data?.pairs || [],
+        blockSettings,
+      );
+      score = result.score;
+      isCorrect = result.isCorrect;
+      feedback = blockSettings.feedbackText || null;
+    }
+    if (block.type === 'numeric_question') {
+      const expected = (block as any).data?.correct_answer ?? (block as any).data?.answer ?? (block as any).data?.value;
+      const result = calculateNumericScore(answerData?.value, expected, blockSettings);
+      score = result.score;
+      isCorrect = result.isCorrect;
+      feedback = blockSettings.feedbackText || null;
+    }
 
-    // Insert student answer
-    const { data: studentAnswer, error: insertError } = await supabase
+    const existingAnswerRes = await supabase
       .from('student_answers')
-      .insert({
-        student_id: user.id,
-        assignment_id: resolvedParams.assignmentId,
-        block_id: resolvedParams.blockId,
-        answer_data: answerData,
-        is_correct: isCorrect,
-        score,
-        feedback,
-        graded_by_ai: false
-      })
-      .select()
-      .single()
+      .select('id')
+      .eq('student_id', user.id)
+      .eq('assignment_id', resolvedParams.assignmentId)
+      .eq('block_id', resolvedParams.blockId)
+      .order('submitted_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const answerPayload: any = {
+      student_id: user.id,
+      assignment_id: resolvedParams.assignmentId,
+      block_id: resolvedParams.blockId,
+      answer_data: answerData,
+      is_correct: isCorrect,
+      score,
+      feedback,
+      graded_by_ai: false,
+      submitted_at: new Date().toISOString(),
+      assignment_attempt_id: (attempt as any).id,
+    };
+
+    let studentAnswer: any = null;
+    let insertError: any = null;
+
+    if (existingAnswerRes.data?.id) {
+      const updateRes = await supabase
+        .from('student_answers')
+        .update(answerPayload)
+        .eq('id', existingAnswerRes.data.id)
+        .select()
+        .single();
+      studentAnswer = updateRes.data;
+      insertError = updateRes.error;
+    } else {
+      const insertRes = await supabase
+        .from('student_answers')
+        .insert(answerPayload)
+        .select()
+        .single();
+      if (insertRes.error && String(insertRes.error.message || '').toLowerCase().includes('assignment_attempt_id')) {
+        delete answerPayload.assignment_attempt_id;
+        const fallbackRes = await supabase
+          .from('student_answers')
+          .insert(answerPayload)
+          .select()
+          .single();
+        studentAnswer = fallbackRes.data;
+        insertError = fallbackRes.error;
+      } else {
+        studentAnswer = insertRes.data;
+        insertError = insertRes.error;
+      }
+    }
 
     if (insertError) {
       console.error('Error inserting student answer:', insertError)
@@ -194,12 +298,33 @@ export async function POST(
     // Update progress_snapshots
     await updateProgressSnapshot(resolvedParams.paragraphId, user.id)
 
-    const hasSubmitted = false;
+    const hasSubmitted = (attempt as any).status !== 'in_progress';
     const canShowFeedback = canReleaseFeedback(assignmentSettings, hasSubmitted);
+    let adaptiveNextBlockId: string | null = null;
+    if (assignmentSettings.advanced.adaptiveEnabled && isCorrect === false) {
+      const { data: allBlocks } = await supabase
+        .from('blocks')
+        .select('id, position, settings')
+        .eq('assignment_id', resolvedParams.assignmentId)
+        .order('position', { ascending: true });
+      const { data: answeredRows } = await supabase
+        .from('student_answers')
+        .select('block_id')
+        .eq('student_id', user.id)
+        .eq('assignment_id', resolvedParams.assignmentId);
+      const answered = new Set((answeredRows || []).map((r: any) => r.block_id));
+      const remedial = (allBlocks || []).find((candidate: any) => {
+        const candidateSettings = normalizeBlockSettings(candidate.settings || {});
+        return !answered.has(candidate.id) && candidateSettings.tags.includes('remedial');
+      });
+      adaptiveNextBlockId = remedial?.id || null;
+    }
+
     return NextResponse.json({
       message: 'Answer submitted successfully',
       answer: studentAnswer,
       feedback_visible: canShowFeedback,
+      adaptive_next_block_id: adaptiveNextBlockId,
     })
 
   } catch (error) {
@@ -271,11 +396,12 @@ export async function PUT(
     if (classId) {
       const { data: classMembership } = await supabase
         .from('class_members')
-        .select('user_id')
+        .select('role')
         .eq('class_id', classId)
         .eq('user_id', user.id)
         .maybeSingle();
-      isTeacher = !!classMembership;
+      const role = String(classMembership?.role || '').toLowerCase();
+      isTeacher = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
     } else {
       isTeacher = subjectData.user_id === user.id;
     }
@@ -369,11 +495,12 @@ export async function DELETE(
     if (classId) {
       const { data: classMembership } = await supabase
         .from('class_members')
-        .select('user_id')
+        .select('role')
         .eq('class_id', classId)
         .eq('user_id', user.id)
         .maybeSingle();
-      isTeacher = !!classMembership;
+      const role = String(classMembership?.role || '').toLowerCase();
+      isTeacher = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
     } else {
       isTeacher = subjectData.user_id === user.id;
     }

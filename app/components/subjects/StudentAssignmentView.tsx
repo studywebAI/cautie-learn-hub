@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { AppContext } from '@/contexts/app-context';
 import { StudentBlockRenderer } from '@/components/blocks/StudentBlockRenderer';
 import {
@@ -18,6 +19,23 @@ import {
   Timer,
 } from 'lucide-react';
 import { AssignmentSettings, getAssignmentAvailabilityState, normalizeAssignmentSettings } from '@/lib/assignments/settings';
+
+function seededShuffle<T>(items: T[], seedInput: string): T[] {
+  const arr = [...items];
+  let seed = 0;
+  for (let i = 0; i < seedInput.length; i += 1) {
+    seed = (seed * 31 + seedInput.charCodeAt(i)) >>> 0;
+  }
+  const random = () => {
+    seed = (1664525 * seed + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 interface Block {
   id: string;
@@ -44,6 +62,11 @@ interface Assignment {
     path?: string;
   }>;
   settings?: AssignmentSettings | null;
+}
+
+interface SubmitResult {
+  ok: boolean;
+  error?: string;
 }
 
 interface StudentAssignmentViewProps {
@@ -76,6 +99,9 @@ export function StudentAssignmentView({
   const [error, setError] = useState<string | null>(null);
   const [completionPercent, setCompletionPercent] = useState(0);
   const [timeLeftSeconds, setTimeLeftSeconds] = useState<number | null>(null);
+  const [hasAutoSubmitted, setHasAutoSubmitted] = useState(false);
+  const [providedAccessCode, setProvidedAccessCode] = useState('');
+  const [accessUnlocked, setAccessUnlocked] = useState(false);
   const assignmentOpenedAtRef = useRef<number>(Date.now());
 
   const { user } = useContext(AppContext) as any;
@@ -100,7 +126,7 @@ export function StudentAssignmentView({
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ answer_data: answerData })
+              body: JSON.stringify({ answer_data: answerData, access_code: providedAccessCode || undefined })
             }
           );
         } catch (err) {
@@ -110,6 +136,24 @@ export function StudentAssignmentView({
         }
       })
     );
+  }, [subjectId, chapterId, paragraphId, assignmentId, providedAccessCode]);
+
+  const sendAssignmentEvent = useCallback(async (eventType: string, eventPayload: Record<string, any> = {}) => {
+    try {
+      await fetch(
+        `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/events`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event_type: eventType,
+            event_payload: eventPayload,
+          }),
+        }
+      );
+    } catch {
+      // Silent on purpose.
+    }
   }, [subjectId, chapterId, paragraphId, assignmentId]);
 
   // Flush on unmount
@@ -127,7 +171,7 @@ export function StudentAssignmentView({
               {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ answer_data: answerData })
+                body: JSON.stringify({ answer_data: answerData, access_code: providedAccessCode || undefined })
               }
             );
           } catch {}
@@ -157,6 +201,10 @@ export function StudentAssignmentView({
           throw new Error(availability.reason === 'not_started' ? 'Assignment is not available yet' : 'Assignment deadline has passed');
         }
         assignmentOpenedAtRef.current = Date.now();
+        void sendAssignmentEvent('assignment_open', {
+          assignment_id: assignmentId,
+          opened_at: new Date().toISOString(),
+        });
         void fetch('/api/activity', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -187,7 +235,10 @@ export function StudentAssignmentView({
         }
         let sortedBlocks = (Array.isArray(blocksData) ? blocksData : []).sort((a: Block, b: Block) => a.position - b.position);
         if (normalizedSettings.access.shuffleQuestions) {
-          sortedBlocks = [...sortedBlocks].sort(() => Math.random() - 0.5);
+          sortedBlocks = seededShuffle(sortedBlocks, `${assignmentId}:${user?.id || 'anon'}`);
+        }
+        if (normalizedSettings.advanced.questionPoolSize && normalizedSettings.advanced.questionPoolSize > 0) {
+          sortedBlocks = sortedBlocks.slice(0, normalizedSettings.advanced.questionPoolSize);
         }
         setBlocks(sortedBlocks);
 
@@ -227,7 +278,7 @@ export function StudentAssignmentView({
     };
 
     fetchAssignmentData();
-  }, [subjectId, chapterId, paragraphId, assignmentId, user]);
+  }, [subjectId, chapterId, paragraphId, assignmentId, user, sendAssignmentEvent]);
 
   useEffect(() => {
     if (!assignment) return;
@@ -252,19 +303,80 @@ export function StudentAssignmentView({
     return () => clearInterval(timer);
   }, [assignment]);
 
-  const handleAnswerChange = (blockId: string, answer: any) => {
+  useEffect(() => {
+    if (!assignment) return;
+    if (timeLeftSeconds === null || timeLeftSeconds > 0) return;
+    if (hasAutoSubmitted) return;
+    if (!settings.time.autoSubmitOnTimeout) return;
+
+    const runAutoSubmit = async () => {
+      setHasAutoSubmitted(true);
+      const answersPayload = Object.entries(studentAnswers).map(([blockId, value]) => ({
+        block_id: blockId,
+        answer_data: (value as any)?.answer_data ?? value,
+      }));
+      try {
+        await fetch(
+          `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/submit`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              answers: answersPayload,
+              access_code: providedAccessCode || undefined,
+            }),
+          }
+        );
+      } catch (err) {
+        console.error('Auto submit failed', err);
+      }
+    };
+
+    void runAutoSubmit();
+  }, [
+    assignment,
+    timeLeftSeconds,
+    hasAutoSubmitted,
+    settings.time.autoSubmitOnTimeout,
+    studentAnswers,
+    subjectId,
+    chapterId,
+    paragraphId,
+    assignmentId,
+    providedAccessCode,
+  ]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden' && settings.antiCheat.detectTabSwitch) {
+        void sendAssignmentEvent('tab_switch', {
+          at: new Date().toISOString(),
+          hidden: true,
+        });
+      }
+    };
+    const onFullscreenChange = () => {
+      if (!document.fullscreenElement && settings.antiCheat.requireFullscreen) {
+        void sendAssignmentEvent('fullscreen_exit', {
+          at: new Date().toISOString(),
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+    };
+  }, [settings.antiCheat.detectTabSwitch, settings.antiCheat.requireFullscreen, sendAssignmentEvent]);
+
+  const handleAnswerChange = async (blockId: string, answer: any): Promise<SubmitResult> => {
+    const previousAnswers = { ...studentAnswers };
     const newAnswers = {
       ...studentAnswers,
       [blockId]: answer
     };
     setStudentAnswers(newAnswers);
-
-    // Queue for auto-save
-    pendingSaves.current[blockId] = answer;
-
-    // Debounce the save
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => flushSaves(), 2000);
 
     // Track assignment interaction for analytics and warning signals.
     void fetch('/api/activity', {
@@ -295,6 +407,59 @@ export function StudentAssignmentView({
     const answeredBlocks = Object.keys(newAnswers).length;
     const totalBlocks = blocks.length;
     setCompletionPercent(totalBlocks > 0 ? Math.round((answeredBlocks / totalBlocks) * 100) : 0);
+
+    try {
+      const response = await fetch(
+        `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${blockId}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            answer_data: answer,
+            access_code: providedAccessCode || undefined,
+          }),
+        }
+      );
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setStudentAnswers(previousAnswers);
+        const restoredAnswered = Object.keys(previousAnswers).length;
+        setCompletionPercent(blocks.length > 0 ? Math.round((restoredAnswered / blocks.length) * 100) : 0);
+        return {
+          ok: false,
+          error: payload?.error || 'Failed to submit answer',
+        };
+      }
+
+      setStudentAnswers((prev) => ({
+        ...prev,
+        [blockId]: {
+          answer_data: answer,
+          gradingResult: payload?.feedback_visible && payload?.answer?.score !== null ? {
+            score: payload.answer.score,
+            feedback: payload.answer.feedback,
+            graded_by_ai: !!payload.answer.graded_by_ai,
+            graded_at: payload.answer.graded_at,
+          } : undefined,
+          isSubmitted: true,
+        },
+      }));
+
+      if (payload?.adaptive_next_block_id) {
+        const nextEl = document.getElementById(`assignment-block-${payload.adaptive_next_block_id}`);
+        if (nextEl) {
+          nextEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+
+      return { ok: true };
+    } catch (err) {
+      console.error('Answer submit failed:', err);
+      setStudentAnswers(previousAnswers);
+      const restoredAnswered = Object.keys(previousAnswers).length;
+      setCompletionPercent(blocks.length > 0 ? Math.round((restoredAnswered / blocks.length) * 100) : 0);
+      return { ok: false, error: 'Network error while submitting answer' };
+    }
   };
 
   if (isLoading) {
@@ -321,6 +486,29 @@ export function StudentAssignmentView({
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const requiresAccessCode = !!settings.access.accessCode;
+  if (requiresAccessCode && !accessUnlocked) {
+    return (
+      <Card className={className}>
+        <CardContent className="pt-6 space-y-3">
+          <h3 className="text-base">access code required</h3>
+          <Input
+            value={providedAccessCode}
+            onChange={(e) => setProvidedAccessCode(e.target.value)}
+            type="password"
+            className="h-10"
+          />
+          <Button
+            onClick={() => setAccessUnlocked(true)}
+            disabled={!providedAccessCode.trim()}
+          >
+            unlock assignment
+          </Button>
         </CardContent>
       </Card>
     );
@@ -425,7 +613,7 @@ export function StudentAssignmentView({
           </Card>
         ) : (
           blocks.map((block, index) => (
-            <Card key={block.id} className="relative">
+            <Card id={`assignment-block-${block.id}`} key={block.id} className="relative">
               <CardContent className="pt-6">
                 {/* Block number. */}
                 <div className="absolute -left-4 top-6 text-muted-foreground font-medium text-sm">

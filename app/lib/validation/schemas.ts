@@ -91,7 +91,7 @@ export const createAssignmentSchema = z.object({
   paragraph_id: uuidSchema.optional().nullable(),
   class_id: uuidSchema.optional().nullable(),
   assignment_index: z.number().int().nonnegative().default(0),
-  type: z.enum(['homework', 'small_test', 'big_test']).default('homework'),
+  type: z.enum(['homework', 'small_test', 'big_test', 'other']).default('homework'),
   scheduled_start_at: z.string().datetime().optional().nullable(),
   scheduled_end_at: z.string().datetime().optional().nullable(),
   answers_enabled: z.boolean().default(false),
@@ -107,6 +107,7 @@ export const createAssignmentSchema = z.object({
 export const blockTypeEnum = z.enum([
   'text', 'image', 'video', 'multiple_choice', 'open_question',
   'fill_in_blank', 'drag_drop', 'ordering', 'media_embed',
+  'numeric_question',
   'divider', 'rich_text', 'executable_code', 'code', 'list',
   'quote', 'layout', 'complex'
 ]);
@@ -164,7 +165,7 @@ export const updateAssignmentSchema = z.object({
   paragraph_id: uuidSchema.optional().nullable(),
   class_id: uuidSchema.optional().nullable(),
   assignment_index: z.number().int().nonnegative().optional(),
-  type: z.enum(['homework', 'small_test', 'big_test']).optional(),
+  type: z.enum(['homework', 'small_test', 'big_test', 'other']).optional(),
   scheduled_start_at: z.string().datetime().optional().nullable(),
   scheduled_end_at: z.string().datetime().optional().nullable(),
   answers_enabled: z.boolean().optional(),
@@ -343,7 +344,7 @@ export const filterAssignmentsSchema = z.object({
   subject_id: uuidSchema.optional().nullable(),
   chapter_id: uuidSchema.optional().nullable(),
   paragraph_id: uuidSchema.optional().nullable(),
-  type: z.enum(['homework', 'small_test', 'big_test']).optional(),
+  type: z.enum(['homework', 'small_test', 'big_test', 'other']).optional(),
   completed: z.boolean().optional(),
   due_date_from: z.string().datetime().optional().nullable(),
   due_date_to: z.string().datetime().optional().nullable()

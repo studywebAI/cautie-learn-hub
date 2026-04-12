@@ -1567,11 +1567,29 @@ export function AssignmentEditor({
                         className="h-8"
                       />
                     </div>
+                    <Textarea
+                      value={s.hints.join('\n')}
+                      onChange={(e) =>
+                        updateBlockSettings(block.id, (prev) => ({
+                          ...prev,
+                          hints: e.target.value.split('\n').map((v: string) => v.trim()).filter(Boolean),
+                        }))
+                      }
+                      className="text-xs min-h-[52px]"
+                      placeholder="Hints (1 per line)"
+                    />
                     <div className="flex items-center justify-between">
                       <Label className="text-xs">Required</Label>
                       <Checkbox
                         checked={s.required}
                         onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, required: !!checked }))}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Random position</Label>
+                      <Checkbox
+                        checked={s.randomPosition}
+                        onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, randomPosition: !!checked }))}
                       />
                     </div>
                     <Textarea
@@ -1631,6 +1649,33 @@ export function AssignmentEditor({
                           <option value="partial">Partial</option>
                           <option value="all_or_nothing">All or nothing</option>
                         </select>
+                      </div>
+                    )}
+                    {(block.type === 'drag_drop' || block.type === 'ordering') && (
+                      <div className="space-y-2 border-t pt-2">
+                        <div className="flex items-center justify-between"><Label className="text-xs">Shuffle items</Label><Checkbox checked={s.matching.shuffleItems} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, matching: { ...prev.matching, shuffleItems: !!checked } }))} /></div>
+                        <div className="flex items-center justify-between"><Label className="text-xs">Partial scoring</Label><Checkbox checked={s.matching.partialScoring} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, matching: { ...prev.matching, partialScoring: !!checked } }))} /></div>
+                        <Input
+                          type="number"
+                          min={1}
+                          value={s.matching.maxAttemptsInQuestion ?? ''}
+                          onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, matching: { ...prev.matching, maxAttemptsInQuestion: e.target.value ? Number(e.target.value) : null } }))}
+                          className="h-8"
+                          placeholder="Max attempts in question"
+                        />
+                      </div>
+                    )}
+                    {(block.type === 'media_embed' || block.type === 'video' || block.type === 'image') && (
+                      <div className="space-y-2 border-t pt-2">
+                        <div className="flex items-center justify-between"><Label className="text-xs">Must watch before answer</Label><Checkbox checked={s.media.mustWatchBeforeAnswer} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, media: { ...prev.media, mustWatchBeforeAnswer: !!checked } }))} /></div>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={s.media.revealDelaySeconds}
+                          onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, media: { ...prev.media, revealDelaySeconds: Number(e.target.value || 0) } }))}
+                          className="h-8"
+                          placeholder="Reveal delay seconds"
+                        />
                       </div>
                     )}
                   </div>

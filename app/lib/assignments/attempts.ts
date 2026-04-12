@@ -1,6 +1,17 @@
 import { AssignmentSettings } from '@/lib/assignments/settings';
 
-export async function getOrCreateAttempt(supabase: any, assignmentId: string, userId: string, settings: AssignmentSettings) {
+type AttemptClientMeta = {
+  ipAddress?: string | null;
+  userAgent?: string | null;
+};
+
+export async function getOrCreateAttempt(
+  supabase: any,
+  assignmentId: string,
+  userId: string,
+  settings: AssignmentSettings,
+  clientMeta?: AttemptClientMeta,
+) {
   const nowIso = new Date().toISOString();
 
   const { data: existingOpen } = await supabase
@@ -13,7 +24,17 @@ export async function getOrCreateAttempt(supabase: any, assignmentId: string, us
     .limit(1)
     .maybeSingle();
 
-  if (existingOpen) return existingOpen;
+  if (existingOpen) {
+    if (settings.antiCheat.restrictIpOrDevice) {
+      if (
+        (existingOpen.ip_address && clientMeta?.ipAddress && existingOpen.ip_address !== clientMeta.ipAddress) ||
+        (existingOpen.user_agent && clientMeta?.userAgent && existingOpen.user_agent !== clientMeta.userAgent)
+      ) {
+        return { blocked: true as const, reason: 'device_or_ip_mismatch' };
+      }
+    }
+    return existingOpen;
+  }
 
   const { data: allAttempts } = await supabase
     .from('assignment_attempts')
@@ -54,6 +75,8 @@ export async function getOrCreateAttempt(supabase: any, assignmentId: string, us
       status: 'in_progress',
       started_at: nowIso,
       due_at: dueAt,
+      ip_address: clientMeta?.ipAddress ?? null,
+      user_agent: clientMeta?.userAgent ?? null,
       settings_snapshot: settings,
     })
     .select('*')

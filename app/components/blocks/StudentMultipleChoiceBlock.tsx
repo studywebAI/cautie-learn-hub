@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { BaseBlock, MultipleChoiceContent } from './types';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -10,20 +10,27 @@ import { normalizeBlockSettings } from '@/lib/assignments/settings';
 
 interface StudentMultipleChoiceBlockProps {
   block: BaseBlock & { data: MultipleChoiceContent };
-  onSubmit: (answerData: any) => void;
+  onSubmit: (answerData: any) => Promise<{ ok: boolean; error?: string }>;
+  isSubmitted?: boolean;
 }
 
 export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProps> = ({
   block,
   onSubmit,
+  isSubmitted = false,
 }) => {
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const startedAtRef = useRef<string>(new Date().toISOString());
   const settings = normalizeBlockSettings((block as any).settings || block.data?.settings || {});
   const shouldShuffleOptions = settings.multipleChoice.shuffleOptions || block.data.shuffle;
-  const displayOptions = shouldShuffleOptions
-    ? [...(block.data.options as Array<{id: string, text: string, correct: boolean}> || [])].sort(() => Math.random() - 0.5)
-    : (block.data.options as Array<{id: string, text: string, correct: boolean}> || []);
+  const displayOptions = useMemo(
+    () => shouldShuffleOptions
+      ? [...(block.data.options as Array<{id: string, text: string, correct: boolean}> || [])].sort(() => Math.random() - 0.5)
+      : (block.data.options as Array<{id: string, text: string, correct: boolean}> || []),
+    [shouldShuffleOptions, block.data.options]
+  );
 
   const handleAnswerChange = (value: string, checked: boolean) => {
     if (block.data.multiple_correct) {
@@ -39,13 +46,20 @@ export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProp
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setError(null);
     const answerData = {
       selected_answers: selectedAnswers,
       multiple_correct: block.data.multiple_correct,
+      started_at: startedAtRef.current,
+      submitted_at: new Date().toISOString(),
     };
-    onSubmit(answerData);
-    setIsSubmitted(true);
+    const result = await onSubmit(answerData);
+    if (!result.ok) {
+      setError(result.error || 'Failed to submit answer');
+    }
+    setIsSubmitting(false);
   };
 
   return (
@@ -61,7 +75,7 @@ export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProp
                 id={option.id}
                 checked={selectedAnswers.includes(option.id)}
                 onCheckedChange={(checked) => handleAnswerChange(option.id, checked as boolean)}
-                disabled={isSubmitted}
+                disabled={isSubmitted || isSubmitting}
               />
               <Label htmlFor={option.id} className="cursor-pointer">
                 {option.text}
@@ -74,7 +88,7 @@ export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProp
         <RadioGroup
           value={selectedAnswers[0] || ''}
           onValueChange={(value) => setSelectedAnswers([value])}
-          disabled={isSubmitted}
+          disabled={isSubmitted || isSubmitting}
         >
           {displayOptions.map((option) => (
             <div key={option.id} className="flex items-center space-x-2">
@@ -90,10 +104,10 @@ export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProp
       {!isSubmitted && (
         <Button
           onClick={handleSubmit}
-          disabled={selectedAnswers.length === 0}
+          disabled={selectedAnswers.length === 0 || isSubmitting}
           className="mt-4"
         >
-          Submit Answer
+          {isSubmitting ? 'Submitting...' : 'Submit Answer'}
         </Button>
       )}
 
@@ -102,6 +116,7 @@ export const StudentMultipleChoiceBlock: React.FC<StudentMultipleChoiceBlockProp
           Answer submitted successfully!
         </div>
       )}
+      {error && <div className="text-sm text-destructive">{error}</div>}
     </div>
   );
 };

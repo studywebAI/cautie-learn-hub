@@ -109,6 +109,31 @@ export async function PATCH(
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { data: assignmentOwnerCheck, error: ownerFetchError } = await (supabase as any)
+    .from('assignments')
+    .select('class_id')
+    .eq('id', assignmentId)
+    .maybeSingle();
+  if (ownerFetchError || !assignmentOwnerCheck) {
+    return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
+  }
+
+  const classId = assignmentOwnerCheck.class_id;
+  const { data: classMember } = await supabase
+    .from('class_members')
+    .select('user_id')
+    .eq('class_id', classId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (!classMember) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   // Build update object with only provided fields
   const updateData: Record<string, any> = {};
   if (typeof is_visible === 'boolean') updateData.is_visible = is_visible;

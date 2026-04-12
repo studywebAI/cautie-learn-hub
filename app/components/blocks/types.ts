@@ -10,6 +10,7 @@ export type BlockType =
   | 'fill_in_blank'
   | 'drag_drop'
   | 'ordering'
+  | 'numeric_question'
   | 'media_embed'
   | 'media'
   | 'divider'
@@ -109,6 +110,11 @@ export interface MediaEmbedContent {
   description: string;
 }
 
+export interface NumericQuestionContent {
+  question: string;
+  correct_answer: number;
+}
+
 // 10. DividerBlock
 export interface DividerContent {
   style: 'line' | 'space' | 'page_break';
@@ -198,6 +204,7 @@ export type BlockContent =
   | FillInBlankContent
   | DragDropContent
   | OrderingContent
+  | NumericQuestionContent
   | MediaEmbedContent
   | DividerContent
   | ListBlockContent

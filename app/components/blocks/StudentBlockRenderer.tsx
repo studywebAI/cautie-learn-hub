@@ -8,6 +8,10 @@ import { StudentOpenQuestionBlock } from './StudentOpenQuestionBlock';
 import { StudentFillInBlankBlock } from './StudentFillInBlankBlock';
 import { StudentMediaBlock } from './StudentMediaBlock';
 import { StudentDividerBlock } from './StudentDividerBlock';
+import { StudentNumericQuestionBlock } from './StudentNumericQuestionBlock';
+import { StudentOrderingBlock } from './StudentOrderingBlock';
+import { StudentDragDropBlock } from './StudentDragDropBlock';
+import { normalizeBlockSettings } from '@/lib/assignments/settings';
 
 interface GradingResult {
   score: number;
@@ -18,7 +22,7 @@ interface GradingResult {
 
 interface StudentBlockRendererProps {
   block: BaseBlock;
-  onSubmit: (answerData: any) => void;
+  onSubmit: (answerData: any) => Promise<{ ok: boolean; error?: string }>;
   gradingResult?: GradingResult;
   isSubmitted?: boolean;
 }
@@ -29,6 +33,7 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
   gradingResult,
   isSubmitted,
 }) => {
+  const settings = normalizeBlockSettings((block as any).settings || (block as any).data?.settings || {});
   const renderBlock = () => {
     const commonProps = {
       block: block as any,
@@ -46,6 +51,12 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
         return <StudentOpenQuestionBlock {...commonProps} />;
       case 'fill_in_blank':
         return <StudentFillInBlankBlock {...commonProps} />;
+      case 'numeric_question':
+        return <StudentNumericQuestionBlock {...commonProps} />;
+      case 'ordering':
+        return <StudentOrderingBlock {...commonProps} />;
+      case 'drag_drop':
+        return <StudentDragDropBlock {...commonProps} />;
       case 'image':
       case 'video':
       case 'media_embed':
@@ -67,5 +78,16 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
     }
   };
 
-  return renderBlock();
+  return (
+    <div className="space-y-2">
+      {settings.hints.length > 0 && (
+        <div className="rounded-md bg-muted p-2 text-xs text-muted-foreground">
+          {settings.hints.map((hint, index) => (
+            <div key={`${block.id}-hint-${index}`}>Hint {index + 1}: {hint}</div>
+          ))}
+        </div>
+      )}
+      {renderBlock()}
+    </div>
+  );
 };

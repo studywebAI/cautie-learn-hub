@@ -72,6 +72,9 @@ CREATE TABLE IF NOT EXISTS public.assignment_events (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+ALTER TABLE IF EXISTS public.student_answers
+  ADD COLUMN IF NOT EXISTS assignment_attempt_id uuid REFERENCES public.assignment_attempts(id) ON DELETE SET NULL;
+
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -113,6 +116,7 @@ CREATE INDEX IF NOT EXISTS idx_assignment_attempts_assignment_student ON public.
 CREATE INDEX IF NOT EXISTS idx_assignment_attempts_status ON public.assignment_attempts(status);
 CREATE INDEX IF NOT EXISTS idx_assignment_events_assignment ON public.assignment_events(assignment_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_assignment_events_student ON public.assignment_events(student_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_student_answers_assignment_attempt ON public.student_answers(assignment_attempt_id);
 
 ALTER TABLE IF EXISTS public.assignment_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.assignment_events ENABLE ROW LEVEL SECURITY;
