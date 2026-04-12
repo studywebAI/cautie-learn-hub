@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
+import { getClassPermission } from '@/lib/auth/class-permissions'
 
 // GET /api/classes/[classId]/grades/history - Class grade history timeline
 export async function GET(
@@ -17,23 +18,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Teachers who are members of the class can view history.
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('subscription_type')
-      .eq('id', user.id)
-      .single()
-
-    const isTeacher = userProfile?.subscription_type === 'teacher'
-
-    const { data: classMember } = await supabase
-      .from('class_members')
-      .select('user_id')
-      .eq('class_id', classId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (!isTeacher || !classMember) {
+    const perm = await getClassPermission(supabase as any, classId, user.id)
+    if (!perm.isMember || !perm.isTeacher) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -125,4 +111,3 @@ export async function GET(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

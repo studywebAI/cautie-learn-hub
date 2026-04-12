@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
+import { getClassPermission } from '@/lib/auth/class-permissions'
 
 // GET /api/classes/[classId]/grades/[gradeSetId] - Get a single grade set with student grades
 export async function GET(
@@ -146,26 +147,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is a teacher member of the class
-    // (owner_id column was removed - all teachers are equal via class_members)
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('subscription_type')
-      .eq('id', user.id)
-      .single()
-
-    const isTeacher = userProfile?.subscription_type === 'teacher'
-
-    // Also check if user is a member of this class
-    const { data: classMember } = await supabase
-      .from('class_members')
-      .select('user_id')
-      .eq('class_id', classId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    // Teachers who are members of the class can access grades
-    if (!isTeacher || !classMember) {
+    const perm = await getClassPermission(supabase as any, classId, user.id)
+    if (!perm.isMember || !perm.isTeacher) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -365,26 +348,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is a teacher member of the class
-    // (owner_id column was removed - all teachers are equal via class_members)
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('subscription_type')
-      .eq('id', user.id)
-      .single()
-
-    const isTeacher = userProfile?.subscription_type === 'teacher'
-
-    // Also check if user is a member of this class
-    const { data: classMember } = await supabase
-      .from('class_members')
-      .select('user_id')
-      .eq('class_id', classId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    // Teachers who are members of the class can delete grades
-    if (!isTeacher || !classMember) {
+    const perm = await getClassPermission(supabase as any, classId, user.id)
+    if (!perm.isMember || !perm.isTeacher) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

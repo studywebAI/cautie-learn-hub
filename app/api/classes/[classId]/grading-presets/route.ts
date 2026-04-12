@@ -1,25 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-
-async function ensureTeacherMember(supabase: any, classId: string, userId: string) {
-  const { data: userProfile } = await supabase
-    .from('profiles')
-    .select('subscription_type')
-    .eq('id', userId)
-    .single()
-
-  const isTeacher = userProfile?.subscription_type === 'teacher'
-
-  const { data: classMember } = await supabase
-    .from('class_members')
-    .select('user_id')
-    .eq('class_id', classId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  return !!isTeacher && !!classMember
-}
+import { getClassPermission } from '@/lib/auth/class-permissions'
 
 export async function GET(
   req: NextRequest,
@@ -34,14 +16,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: classMember } = await supabase
-      .from('class_members')
-      .select('user_id')
-      .eq('class_id', classId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (!classMember) {
+    const perm = await getClassPermission(supabase as any, classId, user.id)
+    if (!perm.isMember || !perm.isTeacher) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -76,8 +52,8 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const allowed = await ensureTeacherMember(supabase, classId, user.id)
-    if (!allowed) {
+    const perm = await getClassPermission(supabase as any, classId, user.id)
+    if (!perm.isMember || !perm.isTeacher) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -129,8 +105,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const allowed = await ensureTeacherMember(supabase, classId, user.id)
-    if (!allowed) {
+    const perm = await getClassPermission(supabase as any, classId, user.id)
+    if (!perm.isMember || !perm.isTeacher) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -169,4 +145,3 @@ export async function PATCH(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

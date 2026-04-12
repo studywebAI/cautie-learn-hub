@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getClassPermission } from '@/lib/auth/class-permissions'
 
 import type { Database } from '@/lib/supabase/database.types'
 
@@ -37,37 +38,9 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Security check: Ensure the requesting user is a member of the class
-  // (owner_id column was removed - all teachers are equal via class_members)
-  
-  // Get user's subscription_type to check if they're a teacher
-  const { data: userProfile, error: profileError } = await supabase
-    .from('profiles')
-    .select('subscription_type')
-    .eq('id', user.id)
-    .single()
-
-  if (profileError) {
-    logAnnouncements('GET - Profile lookup failed', { requestId, classId, userId: user.id, profileError: formatDbError(profileError) })
-    return NextResponse.json({ error: 'Failed to resolve user role' }, { status: 500 })
-  }
-
-  const isTeacher = userProfile?.subscription_type === 'teacher'
-
-  // Also check if user is a member of this class
-  const { data: memberData, error: memberError } = await supabase
-    .from('class_members')
-    .select('user_id')
-    .eq('class_id', classId)
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  if (memberError) {
-    logAnnouncements('GET - Membership lookup failed', { requestId, classId, userId: user.id, memberError: formatDbError(memberError) })
-    return NextResponse.json({ error: 'Failed to validate class membership' }, { status: 500 })
-  }
-
-  const isMember = !!memberData
+  const perm = await getClassPermission(supabase as any, classId, user.id)
+  const isTeacher = perm.isTeacher
+  const isMember = perm.isMember
 
   // Any class member can view announcements.
   if (!isMember) {
@@ -123,37 +96,9 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Security check: Ensure the requesting user is a teacher who is a member of the class
-  // (owner_id column was removed - all teachers are equal via class_members)
-  
-  // Get user's subscription_type to check if they're a teacher
-  const { data: userProfile, error: profileError } = await supabase
-    .from('profiles')
-    .select('subscription_type')
-    .eq('id', user.id)
-    .single()
-
-  if (profileError) {
-    logAnnouncements('POST - Profile lookup failed', { requestId, classId, userId: user.id, profileError: formatDbError(profileError) })
-    return NextResponse.json({ error: 'Failed to resolve user role' }, { status: 500 })
-  }
-
-  const isTeacher = userProfile?.subscription_type === 'teacher'
-
-  // Also check if user is a member of this class
-  const { data: memberData, error: memberError } = await supabase
-    .from('class_members')
-    .select('user_id')
-    .eq('class_id', classId)
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  if (memberError) {
-    logAnnouncements('POST - Membership lookup failed', { requestId, classId, userId: user.id, memberError: formatDbError(memberError) })
-    return NextResponse.json({ error: 'Failed to validate class membership' }, { status: 500 })
-  }
-
-  const isMember = !!memberData
+  const perm = await getClassPermission(supabase as any, classId, user.id)
+  const isTeacher = perm.isTeacher
+  const isMember = perm.isMember
 
   // Teachers who are members of the class can create announcements
   if (!isMember || !isTeacher) {

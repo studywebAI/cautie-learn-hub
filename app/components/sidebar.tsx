@@ -296,6 +296,17 @@ export function AppSidebar() {
     }
   };
 
+  const waitForClassAvailability = async (createdClassId: string) => {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      try {
+        const response = await fetch(`/api/classes/${createdClassId}`, { cache: 'no-store' });
+        if (response.ok) return true;
+      } catch {}
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    return false;
+  };
+
   const submitCreateClass = async () => {
     if (!className.trim() || !classSubjectTitle.trim()) return;
     setSubmitting(true);
@@ -316,8 +327,9 @@ export function AppSidebar() {
         if (typeof window !== 'undefined') {
           window.localStorage.setItem('studyweb-last-class-id', data.id);
         }
+        await waitForClassAvailability(data.id);
         await loadDropdownData('classes');
-        router.replace(`/class/${data.id}?tab=group`);
+        router.replace(resolveTeacherClassRoute(data.id));
       }
       toast({ title: 'Class created' });
       setClassName('');
@@ -737,7 +749,7 @@ export function AppSidebar() {
       </div>
       {(createClassOpen || joinClassOpen) && (
         <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/45 p-4">
-          <div className="font-sans w-full max-w-3xl rounded-3xl border border-border bg-[hsl(var(--surface-1))] shadow-2xl">
+          <div className="w-full max-w-3xl rounded-3xl border border-border bg-[hsl(var(--surface-1))] shadow-2xl">
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
               <div>
                 <h3 className="text-xl font-semibold leading-tight">
@@ -766,7 +778,7 @@ export function AppSidebar() {
                   <div className="space-y-1.5">
                     <p className="text-sm text-muted-foreground">Class name</p>
                     <Input
-                      placeholder="Class name"
+                      placeholder=""
                       value={className}
                       onChange={(e) => setClassName(e.target.value)}
                       className="h-11 text-sm"
@@ -775,7 +787,7 @@ export function AppSidebar() {
                   <div className="space-y-1.5">
                     <p className="text-sm text-muted-foreground">Description (optional)</p>
                     <Input
-                      placeholder="Short class description"
+                      placeholder=""
                       value={classDescription}
                       onChange={(e) => setClassDescription(e.target.value)}
                       className="h-11 text-sm"
@@ -784,7 +796,7 @@ export function AppSidebar() {
                   <div className="space-y-1.5">
                     <p className="text-sm text-muted-foreground">First subject</p>
                     <Input
-                      placeholder="Your subject (e.g. Wiskunde)"
+                      placeholder=""
                       value={classSubjectTitle}
                       onChange={(e) => setClassSubjectTitle(e.target.value)}
                       className="h-11 text-sm"
@@ -814,7 +826,7 @@ export function AppSidebar() {
                   <div className="space-y-1.5">
                     <p className="text-sm text-muted-foreground">Join code</p>
                     <Input
-                      placeholder="Enter join code"
+                      placeholder=""
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value)}
                       className="h-11 text-sm"
@@ -824,7 +836,7 @@ export function AppSidebar() {
                     <div className="space-y-1.5">
                       <p className="text-sm text-muted-foreground">Your subject</p>
                       <Input
-                        placeholder="Your subject (e.g. Wiskunde)"
+                        placeholder=""
                         value={joinSubjectTitle}
                         onChange={(e) => setJoinSubjectTitle(e.target.value)}
                         className="h-11 text-sm"

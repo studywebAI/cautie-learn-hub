@@ -106,8 +106,7 @@ export function ChapterEditor({
         throw new Error('Failed to create chapter');
       }
 
-      const { chapter: newChapter } = await response.json();
-      toast({ title: 'Success', description: 'Chapter created successfully' });
+      await response.json();
       setIsCreateDialogOpen(false);
       setNewChapterTitle('');
       setNewChapterDescription('');
@@ -138,7 +137,6 @@ export function ChapterEditor({
         throw new Error('Failed to update chapter');
       }
 
-      toast({ title: 'Success', description: 'Chapter updated successfully' });
       setEditingChapter(false);
       onChapterUpdated?.();
     } catch (err) {
@@ -171,7 +169,6 @@ export function ChapterEditor({
 
       const { block } = await response.json();
       setBlocks([...blocks, block]);
-      toast({ title: 'Success', description: 'Block added successfully' });
     } catch (err) {
       console.error('Error adding block:', err);
       toast({ title: 'Error', description: 'Failed to add block', variant: 'destructive' });
@@ -197,7 +194,6 @@ export function ChapterEditor({
       }
 
       setBlocks(blocks.filter(block => block.id !== blockId));
-      toast({ title: 'Success', description: 'Block deleted successfully' });
     } catch (err) {
       console.error('Error deleting block:', err);
       toast({ title: 'Error', description: 'Failed to delete block', variant: 'destructive' });
@@ -252,7 +248,7 @@ export function ChapterEditor({
                     <Input
                       value={newChapterTitle}
                       onChange={(e) => setNewChapterTitle(e.target.value)}
-                      placeholder="Chapter title"
+                      placeholder=""
                     />
                   </div>
                   <div>
@@ -260,7 +256,7 @@ export function ChapterEditor({
                     <Textarea
                       value={newChapterDescription}
                       onChange={(e) => setNewChapterDescription(e.target.value)}
-                      placeholder="Chapter description"
+                      placeholder=""
                     />
                   </div>
                   <div className="flex justify-end gap-2">
@@ -317,7 +313,7 @@ export function ChapterEditor({
                 <Textarea
                   value={chapter.description || ''}
                   onChange={(e) => setChapter({ ...chapter, description: e.target.value })}
-                  placeholder="Chapter description"
+                  placeholder=""
                 />
                 <div className="flex gap-2">
                   <Button onClick={handleUpdateChapter} disabled={isSaving}>
