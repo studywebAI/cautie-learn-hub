@@ -145,7 +145,7 @@ export async function GET(
     if (studentIds.length > 0) {
       const { data: logsData, error: logsError } = await dataClient
         .from('audit_logs')
-        .select('id, user_id, action, entity_type, entity_id, details, created_at')
+        .select('id, user_id, action, entity_type, entity_id, changes, metadata, created_at')
         .in('user_id', studentIds)
         .eq('class_id', classId)
         .order('created_at', { ascending: false })
@@ -190,7 +190,7 @@ export async function GET(
         action: log.action,
         entityType: log.entity_type,
         entityId: log.entity_id,
-        details: log.details,
+        details: log.metadata || log.changes || null,
         createdAt: log.created_at
       }))
 
