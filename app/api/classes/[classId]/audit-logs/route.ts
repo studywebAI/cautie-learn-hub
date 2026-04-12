@@ -31,7 +31,7 @@ export async function GET(
 
     let query = (supabase as any)
       .from('audit_logs')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('class_id', classId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
@@ -39,7 +39,7 @@ export async function GET(
     if (entityType) query = query.eq('entity_type', entityType)
     if (userId) query = query.eq('user_id', userId)
 
-    const { data: logs, error } = await query
+    const { data: logs, error, count } = await query
 
     if (error) {
       console.error('Error fetching audit logs:', error)
@@ -76,7 +76,15 @@ export async function GET(
       }, {})
     }))
 
-    return NextResponse.json({ logs: enrichedLogs })
+    return NextResponse.json({
+      logs: enrichedLogs,
+      pagination: {
+        limit,
+        offset,
+        total: count || 0,
+        hasNext: (offset + (enrichedLogs || []).length) < (count || 0),
+      },
+    })
   } catch (error) {
     console.error('Audit logs GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

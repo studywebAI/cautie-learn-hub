@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -451,9 +452,9 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
               Add a note that other teachers can see.
             </DialogDescription>
           </DialogHeader>
-          <textarea
-            className="w-full min-h-[100px] p-3 border rounded-md"
-            placeholder="Enter note..."
+          <Textarea
+            className="min-h-[100px]"
+            placeholder=""
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
           />

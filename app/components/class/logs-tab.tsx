@@ -86,34 +86,50 @@ function formatActor(log: AuditLog) {
 export function LogsTab({ classId }: LogsTabProps) {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category>('all');
   const [quickPreset, setQuickPreset] = useState<QuickPreset>('none');
-  const [limit, setLimit] = useState(200);
+  const [limit] = useState(100);
 
-  const loadLogs = async (nextLimit = limit) => {
-    setLoading(true);
+  const loadLogs = async (mode: 'replace' | 'append' = 'replace') => {
+    if (mode === 'replace') setLoading(true);
+    if (mode === 'append') setLoadingMore(true);
+    const nextOffset = mode === 'append' ? offset : 0;
     void logClassTabEvent({
       classId,
       tab: 'logs',
       event: 'load_start',
       stage: 'data',
       level: 'debug',
-      meta: { limit: nextLimit },
+      meta: { limit, offset: nextOffset, mode },
     });
     try {
-      const response = await fetch(`/api/classes/${classId}/audit-logs?limit=${nextLimit}`);
+      const response = await fetch(`/api/classes/${classId}/audit-logs?limit=${limit}&offset=${nextOffset}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to load logs');
       const rows: AuditLog[] = (data.logs || []).filter((log: AuditLog) => isImportantLog(log));
-      setLogs(rows);
+      const deduped = (() => {
+        if (mode === 'replace') return rows;
+        const map = new Map<string, AuditLog>();
+        [...logs, ...rows].forEach((row) => map.set(row.id, row));
+        return Array.from(map.values());
+      })();
+      setLogs(deduped);
+      const pagination = data.pagination || {};
+      setTotalCount(Number(pagination.total || deduped.length));
+      setHasNext(Boolean(pagination.hasNext));
+      setOffset(mode === 'append' ? nextOffset + rows.length : rows.length);
       void logClassTabEvent({
         classId,
         tab: 'logs',
         event: 'load_success',
         stage: 'data',
         level: 'debug',
-        meta: { count: rows.length },
+        meta: { count: deduped.length, returned: rows.length, has_next: !!pagination.hasNext },
       });
     } catch (error: any) {
       void logClassTabEvent({
@@ -125,7 +141,8 @@ export function LogsTab({ classId }: LogsTabProps) {
         message: error?.message || 'Unknown error',
       });
     } finally {
-      setLoading(false);
+      if (mode === 'replace') setLoading(false);
+      if (mode === 'append') setLoadingMore(false);
     }
   };
 
@@ -137,7 +154,7 @@ export function LogsTab({ classId }: LogsTabProps) {
       stage: 'ui',
       level: 'info',
     });
-    void loadLogs();
+    void loadLogs('replace');
   }, [classId]);
 
   const metadataUserFromLabels = (log: AuditLog, key: string): string | null => {
@@ -254,7 +271,7 @@ export function LogsTab({ classId }: LogsTabProps) {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search actor, action, request, metadata..."
+              placeholder=""
             />
             <select
               value={category}
@@ -274,18 +291,16 @@ export function LogsTab({ classId }: LogsTabProps) {
               <Button
                 variant="outline"
                 onClick={() => {
-                  const next = Math.min(limit + 100, 500);
-                  setLimit(next);
-                  void loadLogs(next);
+                  void loadLogs('append');
                 }}
-                disabled={limit >= 500}
+                disabled={!hasNext || loadingMore}
               >
-                Load more
+                {loadingMore ? 'Loading...' : 'Load more'}
               </Button>
             </div>
           </div>
           <div className="text-xs text-muted-foreground">
-            Showing {filteredLogs.length} of {logs.length} logs
+            Showing {filteredLogs.length} of {totalCount || logs.length} logs
           </div>
         </CardContent>
       </Card>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -531,7 +531,7 @@ function GradesHistoryView({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by student, grade set, teacher, or reason..."
+            placeholder=""
           />
         </CardContent>
       </Card>
@@ -945,7 +945,7 @@ function NewGradesWizard({
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Math Test 1, Quiz Week 3, Homework February"
+                  placeholder=""
                   className="text-lg border-2 border-black/20"
                 />
                 <p className="text-sm text-muted-foreground">
@@ -1002,7 +1002,7 @@ function NewGradesWizard({
                   <Input
                     value={newPresetName}
                     onChange={(e) => setNewPresetName(e.target.value)}
-                    placeholder="New preset name"
+                    placeholder=""
                   />
                   <select
                     value={newPresetKind}
@@ -1019,7 +1019,7 @@ function NewGradesWizard({
                   <Input
                     value={newPresetValues}
                     onChange={(e) => setNewPresetValues(e.target.value)}
-                    placeholder="Comma-separated values (e.g. A,B,C,D,E,F)"
+                    placeholder=""
                   />
                 )}
               </div>
@@ -1059,7 +1059,7 @@ function NewGradesWizard({
                     value={everyoneGrade}
                     onChange={(e) => setEveryoneGrade(e.target.value)}
                     className="border-2 border-black/20"
-                    placeholder="Example: 8.7 or B+"
+                    placeholder=""
                   />
                   <Button onClick={applyToAll} variant="outline">
                     Apply
@@ -1094,7 +1094,7 @@ function NewGradesWizard({
                           value={student.grade_value ?? ''}
                           onChange={(e) => updateStudentGrade(student.student_id, e.target.value)}
                           className="md:col-span-4 text-center"
-                          placeholder="Score"
+                          placeholder=""
                         />
                       </div>
                     ))
@@ -1179,12 +1179,12 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
           onStudentsLoaded(studentGrades);
         } else {
           const errorText = await response.text();
-          console.log('[StudentGrader] ❌ Members API error:', response.status, errorText);
+          console.log('[StudentGrader] âŒ Members API error:', response.status, errorText);
           
           setError('Could not load students. API error: ' + response.status);
         }
       } catch (err: any) {
-        console.error('[StudentGrader] ❌ Failed to load students:', err);
+        console.error('[StudentGrader] âŒ Failed to load students:', err);
         setError('Failed to load students: ' + err.message);
       } finally {
         setLoading(false);
@@ -1517,8 +1517,8 @@ function EditGradesDetail({
             <Badge variant="outline">Professional Mode</Badge>
           </div>
           <p className="text-muted-foreground">
-            {gradeSet.category} • {gradeSet.weight}x weight • {gradeSet.graded_count}/{gradeSet.total_students} graded
-            {gradeSet.average !== null && ` • Avg: ${gradeSet.average}`}
+            {gradeSet.category} â€¢ {gradeSet.weight}x weight â€¢ {gradeSet.graded_count}/{gradeSet.total_students} graded
+            {gradeSet.average !== null && ` â€¢ Avg: ${gradeSet.average}`}
           </p>
         </div>
         <div className="flex gap-2">
@@ -1607,7 +1607,7 @@ function EditGradesDetail({
                 value={everyoneGrade}
                 onChange={(e) => setEveryoneGrade(e.target.value)}
                 className="border-2 border-black/20"
-                placeholder="Example: 8.7 or B+"
+                placeholder=""
               />
               <Button onClick={applyToAll} variant="outline">
                 Apply
@@ -1637,7 +1637,7 @@ function EditGradesDetail({
                   value={student.grade_value ?? ''}
                   onChange={(e) => updateStudentGrade(student.student_id, e.target.value)}
                   className="md:col-span-4 text-center"
-                  placeholder="Score"
+                  placeholder=""
                 />
               </div>
             ))}
@@ -1647,3 +1647,4 @@ function EditGradesDetail({
     </div>
   );
 }
+
