@@ -44,14 +44,19 @@ export default function ClassDetailsPage() {
   const { classId } = params as { classId: string };
   const { classes, isLoading: isAppLoading, refetchMaterials, role } = useContext(AppContext) as AppContextType;
   const requestedTab = searchParams.get('tab');
-  const defaultTab = role === 'teacher' ? 'group' : 'invite';
+  const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
+  const defaultTab = isTeacherRole ? 'group' : 'invite';
+  const teacherTabs = ['invite', 'group', 'attendance', 'grades', 'analytics', 'logs', 'settings'];
+  const studentTabs = ['invite', 'group'];
   const allowedTabs = useMemo(
     () => (
-      role === 'teacher'
-        ? ['invite', 'group', 'attendance', 'grades', 'analytics', 'logs', 'settings']
-        : ['invite', 'group']
+      isTeacherRole
+        ? teacherTabs
+        : role
+          ? studentTabs
+          : teacherTabs
     ),
-    [role]
+    [isTeacherRole, role]
   );
   const tab = requestedTab && allowedTabs.includes(requestedTab) ? requestedTab : defaultTab;
   const [directClassInfo, setDirectClassInfo] = useState<ClassInfo | null>(null);
@@ -216,7 +221,7 @@ export default function ClassDetailsPage() {
   }, [requestedTab, allowedTabs, router, classId, tab]);
 
   const isLoading = !!isAppLoading;
-  const isTeacher = role === 'teacher';
+  const isTeacher = isTeacherRole;
 
   if (isLoading && !classInfo) {
     return (

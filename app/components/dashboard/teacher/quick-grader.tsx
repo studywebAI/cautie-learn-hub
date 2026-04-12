@@ -40,6 +40,20 @@ type OpenAnswer = {
   submitted_at: string;
 };
 
+type OpenAnswersResponse = {
+  rows: OpenAnswer[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    hasNext: boolean;
+  };
+  options?: {
+    assignments?: Array<{ id: string; title: string }>;
+    students?: Array<{ id: string; name: string }>;
+  };
+};
+
 type QuickGraderProps = {
   classId: string;
   isOpen: boolean;
@@ -57,6 +71,15 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
   const [grade, setGrade] = useState('');
   const [feedback, setFeedback] = useState('');
   const [rubricScores, setRubricScores] = useState<Record<string, number>>({});
+  const [selectedOpenAnswerIds, setSelectedOpenAnswerIds] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterAssignmentId, setFilterAssignmentId] = useState('');
+  const [filterStudentId, setFilterStudentId] = useState('');
+  const [openAnswersPage, setOpenAnswersPage] = useState(1);
+  const [openAnswersHasNext, setOpenAnswersHasNext] = useState(false);
+  const [openAnswersTotal, setOpenAnswersTotal] = useState(0);
+  const [assignmentOptions, setAssignmentOptions] = useState<Array<{ id: string; title: string }>>([]);
+  const [studentOptions, setStudentOptions] = useState<Array<{ id: string; name: string }>>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,6 +87,39 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
       fetchPendingSubmissions();
     }
   }, [isOpen, classId]);
+
+  useEffect(() => {
+    if (!isOpen || mode !== 'open_answers') return;
+    fetchOpenAnswers();
+  }, [isOpen, classId, mode, searchQuery, filterAssignmentId, filterStudentId, openAnswersPage]);
+
+  const fetchOpenAnswers = async () => {
+    const params = new URLSearchParams();
+    params.set('status', 'pending');
+    params.set('page', String(openAnswersPage));
+    params.set('limit', '50');
+    if (searchQuery.trim()) params.set('q', searchQuery.trim());
+    if (filterAssignmentId) params.set('assignmentId', filterAssignmentId);
+    if (filterStudentId) params.set('studentId', filterStudentId);
+
+    const openAnswersResponse = await fetch(`/api/classes/${classId}/assignments/open-answers?${params.toString()}`);
+    if (!openAnswersResponse.ok) return;
+    const payload = await openAnswersResponse.json();
+
+    if (Array.isArray(payload)) {
+      setOpenAnswers(payload);
+      setOpenAnswersHasNext(false);
+      setOpenAnswersTotal(payload.length);
+      return;
+    }
+
+    const parsed = payload as OpenAnswersResponse;
+    setOpenAnswers(parsed.rows || []);
+    setOpenAnswersHasNext(!!parsed.pagination?.hasNext);
+    setOpenAnswersTotal(parsed.pagination?.total || 0);
+    setAssignmentOptions(parsed.options?.assignments || []);
+    setStudentOptions(parsed.options?.students || []);
+  };
 
   const fetchPendingSubmissions = async () => {
     setLoading(true);
@@ -74,11 +130,7 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
         const data = await response.json();
         setSubmissions(data);
       }
-      const openAnswersResponse = await fetch(`/api/classes/${classId}/assignments/open-answers?status=pending`);
-      if (openAnswersResponse.ok) {
-        const openAnswersData = await openAnswersResponse.json();
-        setOpenAnswers(openAnswersData || []);
-      }
+      await fetchOpenAnswers();
     } catch (error) {
       console.error('Failed to fetch submissions:', error);
     } finally {
@@ -148,9 +200,52 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
     }
   };
 
+  const handleBulkGrade = async () => {
+    const parsedScore = parseFloat(grade);
+    if (!Number.isFinite(parsedScore) || selectedOpenAnswerIds.length === 0) return;
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}/assignments/open-answers/bulk`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: selectedOpenAnswerIds.map((answerId) => ({
+            answer_id: answerId,
+            score: parsedScore,
+            feedback: feedback || null,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        toast({ title: 'Bulk grading failed', description: data.error, variant: 'destructive' });
+        return;
+      }
+
+      const data = await response.json();
+      const updatedCount = Number(data?.updated_count || 0);
+      const failedCount = Number(data?.failed_count || 0);
+      toast({
+        title: `Bulk grading done`,
+        description: `${updatedCount} updated${failedCount > 0 ? `, ${failedCount} failed` : ''}`,
+      });
+      setSelectedOpenAnswerIds([]);
+      setSelectedOpenAnswer(null);
+      setGrade('');
+      setFeedback('');
+      await fetchOpenAnswers();
+    } catch (error) {
+      console.error('Failed bulk grading:', error);
+      toast({ title: 'Bulk grading failed', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const pendingCount = submissions.filter(s => s.status === 'submitted').length;
   const gradedCount = submissions.filter(s => s.status === 'graded').length;
-  const pendingOpenCount = openAnswers.length;
+  const pendingOpenCount = openAnswersTotal || openAnswers.length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -191,6 +286,46 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
                 Submissions
               </Button>
             </div>
+            {mode === 'open_answers' && (
+              <div className="mb-3 space-y-2">
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setOpenAnswersPage(1);
+                    setSearchQuery(e.target.value);
+                  }}
+                  placeholder="Search student, assignment, question..."
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    className="h-9 rounded-md border bg-background px-2 text-sm"
+                    value={filterAssignmentId}
+                    onChange={(e) => {
+                      setOpenAnswersPage(1);
+                      setFilterAssignmentId(e.target.value);
+                    }}
+                  >
+                    <option value="">All assignments</option>
+                    {assignmentOptions.map((item) => (
+                      <option key={item.id} value={item.id}>{item.title}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="h-9 rounded-md border bg-background px-2 text-sm"
+                    value={filterStudentId}
+                    onChange={(e) => {
+                      setOpenAnswersPage(1);
+                      setFilterStudentId(e.target.value);
+                    }}
+                  >
+                    <option value="">All students</option>
+                    {studentOptions.map((item) => (
+                      <option key={item.id} value={item.id}>{item.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
             <ScrollArea className="h-full">
               {loading ? (
                 <div className="flex justify-center p-4">
@@ -247,6 +382,22 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
                         );
                       }}
                     >
+                      <div className="mb-2">
+                        <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                          <input
+                            type="checkbox"
+                            checked={selectedOpenAnswerIds.includes(answer.id)}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              setSelectedOpenAnswerIds((prev) => {
+                                if (e.target.checked) return [...prev, answer.id];
+                                return prev.filter((id) => id !== answer.id);
+                              });
+                            }}
+                          />
+                          Select for bulk
+                        </label>
+                      </div>
                       <div className="flex justify-between items-start">
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">{answer.student_name}</p>
@@ -370,6 +521,16 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
                     )}
                     Save Grade
                   </Button>
+                  {mode === 'open_answers' && (
+                    <Button
+                      variant="secondary"
+                      onClick={handleBulkGrade}
+                      disabled={saving || !grade || selectedOpenAnswerIds.length === 0}
+                    >
+                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Grade Selected ({selectedOpenAnswerIds.length})
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={() => {
                     setSelectedSubmission(null);
                     setSelectedOpenAnswer(null);
@@ -380,6 +541,31 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
                     Cancel
                   </Button>
                 </div>
+                {mode === 'open_answers' && (
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Page {openAnswersPage} · {pendingOpenCount} total</span>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={openAnswersPage <= 1 || saving}
+                        onClick={() => setOpenAnswersPage((p) => Math.max(1, p - 1))}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={!openAnswersHasNext || saving}
+                        onClick={() => setOpenAnswersPage((p) => p + 1)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground">
