@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getClassPermission } from '@/lib/auth/class-permissions'
 
 function logAttendance(...args: any[]) {
   console.log('[CLASS_ATTENDANCE]', ...args)
@@ -32,34 +33,11 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is a teacher via, class_members + subscription_type
-    // (owner_id column was removed - all teachers are now equal via class_members)
-    const { data: userProfile, error: profileError } = await supabase
-      .from('profiles')
-      .select('subscription_type')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError) {
-      logAttendance('GET - User profile failed', { classId, userId: user.id, profileError: profileError.message })
-      return NextResponse.json({ error: profileError.message }, { status: 500 })
-    }
-
-    const isTeacher = userProfile?.subscription_type === 'teacher'
-    
-    // Also check if user is a member of this class
-    const { data: classMember, error: memberCheckError } = await supabase
-      .from('class_members')
-      .select('user_id')
-      .eq('class_id', classId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    // Teachers who are members of the class can access
-    const canAccess = isTeacher && classMember
+    const perm = await getClassPermission(supabase as any, classId, user.id)
+    const canAccess = perm.isMember && perm.isTeacher
     
     if (!canAccess) {
-      logAttendance('GET - Forbidden', { classId, userId: user.id, memberCheckError: memberCheckError?.message })
+      logAttendance('GET - Forbidden', { classId, userId: user.id, classRole: perm.classRole })
       return NextResponse.json({ error: 'Only teachers can view attendance' }, { status: 403 })
     }
 
@@ -67,12 +45,13 @@ export async function GET(
     // First get all class members
     const { data: classMembers, error: membersError } = await supabase
       .from('class_members')
-      .select('user_id')
+      .select('user_id, role')
       .eq('class_id', classId)
 
     logAttendance('GET - Class members', { classId, count: classMembers?.length, membersError: membersError?.message })
 
-    const memberUserIds = (classMembers || []).map(m => m.user_id)
+    const memberRows = classMembers || []
+    const memberUserIds = memberRows.map((m: any) => m.user_id)
     let profilesData: any[] = []
     if (memberUserIds.length > 0) {
       const { data: profiles, error: profilesFetchError } = await supabase
@@ -93,8 +72,13 @@ export async function GET(
     }
 
     const profileById = new Map(profilesData.map((p: any) => [p.id, p]))
-    // Treat unknown profile role as student so missing profiles don't hide members.
-    const studentIds = memberUserIds.filter((id: string) => profileById.get(id)?.subscription_type !== 'teacher')
+    const studentIds = memberRows
+      .filter((row: any) => {
+        const role = String(row?.role || '').toLowerCase()
+        if (!role) return true
+        return role === 'student'
+      })
+      .map((row: any) => row.user_id)
 
     // Get attendance records for all students
     let attendanceRecords = []
@@ -178,26 +162,8 @@ export async function POST(
     const resolvedParams = await params
     const { classId } = resolvedParams
 
-    // Check if user is a teacher via class_members + subscription_type
-    // (owner_id column was removed - all teachers are now equal via class_members)
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('subscription_type')
-      .eq('id', user.id)
-      .single()
-
-    const isTeacher = userProfile?.subscription_type === 'teacher'
-    
-    // Also check if user is a member of this class
-    const { data: classMember } = await supabase
-      .from('class_members')
-      .select('user_id')
-      .eq('class_id', classId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    // Teachers who are members of the class can access
-    const canAccess = isTeacher && classMember
+    const perm = await getClassPermission(supabase as any, classId, user.id)
+    const canAccess = perm.isMember && perm.isTeacher
     
     if (!canAccess) {
       return NextResponse.json({ error: 'Only teachers can update attendance' }, { status: 403 })

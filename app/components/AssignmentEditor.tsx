@@ -812,54 +812,66 @@ export function AssignmentEditor({
       const existingResponse = await fetch(
         `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`
       );
+      if (!existingResponse.ok) {
+        throw new Error('Failed to load existing assignment blocks');
+      }
       const existingBlocks = existingResponse.ok ? await existingResponse.json() : [];
       const existingMap = new Map(existingBlocks.map((b: any) => [b.id, b]));
       const currentIds = new Set(blocks.map(b => b.id).filter(id => id !== undefined));
 
       // Delete blocks that are no longer present
       const blocksToDelete = existingBlocks.filter((b: any) => !currentIds.has(b.id));
-      await Promise.all(
-        blocksToDelete.map((b: any) =>
-          fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${b.id}`, {
-            method: 'DELETE',
-          })
-        )
-      );
+      for (const blockToDelete of blocksToDelete) {
+        const res = await fetch(
+          `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${blockToDelete.id}`,
+          { method: 'DELETE' }
+        );
+        if (!res.ok) {
+          throw new Error(`Failed to delete block ${blockToDelete.id}`);
+        }
+      }
 
       // Create or update blocks
-      await Promise.all(
-        blocks.map(async (block) => {
-          const payload = {
-            type: block.type,
-            position: block.position,
-            data: block.data,
-            settings: block.settings || DEFAULT_BLOCK_SETTINGS,
-            show_feedback: block.showFeedback || false,
-            ai_grading_override: block.aiGradingOverride || null,
-          };
+      for (const block of blocks) {
+        const payload = {
+          type: block.type,
+          position: block.position,
+          data: block.data,
+          settings: block.settings || DEFAULT_BLOCK_SETTINGS,
+          locked: block.data?.locked ?? false,
+          show_feedback: block.showFeedback || false,
+          ai_grading_override: block.aiGradingOverride || null,
+        };
 
-          const isLocalId = String(block.id || '').startsWith('block-');
-          if (block.id && !isLocalId) {
-            // Update existing block
-            await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${block.id}`, {
+        const isLocalId = String(block.id || '').startsWith('block-');
+        if (block.id && !isLocalId) {
+          const updateRes = await fetch(
+            `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${block.id}`,
+            {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload),
-            });
-          } else {
-            // Create new block
-            const createRes = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`, {
+            }
+          );
+          if (!updateRes.ok) {
+            throw new Error(`Failed to update block ${block.id}`);
+          }
+        } else {
+          const createRes = await fetch(
+            `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`,
+            {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload),
-            });
-            if (createRes.ok) {
-              const created = await createRes.json();
-              setBlocks((prev) => prev.map((b) => (b.id === block.id ? { ...b, id: created.id } : b)));
             }
+          );
+          if (!createRes.ok) {
+            throw new Error('Failed to create block');
           }
-        })
-      );
+          const created = await createRes.json();
+          setBlocks((prev) => prev.map((b) => (b.id === block.id ? { ...b, id: created.id } : b)));
+        }
+      }
 
       const assignmentSettingsRes = await fetch(`/api/assignments/${assignmentId}`, {
         method: 'PATCH',
@@ -880,6 +892,7 @@ export function AssignmentEditor({
       if (onSave) onSave(blocks);
     } catch (error) {
       console.error('Auto-save failed:', error);
+      toast({ title: 'Save failed', description: 'Changes could not be saved to server.', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }

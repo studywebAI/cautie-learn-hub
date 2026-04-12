@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
+import { getClassPermission } from '@/lib/auth/class-permissions'
 
 // GET /api/classes/[classId]/grades - Get all grade sets for a class
 export async function GET(
@@ -10,7 +11,7 @@ export async function GET(
   try {
     const { classId } = await params
     const subjectId = req.nextUrl.searchParams.get('subjectId')
-    console.log(`\n🌐 [GRADES_GET] Fetching grades for class: ${classId}`)
+    console.log(`\nðŸŒ [GRADES_GET] Fetching grades for class: ${classId}`)
     
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
@@ -19,34 +20,17 @@ export async function GET(
     console.log('[GRADES_GET] User:', user?.id, 'Auth error:', userError?.message)
     
     if (userError || !user) {
-      console.log('[GRADES_GET] ❌ Unauthorized - no user')
+      console.log('[GRADES_GET] âŒ Unauthorized - no user')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is a class member
-    const { data: memberData } = await supabase
-      .from('class_members')
-      .select('user_id')
-      .eq('class_id', classId)
-      .eq('user_id', user.id)
-      .single()
-    
-    if (!memberData) {
-      console.log('[GRADES_GET] ❌ Access denied - not a member')
+    const perm = await getClassPermission(supabase as any, classId, user.id)
+    if (!perm.isMember) {
+      console.log('[GRADES_GET] Access denied - not a member')
       return NextResponse.json({ error: 'Only class members can view grades' }, { status: 403 })
     }
-    
-    // Get user's subscription_type to check if they're a teacher
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('subscription_type')
-      .eq('id', user.id)
-      .single()
-    
-    const isTeacher = userProfile?.subscription_type === 'teacher'
-    
-    if (!isTeacher) {
-      console.log('[GRADES_GET] ❌ Access denied - not a teacher')
+    if (!perm.isTeacher) {
+      console.log('[GRADES_GET] Access denied - not a teacher')
       return NextResponse.json({ error: 'Only teachers can view grades' }, { status: 403 })
     }
 
@@ -72,7 +56,7 @@ export async function GET(
     console.log('[GRADES_GET] Query result:', { count: gradeSets?.length, error: error?.message })
     
     if (error) {
-      console.error('[GRADES_GET] ❌ Query error:', error)
+      console.error('[GRADES_GET] âŒ Query error:', error)
       return NextResponse.json({ error: error.message, details: 'Failed to query grade_sets table' }, { status: 500 })
     }
 
@@ -158,26 +142,11 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is a member and is a teacher
-    const { data: memberData } = await supabase
-      .from('class_members')
-      .select('user_id')
-      .eq('class_id', classId)
-      .eq('user_id', user.id)
-      .single()
-    
-    if (!memberData) {
+    const perm = await getClassPermission(supabase as any, classId, user.id)
+    if (!perm.isMember) {
       return NextResponse.json({ error: 'Class not found or unauthorized' }, { status: 403 })
     }
-    
-    // Check subscription_type
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('subscription_type')
-      .eq('id', user.id)
-      .single()
-    
-    if (userProfile?.subscription_type !== 'teacher') {
+    if (!perm.isTeacher) {
       return NextResponse.json({ error: 'Only teachers can create grade sets' }, { status: 403 })
     }
 
@@ -243,22 +212,15 @@ export async function POST(
     // Get all class members first
     const { data: classMembers, error: membersError } = await supabase
       .from('class_members')
-      .select('user_id')
+      .select('user_id, role')
       .eq('class_id', classId)
 
-    const memberUserIds = (classMembers || []).map(m => m.user_id)
-    
-    // Then filter by subscription_type = 'student'
-    let studentIds: string[] = []
-    if (memberUserIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id')
-        .in('id', memberUserIds)
-        .eq('subscription_type', 'student')
-      
-      studentIds = (profiles || []).map(p => p.id)
-    }
+    const studentIds = (classMembers || [])
+      .filter((m: any) => {
+        const role = String(m.role || '').toLowerCase()
+        return role === 'student' || role === ''
+      })
+      .map((m: any) => m.user_id)
 
     // Get student profiles
     let students: any[] = []
@@ -304,3 +266,4 @@ export async function POST(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+

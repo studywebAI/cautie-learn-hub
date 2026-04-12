@@ -139,6 +139,12 @@ export async function POST(
     if (blockSettings.required && !answerData) {
       return NextResponse.json({ error: 'Answer is required' }, { status: 400 });
     }
+    if (!blockSettings.openQuestion.allowFileUpload) {
+      const hasFilePayload = !!(answerData?.file || answerData?.files || answerData?.attachment);
+      if (hasFilePayload) {
+        return NextResponse.json({ error: 'File upload is not allowed for this question' }, { status: 400 });
+      }
+    }
     if (blockSettings.openQuestion.maxChars && typeof answerData?.text === 'string' && answerData.text.length > blockSettings.openQuestion.maxChars) {
       return NextResponse.json({ error: 'Answer exceeds max characters' }, { status: 400 });
     }
@@ -314,8 +320,13 @@ export async function POST(
       .then(() => undefined)
       .catch(() => undefined);
 
-    // If OpenQuestionBlock with AI grading, queue grading job
-    if (block.type === 'open_question' && (block.data as any)?.ai_grading) {
+    // Queue AI grading only when both block + assignment grading settings allow it.
+    if (
+      block.type === 'open_question' &&
+      (block.data as any)?.ai_grading &&
+      assignmentSettings.grading.autoGrade &&
+      assignmentSettings.grading.manualReviewOpenQuestions
+    ) {
       const { error: jobError } = await (supabase as any)
         .from('ai_grading_queue')
         .insert({
@@ -395,9 +406,14 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: newData, settings } = await request.json()
-    // Extract new fields if present
-    const { locked, show_feedback, ai_grading_override } = newData;
+    const body = await request.json()
+    const newData = body?.data ?? body ?? {}
+    const settings = body?.settings
+    const locked = body?.locked ?? newData?.locked
+    const show_feedback = body?.show_feedback ?? newData?.show_feedback
+    const ai_grading_override = body?.ai_grading_override ?? newData?.ai_grading_override
+    const nextType = body?.type ?? newData?.type
+    const nextPosition = body?.position ?? newData?.position
 
     // Verify the block belongs to this assignment and user has access
     const { data: block, error: blockError } = await supabase
@@ -460,6 +476,8 @@ export async function PUT(
     // Update the block
     const normalizedSettings = normalizeBlockSettings(settings || (newData as any)?.settings || {});
     const updatePayload: any = { data: newData, settings: normalizedSettings };
+    if (typeof nextType === 'string') updatePayload.type = nextType;
+    if (typeof nextPosition === 'number' && Number.isFinite(nextPosition)) updatePayload.position = nextPosition;
     if (locked !== undefined) updatePayload.locked = locked;
     if (show_feedback !== undefined) updatePayload.show_feedback = show_feedback;
     if (ai_grading_override !== undefined) updatePayload.ai_grading_override = ai_grading_override;

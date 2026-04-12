@@ -31,9 +31,9 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const classId = params.classId as string;
 
   // Use useSearchParams properly - this will re-render when URL changes
-  const currentTab = searchParams?.get('tab') || (role === 'teacher' ? 'group' : 'invite');
-
-  const visibleTabs = role === 'teacher' ? teacherTabs : studentTabs;
+  const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
+  const currentTab = searchParams?.get('tab') || (isTeacherRole ? 'group' : 'invite');
+  const visibleTabs = isTeacherRole || !role ? teacherTabs : studentTabs;
 
   return (
     <div className="flex h-full flex-col gap-2.5">

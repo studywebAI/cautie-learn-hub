@@ -15,6 +15,7 @@ export interface ClassPermission {
   isMember: boolean
   isTeacher: boolean   // true if subscription_type = 'teacher'
   isStudent: boolean  // true if subscription_type = 'student'
+  classRole: string | null
 }
 
 /**
@@ -29,7 +30,7 @@ export async function getClassPermission(
   // Check if user is a member of this class
   const { data: member, error } = await supabase
     .from('class_members')
-    .select('user_id')
+    .select('user_id, role')
     .eq('class_id', classId)
     .eq('user_id', userId)
     .single()
@@ -38,11 +39,23 @@ export async function getClassPermission(
     return {
       isMember: false,
       isTeacher: false,
-      isStudent: false
+      isStudent: false,
+      classRole: null,
     }
   }
 
-  // Get global role from profiles
+  const classRole = String((member as any)?.role || '').toLowerCase() || null
+  const classTeacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
+  if (classRole && classTeacherRoles.has(classRole)) {
+    return {
+      isMember: true,
+      isTeacher: true,
+      isStudent: false,
+      classRole,
+    }
+  }
+
+  // Fallback to global role from profiles when class role is missing/legacy
   const { data: profile } = await supabase
     .from('profiles')
     .select('subscription_type')
@@ -54,7 +67,8 @@ export async function getClassPermission(
   return {
     isMember: true,
     isTeacher: subscriptionType === 'teacher',
-    isStudent: subscriptionType === 'student'
+    isStudent: subscriptionType === 'student',
+    classRole,
   }
 }
 
