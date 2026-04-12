@@ -23,6 +23,23 @@ type Submission = {
   assignment_title?: string;
 };
 
+type OpenAnswer = {
+  id: string;
+  assignment_id: string | null;
+  assignment_title: string;
+  block_id: string;
+  question: string;
+  max_points: number;
+  rubric: Array<{ id: string; label: string; points: number }>;
+  student_id: string;
+  student_name: string;
+  student_email: string | null;
+  answer_data: any;
+  score: number | null;
+  feedback: string | null;
+  submitted_at: string;
+};
+
 type QuickGraderProps = {
   classId: string;
   isOpen: boolean;
@@ -30,12 +47,16 @@ type QuickGraderProps = {
 };
 
 export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
+  const [mode, setMode] = useState<'submissions' | 'open_answers'>('open_answers');
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [openAnswers, setOpenAnswers] = useState<OpenAnswer[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [selectedOpenAnswer, setSelectedOpenAnswer] = useState<OpenAnswer | null>(null);
   const [grade, setGrade] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [rubricScores, setRubricScores] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -53,6 +74,11 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
         const data = await response.json();
         setSubmissions(data);
       }
+      const openAnswersResponse = await fetch(`/api/classes/${classId}/assignments/open-answers?status=pending`);
+      if (openAnswersResponse.ok) {
+        const openAnswersData = await openAnswersResponse.json();
+        setOpenAnswers(openAnswersData || []);
+      }
     } catch (error) {
       console.error('Failed to fetch submissions:', error);
     } finally {
@@ -61,30 +87,55 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
   };
 
   const handleGrade = async () => {
-    if (!selectedSubmission || !grade) return;
+    if (mode === 'submissions') {
+      if (!selectedSubmission || !grade) return;
+    } else {
+      if (!selectedOpenAnswer || !grade) return;
+    }
     
     setSaving(true);
     try {
-      const response = await fetch(`/api/submissions/${selectedSubmission.id}/grade`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          grade: parseFloat(grade),
-          feedback: feedback || null
+      const parsedScore = parseFloat(grade);
+      const response = mode === 'submissions'
+        ? await fetch(`/api/submissions/${selectedSubmission!.id}/grade`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            grade: parsedScore,
+            feedback: feedback || null
+          })
         })
-      });
+        : await fetch(`/api/classes/${classId}/assignments/open-answers/${selectedOpenAnswer!.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            score: parsedScore,
+            feedback: feedback || null,
+            rubric_scores: selectedOpenAnswer?.rubric?.map((item) => ({
+              id: item.id,
+              label: item.label,
+              max_points: item.points,
+              points_awarded: rubricScores[item.id] ?? 0,
+            })) || [],
+          })
+        });
 
       if (response.ok) {
         toast({ title: 'Grade saved successfully' });
-        // Update local state
-        setSubmissions(prev => prev.map(s => 
-          s.id === selectedSubmission.id 
-            ? { ...s, status: 'graded', grade: parseFloat(grade), feedback }
-            : s
-        ));
+        if (mode === 'submissions' && selectedSubmission) {
+          setSubmissions(prev => prev.map(s => 
+            s.id === selectedSubmission.id 
+              ? { ...s, status: 'graded', grade: parsedScore, feedback }
+              : s
+          ));
+        } else if (mode === 'open_answers' && selectedOpenAnswer) {
+          setOpenAnswers(prev => prev.filter(a => a.id !== selectedOpenAnswer.id));
+        }
         setSelectedSubmission(null);
+        setSelectedOpenAnswer(null);
         setGrade('');
         setFeedback('');
+        setRubricScores({});
       } else {
         const data = await response.json();
         toast({ title: 'Failed to save grade', description: data.error, variant: 'destructive' });
@@ -99,6 +150,7 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
 
   const pendingCount = submissions.filter(s => s.status === 'submitted').length;
   const gradedCount = submissions.filter(s => s.status === 'graded').length;
+  const pendingOpenCount = openAnswers.length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -111,18 +163,46 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
           {/* Submission List */}
           <div className="w-1/3 border-r pr-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-medium">Submissions ({pendingCount} pending)</h3>
+              <h3 className="font-medium">
+                {mode === 'submissions' ? `Submissions (${pendingCount} pending)` : `Open Answers (${pendingOpenCount} pending)`}
+              </h3>
+            </div>
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant={mode === 'open_answers' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setMode('open_answers');
+                  setSelectedSubmission(null);
+                }}
+              >
+                Open Answers
+              </Button>
+              <Button
+                type="button"
+                variant={mode === 'submissions' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setMode('submissions');
+                  setSelectedOpenAnswer(null);
+                }}
+              >
+                Submissions
+              </Button>
             </div>
             <ScrollArea className="h-full">
               {loading ? (
                 <div className="flex justify-center p-4">
                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
-              ) : submissions.length === 0 ? (
+              ) : mode === 'submissions' && submissions.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">No submissions to grade</p>
+              ) : mode === 'open_answers' && openAnswers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No open answers pending review</p>
               ) : (
                 <div className="space-y-2">
-                  {submissions.map(submission => (
+                  {mode === 'submissions' && submissions.map(submission => (
                     <div
                       key={submission.id}
                       className={`p-3 rounded-lg border cursor-pointer hover:bg-accent ${
@@ -152,6 +232,34 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
                       )}
                     </div>
                   ))}
+                  {mode === 'open_answers' && openAnswers.map(answer => (
+                    <div
+                      key={answer.id}
+                      className={`p-3 rounded-lg border cursor-pointer hover:bg-accent ${
+                        selectedOpenAnswer?.id === answer.id ? 'bg-accent border-primary' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedOpenAnswer(answer);
+                        setGrade(answer.score?.toString() || '');
+                        setFeedback(answer.feedback || '');
+                        setRubricScores(
+                          Object.fromEntries((answer.rubric || []).map((item) => [item.id, 0]))
+                        );
+                      }}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{answer.student_name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{answer.assignment_title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{answer.question || 'Open question'}</p>
+                        </div>
+                        <Clock className="h-4 w-4 text-amber-500" />
+                      </div>
+                      <Badge className="mt-2" variant="secondary">
+                        Max: {answer.max_points} pts
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
               )}
             </ScrollArea>
@@ -159,22 +267,87 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
 
           {/* Grading Panel */}
           <div className="flex-1 pl-4">
-            {selectedSubmission ? (
+            {(mode === 'submissions' ? !!selectedSubmission : !!selectedOpenAnswer) ? (
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-medium">Grading: {selectedSubmission.student_name}</h3>
-                  <p className="text-sm text-muted-foreground">{selectedSubmission.assignment_title}</p>
+                  <h3 className="font-medium">
+                    Grading: {mode === 'submissions' ? selectedSubmission?.student_name : selectedOpenAnswer?.student_name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {mode === 'submissions' ? selectedSubmission?.assignment_title : selectedOpenAnswer?.assignment_title}
+                  </p>
                 </div>
 
+                {mode === 'open_answers' && selectedOpenAnswer && (
+                  <Card>
+                    <CardContent className="pt-4 space-y-2">
+                      <p className="text-sm font-medium">{selectedOpenAnswer.question || 'Open question'}</p>
+                      <p className="text-xs text-muted-foreground">Student answer</p>
+                      <div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap break-words">
+                        {typeof selectedOpenAnswer.answer_data?.text === 'string'
+                          ? selectedOpenAnswer.answer_data.text
+                          : JSON.stringify(selectedOpenAnswer.answer_data, null, 2)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {mode === 'open_answers' && selectedOpenAnswer && selectedOpenAnswer.rubric.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Rubric</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {selectedOpenAnswer.rubric.map((item) => (
+                        <div key={item.id} className="grid grid-cols-[1fr_100px] items-center gap-3">
+                          <div>
+                            <div className="text-sm font-medium">{item.label}</div>
+                            <div className="text-xs text-muted-foreground">max {item.points} pts</div>
+                          </div>
+                          <Input
+                            type="number"
+                            min="0"
+                            max={String(item.points)}
+                            value={String(rubricScores[item.id] ?? 0)}
+                            onChange={(e) => {
+                              const raw = Number(e.target.value);
+                              const next = Number.isFinite(raw) ? Math.max(0, Math.min(item.points, raw)) : 0;
+                              setRubricScores((prev) => ({ ...prev, [item.id]: next }));
+                            }}
+                          />
+                        </div>
+                      ))}
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <div className="text-sm font-medium">
+                          Rubric total: {selectedOpenAnswer.rubric.reduce((sum, item) => sum + Number(rubricScores[item.id] ?? 0), 0)} / {selectedOpenAnswer.rubric.reduce((sum, item) => sum + Number(item.points || 0), 0)}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const total = selectedOpenAnswer.rubric.reduce((sum, item) => sum + Number(rubricScores[item.id] ?? 0), 0);
+                            setGrade(String(total));
+                          }}
+                        >
+                          Use total
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Grade (%)</label>
+                  <label className="text-sm font-medium">
+                    {mode === 'submissions' ? 'Grade (%)' : `Score (${selectedOpenAnswer?.max_points || 0} max)`}
+                  </label>
                   <Input
                     type="number"
                     min="0"
-                    max="100"
+                    max={mode === 'submissions' ? '100' : String(selectedOpenAnswer?.max_points || 0)}
                     value={grade}
                     onChange={(e) => setGrade(e.target.value)}
-                    placeholder="Enter grade (0-100)"
+                    placeholder={mode === 'submissions' ? 'Enter grade (0-100)' : 'Enter score'}
                   />
                 </div>
 
@@ -199,8 +372,10 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
                   </Button>
                   <Button variant="outline" onClick={() => {
                     setSelectedSubmission(null);
+                    setSelectedOpenAnswer(null);
                     setGrade('');
                     setFeedback('');
+                    setRubricScores({});
                   }}>
                     Cancel
                   </Button>

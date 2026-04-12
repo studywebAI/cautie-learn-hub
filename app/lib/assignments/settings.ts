@@ -58,6 +58,12 @@ export interface AssignmentSettings {
   };
 }
 
+type AdaptiveRuleContext = {
+  blockId: string;
+  isCorrect: boolean | null;
+  score: number | null;
+};
+
 export interface BlockRubricCriterion {
   id: string;
   label: string;
@@ -408,4 +414,90 @@ export function calculateNumericScore(
   const diff = Math.abs(ans - exp);
   const isCorrect = diff <= tolerance;
   return { score: isCorrect ? settings.points : 0, isCorrect };
+}
+
+export function deterministicShuffle<T>(items: T[], seedInput: string): T[] {
+  const arr = [...items];
+  let seed = 0;
+  for (let i = 0; i < seedInput.length; i += 1) {
+    seed = (seed * 31 + seedInput.charCodeAt(i)) >>> 0;
+  }
+  const random = () => {
+    seed = (1664525 * seed + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+export function applyQuestionSelection<T extends { id: string; position?: number | null }>(
+  blocks: T[],
+  settings: AssignmentSettings,
+  seed: string,
+): T[] {
+  let selected = [...blocks].sort((a, b) => Number(a.position || 0) - Number(b.position || 0));
+
+  if (settings.access.shuffleQuestions) {
+    const shuffleSeed = settings.access.shuffleQuestionsPerStudent ? `${seed}:per-student` : `${seed}:global`;
+    selected = deterministicShuffle(selected, shuffleSeed);
+  }
+
+  if (settings.advanced.questionPoolSize && settings.advanced.questionPoolSize > 0) {
+    selected = selected.slice(0, settings.advanced.questionPoolSize);
+  }
+  return selected;
+}
+
+export function resolveAdaptiveNextBlockId(
+  rules: Array<{ when: string; then: string }>,
+  context: AdaptiveRuleContext,
+  availableBlocks: Array<{ id: string; settings?: unknown }>,
+): string | null {
+  const normalized = Array.isArray(rules) ? rules : [];
+  if (normalized.length === 0) return null;
+
+  const matchesWhen = (exprRaw: string): boolean => {
+    const expr = String(exprRaw || '').trim().toLowerCase();
+    if (!expr) return false;
+    if (expr === 'incorrect') return context.isCorrect === false;
+    if (expr === 'correct') return context.isCorrect === true;
+    if (expr.startsWith('block:')) {
+      const parts = expr.split(':');
+      const blockId = parts[1] || '';
+      const state = parts[2] || '';
+      if (blockId !== String(context.blockId).toLowerCase()) return false;
+      if (state === 'incorrect') return context.isCorrect === false;
+      if (state === 'correct') return context.isCorrect === true;
+    }
+    return false;
+  };
+
+  const resolveThen = (exprRaw: string): string | null => {
+    const expr = String(exprRaw || '').trim();
+    if (!expr) return null;
+    const lower = expr.toLowerCase();
+    if (lower.startsWith('show:')) {
+      const id = expr.slice(5).trim();
+      return availableBlocks.some((b) => b.id === id) ? id : null;
+    }
+    if (lower.startsWith('tag:')) {
+      const tag = expr.slice(4).trim().toLowerCase();
+      const match = availableBlocks.find((b) => {
+        const settings = normalizeBlockSettings((b as any).settings || {});
+        return settings.tags.map((t) => t.toLowerCase()).includes(tag);
+      });
+      return match?.id || null;
+    }
+    return availableBlocks.some((b) => b.id === expr) ? expr : null;
+  };
+
+  for (const rule of normalized) {
+    if (!matchesWhen(rule.when)) continue;
+    const nextId = resolveThen(rule.then);
+    if (nextId) return nextId;
+  }
+  return null;
 }

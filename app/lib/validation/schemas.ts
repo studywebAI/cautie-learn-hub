@@ -141,6 +141,7 @@ export const reorderBlocksSchema = z.object({
 // ============================================
 
 export const gradeSubmissionSchema = z.object({
+  grade: z.number().min(0).max(100).optional().nullable(),
   rubricScores: z.array(z.object({
     rubric_item_id: uuidSchema,
     score: z.number(),

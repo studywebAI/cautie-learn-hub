@@ -20,23 +20,6 @@ import {
 } from 'lucide-react';
 import { AssignmentSettings, getAssignmentAvailabilityState, normalizeAssignmentSettings } from '@/lib/assignments/settings';
 
-function seededShuffle<T>(items: T[], seedInput: string): T[] {
-  const arr = [...items];
-  let seed = 0;
-  for (let i = 0; i < seedInput.length; i += 1) {
-    seed = (seed * 31 + seedInput.charCodeAt(i)) >>> 0;
-  }
-  const random = () => {
-    seed = (1664525 * seed + 1013904223) >>> 0;
-    return seed / 4294967296;
-  };
-  for (let i = arr.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
 interface Block {
   id: string;
   type: string;
@@ -100,43 +83,14 @@ export function StudentAssignmentView({
   const [completionPercent, setCompletionPercent] = useState(0);
   const [timeLeftSeconds, setTimeLeftSeconds] = useState<number | null>(null);
   const [hasAutoSubmitted, setHasAutoSubmitted] = useState(false);
+  const [reflectionText, setReflectionText] = useState('');
+  const [reflectionSaved, setReflectionSaved] = useState(false);
   const [providedAccessCode, setProvidedAccessCode] = useState('');
   const [accessUnlocked, setAccessUnlocked] = useState(false);
   const assignmentOpenedAtRef = useRef<number>(Date.now());
 
   const { user } = useContext(AppContext) as any;
   const settings = normalizeAssignmentSettings(assignment?.settings || {});
-
-  // Auto-save queue
-  const pendingSaves = useRef<Record<string, any>>({});
-  const saveTimer = useRef<NodeJS.Timeout>();
-
-  const flushSaves = useCallback(async () => {
-    const toSave = { ...pendingSaves.current };
-    pendingSaves.current = {};
-
-    const entries = Object.entries(toSave);
-    if (entries.length === 0) return;
-
-    await Promise.allSettled(
-      entries.map(async ([blockId, answerData]) => {
-        try {
-          await fetch(
-            `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${blockId}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ answer_data: answerData, access_code: providedAccessCode || undefined })
-            }
-          );
-        } catch (err) {
-          // Re-queue failed saves
-          pendingSaves.current[blockId] = answerData;
-          console.error('Auto-save failed for block', blockId, err);
-        }
-      })
-    );
-  }, [subjectId, chapterId, paragraphId, assignmentId, providedAccessCode]);
 
   const sendAssignmentEvent = useCallback(async (eventType: string, eventPayload: Record<string, any> = {}) => {
     try {
@@ -154,30 +108,6 @@ export function StudentAssignmentView({
     } catch {
       // Silent on purpose.
     }
-  }, [subjectId, chapterId, paragraphId, assignmentId]);
-
-  // Flush on unmount
-  useEffect(() => {
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      // Fire-and-forget final flush
-      const toSave = { ...pendingSaves.current };
-      if (Object.keys(toSave).length > 0) {
-        const entries = Object.entries(toSave);
-        entries.forEach(async ([blockId, answerData]) => {
-          try {
-            await fetch(
-              `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${blockId}`,
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ answer_data: answerData, access_code: providedAccessCode || undefined })
-              }
-            );
-          } catch {}
-        });
-      }
-    };
   }, [subjectId, chapterId, paragraphId, assignmentId]);
 
   useEffect(() => {
@@ -233,13 +163,7 @@ export function StudentAssignmentView({
         } else {
           console.warn('Blocks fetch returned non-OK status, using empty array');
         }
-        let sortedBlocks = (Array.isArray(blocksData) ? blocksData : []).sort((a: Block, b: Block) => a.position - b.position);
-        if (normalizedSettings.access.shuffleQuestions) {
-          sortedBlocks = seededShuffle(sortedBlocks, `${assignmentId}:${user?.id || 'anon'}`);
-        }
-        if (normalizedSettings.advanced.questionPoolSize && normalizedSettings.advanced.questionPoolSize > 0) {
-          sortedBlocks = sortedBlocks.slice(0, normalizedSettings.advanced.questionPoolSize);
-        }
+        const sortedBlocks = (Array.isArray(blocksData) ? blocksData : []).sort((a: Block, b: Block) => a.position - b.position);
         setBlocks(sortedBlocks);
 
         // Fetch existing student answers
@@ -370,6 +294,13 @@ export function StudentAssignmentView({
     };
   }, [settings.antiCheat.detectTabSwitch, settings.antiCheat.requireFullscreen, sendAssignmentEvent]);
 
+  useEffect(() => {
+    if (!settings.antiCheat.requireFullscreen) return;
+    if (typeof document === 'undefined') return;
+    if (document.fullscreenElement) return;
+    document.documentElement.requestFullscreen().catch(() => undefined);
+  }, [settings.antiCheat.requireFullscreen]);
+
   const handleAnswerChange = async (blockId: string, answer: any): Promise<SubmitResult> => {
     const previousAnswers = { ...studentAnswers };
     const newAnswers = {
@@ -415,7 +346,10 @@ export function StudentAssignmentView({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            answer_data: answer,
+            answer_data: {
+              ...answer,
+              fullscreen_active: !!document.fullscreenElement,
+            },
             access_code: providedAccessCode || undefined,
           }),
         }
@@ -434,7 +368,10 @@ export function StudentAssignmentView({
       setStudentAnswers((prev) => ({
         ...prev,
         [blockId]: {
-          answer_data: answer,
+          answer_data: {
+            ...answer,
+            fullscreen_active: !!document.fullscreenElement,
+          },
           gradingResult: payload?.feedback_visible && payload?.answer?.score !== null ? {
             score: payload.answer.score,
             feedback: payload.answer.feedback,
@@ -459,6 +396,27 @@ export function StudentAssignmentView({
       const restoredAnswered = Object.keys(previousAnswers).length;
       setCompletionPercent(blocks.length > 0 ? Math.round((restoredAnswered / blocks.length) * 100) : 0);
       return { ok: false, error: 'Network error while submitting answer' };
+    }
+  };
+
+  const handleSaveReflection = async () => {
+    if (!reflectionText.trim()) return;
+    const response = await fetch(
+      `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/events`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_type: 'reflection_submitted',
+          event_payload: {
+            text: reflectionText.trim(),
+            submitted_at: new Date().toISOString(),
+          },
+        }),
+      }
+    );
+    if (response.ok) {
+      setReflectionSaved(true);
     }
   };
 
@@ -648,6 +606,25 @@ export function StudentAssignmentView({
           {Object.keys(studentAnswers).length} of {blocks.length} answered
         </span>
       </div>
+
+      {settings.advanced.reflectionEnabled && (
+        <div className="mt-6 rounded-lg border p-4 space-y-3">
+          <div className="text-sm font-medium">Reflection</div>
+          <textarea
+            value={reflectionText}
+            onChange={(e) => setReflectionText(e.target.value)}
+            className="w-full min-h-[120px] rounded-md border bg-background p-3 text-sm"
+            disabled={reflectionSaved}
+          />
+          {!reflectionSaved ? (
+            <Button onClick={handleSaveReflection} disabled={!reflectionText.trim()}>
+              Save reflection
+            </Button>
+          ) : (
+            <div className="text-sm text-green-600">Reflection saved.</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

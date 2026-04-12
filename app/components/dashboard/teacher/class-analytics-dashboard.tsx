@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import type { AnalyticsWarning, ClassAnalytics } from "@/lib/types";
-import { AlertTriangle, BarChart3, Clock3, RefreshCw, UserRound } from "lucide-react";
+import { AlertTriangle, BarChart3, RefreshCw } from "lucide-react";
 
 interface ClassAnalyticsDashboardProps {
   classId: string;
@@ -285,8 +285,8 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
                     <Badge variant={warningVariant(warning.severity)}>{warning.severity}</Badge>
                     <Badge variant="outline">{warning.type}</Badge>
                     <span className="font-medium">{warning.studentName}</span>
-                    {warning.assignmentTitle ? <span className="text-sm text-muted-foreground">• {warning.assignmentTitle}</span> : null}
-                    {warning.subjectTitle ? <span className="text-sm text-muted-foreground">• {warning.subjectTitle}</span> : null}
+                    {warning.assignmentTitle ? <span className="text-sm text-muted-foreground">| {warning.assignmentTitle}</span> : null}
+                    {warning.subjectTitle ? <span className="text-sm text-muted-foreground">| {warning.subjectTitle}</span> : null}
                   </div>
                   <p className="text-sm">{warning.message}</p>
                   <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
@@ -311,40 +311,26 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
               <thead>
                 <tr className="border-b text-left">
                   <th className="py-2 pr-3">Student</th>
-                  <th className="py-2 pr-3">Subjects Worked</th>
-                  <th className="py-2 pr-3">Submissions</th>
-                  <th className="py-2 pr-3">Study Time</th>
-                  <th className="py-2 pr-3">Avg Submit Time</th>
+                  <th className="py-2 pr-3">Completion</th>
+                  <th className="py-2 pr-3">Avg Grade</th>
+                  <th className="py-2 pr-3">Open Reviews</th>
                   <th className="py-2 pr-3">Warnings</th>
-                  <th className="py-2 pr-3">Recent Tool</th>
+                  <th className="py-2 pr-3">Last Activity</th>
+                  <th className="py-2 pr-3">Last Submission</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredStudentRows.map((row) => (
                   <tr key={row.studentId} className="border-b align-top">
                     <td className="py-2 pr-3 font-medium">{row.studentName}</td>
-                    <td className="py-2 pr-3">{row.subjectsWorked.length > 0 ? row.subjectsWorked.join(", ") : "-"}</td>
-                    <td className="py-2 pr-3">{row.submissionsCount}</td>
-                    <td className="py-2 pr-3">{row.totalStudyMinutes}m</td>
-                    <td className="py-2 pr-3">{formatDuration(row.averageSubmissionSeconds)}</td>
+                    <td className="py-2 pr-3">{Math.round(row.completionRate)}%</td>
+                    <td className="py-2 pr-3">{row.averageGrade === null ? '-' : `${Math.round(row.averageGrade)}%`}</td>
+                    <td className="py-2 pr-3">{row.pendingOpenReviews}</td>
                     <td className="py-2 pr-3">
                       <Badge variant={row.warningCount > 0 ? "destructive" : "outline"}>{row.warningCount}</Badge>
                     </td>
-                    <td className="py-2 pr-3">
-                      {row.recentTool ? (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1">
-                            <Clock3 className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="capitalize">{row.recentTool.toolType}</span>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {row.recentTool.title || "Untitled"} • {formatDateTime(row.recentTool.usedAt)}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </td>
+                    <td className="py-2 pr-3">{formatDateTime(row.lastActivityAt)}</td>
+                    <td className="py-2 pr-3">{formatDateTime(row.lastSubmissionAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -363,29 +349,11 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
               <div key={subject.subjectId} className="rounded-lg border p-3">
                 <div className="font-medium">{subject.subjectTitle}</div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  {subject.submissionsCount} submissions • {subject.activeStudents} active students • {subject.totalStudyMinutes}m study
+                  {subject.submissionsCount} submissions | {subject.activeStudents} active students | {subject.totalStudyMinutes}m study
                 </div>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>AI/Plagiarism Integration</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2">
-            <UserRound className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">
-              Provider: {analytics.plagiarismIntegration.provider} •{" "}
-              {analytics.plagiarismIntegration.configured ? "Configured" : "Not configured"}
-            </span>
-          </div>
-          {analytics.plagiarismIntegration.note ? (
-            <p className="mt-2 text-sm text-muted-foreground">{analytics.plagiarismIntegration.note}</p>
-          ) : null}
         </CardContent>
       </Card>
 

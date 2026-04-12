@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { normalizeBlockSettings } from '@/lib/assignments/settings'
+import { applyQuestionSelection, normalizeAssignmentSettings, normalizeBlockSettings } from '@/lib/assignments/settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,6 +51,10 @@ async function userCanEditSubject(supabase: any, userId: string, subjectId: stri
   return role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
 }
 
+async function userIsTeacherForSubject(supabase: any, userId: string, subjectId: string): Promise<boolean> {
+  return userCanEditSubject(supabase, userId, subjectId);
+}
+
 // GET blocks for an assignment
 export async function GET(
   request: Request,
@@ -75,7 +79,7 @@ export async function GET(
     // Verify assignment exists and belongs to the given paragraph
     const { data: assignment, error: assignmentError } = await supabase
       .from('assignments')
-      .select('id, paragraph_id')
+      .select('id, paragraph_id, settings')
       .eq('id', resolvedParams.assignmentId)
       .eq('paragraph_id', resolvedParams.paragraphId)
       .single();
@@ -83,7 +87,7 @@ export async function GET(
     if (assignmentError || !assignment) {
       const { data: fallbackAssignment } = await supabase
         .from('assignments')
-        .select('id')
+        .select('id, settings')
         .eq('id', resolvedParams.assignmentId)
         .maybeSingle();
       if (!fallbackAssignment) {
@@ -107,7 +111,18 @@ export async function GET(
       ...b,
       settings: normalizeBlockSettings(b.settings || b.data?.settings || {}),
     }));
-    return NextResponse.json(normalized);
+    const isTeacher = await userIsTeacherForSubject(supabase, user.id, resolvedParams.subjectId);
+    if (isTeacher) {
+      return NextResponse.json(normalized);
+    }
+
+    const assignmentSettings = normalizeAssignmentSettings((assignment as any)?.settings || {});
+    const selected = applyQuestionSelection(
+      normalized,
+      assignmentSettings,
+      `${resolvedParams.assignmentId}:${user.id}`,
+    );
+    return NextResponse.json(selected);
   } catch (error) {
     console.error('Unexpected error in blocks GET:', error);
     return NextResponse.json([], { status: 200 }); // Graceful fallback

@@ -169,7 +169,7 @@ export async function GET(
     const { data: studentAnswers } = blockIds.length > 0
       ? await supabase
         .from('student_answers')
-        .select('student_id, block_id, answer_data, submitted_at')
+        .select('student_id, block_id, answer_data, submitted_at, score')
         .in('student_id', studentIds.length > 0 ? studentIds : ['00000000-0000-0000-0000-000000000000'])
         .in('block_id', blockIds)
       : { data: [] as any[] }
@@ -219,7 +219,8 @@ export async function GET(
         activityLogsSafe,
         assignmentContextById,
         studentAnswers || [],
-        blockAssignmentById
+        blockAssignmentById,
+        assignmentsSafe.length
       ),
       warnings: buildWarnings(
         studentIds,
@@ -230,9 +231,11 @@ export async function GET(
         blockAssignmentById
       ),
       plagiarismIntegration: {
-        provider: 'ZeroGPT',
-        configured: false,
-        note: 'Internal text-similarity detection is active. ZeroGPT can be added for AI-origin scoring.',
+        provider: process.env.ZEROGPT_API_KEY ? 'ZeroGPT' : 'Internal similarity',
+        configured: true,
+        note: process.env.ZEROGPT_API_KEY
+          ? 'External AI-origin scoring enabled with ZeroGPT plus internal similarity checks.'
+          : 'Using internal text-similarity checks only.',
       },
       classOverview,
       insights: generateInsights(engagementMetrics, atRiskStudents),
@@ -558,7 +561,8 @@ function buildStudentRows(
   activityLogs: any[],
   assignmentContextById: Map<string, any>,
   studentAnswers: any[],
-  blockAssignmentById: Map<string, { assignmentId: string; type: string }>
+  blockAssignmentById: Map<string, { assignmentId: string; type: string }>,
+  totalAssignments: number
 ): ClassAnalyticsStudentRow[] {
   const warnings = buildWarnings(
     studentIds,
@@ -580,6 +584,17 @@ function buildStudentRows(
   for (const studentId of studentIds) {
     const studentSubs = submissions.filter((s: any) => s.user_id === studentId)
     const studentLogs = activityLogs.filter((l: any) => l.student_id === studentId)
+    const studentOpenAnswers = studentAnswers.filter((a: any) => {
+      if (a.student_id !== studentId) return false
+      const blockCtx = blockAssignmentById.get(a.block_id)
+      return blockCtx?.type === 'open_question'
+    })
+    const pendingOpenReviews = studentOpenAnswers.filter((a: any) => a.score === null || a.score === undefined).length
+    const gradedSubs = studentSubs.filter((s: any) => s.grade !== null && s.grade !== undefined)
+    const averageGrade = gradedSubs.length > 0
+      ? gradedSubs.reduce((sum: number, s: any) => sum + Number(s.grade || 0), 0) / gradedSubs.length
+      : null
+    const completionRate = totalAssignments > 0 ? (studentSubs.length / totalAssignments) * 100 : 0
     const subjectSet = new Set<string>()
 
     for (const sub of studentSubs) {
@@ -602,6 +617,9 @@ function buildStudentRows(
 
     const mostRecentLog = [...studentLogs]
       .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+    const lastSubmission = [...studentSubs]
+      .filter((s: any) => !!s.submitted_at)
+      .sort((a: any, b: any) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())[0]
 
     const recentTool = mostRecentLog
       ? {
@@ -617,11 +635,15 @@ function buildStudentRows(
       subjectsWorked: Array.from(subjectSet),
       submissionsCount: studentSubs.length,
       totalStudyMinutes,
+      completionRate,
+      averageGrade,
+      pendingOpenReviews,
       averageSubmissionSeconds: assignmentDurations.length > 0
         ? assignmentDurations.reduce((sum: number, n: number) => sum + n, 0) / assignmentDurations.length
         : null,
       warningCount: warningCountByStudent.get(studentId) || 0,
       lastActivityAt: mostRecentLog?.created_at || null,
+      lastSubmissionAt: lastSubmission?.submitted_at || null,
       recentTool,
     })
   }

@@ -45,8 +45,15 @@ export async function getOrCreateAttempt(
 
   const attempts = allAttempts || [];
   const maxAttempts = settings.attempts.maxAttempts;
-  if (maxAttempts !== null && maxAttempts > 0 && attempts.length >= maxAttempts) {
-    return { blocked: true as const, reason: 'max_attempts_reached', attempts };
+  let effectiveMaxAttempts = maxAttempts;
+  if (settings.advanced.improvementAttemptEnabled && maxAttempts !== null && maxAttempts > 0) {
+    const hasSubmittedAttempt = attempts.some((a: any) => a.status === 'submitted' || a.status === 'auto_submitted');
+    if (hasSubmittedAttempt) {
+      effectiveMaxAttempts = maxAttempts + 1;
+    }
+  }
+  if (effectiveMaxAttempts !== null && effectiveMaxAttempts > 0 && attempts.length >= effectiveMaxAttempts) {
+    return { blocked: true as const, reason: 'max_attempts_reached', attempts, maxAttempts: effectiveMaxAttempts };
   }
 
   const latest = attempts.length > 0 ? attempts[attempts.length - 1] : null;
@@ -62,9 +69,21 @@ export async function getOrCreateAttempt(
   }
 
   const nextNo = (attempts[attempts.length - 1]?.attempt_no || 0) + 1;
-  const dueAt = settings.time.durationMinutes && settings.time.durationMinutes > 0
-    ? new Date(Date.now() + settings.time.durationMinutes * 60_000).toISOString()
-    : null;
+  let dueAt: string | null = null;
+  if (settings.time.timerMode === 'per_student') {
+    if (settings.time.durationMinutes && settings.time.durationMinutes > 0) {
+      dueAt = new Date(Date.now() + settings.time.durationMinutes * 60_000).toISOString();
+    }
+    if (dueAt && settings.time.endAt) {
+      const dueTs = new Date(dueAt).getTime();
+      const endTs = new Date(settings.time.endAt).getTime();
+      if (Number.isFinite(endTs) && endTs < dueTs) {
+        dueAt = new Date(endTs).toISOString();
+      }
+    }
+  } else if (settings.time.timerMode === 'deadline' && settings.time.endAt) {
+    dueAt = settings.time.endAt;
+  }
 
   const { data: created, error: createError } = await supabase
     .from('assignment_attempts')

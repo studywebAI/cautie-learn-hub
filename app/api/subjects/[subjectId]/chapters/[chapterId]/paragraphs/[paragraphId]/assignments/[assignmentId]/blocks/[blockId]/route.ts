@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { updateProgressSnapshot } from '@/lib/progress'
 import {
+  resolveAdaptiveNextBlockId,
   calculateMcqScore,
   calculateFillInBlankScore,
   calculateOrderingScore,
@@ -132,6 +133,9 @@ export async function POST(
     }
 
     const blockSettings = normalizeBlockSettings((block as any).settings || (block as any).data?.settings || {});
+    if (assignmentSettings.antiCheat.requireFullscreen && answerData?.fullscreen_active !== true) {
+      return NextResponse.json({ error: 'Fullscreen is required for this assignment' }, { status: 403 });
+    }
     if (blockSettings.required && !answerData) {
       return NextResponse.json({ error: 'Answer is required' }, { status: 400 });
     }
@@ -152,6 +156,21 @@ export async function POST(
         if (elapsedSec > perQuestionLimit) {
           return NextResponse.json({ error: 'Question time limit exceeded' }, { status: 403 });
         }
+      }
+    }
+
+    if (blockSettings.matching.maxAttemptsInQuestion && blockSettings.matching.maxAttemptsInQuestion > 0) {
+      const { count } = await supabase
+        .from('assignment_events')
+        .select('id', { head: true, count: 'exact' })
+        .eq('assignment_id', resolvedParams.assignmentId)
+        .eq('attempt_id', (attempt as any).id)
+        .eq('student_id', user.id)
+        .eq('event_type', 'answer_saved')
+        .filter('event_payload->>block_id', 'eq', resolvedParams.blockId);
+
+      if ((count || 0) >= blockSettings.matching.maxAttemptsInQuestion) {
+        return NextResponse.json({ error: 'Max attempts reached for this question' }, { status: 403 });
       }
     }
 
@@ -199,10 +218,24 @@ export async function POST(
     }
     if (block.type === 'numeric_question') {
       const expected = (block as any).data?.correct_answer ?? (block as any).data?.answer ?? (block as any).data?.value;
-      const result = calculateNumericScore(answerData?.value, expected, blockSettings);
+      const expectedText = String(expected ?? '').trim().toLowerCase();
+      const answerText = String(answerData?.value ?? '').trim().toLowerCase();
+      const alternateMatch = blockSettings.numeric.alternateAnswers
+        .map((v) => String(v).trim().toLowerCase())
+        .includes(answerText);
+      const result = alternateMatch
+        ? { score: blockSettings.points, isCorrect: true }
+        : calculateNumericScore(answerData?.value, expected, blockSettings);
       score = result.score;
       isCorrect = result.isCorrect;
       feedback = blockSettings.feedbackText || null;
+      if (blockSettings.numeric.requiredUnit) {
+        const requiredUnit = String(blockSettings.numeric.requiredUnit).trim().toLowerCase();
+        const unit = String(answerData?.unit || '').trim().toLowerCase();
+        if (!unit || unit !== requiredUnit) {
+          return NextResponse.json({ error: `Required unit: ${blockSettings.numeric.requiredUnit}` }, { status: 400 });
+        }
+      }
     }
 
     const existingAnswerRes = await supabase
@@ -313,11 +346,25 @@ export async function POST(
         .eq('student_id', user.id)
         .eq('assignment_id', resolvedParams.assignmentId);
       const answered = new Set((answeredRows || []).map((r: any) => r.block_id));
-      const remedial = (allBlocks || []).find((candidate: any) => {
-        const candidateSettings = normalizeBlockSettings(candidate.settings || {});
-        return !answered.has(candidate.id) && candidateSettings.tags.includes('remedial');
-      });
-      adaptiveNextBlockId = remedial?.id || null;
+      const unresolvedBlocks = (allBlocks || []).filter((candidate: any) => !answered.has(candidate.id));
+      const ruleMatch = resolveAdaptiveNextBlockId(
+        assignmentSettings.advanced.adaptiveRules || [],
+        {
+          blockId: resolvedParams.blockId,
+          isCorrect,
+          score,
+        },
+        unresolvedBlocks.map((b: any) => ({ id: b.id, settings: b.settings })),
+      );
+      if (ruleMatch) {
+        adaptiveNextBlockId = ruleMatch;
+      } else {
+        const remedial = unresolvedBlocks.find((candidate: any) => {
+          const candidateSettings = normalizeBlockSettings(candidate.settings || {});
+          return candidateSettings.tags.includes('remedial');
+        });
+        adaptiveNextBlockId = remedial?.id || null;
+      }
     }
 
     return NextResponse.json({

@@ -43,7 +43,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const validation = await validateBody(request, gradeSubmissionSchema)
   if ('error' in validation) return validation.error
 
-  const { rubricScores, feedback } = validation.data
+  const { grade, rubricScores, feedback } = validation.data
 
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore)
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const accessError = await requireTeacherAccess(supabase, classId, user.id)
   if (accessError) return accessError
 
-  let calculatedScore = 0
+  let calculatedScore: number | null = null
 
   if (rubricScores && rubricScores.length > 0) {
     log('Resetting existing rubric scores')
@@ -93,20 +93,36 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .in('id', rubricScores.map((s: any) => s.rubric_item_id))
 
     if (rubricItems) {
+      let weightedScore = 0
+      let totalWeight = 0
       rubricItems.forEach((item: any) => {
         const scoreData = rubricScores.find((s: any) => s.rubric_item_id === item.id)
         if (!scoreData || !item.max_score) return
-        calculatedScore += (scoreData.score / item.max_score) * item.weight
+        const weight = Number(item.weight || 1)
+        weightedScore += (scoreData.score / item.max_score) * 100 * weight
+        totalWeight += weight
       })
+      calculatedScore = totalWeight > 0 ? weightedScore / totalWeight : 0
       log('Calculated score', calculatedScore)
     }
+  }
+
+  if (grade === null && (!rubricScores || rubricScores.length === 0) && !feedback) {
+    return NextResponse.json({ error: 'Nothing to grade. Provide grade, rubricScores, or feedback.' }, { status: 400 })
   }
 
   const updateData: any = {
     status: 'graded',
     graded_at: new Date().toISOString(),
-    graded_by: user.id,
-    calculated_grade: calculatedScore
+    graded_by: user.id
+  }
+
+  if (typeof grade === 'number') {
+    updateData.grade = grade
+    updateData.calculated_grade = grade
+  } else if (typeof calculatedScore === 'number') {
+    updateData.grade = calculatedScore
+    updateData.calculated_grade = calculatedScore
   }
 
   if (feedback) updateData.feedback = feedback

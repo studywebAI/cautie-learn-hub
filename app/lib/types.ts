@@ -262,9 +262,13 @@ export type ClassAnalyticsStudentRow = {
   subjectsWorked: string[];
   submissionsCount: number;
   totalStudyMinutes: number;
+  completionRate: number;
+  averageGrade: number | null;
+  pendingOpenReviews: number;
   averageSubmissionSeconds: number | null;
   warningCount: number;
   lastActivityAt: string | null;
+  lastSubmissionAt: string | null;
   recentTool: {
     toolType: string;
     title: string | null;

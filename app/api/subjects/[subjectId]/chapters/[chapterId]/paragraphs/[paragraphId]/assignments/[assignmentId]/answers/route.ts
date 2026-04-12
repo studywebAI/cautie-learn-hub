@@ -59,6 +59,7 @@ export async function GET(
 
     const safeAnswers = (answers || []).map((answer: any) => ({
       ...answer,
+      answer_data: settings.advanced.reviewModeEnabled ? answer.answer_data : null,
       feedback: feedbackVisible ? answer.feedback : null,
       is_correct: feedbackVisible && settings.grading.showCorrectAnswers ? answer.is_correct : null,
       score: feedbackVisible && settings.grading.showPoints ? answer.score : null,
