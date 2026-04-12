@@ -83,13 +83,15 @@ export function AppSidebar() {
   const [joinSubjectTitle, setJoinSubjectTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTeacherClassId, setActiveTeacherClassId] = useState('');
+  const [storedTeacherClassId, setStoredTeacherClassId] = useState('');
 
   const isTeacher = context?.role === 'teacher';
   const isRailCollapsed = !isPhone && sidebarState === 'collapsed';
   const activeClassTab = searchParams?.get('tab') || '';
-  const teacherSubjectsHref = isTeacher && activeTeacherClassId ? `/subjects?classId=${activeTeacherClassId}` : '/subjects';
-  const teacherManageHref = isTeacher && activeTeacherClassId ? `/class/${activeTeacherClassId}?tab=group` : '/classes';
-  const teacherAgendaHref = isTeacher && activeTeacherClassId ? `/agenda?classId=${activeTeacherClassId}` : '/agenda';
+  const effectiveTeacherClassId = activeTeacherClassId || storedTeacherClassId;
+  const teacherSubjectsHref = isTeacher && effectiveTeacherClassId ? `/subjects?classId=${effectiveTeacherClassId}` : '/subjects';
+  const teacherManageHref = isTeacher && effectiveTeacherClassId ? `/class/${effectiveTeacherClassId}?tab=group` : '/classes';
+  const teacherAgendaHref = isTeacher && effectiveTeacherClassId ? `/agenda?classId=${effectiveTeacherClassId}` : '/agenda';
 
   const menuItems = isTeacher
     ? [
@@ -166,21 +168,37 @@ export function AppSidebar() {
     [subjectItems]
   );
 
+  const persistTeacherClassId = (nextClassId: string) => {
+    if (!nextClassId) return;
+    setActiveTeacherClassId(nextClassId);
+    setStoredTeacherClassId(nextClassId);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('studyweb-last-class-id', nextClassId);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const classIdFromStorage = window.localStorage.getItem('studyweb-last-class-id') || '';
+    if (!classIdFromStorage) return;
+    setStoredTeacherClassId(classIdFromStorage);
+    setActiveTeacherClassId((current) => current || classIdFromStorage);
+  }, []);
+
 
   useEffect(() => {
     if (!isTeacher) return;
-    if (classDropdownItems.length === 0) {
-      setActiveTeacherClassId('');
-      return;
-    }
+    if (classDropdownItems.length === 0) return;
 
     const storageClassId =
       typeof window !== 'undefined' ? window.localStorage.getItem('studyweb-last-class-id') : null;
-    const preferredClassId = activeTeacherClassId || storageClassId || classDropdownItems[0].id;
+    const preferredClassId = activeTeacherClassId || storedTeacherClassId || storageClassId || classDropdownItems[0].id;
     const preferredClass =
       classDropdownItems.find((classItem) => classItem.id === preferredClassId) || classDropdownItems[0];
-    setActiveTeacherClassId(preferredClass.id);
-  }, [isTeacher, classDropdownItems, activeTeacherClassId]);
+    if (preferredClass.id !== activeTeacherClassId || preferredClass.id !== storedTeacherClassId) {
+      persistTeacherClassId(preferredClass.id);
+    }
+  }, [isTeacher, classDropdownItems, activeTeacherClassId, storedTeacherClassId]);
 
   useEffect(() => {
     setDropdown(null);
@@ -189,12 +207,13 @@ export function AppSidebar() {
   useEffect(() => {
     const classMatch = pathname?.match(/^\/class\/([^/?#]+)/);
     const classIdFromPath = classMatch?.[1];
-    if (!classIdFromPath) return;
-    setActiveTeacherClassId(classIdFromPath);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('studyweb-last-class-id', classIdFromPath);
+    const classIdFromQuery = searchParams?.get('classId');
+    const nextClassId = classIdFromPath || classIdFromQuery || '';
+    if (!nextClassId) return;
+    if (nextClassId !== activeTeacherClassId || nextClassId !== storedTeacherClassId) {
+      persistTeacherClassId(nextClassId);
     }
-  }, [pathname]);
+  }, [pathname, searchParams, activeTeacherClassId, storedTeacherClassId]);
 
   useEffect(() => {
     if (!dropdown) return;
@@ -323,10 +342,7 @@ export function AppSidebar() {
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || 'Failed to create class');
       if (data?.id) {
-        setActiveTeacherClassId(data.id);
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('studyweb-last-class-id', data.id);
-        }
+        persistTeacherClassId(data.id);
         await waitForClassAvailability(data.id);
         await loadDropdownData('classes');
         router.replace(resolveTeacherClassRoute(data.id));
@@ -399,10 +415,7 @@ export function AppSidebar() {
       }
       const joinedClassId = data?.class?.id;
       if (joinedClassId) {
-        setActiveTeacherClassId(joinedClassId);
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('studyweb-last-class-id', joinedClassId);
-        }
+        persistTeacherClassId(joinedClassId);
         router.push(resolveTeacherClassRoute(joinedClassId));
       }
       setJoinCode('');
@@ -640,16 +653,13 @@ export function AppSidebar() {
                 href={dropdown.kind === 'classes' && isTeacher ? resolveTeacherClassRoute(entry.id) : entry.href}
                 className={cn(
                   'flex items-center justify-between gap-2 truncate rounded-xl px-2.5 py-2 text-[13px] transition-colors',
-                  dropdown.kind === 'classes' && entry.id === activeTeacherClassId
+                  dropdown.kind === 'classes' && entry.id === effectiveTeacherClassId
                     ? 'bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]'
                     : 'hover:bg-sidebar-accent text-muted-foreground hover:text-[hsl(var(--sidebar-active-foreground))]'
                 )}
                 onClick={() => {
                   if (dropdown.kind === 'classes' && isTeacher) {
-                    setActiveTeacherClassId(entry.id);
-                    if (typeof window !== 'undefined') {
-                      window.localStorage.setItem('studyweb-last-class-id', entry.id);
-                    }
+                    persistTeacherClassId(entry.id);
                   }
                   resetInlinePanels();
                   setDropdown(null);
@@ -657,7 +667,7 @@ export function AppSidebar() {
                 }}
               >
                 <span className="truncate">{entry.label}</span>
-                {dropdown.kind === 'classes' && entry.id === activeTeacherClassId && (
+                {dropdown.kind === 'classes' && entry.id === effectiveTeacherClassId && (
                   <Check className="h-3.5 w-3.5 text-foreground/80" />
                 )}
               </Link>
@@ -679,14 +689,11 @@ export function AppSidebar() {
             class
           </label>
           <select
-            value={activeTeacherClassId}
+            value={effectiveTeacherClassId}
             onChange={(event) => {
               const nextClassId = event.target.value;
               if (!nextClassId) return;
-              setActiveTeacherClassId(nextClassId);
-              if (typeof window !== 'undefined') {
-                window.localStorage.setItem('studyweb-last-class-id', nextClassId);
-              }
+              persistTeacherClassId(nextClassId);
               router.push(resolveTeacherClassRoute(nextClassId));
               setOpenMobile(false);
             }}
