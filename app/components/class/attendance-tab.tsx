@@ -55,6 +55,7 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
   const [preferences, setPreferences] = useState(DEFAULT_CLASS_PREFERENCES);
   const { toast } = useToast();
   const selectedStudentId = searchParams?.get('studentId') || '';
+  const quickAction = searchParams?.get('quick') || '';
 
   // Check if data was passed via props (from cache) or fetch it
   const fetchAttendance = async (forceRefresh = false) => {
@@ -123,6 +124,26 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
     };
     void loadPreferences();
   }, [classId]);
+
+  useEffect(() => {
+    if (!selectedStudentId || !quickAction) return;
+    const student = students.find((entry) => entry.id === selectedStudentId);
+    if (!student) return;
+    if (quickAction === 'note') {
+      setSelectedStudent(student);
+      setNoteText(student.note || '');
+      setIsNoteDialogOpen(true);
+      return;
+    }
+    if (quickAction === 'event') {
+      setSelectedStudent(student);
+      setPendingAction({
+        studentId: student.id,
+        isPresent: student.isPresent ?? true,
+      });
+      setIsConfirmDialogOpen(true);
+    }
+  }, [quickAction, selectedStudentId, students]);
 
   // Method to refresh data after making changes
   const refreshData = useCallback(() => {

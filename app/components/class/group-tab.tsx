@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Users, Clock, TrendingUp, FileText, CheckCircle, Activity, Star, ChevronDown, ChevronRight, ClipboardCheck, CalendarDays, Library, UserPlus, Settings } from 'lucide-react';
+import { Users, Clock, Activity, ChevronDown, ChevronRight, ClipboardCheck, CalendarDays, Library, UserPlus, Settings, Plus, NotebookPen, Ellipsis, FolderOpen, ListChecks } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Link from 'next/link';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
@@ -86,7 +86,7 @@ type GroupData = {
 type GroupTabProps = {
   classId: string;
   isTeacher: boolean;
-  cachedData?: GroupData; // Accept cached data from parent
+  cachedData?: GroupData;
   parentLoading?: boolean;
 };
 
@@ -94,70 +94,37 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
   const appContext = useContext(AppContext) as AppContextType | null;
   const language = appContext?.language || 'en';
   const isDutch = language === 'nl';
+
   const t = {
     failedLoad: isDutch ? 'Kon groepsdata niet laden' : 'Failed to load group data',
     teachers: isDutch ? 'Docenten' : 'Teachers',
     students: isDutch ? 'Leerlingen' : 'Students',
     noTeachers: isDutch ? 'Geen docenten gevonden' : 'No teachers found',
-    noSubjectsYet: isDutch ? 'Nog geen vakken gekoppeld' : 'No linked subjects yet',
-    online: isDutch ? 'Online' : 'Online',
-    offline: isDutch ? 'Offline' : 'Offline',
-    allStudents: isDutch ? 'Alle leerlingen' : 'All students',
     noStudentsFound: isDutch ? 'Geen leerlingen gevonden' : 'No students found',
-    never: isDutch ? 'Nooit' : 'Never',
-    justNow: isDutch ? 'Net nu' : 'Just now',
-    minAgo: (m: number) => (isDutch ? `${m}m geleden` : `${m}m ago`),
-    hourAgo: (h: number) => (isDutch ? `${h}u geleden` : `${h}h ago`),
     noEmail: isDutch ? 'Geen e-mail' : 'No email',
-    progress: isDutch ? 'Voortgang' : 'Progress',
-    assignments: isDutch ? 'Opdrachten' : 'Assignments',
-    avgGrade: isDutch ? 'Gem. cijfer' : 'Avg Grade',
-    lastGrade: isDutch ? 'Laatste cijfer' : 'Last grade',
-    complete: isDutch ? 'Voltooid' : 'Complete',
-    submitted: isDutch ? 'Ingeleverd' : 'Submitted',
-    graded: isDutch ? 'Beoordeeld' : 'Graded',
-    score: isDutch ? 'Score' : 'Score',
-    recentActivity: isDutch ? 'Recente activiteit' : 'Recent Activity',
-    noRecentActivity: isDutch ? 'Geen recente activiteit' : 'No recent activity',
-    recentSubmissions: isDutch ? 'Recente inzendingen' : 'Recent Submissions',
-    noSubmissions: isDutch ? 'Nog geen inzendingen' : 'No submissions yet',
-    viewAssignments: isDutch ? 'Bekijk opdrachten' : 'View Assignments',
-    viewProgress: isDutch ? 'Bekijk voortgang' : 'View Progress',
-    linkedSubjects: isDutch ? 'Gekoppelde vakken' : 'Linked subjects',
-    noLinkedSubjects: isDutch ? 'Nog geen vakken gekoppeld.' : 'No linked subjects yet.',
-    unknownOwner: isDutch ? 'Onbekende eigenaar' : 'Unknown owner',
-    offlineSince: (when: string) => (isDutch ? `Offline - ${when}` : `Offline - ${when}`),
     people: isDutch ? 'personen' : 'people',
     teacherListHint: isDutch ? 'Klik een docent om gekoppelde vakken te bekijken' : 'Click a teacher to view linked subjects',
-    studentListHint: isDutch ? 'Selecteer een leerling voor details en prestaties' : 'Select a student for details and performance',
+    studentListHint: isDutch ? 'Klik een leerling voor acties en details' : 'Click a student for actions and details',
+    online: isDutch ? 'Online' : 'Online',
+    offline: isDutch ? 'Offline' : 'Offline',
     expand: isDutch ? 'Uitklappen' : 'Expand',
     collapse: isDutch ? 'Inklappen' : 'Collapse',
-    viewGrades: isDutch ? 'Bekijk cijfers' : 'View grades',
-    viewAttendance: isDutch ? 'Bekijk aanwezigheid' : 'View attendance',
-    viewSchedule: isDutch ? 'Bekijk rooster' : 'View schedule',
-    viewSubjects: isDutch ? 'Bekijk vakken' : 'View subjects',
-    manageGroup: isDutch ? 'Beheer groep' : 'Manage group',
-    viewAnalytics: isDutch ? 'Bekijk analytics' : 'View analytics',
-    viewSettings: isDutch ? 'Bekijk instellingen' : 'View settings',
-    viewLogs: isDutch ? 'Bekijk logs' : 'View logs',
-    invitePeople: isDutch ? 'Nodig uit' : 'Invite people',
   };
 
   const [data, setData] = useState<GroupData | null>(cachedData || null);
   const [loading, setLoading] = useState(!cachedData && !parentLoading);
+  const [error, setError] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [teachersCollapsed, setTeachersCollapsed] = useState(false);
   const [studentsCollapsed, setStudentsCollapsed] = useState(false);
-  const [scheduleEnabled, setScheduleEnabled] = useState(false);
 
   useEffect(() => {
     setSelectedStudent(null);
     setSelectedTeacher(null);
-    if (!cachedData) {
-      setData(null);
-    }
+    if (!cachedData) setData(null);
     setLoading(!cachedData && !parentLoading);
+    setError(null);
   }, [classId, cachedData, parentLoading]);
 
   useEffect(() => {
@@ -168,134 +135,77 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
       const parsed = JSON.parse(saved) as { teachersCollapsed?: boolean; studentsCollapsed?: boolean };
       setTeachersCollapsed(parsed.teachersCollapsed === true);
       setStudentsCollapsed(parsed.studentsCollapsed === true);
-    } catch {
-      // ignore invalid cache
-    }
+    } catch {}
   }, [classId]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(
-      `group-panel-state:${classId}`,
-      JSON.stringify({ teachersCollapsed, studentsCollapsed })
-    );
+    window.localStorage.setItem(`group-panel-state:${classId}`, JSON.stringify({ teachersCollapsed, studentsCollapsed }));
   }, [classId, teachersCollapsed, studentsCollapsed]);
-
-  useEffect(() => {
-    const loadClassPreferences = async () => {
-      try {
-        const response = await fetch(`/api/classes/${classId}`);
-        if (!response.ok) return;
-        const result = await response.json();
-        setScheduleEnabled(result?.preferences?.school_schedule_enabled === true);
-      } catch {
-        setScheduleEnabled(false);
-      }
-    };
-    void loadClassPreferences();
-  }, [classId]);
 
   useEffect(() => {
     if (!cachedData) return;
     setData(cachedData);
     setLoading(false);
-    void logClassTabEvent({
-      classId,
-      tab: 'group',
-      event: 'cache_hydrated',
-      stage: 'data',
-      level: 'debug',
-    });
-  }, [classId, cachedData]);
+  }, [cachedData]);
 
   useEffect(() => {
-    void logClassTabEvent({
-      classId,
-      tab: 'group',
-      event: 'mount',
-      stage: 'ui',
-      level: 'info',
-    });
-
-    // Parent route already preloads active tab data; avoid duplicate fetch + spinner flicker.
     if (cachedData || parentLoading || data) return;
     void fetchGroupData();
   }, [classId, cachedData, parentLoading, data]);
 
   const fetchGroupData = async () => {
-    if (!data) {
-      setLoading(true);
-    }
-    void logClassTabEvent({
-      classId,
-      tab: 'group',
-      event: 'load_start',
-      stage: 'data',
-      level: 'debug',
-    });
+    if (!data) setLoading(true);
+    setError(null);
     try {
       const response = await fetch(`/api/classes/${classId}/group`);
-      if (response.ok) {
-        const result = await response.json();
-        setData(result);
-        void logClassTabEvent({
-          classId,
-          tab: 'group',
-          event: 'load_success',
-          stage: 'data',
-          level: 'debug',
-          meta: {
-            student_count: (result?.students || []).length,
-            teacher_count: (result?.teachers || []).length,
-          },
-        });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload?.error || `Request failed (${response.status})`);
       }
-    } catch (error) {
-      console.error('Failed to fetch group data:', error);
-      void logClassTabEvent({
-        classId,
-        tab: 'group',
-        event: 'load_error',
-        stage: 'data',
-        level: 'error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      const result = await response.json();
+      setData(result);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : t.failedLoad;
+      setError(msg);
+      setData(null);
+      console.error('Failed to fetch group data:', e);
     } finally {
       setLoading(false);
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const getInitials = (name: string) => name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
   const formatLastSeen = (lastSeen: string | null) => {
-    if (!lastSeen) return t.never;
+    if (!lastSeen) return 'never';
     const date = new Date(lastSeen);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return t.justNow;
-    if (diffMins < 60) return t.minAgo(diffMins);
-    if (diffMins < 1440) return t.hourAgo(Math.floor(diffMins / 60));
+    if (diffMins < 1) return 'now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
     return date.toLocaleDateString();
   };
 
-  const filteredStudents = (data?.students || [])
-    .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically for consistency
-
-  const getActionIcon = (action: string) => {
-    if (action.includes('create')) return <CheckCircle className="h-3 w-3 text-foreground/70" />;
-    if (action.includes('edit') || action.includes('update')) return <Activity className="h-3 w-3 text-foreground/70" />;
-    if (action.includes('submit')) return <FileText className="h-3 w-3 text-foreground/70" />;
-    return <Clock className="h-3 w-3 text-foreground/60" />;
+  const summarizeSignals = (student: Student) => {
+    const actions = (student.recentActivity || []).map((item) => item.action.toLowerCase());
+    const noteCount = (student.recentActivity || []).filter((item) => item.action.toLowerCase().includes('note') || item.entityType.toLowerCase().includes('note')).length;
+    const missedHw = actions.some((action) => action.includes('homework') && (action.includes('miss') || action.includes('incomplete')));
+    const attendanceAction = actions.find((action) => action.includes('attendance') || action.includes('present') || action.includes('absent'));
+    const lastAttendance = attendanceAction ? (attendanceAction.includes('absent') ? 'Absent' : 'Present') : null;
+    const lastActivityAt = student.recentActivity?.[0]?.createdAt || student.lastSeen;
+    return {
+      noteCount,
+      missedHw,
+      lastAttendance,
+      lastActivity: formatLastSeen(lastActivityAt || null),
+      lastNoteAt: student.recentActivity?.find((item) => item.action.toLowerCase().includes('note'))?.createdAt || null,
+    };
   };
+
+  const filteredStudents = (data?.students || []).sort((a, b) => a.name.localeCompare(b.name));
 
   if ((loading || parentLoading) && !data) {
     return (
@@ -309,7 +219,10 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
     return (
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
-          {t.failedLoad}
+          <div className="space-y-3">
+            <p>{error || t.failedLoad}</p>
+            <Button variant="outline" onClick={() => void fetchGroupData()}>Retry</Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -321,286 +234,147 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
         <CardContent className="space-y-4 pt-6">
           <div className="grid gap-4 xl:grid-cols-[22rem_minmax(0,1fr)]">
             <div className="rounded-2xl bg-muted/20">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setTeachersCollapsed((value) => !value)}
-                className="inline-flex items-center gap-1.5 text-left"
-                aria-label={teachersCollapsed ? t.expand : t.collapse}
-              >
-                {teachersCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                <CardTitle className="text-base">{t.teachers}</CardTitle>
-              </button>
-              <span className="text-xs text-muted-foreground">
-                {data.teachers.length} {t.people}
-              </span>
-            </div>
-            {!teachersCollapsed && <p className="text-xs text-muted-foreground">{t.teacherListHint}</p>}
-          </CardHeader>
-          {!teachersCollapsed && <CardContent className="space-y-2">
-            {(data.teachers || []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t.noTeachers}</p>
-            ) : (
-              [...data.teachers]
-                .sort((a, b) => (a.email || a.name).localeCompare(b.email || b.name))
-                .map((teacher) => (
-                  <button
-                    type="button"
-                    key={teacher.id}
-                    className="w-full rounded-xl bg-muted/30 p-3 text-left transition-colors hover:bg-muted/55"
-                    onClick={() => {
-                      setSelectedTeacher(teacher);
-                      void logClassTabEvent({
-                        classId,
-                        tab: 'group',
-                        event: 'teacher_opened',
-                        stage: 'action',
-                        level: 'debug',
-                        meta: { teacher_id: teacher.id },
-                      });
-                    }}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{teacher.email || teacher.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {(teacher.subjects || []).length > 0
-                            ? (teacher.subjects || []).map((s) => s.title).join(', ')
-                            : t.noSubjectsYet}
-                        </p>
-                      </div>
-                    </div>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <button type="button" onClick={() => setTeachersCollapsed((v) => !v)} className="inline-flex items-center gap-1.5 text-left" aria-label={teachersCollapsed ? t.expand : t.collapse}>
+                    {teachersCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    <CardTitle className="text-base">{t.teachers}</CardTitle>
                   </button>
-                ))
-            )}
-          </CardContent>}
+                  <span className="text-xs text-muted-foreground">{data.teachers.length} {t.people}</span>
+                </div>
+                {!teachersCollapsed && <p className="text-xs text-muted-foreground">{t.teacherListHint}</p>}
+              </CardHeader>
+              {!teachersCollapsed && (
+                <CardContent className="space-y-2">
+                  {data.teachers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t.noTeachers}</p>
+                  ) : (
+                    [...data.teachers].sort((a, b) => (a.email || a.name).localeCompare(b.email || b.name)).map((teacher) => (
+                      <button key={teacher.id} type="button" className="w-full rounded-xl bg-muted/30 p-3 text-left transition-colors hover:bg-muted/55" onClick={() => setSelectedTeacher(teacher)}>
+                        <p className="truncate font-medium">{teacher.email || teacher.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{(teacher.subjects || []).map((s) => s.title).join(', ') || 'No linked subjects yet'}</p>
+                      </button>
+                    ))
+                  )}
+                </CardContent>
+              )}
             </div>
 
             <div className="rounded-2xl bg-muted/20">
               <CardContent className="pt-6">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setStudentsCollapsed((value) => !value)}
-                    className="inline-flex items-center gap-1.5 text-left"
-                    aria-label={studentsCollapsed ? t.expand : t.collapse}
-                  >
-                    {studentsCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    <h3 className="text-base font-semibold">{t.students}</h3>
-                  </button>
-                  {!studentsCollapsed && <p className="text-xs text-muted-foreground">{t.studentListHint}</p>}
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <button type="button" onClick={() => setStudentsCollapsed((v) => !v)} className="inline-flex items-center gap-1.5 text-left" aria-label={studentsCollapsed ? t.expand : t.collapse}>
+                      {studentsCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      <h3 className="text-base font-semibold">{t.students}</h3>
+                    </button>
+                    {!studentsCollapsed && <p className="text-xs text-muted-foreground">{t.studentListHint}</p>}
+                  </div>
+                  {!studentsCollapsed && <span className="text-xs text-muted-foreground">{filteredStudents.length} {t.people}</span>}
                 </div>
-                {!studentsCollapsed && (
-                  <span className="text-xs text-muted-foreground">{filteredStudents.length} {t.people}</span>
-                )}
-              </div>
-            </CardContent>
-          
+              </CardContent>
 
-          {!studentsCollapsed && <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
-        {filteredStudents.map(student => (
-          <button
-            type="button"
-            key={student.id}
-            className="w-full rounded-xl bg-muted/30 p-3 text-left transition-colors hover:bg-muted/55"
-            onClick={() => {
-              setSelectedStudent(student);
-              void logClassTabEvent({
-                classId,
-                tab: 'group',
-                event: 'student_opened',
-                stage: 'action',
-                level: 'debug',
-                meta: { student_id: student.id },
-              });
-            }}
-          >
-            <div className="flex items-start gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{student.name}</p>
-                <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {student.stats.completedAssignments}/{student.stats.totalAssignments} {t.assignments.toLowerCase()} · {t.avgGrade}: {student.stats.averageGrade !== null ? `${student.stats.averageGrade}%` : '-'}
-                </p>
-              </div>
-            </div>
-          </button>
-        ))}
-          </div>}
-          {!studentsCollapsed && filteredStudents.length === 0 && (
-            <div className="rounded-xl bg-muted/20 py-12 text-center text-muted-foreground">
-              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>{t.noStudentsFound}</p>
-            </div>
-          )}
+              {!studentsCollapsed && (
+                <div className="space-y-2 px-6 pb-6">
+                  {filteredStudents.map((student) => {
+                    const signals = summarizeSignals(student);
+                    return (
+                      <button
+                        type="button"
+                        key={student.id}
+                        className="w-full rounded-xl bg-muted/35 px-3 py-2 text-left transition-colors hover:bg-muted/55"
+                        onClick={() => {
+                          setSelectedStudent(student);
+                          void logClassTabEvent({ classId, tab: 'group', event: 'student_opened', stage: 'action', level: 'debug', meta: { student_id: student.id } });
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8"><AvatarFallback>{getInitials(student.name)}</AvatarFallback></Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">{student.name}</p>
+                            <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
+                          </div>
+
+                          <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
+                            <span>Last: {signals.lastAttendance || '—'}</span>
+                            <span>Activity: {signals.lastActivity}</span>
+                            {signals.missedHw && <Badge variant="outline">Missed HW</Badge>}
+                            {signals.noteCount > 0 && <span>?? {signals.noteCount}</span>}
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${student.id}&quick=event`} className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70" onClick={(e) => e.stopPropagation()} title="Add Event">
+                              <Plus className="h-4 w-4" />
+                            </Link>
+                            <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${student.id}&quick=note`} className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70" onClick={(e) => e.stopPropagation()} title="Add Note">
+                              <NotebookPen className="h-4 w-4" />
+                            </Link>
+                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground" title="Open">
+                              <Ellipsis className="h-4 w-4" />
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+
+                  {filteredStudents.length === 0 && (
+                    <div className="rounded-xl bg-muted/20 py-12 text-center text-muted-foreground">
+                      <Users className="mx-auto mb-4 h-12 w-12 opacity-50" />
+                      <p>{t.noStudentsFound}</p>
+                    </div>
+                  )}
                 </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Student Detail Dialog */}
       <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl border-none">
           {selectedStudent && (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback>{getInitials(selectedStudent.name)}</AvatarFallback>
-                  </Avatar>
+                  <Avatar className="h-10 w-10"><AvatarFallback>{getInitials(selectedStudent.name)}</AvatarFallback></Avatar>
                   <span>{selectedStudent.name}</span>
-                  {selectedStudent.onlineStatus === 'online' ? (
-                    <Badge className="bg-green-500">{t.online}</Badge>
-                  ) : (
-                    <Badge variant="secondary">{t.offlineSince(formatLastSeen(selectedStudent.lastSeen))}</Badge>
-                  )}
+                  {selectedStudent.onlineStatus === 'online' ? <Badge className="bg-green-500">{t.online}</Badge> : <Badge variant="secondary">{t.offline}</Badge>}
                 </DialogTitle>
               </DialogHeader>
               <p className="text-sm text-muted-foreground">{selectedStudent.email || t.noEmail}</p>
-               
-              <div className="space-y-6 mt-4">
-                {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-3 bg-muted/45 rounded-xl">
-                    <p className="text-2xl font-bold">{selectedStudent.stats.completionRate}%</p>
-                    <p className="text-xs text-muted-foreground">{t.complete}</p>
-                  </div>
-                  <div className="text-center p-3 bg-muted/45 rounded-xl">
-                    <p className="text-2xl font-bold">{selectedStudent.stats.completedAssignments}</p>
-                    <p className="text-xs text-muted-foreground">{t.submitted}</p>
-                  </div>
-                  <div className="text-center p-3 bg-muted/45 rounded-xl">
-                    <p className="text-2xl font-bold">{selectedStudent.stats.gradedAssignments}</p>
-                    <p className="text-xs text-muted-foreground">{t.graded}</p>
-                  </div>
-                  <div className="text-center p-3 bg-muted/45 rounded-xl">
-                    <p className="text-2xl font-bold">
-                      {selectedStudent.stats.averageGrade !== null ? `${selectedStudent.stats.averageGrade}%` : '-'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{t.avgGrade}</p>
+
+              <div className="mt-4 space-y-4">
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=grades&studentId=${selectedStudent.id}`}><ClipboardCheck className="mr-2 h-4 w-4" />Grades</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/subjects?classId=${classId}`}><Library className="mr-2 h-4 w-4" />Subjects</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=analytics&studentId=${selectedStudent.id}`}><ListChecks className="mr-2 h-4 w-4" />Completion</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}`}><CalendarDays className="mr-2 h-4 w-4" />Attendance</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/other/materials?classId=${classId}`}><FolderOpen className="mr-2 h-4 w-4" />Files</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}&quick=note`}><NotebookPen className="mr-2 h-4 w-4" />Notes</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=grades&studentId=${selectedStudent.id}`}><Plus className="mr-2 h-4 w-4" />Assign HW</Link></Button>
+                </div>
+
+                <div className="rounded-xl bg-muted/35 p-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span>Last activity: {formatLastSeen(selectedStudent.recentActivity?.[0]?.createdAt || selectedStudent.lastSeen || null)}</span>
+                    <span>Last note: {selectedStudent.recentActivity?.find((event) => event.action.toLowerCase().includes('note'))?.createdAt ? new Date(selectedStudent.recentActivity.find((event) => event.action.toLowerCase().includes('note'))!.createdAt).toLocaleDateString() : '-'}</span>
+                    <span>Recent submissions: {selectedStudent.recentSubmissions.length}</span>
                   </div>
                 </div>
 
-                {/* Last Graded */}
-                {selectedStudent.lastGraded && (
-                  <div className="p-4 bg-muted/45 rounded-xl">
-                    <h4 className="font-semibold flex items-center gap-2 mb-2">
-                      <Star className="h-4 w-4 text-foreground/70" />
-                      {t.lastGrade}
-                    </h4>
-                    <div className="flex items-center justify-between">
-                      <span>{t.score}: {selectedStudent.lastGraded.grade}%</span>
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(selectedStudent.lastGraded.submittedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Recent Activity */}
-                <div>
-                  <h4 className="font-semibold flex items-center gap-2 mb-3">
-                    <Activity className="h-4 w-4" />
-                    {t.recentActivity}
-                  </h4>
-                  {selectedStudent.recentActivity.length > 0 ? (
+                {selectedStudent.recentActivity.length > 0 && (
+                  <div>
+                    <h4 className="mb-2 text-sm font-semibold">Recent timeline</h4>
                     <div className="space-y-2">
-                      {selectedStudent.recentActivity.map(activity => (
-                        <div key={activity.id} className="flex items-center gap-2 p-2 rounded-xl bg-muted/35 text-sm">
-                          {getActionIcon(activity.action)}
+                      {selectedStudent.recentActivity.slice(0, 3).map((activity) => (
+                        <div key={activity.id} className="flex items-center gap-2 rounded-xl bg-muted/30 p-2 text-sm">
+                          <Activity className="h-3.5 w-3.5 text-foreground/70" />
                           <span className="flex-1 capitalize">{activity.action.replace(/_/g, ' ')}</span>
-                          <span className="text-muted-foreground text-xs">
-                            {new Date(activity.createdAt).toLocaleDateString()}
-                          </span>
+                          <span className="text-xs text-muted-foreground">{new Date(activity.createdAt).toLocaleDateString()}</span>
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">{t.noRecentActivity}</p>
-                  )}
-                </div>
-
-                {/* Recent Submissions */}
-                <div>
-                  <h4 className="font-semibold flex items-center gap-2 mb-3">
-                    <FileText className="h-4 w-4" />
-                    {t.recentSubmissions}
-                  </h4>
-                  {selectedStudent.recentSubmissions.length > 0 ? (
-                    <div className="space-y-2">
-                      {selectedStudent.recentSubmissions.map(submission => (
-                        <div key={submission.id} className="flex items-center justify-between p-2 rounded-xl bg-muted/35 text-sm">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            {submission.grade !== null ? (
-                              <Star className="h-4 w-4 text-foreground/70 shrink-0" />
-                            ) : submission.status === 'submitted' ? (
-                              <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                            ) : (
-                              <Clock className="h-4 w-4 text-gray-400 shrink-0" />
-                            )}
-                            <span className="truncate">{submission.assignmentTitle}</span>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {submission.grade !== null && (
-                              <Badge variant="secondary">
-                                {submission.grade}%
-                              </Badge>
-                            )}
-                            <span className="text-xs text-muted-foreground">
-                              {submission.submittedAt 
-                                ? new Date(submission.submittedAt).toLocaleDateString()
-                                : new Date(submission.createdAt).toLocaleDateString()
-                              }
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">{t.noSubmissions}</p>
-                  )}
-                </div>
-
-                {/* Quick Links for Teachers */}
-                {isTeacher && (
-                  <div className="grid grid-cols-1 gap-2 pt-4 md:grid-cols-2">
-                    <Button variant="outline" className="flex-1" asChild>
-                      <Link prefetch={false} href={`/class/${classId}?tab=grades&studentId=${selectedStudent.id}`}>
-                        <ClipboardCheck className="h-4 w-4 mr-2" />
-                        {t.viewGrades}
-                      </Link>
-                    </Button>
-                    <Button variant="outline" className="flex-1" asChild>
-                      <Link prefetch={false} href={`/class/${classId}?tab=analytics&studentId=${selectedStudent.id}`}>
-                        <FileText className="h-4 w-4 mr-2" />
-                        {t.viewAnalytics}
-                      </Link>
-                    </Button>
-                    <Button variant="outline" className="flex-1" asChild>
-                      <Link prefetch={false} href={`/class/${classId}?tab=group&studentId=${selectedStudent.id}`}>
-                        <TrendingUp className="h-4 w-4 mr-2" />
-                        {t.manageGroup}
-                      </Link>
-                    </Button>
-                    <Button variant="outline" className="flex-1" asChild>
-                      <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}`}>
-                        <CalendarDays className="h-4 w-4 mr-2" />
-                        {t.viewAttendance}
-                      </Link>
-                    </Button>
-                    {scheduleEnabled && (
-                      <Button variant="outline" className="flex-1" asChild>
-                        <Link prefetch={false} href={`/agenda?classId=${classId}`}>
-                          <CalendarDays className="h-4 w-4 mr-2" />
-                          {t.viewSchedule}
-                        </Link>
-                      </Button>
-                    )}
                   </div>
                 )}
               </div>
@@ -609,7 +383,6 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
         </DialogContent>
       </Dialog>
 
-      {/* Teacher Detail Dialog */}
       <Dialog open={!!selectedTeacher} onOpenChange={() => setSelectedTeacher(null)}>
         <DialogContent className="max-w-xl rounded-2xl border-none">
           {selectedTeacher && (
@@ -619,66 +392,13 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
               </DialogHeader>
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <Button variant="outline" asChild>
-                <Link prefetch={false} href={`/class/${classId}?tab=grades`}>
-                      <Library className="h-4 w-4 mr-2" />
-                      {t.viewGrades}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=group`}>
-                      <Users className="h-4 w-4 mr-2" />
-                      {t.manageGroup}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=analytics`}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      {t.viewAnalytics}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=settings`}>
-                      <Settings className="h-4 w-4 mr-2" />
-                      {t.viewSettings}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=logs`}>
-                      <Clock className="h-4 w-4 mr-2" />
-                      {t.viewLogs}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=invite`}>
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      {t.invitePeople}
-                    </Link>
-                  </Button>
-                  {scheduleEnabled && (
-                    <Button variant="outline" asChild>
-                      <Link prefetch={false} href={`/agenda?classId=${classId}`}>
-                        <CalendarDays className="h-4 w-4 mr-2" />
-                        {t.viewSchedule}
-                      </Link>
-                    </Button>
-                  )}
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=grades`}><Library className="mr-2 h-4 w-4" />View grades</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=group`}><Users className="mr-2 h-4 w-4" />Manage group</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=analytics`}><Activity className="mr-2 h-4 w-4" />View analytics</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=settings`}><Settings className="mr-2 h-4 w-4" />View settings</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=invite`}><UserPlus className="mr-2 h-4 w-4" />Invite people</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=attendance`}><Clock className="mr-2 h-4 w-4" />Attendance</Link></Button>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {t.linkedSubjects}
-                </p>
-                {(selectedTeacher.subjects || []).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t.noLinkedSubjects}</p>
-                ) : (
-                  <div className="space-y-2">
-                    {(selectedTeacher.subjects || []).map((subject) => (
-                      <div key={subject.id} className="rounded-xl bg-muted/35 p-3">
-                        <p className="font-medium">{subject.title}</p>
-                        <p className="text-xs text-muted-foreground">{subject.ownerEmail || subject.ownerName || t.unknownOwner}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </>
           )}
