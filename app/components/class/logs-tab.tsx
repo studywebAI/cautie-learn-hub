@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -85,6 +86,8 @@ function formatActor(log: AuditLog) {
 }
 
 export function LogsTab({ classId }: LogsTabProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,7 +114,11 @@ export function LogsTab({ classId }: LogsTabProps) {
       meta: { limit, offset: nextOffset, mode },
     });
     try {
-      const response = await fetch(`/api/classes/${classId}/audit-logs?limit=${limit}&offset=${nextOffset}`);
+      const params = new URLSearchParams();
+      params.set('limit', String(limit));
+      params.set('offset', String(nextOffset));
+      if (studentFilter !== 'all') params.set('student_id', studentFilter);
+      const response = await fetch(`/api/classes/${classId}/audit-logs?${params.toString()}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to load logs');
       const rows: AuditLog[] = (data.logs || []).filter((log: AuditLog) => isImportantLog(log));
@@ -164,6 +171,26 @@ export function LogsTab({ classId }: LogsTabProps) {
     const requestedUserId = searchParams?.get('student_id') || searchParams?.get('user_id') || 'all';
     setStudentFilter(requestedUserId);
   }, [searchParams]);
+
+  const applyStudentFilter = (nextStudentId: string) => {
+    const nextParams = new URLSearchParams(searchParams?.toString() || '');
+    nextParams.set('tab', 'logs');
+    if (nextStudentId === 'all') {
+      nextParams.delete('student_id');
+      nextParams.delete('user_id');
+    } else {
+      nextParams.set('student_id', nextStudentId);
+      nextParams.delete('user_id');
+    }
+    router.replace(`${pathname}?${nextParams.toString()}`);
+  };
+
+  useEffect(() => {
+    setOffset(0);
+    setHasNext(false);
+    setTotalCount(0);
+    void loadLogs('replace');
+  }, [studentFilter]);
 
   const metadataUserFromLabels = (log: AuditLog, key: string): string | null => {
     const labels = log.metadata_user_labels || {};
@@ -314,7 +341,7 @@ export function LogsTab({ classId }: LogsTabProps) {
             </select>
             <select
               value={studentFilter}
-              onChange={(e) => setStudentFilter(e.target.value)}
+              onChange={(e) => applyStudentFilter(e.target.value)}
               className="h-10 rounded-md border border-input bg-background px-3 text-sm"
             >
               <option value="all">All students/actors</option>

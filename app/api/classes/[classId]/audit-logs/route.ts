@@ -39,20 +39,7 @@ export async function GET(
 
     if (entityType) query = query.eq('entity_type', entityType)
     if (userId) query = query.eq('user_id', userId)
-    if (studentId) {
-      // For affected-student filtering we need both:
-      // - actor logs (user_id)
-      // - teacher logs targeting student via metadata.student_id
-      // Load a wider class window then filter server-side.
-      query = (supabase as any)
-        .from('audit_logs')
-        .select('*')
-        .eq('class_id', classId)
-        .order('created_at', { ascending: false })
-        .limit(1000)
-      if (entityType) query = query.eq('entity_type', entityType)
-      if (userId) query = query.eq('user_id', userId)
-    }
+    if (studentId) query = query.or(`user_id.eq.${studentId},metadata->>student_id.eq.${studentId}`)
 
     const { data: logs, error, count } = await query
 
@@ -60,18 +47,8 @@ export async function GET(
       console.error('Error fetching audit logs:', error)
       return NextResponse.json({ error: 'Failed to fetch audit logs' }, { status: 500 })
     }
-
-    const filteredByStudent = studentId
-      ? (logs || []).filter((log: any) => {
-          const actorId = String(log?.user_id || '')
-          const affectedStudentId = String(log?.metadata?.student_id || '')
-          return actorId === studentId || affectedStudentId === studentId
-        })
-      : (logs || [])
-
-    const pagedLogs = studentId
-      ? filteredByStudent.slice(offset, offset + limit)
-      : filteredByStudent
+    const filteredByStudent = logs || []
+    const pagedLogs = filteredByStudent
 
     const metadataUserIdKeys = ['invited_by_user_id', 'requester_user_id', 'resolved_by', 'used_by', 'issued_by', 'student_id', 'created_by']
 
@@ -108,10 +85,8 @@ export async function GET(
       pagination: {
         limit,
         offset,
-        total: studentId ? filteredByStudent.length : (count || 0),
-        hasNext: studentId
-          ? (offset + (enrichedLogs || []).length) < filteredByStudent.length
-          : (offset + (enrichedLogs || []).length) < (count || 0),
+        total: count || 0,
+        hasNext: (offset + (enrichedLogs || []).length) < (count || 0),
       },
     })
   } catch (error) {

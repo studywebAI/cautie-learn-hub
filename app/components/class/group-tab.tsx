@@ -306,7 +306,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                             <span>Last: {signals.lastAttendance || '—'}</span>
                             <span>Activity: {signals.lastActivity}</span>
                             {signals.missedHw && <Badge variant="outline">Missed HW</Badge>}
-                            {signals.noteCount > 0 && <span>?? {signals.noteCount}</span>}
+                            {signals.noteCount > 0 && <span>Notes: {signals.noteCount}</span>}
                           </div>
 
                           <div className="flex items-center gap-1">
