@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,12 +49,14 @@ function warningVariant(severity: AnalyticsWarning["severity"]): "destructive" |
 }
 
 export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProps) {
+  const searchParams = useSearchParams();
   const [analytics, setAnalytics] = useState<ClassAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState("all");
   const [selectedSubjectId, setSelectedSubjectId] = useState("all");
   const [selectedAssignmentId, setSelectedAssignmentId] = useState("all");
+  const deepLinkedStudentId = searchParams?.get("studentId") || "all";
 
   const fetchAnalytics = async () => {
     try {
@@ -75,6 +78,11 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
   useEffect(() => {
     fetchAnalytics();
   }, [classId]);
+
+  useEffect(() => {
+    if (!deepLinkedStudentId || deepLinkedStudentId === "all") return;
+    setSelectedStudentId(deepLinkedStudentId);
+  }, [deepLinkedStudentId]);
 
   const studentOptions = useMemo(() => {
     if (!analytics) return [];

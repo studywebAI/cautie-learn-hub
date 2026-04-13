@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1314,6 +1314,7 @@ function EditGradesDetail({
   onBack: () => void;
   onDeleted: () => void;
 }) {
+  const router = useRouter();
   const { toast } = useToast();
   const [gradeSet, setGradeSet] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -1323,11 +1324,16 @@ function EditGradesDetail({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [presets, setPresets] = useState<GradePreset[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
+  const [selectedStudentId, setSelectedStudentId] = useState<string>(highlightedStudentId || '');
 
   useEffect(() => {
     loadGradeSet();
     loadPresets();
   }, [gradeSetId]);
+
+  useEffect(() => {
+    setSelectedStudentId(highlightedStudentId || '');
+  }, [highlightedStudentId]);
 
   const loadPresets = async () => {
     try {
@@ -1500,6 +1506,9 @@ function EditGradesDetail({
 
   const canPublish = gradeSet.status === 'draft' && !saving;
   const showDeepLinkHint = Boolean(highlightedStudentId);
+  const visibleStudents = selectedStudentId
+    ? students.filter((student) => student.student_id === selectedStudentId)
+    : students;
 
   return (
     <div className="space-y-6">
@@ -1543,6 +1552,31 @@ function EditGradesDetail({
           Focused from Group tab. Highlighted student moved to top.
         </div>
       )}
+      <div className="flex items-center justify-end">
+        <select
+          value={selectedStudentId}
+          onChange={(event) => {
+            const nextStudentId = event.target.value;
+            setSelectedStudentId(nextStudentId);
+            if (nextStudentId) {
+              router.replace(`/class/${classId}?tab=grades&studentId=${nextStudentId}`);
+              window.requestAnimationFrame(() => {
+                document.getElementById(`grade-student-${nextStudentId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              });
+              return;
+            }
+            router.replace(`/class/${classId}?tab=grades`);
+          }}
+          className="h-9 min-w-[14rem] rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="">All students</option>
+          {students.map((student) => (
+            <option key={student.student_id} value={student.student_id}>
+              {student.student?.full_name || student.student?.email || 'Unknown Student'}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1621,7 +1655,7 @@ function EditGradesDetail({
             <div className="md:col-span-4 text-center">Score</div>
           </div>
           <div className="border rounded-lg divide-y">
-            {students.map((student) => (
+            {visibleStudents.map((student) => (
               <div
                 id={`grade-student-${student.student_id}`}
                 key={student.student_id}

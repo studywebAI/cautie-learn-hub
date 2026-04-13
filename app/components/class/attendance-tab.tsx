@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -38,6 +38,8 @@ type AttendanceTabProps = {
 };
 
 export function AttendanceTab({ classId }: AttendanceTabProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [students, setStudents] = useState<StudentAttendance[]>([]);
   const [loading, setLoading] = useState(true);
@@ -274,6 +276,18 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
     ? students.filter((student) => student.id === selectedStudentId)
     : students;
 
+  const applyStudentFilter = (studentId: string) => {
+    const nextParams = new URLSearchParams(searchParams?.toString() || '');
+    nextParams.set('tab', 'attendance');
+    nextParams.delete('quick');
+    if (studentId) {
+      nextParams.set('studentId', studentId);
+    } else {
+      nextParams.delete('studentId');
+    }
+    router.replace(`${pathname}?${nextParams.toString()}`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -286,7 +300,21 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Attendance</h2>
-        <p className="text-sm text-muted-foreground">{visibleStudents.length} students</p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-muted-foreground">{visibleStudents.length} students</p>
+          <select
+            value={selectedStudentId}
+            onChange={(event) => applyStudentFilter(event.target.value)}
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+          >
+            <option value="">All students</option>
+            {students.map((student) => (
+              <option key={student.id} value={student.id}>
+                {student.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {selectedStudentId && (
