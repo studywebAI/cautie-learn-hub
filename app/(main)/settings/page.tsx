@@ -106,7 +106,11 @@ export default function SettingsPage() {
   const saveDisplayName = async () => {
     const next = displayName.trim();
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem('studyweb-display-name', next || 'guest');
+      if (next) {
+        window.localStorage.setItem('studyweb-display-name', next);
+      } else {
+        window.localStorage.removeItem('studyweb-display-name');
+      }
     }
     if (!session?.user?.id) return;
     setDisplayNameSaving(true);

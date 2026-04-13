@@ -88,7 +88,11 @@ export function AppSidebar() {
   const isTeacher = context?.role === 'teacher';
   const isRailCollapsed = !isPhone && sidebarState === 'collapsed';
   const activeClassTab = searchParams?.get('tab') || '';
-  const effectiveTeacherClassId = activeTeacherClassId || storedTeacherClassId;
+  const effectiveTeacherClassId =
+    activeTeacherClassId ||
+    storedTeacherClassId ||
+    classItems[0]?.id ||
+    (context?.classes?.find((classItem) => classItem.status !== 'archived')?.id || '');
   const teacherSubjectsHref = isTeacher && effectiveTeacherClassId ? `/subjects?classId=${effectiveTeacherClassId}` : '/subjects';
   const teacherManageHref = isTeacher && effectiveTeacherClassId ? `/class/${effectiveTeacherClassId}?tab=group` : '/classes';
   const teacherAgendaHref = isTeacher && effectiveTeacherClassId ? `/agenda?classId=${effectiveTeacherClassId}` : '/agenda';
