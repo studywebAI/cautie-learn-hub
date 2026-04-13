@@ -23,7 +23,9 @@ const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|cra
 function normalizeDisplayName(value: unknown): string {
   if (typeof value !== 'string') return '';
   const normalized = value.trim();
-  if (!normalized || normalized === '...') return '';
+  if (!normalized) return '';
+  if (/^[.\s]+$/.test(normalized)) return '';
+  if (normalized.toLowerCase() === 'guest') return '';
   return normalized;
 }
 
@@ -67,7 +69,7 @@ function StudentDashboard() {
       (session as any)?.user?.user_metadata?.name
     );
     if (metaName) setDisplayName(metaName);
-  }, []);
+  }, [session]);
 
   if (isLoading && !session) {
      return (
@@ -139,7 +141,7 @@ function TeacherSummaryDashboard() {
         (session as any)?.user?.user_metadata?.name
       );
       if (metaName) setDisplayName(metaName);
-    }, []);
+    }, [session]);
 
     if (isLoading || !classes) return <DashboardSkeleton />;
 

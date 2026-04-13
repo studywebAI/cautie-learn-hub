@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -84,6 +85,7 @@ function formatActor(log: AuditLog) {
 }
 
 export function LogsTab({ classId }: LogsTabProps) {
+  const searchParams = useSearchParams();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -93,6 +95,7 @@ export function LogsTab({ classId }: LogsTabProps) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category>('all');
   const [quickPreset, setQuickPreset] = useState<QuickPreset>('none');
+  const [studentFilter, setStudentFilter] = useState<string>('all');
   const [limit] = useState(100);
 
   const loadLogs = async (mode: 'replace' | 'append' = 'replace') => {
@@ -157,10 +160,30 @@ export function LogsTab({ classId }: LogsTabProps) {
     void loadLogs('replace');
   }, [classId]);
 
+  useEffect(() => {
+    const requestedUserId = searchParams?.get('user_id') || 'all';
+    setStudentFilter(requestedUserId);
+  }, [searchParams]);
+
   const metadataUserFromLabels = (log: AuditLog, key: string): string | null => {
     const labels = log.metadata_user_labels || {};
     return labels[key] || null;
   };
+
+  const studentOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const log of logs) {
+      const actorId = String(log.user_id || '');
+      const actorLabel = formatActor(log);
+      if (actorId) map.set(actorId, actorLabel);
+      const affectedStudentId = String((log.metadata as any)?.student_id || '');
+      const affectedStudentLabel = metadataUserFromLabels(log, 'student_id') || affectedStudentId;
+      if (affectedStudentId) map.set(affectedStudentId, affectedStudentLabel);
+    }
+    return Array.from(map.entries())
+      .map(([id, label]) => ({ id, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [logs]);
 
   const filteredLogs = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -186,6 +209,11 @@ export function LogsTab({ classId }: LogsTabProps) {
           if (!configActions.some((a) => String(log.action).includes(a))) return false;
         }
       }
+      if (studentFilter !== 'all') {
+        const actorId = String(log.user_id || '');
+        const affectedStudentId = String((log.metadata as any)?.student_id || '');
+        if (actorId !== studentFilter && affectedStudentId !== studentFilter) return false;
+      }
       if (!q) return true;
 
       const actor = formatActor(log).toLowerCase();
@@ -195,7 +223,7 @@ export function LogsTab({ classId }: LogsTabProps) {
 
       return actor.includes(q) || action.includes(q) || entity.includes(q) || metadataText.includes(q);
     });
-  }, [logs, search, category, quickPreset]);
+  }, [logs, search, category, quickPreset, studentFilter]);
 
   const counts = useMemo(() => {
     const base: Record<Category, number> = {
@@ -281,6 +309,18 @@ export function LogsTab({ classId }: LogsTabProps) {
               {categories.map((c) => (
                 <option key={c} value={c}>
                   {CATEGORY_LABELS[c]} ({counts[c]})
+                </option>
+              ))}
+            </select>
+            <select
+              value={studentFilter}
+              onChange={(e) => setStudentFilter(e.target.value)}
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="all">All students/actors</option>
+              {studentOptions.map((student) => (
+                <option key={student.id} value={student.id}>
+                  {student.label}
                 </option>
               ))}
             </select>

@@ -125,7 +125,8 @@ export async function GET(
 
     const assignmentIds = (assignments || []).map((a: { id: string }) => a.id)
 
-    // Get submissions for these assignments
+    // Get submissions for these assignments. Do not fail the whole endpoint
+    // if this optional dataset is unavailable.
     let submissions: any[] = []
     if (assignmentIds.length > 0 && studentIds.length > 0) {
       const { data: submissionsData, error: submissionsError } = await dataClient
@@ -135,26 +136,40 @@ export async function GET(
         .in('user_id', studentIds)
       
       if (submissionsError) {
-        return NextResponse.json({ error: submissionsError.message }, { status: 500 })
+        logGroup('GET - submissions failed (non-fatal)', {
+          classId,
+          submissionsError: submissionsError.message,
+        })
+      } else {
+        submissions = submissionsData || []
       }
-      submissions = submissionsData || []
     }
 
-    // Get recent audit logs for students in this class
+    // Get recent audit logs for this class, then derive per-student activity.
+    // This captures both direct student actions and teacher-created events
+    // targeted at a student via metadata.student_id.
     let auditLogs: any[] = []
     if (studentIds.length > 0) {
       const { data: logsData, error: logsError } = await dataClient
         .from('audit_logs')
         .select('id, user_id, action, entity_type, entity_id, changes, metadata, created_at')
-        .in('user_id', studentIds)
         .eq('class_id', classId)
         .order('created_at', { ascending: false })
-        .limit(50)
+        .limit(250)
       
       if (logsError) {
-        return NextResponse.json({ error: logsError.message }, { status: 500 })
+        logGroup('GET - audit_logs failed (non-fatal)', {
+          classId,
+          logsError: logsError.message,
+        })
+      } else {
+        const studentIdSet = new Set(studentIds)
+        auditLogs = (logsData || []).filter((log: any) => {
+          const actorUserId = String(log?.user_id || '')
+          const affectedStudentId = String(log?.metadata?.student_id || '')
+          return studentIdSet.has(actorUserId) || studentIdSet.has(affectedStudentId)
+        })
       }
-      auditLogs = logsData || []
     }
 
     // Calculate online status (consider online if last_seen is within 5 minutes)
@@ -171,7 +186,11 @@ export async function GET(
     const students = studentIds.map((studentId: string) => {
       const profile = profiles.find((p: any) => p.id === studentId)
       const studentSubmissions = submissions.filter((s: any) => s.user_id === studentId)
-      const studentLogs = auditLogs.filter((l: any) => l.user_id === studentId)
+      const studentLogs = auditLogs.filter((l: any) => {
+        const actorUserId = String(l?.user_id || '')
+        const affectedStudentId = String(l?.metadata?.student_id || '')
+        return actorUserId === studentId || affectedStudentId === studentId
+      })
 
       // Calculate assignment stats
       const totalAssignments = assignments?.length || 0
@@ -253,6 +272,19 @@ export async function GET(
         .select('subjects(id, title, user_id)')
         .eq('class_id', classId),
     ])
+
+    if (directSubjectsResult.error) {
+      logGroup('GET - subjects lookup failed (non-fatal)', {
+        classId,
+        error: directSubjectsResult.error.message,
+      })
+    }
+    if (linkedSubjectsResult.error) {
+      logGroup('GET - class_subjects lookup failed (non-fatal)', {
+        classId,
+        error: linkedSubjectsResult.error.message,
+      })
+    }
 
     const classSubjectsById = new Map<string, { id: string; title: string; user_id: string | null }>()
     for (const subjectRow of (directSubjectsResult.data || []) as any[]) {

@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Check, X, AlertCircle, MessageSquare, CheckCircle, Clock, BookOpen, UserMinus } from 'lucide-react';
+import { Check, X, AlertCircle, MessageSquare, CheckCircle, Clock, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DEFAULT_CLASS_PREFERENCES, normalizeClassPreferences } from '@/lib/class-preferences';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
@@ -46,6 +46,8 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
   const [selectedStudent, setSelectedStudent] = useState<StudentAttendance | null>(null);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [isCustomEventDialogOpen, setIsCustomEventDialogOpen] = useState(false);
+  const [customEventText, setCustomEventText] = useState('');
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<{
     studentId: string;
@@ -139,11 +141,8 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
     }
     if (quickAction === 'event') {
       setSelectedStudent(student);
-      setPendingAction({
-        studentId: student.id,
-        isPresent: student.isPresent ?? true,
-      });
-      setIsConfirmDialogOpen(true);
+      setCustomEventText('');
+      setIsCustomEventDialogOpen(true);
     }
   }, [quickAction, selectedStudentId, students]);
 
@@ -251,6 +250,48 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
 
     setIsNoteDialogOpen(false);
     setNoteText('');
+  };
+
+  const handleSaveCustomEvent = async () => {
+    if (!selectedStudent || !customEventText.trim()) return;
+
+    try {
+      const response = await fetch(`/api/classes/${classId}/attendance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: selectedStudent.id,
+          isPresent: selectedStudent.isPresent ?? true,
+          customMessage: customEventText.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        toast({ title: 'Custom event saved' });
+        void logClassTabEvent({
+          classId,
+          tab: 'attendance',
+          event: 'custom_event_saved',
+          stage: 'action',
+          level: 'info',
+          meta: { student_id: selectedStudent.id },
+        });
+        fetchAttendance();
+      }
+    } catch (error) {
+      console.error('Failed to save custom event:', error);
+      void logClassTabEvent({
+        classId,
+        tab: 'attendance',
+        event: 'custom_event_save_error',
+        stage: 'action',
+        level: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+
+    setIsCustomEventDialogOpen(false);
+    setCustomEventText('');
   };
 
   const handleCheckbox = (studentId: string, field: 'hasHomeworkIncomplete' | 'wasSentOut' | 'wasTooLate', value: boolean) => {
@@ -386,13 +427,17 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
                     <BookOpen className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant={student.wasSentOut ? 'destructive' : 'outline'}
+                    variant="outline"
                     size="sm"
                     className="h-8 px-2"
-                    onClick={() => handleCheckbox(student.id, 'wasSentOut', !student.wasSentOut)}
-                    title="Sent Out"
+                    onClick={() => {
+                      setSelectedStudent(student);
+                      setCustomEventText('');
+                      setIsCustomEventDialogOpen(true);
+                    }}
+                    title="Add custom event"
                   >
-                    <UserMinus className="h-4 w-4" />
+                    <AlertCircle className="h-4 w-4" />
                   </Button>
                   <Button
                     variant={student.wasTooLate ? 'destructive' : 'outline'}
@@ -431,12 +476,6 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
                   {student.stats.totalHomeworkIncomplete > 0 && (
                     <Badge variant="outline" className="text-xs">
                       {student.stats.totalHomeworkIncomplete}
-                    </Badge>
-                  )}
-                  {student.stats.totalSentOut > 0 && (
-                    <Badge variant="destructive" className="text-xs">
-                      <UserMinus className="h-3 w-3 mr-1" />
-                      {student.stats.totalSentOut}
                     </Badge>
                   )}
                   {student.stats.totalTooLate > 0 && (
@@ -513,6 +552,32 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
             </Button>
             <Button onClick={handleSaveNote}>
               Save Note
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Event Dialog */}
+      <Dialog open={isCustomEventDialogOpen} onOpenChange={setIsCustomEventDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Custom event for {selectedStudent?.name}</DialogTitle>
+            <DialogDescription>
+              Add a custom message (for example: missed materials, behavior issue, or follow-up).
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            className="min-h-[100px]"
+            placeholder=""
+            value={customEventText}
+            onChange={(e) => setCustomEventText(e.target.value)}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCustomEventDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveCustomEvent} disabled={!customEventText.trim()}>
+              Save Event
             </Button>
           </DialogFooter>
         </DialogContent>

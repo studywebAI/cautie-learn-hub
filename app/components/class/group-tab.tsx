@@ -368,12 +368,24 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                     <h4 className="mb-2 text-sm font-semibold">Recent timeline</h4>
                     <div className="space-y-2">
                       {selectedStudent.recentActivity.slice(0, 3).map((activity) => (
-                        <div key={activity.id} className="flex items-center gap-2 rounded-xl bg-muted/30 p-2 text-sm">
-                          <Activity className="h-3.5 w-3.5 text-foreground/70" />
-                          <span className="flex-1 capitalize">{activity.action.replace(/_/g, ' ')}</span>
-                          <span className="text-xs text-muted-foreground">{new Date(activity.createdAt).toLocaleDateString()}</span>
+                        <div key={activity.id} className="rounded-xl bg-muted/30 p-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Activity className="h-3.5 w-3.5 text-foreground/70" />
+                            <span className="flex-1 capitalize">{activity.action.replace(/_/g, ' ')}</span>
+                            <span className="text-xs text-muted-foreground">{new Date(activity.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          {(activity.details?.custom_message || activity.details?.note) && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {String(activity.details?.custom_message || activity.details?.note)}
+                            </p>
+                          )}
                         </div>
                       ))}
+                    </div>
+                    <div className="mt-3">
+                      <Button variant="outline" asChild>
+                        <Link prefetch={false} href={`/class/${classId}?tab=logs&user_id=${selectedStudent.id}`}>View full logs</Link>
+                      </Button>
                     </div>
                   </div>
                 )}

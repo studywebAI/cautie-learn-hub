@@ -42,23 +42,7 @@ export default function ClassDetailsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { classId } = params as { classId: string };
-  const { classes, isLoading: isAppLoading, refetchMaterials, role } = useContext(AppContext) as AppContextType;
-  const requestedTab = searchParams.get('tab');
-  const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
-  const defaultTab = isTeacherRole ? 'group' : 'invite';
-  const teacherTabs = ['invite', 'group', 'attendance', 'grades', 'analytics', 'logs', 'settings'];
-  const studentTabs = ['invite', 'group'];
-  const allowedTabs = useMemo(
-    () => (
-      isTeacherRole
-        ? teacherTabs
-        : role
-          ? studentTabs
-          : teacherTabs
-    ),
-    [isTeacherRole, role]
-  );
-  const tab = requestedTab && allowedTabs.includes(requestedTab) ? requestedTab : defaultTab;
+  const { classes, isLoading: isAppLoading, refetchMaterials, role, session } = useContext(AppContext) as AppContextType;
   const [directClassInfo, setDirectClassInfo] = useState<ClassInfo | null>(null);
   const [isQuickGraderOpen, setIsQuickGraderOpen] = useState(false);
   
@@ -72,6 +56,29 @@ export default function ClassDetailsPage() {
     if (contextClass) return contextClass;
     return directClassInfo || undefined;
   }, [classes, classId, directClassInfo]);
+
+  const requestedTab = searchParams.get('tab');
+  const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
+  const isClassOwner = useMemo(() => {
+    if (!session?.user?.id) return false;
+    const ownerCandidates = [String((classInfo as any)?.owner_id || ''), String((classInfo as any)?.user_id || '')];
+    return ownerCandidates.includes(session.user.id);
+  }, [classInfo, session?.user?.id]);
+  const hasTeacherAccess = isTeacherRole || isClassOwner;
+  const defaultTab = hasTeacherAccess ? 'group' : 'invite';
+  const teacherTabs = ['invite', 'group', 'attendance', 'grades', 'analytics', 'logs', 'settings'];
+  const studentTabs = ['invite', 'group'];
+  const allowedTabs = useMemo(
+    () => (
+      hasTeacherAccess
+        ? teacherTabs
+        : role
+          ? studentTabs
+          : teacherTabs
+    ),
+    [hasTeacherAccess, role]
+  );
+  const tab = requestedTab && allowedTabs.includes(requestedTab) ? requestedTab : defaultTab;
   
   useEffect(() => {
     if (classId && !classId.startsWith('local-')) {
@@ -221,7 +228,7 @@ export default function ClassDetailsPage() {
   }, [requestedTab, allowedTabs, router, classId, tab]);
 
   const isLoading = !!isAppLoading;
-  const isTeacher = isTeacherRole;
+  const isTeacher = hasTeacherAccess;
 
   if (isLoading && !classInfo) {
     return (

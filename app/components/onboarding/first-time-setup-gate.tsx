@@ -503,7 +503,7 @@ export function FirstTimeSetupGate() {
                         setLanguage(option.value);
                         window.setTimeout(goNext, 110);
                       }}
-                      className={`setup-option rounded-2xl border px-4 py-3 text-left text-sm transition ${language === option.value ? 'border-[hsl(var(--sidebar-ring))] bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-active-foreground))] shadow-sm ring-1 ring-[hsl(var(--sidebar-ring))/0.24]' : 'border-[hsl(var(--sidebar-border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--surface-3))]'}`}
+                      className={`setup-option ${isRTL ? 'setup-option-rtl' : ''} rounded-2xl border px-4 py-3 text-left text-sm transition ${language === option.value ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm' : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] text-foreground hover:bg-[hsl(var(--accent))]'}`}
                       style={{ animationDelay: `${index * 28}ms` }}
                     >
                       {typedOptionLabel(option.label)}
@@ -541,6 +541,12 @@ export function FirstTimeSetupGate() {
                       onChange={(event) => {
                         setTeacherCode(event.target.value);
                         if (teacherCodeError) setTeacherCodeError('');
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' && teacherCode.trim()) {
+                          event.preventDefault();
+                          goNext();
+                        }
                       }}
                     />
                     {teacherCodeError && <p className="text-xs text-destructive">{teacherCodeError}</p>}
@@ -583,7 +589,7 @@ export function FirstTimeSetupGate() {
                         setTheme(option.value);
                         window.setTimeout(goNext, 110);
                       }}
-                      className={`setup-option rounded-2xl border px-4 py-3 text-left text-sm transition ${theme === option.value ? 'border-[hsl(var(--sidebar-ring))] bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-active-foreground))] shadow-sm ring-1 ring-[hsl(var(--sidebar-ring))/0.24]' : 'border-[hsl(var(--sidebar-border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--surface-3))]'}`}
+                      className={`setup-option ${isRTL ? 'setup-option-rtl' : ''} rounded-2xl border px-4 py-3 text-left text-sm transition ${theme === option.value ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm' : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] text-foreground hover:bg-[hsl(var(--accent))]'}`}
                       style={{ animationDelay: `${index * 28}ms` }}
                     >
                       {typedOptionLabel(option.label)}
@@ -651,6 +657,19 @@ export function FirstTimeSetupGate() {
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+        .setup-option-rtl {
+          animation-name: setupOptionInRtl;
+        }
+        @keyframes setupOptionInRtl {
+          from {
+            opacity: 0;
+            transform: translateX(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
           }
         }
         @media (prefers-reduced-motion: reduce) {

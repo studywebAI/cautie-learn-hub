@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { getClassPermission } from '@/lib/auth/class-permissions'
+import { logAuditEntry } from '@/lib/auth/class-permissions'
 
 function logAttendance(...args: any[]) {
   console.log('[CLASS_ATTENDANCE]', ...args)
@@ -176,8 +177,16 @@ export async function POST(
       hasHomeworkIncomplete, 
       wasSentOut, 
       wasTooLate,
-      note 
+      note,
+      customMessage
     } = body
+
+    const normalizedNote = typeof note === 'string' ? note.trim() : ''
+    const normalizedCustomMessage = typeof customMessage === 'string' ? customMessage.trim() : ''
+    const nextIsPresent = typeof isPresent === 'boolean' ? isPresent : true
+    const nextHomeworkIncomplete = Boolean(hasHomeworkIncomplete)
+    const nextWasSentOut = Boolean(wasSentOut)
+    const nextWasTooLate = Boolean(wasTooLate)
 
     // Create new attendance record
     const { data: attendance, error: attendanceError } = await supabase
@@ -185,12 +194,12 @@ export async function POST(
       .insert({
         student_id: studentId,
         class_id: classId,
-        is_present: isPresent,
-        has_homework_incomplete: hasHomeworkIncomplete || false,
-        was_sent_out: wasSentOut || false,
-        was_too_late: wasTooLate || false,
-        note: note || null,
-        noted_by: note ? user.id : null,
+        is_present: nextIsPresent,
+        has_homework_incomplete: nextHomeworkIncomplete,
+        was_sent_out: nextWasSentOut,
+        was_too_late: nextWasTooLate,
+        note: normalizedNote || normalizedCustomMessage || null,
+        noted_by: normalizedNote || normalizedCustomMessage ? user.id : null,
         created_by: user.id
       })
       .select()
@@ -198,6 +207,77 @@ export async function POST(
 
     if (attendanceError) {
       return NextResponse.json({ error: attendanceError.message }, { status: 500 })
+    }
+
+    const attendanceAction = nextIsPresent ? 'attendance_mark_present' : 'attendance_mark_absent'
+    await logAuditEntry(supabase as any, {
+      userId: user.id,
+      classId,
+      action: attendanceAction,
+      entityType: 'attendance',
+      entityId: attendance?.id,
+      metadata: {
+        student_id: studentId,
+        created_by: user.id,
+      },
+    })
+
+    if (nextHomeworkIncomplete) {
+      await logAuditEntry(supabase as any, {
+        userId: user.id,
+        classId,
+        action: 'attendance_event_homework_incomplete',
+        entityType: 'attendance',
+        entityId: attendance?.id,
+        metadata: {
+          student_id: studentId,
+          created_by: user.id,
+        },
+      })
+    }
+
+    if (nextWasTooLate) {
+      await logAuditEntry(supabase as any, {
+        userId: user.id,
+        classId,
+        action: 'attendance_event_late',
+        entityType: 'attendance',
+        entityId: attendance?.id,
+        metadata: {
+          student_id: studentId,
+          created_by: user.id,
+        },
+      })
+    }
+
+    if (normalizedCustomMessage) {
+      await logAuditEntry(supabase as any, {
+        userId: user.id,
+        classId,
+        action: 'attendance_event_custom',
+        entityType: 'attendance',
+        entityId: attendance?.id,
+        metadata: {
+          student_id: studentId,
+          custom_message: normalizedCustomMessage,
+          created_by: user.id,
+        },
+      })
+    }
+
+    if (normalizedNote) {
+      await logAuditEntry(supabase as any, {
+        userId: user.id,
+        classId,
+        action: 'attendance_note_saved',
+        entityType: 'attendance_note',
+        entityId: attendance?.id,
+        metadata: {
+          student_id: studentId,
+          note: normalizedNote,
+          created_by: user.id,
+        },
+      })
     }
 
     return NextResponse.json({ success: true, attendance })

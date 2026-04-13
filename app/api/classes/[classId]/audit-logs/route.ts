@@ -46,7 +46,7 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch audit logs' }, { status: 500 })
     }
 
-    const metadataUserIdKeys = ['invited_by_user_id', 'requester_user_id', 'resolved_by', 'used_by', 'issued_by']
+    const metadataUserIdKeys = ['invited_by_user_id', 'requester_user_id', 'resolved_by', 'used_by', 'issued_by', 'student_id', 'created_by']
 
     const userIds = [...new Set((logs || []).flatMap((log: any) => {
       const ids = [log.user_id]
