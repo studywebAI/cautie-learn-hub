@@ -161,7 +161,7 @@ export function LogsTab({ classId }: LogsTabProps) {
   }, [classId]);
 
   useEffect(() => {
-    const requestedUserId = searchParams?.get('user_id') || 'all';
+    const requestedUserId = searchParams?.get('student_id') || searchParams?.get('user_id') || 'all';
     setStudentFilter(requestedUserId);
   }, [searchParams]);
 

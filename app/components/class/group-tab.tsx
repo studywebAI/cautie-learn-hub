@@ -194,12 +194,19 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
     const noteCount = (student.recentActivity || []).filter((item) => item.action.toLowerCase().includes('note') || item.entityType.toLowerCase().includes('note')).length;
     const missedHw = actions.some((action) => action.includes('homework') && (action.includes('miss') || action.includes('incomplete')));
     const attendanceAction = actions.find((action) => action.includes('attendance') || action.includes('present') || action.includes('absent'));
+    const latestEvent = student.recentActivity?.[0];
+    const latestEventMessage = String(
+      latestEvent?.details?.custom_message ||
+      latestEvent?.details?.note ||
+      ''
+    ).trim();
     const lastAttendance = attendanceAction ? (attendanceAction.includes('absent') ? 'Absent' : 'Present') : null;
     const lastActivityAt = student.recentActivity?.[0]?.createdAt || student.lastSeen;
     return {
       noteCount,
       missedHw,
       lastAttendance,
+      latestEventMessage,
       lastActivity: formatLastSeen(lastActivityAt || null),
       lastNoteAt: student.recentActivity?.find((item) => item.action.toLowerCase().includes('note'))?.createdAt || null,
     };
@@ -314,6 +321,11 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                             </span>
                           </div>
                         </div>
+                        {signals.latestEventMessage && (
+                          <p className="mt-1 truncate text-xs text-muted-foreground">
+                            {signals.latestEventMessage}
+                          </p>
+                        )}
                       </button>
                     );
                   })}
@@ -384,7 +396,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                     </div>
                     <div className="mt-3">
                       <Button variant="outline" asChild>
-                        <Link prefetch={false} href={`/class/${classId}?tab=logs&user_id=${selectedStudent.id}`}>View full logs</Link>
+                        <Link prefetch={false} href={`/class/${classId}?tab=logs&student_id=${selectedStudent.id}`}>View full logs</Link>
                       </Button>
                     </div>
                   </div>
@@ -404,12 +416,12 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
               </DialogHeader>
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=grades`}><Library className="mr-2 h-4 w-4" />View grades</Link></Button>
-                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=group`}><Users className="mr-2 h-4 w-4" />Manage group</Link></Button>
-                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=analytics`}><Activity className="mr-2 h-4 w-4" />View analytics</Link></Button>
-                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=settings`}><Settings className="mr-2 h-4 w-4" />View settings</Link></Button>
-                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=invite`}><UserPlus className="mr-2 h-4 w-4" />Invite people</Link></Button>
-                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=attendance`}><Clock className="mr-2 h-4 w-4" />Attendance</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=attendance`}><CalendarDays className="mr-2 h-4 w-4" />Attendance</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=grades`}><ClipboardCheck className="mr-2 h-4 w-4" />Grades</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=analytics`}><Activity className="mr-2 h-4 w-4" />Analytics</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=logs`}><Clock className="mr-2 h-4 w-4" />Logs</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=settings`}><Settings className="mr-2 h-4 w-4" />Settings</Link></Button>
+                  <Button variant="outline" asChild><Link prefetch={false} href={`/class/${classId}?tab=group`}><Users className="mr-2 h-4 w-4" />Group</Link></Button>
                 </div>
               </div>
             </>

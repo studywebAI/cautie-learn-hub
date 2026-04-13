@@ -28,6 +28,7 @@ export async function GET(
     const offset = parseInt(searchParams.get('offset') || '0')
     const entityType = searchParams.get('entity_type')
     const userId = searchParams.get('user_id')
+    const studentId = searchParams.get('student_id')
 
     let query = (supabase as any)
       .from('audit_logs')
@@ -38,6 +39,20 @@ export async function GET(
 
     if (entityType) query = query.eq('entity_type', entityType)
     if (userId) query = query.eq('user_id', userId)
+    if (studentId) {
+      // For affected-student filtering we need both:
+      // - actor logs (user_id)
+      // - teacher logs targeting student via metadata.student_id
+      // Load a wider class window then filter server-side.
+      query = (supabase as any)
+        .from('audit_logs')
+        .select('*')
+        .eq('class_id', classId)
+        .order('created_at', { ascending: false })
+        .limit(1000)
+      if (entityType) query = query.eq('entity_type', entityType)
+      if (userId) query = query.eq('user_id', userId)
+    }
 
     const { data: logs, error, count } = await query
 
@@ -46,9 +61,21 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch audit logs' }, { status: 500 })
     }
 
+    const filteredByStudent = studentId
+      ? (logs || []).filter((log: any) => {
+          const actorId = String(log?.user_id || '')
+          const affectedStudentId = String(log?.metadata?.student_id || '')
+          return actorId === studentId || affectedStudentId === studentId
+        })
+      : (logs || [])
+
+    const pagedLogs = studentId
+      ? filteredByStudent.slice(offset, offset + limit)
+      : filteredByStudent
+
     const metadataUserIdKeys = ['invited_by_user_id', 'requester_user_id', 'resolved_by', 'used_by', 'issued_by', 'student_id', 'created_by']
 
-    const userIds = [...new Set((logs || []).flatMap((log: any) => {
+    const userIds = [...new Set((pagedLogs || []).flatMap((log: any) => {
       const ids = [log.user_id]
       const metadata = log?.metadata || {}
       for (const key of metadataUserIdKeys) {
@@ -64,7 +91,7 @@ export async function GET(
 
     const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
 
-    const enrichedLogs = (logs || []).map((log: any) => ({
+    const enrichedLogs = (pagedLogs || []).map((log: any) => ({
       ...log,
       user: profileMap.get(log.user_id) || { full_name: 'Unknown', avatar_url: null, email: null },
       metadata_user_labels: metadataUserIdKeys.reduce((acc: Record<string, string>, key) => {
@@ -81,8 +108,10 @@ export async function GET(
       pagination: {
         limit,
         offset,
-        total: count || 0,
-        hasNext: (offset + (enrichedLogs || []).length) < (count || 0),
+        total: studentId ? filteredByStudent.length : (count || 0),
+        hasNext: studentId
+          ? (offset + (enrichedLogs || []).length) < filteredByStudent.length
+          : (offset + (enrichedLogs || []).length) < (count || 0),
       },
     })
   } catch (error) {
