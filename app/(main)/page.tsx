@@ -20,6 +20,13 @@ import { useRouter } from "next/navigation";
 const AnalyticsDashboard = lazy(() => import("@/components/dashboard/analytics-dashboard").then(module => ({ default: module.AnalyticsDashboard })));
 const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i;
 
+function normalizeDisplayName(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const normalized = value.trim();
+  if (!normalized || normalized === '...') return '';
+  return normalized;
+}
+
 function isLikelyBotClient(): boolean {
   if (typeof window === 'undefined') return false;
   return BOT_UA_PATTERN.test(window.navigator.userAgent || '');
@@ -49,9 +56,17 @@ function StudentDashboard() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const saved = window.localStorage.getItem('studyweb-display-name') || '';
-    if (saved.trim()) {
-      setDisplayName(saved.trim());
+    const localName = normalizeDisplayName(saved);
+    if (localName) {
+      setDisplayName(localName);
+      return;
     }
+    const metaName = normalizeDisplayName(
+      (session as any)?.user?.user_metadata?.display_name ||
+      (session as any)?.user?.user_metadata?.full_name ||
+      (session as any)?.user?.user_metadata?.name
+    );
+    if (metaName) setDisplayName(metaName);
   }, []);
 
   if (isLoading && !session) {
@@ -77,7 +92,12 @@ function StudentDashboard() {
 
   const alerts: Alert[] = [];
 
-  const welcomeName = displayName.trim() ? displayName.trim() : '...';
+  const welcomeName =
+    normalizeDisplayName(displayName) ||
+    normalizeDisplayName((session as any)?.user?.user_metadata?.display_name) ||
+    normalizeDisplayName((session as any)?.user?.user_metadata?.full_name) ||
+    normalizeDisplayName((session as any)?.user?.email?.split('@')?.[0]) ||
+    'there';
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
@@ -108,9 +128,17 @@ function TeacherSummaryDashboard() {
     useEffect(() => {
       if (typeof window === 'undefined') return;
       const saved = window.localStorage.getItem('studyweb-display-name') || '';
-      if (saved.trim()) {
-        setDisplayName(saved.trim());
+      const localName = normalizeDisplayName(saved);
+      if (localName) {
+        setDisplayName(localName);
+        return;
       }
+      const metaName = normalizeDisplayName(
+        (session as any)?.user?.user_metadata?.display_name ||
+        (session as any)?.user?.user_metadata?.full_name ||
+        (session as any)?.user?.user_metadata?.name
+      );
+      if (metaName) setDisplayName(metaName);
     }, []);
 
     if (isLoading || !classes) return <DashboardSkeleton />;
@@ -118,7 +146,12 @@ function TeacherSummaryDashboard() {
     const teacherClasses = (Array.isArray(classes) ? classes : []).filter((c: any) => c?.status !== 'archived');
     const totalStudents = students?.length || 0;
     const activeAssignments = (Array.isArray(assignments) ? assignments : []).length;
-    const welcomeName = displayName || (session?.user?.email ? session.user.email.split('@')[0] : '...');
+    const welcomeName =
+      normalizeDisplayName(displayName) ||
+      normalizeDisplayName((session as any)?.user?.user_metadata?.display_name) ||
+      normalizeDisplayName((session as any)?.user?.user_metadata?.full_name) ||
+      normalizeDisplayName(session?.user?.email ? session.user.email.split('@')[0] : '') ||
+      'there';
 
     return (
         <div className="flex flex-col gap-8">

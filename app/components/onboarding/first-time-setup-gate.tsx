@@ -39,6 +39,7 @@ const THEME_OPTIONS: Array<{ value: ThemeType; label: string }> = [
 
 const GUEST_SETUP_DONE_KEY = 'studyweb-first-time-setup-guest-final-v1';
 const TEACHER_CODE_CACHE_KEY = 'studyweb-setup-teacher-code-v1';
+const RTL_LANGUAGES = new Set<LanguageOption>(['ar', 'ur']);
 
 function normalizeDisplayName(value: unknown): string {
   if (typeof value !== 'string') return '';
@@ -302,7 +303,7 @@ export function FirstTimeSetupGate() {
 
   useEffect(() => {
     if (!visible) return;
-    const prompt = uiText.firstTime || firstTimePromptForLanguage(language);
+    const prompt = stepPrompt;
     let active = true;
     const run = async () => {
       setTypedPrompt('');
@@ -318,7 +319,7 @@ export function FirstTimeSetupGate() {
       active = false;
       window.clearInterval(blink);
     };
-  }, [language, uiText.firstTime, visible]);
+  }, [stepPrompt, visible]);
 
   const persistAndRedirectToLogin = useCallback(() => {
     window.location.href = '/login?message=Sign in to continue setup&type=info';
@@ -401,6 +402,15 @@ export function FirstTimeSetupGate() {
     : ['language', 'role', 'auth', 'appearance', 'displayName'];
   const currentStepIndex = Math.max(0, flowSteps.indexOf(step));
   const totalSteps = flowSteps.length;
+  const isRTL = RTL_LANGUAGES.has(language);
+  const stepPrompt = useMemo(() => {
+    if (step === 'language') return uiText.firstTime || firstTimePromptForLanguage(language);
+    if (step === 'role') return uiText.selectRole || 'Select role';
+    if (step === 'auth') return uiText.selectAuth || 'Sign in or create your account';
+    if (step === 'appearance') return uiText.selectAppearance || 'Select appearance';
+    if (step === 'displayName') return uiText.enterDisplayName || 'Enter display name';
+    return uiText.firstTime || firstTimePromptForLanguage(language);
+  }, [language, step, uiText.enterDisplayName, uiText.firstTime, uiText.selectAppearance, uiText.selectAuth, uiText.selectRole]);
 
   const optionLabels: string[] =
     step === 'language'
@@ -448,7 +458,7 @@ export function FirstTimeSetupGate() {
   if (!hydrated || !visible) return null;
 
   return (
-    <div className="fixed inset-0 z-[260] bg-[hsl(var(--background))]">
+    <div className="fixed inset-0 z-[260] bg-[hsl(var(--background))]" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="grid h-full w-full grid-cols-1 lg:grid-cols-[minmax(320px,38vw)_1fr]">
         <aside className="border-b border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] p-6 lg:border-b-0 lg:border-r lg:p-10">
           <div className="mx-auto flex h-full w-full max-w-xl flex-col justify-between gap-8">
@@ -479,7 +489,7 @@ export function FirstTimeSetupGate() {
         </aside>
 
         <main className="overflow-auto bg-[hsl(var(--surface-1))] p-6 md:p-10">
-          <div key={step} className="setup-step-anim mx-auto w-full max-w-5xl space-y-5">
+          <div key={step} className={`setup-step-anim mx-auto w-full max-w-5xl space-y-5 ${isRTL ? 'setup-rtl' : ''}`}>
             {step === 'language' && (
               <div className="space-y-5">
                 <Label>{uiText.selectLanguage}</Label>
@@ -491,8 +501,9 @@ export function FirstTimeSetupGate() {
                       onClick={() => {
                         setLanguageChoice(option.value);
                         setLanguage(option.value);
+                        window.setTimeout(goNext, 110);
                       }}
-                      className={`setup-option rounded-2xl border px-4 py-3 text-left text-sm transition ${language === option.value ? 'border-[hsl(var(--sidebar-ring))] bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-active-foreground))] shadow-sm' : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))]'}`}
+                      className={`setup-option rounded-2xl border px-4 py-3 text-left text-sm transition ${language === option.value ? 'border-[hsl(var(--sidebar-ring))] bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-active-foreground))] shadow-sm ring-1 ring-[hsl(var(--sidebar-ring))/0.24]' : 'border-[hsl(var(--sidebar-border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--surface-3))]'}`}
                       style={{ animationDelay: `${index * 28}ms` }}
                     >
                       {typedOptionLabel(option.label)}
@@ -506,10 +517,18 @@ export function FirstTimeSetupGate() {
               <div className="max-w-xl space-y-5">
                 <Label>{uiText.selectRole}</Label>
                 <div className="grid grid-cols-2 gap-3">
-                  <Button className="h-12" variant={role === 'student' ? 'default' : 'outline'} onClick={() => setRole('student')}>
+                  <Button className="h-12" variant={role === 'student' ? 'default' : 'outline'} onClick={() => {
+                    setRole('student');
+                    window.setTimeout(goNext, 110);
+                  }}>
                     {typedOptionLabel(uiText.student)}
                   </Button>
-                  <Button className="h-12" variant={role === 'teacher' ? 'default' : 'outline'} onClick={() => setRole('teacher')}>
+                  <Button className="h-12" variant={role === 'teacher' ? 'default' : 'outline'} onClick={() => {
+                    setRole('teacher');
+                    if (teacherCode.trim()) {
+                      window.setTimeout(goNext, 110);
+                    }
+                  }}>
                     {typedOptionLabel(uiText.teacher)}
                   </Button>
                 </div>
@@ -562,8 +581,9 @@ export function FirstTimeSetupGate() {
                       onClick={() => {
                         setThemeChoice(option.value);
                         setTheme(option.value);
+                        window.setTimeout(goNext, 110);
                       }}
-                      className={`setup-option rounded-2xl border px-4 py-3 text-left text-sm transition ${theme === option.value ? 'border-[hsl(var(--sidebar-ring))] bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-active-foreground))] shadow-sm' : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))]'}`}
+                      className={`setup-option rounded-2xl border px-4 py-3 text-left text-sm transition ${theme === option.value ? 'border-[hsl(var(--sidebar-ring))] bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-active-foreground))] shadow-sm ring-1 ring-[hsl(var(--sidebar-ring))/0.24]' : 'border-[hsl(var(--sidebar-border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--surface-3))]'}`}
                       style={{ animationDelay: `${index * 28}ms` }}
                     >
                       {typedOptionLabel(option.label)}
@@ -583,38 +603,11 @@ export function FirstTimeSetupGate() {
                   id="display-name"
                   value={displayName}
                   onChange={(event) => setDisplayName(event.target.value)}
-                  placeholder={uiText.yourDisplayName}
+                  placeholder=""
                 />
-
-                {mode === 'new' && role === 'student' ? (
-                  <div className="space-y-2">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                      <Button className="min-w-[11rem]" onClick={() => void redirectToCreateAccount()}>{uiText.createAccount}</Button>
-                      <Button variant="outline" onClick={() => persistAndRedirectToLogin()}>{uiText.signIn || 'Sign in'}</Button>
-                    </div>
-                    <div className="flex justify-end">
-                      <Button
-                        variant="ghost"
-                        className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-                        onClick={() => void finishSetup()}
-                      >
-                        {uiText.continueGuest}
-                      </Button>
-                    </div>
-                  </div>
-                ) : mode === 'new' && role === 'teacher' ? (
-                  <div className="flex justify-end gap-2">
-                    <Button onClick={() => void redirectToCreateAccount()}>{uiText.createAccount}</Button>
-                  </div>
-                ) : !session ? (
-                  <div className="flex justify-end">
-                    <Button onClick={() => persistAndRedirectToLogin()}>{uiText.createAccount}</Button>
-                  </div>
-                ) : (
-                  <div className="flex justify-end">
-                    <Button onClick={() => void finishSetup()} disabled={savingFinal}>{uiText.finish}</Button>
-                  </div>
-                )}
+                <div className="flex justify-end">
+                  <Button onClick={() => void finishSetup()} disabled={savingFinal}>{uiText.finish}</Button>
+                </div>
               </div>
             )}
           </div>
@@ -630,11 +623,24 @@ export function FirstTimeSetupGate() {
         @keyframes setupStepIn {
           from {
             opacity: 0;
-            transform: translateY(8px);
+            transform: translateX(12px);
           }
           to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateX(0);
+          }
+        }
+        .setup-rtl {
+          animation-name: setupStepInRtl;
+        }
+        @keyframes setupStepInRtl {
+          from {
+            opacity: 0;
+            transform: translateX(-12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
           }
         }
         @keyframes setupOptionIn {
