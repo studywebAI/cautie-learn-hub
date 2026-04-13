@@ -301,26 +301,6 @@ export function FirstTimeSetupGate() {
     };
   }, [isLoading, session?.user?.id, supabase]);
 
-  useEffect(() => {
-    if (!visible) return;
-    const prompt = stepPrompt;
-    let active = true;
-    const run = async () => {
-      setTypedPrompt('');
-      for (let i = 1; i <= prompt.length && active; i += 1) {
-        setTypedPrompt(prompt.slice(0, i));
-        await new Promise((resolve) => window.setTimeout(resolve, 32));
-      }
-    };
-    void run();
-
-    const blink = window.setInterval(() => setCursorVisible((prev) => !prev), 420);
-    return () => {
-      active = false;
-      window.clearInterval(blink);
-    };
-  }, [stepPrompt, visible]);
-
   const persistAndRedirectToLogin = useCallback(() => {
     window.location.href = '/login?message=Sign in to continue setup&type=info';
   }, []);
@@ -411,6 +391,26 @@ export function FirstTimeSetupGate() {
     if (step === 'displayName') return uiText.enterDisplayName || 'Enter display name';
     return uiText.firstTime || firstTimePromptForLanguage(language);
   }, [language, step, uiText.enterDisplayName, uiText.firstTime, uiText.selectAppearance, uiText.selectAuth, uiText.selectRole]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const prompt = stepPrompt;
+    let active = true;
+    const run = async () => {
+      setTypedPrompt('');
+      for (let i = 1; i <= prompt.length && active; i += 1) {
+        setTypedPrompt(prompt.slice(0, i));
+        await new Promise((resolve) => window.setTimeout(resolve, 32));
+      }
+    };
+    void run();
+
+    const blink = window.setInterval(() => setCursorVisible((prev) => !prev), 420);
+    return () => {
+      active = false;
+      window.clearInterval(blink);
+    };
+  }, [stepPrompt, visible]);
 
   const optionLabels: string[] =
     step === 'language'
