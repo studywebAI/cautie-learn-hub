@@ -211,7 +211,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (role !== 'teacher') return;
     const activeClasses = (classes || []).filter((classItem: any) => classItem?.status !== 'archived');
     if (activeClasses.length === 0) return;
 
@@ -220,7 +219,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     if (stillExists) return;
 
     window.localStorage.setItem('studyweb-last-class-id', activeClasses[0].id);
-  }, [classes, role]);
+  }, [classes]);
 
   const applyAppearance = useCallback((currentTheme: ThemeType) => {
     if (typeof window === 'undefined') return;

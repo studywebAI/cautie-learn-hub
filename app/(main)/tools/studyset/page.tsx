@@ -122,7 +122,6 @@ const COLOR_OPTIONS: ColorOption[] = [
   { id: 'slate', swatchClass: 'bg-[#64748b]' },
 ];
 
-const TYPING_PLACEHOLDERS = ['WW2 final prep', 'Chemistry exam sprint', 'Spanish oral practice'];
 const SOFT_SURFACE = 'border border-[#e5e7eb] bg-[#f8fafc] dark:border-zinc-800 dark:bg-zinc-900/40';
 const CALENDAR_CLASSES = {
   day_selected:
@@ -190,7 +189,6 @@ export default function StudysetPage() {
   const [selectedMicrosoftFiles, setSelectedMicrosoftFiles] = useState<MicrosoftFileItem[]>([]);
 
   const [creating, setCreating] = useState(false);
-  const [typingPlaceholder, setTypingPlaceholder] = useState(TYPING_PLACEHOLDERS[0]);
   const [showIconOptions, setShowIconOptions] = useState(false);
   const [showColorOptions, setShowColorOptions] = useState(false);
   const [showNotesInput, setShowNotesInput] = useState(false);
@@ -367,37 +365,6 @@ export default function StudysetPage() {
       selectedColor || COLOR_OPTIONS.find((option) => !usedMeta.colors.has(option.id))?.id || COLOR_OPTIONS[0].id;
     return { icon, color };
   };
-
-  useEffect(() => {
-    let phraseIndex = 0;
-    let charIndex = 0;
-    let deleting = false;
-    let pauseTicks = 0;
-    const tick = () => {
-      const phrase = TYPING_PLACEHOLDERS[phraseIndex] || '';
-      if (!deleting) {
-        charIndex = Math.min(phrase.length, charIndex + 1);
-        setTypingPlaceholder(`${phrase.slice(0, charIndex)}|`);
-        if (charIndex === phrase.length) {
-          pauseTicks += 1;
-          if (pauseTicks > 7) {
-            deleting = true;
-            pauseTicks = 0;
-          }
-        }
-        return;
-      }
-      charIndex = Math.max(0, charIndex - 1);
-      setTypingPlaceholder(`${phrase.slice(0, charIndex)}|`);
-      if (charIndex === 0) {
-        deleting = false;
-        phraseIndex = (phraseIndex + 1) % TYPING_PLACEHOLDERS.length;
-      }
-    };
-
-    const timer = window.setInterval(tick, 90);
-    return () => window.clearInterval(timer);
-  }, []);
 
   const handleUploadChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -654,7 +621,7 @@ export default function StudysetPage() {
                     <Input
                       value={name}
                       onChange={(event) => setName(event.target.value)}
-                      placeholder={typingPlaceholder}
+                      placeholder=""
                       className={`border-[#d1d5db] bg-[#f8fafc] text-zinc-900 placeholder:text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-100 dark:placeholder:text-zinc-400`}
                     />
                   </div>

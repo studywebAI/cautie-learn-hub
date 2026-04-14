@@ -57,10 +57,10 @@ export default function ClassDetailsPage() {
     return directClassInfo || undefined;
   }, [classes, classId, directClassInfo]);
 
-  const teacherTabs = ['invite', 'group', 'attendance', 'grades', 'analytics', 'logs', 'settings'];
-  const studentTabs = ['invite', 'group'];
+  const teacherTabs = ['invite', 'group', 'attendance', 'grades', 'analytics', 'logs', 'settings'] as const;
+  const studentTabs = ['invite', 'group'] as const;
 
-  const requestedTab = searchParams.get('tab');
+  const requestedTab = (searchParams.get('tab') || '').trim().toLowerCase();
   const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
   const isClassOwner = useMemo(() => {
     if (!session?.user?.id) return false;
@@ -68,21 +68,16 @@ export default function ClassDetailsPage() {
     return ownerCandidates.includes(session.user.id);
   }, [classInfo, session?.user?.id]);
   const hasTeacherAccess = isTeacherRole || isClassOwner;
-  const isTeacherTabRequested = Boolean(requestedTab && teacherTabs.includes(requestedTab));
   const defaultTab = hasTeacherAccess ? 'group' : 'invite';
   const allowedTabs = useMemo(
     () => (
       hasTeacherAccess
         ? teacherTabs
-        : isTeacherTabRequested
-          ? teacherTabs
-          : role
-            ? studentTabs
-            : teacherTabs
+        : studentTabs
     ),
-    [hasTeacherAccess, isTeacherTabRequested, role]
+    [hasTeacherAccess]
   );
-  const tab = requestedTab && allowedTabs.includes(requestedTab) ? requestedTab : defaultTab;
+  const tab = requestedTab && allowedTabs.includes(requestedTab as any) ? requestedTab : defaultTab;
   
   useEffect(() => {
     if (classId && !classId.startsWith('local-')) {
@@ -232,7 +227,7 @@ export default function ClassDetailsPage() {
   }, [requestedTab, allowedTabs, router, classId, tab]);
 
   const isLoading = !!isAppLoading;
-  const isTeacher = hasTeacherAccess || isTeacherTabRequested;
+  const isTeacher = hasTeacherAccess;
 
   if (isLoading && !classInfo) {
     return (
@@ -271,13 +266,13 @@ export default function ClassDetailsPage() {
           />
         );
       case 'attendance':
-        return isTeacher ? <AttendanceTab classId={classId} /> : null;
+        return isTeacher ? <AttendanceTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'grades':
-        return isTeacher ? <GradesTab classId={classId} /> : null;
+        return isTeacher ? <GradesTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'analytics':
-        return isTeacher ? <ClassAnalyticsDashboard classId={classId} /> : null;
+        return isTeacher ? <ClassAnalyticsDashboard classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'logs':
-        return isTeacher ? <LogsTab classId={classId} /> : null;
+        return isTeacher ? <LogsTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'settings':
         return isTeacher ? (
           <ClassSettings
@@ -285,7 +280,7 @@ export default function ClassDetailsPage() {
             className={(classInfo as any)?.name || 'Class'}
             isArchived={Boolean((classInfo as any)?.isArchived || (classInfo as any)?.is_archived)}
           />
-        ) : null;
+        ) : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       default:
         return (
           <InviteTab 
@@ -302,7 +297,7 @@ export default function ClassDetailsPage() {
       {isTeacher && (
         <QuickGrader classId={classId} isOpen={isQuickGraderOpen} onClose={() => setIsQuickGraderOpen(false)} />
       )}
-      {renderContent()}
+      <div key={`tab-${tab}`}>{renderContent()}</div>
     </>
   );
 }

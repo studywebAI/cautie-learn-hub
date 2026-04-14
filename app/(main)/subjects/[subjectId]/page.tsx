@@ -25,6 +25,7 @@ type Paragraph = {
   assignment_count: number;
   progress_percent: number;
   answers_enabled?: boolean;
+  is_pending?: boolean;
 };
 
 type Chapter = {
@@ -32,6 +33,7 @@ type Chapter = {
   title: string;
   chapter_number: number;
   paragraphs?: Paragraph[];
+  is_pending?: boolean;
 };
 
 type Subject = {
@@ -128,6 +130,7 @@ export default function SubjectDetailPage() {
       title: newChapterTitle.trim(),
       chapter_number: nextNumber,
       paragraphs: [],
+      is_pending: true,
     };
 
     setIsCreatingChapter(true);
@@ -147,7 +150,7 @@ export default function SubjectDetailPage() {
       const newChapter = await response.json();
       setChapters((prev) =>
         prev.map((chapter) =>
-          chapter.id === tempId ? { ...newChapter, paragraphs: [] } : chapter
+          chapter.id === tempId ? { ...newChapter, paragraphs: [], is_pending: false } : chapter
         )
       );
     } catch (error) {
@@ -164,7 +167,8 @@ export default function SubjectDetailPage() {
     if (!resolvedTitle) return;
     if (isCreatingParagraph) return;
 
-    const targetChapter = chapters.find((chapter) => chapter.id === selectedChapterId);
+    const requestChapterId = selectedChapterId;
+    const targetChapter = chapters.find((chapter) => chapter.id === requestChapterId);
     const nextNumber = targetChapter?.paragraphs?.length
       ? Math.max(...targetChapter.paragraphs.map((p) => p.paragraph_number || 0)) + 1
       : 1;
@@ -176,12 +180,13 @@ export default function SubjectDetailPage() {
       assignment_count: 0,
       progress_percent: 0,
       answers_enabled: false,
+      is_pending: true,
     };
 
     setIsCreatingParagraph(true);
     setChapters((prev) =>
       prev.map((chapter) =>
-        chapter.id === selectedChapterId
+        chapter.id === requestChapterId
           ? { ...chapter, paragraphs: [...(chapter.paragraphs || []), optimisticParagraph] }
           : chapter
       )
@@ -191,7 +196,7 @@ export default function SubjectDetailPage() {
     setIsCreateParagraphOpen(false);
 
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/chapters/${selectedChapterId}/paragraphs`, {
+      const response = await fetch(`/api/subjects/${subjectId}/chapters/${requestChapterId}/paragraphs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: resolvedTitle }),
@@ -203,7 +208,7 @@ export default function SubjectDetailPage() {
       const createdParagraph = await response.json();
       setChapters((prev) =>
         prev.map((chapter) =>
-          chapter.id === selectedChapterId
+          chapter.id === requestChapterId
             ? {
                 ...chapter,
                 paragraphs: (chapter.paragraphs || []).map((paragraph) =>
@@ -213,6 +218,7 @@ export default function SubjectDetailPage() {
                         ...createdParagraph,
                         assignment_count: createdParagraph.assignment_count ?? 0,
                         progress_percent: createdParagraph.progress_percent ?? 0,
+                        is_pending: false,
                       }
                     : paragraph
                 ),
@@ -223,7 +229,7 @@ export default function SubjectDetailPage() {
     } catch (error) {
       setChapters((prev) =>
         prev.map((chapter) =>
-          chapter.id === selectedChapterId
+          chapter.id === requestChapterId
             ? {
                 ...chapter,
                 paragraphs: (chapter.paragraphs || []).filter((paragraph) => paragraph.id !== tempId),
@@ -360,6 +366,9 @@ export default function SubjectDetailPage() {
                         className="text-sm text-[hsl(var(--sidebar-active-foreground))] hover:underline"
                       >
                         {chapter.title}
+                        {chapter.is_pending ? (
+                          <span className="ml-2 text-xs text-muted-foreground">(creating...)</span>
+                        ) : null}
                       </Link>
                     {isTeacher && (
                       <button
@@ -392,6 +401,9 @@ export default function SubjectDetailPage() {
                             {chapter.chapter_number}.{paragraph.paragraph_number}
                           </span>
                           <span className="flex-1 truncate text-sm text-[hsl(var(--sidebar-active-foreground))]">{paragraph.title}</span>
+                          {paragraph.is_pending ? (
+                            <span className="text-xs text-muted-foreground">(creating...)</span>
+                          ) : null}
                           <span className="w-10 text-right text-xs text-sidebar-foreground tabular-nums">
                             {roundedProgress}%
                           </span>

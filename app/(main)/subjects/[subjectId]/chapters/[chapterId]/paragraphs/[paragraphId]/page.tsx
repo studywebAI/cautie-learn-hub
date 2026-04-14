@@ -166,7 +166,6 @@ export default function ParagraphDetailPage() {
         )
       );
       setAssignments(prev => prev.map(a => ({ ...a, ...updates })));
-      toast({ title: 'All assignments updated' });
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to update', variant: 'destructive' });
     } finally {

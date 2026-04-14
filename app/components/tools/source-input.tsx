@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ReactNode } from 'react';
-import { SOURCE_PLACEHOLDER_EXAMPLES, SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL } from '@/lib/tools/source-placeholder-examples';
 
 interface SourceInputProps {
   value: string;
@@ -175,7 +174,7 @@ export function SourceInput({
   onChange,
   onImageDataUriChange,
   onSubmit,
-  placeholder = 'Enter your text here...',
+  placeholder: _placeholder = 'Enter your text here...',
   disabled = false,
   toolId,
   enableMic = true,
@@ -242,8 +241,6 @@ export function SourceInput({
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [removingSourceIds, setRemovingSourceIds] = useState<string[]>([]);
   const [materials, setMaterials] = useState<MaterialEntry[]>([]);
-  const [typedPlaceholder, setTypedPlaceholder] = useState('');
-  const [placeholderCursorVisible, setPlaceholderCursorVisible] = useState(true);
 
   const [micError, setMicError] = useState<string | null>(null);
   const [isFallbackRecording, setIsFallbackRecording] = useState(false);
@@ -320,76 +317,6 @@ export function SourceInput({
     }, 1200);
     return () => window.clearTimeout(timer);
   }, [manualText, upsertMaterial]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const pool = toolId ? SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL[toolId] : SOURCE_PLACEHOLDER_EXAMPLES;
-    if (pool.length === 0) return;
-
-    let active = true;
-    let previous = '';
-    const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
-    const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-    const pickExample = () => {
-      if (pool.length === 1) return pool[0];
-      let next = pool[randomInt(0, pool.length - 1)];
-      let tries = 0;
-      while (next === previous && tries < 8) {
-        next = pool[randomInt(0, pool.length - 1)];
-        tries += 1;
-      }
-      previous = next;
-      return next;
-    };
-
-    const run = async () => {
-      while (active) {
-        if (manualText.trim()) {
-          setTypedPlaceholder('');
-          setPlaceholderCursorVisible(false);
-          await sleep(180);
-          continue;
-        }
-
-        const sample = pickExample();
-        setTypedPlaceholder('');
-        setPlaceholderCursorVisible(true);
-
-        for (let i = 1; i <= sample.length && active; i += 1) {
-          if (manualText.trim()) break;
-          setTypedPlaceholder(sample.slice(0, i));
-          await sleep(randomInt(14, 28));
-        }
-
-        if (!active || manualText.trim()) continue;
-
-        // 3 regular cursor blinks before deleting.
-        for (let i = 0; i < 3 && active; i += 1) {
-          setPlaceholderCursorVisible(false);
-          await sleep(360);
-          if (!active) break;
-          setPlaceholderCursorVisible(true);
-          await sleep(360);
-        }
-
-        if (!active || manualText.trim()) continue;
-
-        // Slow backspace effect.
-        for (let i = sample.length; i >= 0 && active; i -= 1) {
-          if (manualText.trim()) break;
-          setTypedPlaceholder(sample.slice(0, i));
-          await sleep(randomInt(34, 56));
-        }
-
-        await sleep(180);
-      }
-    };
-
-    void run();
-    return () => {
-      active = false;
-    };
-  }, [manualText, toolId]);
 
   const hydrateIntegrationSources = useCallback(async (quiet = false) => {
     const response = await fetch('/api/integrations/context-sources?provider=microsoft&selected=1', {
@@ -1590,16 +1517,10 @@ export function SourceInput({
                   submitAndSave();
                 }
               }}
-              placeholder={manualText ? placeholder : ''}
+              placeholder=""
               className="min-h-[190px] flex-1 resize-none rounded-2xl border border-border bg-muted/70 text-sm"
               disabled={disabled || isProcessing}
             />
-            {!manualText && typedPlaceholder && (
-              <div className="pointer-events-none absolute left-3 top-3 right-3 overflow-hidden text-sm text-muted-foreground/90">
-                <span>{typedPlaceholder}</span>
-                <span className={`ml-0.5 ${placeholderCursorVisible ? 'opacity-100' : 'opacity-0'}`}>|</span>
-              </div>
-            )}
           </div>
           <Button
             type="button"

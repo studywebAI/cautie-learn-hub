@@ -30,12 +30,13 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const { role } = useContext(AppContext) as any;
   const classId = params.classId as string;
 
-  // Use useSearchParams properly - this will re-render when URL changes
   const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
-  const requestedTab = searchParams?.get('tab');
-  const isTeacherTabRequested = Boolean(requestedTab && teacherTabs.some((tab) => tab.id === requestedTab));
-  const currentTab = searchParams?.get('tab') || (isTeacherRole ? 'group' : 'invite');
-  const visibleTabs = isTeacherRole || isTeacherTabRequested || !role ? teacherTabs : studentTabs;
+  const visibleTabs = isTeacherRole ? teacherTabs : studentTabs;
+  const requestedTabRaw = searchParams?.get('tab') || '';
+  const requestedTab = requestedTabRaw.trim().toLowerCase();
+  const tabIds = new Set(visibleTabs.map((tab) => tab.id));
+  const defaultTab = isTeacherRole ? 'group' : 'invite';
+  const currentTab = tabIds.has(requestedTab) ? requestedTab : defaultTab;
 
   return (
     <div className="flex h-full flex-col gap-2.5">
