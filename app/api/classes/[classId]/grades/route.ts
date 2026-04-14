@@ -11,30 +11,24 @@ export async function GET(
   try {
     const { classId } = await params
     const subjectId = req.nextUrl.searchParams.get('subjectId')
-    console.log(`\nðŸŒ [GRADES_GET] Fetching grades for class: ${classId}`)
     
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    console.log('[GRADES_GET] User:', user?.id, 'Auth error:', userError?.message)
     
     if (userError || !user) {
-      console.log('[GRADES_GET] âŒ Unauthorized - no user')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const perm = await getClassPermission(supabase as any, classId, user.id)
     if (!perm.isMember) {
-      console.log('[GRADES_GET] Access denied - not a member')
       return NextResponse.json({ error: 'Only class members can view grades' }, { status: 403 })
     }
     if (!perm.isTeacher) {
-      console.log('[GRADES_GET] Access denied - not a teacher')
       return NextResponse.json({ error: 'Only teachers can view grades' }, { status: 403 })
     }
 
-    console.log('[GRADES_GET] Querying grade_sets table...')
     // Get grade sets for this class
     let gradeSetsQuery = (supabase as any)
       .from('grade_sets')
@@ -53,10 +47,7 @@ export async function GET(
 
     const { data: gradeSets, error } = await gradeSetsQuery
 
-    console.log('[GRADES_GET] Query result:', { count: gradeSets?.length, error: error?.message })
-    
     if (error) {
-      console.error('[GRADES_GET] âŒ Query error:', error)
       return NextResponse.json({ error: error.message, details: 'Failed to query grade_sets table' }, { status: 500 })
     }
 
@@ -109,11 +100,7 @@ export async function POST(
 ) {
   try {
     const { classId } = await params
-    console.log('[GRADES] POST - classId:', classId)
-    
     const body = await req.json()
-    console.log('[GRADES] POST - body:', body)
-    
     const { title, description, category, weight, subject_id, grading_preset_id } = body
     const allowedCategories = new Set(['test', 'quiz', 'homework', 'project', 'exam', 'assignment', 'other'])
 
@@ -136,8 +123,6 @@ export async function POST(
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    console.log('[GRADES] POST - user:', user?.id, 'error:', userError)
-    
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -202,10 +187,7 @@ export async function POST(
       .select()
       .single()
 
-    console.log('[GRADES] POST - gradeSet created:', { gradeSet, error })
-    
     if (error) {
-      console.error('[GRADES] POST - error creating grade set:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -235,8 +217,6 @@ export async function POST(
       }
       students = profilesData || []
     }
-
-    console.log('[GRADES] POST - students:', { count: students.length })
 
     // Create empty grade entries for each student
     if (students && students.length > 0) {

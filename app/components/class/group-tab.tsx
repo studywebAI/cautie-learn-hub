@@ -166,10 +166,76 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
       const result = await response.json();
       setData(result);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t.failedLoad;
-      setError(msg);
-      setData(null);
-      console.error('Failed to fetch group data:', e);
+      console.error('Failed to fetch group data, trying fallback members route:', e);
+      try {
+        const membersResponse = await fetch(`/api/classes/${classId}/members`);
+        if (!membersResponse.ok) {
+          const payload = await membersResponse.json().catch(() => ({}));
+          throw new Error(payload?.error || `Fallback failed (${membersResponse.status})`);
+        }
+
+        const members = await membersResponse.json();
+        const rows = Array.isArray(members) ? members : [];
+        const teachers: Teacher[] = rows
+          .filter((member: any) => {
+            const role = String(member?.role || member?.profiles?.subscription_type || '').toLowerCase();
+            return ['teacher', 'owner', 'admin', 'creator', 'ta'].includes(role);
+          })
+          .map((member: any) => ({
+            id: member.user_id || member.id,
+            name: member.profiles?.full_name || member.profile?.full_name || member.email || 'Teacher',
+            email: member.profiles?.email || member.profile?.email || member.email || null,
+            avatarUrl: member.profiles?.avatar_url || member.profile?.avatar_url || null,
+            role: 'teacher',
+            joinedAt: null,
+            lastSeen: null,
+            onlineStatus: 'offline',
+            subjects: [],
+          }));
+        const students: Student[] = rows
+          .filter((member: any) => {
+            const role = String(member?.role || member?.profiles?.subscription_type || '').toLowerCase();
+            return role === 'student' || role === '';
+          })
+          .map((member: any) => ({
+            id: member.user_id || member.id,
+            name: member.profiles?.full_name || member.profile?.full_name || member.email || 'Student',
+            email: member.profiles?.email || member.profile?.email || member.email || null,
+            avatarUrl: member.profiles?.avatar_url || member.profile?.avatar_url || null,
+            role: 'student',
+            joinedAt: null,
+            lastSeen: null,
+            onlineStatus: 'offline',
+            stats: {
+              totalAssignments: 0,
+              completedAssignments: 0,
+              gradedAssignments: 0,
+              averageGrade: null,
+              completionRate: 0,
+            },
+            lastGraded: null,
+            recentActivity: [],
+            recentSubmissions: [],
+          }));
+
+        setData({
+          classId,
+          students,
+          teachers,
+          assignments: [],
+          stats: {
+            totalStudents: students.length,
+            onlineStudents: 0,
+            totalTeachers: teachers.length,
+            onlineTeachers: 0,
+          },
+        });
+        setError(null);
+      } catch (fallbackError) {
+        const msg = fallbackError instanceof Error ? fallbackError.message : t.failedLoad;
+        setError(msg);
+        setData(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -316,9 +382,17 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                             <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${student.id}&quick=note`} className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70" onClick={(e) => e.stopPropagation()} title="Add Note">
                               <NotebookPen className="h-4 w-4" />
                             </Link>
-                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground" title="Open">
+                            <button
+                              type="button"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-background/70"
+                              title="Open"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setSelectedStudent(student);
+                              }}
+                            >
                               <Ellipsis className="h-4 w-4" />
-                            </span>
+                            </button>
                           </div>
                         </div>
                         {signals.latestEventMessage && (

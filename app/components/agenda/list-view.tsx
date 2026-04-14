@@ -1,6 +1,6 @@
 'use client';
 
-import { format, isToday, isTomorrow, isThisWeek } from 'date-fns';
+import { format, isThisWeek, isToday, isTomorrow } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookCheck, BrainCircuit, Clock } from 'lucide-react';
@@ -13,11 +13,10 @@ interface ListViewProps {
 }
 
 export function ListView({ events, onEventClick }: ListViewProps) {
-  // Simple grouping by time - no overdue, no checkboxes in list
   const groupedEvents = events.reduce((groups, event) => {
     const eventDate = event.date;
     let groupKey: string;
-    
+
     if (isToday(eventDate)) {
       groupKey = 'today';
     } else if (isTomorrow(eventDate)) {
@@ -27,7 +26,7 @@ export function ListView({ events, onEventClick }: ListViewProps) {
     } else {
       groupKey = 'upcoming';
     }
-    
+
     if (!groups[groupKey]) {
       groups[groupKey] = [];
     }
@@ -56,24 +55,18 @@ export function ListView({ events, onEventClick }: ListViewProps) {
 
   return (
     <div className="space-y-6">
-      {groupOrder.map(groupKey => {
+      {groupOrder.map((groupKey) => {
         const groupEvents = groupedEvents[groupKey];
         if (!groupEvents || groupEvents.length === 0) return null;
 
         return (
           <div key={groupKey}>
-            <h3 className="text-sm mb-3 text-muted-foreground">
-              {groupLabels[groupKey]}
-            </h3>
+            <h3 className="mb-3 text-sm text-muted-foreground">{groupLabels[groupKey]}</h3>
             <div className="space-y-2">
               {groupEvents
                 .sort((a, b) => a.date.getTime() - b.date.getTime())
-                .map(event => (
-                  <EventListItem
-                    key={event.id}
-                    event={event}
-                    onEventClick={onEventClick}
-                  />
+                .map((event) => (
+                  <EventListItem key={event.id} event={event} onEventClick={onEventClick} />
                 ))}
             </div>
           </div>
@@ -94,7 +87,7 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
 
   const buildHref = () => {
     if (!event.href) return undefined;
-    
+
     if (event.description) {
       const separator = event.href.includes('?') ? '&' : '?';
       return `${event.href}${separator}instructions=${encodeURIComponent(event.description)}`;
@@ -104,29 +97,31 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
 
   const href = buildHref();
 
-  // No checkbox in list - only when clicking on the event
   const content = (
-    <div className="flex items-center gap-4 p-3 rounded-lg border transition-colors hover:bg-muted/50">
-      <div className="w-1 h-12 rounded-full flex-shrink-0" style={{
-        backgroundColor:
-          event.type === 'assignment'
-            ? '#3b82f6'
-            : event.type === 'agenda_item' && event.visibility_state === 'hidden'
-            ? '#ef4444'
-            : event.type === 'agenda_item'
-            ? '#6366f1'
-            : undefined
-      }} />
-      
-      <div className="flex-1 min-w-0">
-        <p className="truncate">{event.title}</p>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+    <div className="flex items-center gap-3 rounded-lg bg-[hsl(var(--surface-1))] px-3 py-2.5 transition-colors hover:bg-[hsl(var(--surface-2))]">
+      <div
+        className="h-11 w-1 flex-shrink-0 rounded-full"
+        style={{
+          backgroundColor:
+            event.type === 'assignment'
+              ? '#3b82f6'
+              : event.type === 'agenda_item' && event.visibility_state === 'hidden'
+                ? '#ef4444'
+                : event.type === 'agenda_item'
+                  ? '#6366f1'
+                  : undefined,
+        }}
+      />
+
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm text-foreground">{event.title}</p>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>{event.subject}</span>
           {event.class_name && (
             <>
-              <span>·</span>
+              <span>-</span>
               <span
-                className="inline-flex rounded-full px-2 py-0.5 text-white text-[10px]"
+                className="inline-flex rounded-full px-2 py-0.5 text-[10px] text-white"
                 style={{ backgroundColor: getClassChipColor(event.class_id) }}
               >
                 {event.class_name}
@@ -135,44 +130,47 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
           )}
           {event.chapter_title && (
             <>
-              <span>â€º</span>
+              <span>{'>'}</span>
               <span className="truncate">{event.chapter_title}</span>
             </>
           )}
         </div>
-        {event.linked_path && (
-          <div className="text-xs text-primary mt-1 truncate">
-            â†’ {event.linked_path}
-          </div>
-        )}
+        {event.linked_path && <div className="mt-1 truncate text-xs text-primary">-&gt; {event.linked_path}</div>}
       </div>
-      
-      <div className="flex items-center gap-3 flex-shrink-0">
+
+      <div className="flex flex-shrink-0 items-center gap-3">
         {event.estimated_duration && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
             {event.estimated_duration}m
           </div>
         )}
-        
+
         <div className="text-right">
-          <p className="text-sm">{format(event.date, 'EEE, MMM d')}</p>
+          <p className="text-xs">{format(event.date, 'EEE, MMM d')}</p>
           {event.priority && (
-            <Badge variant="secondary" className={`text-xs ${
-              event.priority === 'high' ? 'text-destructive' :
-              event.priority === 'medium' ? 'text-yellow-600' : 'text-green-600'
-            }`}>
+            <Badge
+              variant="secondary"
+              className={`text-xs ${
+                event.priority === 'high'
+                  ? 'text-destructive'
+                  : event.priority === 'medium'
+                    ? 'text-yellow-600'
+                    : 'text-green-600'
+              }`}
+            >
               {event.priority}
             </Badge>
           )}
         </div>
-        
-        {event.type === 'assignment' 
-          ? <BookCheck className="h-4 w-4 text-blue-500" />
-          : event.type === 'agenda_item'
-          ? <BookCheck className="h-4 w-4 text-violet-500" />
-          : <BrainCircuit className="h-4 w-4 text-primary" />
-        }
+
+        {event.type === 'assignment' ? (
+          <BookCheck className="h-4 w-4 text-blue-500" />
+        ) : event.type === 'agenda_item' ? (
+          <BookCheck className="h-4 w-4 text-violet-500" />
+        ) : (
+          <BrainCircuit className="h-4 w-4 text-primary" />
+        )}
       </div>
     </div>
   );
@@ -180,10 +178,7 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
   if (href) {
     if (onEventClick) {
       return (
-        <div
-          className="block cursor-pointer"
-          onClick={() => onEventClick(event)}
-        >
+        <div className="block cursor-pointer" onClick={() => onEventClick(event)}>
           {content}
         </div>
       );
@@ -197,5 +192,3 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
 
   return content;
 }
-
-

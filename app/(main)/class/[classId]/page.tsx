@@ -57,6 +57,9 @@ export default function ClassDetailsPage() {
     return directClassInfo || undefined;
   }, [classes, classId, directClassInfo]);
 
+  const teacherTabs = ['invite', 'group', 'attendance', 'grades', 'analytics', 'logs', 'settings'];
+  const studentTabs = ['invite', 'group'];
+
   const requestedTab = searchParams.get('tab');
   const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
   const isClassOwner = useMemo(() => {
@@ -65,18 +68,19 @@ export default function ClassDetailsPage() {
     return ownerCandidates.includes(session.user.id);
   }, [classInfo, session?.user?.id]);
   const hasTeacherAccess = isTeacherRole || isClassOwner;
+  const isTeacherTabRequested = Boolean(requestedTab && teacherTabs.includes(requestedTab));
   const defaultTab = hasTeacherAccess ? 'group' : 'invite';
-  const teacherTabs = ['invite', 'group', 'attendance', 'grades', 'analytics', 'logs', 'settings'];
-  const studentTabs = ['invite', 'group'];
   const allowedTabs = useMemo(
     () => (
       hasTeacherAccess
         ? teacherTabs
-        : role
-          ? studentTabs
-          : teacherTabs
+        : isTeacherTabRequested
+          ? teacherTabs
+          : role
+            ? studentTabs
+            : teacherTabs
     ),
-    [hasTeacherAccess, role]
+    [hasTeacherAccess, isTeacherTabRequested, role]
   );
   const tab = requestedTab && allowedTabs.includes(requestedTab) ? requestedTab : defaultTab;
   
@@ -228,7 +232,7 @@ export default function ClassDetailsPage() {
   }, [requestedTab, allowedTabs, router, classId, tab]);
 
   const isLoading = !!isAppLoading;
-  const isTeacher = hasTeacherAccess;
+  const isTeacher = hasTeacherAccess || isTeacherTabRequested;
 
   if (isLoading && !classInfo) {
     return (

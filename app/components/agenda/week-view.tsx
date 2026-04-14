@@ -103,9 +103,9 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
       <div className="flex items-center justify-between gap-3 py-1">
         <Button
           type="button"
-          variant="secondary"
+          variant="ghost"
           size="icon"
-          className="h-9 w-9 rounded-xl bg-card hover:bg-muted/70"
+          className="h-9 w-9 rounded-xl bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
           onClick={() => setWeekOffset((prev) => prev - 1)}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -115,9 +115,9 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
         </div>
         <Button
           type="button"
-          variant="secondary"
+          variant="ghost"
           size="icon"
-          className="h-9 w-9 rounded-xl bg-card hover:bg-muted/70"
+          className="h-9 w-9 rounded-xl bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
           onClick={() => setWeekOffset((prev) => prev + 1)}
         >
           <ChevronRight className="h-4 w-4" />
@@ -126,7 +126,7 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
 
       <div className="grid grid-cols-5 gap-2">
         {activeWeek.days.map((day) => (
-          <div key={`label-${format(day, 'yyyy-MM-dd')}`} className="rounded-xl bg-white py-2.5 text-center text-sm font-medium text-muted-foreground">
+          <div key={`label-${format(day, 'yyyy-MM-dd')}`} className="rounded-xl bg-white py-2.5 text-center text-sm font-medium text-foreground/90">
             {format(day, 'EEEE')}
           </div>
         ))}

@@ -1179,12 +1179,12 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
           onStudentsLoaded(studentGrades);
         } else {
           const errorText = await response.text();
-          console.log('[StudentGrader] âŒ Members API error:', response.status, errorText);
+          console.log('[StudentGrader] Members API error:', response.status, errorText);
           
           setError('Could not load students. API error: ' + response.status);
         }
       } catch (err: any) {
-        console.error('[StudentGrader] âŒ Failed to load students:', err);
+        console.error('[StudentGrader] Failed to load students:', err);
         setError('Failed to load students: ' + err.message);
       } finally {
         setLoading(false);
@@ -1526,8 +1526,8 @@ function EditGradesDetail({
             <Badge variant="outline">Professional Mode</Badge>
           </div>
           <p className="text-muted-foreground">
-            {gradeSet.category} â€¢ {gradeSet.weight}x weight â€¢ {gradeSet.graded_count}/{gradeSet.total_students} graded
-            {gradeSet.average !== null && ` â€¢ Avg: ${gradeSet.average}`}
+            {gradeSet.category} | {gradeSet.weight}x weight | {gradeSet.graded_count}/{gradeSet.total_students} graded
+            {gradeSet.average !== null && ` | Avg: ${gradeSet.average}`}
           </p>
         </div>
         <div className="flex gap-2">

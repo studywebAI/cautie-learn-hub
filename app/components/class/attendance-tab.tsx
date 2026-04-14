@@ -367,10 +367,9 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {visibleStudents.map(student => (
-          <Card key={student.id} className={`transition-shadow ${selectedStudentId === student.id ? 'bg-muted/45' : 'hover:shadow-md'}`}>
-            <CardContent className="p-4">
+          <div key={student.id} className={`rounded-xl bg-muted/25 px-3 py-2.5 transition-colors ${selectedStudentId === student.id ? 'bg-muted/45' : 'hover:bg-muted/35'}`}>
               <div className="flex items-center gap-4">
                 {/* Avatar */}
                 <Avatar className="h-10 w-10">
@@ -498,8 +497,7 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
                   )}
                 </div>
               )}
-            </CardContent>
-          </Card>
+          </div>
         ))}
       </div>
 

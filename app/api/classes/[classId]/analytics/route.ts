@@ -238,9 +238,17 @@ export async function GET(
           : 'Using internal text-similarity checks only.',
       },
       classOverview,
-      insights: generateInsights(engagementMetrics, atRiskStudents),
+      insights: generateInsights(engagementMetrics, atRiskStudents, {
+        warnings: [],
+        studentRows: [],
+      }),
       lastUpdated: new Date().toISOString(),
     }
+
+    analytics.insights = generateInsights(engagementMetrics, atRiskStudents, {
+      warnings: analytics.warnings,
+      studentRows: analytics.studentRows,
+    })
 
     return NextResponse.json(analytics)
   } catch (err) {
@@ -442,20 +450,39 @@ async function calculateComparativeAnalysis(supabase: any, teacherId: string): P
   return out
 }
 
-function generateInsights(engagement: EngagementMetrics, atRisk: AtRiskStudent[]): string[] {
+function generateInsights(
+  engagement: EngagementMetrics,
+  atRisk: AtRiskStudent[],
+  context: { warnings: AnalyticsWarning[]; studentRows: ClassAnalyticsStudentRow[] }
+): string[] {
   const insights: string[] = []
 
   if (engagement.assignmentParticipation < 80) {
-    insights.push('Assignment participation is below 80%.')
+    insights.push(`Assignment participation is ${Math.round(engagement.assignmentParticipation)}% (target: 80%+).`)
   }
   if (engagement.attendanceRate < 70) {
-    insights.push('Attendance/engagement is below 70%.')
+    insights.push(`Attendance/engagement is ${Math.round(engagement.attendanceRate)}% (target: 70%+).`)
   }
   if (atRisk.length > 0) {
-    insights.push(`${atRisk.length} student${atRisk.length === 1 ? '' : 's'} require extra attention.`)
+    insights.push(`${atRisk.length} student${atRisk.length === 1 ? '' : 's'} flagged as at-risk for follow-up.`)
+  }
+
+  const highWarnings = context.warnings.filter((warning) => warning.severity === 'high')
+  if (highWarnings.length > 0) {
+    insights.push(`${highWarnings.length} high-severity warning${highWarnings.length === 1 ? '' : 's'} need review.`)
+  }
+
+  const pendingOpenReviews = context.studentRows.reduce((sum, row) => sum + (row.pendingOpenReviews || 0), 0)
+  if (pendingOpenReviews > 0) {
+    insights.push(`${pendingOpenReviews} open-answer review${pendingOpenReviews === 1 ? '' : 's'} are still pending.`)
+  }
+
+  const lowCompletionStudents = context.studentRows.filter((row) => row.completionRate < 60)
+  if (lowCompletionStudents.length > 0) {
+    insights.push(`${lowCompletionStudents.length} student${lowCompletionStudents.length === 1 ? '' : 's'} are below 60% completion.`)
   }
   if (insights.length === 0) {
-    insights.push('Class performance is stable this week.')
+    insights.push('No urgent risk signals detected. Class performance is stable this week.')
   }
 
   return insights

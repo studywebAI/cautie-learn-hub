@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,6 +50,8 @@ function warningVariant(severity: AnalyticsWarning["severity"]): "destructive" |
 }
 
 export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [analytics, setAnalytics] = useState<ClassAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,6 +87,18 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
     setSelectedStudentId(deepLinkedStudentId);
   }, [deepLinkedStudentId]);
 
+  const updateStudentFilter = (nextStudentId: string) => {
+    setSelectedStudentId(nextStudentId);
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    params.set("tab", "analytics");
+    if (nextStudentId && nextStudentId !== "all") {
+      params.set("studentId", nextStudentId);
+    } else {
+      params.delete("studentId");
+    }
+    router.replace(`${pathname}?${params.toString()}`);
+  };
+
   const studentOptions = useMemo(() => {
     if (!analytics) return [];
     return analytics.studentRows
@@ -105,6 +120,17 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
     if (!analytics) return [];
     return analytics.studentRows.filter((row) => selectedStudentId === "all" || row.studentId === selectedStudentId);
   }, [analytics, selectedStudentId]);
+
+  const attentionQueue = useMemo(() => {
+    return [...filteredStudentRows]
+      .sort((a, b) => {
+        const aScore = (a.warningCount * 3) + (a.pendingOpenReviews * 2) + (a.completionRate < 60 ? 2 : 0);
+        const bScore = (b.warningCount * 3) + (b.pendingOpenReviews * 2) + (b.completionRate < 60 ? 2 : 0);
+        return bScore - aScore;
+      })
+      .filter((row) => row.warningCount > 0 || row.pendingOpenReviews > 0 || row.completionRate < 60)
+      .slice(0, 8);
+  }, [filteredStudentRows]);
 
   if (loading) {
     return (
@@ -237,7 +263,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
               <select
                 className="mt-1 w-full rounded-md border bg-background px-2 py-1.5"
                 value={selectedStudentId}
-                onChange={(e) => setSelectedStudentId(e.target.value)}
+                onChange={(e) => updateStudentFilter(e.target.value)}
               >
                 <option value="all">All students</option>
                 {studentOptions.map((s) => (
@@ -324,7 +350,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
                   <th className="py-2 pr-3">Open Reviews</th>
                   <th className="py-2 pr-3">Warnings</th>
                   <th className="py-2 pr-3">Last Activity</th>
-                  <th className="py-2 pr-3">Last Submission</th>
+                  <th className="py-2 pr-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -338,7 +364,34 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
                       <Badge variant={row.warningCount > 0 ? "destructive" : "outline"}>{row.warningCount}</Badge>
                     </td>
                     <td className="py-2 pr-3">{formatDateTime(row.lastActivityAt)}</td>
-                    <td className="py-2 pr-3">{formatDateTime(row.lastSubmissionAt)}</td>
+                    <td className="py-2 pr-3">
+                      <div className="flex flex-wrap gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => router.push(`/class/${classId}?tab=grades&studentId=${row.studentId}`)}
+                        >
+                          Grades
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => router.push(`/class/${classId}?tab=attendance&studentId=${row.studentId}`)}
+                        >
+                          Attendance
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => router.push(`/class/${classId}?tab=logs&student_id=${row.studentId}`)}
+                        >
+                          Logs
+                        </Button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -375,6 +428,48 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
               <div key={idx} className="rounded-md bg-muted/50 p-3 text-sm">{insight}</div>
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Needs Attention</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {attentionQueue.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No urgent follow-up based on current data.</p>
+          ) : (
+            <div className="space-y-2">
+              {attentionQueue.map((row) => (
+                <div key={row.studentId} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/35 p-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{row.studentName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Completion {Math.round(row.completionRate)}% | Warnings {row.warningCount} | Open reviews {row.pendingOpenReviews}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => router.push(`/class/${classId}?tab=attendance&studentId=${row.studentId}`)}
+                    >
+                      Follow up
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => router.push(`/class/${classId}?tab=logs&student_id=${row.studentId}`)}
+                    >
+                      Open logs
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

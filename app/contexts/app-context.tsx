@@ -209,6 +209,19 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     preloadSnapshotRef.current = preloadSnapshot;
   }, [preloadSnapshot]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (role !== 'teacher') return;
+    const activeClasses = (classes || []).filter((classItem: any) => classItem?.status !== 'archived');
+    if (activeClasses.length === 0) return;
+
+    const storedId = window.localStorage.getItem('studyweb-last-class-id') || '';
+    const stillExists = activeClasses.some((classItem: any) => classItem.id === storedId);
+    if (stillExists) return;
+
+    window.localStorage.setItem('studyweb-last-class-id', activeClasses[0].id);
+  }, [classes, role]);
+
   const applyAppearance = useCallback((currentTheme: ThemeType) => {
     if (typeof window === 'undefined') return;
     const root = document.documentElement;
@@ -381,6 +394,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const refreshRoleFromServer = useCallback(async () => {
+    try {
+      const response = await fetch('/api/user/role', { credentials: 'include', cache: 'no-store' });
+      if (!response.ok) return;
+      const payload = await response.json().catch(() => null);
+      const nextRole = payload?.subscription_type || payload?.role;
+      if (nextRole === 'teacher' || nextRole === 'student') {
+        setRoleState(nextRole);
+      }
+    } catch {
+      // Non-fatal: role remains on current cached value.
+    }
+  }, []);
+
   const applyDashboardData = useCallback((dashboardData: any) => {
     if (!dashboardData) return;
     const now = Date.now();
@@ -517,6 +544,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           const now = Date.now();
           setPreloadState('classes:list', { status: 'ready', updatedAt: now, error: null });
           setPreloadState('subjects:list', { status: 'ready', updatedAt: now, error: null });
+          void refreshRoleFromServer();
           console.log('[PRELOAD][TIER0] using cached dashboard snapshot', { durationMs: Date.now() - tier0StartedAt });
           setIsTier0Ready(true);
           return;
@@ -560,7 +588,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [applyAppearance, applyFont, warmResources, applyDashboardData, fetchDashboardSnapshot, supabase.auth]);
+  }, [applyAppearance, applyFont, warmResources, applyDashboardData, fetchDashboardSnapshot, refreshRoleFromServer, supabase.auth]);
 
   const setLanguage = (newLanguage: Locale) => {
     setLanguageState(newLanguage);

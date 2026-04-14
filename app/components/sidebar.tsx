@@ -82,8 +82,14 @@ export function AppSidebar() {
   const [joinCode, setJoinCode] = useState('');
   const [joinSubjectTitle, setJoinSubjectTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [activeTeacherClassId, setActiveTeacherClassId] = useState('');
-  const [storedTeacherClassId, setStoredTeacherClassId] = useState('');
+  const [activeTeacherClassId, setActiveTeacherClassId] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return window.localStorage.getItem('studyweb-last-class-id') || '';
+  });
+  const [storedTeacherClassId, setStoredTeacherClassId] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return window.localStorage.getItem('studyweb-last-class-id') || '';
+  });
 
   const isTeacher = context?.role === 'teacher';
   const isRailCollapsed = !isPhone && sidebarState === 'collapsed';

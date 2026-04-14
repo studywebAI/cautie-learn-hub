@@ -65,12 +65,12 @@ function firstTimePromptForLanguage(language: LanguageOption): string {
     es: 'Primera vez aqui?',
     pt: 'Primeira vez aqui?',
     pl: 'Pierwszy raz tutaj?',
-    ru: 'First time here?',
-    ar: 'First time here?',
-    ur: 'First time here?',
-    hi: 'First time here?',
-    bn: 'First time here?',
-    zh: 'First time here?',
+    ru: 'Первый раз здесь?',
+    ar: 'اول مرة هنا؟',
+    ur: 'پہلی بار یہاں؟',
+    hi: 'पहली बार यहां?',
+    bn: 'প্রথমবার এখানে?',
+    zh: '第一次来这里？',
   };
   return map[language] || map.en;
 }
