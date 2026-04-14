@@ -38,7 +38,6 @@ const THEME_OPTIONS: Array<{ value: ThemeType; label: string }> = [
 ];
 
 const GUEST_SETUP_DONE_KEY = 'studyweb-first-time-setup-guest-final-v1';
-const TEACHER_CODE_CACHE_KEY = 'studyweb-setup-teacher-code-v1';
 const RTL_LANGUAGES = new Set<LanguageOption>(['ar', 'ur']);
 
 function normalizeDisplayName(value: unknown): string {
@@ -88,8 +87,6 @@ export function FirstTimeSetupGate() {
   const [language, setLanguageChoice] = useState<LanguageOption>('en');
   const [theme, setThemeChoice] = useState<ThemeType>('light');
   const [displayName, setDisplayName] = useState('');
-  const [teacherCode, setTeacherCode] = useState('');
-  const [teacherCodeError, setTeacherCodeError] = useState('');
   const [typedPrompt, setTypedPrompt] = useState('');
   const [cursorVisible, setCursorVisible] = useState(true);
   const [savingFinal, setSavingFinal] = useState(false);
@@ -229,8 +226,6 @@ export function FirstTimeSetupGate() {
       setMode(session?.user?.id ? 'account' : 'new');
       setRole('student');
       setDisplayName('');
-      setTeacherCode(typeof window !== 'undefined' ? (window.localStorage.getItem(TEACHER_CODE_CACHE_KEY) || '') : '');
-      setTeacherCodeError('');
 
       if (!session?.user?.id) {
         if (typeof window !== 'undefined' && window.localStorage.getItem(GUEST_SETUP_DONE_KEY) === 'true') {
@@ -317,16 +312,20 @@ export function FirstTimeSetupGate() {
   }, [session?.user?.id, supabase.auth]);
 
   const finishSetup = useCallback(async () => {
+    const normalizedDisplayName = displayName.trim();
+    const persistedDisplayName =
+      normalizedDisplayName ||
+      (typeof window !== 'undefined' ? (window.localStorage.getItem('studyweb-display-name') || '').trim() : '');
+
     setLanguage(language);
     setTheme(theme);
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem('studyweb-display-name', displayName.trim());
-      window.localStorage.setItem(GUEST_SETUP_DONE_KEY, 'true');
-      if (teacherCode.trim()) {
-        window.localStorage.setItem(TEACHER_CODE_CACHE_KEY, teacherCode.trim());
+      if (persistedDisplayName) {
+        window.localStorage.setItem('studyweb-display-name', persistedDisplayName);
       } else {
-        window.localStorage.removeItem(TEACHER_CODE_CACHE_KEY);
+        window.localStorage.removeItem('studyweb-display-name');
       }
+      window.localStorage.setItem(GUEST_SETUP_DONE_KEY, 'true');
     }
 
     if (session?.user?.id) {
@@ -334,8 +333,8 @@ export function FirstTimeSetupGate() {
       try {
         await supabase.from('profiles').upsert({
           id: session.user.id,
-          full_name: displayName.trim() || null,
-          display_name: displayName.trim() || null,
+          full_name: persistedDisplayName || null,
+          display_name: persistedDisplayName || null,
           subscription_type: role,
           language,
           theme,
@@ -347,26 +346,14 @@ export function FirstTimeSetupGate() {
             preference_value: {
               mode,
               role,
-              teacherCode: teacherCode.trim() || null,
               language,
               theme,
-              displayName: displayName.trim() || null,
+              displayName: persistedDisplayName || null,
               completedAt: new Date().toISOString(),
             },
           },
           { onConflict: 'user_id,preference_key' }
         );
-
-        if (role === 'teacher' && teacherCode.trim()) {
-          await fetch('/api/classes/join', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              class_code: teacherCode.trim(),
-              subject_title: 'Joined subject',
-            }),
-          });
-        }
       } catch {
         // Keep UX moving even if backend save fails.
       } finally {
@@ -375,11 +362,16 @@ export function FirstTimeSetupGate() {
     }
 
     setVisible(false);
-  }, [displayName, language, mode, role, session?.user?.id, setLanguage, setTheme, supabase, teacherCode, theme]);
+  }, [displayName, language, mode, role, session?.user?.id, setLanguage, setTheme, supabase, theme]);
 
   const flowSteps: SetupStep[] = mode === 'account'
     ? ['language', 'role', 'appearance', 'displayName']
     : ['language', 'role', 'auth', 'appearance', 'displayName'];
+  useEffect(() => {
+    if (!flowSteps.includes(step)) {
+      setStep(flowSteps[0]);
+    }
+  }, [flowSteps, step]);
   const currentStepIndex = Math.max(0, flowSteps.indexOf(step));
   const totalSteps = flowSteps.length;
   const isRTL = RTL_LANGUAGES.has(language);
@@ -437,14 +429,15 @@ export function FirstTimeSetupGate() {
     return () => window.clearInterval(timer);
   }, [maxOptionLength, step]);
 
-  const typedOptionLabel = (label: string) => label.slice(0, Math.max(1, optionTypeTick));
+  const typedOptionLabel = (label: string) => {
+    const visibleChars = Math.max(1, optionTypeTick);
+    if (isRTL) {
+      return label.slice(Math.max(0, label.length - visibleChars));
+    }
+    return label.slice(0, visibleChars);
+  };
 
   const goNext = () => {
-    if (step === 'role' && role === 'teacher' && !teacherCode.trim()) {
-      setTeacherCodeError(uiText.enterTeacherCode || 'Enter teacher code');
-      return;
-    }
-    setTeacherCodeError('');
     if (currentStepIndex >= totalSteps - 1) return;
     setStep(flowSteps[currentStepIndex + 1]);
   };
@@ -503,7 +496,7 @@ export function FirstTimeSetupGate() {
                         setLanguage(option.value);
                         window.setTimeout(goNext, 110);
                       }}
-                      className={`setup-option ${isRTL ? 'setup-option-rtl' : ''} rounded-2xl border px-4 py-3 text-left text-sm transition ${language === option.value ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm' : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] text-foreground hover:bg-[hsl(var(--accent))]'}`}
+                      className={`setup-option ${isRTL ? 'setup-option-rtl' : ''} rounded-2xl border px-4 py-3 text-left text-sm transition ${language === option.value ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm' : 'border-[hsl(var(--foreground)/0.24)] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--accent))]'}`}
                       style={{ animationDelay: `${index * 28}ms` }}
                     >
                       {typedOptionLabel(option.label)}
@@ -525,37 +518,15 @@ export function FirstTimeSetupGate() {
                   </Button>
                   <Button className="h-12" variant={role === 'teacher' ? 'default' : 'outline'} onClick={() => {
                     setRole('teacher');
-                    if (teacherCode.trim()) {
-                      window.setTimeout(goNext, 110);
-                    }
+                    window.setTimeout(goNext, 110);
                   }}>
                     {typedOptionLabel(uiText.teacher)}
                   </Button>
                 </div>
-                {role === 'teacher' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="teacher-code">{uiText.teacherCode || 'Teacher code'}</Label>
-                    <Input
-                      id="teacher-code"
-                      value={teacherCode}
-                      onChange={(event) => {
-                        setTeacherCode(event.target.value);
-                        if (teacherCodeError) setTeacherCodeError('');
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' && teacherCode.trim()) {
-                          event.preventDefault();
-                          goNext();
-                        }
-                      }}
-                    />
-                    {teacherCodeError && <p className="text-xs text-destructive">{teacherCodeError}</p>}
-                  </div>
-                )}
               </div>
             )}
 
-            {step === 'auth' && (
+            {mode === 'new' && step === 'auth' && (
               <div className="max-w-xl space-y-5">
                 <Label>{uiText.selectAuth || 'Sign in or create your account'}</Label>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -589,7 +560,7 @@ export function FirstTimeSetupGate() {
                         setTheme(option.value);
                         window.setTimeout(goNext, 110);
                       }}
-                      className={`setup-option ${isRTL ? 'setup-option-rtl' : ''} rounded-2xl border px-4 py-3 text-left text-sm transition ${theme === option.value ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm' : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] text-foreground hover:bg-[hsl(var(--accent))]'}`}
+                      className={`setup-option ${isRTL ? 'setup-option-rtl' : ''} rounded-2xl border px-4 py-3 text-left text-sm transition ${theme === option.value ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm' : 'border-[hsl(var(--foreground)/0.24)] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--accent))]'}`}
                       style={{ animationDelay: `${index * 28}ms` }}
                     >
                       {typedOptionLabel(option.label)}

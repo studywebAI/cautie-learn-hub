@@ -90,15 +90,17 @@ export async function GET(
         .in('id', allUserIds)
       
       if (profilesError) {
-        logGroup('GET - profiles failed', { classId, profilesError: profilesError.message })
-        return NextResponse.json({ error: profilesError.message }, { status: 500 })
+        logGroup('GET - profiles failed (non-fatal)', { classId, profilesError: profilesError.message })
+        profiles = []
+        subscriptionTypes = {}
+      } else {
+        profiles = profilesData || []
+        
+      // Build subscription_type lookup
+        profiles.forEach(p => {
+          subscriptionTypes[p.id] = p.subscription_type || 'student'
+        })
       }
-      profiles = profilesData || []
-      
-    // Build subscription_type lookup
-      profiles.forEach(p => {
-        subscriptionTypes[p.id] = p.subscription_type || 'student'
-      })
     }
 
     const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])

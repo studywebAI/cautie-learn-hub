@@ -23,6 +23,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+function normalizeDisplayName(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const normalized = value.trim();
+  if (!normalized) return '';
+  if (/^[.\s]+$/.test(normalized)) return '';
+  if (normalized.toLowerCase() === 'guest') return '';
+  return normalized;
+}
+
 export function SidebarProfile() {
   const { session } = useContext(AppContext) as AppContextType;
   const userId = session?.user?.id ?? null;
@@ -66,6 +75,16 @@ export function SidebarProfile() {
     };
     if (userId) fetchSubscription();
   }, [userId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const local = normalizeDisplayName(window.localStorage.getItem('studyweb-display-name'));
+    const meta =
+      normalizeDisplayName((session as any)?.user?.user_metadata?.display_name) ||
+      normalizeDisplayName((session as any)?.user?.user_metadata?.full_name) ||
+      normalizeDisplayName((session as any)?.user?.user_metadata?.name);
+    setResolvedDisplayName(local || meta || '');
+  }, [session?.user?.id]);
 
   // Not logged in - show guest state with sign up button
   if (!session) {
@@ -210,21 +229,3 @@ export function SidebarProfile() {
     </div>
   );
 }
-  const normalizeDisplayName = (value: unknown): string => {
-    if (typeof value !== 'string') return '';
-    const normalized = value.trim();
-    if (!normalized) return '';
-    if (/^[.\s]+$/.test(normalized)) return '';
-    if (normalized.toLowerCase() === 'guest') return '';
-    return normalized;
-  };
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const local = normalizeDisplayName(window.localStorage.getItem('studyweb-display-name'));
-    const meta =
-      normalizeDisplayName((session as any)?.user?.user_metadata?.display_name) ||
-      normalizeDisplayName((session as any)?.user?.user_metadata?.full_name) ||
-      normalizeDisplayName((session as any)?.user?.user_metadata?.name);
-    setResolvedDisplayName(local || meta || '');
-  }, [session?.user?.id]);
