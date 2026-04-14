@@ -17,7 +17,10 @@ function SubjectsPageContent() {
   const context = useContext(AppContext) as AppContextType | null;
   const searchParams = useSearchParams();
   const isTeacher = context?.role === 'teacher';
-  const [teacherClassId, setTeacherClassId] = useState<string | undefined>(undefined);
+  const [teacherClassId, setTeacherClassId] = useState<string | undefined>(() => {
+    if (typeof window === 'undefined') return undefined;
+    return window.localStorage.getItem('studyweb-last-class-id') || undefined;
+  });
 
   const teacherActiveClasses = useMemo(
     () => (context?.classes || []).filter((classItem) => classItem.status !== 'archived'),
@@ -32,8 +35,20 @@ function SubjectsPageContent() {
       teacherActiveClasses.find((classItem) => classItem.id === classIdFromQuery) ||
       teacherActiveClasses.find((classItem) => classItem.id === savedClassId) ||
       teacherActiveClasses[0];
-    setTeacherClassId(preferredClass?.id);
+    if (!preferredClass?.id) return;
+    setTeacherClassId(preferredClass.id);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('studyweb-last-class-id', preferredClass.id);
+    }
   }, [isTeacher, teacherActiveClasses, searchParams]);
+
+  if (isTeacher && context?.isLoading) {
+    return null;
+  }
+
+  if (isTeacher && !teacherClassId && teacherActiveClasses.length > 0) {
+    return null;
+  }
 
   if (isTeacher && !teacherClassId) {
     return (

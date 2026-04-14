@@ -195,7 +195,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
         const students: Student[] = rows
           .filter((member: any) => {
             const role = String(member?.role || member?.profiles?.subscription_type || '').toLowerCase();
-            return role === 'student' || role === '';
+            return !['teacher', 'owner', 'admin', 'creator', 'ta'].includes(role);
           })
           .map((member: any) => ({
             id: member.user_id || member.id,

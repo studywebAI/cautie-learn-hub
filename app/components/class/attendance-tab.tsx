@@ -165,6 +165,12 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
     setIsConfirmDialogOpen(true);
   };
 
+  const patchStudentLocal = (studentId: string, updates: Partial<StudentAttendance>) => {
+    setStudents((prev) =>
+      prev.map((student) => (student.id === studentId ? { ...student, ...updates } : student))
+    );
+  };
+
   const handleConfirm = async (directAction?: {
     studentId: string;
     isPresent: boolean;
@@ -183,7 +189,13 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
       });
 
       if (response.ok) {
-        toast({ title: 'Attendance updated' });
+        const existing = students.find((student) => student.id === action.studentId);
+        patchStudentLocal(action.studentId, {
+          isPresent: action.isPresent,
+          hasHomeworkIncomplete: action.hasHomeworkIncomplete ?? existing?.hasHomeworkIncomplete ?? false,
+          wasSentOut: action.wasSentOut ?? existing?.wasSentOut ?? false,
+          wasTooLate: action.wasTooLate ?? existing?.wasTooLate ?? false,
+        });
         void logClassTabEvent({
           classId,
           tab: 'attendance',
@@ -192,7 +204,7 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
           level: 'info',
           meta: action,
         });
-        fetchAttendance();
+        fetchAttendance(true);
       }
     } catch (error) {
       console.error('Failed to update attendance:', error);
@@ -225,7 +237,10 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
       });
 
       if (response.ok) {
-        toast({ title: 'Note saved' });
+        patchStudentLocal(selectedStudent.id, {
+          note: noteText.trim(),
+          noteCreatedAt: new Date().toISOString(),
+        });
         void logClassTabEvent({
           classId,
           tab: 'attendance',
@@ -234,7 +249,7 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
           level: 'info',
           meta: { student_id: selectedStudent.id },
         });
-        fetchAttendance();
+        fetchAttendance(true);
       }
     } catch (error) {
       console.error('Failed to save note:', error);
@@ -267,7 +282,6 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
       });
 
       if (response.ok) {
-        toast({ title: 'Custom event saved' });
         void logClassTabEvent({
           classId,
           tab: 'attendance',
@@ -276,7 +290,7 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
           level: 'info',
           meta: { student_id: selectedStudent.id },
         });
-        fetchAttendance();
+        fetchAttendance(true);
       }
     } catch (error) {
       console.error('Failed to save custom event:', error);

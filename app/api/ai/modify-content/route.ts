@@ -73,6 +73,7 @@ function extractBlockContent(data: any, type: string): string {
     case 'fill_in_blank':
       return `Text: ${data?.text}\nAnswers: ${data?.answers?.join(', ')}`;
     case 'drag_drop':
+    case 'matching':
       return `Prompt: ${data?.prompt}\nPairs: ${data?.pairs?.map((pair: any) => `${pair.left} → ${pair.right}`).join(', ')}`;
     case 'ordering':
       return `Prompt: ${data?.prompt}\nItems: ${data?.items?.join(', ')}`;
@@ -114,6 +115,27 @@ function parseBlockResponse(modifiedData: any, blockType: string, originalData: 
           ...originalData,
           text: textMatch ? textMatch[1].trim() : originalData.text,
           answers: answersMatch ? answersMatch[1].split(',').map((a: string) => a.trim()) : originalData.answers,
+        };
+      }
+      case 'drag_drop':
+      case 'matching': {
+        const promptMatch = cleaned.match(/Prompt:\s*(.+?)(?:\n|$)/i);
+        const pairsMatch = cleaned.match(/Pairs:\s*(.+?)(?:\n|$)/i);
+        const pairs = pairsMatch
+          ? pairsMatch[1]
+              .split(',')
+              .map((pair: string) => pair.trim())
+              .filter(Boolean)
+              .map((pair: string) => {
+                const [left, right] = pair.split('â†’').map((side) => side?.trim() || '');
+                return { left, right };
+              })
+              .filter((pair: { left: string; right: string }) => pair.left && pair.right)
+          : originalData.pairs;
+        return {
+          ...originalData,
+          prompt: promptMatch ? promptMatch[1].trim() : originalData.prompt,
+          pairs,
         };
       }
       default:

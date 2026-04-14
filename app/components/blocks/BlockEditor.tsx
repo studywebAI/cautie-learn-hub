@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 
 type Block = {
   id?: string;
-  type: 'text' | 'image' | 'video' | 'multiple_choice' | 'open_question' | 'fill_in_blank' | 'drag_drop' | 'ordering' | 'media_embed' | 'divider' | 'rich_text' | 'executable_code' | 'code' | 'list' | 'quote' | 'layout' | 'complex';
+  type: 'text' | 'image' | 'video' | 'multiple_choice' | 'open_question' | 'fill_in_blank' | 'drag_drop' | 'matching' | 'ordering' | 'media_embed' | 'divider' | 'rich_text' | 'executable_code' | 'code' | 'list' | 'quote' | 'layout' | 'complex';
   position: number;
   data: any;
   locked?: boolean;
@@ -39,6 +39,7 @@ const BLOCK_TYPES = [
   { value: 'open_question', label: 'Open Question', icon: '❓' },
   { value: 'fill_in_blank', label: 'Fill in Blank', icon: '📝' },
   { value: 'drag_drop', label: 'Drag & Drop', icon: '🎯' },
+  { value: 'matching', label: 'Matching', icon: '🎯' },
   { value: 'ordering', label: 'Ordering', icon: '🔢' },
   { value: 'media_embed', label: 'Media Embed', icon: '🔗' },
   { value: 'divider', label: 'Divider', icon: '➖' },
@@ -220,6 +221,7 @@ export function BlockEditor({
       case 'fill_in_blank':
         return { text: 'My shoes ___ 100 euros.', answers: [''], case_sensitive: false };
       case 'drag_drop':
+      case 'matching':
         return { prompt: '', pairs: [{ left: '', right: '' }] };
       case 'ordering':
         return { prompt: '', items: ['', '', ''], correct_order: [0, 1, 2] };
@@ -472,3 +474,4 @@ export function BlockEditor({
     </div>
   );
 }
+

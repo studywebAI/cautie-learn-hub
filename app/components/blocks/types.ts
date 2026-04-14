@@ -9,6 +9,7 @@ export type BlockType =
   | 'open_question'
   | 'fill_in_blank'
   | 'drag_drop'
+  | 'matching'
   | 'ordering'
   | 'numeric_question'
   | 'media_embed'

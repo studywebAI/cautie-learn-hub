@@ -486,7 +486,7 @@ export default function ParagraphDetailPage() {
               <Label htmlFor="assignment-title" className="lowercase">title</Label>
             <Input
               id="assignment-title"
-              placeholder="e.g., Exercise Set A"
+              placeholder=""
               value={newAssignmentTitle}
               onChange={(e) => setNewAssignmentTitle(e.target.value)}
               className="mt-2"

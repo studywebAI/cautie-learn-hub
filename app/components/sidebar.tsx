@@ -195,6 +195,19 @@ export function AppSidebar() {
     setActiveTeacherClassId((current) => current || classIdFromStorage);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== 'studyweb-last-class-id') return;
+      const next = event.newValue || '';
+      if (!next) return;
+      setStoredTeacherClassId(next);
+      setActiveTeacherClassId((current) => current || next);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
 
   useEffect(() => {
     if (!isTeacher) return;
@@ -209,6 +222,13 @@ export function AppSidebar() {
       persistTeacherClassId(preferredClass.id);
     }
   }, [isTeacher, classDropdownItems, activeTeacherClassId, storedTeacherClassId]);
+
+  useEffect(() => {
+    if (!isTeacher) return;
+    if (!effectiveTeacherClassId) return;
+    if (effectiveTeacherClassId === activeTeacherClassId && effectiveTeacherClassId === storedTeacherClassId) return;
+    persistTeacherClassId(effectiveTeacherClassId);
+  }, [isTeacher, effectiveTeacherClassId, activeTeacherClassId, storedTeacherClassId]);
 
   useEffect(() => {
     setDropdown(null);
@@ -757,8 +777,8 @@ export function AppSidebar() {
           className="h-7 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-2.5 text-left text-[11px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))] disabled:opacity-60"
         >
           <span className="flex items-center justify-between gap-2">
-            <span className="truncate">
-              {classDropdownItems.find((classItem) => classItem.id === activeTeacherClassId)?.label || 'no classes'}
+              <span className="truncate">
+              {classDropdownItems.find((classItem) => classItem.id === effectiveTeacherClassId)?.label || 'no classes'}
             </span>
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </span>

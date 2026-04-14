@@ -212,7 +212,7 @@ export async function POST(
       isCorrect = result.isCorrect;
       feedback = blockSettings.feedbackText || null;
     }
-    if (block.type === 'drag_drop') {
+    if (block.type === 'drag_drop' || block.type === 'matching') {
       const result = calculateDragDropScore(
         answerData?.pairs || [],
         (block as any).data?.pairs || [],

@@ -56,6 +56,7 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
       case 'ordering':
         return <StudentOrderingBlock {...commonProps} />;
       case 'drag_drop':
+      case 'matching':
         return <StudentDragDropBlock {...commonProps} />;
       case 'image':
       case 'video':

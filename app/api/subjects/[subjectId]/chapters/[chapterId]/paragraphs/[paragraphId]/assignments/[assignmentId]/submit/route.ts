@@ -138,7 +138,7 @@ export async function POST(
           totalScore += Number(score || 0);
           feedback = blockSettings.feedbackText || (isCorrect ? 'Correct order' : 'Order is not correct');
         }
-        if (block.type === 'drag_drop') {
+        if (block.type === 'drag_drop' || block.type === 'matching') {
           const result = calculateDragDropScore(
             answer_data?.pairs || [],
             blockData?.pairs || [],

@@ -140,6 +140,19 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     }
   },
   {
+    id: 'matching',
+    type: 'matching',
+    icon: <Move className="h-4 w-4" />,
+    label: 'Matching',
+    defaultData: {
+      prompt: '',
+      pairs: [
+        { left: '', right: '' },
+        { left: '', right: '' }
+      ]
+    }
+  },
+  {
     id: 'ordering',
     type: 'ordering',
     icon: <ListOrdered className="h-4 w-4" />,
@@ -1109,6 +1122,7 @@ export function AssignmentEditor({
       }
 
       case 'drag_drop':
+      case 'matching':
         return (
           <div className="space-y-2">
             <Input
@@ -1206,7 +1220,7 @@ export function AssignmentEditor({
   const renderBlockIcons = (block: AssignmentBlock, isHovered: boolean = false) => {
     if (!showTeacherControls) return null;
     
-    const isQuestionBlock = ['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'ordering'].includes(block.type);
+    const isQuestionBlock = ['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'matching', 'ordering'].includes(block.type);
     if (!isQuestionBlock) return null;
     
     const isVisible = selectedBlock === block.id || isHovered;
@@ -1664,7 +1678,7 @@ export function AssignmentEditor({
                         </select>
                       </div>
                     )}
-                    {(block.type === 'drag_drop' || block.type === 'ordering') && (
+                    {(block.type === 'drag_drop' || block.type === 'matching' || block.type === 'ordering') && (
                       <div className="space-y-2 border-t pt-2">
                         <div className="flex items-center justify-between"><Label className="text-xs">Shuffle items</Label><Checkbox checked={s.matching.shuffleItems} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, matching: { ...prev.matching, shuffleItems: !!checked } }))} /></div>
                         <div className="flex items-center justify-between"><Label className="text-xs">Partial scoring</Label><Checkbox checked={s.matching.partialScoring} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, matching: { ...prev.matching, partialScoring: !!checked } }))} /></div>
@@ -1840,6 +1854,7 @@ export function AssignmentEditor({
                     );
 
                   case 'drag_drop':
+                  case 'matching':
                     return (
                       <div className="space-y-4">
                         <div className="space-y-2">

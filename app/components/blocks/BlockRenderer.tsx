@@ -59,6 +59,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'open_question':
       case 'fill_in_blank':
       case 'drag_drop':
+      case 'matching':
       case 'ordering':
         // For now, show JSON - we'll implement more quiz components next
         return (

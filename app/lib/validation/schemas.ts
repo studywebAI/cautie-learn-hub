@@ -106,7 +106,7 @@ export const createAssignmentSchema = z.object({
 
 export const blockTypeEnum = z.enum([
   'text', 'image', 'video', 'multiple_choice', 'open_question',
-  'fill_in_blank', 'drag_drop', 'ordering', 'media_embed',
+  'fill_in_blank', 'drag_drop', 'matching', 'ordering', 'media_embed',
   'numeric_question',
   'divider', 'rich_text', 'executable_code', 'code', 'list',
   'quote', 'layout', 'complex'

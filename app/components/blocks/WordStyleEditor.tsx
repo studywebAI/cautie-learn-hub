@@ -34,6 +34,7 @@ type TemplateType =
   | 'open_question'
   | 'fill_in_blank'
   | 'drag_drop'
+  | 'matching'
   | 'ordering'
   | 'image'
   | 'text'
@@ -73,6 +74,13 @@ const templates: Template[] = [
     id: 'drag_drop',
     name: 'Drag & Drop',
     description: 'Match items by dragging',
+    icon: Move,
+    category: 'question'
+  },
+  {
+    id: 'matching',
+    name: 'Matching',
+    description: 'Match pairs from two columns',
     icon: Move,
     category: 'question'
   },
@@ -215,6 +223,7 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
           case_sensitive: false
         };
       case 'drag_drop':
+      case 'matching':
         return {
           prompt: 'Match the following items:',
           pairs: [
