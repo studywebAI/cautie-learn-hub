@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { getClassPermission, logAuditEntry } from '@/lib/auth/class-permissions'
@@ -17,62 +18,69 @@ export async function GET(
 ) {
   try {
     const { classId } = await params
-    console.log(`\n🌐 [MEMBERS_GET] Fetching members for class: ${classId}`)
-    
+
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()
-    console.log('[MEMBERS_GET] User:', user?.id)
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const perm = await getClassPermission(supabase, classId, user.id)
-    console.log('[MEMBERS_GET] Permission:', perm)
-    
+
     // Allow if user is a member of the class
     if (!perm.isMember) {
-      console.log('[MEMBERS_GET] ❌ Access denied - not a member')
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    // Get all members
-    const { data: membersData, error } = await supabase
+    // Prefer admin client for full roster visibility; fallback to user client.
+    let dataClient: any = supabase
+    try {
+      dataClient = createAdminClient()
+    } catch {
+      dataClient = supabase
+    }
+
+    const { data: membersData, error } = await dataClient
       .from('class_members')
-      .select('user_id')
+      .select('user_id, role')
       .eq('class_id', classId)
 
-    console.log('[MEMBERS_GET] Members query result:', { count: membersData?.length, error })
     if (error) {
-      console.error('[MEMBERS_GET] Error fetching members:', error)
       return NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 })
     }
 
-    // Get profile info separately (including subscription_type to determine teacher/student role)
-    const members = await Promise.all(
-      (membersData || []).map(async (member: any) => {
-        const { data: profile } = await supabase
+    const userIds = (membersData || []).map((member: any) => member.user_id).filter(Boolean)
+
+    const { data: profilesData } = userIds.length > 0
+      ? await dataClient
           .from('profiles')
-          .select('full_name, email, avatar_url, subscription_type')
-          .eq('id', member.user_id)
-          .single()
+          .select('id, full_name, email, avatar_url, subscription_type')
+          .in('id', userIds)
+      : { data: [] as any[] }
 
-        return {
-          ...member,
-          role: profile?.subscription_type || 'student', // Use global subscription_type as role
-          profiles: {
-            full_name: profile?.full_name || getDefaultDisplayName(profile?.email, member.user_id),
-            email: profile?.email || null,
-            avatar_url: profile?.avatar_url || null,
-            subscription_type: profile?.subscription_type || null
-          }
-        }
-      })
-    )
+    const profilesById = new Map<string, any>((profilesData || []).map((profile: any) => [profile.id, profile]))
+    const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
 
-    console.log('[MEMBERS_GET] Returning members:', members.length)
+    const members = (membersData || []).map((member: any) => {
+      const profile = profilesById.get(member.user_id)
+      const normalizedRole = String(member?.role || profile?.subscription_type || 'student').toLowerCase()
+      const role = teacherRoles.has(normalizedRole) ? 'teacher' : 'student'
+
+      return {
+        ...member,
+        role,
+        profiles: {
+          full_name: profile?.full_name || getDefaultDisplayName(profile?.email, member.user_id),
+          email: profile?.email || null,
+          avatar_url: profile?.avatar_url || null,
+          subscription_type: profile?.subscription_type || null,
+        },
+      }
+    })
+
     return NextResponse.json(members || [])
   } catch (error) {
-    console.error('❌ [MEMBERS_GET] Unexpected error:', error)
+    console.error('[MEMBERS_GET] Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -141,7 +149,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('❌ [MEMBERS_PATCH] Unexpected error:', error)
+    console.error('[MEMBERS_PATCH] Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -188,7 +196,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('❌ [MEMBERS_DELETE] Unexpected error:', error)
+    console.error('[MEMBERS_DELETE] Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

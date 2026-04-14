@@ -161,10 +161,7 @@ export default function SubjectDetailPage() {
   const handleCreateParagraph = async () => {
     if (!selectedChapterId) return;
     const resolvedTitle = newParagraphTitle.trim();
-    if (!resolvedTitle) {
-      toast({ title: 'Error', description: 'Paragraph title is required', variant: 'destructive' });
-      return;
-    }
+    if (!resolvedTitle) return;
     if (isCreatingParagraph) return;
 
     const targetChapter = chapters.find((chapter) => chapter.id === selectedChapterId);
@@ -440,7 +437,7 @@ export default function SubjectDetailPage() {
             <Label htmlFor="chapter-title">Title</Label>
             <Input
               id="chapter-title"
-              placeholder="e.g., Introduction"
+              placeholder=""
               value={newChapterTitle}
               onChange={(e) => setNewChapterTitle(e.target.value)}
               className="mt-2"
@@ -485,7 +482,7 @@ export default function SubjectDetailPage() {
             <Label htmlFor="paragraph-title">Title</Label>
             <Input
               id="paragraph-title"
-              placeholder="Paragraph title"
+              placeholder=""
               value={newParagraphTitle}
               onChange={(e) => setNewParagraphTitle(e.target.value)}
               className="mt-2"
