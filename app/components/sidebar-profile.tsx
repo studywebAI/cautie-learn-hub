@@ -27,8 +27,8 @@ function normalizeDisplayName(value: unknown): string {
   if (typeof value !== 'string') return '';
   const normalized = value.trim();
   if (!normalized) return '';
-  if (/^[.\s]+$/.test(normalized)) return '';
   if (normalized.toLowerCase() === 'guest') return '';
+  if (!/[\p{L}\p{N}]/u.test(normalized)) return '';
   return normalized;
 }
 

@@ -25,6 +25,14 @@ type StudentAttendance = {
   note: string | null;
   noteCreatedAt: string | null;
   notedBy: string | null;
+  recentActivity: Array<{
+    id: string;
+    action: string;
+    entityType: string;
+    entityId: string | null;
+    details: Record<string, any>;
+    createdAt: string;
+  }>;
   stats: {
     totalAbsent: number;
     totalHomeworkIncomplete: number;
@@ -153,6 +161,13 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const formatActivityLabel = (action: string) => {
+    return String(action || '')
+      .replace(/_/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   };
 
   const handleAttendanceToggle = (studentId: string, isPresent: boolean) => {
@@ -394,8 +409,8 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{student.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{student.email || 'No email'}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {student.note && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {student.note && (
                       <span className="flex items-center gap-1">
                         <MessageSquare className="h-3 w-3" />
                         Note
@@ -499,6 +514,34 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
                   )}
                 </div>
               </div>
+
+              {student.recentActivity && student.recentActivity.length > 0 && (
+                <div className="mt-2 rounded-md bg-muted/35 p-2">
+                  <div className="mb-1 flex items-center justify-between">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Recent activity</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[11px]"
+                      onClick={() => router.replace(`/class/${classId}?tab=logs&student_id=${student.id}`)}
+                    >
+                      View logs
+                    </Button>
+                  </div>
+                  <div className="space-y-1">
+                    {student.recentActivity.slice(0, 2).map((event) => (
+                      <div key={event.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground/90">{formatActivityLabel(event.action)}</span>
+                        <span>•</span>
+                        <span>{new Date(event.createdAt).toLocaleDateString()}</span>
+                        {(event.details?.custom_message || event.details?.note) && (
+                          <span className="truncate">• {String(event.details?.custom_message || event.details?.note)}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Note preview */}
               {student.note && (

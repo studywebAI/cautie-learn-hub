@@ -45,7 +45,8 @@ function normalizeDisplayName(value: unknown): string {
   const normalized = value.trim();
   if (!normalized) return '';
   const lowered = normalized.toLowerCase();
-  if (lowered === 'guest' || normalized === '...') return '';
+  if (lowered === 'guest') return '';
+  if (!/[\p{L}\p{N}]/u.test(normalized)) return '';
   return normalized;
 }
 
@@ -375,6 +376,12 @@ export function FirstTimeSetupGate() {
   const currentStepIndex = Math.max(0, flowSteps.indexOf(step));
   const totalSteps = flowSteps.length;
   const isRTL = RTL_LANGUAGES.has(language);
+  const getOptionClasses = (active: boolean) => {
+    if (active) {
+      return 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm';
+    }
+    return 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--accent))]';
+  };
   const stepPrompt = useMemo(() => {
     if (step === 'language') return uiText.firstTime || firstTimePromptForLanguage(language);
     if (step === 'role') return uiText.selectRole || 'Select role';
@@ -391,7 +398,11 @@ export function FirstTimeSetupGate() {
     const run = async () => {
       setTypedPrompt('');
       for (let i = 1; i <= prompt.length && active; i += 1) {
-        setTypedPrompt(prompt.slice(0, i));
+        if (isRTL) {
+          setTypedPrompt(prompt.slice(Math.max(0, prompt.length - i)));
+        } else {
+          setTypedPrompt(prompt.slice(0, i));
+        }
         await new Promise((resolve) => window.setTimeout(resolve, 32));
       }
     };
@@ -402,7 +413,7 @@ export function FirstTimeSetupGate() {
       active = false;
       window.clearInterval(blink);
     };
-  }, [stepPrompt, visible]);
+  }, [isRTL, stepPrompt, visible]);
 
   const optionLabels: string[] =
     step === 'language'
@@ -496,7 +507,7 @@ export function FirstTimeSetupGate() {
                         setLanguage(option.value);
                         window.setTimeout(goNext, 110);
                       }}
-                      className={`setup-option ${isRTL ? 'setup-option-rtl' : ''} rounded-2xl border px-4 py-3 text-left text-sm transition ${language === option.value ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm' : 'border-[hsl(var(--foreground)/0.24)] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--accent))]'}`}
+                      className={`setup-option ${isRTL ? 'setup-option-rtl' : ''} rounded-2xl border px-4 py-3 text-left text-sm transition ${getOptionClasses(language === option.value)}`}
                       style={{ animationDelay: `${index * 28}ms` }}
                     >
                       {typedOptionLabel(option.label)}
@@ -560,7 +571,7 @@ export function FirstTimeSetupGate() {
                         setTheme(option.value);
                         window.setTimeout(goNext, 110);
                       }}
-                      className={`setup-option ${isRTL ? 'setup-option-rtl' : ''} rounded-2xl border px-4 py-3 text-left text-sm transition ${theme === option.value ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm' : 'border-[hsl(var(--foreground)/0.24)] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--accent))]'}`}
+                      className={`setup-option ${isRTL ? 'setup-option-rtl' : ''} rounded-2xl border px-4 py-3 text-left text-sm transition ${getOptionClasses(theme === option.value)}`}
                       style={{ animationDelay: `${index * 28}ms` }}
                     >
                       {typedOptionLabel(option.label)}

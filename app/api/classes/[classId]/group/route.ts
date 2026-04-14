@@ -13,6 +13,11 @@ function displayName(fullName: string | null | undefined, email: string | null |
   return `user-${userId.slice(0, 8)}`
 }
 
+function isUuidLike(value: unknown): value is string {
+  if (typeof value !== 'string') return false
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
@@ -77,17 +82,24 @@ export async function GET(
       return NextResponse.json({ error: membersError.message }, { status: 500 })
     }
 
-    const allUserIds = (classMembers || []).map((m: { user_id: string }) => m.user_id)
+    const allUserIds = Array.from(
+      new Set(
+        (classMembers || [])
+          .map((m: { user_id: string | null }) => String(m?.user_id || '').trim())
+          .filter((userId) => userId.length > 0)
+      )
+    )
+    const safeUserIds = allUserIds.filter((userId) => isUuidLike(userId))
     
     // Get profiles for all members to determine their subscription_type (teacher/student)
     let profiles: any[] = []
     let subscriptionTypes: Record<string, string> = {}
     
-    if (allUserIds.length > 0) {
+    if (safeUserIds.length > 0) {
       const { data: profilesData, error: profilesError } = await dataClient
         .from('profiles')
         .select('id, full_name, avatar_url, email, last_seen, subscription_type')
-        .in('id', allUserIds)
+        .in('id', safeUserIds)
       
       if (profilesError) {
         logGroup('GET - profiles failed (non-fatal)', { classId, profilesError: profilesError.message })
@@ -115,14 +127,14 @@ export async function GET(
     const studentIds = allUserIds.filter((uid: string) => !teacherIds.includes(uid))
 
     // Get all assignments for the class
-    const { data: assignments, error: assignmentsError } = await dataClient
+    const { data: assignmentsData, error: assignmentsError } = await dataClient
       .from('assignments')
       .select('id, title, due_date, created_at, class_id')
       .eq('class_id', classId)
       .order('created_at', { ascending: false })
-
+    const assignments = assignmentsError ? [] : (assignmentsData || [])
     if (assignmentsError) {
-      return NextResponse.json({ error: assignmentsError.message }, { status: 500 })
+      logGroup('GET - assignments failed (non-fatal)', { classId, assignmentsError: assignmentsError.message })
     }
 
     const assignmentIds = (assignments || []).map((a: { id: string }) => a.id)
@@ -130,12 +142,13 @@ export async function GET(
     // Get submissions for these assignments. Do not fail the whole endpoint
     // if this optional dataset is unavailable.
     let submissions: any[] = []
-    if (assignmentIds.length > 0 && studentIds.length > 0) {
+    const safeStudentIds = studentIds.filter((studentId) => isUuidLike(studentId))
+    if (assignmentIds.length > 0 && safeStudentIds.length > 0) {
       const { data: submissionsData, error: submissionsError } = await dataClient
         .from('submissions')
         .select('id, assignment_id, user_id, status, grade, submitted_at, created_at')
         .in('assignment_id', assignmentIds)
-        .in('user_id', studentIds)
+        .in('user_id', safeStudentIds)
       
       if (submissionsError) {
         logGroup('GET - submissions failed (non-fatal)', {

@@ -81,6 +81,25 @@ export async function GET(
       })
       .map((row: any) => row.user_id)
 
+    let auditLogs: any[] = []
+    if (studentIds.length > 0) {
+      const studentOrFilters = studentIds
+        .flatMap((studentId: string) => [`user_id.eq.${studentId}`, `metadata->>student_id.eq.${studentId}`])
+        .join(',')
+      const { data: logsData, error: logsError } = await supabase
+        .from('audit_logs')
+        .select('id, user_id, action, entity_type, entity_id, metadata, created_at')
+        .eq('class_id', classId)
+        .or(studentOrFilters)
+        .order('created_at', { ascending: false })
+        .limit(300)
+      if (logsError) {
+        logAttendance('GET - audit logs failed (non-fatal)', { classId, logsError: logsError.message })
+      } else {
+        auditLogs = logsData || []
+      }
+    }
+
     // Get attendance records for all students
     let attendanceRecords = []
     if (studentIds.length > 0) {
@@ -111,6 +130,21 @@ export async function GET(
       const latestRecord = studentRecords.sort((a: any, b: any) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )[0]
+      const recentActivity = auditLogs
+        .filter((log: any) => {
+          const actorId = String(log?.user_id || '')
+          const targetId = String(log?.metadata?.student_id || '')
+          return actorId === studentId || targetId === studentId
+        })
+        .slice(0, 5)
+        .map((log: any) => ({
+          id: log.id,
+          action: log.action,
+          entityType: log.entity_type,
+          entityId: log.entity_id,
+          details: log.metadata || {},
+          createdAt: log.created_at,
+        }))
 
       return {
         id: studentId,
@@ -124,6 +158,7 @@ export async function GET(
         note: latestRecord?.note,
         noteCreatedAt: latestRecord?.created_at,
         notedBy: latestRecord?.noted_by,
+        recentActivity,
         stats: {
           totalAbsent: absentCount,
           totalHomeworkIncomplete: homeworkIncompleteCount,

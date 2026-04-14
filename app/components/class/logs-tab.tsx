@@ -100,6 +100,7 @@ export function LogsTab({ classId }: LogsTabProps) {
   const [quickPreset, setQuickPreset] = useState<QuickPreset>('none');
   const [studentFilter, setStudentFilter] = useState<string>('all');
   const [limit] = useState(100);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadLogs = async (mode: 'replace' | 'append' = 'replace') => {
     if (mode === 'replace') setLoading(true);
@@ -114,6 +115,7 @@ export function LogsTab({ classId }: LogsTabProps) {
       meta: { limit, offset: nextOffset, mode },
     });
     try {
+      setLoadError(null);
       const params = new URLSearchParams();
       params.set('limit', String(limit));
       params.set('offset', String(nextOffset));
@@ -142,6 +144,7 @@ export function LogsTab({ classId }: LogsTabProps) {
         meta: { count: deduped.length, returned: rows.length, has_next: !!pagination.hasNext },
       });
     } catch (error: any) {
+      setLoadError(error?.message || 'Failed to load logs');
       void logClassTabEvent({
         classId,
         tab: 'logs',
@@ -366,6 +369,19 @@ export function LogsTab({ classId }: LogsTabProps) {
               </Button>
             </div>
           </div>
+          {studentFilter !== 'all' && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Filtered by student/actor</span>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => applyStudentFilter('all')}>
+                Clear
+              </Button>
+            </div>
+          )}
+          {loadError && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+              {loadError}
+            </div>
+          )}
           <div className="text-xs text-muted-foreground">
             Showing {filteredLogs.length} of {totalCount || logs.length} logs
           </div>
