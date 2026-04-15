@@ -27,13 +27,14 @@ const studentTabs = [
 export default function ClassLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const searchParams = useSearchParams();
-  const { role } = useContext(AppContext) as any;
+  const { role, isLoading } = useContext(AppContext) as any;
   const classId = params.classId as string;
 
   const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
-  const visibleTabs = isTeacherRole ? teacherTabs : studentTabs;
   const requestedTabRaw = searchParams?.get('tab') || '';
   const requestedTab = requestedTabRaw.trim().toLowerCase();
+  const requestedTeacherTab = teacherTabs.some((tab) => tab.id === requestedTab);
+  const visibleTabs = (isTeacherRole || (isLoading && requestedTeacherTab)) ? teacherTabs : studentTabs;
   const tabIds = new Set(visibleTabs.map((tab) => tab.id));
   const defaultTab = isTeacherRole ? 'group' : 'invite';
   const currentTab = tabIds.has(requestedTab) ? requestedTab : defaultTab;

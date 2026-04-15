@@ -32,9 +32,10 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
   const update = (patch: Partial<AssignmentSettings>) => {
     onSettingsChange({ ...settings, ...patch });
   };
+  const selectClass = "h-8 rounded-md border border-input bg-background text-foreground px-2 text-sm w-full";
 
   return (
-    <div className="bg-popover rounded-lg p-4 space-y-4 max-h-[82vh] overflow-y-auto">
+    <div className="bg-background border border-border rounded-lg p-4 space-y-4 max-h-[82vh] overflow-y-auto text-foreground">
       <div>
         <h3 className="text-sm font-medium">Assignment Settings</h3>
       </div>
@@ -63,7 +64,7 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
             disabled={isLoading}
           />
           <select
-            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            className={selectClass}
             value={settings.time.timerMode}
             onChange={(e) => update({ time: { ...settings.time, timerMode: e.target.value as any } })}
             disabled={isLoading}
@@ -94,7 +95,7 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
         />
         <div className="grid grid-cols-2 gap-2">
           <select
-            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            className={selectClass}
             value={settings.attempts.scoreMode}
             onChange={(e) => update({ attempts: { ...settings.attempts, scoreMode: e.target.value as any } })}
             disabled={isLoading}
@@ -141,7 +142,7 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
         <div className="flex items-center justify-between"><Label className="text-xs">Auto grade</Label><Switch checked={settings.grading.autoGrade} onCheckedChange={(v) => update({ grading: { ...settings.grading, autoGrade: v } })} disabled={isLoading} /></div>
         <div className="flex items-center justify-between"><Label className="text-xs">Manual review open questions</Label><Switch checked={settings.grading.manualReviewOpenQuestions} onCheckedChange={(v) => update({ grading: { ...settings.grading, manualReviewOpenQuestions: v } })} disabled={isLoading} /></div>
         <select
-          className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+          className={selectClass}
           value={settings.grading.feedbackReleaseMode}
           onChange={(e) => update({ grading: { ...settings.grading, feedbackReleaseMode: e.target.value as any } })}
           disabled={isLoading}
@@ -158,7 +159,7 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
         </div>
         <div className="grid grid-cols-2 gap-2">
           <select
-            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            className={selectClass}
             value={settings.grading.gradeDisplayMode}
             onChange={(e) => update({ grading: { ...settings.grading, gradeDisplayMode: e.target.value as any } })}
             disabled={isLoading}

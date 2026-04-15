@@ -14,7 +14,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { InputWithTypingPlaceholder } from '@/components/ui/input-with-typing-placeholder';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
@@ -289,9 +289,9 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="subject-title" className="lowercase">title</Label>
-              <InputWithTypingPlaceholder
+              <Input
                 id="subject-title"
-                placeholders={["Biology", "Mathematics", "Nederlands", "History", "Physics", "Chemistry"]}
+                placeholder=""
                 value={newSubjectTitle}
                 onChange={(e) => setNewSubjectTitle(e.target.value)}
               />

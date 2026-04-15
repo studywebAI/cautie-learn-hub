@@ -16,7 +16,7 @@ import {
   Link,
   Plus,
   GripVertical,
-  PenTool,
+  Settings2,
   ArrowLeft,
   Undo2,
   Redo2,
@@ -24,8 +24,8 @@ import {
   Download,
   Upload,
   X,
-  Check,
-  Sparkles
+  Sparkles,
+  SlidersHorizontal
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -83,7 +83,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     type: 'text',
     icon: <Type className="h-4 w-4" />,
     label: 'Text',
-    defaultData: { content: '', style: 'normal' }
+    defaultData: { header: '', content: '', style: 'normal' }
   },
   {
     id: 'multiple_choice',
@@ -218,7 +218,6 @@ export function AssignmentEditor({
   }));
 
   const [blocks, setBlocks] = useState<AssignmentBlock[]>(normalizedInitialBlocks);
-  const [editingBlock, setEditingBlock] = useState<string | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -234,6 +233,7 @@ export function AssignmentEditor({
   // Settings state
   const [aiSettingsBlockId, setAiSettingsBlockId] = useState<string | null>(null);
   const [isStudentPreview, setIsStudentPreview] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(true);
   const [localAnswersEnabled, setLocalAnswersEnabled] = useState(answersEnabled);
   const [localIsVisible, setLocalIsVisible] = useState(isVisible);
   const [localAnswerMode, setLocalAnswerMode] = useState<'view_only' | 'editable' | 'self_grade'>(answerMode);
@@ -264,7 +264,21 @@ export function AssignmentEditor({
   const paperRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const router = useRouter();
-  const showTeacherControls = isTeacher && !isStudentPreview;
+  const showTeacherControls = isTeacher && !isStudentPreview && isEditMode;
+  const handleEditModeToggle = () => {
+    setIsEditMode((prev) => {
+      const next = !prev;
+      if (!next) {
+        setSelectedBlock(null);
+        setHoveredBlock(null);
+        setAiSettingsBlockId(null);
+        setIsDragging(false);
+        setDragSource(null);
+        setDropTarget(null);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     setLocalAnswersEnabled(answersEnabled);
@@ -497,10 +511,10 @@ export function AssignmentEditor({
 
   const addBlock = (template: BlockTemplate, rowIndex: number, column?: 'left' | 'right') => {
     const rows = getRows();
+    const newBlockId = generateId();
     
     setBlocks(prev => {
       let newBlocks = [...prev];
-      const newBlockId = generateId();
       
       if (column && rowIndex < rows.length) {
         // Dropping onto a specific column in an existing row
@@ -611,6 +625,7 @@ export function AssignmentEditor({
       saveToHistory(newBlocks);
       return newBlocks;
     });
+    setSelectedBlock(newBlockId);
   };
 
   const moveBlock = (blockId: string, targetRowIndex: number, column?: 'left' | 'right') => {
@@ -972,16 +987,32 @@ export function AssignmentEditor({
   };
 
   const renderBlockContent = (block: AssignmentBlock) => {
+    const canEditBlock = showTeacherControls;
+
     switch (block.type) {
       case 'text':
         return (
-          <Textarea
-            value={block.data.content}
-            onChange={(e) => updateBlock(block.id, { ...block.data, content: e.target.value })}
-            placeholder="Enter text..."
-            className="min-h-[60px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div className="space-y-2">
+            <Input
+              value={block.data.header || ''}
+              onChange={(e) => updateBlock(block.id, { ...block.data, header: e.target.value })}
+              placeholder="Header..."
+              className="h-8 border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
+              onClick={(e) => e.stopPropagation()}
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
+              autoFocus={canEditBlock && selectedBlock === block.id}
+            />
+            <Textarea
+              value={block.data.content}
+              onChange={(e) => updateBlock(block.id, { ...block.data, content: e.target.value })}
+              placeholder="Enter text..."
+              className="min-h-[60px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent"
+              onClick={(e) => e.stopPropagation()}
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
+            />
+          </div>
         );
 
       case 'multiple_choice':
@@ -993,6 +1024,9 @@ export function AssignmentEditor({
               placeholder="Enter question..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
               onClick={(e) => e.stopPropagation()}
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
+              autoFocus={canEditBlock && selectedBlock === block.id}
             />
             <div className="space-y-1 pl-2">
               {block.data.options?.map((option: any, idx: number) => (
@@ -1006,6 +1040,7 @@ export function AssignmentEditor({
                     }}
                     onClick={(e) => e.stopPropagation()}
                     className="h-3 w-3"
+                    disabled={!canEditBlock}
                   />
                   <span className="text-xs text-muted-foreground w-3">{String.fromCharCode(65 + idx)}.</span>
                   <Input
@@ -1018,12 +1053,15 @@ export function AssignmentEditor({
                     placeholder={`Option ${String.fromCharCode(65 + idx)}`}
                     className="flex-1 border-0 shadow-none h-7 text-sm focus-visible:ring-0 bg-transparent"
                     onClick={(e) => e.stopPropagation()}
+                    readOnly={!canEditBlock}
+                    disabled={!canEditBlock}
                   />
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={(e) => { e.stopPropagation(); removeOption(block.id, idx); }}
                     className="opacity-0 group-hover:opacity-100 h-5 w-5 p-0 text-muted-foreground"
+                    disabled={!canEditBlock}
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -1034,6 +1072,7 @@ export function AssignmentEditor({
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); addOption(block.id); }}
                 className="text-xs text-muted-foreground h-6"
+                disabled={!canEditBlock}
               >
                 <Plus className="h-3 w-3 mr-1" /> Add
               </Button>
@@ -1050,6 +1089,9 @@ export function AssignmentEditor({
               placeholder="Enter question..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
               onClick={(e) => e.stopPropagation()}
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
+              autoFocus={canEditBlock && selectedBlock === block.id}
             />
             <Textarea
               value={block.data.correct_answer || ''}
@@ -1057,6 +1099,8 @@ export function AssignmentEditor({
               placeholder="Correct answer (for grading)..."
               className="min-h-[40px] border-0 border-b border-dashed border-border rounded-none shadow-none resize-none focus-visible:ring-0 bg-transparent text-sm text-muted-foreground"
               onClick={(e) => e.stopPropagation()}
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
             />
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">({block.data.max_score} pts)</span>
@@ -1089,6 +1133,8 @@ export function AssignmentEditor({
                           placeholder=""
                           className="h-6 px-1 text-sm border-0 border-b-2 border-foreground/40 rounded-none shadow-none focus-visible:ring-0 bg-transparent text-center"
                           onClick={(e) => e.stopPropagation()}
+                          readOnly={!canEditBlock}
+                          disabled={!canEditBlock}
                         />
                         <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground">
                           ({idx + 1})
@@ -1115,6 +1161,8 @@ export function AssignmentEditor({
                 placeholder="My shoes ... 100 euros."
                 className="min-h-[32px] mt-1 border-0 shadow-none resize-none focus-visible:ring-0 bg-muted/30 text-xs rounded px-2 py-1"
                 onClick={(e) => e.stopPropagation()}
+                readOnly={!canEditBlock}
+                disabled={!canEditBlock}
               />
             </div>
           </div>
@@ -1130,6 +1178,9 @@ export function AssignmentEditor({
               onChange={(e) => updateBlock(block.id, { ...block.data, prompt: e.target.value })}
               placeholder="Match the items..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium text-sm"
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
+              autoFocus={canEditBlock && selectedBlock === block.id}
             />
             <div className="grid grid-cols-2 gap-2 text-xs">
               {block.data.pairs?.slice(0, 3).map((pair: any, idx: number) => (
@@ -1151,6 +1202,9 @@ export function AssignmentEditor({
               placeholder="Put in order..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium text-sm"
               onClick={(e) => e.stopPropagation()}
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
+              autoFocus={canEditBlock && selectedBlock === block.id}
             />
             <p className="text-[10px] text-muted-foreground">Items are in correct order (A=first, B=second...)</p>
             <div className="space-y-1">
@@ -1167,18 +1221,21 @@ export function AssignmentEditor({
                     placeholder={`Item ${String.fromCharCode(65 + idx)}`}
                     className="flex-1 h-6 text-xs border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
                     onClick={(e) => e.stopPropagation()}
+                    readOnly={!canEditBlock}
+                    disabled={!canEditBlock}
                   />
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={(e) => {
+                      if (!canEditBlock) return;
                       e.stopPropagation();
                       if (block.data.items.length > 2) {
                         const newItems = block.data.items.filter((_: string, i: number) => i !== idx);
                         updateBlock(block.id, { ...block.data, items: newItems });
                       }
                     }}
-                    disabled={block.data.items.length <= 2}
+                    disabled={!canEditBlock || block.data.items.length <= 2}
                     className="opacity-0 group-hover:opacity-100 h-5 w-5 p-0 text-muted-foreground"
                   >
                     <X className="h-3 w-3" />
@@ -1189,10 +1246,12 @@ export function AssignmentEditor({
                 variant="ghost"
                 size="sm"
                 onClick={(e) => {
+                  if (!canEditBlock) return;
                   e.stopPropagation();
                   updateBlock(block.id, { ...block.data, items: [...block.data.items, ''] });
                 }}
                 className="text-xs text-muted-foreground h-5"
+                disabled={!canEditBlock}
               >
                 <Plus className="h-3 w-3 mr-1" /> Add
               </Button>
@@ -1207,6 +1266,9 @@ export function AssignmentEditor({
             onChange={(e) => updateBlock(block.id, { ...block.data, embed_url: e.target.value })}
             placeholder="Enter media URL..."
             className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-sm"
+            readOnly={!canEditBlock}
+            disabled={!canEditBlock}
+            autoFocus={canEditBlock && selectedBlock === block.id}
           />
         );
 
@@ -1215,105 +1277,42 @@ export function AssignmentEditor({
     }
   };
 
-  // Render block action icons (feedback, AI settings)
-  // Always visible for teachers on question blocks (hover or selected)
-  const renderBlockIcons = (block: AssignmentBlock, isHovered: boolean = false) => {
-    if (!showTeacherControls) return null;
-    
-    const isQuestionBlock = ['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'matching', 'ordering'].includes(block.type);
-    if (!isQuestionBlock) return null;
-    
-    const isVisible = selectedBlock === block.id || isHovered;
-    
-    return (
-      <div className={`flex items-center gap-1 mt-2 justify-center transition-opacity ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-        {/* Check icon - only show when answers enabled */}
-        {localAnswersEnabled && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => { e.stopPropagation(); toggleBlockFeedback(block.id); }}
-            className={`h-7 px-2 text-xs ${block.showFeedback ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-            title={block.showFeedback ? 'hide feedback' : 'show feedback'}
-          >
-            <Check className="h-3 w-3 mr-1" />
-            {block.showFeedback ? 'feedback on' : 'feedback'}
-          </Button>
-        )}
-        
-        {/* AI Settings icon - only for open questions */}
-        {block.type === 'open_question' && (
-          <Popover 
-            open={aiSettingsBlockId === block.id} 
-            onOpenChange={(open) => setAiSettingsBlockId(open ? block.id : null)}
-          >
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-7 px-2 text-xs ${block.aiGradingOverride ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                title="ai grading settings"
-              >
-                <Sparkles className="h-3 w-3 mr-1" />
-                ai
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="center" className="p-0 w-auto">
-              <AIGradingPresets
-                presets={gradingPresets}
-                selectedPresetId={selectedPresetId}
-                blockOverride={block.aiGradingOverride}
-                onSelectPreset={setSelectedPresetId}
-                onSavePreset={(preset) => {
-                  setGradingPresets(prev => {
-                    const exists = prev.find(p => p.id === preset.id);
-                    if (exists) {
-                      return prev.map(p => p.id === preset.id ? preset : p);
-                    }
-                    return [...prev, preset];
-                  });
-                }}
-                onDeletePreset={(id) => {
-                  setGradingPresets(prev => prev.filter(p => p.id !== id));
-                }}
-                onSetDefault={(id) => {
-                  setGradingPresets(prev => prev.map(p => ({ ...p, is_default: p.id === id })));
-                }}
-                onBlockOverrideChange={(override) => updateBlockAiOverride(block.id, override)}
-              />
-            </PopoverContent>
-          </Popover>
-        )}
-      </div>
-    );
-  };
-
   const rows = getRows();
 
   return (
     <div
-      className="h-screen flex flex-col bg-sidebar select-none font-sans"
+      className="h-screen flex flex-col bg-background text-foreground select-none font-sans"
       onPointerMove={handlePointerMove}
       style={{ touchAction: isDragging ? 'none' : 'auto' }}
     >
       {/* Top toolbar */}
-      <div className="flex items-center justify-between px-5 py-2.5 border-b border-sidebar-border/70 bg-sidebar">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-background">
         <div className="flex items-center gap-1.5">
-          <Button variant="ghost" size="sm" onClick={() => router.back()} className="h-9 px-2.5 rounded-lg">
+          <Button variant="outline" size="sm" onClick={() => router.back()} className="h-8 px-2.5 rounded-md bg-muted/50">
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-9 w-9 p-0 rounded-lg" title="Undo">
+          <Button variant="outline" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-8 w-8 p-0 rounded-md bg-muted/50" title="Undo">
             <Undo2 className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-9 w-9 p-0 rounded-lg" title="Redo">
+          <Button variant="outline" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-8 w-8 p-0 rounded-md bg-muted/50" title="Redo">
             <Redo2 className="h-4 w-4" />
           </Button>
           <div className="w-px h-4 bg-border mx-0.5" />
-          <Button variant="ghost" size="sm" onClick={handleExport} className="h-9 w-9 p-0 rounded-lg" title="Export">
-            <Download className="h-4 w-4" />
+          <Button variant="outline" size="sm" onClick={handleExport} className="h-8 rounded-md px-2.5 bg-muted/50" title="Export">
+            <Download className="h-4 w-4 mr-1.5" />
+            Export
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleImport} className="h-9 w-9 p-0 rounded-lg" title="Import">
-            <Upload className="h-4 w-4" />
+          <Button variant="outline" size="sm" onClick={handleImport} className="h-8 rounded-md px-2.5 bg-muted/50" title="Import">
+            <Upload className="h-4 w-4 mr-1.5" />
+            Import
+          </Button>
+          <Button
+            variant={isEditMode ? 'default' : 'outline'}
+            size="sm"
+            onClick={handleEditModeToggle}
+            className="h-8 rounded-md px-2.5"
+          >
+            Edit: {isEditMode ? 'On' : 'Off'}
           </Button>
         </div>
         
@@ -1321,9 +1320,9 @@ export function AssignmentEditor({
           {isSaving && <span className="text-xs text-muted-foreground animate-pulse">saving...</span>}
           {isTeacher && (
             <Button
-              variant={isStudentPreview ? 'default' : 'secondary'}
+              variant={isStudentPreview ? 'default' : 'outline'}
               size="sm"
-              className="h-9 rounded-lg px-3 text-sm"
+              className="h-8 rounded-md px-3 text-sm bg-muted/50"
               onClick={() => setIsStudentPreview((prev) => !prev)}
             >
               {isStudentPreview ? 'Exit Student View' : 'Student View'}
@@ -1335,10 +1334,10 @@ export function AssignmentEditor({
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Paper area */}
-        <div className="flex-1 overflow-auto p-4 bg-sidebar">
+        <div className="flex-1 overflow-auto p-2 md:p-3 bg-background">
           <div
             ref={paperRef}
-            className="bg-sidebar-accent/20 border border-sidebar-border/70 rounded-2xl shadow-sm min-h-[calc(100vh-130px)] p-5 relative mx-auto w-full max-w-6xl"
+            className="bg-card border border-border rounded-xl shadow-sm min-h-[calc(100vh-130px)] p-4 relative w-full"
           >
               {rows.length === 0 ? (
                 <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -1359,7 +1358,7 @@ export function AssignmentEditor({
                     )}
                     
                     {/* Row */}
-                    <div className="flex gap-3">
+                      <div className="flex gap-2.5">
                       {row.blocks[0]?.width === 'full' ? (
                         // Full width block
                         <div className="flex-1 relative group">
@@ -1379,8 +1378,8 @@ export function AssignmentEditor({
                           <div
                             className={`p-3 border rounded-xl transition-all duration-200 ease-out ${
                               selectedBlock === row.blocks[0].id 
-                                ? 'border-primary bg-sidebar-accent' 
-                                : 'border-sidebar-border/65 bg-sidebar-accent/40 hover:bg-sidebar-accent/65'
+                                ? 'border-primary bg-card' 
+                                : 'border-border bg-background hover:bg-muted/30'
                             }`}
                             style={{
                               width: `${getBlockWidthPercent(row.blocks[0])}%`,
@@ -1389,54 +1388,70 @@ export function AssignmentEditor({
                             }}
                             onClick={(e) => {
                               if (!showTeacherControls) return;
-                              setSelectedBlock(selectedBlock === row.blocks[0].id ? null : row.blocks[0].id);
+                              setSelectedBlock(row.blocks[0].id);
                             }}
                             onMouseEnter={() => setHoveredBlock(row.blocks[0].id)}
                             onMouseLeave={() => setHoveredBlock(null)}
                           >
                             {/* Controls */}
                             {showTeacherControls && (
-                            <div className={`absolute top-2 right-2 flex items-center gap-1 bg-background/95 border border-sidebar-border/70 rounded-lg px-1.5 py-1 shadow-sm transition-opacity ${
+                            <div className={`absolute top-2 right-2 left-2 flex items-center justify-between gap-1 bg-background/95 border border-border rounded-lg px-1.5 py-1 shadow-sm transition-opacity ${
                               selectedBlock === row.blocks[0].id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                             }`}>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => { e.stopPropagation(); cycleBlockSize(row.blocks[0].id); }}
-                                className="h-6 px-2 text-[11px]"
-                                title="Cycle width"
-                              >
-                                {row.blocks[0].size === 1 ? 'S' : row.blocks[0].size === 2 ? 'M' : 'L'}
-                              </Button>
-                              <div 
-                                className="h-6 w-6 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
-                                onPointerDown={(e) => handleGripPointerDown(e, row.blocks[0].id)}
-                              >
-                                <GripVertical className="h-3 w-3" />
+                              <div className="text-[11px] font-medium text-muted-foreground">
+                                {BLOCK_TEMPLATES.find((t) => t.type === row.blocks[0].type)?.label || 'Block'}
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => { e.stopPropagation(); setEditingBlock(row.blocks[0].id); }}
-                                className="h-6 w-6 p-0"
-                              >
-                                <PenTool className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => { e.stopPropagation(); deleteBlock(row.blocks[0].id); }}
-                                className="h-6 w-6 p-0 text-destructive"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" title="Block size">
+                                      <SlidersHorizontal className="h-3 w-3 mr-1" />
+                                      Size
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-52 p-3" align="end">
+                                    <Label className="text-xs">Block width</Label>
+                                    <input
+                                      type="range"
+                                      min={1}
+                                      max={3}
+                                      step={1}
+                                      value={row.blocks[0].size ?? 3}
+                                      onChange={(e) => setBlockSize(row.blocks[0].id, Number(e.target.value) as 1 | 2 | 3)}
+                                      className="mt-2 w-full"
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <div 
+                                  className="h-6 w-6 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
+                                  onPointerDown={(e) => handleGripPointerDown(e, row.blocks[0].id)}
+                                  title="Move block"
+                                >
+                                  <GripVertical className="h-3 w-3" />
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => { e.stopPropagation(); setSelectedBlock(row.blocks[0].id); }}
+                                  className="h-6 w-6 p-0"
+                                  title="Question settings"
+                                >
+                                  <Settings2 className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => { e.stopPropagation(); deleteBlock(row.blocks[0].id); }}
+                                  className="h-6 w-6 p-0 text-destructive"
+                                  title="Delete block"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
                             )}
                             
                             {renderBlockContent(row.blocks[0])}
-                            
-                            {/* Block action icons */}
-                            {renderBlockIcons(row.blocks[0], hoveredBlock === row.blocks[0].id)}
                           </div>
                         </div>
                       ) : (
@@ -1457,8 +1472,8 @@ export function AssignmentEditor({
                                   <div
                                     className={`h-full p-3 border rounded-xl transition-all duration-200 ease-out ${
                                       selectedBlock === block.id 
-                                        ? 'border-primary bg-sidebar-accent' 
-                                        : 'border-sidebar-border/65 bg-sidebar-accent/40 hover:bg-sidebar-accent/65'
+                                        ? 'border-primary bg-card' 
+                                        : 'border-border bg-background hover:bg-muted/30'
                                     }`}
                                     style={{
                                       width: `${getBlockWidthPercent(block)}%`,
@@ -1467,57 +1482,73 @@ export function AssignmentEditor({
                                     }}
                                     onClick={(e) => {
                                       if (!showTeacherControls) return;
-                                      setSelectedBlock(selectedBlock === block.id ? null : block.id);
+                                      setSelectedBlock(block.id);
                                     }}
                                     onMouseEnter={() => setHoveredBlock(block.id)}
                                     onMouseLeave={() => setHoveredBlock(null)}
                                   >
                                     {/* Controls */}
                                     {showTeacherControls && (
-                                    <div className={`absolute top-2 right-2 flex items-center gap-1 bg-background/95 border border-sidebar-border/70 rounded-lg px-1.5 py-1 shadow-sm transition-opacity ${
+                                    <div className={`absolute top-2 right-2 left-2 flex items-center justify-between gap-1 bg-background/95 border border-border rounded-lg px-1.5 py-1 shadow-sm transition-opacity ${
                                       selectedBlock === block.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                                     }`}>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => { e.stopPropagation(); cycleBlockSize(block.id); }}
-                                        className="h-6 px-2 text-[11px]"
-                                        title="Cycle width"
-                                      >
-                                        {block.size === 1 ? 'S' : block.size === 2 ? 'M' : 'L'}
-                                      </Button>
-                                      <div 
-                                        className="h-6 w-6 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
-                                        onPointerDown={(e) => handleGripPointerDown(e, block.id)}
-                                      >
-                                        <GripVertical className="h-3 w-3" />
+                                      <div className="text-[11px] font-medium text-muted-foreground">
+                                        {BLOCK_TEMPLATES.find((t) => t.type === block.type)?.label || 'Block'}
                                       </div>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => { e.stopPropagation(); setEditingBlock(block.id); }}
-                                        className="h-6 w-6 p-0"
-                                      >
-                                        <PenTool className="h-3 w-3" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => { e.stopPropagation(); deleteBlock(block.id); }}
-                                        className="h-6 w-6 p-0 text-destructive"
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
+                                      <div className="flex items-center gap-1">
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" title="Block size">
+                                              <SlidersHorizontal className="h-3 w-3 mr-1" />
+                                              Size
+                                            </Button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className="w-52 p-3" align="end">
+                                            <Label className="text-xs">Block width</Label>
+                                            <input
+                                              type="range"
+                                              min={1}
+                                              max={3}
+                                              step={1}
+                                              value={block.size ?? 3}
+                                              onChange={(e) => setBlockSize(block.id, Number(e.target.value) as 1 | 2 | 3)}
+                                              className="mt-2 w-full"
+                                            />
+                                          </PopoverContent>
+                                        </Popover>
+                                        <div 
+                                          className="h-6 w-6 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
+                                          onPointerDown={(e) => handleGripPointerDown(e, block.id)}
+                                          title="Move block"
+                                        >
+                                          <GripVertical className="h-3 w-3" />
+                                        </div>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={(e) => { e.stopPropagation(); setSelectedBlock(block.id); }}
+                                          className="h-6 w-6 p-0"
+                                          title="Question settings"
+                                        >
+                                          <Settings2 className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={(e) => { e.stopPropagation(); deleteBlock(block.id); }}
+                                          className="h-6 w-6 p-0 text-destructive"
+                                          title="Delete block"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
                                     </div>
                                     )}
                                     
                                     {renderBlockContent(block)}
-                                    
-                                    {/* Block action icons */}
-                                    {renderBlockIcons(block, hoveredBlock === block.id)}
                                   </div>
                                 ) : (
-                                  <div className="h-full border border-dashed border-sidebar-border/80 rounded-lg flex items-center justify-center text-xs text-muted-foreground bg-sidebar-accent/20">
+                                  <div className="h-full border border-dashed border-border rounded-lg flex items-center justify-center text-xs text-muted-foreground bg-background">
                                     Drop Here
                                   </div>
                                 )}
@@ -1541,7 +1572,7 @@ export function AssignmentEditor({
             
             {/* Empty drop zone at bottom */}
             {isDragging && rows.length > 0 && (
-              <div className="h-16 mt-4 border-2 border-dashed border-sidebar-border/80 rounded-lg flex items-center justify-center text-sm text-muted-foreground bg-sidebar-accent/20">
+              <div className="h-16 mt-4 border-2 border-dashed border-border rounded-lg flex items-center justify-center text-sm text-muted-foreground bg-background">
                 Drop Here For New Row
               </div>
             )}
@@ -1549,15 +1580,15 @@ export function AssignmentEditor({
         </div>
 
         {showTeacherControls && (
-          <aside className="w-[320px] border-l border-sidebar-border/70 bg-sidebar-accent/30 p-3 overflow-y-auto">
+          <aside className="w-[320px] border-l border-border bg-background p-3 overflow-y-auto">
             <div className="space-y-3">
-              <div className="rounded-xl border border-sidebar-border/70 bg-background/80 p-3">
+              <div className="rounded-xl border border-border bg-card p-3">
                 <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-2">Blocks</div>
                 <div className="space-y-1.5">
                   {BLOCK_TEMPLATES.map((template) => (
                     <div
                       key={template.id}
-                      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-grab hover:bg-sidebar-accent border border-transparent hover:border-sidebar-border/60"
+                      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-grab hover:bg-muted border border-transparent hover:border-border"
                       onPointerDown={(e) => handleTemplatePointerDown(e, template.id)}
                     >
                       {template.icon}
@@ -1566,7 +1597,7 @@ export function AssignmentEditor({
                   ))}
                 </div>
               </div>
-              <div className="rounded-xl border border-sidebar-border/70 bg-background/80 p-1">
+              <div className="rounded-xl border border-border bg-card p-1">
                 <AssignmentSettingsOverlay
                   settings={localSettings}
                   onSettingsChange={handleAdvancedSettingsChange}
@@ -1576,9 +1607,54 @@ export function AssignmentEditor({
                 const block = blocks.find((b) => b.id === selectedBlock);
                 if (!block) return null;
                 const s = normalizeBlockSettings(block.settings || {});
+                const isQuestionBlock = ['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'matching', 'ordering'].includes(block.type);
                 return (
-                  <div className="rounded-xl border border-sidebar-border/70 bg-background/80 p-3 space-y-2">
+                  <div className="rounded-xl border border-border bg-card p-3 space-y-2">
                     <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.08em]">Question Settings</div>
+                    {isQuestionBlock && localAnswersEnabled && (
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Show feedback</Label>
+                        <Checkbox
+                          checked={!!block.showFeedback}
+                          onCheckedChange={() => toggleBlockFeedback(block.id)}
+                        />
+                      </div>
+                    )}
+                    {block.type === 'open_question' && (
+                      <Popover
+                        open={aiSettingsBlockId === block.id}
+                        onOpenChange={(open) => setAiSettingsBlockId(open ? block.id : null)}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-8 w-full justify-start gap-2">
+                            <Sparkles className="h-3.5 w-3.5" />
+                            AI Grading Preset
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="p-0 w-auto">
+                          <AIGradingPresets
+                            presets={gradingPresets}
+                            selectedPresetId={selectedPresetId}
+                            blockOverride={block.aiGradingOverride}
+                            onSelectPreset={setSelectedPresetId}
+                            onSavePreset={(preset) => {
+                              setGradingPresets((prev) => {
+                                const exists = prev.find((p) => p.id === preset.id);
+                                if (exists) return prev.map((p) => (p.id === preset.id ? preset : p));
+                                return [...prev, preset];
+                              });
+                            }}
+                            onDeletePreset={(id) => {
+                              setGradingPresets((prev) => prev.filter((p) => p.id !== id));
+                            }}
+                            onSetDefault={(id) => {
+                              setGradingPresets((prev) => prev.map((p) => ({ ...p, is_default: p.id === id })));
+                            }}
+                            onBlockOverrideChange={(override) => updateBlockAiOverride(block.id, override)}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
                     <div className="grid grid-cols-2 gap-2">
                       <Input
                         type="number"
@@ -1669,7 +1745,7 @@ export function AssignmentEditor({
                         <div className="flex items-center justify-between"><Label className="text-xs">Partial credit</Label><Checkbox checked={s.multipleChoice.partialCredit} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, partialCredit: !!checked } }))} /></div>
                         <div className="flex items-center justify-between"><Label className="text-xs">Negative scoring</Label><Checkbox checked={s.multipleChoice.negativeScoring} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, negativeScoring: !!checked } }))} /></div>
                         <select
-                          className="h-8 rounded-md border border-input bg-background px-2 text-sm w-full"
+                          className="h-8 rounded-md border border-input bg-background text-foreground px-2 text-sm w-full"
                           value={s.multipleChoice.scoringMode}
                           onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, scoringMode: e.target.value } }))}
                         >
@@ -1713,260 +1789,6 @@ export function AssignmentEditor({
         )}
       </div>
 
-      {/* Edit modal */}
-      {editingBlock && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setEditingBlock(null)}>
-          <div className="bg-background rounded-lg shadow-xl border max-w-xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="font-medium">edit block</h3>
-              <Button variant="ghost" size="sm" onClick={() => setEditingBlock(null)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="p-4">
-              {(() => {
-                const block = blocks.find(b => b.id === editingBlock);
-                if (!block) return null;
-
-                switch (block.type) {
-                  case 'text':
-                    return (
-                      <div className="space-y-3">
-                        <Label>content</Label>
-                        <Textarea
-                          value={block.data.content}
-                          onChange={(e) => updateBlock(block.id, { ...block.data, content: e.target.value })}
-                          rows={6}
-                        />
-                      </div>
-                    );
-
-                  case 'multiple_choice':
-                    return (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>question</Label>
-                          <Input
-                            value={block.data.question}
-                            onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>options</Label>
-                          {block.data.options?.map((option: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-2">
-                              <Checkbox
-                                checked={option.correct}
-                                onCheckedChange={(checked) => {
-                                  const newOptions = [...block.data.options];
-                                  newOptions[idx] = { ...newOptions[idx], correct: checked };
-                                  updateBlock(block.id, { ...block.data, options: newOptions });
-                                }}
-                              />
-                              <Input
-                                value={option.text}
-                                onChange={(e) => {
-                                  const newOptions = [...block.data.options];
-                                  newOptions[idx] = { ...newOptions[idx], text: e.target.value };
-                                  updateBlock(block.id, { ...block.data, options: newOptions });
-                                }}
-                                placeholder={`Option ${String.fromCharCode(65 + idx)}`}
-                              />
-                              <Button variant="ghost" size="sm" onClick={() => removeOption(block.id, idx)} className="h-8 w-8 p-0">
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                          <Button variant="outline" size="sm" onClick={() => addOption(block.id)}>
-                            <Plus className="h-4 w-4 mr-1" /> add option
-                          </Button>
-                        </div>
-                      </div>
-                    );
-
-                  case 'open_question':
-                    return (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>question</Label>
-                          <Textarea
-                            value={block.data.question}
-                            onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
-                            rows={3}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>correct answer (for grading reference)</Label>
-                          <Textarea
-                            value={block.data.correct_answer || ''}
-                            onChange={(e) => updateBlock(block.id, { ...block.data, correct_answer: e.target.value })}
-                            rows={3}
-                            placeholder="enter the expected correct answer..."
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>max score</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={block.data.max_score}
-                            onChange={(e) => updateBlock(block.id, { ...block.data, max_score: parseInt(e.target.value) || 1 })}
-                          />
-                        </div>
-                      </div>
-                    );
-
-                  case 'fill_in_blank':
-                    return (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>text (type ... for blanks - auto converts to ___)</Label>
-                          <Textarea
-                            value={block.data.text}
-                            onChange={(e) => {
-                              const newText = e.target.value.replace(/\.\.\./g, '___');
-                              const blankCount = (newText.match(/___/g) || []).length;
-                              const currentAnswers = block.data.answers || [];
-                              const newAnswers = Array(blankCount).fill('').map((_, i) => currentAnswers[i] || '');
-                              updateBlock(block.id, { ...block.data, text: newText, answers: newAnswers });
-                            }}
-                            rows={3}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>correct answers</Label>
-                          {(block.data.text.match(/___/g) || []).map((_: string, idx: number) => (
-                            <div key={idx} className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground w-16">blank {idx + 1}:</span>
-                              <Input
-                                value={block.data.answers?.[idx] || ''}
-                                onChange={(e) => {
-                                  const newAnswers = [...(block.data.answers || [])];
-                                  newAnswers[idx] = e.target.value;
-                                  updateBlock(block.id, { ...block.data, answers: newAnswers });
-                                }}
-                                placeholder={`Answer ${idx + 1}`}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-
-                  case 'drag_drop':
-                  case 'matching':
-                    return (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>prompt</Label>
-                          <Input
-                            value={block.data.prompt}
-                            onChange={(e) => updateBlock(block.id, { ...block.data, prompt: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>pairs</Label>
-                          {block.data.pairs?.map((pair: any, idx: number) => (
-                            <div key={idx} className="grid grid-cols-2 gap-2">
-                              <Input
-                                value={pair.left}
-                                onChange={(e) => {
-                                  const newPairs = [...block.data.pairs];
-                                  newPairs[idx] = { ...newPairs[idx], left: e.target.value };
-                                  updateBlock(block.id, { ...block.data, pairs: newPairs });
-                                }}
-                                placeholder={`Item ${idx + 1}`}
-                              />
-                              <Input
-                                value={pair.right}
-                                onChange={(e) => {
-                                  const newPairs = [...block.data.pairs];
-                                  newPairs[idx] = { ...newPairs[idx], right: e.target.value };
-                                  updateBlock(block.id, { ...block.data, pairs: newPairs });
-                                }}
-                                placeholder={`Match ${idx + 1}`}
-                              />
-                            </div>
-                          ))}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateBlock(block.id, { ...block.data, pairs: [...block.data.pairs, { left: '', right: '' }] })}
-                          >
-                            <Plus className="h-4 w-4 mr-1" /> add pair
-                          </Button>
-                        </div>
-                      </div>
-                    );
-
-                  case 'ordering':
-                    return (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>prompt</Label>
-                          <Input
-                            value={block.data.prompt}
-                            onChange={(e) => updateBlock(block.id, { ...block.data, prompt: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>items (in correct order)</Label>
-                          {block.data.items?.map((item: string, idx: number) => (
-                            <div key={idx} className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground w-6">{idx + 1}.</span>
-                              <Input
-                                value={item}
-                                onChange={(e) => {
-                                  const newItems = [...block.data.items];
-                                  newItems[idx] = e.target.value;
-                                  updateBlock(block.id, { ...block.data, items: newItems });
-                                }}
-                              />
-                            </div>
-                          ))}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateBlock(block.id, { ...block.data, items: [...block.data.items, ''] })}
-                          >
-                            <Plus className="h-4 w-4 mr-1" /> add item
-                          </Button>
-                        </div>
-                      </div>
-                    );
-
-                  case 'media_embed':
-                    return (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>url</Label>
-                          <Input
-                            value={block.data.embed_url}
-                            onChange={(e) => updateBlock(block.id, { ...block.data, embed_url: e.target.value })}
-                            placeholder="https://..."
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>description</Label>
-                          <Input
-                            value={block.data.description}
-                            onChange={(e) => updateBlock(block.id, { ...block.data, description: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                    );
-
-                  default:
-                    return <p className="text-muted-foreground">no editor available</p>;
-                }
-              })()}
-            </div>
-            <div className="p-4 border-t flex justify-end">
-              <Button onClick={() => setEditingBlock(null)}>done</Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

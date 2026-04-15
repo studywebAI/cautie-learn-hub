@@ -62,12 +62,13 @@ export default function ClassDetailsPage() {
 
   const requestedTab = (searchParams.get('tab') || '').trim().toLowerCase();
   const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
+  const requestsTeacherTab = teacherTabs.includes(requestedTab as any);
   const isClassOwner = useMemo(() => {
     if (!session?.user?.id) return false;
     const ownerCandidates = [String((classInfo as any)?.owner_id || ''), String((classInfo as any)?.user_id || '')];
     return ownerCandidates.includes(session.user.id);
   }, [classInfo, session?.user?.id]);
-  const hasTeacherAccess = isTeacherRole || isClassOwner;
+  const hasTeacherAccess = isTeacherRole || isClassOwner || (isAppLoading && requestsTeacherTab);
   const defaultTab = hasTeacherAccess ? 'group' : 'invite';
   const allowedTabs = useMemo(
     () => (
@@ -94,8 +95,8 @@ export default function ClassDetailsPage() {
       try {
         const response = await fetch(`/api/classes/${classId}`);
         if (response.ok) {
-          const classData = await response.json();
-          setDirectClassInfo(classData);
+          const payload = await response.json();
+          setDirectClassInfo((payload?.class || payload) as ClassInfo);
         }
       } catch (error) {
         console.error('Failed to fetch class info:', error);
@@ -222,9 +223,10 @@ export default function ClassDetailsPage() {
 
   useEffect(() => {
     if (!requestedTab) return;
+    if (isAppLoading) return;
     if (allowedTabs.includes(requestedTab)) return;
     router.replace(`/class/${classId}?tab=${tab}`);
-  }, [requestedTab, allowedTabs, router, classId, tab]);
+  }, [requestedTab, allowedTabs, router, classId, tab, isAppLoading]);
 
   const isLoading = !!isAppLoading;
   const isTeacher = hasTeacherAccess;

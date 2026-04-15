@@ -119,12 +119,12 @@ export async function GET(
     const memberRoleByUserId = new Map(
       (classMembers || []).map((m: any) => [m.user_id, String(m.role || '').toLowerCase()])
     )
-    const teacherIds = allUserIds.filter((uid: string) => {
+    const teacherIds = safeUserIds.filter((uid: string) => {
       const classRole = memberRoleByUserId.get(uid) || ''
       if (teacherRoles.has(classRole)) return true
       return subscriptionTypes[uid] === 'teacher'
     })
-    const studentIds = allUserIds.filter((uid: string) => !teacherIds.includes(uid))
+    const studentIds = safeUserIds.filter((uid: string) => !teacherIds.includes(uid))
 
     // Get all assignments for the class
     const { data: assignmentsData, error: assignmentsError } = await dataClient
