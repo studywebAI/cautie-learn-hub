@@ -1,17 +1,50 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { getClassPermission } from '@/lib/auth/class-permissions'
-import { logAuditEntry } from '@/lib/auth/class-permissions'
+import { getClassPermission, logAuditEntry } from '@/lib/auth/class-permissions'
 
 function logAttendance(...args: any[]) {
   console.log('[CLASS_ATTENDANCE]', ...args)
 }
 
-function displayName(fullName: string | null | undefined, email: string | null | undefined, userId: string) {
-  if (fullName && fullName.trim()) return fullName
-  if (email && email.includes('@')) return email.split('@')[0]
+function studentDisplayName(
+  classAlias: string | null | undefined,
+  profileDisplayName: string | null | undefined,
+  fullName: string | null | undefined,
+) {
+  const alias = String(classAlias || '').trim()
+  if (alias) return alias
+  const displayName = String(profileDisplayName || '').trim()
+  if (displayName) return displayName
+  const name = String(fullName || '').trim()
+  if (name) return name
+  return 'Unnamed student'
+}
+
+function actorDisplayName(
+  profileDisplayName: string | null | undefined,
+  fullName: string | null | undefined,
+  email: string | null | undefined,
+  userId: string,
+) {
+  const displayName = String(profileDisplayName || '').trim()
+  if (displayName) return displayName
+  const name = String(fullName || '').trim()
+  if (name) return name
+  const emailValue = String(email || '').trim()
+  if (emailValue) return emailValue
   return `user-${userId.slice(0, 8)}`
+}
+
+function mapRecentActivity(logs: any[]) {
+  return (logs || []).map((log: any) => ({
+    id: log.id,
+    action: log.action,
+    entityType: log.entity_type,
+    entityId: log.entity_id,
+    details: log.metadata || {},
+    createdAt: log.created_at,
+  }))
 }
 
 // GET - Fetch all students with their attendance records for a class
@@ -23,7 +56,7 @@ export async function GET(
     const resolvedParams = await params
     const { classId } = resolvedParams
     logAttendance('GET - Start', { classId })
-    
+
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
@@ -36,20 +69,22 @@ export async function GET(
 
     const perm = await getClassPermission(supabase as any, classId, user.id)
     const canAccess = perm.isMember && perm.isTeacher
-    
+
     if (!canAccess) {
       logAttendance('GET - Forbidden', { classId, userId: user.id, classRole: perm.classRole })
       return NextResponse.json({ error: 'Only teachers can view attendance' }, { status: 403 })
     }
 
-    // Get all students in the class - use subscription_type from profiles (global role)
-    // First get all class members
     const { data: classMembers, error: membersError } = await supabase
       .from('class_members')
-      .select('user_id, role')
+      .select('user_id, role, display_name')
       .eq('class_id', classId)
 
     logAttendance('GET - Class members', { classId, count: classMembers?.length, membersError: membersError?.message })
+
+    if (membersError) {
+      return NextResponse.json({ error: membersError.message }, { status: 500 })
+    }
 
     const memberRows = classMembers || []
     const memberUserIds = memberRows.map((m: any) => m.user_id)
@@ -57,7 +92,7 @@ export async function GET(
     if (memberUserIds.length > 0) {
       const { data: profiles, error: profilesFetchError } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, email, subscription_type')
+        .select('id, display_name, full_name, avatar_url, email, subscription_type')
         .in('id', memberUserIds)
 
       if (profilesFetchError) {
@@ -67,17 +102,16 @@ export async function GET(
       profilesData = profiles || []
     }
 
-    if (membersError) {
-      logAttendance('GET - Error fetching class members', { classId, membersError: membersError.message })
-      return NextResponse.json({ error: membersError.message }, { status: 500 })
-    }
-
     const profileById = new Map(profilesData.map((p: any) => [p.id, p]))
+    const memberById = new Map(memberRows.map((m: any) => [m.user_id, m]))
+    const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
+
     const studentIds = memberRows
       .filter((row: any) => {
         const role = String(row?.role || '').toLowerCase()
-        if (!role) return true
-        return role === 'student'
+        if (role) return role === 'student'
+        const profileRole = String(profileById.get(row.user_id)?.subscription_type || '').toLowerCase()
+        return profileRole !== 'teacher'
       })
       .map((row: any) => row.user_id)
 
@@ -100,7 +134,6 @@ export async function GET(
       }
     }
 
-    // Get attendance records for all students
     let attendanceRecords = []
     if (studentIds.length > 0) {
       const { data: attendanceData, error: attendanceError } = await supabase
@@ -108,7 +141,7 @@ export async function GET(
         .select('*')
         .eq('class_id', classId)
         .in('student_id', studentIds)
-      
+
       if (attendanceError) {
         logAttendance('GET - Attendance records failed', { classId, attendanceError: attendanceError.message })
         return NextResponse.json({ error: attendanceError.message }, { status: 500 })
@@ -116,64 +149,66 @@ export async function GET(
       attendanceRecords = attendanceData || []
     }
 
-    // Calculate stats per student
     const studentsWithAttendance = studentIds.map((studentId: string) => {
       const student = profileById.get(studentId)
+      const classMember = memberById.get(studentId)
       const studentRecords = attendanceRecords.filter((r: any) => r.student_id === studentId)
-      
+
       const absentCount = studentRecords.filter((r: any) => r.is_present === false).length
       const homeworkIncompleteCount = studentRecords.filter((r: any) => r.has_homework_incomplete === true).length
-      const sentOutCount = studentRecords.filter((r: any) => r.was_sent_out === true).length
       const tooLateCount = studentRecords.filter((r: any) => r.was_too_late === true).length
-      
-      // Get the latest record
-      const latestRecord = studentRecords.sort((a: any, b: any) => 
+
+      const latestRecord = studentRecords.sort((a: any, b: any) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )[0]
-      const recentActivity = auditLogs
-        .filter((log: any) => {
-          const actorId = String(log?.user_id || '')
-          const targetId = String(log?.metadata?.student_id || '')
-          return actorId === studentId || targetId === studentId
-        })
-        .slice(0, 5)
-        .map((log: any) => ({
-          id: log.id,
-          action: log.action,
-          entityType: log.entity_type,
-          entityId: log.entity_id,
-          details: log.metadata || {},
-          createdAt: log.created_at,
-        }))
+
+      const recentActivity = mapRecentActivity(
+        auditLogs
+          .filter((log: any) => {
+            const actorId = String(log?.user_id || '')
+            const targetId = String(log?.metadata?.student_id || '')
+            return actorId === studentId || targetId === studentId
+          })
+          .slice(0, 8)
+          .map((log: any) => {
+            const actorProfile = profileById.get(String(log.user_id || ''))
+            return {
+              ...log,
+              metadata: {
+                ...(log.metadata || {}),
+                actor_name: actorDisplayName(
+                  actorProfile?.display_name,
+                  actorProfile?.full_name,
+                  actorProfile?.email,
+                  String(log.user_id || ''),
+                ),
+              },
+            }
+          })
+      )
 
       return {
         id: studentId,
-        name: displayName(student?.full_name, student?.email, studentId),
+        name: studentDisplayName(classMember?.display_name, student?.display_name, student?.full_name),
         email: student?.email || null,
         avatarUrl: student?.avatar_url || null,
         isPresent: latestRecord?.is_present ?? null,
         hasHomeworkIncomplete: latestRecord?.has_homework_incomplete ?? false,
-        wasSentOut: latestRecord?.was_sent_out ?? false,
         wasTooLate: latestRecord?.was_too_late ?? false,
-        note: latestRecord?.note,
-        noteCreatedAt: latestRecord?.created_at,
-        notedBy: latestRecord?.noted_by,
         recentActivity,
         stats: {
           totalAbsent: absentCount,
           totalHomeworkIncomplete: homeworkIncompleteCount,
-          totalSentOut: sentOutCount,
-          totalTooLate: tooLateCount
-        }
+          totalTooLate: tooLateCount,
+        },
       }
     }).sort((a: any, b: any) => a.name.localeCompare(b.name))
 
     return NextResponse.json({
       classId,
       students: studentsWithAttendance,
-      totalStudents: studentsWithAttendance.length
+      totalStudents: studentsWithAttendance.length,
     })
-
   } catch (error) {
     logAttendance('GET - Unexpected error', { error: String(error) })
     return NextResponse.json({ error: 'Internal server error: ' + String(error) }, { status: 500 })
@@ -200,30 +235,29 @@ export async function POST(
 
     const perm = await getClassPermission(supabase as any, classId, user.id)
     const canAccess = perm.isMember && perm.isTeacher
-    
+
     if (!canAccess) {
       return NextResponse.json({ error: 'Only teachers can update attendance' }, { status: 403 })
     }
 
     const body = await request.json()
-    const { 
-      studentId, 
-      isPresent, 
-      hasHomeworkIncomplete, 
-      wasSentOut, 
+    const {
+      studentId,
+      isPresent,
+      hasHomeworkIncomplete,
       wasTooLate,
-      note,
-      customMessage
+      customMessage,
     } = body
 
-    const normalizedNote = typeof note === 'string' ? note.trim() : ''
+    if (!studentId) {
+      return NextResponse.json({ error: 'studentId is required' }, { status: 400 })
+    }
+
     const normalizedCustomMessage = typeof customMessage === 'string' ? customMessage.trim() : ''
     const nextIsPresent = typeof isPresent === 'boolean' ? isPresent : true
     const nextHomeworkIncomplete = Boolean(hasHomeworkIncomplete)
-    const nextWasSentOut = Boolean(wasSentOut)
     const nextWasTooLate = Boolean(wasTooLate)
 
-    // Create new attendance record
     const { data: attendance, error: attendanceError } = await supabase
       .from('student_attendance')
       .insert({
@@ -231,11 +265,9 @@ export async function POST(
         class_id: classId,
         is_present: nextIsPresent,
         has_homework_incomplete: nextHomeworkIncomplete,
-        was_sent_out: nextWasSentOut,
+        was_sent_out: false,
         was_too_late: nextWasTooLate,
-        note: normalizedNote || normalizedCustomMessage || null,
-        noted_by: normalizedNote || normalizedCustomMessage ? user.id : null,
-        created_by: user.id
+        created_by: user.id,
       })
       .select()
       .single()
@@ -244,15 +276,17 @@ export async function POST(
       return NextResponse.json({ error: attendanceError.message }, { status: 500 })
     }
 
-    const attendanceAction = nextIsPresent ? 'attendance_mark_present' : 'attendance_mark_absent'
     await logAuditEntry(supabase as any, {
       userId: user.id,
       classId,
-      action: attendanceAction,
+      action: 'attendance_state_changed',
       entityType: 'attendance',
       entityId: attendance?.id,
       metadata: {
         student_id: studentId,
+        is_present: nextIsPresent,
+        has_homework_incomplete: nextHomeworkIncomplete,
+        was_too_late: nextWasTooLate,
         created_by: user.id,
       },
     })
@@ -266,6 +300,7 @@ export async function POST(
         entityId: attendance?.id,
         metadata: {
           student_id: studentId,
+          active: true,
           created_by: user.id,
         },
       })
@@ -280,6 +315,7 @@ export async function POST(
         entityId: attendance?.id,
         metadata: {
           student_id: studentId,
+          active: true,
           created_by: user.id,
         },
       })
@@ -300,23 +336,7 @@ export async function POST(
       })
     }
 
-    if (normalizedNote) {
-      await logAuditEntry(supabase as any, {
-        userId: user.id,
-        classId,
-        action: 'attendance_note_saved',
-        entityType: 'attendance_note',
-        entityId: attendance?.id,
-        metadata: {
-          student_id: studentId,
-          note: normalizedNote,
-          created_by: user.id,
-        },
-      })
-    }
-
     return NextResponse.json({ success: true, attendance })
-
   } catch (error) {
     console.error('Error updating attendance:', error)
     return NextResponse.json({ error: 'Internal server error: ' + String(error) }, { status: 500 })

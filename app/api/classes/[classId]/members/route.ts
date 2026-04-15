@@ -11,6 +11,11 @@ function getDefaultDisplayName(email: string | null | undefined, userId: string)
   return `user-${userId.slice(0, 8)}`
 }
 
+function normalizeAlias(value: string | null | undefined) {
+  const trimmed = String(value || '').trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
 // GET - Get class members (any member can view)
 export async function GET(
   request: Request,
@@ -42,7 +47,7 @@ export async function GET(
 
     const { data: membersData, error } = await dataClient
       .from('class_members')
-      .select('user_id, role')
+      .select('user_id, role, display_name')
       .eq('class_id', classId)
 
     if (error) {
@@ -54,7 +59,7 @@ export async function GET(
     const { data: profilesData } = userIds.length > 0
       ? await dataClient
           .from('profiles')
-          .select('id, full_name, email, avatar_url, subscription_type')
+          .select('id, display_name, full_name, email, avatar_url, subscription_type')
           .in('id', userIds)
       : { data: [] as any[] }
 
@@ -69,8 +74,13 @@ export async function GET(
       return {
         ...member,
         role,
+        display_name: normalizeAlias(member?.display_name),
         profiles: {
-          full_name: profile?.full_name || getDefaultDisplayName(profile?.email, member.user_id),
+          full_name:
+            normalizeAlias(member?.display_name) ||
+            profile?.display_name ||
+            profile?.full_name ||
+            (role === 'student' ? 'Unnamed student' : getDefaultDisplayName(profile?.email, member.user_id)),
           email: profile?.email || null,
           avatar_url: profile?.avatar_url || null,
           subscription_type: profile?.subscription_type || null,
@@ -85,7 +95,7 @@ export async function GET(
   }
 }
 
-// PATCH - Update member display name (teachers only)
+// PATCH - Update class-scoped member display name (teachers only)
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
@@ -95,12 +105,12 @@ export async function PATCH(
     const body = await request.json()
     const targetUserId = body?.user_id as string | undefined
     const displayNameRaw = body?.display_name as string | undefined
-    const displayName = (displayNameRaw || '').trim()
+    const displayName = normalizeAlias(displayNameRaw)
 
     if (!targetUserId) {
       return NextResponse.json({ error: 'user_id is required' }, { status: 400 })
     }
-    if (displayName.length > 100) {
+    if (displayName && displayName.length > 100) {
       return NextResponse.json({ error: 'display_name is too long' }, { status: 400 })
     }
 
@@ -117,7 +127,7 @@ export async function PATCH(
 
     const { data: targetMembership, error: targetMembershipError } = await supabase
       .from('class_members')
-      .select('user_id')
+      .select('user_id, display_name')
       .eq('class_id', classId)
       .eq('user_id', targetUserId)
       .maybeSingle()
@@ -127,9 +137,10 @@ export async function PATCH(
     }
 
     const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ full_name: displayName || null })
-      .eq('id', targetUserId)
+      .from('class_members')
+      .update({ display_name: displayName })
+      .eq('class_id', classId)
+      .eq('user_id', targetUserId)
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 })
@@ -138,16 +149,18 @@ export async function PATCH(
     await logAuditEntry(supabase, {
       userId: user.id,
       classId,
-      action: 'update',
-      entityType: 'member_profile',
+      action: 'member_rename',
+      entityType: 'class_member',
       entityId: targetUserId,
       metadata: {
-        updatedField: 'full_name',
-        newValue: displayName || null
+        student_id: targetUserId,
+        previous_value: normalizeAlias((targetMembership as any)?.display_name),
+        new_value: displayName,
+        created_by: user.id,
       }
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, user_id: targetUserId, display_name: displayName })
   } catch (error) {
     console.error('[MEMBERS_PATCH] Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

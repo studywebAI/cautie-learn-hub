@@ -1376,7 +1376,7 @@ export function AssignmentEditor({
                           )}
                           
                           <div
-                            className={`p-3 border rounded-xl transition-all duration-200 ease-out ${
+                            className={`${showTeacherControls ? 'px-3 pb-3 pt-11' : 'p-3'} border rounded-xl transition-all duration-200 ease-out ${
                               selectedBlock === row.blocks[0].id 
                                 ? 'border-primary bg-card' 
                                 : 'border-border bg-background hover:bg-muted/30'
@@ -1404,7 +1404,7 @@ export function AssignmentEditor({
                               <div className="flex items-center gap-1">
                                 <Popover>
                                   <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" title="Block size">
+                                    <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] bg-muted/60" title="Block size">
                                       <SlidersHorizontal className="h-3 w-3 mr-1" />
                                       Size
                                     </Button>
@@ -1423,7 +1423,7 @@ export function AssignmentEditor({
                                   </PopoverContent>
                                 </Popover>
                                 <div 
-                                  className="h-6 w-6 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
+                                  className="h-6 w-6 p-0 flex items-center justify-center cursor-grab bg-muted/60 hover:bg-muted rounded"
                                   onPointerDown={(e) => handleGripPointerDown(e, row.blocks[0].id)}
                                   title="Move block"
                                 >
@@ -1433,7 +1433,7 @@ export function AssignmentEditor({
                                   variant="ghost"
                                   size="sm"
                                   onClick={(e) => { e.stopPropagation(); setSelectedBlock(row.blocks[0].id); }}
-                                  className="h-6 w-6 p-0"
+                                  className="h-6 w-6 p-0 bg-muted/60"
                                   title="Question settings"
                                 >
                                   <Settings2 className="h-3 w-3" />
@@ -1442,7 +1442,7 @@ export function AssignmentEditor({
                                   variant="ghost"
                                   size="sm"
                                   onClick={(e) => { e.stopPropagation(); deleteBlock(row.blocks[0].id); }}
-                                  className="h-6 w-6 p-0 text-destructive"
+                                  className="h-6 w-6 p-0 bg-muted/60 text-destructive"
                                   title="Delete block"
                                 >
                                   <Trash2 className="h-3 w-3" />
@@ -1470,7 +1470,7 @@ export function AssignmentEditor({
                                 
                                 {block ? (
                                   <div
-                                    className={`h-full p-3 border rounded-xl transition-all duration-200 ease-out ${
+                                    className={`h-full ${showTeacherControls ? 'px-3 pb-3 pt-11' : 'p-3'} border rounded-xl transition-all duration-200 ease-out ${
                                       selectedBlock === block.id 
                                         ? 'border-primary bg-card' 
                                         : 'border-border bg-background hover:bg-muted/30'
@@ -1498,7 +1498,7 @@ export function AssignmentEditor({
                                       <div className="flex items-center gap-1">
                                         <Popover>
                                           <PopoverTrigger asChild>
-                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" title="Block size">
+                                            <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] bg-muted/60" title="Block size">
                                               <SlidersHorizontal className="h-3 w-3 mr-1" />
                                               Size
                                             </Button>
@@ -1517,7 +1517,7 @@ export function AssignmentEditor({
                                           </PopoverContent>
                                         </Popover>
                                         <div 
-                                          className="h-6 w-6 p-0 flex items-center justify-center cursor-grab hover:bg-muted rounded"
+                                          className="h-6 w-6 p-0 flex items-center justify-center cursor-grab bg-muted/60 hover:bg-muted rounded"
                                           onPointerDown={(e) => handleGripPointerDown(e, block.id)}
                                           title="Move block"
                                         >
@@ -1527,7 +1527,7 @@ export function AssignmentEditor({
                                           variant="ghost"
                                           size="sm"
                                           onClick={(e) => { e.stopPropagation(); setSelectedBlock(block.id); }}
-                                          className="h-6 w-6 p-0"
+                                          className="h-6 w-6 p-0 bg-muted/60"
                                           title="Question settings"
                                         >
                                           <Settings2 className="h-3 w-3" />
@@ -1536,7 +1536,7 @@ export function AssignmentEditor({
                                           variant="ghost"
                                           size="sm"
                                           onClick={(e) => { e.stopPropagation(); deleteBlock(block.id); }}
-                                          className="h-6 w-6 p-0 text-destructive"
+                                          className="h-6 w-6 p-0 bg-muted/60 text-destructive"
                                           title="Delete block"
                                         >
                                           <Trash2 className="h-3 w-3" />
@@ -1663,11 +1663,13 @@ export function AssignmentEditor({
                         value={s.points}
                         onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, points: Number(e.target.value || 0) }))}
                         className="h-8"
+                        placeholder="Points"
                       />
                       <Input
                         value={s.tags.join(',')}
                         onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, tags: e.target.value.split(',').map((v: string) => v.trim()).filter(Boolean) }))}
                         className="h-8"
+                        placeholder="Tags"
                       />
                     </div>
                     <Textarea
@@ -1699,6 +1701,7 @@ export function AssignmentEditor({
                       value={s.feedbackText}
                       onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, feedbackText: e.target.value }))}
                       className="text-xs min-h-[52px]"
+                      placeholder="Custom feedback text"
                     />
                     <Input
                       type="number"

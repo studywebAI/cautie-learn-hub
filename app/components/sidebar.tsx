@@ -548,6 +548,16 @@ export function AppSidebar() {
     return () => browserWindow.clearTimeout(timer);
   }, [router, teacherSubjectsHref, teacherManageHref, teacherAgendaHref]);
 
+  useEffect(() => {
+    if (!isTeacher) return;
+    for (const classItem of classDropdownItems) {
+      const target = resolveTeacherClassRoute(classItem.id);
+      try {
+        void router.prefetch(target);
+      } catch {}
+    }
+  }, [isTeacher, classDropdownItems, router, pathname, searchParams]);
+
   const renderFloatingDropdown = () => {
     if (!dropdown) return null;
     const items = dropdown.kind === 'classes' ? classDropdownItems : subjectDropdownItems;
@@ -687,13 +697,27 @@ export function AppSidebar() {
                     ? 'bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]'
                     : 'hover:bg-sidebar-accent text-muted-foreground hover:text-[hsl(var(--sidebar-active-foreground))]'
                 )}
-                onClick={() => {
+                onClick={(event) => {
                   if (dropdown.kind === 'classes' && isTeacher) {
+                    event.preventDefault();
                     persistTeacherClassId(entry.id);
+                    const nextRoute = resolveTeacherClassRoute(entry.id);
+                    try {
+                      void router.prefetch(nextRoute);
+                    } catch {}
+                    router.replace(nextRoute);
                   }
                   resetInlinePanels();
                   setDropdown(null);
                   setOpenMobile(false);
+                }}
+                onMouseEnter={() => {
+                  if (dropdown.kind === 'classes' && isTeacher) {
+                    const nextRoute = resolveTeacherClassRoute(entry.id);
+                    try {
+                      void router.prefetch(nextRoute);
+                    } catch {}
+                  }
                 }}
               >
                 <span className="truncate">{entry.label}</span>
@@ -724,7 +748,11 @@ export function AppSidebar() {
               const nextClassId = event.target.value;
               if (!nextClassId) return;
               persistTeacherClassId(nextClassId);
-              router.push(resolveTeacherClassRoute(nextClassId));
+              const nextRoute = resolveTeacherClassRoute(nextClassId);
+              try {
+                void router.prefetch(nextRoute);
+              } catch {}
+              router.replace(nextRoute);
               setOpenMobile(false);
             }}
             disabled={classDropdownItems.length === 0}
@@ -939,7 +967,7 @@ export function AppSidebar() {
                       className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                         isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)
-                          ? "bg-[hsl(var(--sidebar-accent)/1)] text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                          ? "bg-[hsl(var(--sidebar-accent)/1)] text-[hsl(var(--sidebar-active-foreground))] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                           : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                       )}
                       title={item.label}
@@ -953,7 +981,7 @@ export function AppSidebar() {
                     className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                       isMenuItemActive(item.href)
-                        ? "bg-[hsl(var(--sidebar-accent)/1)] text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                        ? "bg-[hsl(var(--sidebar-accent)/1)] text-[hsl(var(--sidebar-active-foreground))] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                         : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                     )}
                     title={item.label}
@@ -971,7 +999,7 @@ export function AppSidebar() {
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                   isMenuItemActive(item.href)
-                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-[hsl(var(--sidebar-active-foreground))] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                     : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                 )}
                 title={item.label}
@@ -987,7 +1015,7 @@ export function AppSidebar() {
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                   isMenuItemActive(item.href)
-                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-[hsl(var(--sidebar-active-foreground))] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                     : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                 )}
                 title={item.label}

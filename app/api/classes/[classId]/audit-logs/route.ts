@@ -5,6 +5,10 @@ import { getClassPermission } from '@/lib/auth/class-permissions'
 
 export const dynamic = 'force-dynamic'
 
+function labelFromProfile(profile: any, fallbackId: string) {
+  return profile?.display_name || profile?.full_name || profile?.email || fallbackId
+}
+
 // GET audit logs for a class (teachers/management only)
 export async function GET(
   request: Request,
@@ -61,21 +65,38 @@ export async function GET(
       return ids
     }).filter(Boolean))]
 
-    const { data: profiles } = await supabase
+    const [{ data: profiles }, { data: classMembers }] = await Promise.all([
+      supabase
       .from('profiles')
-      .select('id, full_name, avatar_url, email')
-      .in('id', userIds)
+      .select('id, display_name, full_name, avatar_url, email')
+      .in('id', userIds),
+      supabase
+        .from('class_members')
+        .select('user_id, display_name')
+        .eq('class_id', classId)
+        .in('user_id', userIds),
+    ])
 
     const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+    const classAliasMap = new Map(
+      (classMembers || [])
+        .filter((member: any) => String(member?.display_name || '').trim().length > 0)
+        .map((member: any) => [member.user_id, String(member.display_name).trim()])
+    )
 
     const enrichedLogs = (pagedLogs || []).map((log: any) => ({
       ...log,
-      user: profileMap.get(log.user_id) || { full_name: 'Unknown', avatar_url: null, email: null },
+      user: profileMap.get(log.user_id) || { display_name: null, full_name: 'Unknown', avatar_url: null, email: null },
       metadata_user_labels: metadataUserIdKeys.reduce((acc: Record<string, string>, key) => {
         const value = log?.metadata?.[key]
         if (!value) return acc
+        const classAlias = classAliasMap.get(value)
+        if (classAlias) {
+          acc[key] = classAlias
+          return acc
+        }
         const profile = profileMap.get(value)
-        acc[key] = profile?.email || profile?.full_name || value
+        acc[key] = labelFromProfile(profile, value)
         return acc
       }, {})
     }))

@@ -221,6 +221,29 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     window.localStorage.setItem('studyweb-last-class-id', activeClasses[0].id);
   }, [classes]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!session || role !== 'teacher') return;
+    const activeClasses = (classes || []).filter((classItem: any) => classItem?.status !== 'archived');
+    if (activeClasses.length === 0) return;
+    const classId = window.localStorage.getItem('studyweb-last-class-id') || activeClasses[0].id;
+    if (!classId) return;
+
+    const warm = async () => {
+      try {
+        await Promise.all([
+          fetch(`/api/classes/${classId}/group`, { credentials: 'include', cache: 'no-store' }),
+          fetch(`/api/classes/${classId}/attendance`, { credentials: 'include', cache: 'no-store' }),
+          fetch(`/api/classes/${classId}/audit-logs?limit=50&offset=0`, { credentials: 'include', cache: 'no-store' }),
+        ]);
+      } catch {
+        // non-fatal preload
+      }
+    };
+
+    void warm();
+  }, [classes, role, session]);
+
   const applyAppearance = useCallback((currentTheme: ThemeType) => {
     if (typeof window === 'undefined') return;
     const root = document.documentElement;

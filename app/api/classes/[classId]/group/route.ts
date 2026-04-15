@@ -7,9 +7,17 @@ function logGroup(...args: any[]) {
   console.log('[CLASS_GROUP]', ...args)
 }
 
-function displayName(fullName: string | null | undefined, email: string | null | undefined, userId: string) {
+function studentDisplayName(classAlias: string | null | undefined, displayNameValue: string | null | undefined, fullName: string | null | undefined) {
+  if (classAlias && classAlias.trim()) return classAlias
+  if (displayNameValue && displayNameValue.trim()) return displayNameValue
   if (fullName && fullName.trim()) return fullName
-  if (email && email.includes('@')) return email.split('@')[0]
+  return 'Unnamed student'
+}
+
+function actorDisplayName(displayNameValue: string | null | undefined, fullName: string | null | undefined, email: string | null | undefined, userId: string) {
+  if (displayNameValue && displayNameValue.trim()) return displayNameValue
+  if (fullName && fullName.trim()) return fullName
+  if (email && email.trim()) return email
   return `user-${userId.slice(0, 8)}`
 }
 
@@ -74,7 +82,7 @@ export async function GET(
     // Get all class members (students and teachers)
     const { data: classMembers, error: membersError } = await dataClient
       .from('class_members')
-      .select('user_id, role')
+      .select('user_id, role, display_name')
       .eq('class_id', classId)
 
     if (membersError) {
@@ -86,7 +94,7 @@ export async function GET(
       new Set(
         (classMembers || [])
           .map((m: { user_id: string | null }) => String(m?.user_id || '').trim())
-          .filter((userId) => userId.length > 0)
+          .filter((userId: string) => userId.length > 0)
       )
     )
     const safeUserIds = allUserIds.filter((userId) => isUuidLike(userId))
@@ -98,7 +106,7 @@ export async function GET(
     if (safeUserIds.length > 0) {
       const { data: profilesData, error: profilesError } = await dataClient
         .from('profiles')
-        .select('id, full_name, avatar_url, email, last_seen, subscription_type')
+        .select('id, display_name, full_name, avatar_url, email, last_seen, subscription_type')
         .in('id', safeUserIds)
       
       if (profilesError) {
@@ -116,7 +124,9 @@ export async function GET(
     }
 
     const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
-    const memberRoleByUserId = new Map(
+    const profileById = new Map((profiles || []).map((p: any) => [p.id, p]))
+    const classMemberByUserId = new Map<string, any>((classMembers || []).map((member: any) => [member.user_id, member]))
+    const memberRoleByUserId = new Map<string, string>(
       (classMembers || []).map((m: any) => [m.user_id, String(m.role || '').toLowerCase()])
     )
     const teacherIds = safeUserIds.filter((uid: string) => {
@@ -219,14 +229,23 @@ export async function GET(
         : null
 
       // Get recent activity (last 5 actions)
-      const recentActivity = studentLogs.slice(0, 5).map((log: any) => ({
+      const recentActivity = studentLogs.slice(0, 5).map((log: any) => {
+        const actorProfile = profileById.get(log.user_id)
+        const createdByProfile = profileById.get(log?.metadata?.created_by)
+        return {
         id: log.id,
         action: log.action,
         entityType: log.entity_type,
         entityId: log.entity_id,
-        details: log.metadata || log.changes || null,
+        details: {
+          ...(log.metadata || log.changes || {}),
+          actor_name: actorDisplayName(actorProfile?.display_name, actorProfile?.full_name, actorProfile?.email, String(log.user_id || '')),
+          created_by_name: createdByProfile
+            ? actorDisplayName(createdByProfile.display_name, createdByProfile.full_name, createdByProfile.email, String(log?.metadata?.created_by || ''))
+            : null,
+        },
         createdAt: log.created_at
-      }))
+      }})
 
       // Get recent submissions
       const recentSubmissions = studentSubmissions
@@ -252,7 +271,7 @@ export async function GET(
 
       return {
         id: studentId,
-        name: displayName(profile?.full_name, profile?.email, studentId),
+        name: studentDisplayName(classMemberByUserId.get(studentId)?.display_name, profile?.display_name, profile?.full_name),
         email: profile?.email || null,
         avatarUrl: profile?.avatar_url,
         role: 'student',
@@ -321,13 +340,13 @@ export async function GET(
         .map((subject: any) => ({
           id: subject.id,
           title: subject.title,
-          ownerName: profile?.full_name || null,
+          ownerName: profile?.display_name || profile?.full_name || null,
           ownerEmail: profile?.email || null
         }))
       
       return {
         id: teacherId,
-        name: displayName(profile?.full_name, profile?.email, teacherId),
+        name: actorDisplayName(profile?.display_name, profile?.full_name, profile?.email, teacherId),
         email: profile?.email || null,
         avatarUrl: profile?.avatar_url,
         role: 'teacher',

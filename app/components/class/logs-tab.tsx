@@ -18,7 +18,7 @@ type AuditLog = {
   entity_id: string | null;
   metadata: Record<string, any> | null;
   created_at: string;
-  user?: { full_name?: string | null; email?: string | null };
+  user?: { display_name?: string | null; full_name?: string | null; email?: string | null };
   metadata_user_labels?: Record<string, string>;
 };
 
@@ -26,55 +26,50 @@ type LogsTabProps = {
   classId: string;
 };
 
-type Category = 'all' | 'teacher_invites' | 'join_requests' | 'settings' | 'attendance' | 'grades' | 'subjects' | 'assignments' | 'other';
-type QuickPreset = 'none' | 'pending_teacher_joins' | 'invite_codes_used' | 'rejected_requests' | 'config_changes';
+type Category = 'all' | 'academic' | 'events' | 'custom_events' | 'roster';
 
 const CATEGORY_LABELS: Record<Category, string> = {
   all: 'All',
-  teacher_invites: 'Teacher Invites',
-  join_requests: 'Join Requests',
-  settings: 'Settings',
-  attendance: 'Attendance',
-  grades: 'Grades',
-  subjects: 'Subjects',
-  assignments: 'Assignments',
-  other: 'Other',
+  academic: 'Academic',
+  events: 'Events',
+  custom_events: 'Custom Events',
+  roster: 'Roster & Roles',
 };
-
-const IMPORTANT_ACTION_HINTS = [
-  'grade',
-  'attendance',
-  'teacher_invite_code_',
-  'teacher_join_request_',
-  'update_profile',
-  'update_preferences',
-  'regenerate_invite_codes',
-  'archive',
-  'subject',
-  'assignment',
-];
 
 function isImportantLog(log: AuditLog) {
   const action = String(log.action || '');
   const entityType = String(log.entity_type || '');
   if (action.startsWith('telemetry_') || entityType === 'class_tab') return false;
-  if (IMPORTANT_ACTION_HINTS.some((hint) => action.includes(hint))) return true;
-  if (entityType.includes('subject') || entityType.includes('assignment') || entityType.includes('grade') || entityType.includes('attendance')) return true;
-  return false;
+  return true;
 }
 
 function categorizeLog(log: AuditLog): Category {
   const action = String(log.action || '');
   const entityType = String(log.entity_type || '');
 
-  if (action.startsWith('teacher_invite_code_') || entityType === 'teacher_invite_code') return 'teacher_invites';
-  if (action.startsWith('teacher_join_request_') || action.includes('join_request')) return 'join_requests';
-  if (action.startsWith('update_preferences') || action.startsWith('update_profile') || action.startsWith('regenerate_invite_codes') || action === 'archive') return 'settings';
-  if (action.includes('attendance') || entityType.includes('attendance')) return 'attendance';
-  if (action.includes('grade') || entityType.includes('grade')) return 'grades';
-  if (action.includes('subject') || entityType.includes('subject')) return 'subjects';
-  if (action.includes('assignment') || entityType.includes('assignment')) return 'assignments';
-  return 'other';
+  if (action.includes('attendance_event_custom') || Boolean((log.metadata as any)?.custom_message)) return 'custom_events';
+
+  if (
+    action.includes('attendance') ||
+    action.includes('event_') ||
+    entityType.includes('attendance') ||
+    entityType.includes('event')
+  ) {
+    return 'events';
+  }
+
+  if (
+    action.includes('member_') ||
+    action.includes('teacher_invite') ||
+    action.includes('join_request') ||
+    action.includes('role') ||
+    entityType.includes('member') ||
+    entityType.includes('invite')
+  ) {
+    return 'roster';
+  }
+
+  return 'academic';
 }
 
 function formatAction(action: string) {
@@ -82,7 +77,38 @@ function formatAction(action: string) {
 }
 
 function formatActor(log: AuditLog) {
-  return log?.user?.email || log?.user?.full_name || log.user_id;
+  return log?.user?.display_name || log?.user?.full_name || log?.user?.email || log.user_id;
+}
+
+function toneIndex(input: string) {
+  let sum = 0;
+  for (let i = 0; i < input.length; i += 1) sum += input.charCodeAt(i);
+  return sum % 3;
+}
+
+function getCategoryClass(categoryName: Category, action: string) {
+  const tone = toneIndex(action || categoryName);
+  if (categoryName === 'academic') {
+    if (tone === 0) return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-100 dark:border-blue-800';
+    if (tone === 1) return 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-950/40 dark:text-indigo-100 dark:border-indigo-800';
+    return 'bg-cyan-100 text-cyan-800 border-cyan-300 dark:bg-cyan-950/40 dark:text-cyan-100 dark:border-cyan-800';
+  }
+  if (categoryName === 'events') {
+    if (tone === 0) return 'bg-green-100 text-green-800 border-green-300 dark:bg-green-950/40 dark:text-green-100 dark:border-green-800';
+    if (tone === 1) return 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-100 dark:border-emerald-800';
+    return 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950/40 dark:text-teal-100 dark:border-teal-800';
+  }
+  if (categoryName === 'custom_events') {
+    if (tone === 0) return 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-950/40 dark:text-orange-100 dark:border-orange-800';
+    if (tone === 1) return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-100 dark:border-amber-800';
+    return 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-950/40 dark:text-yellow-100 dark:border-yellow-800';
+  }
+  if (categoryName === 'roster') {
+    if (tone === 0) return 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/40 dark:text-rose-100 dark:border-rose-800';
+    if (tone === 1) return 'bg-pink-100 text-pink-800 border-pink-300 dark:bg-pink-950/40 dark:text-pink-100 dark:border-pink-800';
+    return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-950/40 dark:text-red-100 dark:border-red-800';
+  }
+  return 'bg-muted text-foreground border-border';
 }
 
 export function LogsTab({ classId }: LogsTabProps) {
@@ -97,7 +123,6 @@ export function LogsTab({ classId }: LogsTabProps) {
   const [hasNext, setHasNext] = useState(false);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category>('all');
-  const [quickPreset, setQuickPreset] = useState<QuickPreset>('none');
   const [studentFilter, setStudentFilter] = useState<string>('all');
   const [limit] = useState(100);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -135,24 +160,8 @@ export function LogsTab({ classId }: LogsTabProps) {
       setTotalCount(Number(pagination.total || deduped.length));
       setHasNext(Boolean(pagination.hasNext));
       setOffset(mode === 'append' ? nextOffset + rows.length : rows.length);
-      void logClassTabEvent({
-        classId,
-        tab: 'logs',
-        event: 'load_success',
-        stage: 'data',
-        level: 'debug',
-        meta: { count: deduped.length, returned: rows.length, has_next: !!pagination.hasNext },
-      });
     } catch (error: any) {
       setLoadError(error?.message || 'Failed to load logs');
-      void logClassTabEvent({
-        classId,
-        tab: 'logs',
-        event: 'load_error',
-        stage: 'data',
-        level: 'error',
-        message: error?.message || 'Unknown error',
-      });
     } finally {
       if (mode === 'replace') setLoading(false);
       if (mode === 'append') setLoadingMore(false);
@@ -160,13 +169,6 @@ export function LogsTab({ classId }: LogsTabProps) {
   };
 
   useEffect(() => {
-    void logClassTabEvent({
-      classId,
-      tab: 'logs',
-      event: 'mount',
-      stage: 'ui',
-      level: 'info',
-    });
     void loadLogs('replace');
   }, [classId]);
 
@@ -220,25 +222,7 @@ export function LogsTab({ classId }: LogsTabProps) {
     return logs.filter((log) => {
       const logCategory = categorizeLog(log);
       if (category !== 'all' && logCategory !== category) return false;
-      if (quickPreset !== 'none') {
-        const metadata = log.metadata || {};
-        if (quickPreset === 'pending_teacher_joins') {
-          const isJoinRequest = String(log.action).includes('teacher_join_request_created');
-          if (!isJoinRequest) return false;
-        }
-        if (quickPreset === 'invite_codes_used') {
-          const isUsedCode = String(log.action).includes('teacher_invite_code_used');
-          const hasUsedBy = Boolean(metadata.used_by || metadata.used_by_user_id || metadataUserFromLabels(log, 'used_by'));
-          if (!isUsedCode && !hasUsedBy) return false;
-        }
-        if (quickPreset === 'rejected_requests') {
-          if (!String(log.action).includes('rejected')) return false;
-        }
-        if (quickPreset === 'config_changes') {
-          const configActions = ['update_preferences', 'update_profile', 'regenerate_invite_codes'];
-          if (!configActions.some((a) => String(log.action).includes(a))) return false;
-        }
-      }
+
       if (studentFilter !== 'all') {
         const actorId = String(log.user_id || '');
         const affectedStudentId = String((log.metadata as any)?.student_id || '');
@@ -253,19 +237,15 @@ export function LogsTab({ classId }: LogsTabProps) {
 
       return actor.includes(q) || action.includes(q) || entity.includes(q) || metadataText.includes(q);
     });
-  }, [logs, search, category, quickPreset, studentFilter]);
+  }, [logs, search, category, studentFilter]);
 
   const counts = useMemo(() => {
     const base: Record<Category, number> = {
       all: logs.length,
-      teacher_invites: 0,
-      join_requests: 0,
-      settings: 0,
-      attendance: 0,
-      grades: 0,
-      subjects: 0,
-      assignments: 0,
-      other: 0,
+      academic: 0,
+      events: 0,
+      custom_events: 0,
+      roster: 0,
     };
     for (const log of logs) {
       base[categorizeLog(log)] += 1;
@@ -273,35 +253,7 @@ export function LogsTab({ classId }: LogsTabProps) {
     return base;
   }, [logs]);
 
-  const categories: Category[] = ['all', 'teacher_invites', 'join_requests', 'settings', 'attendance', 'grades', 'subjects', 'assignments', 'other'];
-  const presets: Array<{ id: QuickPreset; label: string }> = [
-    { id: 'none', label: 'No preset' },
-    { id: 'pending_teacher_joins', label: 'Pending teacher joins' },
-    { id: 'invite_codes_used', label: 'Invite codes used' },
-    { id: 'rejected_requests', label: 'Rejected requests' },
-    { id: 'config_changes', label: 'Config changes' },
-  ];
-
-  const getCategoryClass = (categoryName: Category) => {
-    switch (categoryName) {
-      case 'teacher_invites':
-        return 'bg-blue-900/90 text-white border-blue-700';
-      case 'join_requests':
-        return 'bg-sky-700/90 text-white border-sky-600';
-      case 'settings':
-        return 'bg-pink-100 text-pink-700 border-pink-300';
-      case 'attendance':
-        return 'bg-rose-100 text-rose-700 border-rose-300';
-      case 'grades':
-        return 'bg-emerald-100 text-emerald-700 border-emerald-300';
-      case 'subjects':
-        return 'bg-amber-100 text-amber-700 border-amber-300';
-      case 'assignments':
-        return 'bg-violet-100 text-violet-700 border-violet-300';
-      default:
-        return 'bg-muted text-foreground border-border';
-    }
-  };
+  const categories: Category[] = ['all', 'academic', 'events', 'custom_events', 'roster'];
 
   return (
     <div className="space-y-6">
@@ -309,27 +261,15 @@ export function LogsTab({ classId }: LogsTabProps) {
         <CardHeader>
           <CardTitle>Logs</CardTitle>
           <CardDescription>
-            Full class activity timeline by category: who did what, when, and request outcomes.
+            Class logs grouped into Academic, Events, Custom Events, and Roster & Roles.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {presets.map((preset) => (
-              <Button
-                key={preset.id}
-                variant={quickPreset === preset.id ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setQuickPreset(preset.id)}
-              >
-                {preset.label}
-              </Button>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder=""
+              placeholder="Search actions, actors, metadata..."
             />
             <select
               value={category}
@@ -369,48 +309,53 @@ export function LogsTab({ classId }: LogsTabProps) {
               </Button>
             </div>
           </div>
-          {studentFilter !== 'all' && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Filtered by student/actor</span>
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => applyStudentFilter('all')}>
-                Clear
-              </Button>
-            </div>
-          )}
+
           {loadError && (
             <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
               {loadError}
             </div>
           )}
-          <div className="text-xs text-muted-foreground">
-            Showing {filteredLogs.length} of {totalCount || logs.length} logs
-          </div>
+
+          <div className="text-xs text-muted-foreground">Showing {filteredLogs.length} of {totalCount || logs.length} logs</div>
         </CardContent>
       </Card>
 
       <Card>
         <CardContent className="pt-6">
           {loading ? (
-            <div className="text-center py-10 text-muted-foreground">Loading logs...</div>
+            <div className="py-10 text-center text-muted-foreground">Loading logs...</div>
           ) : filteredLogs.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground">No logs found for this filter.</div>
+            <div className="py-10 text-center text-muted-foreground">No logs found for this filter.</div>
           ) : (
             <div className="space-y-3">
               {filteredLogs.map((log) => (
-                <div key={log.id} className="rounded-lg border p-3 space-y-1.5">
+                <div key={log.id} className="space-y-1.5 rounded-lg border p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <p className="font-medium truncate capitalize">{formatAction(log.action)}</p>
-                      <Badge variant="outline" className={getCategoryClass(categorizeLog(log))}>
-                        {CATEGORY_LABELS[categorizeLog(log)]}
-                      </Badge>
+                    <div className="min-w-0 items-center gap-2">
+                      <p className="truncate font-medium capitalize">{formatAction(log.action)}</p>
                     </div>
-                    <p className="text-xs text-muted-foreground shrink-0">{new Date(log.created_at).toLocaleString()}</p>
+                    <p className="shrink-0 text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString()}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-medium text-foreground">{formatActor(log)}</span> on <span className="font-mono">{log.entity_type}</span>
-                    {log.entity_id ? `:${log.entity_id}` : ''}
-                  </p>
+
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={getCategoryClass(categorizeLog(log), log.action)}>
+                      {CATEGORY_LABELS[categorizeLog(log)]}
+                    </Badge>
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">{formatActor(log)}</span> on <span className="font-mono">{log.entity_type}</span>
+                    </p>
+                  </div>
+
+                  {(log.metadata_user_labels?.student_id || (log.metadata as any)?.student_id) && (
+                    <p className="text-xs text-muted-foreground">
+                      Student: <span className="text-foreground">{log.metadata_user_labels?.student_id || String((log.metadata as any)?.student_id)}</span>
+                    </p>
+                  )}
+
+                  {(log.metadata as any)?.custom_message && (
+                    <p className="text-xs text-muted-foreground">{String((log.metadata as any)?.custom_message)}</p>
+                  )}
+
                   {log.metadata && Object.keys(log.metadata).length > 0 && (
                     <div className="rounded-md bg-muted/35 p-2 text-xs">
                       <pre className="whitespace-pre-wrap break-words">
