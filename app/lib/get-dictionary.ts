@@ -11,6 +11,9 @@ import * as hi from './dictionaries/hi.json';
 import * as bn from './dictionaries/bn.json';
 import * as pt from './dictionaries/pt.json';
 import * as ur from './dictionaries/ur.json';
+import * as it from './dictionaries/it.json';
+import * as tr from './dictionaries/tr.json';
+import * as id from './dictionaries/id.json';
 
 const dictionaries = {
   en: () => en,
@@ -26,6 +29,9 @@ const dictionaries = {
   bn: () => bn,
   pt: () => pt,
   ur: () => ur,
+  it: () => it,
+  tr: () => tr,
+  id: () => id,
 };
 
 export type Dictionary = typeof en;

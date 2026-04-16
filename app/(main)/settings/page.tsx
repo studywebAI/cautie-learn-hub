@@ -1,7 +1,7 @@
 'use client';
 
 import { useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import { ThemePicker } from '@/components/settings/theme-picker';
 import { createClient } from '@/lib/supabase/client';
@@ -9,15 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const SUBSCRIPTION_CACHE_KEY = 'studyweb-subscription-cache-v1';
 const SUBSCRIPTION_CACHE_TTL_MS = 300_000;
 
 export default function SettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     language,
     setLanguage,
@@ -45,6 +46,7 @@ export default function SettingsPage() {
   const [aiSettingsStatus, setAiSettingsStatus] = useState('');
   const [hasOpenAIKey, setHasOpenAIKey] = useState(false);
   const [usesDefaultOpenAIKey, setUsesDefaultOpenAIKey] = useState(false);
+  const [logCodeQuery, setLogCodeQuery] = useState('');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -56,6 +58,16 @@ export default function SettingsPage() {
     const fallback = session?.user?.email?.split('@')[0] || '';
     setDisplayName(fallback);
   }, [session?.user?.email]);
+
+  useEffect(() => {
+    const tabParam = (searchParams?.get('tab') || '').toLowerCase();
+    const validTabs = new Set(['personalization', 'general', 'subscription', 'help', 'log-codes']);
+    if (validTabs.has(tabParam)) {
+      setActiveTab(tabParam);
+      return;
+    }
+    setActiveTab('personalization');
+  }, [searchParams]);
 
   useEffect(() => {
     const loadAiSettings = async () => {
@@ -163,6 +175,52 @@ export default function SettingsPage() {
     void fetchSubscription();
   }, [session?.user?.id]);
 
+  const isDutch = language === 'nl';
+  const locale = (language || 'en').toLowerCase();
+  const tr = (values: Partial<Record<string, string>>) => values[locale] || values.en || '';
+  const tabItems = [
+    { id: 'personalization', label: tr({ en: 'Personalization', nl: 'Personalisatie' }) },
+    { id: 'general', label: tr({ en: 'General', nl: 'Algemeen' }) },
+    { id: 'subscription', label: tr({ en: 'Subscription', nl: 'Abonnement' }) },
+    { id: 'help', label: tr({ en: 'Help & FAQ', nl: 'Help & FAQ' }) },
+    { id: 'log-codes', label: tr({ en: 'Log codes', nl: 'Logcodes' }) },
+  ] as const;
+
+  const logCodeDocs: Record<string, { title: string; descriptionEn: string; descriptionNl: string }> = {
+    'EVT-ATT-001': {
+      title: 'Attendance state changed',
+      descriptionEn: 'Attendance check/X was changed for a student. Includes teacher, class, and timestamp.',
+      descriptionNl: 'Aanwezigheid check/X is aangepast voor een leerling. Bevat docent, klas en tijdstip.',
+    },
+    'EVT-ATT-002': {
+      title: 'Attendance homework flag',
+      descriptionEn: 'Homework incomplete flag was enabled or disabled.',
+      descriptionNl: 'Huiswerk-onvolledig vlag is aan of uit gezet.',
+    },
+    'EVT-ATT-003': {
+      title: 'Attendance late flag',
+      descriptionEn: 'Late flag was enabled or disabled.',
+      descriptionNl: 'Te-laat vlag is aan of uit gezet.',
+    },
+    'EVT-CUS-001': {
+      title: 'Custom event',
+      descriptionEn: 'Teacher posted a custom attendance event message.',
+      descriptionNl: 'Docent heeft een aangepast eventbericht geplaatst.',
+    },
+    'ROS-MEM-001': {
+      title: 'Class member rename',
+      descriptionEn: 'A class-scoped student alias was changed by a teacher.',
+      descriptionNl: 'Een klasgebonden leerling-naam is aangepast door een docent.',
+    },
+    'ACD-EDT-001': {
+      title: 'Academic content changed',
+      descriptionEn: 'Subject/chapter/paragraph/assignment content was created or edited.',
+      descriptionNl: 'Vak/hoofdstuk/paragraaf/opdracht is aangemaakt of bewerkt.',
+    },
+  };
+  const normalizedCodeQuery = logCodeQuery.trim().toUpperCase();
+  const selectedLogCodeDoc = normalizedCodeQuery ? logCodeDocs[normalizedCodeQuery] : null;
+
   return (
     <div className="h-full w-full overflow-auto bg-[hsl(var(--surface-1))] p-4 md:p-6">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
@@ -182,24 +240,34 @@ export default function SettingsPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Return
           </Button>
-          <h1 className="text-sm font-medium md:text-base">Settings</h1>
+          <h1 className="text-sm md:text-base">Settings</h1>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
-            <TabsList className="flex w-full flex-wrap justify-start gap-2 bg-transparent p-0">
-              <TabsTrigger value="personalization" className="rounded-xl border border-border px-3 py-2 text-[13px] data-[state=active]:bg-muted">
-                personalization
-              </TabsTrigger>
-              <TabsTrigger value="general" className="rounded-xl border border-border px-3 py-2 text-[13px] data-[state=active]:bg-muted">
-                general
-              </TabsTrigger>
-              <TabsTrigger value="subscription" className="rounded-xl border border-border px-3 py-2 text-[13px] data-[state=active]:bg-muted">
-                subscription
-              </TabsTrigger>
-            </TabsList>
+          <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+            <aside className="rounded-xl border border-border bg-muted/15 p-2">
+              <nav className="space-y-1">
+                {tabItems.map((tabItem) => (
+                  <button
+                    key={tabItem.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab(tabItem.id);
+                      router.replace(`/settings?tab=${tabItem.id}`);
+                    }}
+                    className={cn(
+                      'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                      activeTab === tabItem.id ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50'
+                    )}
+                  >
+                    {tabItem.label}
+                  </button>
+                ))}
+              </nav>
+            </aside>
 
-            <TabsContent value="personalization" className="mt-0">
+            <div className="space-y-5">
+              {activeTab === 'personalization' && (
               <Card className="border-border shadow-none">
                 <CardHeader>
                   <CardTitle>{dictionary.settings.personalization.title}</CardTitle>
@@ -213,19 +281,22 @@ export default function SettingsPage() {
                         <SelectValue placeholder="Select language" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="nl">Nederlands</SelectItem>
-                        <SelectItem value="de">Deutsch</SelectItem>
-                        <SelectItem value="fr">Francais</SelectItem>
-                        <SelectItem value="es">Espanol</SelectItem>
-                        <SelectItem value="pt">Portugues</SelectItem>
-                        <SelectItem value="pl">Polski</SelectItem>
-                        <SelectItem value="ru">Russkiy</SelectItem>
-                        <SelectItem value="ar">Arabic</SelectItem>
-                        <SelectItem value="ur">Urdu</SelectItem>
-                        <SelectItem value="hi">Hindi</SelectItem>
-                        <SelectItem value="bn">Bangla</SelectItem>
-                        <SelectItem value="zh">Chinese</SelectItem>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="zh">Chinese</SelectItem>
+                          <SelectItem value="hi">Hindi</SelectItem>
+                          <SelectItem value="es">Espanol</SelectItem>
+                          <SelectItem value="fr">Francais</SelectItem>
+                          <SelectItem value="ar">Arabic</SelectItem>
+                          <SelectItem value="bn">Bangla</SelectItem>
+                          <SelectItem value="pt">Portugues</SelectItem>
+                          <SelectItem value="ru">Russkiy</SelectItem>
+                          <SelectItem value="ur">Urdu</SelectItem>
+                          <SelectItem value="id">Bahasa Indonesia</SelectItem>
+                          <SelectItem value="de">Deutsch</SelectItem>
+                          <SelectItem value="tr">Turkce</SelectItem>
+                          <SelectItem value="it">Italiano</SelectItem>
+                          <SelectItem value="nl">Nederlands</SelectItem>
+                          <SelectItem value="pl">Polski</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -248,9 +319,9 @@ export default function SettingsPage() {
                   <ThemePicker theme={theme} setTheme={setTheme} />
                 </CardContent>
               </Card>
-            </TabsContent>
+              )}
 
-            <TabsContent value="general" className="mt-0">
+              {activeTab === 'general' && (
               <Card className="border-border shadow-none">
                 <CardHeader>
                   <CardTitle>{dictionary.settings.general.title}</CardTitle>
@@ -354,9 +425,9 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+              )}
 
-            <TabsContent value="subscription" className="mt-0">
+              {activeTab === 'subscription' && (
               <Card className="border-border shadow-none">
                 <CardHeader>
                   <CardTitle>Subscription</CardTitle>
@@ -373,8 +444,74 @@ export default function SettingsPage() {
                   </Button>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+              )}
+
+              {activeTab === 'help' && (
+                <Card className="border-border shadow-none">
+                  <CardHeader>
+                    <CardTitle>{tr({ en: 'Help & FAQ', nl: 'Help & FAQ' })}</CardTitle>
+                    <CardDescription>
+                      {tr({
+                        en: 'Use this page for explanations about logs, attendance, and settings.',
+                        nl: 'Gebruik deze pagina voor uitleg over logs, aanwezigheid en instellingen.',
+                      })}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 text-sm text-muted-foreground">
+                    <div>
+                      <p className="text-foreground">{tr({ en: 'Why do I see a different name in one class?', nl: 'Waarom zie ik een andere naam in een klas?' })}</p>
+                      <p>{tr({ en: 'Teachers can set a class-scoped alias. It only changes that class.', nl: 'Docenten kunnen een klasgebonden alias instellen. Dit verandert alleen die klas.' })}</p>
+                    </div>
+                    <div>
+                      <p className="text-foreground">{tr({ en: 'What do check, X, homework, and late mean?', nl: 'Wat betekenen check, X, huiswerk en laat?' })}</p>
+                      <p>{tr({ en: 'Check = present, X = absent, homework = incomplete, late = late. Every action is logged with teacher and timestamp.', nl: 'Check = aanwezig, X = afwezig, huiswerk = onvolledig, laat = te laat. Alles wordt gelogd met docent en tijd.' })}</p>
+                    </div>
+                    <div>
+                      <p className="text-foreground">{tr({ en: 'Where do I find log codes?', nl: 'Waar vind ik logcodes?' })}</p>
+                      <p>{tr({ en: 'Open the "Log codes" tab and enter the code for full explanation.', nl: 'Open tab "Logcodes" en voer de code in voor een volledige uitleg.' })}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {activeTab === 'log-codes' && (
+                <Card className="border-border shadow-none">
+                  <CardHeader>
+                    <CardTitle>{tr({ en: 'Log codes', nl: 'Logcodes' })}</CardTitle>
+                    <CardDescription>
+                      {tr({ en: 'Enter a code, for example EVT-ATT-001 or ROS-MEM-001.', nl: 'Voer een code in, bijvoorbeeld EVT-ATT-001 of ROS-MEM-001.' })}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Input
+                      value={logCodeQuery}
+                      onChange={(event) => setLogCodeQuery(event.target.value)}
+                      placeholder={tr({ en: 'Enter log code...', nl: 'Voer logcode in...' })}
+                    />
+                    {selectedLogCodeDoc ? (
+                      <div className="rounded-xl border border-border bg-muted/20 p-4">
+                        <p className="text-sm">{selectedLogCodeDoc.title}</p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {isDutch ? selectedLogCodeDoc.descriptionNl : selectedLogCodeDoc.descriptionEn}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-border bg-muted/15 p-4 text-sm text-muted-foreground">
+                        {normalizedCodeQuery
+                          ? (isDutch
+                            ? `Geen uitleg gevonden voor ${normalizedCodeQuery}.`
+                            : `No explanation found for ${normalizedCodeQuery}.`)
+                          : tr({
+                              en: 'Available codes: EVT-ATT-001, EVT-ATT-002, EVT-ATT-003, EVT-CUS-001, ROS-MEM-001, ACD-EDT-001.',
+                              nl: 'Beschikbare codes: EVT-ATT-001, EVT-ATT-002, EVT-ATT-003, EVT-CUS-001, ROS-MEM-001, ACD-EDT-001.',
+                            })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -85,7 +85,7 @@ export function RecentsSidebar() {
           .map((r: any) => ({
             id: r.id,
             title: r.mode
-              ? `${TYPE_LABELS[r.tool_id] || r.tool_id} · ${r.mode}`
+              ? `${TYPE_LABELS[r.tool_id] || r.tool_id} - ${r.mode}`
               : TYPE_LABELS[r.tool_id] || r.tool_id,
             type: r.tool_id as RecentItem['type'],
             date: r.finished_at || r.created_at,
@@ -192,7 +192,7 @@ export function RecentsSidebar() {
               <span className="text-[12px] flex-1 truncate">
                 {item.title}
               </span>
-              <span className="text-[11px] text-muted-foreground/85 shrink-0 font-mono">
+              <span className="text-[11px] text-muted-foreground/85 shrink-0">
                 {dateStr}
               </span>
             </div>

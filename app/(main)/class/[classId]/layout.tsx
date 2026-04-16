@@ -9,26 +9,27 @@ import {
 import Link from 'next/link';
 import { AppContext } from '@/contexts/app-context';
 
-const teacherTabs = [
-  { id: 'invite', label: 'Invite', icon: UserPlus, href: '?tab=invite' },
-  { id: 'group', label: 'Group', icon: Users, href: '?tab=group' },
-  { id: 'attendance', label: 'Attendance', icon: Calendar, href: '?tab=attendance' },
-  { id: 'grades', label: 'Grades', icon: ClipboardCheck, href: '?tab=grades' },
-  { id: 'analytics', label: 'Analytics', icon: Layers, href: '?tab=analytics' },
-  { id: 'logs', label: 'Logs', icon: History, href: '?tab=logs' },
-  { id: 'settings', label: 'Settings', icon: Settings, href: '?tab=settings' },
-];
-
-const studentTabs = [
-  { id: 'invite', label: 'Invite', icon: UserPlus, href: '?tab=invite' },
-  { id: 'group', label: 'Group', icon: Users, href: '?tab=group' },
-];
-
 export default function ClassLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const searchParams = useSearchParams();
-  const { role, isLoading } = useContext(AppContext) as any;
+  const { role, isLoading, language } = useContext(AppContext) as any;
   const classId = params.classId as string;
+  const isDutch = language === 'nl';
+
+  const teacherTabs = [
+    { id: 'invite', label: isDutch ? 'Uitnodigen' : 'Invite', icon: UserPlus, href: '?tab=invite' },
+    { id: 'group', label: isDutch ? 'Groep' : 'Group', icon: Users, href: '?tab=group' },
+    { id: 'attendance', label: isDutch ? 'Aanwezigheid' : 'Attendance', icon: Calendar, href: '?tab=attendance' },
+    { id: 'grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardCheck, href: '?tab=grades' },
+    { id: 'analytics', label: isDutch ? 'Analyse' : 'Analytics', icon: Layers, href: '?tab=analytics' },
+    { id: 'logs', label: isDutch ? 'Logs' : 'Logs', icon: History, href: '?tab=logs' },
+    { id: 'settings', label: isDutch ? 'Instellingen' : 'Settings', icon: Settings, href: '?tab=settings' },
+  ];
+
+  const studentTabs = [
+    { id: 'invite', label: isDutch ? 'Uitnodigen' : 'Invite', icon: UserPlus, href: '?tab=invite' },
+    { id: 'group', label: isDutch ? 'Groep' : 'Group', icon: Users, href: '?tab=group' },
+  ];
 
   const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
   const requestedTabRaw = searchParams?.get('tab') || '';
@@ -71,7 +72,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
               window.dispatchEvent(new Event('cautie:open-class-dropdown'));
             }}
           >
-            Select different class
+            {isDutch ? 'Selecteer andere klas' : 'Select different class'}
           </button>
         </nav>
       </div>

@@ -10,22 +10,25 @@ import { createClient } from '@/lib/supabase/client';
 type SetupMode = 'new' | 'account';
 type SetupRole = 'student' | 'teacher';
 type SetupStep = 'language' | 'role' | 'auth' | 'appearance' | 'displayName';
-type LanguageOption = 'en' | 'nl' | 'de' | 'fr' | 'es' | 'pt' | 'pl' | 'ru' | 'ar' | 'ur' | 'hi' | 'bn' | 'zh';
+type LanguageOption = 'en' | 'nl' | 'de' | 'fr' | 'es' | 'pt' | 'pl' | 'ru' | 'ar' | 'ur' | 'hi' | 'bn' | 'zh' | 'it' | 'tr' | 'id';
 
 const LANGUAGE_OPTIONS: Array<{ value: LanguageOption; label: string }> = [
   { value: 'en', label: 'English' },
-  { value: 'nl', label: 'Nederlands' },
-  { value: 'de', label: 'Deutsch' },
-  { value: 'fr', label: 'Francais' },
-  { value: 'es', label: 'Espanol' },
-  { value: 'pt', label: 'Portugues' },
-  { value: 'pl', label: 'Polski' },
-  { value: 'ru', label: 'Russian' },
-  { value: 'ar', label: 'Arabic' },
-  { value: 'ur', label: 'Urdu' },
-  { value: 'hi', label: 'Hindi' },
-  { value: 'bn', label: 'Bangla' },
   { value: 'zh', label: 'Chinese' },
+  { value: 'hi', label: 'Hindi' },
+  { value: 'es', label: 'Espanol' },
+  { value: 'fr', label: 'Francais' },
+  { value: 'ar', label: 'Arabic' },
+  { value: 'bn', label: 'Bangla' },
+  { value: 'pt', label: 'Portugues' },
+  { value: 'ru', label: 'Russian' },
+  { value: 'ur', label: 'Urdu' },
+  { value: 'id', label: 'Bahasa Indonesia' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'tr', label: 'Turkce' },
+  { value: 'it', label: 'Italiano' },
+  { value: 'nl', label: 'Nederlands' },
+  { value: 'pl', label: 'Polski' },
 ];
 
 const THEME_OPTIONS: Array<{ value: ThemeType; label: string }> = [
@@ -72,6 +75,9 @@ function firstTimePromptForLanguage(language: LanguageOption): string {
     hi: 'पहली बार यहां?',
     bn: 'প্রথমবার এখানে?',
     zh: '第一次来这里？',
+    it: 'Prima volta qui?',
+    tr: 'Buraya ilk kez mi geliyorsun?',
+    id: 'Pertama kali ke sini?',
   };
   return map[language] || map.en;
 }
@@ -212,6 +218,9 @@ export function FirstTimeSetupGate() {
       hi: { firstTime: 'पहली बार यहां?', iAmNew: 'मैं नया हूं', iHaveAccount: 'मेरे पास अकाउंट है', step: 'चरण', of: 'का', selectLanguage: 'भाषा चुनें', selectRole: 'भूमिका चुनें', selectAppearance: 'रूप चुनें', teacherCode: 'शिक्षक कोड', enterTeacherCode: 'शिक्षक कोड दर्ज करें', enterDisplayName: 'डिस्प्ले नाम दर्ज करें', yourDisplayName: 'आपका डिस्प्ले नाम', student: 'छात्र', teacher: 'शिक्षक', next: 'अगला', finish: 'पूरा करें', createAccount: 'अकाउंट बनाएं', continueGuest: 'मेहमान के रूप में जारी रखें', saving: 'सहेजा जा रहा है...' },
       bn: { firstTime: 'প্রথমবার এখানে?', iAmNew: 'আমি নতুন', iHaveAccount: 'আমার অ্যাকাউন্ট আছে', step: 'ধাপ', of: 'এর', selectLanguage: 'ভাষা বাছুন', selectRole: 'ভূমিকা বাছুন', selectAppearance: 'থিম বাছুন', teacherCode: 'শিক্ষক কোড', enterTeacherCode: 'শিক্ষক কোড লিখুন', enterDisplayName: 'ডিসপ্লে নাম লিখুন', yourDisplayName: 'আপনার ডিসপ্লে নাম', student: 'শিক্ষার্থী', teacher: 'শিক্ষক', next: 'পরবর্তী', finish: 'শেষ করুন', createAccount: 'অ্যাকাউন্ট তৈরি করুন', continueGuest: 'অতিথি হিসেবে চালিয়ে যান', saving: 'সংরক্ষণ হচ্ছে...' },
       zh: { firstTime: '第一次来这里？', iAmNew: '我是新用户', iHaveAccount: '我有账号', step: '步骤', of: '共', selectLanguage: '选择语言', selectRole: '选择身份', selectAppearance: '选择外观', teacherCode: '教师代码', enterTeacherCode: '输入教师代码', enterDisplayName: '输入显示名称', yourDisplayName: '你的显示名称', student: '学生', teacher: '老师', next: '下一步', finish: '完成', createAccount: '创建账号', continueGuest: '以访客继续', saving: '正在保存...' },
+      it: { firstTime: 'Prima volta qui?', iAmNew: 'Sono nuovo', iHaveAccount: 'Ho un conto', step: 'Fare un passo', of: 'Di', selectLanguage: 'Seleziona la lingua', selectRole: 'Seleziona ruolo', selectAuth: 'Accedi o crea il tuo account', selectAppearance: 'Seleziona aspetto', teacherCode: 'Codice insegnante', enterTeacherCode: 'Inserisci il codice insegnante', enterDisplayName: 'Inserisci il nome visualizzato', yourDisplayName: 'Il tuo nome visualizzato', student: 'Studente', teacher: 'Insegnante', next: 'Prossimo', finish: 'Fine', createAccount: 'Creare account', signIn: 'Accedi', continueGuest: 'Continua come ospite', saving: 'Salvataggio...' },
+      tr: { firstTime: 'Buraya ilk kez mi geliyorsun?', iAmNew: 'Ben yeniyim', iHaveAccount: 'Bir hesabim var', step: 'Adim', of: 'ile ilgili', selectLanguage: 'Dil secin', selectRole: 'Rol secin', selectAuth: 'Oturum acin veya hesabinizi olusturun', selectAppearance: 'Gorunumu secin', teacherCode: 'Ogretmen kodu', enterTeacherCode: 'Ogretmen kodunu girin', enterDisplayName: 'Gorunen adi girin', yourDisplayName: 'Gorunen adiniz', student: 'Ogrenci', teacher: 'Ogretmen', next: 'Sonraki', finish: 'Bitir', createAccount: 'Hesap olustur', signIn: 'Oturum ac', continueGuest: 'Konuk olarak devam et', saving: 'Kaydediliyor...' },
+      id: { firstTime: 'Pertama kali ke sini?', iAmNew: 'Saya baru', iHaveAccount: 'Saya punya akun', step: 'Langkah', of: 'dari', selectLanguage: 'Pilih bahasa', selectRole: 'Pilih peran', selectAuth: 'Masuk atau buat akun Anda', selectAppearance: 'Pilih tampilan', teacherCode: 'Kode guru', enterTeacherCode: 'Masukkan kode guru', enterDisplayName: 'Masukkan nama tampilan', yourDisplayName: 'Nama tampilan Anda', student: 'Murid', teacher: 'Guru', next: 'Berikutnya', finish: 'Selesai', createAccount: 'Buat akun', signIn: 'Masuk', continueGuest: 'Lanjutkan sebagai tamu', saving: 'Menyimpan...' },
     };
     return byLang[language] || byLang.en;
   }, [language]);

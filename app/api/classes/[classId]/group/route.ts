@@ -106,7 +106,7 @@ export async function GET(
     if (safeUserIds.length > 0) {
       const { data: profilesData, error: profilesError } = await dataClient
         .from('profiles')
-        .select('id, display_name, full_name, avatar_url, email, last_seen, subscription_type')
+        .select('id, display_name, full_name, email, last_seen, subscription_type')
         .in('id', safeUserIds)
       
       if (profilesError) {
@@ -273,7 +273,6 @@ export async function GET(
         id: studentId,
         name: studentDisplayName(classMemberByUserId.get(studentId)?.display_name, profile?.display_name, profile?.full_name),
         email: profile?.email || null,
-        avatarUrl: profile?.avatar_url,
         role: 'student',
         joinedAt: null,
         lastSeen: profile?.last_seen,
@@ -348,7 +347,6 @@ export async function GET(
         id: teacherId,
         name: actorDisplayName(profile?.display_name, profile?.full_name, profile?.email, teacherId),
         email: profile?.email || null,
-        avatarUrl: profile?.avatar_url,
         role: 'teacher',
         joinedAt: null,
         lastSeen: profile?.last_seen,

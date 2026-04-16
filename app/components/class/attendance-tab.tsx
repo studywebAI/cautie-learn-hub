@@ -1,22 +1,22 @@
-'use client';
+﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Check, X, MessageSquare, Clock, BookOpen, Info } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DEFAULT_CLASS_PREFERENCES, normalizeClassPreferences } from '@/lib/class-preferences';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
+import { AppContext, AppContextType } from '@/contexts/app-context';
 
 type StudentAttendance = {
   id: string;
   name: string;
   email: string | null;
-  avatarUrl: string | null;
   isPresent: boolean | null;
   hasHomeworkIncomplete: boolean;
   wasTooLate: boolean;
@@ -37,6 +37,8 @@ type StudentAttendance = {
 
 type AttendanceTabProps = {
   classId: string;
+  cachedData?: { students?: StudentAttendance[] } | null;
+  parentLoading?: boolean;
 };
 
 type PendingAction = {
@@ -46,12 +48,14 @@ type PendingAction = {
   wasTooLate?: boolean;
 };
 
-export function AttendanceTab({ classId }: AttendanceTabProps) {
+export function AttendanceTab({ classId, cachedData = null, parentLoading = false }: AttendanceTabProps) {
+  const appContext = useContext(AppContext) as AppContextType | null;
+  const isDutch = appContext?.language === 'nl';
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [students, setStudents] = useState<StudentAttendance[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [students, setStudents] = useState<StudentAttendance[]>(cachedData?.students || []);
+  const [loading, setLoading] = useState(!cachedData && !parentLoading);
   const [selectedStudent, setSelectedStudent] = useState<StudentAttendance | null>(null);
   const [timelineStudent, setTimelineStudent] = useState<StudentAttendance | null>(null);
   const [isCustomEventDialogOpen, setIsCustomEventDialogOpen] = useState(false);
@@ -61,6 +65,34 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
   const [preferences, setPreferences] = useState(DEFAULT_CLASS_PREFERENCES);
   const selectedStudentId = searchParams?.get('studentId') || '';
   const quickAction = searchParams?.get('quick') || '';
+  const t = {
+    attendance: isDutch ? 'Aanwezigheid' : 'Attendance',
+    students: isDutch ? 'leerlingen' : 'students',
+    allStudents: isDutch ? 'Alle leerlingen' : 'All students',
+    noEmail: isDutch ? 'Gast' : 'Guest',
+    viewTimeline: isDutch ? 'Bekijk tijdlijn' : 'View timeline',
+    homeworkIncomplete: isDutch ? 'Huiswerk onvolledig' : 'Homework incomplete',
+    late: isDutch ? 'Te laat' : 'Late',
+    addCustomEvent: isDutch ? 'Aangepast event toevoegen' : 'Add custom event',
+    present: isDutch ? 'Aanwezig' : 'Present',
+    absent: isDutch ? 'Afwezig' : 'Absent',
+    showingOneStudent: isDutch ? 'Toont een leerling vanuit Groep.' : 'Showing one student from Group tab.',
+    showAll: isDutch ? 'Toon alles' : 'Show all',
+    noStudentsYet: isDutch ? 'Nog geen leerlingen in deze klas.' : 'No students in this class yet.',
+    confirmTitle: isDutch ? 'Bevestig aanwezigheidswijziging' : 'Confirm attendance change',
+    confirmDescription: isDutch ? 'Weet je zeker dat je deze wijziging wilt toepassen?' : 'Are you sure you want to apply this attendance update?',
+    cancel: isDutch ? 'Annuleren' : 'Cancel',
+    confirm: isDutch ? 'Bevestigen' : 'Confirm',
+    customEventFor: isDutch ? 'Aangepast event voor' : 'Custom event for',
+    customEventDescription: isDutch ? 'Voeg een aangepast bericht toe voor dit event.' : 'Add a custom message for this student event.',
+    saveEvent: isDutch ? 'Event opslaan' : 'Save event',
+    timeline: isDutch ? 'tijdlijn' : 'timeline',
+    timelineDescription: isDutch ? 'Recente aanwezigheid en events met docent en datum.' : 'Recent attendance and custom events with teacher and date.',
+    noEventsYet: isDutch ? 'Nog geen events.' : 'No events yet.',
+    teacher: isDutch ? 'Docent' : 'Teacher',
+    loadingLogs: isDutch ? 'Laden...' : 'Loading...',
+    viewLogs: isDutch ? 'Bekijk logs' : 'View logs',
+  };
 
   const fetchAttendance = async (forceRefresh = false) => {
     if (!forceRefresh && students.length > 0) {
@@ -108,6 +140,18 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
   };
 
   useEffect(() => {
+    setStudents(cachedData?.students || []);
+    setLoading(!cachedData && !parentLoading);
+  }, [classId, cachedData, parentLoading]);
+
+  useEffect(() => {
+    if (cachedData?.students?.length) {
+      setStudents(cachedData.students);
+      setLoading(false);
+    }
+  }, [cachedData]);
+
+  useEffect(() => {
     void logClassTabEvent({
       classId,
       tab: 'attendance',
@@ -115,7 +159,9 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
       stage: 'ui',
       level: 'info',
     });
-    void fetchAttendance();
+    if (!cachedData?.students?.length) {
+      void fetchAttendance();
+    }
 
     const loadPreferences = async () => {
       try {
@@ -129,7 +175,7 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
     };
 
     void loadPreferences();
-  }, [classId]);
+  }, [classId, cachedData]);
 
   useEffect(() => {
     if (!selectedStudentId || !quickAction) return;
@@ -141,14 +187,6 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
       setIsCustomEventDialogOpen(true);
     }
   }, [quickAction, selectedStudentId, students]);
-
-  const getInitials = (name: string) =>
-    name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
 
   const formatActivityLabel = (action: string) =>
     String(action || '')
@@ -323,29 +361,30 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Attendance</h2>
+        <h2 className="text-lg">{t.attendance}</h2>
         <div className="flex items-center gap-3">
-          <p className="text-sm text-muted-foreground">{visibleStudents.length} students</p>
-          <select
-            value={selectedStudentId}
-            onChange={(event) => applyStudentFilter(event.target.value)}
-            className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-          >
-            <option value="">All students</option>
-            {students.map((student) => (
-              <option key={student.id} value={student.id}>
-                {student.name}
-              </option>
-            ))}
-          </select>
+          <p className="text-sm text-muted-foreground">{visibleStudents.length} {t.students}</p>
+          <Select value={selectedStudentId || 'all'} onValueChange={(value) => applyStudentFilter(value === 'all' ? '' : value)}>
+            <SelectTrigger className="h-9 w-[180px] text-xs">
+              <SelectValue placeholder={t.allStudents} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t.allStudents}</SelectItem>
+              {students.map((student) => (
+                <SelectItem key={student.id} value={student.id}>
+                  {student.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       {selectedStudentId && (
         <div className="rounded-lg bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
-          Showing one student from Group tab.
+          {t.showingOneStudent}
           <a href={`/class/${classId}?tab=attendance`} className="ml-2 underline underline-offset-2">
-            Show all
+            {t.showAll}
           </a>
         </div>
       )}
@@ -359,78 +398,74 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
             }`}
           >
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
-              </Avatar>
-
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{student.name}</p>
-                <p className="truncate text-xs text-muted-foreground">{student.email || 'No email'}</p>
+                <p className="truncate">{student.name}</p>
+                <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 w-8 p-0"
+                  className="h-10 w-10 rounded-xl p-0"
                   onClick={() => setTimelineStudent(student)}
-                  title="View timeline"
+                  title={t.viewTimeline}
                 >
-                  <Info className="h-4 w-4" />
+                  <Info className="h-[18px] w-[18px]" />
                 </Button>
 
                 <Button
                   variant={student.hasHomeworkIncomplete ? 'destructive' : 'outline'}
                   size="sm"
-                  className="h-8 w-8 p-0"
+                  className="h-10 w-10 rounded-xl p-0"
                   onClick={() => handleFlagToggle(student.id, 'hasHomeworkIncomplete', !student.hasHomeworkIncomplete)}
-                  title="Homework incomplete"
+                  title={t.homeworkIncomplete}
                 >
-                  <BookOpen className="h-4 w-4" />
+                  <BookOpen className="h-[18px] w-[18px]" />
                 </Button>
 
                 <Button
                   variant={student.wasTooLate ? 'destructive' : 'outline'}
                   size="sm"
-                  className="h-8 w-8 p-0"
+                  className="h-10 w-10 rounded-xl p-0"
                   onClick={() => handleFlagToggle(student.id, 'wasTooLate', !student.wasTooLate)}
-                  title="Late"
+                  title={t.late}
                 >
-                  <Clock className="h-4 w-4" />
+                  <Clock className="h-[18px] w-[18px]" />
                 </Button>
 
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 w-8 p-0"
+                  className="h-10 w-10 rounded-xl p-0"
                   onClick={() => {
                     setSelectedStudent(student);
                     setCustomEventText('');
                     setIsCustomEventDialogOpen(true);
                   }}
-                  title="Add custom event"
+                  title={t.addCustomEvent}
                 >
-                  <MessageSquare className="h-4 w-4" />
+                  <MessageSquare className="h-[18px] w-[18px]" />
                 </Button>
 
                 <Button
                   variant={student.isPresent === true ? 'default' : 'outline'}
                   size="sm"
-                  className={`h-8 w-8 p-0 ${student.isPresent === true ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                  className={`h-10 w-10 rounded-xl p-0 ${student.isPresent === true ? 'bg-green-600 hover:bg-green-700' : ''}`}
                   onClick={() => handleAttendanceToggle(student.id, true)}
-                  title="Present"
+                  title={t.present}
                 >
-                  <Check className="h-4 w-4" />
+                  <Check className="h-[18px] w-[18px]" />
                 </Button>
 
                 <Button
                   variant={student.isPresent === false ? 'destructive' : 'outline'}
                   size="sm"
-                  className="h-8 w-8 p-0"
+                  className="h-10 w-10 rounded-xl p-0"
                   onClick={() => handleAttendanceToggle(student.id, false)}
-                  title="Absent"
+                  title={t.absent}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-[18px] w-[18px]" />
                 </Button>
               </div>
 
@@ -454,55 +489,27 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
                 )}
               </div>
             </div>
-
-            {student.recentActivity && student.recentActivity.length > 0 && (
-              <div className="mt-2 rounded-md bg-muted/35 p-2">
-                <div className="mb-1 flex items-center justify-between">
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Recent activity</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-[11px]"
-                    onClick={() => router.replace(`/class/${classId}?tab=logs&student_id=${student.id}`)}
-                  >
-                    View logs
-                  </Button>
-                </div>
-                <div className="space-y-1">
-                  {student.recentActivity.slice(0, 2).map((event) => (
-                    <div key={event.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground/90">{formatActivityLabel(event.action)}</span>
-                      <span>|</span>
-                      <span>{new Date(event.createdAt).toLocaleDateString()}</span>
-                      {event.details?.custom_message && (
-                        <span className="truncate">| {String(event.details.custom_message)}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         ))}
       </div>
 
       {students.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">No students in this class yet.</CardContent>
+          <CardContent className="py-12 text-center text-muted-foreground">{t.noStudentsYet}</CardContent>
         </Card>
       )}
 
       <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm attendance change</DialogTitle>
-            <DialogDescription>Are you sure you want to apply this attendance update?</DialogDescription>
+            <DialogTitle>{t.confirmTitle}</DialogTitle>
+            <DialogDescription>{t.confirmDescription}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>
-              Cancel
+              {t.cancel}
             </Button>
-            <Button onClick={() => void handleConfirm()}>Confirm</Button>
+            <Button onClick={() => void handleConfirm()}>{t.confirm}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -510,8 +517,8 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
       <Dialog open={isCustomEventDialogOpen} onOpenChange={setIsCustomEventDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Custom event for {selectedStudent?.name}</DialogTitle>
-            <DialogDescription>Add a custom message for this student event.</DialogDescription>
+            <DialogTitle>{t.customEventFor} {selectedStudent?.name}</DialogTitle>
+            <DialogDescription>{t.customEventDescription}</DialogDescription>
           </DialogHeader>
           <Textarea
             className="min-h-[100px]"
@@ -521,10 +528,10 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCustomEventDialogOpen(false)}>
-              Cancel
+              {t.cancel}
             </Button>
             <Button onClick={handleSaveCustomEvent} disabled={!customEventText.trim()}>
-              Save event
+              {t.saveEvent}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -533,21 +540,32 @@ export function AttendanceTab({ classId }: AttendanceTabProps) {
       <Dialog open={!!timelineStudent} onOpenChange={() => setTimelineStudent(null)}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{timelineStudent?.name} timeline</DialogTitle>
-            <DialogDescription>Recent attendance and custom events with teacher and date.</DialogDescription>
+            <DialogTitle>{timelineStudent?.name} {t.timeline}</DialogTitle>
+            <DialogDescription>{t.timelineDescription}</DialogDescription>
           </DialogHeader>
+          {timelineStudent && (
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.replace(`/class/${classId}?tab=logs&student_id=${timelineStudent.id}`)}
+              >
+                {t.viewLogs}
+              </Button>
+            </div>
+          )}
           <div className="space-y-2">
             {(timelineStudent?.recentActivity || []).length === 0 && (
-              <p className="text-sm text-muted-foreground">No events yet.</p>
+              <p className="text-sm text-muted-foreground">{t.noEventsYet}</p>
             )}
             {(timelineStudent?.recentActivity || []).map((activity) => (
               <div key={activity.id} className="rounded-md border bg-muted/20 p-2 text-sm">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium capitalize">{formatActivityLabel(activity.action)}</span>
+                  <span className="capitalize">{formatActivityLabel(activity.action)}</span>
                   <span className="text-xs text-muted-foreground">{new Date(activity.createdAt).toLocaleString()}</span>
                 </div>
                 {activity.details?.actor_name && (
-                  <p className="mt-1 text-xs text-muted-foreground">Teacher: {String(activity.details.actor_name)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t.teacher}: {String(activity.details.actor_name)}</p>
                 )}
                 {activity.details?.custom_message && (
                   <p className="mt-1 text-xs text-muted-foreground">{String(activity.details.custom_message)}</p>

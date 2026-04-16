@@ -16,7 +16,6 @@ import {
   Link,
   Plus,
   GripVertical,
-  Settings2,
   ArrowLeft,
   Undo2,
   Redo2,
@@ -265,6 +264,7 @@ export function AssignmentEditor({
   const { toast } = useToast();
   const router = useRouter();
   const showTeacherControls = isTeacher && !isStudentPreview && isEditMode;
+  const selectedBlockRecord = selectedBlock ? blocks.find((b) => b.id === selectedBlock) || null : null;
   const handleEditModeToggle = () => {
     setIsEditMode((prev) => {
       const next = !prev;
@@ -987,7 +987,7 @@ export function AssignmentEditor({
   };
 
   const renderBlockContent = (block: AssignmentBlock) => {
-    const canEditBlock = showTeacherControls;
+    const canEditBlock = showTeacherControls && selectedBlock === block.id;
 
     switch (block.type) {
       case 'text':
@@ -1302,6 +1302,38 @@ export function AssignmentEditor({
             <Download className="h-4 w-4 mr-1.5" />
             Export
           </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-md px-2.5 bg-muted/50"
+                title="Selected block size"
+                disabled={!isTeacher || !selectedBlockRecord || !isEditMode}
+              >
+                <SlidersHorizontal className="h-4 w-4 mr-1.5" />
+                Size
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-3" align="start">
+              <Label className="text-xs">
+                {selectedBlockRecord ? `Width for ${BLOCK_TEMPLATES.find((t) => t.type === selectedBlockRecord.type)?.label || 'block'}` : 'Select a block first'}
+              </Label>
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={1}
+                value={selectedBlockRecord?.size ?? 3}
+                onChange={(e) => {
+                  if (!selectedBlockRecord || !isEditMode) return;
+                  setBlockSize(selectedBlockRecord.id, Number(e.target.value) as 1 | 2 | 3);
+                }}
+                className="mt-2 w-full"
+                disabled={!selectedBlockRecord || !isEditMode}
+              />
+            </PopoverContent>
+          </Popover>
           <Button variant="outline" size="sm" onClick={handleImport} className="h-8 rounded-md px-2.5 bg-muted/50" title="Import">
             <Upload className="h-4 w-4 mr-1.5" />
             Import
@@ -1334,10 +1366,10 @@ export function AssignmentEditor({
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Paper area */}
-        <div className="flex-1 overflow-auto p-2 md:p-3 bg-background">
+        <div className="flex-1 overflow-auto p-2 md:p-3 bg-[hsl(var(--surface-1))]">
           <div
             ref={paperRef}
-            className="bg-card border border-border rounded-xl shadow-sm min-h-[calc(100vh-130px)] p-4 relative w-full"
+            className="bg-card border border-border rounded-xl shadow-sm min-h-[calc(100vh-130px)] p-3 relative w-full"
           >
               {rows.length === 0 ? (
                 <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -1423,7 +1455,7 @@ export function AssignmentEditor({
                                   </PopoverContent>
                                 </Popover>
                                 <div 
-                                  className="h-6 w-6 p-0 flex items-center justify-center cursor-grab bg-muted/60 hover:bg-muted rounded"
+                                  className="h-6 w-6 p-0 flex items-center justify-center cursor-grab bg-muted/70 hover:bg-muted rounded"
                                   onPointerDown={(e) => handleGripPointerDown(e, row.blocks[0].id)}
                                   title="Move block"
                                 >
@@ -1432,17 +1464,8 @@ export function AssignmentEditor({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={(e) => { e.stopPropagation(); setSelectedBlock(row.blocks[0].id); }}
-                                  className="h-6 w-6 p-0 bg-muted/60"
-                                  title="Question settings"
-                                >
-                                  <Settings2 className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
                                   onClick={(e) => { e.stopPropagation(); deleteBlock(row.blocks[0].id); }}
-                                  className="h-6 w-6 p-0 bg-muted/60 text-destructive"
+                                  className="h-6 w-6 p-0 bg-muted/70 text-destructive"
                                   title="Delete block"
                                 >
                                   <Trash2 className="h-3 w-3" />
@@ -1517,7 +1540,7 @@ export function AssignmentEditor({
                                           </PopoverContent>
                                         </Popover>
                                         <div 
-                                          className="h-6 w-6 p-0 flex items-center justify-center cursor-grab bg-muted/60 hover:bg-muted rounded"
+                                          className="h-6 w-6 p-0 flex items-center justify-center cursor-grab bg-muted/70 hover:bg-muted rounded"
                                           onPointerDown={(e) => handleGripPointerDown(e, block.id)}
                                           title="Move block"
                                         >
@@ -1526,17 +1549,8 @@ export function AssignmentEditor({
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={(e) => { e.stopPropagation(); setSelectedBlock(block.id); }}
-                                          className="h-6 w-6 p-0 bg-muted/60"
-                                          title="Question settings"
-                                        >
-                                          <Settings2 className="h-3 w-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
                                           onClick={(e) => { e.stopPropagation(); deleteBlock(block.id); }}
-                                          className="h-6 w-6 p-0 bg-muted/60 text-destructive"
+                                          className="h-6 w-6 p-0 bg-muted/70 text-destructive"
                                           title="Delete block"
                                         >
                                           <Trash2 className="h-3 w-3" />

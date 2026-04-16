@@ -9,6 +9,33 @@ function labelFromProfile(profile: any, fallbackId: string) {
   return profile?.display_name || profile?.full_name || profile?.email || fallbackId
 }
 
+function resolveLogCategory(log: any): 'academic' | 'events' | 'custom_events' | 'roster' {
+  const metadataCategory = String(log?.metadata?.log_category || '').toLowerCase()
+  if (metadataCategory === 'academic' || metadataCategory === 'events' || metadataCategory === 'custom_events' || metadataCategory === 'roster') {
+    return metadataCategory
+  }
+
+  const action = String(log?.action || '')
+  const entityType = String(log?.entity_type || '')
+
+  if (action.includes('attendance_event_custom') || Boolean(log?.metadata?.custom_message)) return 'custom_events'
+  if (action.includes('attendance') || action.includes('event_') || entityType.includes('attendance') || entityType.includes('event')) return 'events'
+  if (action.includes('member_') || action.includes('teacher_invite') || action.includes('join_request') || action.includes('role') || entityType.includes('member') || entityType.includes('invite')) return 'roster'
+  return 'academic'
+}
+
+function resolveLogCode(log: any): string {
+  const metadataCode = String(log?.metadata?.log_code || '').trim()
+  if (metadataCode) return metadataCode
+  const action = String(log?.action || '')
+  if (action === 'attendance_state_changed') return 'EVT-ATT-001'
+  if (action === 'attendance_event_homework_incomplete') return 'EVT-ATT-002'
+  if (action === 'attendance_event_late') return 'EVT-ATT-003'
+  if (action === 'attendance_event_custom') return 'EVT-CUS-001'
+  if (action === 'member_rename') return 'ROS-MEM-001'
+  return 'ACD-EDT-001'
+}
+
 // GET audit logs for a class (teachers/management only)
 export async function GET(
   request: Request,
@@ -33,13 +60,22 @@ export async function GET(
     const entityType = searchParams.get('entity_type')
     const userId = searchParams.get('user_id')
     const studentId = searchParams.get('student_id')
+    const category = String(searchParams.get('category') || '').toLowerCase()
+    const code = String(searchParams.get('code') || '').trim().toUpperCase()
 
     let query = (supabase as any)
       .from('audit_logs')
       .select('*', { count: 'exact' })
       .eq('class_id', classId)
       .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
+
+    // When category/code filtering is requested, we fetch a broader window first
+    // and page after normalization to keep category/code results consistent.
+    if (category || code) {
+      query = query.limit(1000)
+    } else {
+      query = query.range(offset, offset + limit - 1)
+    }
 
     if (entityType) query = query.eq('entity_type', entityType)
     if (userId) query = query.eq('user_id', userId)
@@ -52,7 +88,16 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch audit logs' }, { status: 500 })
     }
     const filteredByStudent = logs || []
-    const pagedLogs = filteredByStudent
+    const filteredByCategoryAndCode = filteredByStudent.filter((log: any) => {
+      const resolvedCategory = resolveLogCategory(log)
+      const resolvedCode = resolveLogCode(log)
+      if (category && category !== 'all' && resolvedCategory !== category) return false
+      if (code && resolvedCode !== code) return false
+      return true
+    })
+    const pagedLogs = category || code
+      ? filteredByCategoryAndCode.slice(offset, offset + limit)
+      : filteredByCategoryAndCode
 
     const metadataUserIdKeys = ['invited_by_user_id', 'requester_user_id', 'resolved_by', 'used_by', 'issued_by', 'student_id', 'created_by']
 
@@ -86,6 +131,8 @@ export async function GET(
 
     const enrichedLogs = (pagedLogs || []).map((log: any) => ({
       ...log,
+      log_category: resolveLogCategory(log),
+      log_code: resolveLogCode(log),
       user: profileMap.get(log.user_id) || { display_name: null, full_name: 'Unknown', avatar_url: null, email: null },
       metadata_user_labels: metadataUserIdKeys.reduce((acc: Record<string, string>, key) => {
         const value = log?.metadata?.[key]
@@ -106,8 +153,10 @@ export async function GET(
       pagination: {
         limit,
         offset,
-        total: count || 0,
-        hasNext: (offset + (enrichedLogs || []).length) < (count || 0),
+        total: category || code ? (filteredByCategoryAndCode || []).length : (count || 0),
+        hasNext: category || code
+          ? (offset + (enrichedLogs || []).length) < ((filteredByCategoryAndCode || []).length)
+          : (offset + (enrichedLogs || []).length) < (count || 0),
       },
     })
   } catch (error) {

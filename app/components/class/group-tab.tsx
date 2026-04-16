@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useContext } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Users, ChevronDown, ChevronRight, MessageSquare, Info, Pencil, Check } from 'lucide-react';
+import { Users, ChevronDown, ChevronRight, MessageSquare, Info, Pencil, Check, Settings, CircleHelp } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -16,7 +15,6 @@ type Student = {
   id: string;
   name: string;
   email: string | null;
-  avatarUrl: string | null;
   role: string;
   joinedAt: string | null;
   lastSeen: string | null;
@@ -42,7 +40,6 @@ type Teacher = {
   id: string;
   name: string;
   email: string | null;
-  avatarUrl: string | null;
   role: string;
   joinedAt: string | null;
   lastSeen: string | null;
@@ -86,12 +83,37 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     students: isDutch ? 'Leerlingen' : 'Students',
     noTeachers: isDutch ? 'Geen docenten gevonden' : 'No teachers found',
     noStudentsFound: isDutch ? 'Geen leerlingen gevonden' : 'No students found',
-    noEmail: isDutch ? 'Geen e-mail' : 'No email',
+    noEmail: isDutch ? 'Gast' : 'Guest',
     people: isDutch ? 'personen' : 'people',
     teacherListHint: isDutch ? 'Klik een docent om gekoppelde vakken te bekijken' : 'Click a teacher to view linked subjects',
     studentListHint: isDutch ? 'Klik een leerling voor acties en details' : 'Click a student for actions and details',
     expand: isDutch ? 'Uitklappen' : 'Expand',
     collapse: isDutch ? 'Inklappen' : 'Collapse',
+    settings: isDutch ? 'Instellingen' : 'Settings',
+    rename: isDutch ? 'Hernoemen' : 'Rename',
+    help: isDutch ? 'Help' : 'Help',
+    renameHint: isDutch ? 'Selecteer een leerling om te hernoemen.' : 'Select a student to rename.',
+    renameSavedHint: isDutch
+      ? 'Naam is klasgebonden en wordt in Supabase opgeslagen.'
+      : 'Rename is class-scoped and syncs to the class member alias in Supabase.',
+    renameVisibleHint: isDutch
+      ? 'Nieuwe naam is direct zichtbaar in Groep, Aanwezigheid en Logs.'
+      : 'The new name appears immediately in Group, Attendance, and Logs after save.',
+    renameStudent: isDutch ? 'Leerling hernoemen' : 'Rename student',
+    renameDescription: isDutch ? 'Deze naam wordt alleen voor deze klas opgeslagen.' : 'This name is saved only for this class and stored server-side.',
+    cancel: isDutch ? 'Annuleren' : 'Cancel',
+    save: isDutch ? 'Opslaan' : 'Save',
+    noLinkedSubjects: isDutch ? 'Nog geen gekoppelde vakken' : 'No linked subjects yet',
+    recentEvents: isDutch ? 'Recente events' : 'Recent events',
+    by: isDutch ? 'Door' : 'By',
+    grades: isDutch ? 'Cijfers' : 'Grades',
+    subjects: isDutch ? 'Vakken' : 'Subjects',
+    completion: isDutch ? 'Voltooiing' : 'Completion',
+    attendance: isDutch ? 'Aanwezigheid' : 'Attendance',
+    files: isDutch ? 'Bestanden' : 'Files',
+    assignEvent: isDutch ? 'Event toevoegen' : 'Assign Event',
+    logs: isDutch ? 'Logs' : 'Logs',
+    lastActivity: isDutch ? 'Laatste activiteit' : 'Last activity',
   };
 
   const [data, setData] = useState<GroupData | null>(cachedData || null);
@@ -101,7 +123,8 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [teachersCollapsed, setTeachersCollapsed] = useState(false);
   const [studentsCollapsed, setStudentsCollapsed] = useState(false);
-  const [renameMode, setRenameMode] = useState(false);
+  const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
+  const [groupSettingsSection, setGroupSettingsSection] = useState<'rename' | 'help'>('rename');
   const [renameStudent, setRenameStudent] = useState<Student | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [savingRename, setSavingRename] = useState(false);
@@ -111,6 +134,8 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     setSelectedTeacher(null);
     setRenameStudent(null);
     setRenameValue('');
+    setGroupSettingsOpen(false);
+    setGroupSettingsSection('rename');
     if (!cachedData) setData(null);
     setLoading(!cachedData && !parentLoading);
     setError(null);
@@ -166,14 +191,6 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     }
   };
 
-  const getInitials = (name: string) =>
-    name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-
   const formatLastSeen = (value: string | null) => {
     if (!value) return 'never';
     const date = new Date(value);
@@ -218,6 +235,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
       );
       setRenameStudent(null);
       setRenameValue('');
+      setGroupSettingsOpen(false);
       void logClassTabEvent({
         classId,
         tab: 'group',
@@ -263,6 +281,69 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     <div className="space-y-4">
       <Card className="rounded-2xl border-none shadow-none">
         <CardContent className="space-y-4 pt-6">
+          <div className="relative flex items-center justify-end">
+            <Button
+              variant={groupSettingsOpen ? 'default' : 'outline'}
+              size="sm"
+              className="h-9 gap-2 rounded-xl"
+              onClick={() => setGroupSettingsOpen((prev) => !prev)}
+            >
+              <Settings className="h-4 w-4" />
+              {t.settings}
+            </Button>
+            {groupSettingsOpen && (
+              <div className="absolute right-0 top-11 z-20 flex w-full max-w-[520px] overflow-hidden rounded-xl border border-border bg-card shadow-xl md:w-[520px]">
+                <div className="w-44 border-r border-border bg-muted/20 p-2">
+                  <button
+                    type="button"
+                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors ${groupSettingsSection === 'rename' ? 'bg-muted/70 text-foreground' : 'text-muted-foreground hover:bg-muted/40'}`}
+                    onClick={() => setGroupSettingsSection('rename')}
+                  >
+                    <Pencil className="h-4 w-4" />
+                    {t.rename}
+                  </button>
+                  <button
+                    type="button"
+                    className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors ${groupSettingsSection === 'help' ? 'bg-muted/70 text-foreground' : 'text-muted-foreground hover:bg-muted/40'}`}
+                    onClick={() => setGroupSettingsSection('help')}
+                  >
+                    <CircleHelp className="h-4 w-4" />
+                    {t.help}
+                  </button>
+                </div>
+                <div className="flex-1 p-3">
+                  {groupSettingsSection === 'rename' ? (
+                    <div className="space-y-2">
+                      <p className="text-sm">{t.renameHint}</p>
+                      <div className="max-h-64 space-y-1 overflow-y-auto">
+                        {sortedStudents.map((student) => (
+                          <button
+                            key={`rename-${student.id}`}
+                            type="button"
+                            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors hover:bg-muted/40"
+                            onClick={() => {
+                              setRenameStudent(student);
+                              setRenameValue(student.name);
+                            }}
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate">{student.name}</p>
+                              <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <p>{t.renameSavedHint}</p>
+                      <p>{t.renameVisibleHint}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="space-y-4">
             <div className="rounded-2xl bg-muted/20">
               <CardHeader className="pb-3">
@@ -274,8 +355,8 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                     aria-label={teachersCollapsed ? t.expand : t.collapse}
                   >
                     {teachersCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    <CardTitle className="text-base">{t.teachers}</CardTitle>
-                  </button>
+                      <CardTitle className="text-base font-normal">{t.teachers}</CardTitle>
+                    </button>
                   <span className="text-xs text-muted-foreground">
                     {data.teachers.length} {t.people}
                   </span>
@@ -294,9 +375,9 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                         className="w-full rounded-xl bg-muted/30 p-3 text-left transition-colors hover:bg-muted/55"
                         onClick={() => setSelectedTeacher(teacher)}
                       >
-                        <p className="truncate font-medium">{teacher.email || teacher.name}</p>
+                        <p className="truncate">{teacher.email || teacher.name}</p>
                         <p className="truncate text-xs text-muted-foreground">
-                          {(teacher.subjects || []).map((s) => s.title).join(', ') || 'No linked subjects yet'}
+                          {(teacher.subjects || []).map((s) => s.title).join(', ') || t.noLinkedSubjects}
                         </p>
                       </button>
                     ))
@@ -316,23 +397,15 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                       aria-label={studentsCollapsed ? t.expand : t.collapse}
                     >
                       {studentsCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      <h3 className="text-base font-semibold">{t.students}</h3>
+                      <h3 className="text-base">{t.students}</h3>
                     </button>
                     {!studentsCollapsed && <p className="text-xs text-muted-foreground">{t.studentListHint}</p>}
                   </div>
                   {!studentsCollapsed && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 pr-1">
                       <span className="text-xs text-muted-foreground">
                         {sortedStudents.length} {t.people}
                       </span>
-                      <Button
-                        variant={renameMode ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-7"
-                        onClick={() => setRenameMode((prev) => !prev)}
-                      >
-                        Rename students
-                      </Button>
                     </div>
                   )}
                 </div>
@@ -357,12 +430,9 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                         });
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
-                        </Avatar>
+                      <div className="flex items-center gap-2">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">{student.name}</p>
+                          <p className="truncate text-sm">{student.name}</p>
                           <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
                         </div>
 
@@ -372,7 +442,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                             href={`/class/${classId}?tab=logs&student_id=${student.id}`}
                             className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70"
                             onClick={(e) => e.stopPropagation()}
-                            title="View timeline"
+                            title={isDutch ? 'Bekijk tijdlijn' : 'View timeline'}
                           >
                             <Info className="h-4 w-4" />
                           </Link>
@@ -381,7 +451,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                             href={`/class/${classId}?tab=attendance&studentId=${student.id}`}
                             className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70"
                             onClick={(e) => e.stopPropagation()}
-                            title="Attendance"
+                            title={t.attendance}
                           >
                             <Check className="h-4 w-4 text-green-600" />
                           </Link>
@@ -390,24 +460,10 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                             href={`/class/${classId}?tab=attendance&studentId=${student.id}&quick=event`}
                             className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70"
                             onClick={(e) => e.stopPropagation()}
-                            title="Add custom event"
+                            title={isDutch ? 'Aangepast event toevoegen' : 'Add custom event'}
                           >
                             <MessageSquare className="h-4 w-4" />
                           </Link>
-                          {renameMode && (
-                            <button
-                              type="button"
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setRenameStudent(student);
-                                setRenameValue(student.name);
-                              }}
-                              title="Rename student"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                          )}
                         </div>
                       </div>
                     </button>
@@ -431,12 +487,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
           {selectedStudent && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback>{getInitials(selectedStudent.name)}</AvatarFallback>
-                  </Avatar>
-                  <span>{selectedStudent.name}</span>
-                </DialogTitle>
+                <DialogTitle>{selectedStudent.name}</DialogTitle>
               </DialogHeader>
               <p className="text-sm text-muted-foreground">{selectedStudent.email || t.noEmail}</p>
 
@@ -444,39 +495,39 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                   <Button variant="outline" asChild>
                     <Link prefetch={false} href={`/class/${classId}?tab=grades&studentId=${selectedStudent.id}`}>
-                      Grades
+                      {t.grades}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link prefetch={false} href={`/subjects?classId=${classId}`}>
-                      Subjects
+                      {t.subjects}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link prefetch={false} href={`/class/${classId}?tab=analytics&studentId=${selectedStudent.id}`}>
-                      Completion
+                      {t.completion}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}`}>
-                      Attendance
+                      {t.attendance}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link prefetch={false} href={`/other/materials?classId=${classId}`}>
-                      Files
+                      {t.files}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}&quick=event`}>
-                      Assign Event
+                      {t.assignEvent}
                     </Link>
                   </Button>
                 </div>
 
                 {selectedStudent.recentActivity.length > 0 && (
                   <div>
-                    <h4 className="mb-2 text-sm font-semibold">Recent events</h4>
+                    <h4 className="mb-2 text-sm">{t.recentEvents}</h4>
                     <div className="space-y-2">
                       {selectedStudent.recentActivity.slice(0, 8).map((activity) => (
                         <div key={activity.id} className="rounded-xl bg-muted/30 p-2 text-sm">
@@ -487,7 +538,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                             </span>
                           </div>
                           {activity.details?.actor_name && (
-                            <p className="mt-1 text-xs text-muted-foreground">By {String(activity.details.actor_name)}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{t.by} {String(activity.details.actor_name)}</p>
                           )}
                           {activity.details?.custom_message && (
                             <p className="mt-1 text-xs text-muted-foreground">{String(activity.details.custom_message)}</p>
@@ -499,7 +550,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                 )}
 
                 <div className="rounded-xl bg-muted/35 p-3 text-sm text-muted-foreground">
-                  Last activity: {formatLastSeen(selectedStudent.recentActivity?.[0]?.createdAt || selectedStudent.lastSeen || null)}
+                  {t.lastActivity}: {formatLastSeen(selectedStudent.recentActivity?.[0]?.createdAt || selectedStudent.lastSeen || null)}
                 </div>
               </div>
             </>
@@ -518,22 +569,22 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   <Button variant="outline" asChild>
                     <Link prefetch={false} href={`/class/${classId}?tab=attendance`}>
-                      Attendance
+                      {t.attendance}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link prefetch={false} href={`/class/${classId}?tab=grades`}>
-                      Grades
+                      {t.grades}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link prefetch={false} href={`/class/${classId}?tab=analytics`}>
-                      Analytics
+                      {isDutch ? 'Analyse' : 'Analytics'}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link prefetch={false} href={`/class/${classId}?tab=logs`}>
-                      Logs
+                      {t.logs}
                     </Link>
                   </Button>
                 </div>
@@ -546,18 +597,18 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
       <Dialog open={!!renameStudent} onOpenChange={() => setRenameStudent(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rename student</DialogTitle>
+            <DialogTitle>{t.renameStudent}</DialogTitle>
             <DialogDescription>
-              This name is saved only for this class and stored server-side.
+              {t.renameDescription}
             </DialogDescription>
           </DialogHeader>
           <Input value={renameValue} onChange={(event) => setRenameValue(event.target.value)} maxLength={100} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setRenameStudent(null)} disabled={savingRename}>
-              Cancel
+              {t.cancel}
             </Button>
             <Button onClick={() => void saveStudentRename()} disabled={savingRename}>
-              Save
+              {t.save}
             </Button>
           </DialogFooter>
         </DialogContent>

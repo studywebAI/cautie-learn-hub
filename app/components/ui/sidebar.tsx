@@ -513,7 +513,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-        "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-xl p-1.5 pl-2.5 text-left text-[13px] font-medium text-[hsl(var(--sidebar-foreground)/0.94)] outline-none transition-[width,height,padding,color,background-color] duration-150 hover:bg-[hsl(var(--sidebar-accent)/0.85)] hover:text-[hsl(var(--sidebar-active-foreground))] active:bg-[hsl(var(--sidebar-accent)/1)] active:text-[hsl(var(--sidebar-active-foreground))] disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-[hsl(var(--sidebar-accent)/1)] data-[active=true]:font-medium data-[active=true]:text-[hsl(var(--sidebar-active-foreground))] data-[active=true]:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] data-[state=open]:hover:bg-[hsl(var(--sidebar-accent)/0.9)] data-[state=open]:hover:text-[hsl(var(--sidebar-active-foreground))] group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+        "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-xl p-1.5 pl-2.5 text-left text-[13px] font-normal text-[hsl(var(--sidebar-foreground)/0.94)] outline-none transition-[width,height,padding,color,background-color] duration-150 hover:bg-[hsl(var(--sidebar-accent)/0.85)] hover:text-sidebar-foreground active:bg-[hsl(var(--sidebar-accent)/1)] active:text-sidebar-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-[hsl(var(--sidebar-accent)/1)] data-[active=true]:font-normal data-[active=true]:text-sidebar-foreground data-[active=true]:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] data-[state=open]:hover:bg-[hsl(var(--sidebar-accent)/0.9)] data-[state=open]:hover:text-sidebar-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -632,7 +632,7 @@ const SidebarMenuBadge = React.forwardRef<
     ref={ref}
     data-sidebar="menu-badge"
     className={cn(
-      "absolute right-1 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums text-sidebar-foreground select-none pointer-events-none",
+      "absolute right-1 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs tabular-nums text-sidebar-foreground select-none pointer-events-none",
       "peer-hover/menu-button:text-sidebar-accent-foreground peer-data-[active=true]/menu-button:text-sidebar-accent-foreground",
       "peer-data-[size=sm]/menu-button:top-1",
       "peer-data-[size=default]/menu-button:top-1.5",

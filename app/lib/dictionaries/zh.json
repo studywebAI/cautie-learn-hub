@@ -1,18 +1,18 @@
 {
   "sidebar": {
-    "dashboard": "仪表板",
+    "dashboard": "Dashboard",
     "subjects": "科目",
-    "classes": "班级",
-    "agenda": "日程",
+    "classes": "课程",
+    "agenda": "议程",
     "material": "材料",
     "settings": "设置",
     "tools": {
       "title": "工具",
-      "quizGenerator": "测验",
-      "flashcardMaker": "闪卡",
-      "materialProcessor": "处理材料",
+      "quizGenerator": "Quiz",
+      "flashcardMaker": "Flashcards",
+      "materialProcessor": "工艺材质",
       "notes": "笔记",
-      "blocks": "块"
+      "blocks": "积木"
     }
   },
   "header": {
@@ -20,354 +20,337 @@
     "teacherDashboard": "教师仪表板",
     "roleSwitcher": "角色切换器",
     "myAccount": "我的账户",
-    "logOut": "退出登录",
+    "logOut": "退出",
     "logIn": "登录"
   },
   "dashboard": {
     "title": "仪表板",
     "todayPlan": {
       "title": "你今天的学习计划",
-      "description": "这些任务是由AI为你准备的。",
-      "completed": "已完成"
+      "description": "这些任务是人工智能为你准备的。",
+      "completed": "完全的"
     },
     "alerts": {
       "title": "重要提醒",
-      "description": "风险和优先级"
+      "description": "风险和优先事项"
     },
     "upcomingDeadlines": {
-      "title": "即将到期的截止日期",
-      "description": "你即将到来的作业和考试概览。",
-      "due": "到期",
-      "onTrack": "按计划",
+      "title": "即将到来的截止日期",
+      "description": "您即将进行的作业和测试的概述。",
+      "due": "到期的",
+      "onTrack": "步入正轨",
       "risk": "风险",
-      "behind": "落后",
-      "viewAgenda": "查看完整日程"
+      "behind": "在后面",
+      "viewAgenda": "查看完整议程"
     },
     "mySubjects": {
-      "title": "你的科目",
-      "description": "你科目的快速概览。"
+      "title": "你的主题",
+      "description": "您的主题的快速概述。"
     },
     "aiSuggestions": {
-      "title": "AI建议",
-      "description": "你的个人助手"
+      "title": "人工智能建议",
+      "description": "您的私人助理"
     },
     "quickAccess": {
       "title": "快速访问",
-      "description": "你最近使用的材料。"
+      "description": "您最近使用的材料。"
     },
     "statistics": {
-      "title": "统计",
-      "description": "你本周的学习时间。",
+      "title": "统计数据",
+      "description": "本周你的学习时间。",
       "weeklyActivity": "每周活动",
-      "lastSessionRecap": "上次学习回顾"
+      "lastSessionRecap": "上次会议回顾"
     }
   },
   "tools": {
     "title": "工具",
-    "description": "你的智能工具套件，用于加速学习。",
+    "description": "您加速学习的智能工具套件。",
     "select": "选择工具",
     "quiz": {
       "title": "测验",
-      "description": "从任何文本创建多项选择测验。通过各种挑战模式测试你的知识。"
+      "description": "从任何文本创建多项选择测验。通过各种具有挑战性的模式来测试您的知识。"
     },
     "flashcards": {
-      "title": "闪卡",
-      "description": "自动从学习材料生成闪卡来强化关键概念。"
+      "title": "抽认卡",
+      "description": "从您的学习材料中自动生成抽认卡以强化关键概念。"
     },
     "notes": {
       "title": "笔记",
-      "description": "在同一个地方创建和组织你的笔记。"
+      "description": "在一处创建和整理您的学习笔记。"
     },
     "blocks": {
-      "title": "块",
-      "description": "使用块编辑器创建结构化内容。"
+      "title": "积木",
+      "description": "使用我们的块编辑器构建结构化内容。"
     },
     "wordweb": {
       "title": "词网",
       "description": "通过交互式词网可视化概念之间的联系。"
     },
     "material": {
-      "title": "处理材料",
-      "description": "获取任何上传文档或粘贴文本的简明摘要。"
+      "title": "工艺材质",
+      "description": "获取任何上传文档或粘贴文本的简洁摘要，以快速掌握要点。"
     }
   },
   "material": {
-    "title": "处理材料",
-    "description": "上传文件或粘贴文本以生成摘要、闪卡等。",
-    "importTitle": "导入内容",
-    "importDescription": "提供文件、粘贴文本，或两者兼有。AI将使用文本作为文件的上下文。",
-    "clickToUpload": "点击上传",
-    "dragAndDrop": "或拖拽到此处",
-    "remove": "删除",
-    "pasteText": "或在此处粘贴你的文本...",
-    "processing": "处理中...",
-    "processWithAi": "用AI处理",
-    "summary": "摘要",
-    "suggestedActions": "建议操作",
-    "done": "完成",
-    "select": "选择"
+    "noteTitle": "注释标题",
+    "e": {
+      "gChapter1": "例如，第一章：文艺复兴"
+    },
+    "sourceText": "将教科书、文章或其他源材料中的文本粘贴到此处...",
+    "fileTitle": "例如，第 5 章阅读"
   },
   "agenda": {
-    "title": "日程",
-    "description": "你整合的截止日期、任务和个人约会的日历。",
-    "eventsOn": "事件在",
-    "noEvents": "这一天没有安排事件。",
+    "title": "议程",
+    "description": "您的截止日期、任务和个人约会的综合日历。",
+    "eventsOn": "活动于",
+    "noEvents": "这一天没有安排任何活动。",
     "addTask": "添加任务",
     "today": "今天",
-    "week": "周",
+    "week": "星期",
     "month": "月",
     "monday": "周一",
-    "tuesday": "周二",
+    "tuesday": "星期二",
     "wednesday": "周三",
-    "thursday": "周四",
+    "thursday": "星期四",
     "friday": "周五"
   },
   "subjects": {
     "title": "科目",
-    "description": "一个地方的所有科目。",
+    "description": "您的所有主题都集中在一处。",
     "noSubjects": "没有找到科目。",
-    "addSubject": "添加科目",
+    "addSubject": "添加主题",
     "chapters": "章节",
     "paragraphs": "段落",
     "assignments": "作业",
-    "progress": "进度"
+    "progress": "进步"
   },
   "classes": {
-    "title": "班级",
-    "description": "管理你的班级和学生。",
-    "noClasses": "没有找到班级。",
-    "createClass": "创建班级",
-    "joinClass": "加入班级",
-    "joinCode": "加入代码",
-    "students": "学生",
-    "assignments": "作业",
-    "announcements": "公告"
+    "searchClasses": "搜索课程...",
+    "className": "班级名称",
+    "classDescription": "类别说明",
+    "briefSummary": "本课程将涵盖的内容的简要总结。",
+    "e": {
+      "gHistory101": "例如，历史 101、高级物理"
+    },
+    "chapterTitle": "章节标题",
+    "chapterDescription": "章节说明"
   },
   "settings": {
     "title": "设置",
-    "description": "管理你的账户和应用设置。",
+    "description": "管理您的帐户和应用程序设置。",
     "general": {
-      "title": "常规",
-      "description": "配置你的应用偏好。",
+      "title": "一般的",
+      "description": "配置您的应用程序首选项。",
       "language": "语言"
     },
     "personalization": {
       "title": "个性化",
-      "description": "自定义应用的外观和颜色。",
+      "description": "自定义应用程序的外观和颜色。",
       "theme": "主题",
-      "themeDescription": "选择你偏好的配色方案。",
-      "light": "浅色",
-      "dark": "深色",
+      "themeDescription": "选择您喜欢的配色方案。",
+      "light": "光",
+      "dark": "黑暗的",
       "ocean": "海洋"
     },
     "accessibility": {
-      "title": "辅助功能",
-      "description": "根据你的需求自定义应用的外观和行为。",
+      "title": "无障碍",
+      "description": "自定义应用程序的外观和行为以满足您的需求。",
       "highContrast": "高对比度模式",
       "highContrastDescription": "增加文本和背景对比度。",
       "dyslexiaFont": "阅读障碍友好字体",
-      "dyslexiaFontDescription": "使用一种为更容易阅读而设计的字体。",
+      "dyslexiaFontDescription": "使用易于阅读的字体。",
       "reducedMotion": "减少动画",
-      "reducedMotionDescription": "关闭装饰性动画和过渡效果。"
+      "reducedMotionDescription": "关闭装饰性动画和过渡。"
     },
     "developer": {
       "title": "开发者设置",
       "description": "用于开发目的的临时设置。",
-      "roleSwitch": "切换角色（仅开发）",
-      "roleSwitchDescription": "在学生和教师视图之间切换。此为开发用途，稍后将移除。"
+      "roleSwitch": "切换角色（仅限开发人员）",
+      "roleSwitchDescription": "在学生和教师视图之间切换。这是为了开发，将被删除。"
     }
   },
   "common": {
-    "save": "保存",
+    "save": "??",
     "cancel": "取消",
     "delete": "删除",
     "edit": "编辑",
     "add": "添加",
-    "create": "创建",
+    "create": "创造",
     "update": "更新",
     "submit": "提交",
     "close": "关闭",
-    "back": "返回",
-    "next": "下一步",
-    "previous": "上一步",
+    "back": "后退",
+    "next": "下一个",
+    "previous": "以前的",
     "loading": "加载中...",
     "error": "错误",
     "success": "成功",
     "confirm": "确认",
-    "yes": "是",
-    "no": "否",
-    "search": "搜索",
+    "yes": "是的",
+    "no": "不",
+    "search": "??",
     "filter": "筛选",
-    "sort": "排序",
-    "view": "查看",
+    "sort": "种类",
+    "view": "看法",
     "download": "下载",
     "upload": "上传",
     "share": "分享",
     "copy": "复制",
     "paste": "粘贴",
-    "undo": "撤销",
+    "undo": "撤消",
     "redo": "重做",
     "reset": "重置",
     "clear": "清除",
     "refresh": "刷新",
     "retry": "重试",
-    "more": "更多",
-    "less": "更少",
+    "more": "更多的",
+    "less": "较少的",
     "all": "全部",
-    "none": "无",
+    "none": "没有任何",
     "select": "选择",
     "selected": "已选择",
-    "optional": "可选",
-    "required": "必填"
+    "optional": "选修的",
+    "required": "必需的"
   },
   "auth": {
     "login": "登录",
     "logout": "退出",
-    "signup": "注册",
-    "email": "邮箱",
+    "signup": "报名",
+    "email": "电子邮件",
     "password": "密码",
     "confirmPassword": "确认密码",
     "forgotPassword": "忘记密码？",
     "resetPassword": "重置密码",
-    "dontHaveAccount": "没有账户？",
-    "alreadyHaveAccount": "已有账户？",
-    "orContinueWith": "或继续使用"
+    "dontHaveAccount": "没有帐户？",
+    "alreadyHaveAccount": "已经有帐户？",
+    "orContinueWith": "或者继续"
   },
   "notifications": {
     "title": "通知",
     "noNotifications": "没有通知",
     "markAsRead": "标记为已读",
     "markAllAsRead": "全部标记为已读",
-    "clearAll": "清除全部"
+    "clearAll": "全部清除"
   },
   "errors": {
     "somethingWentWrong": "出了点问题",
-    "pageNotFound": "页面未找到",
-    "unauthorized": "未授权",
-    "forbidden": "禁止访问",
-    "tryAgain": "重试"
+    "pageNotFound": "找不到页面",
+    "unauthorized": "未经授权",
+    "forbidden": "禁止",
+    "tryAgain": "再试一次"
   },
   "setup": {
-    "welcome": "欢迎来到Cautie",
-    "getStarted": "让我们开始设置",
-    "step": "步骤",
-    "of": "共",
-    "next": "下一步",
-    "back": "返回",
+    "welcome": "欢迎来到考蒂",
+    "getStarted": "让我们帮您设置一下",
+    "step": "步",
+    "of": "的",
+    "next": "下一个",
+    "back": "后退",
     "finish": "完成设置",
     "language": {
-      "title": "选择你的语言",
-      "description": "选择你想在应用中使用的语言。"
+      "title": "选择您的语言",
+      "description": "选择您想在应用程序中使用的语言。"
     },
     "theme": {
-      "title": "选择你的主题",
-      "description": "选择适合你的配色方案。"
+      "title": "选择您的主题",
+      "description": "选择适合您的配色方案。"
     },
     "profile": {
-      "title": "设置你的个人资料",
-      "description": "告诉我们一些关于你的信息，以便个性化你的体验。",
+      "title": "设置您的个人资料",
+      "description": "告诉我们一些关于您自己的信息，以个性化您的体验。",
       "firstName": "名",
       "lastName": "姓",
-      "role": "我是...",
+      "role": "我是一个...",
       "student": "学生",
-      "teacher": "教师",
-      "saveProfile": "保存资料"
+      "teacher": "老师",
+      "saveProfile": "保存个人资料"
     }
   },
   "quiz": {
     "title": "测验",
     "answerAllQuestions": "回答所有问题并在最后提交。",
-    "askFollowUp": "提出后续问题...",
-    "gradingCriteria": "描述如何评分此问题...",
-    "additionalCriteria": "额外评分标准...",
+    "askFollowUp": "问一个后续问题...",
+    "gradingCriteria": "描述一下如何给这个问题评分...",
+    "additionalCriteria": "附加评分标准...",
     "aiGrading": "AI评分设置",
-    "expectedAnswer": "输入预期正确答案...",
-    "export": "导出",
-    "import": "导入",
-    "undo": "撤销",
+    "expectedAnswer": "输入预期的正确答案...",
+    "export": "出口",
+    "import": "进口",
+    "undo": "撤消",
     "redo": "重做"
   },
   "flashcards": {
     "front": "正面",
-    "back": "背面",
+    "back": "后退",
     "termOrQuestion": "术语或问题",
     "definitionOrAnswer": "定义或答案"
   },
   "notes": {
     "createNotes": "从文本、文件或以前的项目创建笔记。",
-    "enterText": "开始输入你的富文本内容..."
+    "enterText": "开始编写您的富文本内容..."
   },
   "blocks": {
-    "enterText": "输入文本内容...",
-    "enterCode": "输入代码...",
-    "yourAnswer": "在此输入你的答案...",
-    "followUpQuestion": "提出后续问题...",
+    "enterText": "输入文字内容...",
+    "enterCode": "输入您的代码...",
+    "yourAnswer": "在此输入您的答案...",
+    "followUpQuestion": "问一个后续问题...",
     "nodeTitle": "节点标题",
-    "detailedDescription": "详细描述",
-    "calloutText": "输入标注文本...",
-    "quoteText": "输入引用...",
-    "authorName": "作者名称...",
+    "detailedDescription": "详细说明",
+    "calloutText": "输入标注文字...",
+    "quoteText": "输入报价...",
+    "authorName": "作者姓名...",
     "source": "书籍、文章等...",
     "caption": "添加标题...",
-    "mediaUrl": "输入媒体URL...",
-    "embedUrl": "输入嵌入内容URL...",
+    "mediaUrl": "输入媒体网址...",
+    "embedUrl": "输入嵌入内容 URL...",
     "matchItems": "匹配项目...",
-    "putInOrder": "排列顺序...",
-    "acceptSynonyms": "例如，接受同义词，关注关键概念..."
-  },
-  "classes": {
-    "searchClasses": "搜索班级...",
-    "className": "班级名称",
-    "classDescription": "班级描述",
-    "briefSummary": "简要概述本班级涵盖的内容。",
-    "e.gHistory101": "例如，历史101，高级物理",
-    "chapterTitle": "章节标题",
-    "chapterDescription": "章节描述"
+    "putInOrder": "整理一下...",
+    "acceptSynonyms": "例如，接受同义词，关注关键概念......"
   },
   "assignments": {
     "assignmentTitle": "作业标题",
-    "extraInstructions": "为学生添加额外说明或上下文。",
-    "instructionsDetails": "为学生添加说明或详情",
+    "extraInstructions": "为您的学生添加任何额外的说明或背景。",
+    "instructionsDetails": "为学生添加说明或详细信息",
     "selectType": "选择类型",
     "selectClass": "选择班级",
-    "weekLecture": "例如，第1周讲座"
+    "weekLecture": "例如，第一周讲座"
   },
   "submissions": {
-    "writeSubmission": "在此写下你的作业提交...",
-    "fileUploadComing": "文件上传即将推出...",
-    "provideFeedback": "提供建设性反馈...",
+    "writeSubmission": "在这里写下您的作业提交...",
+    "fileUploadComing": "文件即将上传...",
+    "provideFeedback": "提供建设性的反馈...",
     "addComment": "添加评论...",
-    "grade": "评分",
-    "e.g8.5": "例如，8.5"
+    "grade": "年级",
+    "e": {
+      "g8": {
+        "5": "例如，8.5"
+      }
+    }
   },
   "announcements": {
     "announcementTitle": "输入公告标题",
-    "announcementMessage": "输入公告消息"
-  },
-  "material": {
-    "noteTitle": "笔记标题",
-    "e.gChapter1": "例如，第1章：文艺复兴",
-    "sourceText": "在此粘贴教科书、文章或其他来源材料的文本...",
-    "fileTitle": "例如，第5章阅读"
+    "announcementMessage": "输入您的公告消息"
   },
   "verification": {
     "enterCode": "输入8位验证码",
     "verificationCode": "8位验证码"
   },
   "subjectEditor": {
-    "e.gStudyOfLiving": "例如，生物体、细胞、遗传学和生态系统的研究...",
+    "e": {
+      "gStudyOfLiving": "例如，生物体、细胞、遗传学和生态系统的研究......"
+    },
     "introduction": "例如，简介"
   },
   "chapterEditor": {
     "newChapterTitle": "例如，基本概念",
-    "newChapterDescription": "章节描述"
+    "newChapterDescription": "章节说明"
   },
   "paragraphEditor": {
     "newParagraphTitle": "例如，基本概念",
     "newParagraphDescription": "段落描述"
   },
   "teacherCode": {
-    "enterCode": "输入教师代码"
+    "enterCode": "输入您的教师代码"
   },
   "upgrade": {
     "upgrade": "升级"
@@ -376,9 +359,9 @@
     "search": "搜索..."
   },
   "wordweb": {
-    "addNotes": "在此添加笔记、注释或文本..."
+    "addNotes": "在此添加注释、注释或文本..."
   },
   "paragraphs": {
-    "newParagraph": "例如，练习A"
+    "newParagraph": "例如，练习组 A"
   }
 }

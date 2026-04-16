@@ -1,0 +1,367 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "subjects": "Subyek",
+    "classes": "Kelas",
+    "agenda": "Agenda",
+    "material": "Bahan",
+    "settings": "Pengaturan",
+    "tools": {
+      "title": "Peralatan",
+      "quizGenerator": "Quiz",
+      "flashcardMaker": "Flashcards",
+      "materialProcessor": "Bahan Proses",
+      "notes": "Catatan",
+      "blocks": "Blok"
+    }
+  },
+  "header": {
+    "studentDashboard": "Dasbor Siswa",
+    "teacherDashboard": "Dasbor Guru",
+    "roleSwitcher": "Pengalih Peran",
+    "myAccount": "Akun Saya",
+    "logOut": "Keluar",
+    "logIn": "Masuk"
+  },
+  "dashboard": {
+    "title": "Dasbor",
+    "todayPlan": {
+      "title": "Rencana Belajar Anda Hari Ini",
+      "description": "Tugas-tugas ini telah disiapkan untuk Anda oleh AI.",
+      "completed": "Selesai"
+    },
+    "alerts": {
+      "title": "Peringatan Penting",
+      "description": "Risiko dan prioritas"
+    },
+    "upcomingDeadlines": {
+      "title": "Batas Waktu Mendatang",
+      "description": "Ikhtisar tugas dan ujian Anda yang akan datang.",
+      "due": "Jatuh tempo",
+      "onTrack": "Sesuai Jalur",
+      "risk": "Mempertaruhkan",
+      "behind": "Di belakang",
+      "viewAgenda": "Lihat Agenda Lengkap"
+    },
+    "mySubjects": {
+      "title": "Subyek Anda",
+      "description": "Tinjauan singkat tentang subjek Anda."
+    },
+    "aiSuggestions": {
+      "title": "Saran AI",
+      "description": "Asisten pribadi Anda"
+    },
+    "quickAccess": {
+      "title": "Akses Cepat",
+      "description": "Bahan yang baru saja Anda gunakan."
+    },
+    "statistics": {
+      "title": "Statistik",
+      "description": "Waktu belajarmu minggu ini.",
+      "weeklyActivity": "Aktivitas Mingguan",
+      "lastSessionRecap": "Rekap Sesi Terakhir"
+    }
+  },
+  "tools": {
+    "title": "Peralatan",
+    "description": "Rangkaian alat cerdas Anda untuk mempercepat pembelajaran.",
+    "select": "Pilih Alat",
+    "quiz": {
+      "title": "Kuis",
+      "description": "Buat kuis pilihan ganda dari teks apa pun. Uji pengetahuan Anda dengan berbagai mode menantang."
+    },
+    "flashcards": {
+      "title": "Kartu flash",
+      "description": "Secara otomatis menghasilkan kartu flash dari materi pelajaran Anda untuk memperkuat konsep-konsep utama."
+    },
+    "notes": {
+      "title": "Catatan",
+      "description": "Buat dan atur catatan belajar Anda di satu tempat."
+    },
+    "blocks": {
+      "title": "Blok",
+      "description": "Bangun konten terstruktur dengan editor blok kami."
+    },
+    "wordweb": {
+      "title": "Web Kata",
+      "description": "Visualisasikan hubungan antar konsep dengan jaringan kata interaktif."
+    },
+    "material": {
+      "title": "Bahan Proses",
+      "description": "Dapatkan ringkasan singkat dari setiap dokumen yang diunggah atau teks yang ditempel untuk memahami poin utama dengan cepat."
+    }
+  },
+  "material": {
+    "noteTitle": "Judul Catatan",
+    "e": {
+      "gChapter1": "misalnya, Bab 1: Renaisans"
+    },
+    "sourceText": "Tempelkan teks dari buku teks, artikel, atau materi sumber lainnya di sini...",
+    "fileTitle": "misalnya, Bab 5 Membaca"
+  },
+  "agenda": {
+    "title": "Agenda",
+    "description": "Kalender konsolidasi tenggat waktu, tugas, dan janji temu pribadi Anda.",
+    "eventsOn": "Acara aktif",
+    "noEvents": "Tidak ada acara yang dijadwalkan untuk hari ini.",
+    "addTask": "Tambahkan Tugas",
+    "today": "Hari ini",
+    "week": "Pekan",
+    "month": "Bulan",
+    "monday": "Senin",
+    "tuesday": "Selasa",
+    "wednesday": "Menikahi",
+    "thursday": "Kam",
+    "friday": "Jumat"
+  },
+  "subjects": {
+    "title": "Subyek",
+    "description": "Semua subjek Anda di satu tempat.",
+    "noSubjects": "Tidak ada subjek yang ditemukan.",
+    "addSubject": "Tambahkan Subjek",
+    "chapters": "bab",
+    "paragraphs": "Paragraf",
+    "assignments": "Tugas",
+    "progress": "Kemajuan"
+  },
+  "classes": {
+    "searchClasses": "Cari kelas...",
+    "className": "Nama Kelas",
+    "classDescription": "Deskripsi Kelas",
+    "briefSummary": "Ringkasan singkat tentang apa yang akan dibahas dalam kelas ini.",
+    "e": {
+      "gHistory101": "misalnya, Sejarah 101, Fisika Tingkat Lanjut"
+    },
+    "chapterTitle": "Judul Bab",
+    "chapterDescription": "Deskripsi Bab"
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "description": "Kelola pengaturan akun dan aplikasi Anda.",
+    "general": {
+      "title": "Umum",
+      "description": "Konfigurasikan preferensi aplikasi Anda.",
+      "language": "Bahasa"
+    },
+    "personalization": {
+      "title": "Personalisasi",
+      "description": "Sesuaikan tampilan dan warna aplikasi Anda.",
+      "theme": "Tema",
+      "themeDescription": "Pilih skema warna pilihan Anda.",
+      "light": "Lampu",
+      "dark": "Gelap",
+      "ocean": "Laut"
+    },
+    "accessibility": {
+      "title": "Aksesibilitas",
+      "description": "Sesuaikan tampilan dan perilaku aplikasi agar sesuai dengan kebutuhan Anda.",
+      "highContrast": "Mode Kontras Tinggi",
+      "highContrastDescription": "Tingkatkan kontras teks dan latar belakang.",
+      "dyslexiaFont": "Font Ramah Disleksia",
+      "dyslexiaFontDescription": "Gunakan font yang dirancang agar lebih mudah dibaca.",
+      "reducedMotion": "Kurangi Animasi",
+      "reducedMotionDescription": "Matikan animasi dan transisi dekoratif."
+    },
+    "developer": {
+      "title": "Pengaturan Pengembang",
+      "description": "Pengaturan sementara untuk tujuan pengembangan.",
+      "roleSwitch": "Alihkan Peran (Khusus Pengembang)",
+      "roleSwitchDescription": "Beralih antara tampilan siswa dan guru. Ini untuk pengembangan dan akan dihapus."
+    }
+  },
+  "common": {
+    "save": "Simpan",
+    "cancel": "Membatalkan",
+    "delete": "Menghapus",
+    "edit": "Sunting",
+    "add": "Menambahkan",
+    "create": "Membuat",
+    "update": "Memperbarui",
+    "submit": "Kirim",
+    "close": "Menutup",
+    "back": "Kembali",
+    "next": "Berikutnya",
+    "previous": "Sebelumnya",
+    "loading": "Memuat...",
+    "error": "Kesalahan",
+    "success": "Kesuksesan",
+    "confirm": "Mengonfirmasi",
+    "yes": "Ya",
+    "no": "TIDAK",
+    "search": "Cari",
+    "filter": "Menyaring",
+    "sort": "Menyortir",
+    "view": "Melihat",
+    "download": "Unduh",
+    "upload": "Mengunggah",
+    "share": "Membagikan",
+    "copy": "Menyalin",
+    "paste": "Pasta",
+    "undo": "Membuka",
+    "redo": "Mengulangi",
+    "reset": "Mengatur ulang",
+    "clear": "Jernih",
+    "refresh": "Menyegarkan",
+    "retry": "Mencoba kembali",
+    "more": "Lagi",
+    "less": "Lebih sedikit",
+    "all": "Semua",
+    "none": "Tidak ada",
+    "select": "Memilih",
+    "selected": "Terpilih",
+    "optional": "Opsional",
+    "required": "Diperlukan"
+  },
+  "auth": {
+    "login": "Masuk",
+    "logout": "Keluar",
+    "signup": "Mendaftar",
+    "email": "E-mail",
+    "password": "Kata sandi",
+    "confirmPassword": "Konfirmasi Kata Sandi",
+    "forgotPassword": "Lupa Kata Sandi?",
+    "resetPassword": "Atur Ulang Kata Sandi",
+    "dontHaveAccount": "Belum punya akun?",
+    "alreadyHaveAccount": "Sudah punya akun?",
+    "orContinueWith": "Atau lanjutkan dengan"
+  },
+  "notifications": {
+    "title": "Pemberitahuan",
+    "noNotifications": "Tidak ada pemberitahuan",
+    "markAsRead": "Tandai sebagai telah dibaca",
+    "markAllAsRead": "Tandai semua sebagai telah dibaca",
+    "clearAll": "Hapus semuanya"
+  },
+  "errors": {
+    "somethingWentWrong": "Ada yang tidak beres",
+    "pageNotFound": "Halaman tidak ditemukan",
+    "unauthorized": "Tidak sah",
+    "forbidden": "Terlarang",
+    "tryAgain": "Coba lagi"
+  },
+  "setup": {
+    "welcome": "Selamat datang di Cautie",
+    "getStarted": "Mari kita siapkan",
+    "step": "Melangkah",
+    "of": "dari",
+    "next": "Berikutnya",
+    "back": "Kembali",
+    "finish": "Selesaikan Pengaturan",
+    "language": {
+      "title": "Pilih bahasa Anda",
+      "description": "Pilih bahasa yang ingin Anda gunakan di aplikasi."
+    },
+    "theme": {
+      "title": "Pilih tema Anda",
+      "description": "Pilih skema warna yang cocok untuk Anda."
+    },
+    "profile": {
+      "title": "Siapkan profil Anda",
+      "description": "Ceritakan sedikit tentang diri Anda kepada kami untuk mempersonalisasi pengalaman Anda.",
+      "firstName": "Nama depan",
+      "lastName": "Nama Belakang",
+      "role": "saya seorang...",
+      "student": "Murid",
+      "teacher": "Guru",
+      "saveProfile": "Simpan Profil"
+    }
+  },
+  "quiz": {
+    "title": "Kuis",
+    "answerAllQuestions": "Jawab semua pertanyaan dan kirimkan di akhir.",
+    "askFollowUp": "Ajukan pertanyaan lanjutan...",
+    "gradingCriteria": "Jelaskan cara menilai pertanyaan ini...",
+    "additionalCriteria": "Kriteria penilaian tambahan...",
+    "aiGrading": "Pengaturan Penilaian AI",
+    "expectedAnswer": "Masukkan jawaban benar yang diharapkan...",
+    "export": "Ekspor",
+    "import": "Impor",
+    "undo": "Membuka",
+    "redo": "Mengulangi"
+  },
+  "flashcards": {
+    "front": "Depan",
+    "back": "Kembali",
+    "termOrQuestion": "Istilah atau pertanyaan",
+    "definitionOrAnswer": "Definisi atau jawaban"
+  },
+  "notes": {
+    "createNotes": "Buat catatan dari teks, file, atau proyek sebelumnya.",
+    "enterText": "Mulailah menulis konten teks kaya Anda..."
+  },
+  "blocks": {
+    "enterText": "Masukkan konten teks...",
+    "enterCode": "Masukkan kode Anda...",
+    "yourAnswer": "Ketik jawabanmu di sini...",
+    "followUpQuestion": "Ajukan pertanyaan lanjutan...",
+    "nodeTitle": "Judul simpul",
+    "detailedDescription": "Deskripsi rinci",
+    "calloutText": "Masukkan teks info...",
+    "quoteText": "Masukkan kutipan...",
+    "authorName": "Nama penulis...",
+    "source": "Buku, artikel, dll...",
+    "caption": "Tambahkan keterangan...",
+    "mediaUrl": "Masukkan URL media...",
+    "embedUrl": "Masukkan URL konten tersemat...",
+    "matchItems": "Cocokkan item...",
+    "putInOrder": "Susunlah...",
+    "acceptSynonyms": "misalnya, Menerima sinonim, fokus pada konsep-konsep kunci..."
+  },
+  "assignments": {
+    "assignmentTitle": "Judul Tugas",
+    "extraInstructions": "Tambahkan instruksi atau konteks tambahan untuk siswa Anda.",
+    "instructionsDetails": "Tambahkan instruksi atau detail untuk siswa",
+    "selectType": "Pilih jenis",
+    "selectClass": "Pilih kelas",
+    "weekLecture": "misal, Kuliah Minggu 1"
+  },
+  "submissions": {
+    "writeSubmission": "Tulis penyerahan tugas Anda di sini...",
+    "fileUploadComing": "Pengunggahan file segera hadir...",
+    "provideFeedback": "Berikan masukan yang membangun...",
+    "addComment": "Tambahkan komentar...",
+    "grade": "Nilai",
+    "e": {
+      "g8": {
+        "5": "misalnya, 8.5"
+      }
+    }
+  },
+  "announcements": {
+    "announcementTitle": "Masukkan judul pengumuman",
+    "announcementMessage": "Masukkan pesan pengumuman Anda"
+  },
+  "verification": {
+    "enterCode": "Masukkan kode verifikasi 8 digit",
+    "verificationCode": "Kode verifikasi 8 digit"
+  },
+  "subjectEditor": {
+    "e": {
+      "gStudyOfLiving": "misalnya, Studi tentang organisme hidup, sel, genetika, dan ekosistem..."
+    },
+    "introduction": "misalnya, Pendahuluan"
+  },
+  "chapterEditor": {
+    "newChapterTitle": "misalnya Konsep Dasar",
+    "newChapterDescription": "Deskripsi bab"
+  },
+  "paragraphEditor": {
+    "newParagraphTitle": "misalnya Konsep Dasar",
+    "newParagraphDescription": "Deskripsi paragraf"
+  },
+  "teacherCode": {
+    "enterCode": "Masukkan kode guru Anda"
+  },
+  "upgrade": {
+    "upgrade": "Meningkatkan"
+  },
+  "search": {
+    "search": "Mencari..."
+  },
+  "wordweb": {
+    "addNotes": "Tambahkan catatan, anotasi, atau teks di sini..."
+  },
+  "paragraphs": {
+    "newParagraph": "misalnya, Latihan Set A"
+  }
+}

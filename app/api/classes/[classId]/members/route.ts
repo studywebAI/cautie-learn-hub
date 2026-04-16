@@ -153,6 +153,8 @@ export async function PATCH(
       entityType: 'class_member',
       entityId: targetUserId,
       metadata: {
+        log_code: 'ROS-MEM-001',
+        log_category: 'roster',
         student_id: targetUserId,
         previous_value: normalizeAlias((targetMembership as any)?.display_name),
         new_value: displayName,

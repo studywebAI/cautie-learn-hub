@@ -61,7 +61,8 @@ export default function ClassDetailsPage() {
   const studentTabs = ['invite', 'group'] as const;
 
   const requestedTab = (searchParams.get('tab') || '').trim().toLowerCase();
-  const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
+  const normalizedRole = String(role || '').toLowerCase();
+  const isTeacherRole = ['teacher', 'owner', 'admin', 'creator'].includes(normalizedRole);
   const requestsTeacherTab = teacherTabs.includes(requestedTab as any);
   const isClassOwner = useMemo(() => {
     if (!session?.user?.id) return false;
@@ -145,6 +146,9 @@ export default function ClassDetailsPage() {
         case 'group':
           url = `/api/classes/${classId}/group`;
           break;
+        case 'attendance':
+          url = `/api/classes/${classId}/attendance`;
+          break;
         case 'analytics':
           url = `/api/classes/${classId}/analytics`;
           break;
@@ -224,7 +228,7 @@ export default function ClassDetailsPage() {
   useEffect(() => {
     if (!requestedTab) return;
     if (isAppLoading) return;
-    if (allowedTabs.includes(requestedTab)) return;
+    if ((allowedTabs as readonly string[]).includes(requestedTab)) return;
     router.replace(`/class/${classId}?tab=${tab}`);
   }, [requestedTab, allowedTabs, router, classId, tab, isAppLoading]);
 
@@ -268,7 +272,13 @@ export default function ClassDetailsPage() {
           />
         );
       case 'attendance':
-        return isTeacher ? <AttendanceTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
+        return isTeacher ? (
+          <AttendanceTab
+            classId={classId}
+            cachedData={cachedTabData['attendance']}
+            parentLoading={!!loadingTabs['attendance']}
+          />
+        ) : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'grades':
         return isTeacher ? <GradesTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'analytics':

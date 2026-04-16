@@ -483,9 +483,9 @@
   * {
     @apply border-border;
     font-family: var(--font-ui) !important;
-    font-weight: 420 !important;
+    font-weight: 400 !important;
     font-stretch: 90% !important;
-    font-variation-settings: "wght" 420, "wdth" 90;
+    font-variation-settings: "wght" 400, "wdth" 90;
   }
   *:focus,
   *:focus-visible {
@@ -498,7 +498,7 @@
     font-size: var(--type-body);
     line-height: 1.4667;
     letter-spacing: 0;
-    font-weight: 420;
+    font-weight: 400;
     -webkit-font-smoothing: auto;
     -moz-osx-font-smoothing: auto;
     text-rendering: optimizeLegibility;
@@ -507,30 +507,30 @@
     font-family: var(--font-ui);
     font-size: var(--type-body);
     line-height: 1.4667;
-    font-weight: 420;
+    font-weight: 400;
   }
   h1 {
     font-size: var(--type-page);
     line-height: 1.3636;
     letter-spacing: -0.01em;
-    font-weight: 420;
+    font-weight: 400;
   }
   h2 {
     font-size: var(--type-section);
     line-height: 1.3889;
     letter-spacing: -0.008em;
-    font-weight: 420;
+    font-weight: 400;
   }
   h3 {
     font-size: 16px;
     line-height: 1.375;
     letter-spacing: -0.006em;
-    font-weight: 420;
+    font-weight: 400;
   }
   h4, h5, h6 {
     font-size: var(--type-body);
     line-height: 1.4667;
-    font-weight: 420;
+    font-weight: 400;
   }
   small, .text-xs {
     font-size: var(--type-micro) !important;
@@ -557,11 +557,11 @@
   .font-semibold,
   .font-medium,
   .font-normal {
-    font-weight: 420 !important;
+    font-weight: 400 !important;
   }
   b,
   strong {
-    font-weight: 420;
+    font-weight: 400;
   }
   body[data-reduced-motion="true"] * {
     @apply transition-none animate-none !important;

@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useContext } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { usePathname, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
+import { AppContext, AppContextType } from '@/contexts/app-context';
 
 type AuditLog = {
   id: string;
@@ -18,6 +20,8 @@ type AuditLog = {
   entity_id: string | null;
   metadata: Record<string, any> | null;
   created_at: string;
+  log_code?: string;
+  log_category?: string;
   user?: { display_name?: string | null; full_name?: string | null; email?: string | null };
   metadata_user_labels?: Record<string, string>;
 };
@@ -44,6 +48,16 @@ function isImportantLog(log: AuditLog) {
 }
 
 function categorizeLog(log: AuditLog): Category {
+  const topLevelCategory = String(log.log_category || '').toLowerCase();
+  if (topLevelCategory === 'academic' || topLevelCategory === 'events' || topLevelCategory === 'custom_events' || topLevelCategory === 'roster') {
+    return topLevelCategory as Category;
+  }
+  const metadataCategory = String((log.metadata as any)?.log_category || '').toLowerCase();
+  if (metadataCategory === 'academic') return 'academic';
+  if (metadataCategory === 'events') return 'events';
+  if (metadataCategory === 'custom_events') return 'custom_events';
+  if (metadataCategory === 'roster') return 'roster';
+
   const action = String(log.action || '');
   const entityType = String(log.entity_type || '');
 
@@ -74,6 +88,20 @@ function categorizeLog(log: AuditLog): Category {
 
 function formatAction(action: string) {
   return action.replace(/_/g, ' ');
+}
+
+function resolveLogCode(log: AuditLog) {
+  const topLevelCode = String(log.log_code || '').trim();
+  if (topLevelCode) return topLevelCode;
+  const metadataCode = String((log.metadata as any)?.log_code || '').trim();
+  if (metadataCode) return metadataCode;
+  const action = String(log.action || '');
+  if (action === 'attendance_state_changed') return 'EVT-ATT-001';
+  if (action === 'attendance_event_homework_incomplete') return 'EVT-ATT-002';
+  if (action === 'attendance_event_late') return 'EVT-ATT-003';
+  if (action === 'attendance_event_custom') return 'EVT-CUS-001';
+  if (action === 'member_rename') return 'ROS-MEM-001';
+  return 'ACD-EDT-001';
 }
 
 function formatActor(log: AuditLog) {
@@ -112,6 +140,8 @@ function getCategoryClass(categoryName: Category, action: string) {
 }
 
 export function LogsTab({ classId }: LogsTabProps) {
+  const appContext = useContext(AppContext) as AppContextType | null;
+  const isDutch = appContext?.language === 'nl';
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -126,6 +156,13 @@ export function LogsTab({ classId }: LogsTabProps) {
   const [studentFilter, setStudentFilter] = useState<string>('all');
   const [limit] = useState(100);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const labelByCategory: Record<Category, string> = {
+    all: isDutch ? 'Alles' : 'All',
+    academic: isDutch ? 'Academisch' : 'Academic',
+    events: isDutch ? 'Events' : 'Events',
+    custom_events: isDutch ? 'Aangepaste events' : 'Custom Events',
+    roster: isDutch ? 'Leden & rollen' : 'Roster & Roles',
+  };
 
   const loadLogs = async (mode: 'replace' | 'append' = 'replace') => {
     if (mode === 'replace') setLoading(true);
@@ -259,9 +296,11 @@ export function LogsTab({ classId }: LogsTabProps) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Logs</CardTitle>
+          <CardTitle>{isDutch ? 'Logs' : 'Logs'}</CardTitle>
           <CardDescription>
-            Class logs grouped into Academic, Events, Custom Events, and Roster & Roles.
+            {isDutch
+              ? 'Klaslogs gegroepeerd in Academisch, Events, Aangepaste events en Leden & rollen.'
+              : 'Class logs grouped into Academic, Events, Custom Events, and Roster & Roles.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -269,34 +308,36 @@ export function LogsTab({ classId }: LogsTabProps) {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search actions, actors, metadata..."
+              placeholder={isDutch ? 'Zoek acties, gebruikers, metadata...' : 'Search actions, actors, metadata...'}
             />
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as Category)}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-            >
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {CATEGORY_LABELS[c]} ({counts[c]})
-                </option>
-              ))}
-            </select>
-            <select
-              value={studentFilter}
-              onChange={(e) => applyStudentFilter(e.target.value)}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="all">All students/actors</option>
-              {studentOptions.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.label}
-                </option>
-              ))}
-            </select>
+            <Select value={category} onValueChange={(value) => setCategory(value as Category)}>
+              <SelectTrigger className="h-10 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {labelByCategory[c]} ({counts[c]})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={studentFilter} onValueChange={applyStudentFilter}>
+              <SelectTrigger className="h-10 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{isDutch ? 'Alle leerlingen/gebruikers' : 'All students/actors'}</SelectItem>
+                {studentOptions.map((student) => (
+                  <SelectItem key={student.id} value={student.id}>
+                    {student.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => void loadLogs()}>
-                Refresh
+                {isDutch ? 'Vernieuwen' : 'Refresh'}
               </Button>
               <Button
                 variant="outline"
@@ -305,9 +346,19 @@ export function LogsTab({ classId }: LogsTabProps) {
                 }}
                 disabled={!hasNext || loadingMore}
               >
-                {loadingMore ? 'Loading...' : 'Load more'}
+                {loadingMore ? (isDutch ? 'Laden...' : 'Loading...') : (isDutch ? 'Meer laden' : 'Load more')}
               </Button>
             </div>
+          </div>
+          <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+            {isDutch
+              ? 'Categorieen groeperen betekenis. Leerling/gebruiker-filter vernauwt de tijdlijn. Zoeken matcht ook metadata en aangepaste eventberichten.'
+              : 'Category groups log meaning. Student/actor filter narrows timeline ownership. Search also matches metadata and custom event messages.'}
+          </div>
+          <div className="rounded-md border border-border/60 bg-muted/15 px-3 py-2 text-xs text-muted-foreground">
+            {isDutch
+              ? 'Gebruik codezoeker in Instellingen > Logcodes voor uitleg van codes zoals EVT-ATT-001 en ROS-MEM-001.'
+              : 'Use Settings > Log codes to look up explanations for codes like EVT-ATT-001 and ROS-MEM-001.'}
           </div>
 
           {loadError && (
@@ -316,39 +367,44 @@ export function LogsTab({ classId }: LogsTabProps) {
             </div>
           )}
 
-          <div className="text-xs text-muted-foreground">Showing {filteredLogs.length} of {totalCount || logs.length} logs</div>
+          <div className="text-xs text-muted-foreground">
+            {isDutch ? 'Toont' : 'Showing'} {filteredLogs.length} {isDutch ? 'van' : 'of'} {totalCount || logs.length} {isDutch ? 'logs' : 'logs'}
+          </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardContent className="pt-6">
           {loading ? (
-            <div className="py-10 text-center text-muted-foreground">Loading logs...</div>
+            <div className="py-10 text-center text-muted-foreground">{isDutch ? 'Logs laden...' : 'Loading logs...'}</div>
           ) : filteredLogs.length === 0 ? (
-            <div className="py-10 text-center text-muted-foreground">No logs found for this filter.</div>
+            <div className="py-10 text-center text-muted-foreground">{isDutch ? 'Geen logs voor dit filter.' : 'No logs found for this filter.'}</div>
           ) : (
             <div className="space-y-3">
               {filteredLogs.map((log) => (
                 <div key={log.id} className="space-y-1.5 rounded-lg border p-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0 items-center gap-2">
-                      <p className="truncate font-medium capitalize">{formatAction(log.action)}</p>
+                      <p className="truncate capitalize">{formatAction(log.action)}</p>
                     </div>
                     <p className="shrink-0 text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString()}</p>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className={getCategoryClass(categorizeLog(log), log.action)}>
-                      {CATEGORY_LABELS[categorizeLog(log)]}
+                      {labelByCategory[categorizeLog(log)]}
+                    </Badge>
+                    <Badge variant="outline" className="font-mono">
+                      {resolveLogCode(log)}
                     </Badge>
                     <p className="text-sm text-muted-foreground">
-                      <span className="font-medium text-foreground">{formatActor(log)}</span> on <span className="font-mono">{log.entity_type}</span>
+                      <span className="text-foreground">{formatActor(log)}</span> on <span className="font-mono">{log.entity_type}</span>
                     </p>
                   </div>
 
                   {(log.metadata_user_labels?.student_id || (log.metadata as any)?.student_id) && (
                     <p className="text-xs text-muted-foreground">
-                      Student: <span className="text-foreground">{log.metadata_user_labels?.student_id || String((log.metadata as any)?.student_id)}</span>
+                      {isDutch ? 'Leerling' : 'Student'}: <span className="text-foreground">{log.metadata_user_labels?.student_id || String((log.metadata as any)?.student_id)}</span>
                     </p>
                   )}
 

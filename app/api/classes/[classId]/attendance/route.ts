@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { getClassPermission, logAuditEntry } from '@/lib/auth/class-permissions'
@@ -75,7 +76,14 @@ export async function GET(
       return NextResponse.json({ error: 'Only teachers can view attendance' }, { status: 403 })
     }
 
-    const { data: classMembers, error: membersError } = await supabase
+    let dataClient: any = supabase
+    try {
+      dataClient = createAdminClient()
+    } catch {
+      dataClient = supabase
+    }
+
+    const { data: classMembers, error: membersError } = await dataClient
       .from('class_members')
       .select('user_id, role, display_name')
       .eq('class_id', classId)
@@ -87,12 +95,14 @@ export async function GET(
     }
 
     const memberRows = classMembers || []
-    const memberUserIds = memberRows.map((m: any) => m.user_id)
+    const memberUserIds = memberRows
+      .map((member: any) => String(member?.user_id || '').trim())
+      .filter((id: string) => id.length > 0)
     let profilesData: any[] = []
     if (memberUserIds.length > 0) {
-      const { data: profiles, error: profilesFetchError } = await supabase
+      const { data: profiles, error: profilesFetchError } = await dataClient
         .from('profiles')
-        .select('id, display_name, full_name, avatar_url, email, subscription_type')
+        .select('id, display_name, full_name, email, subscription_type')
         .in('id', memberUserIds)
 
       if (profilesFetchError) {
@@ -109,7 +119,7 @@ export async function GET(
     const studentIds = memberRows
       .filter((row: any) => {
         const role = String(row?.role || '').toLowerCase()
-        if (role) return role === 'student'
+        if (role) return !teacherRoles.has(role)
         const profileRole = String(profileById.get(row.user_id)?.subscription_type || '').toLowerCase()
         return profileRole !== 'teacher'
       })
@@ -117,30 +127,33 @@ export async function GET(
 
     let auditLogs: any[] = []
     if (studentIds.length > 0) {
-      const studentOrFilters = studentIds
-        .flatMap((studentId: string) => [`user_id.eq.${studentId}`, `metadata->>student_id.eq.${studentId}`])
-        .join(',')
+      const studentSet = new Set(studentIds)
       const { data: logsData, error: logsError } = await supabase
         .from('audit_logs')
         .select('id, user_id, action, entity_type, entity_id, metadata, created_at')
         .eq('class_id', classId)
-        .or(studentOrFilters)
         .order('created_at', { ascending: false })
-        .limit(300)
+        .limit(250)
       if (logsError) {
         logAttendance('GET - audit logs failed (non-fatal)', { classId, logsError: logsError.message })
       } else {
-        auditLogs = logsData || []
+        auditLogs = (logsData || []).filter((log: any) => {
+          const actorId = String(log?.user_id || '')
+          const targetId = String(log?.metadata?.student_id || '')
+          return studentSet.has(actorId) || studentSet.has(targetId)
+        })
       }
     }
 
-    let attendanceRecords = []
+    let attendanceRecords: any[] = []
     if (studentIds.length > 0) {
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('student_attendance')
-        .select('*')
+        .select('id, student_id, is_present, has_homework_incomplete, was_too_late, created_at')
         .eq('class_id', classId)
         .in('student_id', studentIds)
+        .order('created_at', { ascending: false })
+        .limit(Math.max(studentIds.length * 6, 300))
 
       if (attendanceError) {
         logAttendance('GET - Attendance records failed', { classId, attendanceError: attendanceError.message })
@@ -149,18 +162,38 @@ export async function GET(
       attendanceRecords = attendanceData || []
     }
 
+    const attendanceSummaryByStudentId = new Map<string, {
+      latestRecord: any | null
+      totalAbsent: number
+      totalHomeworkIncomplete: number
+      totalTooLate: number
+    }>()
+    for (const studentId of studentIds) {
+      attendanceSummaryByStudentId.set(studentId, {
+        latestRecord: null,
+        totalAbsent: 0,
+        totalHomeworkIncomplete: 0,
+        totalTooLate: 0,
+      })
+    }
+    for (const record of attendanceRecords) {
+      const studentId = String(record?.student_id || '')
+      if (!studentId) continue
+      const summary = attendanceSummaryByStudentId.get(studentId)
+      if (!summary) continue
+      if (!summary.latestRecord) {
+        summary.latestRecord = record
+      }
+      if (record?.is_present === false) summary.totalAbsent += 1
+      if (record?.has_homework_incomplete === true) summary.totalHomeworkIncomplete += 1
+      if (record?.was_too_late === true) summary.totalTooLate += 1
+    }
+
     const studentsWithAttendance = studentIds.map((studentId: string) => {
-      const student = profileById.get(studentId)
-      const classMember = memberById.get(studentId)
-      const studentRecords = attendanceRecords.filter((r: any) => r.student_id === studentId)
-
-      const absentCount = studentRecords.filter((r: any) => r.is_present === false).length
-      const homeworkIncompleteCount = studentRecords.filter((r: any) => r.has_homework_incomplete === true).length
-      const tooLateCount = studentRecords.filter((r: any) => r.was_too_late === true).length
-
-      const latestRecord = studentRecords.sort((a: any, b: any) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )[0]
+      const student = (profileById.get(studentId) || null) as any
+      const classMember = (memberById.get(studentId) || null) as any
+      const attendanceSummary = attendanceSummaryByStudentId.get(studentId)
+      const latestRecord = attendanceSummary?.latestRecord || null
 
       const recentActivity = mapRecentActivity(
         auditLogs
@@ -190,16 +223,15 @@ export async function GET(
       return {
         id: studentId,
         name: studentDisplayName(classMember?.display_name, student?.display_name, student?.full_name),
-        email: student?.email || null,
-        avatarUrl: student?.avatar_url || null,
+        email: student?.email || 'Guest',
         isPresent: latestRecord?.is_present ?? null,
         hasHomeworkIncomplete: latestRecord?.has_homework_incomplete ?? false,
         wasTooLate: latestRecord?.was_too_late ?? false,
         recentActivity,
         stats: {
-          totalAbsent: absentCount,
-          totalHomeworkIncomplete: homeworkIncompleteCount,
-          totalTooLate: tooLateCount,
+          totalAbsent: attendanceSummary?.totalAbsent || 0,
+          totalHomeworkIncomplete: attendanceSummary?.totalHomeworkIncomplete || 0,
+          totalTooLate: attendanceSummary?.totalTooLate || 0,
         },
       }
     }).sort((a: any, b: any) => a.name.localeCompare(b.name))
@@ -283,6 +315,8 @@ export async function POST(
       entityType: 'attendance',
       entityId: attendance?.id,
       metadata: {
+        log_code: 'EVT-ATT-001',
+        log_category: 'events',
         student_id: studentId,
         is_present: nextIsPresent,
         has_homework_incomplete: nextHomeworkIncomplete,
@@ -299,6 +333,8 @@ export async function POST(
         entityType: 'attendance',
         entityId: attendance?.id,
         metadata: {
+          log_code: 'EVT-ATT-002',
+          log_category: 'events',
           student_id: studentId,
           active: true,
           created_by: user.id,
@@ -314,6 +350,8 @@ export async function POST(
         entityType: 'attendance',
         entityId: attendance?.id,
         metadata: {
+          log_code: 'EVT-ATT-003',
+          log_category: 'events',
           student_id: studentId,
           active: true,
           created_by: user.id,
@@ -329,6 +367,8 @@ export async function POST(
         entityType: 'attendance',
         entityId: attendance?.id,
         metadata: {
+          log_code: 'EVT-CUS-001',
+          log_category: 'custom_events',
           student_id: studentId,
           custom_message: normalizedCustomMessage,
           created_by: user.id,

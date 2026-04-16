@@ -1,24 +1,24 @@
 {
   "sidebar": {
     "dashboard": "Dashboard",
-    "subjects": "Vakken",
+    "subjects": "Onderwerpen",
     "classes": "Klassen",
     "agenda": "Agenda",
     "material": "Materiaal",
     "settings": "Instellingen",
     "tools": {
-      "title": "Tools",
+      "title": "Hulpmiddelen",
       "quizGenerator": "Quiz",
       "flashcardMaker": "Flashcards",
-      "materialProcessor": "Materiaal verwerken",
-      "notes": "Notities",
+      "materialProcessor": "Procesmateriaal",
+      "notes": "Opmerkingen",
       "blocks": "Blokken"
     }
   },
   "header": {
-    "studentDashboard": "Leerlingen Dashboard",
-    "teacherDashboard": "Docenten Dashboard",
-    "roleSwitcher": "Rol wisselaar",
+    "studentDashboard": "Studentendashboard",
+    "teacherDashboard": "Docentendashboard",
+    "roleSwitcher": "Rolwisselaar",
     "myAccount": "Mijn account",
     "logOut": "Uitloggen",
     "logIn": "Inloggen"
@@ -27,169 +27,161 @@
     "title": "Dashboard",
     "todayPlan": {
       "title": "Je studieplan voor vandaag",
-      "description": "Deze taken zijn door de AI voor je voorbereid.",
+      "description": "Deze taken zijn door de AI voor u voorbereid.",
       "completed": "Voltooid"
     },
     "alerts": {
-      "title": "Belangrijke meldingen",
+      "title": "Belangrijke waarschuwingen",
       "description": "Risico's en prioriteiten"
     },
     "upcomingDeadlines": {
       "title": "Aankomende deadlines",
-      "description": "Een overzicht van je aankomende toetsen en opdrachten.",
-      "due": "Deadline",
-      "onTrack": "Op schema",
+      "description": "Een overzicht van je komende opdrachten en toetsen.",
+      "due": "Vanwege",
+      "onTrack": "Op koers",
       "risk": "Risico",
       "behind": "Achter",
-      "viewAgenda": "Volledige agenda bekijken"
+      "viewAgenda": "Bekijk de volledige agenda"
     },
     "mySubjects": {
-      "title": "Je vakken",
-      "description": "Een snel overzicht van je vakken."
+      "title": "Jouw onderwerpen",
+      "description": "Een snel overzicht van uw onderwerpen."
     },
     "aiSuggestions": {
-      "title": "AI suggesties",
-      "description": "Je persoonlijke assistent"
+      "title": "AI-suggesties",
+      "description": "Uw persoonlijke assistent"
     },
     "quickAccess": {
       "title": "Snelle toegang",
-      "description": "Je recent gebruikte materialen."
+      "description": "Uw recent gebruikte materialen."
     },
     "statistics": {
       "title": "Statistieken",
-      "description": "Je studietijd deze week.",
+      "description": "Jouw studietijd deze week.",
       "weeklyActivity": "Wekelijkse activiteit",
-      "lastSessionRecap": "Terugblik vorige sessie"
+      "lastSessionRecap": "Samenvatting van de laatste sessie"
     }
   },
   "tools": {
-    "title": "Tools",
-    "description": "Je suite van intelligente tools.",
-    "select": "Tool selecteren",
+    "title": "Hulpmiddelen",
+    "description": "Uw suite met intelligente tools om het leren te versnellen.",
+    "select": "Selecteer Gereedschap",
     "quiz": {
       "title": "Quiz",
-      "description": "Maak meerkeuzequizzen van elke tekst."
+      "description": "Maak meerkeuzevragen van elke tekst. Test je kennis met verschillende uitdagende modi."
     },
     "flashcards": {
-      "title": "Flashcards",
-      "description": "Genereer automatisch flashcards uit je studiemateriaal."
+      "title": "Flitskaarten",
+      "description": "Genereer automatisch flashcards uit uw studiemateriaal om belangrijke concepten te versterken."
     },
     "notes": {
-      "title": "Notities",
-      "description": "Maak en organiseer je aantekeningen."
+      "title": "Opmerkingen",
+      "description": "Maak en organiseer uw studieaantekeningen op één plek."
     },
     "blocks": {
       "title": "Blokken",
-      "description": "Bouw gestructureerde inhoud met onze blokkeneditor."
+      "description": "Bouw gestructureerde inhoud met onze blokeditor."
     },
     "wordweb": {
       "title": "Woordweb",
-      "description": "Visualiseer verbindingen tussen concepten."
+      "description": "Visualiseer verbindingen tussen concepten met interactieve woordwebs."
     },
     "material": {
-      "title": "Materiaal verwerken",
-      "description": "Krijg een beknopt overzicht van elk geüpload document."
+      "title": "Procesmateriaal",
+      "description": "Ontvang een beknopte samenvatting van elk geüpload document of geplakte tekst, zodat u snel de belangrijkste punten begrijpt."
     }
   },
   "material": {
-    "title": "Materiaal verwerken",
-    "description": "Upload bestanden of plak tekst om samenvattingen te genereren.",
-    "importTitle": "Inhoud importeren",
-    "importDescription": "Geef een bestand, plak tekst, of beide.",
-    "clickToUpload": "Klik om te uploaden",
-    "dragAndDrop": "of sleep hier",
-    "remove": "Verwijderen",
-    "pasteText": "Of plak hier je tekst...",
-    "processing": "Verwerken...",
-    "processWithAi": "Met AI verwerken",
-    "summary": "Samenvatting",
-    "suggestedActions": "Voorgestelde acties",
-    "done": "Klaar",
-    "select": "Selecteren"
+    "noteTitle": "Opmerking Titel",
+    "e": {
+      "gChapter1": "bijvoorbeeld Hoofdstuk 1: De Renaissance"
+    },
+    "sourceText": "Plak hier de tekst uit uw leerboek, artikel of ander bronmateriaal...",
+    "fileTitle": "bijvoorbeeld Hoofdstuk 5 Lezen"
   },
   "agenda": {
     "title": "Agenda",
-    "description": "Je samengestelde kalender van deadlines, taken en persoonlijke afspraken.",
-    "eventsOn": "Evenementen op",
-    "noEvents": "Geen evenementen gepland voor deze dag.",
+    "description": "Uw geconsolideerde kalender met deadlines, taken en persoonlijke afspraken.",
+    "eventsOn": "Evenementen aan",
+    "noEvents": "Er zijn geen evenementen gepland voor deze dag.",
     "addTask": "Taak toevoegen",
     "today": "Vandaag",
     "week": "Week",
     "month": "Maand",
-    "monday": "Ma",
-    "tuesday": "Di",
-    "wednesday": "Wo",
+    "monday": "ma",
+    "tuesday": "di",
+    "wednesday": "wo",
     "thursday": "Do",
     "friday": "Vr"
   },
   "subjects": {
-    "title": "Vakken",
-    "description": "Al je vakken op één plek.",
-    "noSubjects": "Geen vakken gevonden.",
-    "addSubject": "Vak toevoegen",
+    "title": "Onderwerpen",
+    "description": "Al uw onderwerpen op één plek.",
+    "noSubjects": "Geen onderwerpen gevonden.",
+    "addSubject": "Onderwerp toevoegen",
     "chapters": "Hoofdstukken",
-    "paragraphs": "Alinea's",
+    "paragraphs": "Paragrafen",
     "assignments": "Opdrachten",
     "progress": "Voortgang"
   },
   "classes": {
-    "title": "Klassen",
-    "description": "Beheer je klassen en leerlingen.",
-    "noClasses": "Geen klassen gevonden.",
-    "createClass": "Klas aanmaken",
-    "joinClass": "Bij klas voegen",
-    "joinCode": "Voeg code",
-    "students": "Leerlingen",
-    "assignments": "Opdrachten",
-    "announcements": "Mededelingen"
+    "searchClasses": "Lessen zoeken...",
+    "className": "Naam van de klas",
+    "classDescription": "Klassebeschrijving",
+    "briefSummary": "Een korte samenvatting van wat deze les zal behandelen.",
+    "e": {
+      "gHistory101": "bijvoorbeeld Geschiedenis 101, Geavanceerde natuurkunde"
+    },
+    "chapterTitle": "Hoofdstuktitel",
+    "chapterDescription": "Hoofdstuk Beschrijving"
   },
   "settings": {
     "title": "Instellingen",
-    "description": "Beheer je account en applicatie-instellingen.",
+    "description": "Beheer uw account- en applicatie-instellingen.",
     "general": {
       "title": "Algemeen",
-      "description": "Configureer je applicatievoorkeuren.",
+      "description": "Configureer uw applicatievoorkeuren.",
       "language": "Taal"
     },
     "personalization": {
-      "title": "Persoonlijke instellingen",
-      "description": "Pas het uiterlijk van je app aan.",
+      "title": "Personalisatie",
+      "description": "Pas het uiterlijk en de kleuren van uw app aan.",
       "theme": "Thema",
-      "themeDescription": "Kies je favoriete kleurenschema.",
+      "themeDescription": "Kies het kleurenschema van uw voorkeur.",
       "light": "Licht",
       "dark": "Donker",
       "ocean": "Oceaan"
     },
     "accessibility": {
       "title": "Toegankelijkheid",
-      "description": "Pas het uiterlijk en gedrag van de app aan.",
-      "highContrast": "High-Contrast Modus",
-      "highContrastDescription": "Verhoog tekst- en achtergrondcontrast.",
-      "dyslexiaFont": "Dyslectische Lettertype",
-      "dyslexiaFontDescription": "Gebruik een lettertype ontworpen voor gemakkelijker lezen.",
-      "reducedMotion": "Animaties Verminderen",
+      "description": "Pas het uiterlijk en het gedrag van de app aan uw behoeften aan.",
+      "highContrast": "Hoogcontrastmodus",
+      "highContrastDescription": "Verhoog het contrast van tekst en achtergrond.",
+      "dyslexiaFont": "Dyslexievriendelijk lettertype",
+      "dyslexiaFontDescription": "Gebruik een lettertype dat is ontworpen om gemakkelijker te kunnen lezen.",
+      "reducedMotion": "Verminder animaties",
       "reducedMotionDescription": "Schakel decoratieve animaties en overgangen uit."
     },
     "developer": {
       "title": "Ontwikkelaarsinstellingen",
       "description": "Tijdelijke instellingen voor ontwikkelingsdoeleinden.",
-      "roleSwitch": "Rol Wisselen (Dev Only)",
-      "roleSwitchDescription": "Schakel tussen leerling- en leraarview."
+      "roleSwitch": "Wisselrol (alleen ontwikkelaar)",
+      "roleSwitchDescription": "Schakelen tussen leerling- en docentenweergave. Dit is voor ontwikkeling en zal worden verwijderd."
     }
   },
   "common": {
     "save": "Opslaan",
     "cancel": "Annuleren",
     "delete": "Verwijderen",
-    "edit": "Bewerken",
+    "edit": "Bewerking",
     "add": "Toevoegen",
-    "create": "Aanmaken",
-    "update": "Bijwerken",
-    "submit": "Versturen",
-    "close": "Sluiten",
-    "back": "Terug",
+    "create": "Creëren",
+    "update": "Update",
+    "submit": "Indienen",
+    "close": "Dichtbij",
+    "back": "Rug",
     "next": "Volgende",
-    "previous": "Vorige",
+    "previous": "Vorig",
     "loading": "Laden...",
     "error": "Fout",
     "success": "Succes",
@@ -197,26 +189,26 @@
     "yes": "Ja",
     "no": "Nee",
     "search": "Zoeken",
-    "filter": "Filteren",
-    "sort": "Sorteren",
-    "view": "Bekijken",
+    "filter": "Filter",
+    "sort": "Soort",
+    "view": "Weergave",
     "download": "Downloaden",
     "upload": "Uploaden",
-    "share": "Delen",
+    "share": "Deel",
     "copy": "Kopiëren",
     "paste": "Plakken",
     "undo": "Ongedaan maken",
-    "redo": "Opnieuw",
-    "reset": "Resetten",
-    "clear": "Wissen",
+    "redo": "Opnieuw uitvoeren",
+    "reset": "Opnieuw instellen",
+    "clear": "Duidelijk",
     "refresh": "Vernieuwen",
     "retry": "Opnieuw proberen",
     "more": "Meer",
     "less": "Minder",
     "all": "Alle",
     "none": "Geen",
-    "select": "Selecteren",
-    "selected": "Geselecteerd",
+    "select": "Selecteer",
+    "selected": "Gekozen",
     "optional": "Optioneel",
     "required": "Vereist"
   },
@@ -226,159 +218,150 @@
     "signup": "Aanmelden",
     "email": "E-mail",
     "password": "Wachtwoord",
-    "confirmPassword": "Wachtwoord bevestigen",
+    "confirmPassword": "Bevestig wachtwoord",
     "forgotPassword": "Wachtwoord vergeten?",
-    "resetPassword": "Wachtwoord resetten",
-    "dontHaveAccount": "Heb je geen account?",
-    "alreadyHaveAccount": "Heb je al een account?",
-    "orContinueWith": "Of doorgaan met"
+    "resetPassword": "Wachtwoord opnieuw instellen",
+    "dontHaveAccount": "Heeft u geen account?",
+    "alreadyHaveAccount": "Heeft u al een account?",
+    "orContinueWith": "Of ga verder met"
   },
   "notifications": {
     "title": "Meldingen",
     "noNotifications": "Geen meldingen",
     "markAsRead": "Markeer als gelezen",
-    "markAllAsRead": "Alles als gelezen markeren",
+    "markAllAsRead": "Markeer alles als gelezen",
     "clearAll": "Alles wissen"
   },
   "errors": {
     "somethingWentWrong": "Er is iets misgegaan",
     "pageNotFound": "Pagina niet gevonden",
-    "unauthorized": "Niet geautoriseerd",
+    "unauthorized": "Ongeautoriseerd",
     "forbidden": "Verboden",
-    "tryAgain": "Probeer opnieuw"
+    "tryAgain": "Probeer het opnieuw"
   },
   "setup": {
     "welcome": "Welkom bij Cautie",
-    "getStarted": "Laten we beginnen",
+    "getStarted": "Laten we je klaarmaken",
     "step": "Stap",
     "of": "van",
     "next": "Volgende",
-    "back": "Terug",
-    "finish": "Installatie voltooien",
+    "back": "Rug",
+    "finish": "Voltooi de installatie",
     "language": {
-      "title": "Kies je taal",
-      "description": "Selecteer de taal die je wilt gebruiken in de app."
+      "title": "Kies uw taal",
+      "description": "Selecteer de taal die u in de app wilt gebruiken."
     },
     "theme": {
-      "title": "Kies je thema",
-      "description": "Kies een kleurenschema dat bij je past."
+      "title": "Kies uw thema",
+      "description": "Kies een kleurenschema dat bij u past."
     },
     "profile": {
-      "title": "Stel je profiel in",
-      "description": "Vertel ons wat over jezelf om je ervaring te personaliseren.",
+      "title": "Stel uw profiel in",
+      "description": "Vertel ons iets over uzelf om uw ervaring te personaliseren.",
       "firstName": "Voornaam",
       "lastName": "Achternaam",
-      "role": "Ik ben een...",
-      "student": "Leerling",
-      "teacher": "Leraar",
+      "role": "ik ben een...",
+      "student": "Student",
+      "teacher": "Docent",
       "saveProfile": "Profiel opslaan"
     }
   },
   "quiz": {
     "title": "Quiz",
-    "answerAllQuestions": "Beantwoord alle vragen en verstuur aan het einde.",
+    "answerAllQuestions": "Beantwoord alle vragen en verzend deze aan het einde.",
     "askFollowUp": "Stel een vervolgvraag...",
-    "gradingCriteria": "Beschrijf hoe deze vraag beoordeeld moet worden...",
+    "gradingCriteria": "Beschrijf hoe je deze vraag kunt beoordelen...",
     "additionalCriteria": "Aanvullende beoordelingscriteria...",
-    "aiGrading": "AI Beoordelingsinstellingen",
-    "expectedAnswer": "Voer het verwachte correcte antwoord in...",
+    "aiGrading": "AI-beoordelingsinstellingen",
+    "expectedAnswer": "Vul het verwachte juiste antwoord in...",
     "export": "Exporteren",
     "import": "Importeren",
     "undo": "Ongedaan maken",
-    "redo": "Opnieuw"
+    "redo": "Opnieuw uitvoeren"
   },
   "flashcards": {
     "front": "Voorkant",
-    "back": "Achterkant",
-    "termOrQuestion": "Term of vraag",
+    "back": "Rug",
+    "termOrQuestion": "Termijn of vraag",
     "definitionOrAnswer": "Definitie of antwoord"
   },
   "notes": {
     "createNotes": "Maak notities van tekst, bestanden of eerdere projecten.",
-    "enterText": "Begin met het schrijven van je rijke tekst inhoud..."
+    "enterText": "Begin met het schrijven van uw rich-text-inhoud..."
   },
   "blocks": {
-    "enterText": "Voer tekst inhoud in...",
-    "enterCode": "Voer je code in...",
-    "yourAnswer": "Typ hier je antwoord...",
+    "enterText": "Tekstinhoud invoeren...",
+    "enterCode": "Voer uw code in...",
+    "yourAnswer": "Typ hier uw antwoord...",
     "followUpQuestion": "Stel een vervolgvraag...",
-    "nodeTitle": "Knooppunt titel",
+    "nodeTitle": "Titel van knooppunt",
     "detailedDescription": "Gedetailleerde beschrijving",
-    "calloutText": "Voer callout tekst in...",
-    "quoteText": "Voer het citaat in...",
-    "authorName": "Auteursnaam...",
-    "source": "Boek, artikel, etc...",
+    "calloutText": "Bijschrifttekst invoeren...",
+    "quoteText": "Voer de offerte in...",
+    "authorName": "Naam auteur...",
+    "source": "Boek, artikel, enz...",
     "caption": "Voeg een bijschrift toe...",
-    "mediaUrl": "Voer media URL in...",
-    "embedUrl": "Voer ingesloten content URL in...",
-    "matchItems": "Koppel de items...",
-    "putInOrder": "Zet in volgorde...",
-    "acceptSynonyms": "bijv., Accepteer synoniemen, focus op sleutelconcepten..."
-  },
-  "classes": {
-    "searchClasses": "Klassen zoeken...",
-    "className": "Klasnaam",
-    "classDescription": "Klasbeschrijving",
-    "briefSummary": "Een korte samenvatting van wat deze klas zal behandelen.",
-    "e.gHistory101": "bijv., Geschiedenis 101, Gevorderde Natuurkunde",
-    "chapterTitle": "Hoofdstuk Titel",
-    "chapterDescription": "Hoofdstukbeschrijving"
+    "mediaUrl": "Media-URL invoeren...",
+    "embedUrl": "Voer de URL van de ingesloten inhoud in...",
+    "matchItems": "Combineer de artikelen...",
+    "putInOrder": "In orde brengen...",
+    "acceptSynonyms": "Accepteer bijvoorbeeld synoniemen, focus op sleutelconcepten..."
   },
   "assignments": {
-    "assignmentTitle": "Opdracht Titel",
-    "extraInstructions": "Voeg extra instructies of context toe voor je leerlingen.",
-    "instructionsDetails": "Voeg instructies of details toe voor leerlingen",
+    "assignmentTitle": "Titel van de opdracht",
+    "extraInstructions": "Voeg eventuele extra instructies of context toe voor uw leerlingen.",
+    "instructionsDetails": "Voeg instructies of details voor studenten toe",
     "selectType": "Selecteer type",
-    "selectClass": "Selecteer klas",
-    "weekLecture": "bijv., Week 1college"
+    "selectClass": "Selecteer klasse",
+    "weekLecture": "bijvoorbeeld week 1 lezing"
   },
   "submissions": {
-    "writeSubmission": "Schrijf hier je opdracht...",
-    "fileUploadComing": "Bestandsupload komt binnenkort...",
+    "writeSubmission": "Schrijf hier uw opdrachtinzending...",
+    "fileUploadComing": "Bestandsupload binnenkort beschikbaar...",
     "provideFeedback": "Geef constructieve feedback...",
     "addComment": "Voeg een reactie toe...",
     "grade": "Cijfer",
-    "e.g8.5": "bijv., 8.5"
+    "e": {
+      "g8": {
+        "5": "bijvoorbeeld 8,5"
+      }
+    }
   },
   "announcements": {
-    "announcementTitle": "Voer mededelingstitel in",
-    "announcementMessage": "Voer je mededelingsbericht in"
-  },
-  "material": {
-    "noteTitle": "Notitie Titel",
-    "e.gChapter1": "bijv., Hoofdstuk 1: De Renaissance",
-    "sourceText": "Plak de tekst uit je studieboek, artikel of ander brondmateriaal hier...",
-    "fileTitle": "bijv., Hoofdstuk 5 Lezen"
+    "announcementTitle": "Voer de aankondigingstitel in",
+    "announcementMessage": "Voer uw aankondigingsbericht in"
   },
   "verification": {
-    "enterCode": "Voer 8-cijferige verificatiecode in",
+    "enterCode": "Voer de 8-cijferige verificatiecode in",
     "verificationCode": "8-cijferige verificatiecode"
   },
   "subjectEditor": {
-    "e.gStudyOfLiving": "bijv., Studie van levende organismen, cellen, genetica en ecosystemen...",
-    "introduction": "bijv., Inleiding"
+    "e": {
+      "gStudyOfLiving": "bijvoorbeeld studie van levende organismen, cellen, genetica en ecosystemen ..."
+    },
+    "introduction": "bijvoorbeeld Inleiding"
   },
   "chapterEditor": {
-    "newChapterTitle": "bijv., Basisconcepten",
+    "newChapterTitle": "bijvoorbeeld basisconcepten",
     "newChapterDescription": "Hoofdstukbeschrijving"
   },
   "paragraphEditor": {
-    "newParagraphTitle": "bijv., Basisconcepten",
+    "newParagraphTitle": "bijvoorbeeld basisconcepten",
     "newParagraphDescription": "Paragraafbeschrijving"
   },
   "teacherCode": {
-    "enterCode": "Voer je leraarscode in"
+    "enterCode": "Voer uw docentencode in"
   },
   "upgrade": {
     "upgrade": "Upgraden"
   },
   "search": {
-    "search": "Zoeken..."
+    "search": "Zoekopdracht..."
   },
   "wordweb": {
-    "addNotes": "Voeg notities, annotaties of tekst hier toe..."
+    "addNotes": "Voeg hier notities, annotaties of tekst toe..."
   },
   "paragraphs": {
-    "newParagraph": "bijv., Oefening A"
+    "newParagraph": "bijvoorbeeld Oefenset A"
   }
 }

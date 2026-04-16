@@ -1,0 +1,367 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "subjects": "Soggetti",
+    "classes": "Classi",
+    "agenda": "ordine del giorno",
+    "material": "Materiale",
+    "settings": "Impostazioni",
+    "tools": {
+      "title": "Utensili",
+      "quizGenerator": "Quiz",
+      "flashcardMaker": "Flashcards",
+      "materialProcessor": "Materiale di processo",
+      "notes": "Note",
+      "blocks": "Blocchi"
+    }
+  },
+  "header": {
+    "studentDashboard": "Cruscotto degli studenti",
+    "teacherDashboard": "Pannello di controllo dell'insegnante",
+    "roleSwitcher": "Cambio di ruolo",
+    "myAccount": "Il mio conto",
+    "logOut": "Esci",
+    "logIn": "Login"
+  },
+  "dashboard": {
+    "title": "Pannello di controllo",
+    "todayPlan": {
+      "title": "Il tuo piano di studi per oggi",
+      "description": "Questi compiti sono stati preparati per te dall'IA.",
+      "completed": "Completato"
+    },
+    "alerts": {
+      "title": "Avvisi importanti",
+      "description": "Rischi e priorità"
+    },
+    "upcomingDeadlines": {
+      "title": "Prossime scadenze",
+      "description": "Una panoramica dei tuoi prossimi compiti e test.",
+      "due": "Dovuto",
+      "onTrack": "In pista",
+      "risk": "Rischio",
+      "behind": "Dietro",
+      "viewAgenda": "Visualizza l'agenda completa"
+    },
+    "mySubjects": {
+      "title": "I tuoi soggetti",
+      "description": "Una rapida panoramica dei tuoi argomenti."
+    },
+    "aiSuggestions": {
+      "title": "Suggerimenti dell'intelligenza artificiale",
+      "description": "Il tuo assistente personale"
+    },
+    "quickAccess": {
+      "title": "Accesso rapido",
+      "description": "I tuoi materiali utilizzati di recente."
+    },
+    "statistics": {
+      "title": "Statistiche",
+      "description": "Il tuo tempo di studio questa settimana.",
+      "weeklyActivity": "Attività settimanale",
+      "lastSessionRecap": "Riepilogo dell'ultima sessione"
+    }
+  },
+  "tools": {
+    "title": "Utensili",
+    "description": "La tua suite di strumenti intelligenti per accelerare l'apprendimento.",
+    "select": "Seleziona Strumento",
+    "quiz": {
+      "title": "Quiz",
+      "description": "Crea quiz a scelta multipla da qualsiasi testo. Metti alla prova le tue conoscenze con varie modalità impegnative."
+    },
+    "flashcards": {
+      "title": "Flashcard",
+      "description": "Genera automaticamente flashcard dai tuoi materiali di studio per rafforzare i concetti chiave."
+    },
+    "notes": {
+      "title": "Note",
+      "description": "Crea e organizza i tuoi appunti di studio in un unico posto."
+    },
+    "blocks": {
+      "title": "Blocchi",
+      "description": "Crea contenuti strutturati con il nostro editor a blocchi."
+    },
+    "wordweb": {
+      "title": "Parola Web",
+      "description": "Visualizza le connessioni tra concetti con reti di parole interattive."
+    },
+    "material": {
+      "title": "Materiale di processo",
+      "description": "Ottieni un riepilogo conciso di qualsiasi documento caricato o testo incollato per cogliere rapidamente i punti principali."
+    }
+  },
+  "material": {
+    "noteTitle": "Titolo della nota",
+    "e": {
+      "gChapter1": "ad esempio, Capitolo 1: Il Rinascimento"
+    },
+    "sourceText": "Incolla qui il testo del tuo libro di testo, articolo o altro materiale sorgente...",
+    "fileTitle": "ad esempio, Capitolo 5 Lettura"
+  },
+  "agenda": {
+    "title": "ordine del giorno",
+    "description": "Il tuo calendario consolidato di scadenze, attività e appuntamenti personali.",
+    "eventsOn": "Eventi in corso",
+    "noEvents": "Nessun evento in programma per questo giorno.",
+    "addTask": "Aggiungi attività",
+    "today": "Oggi",
+    "week": "Settimana",
+    "month": "Mese",
+    "monday": "Lun",
+    "tuesday": "Mar",
+    "wednesday": "Mercoledì",
+    "thursday": "Gio",
+    "friday": "Ven"
+  },
+  "subjects": {
+    "title": "Soggetti",
+    "description": "Tutti i tuoi argomenti in un unico posto.",
+    "noSubjects": "Nessun argomento trovato.",
+    "addSubject": "Aggiungi oggetto",
+    "chapters": "Capitoli",
+    "paragraphs": "Paragrafi",
+    "assignments": "Incarichi",
+    "progress": "Progressi"
+  },
+  "classes": {
+    "searchClasses": "Cerca classi...",
+    "className": "Nome della classe",
+    "classDescription": "Descrizione della classe",
+    "briefSummary": "Un breve riassunto di ciò che tratterà questa lezione.",
+    "e": {
+      "gHistory101": "ad esempio, Storia 101, Fisica avanzata"
+    },
+    "chapterTitle": "Titolo del capitolo",
+    "chapterDescription": "Descrizione del capitolo"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "description": "Gestisci il tuo account e le impostazioni dell'applicazione.",
+    "general": {
+      "title": "Generale",
+      "description": "Configura le preferenze dell'applicazione.",
+      "language": "Lingua"
+    },
+    "personalization": {
+      "title": "Personalizzazione",
+      "description": "Personalizza l'aspetto e i colori della tua app.",
+      "theme": "Tema",
+      "themeDescription": "Scegli la tua combinazione di colori preferita.",
+      "light": "Leggero",
+      "dark": "Buio",
+      "ocean": "Oceano"
+    },
+    "accessibility": {
+      "title": "Accessibilità",
+      "description": "Personalizza l'aspetto e il comportamento dell'app in base alle tue esigenze.",
+      "highContrast": "Modalità ad alto contrasto",
+      "highContrastDescription": "Aumenta il contrasto del testo e dello sfondo.",
+      "dyslexiaFont": "Carattere adatto alla dislessia",
+      "dyslexiaFontDescription": "Utilizza un carattere progettato per facilitare la lettura.",
+      "reducedMotion": "Riduci le animazioni",
+      "reducedMotionDescription": "Disattiva le animazioni e le transizioni decorative."
+    },
+    "developer": {
+      "title": "Impostazioni sviluppatore",
+      "description": "Impostazioni temporanee per scopi di sviluppo.",
+      "roleSwitch": "Attiva/disattiva ruolo (solo sviluppatore)",
+      "roleSwitchDescription": "Passa dalla visualizzazione studente a quella insegnante. Questo è per lo sviluppo e verrà rimosso."
+    }
+  },
+  "common": {
+    "save": "Salva",
+    "cancel": "Cancellare",
+    "delete": "Eliminare",
+    "edit": "Modificare",
+    "add": "Aggiungere",
+    "create": "Creare",
+    "update": "Aggiornamento",
+    "submit": "Invia",
+    "close": "Vicino",
+    "back": "Indietro",
+    "next": "Prossimo",
+    "previous": "Precedente",
+    "loading": "Caricamento...",
+    "error": "Errore",
+    "success": "Successo",
+    "confirm": "Confermare",
+    "yes": "SÌ",
+    "no": "NO",
+    "search": "Cerca",
+    "filter": "Filtro",
+    "sort": "Ordinare",
+    "view": "Visualizzazione",
+    "download": "Scaricamento",
+    "upload": "Caricamento",
+    "share": "Condividere",
+    "copy": "Copia",
+    "paste": "Impasto",
+    "undo": "Disfare",
+    "redo": "Rifare",
+    "reset": "Reset",
+    "clear": "Chiaro",
+    "refresh": "Aggiorna",
+    "retry": "Riprova",
+    "more": "Di più",
+    "less": "Meno",
+    "all": "Tutto",
+    "none": "Nessuno",
+    "select": "Selezionare",
+    "selected": "Selezionato",
+    "optional": "Opzionale",
+    "required": "Necessario"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Esci",
+    "signup": "Iscrizione",
+    "email": "E-mail",
+    "password": "Password",
+    "confirmPassword": "Conferma password",
+    "forgotPassword": "Ha dimenticato la password?",
+    "resetPassword": "Reimposta password",
+    "dontHaveAccount": "Non hai un account?",
+    "alreadyHaveAccount": "Hai già un account?",
+    "orContinueWith": "Oppure continua con"
+  },
+  "notifications": {
+    "title": "Notifiche",
+    "noNotifications": "Nessuna notifica",
+    "markAsRead": "Segna come letto",
+    "markAllAsRead": "Segna tutto come letto",
+    "clearAll": "Cancella tutto"
+  },
+  "errors": {
+    "somethingWentWrong": "Qualcosa è andato storto",
+    "pageNotFound": "Pagina non trovata",
+    "unauthorized": "Non autorizzato",
+    "forbidden": "Vietato",
+    "tryAgain": "Riprova"
+  },
+  "setup": {
+    "welcome": "Benvenuto a Cautie",
+    "getStarted": "Ti sistemiamo",
+    "step": "Fare un passo",
+    "of": "Di",
+    "next": "Prossimo",
+    "back": "Indietro",
+    "finish": "Termina l'installazione",
+    "language": {
+      "title": "Scegli la tua lingua",
+      "description": "Seleziona la lingua che desideri utilizzare nell'app."
+    },
+    "theme": {
+      "title": "Scegli il tuo tema",
+      "description": "Scegli una combinazione di colori adatta a te."
+    },
+    "profile": {
+      "title": "Imposta il tuo profilo",
+      "description": "Raccontaci un po' di te per personalizzare la tua esperienza.",
+      "firstName": "Nome di battesimo",
+      "lastName": "Cognome",
+      "role": "Sono un...",
+      "student": "Studente",
+      "teacher": "Insegnante",
+      "saveProfile": "Salva profilo"
+    }
+  },
+  "quiz": {
+    "title": "Quiz",
+    "answerAllQuestions": "Rispondi a tutte le domande e invia alla fine.",
+    "askFollowUp": "Fai una domanda di follow-up...",
+    "gradingCriteria": "Descrivi come valutare questa domanda...",
+    "additionalCriteria": "Ulteriori criteri di valutazione...",
+    "aiGrading": "Impostazioni di valutazione AI",
+    "expectedAnswer": "Inserisci la risposta corretta prevista...",
+    "export": "Esportare",
+    "import": "Importare",
+    "undo": "Disfare",
+    "redo": "Rifare"
+  },
+  "flashcards": {
+    "front": "Fronte",
+    "back": "Indietro",
+    "termOrQuestion": "Termine o domanda",
+    "definitionOrAnswer": "Definizione o risposta"
+  },
+  "notes": {
+    "createNotes": "Crea note da testo, file o progetti precedenti.",
+    "enterText": "Inizia a scrivere il tuo contenuto RTF..."
+  },
+  "blocks": {
+    "enterText": "Inserisci il contenuto del testo...",
+    "enterCode": "Inserisci il tuo codice...",
+    "yourAnswer": "Scrivi la tua risposta qui...",
+    "followUpQuestion": "Fai una domanda di follow-up...",
+    "nodeTitle": "Titolo del nodo",
+    "detailedDescription": "Descrizione dettagliata",
+    "calloutText": "Inserisci il testo del callout...",
+    "quoteText": "Inserisci il preventivo...",
+    "authorName": "Nome dell'autore...",
+    "source": "Libro, articolo, ecc...",
+    "caption": "Aggiungi una didascalia...",
+    "mediaUrl": "Inserisci l'URL del supporto...",
+    "embedUrl": "Inserisci l'URL del contenuto incorporato...",
+    "matchItems": "Abbina gli articoli...",
+    "putInOrder": "Metti in ordine...",
+    "acceptSynonyms": "ad esempio, accetta i sinonimi, concentrati sui concetti chiave..."
+  },
+  "assignments": {
+    "assignmentTitle": "Titolo dell'incarico",
+    "extraInstructions": "Aggiungi eventuali istruzioni o contesto aggiuntivi per i tuoi studenti.",
+    "instructionsDetails": "Aggiungi istruzioni o dettagli per gli studenti",
+    "selectType": "Seleziona il tipo",
+    "selectClass": "Seleziona classe",
+    "weekLecture": "ad esempio, lezione della settimana 1"
+  },
+  "submissions": {
+    "writeSubmission": "Scrivi qui la presentazione del tuo compito...",
+    "fileUploadComing": "Il caricamento del file sarà disponibile a breve...",
+    "provideFeedback": "Fornisci feedback costruttivi...",
+    "addComment": "Aggiungi un commento...",
+    "grade": "Grado",
+    "e": {
+      "g8": {
+        "5": "ad esempio, 8.5"
+      }
+    }
+  },
+  "announcements": {
+    "announcementTitle": "Inserisci il titolo dell'annuncio",
+    "announcementMessage": "Inserisci il tuo messaggio di annuncio"
+  },
+  "verification": {
+    "enterCode": "Inserisci il codice di verifica di 8 cifre",
+    "verificationCode": "Codice di verifica di 8 cifre"
+  },
+  "subjectEditor": {
+    "e": {
+      "gStudyOfLiving": "ad esempio, studio degli organismi viventi, delle cellule, della genetica e degli ecosistemi..."
+    },
+    "introduction": "ad esempio, Introduzione"
+  },
+  "chapterEditor": {
+    "newChapterTitle": "ad esempio, Concetti di base",
+    "newChapterDescription": "Descrizione del capitolo"
+  },
+  "paragraphEditor": {
+    "newParagraphTitle": "ad esempio, Concetti di base",
+    "newParagraphDescription": "Descrizione del paragrafo"
+  },
+  "teacherCode": {
+    "enterCode": "Inserisci il tuo codice insegnante"
+  },
+  "upgrade": {
+    "upgrade": "Aggiornamento"
+  },
+  "search": {
+    "search": "Ricerca..."
+  },
+  "wordweb": {
+    "addNotes": "Aggiungi note, annotazioni o testo qui..."
+  },
+  "paragraphs": {
+    "newParagraph": "ad esempio, serie di esercizi A"
+  }
+}

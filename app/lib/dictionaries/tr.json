@@ -1,0 +1,367 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "subjects": "Konular",
+    "classes": "Sınıflar",
+    "agenda": "Gündem",
+    "material": "Malzeme",
+    "settings": "Ayarlar",
+    "tools": {
+      "title": "Aletler",
+      "quizGenerator": "Quiz",
+      "flashcardMaker": "Flashcards",
+      "materialProcessor": "Proses Malzemesi",
+      "notes": "Notlar",
+      "blocks": "Bloklar"
+    }
+  },
+  "header": {
+    "studentDashboard": "Öğrenci Kontrol Paneli",
+    "teacherDashboard": "Öğretmen Kontrol Paneli",
+    "roleSwitcher": "Rol Değiştirici",
+    "myAccount": "Hesabım",
+    "logOut": "Oturumu kapat",
+    "logIn": "Giriş yapmak"
+  },
+  "dashboard": {
+    "title": "Kontrol Paneli",
+    "todayPlan": {
+      "title": "Bugünkü Çalışma Planınız",
+      "description": "Bu görevler sizin için yapay zeka tarafından hazırlandı.",
+      "completed": "Tamamlanmış"
+    },
+    "alerts": {
+      "title": "Önemli Uyarılar",
+      "description": "Riskler ve öncelikler"
+    },
+    "upcomingDeadlines": {
+      "title": "Yaklaşan Son Tarihler",
+      "description": "Yaklaşan ödevlerinize ve testlerinize genel bakış.",
+      "due": "Vadesi dolmuş",
+      "onTrack": "Yolda",
+      "risk": "Risk",
+      "behind": "Arka",
+      "viewAgenda": "Tüm Gündemi Görüntüle"
+    },
+    "mySubjects": {
+      "title": "Konularınız",
+      "description": "Konularınıza hızlı bir genel bakış."
+    },
+    "aiSuggestions": {
+      "title": "Yapay Zeka Önerileri",
+      "description": "Kişisel asistanınız"
+    },
+    "quickAccess": {
+      "title": "Hızlı Erişim",
+      "description": "Son zamanlarda kullandığınız malzemeler."
+    },
+    "statistics": {
+      "title": "İstatistikler",
+      "description": "Bu haftaki çalışma süreniz.",
+      "weeklyActivity": "Haftalık Etkinlik",
+      "lastSessionRecap": "Son Oturum Özeti"
+    }
+  },
+  "tools": {
+    "title": "Aletler",
+    "description": "Öğrenmeyi hızlandıracak akıllı araçlar paketiniz.",
+    "select": "Aracı Seç",
+    "quiz": {
+      "title": "Sınav",
+      "description": "Herhangi bir metinden çoktan seçmeli testler oluşturun. Çeşitli zorlu modlarla bilginizi sınayın."
+    },
+    "flashcards": {
+      "title": "Bilgi Kartları",
+      "description": "Temel kavramları güçlendirmek için çalışma materyallerinizden otomatik olarak bilgi kartları oluşturun."
+    },
+    "notes": {
+      "title": "Notlar",
+      "description": "Çalışma notlarınızı tek bir yerde oluşturun ve düzenleyin."
+    },
+    "blocks": {
+      "title": "Bloklar",
+      "description": "Blok düzenleyicimizle yapılandırılmış içerik oluşturun."
+    },
+    "wordweb": {
+      "title": "Kelime Ağı",
+      "description": "Etkileşimli kelime ağlarıyla kavramlar arasındaki bağlantıları görselleştirin."
+    },
+    "material": {
+      "title": "Proses Malzemesi",
+      "description": "Ana noktaları hızlı bir şekilde kavramak için yüklenen herhangi bir belgenin veya yapıştırılan metnin kısa bir özetini alın."
+    }
+  },
+  "material": {
+    "noteTitle": "Not Başlığı",
+    "e": {
+      "gChapter1": "ör. Bölüm 1: Rönesans"
+    },
+    "sourceText": "Ders kitabınızdaki, makalenizdeki veya diğer kaynak materyalinizdeki metni buraya yapıştırın...",
+    "fileTitle": "ör. Bölüm 5 Okuması"
+  },
+  "agenda": {
+    "title": "Gündem",
+    "description": "Son teslim tarihleri, görevler ve kişisel randevulardan oluşan birleştirilmiş takviminiz.",
+    "eventsOn": "Etkinlikler",
+    "noEvents": "Bu gün için planlanmış bir etkinlik yok.",
+    "addTask": "Görev Ekle",
+    "today": "Bugün",
+    "week": "Hafta",
+    "month": "Ay",
+    "monday": "Pazartesi",
+    "tuesday": "Salı",
+    "wednesday": "Çar",
+    "thursday": "Per",
+    "friday": "Cuma"
+  },
+  "subjects": {
+    "title": "Konular",
+    "description": "Tüm konularınız tek bir yerde.",
+    "noSubjects": "Hiçbir konu bulunamadı.",
+    "addSubject": "Konu Ekle",
+    "chapters": "Bölümler",
+    "paragraphs": "Paragraflar",
+    "assignments": "Atamalar",
+    "progress": "İlerlemek"
+  },
+  "classes": {
+    "searchClasses": "Sınıfları ara...",
+    "className": "Sınıf Adı",
+    "classDescription": "Sınıf Açıklaması",
+    "briefSummary": "Bu dersin neleri kapsayacağının kısa bir özeti.",
+    "e": {
+      "gHistory101": "ör. Tarih 101, İleri Fizik"
+    },
+    "chapterTitle": "Bölüm Başlığı",
+    "chapterDescription": "Bölüm Açıklaması"
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "description": "Hesabınızı ve uygulama ayarlarınızı yönetin.",
+    "general": {
+      "title": "Genel",
+      "description": "Uygulama tercihlerinizi yapılandırın.",
+      "language": "Dil"
+    },
+    "personalization": {
+      "title": "Kişiselleştirme",
+      "description": "Uygulamanızın görünümünü ve renklerini özelleştirin.",
+      "theme": "Tema",
+      "themeDescription": "Tercih ettiğiniz renk şemasını seçin.",
+      "light": "Işık",
+      "dark": "Karanlık",
+      "ocean": "Okyanus"
+    },
+    "accessibility": {
+      "title": "Erişilebilirlik",
+      "description": "Uygulamanın görünümünü ve davranışını ihtiyaçlarınıza uyacak şekilde özelleştirin.",
+      "highContrast": "Yüksek Kontrast Modu",
+      "highContrastDescription": "Metin ve arka plan kontrastını artırın.",
+      "dyslexiaFont": "Disleksi Dostu Yazı Tipi",
+      "dyslexiaFontDescription": "Daha kolay okunabilmesi için tasarlanmış bir yazı tipi kullanın.",
+      "reducedMotion": "Animasyonları Azaltın",
+      "reducedMotionDescription": "Dekoratif animasyonları ve geçişleri kapatın."
+    },
+    "developer": {
+      "title": "Geliştirici Ayarları",
+      "description": "Geliştirme amaçlı geçici ayarlar.",
+      "roleSwitch": "Rolü Değiştir (Yalnızca Geliştirici)",
+      "roleSwitchDescription": "Öğrenci ve öğretmen görünümü arasında geçiş yapın. Bu geliştirme amaçlıdır ve kaldırılacaktır."
+    }
+  },
+  "common": {
+    "save": "Kaydet",
+    "cancel": "İptal etmek",
+    "delete": "Silmek",
+    "edit": "Düzenlemek",
+    "add": "Eklemek",
+    "create": "Yaratmak",
+    "update": "Güncelleme",
+    "submit": "Göndermek",
+    "close": "Kapalı",
+    "back": "Geri",
+    "next": "Sonraki",
+    "previous": "Öncesi",
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarı",
+    "confirm": "Onaylamak",
+    "yes": "Evet",
+    "no": "HAYIR",
+    "search": "Ara",
+    "filter": "Filtre",
+    "sort": "Düzenlemek",
+    "view": "Görüş",
+    "download": "İndirmek",
+    "upload": "Yüklemek",
+    "share": "Paylaşmak",
+    "copy": "Kopyala",
+    "paste": "Yapıştır",
+    "undo": "Geri al",
+    "redo": "Yinele",
+    "reset": "Sıfırla",
+    "clear": "Temizlemek",
+    "refresh": "Yenile",
+    "retry": "Yeniden dene",
+    "more": "Daha",
+    "less": "Az",
+    "all": "Tüm",
+    "none": "Hiçbiri",
+    "select": "Seçme",
+    "selected": "Seçildi",
+    "optional": "İsteğe bağlı",
+    "required": "Gerekli"
+  },
+  "auth": {
+    "login": "Giriş yapmak",
+    "logout": "Oturumu Kapat",
+    "signup": "Üye olmak",
+    "email": "E-posta",
+    "password": "Şifre",
+    "confirmPassword": "Şifreyi Onayla",
+    "forgotPassword": "Parolanızı mı unuttunuz?",
+    "resetPassword": "Şifreyi Sıfırla",
+    "dontHaveAccount": "Hesabınız yok mu?",
+    "alreadyHaveAccount": "Zaten bir hesabınız var mı?",
+    "orContinueWith": "Veya ile devam edin"
+  },
+  "notifications": {
+    "title": "Bildirimler",
+    "noNotifications": "Bildirim yok",
+    "markAsRead": "Okundu olarak işaretle",
+    "markAllAsRead": "Tümünü okundu olarak işaretle",
+    "clearAll": "Tümünü temizle"
+  },
+  "errors": {
+    "somethingWentWrong": "Bir şeyler ters gitti",
+    "pageNotFound": "Sayfa bulunamadı",
+    "unauthorized": "Yetkisiz",
+    "forbidden": "Yasaklı",
+    "tryAgain": "Tekrar deneyin"
+  },
+  "setup": {
+    "welcome": "Cautie'ye hoş geldiniz",
+    "getStarted": "Hadi sizi ayarlayalım",
+    "step": "Adım",
+    "of": "ile ilgili",
+    "next": "Sonraki",
+    "back": "Geri",
+    "finish": "Kurulumu Bitir",
+    "language": {
+      "title": "Dilinizi seçin",
+      "description": "Uygulamada kullanmak istediğiniz dili seçin."
+    },
+    "theme": {
+      "title": "Temanızı seçin",
+      "description": "Size uygun bir renk şeması seçin."
+    },
+    "profile": {
+      "title": "Profilinizi ayarlayın",
+      "description": "Deneyiminizi kişiselleştirmek için bize biraz kendinizden bahsedin.",
+      "firstName": "İlk adı",
+      "lastName": "Soy isim",
+      "role": "Ben bir...",
+      "student": "Öğrenci",
+      "teacher": "Öğretmen",
+      "saveProfile": "Profili Kaydet"
+    }
+  },
+  "quiz": {
+    "title": "Sınav",
+    "answerAllQuestions": "Tüm soruları yanıtlayın ve sonunda gönderin.",
+    "askFollowUp": "Bir devam sorusu sorun...",
+    "gradingCriteria": "Bu soruya nasıl not vereceğinizi açıklayın...",
+    "additionalCriteria": "Ek derecelendirme kriterleri...",
+    "aiGrading": "AI Not Verme Ayarları",
+    "expectedAnswer": "Beklenen doğru cevabı girin...",
+    "export": "İhracat",
+    "import": "İçe aktarmak",
+    "undo": "Geri al",
+    "redo": "Yinele"
+  },
+  "flashcards": {
+    "front": "Ön",
+    "back": "Geri",
+    "termOrQuestion": "Terim veya soru",
+    "definitionOrAnswer": "Tanım veya cevap"
+  },
+  "notes": {
+    "createNotes": "Metinden, dosyalardan veya önceki projelerden notlar oluşturun.",
+    "enterText": "Zengin metin içeriğinizi yazmaya başlayın..."
+  },
+  "blocks": {
+    "enterText": "Metin içeriğini girin...",
+    "enterCode": "Kodunuzu girin...",
+    "yourAnswer": "Cevabınızı buraya yazın...",
+    "followUpQuestion": "Bir devam sorusu sorun...",
+    "nodeTitle": "Düğüm başlığı",
+    "detailedDescription": "Ayrıntılı açıklama",
+    "calloutText": "Ek bilgi metnini girin...",
+    "quoteText": "Teklifi girin...",
+    "authorName": "Yazar adı...",
+    "source": "Kitap, makale vb...",
+    "caption": "Bir başlık ekleyin...",
+    "mediaUrl": "Medya URL'sini girin...",
+    "embedUrl": "Gömülü içerik URL'sini girin...",
+    "matchItems": "Eşyaları eşleştir...",
+    "putInOrder": "Düzene koyun...",
+    "acceptSynonyms": "örneğin, Eş anlamlıları kabul edin, temel kavramlara odaklanın..."
+  },
+  "assignments": {
+    "assignmentTitle": "Ödev Başlığı",
+    "extraInstructions": "Öğrencileriniz için ekstra talimatlar veya bağlam ekleyin.",
+    "instructionsDetails": "Öğrenciler için talimatlar veya ayrıntılar ekleyin",
+    "selectType": "Tür seçin",
+    "selectClass": "Sınıf seçin",
+    "weekLecture": "ör. 1. Hafta Dersi"
+  },
+  "submissions": {
+    "writeSubmission": "Ödev tesliminizi buraya yazın...",
+    "fileUploadComing": "Dosya yüklemesi yakında...",
+    "provideFeedback": "Yapıcı geri bildirim sağlayın...",
+    "addComment": "Yorum ekleyin...",
+    "grade": "Seviye",
+    "e": {
+      "g8": {
+        "5": "örneğin 8,5"
+      }
+    }
+  },
+  "announcements": {
+    "announcementTitle": "Duyuru başlığını girin",
+    "announcementMessage": "Duyuru mesajınızı girin"
+  },
+  "verification": {
+    "enterCode": "8 haneli doğrulama kodunu girin",
+    "verificationCode": "8 haneli doğrulama kodu"
+  },
+  "subjectEditor": {
+    "e": {
+      "gStudyOfLiving": "örneğin, canlı organizmaların, hücrelerin, genetiğin ve ekosistemlerin incelenmesi..."
+    },
+    "introduction": "örneğin Giriş"
+  },
+  "chapterEditor": {
+    "newChapterTitle": "örneğin, Temel Kavramlar",
+    "newChapterDescription": "Bölüm açıklaması"
+  },
+  "paragraphEditor": {
+    "newParagraphTitle": "örneğin, Temel Kavramlar",
+    "newParagraphDescription": "Paragraf açıklaması"
+  },
+  "teacherCode": {
+    "enterCode": "Öğretmen kodunuzu girin"
+  },
+  "upgrade": {
+    "upgrade": "Güncelleme"
+  },
+  "search": {
+    "search": "Aramak..."
+  },
+  "wordweb": {
+    "addNotes": "Buraya notlar, açıklamalar veya metin ekleyin..."
+  },
+  "paragraphs": {
+    "newParagraph": "örneğin, Egzersiz Seti A"
+  }
+}

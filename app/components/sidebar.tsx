@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import dynamic from 'next/dynamic';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -92,6 +92,46 @@ export function AppSidebar() {
   });
 
   const isTeacher = context?.role === 'teacher';
+  const isDutch = context?.language === 'nl';
+  const t = {
+    manage: isDutch ? 'Beheer' : 'Manage',
+    studyset: isDutch ? 'Studieset' : 'Studyset',
+    materials: isDutch ? 'Materialen' : 'Materials',
+    untitledClass: isDutch ? 'Naamloze klas' : 'Untitled class',
+    untitledSubject: isDutch ? 'Naamloos vak' : 'Untitled subject',
+    classesLoadError: isDutch ? 'Kon klassen niet laden' : 'Could not load classes',
+    subjectsLoadError: isDutch ? 'Kon vakken niet laden' : 'Could not load subjects',
+    classCreated: isDutch ? 'Klas aangemaakt' : 'Class created',
+    createClassError: isDutch ? 'Kon klas niet aanmaken' : 'Could not create class',
+    createSubjectError: isDutch ? 'Kon vak niet aanmaken' : 'Could not create subject',
+    joinClassError: isDutch ? 'Kon niet deelnemen aan klas' : 'Could not join class',
+    tryAgain: isDutch ? 'Probeer opnieuw.' : 'Try again.',
+    sectionMain: isDutch ? 'hoofd' : 'main',
+    sectionTools: isDutch ? 'tools' : 'tools',
+    sectionOther: isDutch ? 'overig' : 'other',
+    sectionRecents: isDutch ? 'recent' : 'recents',
+    upgrade: isDutch ? 'upgraden' : 'upgrade',
+    selectDifferentClass: isDutch ? 'selecteer andere klas' : 'select different class',
+    joinClass: isDutch ? 'Deelnemen klas' : 'Join class',
+    createNewClass: isDutch ? 'Nieuwe klas maken' : 'Create New Class',
+    joinClassAsTeacher: isDutch ? 'Deelnemen als docent' : 'Join Class as Teacher',
+    createClassSubtitle: isDutch
+      ? 'Stel je klas in met naam, optionele beschrijving en eerste vak.'
+      : 'Set up your class with name, optional description, and first subject.',
+    joinClassSubtitle: isDutch
+      ? 'Neem deel met een code en koppel je vak in deze klas.'
+      : 'Join an existing class using a code and define your subject in that class.',
+    close: isDutch ? 'Sluiten' : 'Close',
+    className: isDutch ? 'Klasnaam' : 'Class name',
+    classDescriptionOptional: isDutch ? 'Beschrijving (optioneel)' : 'Description (optional)',
+    firstSubject: isDutch ? 'Eerste vak' : 'First subject',
+    cancel: isDutch ? 'Annuleren' : 'Cancel',
+    creatingClass: isDutch ? 'Klas maken...' : 'Creating class...',
+    createClass: isDutch ? 'Klas maken' : 'Create Class',
+    joinCode: isDutch ? 'Deelnamecode' : 'Join code',
+    yourSubject: isDutch ? 'Jouw vak' : 'Your subject',
+    joining: isDutch ? 'Bezig met deelnemen...' : 'Joining...',
+  };
   const isRailCollapsed = !isPhone && sidebarState === 'collapsed';
   const activeClassTab = searchParams?.get('tab') || '';
   const effectiveTeacherClassId =
@@ -107,25 +147,25 @@ export function AppSidebar() {
     ? [
         { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
         { href: teacherSubjectsHref, label: dictionary.sidebar.subjects, icon: BookOpen },
-        { href: teacherManageHref, label: 'Manage', icon: School },
+        { href: teacherManageHref, label: t.manage, icon: School },
         { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: Calendar },
       ]
     : [
         { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
         { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
-        { href: '/classes', label: 'Manage', icon: School },
+        { href: '/classes', label: t.manage, icon: School },
         { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
       ];
 
   const toolsMenuItems = [
-    { href: '/tools/studyset', label: 'Studyset', icon: Route },
+    { href: '/tools/studyset', label: t.studyset, icon: Route },
     { href: '/tools/quiz', label: dictionary.sidebar.tools.quizGenerator, icon: BrainCircuit },
     { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: Copy },
     { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: FileSignature },
   ];
 
   const otherMenuItems = [
-    { href: '/other/materials', label: 'Materials', icon: FolderOpen },
+    { href: '/other/materials', label: t.materials, icon: FolderOpen },
   ];
 
   useEffect(() => {
@@ -159,12 +199,12 @@ export function AppSidebar() {
     return [...classItems]
       .filter((classItem) => classItem.status !== 'archived')
       .sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || '')))
-      .map((classItem) => ({
+        .map((classItem) => ({
         id: classItem.id,
-        label: String(classItem?.name || 'Untitled class'),
+        label: String(classItem?.name || t.untitledClass),
         href: `/class/${classItem.id}`,
       }));
-  }, [classItems]);
+  }, [classItems, t.untitledClass]);
 
   const subjectDropdownItems = useMemo(
     () =>
@@ -172,10 +212,10 @@ export function AppSidebar() {
         .sort((a, b) => String(a?.title || '').localeCompare(String(b?.title || '')))
         .map((subject) => ({
           id: subject.id,
-          label: String(subject?.title || 'Untitled subject'),
+          label: String(subject?.title || t.untitledSubject),
           href: `/subjects/${subject.id}`,
         })),
-    [subjectItems]
+    [subjectItems, t.untitledSubject]
   );
 
   const persistTeacherClassId = (nextClassId: string) => {
@@ -339,8 +379,8 @@ export function AppSidebar() {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: kind === 'classes' ? 'Could not load classes' : 'Could not load subjects',
-        description: error?.message || 'Try again.',
+        title: kind === 'classes' ? t.classesLoadError : t.subjectsLoadError,
+        description: error?.message || t.tryAgain,
       });
     }
   };
@@ -377,14 +417,14 @@ export function AppSidebar() {
         await loadDropdownData('classes');
         router.replace(resolveTeacherClassRoute(data.id));
       }
-      toast({ title: 'Class created' });
+      toast({ title: t.classCreated });
       setClassName('');
       setClassDescription('');
       setClassSubjectTitle('');
       setCreateClassOpen(false);
       setNewClassMenuOpen(false);
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Could not create class', description: error?.message || 'Try again.' });
+      toast({ variant: 'destructive', title: t.createClassError, description: error?.message || t.tryAgain });
     } finally {
       setSubmitting(false);
     }
@@ -414,7 +454,7 @@ export function AppSidebar() {
       setCreateSubjectOpen(false);
       await loadDropdownData('subjects');
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Could not create subject', description: error?.message || 'Try again.' });
+      toast({ variant: 'destructive', title: t.createSubjectError, description: error?.message || t.tryAgain });
     } finally {
       setSubmitting(false);
     }
@@ -454,7 +494,7 @@ export function AppSidebar() {
       setNewClassMenuOpen(false);
       await loadDropdownData('classes');
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Could not join class', description: error?.message || 'Try again.' });
+      toast({ variant: 'destructive', title: t.joinClassError, description: error?.message || t.tryAgain });
     } finally {
       setSubmitting(false);
     }
@@ -561,7 +601,9 @@ export function AppSidebar() {
   const renderFloatingDropdown = () => {
     if (!dropdown) return null;
     const items = dropdown.kind === 'classes' ? classDropdownItems : subjectDropdownItems;
-    const emptyText = dropdown.kind === 'classes' ? 'No classes found' : 'No subjects found';
+    const emptyText = dropdown.kind === 'classes'
+      ? (isDutch ? 'Geen klassen gevonden' : 'No classes found')
+      : (isDutch ? 'Geen vakken gevonden' : 'No subjects found');
     const loading =
       dropdown.kind === 'classes'
         ? context?.preloadSnapshot['classes:list']?.status === 'loading'
@@ -578,7 +620,7 @@ export function AppSidebar() {
         <div className="w-max min-w-[11rem] max-w-[22rem] max-h-[65vh] overflow-auto p-1.5">
           {dropdown.kind === 'classes' && (
             <div className="px-2 py-1 text-[12px] tracking-[0.08em] text-muted-foreground lowercase">
-              select different class
+                {t.selectDifferentClass}
             </div>
           )}
           <div className="mb-1 flex gap-1 border-b border-border/80 pb-1">
@@ -586,7 +628,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[12px] font-medium text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
+                className="h-8 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[12px] text-sidebar-foreground hover:bg-sidebar-accent/90"
                 onClick={() => {
                   setNewClassMenuOpen(false);
                   setCreateClassOpen(false);
@@ -594,30 +636,30 @@ export function AppSidebar() {
                   setCreateClassOpen(true);
                 }}
               >
-                + New class
+                + {isDutch ? 'Nieuwe klas' : 'New class'}
               </Button>
             )}
             {dropdown.kind === 'classes' && !isTeacher && (
               <Button
                 size="sm"
                 variant="outline"
-                  className="h-8 text-[12px] rounded-lg border-sidebar-border/80 bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
+                  className="h-8 text-[12px] rounded-lg border-sidebar-border/80 bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-accent/90"
                 onClick={() => {
                   setJoinClassOpen((v) => !v);
                   setCreateClassOpen(false);
                 }}
               >
-                Join class
+                {t.joinClass}
               </Button>
             )}
             {dropdown.kind === 'subjects' && isTeacher && (
               <Button
                 size="sm"
                 variant="outline"
-                  className="h-8 text-[12px] rounded-lg border-sidebar-border/80 bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90"
+                  className="h-8 text-[12px] rounded-lg border-sidebar-border/80 bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-accent/90"
                 onClick={() => setCreateSubjectOpen((v) => !v)}
               >
-                + Create subject
+                + {isDutch ? 'Vak maken' : 'Create subject'}
               </Button>
             )}
           </div>
@@ -629,7 +671,7 @@ export function AppSidebar() {
                 onChange={(e) => setSelectedSubjectClassId(e.target.value)}
                 className="h-8 w-full rounded border border-border bg-background px-2 text-sm"
               >
-                <option value="">Select class</option>
+                <option value="">{isDutch ? 'Selecteer klas' : 'Select class'}</option>
                 {classDropdownItems.map((classItem) => (
                   <option key={classItem.id} value={classItem.id}>
                     {classItem.label}
@@ -637,7 +679,7 @@ export function AppSidebar() {
                 ))}
               </select>
               <Input
-                placeholder="Subject title"
+                placeholder={isDutch ? 'Vaktitel' : 'Subject title'}
                 value={subjectTitle}
                 onChange={(e) => setSubjectTitle(e.target.value)}
                 className="h-8 text-sm"
@@ -649,7 +691,7 @@ export function AppSidebar() {
                   onClick={submitCreateSubject}
                   disabled={submitting || !subjectTitle.trim() || !selectedSubjectClassId}
                 >
-                  Create
+                  {isDutch ? 'Maken' : 'Create'}
                 </Button>
               </div>
             </div>
@@ -660,30 +702,30 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                 className="h-8 w-full justify-start rounded-xl text-[12px] font-medium"
+                 className="h-8 w-full justify-start rounded-xl text-[12px]"
                 onClick={() => {
                   setCreateClassOpen(true);
                   setNewClassMenuOpen(false);
                 }}
               >
-                Create new class
+                {isDutch ? 'Nieuwe klas maken' : 'Create new class'}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
-                 className="h-8 w-full justify-start rounded-xl text-[12px] font-medium"
+                 className="h-8 w-full justify-start rounded-xl text-[12px]"
                 onClick={() => {
                   setJoinClassOpen(true);
                   setNewClassMenuOpen(false);
                 }}
               >
-                Join as teacher (collaborate)
+                {isDutch ? 'Deelnemen als docent (samenwerken)' : 'Join as teacher (collaborate)'}
               </Button>
             </div>
           )}
 
           {loading ? (
-            <p className="px-2 py-1.5 text-xs text-muted-foreground">Loading...</p>
+            <p className="px-2 py-1.5 text-xs text-muted-foreground">{isDutch ? 'Laden...' : 'Loading...'}</p>
           ) : items.length === 0 ? (
             <p className="px-2 py-1.5 text-xs text-muted-foreground">{emptyText}</p>
           ) : (
@@ -694,8 +736,8 @@ export function AppSidebar() {
                 className={cn(
                   'flex items-center justify-between gap-2 truncate rounded-xl px-2.5 py-2 text-[13px] transition-colors',
                   dropdown.kind === 'classes' && entry.id === effectiveTeacherClassId
-                    ? 'bg-sidebar-accent text-[hsl(var(--sidebar-active-foreground))]'
-                    : 'hover:bg-sidebar-accent text-muted-foreground hover:text-[hsl(var(--sidebar-active-foreground))]'
+                    ? 'bg-sidebar-accent text-sidebar-foreground'
+                    : 'hover:bg-sidebar-accent text-muted-foreground hover:text-sidebar-foreground'
                 )}
                 onClick={(event) => {
                   if (dropdown.kind === 'classes' && isTeacher) {
@@ -740,7 +782,7 @@ export function AppSidebar() {
       return (
         <div className="mb-2 px-2">
           <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
-            class
+            {isDutch ? 'klas' : 'class'}
           </label>
           <select
             value={effectiveTeacherClassId}
@@ -756,10 +798,10 @@ export function AppSidebar() {
               setOpenMobile(false);
             }}
             disabled={classDropdownItems.length === 0}
-            className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-3 text-[12px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))] disabled:opacity-60"
+            className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-3 text-[12px] text-sidebar-foreground transition-colors hover:bg-[hsl(var(--surface-2))] disabled:opacity-60"
           >
             {classDropdownItems.length === 0 ? (
-              <option value="">no classes</option>
+              <option value="">{isDutch ? 'geen klassen' : 'no classes'}</option>
             ) : (
               classDropdownItems.map((classItem) => (
                 <option key={classItem.id} value={classItem.id}>
@@ -776,12 +818,12 @@ export function AppSidebar() {
       <>
       <div className="mb-1.5 px-2">
         <label className="mb-1 block text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
-          class
+          {isDutch ? 'klas' : 'class'}
         </label>
         <Button
           size="sm"
           variant="outline"
-          className="mb-1 h-7 w-full justify-start rounded-xl border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-2.5 text-[11px] font-normal text-[hsl(var(--sidebar-active-foreground))] hover:bg-[hsl(var(--surface-2))]"
+          className="mb-1 h-7 w-full justify-start rounded-xl border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-2.5 text-[11px] font-normal text-sidebar-foreground hover:bg-[hsl(var(--surface-2))]"
           onClick={(event) => {
             openDropdownFor('classes', event.currentTarget);
             setNewClassMenuOpen(false);
@@ -789,7 +831,7 @@ export function AppSidebar() {
             setCreateClassOpen(true);
           }}
         >
-          + New class
+          + {isDutch ? 'Nieuwe klas' : 'New class'}
         </Button>
         <button
           ref={classDropdownTriggerRef}
@@ -802,11 +844,11 @@ export function AppSidebar() {
             openDropdownFor('classes', event.currentTarget);
           }}
           disabled={classDropdownItems.length === 0}
-          className="h-7 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-2.5 text-left text-[11px] text-[hsl(var(--sidebar-active-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))] disabled:opacity-60"
+          className="h-7 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-2.5 text-left text-[11px] text-sidebar-foreground transition-colors hover:bg-[hsl(var(--surface-2))] disabled:opacity-60"
         >
           <span className="flex items-center justify-between gap-2">
               <span className="truncate">
-              {classDropdownItems.find((classItem) => classItem.id === effectiveTeacherClassId)?.label || 'no classes'}
+              {classDropdownItems.find((classItem) => classItem.id === effectiveTeacherClassId)?.label || (isDutch ? 'geen klassen' : 'no classes')}
             </span>
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </span>
@@ -817,13 +859,13 @@ export function AppSidebar() {
           <div className="w-full max-w-3xl rounded-3xl border border-border bg-[hsl(var(--surface-1))] shadow-2xl">
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
               <div>
-                <h3 className="text-xl font-semibold leading-tight">
-                  {createClassOpen ? 'Create New Class' : 'Join Class as Teacher'}
+                <h3 className="text-xl leading-tight">
+                  {createClassOpen ? t.createNewClass : t.joinClassAsTeacher}
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   {createClassOpen
-                    ? 'Set up your class with name, optional description, and first subject.'
-                    : 'Join an existing class using a code and define your subject in that class.'}
+                    ? t.createClassSubtitle
+                    : t.joinClassSubtitle}
                 </p>
               </div>
               <Button
@@ -834,14 +876,14 @@ export function AppSidebar() {
                   setJoinClassOpen(false);
                 }}
               >
-                Close
+                {t.close}
               </Button>
             </div>
             <div className="space-y-5 px-6 py-5">
               {createClassOpen && (
                 <>
                   <div className="space-y-1.5">
-                    <p className="text-sm text-muted-foreground">Class name</p>
+                    <p className="text-sm text-muted-foreground">{t.className}</p>
                     <Input
                       placeholder=""
                       value={className}
@@ -850,7 +892,7 @@ export function AppSidebar() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-sm text-muted-foreground">Description (optional)</p>
+                    <p className="text-sm text-muted-foreground">{t.classDescriptionOptional}</p>
                     <Input
                       placeholder=""
                       value={classDescription}
@@ -859,7 +901,7 @@ export function AppSidebar() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-sm text-muted-foreground">First subject</p>
+                    <p className="text-sm text-muted-foreground">{t.firstSubject}</p>
                     <Input
                       placeholder=""
                       value={classSubjectTitle}
@@ -874,14 +916,14 @@ export function AppSidebar() {
                       onClick={() => setCreateClassOpen(false)}
                       disabled={submitting}
                     >
-                      Cancel
+                      {t.cancel}
                     </Button>
                     <Button
                       className="h-10 px-4"
                       onClick={submitCreateClass}
                       disabled={submitting || !className.trim() || !classSubjectTitle.trim()}
                     >
-                      {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating class...</> : 'Create Class'}
+                      {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.creatingClass}</> : t.createClass}
                     </Button>
                   </div>
                 </>
@@ -889,7 +931,7 @@ export function AppSidebar() {
               {joinClassOpen && (
                 <>
                   <div className="space-y-1.5">
-                    <p className="text-sm text-muted-foreground">Join code</p>
+                    <p className="text-sm text-muted-foreground">{t.joinCode}</p>
                     <Input
                       placeholder=""
                       value={joinCode}
@@ -899,7 +941,7 @@ export function AppSidebar() {
                   </div>
                   {isTeacher && (
                     <div className="space-y-1.5">
-                      <p className="text-sm text-muted-foreground">Your subject</p>
+                      <p className="text-sm text-muted-foreground">{t.yourSubject}</p>
                       <Input
                         placeholder=""
                         value={joinSubjectTitle}
@@ -915,14 +957,14 @@ export function AppSidebar() {
                       onClick={() => setJoinClassOpen(false)}
                       disabled={submitting}
                     >
-                      Cancel
+                      {t.cancel}
                     </Button>
                     <Button
                       className="h-10 px-4"
                       onClick={submitJoinClass}
                       disabled={submitting || !joinCode.trim() || (isTeacher && !joinSubjectTitle.trim())}
                     >
-                      {submitting ? 'Joining...' : 'Join Class'}
+                      {submitting ? t.joining : t.joinClass}
                     </Button>
                   </div>
                 </>
@@ -967,7 +1009,7 @@ export function AppSidebar() {
                       className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                         isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)
-                          ? "bg-[hsl(var(--sidebar-accent)/1)] text-[hsl(var(--sidebar-active-foreground))] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                          ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                           : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                       )}
                       title={item.label}
@@ -981,7 +1023,7 @@ export function AppSidebar() {
                     className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                       isMenuItemActive(item.href)
-                        ? "bg-[hsl(var(--sidebar-accent)/1)] text-[hsl(var(--sidebar-active-foreground))] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                        ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                         : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                     )}
                     title={item.label}
@@ -999,7 +1041,7 @@ export function AppSidebar() {
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                   isMenuItemActive(item.href)
-                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-[hsl(var(--sidebar-active-foreground))] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                     : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                 )}
                 title={item.label}
@@ -1015,7 +1057,7 @@ export function AppSidebar() {
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                   isMenuItemActive(item.href)
-                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-[hsl(var(--sidebar-active-foreground))] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                     : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                 )}
                 title={item.label}
@@ -1030,7 +1072,7 @@ export function AppSidebar() {
             <Link
               href="/upgrade"
               className="flex h-8 w-8 items-center justify-center rounded-md text-sidebar-foreground transition-colors hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
-              title="Upgrade"
+              title={isDutch ? 'Upgraden' : 'Upgrade'}
             >
               <ArrowUpRight className="h-4 w-4" />
             </Link>
@@ -1043,7 +1085,7 @@ export function AppSidebar() {
             {renderTeacherClassSwitcher()}
             {visibleMainItems.length > 0 && (
               <>
-                 <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">main</p>
+                 <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionMain}</p>
                 <SidebarMenu>
                   {visibleMainItems.map((item) => (
                     <SidebarMenuItem key={item.label} className="relative">
@@ -1083,7 +1125,7 @@ export function AppSidebar() {
             {visibleToolsItems.length > 0 && (
               <>
                 {visibleMainItems.length > 0 && <div className="h-5" />}
-                <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">tools</p>
+                <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionTools}</p>
                 <SidebarMenu>
                   {visibleToolsItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
@@ -1106,7 +1148,7 @@ export function AppSidebar() {
             {visibleOtherItems.length > 0 && (
               <>
                 {(visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
-                <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">other</p>
+                <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionOther}</p>
                 <SidebarMenu>
                   {visibleOtherItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
@@ -1128,7 +1170,7 @@ export function AppSidebar() {
 
             <div className="space-y-2">
               {(visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
-              <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">recents</p>
+              <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionRecents}</p>
               <RecentsSidebar />
             </div>
           </SidebarContent>
@@ -1151,7 +1193,7 @@ export function AppSidebar() {
         {renderTeacherClassSwitcher()}
         {visibleMainItems.length > 0 && (
           <>
-            <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">main</p>
+            <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">{t.sectionMain}</p>
             <SidebarMenu>
               {visibleMainItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
@@ -1190,7 +1232,7 @@ export function AppSidebar() {
         {visibleToolsItems.length > 0 && (
           <>
             {visibleMainItems.length > 0 && <div className="h-5" />}
-            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">tools</p>
+            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">{t.sectionTools}</p>
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -1213,7 +1255,7 @@ export function AppSidebar() {
         {visibleOtherItems.length > 0 && (
           <>
             {(visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
-            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">other</p>
+            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">{t.sectionOther}</p>
             <SidebarMenu className="group-data-[collapsible=icon]:hidden">
               {visibleOtherItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -1235,7 +1277,7 @@ export function AppSidebar() {
 
         <div className="space-y-2 group-data-[collapsible=icon]:hidden">
           {(visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
-          <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">recents</p>
+          <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionRecents}</p>
           <RecentsSidebar />
         </div>
       </SidebarContent>
@@ -1246,3 +1288,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+

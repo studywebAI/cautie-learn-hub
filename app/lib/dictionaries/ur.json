@@ -1,43 +1,43 @@
 {
   "sidebar": {
-    "dashboard": "ڈیش بورڈ",
+    "dashboard": "Dashboard",
     "subjects": "مضامین",
-    "classes": "کلاسیں",
+    "classes": "کلاسز",
     "agenda": "ایجنڈا",
     "material": "مواد",
     "settings": "ترتیبات",
     "tools": {
       "title": "اوزار",
-      "quizGenerator": "کوئز",
-      "flashcardMaker": "فلیش کارڈ",
-      "materialProcessor": "مواد پروسیسر",
+      "quizGenerator": "Quiz",
+      "flashcardMaker": "Flashcards",
+      "materialProcessor": "عمل کا مواد",
       "notes": "نوٹس",
       "blocks": "بلاکس"
     }
   },
   "header": {
-    "studentDashboard": "طالب علم ڈیش بورڈ",
-    "teacherDashboard": "استاد ڈیش بورڈ",
-    "roleSwitcher": "کردار تبدیل کریں",
+    "studentDashboard": "طلباء کا ڈیش بورڈ",
+    "teacherDashboard": "ٹیچر ڈیش بورڈ",
+    "roleSwitcher": "رول سوئچر",
     "myAccount": "میرا اکاؤنٹ",
-    "logOut": "لاگ آؤٹ",
-    "logIn": "لاگ ان"
+    "logOut": "لاگ آؤٹ کریں۔",
+    "logIn": "لاگ ان کریں۔"
   },
   "dashboard": {
     "title": "ڈیش بورڈ",
     "todayPlan": {
-      "title": "آج کا مطالعہ منصوبہ",
-      "description": "یہ کام AI نے آپ کے لیے تیار کیے ہیں۔",
+      "title": "آج کے لیے آپ کا اسٹڈی پلان",
+      "description": "یہ کام آپ کے لیے AI نے تیار کیے ہیں۔",
       "completed": "مکمل"
     },
     "alerts": {
-      "title": "اہم الرٹ",
+      "title": "اہم انتباہات",
       "description": "خطرات اور ترجیحات"
     },
     "upcomingDeadlines": {
-      "title": "آنے والی تاریخیں",
-      "description": "آپ کے آنے والے اسائنمنٹس اور ٹیسٹوں کا جائزہ۔",
-      "due": "آخری تاریخ",
+      "title": "آنے والی آخری تاریخیں",
+      "description": "آپ کے آنے والے اسائنمنٹس اور ٹیسٹوں کا ایک جائزہ۔",
+      "due": "واجب الادا",
       "onTrack": "ٹریک پر",
       "risk": "خطرہ",
       "behind": "پیچھے",
@@ -45,74 +45,66 @@
     },
     "mySubjects": {
       "title": "آپ کے مضامین",
-      "description": "آپ کے مضامین کا فوری جائزہ۔"
+      "description": "آپ کے مضامین کا ایک فوری جائزہ۔"
     },
     "aiSuggestions": {
       "title": "AI تجاویز",
-      "description": "آپ کا ذاتی معاون"
+      "description": "آپ کا پرسنل اسسٹنٹ"
     },
     "quickAccess": {
       "title": "فوری رسائی",
-      "description": "آپ کے حال ہی میں استعمال شدہ مواد۔"
+      "description": "آپ کا حال ہی میں استعمال شدہ مواد۔"
     },
     "statistics": {
-      "title": "اعدادوشمار",
-      "description": "اس ہفتے آپ کا مطالعہ وقت۔",
-      "weeklyActivity": "ہفتہ واری سرگرمی",
+      "title": "شماریات",
+      "description": "اس ہفتے آپ کا مطالعہ کا وقت۔",
+      "weeklyActivity": "ہفتہ وار سرگرمی",
       "lastSessionRecap": "آخری سیشن کا خلاصہ"
     }
   },
   "tools": {
     "title": "اوزار",
-    "description": "سیکھنے کو تیز کرنے کے لیے آپ کے ذہین ٹولز کا مجموعہ۔",
-    "select": "ٹول کا انتخاب کریں",
+    "description": "سیکھنے کو تیز کرنے کے لیے آپ کا ذہین ٹولز کا مجموعہ۔",
+    "select": "ٹول منتخب کریں۔",
     "quiz": {
       "title": "کوئز",
-      "description": "کسی بھی متن سے کثیر الانتخابی کوئز بنائیں۔"
+      "description": "کسی بھی متن سے متعدد انتخابی کوئز بنائیں۔ مختلف چیلنجنگ طریقوں سے اپنے علم کی جانچ کریں۔"
     },
     "flashcards": {
-      "title": "فلیش کارڈ",
-      "description": "اپنے مطالعاتی مواد سے خودکار فلیش کارڈ بنائیں۔"
+      "title": "فلیش کارڈز",
+      "description": "کلیدی تصورات کو تقویت دینے کے لیے اپنے مطالعاتی مواد سے خودکار طور پر فلیش کارڈز بنائیں۔"
     },
     "notes": {
       "title": "نوٹس",
-      "description": "اپنے نوٹس ایک جگہ بنائیں اور منظم کریں۔"
+      "description": "اپنے مطالعاتی نوٹ ایک جگہ پر بنائیں اور ترتیب دیں۔"
     },
     "blocks": {
       "title": "بلاکس",
-      "description": "بلاک ایڈیٹر سے منظم مواد بنائیں۔"
+      "description": "ہمارے بلاک ایڈیٹر کے ساتھ ساختی مواد تیار کریں۔"
     },
     "wordweb": {
-      "title": "لفظ جال",
-      "description": "انٹرایکٹو لفظ جال سے تصورات کے درمیان روابط دیکھیں۔"
+      "title": "ورڈ ویب",
+      "description": "انٹرایکٹو لفظی جالوں کے ساتھ تصورات کے درمیان کنکشن کا تصور کریں۔"
     },
     "material": {
-      "title": "مواد پروسیسر",
-      "description": "کسی بھی دستاویز کا مختصر خلاصہ حاصل کریں۔"
+      "title": "عمل کا مواد",
+      "description": "اہم نکات کو تیزی سے سمجھنے کے لیے کسی بھی اپ لوڈ کردہ دستاویز یا پیسٹ کیے گئے متن کا مختصر خلاصہ حاصل کریں۔"
     }
   },
   "material": {
-    "title": "مواد پروسیسر",
-    "description": "خلاصے، فلیش کارڈز اور مزید بنانے کے لیے فائلیں اپلوڈ کریں یا ٹیکسٹ چسپاں کریں۔",
-    "importTitle": "مواد درآمد کریں",
-    "importDescription": "فائل دیں، ٹیکسٹ چسپاں کریں، یا دونوں۔",
-    "clickToUpload": "اپلوڈ کرنے کے لیے کلک کریں",
-    "dragAndDrop": "یا گھسیٹ کر چھوڑیں",
-    "remove": "ہٹائیں",
-    "pasteText": "یا اپنا ٹیکسٹ یہاں چسپاں کریں...",
-    "processing": "پروسیسنگ...",
-    "processWithAi": "AI سے پروسیس کریں",
-    "summary": "خلاصہ",
-    "suggestedActions": "تجویز کردہ اقدامات",
-    "done": "ہو گیا",
-    "select": "انتخاب کریں"
+    "noteTitle": "نوٹ ٹائٹل",
+    "e": {
+      "gChapter1": "مثال کے طور پر، باب 1: نشاۃ ثانیہ"
+    },
+    "sourceText": "اپنی نصابی کتاب، مضمون، یا دیگر ماخذ مواد سے متن یہاں چسپاں کریں...",
+    "fileTitle": "مثال کے طور پر، باب 5 پڑھنا"
   },
   "agenda": {
     "title": "ایجنڈا",
-    "description": "آپ کی آخری تاریخوں، کاموں اور ذاتی ملاقاتوں کا مشترکہ کیلنڈر۔",
-    "eventsOn": "واقعات",
-    "noEvents": "اس دن کوئی واقعہ طے نہیں۔",
-    "addTask": "کام شامل کریں",
+    "description": "آخری تاریخوں، کاموں اور ذاتی تقرریوں کا آپ کا مربوط کیلنڈر۔",
+    "eventsOn": "ایونٹس آن",
+    "noEvents": "اس دن کے لیے کوئی پروگرام طے شدہ نہیں ہے۔",
+    "addTask": "ٹاسک شامل کریں۔",
     "today": "آج",
     "week": "ہفتہ",
     "month": "مہینہ",
@@ -125,260 +117,251 @@
   "subjects": {
     "title": "مضامین",
     "description": "آپ کے تمام مضامین ایک جگہ پر۔",
-    "noSubjects": "کوئی مضمون نہیں ملا۔",
-    "addSubject": "مضمون شامل کریں",
+    "noSubjects": "کوئی مضامین نہیں ملے۔",
+    "addSubject": "مضمون شامل کریں۔",
     "chapters": "ابواب",
     "paragraphs": "پیراگراف",
     "assignments": "اسائنمنٹس",
     "progress": "پیش رفت"
   },
   "classes": {
-    "title": "کلاسیں",
-    "description": "اپنی کلاسوں اور طلباء کا انتظام کریں۔",
-    "noClasses": "کوئی کلاس نہیں ملی۔",
-    "createClass": "کلاس بنائیں",
-    "joinClass": "کلاس میں شامل ہوں",
-    "joinCode": "شمولیت کا کوڈ",
-    "students": "طلباء",
-    "assignments": "اسائنمنٹس",
-    "announcements": "اعلانات"
+    "searchClasses": "کلاسز تلاش کریں...",
+    "className": "کلاس کا نام",
+    "classDescription": "کلاس کی تفصیل",
+    "briefSummary": "اس کلاس کا احاطہ کیا جائے گا اس کا ایک مختصر خلاصہ۔",
+    "e": {
+      "gHistory101": "مثال کے طور پر، تاریخ 101، ایڈوانسڈ فزکس"
+    },
+    "chapterTitle": "باب کا عنوان",
+    "chapterDescription": "باب کی تفصیل"
   },
   "settings": {
     "title": "ترتیبات",
-    "description": "اپنا اکاؤنٹ اور ایپ کی ترتیبات منظم کریں۔",
+    "description": "اپنے اکاؤنٹ اور ایپلیکیشن کی ترتیبات کا نظم کریں۔",
     "general": {
-      "title": "عام",
-      "description": "اپنی ایپ ترجیحات ترتیب دیں۔",
+      "title": "جنرل",
+      "description": "اپنی درخواست کی ترجیحات کو ترتیب دیں۔",
       "language": "زبان"
     },
     "personalization": {
-      "title": "ذاتی بنائیں",
-      "description": "اپنی ایپ کی ظاہری شکل اور رنگ حسب مرضی بنائیں۔",
+      "title": "پرسنلائزیشن",
+      "description": "اپنی ایپ کی ظاہری شکل اور رنگوں کو حسب ضرورت بنائیں۔",
       "theme": "تھیم",
-      "themeDescription": "اپنی پسندیدہ رنگ سکیم چنیں۔",
-      "light": "روشن",
+      "themeDescription": "اپنی پسند کی رنگ سکیم کا انتخاب کریں۔",
+      "light": "روشنی",
       "dark": "اندھیرا",
       "ocean": "سمندر"
     },
     "accessibility": {
       "title": "رسائی",
-      "description": "اپنی ضرورتوں کے مطابق ایپ کی ظاہری شکل اور رویے کو حسب مرضی بنائیں۔",
-      "highContrast": "زیادہ کنٹراسٹ موڈ",
-      "highContrastDescription": "متن اور پس منظر کا کنٹراسٹ بڑھائیں۔",
-      "dyslexiaFont": "ڈس لیکسیا دوست فونٹ",
-      "dyslexiaFontDescription": "آسان پڑھنے کے لیے بنایا گیا فونٹ استعمال کریں۔",
-      "reducedMotion": "اینیمیشن کم کریں",
-      "reducedMotionDescription": "سجاوٹی اینیمیشن اور ٹرانزیشن بند کریں۔"
+      "description": "اپنی ضروریات کے مطابق ایپ کی ظاہری شکل اور طرز عمل کو حسب ضرورت بنائیں۔",
+      "highContrast": "ہائی کنٹراسٹ موڈ",
+      "highContrastDescription": "متن اور پس منظر کے تضاد میں اضافہ کریں۔",
+      "dyslexiaFont": "Dyslexia-Friendly فونٹ",
+      "dyslexiaFontDescription": "آسانی سے پڑھنے کے لیے ڈیزائن کردہ فونٹ استعمال کریں۔",
+      "reducedMotion": "متحرک تصاویر کو کم کریں۔",
+      "reducedMotionDescription": "آرائشی متحرک تصاویر اور ٹرانزیشنز کو بند کر دیں۔"
     },
     "developer": {
-      "title": "ڈویلپر ترتیبات",
+      "title": "ڈویلپر کی ترتیبات",
       "description": "ترقیاتی مقاصد کے لیے عارضی ترتیبات۔",
-      "roleSwitch": "کردار تبدیل کریں (صرف Dev)",
-      "roleSwitchDescription": "طالب علم اور استاد ویو کے درمیان تبدیل کریں۔"
+      "roleSwitch": "ٹوگل رول (صرف ڈیو)",
+      "roleSwitchDescription": "طالب علم اور استاد کے منظر کے درمیان سوئچ کریں۔ یہ ترقی کے لیے ہے اور ہٹا دیا جائے گا۔"
     }
   },
   "common": {
-    "save": "محفوظ کریں",
-    "cancel": "منسوخ",
-    "delete": "حذف کریں",
-    "edit": "ترمیم کریں",
-    "add": "شامل کریں",
+    "save": "????? ????",
+    "cancel": "منسوخ کریں۔",
+    "delete": "حذف کریں۔",
+    "edit": "ترمیم کریں۔",
+    "add": "شامل کریں۔",
     "create": "بنائیں",
-    "update": "اپ ڈیٹ کریں",
-    "submit": "جمع کرائیں",
-    "close": "بند کریں",
-    "back": "واپس",
+    "update": "اپ ڈیٹ کریں۔",
+    "submit": "جمع کروائیں۔",
+    "close": "بند",
+    "back": "پیچھے",
     "next": "اگلا",
     "previous": "پچھلا",
     "loading": "لوڈ ہو رہا ہے...",
     "error": "خرابی",
     "success": "کامیابی",
-    "confirm": "تصدیق کریں",
-    "yes": "ہاں",
+    "confirm": "تصدیق کریں۔",
+    "yes": "جی ہاں",
     "no": "نہیں",
-    "search": "تلاش کریں",
+    "search": "????",
     "filter": "فلٹر",
-    "sort": "ترتیب",
+    "sort": "چھانٹنا",
     "view": "دیکھیں",
-    "download": "ڈاؤن لوڈ",
-    "upload": "اپ لوڈ",
-    "share": "شیئر کریں",
+    "download": "ڈاؤن لوڈ کریں۔",
+    "upload": "اپ لوڈ کریں۔",
+    "share": "شیئر کریں۔",
     "copy": "کاپی",
-    "paste": "پیسٹ",
-    "undo": "واپس کریں",
-    "redo": "دوبارہ کریں",
-    "reset": "ری سیٹ",
-    "clear": "صاف کریں",
-    "refresh": "تازہ کریں",
-    "retry": "دوبارہ کوشش",
+    "paste": "چسپاں کریں۔",
+    "undo": "کالعدم",
+    "redo": "دوبارہ کریں۔",
+    "reset": "دوبارہ ترتیب دیں۔",
+    "clear": "صاف",
+    "refresh": "ریفریش کریں۔",
+    "retry": "دوبارہ کوشش کریں۔",
     "more": "مزید",
     "less": "کم",
-    "all": "سب",
-    "none": "کوئی نہیں",
-    "select": "انتخاب کریں",
+    "all": "تمام",
+    "none": "کوئی نہیں۔",
+    "select": "منتخب کریں۔",
     "selected": "منتخب",
     "optional": "اختیاری",
-    "required": "ضروری"
+    "required": "درکار ہے۔"
   },
   "auth": {
-    "login": "لاگ ان",
-    "logout": "لاگ آؤٹ",
-    "signup": "سائن اپ",
+    "login": "لاگ ان کریں۔",
+    "logout": "لاگ آؤٹ کریں۔",
+    "signup": "سائن اپ کریں۔",
     "email": "ای میل",
     "password": "پاس ورڈ",
-    "confirmPassword": "پاس ورڈ کی تصدیق",
+    "confirmPassword": "پاس ورڈ کی تصدیق کریں۔",
     "forgotPassword": "پاس ورڈ بھول گئے؟",
-    "resetPassword": "پاس ورڈ ری سیٹ کریں",
+    "resetPassword": "پاس ورڈ ری سیٹ کریں۔",
     "dontHaveAccount": "اکاؤنٹ نہیں ہے؟",
-    "alreadyHaveAccount": "پہلے سے اکاؤنٹ ہے؟",
-    "orContinueWith": "یا اس کے ساتھ جاری رکھیں"
+    "alreadyHaveAccount": "پہلے سے ہی اکاؤنٹ ہے؟",
+    "orContinueWith": "یا جاری رکھیں"
   },
   "notifications": {
     "title": "اطلاعات",
-    "noNotifications": "کوئی اطلاع نہیں",
-    "markAsRead": "پڑھا ہوا نشان لگائیں",
-    "markAllAsRead": "سب پڑھا ہوا نشان لگائیں",
-    "clearAll": "سب صاف کریں"
+    "noNotifications": "کوئی اطلاع نہیں۔",
+    "markAsRead": "پڑھا ہوا نشان زد کریں۔",
+    "markAllAsRead": "سبھی کو پڑھا ہوا نشان زد کریں۔",
+    "clearAll": "سب صاف کریں۔"
   },
   "errors": {
-    "somethingWentWrong": "کچھ غلط ہو گیا",
+    "somethingWentWrong": "کچھ غلط ہو گیا۔",
     "pageNotFound": "صفحہ نہیں ملا",
     "unauthorized": "غیر مجاز",
-    "forbidden": "ممنوع",
-    "tryAgain": "دوبارہ کوشش کریں"
+    "forbidden": "حرام",
+    "tryAgain": "دوبارہ کوشش کریں۔"
   },
   "setup": {
     "welcome": "Cautie میں خوش آمدید",
-    "getStarted": "شروع کریں",
+    "getStarted": "آئیے آپ کو سیٹ اپ کرواتے ہیں۔",
     "step": "قدم",
-    "of": "میں سے",
+    "of": "کی",
     "next": "اگلا",
-    "back": "واپس",
-    "finish": "سیٹ اپ مکمل کریں",
+    "back": "پیچھے",
+    "finish": "سیٹ اپ ختم کریں۔",
     "language": {
-      "title": "اپنی زبان چنیں",
-      "description": "ایپ میں استعمال کرنے کے لیے زبان چنیں۔"
+      "title": "اپنی زبان کا انتخاب کریں۔",
+      "description": "وہ زبان منتخب کریں جسے آپ ایپ میں استعمال کرنا چاہتے ہیں۔"
     },
     "theme": {
-      "title": "اپنا تھیم چنیں",
-      "description": "اپنے لیے مناسب رنگ سکیم چنیں۔"
+      "title": "اپنا تھیم منتخب کریں۔",
+      "description": "ایک رنگ سکیم منتخب کریں جو آپ کے مطابق ہو۔"
     },
     "profile": {
-      "title": "اپنا پروفائل ترتیب دیں",
-      "description": "اپنے تجربے کو ذاتی بنانے کے لیے ہمیں اپنے بارے میں بتائیں۔",
+      "title": "اپنا پروفائل ترتیب دیں۔",
+      "description": "اپنے تجربے کو ذاتی بنانے کے لیے ہمیں اپنے بارے میں کچھ بتائیں۔",
       "firstName": "پہلا نام",
       "lastName": "آخری نام",
-      "role": "میں ہوں...",
+      "role": "میں ایک...",
       "student": "طالب علم",
       "teacher": "استاد",
-      "saveProfile": "پروفائل محفوظ کریں"
+      "saveProfile": "پروفائل محفوظ کریں۔"
     }
   },
   "quiz": {
     "title": "کوئز",
     "answerAllQuestions": "تمام سوالات کے جوابات دیں اور آخر میں جمع کرائیں۔",
     "askFollowUp": "فالو اپ سوال پوچھیں...",
-    "gradingCriteria": "بیان کریں کہ اس سوال کی درجہ بندی کیسے کریں...",
-    "additionalCriteria": "اضافی درجہ بندی کے معیار...",
-    "aiGrading": "AI درجہ بندی کی ترتیبات",
-    "expectedAnswer": "متوقع صحیح جواب درج کریں...",
-    "export": "ایکسپورٹ",
-    "import": "ایمپورٹ",
-    "undo": "واپس کریں",
-    "redo": "دوبارہ کریں"
+    "gradingCriteria": "اس سوال کی درجہ بندی کرنے کا طریقہ بیان کریں...",
+    "additionalCriteria": "اضافی درجہ بندی کے معیارات...",
+    "aiGrading": "AI گریڈنگ کی ترتیبات",
+    "expectedAnswer": "متوقع درست جواب درج کریں...",
+    "export": "برآمد کریں۔",
+    "import": "درآمد کریں۔",
+    "undo": "کالعدم",
+    "redo": "دوبارہ کریں۔"
   },
   "flashcards": {
-    "front": "سامنے",
+    "front": "سامنے والا",
     "back": "پیچھے",
     "termOrQuestion": "اصطلاح یا سوال",
     "definitionOrAnswer": "تعریف یا جواب"
   },
   "notes": {
-    "createNotes": "متن، فائلوں یا پچھلے پروجیکٹس سے نوٹس بنائیں۔",
-    "enterText": "اپنا ریچ ٹیکسٹ مواد لکھنا شروع کریں..."
+    "createNotes": "متن، فائلوں، یا پچھلے منصوبوں سے نوٹس بنائیں۔",
+    "enterText": "اپنا بھرپور متنی مواد لکھنا شروع کریں..."
   },
   "blocks": {
-    "enterText": "ٹیکسٹ مواد درج کریں...",
+    "enterText": "متن کا مواد درج کریں...",
     "enterCode": "اپنا کوڈ درج کریں...",
-    "yourAnswer": "یہاں اپنا جواب لکھیں...",
+    "yourAnswer": "اپنا جواب یہاں ٹائپ کریں...",
     "followUpQuestion": "فالو اپ سوال پوچھیں...",
     "nodeTitle": "نوڈ کا عنوان",
-    "detailedDescription": "تفصیلی بیان",
+    "detailedDescription": "تفصیلی وضاحت",
     "calloutText": "کال آؤٹ ٹیکسٹ درج کریں...",
     "quoteText": "اقتباس درج کریں...",
     "authorName": "مصنف کا نام...",
-    "source": "کتاب، مضمون وغیرہ...",
-    "caption": "کیپشن شامل کریں...",
+    "source": "کتاب، مضمون، وغیرہ...",
+    "caption": "ایک کیپشن شامل کریں...",
     "mediaUrl": "میڈیا URL درج کریں...",
-    "embedUrl": "ایمبیڈ مواد URL درج کریں...",
-    "matchItems": "آئٹمز ملائیں...",
-    "putInOrder": "ترتیب میں رکھیں...",
-    "acceptSynonyms": "مثلاً، مترادفات قبول کریں، اہم تصورات پر توجہ دیں..."
-  },
-  "classes": {
-    "searchClasses": "کلاسیں تلاش کریں...",
-    "className": "کلاس کا نام",
-    "classDescription": "کلاس کی تفصیل",
-    "briefSummary": "اس کلاس میں کیا شامل ہوگا اس کا مختصر خلاصہ۔",
-    "e.gHistory101": "مثلاً، تاریخ 101، ایڈوانسڈ فزکس",
-    "chapterTitle": "باب کا عنوان",
-    "chapterDescription": "باب کی تفصیل"
+    "embedUrl": "سرایت شدہ مواد کا URL درج کریں...",
+    "matchItems": "اشیاء کو میچ کریں...",
+    "putInOrder": "ترتیب دیں...",
+    "acceptSynonyms": "مثال کے طور پر، مترادفات کو قبول کریں، کلیدی تصورات پر توجہ مرکوز کریں..."
   },
   "assignments": {
-    "assignmentTitle": "اسائنمنٹ کا عنوان",
-    "extraInstructions": "اپنے طلباء کے لیے اضافی ہدایات یا سیاق شامل کریں۔",
-    "instructionsDetails": "طلباء کے لیے ہدایات یا تفصیلات شامل کریں",
-    "selectType": "قسم چنیں",
-    "selectClass": "کلاس چنیں",
-    "weekLecture": "مثلاً، ہفتہ 1 لیکچر"
+    "assignmentTitle": "تفویض کا عنوان",
+    "extraInstructions": "اپنے طلباء کے لیے کوئی اضافی ہدایات یا سیاق و سباق شامل کریں۔",
+    "instructionsDetails": "طلباء کے لیے ہدایات یا تفصیلات شامل کریں۔",
+    "selectType": "قسم منتخب کریں۔",
+    "selectClass": "کلاس منتخب کریں۔",
+    "weekLecture": "مثال کے طور پر، ہفتہ 1 لیکچر"
   },
   "submissions": {
-    "writeSubmission": "اپنی اسائنمنٹ کی تحریر یہاں لکھیں...",
-    "fileUploadComing": "فائل اپ لوڈ جلد آ رہا ہے...",
+    "writeSubmission": "اپنی اسائنمنٹ جمع کرانے کو یہاں لکھیں...",
+    "fileUploadComing": "فائل اپ لوڈ جلد آرہی ہے...",
     "provideFeedback": "تعمیری رائے دیں...",
-    "addComment": "تبصرہ شامل کریں...",
+    "addComment": "ایک تبصرہ شامل کریں...",
     "grade": "گریڈ",
-    "e.g8.5": "مثلاً، 8.5"
+    "e": {
+      "g8": {
+        "5": "مثال کے طور پر، 8.5"
+      }
+    }
   },
   "announcements": {
-    "announcementTitle": "اعلان کا عنوان درج کریں",
-    "announcementMessage": "اپنا اعلان کا پیغام درج کریں"
-  },
-  "material": {
-    "noteTitle": "نوٹ کا عنوان",
-    "e.gChapter1": "مثلاً، باب 1: نشاۃ ثانیہ",
-    "sourceText": "اپنی نصابی کتاب، مضمون یا دیگر ماخذ مواد کا متن یہاں چسپاں کریں...",
-    "fileTitle": "مثلاً، باب 5 پڑھائی"
+    "announcementTitle": "اعلان کا عنوان درج کریں۔",
+    "announcementMessage": "اپنا اعلانیہ پیغام درج کریں۔"
   },
   "verification": {
-    "enterCode": "8 ہندسوں کا تصدیقی کوڈ درج کریں",
-    "verificationCode": "8 ہندسوں کا تصدیقی کوڈ"
+    "enterCode": "8 ہندسوں کا تصدیقی کوڈ درج کریں۔",
+    "verificationCode": "8 ہندسوں کا توثیقی کوڈ"
   },
   "subjectEditor": {
-    "e.gStudyOfLiving": "مثلاً، جانداروں، خلیوں، جینیات اور ماحولیاتی نظام کا مطالعہ...",
-    "introduction": "مثلاً، تعارف"
+    "e": {
+      "gStudyOfLiving": "مثال کے طور پر، جانداروں، خلیات، جینیات، اور ماحولیاتی نظام کا مطالعہ..."
+    },
+    "introduction": "مثال کے طور پر، تعارف"
   },
   "chapterEditor": {
-    "newChapterTitle": "مثلاً، بنیادی تصورات",
+    "newChapterTitle": "مثال کے طور پر، بنیادی تصورات",
     "newChapterDescription": "باب کی تفصیل"
   },
   "paragraphEditor": {
-    "newParagraphTitle": "مثلاً، بنیادی تصورات",
+    "newParagraphTitle": "مثال کے طور پر، بنیادی تصورات",
     "newParagraphDescription": "پیراگراف کی تفصیل"
   },
   "teacherCode": {
-    "enterCode": "استاد کا کوڈ درج کریں"
+    "enterCode": "اپنا ٹیچر کوڈ درج کریں۔"
   },
   "upgrade": {
-    "upgrade": "اپ گریڈ"
+    "upgrade": "اپ گریڈ کریں۔"
   },
   "search": {
-    "search": "تلاش..."
+    "search": "تلاش کریں..."
   },
   "wordweb": {
-    "addNotes": "یہاں نوٹس، حاشیے یا متن شامل کریں..."
+    "addNotes": "یہاں نوٹ، تشریحات، یا متن شامل کریں..."
   },
   "paragraphs": {
-    "newParagraph": "مثلاً، مشق A"
+    "newParagraph": "مثال کے طور پر، ورزش سیٹ A"
   }
 }
