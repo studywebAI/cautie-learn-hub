@@ -106,7 +106,7 @@ export async function PATCH(
       .single();
     if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
 
-    await supabase
+    const { error: assignmentEventError } = await supabase
       .from('assignment_events')
       .insert({
         assignment_id: answer.assignment_id,
@@ -119,9 +119,10 @@ export async function PATCH(
           score: scoreRaw,
           max_points: maxPoints,
         },
-      })
-      .then(() => undefined)
-      .catch(() => undefined);
+      });
+    if (assignmentEventError) {
+      console.warn('[open-answers] failed to record assignment event', assignmentEventError);
+    }
 
     if (answer.assignment_attempt_id) {
       const { data: attemptAnswers } = await supabase
@@ -139,16 +140,17 @@ export async function PATCH(
         return sum + Number(s.points || 0);
       }, 0);
 
-      await supabase
+      const { error: attemptUpdateError } = await supabase
         .from('assignment_attempts')
         .update({
           score: scoreSum,
           max_score: maxSum,
           updated_at: nowIso,
         })
-        .eq('id', answer.assignment_attempt_id)
-        .then(() => undefined)
-        .catch(() => undefined);
+        .eq('id', answer.assignment_attempt_id);
+      if (attemptUpdateError) {
+        console.warn('[open-answers] failed to update assignment attempt score', attemptUpdateError);
+      }
     }
 
     return NextResponse.json({
@@ -160,4 +162,3 @@ export async function PATCH(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

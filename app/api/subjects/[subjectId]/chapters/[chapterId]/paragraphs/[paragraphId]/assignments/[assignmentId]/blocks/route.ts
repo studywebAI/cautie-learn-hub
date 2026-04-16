@@ -1,9 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { applyQuestionSelection, normalizeAssignmentSettings, normalizeBlockSettings } from '@/lib/assignments/settings'
 
 export const dynamic = 'force-dynamic'
+
+const MISSING_COLUMN_PATTERN = /column .* does not exist/i;
+
+function isMissingColumnError(error: any): boolean {
+  const text = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`;
+  return MISSING_COLUMN_PATTERN.test(text);
+}
 
 async function userHasSubjectAccess(supabase: any, userId: string, subjectId: string): Promise<boolean> {
   const { data: subject } = await (supabase as any)
@@ -170,21 +178,41 @@ export async function POST(
       return NextResponse.json({ error: 'Access denied - subject not found' }, { status: 404 })
     }
 
-    // Insert the new block
-    const { data: newBlock, error: insertError } = await supabase
-      .from('blocks')
-      .insert({
-        assignment_id: resolvedParams.assignmentId,
-        type,
-        position,
-        data: blockData,
-        settings: normalizedSettings,
-        locked: locked || false,
-        show_feedback: show_feedback || false,
-        ai_grading_override: ai_grading_override || null
-      })
-      .select()
-      .single()
+    const extendedInsert = {
+      assignment_id: resolvedParams.assignmentId,
+      type,
+      position,
+      data: blockData,
+      settings: normalizedSettings,
+      locked: locked || false,
+      show_feedback: show_feedback || false,
+      ai_grading_override: ai_grading_override || null,
+    };
+    const baseInsert = {
+      assignment_id: resolvedParams.assignmentId,
+      type,
+      position,
+      data: blockData,
+    };
+
+    const insertWith = async (client: any, payload: Record<string, any>) =>
+      client
+        .from('blocks')
+        .insert(payload)
+        .select()
+        .single();
+
+    let { data: newBlock, error: insertError } = await insertWith(supabase as any, extendedInsert);
+    if (insertError && isMissingColumnError(insertError)) {
+      ({ data: newBlock, error: insertError } = await insertWith(supabase as any, baseInsert));
+    }
+    if (insertError) {
+      const admin = createAdminClient();
+      ({ data: newBlock, error: insertError } = await insertWith(admin as any, extendedInsert));
+      if (insertError && isMissingColumnError(insertError)) {
+        ({ data: newBlock, error: insertError } = await insertWith(admin as any, baseInsert));
+      }
+    }
 
     if (insertError) {
       console.error('Error creating block:', insertError)

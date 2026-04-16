@@ -156,7 +156,7 @@ export async function GET(
     if (assignmentIds.length > 0 && safeStudentIds.length > 0) {
       const { data: submissionsData, error: submissionsError } = await dataClient
         .from('submissions')
-        .select('id, assignment_id, user_id, status, grade, submitted_at, created_at')
+        .select('id, assignment_id, user_id, status, grade, submitted_at')
         .in('assignment_id', assignmentIds)
         .in('user_id', safeStudentIds)
       
@@ -249,7 +249,7 @@ export async function GET(
 
       // Get recent submissions
       const recentSubmissions = studentSubmissions
-        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .sort((a: any, b: any) => new Date(b.submitted_at || 0).getTime() - new Date(a.submitted_at || 0).getTime())
         .slice(0, 5)
         .map((sub: any) => {
           const assignment = assignments?.find((a: any) => a.id === sub.assignment_id)
@@ -260,14 +260,14 @@ export async function GET(
             status: sub.status,
             grade: sub.grade,
             submittedAt: sub.submitted_at,
-            createdAt: sub.created_at
+            createdAt: sub.submitted_at
           }
         })
 
       // Get last graded submission
       const lastGraded = studentSubmissions
         .filter((s: any) => s.grade !== null)
-        .sort((a: any, b: any) => new Date(b.submitted_at || b.created_at).getTime() - new Date(a.submitted_at || a.created_at).getTime())[0]
+        .sort((a: any, b: any) => new Date(b.submitted_at || 0).getTime() - new Date(a.submitted_at || 0).getTime())[0]
 
       return {
         id: studentId,

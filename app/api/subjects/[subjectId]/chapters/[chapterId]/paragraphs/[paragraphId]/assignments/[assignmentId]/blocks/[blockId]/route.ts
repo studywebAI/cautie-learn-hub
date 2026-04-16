@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { updateProgressSnapshot } from '@/lib/progress'
@@ -17,6 +18,13 @@ import {
 import { getOrCreateAttempt, isAttemptExpired } from '@/lib/assignments/attempts'
 
 export const dynamic = 'force-dynamic'
+
+const MISSING_COLUMN_PATTERN = /column .* does not exist/i;
+
+function isMissingColumnError(error: any): boolean {
+  const text = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`;
+  return MISSING_COLUMN_PATTERN.test(text);
+}
 
 // POST - Submit student answer for a block
 export async function POST(
@@ -305,7 +313,7 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to submit answer' }, { status: 500 })
     }
 
-    await supabase
+    const { error: assignmentEventError } = await supabase
       .from('assignment_events')
       .insert({
         assignment_id: resolvedParams.assignmentId,
@@ -316,9 +324,10 @@ export async function POST(
           block_id: resolvedParams.blockId,
           assignment_id: resolvedParams.assignmentId,
         },
-      })
-      .then(() => undefined)
-      .catch(() => undefined);
+      });
+    if (assignmentEventError) {
+      console.warn('Failed to insert assignment event after answer submit', assignmentEventError);
+    }
 
     // Queue AI grading only when both block + assignment grading settings allow it.
     if (
@@ -475,22 +484,47 @@ export async function PUT(
 
     // Update the block
     const normalizedSettings = normalizeBlockSettings(settings || (newData as any)?.settings || {});
-    const updatePayload: any = { data: newData, settings: normalizedSettings };
-    if (typeof nextType === 'string') updatePayload.type = nextType;
-    if (typeof nextPosition === 'number' && Number.isFinite(nextPosition)) updatePayload.position = nextPosition;
-    if (locked !== undefined) updatePayload.locked = locked;
-    if (show_feedback !== undefined) updatePayload.show_feedback = show_feedback;
-    if (ai_grading_override !== undefined) updatePayload.ai_grading_override = ai_grading_override;
-    
-    const { data: updatedBlock, error: updateError } = await supabase
-      .from('blocks')
-      .update(updatePayload)
-      .eq('id', resolvedParams.blockId)
-      .select()
-      .single()
+    const fullPayload: any = { data: newData, settings: normalizedSettings };
+    const fallbackPayload: any = { data: newData };
+    if (typeof nextType === 'string') {
+      fullPayload.type = nextType;
+      fallbackPayload.type = nextType;
+    }
+    if (typeof nextPosition === 'number' && Number.isFinite(nextPosition)) {
+      fullPayload.position = nextPosition;
+      fallbackPayload.position = nextPosition;
+    }
+    if (locked !== undefined) fullPayload.locked = locked;
+    if (show_feedback !== undefined) fullPayload.show_feedback = show_feedback;
+    if (ai_grading_override !== undefined) fullPayload.ai_grading_override = ai_grading_override;
+
+    const updateWith = async (client: any, payload: Record<string, any>) =>
+      client
+        .from('blocks')
+        .update(payload)
+        .eq('id', resolvedParams.blockId)
+        .select()
+        .single();
+
+    let { data: updatedBlock, error: updateError } = await updateWith(supabase as any, fullPayload);
+    if (updateError && isMissingColumnError(updateError)) {
+      ({ data: updatedBlock, error: updateError } = await updateWith(supabase as any, fallbackPayload));
+    }
+    if (updateError) {
+      const admin = createAdminClient();
+      ({ data: updatedBlock, error: updateError } = await updateWith(admin as any, fullPayload));
+      if (updateError && isMissingColumnError(updateError)) {
+        ({ data: updatedBlock, error: updateError } = await updateWith(admin as any, fallbackPayload));
+      }
+    }
 
     if (updateError) {
-      console.error('Error updating block:', updateError)
+      console.error('Error updating block:', {
+        message: (updateError as any)?.message,
+        details: (updateError as any)?.details,
+        hint: (updateError as any)?.hint,
+        code: (updateError as any)?.code,
+      })
       return NextResponse.json({ error: 'Failed to update block' }, { status: 500 })
     }
 

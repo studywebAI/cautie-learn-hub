@@ -359,7 +359,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="attendance-tab">
       <div className="flex items-center justify-between">
         <h2 className="text-lg">{t.attendance}</h2>
         <div className="flex items-center gap-3">
@@ -393,6 +393,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
         {visibleStudents.map((student) => (
           <div
             key={student.id}
+            data-testid={`attendance-student-row-${student.id}`}
             className={`rounded-xl bg-muted/25 px-3 py-2.5 transition-colors ${
               selectedStudentId === student.id ? 'bg-muted/45' : 'hover:bg-muted/35'
             }`}
@@ -405,6 +406,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
 
               <div className="flex items-center gap-2">
                 <Button
+                  data-testid={`attendance-action-info-${student.id}`}
                   variant="outline"
                   size="sm"
                   className="h-10 w-10 rounded-xl p-0"
@@ -415,6 +417,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                 </Button>
 
                 <Button
+                  data-testid={`attendance-action-homework-${student.id}`}
                   variant={student.hasHomeworkIncomplete ? 'destructive' : 'outline'}
                   size="sm"
                   className="h-10 w-10 rounded-xl p-0"
@@ -425,6 +428,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                 </Button>
 
                 <Button
+                  data-testid={`attendance-action-late-${student.id}`}
                   variant={student.wasTooLate ? 'destructive' : 'outline'}
                   size="sm"
                   className="h-10 w-10 rounded-xl p-0"
@@ -435,6 +439,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                 </Button>
 
                 <Button
+                  data-testid={`attendance-action-custom-${student.id}`}
                   variant="outline"
                   size="sm"
                   className="h-10 w-10 rounded-xl p-0"
@@ -449,6 +454,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                 </Button>
 
                 <Button
+                  data-testid={`attendance-action-present-${student.id}`}
                   variant={student.isPresent === true ? 'default' : 'outline'}
                   size="sm"
                   className={`h-10 w-10 rounded-xl p-0 ${student.isPresent === true ? 'bg-green-600 hover:bg-green-700' : ''}`}
@@ -459,6 +465,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                 </Button>
 
                 <Button
+                  data-testid={`attendance-action-absent-${student.id}`}
                   variant={student.isPresent === false ? 'destructive' : 'outline'}
                   size="sm"
                   className="h-10 w-10 rounded-xl p-0"

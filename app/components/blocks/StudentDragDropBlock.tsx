@@ -22,9 +22,10 @@ export const StudentDragDropBlock: React.FC<StudentDragDropBlockProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [matches, setMatches] = useState<Record<string, string>>({});
+  const pairs: Array<{ left: string; right: string }> = Array.isArray(block.data?.pairs) ? block.data.pairs : [];
 
   const rightItems = useMemo(() => {
-    const values = (block.data.pairs || []).map((p) => p.right);
+    const values = pairs.map((pair) => pair.right);
     if (!settings.matching.shuffleItems) return values;
     const shuffled = [...values];
     for (let i = shuffled.length - 1; i > 0; i -= 1) {
@@ -32,19 +33,19 @@ export const StudentDragDropBlock: React.FC<StudentDragDropBlockProps> = ({
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
-  }, [block.data.pairs, settings.matching.shuffleItems]);
+  }, [pairs, settings.matching.shuffleItems]);
 
-  const allFilled = (block.data.pairs || []).every((pair) => !!matches[pair.left]);
+  const allFilled = pairs.every((pair) => !!matches[pair.left]);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
-    const pairs = (block.data.pairs || []).map((pair) => ({
+    const selectedPairs = pairs.map((pair) => ({
       left: pair.left,
       right: matches[pair.left] || '',
     }));
     const result = await onSubmit({
-      pairs,
+      pairs: selectedPairs,
       started_at: startedAtRef.current,
       submitted_at: new Date().toISOString(),
     });
@@ -58,7 +59,7 @@ export const StudentDragDropBlock: React.FC<StudentDragDropBlockProps> = ({
     <div className="space-y-4">
       <div className="font-medium">{block.data.prompt || 'Match each item with the correct option'}</div>
       <div className="space-y-2">
-        {(block.data.pairs || []).map((pair) => (
+        {pairs.map((pair) => (
           <div key={`${block.id}-${pair.left}`} className="grid grid-cols-1 md:grid-cols-2 items-center gap-3 rounded-md border bg-background p-3">
             <div className="text-sm font-medium">{pair.left}</div>
             <Select
@@ -88,4 +89,3 @@ export const StudentDragDropBlock: React.FC<StudentDragDropBlockProps> = ({
     </div>
   );
 };
-

@@ -24,6 +24,7 @@ import { AppContext, AppContextType } from '@/contexts/app-context';
 import Link from 'next/link';
 import { Settings, EyeOff, Lock } from 'lucide-react';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
+import { AssignmentSettings, normalizeAssignmentSettings } from '@/lib/assignments/settings';
 
 type Assignment = {
   id: string;
@@ -36,6 +37,7 @@ type Assignment = {
   is_locked: boolean;
   answer_mode: 'view_only' | 'editable' | 'self_grade';
   ai_grading_enabled: boolean;
+  settings?: AssignmentSettings | null;
   progress_percent?: number;
   correct_percent?: number;
   is_pending?: boolean;
@@ -117,6 +119,7 @@ export default function ParagraphDetailPage() {
           is_locked: a.is_locked ?? false,
           answer_mode: a.answer_mode ?? 'view_only',
           ai_grading_enabled: a.ai_grading_enabled ?? false,
+          settings: normalizeAssignmentSettings(a.settings || {}),
         }));
         setAssignments(normalizedAssignments);
       } catch (error) {
@@ -263,22 +266,9 @@ export default function ParagraphDetailPage() {
     return <div className="text-center py-8 text-muted-foreground">Paragraph not found</div>;
   }
 
-  // Compute bulk defaults from first assignment or defaults
-  const bulkDefaults = assignments.length > 0
-    ? {
-        is_visible: assignments.every(a => a.is_visible),
-        answers_enabled: assignments.every(a => a.answers_enabled),
-        is_locked: assignments.every(a => a.is_locked),
-        answer_mode: assignments[0].answer_mode,
-        ai_grading_enabled: assignments.every(a => a.ai_grading_enabled),
-      }
-    : {
-        is_visible: true,
-        answers_enabled: false,
-        is_locked: false,
-        answer_mode: 'view_only' as const,
-        ai_grading_enabled: false,
-      };
+  const bulkSettings = assignments.length > 0
+    ? normalizeAssignmentSettings(assignments[0].settings || {})
+    : normalizeAssignmentSettings({});
 
   return (
     <div className="space-y-0">
@@ -307,17 +297,8 @@ export default function ParagraphDetailPage() {
               </PopoverTrigger>
               <PopoverContent align="end" className="p-0 w-auto">
                 <AssignmentSettingsOverlay
-                  isBulk
-                  isVisible={bulkDefaults.is_visible}
-                  answersEnabled={bulkDefaults.answers_enabled}
-                  isLocked={bulkDefaults.is_locked}
-                  answerMode={bulkDefaults.answer_mode}
-                  aiGradingEnabled={bulkDefaults.ai_grading_enabled}
-                  onVisibilityChange={(v) => handleBulkUpdate({ is_visible: v })}
-                  onAnswersEnabledChange={(v) => handleBulkUpdate({ answers_enabled: v })}
-                  onLockedChange={(v) => handleBulkUpdate({ is_locked: v })}
-                  onAnswerModeChange={(m) => handleBulkUpdate({ answer_mode: m })}
-                  onAiGradingChange={(v) => handleBulkUpdate({ ai_grading_enabled: v })}
+                  settings={bulkSettings}
+                  onSettingsChange={(settings) => handleBulkUpdate({ settings })}
                   isLoading={isUpdating}
                 />
               </PopoverContent>
@@ -430,16 +411,8 @@ export default function ParagraphDetailPage() {
                       </PopoverTrigger>
                       <PopoverContent align="end" className="p-0 w-auto">
                         <AssignmentSettingsOverlay
-                          isVisible={assignment.is_visible}
-                          answersEnabled={assignment.answers_enabled}
-                          isLocked={assignment.is_locked}
-                          answerMode={assignment.answer_mode}
-                          aiGradingEnabled={assignment.ai_grading_enabled}
-                          onVisibilityChange={(v) => handleUpdateAssignment(assignment.id, { is_visible: v })}
-                          onAnswersEnabledChange={(v) => handleUpdateAssignment(assignment.id, { answers_enabled: v })}
-                          onLockedChange={(v) => handleUpdateAssignment(assignment.id, { is_locked: v })}
-                          onAnswerModeChange={(m) => handleUpdateAssignment(assignment.id, { answer_mode: m })}
-                          onAiGradingChange={(v) => handleUpdateAssignment(assignment.id, { ai_grading_enabled: v })}
+                          settings={normalizeAssignmentSettings(assignment.settings || {})}
+                          onSettingsChange={(settings) => handleUpdateAssignment(assignment.id, { settings })}
                           isLoading={isUpdating}
                         />
                       </PopoverContent>

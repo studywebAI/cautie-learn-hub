@@ -507,7 +507,7 @@ export function SourceInput({
           text: content,
           lastModifiedDateTime: String(material?.updated_at || material?.created_at || ''),
         };
-      }).filter((item) => item.id !== 'material:');
+      }).filter((item: RecentCatalogItem) => item.id !== 'material:');
 
       let merged = [...runs, ...materials];
       if (recentsSourceFilter === 'tool_runs') {

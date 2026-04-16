@@ -153,7 +153,7 @@ export async function PATCH(
 
       updated.push(row);
 
-      await supabase
+      const { error: assignmentEventError } = await supabase
         .from('assignment_events')
         .insert({
           assignment_id: answer.assignment_id,
@@ -167,9 +167,10 @@ export async function PATCH(
             max_points: maxPoints,
             bulk: true,
           },
-        })
-        .then(() => undefined)
-        .catch(() => undefined);
+        });
+      if (assignmentEventError) {
+        console.warn('[open-answers-bulk] failed to record assignment event', assignmentEventError);
+      }
 
       if (answer.assignment_attempt_id) touchedAttemptIds.add(answer.assignment_attempt_id);
     }
@@ -195,16 +196,17 @@ export async function PATCH(
         }, 0);
       }
 
-      await supabase
+      const { error: attemptUpdateError } = await supabase
         .from('assignment_attempts')
         .update({
           score: scoreSum,
           max_score: maxSum,
           updated_at: nowIso,
         })
-        .eq('id', attemptId)
-        .then(() => undefined)
-        .catch(() => undefined);
+        .eq('id', attemptId);
+      if (attemptUpdateError) {
+        console.warn('[open-answers-bulk] failed to update assignment attempt score', attemptUpdateError);
+      }
     }
 
     return NextResponse.json({
@@ -219,4 +221,3 @@ export async function PATCH(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

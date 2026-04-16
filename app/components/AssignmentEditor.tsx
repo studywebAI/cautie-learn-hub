@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -202,7 +202,7 @@ export function AssignmentEditor({
   };
 
   // Normalize initialBlocks to have rowId
-  const normalizedInitialBlocks = initialBlocks.map((b, i) => ({
+  const normalizedInitialBlocks = useMemo(() => initialBlocks.map((b, i) => ({
     ...b,
     rowId: b.rowId || generateRowId(),
     width: b.width || 'full' as const,
@@ -214,7 +214,7 @@ export function AssignmentEditor({
       ...getTemplateDefaults(b.type),
       ...(typeof b.data === 'object' && b.data !== null ? b.data : {}),
     },
-  }));
+  })), [initialBlocks]);
 
   const [blocks, setBlocks] = useState<AssignmentBlock[]>(normalizedInitialBlocks);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
@@ -240,6 +240,22 @@ export function AssignmentEditor({
   const [localSettings, setLocalSettings] = useState<AssignmentSettings>(
     normalizeAssignmentSettings(initialSettings || DEFAULT_ASSIGNMENT_SETTINGS)
   );
+  const blocksRef = useRef<AssignmentBlock[]>(normalizedInitialBlocks);
+  const isSavingRef = useRef(false);
+  const answersEnabledRef = useRef(localAnswersEnabled);
+  const isVisibleRef = useRef(localIsVisible);
+  const answerModeRef = useRef(localAnswerMode);
+  const aiGradingEnabledRef = useRef(localAiGradingEnabled);
+  const settingsRef = useRef(localSettings);
+
+  useEffect(() => {
+    setBlocks(normalizedInitialBlocks);
+    setHistory([normalizedInitialBlocks]);
+    setHistoryIndex(0);
+    setSelectedBlock(null);
+    setHoveredBlock(null);
+    setHasUnsavedChanges(false);
+  }, [normalizedInitialBlocks]);
   
   // AI Grading presets (stored locally for now - would come from API)
   const [gradingPresets, setGradingPresets] = useState<GradingPreset[]>([
@@ -299,6 +315,34 @@ export function AssignmentEditor({
   useEffect(() => {
     setLocalSettings(normalizeAssignmentSettings(initialSettings || DEFAULT_ASSIGNMENT_SETTINGS));
   }, [initialSettings]);
+
+  useEffect(() => {
+    blocksRef.current = blocks;
+  }, [blocks]);
+
+  useEffect(() => {
+    isSavingRef.current = isSaving;
+  }, [isSaving]);
+
+  useEffect(() => {
+    answersEnabledRef.current = localAnswersEnabled;
+  }, [localAnswersEnabled]);
+
+  useEffect(() => {
+    isVisibleRef.current = localIsVisible;
+  }, [localIsVisible]);
+
+  useEffect(() => {
+    answerModeRef.current = localAnswerMode;
+  }, [localAnswerMode]);
+
+  useEffect(() => {
+    aiGradingEnabledRef.current = localAiGradingEnabled;
+  }, [localAiGradingEnabled]);
+
+  useEffect(() => {
+    settingsRef.current = localSettings;
+  }, [localSettings]);
 
   // Toggle feedback visibility for a block
   const toggleBlockFeedback = (blockId: string) => {
@@ -830,10 +874,12 @@ export function AssignmentEditor({
     };
   }, [isDragging, dragSource, dropTarget]);
 
-  const handleSilentSave = async () => {
+  const handleSilentSave = useCallback(async () => {
     if (!assignmentId || assignmentId === 'undefined') return;
-    if (isSaving) return;
+    if (isSavingRef.current) return;
+    const blocksToPersist = blocksRef.current;
 
+    isSavingRef.current = true;
     setIsSaving(true);
     try {
       // Get existing blocks to determine which to update vs delete
@@ -844,8 +890,7 @@ export function AssignmentEditor({
         throw new Error('Failed to load existing assignment blocks');
       }
       const existingBlocks = existingResponse.ok ? await existingResponse.json() : [];
-      const existingMap = new Map(existingBlocks.map((b: any) => [b.id, b]));
-      const currentIds = new Set(blocks.map(b => b.id).filter(id => id !== undefined));
+      const currentIds = new Set(blocksToPersist.map(b => b.id).filter(id => id !== undefined));
 
       // Delete blocks that are no longer present
       const blocksToDelete = existingBlocks.filter((b: any) => !currentIds.has(b.id));
@@ -860,7 +905,7 @@ export function AssignmentEditor({
       }
 
       // Create or update blocks
-      for (const block of blocks) {
+      for (const block of blocksToPersist) {
         const payload = {
           type: block.type,
           position: block.position,
@@ -905,11 +950,11 @@ export function AssignmentEditor({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          is_visible: localIsVisible,
-          answers_enabled: localAnswersEnabled,
-          answer_mode: localAnswerMode,
-          ai_grading_enabled: localAiGradingEnabled,
-          settings: localSettings,
+          is_visible: isVisibleRef.current,
+          answers_enabled: answersEnabledRef.current,
+          answer_mode: answerModeRef.current,
+          ai_grading_enabled: aiGradingEnabledRef.current,
+          settings: settingsRef.current,
         }),
       });
       if (!assignmentSettingsRes.ok) {
@@ -917,14 +962,15 @@ export function AssignmentEditor({
       }
 
       setHasUnsavedChanges(false);
-      if (onSave) onSave(blocks);
+      if (onSave) onSave(blocksToPersist);
     } catch (error) {
       console.error('Auto-save failed:', error);
       toast({ title: 'Save failed', description: 'Changes could not be saved to server.', variant: 'destructive' });
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
-  };
+  }, [assignmentId, chapterId, onSave, paragraphId, subjectId, toast]);
 
   // Keep handleSave for keyboard shortcut (Ctrl+S) - also silent
   const handleSave = handleSilentSave;
@@ -994,6 +1040,7 @@ export function AssignmentEditor({
         return (
           <div className="space-y-2">
             <Input
+              data-testid={`assignment-text-header-${block.id}`}
               value={block.data.header || ''}
               onChange={(e) => updateBlock(block.id, { ...block.data, header: e.target.value })}
               placeholder="Header..."
@@ -1281,6 +1328,7 @@ export function AssignmentEditor({
 
   return (
     <div
+      data-testid="assignment-editor-root"
       className="h-screen flex flex-col bg-background text-foreground select-none font-sans"
       onPointerMove={handlePointerMove}
       style={{ touchAction: isDragging ? 'none' : 'auto' }}
@@ -1305,6 +1353,7 @@ export function AssignmentEditor({
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                data-testid="assignment-size-button"
                 variant="outline"
                 size="sm"
                 className="h-8 rounded-md px-2.5 bg-muted/50"
@@ -1320,6 +1369,7 @@ export function AssignmentEditor({
                 {selectedBlockRecord ? `Width for ${BLOCK_TEMPLATES.find((t) => t.type === selectedBlockRecord.type)?.label || 'block'}` : 'Select a block first'}
               </Label>
               <input
+                data-testid="assignment-size-slider"
                 type="range"
                 min={1}
                 max={3}
@@ -1339,6 +1389,7 @@ export function AssignmentEditor({
             Import
           </Button>
           <Button
+            data-testid="assignment-edit-toggle"
             variant={isEditMode ? 'default' : 'outline'}
             size="sm"
             onClick={handleEditModeToggle}
@@ -1369,6 +1420,7 @@ export function AssignmentEditor({
         <div className="flex-1 overflow-auto p-2 md:p-3 bg-[hsl(var(--surface-1))]">
           <div
             ref={paperRef}
+            data-testid="assignment-paper"
             className="bg-card border border-border rounded-xl shadow-sm min-h-[calc(100vh-130px)] p-3 relative w-full"
           >
               {rows.length === 0 ? (
@@ -1408,6 +1460,7 @@ export function AssignmentEditor({
                           )}
                           
                           <div
+                            data-testid={`assignment-block-${row.blocks[0].id}`}
                             className={`${showTeacherControls ? 'px-3 pb-3 pt-11' : 'p-3'} border rounded-xl transition-all duration-200 ease-out ${
                               selectedBlock === row.blocks[0].id 
                                 ? 'border-primary bg-card' 
@@ -1493,6 +1546,7 @@ export function AssignmentEditor({
                                 
                                 {block ? (
                                   <div
+                                    data-testid={`assignment-block-${block.id}`}
                                     className={`h-full ${showTeacherControls ? 'px-3 pb-3 pt-11' : 'p-3'} border rounded-xl transition-all duration-200 ease-out ${
                                       selectedBlock === block.id 
                                         ? 'border-primary bg-card' 
@@ -1602,6 +1656,7 @@ export function AssignmentEditor({
                   {BLOCK_TEMPLATES.map((template) => (
                     <div
                       key={template.id}
+                      data-testid={`assignment-template-${template.id}`}
                       className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-grab hover:bg-muted border border-transparent hover:border-border"
                       onPointerDown={(e) => handleTemplatePointerDown(e, template.id)}
                     >

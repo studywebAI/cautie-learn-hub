@@ -128,7 +128,7 @@ export async function GET(
     let auditLogs: any[] = []
     if (studentIds.length > 0) {
       const studentSet = new Set(studentIds)
-      const { data: logsData, error: logsError } = await supabase
+      const { data: logsData, error: logsError } = await dataClient
         .from('audit_logs')
         .select('id, user_id, action, entity_type, entity_id, metadata, created_at')
         .eq('class_id', classId)
@@ -147,7 +147,7 @@ export async function GET(
 
     let attendanceRecords: any[] = []
     if (studentIds.length > 0) {
-      const { data: attendanceData, error: attendanceError } = await supabase
+      const { data: attendanceData, error: attendanceError } = await dataClient
         .from('student_attendance')
         .select('id, student_id, is_present, has_homework_incomplete, was_too_late, created_at')
         .eq('class_id', classId)
@@ -290,7 +290,14 @@ export async function POST(
     const nextHomeworkIncomplete = Boolean(hasHomeworkIncomplete)
     const nextWasTooLate = Boolean(wasTooLate)
 
-    const { data: attendance, error: attendanceError } = await supabase
+    let writeClient: any = supabase
+    try {
+      writeClient = createAdminClient()
+    } catch {
+      writeClient = supabase
+    }
+
+    const { data: attendance, error: attendanceError } = await writeClient
       .from('student_attendance')
       .insert({
         student_id: studentId,
@@ -308,7 +315,7 @@ export async function POST(
       return NextResponse.json({ error: attendanceError.message }, { status: 500 })
     }
 
-    await logAuditEntry(supabase as any, {
+    await logAuditEntry(writeClient as any, {
       userId: user.id,
       classId,
       action: 'attendance_state_changed',
@@ -326,7 +333,7 @@ export async function POST(
     })
 
     if (nextHomeworkIncomplete) {
-      await logAuditEntry(supabase as any, {
+      await logAuditEntry(writeClient as any, {
         userId: user.id,
         classId,
         action: 'attendance_event_homework_incomplete',
@@ -343,7 +350,7 @@ export async function POST(
     }
 
     if (nextWasTooLate) {
-      await logAuditEntry(supabase as any, {
+      await logAuditEntry(writeClient as any, {
         userId: user.id,
         classId,
         action: 'attendance_event_late',
@@ -360,7 +367,7 @@ export async function POST(
     }
 
     if (normalizedCustomMessage) {
-      await logAuditEntry(supabase as any, {
+      await logAuditEntry(writeClient as any, {
         userId: user.id,
         classId,
         action: 'attendance_event_custom',

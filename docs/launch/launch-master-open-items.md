@@ -7,6 +7,10 @@ Goal: Complete all non-placeholder launch blockers to a production standard.
 ## Status
 - Phase 1 (Stability): Completed
 - Remaining: Phases 2-8
+- Completed slice (2026-04-16): Class Ops + Assignment Editor runtime-hardening and verification
+  - Attendance actions + audit logs + class-scoped rename propagation verified
+  - Assignment editor edit/size/add/persist flow verified
+  - Typecheck gate verified
 
 ## A. Agenda System (Phase 2)
 - [ ] Rebuild teacher agenda layout per requested structure (clean top actions, no legacy boxes, consistent spacing)

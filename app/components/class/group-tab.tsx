@@ -278,7 +278,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
   const sortedTeachers = [...data.teachers].sort((a, b) => (a.email || a.name).localeCompare(b.email || b.name));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="group-tab">
       <Card className="rounded-2xl border-none shadow-none">
         <CardContent className="space-y-4 pt-6">
           <div className="relative flex items-center justify-end">
@@ -345,7 +345,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
             )}
           </div>
           <div className="space-y-4">
-            <div className="rounded-2xl bg-muted/20">
+            <div className="rounded-2xl bg-muted/20" data-testid="group-section-teachers">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <button
@@ -355,7 +355,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                     aria-label={teachersCollapsed ? t.expand : t.collapse}
                   >
                     {teachersCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      <CardTitle className="text-base font-normal">{t.teachers}</CardTitle>
+                      <CardTitle className="text-base font-normal" data-testid="group-heading-teachers">{t.teachers}</CardTitle>
                     </button>
                   <span className="text-xs text-muted-foreground">
                     {data.teachers.length} {t.people}
@@ -386,7 +386,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
               )}
             </div>
 
-            <div className="rounded-2xl bg-muted/20">
+            <div className="rounded-2xl bg-muted/20" data-testid="group-section-students">
               <CardContent className="pt-6">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
@@ -397,7 +397,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                       aria-label={studentsCollapsed ? t.expand : t.collapse}
                     >
                       {studentsCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      <h3 className="text-base">{t.students}</h3>
+                      <h3 className="text-base" data-testid="group-heading-students">{t.students}</h3>
                     </button>
                     {!studentsCollapsed && <p className="text-xs text-muted-foreground">{t.studentListHint}</p>}
                   </div>
@@ -417,6 +417,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                     <button
                       type="button"
                       key={student.id}
+                      data-testid={`group-student-row-${student.id}`}
                       className="w-full rounded-xl bg-muted/35 px-3 py-2 text-left transition-colors hover:bg-muted/55"
                       onClick={() => {
                         setSelectedStudent(student);

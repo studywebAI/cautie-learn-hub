@@ -21,9 +21,10 @@ export const StudentOrderingBlock: React.FC<StudentOrderingBlockProps> = ({
   const startedAtRef = useRef<string>(new Date().toISOString());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const items: string[] = Array.isArray(block.data?.items) ? block.data.items : [];
 
   const initialOrder = useMemo(() => {
-    const indices = block.data.items.map((_, idx) => idx);
+    const indices = items.map((_: string, idx: number) => idx);
     if (!settings.matching.shuffleItems) return indices;
     const shuffled = [...indices];
     for (let i = shuffled.length - 1; i > 0; i -= 1) {
@@ -31,7 +32,7 @@ export const StudentOrderingBlock: React.FC<StudentOrderingBlockProps> = ({
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
-  }, [block.data.items, settings.matching.shuffleItems]);
+  }, [items, settings.matching.shuffleItems]);
 
   const [order, setOrder] = useState<number[]>(initialOrder);
 
@@ -73,7 +74,7 @@ export const StudentOrderingBlock: React.FC<StudentOrderingBlockProps> = ({
               </Button>
             </div>
             <div className="text-xs text-muted-foreground w-6">{index + 1}.</div>
-            <div className="flex-1">{block.data.items[itemIndex]}</div>
+            <div className="flex-1">{items[itemIndex]}</div>
           </div>
         ))}
       </div>
@@ -88,4 +89,3 @@ export const StudentOrderingBlock: React.FC<StudentOrderingBlockProps> = ({
     </div>
   );
 };
-
