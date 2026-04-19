@@ -4,6 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { CalendarEvent } from '@/lib/types';
 import { useRouter } from 'next/navigation';
+import { getAgendaVisualStyle } from '@/lib/agenda-event-style';
 
 interface DraggableEventProps {
   event: CalendarEvent;
@@ -63,17 +64,8 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
       return { accentColor: '#7e8d9d' };
     }
 
-    const assignmentType = (event as any).assignment_type || 'homework';
-    switch (assignmentType) {
-      case 'homework':
-        return { accentColor: '#4f86c0' };
-      case 'small_test':
-        return { accentColor: '#c38843' };
-      case 'big_test':
-        return { accentColor: '#c56f6f' };
-      default:
-        return { accentColor: '#8f7bb0' };
-    }
+    const visual = getAgendaVisualStyle(event as any);
+    return { accentColor: visual.accentColor };
   };
 
   const styleData = getDeadlineStyle();
@@ -95,18 +87,18 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
       }}
       {...attributes}
       {...listeners}
-      className={`rounded-lg border-l-4 border-l-transparent bg-[hsl(var(--surface-1))] px-2 py-1.5 cursor-grab active:cursor-grabbing ${
+      className={`rounded-md border-l-4 border-l-transparent bg-[hsl(var(--surface-1))] px-2 py-1 cursor-grab active:cursor-grabbing ${
         isDragging ? 'opacity-50' : 'hover:bg-[hsl(var(--surface-2))]'
       }`}
       onClick={handleClick}
     >
       <div className={`min-w-0 flex-1 ${compact ? 'hidden xl:block' : ''}`}>
-        <p className="truncate text-[11px] uppercase tracking-[0.03em] text-muted-foreground">
+        <p className="truncate text-[10px] uppercase tracking-[0.03em] text-muted-foreground">
           {event.subject}{event.class_name ? ` | ${event.class_name}` : ''}
         </p>
-        <p className="truncate text-sm text-foreground">{event.title}</p>
+        <p className="truncate text-[13px] text-foreground">{event.title}</p>
         {event.chapter_title && (
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+          <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
             {event.chapter_title}
           </p>
         )}

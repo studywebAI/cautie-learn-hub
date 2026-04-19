@@ -99,7 +99,7 @@ function StudentDashboard() {
     normalizeDisplayName((session as any)?.user?.user_metadata?.display_name) ||
     normalizeDisplayName((session as any)?.user?.user_metadata?.full_name) ||
     normalizeDisplayName((session as any)?.user?.email?.split('@')?.[0]) ||
-    'there';
+    'Guest';
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
@@ -153,7 +153,7 @@ function TeacherSummaryDashboard() {
       normalizeDisplayName((session as any)?.user?.user_metadata?.display_name) ||
       normalizeDisplayName((session as any)?.user?.user_metadata?.full_name) ||
       normalizeDisplayName(session?.user?.email ? session.user.email.split('@')[0] : '') ||
-      'there';
+      'Guest';
 
     return (
         <div className="flex flex-col gap-8">

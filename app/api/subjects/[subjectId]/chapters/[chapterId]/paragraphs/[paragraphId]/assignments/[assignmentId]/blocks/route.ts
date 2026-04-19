@@ -112,7 +112,7 @@ export async function GET(
 
     if (blocksError) {
       console.error('Error fetching blocks:', blocksError);
-      return NextResponse.json([]); // Return empty array to prevent infinite loading
+      return NextResponse.json({ error: 'Failed to fetch blocks' }, { status: 500 });
     }
 
     const normalized = (blocks || []).map((b: any) => ({
@@ -133,7 +133,7 @@ export async function GET(
     return NextResponse.json(selected);
   } catch (error) {
     console.error('Unexpected error in blocks GET:', error);
-    return NextResponse.json([], { status: 200 }); // Graceful fallback
+    return NextResponse.json({ error: 'Internal server error while loading blocks' }, { status: 500 });
   }
 }
 

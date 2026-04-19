@@ -1,16 +1,12 @@
-# Launch Master Open Items
+﻿# Launch Master Open Items
 
-Last updated: 2026-04-14
+Last updated: 2026-04-19
 Source: Full chat backlog + repository marker scan
 Goal: Complete all non-placeholder launch blockers to a production standard.
 
 ## Status
 - Phase 1 (Stability): Completed
 - Remaining: Phases 2-8
-- Completed slice (2026-04-16): Class Ops + Assignment Editor runtime-hardening and verification
-  - Attendance actions + audit logs + class-scoped rename propagation verified
-  - Assignment editor edit/size/add/persist flow verified
-  - Typecheck gate verified
 
 ## A. Agenda System (Phase 2)
 - [ ] Rebuild teacher agenda layout per requested structure (clean top actions, no legacy boxes, consistent spacing)
@@ -140,18 +136,20 @@ Goal: Complete all non-placeholder launch blockers to a production standard.
 
 ## L. SQL / Data / Migrations (Phase 8)
 - [ ] Consolidate all required migrations into clean idempotent files
-- [ ] Exclude old emergency/debug/temporary SQL from launch runbook
-- [ ] Produce exact ordered SQL run-list for launch environment
-- [ ] Add verification checklist per migration and per feature area
+- [x] Exclude old emergency/debug/temporary SQL from launch runbook
+- [x] Produce exact ordered SQL run-list for launch environment
+- [x] Add verification checklist per migration and per feature area
 
 ## M. Repository Marker Findings (action required)
 - [ ] Review and clean files flagged in docs/launch/code-markers-scan.txt
-- [ ] Highest-priority flagged areas:
-  - [ ] root-level SQL files containing temporary/debug RLS logic
-  - [ ] placeholder mentions in dictionaries and UI text
-  - [ ] tool placeholder examples in app/lib/tools/source-placeholder-examples.ts
-  - [ ] docs/spec files still describing placeholder/prototype behavior
+- [x] Highest-priority flagged areas:
+  - [x] root-level SQL files containing temporary/debug RLS logic
+  - [x] placeholder mentions in dictionaries and UI text
+  - [x] tool placeholder examples in app/lib/tools/source-placeholder-examples.ts
+  - [x] docs/spec files still describing placeholder/prototype behavior
 
 ## Notes
 - This file is the execution source of truth for remaining launch work.
 - No item is considered complete until UI + API + persistence + validation are done.
+
+

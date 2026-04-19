@@ -1,4 +1,4 @@
-type ToolPlaceholderId = 'notes' | 'quiz' | 'flashcards' | 'presentation';
+type ToolPromptId = 'notes' | 'quiz' | 'flashcards' | 'presentation';
 
 const buildPool = (parts: {
   intents: string[];
@@ -98,17 +98,8 @@ const notesPool = buildPool({
     'with examples and definitions',
     'with cause and effect grouping',
   ],
-  audiences: [
-    'for high school',
-    'for first-year university',
-    'for exam revision',
-    'for someone who missed class',
-  ],
-  constraints: [
-    'keep it concise',
-    'include common mistakes',
-    'add memory hooks',
-  ],
+  audiences: ['for high school', 'for first-year university', 'for exam revision', 'for someone who missed class'],
+  constraints: ['keep it concise', 'include common mistakes', 'add memory hooks'],
 });
 
 const quizPool = buildPool({
@@ -127,17 +118,8 @@ const quizPool = buildPool({
     'with trick-vs-core balance',
     'with clear answer keys',
   ],
-  audiences: [
-    'for high school level',
-    'for first-year university',
-    'for final exam prep',
-    'for weekly revision',
-  ],
-  constraints: [
-    'focus on weak spots',
-    'avoid duplicate wording',
-    'prioritize conceptual understanding',
-  ],
+  audiences: ['for high school level', 'for first-year university', 'for final exam prep', 'for weekly revision'],
+  constraints: ['focus on weak spots', 'avoid duplicate wording', 'prioritize conceptual understanding'],
 });
 
 const flashcardsPool = buildPool({
@@ -156,17 +138,8 @@ const flashcardsPool = buildPool({
     'with misconception checks',
     'with clear keyword emphasis',
   ],
-  audiences: [
-    'for exam week',
-    'for beginner learners',
-    'for intermediate level',
-    'for rapid daily review',
-  ],
-  constraints: [
-    'avoid duplicates',
-    'keep each prompt specific',
-    'include only testable facts',
-  ],
+  audiences: ['for exam week', 'for beginner learners', 'for intermediate level', 'for rapid daily review'],
+  constraints: ['avoid duplicates', 'keep each prompt specific', 'include only testable facts'],
 });
 
 const presentationPool = buildPool({
@@ -191,25 +164,21 @@ const presentationPool = buildPool({
     'for an introductory lesson',
     'for exam recap session',
   ],
-  constraints: [
-    'keep language simple',
-    'include speaker cue notes',
-    'add a short Q&A slide',
-  ],
+  constraints: ['keep language simple', 'include speaker cue notes', 'add a short Q&A slide'],
 });
 
 const take250 = (pool: string[]) => pool.slice(0, 250);
 
-export const SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL: Record<ToolPlaceholderId, string[]> = {
+export const SOURCE_PROMPT_EXAMPLES_BY_TOOL: Record<ToolPromptId, string[]> = {
   notes: take250(notesPool),
   quiz: take250(quizPool),
   flashcards: take250(flashcardsPool),
   presentation: take250(presentationPool),
 };
 
-export const SOURCE_PLACEHOLDER_EXAMPLES = [
-  ...SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL.notes,
-  ...SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL.quiz,
-  ...SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL.flashcards,
-  ...SOURCE_PLACEHOLDER_EXAMPLES_BY_TOOL.presentation,
+export const SOURCE_PROMPT_EXAMPLES = [
+  ...SOURCE_PROMPT_EXAMPLES_BY_TOOL.notes,
+  ...SOURCE_PROMPT_EXAMPLES_BY_TOOL.quiz,
+  ...SOURCE_PROMPT_EXAMPLES_BY_TOOL.flashcards,
+  ...SOURCE_PROMPT_EXAMPLES_BY_TOOL.presentation,
 ];

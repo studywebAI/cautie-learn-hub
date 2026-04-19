@@ -164,9 +164,9 @@
     },
     "developer": {
       "title": "Ustawienia programisty",
-      "description": "Ustawienia tymczasowe do celów programistycznych.",
-      "roleSwitch": "Przełącz rolę (tylko deweloper)",
-      "roleSwitchDescription": "Przełączaj się między widokiem ucznia i nauczyciela. To jest przeznaczone do rozwoju i zostanie usunięte."
+      "description": "Zaawansowane ustawienia diagnostyki obszaru roboczego.",
+      "roleSwitch": "Przelacz role (podglad)",
+      "roleSwitchDescription": "Przelaczaj miedzy podgladem ucznia i nauczyciela."
     }
   },
   "common": {
@@ -317,7 +317,7 @@
   },
   "submissions": {
     "writeSubmission": "Tutaj wpisz swoje zadanie...",
-    "fileUploadComing": "Przesyłanie plików wkrótce...",
+    "fileUploadComing": "Przesylanie plik�w jest niedostepne dla tego zadania.",
     "provideFeedback": "Przekaż konstruktywną informację zwrotną...",
     "addComment": "Dodaj komentarz...",
     "grade": "Stopień",

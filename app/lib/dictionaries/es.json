@@ -164,9 +164,9 @@
     },
     "developer": {
       "title": "Configuración del desarrollador",
-      "description": "Configuraciones temporales para fines de desarrollo.",
-      "roleSwitch": "Alternar rol (solo desarrolladores)",
-      "roleSwitchDescription": "Cambie entre la vista de estudiante y profesor. Esto es para desarrollo y será eliminado."
+      "description": "Controles avanzados para diagn�sticos del espacio de trabajo.",
+      "roleSwitch": "Cambiar rol (vista previa)",
+      "roleSwitchDescription": "Cambiar entre la vista previa de estudiante y docente."
     }
   },
   "common": {
@@ -317,7 +317,7 @@
   },
   "submissions": {
     "writeSubmission": "Escribe aquí el envío de tu tarea...",
-    "fileUploadComing": "La carga del archivo próximamente...",
+    "fileUploadComing": "La carga de archivos no est� disponible para esta tarea.",
     "provideFeedback": "Proporcionar comentarios constructivos...",
     "addComment": "Añade un comentario...",
     "grade": "Calificación",

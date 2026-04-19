@@ -2,6 +2,7 @@ type FlowHandler = (input: any) => Promise<any> | any;
 import {
   canUseOpenAIFallback,
   executeOpenAIFallbackFlow,
+  shouldFallbackToOpenAI,
 } from "@/lib/ai/openai-fallback";
 
 export type AIExecutionOptions = {
@@ -141,6 +142,11 @@ export async function executeAIFlow(
   try {
     return await flow(enrichedInput);
   } catch (error) {
+    const shouldFallback =
+      providerPreference === "auto" &&
+      canFallback &&
+      shouldFallbackToOpenAI(error);
+
     emit?.({
       type: "primary_error",
       provider: "gemini",
@@ -149,8 +155,8 @@ export async function executeAIFlow(
       code: (error as any)?.code ? String((error as any).code) : undefined,
     });
 
-    // In auto mode we always attempt OpenAI fallback for supported flows.
-    if (canFallback && providerPreference === "auto") {
+    // In auto mode, fallback only for provider/runtime errors that are retryable on OpenAI.
+    if (shouldFallback) {
       emit?.({
         type: "fallback_attempt",
         provider: "openai",

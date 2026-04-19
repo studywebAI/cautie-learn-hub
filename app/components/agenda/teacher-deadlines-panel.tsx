@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Calendar, Home, Circle, Square, BookCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { CalendarEvent } from '@/lib/types';
+import { getAgendaVisualStyle } from '@/lib/agenda-event-style';
 
 interface TeacherDeadlinesPanelProps {
   events: CalendarEvent[];
@@ -28,53 +29,32 @@ export function TeacherDeadlinesPanel({ events, selectedDay, onEventClick }: Tea
     .slice(0, 5);
 
   const getDeadlineStyle = (event: CalendarEvent) => {
-    const assignmentType = event.type === 'agenda_item' ? (event.item_type || 'assignment') : ((event as any).assignment_type || 'homework');
-    if (event.type === 'agenda_item' && event.visibility_state === 'hidden') {
-      return {
-        borderColor: 'rgb(239, 68, 68)',
-        icon: Square,
-        iconColor: 'text-red-500',
-        iconBg: 'bg-red-100',
-        label: 'H'
-      };
-    }
-    
-    switch (assignmentType) {
-      case 'homework':
-        return {
-          borderColor: 'rgb(59, 130, 246)',
-          icon: Home,
-          iconColor: 'text-blue-500',
-          iconBg: 'bg-blue-100',
-          label: 'H'
-        };
-      case 'small_test':
-      case 'quiz':
-        return {
-          borderColor: 'rgb(249, 115, 22)',
-          icon: Circle,
-          iconColor: 'text-orange-500',
-          iconBg: 'bg-orange-100',
-          label: 't'
-        };
-      case 'big_test':
-      case 'event':
-        return {
-          borderColor: 'rgb(239, 68, 68)',
-          icon: Square,
-          iconColor: 'text-red-500',
-          iconBg: 'bg-red-100',
-          label: 'T'
-        };
-      default:
-        return {
-          borderColor: 'hsl(var(--muted))',
-          icon: BookCheck,
-          iconColor: 'text-muted-foreground',
-          iconBg: 'bg-muted',
-          label: '!'
-        };
-    }
+    const visual = getAgendaVisualStyle(event as any);
+    const iconByType = {
+      homework: Home,
+      test: Circle,
+      big_test: Square,
+      other: BookCheck,
+    } as const;
+    const iconColorByType = {
+      homework: 'text-blue-500',
+      test: 'text-orange-500',
+      big_test: 'text-red-500',
+      other: 'text-muted-foreground',
+    } as const;
+    const iconBgByType = {
+      homework: 'bg-blue-100',
+      test: 'bg-orange-100',
+      big_test: 'bg-red-100',
+      other: 'bg-muted',
+    } as const;
+    return {
+      borderColor: visual.accentColor,
+      icon: iconByType[visual.visualType],
+      iconColor: iconColorByType[visual.visualType],
+      iconBg: iconBgByType[visual.visualType],
+      label: visual.label,
+    };
   };
 
   const displayEvents = selectedDay ? selectedDayEvents : upcomingEvents;
@@ -97,8 +77,6 @@ export function TeacherDeadlinesPanel({ events, selectedDay, onEventClick }: Tea
         {displayEvents.length > 0 ? (
           displayEvents.map(event => {
             const style = getDeadlineStyle(event);
-            const IconComponent = style.icon;
-            
             return (
               <div
                 key={event.id}

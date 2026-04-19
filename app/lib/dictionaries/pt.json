@@ -164,9 +164,9 @@
     },
     "developer": {
       "title": "Configurações do desenvolvedor",
-      "description": "Configurações temporárias para fins de desenvolvimento.",
-      "roleSwitch": "Alternar função (somente desenvolvedor)",
-      "roleSwitchDescription": "Alternar entre a visualização do aluno e do professor. Isto é para desenvolvimento e será removido."
+      "description": "Controles avan�ados para diagn�stico do espa�o de trabalho.",
+      "roleSwitch": "Alternar fun��o (pr�-visualiza��o)",
+      "roleSwitchDescription": "Alternar entre a pr�-visualiza��o de aluno e professor."
     }
   },
   "common": {
@@ -317,7 +317,7 @@
   },
   "submissions": {
     "writeSubmission": "Escreva aqui o envio do seu trabalho...",
-    "fileUploadComing": "Upload de arquivo em breve...",
+    "fileUploadComing": "O upload de arquivo n�o est� dispon�vel para esta atividade.",
     "provideFeedback": "Forneça feedback construtivo...",
     "addComment": "Adicione um comentário...",
     "grade": "Nota",

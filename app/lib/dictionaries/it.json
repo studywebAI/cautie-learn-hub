@@ -164,9 +164,9 @@
     },
     "developer": {
       "title": "Impostazioni sviluppatore",
-      "description": "Impostazioni temporanee per scopi di sviluppo.",
-      "roleSwitch": "Attiva/disattiva ruolo (solo sviluppatore)",
-      "roleSwitchDescription": "Passa dalla visualizzazione studente a quella insegnante. Questo è per lo sviluppo e verrà rimosso."
+      "description": "Controlli avanzati per la diagnostica dell�area di lavoro.",
+      "roleSwitch": "Cambia ruolo (anteprima)",
+      "roleSwitchDescription": "Passa tra anteprima studente e insegnante."
     }
   },
   "common": {
@@ -317,7 +317,7 @@
   },
   "submissions": {
     "writeSubmission": "Scrivi qui la presentazione del tuo compito...",
-    "fileUploadComing": "Il caricamento del file sarà disponibile a breve...",
+    "fileUploadComing": "Il caricamento file non � disponibile per questo compito.",
     "provideFeedback": "Fornisci feedback costruttivi...",
     "addComment": "Aggiungi un commento...",
     "grade": "Grado",

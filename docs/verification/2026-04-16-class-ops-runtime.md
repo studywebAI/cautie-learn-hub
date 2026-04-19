@@ -55,3 +55,8 @@ Class used during run: `aeea417e-8ad3-4e5b-8601-4a76572b490c` (cleaned up after 
 ## Notes
 - The first verification run failed on attendance writes due RLS. Fix applied in attendance API to use admin client for attendance/audit write path and teacher read path where needed.
 - Re-run completed fully with all checks passing.
+- Final hardening re-run (after timeline/logging/performance patch): PASS
+  - Verification class id: `dcdb832c-ae15-4716-84d5-f2cd55c2dbe0` (cleaned up)
+  - Added behavior now validated:
+    - attendance timeline includes only attendance/custom-event log actions
+    - attendance flag actions (`homework`, `late`) now always produce normalized audit rows with `active: true|false`

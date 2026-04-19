@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import type { CalendarEvent } from '@/lib/types';
 import type { ClassInfo } from '@/contexts/app-context';
+import { getAgendaVisualStyle } from '@/lib/agenda-event-style';
 
 type EditableType = 'assignment' | 'quiz' | 'event' | 'other';
 
@@ -32,19 +33,23 @@ interface AssignmentDetailsPanelProps {
   isTeacher: boolean;
   isStudent: boolean;
   onClose?: () => void;
+  onItemPatched?: (item: any) => void;
+  onItemDeleted?: (itemId: string) => void;
   onRefresh?: () => Promise<void> | void;
 }
 
 function getAccentColor(event: CalendarEvent) {
-  if (event.visibility_state === 'hidden') return '#c56f6f';
-  if (event.item_type === 'quiz') return '#c38843';
-  if (event.item_type === 'event') return '#c56f6f';
-  if (event.item_type === 'other') return '#8f7bb0';
-  if (event.item_type === 'studyset') return '#5fa771';
-  return '#4f86c0';
+  return getAgendaVisualStyle(event as any).accentColor;
 }
 
-export function AssignmentDetailsPanel({ event, isTeacher, onClose, onRefresh }: AssignmentDetailsPanelProps) {
+export function AssignmentDetailsPanel({
+  event,
+  isTeacher,
+  onClose,
+  onItemPatched,
+  onItemDeleted,
+  onRefresh,
+}: AssignmentDetailsPanelProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -130,6 +135,10 @@ export function AssignmentDetailsPanel({ event, isTeacher, onClose, onRefresh }:
         const data = await response.json().catch(() => ({}));
         throw new Error(data?.error || 'Failed to save item');
       }
+      const payload = await response.json().catch(() => ({}));
+      if (payload?.item) {
+        onItemPatched?.(payload.item);
+      }
 
       toast({ title: 'Updated', description: 'Agenda item updated.' });
       setIsEditing(false);
@@ -148,6 +157,7 @@ export function AssignmentDetailsPanel({ event, isTeacher, onClose, onRefresh }:
     try {
       const response = await fetch(`/api/classes/${event.class_id}/agenda/${event.id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete item');
+      onItemDeleted?.(event.id);
       toast({ title: 'Deleted', description: 'Agenda item deleted.' });
       onClose?.();
       await onRefresh?.();
@@ -170,6 +180,10 @@ export function AssignmentDetailsPanel({ event, isTeacher, onClose, onRefresh }:
         body: JSON.stringify({ visible: nextVisible }),
       });
       if (!response.ok) throw new Error('Failed visibility update');
+      const payload = await response.json().catch(() => ({}));
+      if (payload?.item) {
+        onItemPatched?.(payload.item);
+      }
       await onRefresh?.();
     } catch {
       setVisible(!nextVisible);

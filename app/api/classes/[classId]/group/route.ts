@@ -21,6 +21,11 @@ function actorDisplayName(displayNameValue: string | null | undefined, fullName:
   return `user-${userId.slice(0, 8)}`
 }
 
+function safeEmail(email: string | null | undefined) {
+  const value = String(email || '').trim()
+  return value || 'Guest'
+}
+
 function isUuidLike(value: unknown): value is string {
   if (typeof value !== 'string') return false
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
@@ -272,7 +277,7 @@ export async function GET(
       return {
         id: studentId,
         name: studentDisplayName(classMemberByUserId.get(studentId)?.display_name, profile?.display_name, profile?.full_name),
-        email: profile?.email || null,
+        email: safeEmail(profile?.email),
         role: 'student',
         joinedAt: null,
         lastSeen: profile?.last_seen,
@@ -346,7 +351,7 @@ export async function GET(
       return {
         id: teacherId,
         name: actorDisplayName(profile?.display_name, profile?.full_name, profile?.email, teacherId),
-        email: profile?.email || null,
+        email: safeEmail(profile?.email),
         role: 'teacher',
         joinedAt: null,
         lastSeen: profile?.last_seen,

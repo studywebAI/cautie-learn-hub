@@ -3,11 +3,12 @@
 import { useParams, useSearchParams } from 'next/navigation';
 import { useContext } from 'react';
 import { cn } from '@/lib/utils';
-import { 
+import {
   Users, Settings, Calendar, UserPlus, Layers, ClipboardCheck, History
 } from 'lucide-react';
 import Link from 'next/link';
 import { AppContext } from '@/contexts/app-context';
+import { STUDENT_CLASS_TAB_IDS, TEACHER_CLASS_TAB_IDS } from '@/lib/class-tabs';
 
 export default function ClassLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
@@ -16,27 +17,25 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const classId = params.classId as string;
   const isDutch = language === 'nl';
 
-  const teacherTabs = [
-    { id: 'invite', label: isDutch ? 'Uitnodigen' : 'Invite', icon: UserPlus, href: '?tab=invite' },
-    { id: 'group', label: isDutch ? 'Groep' : 'Group', icon: Users, href: '?tab=group' },
-    { id: 'attendance', label: isDutch ? 'Aanwezigheid' : 'Attendance', icon: Calendar, href: '?tab=attendance' },
-    { id: 'grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardCheck, href: '?tab=grades' },
-    { id: 'analytics', label: isDutch ? 'Analyse' : 'Analytics', icon: Layers, href: '?tab=analytics' },
-    { id: 'logs', label: isDutch ? 'Logs' : 'Logs', icon: History, href: '?tab=logs' },
-    { id: 'settings', label: isDutch ? 'Instellingen' : 'Settings', icon: Settings, href: '?tab=settings' },
-  ];
+  const tabDefinitions = {
+    invite: { label: isDutch ? 'Uitnodigen' : 'Invite', icon: UserPlus, href: '?tab=invite' },
+    group: { label: isDutch ? 'Groep' : 'Group', icon: Users, href: '?tab=group' },
+    attendance: { label: isDutch ? 'Aanwezigheid' : 'Attendance', icon: Calendar, href: '?tab=attendance' },
+    grades: { label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardCheck, href: '?tab=grades' },
+    analytics: { label: isDutch ? 'Analyse' : 'Analytics', icon: Layers, href: '?tab=analytics' },
+    logs: { label: isDutch ? 'Logs' : 'Logs', icon: History, href: '?tab=logs' },
+    settings: { label: isDutch ? 'Instellingen' : 'Settings', icon: Settings, href: '?tab=settings' },
+  } as const;
 
-  const studentTabs = [
-    { id: 'invite', label: isDutch ? 'Uitnodigen' : 'Invite', icon: UserPlus, href: '?tab=invite' },
-    { id: 'group', label: isDutch ? 'Groep' : 'Group', icon: Users, href: '?tab=group' },
-  ];
+  const teacherTabs = TEACHER_CLASS_TAB_IDS.map((id) => ({ id, ...tabDefinitions[id] }));
+  const studentTabs = STUDENT_CLASS_TAB_IDS.map((id) => ({ id, ...tabDefinitions[id] }));
 
   const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
   const requestedTabRaw = searchParams?.get('tab') || '';
   const requestedTab = requestedTabRaw.trim().toLowerCase();
   const requestedTeacherTab = teacherTabs.some((tab) => tab.id === requestedTab);
   const visibleTabs = (isTeacherRole || (isLoading && requestedTeacherTab)) ? teacherTabs : studentTabs;
-  const tabIds = new Set(visibleTabs.map((tab) => tab.id));
+  const tabIds = new Set<string>(visibleTabs.map((tab) => tab.id));
   const defaultTab = isTeacherRole ? 'group' : 'invite';
   const currentTab = tabIds.has(requestedTab) ? requestedTab : defaultTab;
 

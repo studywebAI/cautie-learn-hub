@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect, useContext } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DEFAULT_CLASS_PREFERENCES, normalizeClassPreferences } from '@/lib/class-preferences';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 import { AppContext, AppContextType } from '@/contexts/app-context';
+import { useToast } from '@/hooks/use-toast';
 
 type StudentAttendance = {
   id: string;
@@ -57,12 +59,13 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
   const [students, setStudents] = useState<StudentAttendance[]>(cachedData?.students || []);
   const [loading, setLoading] = useState(!cachedData && !parentLoading);
   const [selectedStudent, setSelectedStudent] = useState<StudentAttendance | null>(null);
-  const [timelineStudent, setTimelineStudent] = useState<StudentAttendance | null>(null);
+  const [timelineStudentId, setTimelineStudentId] = useState<string | null>(null);
   const [isCustomEventDialogOpen, setIsCustomEventDialogOpen] = useState(false);
   const [customEventText, setCustomEventText] = useState('');
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [preferences, setPreferences] = useState(DEFAULT_CLASS_PREFERENCES);
+  const { toast } = useToast();
   const selectedStudentId = searchParams?.get('studentId') || '';
   const quickAction = searchParams?.get('quick') || '';
   const t = {
@@ -92,15 +95,14 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
     teacher: isDutch ? 'Docent' : 'Teacher',
     loadingLogs: isDutch ? 'Laden...' : 'Loading...',
     viewLogs: isDutch ? 'Bekijk logs' : 'View logs',
+    unnamedStudent: isDutch ? 'Naamloze leerling' : 'Unnamed student',
   };
 
   const fetchAttendance = async (forceRefresh = false) => {
-    if (!forceRefresh && students.length > 0) {
-      setLoading(false);
-      return;
+    const shouldKeepCurrentRowsVisible = !forceRefresh && students.length > 0;
+    if (!shouldKeepCurrentRowsVisible) {
+      setLoading(true);
     }
-
-    setLoading(true);
     void logClassTabEvent({
       classId,
       tab: 'attendance',
@@ -135,7 +137,9 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
         message: error instanceof Error ? error.message : 'Unknown error',
       });
     } finally {
-      setLoading(false);
+      if (!shouldKeepCurrentRowsVisible) {
+        setLoading(false);
+      }
     }
   };
 
@@ -185,6 +189,27 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
       setSelectedStudent(student);
       setCustomEventText('');
       setIsCustomEventDialogOpen(true);
+      return;
+    }
+    if (quickAction === 'timeline') {
+      setTimelineStudentId(student.id);
+      return;
+    }
+    if (quickAction === 'present') {
+      handleAttendanceToggle(student.id, true);
+      return;
+    }
+    if (quickAction === 'absent') {
+      handleAttendanceToggle(student.id, false);
+      return;
+    }
+    if (quickAction === 'homework') {
+      handleFlagToggle(student.id, 'hasHomeworkIncomplete', !student.hasHomeworkIncomplete);
+      return;
+    }
+    if (quickAction === 'late') {
+      handleFlagToggle(student.id, 'wasTooLate', !student.wasTooLate);
+      return;
     }
   }, [quickAction, selectedStudentId, students]);
 
@@ -219,6 +244,11 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
         throw new Error(`Failed to update attendance (${response.status})`);
       }
 
+      clearQuickAction();
+      toast({
+        title: isDutch ? 'Opgeslagen' : 'Saved',
+        description: isDutch ? 'Aanwezigheid bijgewerkt.' : 'Attendance updated.',
+      });
       void fetchAttendance(true);
       void logClassTabEvent({
         classId,
@@ -238,6 +268,11 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
         stage: 'action',
         level: 'error',
         message: error instanceof Error ? error.message : 'Unknown error',
+      });
+      toast({
+        variant: 'destructive',
+        title: isDutch ? 'Opslaan mislukt' : 'Save failed',
+        description: isDutch ? 'Aanwezigheid kon niet worden bijgewerkt.' : 'Attendance update could not be saved.',
       });
     }
   };
@@ -307,17 +342,25 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
         }),
       });
 
-      if (response.ok) {
-        void fetchAttendance(true);
-        void logClassTabEvent({
-          classId,
-          tab: 'attendance',
-          event: 'custom_event_saved',
-          stage: 'action',
-          level: 'info',
-          meta: { student_id: selectedStudent.id },
-        });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.error || `Failed to save custom event (${response.status})`);
       }
+
+      clearQuickAction();
+      toast({
+        title: isDutch ? 'Opgeslagen' : 'Saved',
+        description: isDutch ? 'Aangepast event opgeslagen.' : 'Custom event saved.',
+      });
+      void fetchAttendance(true);
+      void logClassTabEvent({
+        classId,
+        tab: 'attendance',
+        event: 'custom_event_saved',
+        stage: 'action',
+        level: 'info',
+        meta: { student_id: selectedStudent.id },
+      });
     } catch (error) {
       console.error('Failed to save custom event:', error);
       void logClassTabEvent({
@@ -328,6 +371,11 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
         level: 'error',
         message: error instanceof Error ? error.message : 'Unknown error',
       });
+      toast({
+        variant: 'destructive',
+        title: isDutch ? 'Opslaan mislukt' : 'Save failed',
+        description: isDutch ? 'Aangepast event kon niet worden opgeslagen.' : 'Custom event could not be saved.',
+      });
     }
 
     setIsCustomEventDialogOpen(false);
@@ -337,6 +385,9 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
   const visibleStudents = selectedStudentId
     ? students.filter((student) => student.id === selectedStudentId)
     : students;
+  const timelineStudent = timelineStudentId
+    ? students.find((student) => student.id === timelineStudentId) || null
+    : null;
 
   const applyStudentFilter = (studentId: string) => {
     const nextParams = new URLSearchParams(searchParams?.toString() || '');
@@ -347,6 +398,14 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
     } else {
       nextParams.delete('studentId');
     }
+    router.replace(`${pathname}?${nextParams.toString()}`);
+  };
+
+  const clearQuickAction = () => {
+    if (!quickAction) return;
+    const nextParams = new URLSearchParams(searchParams?.toString() || '');
+    nextParams.set('tab', 'attendance');
+    nextParams.delete('quick');
     router.replace(`${pathname}?${nextParams.toString()}`);
   };
 
@@ -372,7 +431,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
               <SelectItem value="all">{t.allStudents}</SelectItem>
               {students.map((student) => (
                 <SelectItem key={student.id} value={student.id}>
-                  {student.name}
+                  {student.name || t.unnamedStudent}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -383,9 +442,9 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
       {selectedStudentId && (
         <div className="rounded-lg bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
           {t.showingOneStudent}
-          <a href={`/class/${classId}?tab=attendance`} className="ml-2 underline underline-offset-2">
+          <Link prefetch={false} href={`/class/${classId}?tab=attendance`} className="ml-2 underline underline-offset-2">
             {t.showAll}
-          </a>
+          </Link>
         </div>
       )}
 
@@ -400,7 +459,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
           >
             <div className="flex items-center gap-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate">{student.name}</p>
+                <p className="truncate">{student.name || t.unnamedStudent}</p>
                 <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
               </div>
 
@@ -409,8 +468,9 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-info-${student.id}`}
                   variant="outline"
                   size="sm"
-                  className="h-10 w-10 rounded-xl p-0"
-                  onClick={() => setTimelineStudent(student)}
+                  className="h-11 w-11 rounded-xl p-0"
+                  aria-label={t.viewTimeline}
+                  onClick={() => setTimelineStudentId(student.id)}
                   title={t.viewTimeline}
                 >
                   <Info className="h-[18px] w-[18px]" />
@@ -420,7 +480,8 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-homework-${student.id}`}
                   variant={student.hasHomeworkIncomplete ? 'destructive' : 'outline'}
                   size="sm"
-                  className="h-10 w-10 rounded-xl p-0"
+                  className="h-11 w-11 rounded-xl p-0"
+                  aria-label={t.homeworkIncomplete}
                   onClick={() => handleFlagToggle(student.id, 'hasHomeworkIncomplete', !student.hasHomeworkIncomplete)}
                   title={t.homeworkIncomplete}
                 >
@@ -431,7 +492,8 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-late-${student.id}`}
                   variant={student.wasTooLate ? 'destructive' : 'outline'}
                   size="sm"
-                  className="h-10 w-10 rounded-xl p-0"
+                  className="h-11 w-11 rounded-xl p-0"
+                  aria-label={t.late}
                   onClick={() => handleFlagToggle(student.id, 'wasTooLate', !student.wasTooLate)}
                   title={t.late}
                 >
@@ -442,7 +504,8 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-custom-${student.id}`}
                   variant="outline"
                   size="sm"
-                  className="h-10 w-10 rounded-xl p-0"
+                  className="h-11 w-11 rounded-xl p-0"
+                  aria-label={t.addCustomEvent}
                   onClick={() => {
                     setSelectedStudent(student);
                     setCustomEventText('');
@@ -457,7 +520,8 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-present-${student.id}`}
                   variant={student.isPresent === true ? 'default' : 'outline'}
                   size="sm"
-                  className={`h-10 w-10 rounded-xl p-0 ${student.isPresent === true ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                  className={`h-11 w-11 rounded-xl p-0 ${student.isPresent === true ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                  aria-label={t.present}
                   onClick={() => handleAttendanceToggle(student.id, true)}
                   title={t.present}
                 >
@@ -468,7 +532,8 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-absent-${student.id}`}
                   variant={student.isPresent === false ? 'destructive' : 'outline'}
                   size="sm"
-                  className="h-10 w-10 rounded-xl p-0"
+                  className="h-11 w-11 rounded-xl p-0"
+                  aria-label={t.absent}
                   onClick={() => handleAttendanceToggle(student.id, false)}
                   title={t.absent}
                 >
@@ -544,10 +609,10 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!timelineStudent} onOpenChange={() => setTimelineStudent(null)}>
+      <Dialog open={!!timelineStudent} onOpenChange={() => setTimelineStudentId(null)}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{timelineStudent?.name} {t.timeline}</DialogTitle>
+            <DialogTitle>{timelineStudent?.name || ''} {t.timeline}</DialogTitle>
             <DialogDescription>{t.timelineDescription}</DialogDescription>
           </DialogHeader>
           {timelineStudent && (
@@ -555,7 +620,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => router.replace(`/class/${classId}?tab=logs&student_id=${timelineStudent.id}`)}
+                onClick={() => router.replace(`/class/${classId}?tab=logs&student_id=${timelineStudent.id}&category=events`)}
               >
                 {t.viewLogs}
               </Button>

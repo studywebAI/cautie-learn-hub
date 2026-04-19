@@ -164,9 +164,9 @@
     },
     "developer": {
       "title": "Geliştirici Ayarları",
-      "description": "Geliştirme amaçlı geçici ayarlar.",
-      "roleSwitch": "Rolü Değiştir (Yalnızca Geliştirici)",
-      "roleSwitchDescription": "Öğrenci ve öğretmen görünümü arasında geçiş yapın. Bu geliştirme amaçlıdır ve kaldırılacaktır."
+      "description": "�alisma alani tanilamasi i�in gelismis ayarlar.",
+      "roleSwitch": "Rol degistir (�nizleme)",
+      "roleSwitchDescription": "�grenci ve �gretmen �nizlemesi arasinda ge�is yapin."
     }
   },
   "common": {
@@ -317,7 +317,7 @@
   },
   "submissions": {
     "writeSubmission": "Ödev tesliminizi buraya yazın...",
-    "fileUploadComing": "Dosya yüklemesi yakında...",
+    "fileUploadComing": "Bu �dev i�in dosya y�kleme kullanilamiyor.",
     "provideFeedback": "Yapıcı geri bildirim sağlayın...",
     "addComment": "Yorum ekleyin...",
     "grade": "Seviye",

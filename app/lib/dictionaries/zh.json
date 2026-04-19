@@ -164,9 +164,9 @@
     },
     "developer": {
       "title": "开发者设置",
-      "description": "用于开发目的的临时设置。",
-      "roleSwitch": "切换角色（仅限开发人员）",
-      "roleSwitchDescription": "在学生和教师视图之间切换。这是为了开发，将被删除。"
+      "description": "?????????????",
+      "roleSwitch": "????(??)",
+      "roleSwitchDescription": "???????????????"
     }
   },
   "common": {
@@ -317,7 +317,7 @@
   },
   "submissions": {
     "writeSubmission": "在这里写下您的作业提交...",
-    "fileUploadComing": "文件即将上传...",
+    "fileUploadComing": "????????????",
     "provideFeedback": "提供建设性的反馈...",
     "addComment": "添加评论...",
     "grade": "年级",

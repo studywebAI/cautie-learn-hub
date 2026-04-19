@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { X, Home, Circle, Square, BookCheck, Link as LinkIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { CalendarEvent } from '@/lib/types';
+import { getAgendaVisualStyle } from '@/lib/agenda-event-style';
 
 interface TaskOverviewModalProps {
   event: CalendarEvent | null;
@@ -28,46 +29,33 @@ export function TaskOverviewModal({ event, isOpen, onClose, onCompletionToggle }
   }, [event]);
 
   const getDeadlineStyle = (event: CalendarEvent) => {
-    const assignmentType = (event as any).assignment_type || 'homework';
-
-    switch (assignmentType) {
-      case 'homework':
-        return {
-          borderColor: 'rgb(59, 130, 246)',
-          bgColor: 'rgba(59, 130, 246, 0.1)',
-          icon: Home,
-          iconColor: 'text-blue-500',
-          iconBg: 'bg-blue-100',
-          label: 'H'
-        };
-      case 'small_test':
-        return {
-          borderColor: 'rgb(249, 115, 22)',
-          bgColor: 'rgba(249, 115, 22, 0.1)',
-          icon: Circle,
-          iconColor: 'text-orange-500',
-          iconBg: 'bg-orange-100',
-          label: 't'
-        };
-      case 'big_test':
-        return {
-          borderColor: 'rgb(239, 68, 68)',
-          bgColor: 'rgba(239, 68, 68, 0.1)',
-          icon: Square,
-          iconColor: 'text-red-500',
-          iconBg: 'bg-red-100',
-          label: 'T'
-        };
-      default:
-        return {
-          borderColor: 'hsl(var(--destructive))',
-          bgColor: 'hsl(var(--destructive) / 0.1)',
-          icon: BookCheck,
-          iconColor: 'text-destructive',
-          iconBg: 'bg-destructive/10',
-          label: '!'
-        };
-    }
+    const visual = getAgendaVisualStyle(event as any);
+    const iconByType = {
+      homework: Home,
+      test: Circle,
+      big_test: Square,
+      other: BookCheck,
+    } as const;
+    const iconColorByType = {
+      homework: 'text-blue-500',
+      test: 'text-orange-500',
+      big_test: 'text-red-500',
+      other: 'text-muted-foreground',
+    } as const;
+    const iconBgByType = {
+      homework: 'bg-blue-100',
+      test: 'bg-orange-100',
+      big_test: 'bg-red-100',
+      other: 'bg-muted',
+    } as const;
+    return {
+      borderColor: visual.accentColor,
+      bgColor: visual.bgColor,
+      icon: iconByType[visual.visualType],
+      iconColor: iconColorByType[visual.visualType],
+      iconBg: iconBgByType[visual.visualType],
+      label: visual.label,
+    };
   };
 
   const handleToggleComplete = async (checked: boolean) => {

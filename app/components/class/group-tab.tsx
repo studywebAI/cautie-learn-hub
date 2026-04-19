@@ -3,7 +3,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, ChevronDown, ChevronRight, MessageSquare, Info, Pencil, Check, Settings, CircleHelp } from 'lucide-react';
+import { Users, ChevronDown, ChevronRight, MessageSquare, Info, Pencil, Check, Settings, CircleHelp, MoreHorizontal } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -104,8 +104,6 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     cancel: isDutch ? 'Annuleren' : 'Cancel',
     save: isDutch ? 'Opslaan' : 'Save',
     noLinkedSubjects: isDutch ? 'Nog geen gekoppelde vakken' : 'No linked subjects yet',
-    recentEvents: isDutch ? 'Recente events' : 'Recent events',
-    by: isDutch ? 'Door' : 'By',
     grades: isDutch ? 'Cijfers' : 'Grades',
     subjects: isDutch ? 'Vakken' : 'Subjects',
     completion: isDutch ? 'Voltooiing' : 'Completion',
@@ -113,7 +111,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     files: isDutch ? 'Bestanden' : 'Files',
     assignEvent: isDutch ? 'Event toevoegen' : 'Assign Event',
     logs: isDutch ? 'Logs' : 'Logs',
-    lastActivity: isDutch ? 'Laatste activiteit' : 'Last activity',
+    activity: isDutch ? 'Activiteit' : 'Activity',
   };
 
   const [data, setData] = useState<GroupData | null>(cachedData || null);
@@ -128,6 +126,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
   const [renameStudent, setRenameStudent] = useState<Student | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [savingRename, setSavingRename] = useState(false);
+  const [logCodeQuery, setLogCodeQuery] = useState('');
 
   useEffect(() => {
     setSelectedStudent(null);
@@ -189,16 +188,6 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatLastSeen = (value: string | null) => {
-    if (!value) return 'never';
-    const date = new Date(value);
-    const diffMins = Math.floor((Date.now() - date.getTime()) / 60000);
-    if (diffMins < 1) return 'now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-    return date.toLocaleDateString();
   };
 
   const saveStudentRename = async () => {
@@ -279,8 +268,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
 
   return (
     <div className="space-y-4" data-testid="group-tab">
-      <Card className="rounded-2xl border-none shadow-none">
-        <CardContent className="space-y-4 pt-6">
+      <div className="space-y-4 rounded-2xl bg-[hsl(var(--surface-1))] p-3 md:p-4">
           <div className="relative flex items-center justify-end">
             <Button
               variant={groupSettingsOpen ? 'default' : 'outline'}
@@ -338,6 +326,40 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                     <div className="space-y-2 text-sm text-muted-foreground">
                       <p>{t.renameSavedHint}</p>
                       <p>{t.renameVisibleHint}</p>
+                      <div className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-2">
+                        <p className="text-xs uppercase tracking-wide">{isDutch ? 'Log code hulp' : 'Log code help'}</p>
+                        <Input
+                          value={logCodeQuery}
+                          onChange={(event) => setLogCodeQuery(event.target.value.toUpperCase())}
+                          placeholder={isDutch ? 'Voer code in (bv. EVT-ATT-001)' : 'Enter code (e.g. EVT-ATT-001)'}
+                          className="h-9"
+                        />
+                        <div className="space-y-1 text-xs">
+                          {(isDutch
+                            ? [
+                                ['EVT-ATT-001', 'Aanwezigheidsstatus aangepast (check of x).'],
+                                ['EVT-ATT-002', 'Huiswerk-markering gewijzigd.'],
+                                ['EVT-ATT-003', 'Te-laat markering gewijzigd.'],
+                                ['EVT-CUS-001', 'Aangepast eventbericht toegevoegd.'],
+                                ['ROS-MEM-001', 'Leerlingnaam in deze klas hernoemd.'],
+                              ]
+                            : [
+                                ['EVT-ATT-001', 'Attendance state changed (check or x).'],
+                                ['EVT-ATT-002', 'Homework flag changed.'],
+                                ['EVT-ATT-003', 'Late flag changed.'],
+                                ['EVT-CUS-001', 'Custom event message added.'],
+                                ['ROS-MEM-001', 'Student alias renamed for this class.'],
+                              ]
+                          )
+                            .filter(([code]) => !logCodeQuery || code.includes(logCodeQuery))
+                            .map(([code, description]) => (
+                              <div key={code} className="rounded-md bg-background/80 px-2 py-1">
+                                <p className="font-mono text-[11px] text-foreground">{code}</p>
+                                <p>{description}</p>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -345,8 +367,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
             )}
           </div>
           <div className="space-y-4">
-            <div className="rounded-2xl bg-muted/20" data-testid="group-section-teachers">
-              <CardHeader className="pb-3">
+            <div className="rounded-2xl bg-muted/20 p-4" data-testid="group-section-teachers">
                 <div className="flex items-center justify-between">
                   <button
                     type="button"
@@ -362,9 +383,8 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                   </span>
                 </div>
                 {!teachersCollapsed && <p className="text-xs text-muted-foreground">{t.teacherListHint}</p>}
-              </CardHeader>
               {!teachersCollapsed && (
-                <CardContent className="space-y-2">
+                <div className="mt-3 space-y-1.5">
                   {sortedTeachers.length === 0 ? (
                     <p className="text-sm text-muted-foreground">{t.noTeachers}</p>
                   ) : (
@@ -372,22 +392,24 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                       <button
                         key={teacher.id}
                         type="button"
-                        className="w-full rounded-xl bg-muted/30 p-3 text-left transition-colors hover:bg-muted/55"
+                        className="group flex w-full items-center gap-3 rounded-lg border-l-4 border-l-sky-500 bg-muted/30 px-3 py-2 text-left transition-colors hover:bg-muted/55"
                         onClick={() => setSelectedTeacher(teacher)}
                       >
-                        <p className="truncate">{teacher.email || teacher.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {(teacher.subjects || []).map((s) => s.title).join(', ') || t.noLinkedSubjects}
-                        </p>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate">{teacher.email || teacher.name}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {(teacher.subjects || []).map((s) => s.title).join(', ') || t.noLinkedSubjects}
+                          </p>
+                        </div>
+                        <MoreHorizontal className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
                       </button>
                     ))
                   )}
-                </CardContent>
+                </div>
               )}
             </div>
 
-            <div className="rounded-2xl bg-muted/20" data-testid="group-section-students">
-              <CardContent className="pt-6">
+            <div className="rounded-2xl bg-muted/20 p-4" data-testid="group-section-students">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <button
@@ -409,16 +431,15 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                     </div>
                   )}
                 </div>
-              </CardContent>
 
               {!studentsCollapsed && (
-                <div className="space-y-2 px-6 pb-6">
+                <div className="mt-3 space-y-1.5">
                   {sortedStudents.map((student) => (
                     <button
                       type="button"
                       key={student.id}
                       data-testid={`group-student-row-${student.id}`}
-                      className="w-full rounded-xl bg-muted/35 px-3 py-2 text-left transition-colors hover:bg-muted/55"
+                      className="group flex items-center gap-3 rounded-lg border-l-4 border-l-emerald-500 bg-muted/35 px-3 py-2 text-left transition-colors hover:bg-muted/55"
                       onClick={() => {
                         setSelectedStudent(student);
                         void logClassTabEvent({
@@ -440,7 +461,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                         <div className="flex items-center gap-1">
                           <Link
                             prefetch={false}
-                            href={`/class/${classId}?tab=logs&student_id=${student.id}`}
+                            href={`/class/${classId}?tab=logs&student_id=${student.id}&category=events`}
                             className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70"
                             onClick={(e) => e.stopPropagation()}
                             title={isDutch ? 'Bekijk tijdlijn' : 'View timeline'}
@@ -465,6 +486,25 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                           >
                             <MessageSquare className="h-4 w-4" />
                           </Link>
+                          <button
+                            type="button"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedStudent(student);
+                              void logClassTabEvent({
+                                classId,
+                                tab: 'group',
+                                event: 'student_opened',
+                                stage: 'action',
+                                level: 'debug',
+                                meta: { student_id: student.id },
+                              });
+                            }}
+                            title={isDutch ? 'Meer acties' : 'More actions'}
+                          >
+                            <MoreHorizontal className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                          </button>
                         </div>
                       </div>
                     </button>
@@ -480,8 +520,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </div>
 
       <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
         <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto rounded-2xl border-none">
@@ -510,7 +549,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}`}>
+                    <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}&quick=timeline`}>
                       {t.attendance}
                     </Link>
                   </Button>
@@ -524,34 +563,16 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                       {t.assignEvent}
                     </Link>
                   </Button>
-                </div>
-
-                {selectedStudent.recentActivity.length > 0 && (
-                  <div>
-                    <h4 className="mb-2 text-sm">{t.recentEvents}</h4>
-                    <div className="space-y-2">
-                      {selectedStudent.recentActivity.slice(0, 8).map((activity) => (
-                        <div key={activity.id} className="rounded-xl bg-muted/30 p-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="flex-1 capitalize">{activity.action.replace(/_/g, ' ')}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(activity.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                          {activity.details?.actor_name && (
-                            <p className="mt-1 text-xs text-muted-foreground">{t.by} {String(activity.details.actor_name)}</p>
-                          )}
-                          {activity.details?.custom_message && (
-                            <p className="mt-1 text-xs text-muted-foreground">{String(activity.details.custom_message)}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="rounded-xl bg-muted/35 p-3 text-sm text-muted-foreground">
-                  {t.lastActivity}: {formatLastSeen(selectedStudent.recentActivity?.[0]?.createdAt || selectedStudent.lastSeen || null)}
+                  <Button variant="outline" asChild>
+                    <Link prefetch={false} href={`/class/${classId}?tab=logs&student_id=${selectedStudent.id}&category=events`}>
+                      {t.logs}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link prefetch={false} href={`/class/${classId}?tab=logs&student_id=${selectedStudent.id}&category=all`}>
+                      {t.activity}
+                    </Link>
+                  </Button>
                 </div>
               </div>
             </>

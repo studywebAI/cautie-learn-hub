@@ -2,10 +2,9 @@
 
 import React, { Suspense, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ChevronDown, FileUp, Loader2, Sparkles, Upload } from 'lucide-react';
+import { FileUp, Loader2, Sparkles, Upload } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
-import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -243,8 +242,6 @@ function PresentationPageContent() {
   const [isExportingCloud, setIsExportingCloud] = useState(false);
   const [activeShareToken, setActiveShareToken] = useState<string | null>(null);
   const [activeShareUrl, setActiveShareUrl] = useState<string | null>(null);
-  const [connectMenuOpen, setConnectMenuOpen] = useState(false);
-  const [connectMicrosoftOpen, setConnectMicrosoftOpen] = useState(false);
   const [importCatalog, setImportCatalog] = useState<ImportCatalogItem[]>([]);
   const [importCatalogLoading, setImportCatalogLoading] = useState(false);
   const [importSourceFilter, setImportSourceFilter] = useState<'all' | 'tool_runs' | 'materials'>('all');
@@ -345,41 +342,6 @@ function PresentationPageContent() {
     setSourceText((prev) => (prev.trim() ? `${prev.trim()}\n\n${normalized}` : normalized));
   }, []);
 
-  const importRecentSources = useCallback(async () => {
-    try {
-      const response = await fetch('/api/integrations/context-sources?provider=microsoft&selected=1', { cache: 'no-store' });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(String(payload?.error || 'Could not import recent files'));
-      const items = Array.isArray(payload?.items) ? payload.items : [];
-      const chunks = items
-        .map((item: any) => String(item?.extracted_text || '').trim())
-        .filter(Boolean);
-      const attachments: SourceAttachment[] = items.map((item: any, idx: number) => ({
-        key: `recent:${String(item?.id || idx)}`,
-        sourceType: 'cloud_file',
-        fileName: String(item?.name || 'Cloud file'),
-        mimeType: typeof item?.mime_type === 'string' ? item.mime_type : undefined,
-        externalProvider: 'onedrive',
-        externalFileId: typeof item?.external_file_id === 'string' ? item.external_file_id : undefined,
-        extractedText: typeof item?.extracted_text === 'string' ? item.extracted_text : undefined,
-        thumbnailUrl: typeof item?.metadata?.preview_url === 'string' ? item.metadata.preview_url : undefined,
-        parsedMetadata: {
-          webUrl: typeof item?.web_url === 'string' ? item.web_url : undefined,
-          containsVisuals: true,
-        },
-      }));
-      setSourceAttachments((prev) => mergeAttachments(prev, attachments));
-      if (chunks.length === 0) {
-        toast({ variant: 'destructive', title: 'No recent files ready', description: 'Select files with Connect first.' });
-        return;
-      }
-      appendSourceChunk(chunks.join('\n\n'));
-      toast({ title: 'Imported recents', description: `${chunks.length} file(s) merged into source.` });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Import failed', description: error?.message || 'Try again.' });
-    }
-  }, [appendSourceChunk, toast]);
-
   const getImportUsageMap = useCallback((): Record<string, number> => {
     if (typeof window === 'undefined') return {};
     try {
@@ -435,6 +397,7 @@ function PresentationPageContent() {
         .filter((item) => item.runId);
 
       const materialItems: ImportCatalogItem[] = (Array.isArray(materialsPayload?.materials) ? materialsPayload.materials : [])
+        .filter((material: any) => String(material?.type || '').toLowerCase() !== 'onedrive')
         .map((material: any) => ({
           id: `material:${String(material?.id || '')}`,
           name: String(material?.title || RECENT_TYPE_LABELS[String(material?.type || '').toLowerCase()] || 'Material'),
@@ -790,9 +753,7 @@ function PresentationPageContent() {
         },
       }));
       setSourceAttachments((prev) => mergeAttachments(prev, attachments));
-      setConnectMicrosoftOpen(false);
-      setConnectMenuOpen(false);
-      toast({ title: 'Microsoft files imported', description: `${items.length} file(s) ingested.` });
+      toast({ title: 'Cloud files imported', description: `${items.length} file(s) ingested.` });
     };
     window.addEventListener('integration-source-picked', onPicked as EventListener);
     return () => window.removeEventListener('integration-source-picked', onPicked as EventListener);
@@ -958,7 +919,7 @@ function PresentationPageContent() {
       toast({
         variant: 'destructive',
         title: 'Add source material first',
-        description: 'Upload, import, connect, or type your prompt before Analyze.',
+        description: 'Upload, import, or type your prompt before Analyze.',
       });
       return;
     }
@@ -1270,7 +1231,7 @@ function PresentationPageContent() {
                 {sourceAttachments.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-5 py-7 text-center">
                     <p className="text-sm font-medium">Add material to start</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Upload files, import recents, or connect Microsoft</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Upload files or import recents</p>
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
@@ -1292,15 +1253,15 @@ function PresentationPageContent() {
               <Card className="border border-border/60">
                 <CardContent className="pt-4">
                   <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <Input value={importSearch} onChange={(e) => setImportSearch(e.target.value)} placeholder="Search recents..." className="h-8" />
+                    <Input value={importSearch} onChange={(e) => setImportSearch(e.target.value)} placeholder="Search local recents..." className="h-8" />
                     <select
                       value={importSourceFilter}
                       onChange={(e) => setImportSourceFilter(e.target.value as 'all' | 'tool_runs' | 'materials')}
                       className="h-8 rounded-md border border-border bg-background px-2 text-xs"
                     >
-                      <option value="all">All recents</option>
-                      <option value="tool_runs">Tool runs</option>
-                      <option value="materials">Materials</option>
+                      <option value="all">All local recents</option>
+                      <option value="tool_runs">Tool runs (local)</option>
+                      <option value="materials">Materials (local)</option>
                     </select>
                     <select
                       value={importSort}
@@ -1319,7 +1280,7 @@ function PresentationPageContent() {
                         <Loader2 className="h-4 w-4 animate-spin" />
                       </div>
                     ) : visibleRecents.length === 0 ? (
-                      <p className="px-1 py-2 text-xs text-muted-foreground">No recents found.</p>
+                      <p className="px-1 py-2 text-xs text-muted-foreground">No local recents found.</p>
                     ) : (
                       <div className="space-y-1.5">
                         {visibleRecents.slice(0, 40).map((item) => (
@@ -1353,26 +1314,6 @@ function PresentationPageContent() {
                     <FileUp className="mr-1.5 h-3.5 w-3.5" />
                     Import
                   </Button>
-                  <div className="relative">
-                    <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => setConnectMenuOpen((prev) => !prev)}>
-                      Connect
-                      <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
-                    </Button>
-                    {connectMenuOpen && (
-                      <div className="absolute left-0 top-10 z-20 w-44 rounded-md border border-border bg-card p-1 shadow-md">
-                        <button
-                          type="button"
-                          className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-muted"
-                          onClick={() => {
-                            setConnectMicrosoftOpen(true);
-                            setConnectMenuOpen(false);
-                          }}
-                        >
-                          Microsoft
-                        </button>
-                      </div>
-                    )}
-                  </div>
                 </div>
                 <Button
                   size="sm"
@@ -1393,22 +1334,6 @@ function PresentationPageContent() {
               />
             </div>
 
-            {connectMicrosoftOpen && (
-              <Card className="mx-auto w-full max-w-[960px] border border-border/60">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Microsoft Connect</CardTitle>
-                  <CardDescription>Choose files to import into source.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <MicrosoftAppStrip returnTo="/tools/presentation" autoOpen hideLauncher />
-                  <div className="flex justify-end">
-                    <Button size="sm" variant="outline" onClick={() => setConnectMicrosoftOpen(false)}>
-                      Close
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         )}
 
@@ -1423,9 +1348,6 @@ function PresentationPageContent() {
                 <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => setImportOpen((prev) => !prev)}>
                   <FileUp className="mr-1.5 h-3.5 w-3.5" />
                   Import
-                </Button>
-                <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => setConnectMicrosoftOpen(true)}>
-                  Connect
                 </Button>
               </div>
               <textarea
@@ -1693,23 +1615,6 @@ function PresentationPageContent() {
             exportingCloud={isExportingCloud}
             cloudLabel={cloudLabel}
           />
-        )}
-
-        {connectMicrosoftOpen && stage !== 'source' && (
-          <Card className="mx-auto w-full max-w-[960px] border border-border/60">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Microsoft Connect</CardTitle>
-              <CardDescription>Choose files to import into source.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <MicrosoftAppStrip returnTo="/tools/presentation" autoOpen hideLauncher />
-              <div className="flex justify-end">
-                <Button size="sm" variant="outline" onClick={() => setConnectMicrosoftOpen(false)}>
-                  Close
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         )}
       </div>
 

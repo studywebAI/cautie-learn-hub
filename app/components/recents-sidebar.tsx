@@ -6,7 +6,6 @@ import {
   Copy,
   FileSignature,
   BookOpen,
-  Clock,
   ChevronDown,
   ChevronUp,
   StickyNote,
@@ -43,7 +42,14 @@ const RECENTS_CACHE_KEY = 'studyweb-recents-cache-v1';
 const RECENTS_CACHE_TTL_MS = 60_000;
 
 export function RecentsSidebar() {
-  const { session } = useContext(AppContext) as AppContextType;
+  const { session, language } = useContext(AppContext) as AppContextType;
+  const isDutch = language === 'nl';
+  const t = {
+    noLocalRecent: isDutch ? 'geen lokale recente activiteit' : 'no local recent activity',
+    showLess: isDutch ? 'minder tonen' : 'show less',
+    showMore: isDutch ? 'toon' : 'show',
+    more: isDutch ? 'meer' : 'more',
+  };
   const userId = session?.user?.id ?? null;
   const [recents, setRecents] = useState<RecentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,11 +79,13 @@ export function RecentsSidebar() {
           }
         }
 
-        // Fetch both tool runs and materials in parallel
-        const [runsRes, materialsRes] = await Promise.all([
-          fetch('/api/tools/v2/runs').then(r => r.ok ? r.json() : []),
-          fetch('/api/materials?limit=10').then(r => r.ok ? r.json() : { materials: [] }),
+        // Fetch both tool runs and materials in parallel with partial-failure tolerance.
+        const [runsResult, materialsResult] = await Promise.allSettled([
+          fetch('/api/tools/v2/runs').then((r) => (r.ok ? r.json() : [])),
+          fetch('/api/materials?limit=10').then((r) => (r.ok ? r.json() : { materials: [] })),
         ]);
+        const runsRes = runsResult.status === 'fulfilled' ? runsResult.value : [];
+        const materialsRes = materialsResult.status === 'fulfilled' ? materialsResult.value : { materials: [] };
 
         const toolItems: RecentItem[] = (Array.isArray(runsRes) ? runsRes : [])
           .filter((r: any) => r?.options_payload?.saveToRecents !== false)
@@ -93,6 +101,7 @@ export function RecentsSidebar() {
           }));
 
         const materialItems: RecentItem[] = (materialsRes.materials || [])
+          .filter((m: any) => String(m?.type || '').toLowerCase() !== 'onedrive')
           .map((m: any) => ({
             id: m.id,
             title: m.title || TYPE_LABELS[m.type] || m.type,
@@ -142,10 +151,6 @@ export function RecentsSidebar() {
   if (isLoading) {
     return (
       <div className="px-2">
-        <p className="text-[12px] tracking-[0.06em] text-muted-foreground/85 flex items-center gap-1 mb-2 px-1 lowercase">
-          <Clock className="h-3 w-3" />
-          recents
-        </p>
         <div className="space-y-1">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="animate-pulse h-5 bg-muted/55 rounded-md" />
@@ -158,12 +163,8 @@ export function RecentsSidebar() {
   if (recents.length === 0) {
     return (
       <div className="px-2">
-        <p className="text-[12px] tracking-[0.06em] text-muted-foreground/85 flex items-center gap-1 mb-2 px-1 lowercase">
-          <Clock className="h-3 w-3" />
-          recents
-        </p>
-        <p className="text-xs text-muted-foreground text-center py-1.5 rounded-md bg-muted/30">
-          no recent activity
+        <p className="text-[12px] text-muted-foreground text-center py-1.5 rounded-md bg-muted/30">
+          {t.noLocalRecent}
         </p>
       </div>
     );
@@ -171,10 +172,6 @@ export function RecentsSidebar() {
 
   return (
     <div className="px-2">
-      <p className="text-[12px] tracking-[0.06em] text-muted-foreground/85 flex items-center gap-1 mb-2 px-1 lowercase">
-        <Clock className="h-3 w-3" />
-        recents
-      </p>
       <div
         className={`rounded-md bg-transparent space-y-0.5 ${enableScroll ? 'max-h-[300px] overflow-y-auto pr-1' : ''}`}
       >
@@ -189,7 +186,7 @@ export function RecentsSidebar() {
               onClick={() => handleClick(item)}
             >
               <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
-              <span className="text-[12px] flex-1 truncate">
+              <span className="text-[12px] font-normal flex-1 truncate">
                 {item.title}
               </span>
               <span className="text-[11px] text-muted-foreground/85 shrink-0">
@@ -209,12 +206,12 @@ export function RecentsSidebar() {
           {expanded ? (
             <>
               <ChevronUp className="h-3 w-3" />
-              show less
+              {t.showLess}
             </>
           ) : (
             <>
               <ChevronDown className="h-3 w-3" />
-              show {recents.length - 3} more
+              {t.showMore} {recents.length - 3} {t.more}
             </>
           )}
         </button>

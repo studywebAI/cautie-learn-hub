@@ -9,7 +9,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
-import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import type { GenerateNotesOutput } from '@/ai/flows/generate-notes';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { PillSelector } from '@/components/tools/pill-selector';
@@ -1217,9 +1216,13 @@ function NotesPageContent() {
         value={sourceText}
         onChange={setSourceText}
         onImageDataUriChange={setImageDataUri}
-        onSubmit={handleGenerate}
+        onSubmit={(compiledText) => {
+          if (typeof compiledText === 'string') {
+            setSourceText(compiledText);
+          }
+          return runNotesGeneration(String(compiledText || sourceText), { background: false });
+        }}
         placeholder={t.sourceInputPlaceholder}
-        topContent={<MicrosoftAppStrip returnTo="/tools/notes" hideLauncher />}
         speechLanguage={language}
         enableMic={false}
         enableCaptions={false}

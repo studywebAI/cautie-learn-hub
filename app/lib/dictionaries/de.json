@@ -164,9 +164,9 @@
     },
     "developer": {
       "title": "Entwicklereinstellungen",
-      "description": "Temporäre Einstellungen für Entwicklungszwecke.",
-      "roleSwitch": "Rolle umschalten (nur Entwickler)",
-      "roleSwitchDescription": "Wechseln Sie zwischen Schüler- und Lehreransicht. Dies dient der Entwicklung und wird entfernt."
+      "description": "Erweiterte Einstellungen f�r Workspace-Diagnosen.",
+      "roleSwitch": "Rolle wechseln (Vorschau)",
+      "roleSwitchDescription": "Zwischen Sch�ler- und Lehrervorschau wechseln."
     }
   },
   "common": {
@@ -317,7 +317,7 @@
   },
   "submissions": {
     "writeSubmission": "Schreiben Sie hier Ihre Aufgabeneinreichung...",
-    "fileUploadComing": "Datei-Upload folgt bald...",
+    "fileUploadComing": "Datei-Upload ist f�r diese Aufgabe nicht verf�gbar.",
     "provideFeedback": "Geben Sie konstruktives Feedback ...",
     "addComment": "Kommentar hinzufügen...",
     "grade": "Grad",

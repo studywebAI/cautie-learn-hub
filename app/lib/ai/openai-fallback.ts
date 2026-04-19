@@ -27,15 +27,37 @@ export function canUseOpenAIFallback(flowName: string) {
 }
 
 export function shouldFallbackToOpenAI(error: unknown) {
+  const code = String((error as any)?.code || "").toLowerCase();
+  const status = Number((error as any)?.status || (error as any)?.statusCode || 0);
   const message = String((error as any)?.message || "").toLowerCase();
-  if (!message) return false;
+  const combined = `${code} ${message}`;
+
+  // Do not retry functional/validation failures on another provider.
+  if (
+    combined.includes("source_guard_failed") ||
+    combined.includes("validation") ||
+    combined.includes("zod") ||
+    combined.includes("unauthorized") ||
+    combined.includes("forbidden")
+  ) {
+    return false;
+  }
+
+  if (status === 429 || status === 500 || status === 502 || status === 503 || status === 504) {
+    return true;
+  }
+
   return (
-    message.includes("token") ||
-    message.includes("context length") ||
-    message.includes("maximum context") ||
-    message.includes("too large") ||
-    message.includes("resource exhausted") ||
-    message.includes("quota")
+    combined.includes("token") ||
+    combined.includes("context length") ||
+    combined.includes("maximum context") ||
+    combined.includes("too large") ||
+    combined.includes("resource exhausted") ||
+    combined.includes("quota") ||
+    combined.includes("rate limit") ||
+    combined.includes("deadline exceeded") ||
+    combined.includes("unavailable") ||
+    combined.includes("overloaded")
   );
 }
 

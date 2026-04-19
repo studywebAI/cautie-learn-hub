@@ -28,17 +28,11 @@ type AuditLog = {
 
 type LogsTabProps = {
   classId: string;
+  cachedData?: { logs?: AuditLog[]; pagination?: { total?: number; hasNext?: boolean } } | null;
+  parentLoading?: boolean;
 };
 
 type Category = 'all' | 'academic' | 'events' | 'custom_events' | 'roster';
-
-const CATEGORY_LABELS: Record<Category, string> = {
-  all: 'All',
-  academic: 'Academic',
-  events: 'Events',
-  custom_events: 'Custom Events',
-  roster: 'Roster & Roles',
-};
 
 function isImportantLog(log: AuditLog) {
   const action = String(log.action || '');
@@ -139,14 +133,14 @@ function getCategoryClass(categoryName: Category, action: string) {
   return 'bg-muted text-foreground border-border';
 }
 
-export function LogsTab({ classId }: LogsTabProps) {
+export function LogsTab({ classId, cachedData = null, parentLoading = false }: LogsTabProps) {
   const appContext = useContext(AppContext) as AppContextType | null;
   const isDutch = appContext?.language === 'nl';
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState<AuditLog[]>(cachedData?.logs || []);
+  const [loading, setLoading] = useState(!cachedData && !parentLoading);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [offset, setOffset] = useState(0);
@@ -156,6 +150,7 @@ export function LogsTab({ classId }: LogsTabProps) {
   const [studentFilter, setStudentFilter] = useState<string>('all');
   const [limit] = useState(100);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [classStudents, setClassStudents] = useState<Array<{ id: string; label: string }>>([]);
   const labelByCategory: Record<Category, string> = {
     all: isDutch ? 'Alles' : 'All',
     academic: isDutch ? 'Academisch' : 'Academic',
@@ -163,6 +158,22 @@ export function LogsTab({ classId }: LogsTabProps) {
     custom_events: isDutch ? 'Aangepaste events' : 'Custom Events',
     roster: isDutch ? 'Leden & rollen' : 'Roster & Roles',
   };
+
+  useEffect(() => {
+    setLogs(cachedData?.logs || []);
+    setLoading(!cachedData && !parentLoading);
+  }, [classId, cachedData, parentLoading]);
+
+  useEffect(() => {
+    if (!cachedData) return;
+    const nextLogs = (cachedData.logs || []).filter((log) => isImportantLog(log));
+    setLogs(nextLogs);
+    const pagination = cachedData.pagination || {};
+    setTotalCount(Number(pagination.total || nextLogs.length));
+    setHasNext(Boolean(pagination.hasNext));
+    setOffset(nextLogs.length);
+    setLoading(false);
+  }, [cachedData]);
 
   const loadLogs = async (mode: 'replace' | 'append' = 'replace') => {
     if (mode === 'replace') setLoading(true);
@@ -206,17 +217,53 @@ export function LogsTab({ classId }: LogsTabProps) {
   };
 
   useEffect(() => {
+    if (cachedData?.logs?.length) return;
     void loadLogs('replace');
-  }, [classId]);
+  }, [classId, cachedData]);
 
   useEffect(() => {
     const requestedUserId = searchParams?.get('student_id') || searchParams?.get('user_id') || 'all';
     setStudentFilter(requestedUserId);
+    const requestedCategory = String(searchParams?.get('category') || '').toLowerCase();
+    if (requestedCategory === 'academic' || requestedCategory === 'events' || requestedCategory === 'custom_events' || requestedCategory === 'roster') {
+      setCategory(requestedCategory);
+    } else {
+      setCategory('all');
+    }
+    const requestedSearch = searchParams?.get('q') || '';
+    setSearch(requestedSearch);
   }, [searchParams]);
 
-  const applyStudentFilter = (nextStudentId: string) => {
+  useEffect(() => {
+    const loadStudents = async () => {
+      try {
+        const response = await fetch(`/api/classes/${classId}/group`);
+        if (!response.ok) return;
+        const data = await response.json();
+        const rows = Array.isArray(data?.students) ? data.students : [];
+        const mapped = rows.map((row: any) => {
+          const name = String(row?.name || '').trim();
+          const email = String(row?.email || '').trim();
+          return {
+            id: String(row?.id || ''),
+            label: name || email || (isDutch ? 'Naamloze leerling' : 'Unnamed student'),
+          };
+        }).filter((row: { id: string }) => Boolean(row.id));
+        setClassStudents(mapped);
+      } catch {
+        // Best-effort enhancement for student selector.
+      }
+    };
+    void loadStudents();
+  }, [classId, isDutch]);
+
+  const updateFiltersInQuery = (next: { studentId?: string; categoryValue?: Category; queryValue?: string }) => {
     const nextParams = new URLSearchParams(searchParams?.toString() || '');
     nextParams.set('tab', 'logs');
+    const nextStudentId = next.studentId ?? studentFilter;
+    const nextCategory = next.categoryValue ?? category;
+    const nextQuery = next.queryValue ?? search;
+
     if (nextStudentId === 'all') {
       nextParams.delete('student_id');
       nextParams.delete('user_id');
@@ -224,7 +271,16 @@ export function LogsTab({ classId }: LogsTabProps) {
       nextParams.set('student_id', nextStudentId);
       nextParams.delete('user_id');
     }
+    if (nextCategory === 'all') nextParams.delete('category');
+    else nextParams.set('category', nextCategory);
+    if (!nextQuery.trim()) nextParams.delete('q');
+    else nextParams.set('q', nextQuery.trim());
+
     router.replace(`${pathname}?${nextParams.toString()}`);
+  };
+
+  const applyStudentFilter = (nextStudentId: string) => {
+    updateFiltersInQuery({ studentId: nextStudentId });
   };
 
   useEffect(() => {
@@ -241,18 +297,19 @@ export function LogsTab({ classId }: LogsTabProps) {
 
   const studentOptions = useMemo(() => {
     const map = new Map<string, string>();
+    classStudents.forEach((student) => map.set(student.id, student.label));
     for (const log of logs) {
       const actorId = String(log.user_id || '');
       const actorLabel = formatActor(log);
-      if (actorId) map.set(actorId, actorLabel);
+      if (actorId && !map.has(actorId)) map.set(actorId, actorLabel);
       const affectedStudentId = String((log.metadata as any)?.student_id || '');
       const affectedStudentLabel = metadataUserFromLabels(log, 'student_id') || affectedStudentId;
-      if (affectedStudentId) map.set(affectedStudentId, affectedStudentLabel);
+      if (affectedStudentId && !map.has(affectedStudentId)) map.set(affectedStudentId, affectedStudentLabel);
     }
     return Array.from(map.entries())
       .map(([id, label]) => ({ id, label }))
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [logs]);
+  }, [classStudents, logs]);
 
   const filteredLogs = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -304,24 +361,12 @@ export function LogsTab({ classId }: LogsTabProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => updateFiltersInQuery({ queryValue: e.target.value })}
               placeholder={isDutch ? 'Zoek acties, gebruikers, metadata...' : 'Search actions, actors, metadata...'}
             />
-            <Select value={category} onValueChange={(value) => setCategory(value as Category)}>
-              <SelectTrigger className="h-10 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {labelByCategory[c]} ({counts[c]})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <Select value={studentFilter} onValueChange={applyStudentFilter}>
               <SelectTrigger className="h-10 text-sm">
                 <SelectValue />
@@ -335,7 +380,24 @@ export function LogsTab({ classId }: LogsTabProps) {
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex gap-2">
+            <div className="md:col-span-2 flex flex-wrap items-center gap-2">
+              {categories.map((c) => {
+                const active = category === c;
+                return (
+                  <Button
+                    key={c}
+                    type="button"
+                    variant={active ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-9 rounded-xl px-3 text-xs"
+                    onClick={() => updateFiltersInQuery({ categoryValue: c })}
+                  >
+                    {labelByCategory[c]} ({counts[c]})
+                  </Button>
+                );
+              })}
+            </div>
+            <div className="md:col-span-2 flex gap-2">
               <Button variant="outline" onClick={() => void loadLogs()}>
                 {isDutch ? 'Vernieuwen' : 'Refresh'}
               </Button>

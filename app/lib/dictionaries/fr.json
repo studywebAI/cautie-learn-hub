@@ -164,9 +164,9 @@
     },
     "developer": {
       "title": "Paramètres du développeur",
-      "description": "Paramètres temporaires à des fins de développement.",
-      "roleSwitch": "Toggle Rôle (Dév. uniquement)",
-      "roleSwitchDescription": "Basculez entre la vue étudiant et la vue enseignant. Ceci est destiné au développement et sera supprimé."
+      "description": "Param�tres avanc�s pour le diagnostic de l�espace de travail.",
+      "roleSwitch": "Changer de r�le (aper�u)",
+      "roleSwitchDescription": "Basculer entre l�aper�u �l�ve et l�aper�u enseignant."
     }
   },
   "common": {
@@ -317,7 +317,7 @@
   },
   "submissions": {
     "writeSubmission": "Écrivez votre devoir ici...",
-    "fileUploadComing": "Le téléchargement du fichier sera bientôt disponible...",
+    "fileUploadComing": "Le t�l�versement de fichier n�est pas disponible pour ce devoir.",
     "provideFeedback": "Fournir des commentaires constructifs...",
     "addComment": "Ajouter un commentaire...",
     "grade": "Grade",

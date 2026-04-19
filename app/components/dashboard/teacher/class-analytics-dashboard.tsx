@@ -60,6 +60,8 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
   const [selectedSubjectId, setSelectedSubjectId] = useState("all");
   const [selectedAssignmentId, setSelectedAssignmentId] = useState("all");
   const deepLinkedStudentId = searchParams?.get("studentId") || "all";
+  const deepLinkedSubjectId = searchParams?.get("subjectId") || "all";
+  const deepLinkedAssignmentId = searchParams?.get("assignmentId") || "all";
 
   const fetchAnalytics = async () => {
     try {
@@ -87,16 +89,52 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
     setSelectedStudentId(deepLinkedStudentId);
   }, [deepLinkedStudentId]);
 
-  const updateStudentFilter = (nextStudentId: string) => {
-    setSelectedStudentId(nextStudentId);
+  useEffect(() => {
+    setSelectedSubjectId(deepLinkedSubjectId || "all");
+  }, [deepLinkedSubjectId]);
+
+  useEffect(() => {
+    setSelectedAssignmentId(deepLinkedAssignmentId || "all");
+  }, [deepLinkedAssignmentId]);
+
+  const updateFiltersInQuery = (next: { studentId?: string; subjectId?: string; assignmentId?: string }) => {
     const params = new URLSearchParams(searchParams?.toString() || "");
     params.set("tab", "analytics");
+    const nextStudentId = next.studentId ?? selectedStudentId;
+    const nextSubjectId = next.subjectId ?? selectedSubjectId;
+    const nextAssignmentId = next.assignmentId ?? selectedAssignmentId;
+
     if (nextStudentId && nextStudentId !== "all") {
       params.set("studentId", nextStudentId);
     } else {
       params.delete("studentId");
     }
+    if (nextSubjectId && nextSubjectId !== "all") {
+      params.set("subjectId", nextSubjectId);
+    } else {
+      params.delete("subjectId");
+    }
+    if (nextAssignmentId && nextAssignmentId !== "all") {
+      params.set("assignmentId", nextAssignmentId);
+    } else {
+      params.delete("assignmentId");
+    }
     router.replace(`${pathname}?${params.toString()}`);
+  };
+
+  const updateStudentFilter = (nextStudentId: string) => {
+    setSelectedStudentId(nextStudentId);
+    updateFiltersInQuery({ studentId: nextStudentId });
+  };
+
+  const updateSubjectFilter = (nextSubjectId: string) => {
+    setSelectedSubjectId(nextSubjectId);
+    updateFiltersInQuery({ subjectId: nextSubjectId });
+  };
+
+  const updateAssignmentFilter = (nextAssignmentId: string) => {
+    setSelectedAssignmentId(nextAssignmentId);
+    updateFiltersInQuery({ assignmentId: nextAssignmentId });
   };
 
   const studentOptions = useMemo(() => {
@@ -276,7 +314,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
               <select
                 className="mt-1 w-full rounded-md border bg-background px-2 py-1.5"
                 value={selectedSubjectId}
-                onChange={(e) => setSelectedSubjectId(e.target.value)}
+                onChange={(e) => updateSubjectFilter(e.target.value)}
               >
                 <option value="all">All subjects</option>
                 {analytics.subjects.map((s) => (
@@ -289,7 +327,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
               <select
                 className="mt-1 w-full rounded-md border bg-background px-2 py-1.5"
                 value={selectedAssignmentId}
-                onChange={(e) => setSelectedAssignmentId(e.target.value)}
+                onChange={(e) => updateAssignmentFilter(e.target.value)}
               >
                 <option value="all">All assignments</option>
                 {analytics.assignmentSpeeds.map((a) => (

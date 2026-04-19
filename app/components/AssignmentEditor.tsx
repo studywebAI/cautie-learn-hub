@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { AppContext, AppContextType } from '@/contexts/app-context';
 import {
   Popover,
   PopoverContent,
@@ -193,6 +194,26 @@ export function AssignmentEditor({
   onSettingsChange,
   isTeacher = true
 }: AssignmentEditorProps) {
+  const appContext = useContext(AppContext) as AppContextType | null;
+  const isDutch = appContext?.language === 'nl';
+  const t = {
+    back: isDutch ? 'Terug' : 'Back',
+    undo: isDutch ? 'Ongedaan' : 'Undo',
+    redo: isDutch ? 'Opnieuw' : 'Redo',
+    export: isDutch ? 'Download' : 'Export',
+    import: isDutch ? 'Importeer' : 'Import',
+    size: isDutch ? 'Grootte' : 'Size',
+    edit: isDutch ? 'Bewerken' : 'Edit',
+    on: isDutch ? 'Aan' : 'On',
+    off: isDutch ? 'Uit' : 'Off',
+    saving: isDutch ? 'opslaan...' : 'saving...',
+    studentView: isDutch ? 'Leerlingweergave' : 'Student View',
+    exitStudentView: isDutch ? 'Stop leerlingweergave' : 'Exit Student View',
+    widthFor: isDutch ? 'Breedte voor' : 'Width for',
+    selectBlockFirst: isDutch ? 'Selecteer eerst een blok' : 'Select a block first',
+    noContentTitle: isDutch ? 'Nog geen inhoud' : 'No content yet',
+    noContentHint: isDutch ? 'Gebruik het rechterpaneel om blokken toe te voegen' : 'Use the right panel to add blocks',
+  };
   const getTemplateDefaults = (type: string) => {
     const template = BLOCK_TEMPLATES.find((item) => item.type === type);
     if (!template || typeof template.defaultData !== 'object' || template.defaultData === null) {
@@ -1334,21 +1355,24 @@ export function AssignmentEditor({
       style={{ touchAction: isDragging ? 'none' : 'auto' }}
     >
       {/* Top toolbar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-background">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border bg-background">
         <div className="flex items-center gap-1.5">
-          <Button variant="outline" size="sm" onClick={() => router.back()} className="h-8 px-2.5 rounded-md bg-muted/50">
+          <Button variant="outline" size="sm" onClick={() => router.back()} className="h-8 px-2.5 rounded-md bg-muted/50 gap-1.5">
             <ArrowLeft className="h-4 w-4" />
+            {t.back}
           </Button>
-          <Button variant="outline" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-8 w-8 p-0 rounded-md bg-muted/50" title="Undo">
+          <Button variant="outline" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-8 rounded-md px-2.5 bg-muted/50 gap-1.5" title={t.undo}>
             <Undo2 className="h-4 w-4" />
+            {t.undo}
           </Button>
-          <Button variant="outline" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-8 w-8 p-0 rounded-md bg-muted/50" title="Redo">
+          <Button variant="outline" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-8 rounded-md px-2.5 bg-muted/50 gap-1.5" title={t.redo}>
             <Redo2 className="h-4 w-4" />
+            {t.redo}
           </Button>
           <div className="w-px h-4 bg-border mx-0.5" />
-          <Button variant="outline" size="sm" onClick={handleExport} className="h-8 rounded-md px-2.5 bg-muted/50" title="Export">
+          <Button variant="outline" size="sm" onClick={handleExport} className="h-8 rounded-md px-2.5 bg-muted/50" title={t.export}>
             <Download className="h-4 w-4 mr-1.5" />
-            Export
+            {t.export}
           </Button>
           <Popover>
             <PopoverTrigger asChild>
@@ -1357,16 +1381,16 @@ export function AssignmentEditor({
                 variant="outline"
                 size="sm"
                 className="h-8 rounded-md px-2.5 bg-muted/50"
-                title="Selected block size"
+                title={t.size}
                 disabled={!isTeacher || !selectedBlockRecord || !isEditMode}
               >
                 <SlidersHorizontal className="h-4 w-4 mr-1.5" />
-                Size
+                {t.size}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-3" align="start">
               <Label className="text-xs">
-                {selectedBlockRecord ? `Width for ${BLOCK_TEMPLATES.find((t) => t.type === selectedBlockRecord.type)?.label || 'block'}` : 'Select a block first'}
+                {selectedBlockRecord ? `${t.widthFor} ${BLOCK_TEMPLATES.find((item) => item.type === selectedBlockRecord.type)?.label || 'block'}` : t.selectBlockFirst}
               </Label>
               <input
                 data-testid="assignment-size-slider"
@@ -1384,9 +1408,9 @@ export function AssignmentEditor({
               />
             </PopoverContent>
           </Popover>
-          <Button variant="outline" size="sm" onClick={handleImport} className="h-8 rounded-md px-2.5 bg-muted/50" title="Import">
+          <Button variant="outline" size="sm" onClick={handleImport} className="h-8 rounded-md px-2.5 bg-muted/50" title={t.import}>
             <Upload className="h-4 w-4 mr-1.5" />
-            Import
+            {t.import}
           </Button>
           <Button
             data-testid="assignment-edit-toggle"
@@ -1395,12 +1419,12 @@ export function AssignmentEditor({
             onClick={handleEditModeToggle}
             className="h-8 rounded-md px-2.5"
           >
-            Edit: {isEditMode ? 'On' : 'Off'}
+            {t.edit}: {isEditMode ? t.on : t.off}
           </Button>
         </div>
         
         <div className="flex items-center gap-2">
-          {isSaving && <span className="text-xs text-muted-foreground animate-pulse">saving...</span>}
+          {isSaving && <span className="text-xs text-muted-foreground animate-pulse">{t.saving}</span>}
           {isTeacher && (
             <Button
               variant={isStudentPreview ? 'default' : 'outline'}
@@ -1408,7 +1432,7 @@ export function AssignmentEditor({
               className="h-8 rounded-md px-3 text-sm bg-muted/50"
               onClick={() => setIsStudentPreview((prev) => !prev)}
             >
-              {isStudentPreview ? 'Exit Student View' : 'Student View'}
+              {isStudentPreview ? t.exitStudentView : t.studentView}
             </Button>
           )}
         </div>
@@ -1426,8 +1450,8 @@ export function AssignmentEditor({
               {rows.length === 0 ? (
                 <div className="flex items-center justify-center h-64 text-muted-foreground">
                   <div className="text-center">
-                    <p className="mb-2">No content yet</p>
-                    <p className="text-sm">Use the right panel to add blocks</p>
+                    <p className="mb-2">{t.noContentTitle}</p>
+                    <p className="text-sm">{t.noContentHint}</p>
                   </div>
                 </div>
               ) : (

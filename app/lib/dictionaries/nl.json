@@ -164,9 +164,9 @@
     },
     "developer": {
       "title": "Ontwikkelaarsinstellingen",
-      "description": "Tijdelijke instellingen voor ontwikkelingsdoeleinden.",
-      "roleSwitch": "Wisselrol (alleen ontwikkelaar)",
-      "roleSwitchDescription": "Schakelen tussen leerling- en docentenweergave. Dit is voor ontwikkeling en zal worden verwijderd."
+      "description": "Geavanceerde instellingen voor werkruimtediagnostiek.",
+      "roleSwitch": "Rol wisselen (voorbeeld)",
+      "roleSwitchDescription": "Schakel tussen leerling- en docentvoorbeeldweergave."
     }
   },
   "common": {
@@ -317,7 +317,7 @@
   },
   "submissions": {
     "writeSubmission": "Schrijf hier uw opdrachtinzending...",
-    "fileUploadComing": "Bestandsupload binnenkort beschikbaar...",
+    "fileUploadComing": "Bestandsupload is niet beschikbaar voor deze opdracht.",
     "provideFeedback": "Geef constructieve feedback...",
     "addComment": "Voeg een reactie toe...",
     "grade": "Cijfer",

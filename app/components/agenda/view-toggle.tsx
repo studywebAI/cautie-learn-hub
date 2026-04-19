@@ -12,21 +12,21 @@ interface ViewToggleProps {
 
 export function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
   return (
-    <div className="flex items-center rounded-xl bg-card p-1 shadow-sm">
+    <div className="flex items-center rounded-xl bg-[hsl(var(--surface-2))] p-1">
       <Button
-        variant={currentView === 'week' ? 'default' : 'ghost'}
+        variant="ghost"
         size="sm"
         onClick={() => onViewChange('week')}
-        className="gap-2 bg-transparent"
+        className={currentView === 'week' ? 'h-8 gap-2 rounded-lg bg-[hsl(var(--surface-1))]' : 'h-8 gap-2 rounded-lg bg-transparent'}
       >
         <Calendar className="h-4 w-4" />
         Week
       </Button>
       <Button
-        variant={currentView === 'list' ? 'default' : 'ghost'}
+        variant="ghost"
         size="sm"
         onClick={() => onViewChange('list')}
-        className="gap-2 bg-transparent"
+        className={currentView === 'list' ? 'h-8 gap-2 rounded-lg bg-[hsl(var(--surface-1))]' : 'h-8 gap-2 rounded-lg bg-transparent'}
       >
         <List className="h-4 w-4" />
         List

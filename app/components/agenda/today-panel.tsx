@@ -8,6 +8,7 @@ import type { AiSuggestion } from '@/lib/types';
 import { useDictionary } from '@/contexts/app-context';
 import Link from 'next/link';
 import { Skeleton } from '../ui/skeleton';
+import { getAgendaVisualStyle } from '@/lib/agenda-event-style';
 
 type TodayPanelProps = {
   selectedDay?: Date;
@@ -25,33 +26,32 @@ export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSugges
 
   const getDeadlineStyle = (event: CalendarEvent) => {
     if (event.type === 'agenda_item') {
-      if (event.visibility_state === 'hidden') {
-        return {
-          borderColor: 'rgb(239, 68, 68)',
-          bgColor: 'rgba(239, 68, 68, 0.1)',
-          icon: Square,
-          iconColor: 'text-red-500',
-          iconBg: 'bg-red-100',
-          label: 'H'
-        };
-      }
-      if (event.item_type === 'quiz') {
-        return {
-          borderColor: 'rgb(249, 115, 22)',
-          bgColor: 'rgba(249, 115, 22, 0.1)',
-          icon: Circle,
-          iconColor: 'text-orange-500',
-          iconBg: 'bg-orange-100',
-          label: 'Q'
-        };
-      }
+      const visual = getAgendaVisualStyle(event as any);
+      const iconByType = {
+        homework: Home,
+        test: Circle,
+        big_test: Square,
+        other: BookCheck,
+      } as const;
+      const iconColorByType = {
+        homework: 'text-blue-500',
+        test: 'text-orange-500',
+        big_test: 'text-red-500',
+        other: 'text-muted-foreground',
+      } as const;
+      const iconBgByType = {
+        homework: 'bg-blue-100',
+        test: 'bg-orange-100',
+        big_test: 'bg-red-100',
+        other: 'bg-muted',
+      } as const;
       return {
-        borderColor: 'rgb(59, 130, 246)',
-        bgColor: 'rgba(59, 130, 246, 0.1)',
-        icon: Home,
-        iconColor: 'text-blue-500',
-        iconBg: 'bg-blue-100',
-        label: 'A'
+        borderColor: visual.accentColor,
+        bgColor: visual.bgColor,
+        icon: iconByType[visual.visualType],
+        iconColor: iconColorByType[visual.visualType],
+        iconBg: iconBgByType[visual.visualType],
+        label: visual.label,
       };
     }
 
@@ -66,46 +66,33 @@ export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSugges
       };
     }
 
-    const assignmentType = (event as any).assignment_type || 'homework';
-    
-    switch (assignmentType) {
-      case 'homework':
-        return {
-          borderColor: 'rgb(59, 130, 246)',
-          bgColor: 'rgba(59, 130, 246, 0.1)',
-          icon: Home,
-          iconColor: 'text-blue-500',
-          iconBg: 'bg-blue-100',
-          label: 'H'
-        };
-      case 'small_test':
-        return {
-          borderColor: 'rgb(249, 115, 22)',
-          bgColor: 'rgba(249, 115, 22, 0.1)',
-          icon: Circle,
-          iconColor: 'text-orange-500',
-          iconBg: 'bg-orange-100',
-          label: 't'
-        };
-      case 'big_test':
-        return {
-          borderColor: 'rgb(239, 68, 68)',
-          bgColor: 'rgba(239, 68, 68, 0.1)',
-          icon: Square,
-          iconColor: 'text-red-500',
-          iconBg: 'bg-red-100',
-          label: 'T'
-        };
-      default:
-        return {
-          borderColor: 'hsl(var(--muted))',
-          bgColor: 'hsl(var(--muted) / 0.1)',
-          icon: BookCheck,
-          iconColor: 'text-muted-foreground',
-          iconBg: 'bg-muted',
-          label: '!'
-        };
-    }
+    const visual = getAgendaVisualStyle(event as any);
+    const iconByType = {
+      homework: Home,
+      test: Circle,
+      big_test: Square,
+      other: BookCheck,
+    } as const;
+    const iconColorByType = {
+      homework: 'text-blue-500',
+      test: 'text-orange-500',
+      big_test: 'text-red-500',
+      other: 'text-muted-foreground',
+    } as const;
+    const iconBgByType = {
+      homework: 'bg-blue-100',
+      test: 'bg-orange-100',
+      big_test: 'bg-red-100',
+      other: 'bg-muted',
+    } as const;
+    return {
+      borderColor: visual.accentColor,
+      bgColor: visual.bgColor,
+      icon: iconByType[visual.visualType],
+      iconColor: iconColorByType[visual.visualType],
+      iconBg: iconBgByType[visual.visualType],
+      label: visual.label,
+    };
   };
 
   const renderEvent = (event: CalendarEvent) => {

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import dynamic from 'next/dynamic';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -542,6 +542,7 @@ export function AppSidebar() {
   const visibleMainItems = menuItems;
   const visibleToolsItems = toolsMenuItems;
   const visibleOtherItems = otherMenuItems;
+  const showSectionHeaders = isTeacher;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1009,7 +1010,7 @@ export function AppSidebar() {
                       className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                         isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)
-                          ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                          ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground dark:text-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                           : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                       )}
                       title={item.label}
@@ -1023,7 +1024,7 @@ export function AppSidebar() {
                     className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                       isMenuItemActive(item.href)
-                        ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                        ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground dark:text-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                         : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                     )}
                     title={item.label}
@@ -1033,7 +1034,7 @@ export function AppSidebar() {
                 )}
               </div>
             ))}
-            {visibleMainItems.length > 0 && (visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-px bg-sidebar-border my-2" />}
+            {showSectionHeaders && visibleMainItems.length > 0 && (visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-px bg-sidebar-border my-2" />}
             {visibleToolsItems.map((item) => (
               <Link
                 key={item.href}
@@ -1041,7 +1042,7 @@ export function AppSidebar() {
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                   isMenuItemActive(item.href)
-                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground dark:text-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                     : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                 )}
                 title={item.label}
@@ -1049,7 +1050,7 @@ export function AppSidebar() {
                 <item.icon className="h-4 w-4" />
               </Link>
             ))}
-            {visibleToolsItems.length > 0 && visibleOtherItems.length > 0 && <div className="h-px bg-sidebar-border my-2" />}
+            {showSectionHeaders && visibleToolsItems.length > 0 && visibleOtherItems.length > 0 && <div className="h-px bg-sidebar-border my-2" />}
             {visibleOtherItems.map((item) => (
               <Link
                 key={item.href}
@@ -1057,7 +1058,7 @@ export function AppSidebar() {
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                   isMenuItemActive(item.href)
-                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground dark:text-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
                     : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
                 )}
                 title={item.label}
@@ -1085,7 +1086,7 @@ export function AppSidebar() {
             {renderTeacherClassSwitcher()}
             {visibleMainItems.length > 0 && (
               <>
-                 <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionMain}</p>
+                 {showSectionHeaders && <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionMain}</p>}
                 <SidebarMenu>
                   {visibleMainItems.map((item) => (
                     <SidebarMenuItem key={item.label} className="relative">
@@ -1124,8 +1125,8 @@ export function AppSidebar() {
 
             {visibleToolsItems.length > 0 && (
               <>
-                {visibleMainItems.length > 0 && <div className="h-5" />}
-                <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionTools}</p>
+                {showSectionHeaders && visibleMainItems.length > 0 && <div className="h-5" />}
+                {showSectionHeaders && <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionTools}</p>}
                 <SidebarMenu>
                   {visibleToolsItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
@@ -1147,8 +1148,8 @@ export function AppSidebar() {
 
             {visibleOtherItems.length > 0 && (
               <>
-                {(visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
-                <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionOther}</p>
+                {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
+                {showSectionHeaders && <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionOther}</p>}
                 <SidebarMenu>
                   {visibleOtherItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
@@ -1169,8 +1170,8 @@ export function AppSidebar() {
             )}
 
             <div className="space-y-2">
-              {(visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
-              <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionRecents}</p>
+              {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
+              {showSectionHeaders && <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionRecents}</p>}
               <RecentsSidebar />
             </div>
           </SidebarContent>
@@ -1193,7 +1194,7 @@ export function AppSidebar() {
         {renderTeacherClassSwitcher()}
         {visibleMainItems.length > 0 && (
           <>
-            <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">{t.sectionMain}</p>
+            {showSectionHeaders && <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">{t.sectionMain}</p>}
             <SidebarMenu>
               {visibleMainItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
@@ -1231,8 +1232,8 @@ export function AppSidebar() {
 
         {visibleToolsItems.length > 0 && (
           <>
-            {visibleMainItems.length > 0 && <div className="h-5" />}
-            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">{t.sectionTools}</p>
+            {showSectionHeaders && visibleMainItems.length > 0 && <div className="h-5" />}
+            {showSectionHeaders && <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">{t.sectionTools}</p>}
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -1254,8 +1255,8 @@ export function AppSidebar() {
 
         {visibleOtherItems.length > 0 && (
           <>
-            {(visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
-            <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">{t.sectionOther}</p>
+            {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
+            {showSectionHeaders && <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">{t.sectionOther}</p>}
             <SidebarMenu className="group-data-[collapsible=icon]:hidden">
               {visibleOtherItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -1276,8 +1277,8 @@ export function AppSidebar() {
         )}
 
         <div className="space-y-2 group-data-[collapsible=icon]:hidden">
-          {(visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
-          <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionRecents}</p>
+          {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
+          {showSectionHeaders && <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionRecents}</p>}
           <RecentsSidebar />
         </div>
       </SidebarContent>
@@ -1288,4 +1289,5 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
 

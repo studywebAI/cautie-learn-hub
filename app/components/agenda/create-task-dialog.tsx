@@ -70,10 +70,6 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
         estimated_duration: estimatedDuration,
         tags,
       });
-      toast({
-        title: 'Task Created',
-        description: `"${title}" has been added to your agenda.`,
-      });
 
       resetAndClose();
     } catch (error) {
@@ -162,9 +158,6 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
             </Popover>
           </div>
 
-          <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-            Personal items only. No homework/test type and no subject linking for student-created tasks.
-          </div>
         </div>
         <DialogFooter>
           <Button variant="secondary" onClick={resetAndClose}>Cancel</Button>

@@ -104,30 +104,33 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
         <Button
           type="button"
           variant="ghost"
-          size="icon"
-          className="h-9 w-9 rounded-xl bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
+          size="sm"
+          className="h-8 rounded-lg bg-[hsl(var(--surface-2))] px-2.5 hover:bg-[hsl(var(--surface-3))]"
           onClick={() => setWeekOffset((prev) => prev - 1)}
         >
           <ChevronLeft className="h-4 w-4" />
+          <span className="ml-1 text-xs">Prev</span>
         </Button>
-        <div className="text-sm font-medium">
-          Week {format(activeWeek.startDate, 'MMM d')} - {format(activeWeek.endDate, 'MMM d')}
+        <div className="text-sm">
+          Week of {format(activeWeek.startDate, 'MMM d')} - {format(activeWeek.endDate, 'MMM d')}
         </div>
         <Button
           type="button"
           variant="ghost"
-          size="icon"
-          className="h-9 w-9 rounded-xl bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]"
+          size="sm"
+          className="h-8 rounded-lg bg-[hsl(var(--surface-2))] px-2.5 hover:bg-[hsl(var(--surface-3))]"
           onClick={() => setWeekOffset((prev) => prev + 1)}
         >
+          <span className="mr-1 text-xs">Next</span>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
 
       <div className="grid grid-cols-5 gap-2">
         {activeWeek.days.map((day) => (
-          <div key={`label-${format(day, 'yyyy-MM-dd')}`} className="rounded-xl bg-white py-2.5 text-center text-sm font-medium text-foreground/90">
-            {format(day, 'EEEE')}
+          <div key={`label-${format(day, 'yyyy-MM-dd')}`} className="rounded-xl bg-white px-2 py-2 text-center">
+            <p className="text-sm text-foreground/90">{format(day, 'EEEE')}</p>
+            <p className="text-[11px] text-muted-foreground">{format(day, 'MMM d')}</p>
           </div>
         ))}
       </div>

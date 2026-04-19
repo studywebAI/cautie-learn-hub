@@ -6,6 +6,7 @@ import { useContext, useEffect, useState, useMemo, useCallback, useRef } from 'r
 import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
+import { STUDENT_CLASS_TAB_IDS, TEACHER_CLASS_TAB_IDS } from '@/lib/class-tabs';
 
 const QuickGrader = dynamic(
   () => import('@/components/dashboard/teacher/quick-grader').then((m) => m.QuickGrader),
@@ -44,6 +45,7 @@ export default function ClassDetailsPage() {
   const { classId } = params as { classId: string };
   const { classes, isLoading: isAppLoading, refetchMaterials, role, session } = useContext(AppContext) as AppContextType;
   const [directClassInfo, setDirectClassInfo] = useState<ClassInfo | null>(null);
+  const [isResolvingClass, setIsResolvingClass] = useState(false);
   const [isQuickGraderOpen, setIsQuickGraderOpen] = useState(false);
   
   // Centralized tab data cache
@@ -57,8 +59,8 @@ export default function ClassDetailsPage() {
     return directClassInfo || undefined;
   }, [classes, classId, directClassInfo]);
 
-  const teacherTabs = ['invite', 'group', 'attendance', 'grades', 'analytics', 'logs', 'settings'] as const;
-  const studentTabs = ['invite', 'group'] as const;
+  const teacherTabs = TEACHER_CLASS_TAB_IDS;
+  const studentTabs = STUDENT_CLASS_TAB_IDS;
 
   const requestedTab = (searchParams.get('tab') || '').trim().toLowerCase();
   const normalizedRole = String(role || '').toLowerCase();
@@ -93,6 +95,7 @@ export default function ClassDetailsPage() {
     if (contextClass || directClassInfo) return;
 
     const fetchClassInfo = async () => {
+      setIsResolvingClass(true);
       try {
         const response = await fetch(`/api/classes/${classId}`);
         if (response.ok) {
@@ -101,6 +104,8 @@ export default function ClassDetailsPage() {
         }
       } catch (error) {
         console.error('Failed to fetch class info:', error);
+      } finally {
+        setIsResolvingClass(false);
       }
     };
     fetchClassInfo();
@@ -151,6 +156,12 @@ export default function ClassDetailsPage() {
           break;
         case 'analytics':
           url = `/api/classes/${classId}/analytics`;
+          break;
+        case 'grades':
+          url = `/api/classes/${classId}/grades`;
+          break;
+        case 'logs':
+          url = `/api/classes/${classId}/audit-logs?limit=100&offset=0`;
           break;
         default:
           return null;
@@ -225,6 +236,21 @@ export default function ClassDetailsPage() {
     }
   }, [classId, isAppLoading, loadTabData, tab]);
 
+  // Warm teacher-critical tabs in the background so switching feels instant.
+  useEffect(() => {
+    if (!classId || isAppLoading || !hasTeacherAccess) return;
+    const warmTabs = async () => {
+      await Promise.allSettled([
+        loadTabData('group'),
+        loadTabData('attendance'),
+        loadTabData('analytics'),
+        loadTabData('grades'),
+        loadTabData('logs'),
+      ]);
+    };
+    void warmTabs();
+  }, [classId, isAppLoading, hasTeacherAccess, loadTabData]);
+
   useEffect(() => {
     if (!requestedTab) return;
     if (isAppLoading) return;
@@ -244,9 +270,16 @@ export default function ClassDetailsPage() {
   }
 
   if (!classInfo) {
+    if (isResolvingClass) {
+      return (
+        <div className="flex min-h-[55vh] items-center justify-center">
+          <CautieLoader label="Loading class" sublabel="Resolving class access" size="lg" />
+        </div>
+      );
+    }
     return (
       <div>
-        <h1 className="text-3xl font-bold font-headline">Class not found</h1>
+        <h1 className="text-xl">Class not found</h1>
         <p className="text-muted-foreground">The class you are looking for does not exist or you do not have permission to view it.</p>
       </div>
     );
@@ -284,7 +317,7 @@ export default function ClassDetailsPage() {
       case 'analytics':
         return isTeacher ? <ClassAnalyticsDashboard classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'logs':
-        return isTeacher ? <LogsTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
+        return isTeacher ? <LogsTab classId={classId} cachedData={cachedTabData['logs']} parentLoading={!!loadingTabs['logs']} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'settings':
         return isTeacher ? (
           <ClassSettings

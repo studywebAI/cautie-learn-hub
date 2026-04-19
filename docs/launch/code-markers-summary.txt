@@ -1,2 +1,56 @@
-Total marker hits: 1058  Top files by marker count:
-1058  C
+Total marker hits: 269
+Top files by marker count:
+  22  app/components/AssignmentEditor.tsx
+  15  app/components/dashboard/teacher/class-settings.tsx
+  12  app/api/classes/[classId]/subjects/route.ts
+  12  app/components/class/grades-tab.tsx
+   8  docs/launch/launch-master-open-items.md
+   7  app/(main)/settings/page.tsx
+   7  app/components/debug/global-request-logger.tsx
+   7  app/components/tools/source-input.tsx
+   6  app/components/sidebar.tsx
+   5  app/components/blocks/BlockEditor.tsx
+   4  app/(main)/tools/presentation/page.tsx
+   4  app/(main)/tools/studyset/page.tsx
+   4  app/components/blocks/ListBlock.tsx
+   4  app/components/class/attendance-tab.tsx
+   4  app/components/class/invite-tab.tsx
+   4  app/components/dashboard/teacher/material-list.tsx
+   4  app/lib/cache/README.md
+   4  docs/launch/launch-closure-tracker.md
+   4  docs/launch/sql-launch-runbook.md
+   3  app/components/AIGradingPresets.tsx
+   3  app/components/blocks/MediaBlock.tsx
+   3  app/components/blocks/QuoteBlock.tsx
+   3  app/components/class/ChapterEditor.tsx
+   3  app/components/class/group-tab.tsx
+   3  app/components/dashboard/teacher/quick-grader.tsx
+   3  app/components/dashboard/teacher/submissions-view.tsx
+   3  app/components/material-viewers/mindmap-professional.tsx
+   3  app/lib/class-tab-telemetry.ts
+   3  app/lib/dictionaries/es.json
+   3  app/lib/tool-i18n.ts
+   3  app/package-lock.json
+   3  docs/launch/high-impact-6-technical-closure.md
+   2  app/(main)/class/[classId]/page.tsx
+   2  app/(main)/subjects/[subjectId]/page.tsx
+   2  app/ai/flows/generate-quiz-duel-data.ts
+   2  app/components/agenda/create-task-dialog.tsx
+   2  app/components/AssignmentSettingsOverlay.tsx
+   2  app/components/auth-form.tsx
+   2  app/components/blocks/LayoutBlock.tsx
+   2  app/components/blocks/MultipleChoiceBlock.tsx
+   2  app/components/class/logs-tab.tsx
+   2  app/components/dashboard/teacher/announcement-manager.tsx
+   2  app/components/dashboard/teacher/create-assignment-dialog.tsx
+   2  app/components/dashboard/teacher/create-class-dialog.tsx
+   2  app/components/dashboard/teacher/teacher-dashboard.tsx
+   2  app/components/presentation/adaptive-settings-sidebar.tsx
+   2  app/components/subjects-grid.tsx
+   2  app/components/tools/artifact-collab-panel.tsx
+   2  app/components/tools/flashcard-editor.tsx
+   2  app/components/tools/quiz-editor.tsx
+
+Scanned files: 623
+Scanned roots: app, docs, supabase, scripts
+Marker pattern: TODO|FIXME|placeholder|mock|hardcoded|temporary|debug

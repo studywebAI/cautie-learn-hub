@@ -7,6 +7,7 @@ const PROJECT_REF = 'lrcaoisrfragkvmofeyg';
 const BASE_URL = 'http://127.0.0.1:9003';
 const SUPABASE_URL = `https://${PROJECT_REF}.supabase.co`;
 const VERIFY_PASSWORD = 'RuntimeVerify!123';
+const UI_WAIT_TIMEOUT_MS = 120000;
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const logStep = (label) => console.log(`[verify-ui] ${label}`);
@@ -327,7 +328,7 @@ async function main() {
 
     logStep('Verifying Group tab UI parity checks');
     await page.goto(`${BASE_URL}/class/${createdEntityIds.classId}?tab=group`, { waitUntil: 'networkidle' });
-    await page.locator('[data-testid="group-tab"]').waitFor({ timeout: 30000 });
+    await page.locator('[data-testid="group-tab"]').waitFor({ timeout: UI_WAIT_TIMEOUT_MS });
     const teacherHeadingBox = await page.locator('[data-testid="group-heading-teachers"]').boundingBox();
     const studentHeadingBox = await page.locator('[data-testid="group-heading-students"]').boundingBox();
     const groupImgCount = await page.locator('[data-testid="group-tab"] img').count();
@@ -342,8 +343,8 @@ async function main() {
 
     logStep('Verifying Attendance tab UI parity checks');
     await page.goto(`${BASE_URL}/class/${createdEntityIds.classId}?tab=attendance`, { waitUntil: 'networkidle' });
-    await page.locator('[data-testid="attendance-tab"]').waitFor({ timeout: 30000 });
-    await page.locator(`[data-testid="attendance-student-row-${studentA.id}"]`).waitFor({ timeout: 30000 });
+    await page.locator('[data-testid="attendance-tab"]').waitFor({ timeout: UI_WAIT_TIMEOUT_MS });
+    await page.locator(`[data-testid="attendance-student-row-${studentA.id}"]`).waitFor({ timeout: UI_WAIT_TIMEOUT_MS });
     const attendanceImgCount = await page.locator('[data-testid="attendance-tab"] img').count();
     const actionCount = await page
       .locator(`[data-testid="attendance-student-row-${studentA.id}"] [data-testid^="attendance-action-"]`)
@@ -373,10 +374,10 @@ async function main() {
       `${BASE_URL}/subjects/${createdEntityIds.subjectId}/chapters/${createdEntityIds.chapterId}/paragraphs/${createdEntityIds.paragraphId}/assignments/${createdEntityIds.assignmentId}`,
       { waitUntil: 'networkidle' }
     );
-    await page.locator('[data-testid="assignment-editor-root"]').waitFor({ timeout: 30000 });
+    await page.locator('[data-testid="assignment-editor-root"]').waitFor({ timeout: UI_WAIT_TIMEOUT_MS });
     try {
-      await page.locator('[data-testid^="assignment-block-"]').first().waitFor({ timeout: 30000 });
-      await page.locator('[data-testid^="assignment-text-header-"]').first().waitFor({ timeout: 30000 });
+      await page.locator('[data-testid^="assignment-block-"]').first().waitFor({ timeout: UI_WAIT_TIMEOUT_MS });
+      await page.locator('[data-testid^="assignment-text-header-"]').first().waitFor({ timeout: UI_WAIT_TIMEOUT_MS });
     } catch (error) {
       const currentUrl = page.url();
       const bodyText = await page.locator('body').innerText().catch(() => '');

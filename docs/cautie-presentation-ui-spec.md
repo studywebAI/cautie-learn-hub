@@ -1,5 +1,5 @@
-
-# CAUTIE Presentation Tool — UI Spec
+﻿
+# CAUTIE Presentation Tool â€” UI Spec
 
 Versie: 1.0  
 Doel: een rustige, simpele, professionele UI voor de Presentation tool die past bij de rest van CAUTIE.
@@ -8,9 +8,9 @@ Doel: een rustige, simpele, professionele UI voor de Presentation tool die past 
 
 ## 1. Productprincipe
 
-De Presentation tool is geen editor en geen wizard met harde “step 1 / step 2 / step 3” pagina’s.
+De Presentation tool is geen editor en geen wizard met harde â€œstep 1 / step 2 / step 3â€ paginaâ€™s.
 
-De UI werkt als één rustige page met **3 states**:
+De UI werkt als Ã©Ã©n rustige page met **3 states**:
 
 1. **Source mode**
 2. **Smart settings mode**
@@ -33,7 +33,7 @@ De gebruiker voelt dus flow, maar ziet geen drukke multi-step wizard.
 ### Wat de UI niet moet doen
 - geen drukke sidebar met tientallen settings
 - geen nep-editor met tekstvelden per slide
-- geen “AI did this, AI did that” overload
+- geen â€œAI did this, AI did thatâ€ overload
 - geen grote uitlegblokken / tips-secties
 - geen overmatig visuele brainstorm-map
 - geen wizard die zwaar of schools voelt
@@ -49,7 +49,7 @@ Behoud de algemene website-shell:
 - geen vaste rechter-sidebar in de eerste state
 
 ### Content width
-- hoofdcontent max-width: 1200–1320px
+- hoofdcontent max-width: 1200â€“1320px
 - horizontaal gecentreerd
 - voldoende witruimte links/rechts
 
@@ -62,7 +62,7 @@ Behoud de algemene website-shell:
 
 ## 4. State model
 
-# STATE A — SOURCE MODE
+# STATE A â€” SOURCE MODE
 
 ### Doel
 Alleen bronmateriaal verzamelen en de gebruiker een onderwerp laten geven.
@@ -85,7 +85,7 @@ Alleen bronmateriaal verzamelen en de gebruiker een onderwerp laten geven.
 
 ---
 
-# STATE B — SMART SETTINGS MODE
+# STATE B â€” SMART SETTINGS MODE
 
 ### Doel
 Na analyse toont de tool alleen compacte, relevante settings.
@@ -104,7 +104,7 @@ Na analyse toont de tool alleen compacte, relevante settings.
 
 ---
 
-# STATE C — PREVIEW MODE
+# STATE C â€” PREVIEW MODE
 
 ### Doel
 De gegenereerde presentatie tonen in read-only vorm met export/open/share acties.
@@ -123,7 +123,7 @@ De gegenereerde presentatie tonen in read-only vorm met export/open/share acties
 
 ---
 
-## 5. Source Mode — exacte layout
+## 5. Source Mode â€” exacte layout
 
 ## Page header
 Bovenaan:
@@ -133,8 +133,8 @@ Bovenaan:
 - geen info box
 
 ### Spacing
-- top margin: 28–36px
-- titel tot content: 20–28px
+- top margin: 28â€“36px
+- titel tot content: 20â€“28px
 
 ---
 
@@ -142,10 +142,10 @@ Bovenaan:
 
 De source mode bestaat uit 3 visuele lagen:
 
-### Laag 1 — Source canvas / source cluster area
+### Laag 1 â€” Source canvas / source cluster area
 Een rustige zone waar bronmateriaal zichtbaar wordt zodra toegevoegd.
 
-Dit is géén zware mindmap.
+Dit is gÃ©Ã©n zware mindmap.
 
 ### Vorm
 - lege staat: subtiel leeg canvas
@@ -171,27 +171,27 @@ Elke source card/chip toont:
 
 ---
 
-### Laag 2 — Prompt bar
+### Laag 2 â€” Prompt bar
 Onderaan of midden-onder in de content area een **lage brede input bar**.
 
 #### Inhoud
 - groot tekstvlak, maar niet hoog
-- placeholder:
-  - “Describe your presentation or add material…”
+- input hint text:
+  - â€œDescribe your presentation or add materialâ€¦â€
   - of
-  - “What should this presentation be about?”
+  - â€œWhat should this presentation be about?â€
 
 #### Hoogte
-- ongeveer 52–64px als single-line / auto-grow compact
+- ongeveer 52â€“64px als single-line / auto-grow compact
 - niet een enorme textarea bij start
 
 #### Breedte
 - breed, vergelijkbaar met huidige centrale breedte
-- mag ongeveer 70–78% van de main content width innemen
+- mag ongeveer 70â€“78% van de main content width innemen
 
 ---
 
-### Laag 3 — Actieknoppen rond de prompt
+### Laag 3 â€” Actieknoppen rond de prompt
 **Links van de promptbar**
 - Upload
 - Import
@@ -219,7 +219,7 @@ Rechts:
 
 ---
 
-## 6. Source Mode — behavior
+## 6. Source Mode â€” behavior
 
 ### Upload
 Opent lokale file picker voor:
@@ -242,7 +242,7 @@ Opent dropdown met connect providers.
 Voor nu:
 - Microsoft
 
-Later:
+Deferred \(post-launch\):
 - Google
 - Dropbox
 
@@ -258,7 +258,7 @@ Disabled state:
 
 ---
 
-## 7. Smart Settings Mode — exacte layout
+## 7. Smart Settings Mode â€” exacte layout
 
 Zelfde pagina, geen navigatie naar aparte wizard.
 
@@ -286,7 +286,7 @@ Compacte card direct onder de source area.
 ### Voorbeeld
 - Type: tutorial
 - Audience: general
-- Slides: 10–14
+- Slides: 10â€“14
 - Visuals: medium
 
 ### Acties
@@ -295,10 +295,10 @@ Compacte card direct onder de source area.
 
 ### Stijl
 - geen AI-marketing toon
-- geen “our advanced AI has determined…”
+- geen â€œour advanced AI has determinedâ€¦â€
 - gewoon rustig:
-  - “Detected from your material”
-  - “Recommended setup”
+  - â€œDetected from your materialâ€
+  - â€œRecommended setupâ€
 
 ---
 
@@ -318,7 +318,7 @@ Gewoon als compacte section onder de analysis card.
 
 ## 8. De enige 4 settings groups die standaard zichtbaar moeten zijn
 
-# Group 1 — Structure
+# Group 1 â€” Structure
 Doel: lengte en deck-opbouw
 
 Velden:
@@ -332,7 +332,7 @@ Niet meer dan 4 controls in deze groep.
 
 ---
 
-# Group 2 — Style
+# Group 2 â€” Style
 Doel: taalgevoel en informatiedichtheid
 
 Velden:
@@ -350,7 +350,7 @@ Segmented controls, niet dropdowns als het weinig opties zijn.
 
 ---
 
-# Group 3 — Visuals
+# Group 3 â€” Visuals
 Doel: hoeveel beeld en welke beeldbron
 
 Velden:
@@ -367,7 +367,7 @@ Hier staat nergens AI images.
 
 ---
 
-# Group 4 — Output
+# Group 4 â€” Output
 Doel: eindformaat
 
 Velden:
@@ -387,7 +387,7 @@ Advanced staat standaard dicht.
 
 ### Plaatsing
 Onderaan settings panel:
-- “More options”
+- â€œMore optionsâ€
 - compacte disclosure row
 - geen huge accordion dump
 
@@ -406,7 +406,7 @@ Onderaan settings panel:
 
 ---
 
-## 10. Smart Settings Mode — visual hierarchy
+## 10. Smart Settings Mode â€” visual hierarchy
 
 Volgorde:
 
@@ -423,7 +423,7 @@ Volgorde:
 
 ---
 
-## 11. Preview Mode — exacte layout
+## 11. Preview Mode â€” exacte layout
 
 Hier gaat de UI naar een output-first scherm.
 
@@ -451,14 +451,14 @@ Eventueel:
 
 2-kolom lay-out:
 
-### Links — thumbnail rail
+### Links â€” thumbnail rail
 - vaste smalle kolom
 - scrollbaar
 - elke thumbnail met slide nummer
 - actieve slide duidelijk geselecteerd
 - hover subtiel
 
-### Rechts — large slide viewer
+### Rechts â€” large slide viewer
 - grote render van actuele slide
 - gecentreerd
 - goede witruimte rondom
@@ -478,11 +478,11 @@ Maar houd het compact.
 
 ---
 
-## 12. Preview Mode — behavior
+## 12. Preview Mode â€” behavior
 
 ### Thumbnails
 - klik = switch slide
-- keyboard support later
+- keyboard support in post-launch accessibility phase
 - scroll onafhankelijk van de main slide
 
 ### Large slide
@@ -555,15 +555,15 @@ Maar houd het compact.
 ## PromptBar
 ### Props
 - value
-- placeholder
+- promptHint
 - onChange
 - onAnalyze
 - onGenerate
 - mode: source | settings
 
 ### Behavior
-- source mode → CTA is Analyze
-- settings mode → CTA is Generate presentation
+- source mode â†’ CTA is Analyze
+- settings mode â†’ CTA is Generate presentation
 - compact auto-grow, max 3 lines before internal scroll
 
 ---
@@ -573,8 +573,8 @@ Maar houd het compact.
 Toont geen tips-lijst.  
 Alleen subtiele lege-state copy:
 
-- “Add material to start”
-- “Upload files, import recents, or connect Microsoft”
+- â€œAdd material to startâ€
+- â€œUpload files, import recents, or connect Microsoftâ€
 
 ### Filled state
 Toont source cards in clean cluster layout.
@@ -584,12 +584,12 @@ Toont source cards in clean cluster layout.
 ## AnalysisSummaryCard
 ### Copy style
 Kort en feitelijk:
-- “Detected from your material”
-- “Recommended setup”
+- â€œDetected from your materialâ€
+- â€œRecommended setupâ€
 
 ### Niet gebruiken
-- “Our AI engine”
-- “Advanced automation”
+- â€œOur AI engineâ€
+- â€œAdvanced automationâ€
 - marketing copy
 
 ---
@@ -598,7 +598,7 @@ Kort en feitelijk:
 ### Visual rule
 Elke group is een rustige card:
 - title
-- 2–4 controls
+- 2â€“4 controls
 - geen lange helper teksten
 - alleen korte labels
 
@@ -607,9 +607,9 @@ Elke group is een rustige card:
 ## 16. Visual design tokens
 
 ## Radius
-- cards: 20–24px
-- buttons: 14–18px
-- inputs: 14–18px
+- cards: 20â€“24px
+- buttons: 14â€“18px
+- inputs: 14â€“18px
 
 ## Shadows
 - zeer subtiel
@@ -621,9 +621,9 @@ Elke group is een rustige card:
 - hover = accent color
 
 ## Spacing
-- inner card padding: 18–24px
-- group gap: 16–20px
-- section gap: 20–28px
+- inner card padding: 18â€“24px
+- group gap: 16â€“20px
+- section gap: 20â€“28px
 
 ## Typography
 - page title duidelijk maar niet oversized
@@ -658,17 +658,17 @@ Gebruik eenvoudige taal:
 
 ## Source mode
 - Title: Presentation
-- Prompt placeholder: “Describe your presentation or add material…”
-- Empty source text: “Add material to start”
+- Prompt hint: â€œDescribe your presentation or add materialâ€¦â€
+- Empty source text: â€œAdd material to startâ€
 
 ## Settings mode
-- Analysis card title: “Detected from your material”
-- Secondary label: “Recommended setup”
-- Primary CTA: “Generate presentation”
+- Analysis card title: â€œDetected from your materialâ€
+- Secondary label: â€œRecommended setupâ€
+- Primary CTA: â€œGenerate presentationâ€
 
 ## Preview mode
-- Section title: “Preview”
-- Secondary text: “Read-only slide preview. Editing happens in external apps.”
+- Section title: â€œPreviewâ€
+- Secondary text: â€œRead-only slide preview. Editing happens in external apps.â€
 
 ---
 
@@ -680,8 +680,8 @@ Gebruik eenvoudige taal:
 - title/platform aan begin
 - manual slide input screen
 - step 1 / 2 / 3 labeling
-- placeholder slide text split view
-- editor-achtige interface voor slides vóór generatie
+- promptHint slide text split view
+- editor-achtige interface voor slides vÃ³Ã³r generatie
 
 ---
 
@@ -715,17 +715,17 @@ Dit houdt alles simpel, rustig en logisch.
 
 ---
 
-## 21. Design intent in één zin
+## 21. Design intent in Ã©Ã©n zin
 
 De tool moet voelen als:
 
-**“Drop in your material, let the system understand it, make a few calm choices, and preview a real deck.”**
+**â€œDrop in your material, let the system understand it, make a few calm choices, and preview a real deck.â€**
 
 Niet als:
 - editor
 - wizard
 - dashboard vol controls
-- prototype vol placeholder AI cards
+- concept screen overloaded with AI cards
 
 ---
 
@@ -737,7 +737,7 @@ De beste versie voor CAUTIE is:
 - **geen editor**
 - **geen settings sidebar bij start**
 - **wel progressive disclosure**
-- **wel één rustige page die mee-evolueert met de flow**
+- **wel Ã©Ã©n rustige page die mee-evolueert met de flow**
 
 ---
 
@@ -763,3 +763,4 @@ De beste versie voor CAUTIE is:
 ---
 
 END
+

@@ -82,6 +82,25 @@ export default function ParagraphDetailPage() {
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
+  const appContext = useContext(AppContext) as AppContextType;
+  const isDutch = appContext.language === 'nl';
+  const t = {
+    backToChapters: isDutch ? 'Terug naar hoofdstukken' : 'Back to chapters',
+    allSettings: isDutch ? 'Alle instellingen' : 'All settings',
+    addAssignment: isDutch ? '+ opdracht toevoegen' : '+ add assignment',
+    noAssignmentsYet: isDutch ? 'nog geen opdrachten' : 'no assignments yet',
+    createFirstAssignment: isDutch ? 'eerste opdracht maken' : 'create first assignment',
+    addAssignmentTitle: isDutch ? 'opdracht toevoegen' : 'add assignment',
+    addAssignmentDescription: isDutch ? 'maak een nieuwe opdracht voor deze paragraaf.' : 'create a new assignment for this paragraph.',
+    title: isDutch ? 'titel' : 'title',
+    cancel: isDutch ? 'annuleren' : 'cancel',
+    creating: isDutch ? 'aanmaken...' : 'creating...',
+    create: isDutch ? 'maken' : 'create',
+    error: isDutch ? 'Fout' : 'Error',
+    failedUpdate: isDutch ? 'Instellingen bijwerken mislukt' : 'Failed to update settings',
+    failedBulkUpdate: isDutch ? 'Bijwerken mislukt' : 'Failed to update',
+    failedCreateAssignment: isDutch ? 'Opdracht maken mislukt' : 'Failed to create assignment',
+  };
   const effectiveChapterId = resolvedChapterId || chapterId;
 
   // Auto-track study session for students
@@ -150,7 +169,7 @@ export default function ParagraphDetailPage() {
       }
     } catch (error) {
       console.error('Update error:', error);
-      toast({ title: 'Error', description: 'Failed to update settings', variant: 'destructive' });
+      toast({ title: t.error, description: t.failedUpdate, variant: 'destructive' });
     } finally {
       setIsUpdating(false);
     }
@@ -170,7 +189,7 @@ export default function ParagraphDetailPage() {
       );
       setAssignments(prev => prev.map(a => ({ ...a, ...updates })));
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to update', variant: 'destructive' });
+      toast({ title: t.error, description: t.failedBulkUpdate, variant: 'destructive' });
     } finally {
       setIsUpdating(false);
     }
@@ -241,7 +260,7 @@ export default function ParagraphDetailPage() {
       setAssignments((prev) => prev.filter((assignment) => assignment.id !== tempId));
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to create assignment',
+        description: error instanceof Error ? error.message : t.failedCreateAssignment,
         variant: 'destructive',
       });
     } finally {
@@ -279,7 +298,7 @@ export default function ParagraphDetailPage() {
             href={`/subjects/${subjectId}`}
             className="text-xs text-muted-foreground hover:text-foreground mb-1 block"
           >
-            Back to chapters
+            {t.backToChapters}
           </Link>
           <h1 className="text-lg">
             {paragraph.paragraph_number}. {paragraph.title}
@@ -292,7 +311,7 @@ export default function ParagraphDetailPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="h-8 gap-1.5">
                   <Settings className="h-3.5 w-3.5" />
-                  <span className="text-xs lowercase">all settings</span>
+                  <span className="text-xs">{t.allSettings}</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" className="p-0 w-auto">
@@ -306,7 +325,7 @@ export default function ParagraphDetailPage() {
           )}
           {isTeacher && (
             <Button onClick={() => setIsCreateAssignmentOpen(true)} size="sm" className="h-8">
-              + add assignment
+              {t.addAssignment}
             </Button>
           )}
         </div>
@@ -315,10 +334,10 @@ export default function ParagraphDetailPage() {
       {/* Assignments list */}
       {assignments.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <p className="text-sm mb-4 lowercase">no assignments yet</p>
+          <p className="text-sm mb-4">{t.noAssignmentsYet}</p>
           {isTeacher && (
             <Button onClick={() => setIsCreateAssignmentOpen(true)} size="sm">
-                create first assignment
+                {t.createFirstAssignment}
             </Button>
           )}
         </div>
@@ -451,11 +470,11 @@ export default function ParagraphDetailPage() {
       <Dialog open={isCreateAssignmentOpen} onOpenChange={setIsCreateAssignmentOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="lowercase">add assignment</DialogTitle>
-            <DialogDescription className="lowercase">create a new assignment for this paragraph.</DialogDescription>
+            <DialogTitle>{t.addAssignmentTitle}</DialogTitle>
+            <DialogDescription>{t.addAssignmentDescription}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
-              <Label htmlFor="assignment-title" className="lowercase">title</Label>
+              <Label htmlFor="assignment-title">{t.title}</Label>
             <Input
               id="assignment-title"
               placeholder=""
@@ -465,9 +484,9 @@ export default function ParagraphDetailPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateAssignmentOpen(false)} className="lowercase">cancel</Button>
-            <Button onClick={handleCreateAssignment} disabled={!newAssignmentTitle.trim() || isCreatingAssignment} className="lowercase">
-              {isCreatingAssignment ? 'creating...' : 'create'}
+            <Button variant="outline" onClick={() => setIsCreateAssignmentOpen(false)}>{t.cancel}</Button>
+            <Button onClick={handleCreateAssignment} disabled={!newAssignmentTitle.trim() || isCreatingAssignment}>
+              {isCreatingAssignment ? t.creating : t.create}
             </Button>
           </DialogFooter>
         </DialogContent>

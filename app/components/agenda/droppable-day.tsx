@@ -24,16 +24,14 @@ export function DroppableDay({ id, date, events, onClick, onEventClick, compact 
     <div
       ref={setNodeRef}
       onClick={onClick}
-      className="relative min-h-[400px] rounded-xl bg-white p-2.5 md:min-h-[560px] md:p-3 cursor-pointer transition-colors hover:bg-white"
+      className="relative min-h-[360px] rounded-xl bg-white/95 p-2 md:min-h-[520px] md:p-2.5 cursor-pointer transition-colors"
     >
-      <div className="mb-1 flex items-start justify-end">
-        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-md bg-[hsl(var(--surface-2))] px-1.5 text-[11px] text-muted-foreground">
-          {format(date, 'd')}
-        </span>
+      <div className="mb-2 flex items-center justify-end">
+        <span className="text-[11px] text-muted-foreground">{format(date, 'd')}</span>
       </div>
 
       <SortableContext items={events.map(e => e.id)} strategy={verticalListSortingStrategy}>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {events.map((event) => (
             <DraggableEvent key={event.id} event={event} onEventClick={onEventClick} compact={compact} />
           ))}

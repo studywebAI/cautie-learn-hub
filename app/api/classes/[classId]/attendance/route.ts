@@ -48,6 +48,17 @@ function mapRecentActivity(logs: any[]) {
   }))
 }
 
+function isAttendanceTimelineAction(log: any) {
+  const action = String(log?.action || '')
+  if (action === 'attendance_state_changed') return true
+  if (action === 'attendance_event_homework_incomplete') return true
+  if (action === 'attendance_event_late') return true
+  if (action === 'attendance_event_custom') return true
+  const logCategory = String(log?.metadata?.log_category || '').toLowerCase()
+  if (logCategory === 'events' || logCategory === 'custom_events') return true
+  return false
+}
+
 // GET - Fetch all students with their attendance records for a class
 export async function GET(
   request: Request,
@@ -200,9 +211,11 @@ export async function GET(
           .filter((log: any) => {
             const actorId = String(log?.user_id || '')
             const targetId = String(log?.metadata?.student_id || '')
-            return actorId === studentId || targetId === studentId
+            const touchesStudent = actorId === studentId || targetId === studentId
+            if (!touchesStudent) return false
+            return isAttendanceTimelineAction(log)
           })
-          .slice(0, 8)
+          .slice(0, 12)
           .map((log: any) => {
             const actorProfile = profileById.get(String(log.user_id || ''))
             return {
@@ -297,6 +310,15 @@ export async function POST(
       writeClient = supabase
     }
 
+    const { data: latestAttendanceRecord } = await writeClient
+      .from('student_attendance')
+      .select('id, is_present, has_homework_incomplete, was_too_late, created_at')
+      .eq('class_id', classId)
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
     const { data: attendance, error: attendanceError } = await writeClient
       .from('student_attendance')
       .insert({
@@ -315,6 +337,19 @@ export async function POST(
       return NextResponse.json({ error: attendanceError.message }, { status: 500 })
     }
 
+    const previousIsPresent =
+      typeof latestAttendanceRecord?.is_present === 'boolean'
+        ? latestAttendanceRecord.is_present
+        : null
+    const previousHomeworkIncomplete =
+      typeof latestAttendanceRecord?.has_homework_incomplete === 'boolean'
+        ? latestAttendanceRecord.has_homework_incomplete
+        : null
+    const previousTooLate =
+      typeof latestAttendanceRecord?.was_too_late === 'boolean'
+        ? latestAttendanceRecord.was_too_late
+        : null
+
     await logAuditEntry(writeClient as any, {
       userId: user.id,
       classId,
@@ -325,14 +360,13 @@ export async function POST(
         log_code: 'EVT-ATT-001',
         log_category: 'events',
         student_id: studentId,
-        is_present: nextIsPresent,
-        has_homework_incomplete: nextHomeworkIncomplete,
-        was_too_late: nextWasTooLate,
+        from_is_present: previousIsPresent,
+        to_is_present: nextIsPresent,
         created_by: user.id,
       },
     })
 
-    if (nextHomeworkIncomplete) {
+    if (previousHomeworkIncomplete !== nextHomeworkIncomplete) {
       await logAuditEntry(writeClient as any, {
         userId: user.id,
         classId,
@@ -343,13 +377,14 @@ export async function POST(
           log_code: 'EVT-ATT-002',
           log_category: 'events',
           student_id: studentId,
-          active: true,
+          from_active: previousHomeworkIncomplete,
+          to_active: nextHomeworkIncomplete,
           created_by: user.id,
         },
       })
     }
 
-    if (nextWasTooLate) {
+    if (previousTooLate !== nextWasTooLate) {
       await logAuditEntry(writeClient as any, {
         userId: user.id,
         classId,
@@ -360,7 +395,8 @@ export async function POST(
           log_code: 'EVT-ATT-003',
           log_category: 'events',
           student_id: studentId,
-          active: true,
+          from_active: previousTooLate,
+          to_active: nextWasTooLate,
           created_by: user.id,
         },
       })

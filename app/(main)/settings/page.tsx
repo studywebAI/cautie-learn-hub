@@ -55,7 +55,7 @@ export default function SettingsPage() {
       setDisplayName(saved.trim());
       return;
     }
-    const fallback = session?.user?.email?.split('@')[0] || '';
+    const fallback = session?.user?.email?.split('@')[0] || 'Guest';
     setDisplayName(fallback);
   }, [session?.user?.email]);
 
@@ -220,6 +220,34 @@ export default function SettingsPage() {
   };
   const normalizedCodeQuery = logCodeQuery.trim().toUpperCase();
   const selectedLogCodeDoc = normalizedCodeQuery ? logCodeDocs[normalizedCodeQuery] : null;
+  const ui = {
+    settings: tr({ en: 'Settings', nl: 'Instellingen' }),
+    back: tr({ en: 'Return', nl: 'Terug' }),
+    language: tr({ en: 'Language', nl: 'Taal' }),
+    languagePlaceholder: tr({ en: 'Select language', nl: 'Selecteer taal' }),
+    displayName: tr({ en: 'Display name', nl: 'Weergavenaam' }),
+    displayNamePlaceholder: tr({ en: 'Your display name', nl: 'Jouw weergavenaam' }),
+    saving: tr({ en: 'Saving...', nl: 'Opslaan...' }),
+    save: tr({ en: 'Save', nl: 'Opslaan' }),
+    region: tr({ en: 'Region', nl: 'Regio' }),
+    regionPlaceholder: tr({ en: 'Select region', nl: 'Selecteer regio' }),
+    schoolingLevel: tr({ en: 'Degree of schooling', nl: 'Onderwijsniveau' }),
+    schoolingPlaceholder: tr({ en: 'Select schooling level', nl: 'Selecteer onderwijsniveau' }),
+    aiProvider: tr({ en: 'AI provider', nl: 'AI-provider' }),
+    aiProviderPlaceholder: tr({ en: 'Select provider', nl: 'Selecteer provider' }),
+    autoRecommended: tr({ en: 'Auto (Recommended)', nl: 'Auto (Aanbevolen)' }),
+    openAIKeyOptional: tr({ en: 'OpenAI API key (optional)', nl: 'OpenAI API-sleutel (optioneel)' }),
+    noOpenAIKey: tr({ en: 'No OpenAI key available yet.', nl: 'Nog geen OpenAI-sleutel beschikbaar.' }),
+    customOpenAIKeySaved: tr({ en: 'Custom OpenAI key saved for your account.', nl: 'Aangepaste OpenAI-sleutel is opgeslagen voor je account.' }),
+    usingDefaultOpenAIKey: tr({ en: 'Using platform default OpenAI key.', nl: 'Standaard OpenAI-sleutel van het platform wordt gebruikt.' }),
+    keyEncrypted: tr({ en: 'Your key is encrypted server-side and never returned to the client after saving.', nl: 'Je sleutel wordt server-side versleuteld en na opslaan niet teruggestuurd naar de client.' }),
+    saveAiSettings: tr({ en: 'Save AI settings', nl: 'AI-instellingen opslaan' }),
+    subscription: tr({ en: 'Subscription', nl: 'Abonnement' }),
+    current: tr({ en: 'Current', nl: 'Huidig' }),
+    teacher: tr({ en: 'Teacher', nl: 'Docent' }),
+    student: tr({ en: 'Student', nl: 'Leerling' }),
+    upgradeSubscriptionHere: tr({ en: 'Upgrade subscription here', nl: 'Upgrade abonnement hier' }),
+  };
 
   return (
     <div className="h-full w-full overflow-auto bg-[hsl(var(--surface-1))] p-4 md:p-6">
@@ -238,9 +266,9 @@ export default function SettingsPage() {
             }}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Return
+            {ui.back}
           </Button>
-          <h1 className="text-sm md:text-base">Settings</h1>
+          <h1 className="text-sm md:text-base">{ui.settings}</h1>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
@@ -275,43 +303,43 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid gap-2 max-w-md">
-                    <Label htmlFor="language">Language</Label>
+                    <Label htmlFor="language">{ui.language}</Label>
                     <Select value={language} onValueChange={setLanguage}>
                       <SelectTrigger id="language">
-                        <SelectValue placeholder="Select language" />
+                        <SelectValue placeholder={ui.languagePlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
                           <SelectItem value="en">English</SelectItem>
-                          <SelectItem value="zh">Chinese</SelectItem>
-                          <SelectItem value="hi">Hindi</SelectItem>
-                          <SelectItem value="es">Espanol</SelectItem>
-                          <SelectItem value="fr">Francais</SelectItem>
-                          <SelectItem value="ar">Arabic</SelectItem>
-                          <SelectItem value="bn">Bangla</SelectItem>
-                          <SelectItem value="pt">Portugues</SelectItem>
-                          <SelectItem value="ru">Russkiy</SelectItem>
-                          <SelectItem value="ur">Urdu</SelectItem>
+                          <SelectItem value="zh">中文 (Chinese)</SelectItem>
+                          <SelectItem value="hi">हिन्दी (Hindi)</SelectItem>
+                          <SelectItem value="es">Español (Spanish)</SelectItem>
+                          <SelectItem value="fr">Français (French)</SelectItem>
+                          <SelectItem value="ar">العربية (Arabic)</SelectItem>
+                          <SelectItem value="bn">বাংলা (Bangla)</SelectItem>
+                          <SelectItem value="pt">Português (Portuguese)</SelectItem>
+                          <SelectItem value="ru">Русский (Russian)</SelectItem>
+                          <SelectItem value="ur">اردو (Urdu)</SelectItem>
+                          <SelectItem value="de">Deutsch (German)</SelectItem>
                           <SelectItem value="id">Bahasa Indonesia</SelectItem>
-                          <SelectItem value="de">Deutsch</SelectItem>
-                          <SelectItem value="tr">Turkce</SelectItem>
-                          <SelectItem value="it">Italiano</SelectItem>
-                          <SelectItem value="nl">Nederlands</SelectItem>
-                          <SelectItem value="pl">Polski</SelectItem>
+                          <SelectItem value="tr">Türkçe (Turkish)</SelectItem>
+                          <SelectItem value="it">Italiano (Italian)</SelectItem>
+                          <SelectItem value="nl">Nederlands (Dutch)</SelectItem>
+                          <SelectItem value="pl">Polski (Polish)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="grid gap-2 max-w-md">
-                    <Label htmlFor="display-name">Display name</Label>
+                    <Label htmlFor="display-name">{ui.displayName}</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         id="display-name"
                         value={displayName}
                         onChange={(event) => setDisplayName(event.target.value)}
-                        placeholder="Your display name"
+                        placeholder={ui.displayNamePlaceholder}
                       />
                       <Button onClick={() => void saveDisplayName()} disabled={displayNameSaving}>
-                        {displayNameSaving ? 'Saving...' : 'Save'}
+                        {displayNameSaving ? ui.saving : ui.save}
                       </Button>
                     </div>
                   </div>
@@ -329,10 +357,10 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid gap-2 max-w-md">
-                    <Label htmlFor="region">Region</Label>
+                    <Label htmlFor="region">{ui.region}</Label>
                     <Select value={region} onValueChange={(value) => setRegion(value as any)}>
                       <SelectTrigger id="region">
-                        <SelectValue placeholder="Select region" />
+                        <SelectValue placeholder={ui.regionPlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="global">Global</SelectItem>
@@ -360,10 +388,10 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="grid gap-2 max-w-md">
-                    <Label htmlFor="schooling-level">Degree of schooling</Label>
+                    <Label htmlFor="schooling-level">{ui.schoolingLevel}</Label>
                     <Select value={String(schoolingLevel)} onValueChange={(value) => setSchoolingLevel(Number(value) as any)}>
                       <SelectTrigger id="schooling-level">
-                        <SelectValue placeholder="Select schooling level" />
+                        <SelectValue placeholder={ui.schoolingPlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="1">Primary / Foundation</SelectItem>
@@ -376,7 +404,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="grid gap-2 max-w-md">
-                    <Label htmlFor="provider">AI provider</Label>
+                    <Label htmlFor="provider">{ui.aiProvider}</Label>
                     <Select
                       value={aiProvider}
                       onValueChange={(value) => {
@@ -385,10 +413,10 @@ export default function SettingsPage() {
                       }}
                     >
                       <SelectTrigger id="provider">
-                        <SelectValue placeholder="Select provider" />
+                        <SelectValue placeholder={ui.aiProviderPlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="auto">Auto (Recommended)</SelectItem>
+                        <SelectItem value="auto">{ui.autoRecommended}</SelectItem>
                         <SelectItem value="gemini">Gemini</SelectItem>
                         <SelectItem value="openai">OpenAI</SelectItem>
                       </SelectContent>
@@ -397,7 +425,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="grid gap-2 max-w-md">
-                    <Label htmlFor="openai-user-key">OpenAI API key (optional)</Label>
+                    <Label htmlFor="openai-user-key">{ui.openAIKeyOptional}</Label>
                     <Input
                       id="openai-user-key"
                       type="password"
@@ -408,9 +436,9 @@ export default function SettingsPage() {
                       placeholder="sk-..."
                     />
                     <p className="text-xs text-muted-foreground">
-                      {hasOpenAIKey ? 'Custom OpenAI key saved for your account.' : usesDefaultOpenAIKey ? 'Using platform default OpenAI key.' : 'No OpenAI key available yet.'}
+                      {hasOpenAIKey ? ui.customOpenAIKeySaved : usesDefaultOpenAIKey ? ui.usingDefaultOpenAIKey : ui.noOpenAIKey}
                     </p>
-                    <p className="text-xs text-muted-foreground">Your key is encrypted server-side and never returned to the client after saving.</p>
+                    <p className="text-xs text-muted-foreground">{ui.keyEncrypted}</p>
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
@@ -418,7 +446,7 @@ export default function SettingsPage() {
                         onClick={() => void saveAiSettings()}
                         disabled={aiSettingsSaving || aiSettingsLoading}
                       >
-                        {aiSettingsSaving ? 'Saving...' : 'Save AI settings'}
+                        {aiSettingsSaving ? ui.saving : ui.saveAiSettings}
                       </Button>
                       {aiSettingsStatus ? <span className="text-xs text-muted-foreground">{aiSettingsStatus}</span> : null}
                     </div>
@@ -430,15 +458,15 @@ export default function SettingsPage() {
               {activeTab === 'subscription' && (
               <Card className="border-border shadow-none">
                 <CardHeader>
-                  <CardTitle>Subscription</CardTitle>
+                  <CardTitle>{ui.subscription}</CardTitle>
                   <CardDescription>
-                    Current: {subscriptionTier} {subscriptionType === 'teacher' ? 'Teacher' : 'Student'}
+                    {ui.current}: {subscriptionTier} {subscriptionType === 'teacher' ? ui.teacher : ui.student}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Button asChild className="rounded-xl">
                     <a href="/upgrade">
-                      Upgrade subscription here
+                      {ui.upgradeSubscriptionHere}
                       <ArrowUpRight className="ml-2 h-4 w-4" />
                     </a>
                   </Button>

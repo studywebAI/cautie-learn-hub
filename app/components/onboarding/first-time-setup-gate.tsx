@@ -118,11 +118,15 @@ export function FirstTimeSetupGate() {
         student: 'Student',
         teacher: 'Teacher',
         next: 'Next',
+        back: 'Back',
         finish: 'Finish',
         createAccount: 'Create account',
         signIn: 'Sign in',
         continueGuest: 'Continue as guest',
         saving: 'Saving...',
+        welcomePrefix: 'Welcome',
+        loginToContinueSetup: 'Sign in to continue setup',
+        createYourAccount: 'Create your account',
       },
       nl: {
         firstTime: 'Eerste keer hier?',
@@ -141,11 +145,15 @@ export function FirstTimeSetupGate() {
         student: 'Leerling',
         teacher: 'Docent',
         next: 'Volgende',
+        back: 'Terug',
         finish: 'Afronden',
         createAccount: 'Account maken',
         signIn: 'Inloggen',
         continueGuest: 'Doorgaan als gast',
         saving: 'Opslaan...',
+        welcomePrefix: 'Welkom',
+        loginToContinueSetup: 'Log in om door te gaan met instellen',
+        createYourAccount: 'Maak je account aan',
       },
       de: {
         firstTime: 'Zum ersten Mal hier?',
@@ -156,6 +164,7 @@ export function FirstTimeSetupGate() {
         selectLanguage: 'Sprache wählen',
         selectRole: 'Rolle wählen',
         selectAppearance: 'Design wählen',
+        selectAuth: 'Anmelden oder Konto erstellen',
         teacherCode: 'Lehrercode',
         enterTeacherCode: 'Lehrercode eingeben',
         enterDisplayName: 'Anzeigename eingeben',
@@ -163,10 +172,15 @@ export function FirstTimeSetupGate() {
         student: 'Schüler',
         teacher: 'Lehrer',
         next: 'Weiter',
+        back: 'Zurück',
         finish: 'Fertig',
         createAccount: 'Konto erstellen',
+        signIn: 'Anmelden',
         continueGuest: 'Als Gast fortfahren',
         saving: 'Speichern...',
+        welcomePrefix: 'Willkommen',
+        loginToContinueSetup: 'Melde dich an, um mit der Einrichtung fortzufahren',
+        createYourAccount: 'Erstelle dein Konto',
       },
       fr: {
         firstTime: 'Premiere fois ici?',
@@ -177,6 +191,7 @@ export function FirstTimeSetupGate() {
         selectLanguage: 'Choisir la langue',
         selectRole: 'Choisir le role',
         selectAppearance: "Choisir l'apparence",
+        selectAuth: 'Connectez-vous ou creez votre compte',
         teacherCode: 'Code enseignant',
         enterTeacherCode: 'Entrer le code enseignant',
         enterDisplayName: "Entrer le nom d'affichage",
@@ -184,10 +199,15 @@ export function FirstTimeSetupGate() {
         student: 'Etudiant',
         teacher: 'Enseignant',
         next: 'Suivant',
+        back: 'Retour',
         finish: 'Terminer',
         createAccount: 'Creer un compte',
+        signIn: 'Se connecter',
         continueGuest: 'Continuer en invite',
         saving: 'Enregistrement...',
+        welcomePrefix: 'Bienvenue',
+        loginToContinueSetup: 'Connectez-vous pour continuer la configuration',
+        createYourAccount: 'Creez votre compte',
       },
       es: {
         firstTime: 'Primera vez aqui?',
@@ -198,6 +218,7 @@ export function FirstTimeSetupGate() {
         selectLanguage: 'Seleccionar idioma',
         selectRole: 'Seleccionar rol',
         selectAppearance: 'Seleccionar apariencia',
+        selectAuth: 'Inicia sesion o crea tu cuenta',
         teacherCode: 'Codigo docente',
         enterTeacherCode: 'Ingresa el codigo docente',
         enterDisplayName: 'Ingresa nombre visible',
@@ -205,22 +226,27 @@ export function FirstTimeSetupGate() {
         student: 'Estudiante',
         teacher: 'Docente',
         next: 'Siguiente',
+        back: 'Atras',
         finish: 'Finalizar',
         createAccount: 'Crear cuenta',
+        signIn: 'Iniciar sesion',
         continueGuest: 'Continuar como invitado',
         saving: 'Guardando...',
+        welcomePrefix: 'Bienvenido',
+        loginToContinueSetup: 'Inicia sesion para continuar la configuracion',
+        createYourAccount: 'Crea tu cuenta',
       },
-      pt: { firstTime: 'Primeira vez aqui?', iAmNew: 'Sou novo', iHaveAccount: 'Tenho conta', step: 'Passo', of: 'de', selectLanguage: 'Selecionar idioma', selectRole: 'Selecionar papel', selectAppearance: 'Selecionar aparencia', teacherCode: 'Codigo do professor', enterTeacherCode: 'Digite o codigo do professor', enterDisplayName: 'Digite nome de exibicao', yourDisplayName: 'Seu nome de exibicao', student: 'Aluno', teacher: 'Professor', next: 'Proximo', finish: 'Concluir', createAccount: 'Criar conta', continueGuest: 'Continuar como convidado', saving: 'Salvando...' },
-      pl: { firstTime: 'Pierwszy raz tutaj?', iAmNew: 'Jestem nowy', iHaveAccount: 'Mam konto', step: 'Krok', of: 'z', selectLanguage: 'Wybierz jezyk', selectRole: 'Wybierz role', selectAppearance: 'Wybierz wyglad', teacherCode: 'Kod nauczyciela', enterTeacherCode: 'Wpisz kod nauczyciela', enterDisplayName: 'Wpisz nazwe wyswietlana', yourDisplayName: 'Twoja nazwa wyswietlana', student: 'Uczen', teacher: 'Nauczyciel', next: 'Dalej', finish: 'Zakoncz', createAccount: 'Utworz konto', continueGuest: 'Kontynuuj jako gosc', saving: 'Zapisywanie...' },
-      ru: { firstTime: 'Первый раз здесь?', iAmNew: 'Я новый', iHaveAccount: 'У меня есть аккаунт', step: 'Шаг', of: 'из', selectLanguage: 'Выберите язык', selectRole: 'Выберите роль', selectAppearance: 'Выберите тему', teacherCode: 'Код учителя', enterTeacherCode: 'Введите код учителя', enterDisplayName: 'Введите отображаемое имя', yourDisplayName: 'Ваше отображаемое имя', student: 'Ученик', teacher: 'Учитель', next: 'Далее', finish: 'Завершить', createAccount: 'Создать аккаунт', continueGuest: 'Продолжить как гость', saving: 'Сохранение...' },
-      ar: { firstTime: 'اول مرة هنا؟', iAmNew: 'انا جديد', iHaveAccount: 'لدي حساب', step: 'الخطوة', of: 'من', selectLanguage: 'اختر اللغة', selectRole: 'اختر الدور', selectAppearance: 'اختر المظهر', teacherCode: 'رمز المعلم', enterTeacherCode: 'ادخل رمز المعلم', enterDisplayName: 'ادخل اسم العرض', yourDisplayName: 'اسم العرض', student: 'طالب', teacher: 'معلم', next: 'التالي', finish: 'انهاء', createAccount: 'انشاء حساب', continueGuest: 'المتابعة كضيف', saving: 'جار الحفظ...' },
-      ur: { firstTime: 'پہلی بار یہاں؟', iAmNew: 'میں نیا ہوں', iHaveAccount: 'میرے پاس اکاؤنٹ ہے', step: 'مرحلہ', of: 'میں سے', selectLanguage: 'زبان منتخب کریں', selectRole: 'کردار منتخب کریں', selectAppearance: 'ظاہری شکل منتخب کریں', teacherCode: 'استاد کوڈ', enterTeacherCode: 'استاد کوڈ درج کریں', enterDisplayName: 'ڈسپلے نام درج کریں', yourDisplayName: 'آپ کا ڈسپلے نام', student: 'طالب علم', teacher: 'استاد', next: 'اگلا', finish: 'مکمل کریں', createAccount: 'اکاؤنٹ بنائیں', continueGuest: 'بطور مہمان جاری رکھیں', saving: 'محفوظ ہو رہا ہے...' },
-      hi: { firstTime: 'पहली बार यहां?', iAmNew: 'मैं नया हूं', iHaveAccount: 'मेरे पास अकाउंट है', step: 'चरण', of: 'का', selectLanguage: 'भाषा चुनें', selectRole: 'भूमिका चुनें', selectAppearance: 'रूप चुनें', teacherCode: 'शिक्षक कोड', enterTeacherCode: 'शिक्षक कोड दर्ज करें', enterDisplayName: 'डिस्प्ले नाम दर्ज करें', yourDisplayName: 'आपका डिस्प्ले नाम', student: 'छात्र', teacher: 'शिक्षक', next: 'अगला', finish: 'पूरा करें', createAccount: 'अकाउंट बनाएं', continueGuest: 'मेहमान के रूप में जारी रखें', saving: 'सहेजा जा रहा है...' },
-      bn: { firstTime: 'প্রথমবার এখানে?', iAmNew: 'আমি নতুন', iHaveAccount: 'আমার অ্যাকাউন্ট আছে', step: 'ধাপ', of: 'এর', selectLanguage: 'ভাষা বাছুন', selectRole: 'ভূমিকা বাছুন', selectAppearance: 'থিম বাছুন', teacherCode: 'শিক্ষক কোড', enterTeacherCode: 'শিক্ষক কোড লিখুন', enterDisplayName: 'ডিসপ্লে নাম লিখুন', yourDisplayName: 'আপনার ডিসপ্লে নাম', student: 'শিক্ষার্থী', teacher: 'শিক্ষক', next: 'পরবর্তী', finish: 'শেষ করুন', createAccount: 'অ্যাকাউন্ট তৈরি করুন', continueGuest: 'অতিথি হিসেবে চালিয়ে যান', saving: 'সংরক্ষণ হচ্ছে...' },
-      zh: { firstTime: '第一次来这里？', iAmNew: '我是新用户', iHaveAccount: '我有账号', step: '步骤', of: '共', selectLanguage: '选择语言', selectRole: '选择身份', selectAppearance: '选择外观', teacherCode: '教师代码', enterTeacherCode: '输入教师代码', enterDisplayName: '输入显示名称', yourDisplayName: '你的显示名称', student: '学生', teacher: '老师', next: '下一步', finish: '完成', createAccount: '创建账号', continueGuest: '以访客继续', saving: '正在保存...' },
-      it: { firstTime: 'Prima volta qui?', iAmNew: 'Sono nuovo', iHaveAccount: 'Ho un conto', step: 'Fare un passo', of: 'Di', selectLanguage: 'Seleziona la lingua', selectRole: 'Seleziona ruolo', selectAuth: 'Accedi o crea il tuo account', selectAppearance: 'Seleziona aspetto', teacherCode: 'Codice insegnante', enterTeacherCode: 'Inserisci il codice insegnante', enterDisplayName: 'Inserisci il nome visualizzato', yourDisplayName: 'Il tuo nome visualizzato', student: 'Studente', teacher: 'Insegnante', next: 'Prossimo', finish: 'Fine', createAccount: 'Creare account', signIn: 'Accedi', continueGuest: 'Continua come ospite', saving: 'Salvataggio...' },
-      tr: { firstTime: 'Buraya ilk kez mi geliyorsun?', iAmNew: 'Ben yeniyim', iHaveAccount: 'Bir hesabim var', step: 'Adim', of: 'ile ilgili', selectLanguage: 'Dil secin', selectRole: 'Rol secin', selectAuth: 'Oturum acin veya hesabinizi olusturun', selectAppearance: 'Gorunumu secin', teacherCode: 'Ogretmen kodu', enterTeacherCode: 'Ogretmen kodunu girin', enterDisplayName: 'Gorunen adi girin', yourDisplayName: 'Gorunen adiniz', student: 'Ogrenci', teacher: 'Ogretmen', next: 'Sonraki', finish: 'Bitir', createAccount: 'Hesap olustur', signIn: 'Oturum ac', continueGuest: 'Konuk olarak devam et', saving: 'Kaydediliyor...' },
-      id: { firstTime: 'Pertama kali ke sini?', iAmNew: 'Saya baru', iHaveAccount: 'Saya punya akun', step: 'Langkah', of: 'dari', selectLanguage: 'Pilih bahasa', selectRole: 'Pilih peran', selectAuth: 'Masuk atau buat akun Anda', selectAppearance: 'Pilih tampilan', teacherCode: 'Kode guru', enterTeacherCode: 'Masukkan kode guru', enterDisplayName: 'Masukkan nama tampilan', yourDisplayName: 'Nama tampilan Anda', student: 'Murid', teacher: 'Guru', next: 'Berikutnya', finish: 'Selesai', createAccount: 'Buat akun', signIn: 'Masuk', continueGuest: 'Lanjutkan sebagai tamu', saving: 'Menyimpan...' },
+      pt: { firstTime: 'Primeira vez aqui?', iAmNew: 'Sou novo', iHaveAccount: 'Tenho conta', step: 'Passo', of: 'de', selectLanguage: 'Selecionar idioma', selectRole: 'Selecionar papel', selectAuth: 'Entrar ou criar conta', selectAppearance: 'Selecionar aparencia', teacherCode: 'Codigo do professor', enterTeacherCode: 'Digite o codigo do professor', enterDisplayName: 'Digite nome de exibicao', yourDisplayName: 'Seu nome de exibicao', student: 'Aluno', teacher: 'Professor', next: 'Proximo', back: 'Voltar', finish: 'Concluir', createAccount: 'Criar conta', signIn: 'Entrar', continueGuest: 'Continuar como convidado', saving: 'Salvando...', welcomePrefix: 'Bem-vindo', loginToContinueSetup: 'Entre para continuar a configuracao', createYourAccount: 'Crie sua conta' },
+      pl: { firstTime: 'Pierwszy raz tutaj?', iAmNew: 'Jestem nowy', iHaveAccount: 'Mam konto', step: 'Krok', of: 'z', selectLanguage: 'Wybierz jezyk', selectRole: 'Wybierz role', selectAuth: 'Zaloguj sie lub utworz konto', selectAppearance: 'Wybierz wyglad', teacherCode: 'Kod nauczyciela', enterTeacherCode: 'Wpisz kod nauczyciela', enterDisplayName: 'Wpisz nazwe wyswietlana', yourDisplayName: 'Twoja nazwa wyswietlana', student: 'Uczen', teacher: 'Nauczyciel', next: 'Dalej', back: 'Wstecz', finish: 'Zakoncz', createAccount: 'Utworz konto', signIn: 'Zaloguj sie', continueGuest: 'Kontynuuj jako gosc', saving: 'Zapisywanie...', welcomePrefix: 'Witamy', loginToContinueSetup: 'Zaloguj sie, aby kontynuowac konfiguracje', createYourAccount: 'Utworz swoje konto' },
+      ru: { firstTime: 'Первый раз здесь?', iAmNew: 'Я новый', iHaveAccount: 'У меня есть аккаунт', step: 'Шаг', of: 'из', selectLanguage: 'Выберите язык', selectRole: 'Выберите роль', selectAuth: 'Войдите или создайте аккаунт', selectAppearance: 'Выберите тему', teacherCode: 'Код учителя', enterTeacherCode: 'Введите код учителя', enterDisplayName: 'Введите отображаемое имя', yourDisplayName: 'Ваше отображаемое имя', student: 'Ученик', teacher: 'Учитель', next: 'Далее', back: 'Назад', finish: 'Завершить', createAccount: 'Создать аккаунт', signIn: 'Войти', continueGuest: 'Продолжить как гость', saving: 'Сохранение...', welcomePrefix: 'Добро пожаловать', loginToContinueSetup: 'Войдите, чтобы продолжить настройку', createYourAccount: 'Создайте аккаунт' },
+      ar: { firstTime: 'اول مرة هنا؟', iAmNew: 'انا جديد', iHaveAccount: 'لدي حساب', step: 'الخطوة', of: 'من', selectLanguage: 'اختر اللغة', selectRole: 'اختر الدور', selectAuth: 'سجل الدخول او انشئ حسابك', selectAppearance: 'اختر المظهر', teacherCode: 'رمز المعلم', enterTeacherCode: 'ادخل رمز المعلم', enterDisplayName: 'ادخل اسم العرض', yourDisplayName: 'اسم العرض', student: 'طالب', teacher: 'معلم', next: 'التالي', back: 'رجوع', finish: 'انهاء', createAccount: 'انشاء حساب', signIn: 'تسجيل الدخول', continueGuest: 'المتابعة كضيف', saving: 'جار الحفظ...', welcomePrefix: 'اهلا بك', loginToContinueSetup: 'سجل الدخول للمتابعة في الاعداد', createYourAccount: 'انشئ حسابك' },
+      ur: { firstTime: 'پہلی بار یہاں؟', iAmNew: 'میں نیا ہوں', iHaveAccount: 'میرے پاس اکاؤنٹ ہے', step: 'مرحلہ', of: 'میں سے', selectLanguage: 'زبان منتخب کریں', selectRole: 'کردار منتخب کریں', selectAuth: 'سائن ان کریں یا اکاؤنٹ بنائیں', selectAppearance: 'ظاہری شکل منتخب کریں', teacherCode: 'استاد کوڈ', enterTeacherCode: 'استاد کوڈ درج کریں', enterDisplayName: 'ڈسپلے نام درج کریں', yourDisplayName: 'آپ کا ڈسپلے نام', student: 'طالب علم', teacher: 'استاد', next: 'اگلا', back: 'واپس', finish: 'مکمل کریں', createAccount: 'اکاؤنٹ بنائیں', signIn: 'سائن ان', continueGuest: 'بطور مہمان جاری رکھیں', saving: 'محفوظ ہو رہا ہے...', welcomePrefix: 'خوش آمدید', loginToContinueSetup: 'سیٹ اپ جاری رکھنے کے لیے سائن ان کریں', createYourAccount: 'اپنا اکاؤنٹ بنائیں' },
+      hi: { firstTime: 'पहली बार यहां?', iAmNew: 'मैं नया हूं', iHaveAccount: 'मेरे पास अकाउंट है', step: 'चरण', of: 'का', selectLanguage: 'भाषा चुनें', selectRole: 'भूमिका चुनें', selectAuth: 'साइन इन करें या अकाउंट बनाएं', selectAppearance: 'रूप चुनें', teacherCode: 'शिक्षक कोड', enterTeacherCode: 'शिक्षक कोड दर्ज करें', enterDisplayName: 'डिस्प्ले नाम दर्ज करें', yourDisplayName: 'आपका डिस्प्ले नाम', student: 'छात्र', teacher: 'शिक्षक', next: 'अगला', back: 'वापस', finish: 'पूरा करें', createAccount: 'अकाउंट बनाएं', signIn: 'साइन इन', continueGuest: 'मेहमान के रूप में जारी रखें', saving: 'सहेजा जा रहा है...', welcomePrefix: 'स्वागत है', loginToContinueSetup: 'सेटअप जारी रखने के लिए साइन इन करें', createYourAccount: 'अपना अकाउंट बनाएं' },
+      bn: { firstTime: 'প্রথমবার এখানে?', iAmNew: 'আমি নতুন', iHaveAccount: 'আমার অ্যাকাউন্ট আছে', step: 'ধাপ', of: 'এর', selectLanguage: 'ভাষা বাছুন', selectRole: 'ভূমিকা বাছুন', selectAuth: 'সাইন ইন করুন বা অ্যাকাউন্ট তৈরি করুন', selectAppearance: 'থিম বাছুন', teacherCode: 'শিক্ষক কোড', enterTeacherCode: 'শিক্ষক কোড লিখুন', enterDisplayName: 'ডিসপ্লে নাম লিখুন', yourDisplayName: 'আপনার ডিসপ্লে নাম', student: 'শিক্ষার্থী', teacher: 'শিক্ষক', next: 'পরবর্তী', back: 'পিছনে', finish: 'শেষ করুন', createAccount: 'অ্যাকাউন্ট তৈরি করুন', signIn: 'সাইন ইন', continueGuest: 'অতিথি হিসেবে চালিয়ে যান', saving: 'সংরক্ষণ হচ্ছে...', welcomePrefix: 'স্বাগতম', loginToContinueSetup: 'সেটআপ চালিয়ে যেতে সাইন ইন করুন', createYourAccount: 'আপনার অ্যাকাউন্ট তৈরি করুন' },
+      zh: { firstTime: '第一次来这里？', iAmNew: '我是新用户', iHaveAccount: '我有账号', step: '步骤', of: '共', selectLanguage: '选择语言', selectRole: '选择身份', selectAuth: '登录或创建账号', selectAppearance: '选择外观', teacherCode: '教师代码', enterTeacherCode: '输入教师代码', enterDisplayName: '输入显示名称', yourDisplayName: '你的显示名称', student: '学生', teacher: '老师', next: '下一步', back: '返回', finish: '完成', createAccount: '创建账号', signIn: '登录', continueGuest: '以访客继续', saving: '正在保存...', welcomePrefix: '欢迎', loginToContinueSetup: '登录以继续设置', createYourAccount: '创建你的账号' },
+      it: { firstTime: 'Prima volta qui?', iAmNew: 'Sono nuovo', iHaveAccount: 'Ho un conto', step: 'Fare un passo', of: 'Di', selectLanguage: 'Seleziona la lingua', selectRole: 'Seleziona ruolo', selectAuth: 'Accedi o crea il tuo account', selectAppearance: 'Seleziona aspetto', teacherCode: 'Codice insegnante', enterTeacherCode: 'Inserisci il codice insegnante', enterDisplayName: 'Inserisci il nome visualizzato', yourDisplayName: 'Il tuo nome visualizzato', student: 'Studente', teacher: 'Insegnante', next: 'Prossimo', back: 'Indietro', finish: 'Fine', createAccount: 'Creare account', signIn: 'Accedi', continueGuest: 'Continua come ospite', saving: 'Salvataggio...', welcomePrefix: 'Benvenuto', loginToContinueSetup: 'Accedi per continuare la configurazione', createYourAccount: 'Crea il tuo account' },
+      tr: { firstTime: 'Buraya ilk kez mi geliyorsun?', iAmNew: 'Ben yeniyim', iHaveAccount: 'Bir hesabim var', step: 'Adim', of: 'ile ilgili', selectLanguage: 'Dil secin', selectRole: 'Rol secin', selectAuth: 'Oturum acin veya hesabinizi olusturun', selectAppearance: 'Gorunumu secin', teacherCode: 'Ogretmen kodu', enterTeacherCode: 'Ogretmen kodunu girin', enterDisplayName: 'Gorunen adi girin', yourDisplayName: 'Gorunen adiniz', student: 'Ogrenci', teacher: 'Ogretmen', next: 'Sonraki', back: 'Geri', finish: 'Bitir', createAccount: 'Hesap olustur', signIn: 'Oturum ac', continueGuest: 'Konuk olarak devam et', saving: 'Kaydediliyor...', welcomePrefix: 'Hos geldin', loginToContinueSetup: 'Kuruluma devam etmek icin oturum ac', createYourAccount: 'Hesabini olustur' },
+      id: { firstTime: 'Pertama kali ke sini?', iAmNew: 'Saya baru', iHaveAccount: 'Saya punya akun', step: 'Langkah', of: 'dari', selectLanguage: 'Pilih bahasa', selectRole: 'Pilih peran', selectAuth: 'Masuk atau buat akun Anda', selectAppearance: 'Pilih tampilan', teacherCode: 'Kode guru', enterTeacherCode: 'Masukkan kode guru', enterDisplayName: 'Masukkan nama tampilan', yourDisplayName: 'Nama tampilan Anda', student: 'Murid', teacher: 'Guru', next: 'Berikutnya', back: 'Kembali', finish: 'Selesai', createAccount: 'Buat akun', signIn: 'Masuk', continueGuest: 'Lanjutkan sebagai tamu', saving: 'Menyimpan...', welcomePrefix: 'Selamat datang', loginToContinueSetup: 'Masuk untuk melanjutkan pengaturan', createYourAccount: 'Buat akun Anda' },
     };
     return byLang[language] || byLang.en;
   }, [language]);
@@ -307,8 +333,9 @@ export function FirstTimeSetupGate() {
   }, [isLoading, session?.user?.id, supabase]);
 
   const persistAndRedirectToLogin = useCallback(() => {
-    window.location.href = '/login?message=Sign in to continue setup&type=info';
-  }, []);
+    const message = encodeURIComponent(uiText.loginToContinueSetup || 'Sign in to continue setup');
+    window.location.href = `/login?message=${message}&type=info`;
+  }, [uiText.loginToContinueSetup]);
 
   const redirectToCreateAccount = useCallback(async () => {
     try {
@@ -318,8 +345,9 @@ export function FirstTimeSetupGate() {
     } catch {
       // Continue to auth page even if sign-out fails.
     }
-    window.location.href = '/login?message=Create your account&type=info';
-  }, [session?.user?.id, supabase.auth]);
+    const message = encodeURIComponent(uiText.createYourAccount || 'Create your account');
+    window.location.href = `/login?message=${message}&type=info`;
+  }, [session?.user?.id, supabase.auth, uiText.createYourAccount]);
 
   const finishSetup = useCallback(async () => {
     const normalizedDisplayName = displayName.trim();
@@ -389,7 +417,7 @@ export function FirstTimeSetupGate() {
     if (active) {
       return 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm';
     }
-    return 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--accent))]';
+    return 'border-[hsl(var(--border))] bg-[hsl(var(--card))] text-foreground hover:border-[hsl(var(--primary))/0.35] hover:bg-[hsl(var(--accent))]';
   };
   const stepPrompt = useMemo(() => {
     if (step === 'language') return uiText.firstTime || firstTimePromptForLanguage(language);
@@ -466,8 +494,6 @@ export function FirstTimeSetupGate() {
     if (currentStepIndex <= 0) return;
     setStep(flowSteps[currentStepIndex - 1]);
   };
-  const showLinearNext = step === 'language' || step === 'role' || step === 'appearance';
-
   if (!hydrated || !visible) return null;
 
   return (
@@ -488,14 +514,9 @@ export function FirstTimeSetupGate() {
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <Button variant="outline" onClick={goBack} disabled={currentStepIndex === 0 || savingFinal}>Back</Button>
+              <Button variant="outline" onClick={goBack} disabled={currentStepIndex === 0 || savingFinal}>{uiText.back || 'Back'}</Button>
               <div className="flex items-center gap-3">
                 {savingFinal && <p className="text-xs text-muted-foreground">{uiText.saving}</p>}
-                {showLinearNext && (
-                  <Button onClick={goNext} disabled={savingFinal}>
-                    {uiText.next}
-                  </Button>
-                )}
               </div>
             </div>
           </div>
@@ -593,14 +614,14 @@ export function FirstTimeSetupGate() {
             {step === 'displayName' && (
               <div className="max-w-xl space-y-5">
                 <p className="text-sm text-muted-foreground">
-                  {`Welcome, ${(displayName || uiText.yourDisplayName || 'there').trim()}.`}
+                  {displayName.trim() ? `${uiText.welcomePrefix || 'Welcome'}, ${displayName.trim()}.` : ''}
                 </p>
                 <Label htmlFor="display-name">{uiText.enterDisplayName}</Label>
                 <Input
                   id="display-name"
                   value={displayName}
                   onChange={(event) => setDisplayName(event.target.value)}
-                  placeholder=""
+                  placeholder={uiText.yourDisplayName || ''}
                 />
                 <div className="flex justify-end">
                   <Button onClick={() => void finishSetup()} disabled={savingFinal}>{uiText.finish}</Button>

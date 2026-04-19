@@ -164,9 +164,9 @@
     },
     "developer": {
       "title": "Pengaturan Pengembang",
-      "description": "Pengaturan sementara untuk tujuan pengembangan.",
-      "roleSwitch": "Alihkan Peran (Khusus Pengembang)",
-      "roleSwitchDescription": "Beralih antara tampilan siswa dan guru. Ini untuk pengembangan dan akan dihapus."
+      "description": "Pengaturan lanjutan untuk diagnostik ruang kerja.",
+      "roleSwitch": "Ganti peran (pratinjau)",
+      "roleSwitchDescription": "Beralih antara pratinjau siswa dan guru."
     }
   },
   "common": {
@@ -317,7 +317,7 @@
   },
   "submissions": {
     "writeSubmission": "Tulis penyerahan tugas Anda di sini...",
-    "fileUploadComing": "Pengunggahan file segera hadir...",
+    "fileUploadComing": "Unggahan file tidak tersedia untuk tugas ini.",
     "provideFeedback": "Berikan masukan yang membangun...",
     "addComment": "Tambahkan komentar...",
     "grade": "Nilai",

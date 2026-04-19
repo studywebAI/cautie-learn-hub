@@ -1,11 +1,11 @@
 'use client';
 
 import { format, isThisWeek, isToday, isTomorrow } from 'date-fns';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookCheck, BrainCircuit, Clock } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
 import Link from 'next/link';
+import { getAgendaVisualStyle } from '@/lib/agenda-event-style';
 
 interface ListViewProps {
   events: CalendarEvent[];
@@ -45,11 +45,9 @@ export function ListView({ events, onEventClick }: ListViewProps) {
 
   if (events.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <p className="text-muted-foreground">No events scheduled</p>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl bg-[hsl(var(--surface-1))] p-8 text-center">
+        <p className="text-muted-foreground">No events scheduled</p>
+      </div>
     );
   }
 
@@ -77,6 +75,18 @@ export function ListView({ events, onEventClick }: ListViewProps) {
 }
 
 function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventClick?: (event: CalendarEvent) => void }) {
+  const getEventAccent = () => {
+    if (event.type === 'agenda_item') {
+      if (event.visibility_state === 'hidden') return '#c56f6f';
+      if (event.item_type === 'quiz') return '#c38843';
+      if (event.item_type === 'event') return '#c56f6f';
+      if (event.item_type === 'other') return '#8f7bb0';
+      return '#4f86c0';
+    }
+    if (event.type === 'assignment') return getAgendaVisualStyle(event as any).accentColor;
+    return '#7e8d9d';
+  };
+
   const getClassChipColor = (classId?: string) => {
     if (!classId) return 'hsl(var(--muted))';
     let hash = 0;
@@ -98,23 +108,14 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
   const href = buildHref();
 
   const content = (
-    <div className="flex items-center gap-3 rounded-lg bg-[hsl(var(--surface-1))] px-3 py-2.5 transition-colors hover:bg-[hsl(var(--surface-2))]">
+    <div className="flex items-center gap-3 rounded-md bg-[hsl(var(--surface-1))] px-3 py-2 transition-colors hover:bg-[hsl(var(--surface-2))]">
       <div
-        className="h-11 w-1 flex-shrink-0 rounded-full"
-        style={{
-          backgroundColor:
-            event.type === 'assignment'
-              ? '#3b82f6'
-              : event.type === 'agenda_item' && event.visibility_state === 'hidden'
-                ? '#ef4444'
-                : event.type === 'agenda_item'
-                  ? '#6366f1'
-                  : undefined,
-        }}
+        className="h-10 w-1 flex-shrink-0 rounded-full"
+        style={{ backgroundColor: getEventAccent() }}
       />
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm text-foreground">{event.title}</p>
+        <p className="truncate text-[13px] text-foreground">{event.title}</p>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>{event.subject}</span>
           {event.class_name && (
@@ -165,11 +166,11 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
         </div>
 
         {event.type === 'assignment' ? (
-          <BookCheck className="h-4 w-4 text-blue-500" />
+          <BookCheck className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
         ) : event.type === 'agenda_item' ? (
-          <BookCheck className="h-4 w-4 text-violet-500" />
+          <BookCheck className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
         ) : (
-          <BrainCircuit className="h-4 w-4 text-primary" />
+          <BrainCircuit className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
         )}
       </div>
     </div>

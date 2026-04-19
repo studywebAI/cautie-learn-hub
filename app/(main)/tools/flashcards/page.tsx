@@ -10,7 +10,6 @@ import { AppContext } from '@/contexts/app-context';
 import type { Flashcard } from '@/lib/types';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
-import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SourceInput } from '@/components/tools/source-input';
@@ -332,9 +331,8 @@ function FlashcardsPageContent() {
         value={sourceText}
         onChange={setSourceText}
         onImageDataUriChange={setImageDataUri}
-        onSubmit={() => handleGenerate(sourceText)}
+        onSubmit={(compiledText) => handleGenerate(String(compiledText || sourceText))}
         placeholder={t.sourceInputPlaceholder}
-        topContent={<MicrosoftAppStrip returnTo="/tools/flashcards" hideLauncher />}
         speechLanguage={language}
         enableMic={false}
         enableCaptions={false}

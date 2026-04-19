@@ -548,14 +548,22 @@ function AgendaPageContent() {
       const data = await response.json().catch(() => ({}));
       throw new Error(data?.error || 'Failed to create agenda item');
     }
+    const createdPayload = await response.json().catch(() => ({}));
+    const createdItem = createdPayload?.item;
+    if (createdItem?.id) {
+      // Immediate local reflection for teacher UX, then background revalidate.
+      setTeacherAgendaItems((prev) => [createdItem, ...prev]);
+    }
 
     const params = new URLSearchParams();
     params.set('classIds', overlayClassIds.join(','));
-    const refreshed = await fetch(`/api/agenda/teacher-overlay?${params.toString()}`);
-    if (refreshed.ok) {
-      const data = await refreshed.json();
-      setTeacherAgendaItems(data?.items || []);
-    }
+    void fetch(`/api/agenda/teacher-overlay?${params.toString()}`)
+      .then(async (refreshed) => {
+        if (!refreshed.ok) return;
+        const data = await refreshed.json();
+        setTeacherAgendaItems(data?.items || []);
+      })
+      .catch(() => {});
   };
 
   const handleEventMove = async (eventId: string, newDate: Date) => {
@@ -584,6 +592,28 @@ function AgendaPageContent() {
     }
   };
 
+  const handleAgendaItemPatched = (item: AgendaApiItem) => {
+    if (!item?.id) return;
+    setTeacherAgendaItems((prev) => {
+      const hasExisting = prev.some((row) => row.id === item.id);
+      if (!hasExisting) return [item, ...prev];
+      return prev.map((row) => (row.id === item.id ? item : row));
+    });
+    setStudentAgendaItems((prev) => prev.map((row) => (row.id === item.id ? item : row)));
+
+    setSelectedEvent((prev) => {
+      if (!prev || prev.id !== item.id) return prev;
+      return agendaApiItemToEvent(item);
+    });
+  };
+
+  const handleAgendaItemDeleted = (itemId: string) => {
+    if (!itemId) return;
+    setTeacherAgendaItems((prev) => prev.filter((row) => row.id !== itemId));
+    setStudentAgendaItems((prev) => prev.filter((row) => row.id !== itemId));
+    setSelectedEvent((prev) => (prev?.id === itemId ? null : prev));
+  };
+
   const teacherClasses = (classes || []).filter((classItem) => classItem.status !== 'archived');
   const toggleOverlayClass = (classId: string) => {
     setOverlayClassIds((prev) => {
@@ -605,63 +635,64 @@ function AgendaPageContent() {
   return (
     <div className="agenda-clean h-full pt-4 pl-4 pr-2 pb-2 md:pt-5 md:pl-5 md:pr-2.5 md:pb-2.5">
       <div className="flex h-full flex-col gap-6">
-        <div className="flex flex-wrap items-center gap-3">
-            {isTeacher && (
-              <>
+        <div className="rounded-2xl bg-[hsl(var(--surface-1))] p-2.5 md:p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
+              {isTeacher && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="secondary" size="sm" className="gap-2 bg-card hover:bg-muted/70 shadow-sm">
-                      <SlidersHorizontal className="h-4 w-4" />
+                    <Button variant="ghost" size="sm" className="h-9 rounded-xl bg-[hsl(var(--surface-2))] px-3.5 hover:bg-[hsl(var(--surface-3))]">
+                      <SlidersHorizontal className="mr-2 h-4 w-4" />
                       Classes ({overlayClassIds.length})
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-72">
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium">Choose classes</p>
-                      {teacherClasses.map((classItem) => {
-                        const checked = overlayClassIds.includes(classItem.id);
-                        return (
-                          <button
-                            key={classItem.id}
-                            type="button"
-                            onClick={() => toggleOverlayClass(classItem.id)}
-                            className="flex w-full items-center justify-between gap-2 rounded-lg bg-card p-2 text-left shadow-sm"
-                          >
-                            <span className="text-sm">{classItem.name}</span>
-                            <Checkbox
-                              checked={checked}
-                              onCheckedChange={() => toggleOverlayClass(classItem.id)}
-                              onClick={(event) => event.stopPropagation()}
-                            />
-                          </button>
-                        );
-                      })}
+                  <PopoverContent className="w-80 rounded-xl border-0 bg-[hsl(var(--surface-1))] p-3 shadow-md">
+                    <div className="space-y-2.5">
+                      <p className="text-sm text-muted-foreground">Choose classes</p>
+                      <div className="max-h-72 space-y-1.5 overflow-auto pr-1">
+                        {teacherClasses.map((classItem) => {
+                          const checked = overlayClassIds.includes(classItem.id);
+                          return (
+                            <button
+                              key={classItem.id}
+                              type="button"
+                              onClick={() => toggleOverlayClass(classItem.id)}
+                              className="flex w-full items-center justify-between gap-2 rounded-lg bg-[hsl(var(--surface-2))] px-2.5 py-2 text-left hover:bg-[hsl(var(--surface-3))]"
+                            >
+                              <span className="text-sm">{classItem.name}</span>
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={() => toggleOverlayClass(classItem.id)}
+                                onClick={(event) => event.stopPropagation()}
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>
-              </>
-            )}
-
-            <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
+              )}
+            </div>
 
             {isStudent && (
-              <div className="flex items-center gap-2">
-                <Button onClick={() => setIsCreateTaskOpen(true)}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Activity
-                </Button>
-              </div>
+              <Button className="h-9 rounded-xl px-3.5" onClick={() => setIsCreateTaskOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Activity
+              </Button>
             )}
 
             {isTeacher && (
-              <Button className="bg-card text-foreground hover:bg-muted/70 shadow-sm" onClick={() => setIsTeacherDialogOpen(true)}>
+              <Button className="h-9 rounded-xl bg-[hsl(var(--surface-2))] px-3.5 text-foreground hover:bg-[hsl(var(--surface-3))]" onClick={() => setIsTeacherDialogOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Agenda Item
               </Button>
             )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start flex-1">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-12 md:gap-5 flex-1">
           <div className={selectedEvent ? 'md:col-span-8 lg:col-span-9' : 'md:col-span-12'}>
             {viewMode === 'week' ? (
               <WeekView
@@ -684,6 +715,8 @@ function AgendaPageContent() {
                 isTeacher={isTeacher}
                 isStudent={isStudent}
                 onClose={() => setSelectedEvent(null)}
+                onItemPatched={handleAgendaItemPatched}
+                onItemDeleted={handleAgendaItemDeleted}
                 onRefresh={() => setAgendaReloadKey((prev) => prev + 1)}
               />
             </div>

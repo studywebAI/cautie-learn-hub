@@ -27,7 +27,7 @@ interface SourceInputProps {
   value: string;
   onChange: (text: string) => void;
   onImageDataUriChange?: (imageDataUri: string | null) => void;
-  onSubmit?: () => void;
+  onSubmit?: (compiledText?: string) => void | Promise<unknown>;
   placeholder?: string;
   disabled?: boolean;
   toolId?: 'notes' | 'quiz' | 'flashcards' | 'presentation';
@@ -39,6 +39,7 @@ interface SourceInputProps {
   sourceMergeMode?: 'append_labeled';
   topContent?: ReactNode;
   submitLabel?: string;
+  enableMicrosoftSources?: boolean;
 }
 
 type SourceKind = 'url' | 'file' | 'caption' | 'image';
@@ -124,7 +125,32 @@ const normalizeUrl = (raw: string): string | null => {
   }
 };
 
-const urlKey = (url: string) => url;
+const urlKey = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    parsed.hash = '';
+    // Remove common tracking params so same page does not appear as duplicate mismatch.
+    const removableParams = [
+      'utm_source',
+      'utm_medium',
+      'utm_campaign',
+      'utm_term',
+      'utm_content',
+      'gclid',
+      'fbclid',
+      'mc_cid',
+      'mc_eid',
+    ];
+    for (const key of removableParams) {
+      parsed.searchParams.delete(key);
+    }
+    const pathname = parsed.pathname.endsWith('/') && parsed.pathname !== '/' ? parsed.pathname.slice(0, -1) : parsed.pathname;
+    const search = parsed.searchParams.toString();
+    return `${parsed.origin}${pathname}${search ? `?${search}` : ''}`;
+  } catch {
+    return url.trim();
+  }
+};
 
 const cleanupCaptionText = (value: string) => {
   const normalized = value
@@ -156,6 +182,28 @@ const extractUrlsFromText = (text: string) => {
   return { cleanedText, urls: uniqueUrls };
 };
 
+const compileSourceText = (
+  manualValue: string,
+  sourceItems: SourceEntry[],
+  mergeMode: 'append_labeled'
+) => {
+  let next = '';
+  if (manualValue.trim()) {
+    next = mergeMode === 'append_labeled'
+      ? appendLabeledBlock(next, 'MANUAL_TEXT', manualValue)
+      : manualValue;
+  }
+
+  for (const source of sourceItems) {
+    const body = source.text.trim() || source.url || '';
+    if (!body) continue;
+    next = mergeMode === 'append_labeled'
+      ? appendLabeledBlock(next, source.label, body)
+      : body;
+  }
+  return next;
+};
+
 function buildMicrosoftContextBlock(input: {
   app: string;
   name: string;
@@ -185,6 +233,7 @@ export function SourceInput({
   sourceMergeMode = 'append_labeled',
   topContent,
   submitLabel = 'Generate',
+  enableMicrosoftSources = false,
 }: SourceInputProps) {
   const { toast } = useToast();
   const micSessionIdRef = useRef<string>('');
@@ -239,6 +288,8 @@ export function SourceInput({
   const [recentsSort, setRecentsSort] = useState<'newest' | 'oldest' | 'most_used' | 'name'>('newest');
   const [recentsSearch, setRecentsSearch] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
+  const [linkInputOpen, setLinkInputOpen] = useState(false);
+  const [linkInputValue, setLinkInputValue] = useState('');
   const [removingSourceIds, setRemovingSourceIds] = useState<string[]>([]);
   const [materials, setMaterials] = useState<MaterialEntry[]>([]);
 
@@ -319,16 +370,23 @@ export function SourceInput({
   }, [manualText, upsertMaterial]);
 
   const hydrateIntegrationSources = useCallback(async (quiet = false) => {
-    const response = await fetch('/api/integrations/context-sources?provider=microsoft&selected=1', {
-      cache: 'no-store',
-    });
-    if (!response.ok) return;
-    const json = await response.json();
-    const items = Array.isArray(json?.items) ? json.items : [];
-    const pendingCount = items.filter((item: any) => {
-      const status = String(item?.extraction_status || '').toLowerCase();
-      return status === 'pending';
-    }).length;
+    if (!enableMicrosoftSources) return;
+    let items: any[] = [];
+    let pendingCount = 0;
+    try {
+      const response = await fetch('/api/integrations/context-sources?provider=microsoft&selected=1', {
+        cache: 'no-store',
+      });
+      if (!response.ok) return;
+      const json = await response.json();
+      items = Array.isArray(json?.items) ? json.items : [];
+      pendingCount = items.filter((item: any) => {
+        const status = String(item?.extraction_status || '').toLowerCase();
+        return status === 'pending';
+      }).length;
+    } catch {
+      return;
+    }
 
     const mapped: SourceEntry[] = items.map((item: any) => {
       const appKey = String(item?.app || '').toLowerCase();
@@ -423,7 +481,7 @@ export function SourceInput({
     } else {
       integrationPendingPollCountRef.current = 0;
     }
-  }, [toast]);
+  }, [enableMicrosoftSources, toast]);
 
   const getRecentsUsageMap = useCallback((): Record<string, number> => {
     if (typeof window === 'undefined') return {};
@@ -447,7 +505,7 @@ export function SourceInput({
   const loadRecentsCatalog = useCallback(async () => {
     setRecentsLoading(true);
     try {
-      const [runsRes, materialsRes] = await Promise.all([
+      const [runsResult, materialsResult] = await Promise.allSettled([
         fetch('/api/tools/v2/runs', { cache: 'no-store' }).then(async (response) => {
           if (!response.ok) throw new Error('Could not load tool runs');
           return response.json();
@@ -457,6 +515,8 @@ export function SourceInput({
           return response.json();
         }),
       ]);
+      const runsRes = runsResult.status === 'fulfilled' ? runsResult.value : [];
+      const materialsRes = materialsResult.status === 'fulfilled' ? materialsResult.value : { materials: [] };
 
       const runs: RecentCatalogItem[] = (Array.isArray(runsRes) ? runsRes : [])
         .filter((run: any) => run?.status === 'succeeded')
@@ -507,7 +567,9 @@ export function SourceInput({
           text: content,
           lastModifiedDateTime: String(material?.updated_at || material?.created_at || ''),
         };
-      }).filter((item: RecentCatalogItem) => item.id !== 'material:');
+      })
+      .filter((item: RecentCatalogItem) => item.id !== 'material:')
+      .filter((item: RecentCatalogItem) => enableMicrosoftSources || item.materialType !== 'onedrive');
 
       let merged = [...runs, ...materials];
       if (recentsSourceFilter === 'tool_runs') {
@@ -521,6 +583,15 @@ export function SourceInput({
         return bTime - aTime;
       });
       setRecentsCatalog(merged);
+
+      // Only show a warning if both upstream sources failed.
+      if (runsResult.status === 'rejected' && materialsResult.status === 'rejected') {
+        toast({
+          variant: 'destructive',
+          title: 'Could not load recents',
+          description: 'Try again in a moment.',
+        });
+      }
     } catch (error: any) {
       setRecentsCatalog([]);
       toast({
@@ -531,7 +602,7 @@ export function SourceInput({
     } finally {
       setRecentsLoading(false);
     }
-  }, [recentsSourceFilter, toast]);
+  }, [enableMicrosoftSources, recentsSourceFilter, toast]);
 
   const importRecentsItems = useCallback(async (items: RecentCatalogItem[]) => {
     if (items.length === 0) return;
@@ -573,12 +644,14 @@ export function SourceInput({
   }, [bumpRecentsUsage, toast, upsertMaterial]);
 
   useEffect(() => {
+    if (!enableMicrosoftSources) return;
     if (integrationHydratedRef.current) return;
     integrationHydratedRef.current = true;
     void hydrateIntegrationSources(true);
-  }, [hydrateIntegrationSources]);
+  }, [enableMicrosoftSources, hydrateIntegrationSources]);
 
   useEffect(() => {
+    if (!enableMicrosoftSources) return;
     const onUpdated = () => {
       void hydrateIntegrationSources(true);
     };
@@ -656,7 +729,7 @@ export function SourceInput({
         integrationPollTimeoutRef.current = null;
       }
     };
-  }, [hydrateIntegrationSources, upsertMaterial]);
+  }, [enableMicrosoftSources, hydrateIntegrationSources, upsertMaterial]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -686,25 +759,10 @@ export function SourceInput({
     };
   }, []);
 
-  const compiledSource = useMemo(() => {
-    let next = '';
-
-    if (manualText.trim()) {
-      next = sourceMergeMode === 'append_labeled'
-        ? appendLabeledBlock(next, 'MANUAL_TEXT', manualText)
-        : manualText;
-    }
-
-    for (const source of sources) {
-      const body = source.text.trim() || source.url || '';
-      if (!body) continue;
-      next = sourceMergeMode === 'append_labeled'
-        ? appendLabeledBlock(next, source.label, body)
-        : body;
-    }
-
-    return next;
-  }, [manualText, sourceMergeMode, sources]);
+  const compiledSource = useMemo(
+    () => compileSourceText(manualText, sources, sourceMergeMode),
+    [manualText, sourceMergeMode, sources]
+  );
 
   useEffect(() => {
     if (compiledSource === lastEmittedRef.current) return;
@@ -757,6 +815,7 @@ export function SourceInput({
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     let targetId = id;
     let shouldFetch = true;
+    let existingReady = false;
 
     setSources((prev) => {
       const existing = prev.find((s) => s.kind === 'url' && s.urlKey === key);
@@ -765,6 +824,13 @@ export function SourceInput({
         if (existing.loading) {
           shouldFetch = false;
           return prev;
+        }
+        if ((existing.text.trim() || existing.previewUrl) && !existing.error) {
+          existingReady = true;
+          shouldFetch = false;
+          return prev.map((source) =>
+            source.id === existing.id ? { ...source, selected: true } : source
+          );
         }
         return prev.map((source) =>
           source.id === existing.id ? { ...source, loading: true, error: undefined } : source
@@ -786,20 +852,21 @@ export function SourceInput({
     });
 
     if (!shouldFetch) {
+      // Existing source is already loaded or loading: silently reuse to avoid duplicate/noisy UX.
       return;
     }
 
     setIsFetchingUrl(true);
+    let timeout: ReturnType<typeof setTimeout> | null = null;
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), EXTRACTION_REQUEST_TIMEOUT_MS);
+      timeout = setTimeout(() => controller.abort(), EXTRACTION_REQUEST_TIMEOUT_MS);
       const res = await fetch('/api/tools/extract-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: normalized }),
         signal: controller.signal,
       });
-      clearTimeout(timeout);
 
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}));
@@ -822,12 +889,16 @@ export function SourceInput({
         toast({ title: 'Content imported', description: `Extracted text from ${host}` });
       }
     } catch (error: any) {
-      const message = String(error?.message || 'Could not fetch this URL right now.');
+      const aborted = error?.name === 'AbortError';
+      const message = aborted
+        ? 'This link took too long to load. Please try again.'
+        : String(error?.message || 'Could not fetch this URL right now.');
       setSources((prev) => prev.map((s) => (
         s.id === targetId ? { ...s, loading: false, error: message } : s
       )));
       toast({ variant: 'destructive', title: 'Import failed', description: message });
     } finally {
+      if (timeout) clearTimeout(timeout);
       setIsFetchingUrl(false);
     }
   }, [toast]);
@@ -1357,7 +1428,9 @@ export function SourceInput({
     window.dispatchEvent(new CustomEvent('cautie:open-microsoft-picker'));
   }, []);
 
-  const submitAndSave = useCallback(() => {
+  const submitAndSave = useCallback(async () => {
+    setIsProcessing(true);
+    let nextManualText = manualText;
     if (manualText.trim()) {
       const firstWords = manualText.trim().split(/\s+/).slice(0, 8).join(' ');
       upsertMaterial({
@@ -1367,8 +1440,27 @@ export function SourceInput({
         detail: manualText.trim(),
       });
     }
-    onSubmit?.();
-  }, [manualText, onSubmit, upsertMaterial]);
+
+    try {
+      const inlineUrlRegex = /((?:https?:\/\/|www\.)[^\s<>"]+)/gi;
+      const rawUrls = Array.from(new Set((manualText.match(inlineUrlRegex) || []).map((entry) => entry.trim()).filter(Boolean)));
+      if (rawUrls.length > 0) {
+        nextManualText = manualText
+          .replace(inlineUrlRegex, ' ')
+          .replace(/\n{3,}/g, '\n\n')
+          .replace(/[ \t]{2,}/g, ' ')
+          .trimStart();
+        setManualText(nextManualText);
+        await Promise.all(rawUrls.map((url) => upsertUrlSource(url)));
+      }
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      const finalized = compileSourceText(nextManualText, sources, sourceMergeMode);
+      onChange(finalized);
+      await onSubmit?.(finalized);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [manualText, onChange, onSubmit, sourceMergeMode, sources, upsertMaterial, upsertUrlSource]);
 
   return (
     <div
@@ -1460,10 +1552,12 @@ export function SourceInput({
         )}
 
         <div className="relative z-10 flex flex-wrap items-center gap-1.5">
-          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={openMicrosoftPicker} disabled={disabled || isProcessing}>
-            <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
-            Import
-          </Button>
+          {enableMicrosoftSources && (
+            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={openMicrosoftPicker} disabled={disabled || isProcessing}>
+              <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
+              Cloud
+            </Button>
+          )}
           <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
             <Image className="mr-1.5 h-3.5 w-3.5" />
             Photo
@@ -1481,12 +1575,7 @@ export function SourceInput({
             variant="outline"
             size="sm"
             className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40"
-            onClick={() => {
-              const raw = typeof window === 'undefined' ? '' : window.prompt('Paste a link to import') || '';
-              if (raw.trim()) {
-                void handleAddLink(raw);
-              }
-            }}
+            onClick={() => setLinkInputOpen((prev) => !prev)}
             disabled={disabled || isProcessing || isFetchingUrl}
           >
             <Link2 className="mr-1.5 h-3.5 w-3.5" />
@@ -1506,6 +1595,60 @@ export function SourceInput({
           )}
         </div>
 
+        {linkInputOpen && (
+          <div className="rounded-xl border border-sidebar-border bg-background/80 p-2">
+            <div className="flex items-center gap-2">
+              <input
+                value={linkInputValue}
+                onChange={(e) => setLinkInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const value = linkInputValue.trim();
+                    if (!value) return;
+                    void handleAddLink(value).finally(() => {
+                      setLinkInputValue('');
+                      setLinkInputOpen(false);
+                    });
+                  }
+                }}
+                placeholder="Paste link..."
+                className="h-8 flex-1 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
+                disabled={disabled || isProcessing || isFetchingUrl}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 px-2 text-xs"
+                disabled={disabled || isProcessing || isFetchingUrl || !linkInputValue.trim()}
+                onClick={() => {
+                  const value = linkInputValue.trim();
+                  if (!value) return;
+                  void handleAddLink(value).finally(() => {
+                    setLinkInputValue('');
+                    setLinkInputOpen(false);
+                  });
+                }}
+              >
+                Add
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs"
+                onClick={() => {
+                  setLinkInputOpen(false);
+                  setLinkInputValue('');
+                }}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-stretch gap-2">
           <div className="relative flex-1">
             <Textarea
@@ -1514,7 +1657,7 @@ export function SourceInput({
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                   e.preventDefault();
-                  submitAndSave();
+                  void submitAndSave();
                 }
               }}
               placeholder=""
@@ -1526,7 +1669,7 @@ export function SourceInput({
             type="button"
             variant="outline"
             className="w-[112px] rounded-2xl border-border bg-muted/80 text-xs hover:bg-muted"
-            onClick={submitAndSave}
+            onClick={() => void submitAndSave()}
             disabled={disabled || isProcessing || !canGenerate}
           >
             {isProcessing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
@@ -1555,7 +1698,7 @@ export function SourceInput({
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-3">
           <div className="flex h-[72vh] w-full max-w-3xl flex-col rounded-xl border border-sidebar-border bg-background p-3 shadow-xl">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-sm font-medium">Recents</p>
+              <p className="text-sm font-medium">Local recents</p>
               <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setRecentsOpen(false)}>Close</Button>
             </div>
             <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3">
@@ -1570,8 +1713,8 @@ export function SourceInput({
               </div>
               <select value={recentsSourceFilter} onChange={(e) => setRecentsSourceFilter(e.target.value as 'all' | 'tool_runs' | 'materials')} className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs">
                 <option value="all">All</option>
-                <option value="tool_runs">Tool runs</option>
-                <option value="materials">Materials</option>
+                <option value="tool_runs">Tool runs (local)</option>
+                <option value="materials">Materials (local)</option>
               </select>
               <select value={recentsSort} onChange={(e) => setRecentsSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')} className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs">
                 <option value="newest">Time: Newest</option>
@@ -1584,7 +1727,7 @@ export function SourceInput({
               {recentsLoading ? (
                 <div className="flex h-full items-center justify-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
               ) : visibleRecents.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No recents found.</p>
+                <p className="text-xs text-muted-foreground">No local recents found.</p>
               ) : (
                 <div className="space-y-1.5">
                   {visibleRecents.slice(0, 50).map((item) => (
