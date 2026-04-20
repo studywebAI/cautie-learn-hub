@@ -24,6 +24,8 @@ import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { FunLoader } from '@/components/tools/fun-loader';
+import Link from 'next/link';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -112,6 +114,11 @@ type DrawingPath = {
   opacity: number;
 };
 
+type NoteSection = {
+  title: string;
+  content: string | string[];
+};
+
 const NOTE_FONTS = [
   { value: 'IBM Plex Sans', label: 'IBM Plex Sans' },
   { value: 'Inter', label: 'Inter' },
@@ -127,6 +134,23 @@ const NOTE_BLOCK_OPTIONS = [
   { value: 'definitions', label: 'Definitions' },
   { value: 'summary', label: 'Summary Box' },
 ];
+
+function normalizeNotesOutput(input: unknown): NoteSection[] | null {
+  if (!Array.isArray(input)) return null;
+  const normalized = input
+    .map((entry: any, index) => {
+      const title = String(entry?.title || '').trim() || `Section ${index + 1}`;
+      const rawContent = entry?.content;
+      if (Array.isArray(rawContent)) {
+        const list = rawContent.map((item) => String(item || '').trim()).filter(Boolean);
+        return { title, content: list.length > 0 ? list : '' };
+      }
+      return { title, content: String(rawContent || '').trim() };
+    })
+    .filter((entry) => (Array.isArray(entry.content) ? entry.content.length > 0 : entry.content.length > 0));
+
+  return normalized.length > 0 ? normalized : null;
+}
 
 type AutoHighlightTarget = {
   value: string;
@@ -200,6 +224,7 @@ function NotesPageContent() {
   const [showLaunchScreen, setShowLaunchScreen] = useState(Boolean(launchRequested && taskId && studysetId));
   const [launchStageIndex, setLaunchStageIndex] = useState(0);
   const [saveToRecents, setSaveToRecents] = useState(true);
+  const [markingDone, setMarkingDone] = useState(false);
   const notesContentRef = useRef<HTMLDivElement>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
@@ -306,10 +331,48 @@ function NotesPageContent() {
         correctItems: 1,
         timeSpentSeconds: Math.min(3600, Math.max(60, Math.round(trimmed.length / 6))),
         weakTopics: score < 70 ? ['concept clarity'] : [],
-        markCompleted: true,
+        // Opening/generating should not auto-complete the task.
+        markCompleted: false,
       }),
     }).catch(() => {});
   }, [audience, length, style, studysetId, taskId]);
+
+  const markStudysetTaskDone = useCallback(async () => {
+    if (!taskId || !studysetId || markingDone) return;
+    const parsed = parseNotesFromHtml(noteHtml || '');
+    const totalItems = Math.max(1, parsed.length > 0 ? parsed.length : (generatedNotes?.length || 1));
+    const weakTopics: string[] = [];
+    if (selectedAutoHighlightTargets.length === 0) weakTopics.push('key terms');
+    const score = Math.max(60, Math.min(100, Math.round(70 + totalItems * 4)));
+
+    setMarkingDone(true);
+    try {
+      const response = await fetch(`/api/studysets/plan-tasks/${taskId}/performance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studysetId,
+          toolId: 'notes',
+          score,
+          totalItems,
+          correctItems: totalItems,
+          timeSpentSeconds: Math.max(90, Math.round((noteHtml || '').length / 4)),
+          weakTopics: weakTopics.slice(0, 4),
+          markCompleted: true,
+        }),
+      });
+      if (!response.ok) throw new Error('Could not mark task done');
+      toast({ title: 'Task marked as done', description: 'Studyset progress updated.' });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not mark task done',
+        description: error?.message || 'Try again.',
+      });
+    } finally {
+      setMarkingDone(false);
+    }
+  }, [generatedNotes, markingDone, noteHtml, selectedAutoHighlightTargets.length, studysetId, taskId, toast]);
 
   const toggleMulti = useCallback((value: string, setValue: (updater: (prev: string[]) => string[]) => void) => {
     setValue((prev) => (prev.includes(value) ? prev.filter((entry) => entry !== value) : [...prev, value]));
@@ -562,7 +625,7 @@ function NotesPageContent() {
           fontFamily: 'default',
         },
       });
-      const notes = (run?.output_payload?.notes || run?.notes || null) as GenerateNotesOutput['notes'] | null;
+      const notes = normalizeNotesOutput(run?.output_payload?.notes || run?.notes || null) as GenerateNotesOutput['notes'] | null;
       if (typeof run?.output_artifact_id === 'string' && run.output_artifact_id) {
         setArtifactId(run.output_artifact_id);
       }
@@ -915,6 +978,10 @@ function NotesPageContent() {
     );
   }
 
+  if (isLoading && !generatedNotes) {
+    return <FunLoader tool="notes" />;
+  }
+
   if (generatedNotes) {
     return (
       <div className="h-full overflow-auto p-4 md:p-6">
@@ -977,6 +1044,21 @@ function NotesPageContent() {
                 getHtml={() => noteHtml || notesToHtml(generatedNotes)}
                 getPrintHtml={() => notesContentRef.current?.innerHTML || noteHtml || notesToHtml(generatedNotes)}
               />
+              {taskId && studysetId ? (
+                <Button
+                  size="sm"
+                  className="rounded-full h-8"
+                  onClick={() => void markStudysetTaskDone()}
+                  disabled={markingDone}
+                >
+                  {markingDone ? 'Saving...' : 'Mark task done'}
+                </Button>
+              ) : null}
+              {studysetId ? (
+                <Button asChild size="sm" variant="outline" className="rounded-full h-8">
+                  <Link href={`/tools/studyset/${studysetId}`}>Back to studyset</Link>
+                </Button>
+              ) : null}
             </div>
           </div>
 
@@ -1234,7 +1316,7 @@ function NotesPageContent() {
 
 export default function NotesPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+    <Suspense fallback={<FunLoader tool="notes" />}>
       <NotesPageContent />
     </Suspense>
   );

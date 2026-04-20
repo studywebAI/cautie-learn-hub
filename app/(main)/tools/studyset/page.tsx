@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Atom,
@@ -49,6 +49,21 @@ type StudysetRow = {
   status: string;
   updated_at: string;
   source_bundle?: string | null;
+  progress?: {
+    total_tasks: number;
+    completed_tasks: number;
+    percent: number;
+  };
+  next_task_href?: string | null;
+  meta?: {
+    icon?: string | null;
+    color?: string | null;
+  };
+  analytics_summary?: {
+    avg_score?: number;
+    recent_attempts_7d?: number;
+    due_today_tasks?: number;
+  };
 };
 
 type MicrosoftFileItem = {
@@ -106,28 +121,25 @@ const ICON_OPTIONS: IconOption[] = [
 ];
 
 const COLOR_OPTIONS: ColorOption[] = [
-  { id: 'cobalt', swatchClass: 'bg-[#3a5be7]' },
-  { id: 'azure', swatchClass: 'bg-[#1d9bf0]' },
-  { id: 'turquoise', swatchClass: 'bg-[#19b5a5]' },
-  { id: 'mint', swatchClass: 'bg-[#25c47a]' },
-  { id: 'lime', swatchClass: 'bg-[#6ad63a]' },
-  { id: 'amber', swatchClass: 'bg-[#f4b400]' },
-  { id: 'orange', swatchClass: 'bg-[#f78422]' },
-  { id: 'coral', swatchClass: 'bg-[#ff6f61]' },
-  { id: 'rose', swatchClass: 'bg-[#ff4f8b]' },
-  { id: 'magenta', swatchClass: 'bg-[#d946ef]' },
-  { id: 'violet', swatchClass: 'bg-[#8b5cf6]' },
-  { id: 'grape', swatchClass: 'bg-[#5f3dc4]' },
-  { id: 'charcoal', swatchClass: 'bg-[#4b5563]' },
-  { id: 'slate', swatchClass: 'bg-[#64748b]' },
+  { id: 'blue', swatchClass: 'bg-[#2563eb]' },
+  { id: 'sky', swatchClass: 'bg-[#0284c7]' },
+  { id: 'teal', swatchClass: 'bg-[#0f766e]' },
+  { id: 'green', swatchClass: 'bg-[#15803d]' },
+  { id: 'amber', swatchClass: 'bg-[#b45309]' },
+  { id: 'orange', swatchClass: 'bg-[#c2410c]' },
+  { id: 'red', swatchClass: 'bg-[#b91c1c]' },
+  { id: 'slate', swatchClass: 'bg-[#475569]' },
+  { id: 'zinc', swatchClass: 'bg-[#52525b]' },
+  { id: 'indigo', swatchClass: 'bg-[#4338ca]' },
 ];
 
 const SOFT_SURFACE = 'border border-[#e5e7eb] bg-[#f8fafc] dark:border-zinc-800 dark:bg-zinc-900/40';
 const CALENDAR_CLASSES = {
   day_selected:
-    'bg-[#e5e7eb] text-[#111827] hover:bg-[#d1d5db] hover:text-[#111827] focus:bg-[#d1d5db] focus:text-[#111827] dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600',
-  day_today: 'bg-[#f1f5f9] text-[#0f172a] dark:bg-zinc-800 dark:text-zinc-100',
-  day_range_middle: 'aria-selected:bg-[#e5e7eb] aria-selected:text-[#111827] dark:aria-selected:bg-zinc-700 dark:aria-selected:text-zinc-100',
+    'bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.92)] hover:text-sidebar-foreground focus:bg-[hsl(var(--sidebar-accent)/0.92)] focus:text-sidebar-foreground',
+  day_today:
+    'border border-border bg-transparent text-foreground',
+  day_range_middle: 'aria-selected:bg-[hsl(var(--sidebar-accent)/0.85)] aria-selected:text-sidebar-foreground',
 };
 
 function toIsoLocalDate(date: Date) {
@@ -192,6 +204,8 @@ export default function StudysetPage() {
   const [showIconOptions, setShowIconOptions] = useState(false);
   const [showColorOptions, setShowColorOptions] = useState(false);
   const [showNotesInput, setShowNotesInput] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const oneDriveSectionRef = useRef<HTMLDivElement | null>(null);
 
   const madeStudysets = useMemo(() => studysets.filter((row) => row.status !== 'archived'), [studysets]);
 
@@ -207,6 +221,11 @@ export default function StudysetPage() {
   }, [studysets]);
 
   const selectedDateStrings = useMemo(() => normalizeDates(selectedDates), [selectedDates]);
+  const todayDate = useMemo(() => {
+    const next = new Date();
+    next.setHours(0, 0, 0, 0);
+    return next;
+  }, []);
   const sortedOneDriveFiles = useMemo(() => selectedMicrosoftFiles.slice(0, 24), [selectedMicrosoftFiles]);
 
   const isStepOneReady = name.trim().length > 0;
@@ -572,17 +591,42 @@ export default function StudysetPage() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {madeStudysets.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => router.push(`/tools/studyset/${item.id}`)}
-                      className="w-full rounded-xl bg-card px-3 py-2 text-left transition-colors hover:bg-muted"
-                    >
-                      <p className="text-sm font-medium">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.target_days} days
-                      </p>
-                    </button>
+                    <div key={item.id} className="w-full rounded-xl bg-card px-3 py-2">
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/tools/studyset/${item.id}`)}
+                        className="w-full text-left"
+                      >
+                        <p className="text-sm font-medium">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.target_days} days
+                          {item.progress ? ` • ${item.progress.completed_tasks}/${item.progress.total_tasks} tasks` : ''}
+                        </p>
+                        {item.analytics_summary && (
+                          <p className="text-[11px] text-muted-foreground">
+                            Avg {item.analytics_summary.avg_score || 0}% • Due today {item.analytics_summary.due_today_tasks || 0}
+                          </p>
+                        )}
+                      </button>
+                      <div className="mt-2 flex items-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => router.push(item.next_task_href || `/tools/studyset/${item.id}`)}
+                        >
+                          Quick start
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => router.push(`/tools/studyset/${item.id}`)}
+                        >
+                          Analytics
+                        </Button>
+                      </div>
+                    </div>
                   ))}
                 </CardContent>
               </Card>
@@ -591,7 +635,7 @@ export default function StudysetPage() {
         )}
 
         {view === 'create' && (
-          <Card className="flex min-h-[calc(100vh-10rem)] flex-col border-none">
+          <Card className="flex min-h-0 flex-col border-none">
             <CardHeader className="pb-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -692,12 +736,21 @@ export default function StudysetPage() {
 
               {step === 1 && (
                 <div className="space-y-3">
-                  <Label>Select available study days</Label>
+                  <Label>Select study days (today or later)</Label>
                   <div className={`rounded-xl p-2 ${SOFT_SURFACE}`}>
                     <Calendar
                       mode="multiple"
                       selected={selectedDates}
-                      onSelect={(value) => setSelectedDates(Array.isArray(value) ? value : [])}
+                      onSelect={(value) =>
+                        setSelectedDates(
+                          (Array.isArray(value) ? value : []).filter((date) => {
+                            const copy = new Date(date);
+                            copy.setHours(0, 0, 0, 0);
+                            return copy >= todayDate;
+                          })
+                        )
+                      }
+                      disabled={{ before: todayDate }}
                       className="mx-auto"
                       classNames={CALENDAR_CLASSES}
                     />
@@ -712,40 +765,85 @@ export default function StudysetPage() {
 
               {step === 2 && (
                 <div className="space-y-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <Label>Notes (optional)</Label>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setShowNotesInput((v) => !v)}>
-                        {showNotesInput ? 'Hide' : 'Add notes'}
-                        {showNotesInput ? <ChevronUp className="ml-1 h-3 w-3" /> : <ChevronDown className="ml-1 h-3 w-3" />}
-                      </Button>
-                    </div>
-                    {showNotesInput && (
-                      <Textarea
-                        value={notesText}
-                        onChange={(event) => setNotesText(event.target.value)}
-                        placeholder="What this studyset should focus on..."
-                        className={`min-h-[110px] ${SOFT_SURFACE}`}
-                      />
-                    )}
+                  <div className="grid gap-2 md:grid-cols-4">
+                    <button
+                      type="button"
+                      className={`rounded-xl p-3 text-left ${SOFT_SURFACE}`}
+                      onClick={() => setShowNotesInput(true)}
+                    >
+                      <p className="text-sm font-medium">Quick notes</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Add guidance for AI planning.</p>
+                    </button>
+                    <button
+                      type="button"
+                      className={`rounded-xl p-3 text-left ${SOFT_SURFACE}`}
+                      onClick={() => {
+                        const field = document.getElementById('studyset-pasted-text');
+                        field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }}
+                    >
+                      <p className="text-sm font-medium">Pasted text</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Paste chapter or exam content.</p>
+                    </button>
+                    <button
+                      type="button"
+                      className={`rounded-xl p-3 text-left ${SOFT_SURFACE}`}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <p className="text-sm font-medium">Files</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Upload PDFs, docs, slides, images.</p>
+                    </button>
+                    <button
+                      type="button"
+                      className={`rounded-xl p-3 text-left ${SOFT_SURFACE}`}
+                      onClick={() => oneDriveSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                    >
+                      <p className="text-sm font-medium">OneDrive</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Import selected cloud documents.</p>
+                    </button>
                   </div>
 
-                  <div className="space-y-1">
-                    <Label>Pasted text</Label>
-                    <Textarea
-                      value={pastedText}
-                      onChange={(event) => setPastedText(event.target.value)}
-                      placeholder="Paste chapters, summaries, requirements..."
-                      className={`min-h-[140px] ${SOFT_SURFACE}`}
-                    />
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
+                      <div className="mb-2 flex items-center justify-between">
+                        <Label>Quick notes</Label>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setShowNotesInput((v) => !v)}>
+                          {showNotesInput ? 'Hide' : 'Open'}
+                          {showNotesInput ? <ChevronUp className="ml-1 h-3 w-3" /> : <ChevronDown className="ml-1 h-3 w-3" />}
+                        </Button>
+                      </div>
+                      <p className="mb-2 text-xs text-muted-foreground">Short instructions for what this studyset should focus on.</p>
+                      {showNotesInput && (
+                        <Textarea
+                          value={notesText}
+                          onChange={(event) => setNotesText(event.target.value)}
+                          placeholder="What this studyset should focus on..."
+                          className={`min-h-[110px] ${SOFT_SURFACE}`}
+                        />
+                      )}
+                    </div>
+
+                    <div className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
+                      <Label>Pasted text</Label>
+                      <p className="mb-2 text-xs text-muted-foreground">Paste chapter text, requirements, or existing summaries.</p>
+                      <Textarea
+                        id="studyset-pasted-text"
+                        value={pastedText}
+                        onChange={(event) => setPastedText(event.target.value)}
+                        placeholder="Paste chapters, summaries, requirements..."
+                        className={`min-h-[140px] ${SOFT_SURFACE}`}
+                      />
+                    </div>
                   </div>
 
                   <div className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
                     <p className="mb-2 text-sm font-medium">Files</p>
+                    <p className="mb-2 text-xs text-muted-foreground">Import text files, PDFs, docs, images, and slides.</p>
                     <label className={`flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm ${SOFT_SURFACE}`}>
                       <Upload className="h-4 w-4" />
                       Add files
                       <input
+                        ref={fileInputRef}
                         type="file"
                         multiple
                         className="hidden"
@@ -767,7 +865,7 @@ export default function StudysetPage() {
                     )}
                   </div>
 
-                  <div className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
+                  <div ref={oneDriveSectionRef} className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-medium">Import from OneDrive</p>
                       {microsoftConnected ? (
@@ -777,7 +875,8 @@ export default function StudysetPage() {
                       )}
                     </div>
 
-                    <div className="mt-2 min-h-[260px]">
+                    <div className="mt-2 min-h-[140px]">
+                      <p className="mb-2 text-xs text-muted-foreground">Connect once, then select OneDrive files in the picker.</p>
                       <MicrosoftAppStrip returnTo="/tools/studyset?open=create&step=2" />
                     </div>
                     <div className="mt-3 grid grid-cols-1 gap-3">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { deriveStudysetRuntimeStatus } from '@/lib/studysets/runtime'
 
 export const dynamic = 'force-dynamic'
 
@@ -133,6 +134,7 @@ export async function POST(
           studysets!inner (
             id,
             user_id,
+            status,
             source_bundle
           )
         )
@@ -336,14 +338,25 @@ export async function POST(
         id,
         completed,
         studyset_plan_days!inner (
-          studyset_id
+          studyset_id,
+          plan_date
         )
       `)
       .eq('studyset_plan_days.studyset_id', day.studyset_id)
 
     const totalTasks = (allTasks || []).length
     const completedTasks = (allTasks || []).filter((row: any) => row.completed === true).length
-    const studysetStatus = totalTasks > 0 && completedTasks === totalTasks ? 'completed' : 'active'
+    const todayIso = new Date().toISOString().slice(0, 10)
+    const hasOverduePendingTasks = (allTasks || []).some((row: any) => {
+      const planDate = String(row?.studyset_plan_days?.plan_date || '').slice(0, 10)
+      return row?.completed !== true && Boolean(planDate) && planDate < todayIso
+    })
+    const studysetStatus = deriveStudysetRuntimeStatus({
+      currentStatus: studyset.status,
+      totalTasks,
+      completedTasks,
+      hasOverduePendingTasks,
+    })
 
     await (supabase as any)
       .from('studysets')

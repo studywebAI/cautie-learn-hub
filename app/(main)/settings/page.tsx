@@ -421,7 +421,7 @@ export default function SettingsPage() {
                         <SelectItem value="openai">OpenAI</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">Auto uses Gemini first and switches to OpenAI on token/context-limit failures.</p>
+                    <p className="text-xs text-muted-foreground">Auto uses Gemini first and switches to OpenAI on token/context, quota/rate-limit, and temporary provider failures.</p>
                   </div>
 
                   <div className="grid gap-2 max-w-md">

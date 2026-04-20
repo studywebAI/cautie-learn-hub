@@ -127,7 +127,7 @@ function parseBlockResponse(modifiedData: any, blockType: string, originalData: 
               .map((pair: string) => pair.trim())
               .filter(Boolean)
               .map((pair: string) => {
-                const [left, right] = pair.split('â†’').map((side) => side?.trim() || '');
+                const [left, right] = pair.split(/\s*(?:->|\u2192)\s*/).map((side) => side?.trim() || '');
                 return { left, right };
               })
               .filter((pair: { left: string; right: string }) => pair.left && pair.right)

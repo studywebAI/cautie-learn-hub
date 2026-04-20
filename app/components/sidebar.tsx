@@ -542,7 +542,7 @@ export function AppSidebar() {
   const visibleMainItems = menuItems;
   const visibleToolsItems = toolsMenuItems;
   const visibleOtherItems = otherMenuItems;
-  const showSectionHeaders = isTeacher;
+  const showSectionHeaders = false;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -782,7 +782,7 @@ export function AppSidebar() {
     if (isPhone) {
       return (
         <div className="mb-2 px-2">
-          <label className="mb-1 block text-[11px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
+                      <label className="mb-1 block text-[11px] font-medium text-sidebar-foreground/80">
             {isDutch ? 'klas' : 'class'}
           </label>
           <select
@@ -818,7 +818,7 @@ export function AppSidebar() {
     return (
       <>
       <div className="mb-1.5 px-2">
-        <label className="mb-1 block text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">
+                    <label className="mb-1 block text-[11px] font-medium text-sidebar-foreground/80">
           {isDutch ? 'klas' : 'class'}
         </label>
         <Button
@@ -1086,7 +1086,7 @@ export function AppSidebar() {
             {renderTeacherClassSwitcher()}
             {visibleMainItems.length > 0 && (
               <>
-                 {showSectionHeaders && <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionMain}</p>}
+                  {showSectionHeaders && <p className="px-2 pb-1 pt-1 text-[11px] font-medium text-sidebar-foreground/80">{t.sectionMain}</p>}
                 <SidebarMenu>
                   {visibleMainItems.map((item) => (
                     <SidebarMenuItem key={item.label} className="relative">
@@ -1126,7 +1126,7 @@ export function AppSidebar() {
             {visibleToolsItems.length > 0 && (
               <>
                 {showSectionHeaders && visibleMainItems.length > 0 && <div className="h-5" />}
-                {showSectionHeaders && <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionTools}</p>}
+                {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80">{t.sectionTools}</p>}
                 <SidebarMenu>
                   {visibleToolsItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
@@ -1149,7 +1149,7 @@ export function AppSidebar() {
             {visibleOtherItems.length > 0 && (
               <>
                 {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
-                {showSectionHeaders && <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionOther}</p>}
+                {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80">{t.sectionOther}</p>}
                 <SidebarMenu>
                   {visibleOtherItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
@@ -1171,7 +1171,7 @@ export function AppSidebar() {
 
             <div className="space-y-2">
               {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
-              {showSectionHeaders && <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionRecents}</p>}
+                {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80">{t.sectionRecents}</p>}
               <RecentsSidebar />
             </div>
           </SidebarContent>
@@ -1194,7 +1194,7 @@ export function AppSidebar() {
         {renderTeacherClassSwitcher()}
         {visibleMainItems.length > 0 && (
           <>
-            {showSectionHeaders && <p className="px-2 pb-1 pt-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">{t.sectionMain}</p>}
+                  {showSectionHeaders && <p className="px-2 pb-1 pt-1 text-[11px] font-medium text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{t.sectionMain}</p>}
             <SidebarMenu>
               {visibleMainItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
@@ -1233,7 +1233,7 @@ export function AppSidebar() {
         {visibleToolsItems.length > 0 && (
           <>
             {showSectionHeaders && visibleMainItems.length > 0 && <div className="h-5" />}
-            {showSectionHeaders && <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">{t.sectionTools}</p>}
+                {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{t.sectionTools}</p>}
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -1256,7 +1256,7 @@ export function AppSidebar() {
         {visibleOtherItems.length > 0 && (
           <>
             {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
-            {showSectionHeaders && <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase group-data-[collapsible=icon]:hidden">{t.sectionOther}</p>}
+                {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{t.sectionOther}</p>}
             <SidebarMenu className="group-data-[collapsible=icon]:hidden">
               {visibleOtherItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -1278,7 +1278,7 @@ export function AppSidebar() {
 
         <div className="space-y-2 group-data-[collapsible=icon]:hidden">
           {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
-          {showSectionHeaders && <p className="px-2 pb-1 text-[10px] tracking-[0.08em] text-sidebar-foreground/72 lowercase">{t.sectionRecents}</p>}
+              {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80">{t.sectionRecents}</p>}
           <RecentsSidebar />
         </div>
       </SidebarContent>

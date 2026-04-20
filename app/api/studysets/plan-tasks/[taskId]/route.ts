@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { logAuditEntry } from '@/lib/auth/class-permissions'
+import { deriveStudysetRuntimeStatus } from '@/lib/studysets/runtime'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,6 +49,23 @@ export async function PATCH(
     const studyset = day?.studysets
     if (!day || !studyset) return NextResponse.json({ error: 'Task relation invalid' }, { status: 500 })
 
+    const todayIso = new Date().toISOString().slice(0, 10)
+    const { data: dayDateRow } = await (supabase as any)
+      .from('studyset_plan_days')
+      .select('plan_date')
+      .eq('id', day.id)
+      .eq('studyset_id', day.studyset_id)
+      .maybeSingle()
+
+    const planDate = String(dayDateRow?.plan_date || '').slice(0, 10)
+    const isFutureDay = Boolean(planDate) && planDate > todayIso
+    if (nextCompleted && isFutureDay) {
+      return NextResponse.json(
+        { error: 'You can only complete tasks on or after their scheduled day.' },
+        { status: 400 }
+      )
+    }
+
     const { error: updateTaskError } = await (supabase as any)
       .from('studyset_plan_tasks')
       .update({ completed: nextCompleted })
@@ -79,7 +97,8 @@ export async function PATCH(
         completed,
         studyset_plan_days!inner (
           id,
-          studyset_id
+          studyset_id,
+          plan_date
         )
       `)
       .eq('studyset_plan_days.studyset_id', day.studyset_id)
@@ -87,7 +106,16 @@ export async function PATCH(
     if (allTasksError) return NextResponse.json({ error: allTasksError.message }, { status: 500 })
     const totalTasks = (allTasks || []).length
     const completedTasks = (allTasks || []).filter((row: any) => row.completed === true).length
-    const studysetStatus = totalTasks > 0 && completedTasks === totalTasks ? 'completed' : 'active'
+    const hasOverduePendingTasks = (allTasks || []).some((row: any) => {
+      const planDate = String(row?.studyset_plan_days?.plan_date || '').slice(0, 10)
+      return row?.completed !== true && Boolean(planDate) && planDate < todayIso
+    })
+    const studysetStatus = deriveStudysetRuntimeStatus({
+      currentStatus: studyset.status,
+      totalTasks,
+      completedTasks,
+      hasOverduePendingTasks,
+    })
 
     await (supabase as any)
       .from('studysets')

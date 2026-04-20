@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { logAuditEntry } from '@/lib/auth/class-permissions'
+import { generateStudysetCustomPlan } from '@/ai/flows/generate-studyset-custom-plan'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +21,70 @@ type SourceBundleContext = {
     word?: boolean
     powerpoint?: boolean
   }
+}
+
+type AIDayPlan = {
+  day_number: number
+  summary: string
+  tasks: TaskTemplate[]
+}
+
+function extractFocusTopic(context: SourceBundleContext, studysetName: string) {
+  const raw = String(context.contextText || context.additionalNotes || '').trim()
+  if (!raw) return studysetName
+  const firstLine = raw.split(/\r?\n/).map((line) => line.trim()).find(Boolean) || studysetName
+  return firstLine.slice(0, 90)
+}
+
+function extractTopicCandidates(context: SourceBundleContext, studysetName: string) {
+  const raw = String(context.contextText || context.additionalNotes || '').trim()
+  if (!raw) return [studysetName]
+
+  const candidates: string[] = []
+  const seen = new Set<string>()
+  const pushCandidate = (value: string) => {
+    const cleaned = value
+      .replace(/^[\-\*\d\.\)\s]+/, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 90)
+    if (cleaned.length < 4) return
+    const key = cleaned.toLowerCase()
+    if (seen.has(key)) return
+    seen.add(key)
+    candidates.push(cleaned)
+  }
+
+  raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 30)
+    .forEach(pushCandidate)
+
+  if (candidates.length < 5) {
+    raw
+      .split(/[.!?;\n]+/)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .slice(0, 20)
+      .forEach(pushCandidate)
+  }
+
+  if (candidates.length === 0) return [studysetName]
+  return candidates.slice(0, 8)
+}
+
+function resolveDayTheme(dayNumber: number, totalDays: number, topics: string[]) {
+  const phases = ['Kickoff', 'Concept build', 'Active recall', 'Application', 'Consolidation']
+  const phase =
+    dayNumber === 1
+      ? 'Kickoff'
+      : dayNumber === totalDays
+        ? 'Final mastery'
+        : phases[(dayNumber - 1) % phases.length]
+  const topic = topics[(dayNumber - 1) % topics.length] || topics[0] || 'Core subject'
+  return { phase, topic }
 }
 
 function parseSourceBundle(raw: unknown): SourceBundleContext {
@@ -52,8 +117,86 @@ function parseSourceBundle(raw: unknown): SourceBundleContext {
   }
 }
 
+function clampMinutes(value: number, fallback: number) {
+  if (!Number.isFinite(value)) return fallback
+  return Math.max(5, Math.min(240, Math.round(value)))
+}
+
+function normalizeTaskType(value: unknown): TaskTemplate['task_type'] {
+  const raw = String(value || '').toLowerCase()
+  if (raw === 'flashcards') return 'flashcards'
+  if (raw === 'quiz') return 'quiz'
+  if (raw === 'wordweb') return 'wordweb'
+  if (raw === 'review') return 'review'
+  return 'notes'
+}
+
+function normalizeAIPlanDays(rawDays: unknown, totalDays: number, minutesPerDay: number): AIDayPlan[] {
+  if (!Array.isArray(rawDays)) return []
+  const fallbackMinutes = Math.max(10, Math.round(minutesPerDay / 4))
+  return rawDays
+    .slice(0, totalDays)
+    .map((raw, index) => {
+      const tasksRaw = Array.isArray((raw as any)?.tasks) ? (raw as any).tasks : []
+      const tasks = tasksRaw
+        .slice(0, 6)
+        .map((task: any) => ({
+          task_type: normalizeTaskType(task?.task_type),
+          title: String(task?.title || '').trim().slice(0, 120) || `Task ${index + 1}`,
+          description: String(task?.description || '').trim().slice(0, 400) || 'Work on the planned learning objective.',
+          estimated_minutes: clampMinutes(Number(task?.estimated_minutes || fallbackMinutes), fallbackMinutes),
+        }))
+        .filter((task: TaskTemplate) => Boolean(task.title))
+      return {
+        day_number: Number((raw as any)?.day_number || index + 1),
+        summary: String((raw as any)?.summary || '').trim().slice(0, 180) || `Day ${index + 1} focus`,
+        tasks,
+      }
+    })
+    .filter((day) => day.tasks.length > 0)
+}
+
+async function tryBuildCustomAIPlan(input: {
+  studysetName: string
+  targetDays: number
+  minutesPerDay: number
+  selectedDates: string[]
+  focusTopic: string
+  topicCandidates: string[]
+  contextText: string
+  additionalNotes: string
+}): Promise<AIDayPlan[] | null> {
+  try {
+    const output = await generateStudysetCustomPlan({
+      studysetName: input.studysetName,
+      targetDays: input.targetDays,
+      minutesPerDay: input.minutesPerDay,
+      selectedDates: input.selectedDates,
+      focusTopic: input.focusTopic,
+      topicCandidates: input.topicCandidates.slice(0, 12),
+      contextText: input.contextText.slice(0, 12000),
+      additionalNotes: input.additionalNotes.slice(0, 2000),
+    })
+    const days = normalizeAIPlanDays(output?.days, input.targetDays, input.minutesPerDay)
+    if (days.length === 0) return null
+    return days
+  } catch (error) {
+    console.warn('studyset custom AI plan failed; using deterministic fallback', {
+      message: (error as any)?.message || String(error),
+    })
+    return null
+  }
+}
+
 function toIsoDate(value: Date) {
   return value.toISOString().slice(0, 10)
+}
+
+function toLocalIsoDate(value: Date) {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 function normalizeDateInput(value: unknown) {
@@ -114,15 +257,11 @@ function buildDayTasks(
   totalDays: number,
   minutesPerDay: number,
   context: SourceBundleContext,
-  feedback: string
+  focusTopic: string
 ): TaskTemplate[] {
   const noteContext = context.contextText?.slice(0, 120).trim()
   const hasWord = context.imports?.word === true
   const hasPowerpoint = context.imports?.powerpoint === true
-
-  // Security/quality: do not let free-form feedback text dictate task type.
-  // Plans stay grounded in source material + predictable pedagogy.
-  void feedback;
 
   const coreMinutes = Math.max(10, Math.floor(minutesPerDay * 0.4))
   const recallMinutes = Math.max(10, Math.floor(minutesPerDay * 0.25))
@@ -138,23 +277,23 @@ function buildDayTasks(
 
   tasks.push({
     task_type: 'notes',
-    title: dayNumber === 1 ? 'Core notes pass' : `Notes pass ${dayNumber}`,
-    description: `${contextHint} ${importHint}`,
+    title: dayNumber === 1 ? `Core notes: ${focusTopic}` : `Notes refinement: ${focusTopic} (day ${dayNumber})`,
+    description: `${contextHint} ${importHint} Focus topic: ${focusTopic}.`,
     estimated_minutes: coreMinutes,
   })
 
   if (dayNumber % 2 === 1) {
     tasks.push({
       task_type: 'flashcards',
-      title: dayNumber === 1 ? 'Baseline flashcards' : 'Recall deck build',
-      description: 'Turn key terms, formulas, and definitions into active recall cards.',
+      title: dayNumber === 1 ? `Baseline flashcards: ${focusTopic}` : `Recall deck: ${focusTopic}`,
+      description: `Turn key terms and definitions from ${focusTopic} into active recall cards.`,
       estimated_minutes: recallMinutes,
     })
   } else {
     tasks.push({
       task_type: 'quiz',
-      title: dayNumber === totalDays ? 'Final checkpoint quiz' : 'Checkpoint quiz',
-      description: 'Run a focused quiz and tag weak areas for revision.',
+      title: dayNumber === totalDays ? `Final checkpoint: ${focusTopic}` : `Checkpoint quiz: ${focusTopic}`,
+      description: `Run a focused quiz on ${focusTopic} and tag weak areas for revision.`,
       estimated_minutes: recallMinutes,
     })
   }
@@ -162,22 +301,22 @@ function buildDayTasks(
   if (dayNumber === totalDays) {
     tasks.push({
       task_type: 'review',
-      title: dayNumber === totalDays ? 'Final review' : 'Consolidation review',
-      description: 'Review weak points and tighten understanding before moving on.',
+      title: dayNumber === totalDays ? `Final review: ${focusTopic}` : `Consolidation review: ${focusTopic}`,
+      description: `Review weak points in ${focusTopic} and tighten understanding before moving on.`,
       estimated_minutes: practiceMinutes,
     })
   } else {
     tasks.push({
       task_type: 'wordweb',
-      title: 'Concept map',
-      description: 'Connect terms and concepts into one structured overview.',
+      title: `Concept map: ${focusTopic}`,
+      description: `Connect terms and concepts from ${focusTopic} into one structured overview.`,
       estimated_minutes: practiceMinutes,
     })
   }
 
   tasks.push({
     task_type: 'review',
-    title: 'Daily closeout',
+    title: `Daily closeout: ${focusTopic}`,
     description:
       context.additionalNotes?.trim()
         ? `Keep in mind: ${context.additionalNotes.slice(0, 120)}`
@@ -211,27 +350,44 @@ export async function POST(
     if (studysetError) return NextResponse.json({ error: studysetError.message }, { status: 500 })
     if (!studyset) return NextResponse.json({ error: 'Studyset not found' }, { status: 404 })
 
-    const startDate = normalizeDateInput(body?.start_date) || new Date()
+    const requestedStartDate = normalizeDateInput(body?.start_date) || new Date()
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const startDate = requestedStartDate < today ? today : requestedStartDate
     const endDate = normalizeDateInput(body?.end_date)
     if (endDate && endDate < startDate) {
       return NextResponse.json({ error: 'end_date must be on/after start_date' }, { status: 400 })
     }
 
     const excludedWeekdays = normalizeExcludedWeekdays(body?.excluded_weekdays)
-    const feedback = typeof body?.feedback === 'string' ? body.feedback.trim() : ''
     const sourceContext = parseSourceBundle(studyset.source_bundle)
+    const fallbackTopic = extractFocusTopic(sourceContext, String(studyset.name || 'Study topic'))
+    const topicCandidates = extractTopicCandidates(sourceContext, fallbackTopic)
     const requestedDates = normalizeSelectedDates(body?.selected_dates)
     const sourceDates = normalizeSelectedDates(sourceContext.selectedDates)
 
     const requestedTargetDays = Math.max(1, Number(studyset.target_days || 1))
     const minutesPerDay = Math.max(10, Number(studyset.minutes_per_day || 30))
+    const todayIso = toLocalIsoDate(new Date())
+    const allowedRequestedDates = requestedDates.filter((value) => value >= todayIso)
+    const allowedSourceDates = sourceDates.filter((value) => value >= todayIso)
     const planDates =
-      requestedDates.length > 0
-        ? requestedDates
-        : sourceDates.length > 0
-          ? sourceDates
+      allowedRequestedDates.length > 0
+        ? allowedRequestedDates
+        : allowedSourceDates.length > 0
+          ? allowedSourceDates
           : buildPlanDates(startDate, requestedTargetDays, excludedWeekdays, endDate)
     const totalDays = planDates.length
+    const aiPlanDays = await tryBuildCustomAIPlan({
+      studysetName: String(studyset.name || 'Studyset'),
+      targetDays: totalDays,
+      minutesPerDay,
+      selectedDates: planDates,
+      focusTopic: fallbackTopic,
+      topicCandidates,
+      contextText: String(sourceContext.contextText || ''),
+      additionalNotes: String(sourceContext.additionalNotes || ''),
+    })
 
     // Replace existing plan for deterministic regeneration.
     const { data: existingDays } = await (supabase as any)
@@ -247,11 +403,13 @@ export async function POST(
 
     const dayRows = planDates.map((planDate, index) => {
       const dayNumber = index + 1
+      const dayTheme = resolveDayTheme(dayNumber, totalDays, topicCandidates)
+      const aiDay = Array.isArray(aiPlanDays) ? aiPlanDays[index] : null
       return {
         studyset_id: studyset.id,
         day_number: dayNumber,
         plan_date: planDate,
-        summary: `Day ${dayNumber}: ${studyset.name}`,
+        summary: aiDay?.summary || `Day ${dayNumber}: ${dayTheme.phase} - ${dayTheme.topic}`,
         estimated_minutes: minutesPerDay,
         completed: false,
       }
@@ -269,7 +427,12 @@ export async function POST(
 
     const taskRows: any[] = []
     insertedDays.forEach((day: any) => {
-      const templates = buildDayTasks(day.day_number, totalDays, minutesPerDay, sourceContext, feedback)
+      const dayTheme = resolveDayTheme(day.day_number, totalDays, topicCandidates)
+      const aiDay = Array.isArray(aiPlanDays) ? aiPlanDays[Number(day.day_number || 1) - 1] : null
+      const templates =
+        aiDay && Array.isArray(aiDay.tasks) && aiDay.tasks.length > 0
+          ? aiDay.tasks
+          : buildDayTasks(day.day_number, totalDays, minutesPerDay, sourceContext, dayTheme.topic)
       templates.forEach((task, position) => {
         taskRows.push({
           studyset_day_id: day.id,

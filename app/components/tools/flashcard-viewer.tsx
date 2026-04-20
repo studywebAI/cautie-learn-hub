@@ -290,14 +290,14 @@ export function FlashcardViewer({
     const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
     const deckHealth = computeDeckHealth();
     const sessionTotal = Math.max(1, queue.length);
-    const completionScore = queue.length > 0 ? Math.round((cardsReviewed.size / sessionTotal) * 100) : 0;
+    const accuracyScore = sessionTotal > 0 ? Math.round((correctCards / sessionTotal) * 100) : 0;
     try {
       await fetch('/api/activity', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           activity_type: 'flashcard',
-          score: completionScore,
+          score: accuracyScore,
           total_items: sessionTotal,
           correct_items: correctCards,
           time_spent_seconds: timeSpent,
@@ -324,7 +324,7 @@ export function FlashcardViewer({
           body: JSON.stringify({
             studysetId,
             toolId: 'flashcards',
-            score: completionScore,
+            score: accuracyScore,
             totalItems: sessionTotal,
             correctItems: correctCards,
             timeSpentSeconds: timeSpent,
@@ -336,7 +336,7 @@ export function FlashcardViewer({
     } catch (error) {
       console.error('Failed to save flashcard session:', error);
     }
-  }, [cards.length, queue.length, cardsReviewed.size, correctCards, mode, computeDeckHealth, computeTopicAnalytics, studysetId, taskId]);
+  }, [cards.length, queue.length, correctCards, mode, computeDeckHealth, computeTopicAnalytics, studysetId, taskId]);
 
   const getQualityFromOutcome = (isCorrect: boolean, responseMs: number): 0 | 1 | 2 | 3 => {
     if (!isCorrect) return 0;

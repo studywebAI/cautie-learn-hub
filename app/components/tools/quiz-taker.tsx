@@ -121,7 +121,7 @@ function FinalResults({
     const totalQuestionsAnswered = Object.keys(answers).length;
     const totalQuestionsInQuiz = quiz.questions.length;
     const incorrectCount = totalQuestionsAnswered - correctCount;
-    const scorePercentage = totalQuestionsAnswered > 0 ? Math.round((correctCount / totalQuestionsAnswered) * 100) : 0;
+    const scorePercentage = totalQuestionsInQuiz > 0 ? Math.round((correctCount / totalQuestionsInQuiz) * 100) : 0;
     
     const reportedRef = useRef(false);
 
@@ -178,7 +178,7 @@ function FinalResults({
                     studysetId,
                     toolId: 'quiz',
                     score: scorePercentage,
-                    totalItems: totalQuestionsAnswered,
+                    totalItems: totalQuestionsInQuiz,
                     correctItems: correctCount,
                     timeSpentSeconds: timeTaken,
                     weakTopics,
@@ -189,7 +189,7 @@ function FinalResults({
 
         // Clear recap on unmount
         return () => setSessionRecap(null);
-    }, [answers, correctCount, quiz.questions, scorePercentage, setSessionRecap, studysetId, taskId, timeTaken, totalQuestionsAnswered]);
+    }, [answers, correctCount, quiz.questions, scorePercentage, setSessionRecap, studysetId, taskId, timeTaken, totalQuestionsAnswered, totalQuestionsInQuiz]);
 
 
     if (mode === 'survival') {

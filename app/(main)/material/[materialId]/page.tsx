@@ -232,7 +232,7 @@ function MaterialPageContent() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <Button variant="ghost" asChild className="-ml-4">
-          <Link href={material ? `/class/${material.class_id}` : '/material'}>
+          <Link href={material ? `/class/${material.class_id}` : '/other/materials'}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             {material ? 'Back to Class' : 'Back to Materials'}
           </Link>
@@ -273,7 +273,7 @@ function MaterialPageContent() {
 
 export default function MaterialPage() {
   return (
-    <Suspense fallback={<p>Loading material...</p>}>
+    <Suspense fallback={<div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">Loading material...</div>}>
       <MaterialPageContent />
     </Suspense>
   );

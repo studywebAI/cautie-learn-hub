@@ -65,12 +65,22 @@ export async function GET(request: NextRequest) {
     const app = request.nextUrl.searchParams.get('app') || undefined;
     const selectedOnly = request.nextUrl.searchParams.get('selected') === '1';
 
-    const items = await listIntegrationSources(supabase, user.id, {
-      provider,
-      app,
-      selectedOnly,
-      limit: 50,
-    });
+    let items: any[] = [];
+    try {
+      items = await listIntegrationSources(supabase, user.id, {
+        provider,
+        app,
+        selectedOnly,
+        limit: 50,
+      });
+    } catch (error: any) {
+      const message = String(error?.message || "").toLowerCase();
+      // Graceful fallback when integration tables are not migrated yet.
+      if (!message.includes('external_integration_sources')) {
+        throw error;
+      }
+      items = [];
+    }
 
     return NextResponse.json({ items });
   } catch (error: any) {

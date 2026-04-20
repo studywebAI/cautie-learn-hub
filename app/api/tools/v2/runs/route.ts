@@ -89,6 +89,16 @@ async function writeAIErrorLog(
 
   const { error } = await supabase.from("ai_error_logs").insert(payload);
   if (error) {
+    const errorCode = String(error.code || "");
+    const errorMessage = String(error.message || "").toLowerCase();
+    // Migration-safe: keep runtime resilient when logging table is not present yet.
+    if (
+      errorCode === "PGRST205" ||
+      errorMessage.includes("could not find the table") ||
+      errorMessage.includes("ai_error_logs")
+    ) {
+      return;
+    }
     // Non-blocking; keep tool execution result path stable.
     console.error("[ai_error_logs] insert failed", {
       message: error.message,
@@ -296,6 +306,9 @@ export async function POST(request: NextRequest) {
     } catch (err: any) {
       const errorCode = err?.code || "RUN_FAILED";
       const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id).catch(() => ({ providerPreference: "auto" as const }));
+      const normalizedMessage = String(err?.message || "").toLowerCase();
+      const inferredProvider: "gemini" | "openai" =
+        normalizedMessage.includes("openai") ? "openai" : "gemini";
       await supabase
         .from("tool_runs")
         .update({
@@ -314,7 +327,7 @@ export async function POST(request: NextRequest) {
         toolId: payload.toolId,
         flowName: payload.flowName,
         providerPreference: runtimeOptions.providerPreference || "auto",
-        providerAttempted: "gemini",
+        providerAttempted: inferredProvider,
         stage: "run_failed",
         fallbackAttempted: String(err?.message || "").toLowerCase().includes("fallback"),
         fallbackSucceeded: false,

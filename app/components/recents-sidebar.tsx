@@ -6,6 +6,7 @@ import {
   Copy,
   FileSignature,
   BookOpen,
+  Route,
   ChevronDown,
   ChevronUp,
   StickyNote,
@@ -18,9 +19,14 @@ import { useRouter } from 'next/navigation';
 type RecentItem = {
   id: string;
   title: string;
-  type: 'quiz' | 'flashcards' | 'notes' | 'subject' | 'assignment';
+  type: 'quiz' | 'flashcards' | 'notes' | 'subject' | 'assignment' | 'studyset';
   date: string;
-  source: 'tool_run' | 'material';
+  source: 'tool_run' | 'material' | 'studyset';
+  nextTaskHref?: string | null;
+  analyticsHref?: string | null;
+  progressLabel?: string | null;
+  progressPercent?: number | null;
+  isComplete?: boolean;
 };
 
 const TYPE_ICONS: Record<string, typeof BrainCircuit> = {
@@ -29,6 +35,7 @@ const TYPE_ICONS: Record<string, typeof BrainCircuit> = {
   quiz: BrainCircuit,
   subject: BookOpen,
   assignment: FileSignature,
+  studyset: Route,
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -37,6 +44,7 @@ const TYPE_LABELS: Record<string, string> = {
   quiz: 'Quiz',
   subject: 'Subject',
   assignment: 'Assignment',
+  studyset: 'Studyset',
 };
 const RECENTS_CACHE_KEY = 'studyweb-recents-cache-v1';
 const RECENTS_CACHE_TTL_MS = 60_000;
@@ -54,6 +62,7 @@ export function RecentsSidebar() {
   const [recents, setRecents] = useState<RecentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<'all' | 'studysets'>('all');
   const { state } = useSidebar();
   const router = useRouter();
 
@@ -80,12 +89,14 @@ export function RecentsSidebar() {
         }
 
         // Fetch both tool runs and materials in parallel with partial-failure tolerance.
-        const [runsResult, materialsResult] = await Promise.allSettled([
+        const [runsResult, materialsResult, studysetsResult] = await Promise.allSettled([
           fetch('/api/tools/v2/runs').then((r) => (r.ok ? r.json() : [])),
           fetch('/api/materials?limit=10').then((r) => (r.ok ? r.json() : { materials: [] })),
+          fetch('/api/studysets').then((r) => (r.ok ? r.json() : { studysets: [] })),
         ]);
         const runsRes = runsResult.status === 'fulfilled' ? runsResult.value : [];
         const materialsRes = materialsResult.status === 'fulfilled' ? materialsResult.value : { materials: [] };
+        const studysetsRes = studysetsResult.status === 'fulfilled' ? studysetsResult.value : { studysets: [] };
 
         const toolItems: RecentItem[] = (Array.isArray(runsRes) ? runsRes : [])
           .filter((r: any) => r?.options_payload?.saveToRecents !== false)
@@ -110,8 +121,31 @@ export function RecentsSidebar() {
             source: 'material' as const,
           }));
 
+        const studysetItems: RecentItem[] = (studysetsRes.studysets || [])
+          .filter((s: any) => String(s?.status || '').toLowerCase() !== 'archived')
+          .slice(0, 8)
+          .map((s: any) => ({
+            id: String(s.id),
+            title: String(s.name || 'Studyset'),
+            type: 'studyset' as const,
+            date: String(s.updated_at || s.created_at || new Date().toISOString()),
+            source: 'studyset' as const,
+            nextTaskHref: typeof s?.next_task_href === 'string' ? s.next_task_href : null,
+            analyticsHref: `/tools/studyset/${String(s.id)}`,
+            progressLabel:
+              typeof s?.progress?.completed_tasks === 'number' && typeof s?.progress?.total_tasks === 'number'
+                ? `${s.progress.completed_tasks}/${s.progress.total_tasks}`
+                : null,
+            progressPercent:
+              typeof s?.progress?.percent === 'number' ? Number(s.progress.percent) : null,
+            isComplete:
+              typeof s?.progress?.total_tasks === 'number' &&
+              Number(s?.progress?.total_tasks || 0) > 0 &&
+              Number(s?.progress?.completed_tasks || 0) === Number(s?.progress?.total_tasks || 0),
+          }));
+
         // Merge, deduplicate, sort by date
-        const all = [...toolItems, ...materialItems]
+        const all = [...studysetItems, ...toolItems, ...materialItems]
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         setRecents(all);
@@ -136,6 +170,14 @@ export function RecentsSidebar() {
       // Navigate to tool page with runId to reload saved output
       const toolPath = `/tools/${item.type}`;
       router.push(`${toolPath}?runId=${item.id}`);
+    } else if (item.source === 'studyset') {
+      if (item.isComplete && item.analyticsHref) {
+        router.push(item.analyticsHref);
+      } else if (item.nextTaskHref) {
+        router.push(item.nextTaskHref);
+      } else {
+        router.push(`/tools/studyset/${item.id}`);
+      }
     } else {
       router.push(`/material/${item.id}`);
     }
@@ -143,10 +185,13 @@ export function RecentsSidebar() {
 
   if (isCollapsed) return null;
 
-  const displayCount = expanded ? recents.length : 3;
-  const displayItems = recents.slice(0, displayCount);
-  const hasMore = recents.length > 3;
-  const enableScroll = expanded && recents.length > 10;
+  const visibleRecents = activeTab === 'studysets'
+    ? recents.filter((item) => item.source === 'studyset')
+    : recents;
+  const displayCount = expanded ? visibleRecents.length : 3;
+  const displayItems = visibleRecents.slice(0, displayCount);
+  const hasMore = visibleRecents.length > 3;
+  const enableScroll = expanded && visibleRecents.length > 10;
 
   if (isLoading) {
     return (
@@ -172,6 +217,22 @@ export function RecentsSidebar() {
 
   return (
     <div className="px-2">
+      <div className="mb-1.5 flex items-center gap-1.5">
+        <button
+          type="button"
+          className={`rounded-full px-2 py-0.5 text-[10px] ${activeTab === 'all' ? 'bg-sidebar-accent/70 text-sidebar-foreground' : 'bg-sidebar-accent/30 text-sidebar-foreground/80'}`}
+          onClick={() => setActiveTab('all')}
+        >
+          All
+        </button>
+        <button
+          type="button"
+          className={`rounded-full px-2 py-0.5 text-[10px] ${activeTab === 'studysets' ? 'bg-sidebar-accent/70 text-sidebar-foreground' : 'bg-sidebar-accent/30 text-sidebar-foreground/80'}`}
+          onClick={() => setActiveTab('studysets')}
+        >
+          Studysets
+        </button>
+      </div>
       <div
         className={`rounded-md bg-transparent space-y-0.5 ${enableScroll ? 'max-h-[300px] overflow-y-auto pr-1' : ''}`}
       >
@@ -186,9 +247,44 @@ export function RecentsSidebar() {
               onClick={() => handleClick(item)}
             >
               <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
-              <span className="text-[12px] font-normal flex-1 truncate">
-                {item.title}
-              </span>
+              {item.source === 'studyset' ? (
+                <button
+                  type="button"
+                  className="text-[12px] font-normal flex-1 truncate text-left hover:underline"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    router.push(item.analyticsHref || `/tools/studyset/${item.id}`);
+                  }}
+                >
+                  {item.title}
+                </button>
+              ) : (
+                <span className="text-[12px] font-normal flex-1 truncate">{item.title}</span>
+              )}
+              {item.source === 'studyset' && item.progressLabel ? (
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-[10px] text-muted-foreground/90">
+                    {item.progressLabel}
+                  </span>
+                  {typeof item.progressPercent === 'number' ? (
+                    <span className="text-[10px] text-muted-foreground/75">
+                      {item.progressPercent}%
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+              {item.source === 'studyset' && item.nextTaskHref && !item.isComplete ? (
+                <button
+                  type="button"
+                  className="rounded bg-sidebar-accent/40 px-1.5 py-0.5 text-[10px] text-sidebar-foreground/90 hover:bg-sidebar-accent/65"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    router.push(item.nextTaskHref || `/tools/studyset/${item.id}`);
+                  }}
+                >
+                  Start
+                </button>
+              ) : null}
               <span className="text-[11px] text-muted-foreground/85 shrink-0">
                 {dateStr}
               </span>
@@ -211,7 +307,7 @@ export function RecentsSidebar() {
           ) : (
             <>
               <ChevronDown className="h-3 w-3" />
-              {t.showMore} {recents.length - 3} {t.more}
+              {t.showMore} {visibleRecents.length - 3} {t.more}
             </>
           )}
         </button>

@@ -143,7 +143,7 @@ export async function executeAIFlow(
     return await flow(enrichedInput);
   } catch (error) {
     const shouldFallback =
-      providerPreference === "auto" &&
+      (providerPreference === "auto" || providerPreference === "gemini") &&
       canFallback &&
       shouldFallbackToOpenAI(error);
 

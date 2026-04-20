@@ -19,6 +19,7 @@ const MATERIALS_STORAGE_KEY = 'tools.source_input.materials.v1';
 export default function OtherMaterialsPage() {
   const [materials, setMaterials] = useState<MaterialEntry[]>([]);
   const [search, setSearch] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -55,6 +56,11 @@ export default function OtherMaterialsPage() {
     );
   }, [materials, search]);
 
+  const selectedMaterial = useMemo(
+    () => filtered.find((item) => item.id === selectedId) || filtered[0] || null,
+    [filtered, selectedId]
+  );
+
   return (
     <div className="h-full overflow-auto">
       <div className="mx-auto w-full max-w-7xl p-4 md:p-6">
@@ -77,23 +83,54 @@ export default function OtherMaterialsPage() {
           {filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground">No materials yet.</p>
           ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((material) => (
-                <article key={material.id} className="rounded-xl border border-border bg-background p-2 text-left">
-                  <p className="truncate text-xs font-medium">{material.title}</p>
-                  <div className="mt-1 rounded-md border border-border bg-muted/40 p-2">
-                    <div className="h-24 overflow-hidden rounded bg-background p-1 text-[10px] text-muted-foreground">
-                      {material.type === 'image' ? (
-                        <img src={material.preview} alt={material.title} className="h-full w-full object-cover" />
-                      ) : (
-                        <pre className="whitespace-pre-wrap break-words font-sans">{material.preview || 'No preview'}</pre>
-                      )}
-                    </div>
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                {filtered.map((material) => {
+                  const selected = material.id === selectedMaterial?.id;
+                  return (
+                    <button
+                      key={material.id}
+                      type="button"
+                      onClick={() => setSelectedId(material.id)}
+                      className={`rounded-xl border p-2 text-left transition-colors ${
+                        selected
+                          ? 'border-[hsl(var(--sidebar-accent)/0.9)] bg-[hsl(var(--sidebar-accent)/0.14)]'
+                          : 'border-border bg-background hover:bg-muted/40'
+                      }`}
+                    >
+                      <p className="truncate text-xs font-medium">{material.title}</p>
+                      <div className="mt-1 rounded-md border border-border bg-muted/40 p-2">
+                        <div className="h-24 overflow-hidden rounded bg-background p-1 text-[10px] text-muted-foreground">
+                          {material.type === 'image' ? (
+                            <img src={material.preview} alt={material.title} className="h-full w-full object-cover" />
+                          ) : (
+                            <pre className="whitespace-pre-wrap break-words font-sans">{material.preview || 'No preview'}</pre>
+                          )}
+                        </div>
+                      </div>
+                      <p className="mt-1 text-[10px] text-muted-foreground">{material.type}</p>
+                      <p className="text-[10px] text-muted-foreground">{new Date(material.dateIso).toLocaleString()}</p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedMaterial && (
+                <aside className="rounded-xl border border-border bg-background p-3">
+                  <p className="text-sm font-medium">{selectedMaterial.title}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{selectedMaterial.type}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(selectedMaterial.dateIso).toLocaleString()}</p>
+                  <div className="mt-3 rounded-md border border-border bg-muted/30 p-2">
+                    {selectedMaterial.type === 'image' ? (
+                      <img src={selectedMaterial.preview} alt={selectedMaterial.title} className="h-40 w-full rounded object-cover" />
+                    ) : (
+                      <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs font-sans">
+                        {selectedMaterial.detail || selectedMaterial.preview || 'No content'}
+                      </pre>
+                    )}
                   </div>
-                  <p className="mt-1 text-[10px] text-muted-foreground">{material.type}</p>
-                  <p className="text-[10px] text-muted-foreground">{new Date(material.dateIso).toLocaleString()}</p>
-                </article>
-              ))}
+                </aside>
+              )}
             </div>
           )}
         </section>
