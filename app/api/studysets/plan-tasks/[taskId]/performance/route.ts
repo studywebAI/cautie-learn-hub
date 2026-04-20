@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { deriveStudysetRuntimeStatus } from '@/lib/studysets/runtime'
+import { upsertStudysetAdaptiveRuntime } from '@/lib/studysets/adaptive-engine'
+import { resolvePendingInterventionsForTask } from '@/lib/studysets/interventions-runtime'
 
 export const dynamic = 'force-dynamic'
 
@@ -224,6 +226,17 @@ export async function POST(
         .eq('studyset_day_id', day.id)
     }
 
+    if (markCompleted) {
+      await resolvePendingInterventionsForTask({
+        supabase,
+        userId: user.id,
+        studysetId: day.studyset_id,
+        taskId,
+      }).catch(() => {
+        // Keep performance submission resilient if intervention queue update fails.
+      })
+    }
+
     const { data: dayTasks } = await (supabase as any)
       .from('studyset_plan_tasks')
       .select('id, completed')
@@ -418,6 +431,15 @@ export async function POST(
         })
         .eq('id', update.id)
     }
+
+    // Step 4 + 5 runtime refresh: normalized tool profiles and intervention queue.
+    await upsertStudysetAdaptiveRuntime({
+      supabase,
+      userId: user.id,
+      studysetId: day.studyset_id,
+    }).catch(() => {
+      // Keep the primary task completion flow resilient even when adaptive tables are not migrated yet.
+    })
 
     return NextResponse.json({
       success: true,

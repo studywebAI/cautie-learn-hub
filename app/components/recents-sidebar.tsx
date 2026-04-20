@@ -27,6 +27,8 @@ type RecentItem = {
   progressLabel?: string | null;
   progressPercent?: number | null;
   isComplete?: boolean;
+  pendingInterventions?: number | null;
+  weakestTool?: string | null;
 };
 
 const TYPE_ICONS: Record<string, typeof BrainCircuit> = {
@@ -92,11 +94,11 @@ export function RecentsSidebar() {
         const [runsResult, materialsResult, studysetsResult] = await Promise.allSettled([
           fetch('/api/tools/v2/runs').then((r) => (r.ok ? r.json() : [])),
           fetch('/api/materials?limit=10').then((r) => (r.ok ? r.json() : { materials: [] })),
-          fetch('/api/studysets').then((r) => (r.ok ? r.json() : { studysets: [] })),
+          fetch('/api/studysets/launchpad?limit=16').then((r) => (r.ok ? r.json() : { items: [] })),
         ]);
         const runsRes = runsResult.status === 'fulfilled' ? runsResult.value : [];
         const materialsRes = materialsResult.status === 'fulfilled' ? materialsResult.value : { materials: [] };
-        const studysetsRes = studysetsResult.status === 'fulfilled' ? studysetsResult.value : { studysets: [] };
+        const studysetsRes = studysetsResult.status === 'fulfilled' ? studysetsResult.value : { items: [] };
 
         const toolItems: RecentItem[] = (Array.isArray(runsRes) ? runsRes : [])
           .filter((r: any) => r?.options_payload?.saveToRecents !== false)
@@ -121,23 +123,30 @@ export function RecentsSidebar() {
             source: 'material' as const,
           }));
 
-        const studysetItems: RecentItem[] = (studysetsRes.studysets || [])
-          .filter((s: any) => String(s?.status || '').toLowerCase() !== 'archived')
-          .slice(0, 8)
+        const studysetItems: RecentItem[] = (studysetsRes.items || [])
+          .slice(0, 10)
           .map((s: any) => ({
             id: String(s.id),
-            title: String(s.name || 'Studyset'),
+            title: String(s.title || 'Studyset'),
             type: 'studyset' as const,
-            date: String(s.updated_at || s.created_at || new Date().toISOString()),
+            date: String(s.updated_at || new Date().toISOString()),
             source: 'studyset' as const,
-            nextTaskHref: typeof s?.next_task_href === 'string' ? s.next_task_href : null,
-            analyticsHref: `/tools/studyset/${String(s.id)}`,
+            nextTaskHref: typeof s?.next_action_href === 'string' ? s.next_action_href : null,
+            analyticsHref: typeof s?.analytics_href === 'string' ? s.analytics_href : `/tools/studyset/${String(s.id)}`,
             progressLabel:
               typeof s?.progress?.completed_tasks === 'number' && typeof s?.progress?.total_tasks === 'number'
                 ? `${s.progress.completed_tasks}/${s.progress.total_tasks}`
                 : null,
             progressPercent:
               typeof s?.progress?.percent === 'number' ? Number(s.progress.percent) : null,
+            pendingInterventions:
+              typeof s?.pending_interventions === 'number'
+                ? Number(s.pending_interventions)
+                : null,
+            weakestTool:
+              typeof s?.pulse_weakest_tool === 'string'
+                ? String(s.pulse_weakest_tool)
+                : null,
             isComplete:
               typeof s?.progress?.total_tasks === 'number' &&
               Number(s?.progress?.total_tasks || 0) > 0 &&
@@ -272,6 +281,16 @@ export function RecentsSidebar() {
                     </span>
                   ) : null}
                 </div>
+              ) : null}
+              {item.source === 'studyset' && typeof item.pendingInterventions === 'number' && item.pendingInterventions > 0 ? (
+                <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-300">
+                  Q:{item.pendingInterventions}
+                </span>
+              ) : null}
+              {item.source === 'studyset' && item.weakestTool ? (
+                <span className="rounded bg-sidebar-accent/40 px-1.5 py-0.5 text-[10px] text-sidebar-foreground/90">
+                  {item.weakestTool}
+                </span>
               ) : null}
               {item.source === 'studyset' && item.nextTaskHref && !item.isComplete ? (
                 <button

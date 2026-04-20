@@ -63,6 +63,8 @@ type StudysetRow = {
     avg_score?: number;
     recent_attempts_7d?: number;
     due_today_tasks?: number;
+    pending_interventions?: number;
+    weakest_tool?: string | null;
   };
 };
 
@@ -201,6 +203,7 @@ export default function StudysetPage() {
   const [selectedMicrosoftFiles, setSelectedMicrosoftFiles] = useState<MicrosoftFileItem[]>([]);
 
   const [creating, setCreating] = useState(false);
+  const [optimizingAll, setOptimizingAll] = useState(false);
   const [showIconOptions, setShowIconOptions] = useState(false);
   const [showColorOptions, setShowColorOptions] = useState(false);
   const [showNotesInput, setShowNotesInput] = useState(false);
@@ -555,6 +558,39 @@ export default function StudysetPage() {
     }
   };
 
+  const optimizeAllStudysets = async () => {
+    if (optimizingAll) return;
+    setOptimizingAll(true);
+    try {
+      const response = await fetch('/api/studysets/optimize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          force: true,
+          includeLaunchpad: false,
+        }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json?.error || 'Could not optimize studysets');
+
+      const replanChanged = Number(json?.replan?.changed || 0);
+      const adaptiveChanged = Number(json?.adaptive?.changed || 0);
+      toast({
+        title: 'Studysets optimized',
+        description: `Replan updated ${replanChanged}, adaptive updated ${adaptiveChanged}.`,
+      });
+      await loadStudysets();
+    } catch (error: any) {
+      toast({
+        title: 'Optimization failed',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setOptimizingAll(false);
+    }
+  };
+
   return (
     <div className="h-full min-h-0 overflow-auto">
       <div className="flex min-h-full w-full flex-col gap-4">
@@ -576,10 +612,15 @@ export default function StudysetPage() {
                 <CardDescription>Create a fresh study plan in 3 clear steps.</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button type="button" onClick={startCreate}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Open new studyset
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button type="button" onClick={startCreate}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Open new studyset
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => void optimizeAllStudysets()} disabled={optimizingAll}>
+                    {optimizingAll ? 'Optimizing...' : 'Optimize all'}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -600,11 +641,17 @@ export default function StudysetPage() {
                         <p className="text-sm font-medium">{item.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {item.target_days} days
-                          {item.progress ? ` • ${item.progress.completed_tasks}/${item.progress.total_tasks} tasks` : ''}
+                          {item.progress ? ` - ${item.progress.completed_tasks}/${item.progress.total_tasks} tasks` : ''}
                         </p>
                         {item.analytics_summary && (
                           <p className="text-[11px] text-muted-foreground">
-                            Avg {item.analytics_summary.avg_score || 0}% • Due today {item.analytics_summary.due_today_tasks || 0}
+                            Avg {item.analytics_summary.avg_score || 0}% - Due today {item.analytics_summary.due_today_tasks || 0}
+                            {typeof item.analytics_summary.pending_interventions === 'number'
+                              ? ` - Queue ${item.analytics_summary.pending_interventions}`
+                              : ''}
+                            {item.analytics_summary.weakest_tool
+                              ? ` - Focus ${String(item.analytics_summary.weakest_tool)}`
+                              : ''}
                           </p>
                         )}
                       </button>

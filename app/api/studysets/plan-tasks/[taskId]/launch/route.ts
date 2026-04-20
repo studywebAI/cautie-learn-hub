@@ -16,6 +16,13 @@ type ParsedSourceBundle = {
   }
 }
 
+type LaunchAdaptiveContext = {
+  weakestTool: string
+  weakestAction: string
+  pendingForTask: number
+  queueCount: number
+}
+
 function parseSourceBundle(raw: unknown): ParsedSourceBundle {
   if (typeof raw !== 'string' || !raw.trim()) {
     return { notesText: '', pastedText: '', selectedDocuments: [], uploadedFiles: [], adaptive: { avg_score: 0, mastery_band: '', weak_topics: [] } }
@@ -94,6 +101,9 @@ function buildSourceText(studysetName: string, taskTitle: string, taskDescriptio
   if (bundle.adaptive.weak_topics.length > 0) {
     sections.push(`CURRENT WEAK AREAS\n${bundle.adaptive.weak_topics.map((topic) => `- ${topic}`).join('\n')}`)
   }
+  if (bundle.adaptive.mastery_band) {
+    sections.push(`CURRENT MASTERY BAND\n${bundle.adaptive.mastery_band} (avg ${bundle.adaptive.avg_score}%)`)
+  }
 
   if (sections.length === 0) {
     sections.push('No extracted source content available yet. Use pasted text or files with successful text extraction.')
@@ -152,7 +162,12 @@ function inferTool(taskType: string): 'notes' | 'flashcards' | 'quiz' {
   return 'notes'
 }
 
-function buildNotesPreset(taskTitle: string, estimatedMinutes: number, bundle: ParsedSourceBundle) {
+function buildNotesPreset(
+  taskTitle: string,
+  estimatedMinutes: number,
+  bundle: ParsedSourceBundle,
+  adaptiveContext: LaunchAdaptiveContext
+) {
   const title = taskTitle.toLowerCase()
   const length = bundle.adaptive.mastery_band === 'weak'
     ? 'long'
@@ -161,32 +176,49 @@ function buildNotesPreset(taskTitle: string, estimatedMinutes: number, bundle: P
       : estimatedMinutes <= 15
         ? 'short'
         : 'medium'
-  const style = title.includes('map') ? 'structured' : 'structured'
+  const style = adaptiveContext.weakestAction === 'reinforce' || title.includes('map') ? 'structured' : 'concise'
   const audience = 'student'
   return { length, style, audience }
 }
 
-function buildFlashcardsPreset(taskTitle: string, estimatedMinutes: number, bundle: ParsedSourceBundle) {
+function buildFlashcardsPreset(
+  taskTitle: string,
+  estimatedMinutes: number,
+  bundle: ParsedSourceBundle,
+  adaptiveContext: LaunchAdaptiveContext
+) {
   const title = taskTitle.toLowerCase()
   const masteryBoost = bundle.adaptive.mastery_band === 'weak' ? 6 : bundle.adaptive.mastery_band === 'strong' ? -2 : 0
+  const queueBoost = adaptiveContext.pendingForTask > 0 ? 2 : 0
   const count = Math.max(8, Math.min(28, Math.round((estimatedMinutes || 15) / 1.5) + masteryBoost))
   const mode = title.includes('quiz') ? 'mcq' : 'flip'
-  const complexity = bundle.adaptive.mastery_band === 'strong'
+  const complexity = adaptiveContext.weakestAction === 'reinforce'
+    ? 'easy'
+    : bundle.adaptive.mastery_band === 'strong'
     ? 'hard'
     : estimatedMinutes >= 25
       ? 'hard'
       : estimatedMinutes <= 12
         ? 'easy'
         : 'medium'
-  return { count, mode, complexity }
+  return { count: Math.max(8, Math.min(32, count + queueBoost)), mode, complexity }
 }
 
-function buildQuizPreset(taskTitle: string, taskDescription: string, estimatedMinutes: number, bundle: ParsedSourceBundle) {
+function buildQuizPreset(
+  taskTitle: string,
+  taskDescription: string,
+  estimatedMinutes: number,
+  bundle: ParsedSourceBundle,
+  adaptiveContext: LaunchAdaptiveContext
+) {
   const copy = `${taskTitle} ${taskDescription}`.toLowerCase()
   const masteryBoost = bundle.adaptive.mastery_band === 'weak' ? 3 : bundle.adaptive.mastery_band === 'strong' ? -1 : 0
-  const questionCount = Math.max(5, Math.min(18, Math.round((estimatedMinutes || 15) / 1.8) + masteryBoost))
+  const queueBoost = adaptiveContext.pendingForTask > 0 ? 2 : 0
+  const questionCount = Math.max(5, Math.min(18, Math.round((estimatedMinutes || 15) / 1.8) + masteryBoost + queueBoost))
   const mode = copy.includes('checkpoint') || copy.includes('final') ? 'practice' : 'practice'
-  const difficultyProfile = bundle.adaptive.mastery_band === 'strong'
+  const difficultyProfile = adaptiveContext.weakestAction === 'reinforce'
+    ? 'balanced'
+    : bundle.adaptive.mastery_band === 'strong'
     ? 'hard'
     : copy.includes('final') || copy.includes('hard')
       ? 'hard'
@@ -260,21 +292,22 @@ export async function GET(
     const estimatedMinutes = Number(taskRow.estimated_minutes || 15)
     const parsedBundle = parseSourceBundle(studyset.source_bundle)
     try {
-      const { data: recentAttempts } = await (supabase as any)
-        .from('studyset_task_attempts')
-        .select('score')
-        .eq('user_id', user.id)
-        .eq('studyset_id', studyset.id)
-        .order('created_at', { ascending: false })
-        .limit(8)
-
-      const { data: weakTopicRows } = await (supabase as any)
-        .from('studyset_mastery_topics')
-        .select('topic_label, weakness_score, mastery_score')
-        .eq('user_id', user.id)
-        .eq('studyset_id', studyset.id)
-        .order('weakness_score', { ascending: false })
-        .limit(5)
+      const [{ data: recentAttempts }, { data: weakTopicRows }] = await Promise.all([
+        (supabase as any)
+          .from('studyset_task_attempts')
+          .select('score')
+          .eq('user_id', user.id)
+          .eq('studyset_id', studyset.id)
+          .order('created_at', { ascending: false })
+          .limit(8),
+        (supabase as any)
+          .from('studyset_mastery_topics')
+          .select('topic_label, weakness_score, mastery_score')
+          .eq('user_id', user.id)
+          .eq('studyset_id', studyset.id)
+          .order('weakness_score', { ascending: false })
+          .limit(5),
+      ])
 
       if (Array.isArray(recentAttempts) && recentAttempts.length > 0) {
         const avgScore = Math.round(
@@ -293,6 +326,46 @@ export async function GET(
       }
     } catch {
       // Normalized adaptive tables may not be migrated yet; JSON fallback already parsed.
+    }
+    let adaptiveContext: LaunchAdaptiveContext = {
+      weakestTool: '',
+      weakestAction: '',
+      pendingForTask: 0,
+      queueCount: 0,
+    }
+    try {
+      const [{ data: weakestProfile }, { data: queueRows }] = await Promise.all([
+        (supabase as any)
+          .from('studyset_tool_profiles')
+          .select('tool_key, recommended_action, avg_score')
+          .eq('user_id', user.id)
+          .eq('studyset_id', studyset.id)
+          .order('avg_score', { ascending: true })
+          .limit(1)
+          .maybeSingle(),
+        (supabase as any)
+          .from('studyset_intervention_queue')
+          .select('id, studyset_task_id')
+          .eq('user_id', user.id)
+          .eq('studyset_id', studyset.id)
+          .eq('status', 'pending')
+          .limit(40),
+      ])
+
+      const queue = Array.isArray(queueRows) ? queueRows : []
+      adaptiveContext = {
+        weakestTool: String(weakestProfile?.tool_key || ''),
+        weakestAction: String(weakestProfile?.recommended_action || ''),
+        pendingForTask: queue.filter((row: any) => String(row?.studyset_task_id || '') === String(taskId)).length,
+        queueCount: queue.length,
+      }
+    } catch {
+      adaptiveContext = {
+        weakestTool: '',
+        weakestAction: '',
+        pendingForTask: 0,
+        queueCount: 0,
+      }
     }
     const enrichedBundle = await enrichSelectedDocumentsFromStore(supabase, user.id, parsedBundle)
     const sourceText = buildSourceText(studyset.name, taskTitle, taskDescription, enrichedBundle)
@@ -330,6 +403,12 @@ export async function GET(
         sourceText,
         artifactTitle: `${studyset.name} - ${taskTitle}`,
         autoRun: true,
+        adaptiveContext: {
+          weakestTool: adaptiveContext.weakestTool || null,
+          weakestAction: adaptiveContext.weakestAction || null,
+          pendingQueueCount: adaptiveContext.queueCount,
+          pendingForTask: adaptiveContext.pendingForTask,
+        },
       },
     }
 
@@ -338,7 +417,7 @@ export async function GET(
         ...baseResponse,
         launch: {
           ...baseResponse.launch,
-          flashcardsPreset: buildFlashcardsPreset(taskTitle, estimatedMinutes, enrichedBundle),
+          flashcardsPreset: buildFlashcardsPreset(taskTitle, estimatedMinutes, enrichedBundle, adaptiveContext),
         },
       }
       console.info('[studyset-launch] success', { requestId, taskId, tool: 'flashcards' })
@@ -350,7 +429,7 @@ export async function GET(
         ...baseResponse,
         launch: {
           ...baseResponse.launch,
-          quizPreset: buildQuizPreset(taskTitle, taskDescription, estimatedMinutes, enrichedBundle),
+          quizPreset: buildQuizPreset(taskTitle, taskDescription, estimatedMinutes, enrichedBundle, adaptiveContext),
         },
       }
       console.info('[studyset-launch] success', { requestId, taskId, tool: 'quiz' })
@@ -361,7 +440,7 @@ export async function GET(
       ...baseResponse,
       launch: {
         ...baseResponse.launch,
-        notesPreset: buildNotesPreset(taskTitle, estimatedMinutes, enrichedBundle),
+        notesPreset: buildNotesPreset(taskTitle, estimatedMinutes, enrichedBundle, adaptiveContext),
       },
     }
     console.info('[studyset-launch] success', { requestId, taskId, tool: 'notes' })

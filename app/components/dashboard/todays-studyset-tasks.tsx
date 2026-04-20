@@ -7,36 +7,26 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Route, ArrowRight } from 'lucide-react';
 
-type StudysetAgendaTask = {
+type StudysetLaunchpadItem = {
   id: string;
-  type: string;
   title: string;
-  estimated_minutes: number;
-  completed: boolean;
-};
-
-type StudysetAgendaItem = {
-  id: string;
-  studyset_id: string;
-  title: string;
-  plan_date: string;
-  estimated_minutes: number;
-  tasks: StudysetAgendaTask[];
+  updated_at: string;
+  progress: {
+    completed_tasks: number;
+    total_tasks: number;
+    percent: number;
+  };
+  due_today_tasks: number;
+  pending_interventions: number;
+  next_action_href?: string | null;
+  next_action_type?: 'intervention' | 'task' | null;
+  next_action_label?: string;
+  analytics_href: string;
 };
 const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i;
-const TOOL_HREFS: Record<string, string> = {
-  notes: '/tools/notes',
-  flashcards: '/tools/flashcards',
-  quiz: '/tools/quiz',
-  wordweb: '/tools/notes',
-};
-
-function isoToday() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export function TodaysStudysetTasks() {
-  const [items, setItems] = useState<StudysetAgendaItem[]>([]);
+  const [items, setItems] = useState<StudysetLaunchpadItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,8 +39,7 @@ export function TodaysStudysetTasks() {
 
     const load = async () => {
       try {
-        const today = isoToday();
-        const response = await fetch(`/api/studysets/agenda?from=${today}&to=${today}`, {
+        const response = await fetch('/api/studysets/launchpad?limit=6', {
           signal: controller.signal,
         });
         if (!response.ok) {
@@ -72,10 +61,10 @@ export function TodaysStudysetTasks() {
   }, []);
 
   const summary = useMemo(() => {
-    const allTasks = items.flatMap((item) => item.tasks || []);
-    const completed = allTasks.filter((task) => task.completed).length;
-    const total = allTasks.length;
-    return { completed, total };
+    const completed = items.reduce((sum, item) => sum + Number(item?.progress?.completed_tasks || 0), 0);
+    const total = items.reduce((sum, item) => sum + Number(item?.progress?.total_tasks || 0), 0);
+    const queue = items.reduce((sum, item) => sum + Number(item?.pending_interventions || 0), 0);
+    return { completed, total, queue };
   }, [items]);
 
   if (loading) {
@@ -99,40 +88,40 @@ export function TodaysStudysetTasks() {
           Today&apos;s Studyset
         </CardTitle>
         <CardDescription>
-          {summary.completed}/{summary.total} tasks completed today
+          {summary.completed}/{summary.total} tasks complete - Queue {summary.queue}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {items.slice(0, 2).map((item) => {
-          const completed = (item.tasks || []).filter((task) => task.completed).length;
-          const total = (item.tasks || []).length;
+        {items.slice(0, 3).map((item) => {
+          const completed = Number(item?.progress?.completed_tasks || 0);
+          const total = Number(item?.progress?.total_tasks || 0);
           return (
             <div key={item.id} className="rounded-md border p-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-medium truncate">{item.title}</p>
-                <Badge variant="outline">
-                  {completed}/{total}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {Number(item.pending_interventions || 0) > 0 && (
+                    <Badge variant="outline">Q:{item.pending_interventions}</Badge>
+                  )}
+                  <Badge variant="outline">{completed}/{total}</Badge>
+                </div>
               </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Due today {Number(item?.due_today_tasks || 0)} - {Number(item?.progress?.percent || 0)}%
+              </p>
               <div className="mt-3">
                 <div className="flex items-center gap-2">
                   <Button asChild size="sm" variant="outline">
-                    <Link prefetch={false} href={`/tools/studyset/${item.studyset_id}`}>
+                    <Link prefetch={false} href={item.analytics_href || `/tools/studyset/${item.id}`}>
                       Open Studyset
                       <ArrowRight className="ml-2 h-3.5 w-3.5" />
                     </Link>
                   </Button>
-                  {(() => {
-                    const nextTask = (item.tasks || []).find((task) => !task.completed && task.type !== 'review');
-                    if (!nextTask) return null;
-                    const base = TOOL_HREFS[nextTask.type] || '/tools/notes';
-                    const href = `${base}?studysetId=${item.studyset_id}&taskId=${nextTask.id}&launch=1`;
-                    return (
-                      <Button asChild size="sm">
-                        <Link prefetch={false} href={href}>Start now</Link>
-                      </Button>
-                    );
-                  })()}
+                  {item.next_action_href && (
+                    <Button asChild size="sm">
+                      <Link prefetch={false} href={item.next_action_href}>{item.next_action_label || 'Start now'}</Link>
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

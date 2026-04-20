@@ -423,8 +423,7 @@ export async function runDailyReplanForUser(input: {
     .from('studysets')
     .select('id, status')
     .eq('user_id', userId)
-    .in('status', ['active', 'due', 'draft'])
-    .limit(25)
+    .limit(100)
 
   const results: ReplanResult[] = []
   for (const row of Array.isArray(studysets) ? studysets : []) {
@@ -443,4 +442,3 @@ export async function runDailyReplanForUser(input: {
     results,
   }
 }
-

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { logAuditEntry } from '@/lib/auth/class-permissions'
 import { runDailyReplanForUser } from '@/lib/studysets/daily-replan'
 import { deriveStudysetRuntimeStatus } from '@/lib/studysets/runtime'
+import { runDailyAdaptiveSyncForUser } from '@/lib/studysets/adaptive-engine'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,6 +57,15 @@ export async function GET() {
         message: (runError as any)?.message || String(runError),
       })
     })
+    await runDailyAdaptiveSyncForUser({
+      supabase,
+      userId: user.id,
+      force: false,
+    }).catch((runError) => {
+      console.warn('daily adaptive sync auto-run skipped', {
+        message: (runError as any)?.message || String(runError),
+      })
+    })
 
     const { data: refreshedRows } = await (supabase as any)
       .from('studysets')
@@ -67,7 +77,7 @@ export async function GET() {
     const studysetIds = studysets.map((row: any) => String(row.id)).filter(Boolean)
     if (studysetIds.length === 0) return NextResponse.json({ studysets: [] })
 
-    const [{ data: dayRows }, { data: recentAttempts }] = await Promise.all([
+    const [{ data: dayRows }, { data: recentAttempts }, { data: pendingInterventions }, { data: weakestProfiles }] = await Promise.all([
       (supabase as any)
         .from('studyset_plan_days')
         .select(`
@@ -92,6 +102,20 @@ export async function GET() {
         .in('studyset_id', studysetIds)
         .order('created_at', { ascending: false })
         .limit(800),
+      (supabase as any)
+        .from('studyset_intervention_queue')
+        .select('studyset_id')
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
+        .in('studyset_id', studysetIds)
+        .limit(800),
+      (supabase as any)
+        .from('studyset_tool_profiles')
+        .select('studyset_id, tool_key, avg_score')
+        .eq('user_id', user.id)
+        .in('studyset_id', studysetIds)
+        .order('avg_score', { ascending: true })
+        .limit(800),
     ])
 
     const daysByStudyset = new Map<string, any[]>()
@@ -110,6 +134,20 @@ export async function GET() {
       const list = attemptsByStudyset.get(key) || []
       list.push(row)
       attemptsByStudyset.set(key, list)
+    }
+
+    const pendingInterventionsByStudyset = new Map<string, number>()
+    for (const row of Array.isArray(pendingInterventions) ? pendingInterventions : []) {
+      const key = String(row?.studyset_id || '')
+      if (!key) continue
+      pendingInterventionsByStudyset.set(key, Number(pendingInterventionsByStudyset.get(key) || 0) + 1)
+    }
+
+    const weakestToolByStudyset = new Map<string, string>()
+    for (const row of Array.isArray(weakestProfiles) ? weakestProfiles : []) {
+      const key = String(row?.studyset_id || '')
+      if (!key || weakestToolByStudyset.has(key)) continue
+      weakestToolByStudyset.set(key, String(row?.tool_key || ''))
     }
 
     const todayIso = new Date().toISOString().slice(0, 10)
@@ -190,6 +228,8 @@ export async function GET() {
           avg_score: avgScore,
           recent_attempts_7d: recentAttemptCount,
           due_today_tasks: dueTodayTasks,
+          pending_interventions: Number(pendingInterventionsByStudyset.get(studysetId) || 0),
+          weakest_tool: weakestToolByStudyset.get(studysetId) || null,
         },
         next_task_id: nextTaskId,
         next_task_href: nextTaskHref,

@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
 
     if (daysError) return NextResponse.json({ error: daysError.message }, { status: 500 });
 
-    const todayIso = toIsoLocalDate(new Date());
+    const todayIsoForStatus = toIsoLocalDate(new Date());
     const sourceDayDates = (Array.isArray(sourceDays) ? sourceDays : [])
       .map((day: any) => String(day?.plan_date || '').slice(0, 10))
       .filter((date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date))
@@ -256,7 +256,7 @@ export async function POST(req: NextRequest) {
       for (const task of Array.isArray(day?.studyset_plan_tasks) ? day.studyset_plan_tasks : []) {
         totalTasks += 1;
         if (task?.completed === true) completedTasks += 1;
-        else if (planDate && planDate < todayIso) hasOverduePendingTasks = true;
+        else if (planDate && planDate < todayIsoForStatus) hasOverduePendingTasks = true;
       }
     }
 

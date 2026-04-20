@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { deriveStudysetRuntimeStatus } from '@/lib/studysets/runtime'
+import { upsertStudysetAdaptiveRuntime } from '@/lib/studysets/adaptive-engine'
+import { upsertDailyPulseForStudyset } from '@/lib/studysets/daily-pulse'
 
 export const dynamic = 'force-dynamic'
 
@@ -256,6 +258,110 @@ export async function GET(
       studyset.status = derivedStatus
     }
 
+    await upsertStudysetAdaptiveRuntime({
+      supabase,
+      userId: user.id,
+      studysetId: studyset.id,
+    }).catch(() => {
+      // Ignore when migration is not applied yet; page should still load.
+    })
+    await upsertDailyPulseForStudyset({
+      supabase,
+      userId: user.id,
+      studysetId: studyset.id,
+    }).catch(() => {
+      // Ignore when daily pulse table is not migrated yet.
+    })
+
+    const [toolProfilesResult, interventionsResult, dailyPulseResult] = await Promise.all([
+      (supabase as any)
+        .from('studyset_tool_profiles')
+        .select('id, tool_key, attempts_count, avg_score, recent_avg_score, mastery_band, momentum, momentum_delta, recommended_action, updated_at')
+        .eq('user_id', user.id)
+        .eq('studyset_id', studyset.id)
+        .order('avg_score', { ascending: true })
+        .limit(12),
+      (supabase as any)
+        .from('studyset_intervention_queue')
+        .select(`
+          id,
+          kind,
+          tool_key,
+          title,
+          reason,
+          priority,
+          due_date,
+          status,
+          created_at,
+          payload,
+          studyset_task_id,
+          studyset_plan_tasks (
+            id,
+            task_type,
+            title,
+            studyset_day_id,
+            studyset_plan_days (
+              day_number,
+              plan_date
+            )
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('studyset_id', studyset.id)
+        .eq('status', 'pending')
+        .order('priority', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(20),
+      (supabase as any)
+        .from('studyset_daily_pulses')
+        .select('id, pulse_date, completion_percent, avg_score, pending_tasks, pending_interventions, weakest_tool, focus_topics, recommended_tools, summary, updated_at')
+        .eq('user_id', user.id)
+        .eq('studyset_id', studyset.id)
+        .order('pulse_date', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ])
+
+    const toolProfiles = Array.isArray(toolProfilesResult.data) ? toolProfilesResult.data : []
+    const dailyPulse = dailyPulseResult?.data
+      ? {
+          id: String(dailyPulseResult.data.id),
+          pulse_date: String(dailyPulseResult.data.pulse_date || ''),
+          completion_percent: Number(dailyPulseResult.data.completion_percent || 0),
+          avg_score: Number(dailyPulseResult.data.avg_score || 0),
+          pending_tasks: Number(dailyPulseResult.data.pending_tasks || 0),
+          pending_interventions: Number(dailyPulseResult.data.pending_interventions || 0),
+          weakest_tool: dailyPulseResult.data.weakest_tool ? String(dailyPulseResult.data.weakest_tool) : null,
+          focus_topics: Array.isArray(dailyPulseResult.data.focus_topics) ? dailyPulseResult.data.focus_topics : [],
+          recommended_tools: Array.isArray(dailyPulseResult.data.recommended_tools) ? dailyPulseResult.data.recommended_tools : [],
+          summary: String(dailyPulseResult.data.summary || ''),
+          updated_at: dailyPulseResult.data.updated_at ? String(dailyPulseResult.data.updated_at) : null,
+        }
+      : null
+    const interventionsPending = (Array.isArray(interventionsResult.data) ? interventionsResult.data : []).map((row: any) => {
+      const task = row?.studyset_plan_tasks
+      const taskId = String(task?.id || row?.studyset_task_id || '')
+      const taskType = String(task?.task_type || row?.tool_key || 'notes')
+      const launchHref = taskId ? getTaskHref(taskType, String(studyset.id), taskId) : null
+      return {
+        id: String(row?.id || ''),
+        kind: String(row?.kind || 'focus'),
+        tool_key: row?.tool_key ? String(row.tool_key) : null,
+        title: String(row?.title || 'Intervention'),
+        reason: String(row?.reason || ''),
+        priority: Number(row?.priority || 0),
+        due_date: row?.due_date ? String(row.due_date) : null,
+        status: String(row?.status || 'pending'),
+        created_at: row?.created_at ? String(row.created_at) : null,
+        task_id: taskId || null,
+        task_type: taskType || null,
+        task_title: task?.title ? String(task.title) : null,
+        day_number: Number(task?.studyset_plan_days?.day_number || 0) || null,
+        plan_date: task?.studyset_plan_days?.plan_date ? String(task.studyset_plan_days.plan_date).slice(0, 10) : null,
+        launch_href: launchHref,
+      }
+    })
+
     let adaptive: any = null
     const weakTopicsFromTable = Array.isArray(masteryResult.data)
       ? masteryResult.data
@@ -302,7 +408,14 @@ export async function GET(
             href: nextTaskHref,
             dayNumber: Number(nextPending.day?.day_number || 1),
           }
-        : null,
+        : interventionsPending.length > 0
+          ? {
+              tool: String(interventionsPending[0]?.task_type || interventionsPending[0]?.tool_key || 'notes'),
+              taskTitle: String(interventionsPending[0]?.title || 'Intervention'),
+              href: interventionsPending[0]?.launch_href || null,
+              dayNumber: Number(interventionsPending[0]?.day_number || 1),
+            }
+          : null,
     }
 
     const daysCompleted = days.filter((day: any) => day.completed === true).length
@@ -384,6 +497,12 @@ export async function GET(
           pending_days: pendingDaysCount,
           forecast_finish_date: forecastFinishDate,
         },
+        adaptive_engine: {
+          tool_profiles: toolProfiles,
+          interventions_pending: interventionsPending,
+          generated_at: new Date().toISOString(),
+        },
+        daily_pulse: dailyPulse,
       },
       progress: {
         total_tasks: totalTasks,

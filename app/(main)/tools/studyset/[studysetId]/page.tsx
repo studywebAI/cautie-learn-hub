@@ -128,6 +128,56 @@ type StudysetAnalytics = {
     pending_days: number;
     forecast_finish_date: string | null;
   };
+  adaptive_engine?: {
+    tool_profiles?: Array<{
+      id: string;
+      tool_key: string;
+      attempts_count: number;
+      avg_score: number;
+      recent_avg_score: number;
+      mastery_band: 'weak' | 'developing' | 'strong' | string;
+      momentum: 'down' | 'flat' | 'up' | string;
+      momentum_delta: number;
+      recommended_action: 'reinforce' | 'stabilize' | 'challenge' | string;
+      updated_at: string;
+    }>;
+    interventions_pending?: Array<{
+      id: string;
+      kind: 'retry' | 'focus' | 'challenge' | string;
+      tool_key?: string | null;
+      title: string;
+      reason: string;
+      priority: number;
+      due_date?: string | null;
+      status?: string;
+      created_at?: string | null;
+      task_id?: string | null;
+      task_type?: string | null;
+      task_title?: string | null;
+      day_number?: number | null;
+      plan_date?: string | null;
+      launch_href?: string | null;
+    }>;
+    generated_at?: string;
+  };
+  daily_pulse?: {
+    id: string;
+    pulse_date: string;
+    completion_percent: number;
+    avg_score: number;
+    pending_tasks: number;
+    pending_interventions: number;
+    weakest_tool?: string | null;
+    focus_topics?: string[];
+    recommended_tools?: Array<{
+      tool?: string;
+      avg_score?: number;
+      action?: string;
+      pending_tasks?: number;
+    }>;
+    summary?: string;
+    updated_at?: string | null;
+  } | null;
 };
 
 type StudysetDeepAnalytics = {
@@ -160,7 +210,7 @@ function toIsoLocalDate(date: Date) {
 function shortTopicLabel(input: string, max = 20) {
   const value = String(input || '').trim();
   if (value.length <= max) return value;
-  return `${value.slice(0, max - 1)}…`;
+  return `${value.slice(0, max - 1)}...`;
 }
 
 export default function StudysetDetailPage() {
@@ -184,7 +234,8 @@ export default function StudysetDetailPage() {
   const [taskMetrics, setTaskMetrics] = useState<Record<string, TaskMetric>>({});
   const [nextTaskHref, setNextTaskHref] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
-  const [refreshingAI, setRefreshingAI] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
+  const [updatingInterventionId, setUpdatingInterventionId] = useState<string | null>(null);
 
   const loadDetail = async () => {
     if (!studysetId) return;
@@ -397,30 +448,71 @@ export default function StudysetDetailPage() {
     }
   };
 
-  const handleAIRefresh = async () => {
-    if (refreshingAI) return;
-    setRefreshingAI(true);
+  const handleOptimize = async () => {
+    if (!studysetId || optimizing) return;
+    setOptimizing(true);
     try {
-      const response = await fetch('/api/studysets/daily-replan', {
+      const response = await fetch('/api/studysets/optimize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ force: true }),
+        body: JSON.stringify({
+          force: true,
+          studysetId,
+          includeLaunchpad: false,
+        }),
       });
       const json = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(json?.error || 'Could not refresh studyset plan');
+      if (!response.ok) throw new Error(json?.error || 'Could not optimize studyset');
+
+      const replanChanged = json?.replan?.changed === true;
+      const adaptiveChanged = json?.adaptive?.changed === true;
       toast({
-        title: 'AI refresh completed',
-        description: `Updated ${Number(json?.changed || 0)} studyset(s).`,
+        title: 'Studyset optimized',
+        description: `Replan ${replanChanged ? 'updated' : 'unchanged'} | Adaptive ${adaptiveChanged ? 'updated' : 'unchanged'}.`,
       });
       await loadDetail();
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'AI refresh failed',
+        title: 'Optimization failed',
         description: error?.message || 'Try again.',
       });
     } finally {
-      setRefreshingAI(false);
+      setOptimizing(false);
+    }
+  };
+
+  const updateInterventionStatus = async (interventionId: string, status: 'done' | 'dismissed') => {
+    if (!interventionId || updatingInterventionId) return;
+    setUpdatingInterventionId(interventionId);
+    try {
+      const response = await fetch(`/api/studysets/interventions/${interventionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json?.error || 'Could not update intervention');
+
+      setAnalytics((prev) => {
+        if (!prev) return prev;
+        const current = prev.adaptive_engine?.interventions_pending || [];
+        return {
+          ...prev,
+          adaptive_engine: {
+            ...(prev.adaptive_engine || {}),
+            interventions_pending: current.filter((row) => row.id !== interventionId),
+          },
+        };
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Intervention update failed',
+        description: error?.message || 'Try again.',
+      });
+    } finally {
+      setUpdatingInterventionId(null);
     }
   };
 
@@ -482,8 +574,8 @@ export default function StudysetDetailPage() {
                   <Send className="mr-2 h-3.5 w-3.5" />
                   {shareLoading ? 'Preparing...' : 'Share'}
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => void handleAIRefresh()} disabled={refreshingAI}>
-                  {refreshingAI ? 'Refreshing...' : 'AI refresh'}
+                <Button size="sm" variant="outline" onClick={() => void handleOptimize()} disabled={optimizing}>
+                  {optimizing ? 'Optimizing...' : 'Optimize now'}
                 </Button>
                 <Button size="sm" variant={showAnalytics ? 'default' : 'outline'} onClick={() => setShowAnalytics((value) => !value)}>
                   {showAnalytics ? 'Hide analytics' : 'Analytics'}
@@ -673,6 +765,115 @@ export default function StudysetDetailPage() {
                       <Bar dataKey="score" fill="var(--color-score)" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ChartContainer>
+                </div>
+              )}
+
+              {analytics.adaptive_engine && (
+                <div className="space-y-2 rounded-lg bg-background p-2">
+                  <p className="text-[11px] text-muted-foreground">Intervention queue (Step 5)</p>
+                  {(analytics.adaptive_engine.tool_profiles || []).length > 0 && (
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {(analytics.adaptive_engine.tool_profiles || []).slice(0, 3).map((profile) => (
+                        <div key={profile.id} className="rounded-lg border p-2">
+                          <p className="text-xs font-medium">{toolLabel(profile.tool_key)}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {profile.avg_score}% avg - {profile.mastery_band} - {profile.momentum}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            Action: {profile.recommended_action}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {(analytics.adaptive_engine.interventions_pending || []).length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No active interventions right now.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {(analytics.adaptive_engine.interventions_pending || []).slice(0, 8).map((item) => (
+                        <div key={item.id} className="rounded-lg border p-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-medium">{item.title}</p>
+                            <Badge variant="outline">P{item.priority}</Badge>
+                          </div>
+                          <p className="mt-1 text-[11px] text-muted-foreground">{item.reason}</p>
+                          <div className="mt-2 flex items-center gap-2">
+                            {item.launch_href && (
+                              <Button asChild size="sm" variant="outline">
+                                <Link href={item.launch_href}>Start</Link>
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={updatingInterventionId === item.id}
+                              onClick={() => void updateInterventionStatus(item.id, 'done')}
+                            >
+                              Done
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={updatingInterventionId === item.id}
+                              onClick={() => void updateInterventionStatus(item.id, 'dismissed')}
+                            >
+                              Dismiss
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {analytics.daily_pulse && (
+                <div className="space-y-2 rounded-lg bg-background p-2">
+                  <p className="text-[11px] text-muted-foreground">Daily pulse</p>
+                  <p className="text-xs text-muted-foreground">
+                    {analytics.daily_pulse.summary || 'No pulse summary yet.'}
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-4">
+                    <div className="rounded-lg border p-2">
+                      <p className="text-[11px] text-muted-foreground">Pulse date</p>
+                      <p className="text-sm font-medium">{analytics.daily_pulse.pulse_date || 'n/a'}</p>
+                    </div>
+                    <div className="rounded-lg border p-2">
+                      <p className="text-[11px] text-muted-foreground">Weakest tool</p>
+                      <p className="text-sm font-medium">
+                        {analytics.daily_pulse.weakest_tool ? toolLabel(analytics.daily_pulse.weakest_tool) : 'n/a'}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border p-2">
+                      <p className="text-[11px] text-muted-foreground">Pending tasks</p>
+                      <p className="text-sm font-medium">{Number(analytics.daily_pulse.pending_tasks || 0)}</p>
+                    </div>
+                    <div className="rounded-lg border p-2">
+                      <p className="text-[11px] text-muted-foreground">Queue</p>
+                      <p className="text-sm font-medium">{Number(analytics.daily_pulse.pending_interventions || 0)}</p>
+                    </div>
+                  </div>
+                  {Array.isArray(analytics.daily_pulse.focus_topics) && analytics.daily_pulse.focus_topics.length > 0 && (
+                    <div className="rounded-lg border p-2">
+                      <p className="text-[11px] text-muted-foreground">Focus topics</p>
+                      <p className="text-xs">{analytics.daily_pulse.focus_topics.slice(0, 4).join(', ')}</p>
+                    </div>
+                  )}
+                  {Array.isArray(analytics.daily_pulse.recommended_tools) && analytics.daily_pulse.recommended_tools.length > 0 && (
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {analytics.daily_pulse.recommended_tools.slice(0, 3).map((item, idx) => (
+                        <div key={`${String(item?.tool || 'tool')}-${idx}`} className="rounded-lg border p-2">
+                          <p className="text-xs font-medium">{toolLabel(String(item?.tool || 'notes'))}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            Score {Number(item?.avg_score || 0)}% - {String(item?.action || 'stabilize')}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            Pending {Number(item?.pending_tasks || 0)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

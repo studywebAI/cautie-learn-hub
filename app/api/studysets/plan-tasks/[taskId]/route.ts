@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { logAuditEntry } from '@/lib/auth/class-permissions'
 import { deriveStudysetRuntimeStatus } from '@/lib/studysets/runtime'
+import { resolvePendingInterventionsForTask } from '@/lib/studysets/interventions-runtime'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +35,8 @@ export async function PATCH(
             id,
             user_id,
             class_id,
-            name
+            name,
+            status
           )
         )
       `)
@@ -73,6 +75,17 @@ export async function PATCH(
       .eq('studyset_day_id', day.id)
 
     if (updateTaskError) return NextResponse.json({ error: updateTaskError.message }, { status: 500 })
+
+    if (nextCompleted) {
+      await resolvePendingInterventionsForTask({
+        supabase,
+        userId: user.id,
+        studysetId: day.studyset_id,
+        taskId,
+      }).catch(() => {
+        // Do not block task completion if intervention queue update fails.
+      })
+    }
 
     const { data: dayTasks, error: dayTasksError } = await (supabase as any)
       .from('studyset_plan_tasks')
