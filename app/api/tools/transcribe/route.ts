@@ -36,9 +36,15 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const input = formData.get('file');
     const language = normalizeLanguage(formData.get('language')?.toString());
+    const micSessionId = String(formData.get('micSessionId') || '').trim();
+    const clientTs = String(formData.get('clientTs') || '').trim();
     log('transcribe_formdata_parsed', {
       language: language || null,
+      micSessionId: micSessionId || null,
+      clientTs: clientTs || null,
       inputType: input?.constructor?.name || typeof input,
+      contentType: request.headers.get('content-type') || null,
+      userAgent: request.headers.get('user-agent') || null,
     });
 
     if (!(input instanceof File)) {
@@ -51,6 +57,7 @@ export async function POST(request: NextRequest) {
       fileType: input.type,
       fileSize: input.size,
       maxSize: MAX_AUDIO_BYTES,
+      micSessionId: micSessionId || null,
     });
 
     if (!input.type.startsWith('audio/') && !input.type.startsWith('video/')) {
@@ -78,6 +85,7 @@ export async function POST(request: NextRequest) {
     log('transcribe_upstream_request_start', {
       model: 'whisper-1',
       language: language || null,
+      micSessionId: micSessionId || null,
     });
 
     const upstream = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -93,6 +101,7 @@ export async function POST(request: NextRequest) {
       ok: upstream.ok,
       status: upstream.status,
       durationMs: Date.now() - startedAt,
+      micSessionId: micSessionId || null,
       payloadKeys: payload ? Object.keys(payload) : [],
       textLength: typeof payload?.text === 'string' ? payload.text.length : 0,
       errorMessage: payload?.error?.message || null,
@@ -110,6 +119,7 @@ export async function POST(request: NextRequest) {
     log('transcribe_success', {
       textLength: text.length,
       durationMs: Date.now() - startedAt,
+      micSessionId: micSessionId || null,
       textPreview: text.slice(0, 160),
     });
     return NextResponse.json({ text });

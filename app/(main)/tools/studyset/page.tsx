@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ChevronLeft,
@@ -168,9 +168,32 @@ export default function StudysetPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const recordedChunksRef = useRef<BlobPart[]>([]);
+  const micSessionIdRef = useRef<string>('');
+  const micChunkCountRef = useRef(0);
+  const micChunkBytesRef = useRef(0);
   const oneDriveSectionRef = useRef<HTMLDivElement | null>(null);
 
   const madeStudysets = useMemo(() => studysets.filter((row) => row.status !== 'archived'), [studysets]);
+  const debugMic = useCallback((event: string, details?: Record<string, unknown>) => {
+    const payload = {
+      event,
+      sessionId: micSessionIdRef.current || null,
+      ts: new Date().toISOString(),
+      surface: 'studyset-create',
+      ...details,
+    };
+    console.log('[MIC_DEBUG][STUDYSET][CLIENT]', payload);
+    try {
+      void fetch('/api/tools/mic-debug', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      });
+    } catch {
+      // keep recording flow resilient if logging fails
+    }
+  }, []);
 
   const selectedDateStrings = useMemo(() => normalizeDates(selectedDates), [selectedDates]);
   const todayDate = useMemo(() => {
@@ -462,24 +485,52 @@ export default function StudysetPage() {
 
   const transcribeVoiceMemo = async (audioBlob: Blob) => {
     setIsTranscribing(true);
+    const startedAt = Date.now();
+    debugMic('transcribe_started', {
+      blobType: audioBlob.type || 'audio/webm',
+      blobSize: audioBlob.size,
+      chunks: micChunkCountRef.current,
+      totalChunkBytes: micChunkBytesRef.current,
+      language,
+    });
     try {
       const file = new File([audioBlob], 'studyset-voice-memo.webm', { type: audioBlob.type || 'audio/webm' });
       const formData = new FormData();
       formData.append('file', file);
       formData.append('language', String(language || 'en'));
+      formData.append('micSessionId', micSessionIdRef.current || '');
+      formData.append('clientTs', new Date().toISOString());
       const response = await fetch('/api/tools/transcribe', { method: 'POST', body: formData });
       const payload = await response.json().catch(() => ({}));
+      debugMic('transcribe_response', {
+        ok: response.ok,
+        status: response.status,
+        durationMs: Date.now() - startedAt,
+        responseKeys: payload ? Object.keys(payload) : [],
+        textLength: typeof payload?.text === 'string' ? payload.text.length : 0,
+        errorMessage: payload?.error || null,
+      });
       if (!response.ok) {
         throw new Error(typeof payload?.error === 'string' ? payload.error : 'Could not transcribe audio.');
       }
       const transcript = typeof payload?.text === 'string' ? payload.text.trim() : '';
       if (!transcript) {
+        debugMic('transcribe_no_text', { durationMs: Date.now() - startedAt });
         toast({ title: 'No speech detected', description: 'Recording was saved but no transcript was returned.' });
         return;
       }
       setVoiceMemoText((prev) => `${prev.trim()}\n${transcript}`.trim());
+      debugMic('transcribe_success', {
+        durationMs: Date.now() - startedAt,
+        transcriptLength: transcript.length,
+        transcriptPreview: transcript.slice(0, 160),
+      });
       toast({ title: 'Voice memo added', description: 'Transcript is now included in your studyset sources.' });
     } catch (error: any) {
+      debugMic('transcribe_error', {
+        durationMs: Date.now() - startedAt,
+        message: error?.message || null,
+      });
       toast({
         title: 'Voice transcription failed',
         description: error?.message || 'Try recording again.',
@@ -487,11 +538,17 @@ export default function StudysetPage() {
       });
     } finally {
       setIsTranscribing(false);
+      debugMic('transcribe_finished', { durationMs: Date.now() - startedAt });
     }
   };
 
   const stopRecording = async () => {
     const recorder = mediaRecorderRef.current;
+    debugMic('recording_stop_requested', {
+      recorderState: recorder?.state || 'none',
+      isRecording,
+      isTranscribing,
+    });
     if (recorder && recorder.state !== 'inactive') {
       recorder.stop();
     }
@@ -501,18 +558,34 @@ export default function StudysetPage() {
     }
     mediaStreamRef.current = null;
     setIsRecording(false);
+    debugMic('recording_stop_finished');
   };
 
   const startRecording = async () => {
+    micSessionIdRef.current = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    micChunkCountRef.current = 0;
+    micChunkBytesRef.current = 0;
+    debugMic('recording_start_requested', {
+      recordingSupported,
+      language,
+      hasMediaDevices: Boolean(navigator.mediaDevices?.getUserMedia),
+      hasMediaRecorder: typeof MediaRecorder !== 'undefined',
+    });
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      debugMic('recording_not_supported');
       toast({ title: 'Mic not available', description: 'Your browser does not support voice recording.', variant: 'destructive' });
       return;
     }
 
     try {
+      debugMic('media_devices_request_start');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
       recordedChunksRef.current = [];
+      debugMic('media_devices_request_success', {
+        audioTracks: stream.getAudioTracks().length,
+        trackLabels: stream.getAudioTracks().map((track) => track.label || 'unknown'),
+      });
       const preferredMime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
         : MediaRecorder.isTypeSupported('audio/webm')
@@ -520,18 +593,56 @@ export default function StudysetPage() {
           : '';
       const recorder = preferredMime ? new MediaRecorder(stream, { mimeType: preferredMime }) : new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
+      recorder.onstart = () => {
+        debugMic('recorder_started', {
+          recorderMimeType: recorder.mimeType,
+          preferredMime,
+        });
+      };
       recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) recordedChunksRef.current.push(event.data);
+        if (event.data && event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+          micChunkCountRef.current += 1;
+          micChunkBytesRef.current += event.data.size;
+          debugMic('recorder_chunk', {
+            chunkIndex: micChunkCountRef.current,
+            size: event.data.size,
+            totalBytes: micChunkBytesRef.current,
+          });
+        }
+      };
+      recorder.onerror = (event) => {
+        debugMic('recorder_error', {
+          recorderState: recorder.state,
+          eventType: event.type,
+        });
       };
       recorder.onstop = () => {
         const chunks = recordedChunksRef.current;
-        if (!chunks.length) return;
+        debugMic('recorder_stopped', {
+          chunkCount: micChunkCountRef.current,
+          totalBytes: micChunkBytesRef.current,
+          chunksLength: chunks.length,
+        });
+        if (!chunks.length) {
+          debugMic('recorder_stopped_no_chunks');
+          return;
+        }
         const blob = new Blob(chunks, { type: preferredMime || 'audio/webm' });
+        debugMic('recorder_blob_ready', {
+          blobType: blob.type,
+          blobSize: blob.size,
+        });
         void transcribeVoiceMemo(blob);
       };
       recorder.start(300);
       setIsRecording(true);
+      debugMic('recording_state_on');
     } catch (error: any) {
+      debugMic('media_devices_request_error', {
+        message: error?.message || null,
+        name: error?.name || null,
+      });
       toast({
         title: 'Mic permission denied',
         description: error?.message || 'Allow microphone access and try again.',
