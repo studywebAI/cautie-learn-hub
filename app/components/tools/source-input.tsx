@@ -1646,37 +1646,51 @@ export function SourceInput({
             </div>
           </div>
 
-          <div className="relative mx-auto flex min-h-[360px] w-full max-w-[760px] items-center justify-center">
-            <div className="relative hidden h-[340px] w-[340px] md:block">
-              {radialActions.map((action, index) => {
-                const ActionIcon = action.icon;
-                const count = Math.max(radialActions.length, 1);
-                const startAngle = -90;
-                const step = 360 / count;
-                const angle = (startAngle + index * step) * (Math.PI / 180);
-                const radius = isModeActive ? 142 : 122;
-                const tx = Math.round(Math.cos(angle) * radius);
-                const ty = Math.round(Math.sin(angle) * radius);
-                return (
-                  <button
-                    key={`ring-${action.mode}`}
-                    type="button"
-                    className={`group absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-sidebar-border bg-background shadow-sm transition-all duration-300 ease-out hover:bg-sidebar-accent/30 ${mode === action.mode ? 'ring-2 ring-ring scale-105' : ''} ${isModeActive && mode !== action.mode ? 'opacity-40 scale-[0.95]' : 'opacity-100 scale-100'}`}
-                    style={{ transform: `translate(${tx}px, ${ty}px)`, transitionDelay: `${index * 12}ms` }}
-                    onClick={action.onClick}
-                    title={action.label}
-                    disabled={disabled || isProcessing}
-                  >
-                    <ActionIcon className="h-4 w-4" />
-                    <span className="pointer-events-none absolute -bottom-6 whitespace-nowrap rounded bg-background px-1.5 py-0.5 text-[10px] opacity-0 shadow-sm transition-opacity duration-200 group-hover:opacity-100">
-                      {action.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <div className="relative mx-auto flex min-h-[360px] w-full max-w-[760px] items-center justify-center">
+              <div className="relative hidden h-[340px] w-[340px] md:block">
+                {radialActions.map((action, index) => {
+                  const ActionIcon = action.icon;
+                  const count = Math.max(radialActions.length, 1);
+                  const startAngle = -90;
+                  const step = 360 / count;
+                  const angleDeg = startAngle + index * step;
+                  const angle = (startAngle + index * step) * (Math.PI / 180);
+                  const radius = isModeActive ? 142 : 122;
+                  const tx = Math.round(Math.cos(angle) * radius);
+                  const ty = Math.round(Math.sin(angle) * radius);
+                  const lineLength = Math.max(0, radius - 34);
+                  return (
+                    <div key={`ring-${action.mode}`}>
+                      <div
+                        aria-hidden="true"
+                        className={`absolute left-1/2 top-1/2 z-0 h-px origin-left bg-border transition-opacity duration-300 ${isModeActive && mode !== action.mode ? 'opacity-45' : 'opacity-80'}`}
+                        style={{
+                          width: `${lineLength}px`,
+                          transform: `rotate(${angleDeg}deg)`,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className={`group absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-sidebar-border bg-background shadow-sm transition-all duration-300 ease-out hover:bg-sidebar-accent/30 ${mode === action.mode ? 'ring-2 ring-ring scale-105' : ''} ${isModeActive && mode !== action.mode ? 'opacity-80 scale-[0.97]' : 'opacity-100 scale-100'}`}
+                        style={{
+                          transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`,
+                          transitionDelay: `${index * 12}ms`,
+                        }}
+                        onClick={action.onClick}
+                        title={action.label}
+                        disabled={disabled || isProcessing}
+                      >
+                        <ActionIcon className="h-4 w-4" />
+                        <span className="pointer-events-none absolute -bottom-6 whitespace-nowrap rounded bg-background/95 px-1.5 py-0.5 text-[10px] shadow-sm">
+                          {action.label}
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
 
-            <div className={`relative z-10 w-full max-w-[560px] rounded-2xl border border-border bg-muted/60 p-3 transition-all duration-300 ease-out md:p-4 ${isModeActive ? 'shadow-lg shadow-black/5 scale-[1.01]' : 'shadow-none scale-100'}`}>
+            <div className={`relative z-10 w-full max-w-[560px] rounded-2xl border border-border bg-background p-3 transition-all duration-300 ease-out md:p-4 ${isModeActive ? 'shadow-lg shadow-black/5 scale-[1.01]' : 'shadow-none scale-100'}`}>
               {mode === 'text' && (
                 <div className="space-y-3">
                   <Textarea
