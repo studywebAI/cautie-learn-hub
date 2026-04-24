@@ -1,37 +1,21 @@
 'use client';
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  Atom,
-  Brain,
-  BookOpen,
-  Calculator,
   ChevronLeft,
-  ChevronDown,
   ChevronRight,
-  ChevronUp,
-  Code2,
-  Compass,
-  Dna,
-  FlaskConical,
-  GraduationCap,
-  Globe,
-  Landmark,
-  Languages,
-  Lightbulb,
-  Microscope,
-  Music,
-  Palette,
-  Pencil,
-  PenTool,
+  FileText,
+  FileUp,
+  History,
+  Link2,
+  Mic,
+  MicOff,
   Plus,
   Route,
-  Sigma,
+  Sparkles,
   Upload,
-  FileText,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
+import { AppContext } from '@/contexts/app-context';
 
 type StudysetRow = {
   id: string;
@@ -88,52 +73,24 @@ type UploadMeta = {
   extractionStatus?: 'ready' | 'empty' | 'error';
 };
 
-type IconOption = {
+type RecentMaterialItem = {
   id: string;
-  Icon: LucideIcon;
+  title: string;
+  type: string;
+  snippet: string;
 };
 
-type ColorOption = {
-  id: string;
-  swatchClass: string;
+type StudysetDraft = {
+  name: string;
+  selectedDates: string[];
+  notesText: string;
+  pastedText: string;
+  aiRulesText: string;
+  voiceMemoText: string;
 };
 
 const STEP_TITLES = ['Basics', 'Calendar', 'Sources'];
-
-const ICON_OPTIONS: IconOption[] = [
-  { id: 'book-open', Icon: BookOpen },
-  { id: 'flask', Icon: FlaskConical },
-  { id: 'landmark', Icon: Landmark },
-  { id: 'globe', Icon: Globe },
-  { id: 'calculator', Icon: Calculator },
-  { id: 'dna', Icon: Dna },
-  { id: 'atom', Icon: Atom },
-  { id: 'pencil', Icon: Pencil },
-  { id: 'code', Icon: Code2 },
-  { id: 'brain', Icon: Brain },
-  { id: 'graduation-cap', Icon: GraduationCap },
-  { id: 'languages', Icon: Languages },
-  { id: 'music', Icon: Music },
-  { id: 'palette', Icon: Palette },
-  { id: 'microscope', Icon: Microscope },
-  { id: 'sigma', Icon: Sigma },
-  { id: 'compass', Icon: Compass },
-  { id: 'pen-tool', Icon: PenTool },
-  { id: 'lightbulb', Icon: Lightbulb },
-];
-
-const COLOR_OPTIONS: ColorOption[] = [
-  { id: 'blue', swatchClass: 'bg-[#2563eb]' },
-  { id: 'sky', swatchClass: 'bg-[#0284c7]' },
-  { id: 'teal', swatchClass: 'bg-[#0f766e]' },
-  { id: 'green', swatchClass: 'bg-[#15803d]' },
-  { id: 'amber', swatchClass: 'bg-[#b45309]' },
-  { id: 'orange', swatchClass: 'bg-[#c2410c]' },
-  { id: 'red', swatchClass: 'bg-[#b91c1c]' },
-  { id: 'slate', swatchClass: 'bg-[#475569]' },
-  { id: 'zinc', swatchClass: 'bg-[#52525b]' },
-  { id: 'indigo', swatchClass: 'bg-[#4338ca]' },
-];
+const STUDYSET_DRAFT_KEY = 'studyset.create.draft.v2';
 
 const SOFT_SURFACE = 'border border-[#e5e7eb] bg-[#f8fafc] dark:border-zinc-800 dark:bg-zinc-900/40';
 const CALENDAR_CLASSES = {
@@ -156,16 +113,11 @@ function normalizeDates(dates: Date[]) {
   return Array.from(unique).sort();
 }
 
-function parseSourceMeta(raw: string | null | undefined) {
-  if (!raw) return { icon: null as string | null, color: null as string | null };
-  try {
-    const parsed = JSON.parse(raw);
-    const icon = typeof parsed?.meta?.icon === 'string' ? parsed.meta.icon : null;
-    const color = typeof parsed?.meta?.color === 'string' ? parsed.meta.color : null;
-    return { icon, color };
-  } catch {
-    return { icon: null, color: null };
-  }
+function parseDraftDate(value: string) {
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  parsed.setHours(0, 0, 0, 0);
+  return parsed;
 }
 
 function getMicrosoftErrorMessage(code: string) {
@@ -184,6 +136,8 @@ export default function StudysetPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const appContext = useContext(AppContext);
+  const language = appContext?.language ?? 'en';
 
   const [view, setView] = useState<'home' | 'create'>('home');
   const [step, setStep] = useState(0);
@@ -191,12 +145,15 @@ export default function StudysetPage() {
   const [loadingStudysets, setLoadingStudysets] = useState(true);
 
   const [name, setName] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [notesText, setNotesText] = useState('');
   const [pastedText, setPastedText] = useState('');
+  const [aiRulesText, setAiRulesText] = useState('');
+  const [voiceMemoText, setVoiceMemoText] = useState('');
   const [uploads, setUploads] = useState<UploadMeta[]>([]);
+  const [recentsLoading, setRecentsLoading] = useState(false);
+  const [recents, setRecents] = useState<RecentMaterialItem[]>([]);
+  const [selectedRecents, setSelectedRecents] = useState<string[]>([]);
 
   const [microsoftConnected, setMicrosoftConnected] = useState(false);
   const [microsoftEmail, setMicrosoftEmail] = useState('');
@@ -204,24 +161,16 @@ export default function StudysetPage() {
 
   const [creating, setCreating] = useState(false);
   const [optimizingAll, setOptimizingAll] = useState(false);
-  const [showIconOptions, setShowIconOptions] = useState(false);
-  const [showColorOptions, setShowColorOptions] = useState(false);
-  const [showNotesInput, setShowNotesInput] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [recordingSupported, setRecordingSupported] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recordedChunksRef = useRef<BlobPart[]>([]);
   const oneDriveSectionRef = useRef<HTMLDivElement | null>(null);
 
   const madeStudysets = useMemo(() => studysets.filter((row) => row.status !== 'archived'), [studysets]);
-
-  const usedMeta = useMemo(() => {
-    const icons = new Set<string>();
-    const colors = new Set<string>();
-    for (const row of studysets) {
-      const meta = parseSourceMeta(row.source_bundle);
-      if (meta.icon) icons.add(meta.icon);
-      if (meta.color) colors.add(meta.color);
-    }
-    return { icons, colors };
-  }, [studysets]);
 
   const selectedDateStrings = useMemo(() => normalizeDates(selectedDates), [selectedDates]);
   const todayDate = useMemo(() => {
@@ -235,22 +184,30 @@ export default function StudysetPage() {
   const isStepTwoReady = selectedDateStrings.length > 0;
   const hasExtractedUploads = uploads.some((file) => (file.extractedText || '').trim().length > 0);
   const hasExtractedMicrosoft = selectedMicrosoftFiles.some((file) => (file.extractedText || '').trim().length > 0);
+  const hasSelectedRecents = selectedRecents.length > 0;
   const isStepThreeReady =
     notesText.trim().length > 0 ||
     pastedText.trim().length > 0 ||
+    aiRulesText.trim().length > 0 ||
+    voiceMemoText.trim().length > 0 ||
+    hasSelectedRecents ||
     hasExtractedUploads ||
     hasExtractedMicrosoft;
 
   const resetWizard = () => {
     setStep(0);
     setName('');
-    setSelectedIcon(null);
-    setSelectedColor(null);
     setSelectedDates([]);
     setNotesText('');
     setPastedText('');
+    setAiRulesText('');
+    setVoiceMemoText('');
     setUploads([]);
+    setSelectedRecents([]);
     setSelectedMicrosoftFiles([]);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(STUDYSET_DRAFT_KEY);
+    }
   };
 
   const loadStudysets = async () => {
@@ -321,6 +278,16 @@ export default function StudysetPage() {
   }, []);
 
   useEffect(() => {
+    setRecordingSupported(typeof window !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined');
+    return () => {
+      const stream = mediaStreamRef.current;
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (searchParams.get('ms') === 'connected') {
       toast({ title: 'Microsoft connected', description: 'OneDrive files are ready.' });
       void loadMicrosoftStatus();
@@ -346,6 +313,27 @@ export default function StudysetPage() {
       if (!Number.isNaN(rawStep)) {
         setStep(Math.max(0, Math.min(2, rawStep)));
       }
+      if (typeof window !== 'undefined') {
+        const rawDraft = window.localStorage.getItem(STUDYSET_DRAFT_KEY);
+        if (rawDraft) {
+          try {
+            const parsed = JSON.parse(rawDraft) as StudysetDraft;
+            if (typeof parsed?.name === 'string') setName(parsed.name);
+            if (Array.isArray(parsed?.selectedDates)) {
+              const restoredDates = parsed.selectedDates
+                .map((value) => parseDraftDate(String(value || '')))
+                .filter((date): date is Date => Boolean(date));
+              setSelectedDates(restoredDates);
+            }
+            if (typeof parsed?.notesText === 'string') setNotesText(parsed.notesText);
+            if (typeof parsed?.pastedText === 'string') setPastedText(parsed.pastedText);
+            if (typeof parsed?.aiRulesText === 'string') setAiRulesText(parsed.aiRulesText);
+            if (typeof parsed?.voiceMemoText === 'string') setVoiceMemoText(parsed.voiceMemoText);
+          } catch {
+            window.localStorage.removeItem(STUDYSET_DRAFT_KEY);
+          }
+        }
+      }
     }
   }, [searchParams]);
 
@@ -367,8 +355,54 @@ export default function StudysetPage() {
     };
   }, [loadMicrosoftSelectedFiles]);
 
+  useEffect(() => {
+    if (view !== 'create') return;
+    const draft: StudysetDraft = {
+      name,
+      selectedDates: selectedDateStrings,
+      notesText,
+      pastedText,
+      aiRulesText,
+      voiceMemoText,
+    };
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(STUDYSET_DRAFT_KEY, JSON.stringify(draft));
+    }
+  }, [aiRulesText, name, notesText, pastedText, selectedDateStrings, view, voiceMemoText]);
+
+  useEffect(() => {
+    if (view === 'create' && step === 2) {
+      void loadRecents();
+    }
+  }, [step, view]);
+
   const startCreate = () => {
-    resetWizard();
+    if (typeof window !== 'undefined') {
+      const raw = window.localStorage.getItem(STUDYSET_DRAFT_KEY);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw) as StudysetDraft;
+          if (typeof parsed?.name === 'string') setName(parsed.name);
+          if (Array.isArray(parsed?.selectedDates)) {
+            const restoredDates = parsed.selectedDates
+              .map((value) => parseDraftDate(String(value || '')))
+              .filter((date): date is Date => Boolean(date));
+            setSelectedDates(restoredDates);
+          }
+          if (typeof parsed?.notesText === 'string') setNotesText(parsed.notesText);
+          if (typeof parsed?.pastedText === 'string') setPastedText(parsed.pastedText);
+          if (typeof parsed?.aiRulesText === 'string') setAiRulesText(parsed.aiRulesText);
+          if (typeof parsed?.voiceMemoText === 'string') setVoiceMemoText(parsed.voiceMemoText);
+        } catch {
+          window.localStorage.removeItem(STUDYSET_DRAFT_KEY);
+          resetWizard();
+        }
+      } else {
+        resetWizard();
+      }
+    } else {
+      resetWizard();
+    }
     setView('create');
   };
 
@@ -380,12 +414,130 @@ export default function StudysetPage() {
 
   const canNext = step === 0 ? isStepOneReady : step === 1 ? isStepTwoReady : false;
 
-  const autoPickMeta = () => {
-    const icon =
-      selectedIcon || ICON_OPTIONS.find((option) => !usedMeta.icons.has(option.id))?.id || ICON_OPTIONS[0].id;
-    const color =
-      selectedColor || COLOR_OPTIONS.find((option) => !usedMeta.colors.has(option.id))?.id || COLOR_OPTIONS[0].id;
-    return { icon, color };
+  const loadRecents = async () => {
+    setRecentsLoading(true);
+    try {
+      const response = await fetch('/api/materials?limit=12', { cache: 'no-store' });
+      if (!response.ok) {
+        setRecents([]);
+        return;
+      }
+      const data = await response.json().catch(() => ({}));
+      const items = Array.isArray(data?.materials) ? data.materials : [];
+      const mapped: RecentMaterialItem[] = items.map((item: any) => {
+        const sourceText = typeof item?.source_text === 'string' ? item.source_text : '';
+        const content =
+          typeof item?.content === 'string'
+            ? item.content
+            : item?.content && typeof item.content === 'object'
+              ? JSON.stringify(item.content)
+              : '';
+        const description = typeof item?.description === 'string' ? item.description : '';
+        const snippet = (sourceText || description || content).replace(/\s+/g, ' ').trim().slice(0, 260);
+        return {
+          id: String(item?.id || ''),
+          title: String(item?.title || item?.name || 'Untitled source'),
+          type: String(item?.type || 'material'),
+          snippet,
+        };
+      }).filter((item: RecentMaterialItem) => Boolean(item.id));
+      setRecents(mapped);
+    } finally {
+      setRecentsLoading(false);
+    }
+  };
+
+  const addSelectedRecentsToSources = () => {
+    const picked = recents.filter((item) => selectedRecents.includes(item.id));
+    if (picked.length === 0) return;
+    const block = picked
+      .map((item) => `[${item.type}] ${item.title}\n${item.snippet || 'No preview available.'}`)
+      .join('\n\n');
+    setPastedText((prev) => `${prev.trim()}\n\n${block}`.trim());
+    toast({
+      title: 'Recents imported',
+      description: `${picked.length} recent source${picked.length === 1 ? '' : 's'} added to pasted text.`,
+    });
+  };
+
+  const transcribeVoiceMemo = async (audioBlob: Blob) => {
+    setIsTranscribing(true);
+    try {
+      const file = new File([audioBlob], 'studyset-voice-memo.webm', { type: audioBlob.type || 'audio/webm' });
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('language', String(language || 'en'));
+      const response = await fetch('/api/tools/transcribe', { method: 'POST', body: formData });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(typeof payload?.error === 'string' ? payload.error : 'Could not transcribe audio.');
+      }
+      const transcript = typeof payload?.text === 'string' ? payload.text.trim() : '';
+      if (!transcript) {
+        toast({ title: 'No speech detected', description: 'Recording was saved but no transcript was returned.' });
+        return;
+      }
+      setVoiceMemoText((prev) => `${prev.trim()}\n${transcript}`.trim());
+      toast({ title: 'Voice memo added', description: 'Transcript is now included in your studyset sources.' });
+    } catch (error: any) {
+      toast({
+        title: 'Voice transcription failed',
+        description: error?.message || 'Try recording again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const stopRecording = async () => {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.stop();
+    }
+    const stream = mediaStreamRef.current;
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+    mediaStreamRef.current = null;
+    setIsRecording(false);
+  };
+
+  const startRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      toast({ title: 'Mic not available', description: 'Your browser does not support voice recording.', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      recordedChunksRef.current = [];
+      const preferredMime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm')
+          ? 'audio/webm'
+          : '';
+      const recorder = preferredMime ? new MediaRecorder(stream, { mimeType: preferredMime }) : new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) recordedChunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        const chunks = recordedChunksRef.current;
+        if (!chunks.length) return;
+        const blob = new Blob(chunks, { type: preferredMime || 'audio/webm' });
+        void transcribeVoiceMemo(blob);
+      };
+      recorder.start(300);
+      setIsRecording(true);
+    } catch (error: any) {
+      toast({
+        title: 'Mic permission denied',
+        description: error?.message || 'Allow microphone access and try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleUploadChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -462,7 +614,6 @@ export default function StudysetPage() {
     if (!isStepOneReady || !isStepTwoReady || !isStepThreeReady) return;
     setCreating(true);
     try {
-      const meta = autoPickMeta();
       const extractedUploadFiles = uploads
         .map((file) => ({
           name: file.name,
@@ -487,17 +638,29 @@ export default function StudysetPage() {
         }))
         .filter((file) => file.extracted_text.length > 0);
 
+      const pickedRecents = recents.filter((item) => selectedRecents.includes(item.id));
+      const recentsTextBlock = pickedRecents
+        .map((item) => `[${item.type}] ${item.title}\n${item.snippet || 'No preview available.'}`)
+        .join('\n\n')
+        .trim();
+      const sourceNotesText = [notesText.trim(), aiRulesText.trim() ? `AI RULES\n${aiRulesText.trim()}` : '', voiceMemoText.trim() ? `VOICE MEMO\n${voiceMemoText.trim()}` : '']
+        .filter(Boolean)
+        .join('\n\n')
+        .trim();
+      const sourcePastedText = [pastedText.trim(), recentsTextBlock].filter(Boolean).join('\n\n').trim();
+      const contextText = [sourceNotesText, sourcePastedText].filter(Boolean).join('\n\n').trim();
+
       const sourcePayload = {
-        meta: {
-          icon: meta.icon,
-          color: meta.color,
-        },
         schedule: {
           selected_dates: selectedDateStrings,
         },
         sources: {
-          notes_text: notesText.trim(),
-          pasted_text: pastedText.trim(),
+          notes_text: sourceNotesText,
+          pasted_text: sourcePastedText,
+          context_text: contextText,
+          ai_rules_text: aiRulesText.trim(),
+          voice_memo_text: voiceMemoText.trim(),
+          imported_recents: pickedRecents,
           uploaded_files: extractedUploadFiles,
           imports: {
             word: false,
@@ -546,6 +709,9 @@ export default function StudysetPage() {
       }
 
       toast({ title: 'Studyset created', description: 'Today plan is ready.' });
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(STUDYSET_DRAFT_KEY);
+      }
       router.push(`/tools/studyset/${studysetId}`);
     } catch (error: any) {
       toast({
@@ -716,67 +882,8 @@ export default function StudysetPage() {
                       className={`border-[#d1d5db] bg-[#f8fafc] text-zinc-900 placeholder:text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-100 dark:placeholder:text-zinc-400`}
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label>Icon (optional)</Label>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setShowIconOptions((v) => !v)}>
-                      Select icon
-                      {showIconOptions ? <ChevronUp className="ml-2 h-3 w-3" /> : <ChevronDown className="ml-2 h-3 w-3" />}
-                    </Button>
-                    {showIconOptions && (
-                      <div className="grid grid-cols-8 gap-1.5 rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-2 md:grid-cols-12 dark:border-zinc-800 dark:bg-zinc-900/40">
-                        {ICON_OPTIONS.map((option) => {
-                          const ActiveIcon = option.Icon;
-                          const selected = selectedIcon === option.id;
-                          return (
-                            <button
-                              key={option.id}
-                              type="button"
-                              onClick={() => setSelectedIcon(selected ? null : option.id)}
-                              aria-label={option.id}
-                              title={option.id}
-                              className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
-                                selected
-                                  ? 'bg-[#e2e8f0] text-foreground ring-1 ring-[#94a3b8] dark:bg-zinc-700 dark:ring-zinc-500'
-                                  : 'bg-white text-muted-foreground hover:bg-[#f1f5f9] dark:bg-zinc-900 dark:hover:bg-zinc-800'
-                              }`}
-                            >
-                              <ActiveIcon className="h-3.5 w-3.5" />
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Color (optional)</Label>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setShowColorOptions((v) => !v)}>
-                      Select color
-                      {showColorOptions ? <ChevronUp className="ml-2 h-3 w-3" /> : <ChevronDown className="ml-2 h-3 w-3" />}
-                    </Button>
-                    {showColorOptions && (
-                      <div className="grid grid-cols-10 gap-1.5 rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-2 md:grid-cols-14 dark:border-zinc-800 dark:bg-zinc-900/40">
-                        {COLOR_OPTIONS.map((color) => {
-                          const selected = selectedColor === color.id;
-                          return (
-                            <button
-                              key={color.id}
-                              type="button"
-                              aria-label={color.id}
-                              title={color.id}
-                              onClick={() => setSelectedColor(selected ? null : color.id)}
-                              className={`h-6 w-6 rounded-md transition-all ${color.swatchClass} ${
-                                selected ? 'ring-2 ring-[#334155] ring-offset-1 ring-offset-background' : 'hover:scale-[1.03]'
-                              }`}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      If you skip icon/color, we auto-pick an unused combo.
-                    </p>
+                  <div className={`rounded-xl p-3 text-xs text-foreground/80 ${SOFT_SURFACE}`}>
+                    Visual presets are now automatic. No icon or color setup needed.
                   </div>
                 </div>
               )}
@@ -812,154 +919,220 @@ export default function StudysetPage() {
 
               {step === 2 && (
                 <div className="space-y-4">
-                  <div className="grid gap-2 md:grid-cols-4">
-                    <button
-                      type="button"
-                      className={`rounded-xl p-3 text-left ${SOFT_SURFACE}`}
-                      onClick={() => setShowNotesInput(true)}
-                    >
-                      <p className="text-sm font-medium">Quick notes</p>
-                      <p className="mt-1 text-xs text-muted-foreground">Add guidance for AI planning.</p>
-                    </button>
-                    <button
-                      type="button"
-                      className={`rounded-xl p-3 text-left ${SOFT_SURFACE}`}
-                      onClick={() => {
-                        const field = document.getElementById('studyset-pasted-text');
-                        field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }}
-                    >
-                      <p className="text-sm font-medium">Pasted text</p>
-                      <p className="mt-1 text-xs text-muted-foreground">Paste chapter or exam content.</p>
-                    </button>
-                    <button
-                      type="button"
-                      className={`rounded-xl p-3 text-left ${SOFT_SURFACE}`}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <p className="text-sm font-medium">Files</p>
-                      <p className="mt-1 text-xs text-muted-foreground">Upload PDFs, docs, slides, images.</p>
-                    </button>
-                    <button
-                      type="button"
-                      className={`rounded-xl p-3 text-left ${SOFT_SURFACE}`}
-                      onClick={() => oneDriveSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                    >
-                      <p className="text-sm font-medium">OneDrive</p>
-                      <p className="mt-1 text-xs text-muted-foreground">Import selected cloud documents.</p>
-                    </button>
-                  </div>
-
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
-                      <div className="mb-2 flex items-center justify-between">
-                        <Label>Quick notes</Label>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setShowNotesInput((v) => !v)}>
-                          {showNotesInput ? 'Hide' : 'Open'}
-                          {showNotesInput ? <ChevronUp className="ml-1 h-3 w-3" /> : <ChevronDown className="ml-1 h-3 w-3" />}
-                        </Button>
+                  <div className={`rounded-2xl p-4 ${SOFT_SURFACE}`}>
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold">Source hub</p>
+                        <p className="text-xs text-muted-foreground">Draft auto-saves. Connecting OneDrive no longer loses your progress.</p>
                       </div>
-                      <p className="mb-2 text-xs text-muted-foreground">Short instructions for what this studyset should focus on.</p>
-                      {showNotesInput && (
-                        <Textarea
-                          value={notesText}
-                          onChange={(event) => setNotesText(event.target.value)}
-                          placeholder="What this studyset should focus on..."
-                          className={`min-h-[110px] ${SOFT_SURFACE}`}
-                        />
-                      )}
+                      <Button type="button" variant="outline" size="sm" onClick={() => void loadRecents()} disabled={recentsLoading}>
+                        {recentsLoading ? 'Refreshing...' : 'Refresh recents'}
+                      </Button>
                     </div>
 
+                    <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
+                      <div className={`relative overflow-hidden rounded-2xl p-4 ${SOFT_SURFACE}`}>
+                        <div className="relative mx-auto w-full max-w-xl">
+                          <Label>Central brief</Label>
+                          <Textarea
+                            value={notesText}
+                            onChange={(event) => setNotesText(event.target.value)}
+                            placeholder="Write your core goal, exam focus, chapter priority, weak areas..."
+                            className="mt-2 min-h-[130px] border-[#d1d5db] bg-white dark:border-zinc-800 dark:bg-zinc-900"
+                          />
+                        </div>
+                        <div className="mt-3 hidden min-h-[180px] md:block">
+                          <div className="pointer-events-none absolute left-1/2 top-[172px] h-px w-[56%] -translate-x-1/2 bg-border/70" />
+                          <div className="pointer-events-none absolute left-[15%] top-[104px] h-[80px] w-px bg-border/70" />
+                          <div className="pointer-events-none absolute right-[15%] top-[104px] h-[80px] w-px bg-border/70" />
+                          <div className="pointer-events-none absolute left-[26%] top-[118px] h-[72px] w-px rotate-[35deg] bg-border/70" />
+                          <div className="pointer-events-none absolute right-[26%] top-[118px] h-[72px] w-px -rotate-[35deg] bg-border/70" />
+                          <button type="button" onClick={() => fileInputRef.current?.click()} className="absolute left-[7%] top-[62px] rounded-lg border border-border bg-background px-3 py-2 text-xs hover:bg-muted">
+                            <FileUp className="mr-1 inline h-3.5 w-3.5" /> Files
+                          </button>
+                          <button type="button" onClick={() => oneDriveSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="absolute left-[38%] top-[44px] rounded-lg border border-border bg-background px-3 py-2 text-xs hover:bg-muted">
+                            <Link2 className="mr-1 inline h-3.5 w-3.5" /> OneDrive
+                          </button>
+                          <button type="button" onClick={() => document.getElementById('studyset-ai-rules')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="absolute right-[38%] top-[44px] rounded-lg border border-border bg-background px-3 py-2 text-xs hover:bg-muted">
+                            <Sparkles className="mr-1 inline h-3.5 w-3.5" /> AI rules
+                          </button>
+                          <button type="button" onClick={() => document.getElementById('studyset-recents')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="absolute right-[7%] top-[62px] rounded-lg border border-border bg-background px-3 py-2 text-xs hover:bg-muted">
+                            <History className="mr-1 inline h-3.5 w-3.5" /> Recents
+                          </button>
+                          <button type="button" onClick={() => document.getElementById('studyset-voice-memo')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="absolute left-1/2 top-[198px] -translate-x-1/2 rounded-lg border border-border bg-background px-3 py-2 text-xs hover:bg-muted">
+                            <Mic className="mr-1 inline h-3.5 w-3.5" /> Voice memo
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className={`rounded-2xl p-3 ${SOFT_SURFACE}`}>
+                        <p className="text-xs font-medium">Source checklist</p>
+                        <div className="mt-2 space-y-1.5 text-xs text-muted-foreground">
+                          <p>{notesText.trim() ? 'Ready' : 'Missing'} central brief</p>
+                          <p>{(pastedText.trim() || selectedRecents.length > 0) ? 'Ready' : 'Missing'} chapter/source text</p>
+                          <p>{uploads.length > 0 ? `Ready (${uploads.length})` : 'Optional'} file uploads</p>
+                          <p>{sortedOneDriveFiles.length > 0 ? `Ready (${sortedOneDriveFiles.length})` : 'Optional'} OneDrive</p>
+                          <p>{aiRulesText.trim() ? 'Ready' : 'Optional'} AI behavior rules</p>
+                          <p>{voiceMemoText.trim() ? 'Ready' : 'Optional'} voice memo</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 lg:grid-cols-2">
                     <div className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
                       <Label>Pasted text</Label>
-                      <p className="mb-2 text-xs text-muted-foreground">Paste chapter text, requirements, or existing summaries.</p>
+                      <p className="mb-2 text-xs text-muted-foreground">Paste chapter text, rubric, model answers, or assignment requirements.</p>
                       <Textarea
                         id="studyset-pasted-text"
                         value={pastedText}
                         onChange={(event) => setPastedText(event.target.value)}
                         placeholder="Paste chapters, summaries, requirements..."
-                        className={`min-h-[140px] ${SOFT_SURFACE}`}
+                        className="min-h-[170px] border-[#d1d5db] bg-white dark:border-zinc-800 dark:bg-zinc-900"
+                      />
+                    </div>
+
+                    <div id="studyset-ai-rules" className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
+                      <Label>AI rules</Label>
+                      <p className="mb-2 text-xs text-muted-foreground">Tell the planner exactly how to return tasks, titles, symbols, and strict constraints.</p>
+                      <Textarea
+                        value={aiRulesText}
+                        onChange={(event) => setAiRulesText(event.target.value)}
+                        placeholder="Example: return day-task lines with explicit tool, subject title, concise objective and exam-level focus..."
+                        className="min-h-[170px] border-[#d1d5db] bg-white dark:border-zinc-800 dark:bg-zinc-900"
                       />
                     </div>
                   </div>
 
-                  <div className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
-                    <p className="mb-2 text-sm font-medium">Files</p>
-                    <p className="mb-2 text-xs text-muted-foreground">Import text files, PDFs, docs, images, and slides.</p>
-                    <label className={`flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm ${SOFT_SURFACE}`}>
-                      <Upload className="h-4 w-4" />
-                      Add files
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        className="hidden"
-                        accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.md,.png,.jpg,.jpeg"
-                        onChange={handleUploadChange}
-                      />
-                    </label>
-                    {uploads.length > 0 && (
-                      <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
-                        {uploads.map((file) => (
-                          <div key={`${file.name}-${file.size}`} className="rounded-lg border border-[#d1d5db] bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
-                            <div className="mb-2 flex h-14 items-center justify-center rounded-md bg-[#f1f5f9] dark:bg-zinc-800">
-                              <FileText className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                            <p className="truncate text-xs">{file.name}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div ref={oneDriveSectionRef} className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium">Import from OneDrive</p>
-                      {microsoftConnected ? (
-                        <span className="text-xs text-muted-foreground">{microsoftEmail || 'Connected'}</span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Not connected</span>
-                      )}
-                    </div>
-
-                    <div className="mt-2 min-h-[140px]">
-                      <p className="mb-2 text-xs text-muted-foreground">Connect once, then select OneDrive files in the picker.</p>
-                      <MicrosoftAppStrip returnTo="/tools/studyset?open=create&step=2" />
-                    </div>
-                    <div className="mt-3 grid grid-cols-1 gap-3">
-                      <div className="rounded-lg border border-[#d1d5db] bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
-                        <div className="mb-1 flex items-center justify-between gap-2">
-                          <p className="text-xs font-medium">Selected OneDrive files</p>
-                          {microsoftConnected && (
-                            <Button type="button" variant="outline" size="sm" onClick={() => void loadMicrosoftSelectedFiles()}>
-                              Refresh
-                            </Button>
-                          )}
-                        </div>
-                        {!microsoftConnected && (
-                          <p className="text-xs text-muted-foreground">Connect Microsoft above to select files.</p>
-                        )}
-                        {microsoftConnected && sortedOneDriveFiles.length === 0 && (
-                          <p className="text-xs text-muted-foreground">No OneDrive files selected yet.</p>
-                        )}
-                        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                          {sortedOneDriveFiles.map((file) => (
-                            <div key={file.id} className="rounded-lg border border-[#d1d5db] bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
-                              <div className="mb-2 flex h-14 items-center justify-center rounded-md bg-[#f1f5f9] dark:bg-zinc-800">
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    <div className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
+                      <p className="mb-2 text-sm font-medium">Files and photos</p>
+                      <p className="mb-2 text-xs text-muted-foreground">Import text files, PDFs, docs, images, and slides.</p>
+                      <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm hover:bg-muted">
+                        <Upload className="h-4 w-4" />
+                        Add files
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          className="hidden"
+                          accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.md,.png,.jpg,.jpeg"
+                          onChange={handleUploadChange}
+                        />
+                      </label>
+                      {uploads.length > 0 && (
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          {uploads.slice(0, 8).map((file) => (
+                            <div key={`${file.name}-${file.size}`} className="rounded-lg border border-[#d1d5db] bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
+                              <div className="mb-2 flex h-12 items-center justify-center rounded-md bg-[#f1f5f9] dark:bg-zinc-800">
                                 <FileText className="h-4 w-4 text-muted-foreground" />
                               </div>
                               <p className="truncate text-xs">{file.name}</p>
                             </div>
                           ))}
                         </div>
+                      )}
+                    </div>
+
+                    <div id="studyset-voice-memo" className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
+                      <p className="mb-2 text-sm font-medium">Voice memo</p>
+                      <p className="mb-2 text-xs text-muted-foreground">Record quick spoken context and convert it to transcript automatically.</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {!isRecording ? (
+                          <Button type="button" variant="outline" size="sm" onClick={() => void startRecording()} disabled={!recordingSupported || isTranscribing}>
+                            <Mic className="mr-1 h-4 w-4" />
+                            Start recording
+                          </Button>
+                        ) : (
+                          <Button type="button" variant="destructive" size="sm" onClick={() => void stopRecording()}>
+                            <MicOff className="mr-1 h-4 w-4" />
+                            Stop recording
+                          </Button>
+                        )}
+                        {isTranscribing && <span className="text-xs text-muted-foreground">Transcribing...</span>}
+                      </div>
+                      <Textarea
+                        value={voiceMemoText}
+                        onChange={(event) => setVoiceMemoText(event.target.value)}
+                        placeholder="Transcript will appear here..."
+                        className="mt-2 min-h-[120px] border-[#d1d5db] bg-white dark:border-zinc-800 dark:bg-zinc-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div id="studyset-recents" className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">Import from recents</p>
+                      <Button type="button" size="sm" variant="outline" onClick={addSelectedRecentsToSources} disabled={selectedRecents.length === 0}>
+                        Import selected
+                      </Button>
+                    </div>
+                    {recentsLoading && <p className="text-xs text-muted-foreground">Loading recents...</p>}
+                    {!recentsLoading && recents.length === 0 && <p className="text-xs text-muted-foreground">No recent materials found.</p>}
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {recents.slice(0, 12).map((item) => {
+                        const checked = selectedRecents.includes(item.id);
+                        return (
+                          <label key={item.id} className="flex cursor-pointer items-start gap-2 rounded-lg border border-border bg-background p-2 hover:bg-muted">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(event) =>
+                                setSelectedRecents((prev) =>
+                                  event.target.checked ? [...prev, item.id] : prev.filter((value) => value !== item.id)
+                                )
+                              }
+                              className="mt-1"
+                            />
+                            <span className="min-w-0">
+                              <span className="block truncate text-xs font-medium">{item.title}</span>
+                              <span className="block truncate text-[11px] text-muted-foreground">{item.type}</span>
+                              <span className="mt-1 block text-[11px] text-muted-foreground">{item.snippet || 'No preview available.'}</span>
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div ref={oneDriveSectionRef} className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">Import from OneDrive</p>
+                      <span className="text-xs text-muted-foreground">{microsoftConnected ? (microsoftEmail || 'Connected') : 'Not connected'}</span>
+                    </div>
+
+                    <div className="mt-2 min-h-[110px]">
+                      <p className="mb-2 text-xs text-muted-foreground">Connect once, then pick files. Your studyset draft remains saved across the auth redirect.</p>
+                      <MicrosoftAppStrip returnTo="/tools/studyset?open=create&step=2" />
+                    </div>
+                    <div className="mt-2 rounded-lg border border-[#d1d5db] bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <p className="text-xs font-medium">Selected OneDrive files</p>
                         {microsoftConnected && (
-                          <div className="mt-2">
-                            <Button type="button" variant="outline" onClick={() => void disconnectMicrosoft()}>
-                              Disconnect
-                            </Button>
-                          </div>
+                          <Button type="button" variant="outline" size="sm" onClick={() => void loadMicrosoftSelectedFiles()}>
+                            Refresh
+                          </Button>
                         )}
                       </div>
+                      {microsoftConnected && sortedOneDriveFiles.length === 0 && <p className="text-xs text-muted-foreground">No files selected yet.</p>}
+                      {!microsoftConnected && <p className="text-xs text-muted-foreground">Connect Microsoft above to select files.</p>}
+                      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                        {sortedOneDriveFiles.map((file) => (
+                          <div key={file.id} className="rounded-lg border border-[#d1d5db] bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
+                            <div className="mb-2 flex h-12 items-center justify-center rounded-md bg-[#f1f5f9] dark:bg-zinc-800">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <p className="truncate text-xs">{file.name}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {microsoftConnected && (
+                        <div className="mt-2">
+                          <Button type="button" variant="outline" onClick={() => void disconnectMicrosoft()}>
+                            Disconnect
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
