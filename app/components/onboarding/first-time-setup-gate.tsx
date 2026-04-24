@@ -41,7 +41,12 @@ const THEME_OPTIONS: Array<{ value: ThemeType; label: string }> = [
 ];
 
 const GUEST_SETUP_DONE_KEY = 'studyweb-first-time-setup-guest-final-v1';
+const ACCOUNT_SETUP_DONE_KEY_PREFIX = 'studyweb-first-time-setup-account-final-v1';
 const RTL_LANGUAGES = new Set<LanguageOption>(['ar', 'ur']);
+
+function accountSetupDoneKey(userId: string): string {
+  return `${ACCOUNT_SETUP_DONE_KEY_PREFIX}:${userId}`;
+}
 
 function normalizeDisplayName(value: unknown): string {
   if (typeof value !== 'string') return '';
@@ -276,6 +281,13 @@ export function FirstTimeSetupGate() {
         return;
       }
 
+      if (typeof window !== 'undefined' && window.localStorage.getItem(accountSetupDoneKey(session.user.id)) === 'true') {
+        if (!alive) return;
+        setVisible(false);
+        setHydrated(true);
+        return;
+      }
+
       try {
         const { data: prefRows } = await supabase
           .from('user_preferences')
@@ -312,6 +324,9 @@ export function FirstTimeSetupGate() {
         }
 
         if (hasCompletedSetup) {
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem(accountSetupDoneKey(session.user.id), 'true');
+          }
           setVisible(false);
           setHydrated(true);
           return;
@@ -364,6 +379,9 @@ export function FirstTimeSetupGate() {
         window.localStorage.removeItem('studyweb-display-name');
       }
       window.localStorage.setItem(GUEST_SETUP_DONE_KEY, 'true');
+      if (session?.user?.id) {
+        window.localStorage.setItem(accountSetupDoneKey(session.user.id), 'true');
+      }
     }
 
     if (session?.user?.id) {
