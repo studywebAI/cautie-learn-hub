@@ -29,6 +29,16 @@ type AIDayPlan = {
   tasks: TaskTemplate[]
 }
 
+function stripPlannerGuidelines(input: string) {
+  const text = String(input || '').trim()
+  if (!text) return ''
+  return text
+    .replace(/AI RULES[\s\S]*$/gi, '')
+    .replace(/PLANNER RULES[\s\S]*$/gi, '')
+    .replace(/GUIDELINES[\s\S]*$/gi, '')
+    .trim()
+}
+
 function extractFocusTopic(context: SourceBundleContext, studysetName: string) {
   const raw = String(context.contextText || context.additionalNotes || '').trim()
   if (!raw) return studysetName
@@ -91,19 +101,19 @@ function parseSourceBundle(raw: unknown): SourceBundleContext {
   if (typeof raw !== 'string' || !raw.trim()) return {}
   try {
     const parsed = JSON.parse(raw)
+    const rawContext = typeof parsed?.sources?.context_text === 'string' ? parsed.sources.context_text : ''
+    const rawPasted = typeof parsed?.sources?.pasted_text === 'string' ? parsed.sources.pasted_text : ''
+    const rawNotes = typeof parsed?.sources?.notes_text === 'string' ? parsed.sources.notes_text : ''
+    const cleanedContext = stripPlannerGuidelines(rawContext)
+    const cleanedPasted = stripPlannerGuidelines(rawPasted)
+    const cleanedNotes = stripPlannerGuidelines(rawNotes)
     return {
       additionalNotes:
         typeof parsed?.additional_notes === 'string'
           ? parsed.additional_notes
           : undefined,
       contextText:
-        typeof parsed?.sources?.context_text === 'string'
-          ? parsed.sources.context_text
-          : typeof parsed?.sources?.pasted_text === 'string'
-            ? parsed.sources.pasted_text
-            : typeof parsed?.sources?.notes_text === 'string'
-              ? parsed.sources.notes_text
-              : undefined,
+        cleanedContext || cleanedPasted || cleanedNotes || undefined,
       selectedDates: Array.isArray(parsed?.schedule?.selected_dates)
         ? parsed.schedule.selected_dates
         : undefined,

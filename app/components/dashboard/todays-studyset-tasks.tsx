@@ -85,14 +85,36 @@ export function TodaysStudysetTasks() {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Route className="h-4 w-4" />
-          Today&apos;s Studyset
+          Continue Today
         </CardTitle>
         <CardDescription>
           {summary.completed}/{summary.total} tasks complete - Queue {summary.queue}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {items.slice(0, 3).map((item) => {
+        {items[0] && (
+          <div className="rounded-md border bg-background p-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Next up</p>
+            <p className="mt-1 text-sm font-medium truncate">{items[0].title}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {Number(items[0]?.due_today_tasks || 0)} due today - Queue {Number(items[0]?.pending_interventions || 0)}
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              {items[0].next_action_href ? (
+                <Button asChild size="sm">
+                  <Link prefetch={false} href={items[0].next_action_href}>{items[0].next_action_label || 'Keep going'}</Link>
+                </Button>
+              ) : null}
+              <Button asChild size="sm" variant="outline">
+                <Link prefetch={false} href={items[0].analytics_href || `/tools/studyset/${items[0].id}`}>
+                  Open Studyset
+                  <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        )}
+        {items.slice(items[0] ? 1 : 0, items[0] ? 4 : 3).map((item) => {
           const completed = Number(item?.progress?.completed_tasks || 0);
           const total = Number(item?.progress?.total_tasks || 0);
           return (
@@ -101,7 +123,12 @@ export function TodaysStudysetTasks() {
                 <p className="text-sm font-medium truncate">{item.title}</p>
                 <div className="flex items-center gap-2">
                   {Number(item.pending_interventions || 0) > 0 && (
-                    <Badge variant="outline">Q:{item.pending_interventions}</Badge>
+                    <Badge
+                      variant="outline"
+                      title={`Priority queue: ${item.pending_interventions} intervention${Number(item.pending_interventions) === 1 ? '' : 's'} waiting.`}
+                    >
+                      Queue {item.pending_interventions}
+                    </Badge>
                   )}
                   <Badge variant="outline">{completed}/{total}</Badge>
                 </div>
@@ -119,7 +146,7 @@ export function TodaysStudysetTasks() {
                   </Button>
                   {item.next_action_href && (
                     <Button asChild size="sm">
-                      <Link prefetch={false} href={item.next_action_href}>{item.next_action_label || 'Start now'}</Link>
+                      <Link prefetch={false} href={item.next_action_href}>{item.next_action_label || 'Keep going'}</Link>
                     </Button>
                   )}
                 </div>

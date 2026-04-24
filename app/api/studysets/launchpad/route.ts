@@ -159,7 +159,7 @@ export async function GET(req: NextRequest) {
 
         if (nextActionHref) {
           nextActionType = 'intervention'
-          nextActionLabel = 'Start priority'
+          nextActionLabel = 'Keep going'
         }
       }
 
@@ -168,7 +168,7 @@ export async function GET(req: NextRequest) {
         if (nextPending?.task?.id) {
           nextActionHref = getTaskHref(String(nextPending.task.task_type || 'notes'), studysetId, String(nextPending.task.id))
           nextActionType = 'task'
-          nextActionLabel = 'Start next task'
+          nextActionLabel = 'Keep going'
         }
       }
 

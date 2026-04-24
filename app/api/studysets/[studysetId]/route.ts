@@ -400,7 +400,7 @@ export async function GET(
       summary:
         adaptive?.last_issues?.length > 0
           ? `Focus weak areas first: ${adaptive.last_issues.join(' | ')}`
-          : `Keep momentum on ${focusTopic}. Start with the next pending task.`,
+          : `Keep momentum on ${focusTopic}. Keep going with the next pending task.`,
       recommendation: nextPending
         ? {
             tool: String(nextPending.task.task_type || 'notes'),

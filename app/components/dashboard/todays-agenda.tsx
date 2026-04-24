@@ -2,10 +2,9 @@
 'use client';
 
 import { useMemo } from 'react';
-import { format, isToday, parseISO } from 'date-fns';
+import { isToday, parseISO } from 'date-fns';
 import type { ClassAssignment, ClassInfo, PersonalTask } from '@/contexts/app-context';
 import { BrainCircuit, BookCheck } from 'lucide-react';
-import { Button } from '../ui/button';
 import Link from 'next/link';
 
 type TodaysAgendaProps = {
@@ -45,14 +44,7 @@ export function TodaysAgenda({ assignments, personalTasks, classes }: TodaysAgen
   }, [assignments, personalTasks, classes]);
 
   if (todaysEvents.length === 0) {
-    return (
-      <div className="text-center text-muted-foreground p-4">
-        <p>You have nothing scheduled for today.</p>
-        <Button variant="link" asChild className="mt-2">
-          <Link prefetch={false} href="/agenda">Go to Agenda to add tasks</Link>
-        </Button>
-      </div>
-    );
+    return null;
   }
 
   const renderEvent = (event: typeof todaysEvents[0]) => {

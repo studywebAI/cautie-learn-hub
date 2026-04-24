@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic'
 type ParsedSourceBundle = {
   notesText: string
   pastedText: string
+  aiRulesText: string
   selectedDocuments: Array<{ id: string; name: string; mime_type?: string | null; web_url?: string | null; extracted_text?: string; extraction_status?: string | null }>
   uploadedFiles: Array<{ name: string; type?: string | null; extracted_text?: string; extraction_status?: string | null }>
   adaptive: {
@@ -14,6 +15,16 @@ type ParsedSourceBundle = {
     mastery_band: string
     weak_topics: string[]
   }
+}
+
+function stripPlannerGuidelines(input: string) {
+  const text = String(input || '').trim()
+  if (!text) return ''
+  return text
+    .replace(/AI RULES[\s\S]*$/gi, '')
+    .replace(/PLANNER RULES[\s\S]*$/gi, '')
+    .replace(/GUIDELINES[\s\S]*$/gi, '')
+    .trim()
 }
 
 type LaunchAdaptiveContext = {
@@ -25,7 +36,7 @@ type LaunchAdaptiveContext = {
 
 function parseSourceBundle(raw: unknown): ParsedSourceBundle {
   if (typeof raw !== 'string' || !raw.trim()) {
-    return { notesText: '', pastedText: '', selectedDocuments: [], uploadedFiles: [], adaptive: { avg_score: 0, mastery_band: '', weak_topics: [] } }
+    return { notesText: '', pastedText: '', aiRulesText: '', selectedDocuments: [], uploadedFiles: [], adaptive: { avg_score: 0, mastery_band: '', weak_topics: [] } }
   }
   try {
     const parsed = JSON.parse(raw)
@@ -53,6 +64,10 @@ function parseSourceBundle(raw: unknown): ParsedSourceBundle {
           .filter((file: any) => file.name)
       : []
 
+    const rawNotes = typeof parsed?.sources?.notes_text === 'string' ? parsed.sources.notes_text : ''
+    const rawPasted = typeof parsed?.sources?.pasted_text === 'string' ? parsed.sources.pasted_text : ''
+    const rawContext = typeof parsed?.sources?.context_text === 'string' ? parsed.sources.context_text : ''
+    const aiRulesText = typeof parsed?.sources?.ai_rules_text === 'string' ? parsed.sources.ai_rules_text.trim() : ''
     const adaptiveWeak = parsed?.runtime?.adaptive?.weak_topic_counts
       ? Object.entries(parsed.runtime.adaptive.weak_topic_counts)
           .map(([topic, count]) => ({ topic: String(topic), count: Number(count || 0) }))
@@ -63,8 +78,9 @@ function parseSourceBundle(raw: unknown): ParsedSourceBundle {
       : []
 
     return {
-      notesText: typeof parsed?.sources?.notes_text === 'string' ? parsed.sources.notes_text.trim() : '',
-      pastedText: typeof parsed?.sources?.pasted_text === 'string' ? parsed.sources.pasted_text.trim() : '',
+      notesText: stripPlannerGuidelines(rawNotes).trim(),
+      pastedText: stripPlannerGuidelines(rawPasted || rawContext).trim(),
+      aiRulesText,
       selectedDocuments,
       uploadedFiles,
       adaptive: {
@@ -74,7 +90,7 @@ function parseSourceBundle(raw: unknown): ParsedSourceBundle {
       },
     }
   } catch {
-    return { notesText: '', pastedText: '', selectedDocuments: [], uploadedFiles: [], adaptive: { avg_score: 0, mastery_band: '', weak_topics: [] } }
+    return { notesText: '', pastedText: '', aiRulesText: '', selectedDocuments: [], uploadedFiles: [], adaptive: { avg_score: 0, mastery_band: '', weak_topics: [] } }
   }
 }
 
@@ -96,13 +112,6 @@ function buildSourceText(studysetName: string, taskTitle: string, taskDescriptio
     .filter(Boolean)
   if (onedriveExtractedBlocks.length > 0) {
     sections.push(`ONEDRIVE EXTRACTED CONTENT\n${onedriveExtractedBlocks.join('\n\n')}`)
-  }
-
-  if (bundle.adaptive.weak_topics.length > 0) {
-    sections.push(`CURRENT WEAK AREAS\n${bundle.adaptive.weak_topics.map((topic) => `- ${topic}`).join('\n')}`)
-  }
-  if (bundle.adaptive.mastery_band) {
-    sections.push(`CURRENT MASTERY BAND\n${bundle.adaptive.mastery_band} (avg ${bundle.adaptive.avg_score}%)`)
   }
 
   if (sections.length === 0) {

@@ -125,7 +125,7 @@ async function getLaunchpadPreview(input: {
           typeof topIntervention?.payload?.href === 'string' ? String(topIntervention.payload.href) : ''
         if (payloadHref) {
           nextActionHref = payloadHref
-          nextActionLabel = 'Start priority'
+          nextActionLabel = 'Keep going'
         }
       }
       if (!nextActionHref && nextPending?.task?.id) {
@@ -134,7 +134,7 @@ async function getLaunchpadPreview(input: {
           studysetKey,
           String(nextPending.task.id)
         )
-        nextActionLabel = 'Start next task'
+        nextActionLabel = 'Keep going'
       }
 
       const percent = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100)

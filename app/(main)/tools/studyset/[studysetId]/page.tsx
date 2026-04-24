@@ -234,7 +234,6 @@ export default function StudysetDetailPage() {
   const [taskMetrics, setTaskMetrics] = useState<Record<string, TaskMetric>>({});
   const [nextTaskHref, setNextTaskHref] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
-  const [optimizing, setOptimizing] = useState(false);
   const [updatingInterventionId, setUpdatingInterventionId] = useState<string | null>(null);
 
   const loadDetail = async () => {
@@ -448,40 +447,6 @@ export default function StudysetDetailPage() {
     }
   };
 
-  const handleOptimize = async () => {
-    if (!studysetId || optimizing) return;
-    setOptimizing(true);
-    try {
-      const response = await fetch('/api/studysets/optimize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          force: true,
-          studysetId,
-          includeLaunchpad: false,
-        }),
-      });
-      const json = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(json?.error || 'Could not optimize studyset');
-
-      const replanChanged = json?.replan?.changed === true;
-      const adaptiveChanged = json?.adaptive?.changed === true;
-      toast({
-        title: 'Studyset optimized',
-        description: `Replan ${replanChanged ? 'updated' : 'unchanged'} | Adaptive ${adaptiveChanged ? 'updated' : 'unchanged'}.`,
-      });
-      await loadDetail();
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Optimization failed',
-        description: error?.message || 'Try again.',
-      });
-    } finally {
-      setOptimizing(false);
-    }
-  };
-
   const updateInterventionStatus = async (interventionId: string, status: 'done' | 'dismissed') => {
     if (!interventionId || updatingInterventionId) return;
     setUpdatingInterventionId(interventionId);
@@ -566,16 +531,13 @@ export default function StudysetDetailPage() {
                   <Button size="sm" variant="default" asChild>
                     <Link href={nextTaskHref}>
                       <Play className="mr-2 h-3.5 w-3.5" />
-                      Quick start
+                      Keep going
                     </Link>
                   </Button>
                 )}
                 <Button size="sm" variant="outline" onClick={() => void handleShare()} disabled={shareLoading}>
                   <Send className="mr-2 h-3.5 w-3.5" />
                   {shareLoading ? 'Preparing...' : 'Share'}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => void handleOptimize()} disabled={optimizing}>
-                  {optimizing ? 'Optimizing...' : 'Optimize now'}
                 </Button>
                 <Button size="sm" variant={showAnalytics ? 'default' : 'outline'} onClick={() => setShowAnalytics((value) => !value)}>
                   {showAnalytics ? 'Hide analytics' : 'Analytics'}
@@ -800,7 +762,7 @@ export default function StudysetDetailPage() {
                           <div className="mt-2 flex items-center gap-2">
                             {item.launch_href && (
                               <Button asChild size="sm" variant="outline">
-                                <Link href={item.launch_href}>Start</Link>
+                                <Link href={item.launch_href}>Keep going</Link>
                               </Button>
                             )}
                             <Button
@@ -889,7 +851,7 @@ export default function StudysetDetailPage() {
             {aiBrief.recommendation?.href && (
               <CardContent className="pt-0">
                 <Button asChild size="sm" variant="outline">
-                  <Link href={String(aiBrief.recommendation.href)}>Start recommended task</Link>
+                  <Link href={String(aiBrief.recommendation.href)}>Keep going</Link>
                 </Button>
               </CardContent>
             )}
@@ -970,7 +932,7 @@ export default function StudysetDetailPage() {
                                 href={href}
                                 onClick={() => {
                                   if (isFutureDay) return;
-                                  console.info('[STUDYSET_TASK] start now clicked', {
+                                  console.info('[STUDYSET_TASK] keep going clicked', {
                                     studysetId,
                                     taskId: task.id,
                                     taskType: task.task_type,
@@ -979,7 +941,7 @@ export default function StudysetDetailPage() {
                                   });
                                 }}
                               >
-                                {isFutureDay ? 'Locked' : 'Start now'}
+                                {isFutureDay ? 'Locked' : 'Keep going'}
                               </Link>
                             </Button>
                           </div>

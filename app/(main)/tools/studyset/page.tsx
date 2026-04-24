@@ -160,7 +160,6 @@ export default function StudysetPage() {
   const [selectedMicrosoftFiles, setSelectedMicrosoftFiles] = useState<MicrosoftFileItem[]>([]);
 
   const [creating, setCreating] = useState(false);
-  const [optimizingAll, setOptimizingAll] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [recordingSupported, setRecordingSupported] = useState(false);
@@ -754,10 +753,11 @@ export default function StudysetPage() {
         .map((item) => `[${item.type}] ${item.title}\n${item.snippet || 'No preview available.'}`)
         .join('\n\n')
         .trim();
-      const sourceNotesText = [notesText.trim(), aiRulesText.trim() ? `AI RULES\n${aiRulesText.trim()}` : '', voiceMemoText.trim() ? `VOICE MEMO\n${voiceMemoText.trim()}` : '']
+      const sourceNotesText = [notesText.trim(), voiceMemoText.trim() ? `VOICE MEMO\n${voiceMemoText.trim()}` : '']
         .filter(Boolean)
         .join('\n\n')
         .trim();
+      const planInstructions = aiRulesText.trim();
       const sourcePastedText = [pastedText.trim(), recentsTextBlock].filter(Boolean).join('\n\n').trim();
       const contextText = [sourceNotesText, sourcePastedText].filter(Boolean).join('\n\n').trim();
 
@@ -769,7 +769,7 @@ export default function StudysetPage() {
           notes_text: sourceNotesText,
           pasted_text: sourcePastedText,
           context_text: contextText,
-          ai_rules_text: aiRulesText.trim(),
+          ai_rules_text: planInstructions,
           voice_memo_text: voiceMemoText.trim(),
           imported_recents: pickedRecents,
           uploaded_files: extractedUploadFiles,
@@ -835,39 +835,6 @@ export default function StudysetPage() {
     }
   };
 
-  const optimizeAllStudysets = async () => {
-    if (optimizingAll) return;
-    setOptimizingAll(true);
-    try {
-      const response = await fetch('/api/studysets/optimize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          force: true,
-          includeLaunchpad: false,
-        }),
-      });
-      const json = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(json?.error || 'Could not optimize studysets');
-
-      const replanChanged = Number(json?.replan?.changed || 0);
-      const adaptiveChanged = Number(json?.adaptive?.changed || 0);
-      toast({
-        title: 'Studysets optimized',
-        description: `Replan updated ${replanChanged}, adaptive updated ${adaptiveChanged}.`,
-      });
-      await loadStudysets();
-    } catch (error: any) {
-      toast({
-        title: 'Optimization failed',
-        description: error?.message || 'Try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setOptimizingAll(false);
-    }
-  };
-
   return (
     <div className="h-full min-h-0 overflow-auto">
       <div className="flex min-h-full w-full flex-col gap-4">
@@ -893,9 +860,6 @@ export default function StudysetPage() {
                   <Button type="button" onClick={startCreate}>
                     <Plus className="mr-2 h-4 w-4" />
                     Open new studyset
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => void optimizeAllStudysets()} disabled={optimizingAll}>
-                    {optimizingAll ? 'Optimizing...' : 'Optimize all'}
                   </Button>
                 </div>
               </CardContent>
@@ -924,10 +888,10 @@ export default function StudysetPage() {
                           <p className="text-[11px] text-muted-foreground">
                             Avg {item.analytics_summary.avg_score || 0}% - Due today {item.analytics_summary.due_today_tasks || 0}
                             {typeof item.analytics_summary.pending_interventions === 'number'
-                              ? ` - Queue ${item.analytics_summary.pending_interventions}`
+                              ? ` - Queue ${item.analytics_summary.pending_interventions} pending`
                               : ''}
                             {item.analytics_summary.weakest_tool
-                              ? ` - Focus ${String(item.analytics_summary.weakest_tool)}`
+                              ? ` - Focus ${String(item.analytics_summary.weakest_tool)} next`
                               : ''}
                           </p>
                         )}
@@ -939,7 +903,7 @@ export default function StudysetPage() {
                           variant="outline"
                           onClick={() => router.push(item.next_task_href || `/tools/studyset/${item.id}`)}
                         >
-                          Quick start
+                          Keep going
                         </Button>
                         <Button
                           type="button"
