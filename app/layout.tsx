@@ -6,6 +6,7 @@ import { Atkinson_Hyperlegible } from 'next/font/google';
 import { cn } from "@/lib/utils";
 import { AppContextProvider } from "@/contexts/app-context";
 import { GlobalRequestLogger } from "@/components/debug/global-request-logger";
+import { ChunkRecovery } from "@/components/runtime/chunk-recovery";
 
 const fontAtkinsonHyperlegible = Atkinson_Hyperlegible({
   subsets: ['latin'],
@@ -18,7 +19,7 @@ const fontAtkinsonHyperlegible = Atkinson_Hyperlegible({
 export const metadata: Metadata = {
   title: "cautie",
   description: "The future of learning, powered by AI.",
-  manifest: "/manifest.json",
+  manifest: process.env.NEXT_PUBLIC_ENABLE_PWA === '1' ? "/manifest.json" : undefined,
 };
 
 export const viewport: Viewport = {
@@ -66,6 +67,7 @@ export default function RootLayout({
         fontAtkinsonHyperlegible.variable
       )}>
         <AppContextProvider>
+            <ChunkRecovery />
             {shouldEnableRequestLogger ? (
               <Suspense fallback={null}>
                 <GlobalRequestLogger />
