@@ -1429,6 +1429,12 @@ export function SourceInput({
   );
   const canGenerate = (compiledSource.trim().length > 0 || hasImageContext) && !hasPendingSource && !hasFileSourceWithoutText;
   const isModeActive = mode !== 'text';
+  const openMicrosoftPicker = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    setMode('onedrive');
+    window.dispatchEvent(new CustomEvent('cautie:open-microsoft-picker'));
+  }, []);
+
   const radialActions = useMemo(() => {
     const list: Array<{ mode: SourceInputMode; label: string; icon: React.ComponentType<{ className?: string }>; onClick: () => void; hidden?: boolean }> = [
       { mode: 'files', label: 'Files', icon: FileIcon, onClick: () => { setMode('files'); fileInputRef.current?.click(); } },
@@ -1439,12 +1445,6 @@ export function SourceInput({
     ];
     return list.filter((item) => !item.hidden);
   }, [enableMicrosoftSources, openMicrosoftPicker]);
-
-  const openMicrosoftPicker = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    setMode('onedrive');
-    window.dispatchEvent(new CustomEvent('cautie:open-microsoft-picker'));
-  }, []);
 
   const submitAndSave = useCallback(async () => {
     setIsProcessing(true);
