@@ -60,6 +60,7 @@ function FlashcardsPageContent() {
   const [saveToRecents, setSaveToRecents] = useState(true);
   const [studyCompleted, setStudyCompleted] = useState(false);
   const launchHandledRef = useRef(false);
+  const sourceParamsHandledRef = useRef(false);
   const { toast } = useToast();
   const modeOptions = React.useMemo(
     () =>
@@ -136,8 +137,10 @@ function FlashcardsPageContent() {
   }, [customTitle, flashcardCount, imageDataUri, language, region, schoolingLevel, saveToRecents, studyMode]);
 
   useEffect(() => {
-    if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
-  }, [sourceTextFromParams, handleGenerate]);
+    if (!sourceTextFromParams || isAssignmentContext || sourceParamsHandledRef.current) return;
+    sourceParamsHandledRef.current = true;
+    void handleGenerate(sourceTextFromParams);
+  }, [sourceTextFromParams, isAssignmentContext, handleGenerate]);
 
   useEffect(() => {
     if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;

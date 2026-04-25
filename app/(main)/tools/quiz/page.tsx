@@ -71,6 +71,7 @@ function QuizPageContent() {
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [saveToRecents, setSaveToRecents] = useState(true);
   const launchHandledRef = useRef(false);
+  const sourceParamsHandledRef = useRef(false);
   const { toast } = useToast();
 
   const handleGenerate = useCallback(async (
@@ -133,8 +134,10 @@ function QuizPageContent() {
   }, [customTitle, imageDataUri, language, region, schoolingLevel, questionCount, questionType, quizMode, saveToRecents]);
 
   useEffect(() => {
-    if (sourceTextFromParams && !isAssignmentContext) handleGenerate(sourceTextFromParams);
-  }, [sourceTextFromParams, handleGenerate]);
+    if (!sourceTextFromParams || isAssignmentContext || sourceParamsHandledRef.current) return;
+    sourceParamsHandledRef.current = true;
+    void handleGenerate(sourceTextFromParams);
+  }, [sourceTextFromParams, isAssignmentContext, handleGenerate]);
 
   useEffect(() => {
     if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;

@@ -67,7 +67,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
   const [randomizeAnswers, setRandomizeAnswers] = useState(true);
   const [integrityMode, setIntegrityMode] = useState(false);
   const [addToAgenda, setAddToAgenda] = useState(false);
-  const [existingAgendaItemId, setExistingAgendaItemId] = useState<string | null>(null);
+  const [existingAgendaItemIds, setExistingAgendaItemIds] = useState<string[]>([]);
   const [selectedMaterial, setSelectedMaterial] = useState<Pick<MaterialReference, 'id' | 'title'> | null>(null);
   const [isSelectMaterialOpen, setIsSelectMaterialOpen] = useState(false);
   const [chapters, setChapters] = useState<Array<{ id: string; title: string }>>([]);
@@ -78,7 +78,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
   const [isLoadingChapters, setIsLoadingChapters] = useState(false);
   const [isLoadingBlocks, setIsLoadingBlocks] = useState(false);
   const { toast } = useToast();
-  const { language, refetchAssignments } = useContext(AppContext) as AppContextType;
+  const { language, refetchAssignments, materials, refetchMaterials } = useContext(AppContext) as AppContextType;
   const isDutch = language === 'nl';
 
   const t = {
@@ -174,10 +174,23 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
     setRandomizeQuestions(Boolean(settings.access.shuffleQuestions));
     setRandomizeAnswers(Boolean(settings.access.shuffleAnswers));
     setIntegrityMode(Boolean(settings.antiCheat.requireFullscreen || settings.antiCheat.detectTabSwitch));
-    setSelectedMaterial(assignment.material_id ? { id: assignment.material_id, title: 'Linked material' } : null);
+    if (assignment.material_id) {
+      const found = materials.find((m) => m.id === assignment.material_id);
+      setSelectedMaterial({
+        id: assignment.material_id,
+        title: found?.title || `Material ${assignment.material_id.slice(0, 8)}`,
+      });
+    } else {
+      setSelectedMaterial(null);
+    }
     setSelectedChapter(assignment.chapter_id || '');
     setSelectedBlock(assignment.block_id || '');
-  }, [isOpen, assignment]);
+  }, [isOpen, assignment, materials]);
+
+  useEffect(() => {
+    if (!isOpen || !classId) return;
+    void refetchMaterials(classId);
+  }, [isOpen, classId, refetchMaterials]);
 
   useEffect(() => {
     if (!isOpen || !assignment?.id) return;
@@ -187,21 +200,23 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
         if (!response.ok) return;
         const payload = await response.json();
         const items = Array.isArray(payload?.items) ? payload.items : [];
-        const match = items.find((item: any) =>
-          Array.isArray(item?.class_agenda_item_links) &&
-          item.class_agenda_item_links.some(
-            (link: any) => link?.link_type === 'assignment' && String(link?.link_ref_id || '') === String(assignment.id)
+        const matchingIds = items
+          .filter((item: any) =>
+            Array.isArray(item?.class_agenda_item_links) &&
+            item.class_agenda_item_links.some(
+              (link: any) => link?.link_type === 'assignment' && String(link?.link_ref_id || '') === String(assignment.id)
+            )
           )
-        );
-        if (match?.id) {
-          setExistingAgendaItemId(match.id);
+          .map((item: any) => String(item.id));
+        if (matchingIds.length > 0) {
+          setExistingAgendaItemIds(matchingIds);
           setAddToAgenda(true);
         } else {
-          setExistingAgendaItemId(null);
+          setExistingAgendaItemIds([]);
           setAddToAgenda(false);
         }
       } catch {
-        setExistingAgendaItemId(null);
+        setExistingAgendaItemIds([]);
       }
     };
     void fetchAgendaLinkState();
@@ -342,22 +357,31 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
         },
       };
 
-      if (addToAgenda && existingAgendaItemId) {
-        await fetch(`/api/classes/${classId}/agenda/${existingAgendaItemId}`, {
+      if (addToAgenda && existingAgendaItemIds.length > 0) {
+        await fetch(`/api/classes/${classId}/agenda/${existingAgendaItemIds[0]}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(agendaPayload),
         });
-      } else if (addToAgenda && !existingAgendaItemId) {
+        if (existingAgendaItemIds.length > 1) {
+          for (const duplicateId of existingAgendaItemIds.slice(1)) {
+            await fetch(`/api/classes/${classId}/agenda/${duplicateId}`, {
+              method: 'DELETE',
+            });
+          }
+        }
+      } else if (addToAgenda && existingAgendaItemIds.length === 0) {
         await fetch(`/api/classes/${classId}/agenda`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(agendaPayload),
         });
-      } else if (!addToAgenda && existingAgendaItemId) {
-        await fetch(`/api/classes/${classId}/agenda/${existingAgendaItemId}`, {
-          method: 'DELETE',
-        });
+      } else if (!addToAgenda && existingAgendaItemIds.length > 0) {
+        for (const agendaItemId of existingAgendaItemIds) {
+          await fetch(`/api/classes/${classId}/agenda/${agendaItemId}`, {
+            method: 'DELETE',
+          });
+        }
       }
 
       await refetchAssignments();

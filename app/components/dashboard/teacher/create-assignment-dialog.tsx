@@ -299,30 +299,64 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
       if (addToAgenda) {
         const startsAt = scheduledStartAt || scheduledEndAt;
         const dueAt = scheduledEndAt;
-        await fetch(`/api/classes/${classId}/agenda`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: isTest ? `${t.test}: ${trimmedTitle}` : `${t.homework}: ${trimmedTitle}`,
-            description: description.trim() || null,
-            item_type: isTest ? 'quiz' : 'assignment',
-            starts_at: startsAt,
-            due_at: dueAt,
-            visible: true,
-            links: [
-              {
-                link_type: 'assignment',
-                link_ref_id: createdAssignment.id,
-                label: trimmedTitle,
-                url: `/class/${classId}`,
-              },
-            ],
-            metadata_json: {
-              assignment_id: createdAssignment.id,
-              assignment_type: createKind,
+        const agendaPayload = {
+          title: isTest ? `${t.test}: ${trimmedTitle}` : `${t.homework}: ${trimmedTitle}`,
+          description: description.trim() || null,
+          item_type: isTest ? 'quiz' : 'assignment',
+          starts_at: startsAt,
+          due_at: dueAt,
+          visible: true,
+          links: [
+            {
+              link_type: 'assignment',
+              link_ref_id: createdAssignment.id,
+              label: trimmedTitle,
+              url: `/class/${classId}`,
             },
-          }),
-        });
+          ],
+          metadata_json: {
+            assignment_id: createdAssignment.id,
+            assignment_type: createKind,
+          },
+        };
+
+        const existingAgendaRes = await fetch(`/api/classes/${classId}/agenda?includeHidden=1`);
+        let matchingAgendaIds: string[] = [];
+        if (existingAgendaRes.ok) {
+          const existingAgendaPayload = await existingAgendaRes.json();
+          const items = Array.isArray(existingAgendaPayload?.items) ? existingAgendaPayload.items : [];
+          matchingAgendaIds = items
+            .filter((item: any) =>
+              Array.isArray(item?.class_agenda_item_links) &&
+              item.class_agenda_item_links.some(
+                (link: any) =>
+                  link?.link_type === 'assignment' &&
+                  String(link?.link_ref_id || '') === String(createdAssignment.id)
+              )
+            )
+            .map((item: any) => String(item.id));
+        }
+
+        if (matchingAgendaIds.length > 0) {
+          await fetch(`/api/classes/${classId}/agenda/${matchingAgendaIds[0]}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(agendaPayload),
+          });
+          if (matchingAgendaIds.length > 1) {
+            for (const duplicateId of matchingAgendaIds.slice(1)) {
+              await fetch(`/api/classes/${classId}/agenda/${duplicateId}`, {
+                method: 'DELETE',
+              });
+            }
+          }
+        } else {
+          await fetch(`/api/classes/${classId}/agenda`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(agendaPayload),
+          });
+        }
       }
 
       toast({
