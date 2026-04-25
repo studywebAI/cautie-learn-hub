@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { makeRequestId, subjectsError, subjectsLog, subjectsWarn } from '@/lib/subjects-log'
+import { normalizeAssignmentSettings } from '@/lib/assignments/settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -135,11 +136,38 @@ export async function POST(
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params;
 
-    const { title, answers_enabled = false } = await request.json()
+    const {
+      title,
+      answers_enabled = false,
+      type = 'homework',
+      scheduled_start_at = null,
+      scheduled_end_at = null,
+      settings = null,
+    } = await request.json()
     const normalizedTitle = typeof title === 'string' ? title.trim() : ''
     if (!normalizedTitle) {
       return NextResponse.json({ error: 'Assignment title is required' }, { status: 400 })
     }
+    const normalizedType =
+      type === 'homework' || type === 'small_test' || type === 'big_test' || type === 'other'
+        ? type
+        : 'homework';
+
+    const toIsoOrNull = (value: unknown): string | null => {
+      if (!value) return null;
+      const date = new Date(String(value));
+      if (Number.isNaN(date.getTime())) return null;
+      return date.toISOString();
+    };
+
+    const normalizedSettings = normalizeAssignmentSettings(
+      settings || {
+        time: {
+          startAt: toIsoOrNull(scheduled_start_at),
+          endAt: toIsoOrNull(scheduled_end_at),
+        },
+      }
+    );
 
     // Get max assignment index for this paragraph
     const { data: existingAssignments } = await supabase
@@ -153,6 +181,14 @@ export async function POST(
       ? (existingAssignments[0].assignment_index ?? -1) + 1 
       : 0;
 
+    const { data: paragraphContext } = await (supabase as any)
+      .from('paragraphs')
+      .select('id, chapters!inner(id, subject_id, subjects!inner(id, class_id))')
+      .eq('id', resolvedParams.paragraphId)
+      .maybeSingle();
+
+    const classId = paragraphContext?.chapters?.subjects?.class_id || null;
+
     const { data: assignment, error: insertError } = await (supabase
       .from('assignments') as any)
       .insert({
@@ -160,6 +196,43 @@ export async function POST(
         assignment_index: nextIndex,
         title: normalizedTitle,
         answers_enabled: answers_enabled ?? false,
+        type: normalizedType,
+        class_id: classId,
+        settings: normalizedSettings,
+        scheduled_start_at: normalizedSettings.time.startAt,
+        scheduled_end_at: normalizedSettings.time.endAt,
+        scheduled_answer_release_at: normalizedSettings.time.endAt,
+        access_code: normalizedSettings.access.accessCode,
+        timer_mode: normalizedSettings.time.timerMode,
+        duration_minutes: normalizedSettings.time.durationMinutes,
+        auto_submit_on_timeout: normalizedSettings.time.autoSubmitOnTimeout,
+        max_attempts: normalizedSettings.attempts.maxAttempts,
+        attempt_score_mode: normalizedSettings.attempts.scoreMode,
+        cooldown_minutes: normalizedSettings.attempts.cooldownMinutes,
+        show_correct_answers: normalizedSettings.grading.showCorrectAnswers,
+        show_points: normalizedSettings.grading.showPoints,
+        total_points: normalizedSettings.grading.totalPoints,
+        assignment_weight: normalizedSettings.grading.weight,
+        grade_display_mode: normalizedSettings.grading.gradeDisplayMode,
+        rounding_decimals: normalizedSettings.grading.roundingDecimals,
+        require_fullscreen: normalizedSettings.antiCheat.requireFullscreen,
+        detect_tab_switch: normalizedSettings.antiCheat.detectTabSwitch,
+        per_question_time_limit_seconds: normalizedSettings.antiCheat.perQuestionTimeLimitSeconds,
+        restrict_ip_or_device: normalizedSettings.antiCheat.restrictIpOrDevice,
+        shuffle_questions: normalizedSettings.access.shuffleQuestions,
+        shuffle_answers: normalizedSettings.access.shuffleAnswers,
+        shuffle_questions_per_student: normalizedSettings.access.shuffleQuestionsPerStudent,
+        autosave_enabled: normalizedSettings.delivery.autosave,
+        allow_resume: normalizedSettings.delivery.allowResume,
+        instruction_text: normalizedSettings.delivery.instructionText,
+        show_timer: normalizedSettings.time.showTimer,
+        question_pool_size: normalizedSettings.advanced.questionPoolSize,
+        adaptive_enabled: normalizedSettings.advanced.adaptiveEnabled,
+        adaptive_rules: normalizedSettings.advanced.adaptiveRules,
+        review_mode_enabled: normalizedSettings.advanced.reviewModeEnabled,
+        reflection_enabled: normalizedSettings.advanced.reflectionEnabled,
+        improvement_attempt_enabled: normalizedSettings.advanced.improvementAttemptEnabled,
+        allowed_class_ids: normalizedSettings.access.allowedClassIds,
       })
       .select()
       .single()
