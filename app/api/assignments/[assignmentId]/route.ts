@@ -86,6 +86,15 @@ export async function PATCH(
     is_locked,
     answer_mode,
     ai_grading_enabled,
+    title,
+    description,
+    type,
+    scheduled_start_at,
+    scheduled_end_at,
+    scheduled_answer_release_at,
+    chapter_id,
+    block_id,
+    material_id,
     settings,
   } = body;
 
@@ -119,8 +128,22 @@ export async function PATCH(
   if (typeof is_locked === 'boolean') updateData.is_locked = is_locked;
   if (typeof answer_mode === 'string') updateData.answer_mode = answer_mode;
   if (typeof ai_grading_enabled === 'boolean') updateData.ai_grading_enabled = ai_grading_enabled;
+  if (typeof title === 'string' && title.trim().length > 0) updateData.title = title.trim();
+  if (description !== undefined) updateData.description = description ? String(description) : null;
+  if (typeof type === 'string') updateData.type = type;
+  if (scheduled_start_at !== undefined) updateData.scheduled_start_at = scheduled_start_at || null;
+  if (scheduled_end_at !== undefined) {
+    updateData.scheduled_end_at = scheduled_end_at || null;
+    updateData.due_date = scheduled_end_at || null;
+  }
+  if (scheduled_answer_release_at !== undefined) updateData.scheduled_answer_release_at = scheduled_answer_release_at || null;
+  if (chapter_id !== undefined) updateData.chapter_id = chapter_id || null;
+  if (block_id !== undefined) updateData.block_id = block_id || null;
+  if (material_id !== undefined) updateData.material_id = material_id || null;
   if (settings !== undefined) {
     const normalized = normalizeAssignmentSettings(settings);
+    if (scheduled_start_at !== undefined) normalized.time.startAt = scheduled_start_at || null;
+    if (scheduled_end_at !== undefined) normalized.time.endAt = scheduled_end_at || null;
     updateData.settings = normalized as any;
     updateData.access_code = normalized.access.accessCode;
     updateData.timer_mode = normalized.time.timerMode;

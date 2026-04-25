@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreateAssignmentDialog } from './create-assignment-dialog';
+import { EditAssignmentDialog } from './edit-assignment-dialog';
 import { SubmitAssignmentDialog } from '../student/submit-assignment-dialog';
 import { SubmissionsView } from './submissions-view';
 import type { ClassAssignment } from '@/contexts/app-context';
@@ -29,6 +30,7 @@ type AssignmentListProps = {
 
 export function AssignmentList({ assignments, classId, isTeacher = true }: AssignmentListProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSubmitOpen, setIsSubmitOpen] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<ClassAssignment | null>(null);
   const [submissionStatuses, setSubmissionStatuses] = useState<Record<string, string>>({});
@@ -124,6 +126,11 @@ export function AssignmentList({ assignments, classId, isTeacher = true }: Assig
   const handleSubmitClick = (assignment: ClassAssignment) => {
     setSelectedAssignment(assignment);
     setIsSubmitOpen(true);
+  };
+
+  const handleEditClick = (assignment: ClassAssignment) => {
+    setSelectedAssignment(assignment);
+    setIsEditOpen(true);
   };
 
   const handleSubmissionComplete = () => {
@@ -280,7 +287,7 @@ export function AssignmentList({ assignments, classId, isTeacher = true }: Assig
                                   <DropdownMenuItem onClick={() => handleViewSubmissions(assignment.id)}>
                                     {t.viewSubmissions}
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem>{t.editAssignment}</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleEditClick(assignment)}>{t.editAssignment}</DropdownMenuItem>
                                   <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteAssignment(assignment.id)}>{t.delete}</DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -314,6 +321,15 @@ export function AssignmentList({ assignments, classId, isTeacher = true }: Assig
         isOpen={isCreateOpen}
         setIsOpen={setIsCreateOpen}
         classId={classId}
+      />
+      <EditAssignmentDialog
+        isOpen={isEditOpen}
+        setIsOpen={(open) => {
+          setIsEditOpen(open);
+          if (!open) setSelectedAssignment(null);
+        }}
+        classId={classId}
+        assignment={selectedAssignment}
       />
       {selectedAssignment && (
         <SubmitAssignmentDialog

@@ -17,17 +17,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { BrainCircuit, Copy, Loader2, Link as LinkIcon, Paperclip, X } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { AppContext, AppContextType } from '@/contexts/app-context';
+import { AppContext, AppContextType, ClassAssignment } from '@/contexts/app-context';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { SelectMaterialDialog } from './select-material-dialog';
 import type { MaterialReference } from '@/lib/teacher-types';
 import { ASSIGNMENT_PRESETS, AssignmentCreateKind, getPresetById, toAssignmentType } from '@/lib/assignments/presets';
 import { DEFAULT_ASSIGNMENT_SETTINGS, normalizeAssignmentSettings } from '@/lib/assignments/settings';
 
-type CreateAssignmentDialogProps = {
+type EditAssignmentDialogProps = {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   classId: string;
+  assignment: ClassAssignment | null;
 };
 
 function toIsoOrNull(value: string): string | null {
@@ -37,28 +38,20 @@ function toIsoOrNull(value: string): string | null {
   return date.toISOString();
 }
 
-function buildDefaultBlockData(type: string) {
-  if (type === 'open_question') return { question: '', correct_answer: '', ai_grading: true, grading_criteria: '', max_score: 5 };
-  if (type === 'multiple_choice') {
-    return {
-      question: '',
-      options: [
-        { id: 'a', text: '', correct: false },
-        { id: 'b', text: '', correct: false },
-        { id: 'c', text: '', correct: false },
-        { id: 'd', text: '', correct: false },
-      ],
-      explanation: '',
-    };
-  }
-  if (type === 'fill_in_blank') return { sentence: '', answers: [''], alternatives: [] };
-  if (type === 'matching') return { prompt: '', pairs: [{ left: '', right: '' }], shuffle: true };
-  if (type === 'ordering') return { prompt: '', items: ['', '', ''], correctOrder: [0, 1, 2] };
-  if (type === 'text') return { header: '', content: '', style: 'normal' };
-  return { text: '' };
+function toLocalInputOrEmpty(value: string | null | undefined): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
 }
 
-export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAssignmentDialogProps) {
+function assignmentToKind(assignment: ClassAssignment | null): AssignmentCreateKind {
+  const raw = String(assignment?.type || '').toLowerCase();
+  return raw === 'small_test' || raw === 'big_test' ? 'test' : 'homework';
+}
+
+export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }: EditAssignmentDialogProps) {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -72,8 +65,9 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
   const [attemptLimit, setAttemptLimit] = useState<number>(1);
   const [randomizeQuestions, setRandomizeQuestions] = useState(true);
   const [randomizeAnswers, setRandomizeAnswers] = useState(true);
-  const [integrityMode, setIntegrityMode] = useState(true);
-  const [addToAgenda, setAddToAgenda] = useState(true);
+  const [integrityMode, setIntegrityMode] = useState(false);
+  const [addToAgenda, setAddToAgenda] = useState(false);
+  const [existingAgendaItemId, setExistingAgendaItemId] = useState<string | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<Pick<MaterialReference, 'id' | 'title'> | null>(null);
   const [isSelectMaterialOpen, setIsSelectMaterialOpen] = useState(false);
   const [chapters, setChapters] = useState<Array<{ id: string; title: string }>>([]);
@@ -84,24 +78,24 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
   const [isLoadingChapters, setIsLoadingChapters] = useState(false);
   const [isLoadingBlocks, setIsLoadingBlocks] = useState(false);
   const { toast } = useToast();
-  const { createAssignment, language } = useContext(AppContext) as AppContextType;
+  const { language, refetchAssignments } = useContext(AppContext) as AppContextType;
   const isDutch = language === 'nl';
 
   const t = {
-    createAssignment: isDutch ? 'nieuwe opdracht maken' : 'create new assignment',
-    createDescription: isDutch ? 'Kies eerst wat je maakt. Daarna begeleiden we je stap voor stap.' : 'Choose what you are creating first. Then we guide you step by step.',
+    editAssignment: isDutch ? 'opdracht bewerken' : 'edit assignment',
+    editDescription: isDutch ? 'Werk type, opzet en instellingen bij in duidelijke stappen.' : 'Update type, structure, and settings in clear steps.',
     stepType: isDutch ? 'stap 1 van 3 - type' : 'step 1 of 3 - type',
     stepPreset: isDutch ? 'stap 2 van 3 - preset' : 'step 2 of 3 - preset',
     stepDetails: isDutch ? 'stap 3 van 3 - details' : 'step 3 of 3 - details',
-    whatCreating: isDutch ? 'wat maak je?' : 'what are you creating?',
+    whatCreating: isDutch ? 'welk type is dit?' : 'what type is this?',
     homework: isDutch ? 'huiswerk' : 'homework',
     test: isDutch ? 'toets' : 'test',
     homeworkCaption: isDutch ? 'oefenen, reflectie, thuiswerk' : 'practice, reflection, take-home work',
     testCaption: isDutch ? 'beoordeling, quiz, toetsmoment' : 'assessment, quiz, checkpoint',
-    chooseTemplate: isDutch ? 'kies een starttemplate' : 'pick a starting template',
-    chooseTemplateDescription: isDutch ? 'Gebruik een bewezen opzet of begin vanaf nul.' : 'Use a proven structure or start from scratch.',
-    createYourOwn: isDutch ? 'zelf opbouwen' : 'create your own',
-    createYourOwnCaption: isDutch ? 'Lege opdracht zonder startblokken.' : 'Blank assignment with no starter blocks.',
+    chooseTemplate: isDutch ? 'pas eventueel een template toe' : 'optionally apply a template',
+    chooseTemplateDescription: isDutch ? 'Template past instellingen aan, maar verwijdert geen bestaande blokken.' : 'Template updates settings, but does not remove existing blocks.',
+    createYourOwn: isDutch ? 'huidige opzet behouden' : 'keep current setup',
+    createYourOwnCaption: isDutch ? 'Geen preset toepassen, alleen handmatige aanpassingen.' : 'No preset; keep manual settings.',
     assignmentTitle: isDutch ? 'titel' : 'title',
     contentOptional: isDutch ? 'inhoud (optioneel)' : 'content (optional)',
     dueAt: isDutch ? 'inlevermoment' : 'due at',
@@ -112,10 +106,10 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
     randomizeQuestions: isDutch ? 'vragen husselen' : 'randomize questions',
     randomizeAnswers: isDutch ? 'antwoorden husselen' : 'randomize answers',
     integrityMode: isDutch ? 'integriteitsmodus (fullscreen + tabdetectie)' : 'integrity mode (fullscreen + tab switch detection)',
-    addToAgenda: isDutch ? 'ook aan agenda toevoegen' : 'also add to agenda',
-    addToAgendaHelp: isDutch ? 'Voegt automatisch een agenda-item toe voor deze opdracht.' : 'Automatically creates an agenda item for this assignment.',
+    addToAgenda: isDutch ? 'op agenda zetten' : 'show in agenda',
+    addToAgendaHelp: isDutch ? 'Bij uitzetten verwijderen we gekoppelde agenda-item(s).' : 'Turning this off removes linked agenda item(s).',
     materials: isDutch ? 'materiaal' : 'material',
-    materialsHelp: isDutch ? 'Optioneel: voeg bestaand materiaal toe of maak nieuw materiaal.' : 'Optional: attach existing material or create new material.',
+    materialsHelp: isDutch ? 'Optioneel: wijzig het gekoppelde materiaal.' : 'Optional: change the linked material.',
     createNewMaterial: isDutch ? 'nieuw materiaal maken...' : 'create new material...',
     createNewQuiz: isDutch ? 'nieuwe quiz maken' : 'create new quiz',
     createNewFlashcards: isDutch ? 'nieuwe flashcards maken' : 'create new flashcards',
@@ -132,11 +126,10 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
     loadingBlocks: isDutch ? 'blokken laden...' : 'loading blocks...',
     missingInfo: isDutch ? 'onvolledige informatie' : 'missing information',
     missingInfoDesc: isDutch ? 'Vul minimaal een titel in. Voeg bij huiswerk een inlevermoment toe, of bij een toets een start- en eindmoment.' : 'Enter at least a title. Add due time for homework, or both start and end times for tests.',
-    createSuccess: isDutch ? 'opdracht gemaakt' : 'assignment created',
-    createSuccessDesc: isDutch ? 'is toegevoegd aan de klas.' : 'has been assigned to the class.',
-    createError: isDutch ? 'fout bij maken van opdracht' : 'error creating assignment',
-    createCtaHomework: isDutch ? 'huiswerk maken' : 'create homework',
-    createCtaTest: isDutch ? 'toets maken' : 'create test',
+    saveSuccess: isDutch ? 'opdracht bijgewerkt' : 'assignment updated',
+    saveSuccessDesc: isDutch ? 'Wijzigingen zijn opgeslagen.' : 'Changes have been saved.',
+    saveError: isDutch ? 'fout bij bijwerken' : 'error updating assignment',
+    saveCta: isDutch ? 'wijzigingen opslaan' : 'save changes',
     cancel: isDutch ? 'annuleren' : 'cancel',
     back: isDutch ? 'terug' : 'back',
     next: isDutch ? 'volgende' : 'next',
@@ -165,6 +158,56 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
   };
 
   useEffect(() => {
+    if (!isOpen || !assignment) return;
+    const settings = normalizeAssignmentSettings(assignment.settings || DEFAULT_ASSIGNMENT_SETTINGS);
+    const inferredKind = assignmentToKind(assignment);
+    setCreateStep(1);
+    setCreateKind(inferredKind);
+    setSelectedPresetId(null);
+    setTitle(assignment.title || '');
+    setDescription(assignment.description || '');
+    setHomeworkDueAtLocal(toLocalInputOrEmpty(assignment.scheduled_end_at || assignment.due_date || null));
+    setTestStartsAtLocal(toLocalInputOrEmpty(assignment.scheduled_start_at || settings.time.startAt || null));
+    setTestEndsAtLocal(toLocalInputOrEmpty(assignment.scheduled_end_at || settings.time.endAt || null));
+    setTimerMinutes(Number(settings.time.durationMinutes || 45));
+    setAttemptLimit(Number(settings.attempts.maxAttempts || 1));
+    setRandomizeQuestions(Boolean(settings.access.shuffleQuestions));
+    setRandomizeAnswers(Boolean(settings.access.shuffleAnswers));
+    setIntegrityMode(Boolean(settings.antiCheat.requireFullscreen || settings.antiCheat.detectTabSwitch));
+    setSelectedMaterial(assignment.material_id ? { id: assignment.material_id, title: 'Linked material' } : null);
+    setSelectedChapter(assignment.chapter_id || '');
+    setSelectedBlock(assignment.block_id || '');
+  }, [isOpen, assignment]);
+
+  useEffect(() => {
+    if (!isOpen || !assignment?.id) return;
+    const fetchAgendaLinkState = async () => {
+      try {
+        const response = await fetch(`/api/classes/${classId}/agenda?includeHidden=1`);
+        if (!response.ok) return;
+        const payload = await response.json();
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        const match = items.find((item: any) =>
+          Array.isArray(item?.class_agenda_item_links) &&
+          item.class_agenda_item_links.some(
+            (link: any) => link?.link_type === 'assignment' && String(link?.link_ref_id || '') === String(assignment.id)
+          )
+        );
+        if (match?.id) {
+          setExistingAgendaItemId(match.id);
+          setAddToAgenda(true);
+        } else {
+          setExistingAgendaItemId(null);
+          setAddToAgenda(false);
+        }
+      } catch {
+        setExistingAgendaItemId(null);
+      }
+    };
+    void fetchAgendaLinkState();
+  }, [isOpen, assignment?.id, classId]);
+
+  useEffect(() => {
     if (!isOpen || !classId) return;
     const fetchChapters = async () => {
       setIsLoadingChapters(true);
@@ -191,8 +234,6 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
     }
     const fetchBlocks = async () => {
       setIsLoadingBlocks(true);
-      setBlocks([]);
-      setSelectedBlock('');
       try {
         const response = await fetch(`/api/classes/${classId}/chapters/${selectedChapter}/blocks`);
         if (response.ok) {
@@ -208,7 +249,8 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
     void fetchBlocks();
   }, [selectedChapter, classId]);
 
-  const handleCreateAssignment = async () => {
+  const handleSaveAssignment = async () => {
+    if (!assignment?.id) return;
     const trimmedTitle = title.trim();
     const isTest = createKind === 'test';
     const scheduledStartAt = isTest ? toIsoOrNull(testStartsAtLocal) : null;
@@ -225,8 +267,8 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
     setIsLoading(true);
     try {
       const selectedPreset = getPresetById(selectedPresetId);
-      const baseSettings = normalizeAssignmentSettings(DEFAULT_ASSIGNMENT_SETTINGS);
-      const presetSettings = selectedPreset ? selectedPreset.applyDefaults(baseSettings) : baseSettings;
+      const existingSettings = normalizeAssignmentSettings(assignment.settings || DEFAULT_ASSIGNMENT_SETTINGS);
+      const presetSettings = selectedPreset ? selectedPreset.applyDefaults(existingSettings) : existingSettings;
       const settings = normalizeAssignmentSettings({
         ...presetSettings,
         time: {
@@ -257,82 +299,76 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
         },
       });
 
-      const createdAssignment = await createAssignment({
-        title: trimmedTitle,
+      const updateRes = await fetch(`/api/assignments/${assignment.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: trimmedTitle,
+          description: description.trim() || null,
+          type: toAssignmentType(createKind),
+          scheduled_start_at: scheduledStartAt,
+          scheduled_end_at: scheduledEndAt,
+          scheduled_answer_release_at: scheduledEndAt,
+          chapter_id: selectedChapter || null,
+          block_id: selectedBlock || null,
+          material_id: selectedMaterial?.id || null,
+          settings,
+        }),
+      });
+
+      if (!updateRes.ok) {
+        const err = await updateRes.json().catch(() => ({}));
+        throw new Error(err?.error || 'Failed to update assignment');
+      }
+
+      const agendaPayload = {
+        title: isTest ? `${t.test}: ${trimmedTitle}` : `${t.homework}: ${trimmedTitle}`,
         description: description.trim() || null,
-        scheduled_start_at: scheduledStartAt,
-        scheduled_end_at: scheduledEndAt,
-        scheduled_answer_release_at: scheduledEndAt,
-        class_id: classId,
-        material_id: selectedMaterial?.id || null,
-        chapter_id: selectedChapter || null,
-        block_id: selectedBlock || null,
-        paragraph_id: null,
-        type: toAssignmentType(createKind),
-        assignment_index: 0,
-        settings,
-      } as any);
+        item_type: isTest ? 'quiz' : 'assignment',
+        starts_at: scheduledStartAt || scheduledEndAt,
+        due_at: scheduledEndAt,
+        visible: true,
+        links: [
+          {
+            link_type: 'assignment',
+            link_ref_id: assignment.id,
+            label: trimmedTitle,
+            url: `/class/${classId}`,
+          },
+        ],
+        metadata_json: {
+          assignment_id: assignment.id,
+          assignment_type: createKind,
+        },
+      };
 
-      if (!createdAssignment?.id) {
-        throw new Error('Assignment was created but no id was returned.');
-      }
-
-      if (selectedPreset) {
-        let position = 0;
-        for (const mix of selectedPreset.blockMix) {
-          for (let i = 0; i < mix.count; i += 1) {
-            await fetch('/api/blocks', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                assignment_id: createdAssignment.id,
-                type: mix.type,
-                data: buildDefaultBlockData(mix.type),
-                position,
-              }),
-            });
-            position += 1;
-          }
-        }
-      }
-
-      if (addToAgenda) {
-        const startsAt = scheduledStartAt || scheduledEndAt;
-        const dueAt = scheduledEndAt;
+      if (addToAgenda && existingAgendaItemId) {
+        await fetch(`/api/classes/${classId}/agenda/${existingAgendaItemId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(agendaPayload),
+        });
+      } else if (addToAgenda && !existingAgendaItemId) {
         await fetch(`/api/classes/${classId}/agenda`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: isTest ? `${t.test}: ${trimmedTitle}` : `${t.homework}: ${trimmedTitle}`,
-            description: description.trim() || null,
-            item_type: isTest ? 'quiz' : 'assignment',
-            starts_at: startsAt,
-            due_at: dueAt,
-            visible: true,
-            links: [
-              {
-                link_type: 'assignment',
-                link_ref_id: createdAssignment.id,
-                label: trimmedTitle,
-                url: `/class/${classId}`,
-              },
-            ],
-            metadata_json: {
-              assignment_id: createdAssignment.id,
-              assignment_type: createKind,
-            },
-          }),
+          body: JSON.stringify(agendaPayload),
+        });
+      } else if (!addToAgenda && existingAgendaItemId) {
+        await fetch(`/api/classes/${classId}/agenda/${existingAgendaItemId}`, {
+          method: 'DELETE',
         });
       }
 
+      await refetchAssignments();
       toast({
-        title: t.createSuccess,
-        description: `"${trimmedTitle}" ${t.createSuccessDesc}`,
+        title: t.saveSuccess,
+        description: t.saveSuccessDesc,
       });
-      resetAndClose();
+      setIsOpen(false);
     } catch (error: any) {
       toast({
-        title: t.createError,
+        title: t.saveError,
         description: error?.message || 'Unexpected error',
         variant: 'destructive',
       });
@@ -350,27 +386,6 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
     router.push(`/tools/${tool}?${params.toString()}`);
   };
 
-  const resetAndClose = () => {
-    setTitle('');
-    setDescription('');
-    setCreateStep(1);
-    setCreateKind('homework');
-    setSelectedPresetId(null);
-    setHomeworkDueAtLocal('');
-    setTestStartsAtLocal('');
-    setTestEndsAtLocal('');
-    setTimerMinutes(45);
-    setAttemptLimit(1);
-    setRandomizeQuestions(true);
-    setRandomizeAnswers(true);
-    setIntegrityMode(true);
-    setAddToAgenda(true);
-    setSelectedMaterial(null);
-    setSelectedChapter('');
-    setSelectedBlock('');
-    setIsOpen(false);
-  };
-
   const handleMaterialSelected = (material: Pick<MaterialReference, 'id' | 'title'>) => {
     setSelectedMaterial(material);
     setIsSelectMaterialOpen(false);
@@ -378,17 +393,11 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
 
   return (
     <>
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          if (!open) resetAndClose();
-          else setIsOpen(true);
-        }}
-      >
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t.createAssignment}</DialogTitle>
-            <DialogDescription>{t.createDescription}</DialogDescription>
+            <DialogTitle>{t.editAssignment}</DialogTitle>
+            <DialogDescription>{t.editDescription}</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-6 py-3">
@@ -442,13 +451,6 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
                         {preset.recommended && (
                           <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase">{t.recommended}</span>
                         )}
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {preset.blockMix.map((mix) => (
-                          <span key={`${preset.id}-${mix.type}`} className="rounded-full bg-muted px-2 py-0.5 text-[10px]">
-                            {mix.count}x {mix.type.replace('_', ' ')}
-                          </span>
-                        ))}
                       </div>
                     </button>
                   ))}
@@ -639,16 +641,16 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
                   {t.back}
                 </Button>
               ) : (
-                <Button variant="outline" onClick={resetAndClose}>{t.cancel}</Button>
+                <Button variant="outline" onClick={() => setIsOpen(false)}>{t.cancel}</Button>
               )}
             </div>
             <div>
               {createStep < 3 ? (
                 <Button onClick={() => setCreateStep((prev) => (prev === 1 ? 2 : 3))}>{t.next}</Button>
               ) : (
-                <Button onClick={handleCreateAssignment} disabled={isLoading}>
+                <Button onClick={handleSaveAssignment} disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {createKind === 'test' ? t.createCtaTest : t.createCtaHomework}
+                  {t.saveCta}
                 </Button>
               )}
             </div>
