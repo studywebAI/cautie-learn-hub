@@ -292,6 +292,7 @@ export async function POST(
       hasHomeworkIncomplete,
       wasTooLate,
       customMessage,
+      logCustomEvent,
     } = body
 
     if (!studentId) {
@@ -299,6 +300,7 @@ export async function POST(
     }
 
     const normalizedCustomMessage = typeof customMessage === 'string' ? customMessage.trim() : ''
+    const shouldLogCustomEvent = logCustomEvent !== false
     const nextIsPresent = typeof isPresent === 'boolean' ? isPresent : true
     const nextHomeworkIncomplete = Boolean(hasHomeworkIncomplete)
     const nextWasTooLate = Boolean(wasTooLate)
@@ -319,6 +321,33 @@ export async function POST(
       .limit(1)
       .maybeSingle()
 
+    const previousIsPresent =
+      typeof latestAttendanceRecord?.is_present === 'boolean'
+        ? latestAttendanceRecord.is_present
+        : null
+    const previousHomeworkIncomplete =
+      typeof latestAttendanceRecord?.has_homework_incomplete === 'boolean'
+        ? latestAttendanceRecord.has_homework_incomplete
+        : null
+    const previousTooLate =
+      typeof latestAttendanceRecord?.was_too_late === 'boolean'
+        ? latestAttendanceRecord.was_too_late
+        : null
+    const isPresentChanged = previousIsPresent === null || previousIsPresent !== nextIsPresent
+    const homeworkChanged =
+      previousHomeworkIncomplete === null
+        ? nextHomeworkIncomplete
+        : previousHomeworkIncomplete !== nextHomeworkIncomplete
+    const tooLateChanged =
+      previousTooLate === null
+        ? nextWasTooLate
+        : previousTooLate !== nextWasTooLate
+    const hasNoStateChange = !isPresentChanged && !homeworkChanged && !tooLateChanged
+
+    if (hasNoStateChange && !normalizedCustomMessage) {
+      return NextResponse.json({ success: true, noop: true, attendance: latestAttendanceRecord })
+    }
+
     const { data: attendance, error: attendanceError } = await writeClient
       .from('student_attendance')
       .insert({
@@ -337,36 +366,25 @@ export async function POST(
       return NextResponse.json({ error: attendanceError.message }, { status: 500 })
     }
 
-    const previousIsPresent =
-      typeof latestAttendanceRecord?.is_present === 'boolean'
-        ? latestAttendanceRecord.is_present
-        : null
-    const previousHomeworkIncomplete =
-      typeof latestAttendanceRecord?.has_homework_incomplete === 'boolean'
-        ? latestAttendanceRecord.has_homework_incomplete
-        : null
-    const previousTooLate =
-      typeof latestAttendanceRecord?.was_too_late === 'boolean'
-        ? latestAttendanceRecord.was_too_late
-        : null
+    if (isPresentChanged) {
+      await logAuditEntry(writeClient as any, {
+        userId: user.id,
+        classId,
+        action: 'attendance_state_changed',
+        entityType: 'attendance',
+        entityId: attendance?.id,
+        metadata: {
+          log_code: 'EVT-ATT-001',
+          log_category: 'events',
+          student_id: studentId,
+          from_is_present: previousIsPresent,
+          to_is_present: nextIsPresent,
+          created_by: user.id,
+        },
+      })
+    }
 
-    await logAuditEntry(writeClient as any, {
-      userId: user.id,
-      classId,
-      action: 'attendance_state_changed',
-      entityType: 'attendance',
-      entityId: attendance?.id,
-      metadata: {
-        log_code: 'EVT-ATT-001',
-        log_category: 'events',
-        student_id: studentId,
-        from_is_present: previousIsPresent,
-        to_is_present: nextIsPresent,
-        created_by: user.id,
-      },
-    })
-
-    if (previousHomeworkIncomplete !== nextHomeworkIncomplete) {
+    if (homeworkChanged) {
       await logAuditEntry(writeClient as any, {
         userId: user.id,
         classId,
@@ -384,7 +402,7 @@ export async function POST(
       })
     }
 
-    if (previousTooLate !== nextWasTooLate) {
+    if (tooLateChanged) {
       await logAuditEntry(writeClient as any, {
         userId: user.id,
         classId,
@@ -402,7 +420,7 @@ export async function POST(
       })
     }
 
-    if (normalizedCustomMessage) {
+    if (normalizedCustomMessage && shouldLogCustomEvent) {
       await logAuditEntry(writeClient as any, {
         userId: user.id,
         classId,

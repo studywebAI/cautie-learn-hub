@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowUpRight } from 'lucide-react';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 
@@ -33,6 +34,7 @@ type LogsTabProps = {
 };
 
 type Category = 'all' | 'academic' | 'events' | 'custom_events' | 'roster';
+type DateWindow = 'all' | 'today' | '7d' | '30d';
 
 function isImportantLog(log: AuditLog) {
   const action = String(log.action || '');
@@ -82,6 +84,35 @@ function categorizeLog(log: AuditLog): Category {
 
 function formatAction(action: string) {
   return action.replace(/_/g, ' ');
+}
+
+function formatActionLabel(log: AuditLog, isDutch: boolean) {
+  const metadata = (log.metadata || {}) as Record<string, any>;
+  const action = String(log.action || '');
+
+  if (action === 'attendance_state_changed') {
+    if (metadata.to_is_present === true) return isDutch ? 'Aanwezig gemarkeerd' : 'Marked present';
+    if (metadata.to_is_present === false) return isDutch ? 'Afwezig gemarkeerd' : 'Marked absent';
+    return isDutch ? 'Aanwezigheid bijgewerkt' : 'Attendance updated';
+  }
+
+  if (action === 'attendance_event_homework_incomplete') {
+    if (metadata.to_active === true) return isDutch ? 'Huiswerk onvolledig aangezet' : 'Homework incomplete enabled';
+    if (metadata.to_active === false) return isDutch ? 'Huiswerk onvolledig uitgezet' : 'Homework incomplete disabled';
+    return isDutch ? 'Huiswerkstatus bijgewerkt' : 'Homework status updated';
+  }
+
+  if (action === 'attendance_event_late') {
+    if (metadata.to_active === true) return isDutch ? 'Te laat aangezet' : 'Late flag enabled';
+    if (metadata.to_active === false) return isDutch ? 'Te laat uitgezet' : 'Late flag disabled';
+    return isDutch ? 'Te-laatstatus bijgewerkt' : 'Late status updated';
+  }
+
+  if (action === 'attendance_event_custom') {
+    return isDutch ? 'Aangepaste notitie toegevoegd' : 'Custom note added';
+  }
+
+  return formatAction(action);
 }
 
 function resolveLogCode(log: AuditLog) {
@@ -148,6 +179,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category>('all');
   const [studentFilter, setStudentFilter] = useState<string>('all');
+  const [dateWindow, setDateWindow] = useState<DateWindow>('all');
   const [limit] = useState(100);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [classStudents, setClassStudents] = useState<Array<{ id: string; label: string }>>([]);
@@ -232,6 +264,12 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
     }
     const requestedSearch = searchParams?.get('q') || '';
     setSearch(requestedSearch);
+    const requestedDate = String(searchParams?.get('date') || '').toLowerCase();
+    if (requestedDate === 'today' || requestedDate === '7d' || requestedDate === '30d') {
+      setDateWindow(requestedDate as DateWindow);
+    } else {
+      setDateWindow('all');
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -257,12 +295,13 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
     void loadStudents();
   }, [classId, isDutch]);
 
-  const updateFiltersInQuery = (next: { studentId?: string; categoryValue?: Category; queryValue?: string }) => {
+  const updateFiltersInQuery = (next: { studentId?: string; categoryValue?: Category; queryValue?: string; dateValue?: DateWindow }) => {
     const nextParams = new URLSearchParams(searchParams?.toString() || '');
     nextParams.set('tab', 'logs');
     const nextStudentId = next.studentId ?? studentFilter;
     const nextCategory = next.categoryValue ?? category;
     const nextQuery = next.queryValue ?? search;
+    const nextDate = next.dateValue ?? dateWindow;
 
     if (nextStudentId === 'all') {
       nextParams.delete('student_id');
@@ -275,6 +314,8 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
     else nextParams.set('category', nextCategory);
     if (!nextQuery.trim()) nextParams.delete('q');
     else nextParams.set('q', nextQuery.trim());
+    if (nextDate === 'all') nextParams.delete('date');
+    else nextParams.set('date', nextDate);
 
     router.replace(`${pathname}?${nextParams.toString()}`);
   };
@@ -282,6 +323,8 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
   const applyStudentFilter = (nextStudentId: string) => {
     updateFiltersInQuery({ studentId: nextStudentId });
   };
+
+  const getAffectedStudentId = (log: AuditLog) => String((log.metadata as any)?.student_id || '').trim();
 
   useEffect(() => {
     setOffset(0);
@@ -313,9 +356,22 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
 
   const filteredLogs = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const now = Date.now();
+    const minTimestamp = (() => {
+      if (dateWindow === 'today') {
+        const date = new Date();
+        date.setHours(0, 0, 0, 0);
+        return date.getTime();
+      }
+      if (dateWindow === '7d') return now - 7 * 24 * 60 * 60 * 1000;
+      if (dateWindow === '30d') return now - 30 * 24 * 60 * 60 * 1000;
+      return 0;
+    })();
+
     return logs.filter((log) => {
       const logCategory = categorizeLog(log);
       if (category !== 'all' && logCategory !== category) return false;
+      if (minTimestamp > 0 && new Date(log.created_at).getTime() < minTimestamp) return false;
 
       if (studentFilter !== 'all') {
         const actorId = String(log.user_id || '');
@@ -325,13 +381,14 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
       if (!q) return true;
 
       const actor = formatActor(log).toLowerCase();
-      const action = formatAction(log.action).toLowerCase();
+      const action = formatActionLabel(log, isDutch).toLowerCase();
+      const rawAction = String(log.action || '').toLowerCase();
       const entity = (log.entity_type || '').toLowerCase();
       const metadataText = JSON.stringify(log.metadata || {}).toLowerCase();
 
-      return actor.includes(q) || action.includes(q) || entity.includes(q) || metadataText.includes(q);
+      return actor.includes(q) || action.includes(q) || rawAction.includes(q) || entity.includes(q) || metadataText.includes(q);
     });
-  }, [logs, search, category, studentFilter]);
+  }, [logs, search, category, studentFilter, isDutch, dateWindow]);
 
   const counts = useMemo(() => {
     const base: Record<Category, number> = {
@@ -361,7 +418,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <Input
               value={search}
               onChange={(e) => updateFiltersInQuery({ queryValue: e.target.value })}
@@ -380,7 +437,18 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                 ))}
               </SelectContent>
             </Select>
-            <div className="md:col-span-2 flex flex-wrap items-center gap-2">
+            <Select value={dateWindow} onValueChange={(value) => updateFiltersInQuery({ dateValue: value as DateWindow })}>
+              <SelectTrigger className="h-10 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{isDutch ? 'Alle datums' : 'All dates'}</SelectItem>
+                <SelectItem value="today">{isDutch ? 'Vandaag' : 'Today'}</SelectItem>
+                <SelectItem value="7d">{isDutch ? 'Laatste 7 dagen' : 'Last 7 days'}</SelectItem>
+                <SelectItem value="30d">{isDutch ? 'Laatste 30 dagen' : 'Last 30 days'}</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="md:col-span-3 flex flex-wrap items-center gap-2">
               {categories.map((c) => {
                 const active = category === c;
                 return (
@@ -397,7 +465,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                 );
               })}
             </div>
-            <div className="md:col-span-2 flex gap-2">
+            <div className="md:col-span-3 flex gap-2">
               <Button variant="outline" onClick={() => void loadLogs()}>
                 {isDutch ? 'Vernieuwen' : 'Refresh'}
               </Button>
@@ -443,53 +511,55 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
             <div className="py-10 text-center text-muted-foreground">{isDutch ? 'Geen logs voor dit filter.' : 'No logs found for this filter.'}</div>
           ) : (
             <div className="space-y-3">
-              {filteredLogs.map((log) => (
-                <div key={log.id} className="space-y-1.5 rounded-lg border p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0 items-center gap-2">
-                      <p className="truncate capitalize">{formatAction(log.action)}</p>
+              {filteredLogs.map((log) => {
+                const affectedStudentId = getAffectedStudentId(log);
+                const affectedStudentLabel = log.metadata_user_labels?.student_id || affectedStudentId;
+                const canOpenAttendance = Boolean(affectedStudentId);
+                return (
+                  <div key={log.id} className="space-y-2 rounded-lg border bg-[hsl(var(--surface-1))] p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{formatActionLabel(log, isDutch)}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString()}</p>
+                      </div>
+                      {canOpenAttendance && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2 text-xs"
+                          onClick={() => router.replace(`/class/${classId}?tab=attendance&studentId=${affectedStudentId}&quick=timeline`)}
+                        >
+                          {isDutch ? 'Open aanwezigheidskaart' : 'Open attendance'}
+                          <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </div>
-                    <p className="shrink-0 text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString()}</p>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={getCategoryClass(categorizeLog(log), log.action)}>
-                      {labelByCategory[categorizeLog(log)]}
-                    </Badge>
-                    <Badge variant="outline" className="font-mono">
-                      {resolveLogCode(log)}
-                    </Badge>
-                    <p className="text-sm text-muted-foreground">
-                      <span className="text-foreground">{formatActor(log)}</span> on <span className="font-mono">{log.entity_type}</span>
-                    </p>
-                  </div>
-
-                  {(log.metadata_user_labels?.student_id || (log.metadata as any)?.student_id) && (
-                    <p className="text-xs text-muted-foreground">
-                      {isDutch ? 'Leerling' : 'Student'}: <span className="text-foreground">{log.metadata_user_labels?.student_id || String((log.metadata as any)?.student_id)}</span>
-                    </p>
-                  )}
-
-                  {(log.metadata as any)?.custom_message && (
-                    <p className="text-xs text-muted-foreground">{String((log.metadata as any)?.custom_message)}</p>
-                  )}
-
-                  {log.metadata && Object.keys(log.metadata).length > 0 && (
-                    <div className="rounded-md bg-muted/35 p-2 text-xs">
-                      <pre className="whitespace-pre-wrap break-words">
-                        {JSON.stringify(
-                          {
-                            ...log.metadata,
-                            ...(log.metadata_user_labels ? { metadata_user_labels: log.metadata_user_labels } : {}),
-                          },
-                          null,
-                          2
-                        )}
-                      </pre>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className={getCategoryClass(categorizeLog(log), log.action)}>
+                        {labelByCategory[categorizeLog(log)]}
+                      </Badge>
+                      <Badge variant="outline" className="font-mono">
+                        {resolveLogCode(log)}
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        {isDutch ? 'Actor' : 'Actor'}: {formatActor(log)}
+                      </Badge>
+                      {affectedStudentLabel && (
+                        <Badge variant="secondary" className="text-xs">
+                          {isDutch ? 'Leerling' : 'Student'}: {affectedStudentLabel}
+                        </Badge>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {(log.metadata as any)?.custom_message && (
+                      <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 py-1.5 text-xs">
+                        {String((log.metadata as any)?.custom_message)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>

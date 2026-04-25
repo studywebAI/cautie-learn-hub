@@ -161,3 +161,78 @@ export async function DELETE(
   }
 }
 
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ classId: string }> }
+) {
+  try {
+    const { classId } = await params
+    const cookieStore = cookies()
+    const supabase = await createClient(cookieStore)
+    const body = await req.json().catch(() => ({}))
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const perm = await getClassPermission(supabase as any, classId, user.id)
+    if (!perm.isTeacher) return NextResponse.json({ error: 'Only teachers can edit schedule' }, { status: 403 })
+
+    const slotId = String(body?.slot_id || '').trim()
+    if (!slotId) return NextResponse.json({ error: 'slot_id is required' }, { status: 400 })
+
+    const updates: Record<string, any> = { updated_at: new Date().toISOString() }
+    if (body?.day_of_week !== undefined) updates.day_of_week = Number(body.day_of_week)
+    if (body?.period_index !== undefined) updates.period_index = Number(body.period_index)
+    if (body?.title !== undefined) updates.title = String(body.title || '').trim()
+    if (body?.start_time !== undefined) updates.start_time = String(body.start_time || '')
+    if (body?.end_time !== undefined) updates.end_time = String(body.end_time || '')
+    if (body?.is_break !== undefined) updates.is_break = Boolean(body.is_break)
+    if (body?.subject_id !== undefined) updates.subject_id = body.subject_id ? String(body.subject_id) : null
+    if (body?.notes !== undefined) updates.notes = body.notes ? String(body.notes) : null
+
+    const hasContentUpdates = Object.keys(updates).some((key) => key !== 'updated_at')
+    if (!hasContentUpdates) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
+    }
+
+    if (updates.title !== undefined && !updates.title) {
+      return NextResponse.json({ error: 'title cannot be empty' }, { status: 400 })
+    }
+    if (updates.start_time !== undefined && !updates.start_time) {
+      return NextResponse.json({ error: 'start_time cannot be empty' }, { status: 400 })
+    }
+    if (updates.end_time !== undefined && !updates.end_time) {
+      return NextResponse.json({ error: 'end_time cannot be empty' }, { status: 400 })
+    }
+
+    const { data: updated, error } = await (supabase as any)
+      .from('class_school_schedule_slots')
+      .update(updates)
+      .eq('id', slotId)
+      .eq('class_id', classId)
+      .select('*')
+      .single()
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    await logAuditEntry(supabase as any, {
+      userId: user.id,
+      classId,
+      action: 'school_schedule_slot_updated',
+      entityType: 'school_schedule',
+      entityId: slotId,
+      metadata: {
+        day_of_week: updates.day_of_week,
+        period_index: updates.period_index,
+        title: updates.title,
+        start_time: updates.start_time,
+        end_time: updates.end_time,
+      },
+    })
+
+    return NextResponse.json({ success: true, slot: updated })
+  } catch (error) {
+    console.error('school schedule PATCH failed', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

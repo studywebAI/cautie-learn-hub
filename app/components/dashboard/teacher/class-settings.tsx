@@ -744,17 +744,12 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     { id: 'import', label: 'Import Subject', description: 'Copy or link from another class' },
     { id: 'danger', label: 'Danger Zone', description: 'Archive class' },
   ];
-  const activeSectionMeta = settingsSections.find((section) => section.id === activeSettingsSection) || settingsSections[0];
 
   return (
-    <div className="grid gap-4 rounded-2xl bg-zinc-200/70 p-3 lg:grid-cols-[240px_minmax(0,1fr)]">
+    <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
       <aside className="lg:sticky lg:top-4 self-start">
-        <Card className="border-0 bg-white shadow-none">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Class Settings</CardTitle>
-            <CardDescription>Pick a topic to edit.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-1">
+        <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
+          <CardContent className="space-y-1 pt-4">
             {settingsSections.map((section) => (
               <Button
                 key={section.id}
@@ -763,8 +758,8 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 onClick={() => setActiveSettingsSection(section.id)}
                 className={`h-auto w-full justify-start rounded-md px-3 py-2 text-left ${
                   activeSettingsSection === section.id
-                    ? 'bg-zinc-100 text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] hover:bg-zinc-100'
-                    : 'text-foreground/80 hover:bg-zinc-100'
+                    ? 'bg-[hsl(var(--surface-3))] text-foreground shadow-[inset_0_0_0_1px_hsl(var(--border))] hover:bg-[hsl(var(--surface-3))]'
+                    : 'text-foreground/80 hover:bg-[hsl(var(--interactive-hover))]'
                 }`}
               >
                 <span className="text-sm font-medium">{section.label}</span>
@@ -774,16 +769,9 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
         </Card>
       </aside>
 
-      <div className="space-y-4">
-        <Card className="border-0 bg-white shadow-none">
-          <CardHeader>
-            <CardTitle>{activeSectionMeta.label}</CardTitle>
-            <CardDescription>{activeSectionMeta.description}</CardDescription>
-          </CardHeader>
-        </Card>
-
+      <div className="space-y-4 min-w-0">
       {activeSettingsSection === 'profile' && (
-      <Card className="border-0 bg-white shadow-none">
+      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
         <CardHeader>
           <CardTitle>Class Profile</CardTitle>
           <CardDescription>Rename the class and update the class description.</CardDescription>
@@ -813,7 +801,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'invite' && (
-      <Card className="border-0 bg-white shadow-none">
+      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
         <CardHeader>
           <CardTitle>Invite Access</CardTitle>
           <CardDescription>Copy current join codes or rotate them if they leaked.</CardDescription>
@@ -823,7 +811,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <Label>Student Join Code</Label>
             <div className="flex gap-2">
               <Input value={studentJoinCode} readOnly />
-              <Button className="bg-white hover:bg-zinc-100 text-black border-0" variant="outline" size="icon" onClick={() => void copyText(studentJoinCode, 'Student join code')}>
+              <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" size="icon" onClick={() => void copyText(studentJoinCode, 'Student join code')}>
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
@@ -832,12 +820,12 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <Label>Teacher Join Code</Label>
             <div className="flex gap-2">
               <Input value={teacherJoinCode} readOnly />
-              <Button className="bg-white hover:bg-zinc-100 text-black border-0" variant="outline" size="icon" onClick={() => void copyText(teacherJoinCode, 'Teacher join code')}>
+              <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" size="icon" onClick={() => void copyText(teacherJoinCode, 'Teacher join code')}>
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
           </div>
-          <Button className="bg-white hover:bg-zinc-100 text-black border-0" variant="outline" onClick={() => void handleRegenerateCodes()} disabled={regeneratingCodes}>
+          <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" onClick={() => void handleRegenerateCodes()} disabled={regeneratingCodes}>
             <RotateCcw className="mr-2 h-4 w-4" />
             {regeneratingCodes ? 'Regenerating...' : 'Regenerate Invite Codes'}
           </Button>
@@ -846,7 +834,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'defaults' && (
-      <Card className="border-0 bg-white shadow-none">
+      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
         <CardHeader>
           <CardTitle>Teaching Defaults</CardTitle>
           <CardDescription>Class-wide defaults used by grades, attendance, and invite flows.</CardDescription>
@@ -896,7 +884,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </Select>
           </div>
 
-          <div className="flex items-center justify-between rounded-md bg-white p-3">
+          <div className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Show class average in grades</p>
               <p className="text-xs text-muted-foreground">Toggle class-level average cards in grades.</p>
@@ -915,7 +903,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md bg-white p-3">
+          <div className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Require attendance confirmation</p>
               <p className="text-xs text-muted-foreground">Prompt before attendance changes are saved.</p>
@@ -934,7 +922,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md bg-white p-3">
+          <div className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Allow teacher invite actions</p>
               <p className="text-xs text-muted-foreground">Enable or disable teacher invite section.</p>
@@ -953,7 +941,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md bg-white p-3">
+          <div className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Enable school schedule</p>
               <p className="text-xs text-muted-foreground">Turns on class timetable management for this class.</p>
@@ -972,7 +960,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md bg-white p-3">
+          <div className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Show school schedule to students</p>
               <p className="text-xs text-muted-foreground">Students can view timetable blocks in agenda/dashboard when enabled.</p>
@@ -998,9 +986,21 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'schedule' && (
-      <Card className="border-0 bg-white shadow-none">
+      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
         <CardHeader>
-          <CardTitle>School Schedule</CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle>School Schedule</CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]"
+              onClick={() => {
+                window.location.href = `/class/${classId}?tab=schedule`;
+              }}
+            >
+              Open Full Schedule Board
+            </Button>
+          </div>
           <CardDescription>
             Add one slot at a time: choose day, period, time range, and optional subject link.
           </CardDescription>
@@ -1008,10 +1008,10 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
         <CardContent className="space-y-4">
           <div className="rounded-md bg-emerald-100/70 p-3 text-sm text-emerald-900">
             Slot preview: {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, Number(newScheduleSlot.day_of_week) - 1)]}
-            {' Â· '}P{newScheduleSlot.period_index || '?'}{' Â· '}
+            {' · '}P{newScheduleSlot.period_index || '?'}{' · '}
             {formatTimeLabel(newScheduleSlot.start_time)} - {formatTimeLabel(newScheduleSlot.end_time)}
             {scheduleDurationMinutes > 0 ? ` (${scheduleDurationMinutes} min)` : ''}
-            {newScheduleSlot.title.trim() ? ` Â· ${newScheduleSlot.title.trim()}` : ''}
+            {newScheduleSlot.title.trim() ? ` · ${newScheduleSlot.title.trim()}` : ''}
           </div>
 
           <div className="grid gap-3 md:grid-cols-3">
@@ -1115,7 +1115,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <p className="text-sm text-rose-700">End time must be after start time.</p>
           )}
 
-          <div className="flex items-center justify-between rounded-md bg-white p-3">
+          <div className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Break slot</p>
               <p className="text-xs text-muted-foreground">Mark this timetable slot as pause/break.</p>
@@ -1141,7 +1141,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             />
           </div>
 
-          <Button className="bg-white hover:bg-zinc-100 text-black border-0" onClick={() => void createScheduleSlot()} disabled={!canCreateScheduleSlot}>
+          <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" onClick={() => void createScheduleSlot()} disabled={!canCreateScheduleSlot}>
             {creatingScheduleSlot ? 'Adding...' : 'Add schedule slot'}
           </Button>
 
@@ -1152,16 +1152,16 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <p className="text-sm text-muted-foreground">No schedule slots yet.</p>
             ) : (
               scheduleSlots.map((slot) => (
-                <div key={slot.id} className="rounded-md bg-white p-3 flex items-center justify-between gap-3">
+                <div key={slot.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="font-medium">
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, slot.day_of_week - 1)]} Â· P{slot.period_index} Â· {slot.title}
+                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, slot.day_of_week - 1)]} · P{slot.period_index} · {slot.title}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {slot.start_time} - {slot.end_time} {slot.is_break ? 'Â· Break' : ''}
+                      {slot.start_time} - {slot.end_time} {slot.is_break ? '· Break' : ''}
                     </p>
                   </div>
-                  <Button className="bg-white hover:bg-zinc-100 text-black border-0" variant="outline" size="sm" onClick={() => void deleteScheduleSlot(slot.id)}>
+                  <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" size="sm" onClick={() => void deleteScheduleSlot(slot.id)}>
                     Remove
                   </Button>
                 </div>
@@ -1173,7 +1173,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'requests' && (
-      <Card className="border-0 bg-white shadow-none">
+      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
         <CardHeader>
           <CardTitle>Teacher Join Requests</CardTitle>
           <CardDescription>Approve or reject teachers who request access via teacher join code.</CardDescription>
@@ -1185,16 +1185,16 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <p className="text-sm text-muted-foreground">No pending teacher join requests.</p>
           ) : (
             pendingJoinRequests.map((request) => (
-              <div key={request.id} className="rounded-lg bg-white p-3 flex items-center justify-between gap-3">
+              <div key={request.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-medium truncate">{request.requester_email || request.requester_user_id}</p>
                   <p className="text-xs text-muted-foreground">
-                    Subject: {request.subject_title || 'No subject provided'} Â· Requested {new Date(request.requested_at).toLocaleString()}
+                    Subject: {request.subject_title || 'No subject provided'} · Requested {new Date(request.requested_at).toLocaleString()}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
-                    className="bg-white hover:bg-zinc-100 text-black border-0"
+                    className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]"
                     size="sm"
                     onClick={() => void resolveJoinRequest(request.id, 'approve')}
                     disabled={processingJoinRequestId === request.id}
@@ -1202,7 +1202,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                     Approve
                   </Button>
                   <Button
-                    className="bg-white hover:bg-zinc-100 text-black border-0"
+                    className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]"
                     size="sm"
                     variant="outline"
                     onClick={() => void resolveJoinRequest(request.id, 'reject')}
@@ -1219,7 +1219,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'activity' && (
-      <Card className="border-0 bg-white shadow-none">
+      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
         <CardHeader>
           <CardTitle>Teacher Invite Activity</CardTitle>
           <CardDescription>
@@ -1233,7 +1233,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <p className="text-sm text-muted-foreground">No teacher invite activity yet.</p>
           ) : (
             inviteActivity.map((item) => (
-              <div key={item.id} className="rounded-lg bg-white p-3">
+              <div key={item.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-mono text-sm">{item.code}</p>
@@ -1256,7 +1256,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Issued: {new Date(item.issued_at).toLocaleString()} Â· Expires: {new Date(item.expires_at).toLocaleString()}
+                  Issued: {new Date(item.issued_at).toLocaleString()} · Expires: {new Date(item.expires_at).toLocaleString()}
                 </p>
                 {item.used_at && (
                   <p className="text-xs text-muted-foreground">
@@ -1271,7 +1271,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'subjects' && (
-      <Card className="border-0 bg-white shadow-none">
+      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
         <CardHeader>
           <CardTitle>Subject Management</CardTitle>
           <CardDescription>
@@ -1285,7 +1285,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <p className="text-sm text-muted-foreground">No subjects in this class yet.</p>
           ) : (
             subjects.map((subject) => (
-              <div key={subject.id} className="rounded-lg bg-white p-4 space-y-3">
+              <div key={subject.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{subject.title}</p>
@@ -1355,7 +1355,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'import' && (
-      <Card className="border-0 bg-white shadow-none">
+      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
         <CardHeader>
           <CardTitle>Import Subject</CardTitle>
           <CardDescription>
@@ -1410,7 +1410,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           )}
 
-          <Button className="bg-white hover:bg-zinc-100 text-black border-0" onClick={() => void handleImport()} disabled={importing || !importSourceId}>
+          <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" onClick={() => void handleImport()} disabled={importing || !importSourceId}>
             {importing ? 'Importing...' : 'Import Subject'}
           </Button>
         </CardContent>
@@ -1418,7 +1418,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'danger' && (
-      <Card className="border-0 bg-white shadow-none">
+      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
         <CardHeader>
           <CardTitle>Danger Zone</CardTitle>
           <CardDescription>
@@ -1474,6 +1474,8 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     </div>
   );
 }
+
+
 
 
 
