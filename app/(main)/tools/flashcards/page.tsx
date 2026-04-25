@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense, useContext, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
+import { Loader2 } from 'lucide-react';
 import { FunLoader } from '@/components/tools/fun-loader';
 import { FlashcardViewer, StudyMode } from '@/components/tools/flashcard-viewer';
 import { AppContext } from '@/contexts/app-context';
@@ -343,7 +344,7 @@ function FlashcardsPageContent() {
 
 export default function FlashcardsPage() {
   return (
-    <Suspense fallback={<FunLoader tool="flashcards" />}>
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
       <FlashcardsPageContent />
     </Suspense>
   );

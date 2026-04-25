@@ -5,7 +5,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import {
   Clock3,
-  Cloud,
   File as FileIcon,
   UploadCloud,
   FileText,
@@ -20,8 +19,6 @@ import {
   Captions,
   StopCircle,
   Trash2,
-  PanelRightClose,
-  PanelRightOpen,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ReactNode } from 'react';
@@ -46,7 +43,6 @@ interface SourceInputProps {
 }
 
 type SourceKind = 'url' | 'file' | 'caption' | 'image';
-type SourceInputMode = 'text' | 'files' | 'photos' | 'recents' | 'onedrive' | 'links';
 
 type SourceEntry = {
   id: string;
@@ -285,15 +281,15 @@ export function SourceInput({
   const [uploadedImageDataUri, setUploadedImageDataUri] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const [recentsOpen, setRecentsOpen] = useState(false);
   const [recentsCatalog, setRecentsCatalog] = useState<RecentCatalogItem[]>([]);
   const [recentsLoading, setRecentsLoading] = useState(false);
   const [recentsSourceFilter, setRecentsSourceFilter] = useState<'all' | 'tool_runs' | 'materials'>('all');
   const [recentsSort, setRecentsSort] = useState<'newest' | 'oldest' | 'most_used' | 'name'>('newest');
   const [recentsSearch, setRecentsSearch] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
+  const [linkInputOpen, setLinkInputOpen] = useState(false);
   const [linkInputValue, setLinkInputValue] = useState('');
-  const [mode, setMode] = useState<SourceInputMode>('text');
-  const [optionsOpen, setOptionsOpen] = useState(false);
   const [removingSourceIds, setRemovingSourceIds] = useState<string[]>([]);
   const [materials, setMaterials] = useState<MaterialEntry[]>([]);
 
@@ -638,7 +634,6 @@ export function SourceInput({
         title: 'Recents imported',
         description: `${items.length} file${items.length === 1 ? '' : 's'} imported.`,
       });
-      setMode('text');
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -912,7 +907,6 @@ export function SourceInput({
     const raw = String(rawInput || '').trim();
     if (!raw) return;
     await upsertUrlSource(raw);
-    setMode('text');
   };
 
   const removeSource = (id: string) => {
@@ -1428,20 +1422,11 @@ export function SourceInput({
     (source) => source.kind === 'file' && !source.loading && !source.text.trim() && !source.previewUrl
   );
   const canGenerate = (compiledSource.trim().length > 0 || hasImageContext) && !hasPendingSource && !hasFileSourceWithoutText;
-  const isModeActive = mode !== 'text';
-  const openMicrosoftPicker = () => {
-    if (typeof window === 'undefined') return;
-    setMode('onedrive');
-    window.dispatchEvent(new CustomEvent('cautie:open-microsoft-picker'));
-  };
 
-  const radialActions: Array<{ mode: SourceInputMode; label: string; icon: React.ComponentType<{ className?: string }>; onClick: () => void; hidden?: boolean }> = [
-    { mode: 'files', label: 'Files', icon: FileIcon, onClick: () => { setMode('files'); fileInputRef.current?.click(); } },
-    { mode: 'photos', label: 'Photos', icon: Image, onClick: () => { setMode('photos'); imageInputRef.current?.click(); } },
-    { mode: 'recents', label: 'Recents', icon: Clock3, onClick: () => setMode('recents') },
-    { mode: 'onedrive', label: 'OneDrive', icon: Cloud, onClick: openMicrosoftPicker, hidden: !enableMicrosoftSources },
-    { mode: 'links', label: 'Links', icon: Link2, onClick: () => setMode('links') },
-  ].filter((item) => !item.hidden);
+  const openMicrosoftPicker = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('cautie:open-microsoft-picker'));
+  }, []);
 
   const submitAndSave = useCallback(async () => {
     setIsProcessing(true);
@@ -1474,7 +1459,6 @@ export function SourceInput({
       await onSubmit?.(finalized);
     } finally {
       setIsProcessing(false);
-      setMode('text');
     }
   }, [manualText, onChange, onSubmit, sourceMergeMode, sources, upsertMaterial, upsertUrlSource]);
 
@@ -1566,300 +1550,131 @@ export function SourceInput({
             })}
           </div>
         )}
-        <div className="relative overflow-hidden rounded-3xl border border-sidebar-border bg-background/70 p-4 md:p-6">
-          <div className="mb-3 flex items-center gap-2 md:hidden">
-            {radialActions.map((action) => {
-              const ActionIcon = action.icon;
-              return (
-                <button
-                  key={`mobile-${action.mode}`}
-                  type="button"
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-sidebar-border bg-background/90 transition-all duration-200 ease-out hover:bg-sidebar-accent/30 ${mode === action.mode ? 'ring-1 ring-ring' : ''}`}
-                  onClick={action.onClick}
-                  title={action.label}
-                  disabled={disabled || isProcessing}
-                >
-                  <ActionIcon className="h-4 w-4" />
-                </button>
-              );
-            })}
-          </div>
 
-          <div className="pointer-events-none absolute inset-0 hidden md:block">
-            <div className={`absolute left-1/2 top-1/2 h-[238px] w-[238px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed transition-all duration-300 ease-out ${isModeActive ? 'border-border/70 scale-[1.10]' : 'border-border/45 scale-100'}`} />
-            <div className={`absolute left-1/2 top-1/2 h-[172px] w-[172px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-border/25 transition-all duration-300 ease-out ${isModeActive ? 'scale-[1.06]' : 'scale-100'}`} />
-          </div>
+        <div className="relative z-10 flex flex-wrap items-center gap-1.5">
+          {enableMicrosoftSources && (
+            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={openMicrosoftPicker} disabled={disabled || isProcessing}>
+              <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
+              Cloud
+            </Button>
+          )}
+          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
+            <Image className="mr-1.5 h-3.5 w-3.5" />
+            Photo
+          </Button>
+          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
+            <FileIcon className="mr-1.5 h-3.5 w-3.5" />
+            Files
+          </Button>
+          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => setRecentsOpen(true)} disabled={disabled || isProcessing}>
+            <Clock3 className="mr-1.5 h-3.5 w-3.5" />
+            Recents
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40"
+            onClick={() => setLinkInputOpen((prev) => !prev)}
+            disabled={disabled || isProcessing || isFetchingUrl}
+          >
+            <Link2 className="mr-1.5 h-3.5 w-3.5" />
+            Links
+          </Button>
+          {enableMic && (
+            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
+              {isFallbackRecording ? <StopCircle className="mr-1.5 h-3.5 w-3.5" /> : <Mic className="mr-1.5 h-3.5 w-3.5" />}
+              Mic
+            </Button>
+          )}
+          {enableCaptions && (
+            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => setCaptionsOpen((prev) => !prev)} disabled={disabled || !enableCaptions}>
+              <Captions className="mr-1.5 h-3.5 w-3.5" />
+              Captions
+            </Button>
+          )}
+        </div>
 
-          <div className="absolute right-3 top-3 z-20 hidden md:block">
-            <div className={`overflow-hidden rounded-xl border border-sidebar-border bg-background/90 p-2 shadow-sm transition-all duration-250 ease-out ${optionsOpen ? 'w-[156px]' : 'w-[52px]'}`}>
-              <button
+        {linkInputOpen && (
+          <div className="rounded-xl border border-sidebar-border bg-background/80 p-2">
+            <div className="flex items-center gap-2">
+              <input
+                value={linkInputValue}
+                onChange={(e) => setLinkInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const value = linkInputValue.trim();
+                    if (!value) return;
+                    void handleAddLink(value).finally(() => {
+                      setLinkInputValue('');
+                      setLinkInputOpen(false);
+                    });
+                  }
+                }}
+                placeholder="Paste link..."
+                className="h-8 flex-1 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
+                disabled={disabled || isProcessing || isFetchingUrl}
+              />
+              <Button
                 type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-sidebar-border transition-colors hover:bg-sidebar-accent/30"
-                onClick={() => setOptionsOpen((prev) => !prev)}
-                title={optionsOpen ? 'Collapse options' : 'Expand options'}
+                variant="outline"
+                size="sm"
+                className="h-8 px-2 text-xs"
+                disabled={disabled || isProcessing || isFetchingUrl || !linkInputValue.trim()}
+                onClick={() => {
+                  const value = linkInputValue.trim();
+                  if (!value) return;
+                  void handleAddLink(value).finally(() => {
+                    setLinkInputValue('');
+                    setLinkInputOpen(false);
+                  });
+                }}
               >
-                {optionsOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
-              </button>
-              <div className="mt-2 space-y-1.5">
-                {optionsOpen && <p className="px-1 text-[10px] uppercase tracking-wide text-muted-foreground">Options</p>}
-                {radialActions.map((action) => {
-                  const ActionIcon = action.icon;
-                  return (
-                    <button
-                      key={`panel-${action.mode}`}
-                      type="button"
-                      className="group flex h-8 items-center gap-2 rounded-md border border-sidebar-border bg-background px-2 text-xs transition-all duration-200 ease-out hover:bg-sidebar-accent/30"
-                      onClick={action.onClick}
-                      disabled={disabled || isProcessing}
-                      title={action.label}
-                    >
-                      <ActionIcon className="h-3.5 w-3.5" />
-                      {optionsOpen && <span>{action.label}</span>}
-                    </button>
-                  );
-                })}
-                {enableMic && (
-                  <button
-                    type="button"
-                    className="group flex h-8 items-center gap-2 rounded-md border border-sidebar-border bg-background px-2 text-xs hover:bg-sidebar-accent/30"
-                    onClick={() => (isFallbackRecording ? stopListening() : startListening())}
-                    disabled={disabled || isProcessing}
-                    title="Mic"
-                  >
-                    {isFallbackRecording ? <StopCircle className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                    {optionsOpen && <span>Mic</span>}
-                  </button>
-                )}
-                {enableCaptions && (
-                  <button
-                    type="button"
-                    className="group flex h-8 items-center gap-2 rounded-md border border-sidebar-border bg-background px-2 text-xs hover:bg-sidebar-accent/30"
-                    onClick={() => setCaptionsOpen((prev) => !prev)}
-                    disabled={disabled || isProcessing}
-                    title="Captions"
-                  >
-                    <Captions className="h-3.5 w-3.5" />
-                    {optionsOpen && <span>Captions</span>}
-                  </button>
-                )}
-              </div>
+                Add
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs"
+                onClick={() => {
+                  setLinkInputOpen(false);
+                  setLinkInputValue('');
+                }}
+              >
+                Close
+              </Button>
             </div>
           </div>
+        )}
 
-            <div className="relative mx-auto flex min-h-[360px] w-full max-w-[760px] items-center justify-center">
-              <div className="relative hidden h-[340px] w-[340px] md:block">
-                {radialActions.map((action, index) => {
-                  const ActionIcon = action.icon;
-                  const count = Math.max(radialActions.length, 1);
-                  const startAngle = -90;
-                  const step = 360 / count;
-                  const angleDeg = startAngle + index * step;
-                  const angle = (startAngle + index * step) * (Math.PI / 180);
-                  const radius = isModeActive ? 142 : 122;
-                  const tx = Math.round(Math.cos(angle) * radius);
-                  const ty = Math.round(Math.sin(angle) * radius);
-                  const lineLength = Math.max(0, radius - 34);
-                  return (
-                    <div key={`ring-${action.mode}`}>
-                      <div
-                        aria-hidden="true"
-                        className={`absolute left-1/2 top-1/2 z-0 h-px origin-left bg-border transition-opacity duration-300 ${isModeActive && mode !== action.mode ? 'opacity-45' : 'opacity-80'}`}
-                        style={{
-                          width: `${lineLength}px`,
-                          transform: `rotate(${angleDeg}deg)`,
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className={`group absolute left-1/2 top-1/2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-sidebar-border bg-background shadow-sm transition-all duration-300 ease-out hover:bg-sidebar-accent/30 ${mode === action.mode ? 'ring-2 ring-ring scale-105' : ''} ${isModeActive && mode !== action.mode ? 'opacity-80 scale-[0.97]' : 'opacity-100 scale-100'}`}
-                        style={{
-                          transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`,
-                          transitionDelay: `${index * 12}ms`,
-                        }}
-                        onClick={action.onClick}
-                        title={action.label}
-                        disabled={disabled || isProcessing}
-                      >
-                        <ActionIcon className="h-4 w-4" />
-                        <span className="pointer-events-none absolute -bottom-6 whitespace-nowrap rounded bg-background/95 px-1.5 py-0.5 text-[10px] shadow-sm">
-                          {action.label}
-                        </span>
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-
-            <div className={`relative z-10 w-full max-w-[560px] rounded-2xl border border-border bg-background p-3 transition-all duration-300 ease-out md:p-4 ${isModeActive ? 'shadow-lg shadow-black/5 scale-[1.01]' : 'shadow-none scale-100'}`}>
-              {mode === 'text' && (
-                <div className="space-y-3">
-                  <Textarea
-                    value={manualText}
-                    onChange={(e) => handleManualTextChange(e.target.value)}
-                    onKeyDown={(e) => {
-                      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                        e.preventDefault();
-                        void submitAndSave();
-                      }
-                    }}
-                    placeholder="Paste, type, or drop content..."
-                    className="min-h-[190px] resize-none rounded-xl border border-border bg-background text-sm"
-                    disabled={disabled || isProcessing}
-                  />
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-xl border-border bg-background text-xs hover:bg-muted"
-                      onClick={() => void submitAndSave()}
-                      disabled={disabled || isProcessing || !canGenerate}
-                    >
-                      {isProcessing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
-                      {submitLabel}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {mode === 'files' && (
-                <div className="space-y-3 rounded-xl border border-dashed border-sidebar-border bg-background p-4 text-sm">
-                  <p className="font-medium">Add files</p>
-                  <p className="text-xs text-muted-foreground">Upload PDF, DOCX, TXT, JPG, PNG, or WebP.</p>
-                  <div className="flex gap-2">
-                    <Button type="button" size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
-                      <FileIcon className="mr-1.5 h-3.5 w-3.5" />
-                      Choose file
-                    </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => setMode('text')}>Back</Button>
-                  </div>
-                </div>
-              )}
-
-              {mode === 'photos' && (
-                <div className="space-y-3 rounded-xl border border-dashed border-sidebar-border bg-background p-4 text-sm">
-                  <p className="font-medium">Add photo</p>
-                  <p className="text-xs text-muted-foreground">Upload JPG, PNG, or WebP image.</p>
-                  <div className="flex gap-2">
-                    <Button type="button" size="sm" variant="outline" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
-                      <Image className="mr-1.5 h-3.5 w-3.5" />
-                      Choose photo
-                    </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => setMode('text')}>Back</Button>
-                  </div>
-                </div>
-              )}
-
-              {mode === 'onedrive' && (
-                <div className="space-y-3 rounded-xl border border-dashed border-sidebar-border bg-background p-4 text-sm">
-                  <p className="font-medium">OneDrive</p>
-                  <p className="text-xs text-muted-foreground">Open the picker, select files, then you return to text mode with attachments.</p>
-                  <div className="flex gap-2">
-                    <Button type="button" size="sm" variant="outline" onClick={openMicrosoftPicker} disabled={disabled || isProcessing}>
-                      <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
-                      Open picker
-                    </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => setMode('text')}>Back</Button>
-                  </div>
-                </div>
-              )}
-
-              {mode === 'links' && (
-                <div className="space-y-3 rounded-xl border border-sidebar-border bg-background p-4">
-                  <p className="text-sm font-medium">Paste link</p>
-                  <div className="flex items-center gap-2">
-                    <input
-                      value={linkInputValue}
-                      onChange={(e) => setLinkInputValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const value = linkInputValue.trim();
-                          if (!value) return;
-                          void handleAddLink(value).finally(() => setLinkInputValue(''));
-                        }
-                      }}
-                      placeholder="Paste link..."
-                      className="h-9 flex-1 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
-                      disabled={disabled || isProcessing || isFetchingUrl}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={disabled || isProcessing || isFetchingUrl || !linkInputValue.trim()}
-                      onClick={() => {
-                        const value = linkInputValue.trim();
-                        if (!value) return;
-                        void handleAddLink(value).finally(() => setLinkInputValue(''));
-                      }}
-                    >
-                      Add
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => { setMode('text'); setLinkInputValue(''); }}>
-                      Back
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {mode === 'recents' && (
-                <div className="space-y-2 rounded-xl border border-sidebar-border bg-background p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">Recents</p>
-                    <Button size="sm" variant="ghost" onClick={() => setMode('text')}>Back</Button>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <div className="relative md:col-span-1">
-                      <Search className="pointer-events-none absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                      <input
-                        value={recentsSearch}
-                        onChange={(e) => setRecentsSearch(e.target.value)}
-                        placeholder="Search by name..."
-                        className="h-8 w-full rounded-md border border-sidebar-border bg-sidebar-accent/50 pl-7 pr-2 text-xs outline-none focus:ring-1 focus:ring-ring"
-                      />
-                    </div>
-                    <select value={recentsSourceFilter} onChange={(e) => setRecentsSourceFilter(e.target.value as 'all' | 'tool_runs' | 'materials')} className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs">
-                      <option value="all">All</option>
-                      <option value="tool_runs">Tool runs</option>
-                      <option value="materials">Materials</option>
-                    </select>
-                    <select value={recentsSort} onChange={(e) => setRecentsSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')} className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs">
-                      <option value="newest">Newest</option>
-                      <option value="oldest">Oldest</option>
-                      <option value="most_used">Most used</option>
-                      <option value="name">Name</option>
-                    </select>
-                  </div>
-                  <div className="max-h-[220px] overflow-auto rounded-lg border border-sidebar-border bg-sidebar-accent/20 p-2">
-                    {recentsLoading ? (
-                      <div className="flex h-20 items-center justify-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
-                    ) : visibleRecents.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">No local recents found.</p>
-                    ) : (
-                      <div className="space-y-1.5">
-                        {visibleRecents.slice(0, 30).map((item) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            className="flex w-full items-center gap-2 rounded-md border border-sidebar-border bg-background px-2 py-1.5 text-left hover:bg-sidebar-accent/30"
-                            onClick={() => {
-                              void importRecentsItems([item]);
-                            }}
-                          >
-                            <FileText className="h-4 w-4 shrink-0 text-primary" />
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-xs">{item.name}</p>
-                              <p className="text-[10px] text-muted-foreground">{item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleString() : '-'}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+        <div className="flex items-stretch gap-2">
+          <div className="relative flex-1">
+            <Textarea
+              value={manualText}
+              onChange={(e) => handleManualTextChange(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                  e.preventDefault();
+                  void submitAndSave();
+                }
+              }}
+              placeholder=""
+              className="min-h-[190px] flex-1 resize-none rounded-2xl border border-border bg-muted/70 text-sm"
+              disabled={disabled || isProcessing}
+            />
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-[112px] rounded-2xl border-border bg-muted/80 text-xs hover:bg-muted"
+            onClick={() => void submitAndSave()}
+            disabled={disabled || isProcessing || !canGenerate}
+          >
+            {isProcessing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+            {submitLabel}
+          </Button>
         </div>
 
         {charCount > 0 && (
@@ -1878,6 +1693,66 @@ export function SourceInput({
           </span>
         )}
       </div>
+
+      {recentsOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-3">
+          <div className="flex h-[72vh] w-full max-w-3xl flex-col rounded-xl border border-sidebar-border bg-background p-3 shadow-xl">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm font-medium">Local recents</p>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setRecentsOpen(false)}>Close</Button>
+            </div>
+            <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+              <div className="relative md:col-span-1">
+                <Search className="pointer-events-none absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  value={recentsSearch}
+                  onChange={(e) => setRecentsSearch(e.target.value)}
+                  placeholder="Search by name..."
+                  className="h-8 w-full rounded-md border border-sidebar-border bg-sidebar-accent/50 pl-7 pr-2 text-xs outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <select value={recentsSourceFilter} onChange={(e) => setRecentsSourceFilter(e.target.value as 'all' | 'tool_runs' | 'materials')} className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs">
+                <option value="all">All</option>
+                <option value="tool_runs">Tool runs (local)</option>
+                <option value="materials">Materials (local)</option>
+              </select>
+              <select value={recentsSort} onChange={(e) => setRecentsSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')} className="h-8 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs">
+                <option value="newest">Time: Newest</option>
+                <option value="oldest">Time: Oldest</option>
+                <option value="most_used">Most used</option>
+                <option value="name">Name</option>
+              </select>
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-sidebar-border bg-sidebar-accent/20 p-2">
+              {recentsLoading ? (
+                <div className="flex h-full items-center justify-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
+              ) : visibleRecents.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No local recents found.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {visibleRecents.slice(0, 50).map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-md border border-sidebar-border bg-background px-2 py-1.5 text-left hover:bg-sidebar-accent/30"
+                      onClick={() => {
+                        void importRecentsItems([item]);
+                        setRecentsOpen(false);
+                      }}
+                    >
+                      <FileText className="h-4 w-4 shrink-0 text-primary" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs">{item.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleString() : '-'}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <input
         ref={fileInputRef}
