@@ -200,6 +200,49 @@ export async function GET(
       overallCompletionRate: performanceTrends.length > 0 ? performanceTrends[performanceTrends.length - 1].completionRate : 0,
     }
 
+    const fourteenDaysAgo = subDays(new Date(), 14).toISOString()
+    const { data: attendanceRows } = await (supabase as any)
+      .from('student_attendance')
+      .select('is_present, has_homework_incomplete, was_too_late, created_at')
+      .eq('class_id', classId)
+      .gte('created_at', fourteenDaysAgo)
+
+    const attendanceSafe = attendanceRows || []
+    const attendanceCount = attendanceSafe.length
+    const absentCount = attendanceSafe.filter((row: any) => row?.is_present === false).length
+    const lateCount = attendanceSafe.filter((row: any) => row?.was_too_late === true).length
+    const homeworkIssueCount = attendanceSafe.filter((row: any) => row?.has_homework_incomplete === true).length
+
+    const jsDay = new Date().getDay()
+    const currentDay = jsDay === 0 ? 7 : jsDay
+    const currentMinutes = new Date().getHours() * 60 + new Date().getMinutes()
+    const { data: scheduleSlots } = await (supabase as any)
+      .from('class_school_schedule_slots')
+      .select('day_of_week, start_time, end_time')
+      .eq('class_id', classId)
+
+    const scheduleSafe = scheduleSlots || []
+    const todaySlots = scheduleSafe.filter((slot: any) => Number(slot?.day_of_week || 0) === currentDay)
+    const parseMinutes = (time: string) => {
+      const [hourText, minuteText] = String(time || '').split(':')
+      const hour = Number(hourText)
+      const minute = Number(minuteText)
+      if (Number.isNaN(hour) || Number.isNaN(minute)) return NaN
+      return hour * 60 + minute
+    }
+    const hasLiveClassNow = todaySlots.some((slot: any) => {
+      const start = parseMinutes(String(slot?.start_time || ''))
+      const end = parseMinutes(String(slot?.end_time || ''))
+      return !Number.isNaN(start) && !Number.isNaN(end) && currentMinutes >= start && currentMinutes < end
+    })
+    const nextSlot = todaySlots
+      .map((slot: any) => ({
+        start: parseMinutes(String(slot?.start_time || '')),
+        startRaw: String(slot?.start_time || ''),
+      }))
+      .filter((slot: any) => !Number.isNaN(slot.start) && slot.start > currentMinutes)
+      .sort((a: any, b: any) => a.start - b.start)[0] || null
+
     const analytics: ClassAnalytics = {
       engagementMetrics,
       performanceTrends,
@@ -238,6 +281,18 @@ export async function GET(
           : 'Using internal text-similarity checks only.',
       },
       classOverview,
+      attendanceSignals: {
+        recordsCount: attendanceCount,
+        absentRate: attendanceCount > 0 ? (absentCount / attendanceCount) * 100 : 0,
+        lateRate: attendanceCount > 0 ? (lateCount / attendanceCount) * 100 : 0,
+        homeworkIssueRate: attendanceCount > 0 ? (homeworkIssueCount / attendanceCount) * 100 : 0,
+      },
+      scheduleSignals: {
+        slotsCount: scheduleSafe.length,
+        todaySlotsCount: todaySlots.length,
+        hasLiveClassNow,
+        nextClassAt: nextSlot?.startRaw || null,
+      },
       insights: generateInsights(engagementMetrics, atRiskStudents, {
         warnings: [],
         studentRows: [],

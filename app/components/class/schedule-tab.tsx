@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarClock, Clock3, GripVertical, Plus, Trash2 } from 'lucide-react';
+import { CalendarClock, Clock3, CopyPlus, GripVertical, Pencil, Plus, Shuffle, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
 type ScheduleSlot = {
@@ -57,6 +58,14 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
   const [enabled, setEnabled] = useState(Boolean(cachedData?.enabled));
   const [slots, setSlots] = useState<ScheduleSlot[]>(cachedData?.slots || []);
   const [dragSlotId, setDragSlotId] = useState<string | null>(null);
+  const [editingSlot, setEditingSlot] = useState<ScheduleSlot | null>(null);
+  const [editDraft, setEditDraft] = useState({
+    title: '',
+    start_time: '08:30',
+    end_time: '09:20',
+    day_of_week: '1',
+    period_index: '1',
+  });
   const [newSlot, setNewSlot] = useState({
     day_of_week: '1',
     period_index: '1',
@@ -172,7 +181,46 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
 
     const occupied = slotByCell.get(`${dayOfWeek}-${periodIndex}`);
     if (occupied && occupied.id !== slotId) {
-      toast({ title: 'Target period is occupied', description: 'Move or delete that slot first.', variant: 'destructive' });
+      const sourceDay = slot.day_of_week;
+      const sourcePeriod = slot.period_index;
+      setSlots((prev) =>
+        prev.map((entry) => {
+          if (entry.id === slotId) return { ...entry, day_of_week: dayOfWeek, period_index: periodIndex };
+          if (entry.id === occupied.id) return { ...entry, day_of_week: sourceDay, period_index: sourcePeriod };
+          return entry;
+        })
+      );
+      try {
+        const [firstResponse, secondResponse] = await Promise.all([
+          fetch(`/api/classes/${classId}/school-schedule`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              slot_id: slotId,
+              day_of_week: dayOfWeek,
+              period_index: periodIndex,
+            }),
+          }),
+          fetch(`/api/classes/${classId}/school-schedule`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              slot_id: occupied.id,
+              day_of_week: sourceDay,
+              period_index: sourcePeriod,
+            }),
+          }),
+        ]);
+        const firstPayload = await firstResponse.json().catch(() => ({}));
+        const secondPayload = await secondResponse.json().catch(() => ({}));
+        if (!firstResponse.ok) throw new Error(firstPayload.error || 'Failed to swap source slot');
+        if (!secondResponse.ok) throw new Error(secondPayload.error || 'Failed to swap target slot');
+        await loadSchedule();
+        toast({ title: 'Slots swapped' });
+      } catch (error: any) {
+        toast({ title: 'Could not swap slots', description: error?.message || 'Try again.', variant: 'destructive' });
+        await loadSchedule();
+      }
       return;
     }
 
@@ -193,6 +241,90 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
     } catch (error: any) {
       toast({ title: 'Could not move slot', description: error?.message || 'Try again.', variant: 'destructive' });
       await loadSchedule();
+    }
+  };
+
+  const openEditSlot = (slot: ScheduleSlot) => {
+    setEditingSlot(slot);
+    setEditDraft({
+      title: slot.title,
+      start_time: slot.start_time,
+      end_time: slot.end_time,
+      day_of_week: String(slot.day_of_week),
+      period_index: String(slot.period_index),
+    });
+  };
+
+  const saveEditSlot = async () => {
+    if (!editingSlot) return;
+    if (!editDraft.title.trim()) {
+      toast({ title: 'Title is required', variant: 'destructive' });
+      return;
+    }
+    const start = parseMinutes(editDraft.start_time);
+    const end = parseMinutes(editDraft.end_time);
+    if (Number.isNaN(start) || Number.isNaN(end) || end <= start) {
+      toast({ title: 'End time must be after start time', variant: 'destructive' });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}/school-schedule`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slot_id: editingSlot.id,
+          title: editDraft.title.trim(),
+          start_time: editDraft.start_time,
+          end_time: editDraft.end_time,
+          day_of_week: Number(editDraft.day_of_week),
+          period_index: Number(editDraft.period_index),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to save slot');
+      await loadSchedule();
+      setEditingSlot(null);
+      toast({ title: 'Slot updated' });
+    } catch (error: any) {
+      toast({ title: 'Could not update slot', description: error?.message || 'Try again.', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const duplicateSlotToNextDay = async (slot: ScheduleSlot) => {
+    const targetDay = slot.day_of_week === 5 ? 1 : slot.day_of_week + 1;
+    const targetKey = `${targetDay}-${slot.period_index}`;
+    if (slotByCell.has(targetKey)) {
+      toast({ title: 'Next day period occupied', description: 'Pick another slot or move existing block first.', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}/school-schedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          day_of_week: targetDay,
+          period_index: slot.period_index,
+          title: slot.title,
+          start_time: slot.start_time,
+          end_time: slot.end_time,
+          is_break: slot.is_break,
+          subject_id: slot.subject_id,
+          notes: slot.notes,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to duplicate slot');
+      await loadSchedule();
+      toast({ title: 'Slot duplicated to next day' });
+    } catch (error: any) {
+      toast({ title: 'Could not duplicate slot', description: error?.message || 'Try again.', variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -275,7 +407,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
           <CardDescription>Drop onto any cell to move a class. Occupied targets are protected.</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <div className="min-w-[840px] space-y-2">
+          <div className="hidden min-w-[840px] space-y-2 md:block">
             <div className="grid grid-cols-[80px_repeat(5,minmax(0,1fr))] gap-2">
               <div />
               {WEEK_DAYS.map((day) => (
@@ -319,6 +451,24 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                               <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
                               <button
                                 type="button"
+                                onClick={() => openEditSlot(slot)}
+                                className="rounded p-1 text-muted-foreground hover:bg-[hsl(var(--interactive-hover))] hover:text-foreground"
+                                disabled={saving}
+                                aria-label="Edit slot"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void duplicateSlotToNextDay(slot)}
+                                className="rounded p-1 text-muted-foreground hover:bg-[hsl(var(--interactive-hover))] hover:text-foreground"
+                                disabled={saving}
+                                aria-label="Duplicate slot"
+                              >
+                                <CopyPlus className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => void removeSlot(slot.id)}
                                 className="rounded p-1 text-muted-foreground hover:bg-[hsl(var(--interactive-hover))] hover:text-foreground"
                                 disabled={saving}
@@ -337,6 +487,43 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                 })}
               </div>
             ))}
+          </div>
+          <div className="space-y-2 md:hidden">
+            {WEEK_DAYS.map((day) => {
+              const daySlots = sortedSlots.filter((slot) => slot.day_of_week === day.value);
+              return (
+                <div key={day.value} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-2">
+                  <p className="mb-2 text-xs font-semibold text-muted-foreground">{day.label}</p>
+                  {daySlots.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No slots</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {daySlots.map((slot) => (
+                        <div key={slot.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <p className="text-xs font-semibold">P{slot.period_index} · {slot.title}</p>
+                              <p className="text-[11px] text-muted-foreground">{formatTime(slot.start_time)} - {formatTime(slot.end_time)}</p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button type="button" onClick={() => openEditSlot(slot)} className="rounded p-1 text-muted-foreground hover:bg-[hsl(var(--interactive-hover))] hover:text-foreground">
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              <button type="button" onClick={() => void duplicateSlotToNextDay(slot)} className="rounded p-1 text-muted-foreground hover:bg-[hsl(var(--interactive-hover))] hover:text-foreground">
+                                <Shuffle className="h-3.5 w-3.5" />
+                              </button>
+                              <button type="button" onClick={() => void removeSlot(slot.id)} className="rounded p-1 text-muted-foreground hover:bg-[hsl(var(--interactive-hover))] hover:text-foreground">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
@@ -388,7 +575,50 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={Boolean(editingSlot)} onOpenChange={(open) => !open && setEditingSlot(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Schedule Slot</DialogTitle>
+            <DialogDescription>Update day, period, title, and time range.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1">
+              <Label>Day</Label>
+              <Select value={editDraft.day_of_week} onValueChange={(value) => setEditDraft((prev) => ({ ...prev, day_of_week: value }))}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WEEK_DAYS.map((day) => (
+                    <SelectItem key={day.value} value={String(day.value)}>{day.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Period</Label>
+              <Input value={editDraft.period_index} onChange={(event) => setEditDraft((prev) => ({ ...prev, period_index: event.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>Start</Label>
+              <Input value={editDraft.start_time} onChange={(event) => setEditDraft((prev) => ({ ...prev, start_time: event.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>End</Label>
+              <Input value={editDraft.end_time} onChange={(event) => setEditDraft((prev) => ({ ...prev, end_time: event.target.value }))} />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <Label>Title</Label>
+              <Input value={editDraft.title} onChange={(event) => setEditDraft((prev) => ({ ...prev, title: event.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingSlot(null)}>Cancel</Button>
+            <Button onClick={() => void saveEditSlot()} disabled={saving}>{saving ? 'Saving...' : 'Save changes'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-

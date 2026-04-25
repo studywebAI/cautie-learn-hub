@@ -232,7 +232,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Students</CardTitle>
@@ -267,6 +267,28 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
           <CardContent>
             <div className="text-2xl font-bold">{analytics.warnings.length}</div>
             <p className="text-xs text-muted-foreground">Suspicious speed/paste/AI signals</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Attendance Risk</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{Math.round(analytics.attendanceSignals?.absentRate || 0)}%</div>
+            <p className="text-xs text-muted-foreground">
+              Absent rate (14d) · Late {Math.round(analytics.attendanceSignals?.lateRate || 0)}%
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Schedule Health</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{analytics.scheduleSignals?.slotsCount || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Today {analytics.scheduleSignals?.todaySlotsCount || 0} · {analytics.scheduleSignals?.hasLiveClassNow ? "Live now" : "No live class"}
+            </p>
           </CardContent>
         </Card>
       </div>

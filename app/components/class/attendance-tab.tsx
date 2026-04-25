@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +12,8 @@ import { CheckCheck, XCircle, MessageSquareText, Clock3, NotebookPen, History, U
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { ToastAction } from '@/components/ui/toast';
 import { DEFAULT_CLASS_PREFERENCES, normalizeClassPreferences } from '@/lib/class-preferences';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 import { AppContext, AppContextType } from '@/contexts/app-context';
@@ -54,6 +56,11 @@ type PendingAction = {
   logCustomEvent?: boolean;
 };
 
+type PendingActionWithPatch = {
+  action: PendingAction;
+  optimisticPatch: Partial<StudentAttendance>;
+};
+
 export function AttendanceTab({ classId, cachedData = null, parentLoading = false }: AttendanceTabProps) {
   const appContext = useContext(AppContext) as AppContextType | null;
   const isDutch = appContext?.language === 'nl';
@@ -67,11 +74,13 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
   const [isCustomEventDialogOpen, setIsCustomEventDialogOpen] = useState(false);
   const [customEventText, setCustomEventText] = useState('');
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingActionWithPatch | null>(null);
   const [preferences, setPreferences] = useState(DEFAULT_CLASS_PREFERENCES);
   const [logCustomEvent, setLogCustomEvent] = useState(true);
   const [processingStudentIds, setProcessingStudentIds] = useState<Set<string>>(new Set());
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [provisionalMode, setProvisionalMode] = useState(false);
+  const [stagedActions, setStagedActions] = useState<Record<string, PendingAction>>({});
   const { toast } = useToast();
   const selectedStudentId = searchParams?.get('studentId') || '';
   const quickAction = searchParams?.get('quick') || '';
@@ -105,6 +114,12 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
     reasonMaterialMissing: isDutch ? 'Materiaal vergeten' : 'Forgot materials',
     reasonBehavior: isDutch ? 'Klasgedrag besproken' : 'Behavior discussed',
     reasonParentContact: isDutch ? 'Oudercontact gepland' : 'Parent contact planned',
+    provisionalMode: isDutch ? 'Voorlopige modus' : 'Provisional mode',
+    provisionalModeHint: isDutch ? 'Wijzigingen opslaan als concept. Publiceer later in bulk.' : 'Stage attendance changes, then publish in bulk.',
+    applyStaged: isDutch ? 'Publiceer conceptwijzigingen' : 'Apply staged changes',
+    discardStaged: isDutch ? 'Verwijder concept' : 'Discard staged',
+    stagedCount: isDutch ? 'concept' : 'staged',
+    undo: isDutch ? 'Ongedaan maken' : 'Undo',
     timeline: isDutch ? 'tijdlijn' : 'timeline',
     timelineDescription: isDutch ? 'Recente aanwezigheid en events met docent en datum.' : 'Recent attendance and custom events with teacher and date.',
     noEventsYet: isDutch ? 'Nog geen events.' : 'No events yet.',
@@ -268,7 +283,11 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
     setStudents((prev) => prev.map((student) => (student.id === studentId ? snapshot : student)));
   };
 
-  const postAttendanceAction = async (action: PendingAction, optimisticPatch: Partial<StudentAttendance>) => {
+  const postAttendanceAction = async (
+    action: PendingAction,
+    optimisticPatch: Partial<StudentAttendance>,
+    options: { silentSuccess?: boolean } = {}
+  ) => {
     const previous = students.find((student) => student.id === action.studentId);
     setProcessingStudentIds((prev) => new Set(prev).add(action.studentId));
     patchStudentLocal(action.studentId, optimisticPatch);
@@ -288,10 +307,33 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
 
       clearQuickAction();
       const noop = Boolean(payload?.noop);
-      if (!noop) {
+      if (!noop && !options.silentSuccess) {
         toast({
           title: isDutch ? 'Opgeslagen' : 'Saved',
           description: isDutch ? 'Aanwezigheid bijgewerkt.' : 'Attendance updated.',
+          action: (
+            <ToastAction
+              altText={t.undo}
+              onClick={() => {
+                if (!previous) return;
+                void postAttendanceAction(
+                  {
+                    studentId: action.studentId,
+                    isPresent: previous.isPresent ?? true,
+                    hasHomeworkIncomplete: previous.hasHomeworkIncomplete,
+                    wasTooLate: previous.wasTooLate,
+                  },
+                  {
+                    isPresent: previous.isPresent,
+                    hasHomeworkIncomplete: previous.hasHomeworkIncomplete,
+                    wasTooLate: previous.wasTooLate,
+                  }
+                );
+              }}
+            >
+              {t.undo}
+            </ToastAction>
+          ),
         });
       }
       void fetchAttendance(true);
@@ -337,18 +379,28 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
       wasTooLate: student?.wasTooLate ?? false,
     };
 
+    if (provisionalMode) {
+      patchStudentLocal(studentId, { isPresent });
+      setStagedActions((prev) => ({
+        ...prev,
+        [studentId]: action,
+      }));
+      clearQuickAction();
+      return;
+    }
+
     if (!preferences.attendance_require_confirmation) {
       void postAttendanceAction(action, { isPresent });
       return;
     }
 
-    setPendingAction(action);
+    setPendingAction({ action, optimisticPatch: { isPresent } });
     setIsConfirmDialogOpen(true);
   };
 
   const handleConfirm = async () => {
     if (!pendingAction) return;
-    await postAttendanceAction(pendingAction, { isPresent: pendingAction.isPresent });
+    await postAttendanceAction(pendingAction.action, pendingAction.optimisticPatch);
     setIsConfirmDialogOpen(false);
     setPendingAction(null);
   };
@@ -368,12 +420,22 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
       [field]: value,
     };
 
+    if (provisionalMode) {
+      patchStudentLocal(studentId, optimisticPatch);
+      setStagedActions((prev) => ({
+        ...prev,
+        [studentId]: action,
+      }));
+      clearQuickAction();
+      return;
+    }
+
     if (!preferences.attendance_require_confirmation) {
       void postAttendanceAction(action, optimisticPatch);
       return;
     }
 
-    setPendingAction(action);
+    setPendingAction({ action, optimisticPatch });
     setIsConfirmDialogOpen(true);
   };
 
@@ -390,7 +452,8 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
               hasHomeworkIncomplete: student.hasHomeworkIncomplete,
               wasTooLate: student.wasTooLate,
             },
-            { isPresent }
+            { isPresent },
+            { silentSuccess: true }
           )
         )
       );
@@ -403,6 +466,43 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
     } finally {
       setBulkSaving(false);
     }
+  };
+
+  const applyStagedChanges = async () => {
+    const entries = Object.values(stagedActions);
+    if (entries.length === 0) return;
+    setBulkSaving(true);
+    try {
+      await Promise.all(
+        entries.map((action) =>
+          postAttendanceAction(
+            action,
+            {
+              isPresent: action.isPresent,
+              hasHomeworkIncomplete: action.hasHomeworkIncomplete,
+              wasTooLate: action.wasTooLate,
+            },
+            { silentSuccess: true }
+          )
+        )
+      );
+      setStagedActions({});
+      toast({
+        title: isDutch ? 'Conceptwijzigingen gepubliceerd' : 'Staged changes applied',
+        description: isDutch ? `${entries.length} wijzigingen opgeslagen.` : `Saved ${entries.length} changes.`,
+      });
+      void fetchAttendance(true);
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
+  const discardStagedChanges = async () => {
+    setStagedActions({});
+    await fetchAttendance(true);
+    toast({
+      title: isDutch ? 'Concept verwijderd' : 'Staged changes discarded',
+    });
   };
 
   const handleSaveCustomEvent = async () => {
@@ -465,6 +565,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
   const visibleStudents = selectedStudentId
     ? students.filter((student) => student.id === selectedStudentId)
     : students;
+  const stagedCount = useMemo(() => Object.keys(stagedActions).length, [stagedActions]);
   const timelineStudent = timelineStudentId
     ? students.find((student) => student.id === timelineStudentId) || null
     : null;
@@ -499,9 +600,9 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
 
   return (
     <div className="space-y-6" data-testid="attendance-tab">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg">{t.attendance}</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm text-muted-foreground">{visibleStudents.length} {t.students}</p>
           <Select value={selectedStudentId || 'all'} onValueChange={(value) => applyStudentFilter(value === 'all' ? '' : value)}>
             <SelectTrigger className="h-9 w-[180px] text-xs">
@@ -537,6 +638,31 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
         </div>
       </div>
 
+      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Switch checked={provisionalMode} onCheckedChange={(checked) => setProvisionalMode(Boolean(checked))} />
+            <p className="text-sm font-medium">{t.provisionalMode}</p>
+          </div>
+          <p className="text-xs text-muted-foreground">{t.provisionalModeHint}</p>
+          {provisionalMode && stagedCount > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              {stagedCount} {t.stagedCount}
+            </Badge>
+          )}
+          {provisionalMode && (
+            <div className="ml-auto flex items-center gap-2">
+              <Button variant="outline" size="sm" className="h-8 text-xs" disabled={stagedCount === 0 || bulkSaving} onClick={() => void discardStagedChanges()}>
+                {t.discardStaged}
+              </Button>
+              <Button size="sm" className="h-8 text-xs" disabled={stagedCount === 0 || bulkSaving} onClick={() => void applyStagedChanges()}>
+                {t.applyStaged}
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
       {selectedStudentId && (
         <div className="rounded-lg bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
           {t.showingOneStudent}
@@ -561,7 +687,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                 <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 <Button
                   data-testid={`attendance-action-info-${student.id}`}
                   variant="outline"

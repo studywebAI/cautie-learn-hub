@@ -115,6 +115,29 @@ function formatActionLabel(log: AuditLog, isDutch: boolean) {
   return formatAction(action);
 }
 
+function formatDiffValue(value: unknown) {
+  if (value === true) return 'on';
+  if (value === false) return 'off';
+  if (value === null || value === undefined || value === '') return 'none';
+  return String(value);
+}
+
+function getDiffSummary(log: AuditLog, isDutch: boolean): string[] {
+  const metadata = (log.metadata || {}) as Record<string, any>;
+  const diffs: string[] = [];
+
+  if ('from_is_present' in metadata || 'to_is_present' in metadata) {
+    diffs.push(`${isDutch ? 'Aanwezigheid' : 'Attendance'}: ${formatDiffValue(metadata.from_is_present)} -> ${formatDiffValue(metadata.to_is_present)}`);
+  }
+  if ('from_active' in metadata || 'to_active' in metadata) {
+    diffs.push(`${isDutch ? 'Status' : 'Status'}: ${formatDiffValue(metadata.from_active)} -> ${formatDiffValue(metadata.to_active)}`);
+  }
+  if ('from' in metadata || 'to' in metadata) {
+    diffs.push(`${isDutch ? 'Waarde' : 'Value'}: ${formatDiffValue(metadata.from)} -> ${formatDiffValue(metadata.to)}`);
+  }
+  return diffs;
+}
+
 function resolveLogCode(log: AuditLog) {
   const topLevelCode = String(log.log_code || '').trim();
   if (topLevelCode) return topLevelCode;
@@ -390,6 +413,33 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
     });
   }, [logs, search, category, studentFilter, isDutch, dateWindow]);
 
+  const groupedLogs = useMemo(() => {
+    const groups: Array<{ id: string; logs: AuditLog[] }> = [];
+    const thresholdMs = 45 * 1000;
+    for (const log of filteredLogs) {
+      const lastGroup = groups[groups.length - 1];
+      if (!lastGroup) {
+        groups.push({ id: log.id, logs: [log] });
+        continue;
+      }
+      const previous = lastGroup.logs[lastGroup.logs.length - 1];
+      const sameActor = String(previous.user_id || '') === String(log.user_id || '');
+      const sameStudent = String((previous.metadata as any)?.student_id || '') === String((log.metadata as any)?.student_id || '');
+      const sameCategory = categorizeLog(previous) === categorizeLog(log);
+      const previousGroupId = String((previous.metadata as any)?.attendance_change_group_id || '');
+      const currentGroupId = String((log.metadata as any)?.attendance_change_group_id || '');
+      const sameChangeGroup = Boolean(previousGroupId && currentGroupId && previousGroupId === currentGroupId);
+      const delta = Math.abs(new Date(previous.created_at).getTime() - new Date(log.created_at).getTime());
+
+      if (sameChangeGroup || (sameActor && sameStudent && sameCategory && delta <= thresholdMs)) {
+        lastGroup.logs.push(log);
+      } else {
+        groups.push({ id: log.id, logs: [log] });
+      }
+    }
+    return groups;
+  }, [filteredLogs]);
+
   const counts = useMemo(() => {
     const base: Record<Category, number> = {
       all: logs.length,
@@ -511,16 +561,21 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
             <div className="py-10 text-center text-muted-foreground">{isDutch ? 'Geen logs voor dit filter.' : 'No logs found for this filter.'}</div>
           ) : (
             <div className="space-y-3">
-              {filteredLogs.map((log) => {
-                const affectedStudentId = getAffectedStudentId(log);
-                const affectedStudentLabel = log.metadata_user_labels?.student_id || affectedStudentId;
+              {groupedLogs.map((group) => {
+                const leadLog = group.logs[0];
+                const affectedStudentId = getAffectedStudentId(leadLog);
+                const affectedStudentLabel = leadLog.metadata_user_labels?.student_id || affectedStudentId;
                 const canOpenAttendance = Boolean(affectedStudentId);
                 return (
-                  <div key={log.id} className="space-y-2 rounded-lg border bg-[hsl(var(--surface-1))] p-3">
+                  <div key={group.id} className="space-y-2 rounded-lg border bg-[hsl(var(--surface-1))] p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate font-medium">{formatActionLabel(log, isDutch)}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString()}</p>
+                        <p className="truncate font-medium">
+                          {group.logs.length > 1
+                            ? `${group.logs.length} ${isDutch ? 'gerelateerde updates' : 'related updates'}`
+                            : formatActionLabel(leadLog, isDutch)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{new Date(leadLog.created_at).toLocaleString()}</p>
                       </div>
                       {canOpenAttendance && (
                         <Button
@@ -536,14 +591,14 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className={getCategoryClass(categorizeLog(log), log.action)}>
-                        {labelByCategory[categorizeLog(log)]}
+                      <Badge variant="outline" className={getCategoryClass(categorizeLog(leadLog), leadLog.action)}>
+                        {labelByCategory[categorizeLog(leadLog)]}
                       </Badge>
                       <Badge variant="outline" className="font-mono">
-                        {resolveLogCode(log)}
+                        {resolveLogCode(leadLog)}
                       </Badge>
                       <Badge variant="secondary" className="text-xs">
-                        {isDutch ? 'Actor' : 'Actor'}: {formatActor(log)}
+                        {isDutch ? 'Actor' : 'Actor'}: {formatActor(leadLog)}
                       </Badge>
                       {affectedStudentLabel && (
                         <Badge variant="secondary" className="text-xs">
@@ -552,11 +607,25 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                       )}
                     </div>
 
-                    {(log.metadata as any)?.custom_message && (
+                    {(leadLog.metadata as any)?.custom_message && (
                       <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 py-1.5 text-xs">
-                        {String((log.metadata as any)?.custom_message)}
+                        {String((leadLog.metadata as any)?.custom_message)}
                       </div>
                     )}
+
+                    <div className="space-y-1">
+                      {group.logs.map((log) => {
+                        const diffLines = getDiffSummary(log, isDutch);
+                        return (
+                          <div key={log.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 py-1.5">
+                            <p className="text-xs font-medium">{formatActionLabel(log, isDutch)}</p>
+                            {diffLines.map((line) => (
+                              <p key={line} className="text-[11px] text-muted-foreground">{line}</p>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })}

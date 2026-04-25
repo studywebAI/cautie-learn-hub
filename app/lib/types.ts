@@ -297,6 +297,18 @@ export type ClassAnalytics = {
     averageClassScore: number;
     overallCompletionRate: number;
   };
+  attendanceSignals?: {
+    recordsCount: number;
+    absentRate: number;
+    lateRate: number;
+    homeworkIssueRate: number;
+  };
+  scheduleSignals?: {
+    slotsCount: number;
+    todaySlotsCount: number;
+    hasLiveClassNow: boolean;
+    nextClassAt: string | null;
+  };
   insights: string[];
   lastUpdated: string;
 };

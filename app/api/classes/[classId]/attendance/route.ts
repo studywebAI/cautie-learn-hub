@@ -8,6 +8,8 @@ function logAttendance(...args: any[]) {
   console.log('[CLASS_ATTENDANCE]', ...args)
 }
 
+const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
+
 function studentDisplayName(
   classAlias: string | null | undefined,
   profileDisplayName: string | null | undefined,
@@ -304,12 +306,33 @@ export async function POST(
     const nextIsPresent = typeof isPresent === 'boolean' ? isPresent : true
     const nextHomeworkIncomplete = Boolean(hasHomeworkIncomplete)
     const nextWasTooLate = Boolean(wasTooLate)
+    const attendanceChangeGroupId = typeof crypto?.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`
 
     let writeClient: any = supabase
     try {
       writeClient = createAdminClient()
     } catch {
       writeClient = supabase
+    }
+
+    const { data: targetMember, error: memberError } = await writeClient
+      .from('class_members')
+      .select('user_id, role')
+      .eq('class_id', classId)
+      .eq('user_id', studentId)
+      .maybeSingle()
+
+    if (memberError) {
+      return NextResponse.json({ error: memberError.message }, { status: 500 })
+    }
+    if (!targetMember) {
+      return NextResponse.json({ error: 'Target student is not in this class' }, { status: 400 })
+    }
+    const targetRole = String(targetMember.role || '').toLowerCase()
+    if (teacherRoles.has(targetRole)) {
+      return NextResponse.json({ error: 'Attendance can only be updated for students' }, { status: 400 })
     }
 
     const { data: latestAttendanceRecord } = await writeClient
@@ -379,6 +402,7 @@ export async function POST(
           student_id: studentId,
           from_is_present: previousIsPresent,
           to_is_present: nextIsPresent,
+          attendance_change_group_id: attendanceChangeGroupId,
           created_by: user.id,
         },
       })
@@ -397,6 +421,7 @@ export async function POST(
           student_id: studentId,
           from_active: previousHomeworkIncomplete,
           to_active: nextHomeworkIncomplete,
+          attendance_change_group_id: attendanceChangeGroupId,
           created_by: user.id,
         },
       })
@@ -415,6 +440,7 @@ export async function POST(
           student_id: studentId,
           from_active: previousTooLate,
           to_active: nextWasTooLate,
+          attendance_change_group_id: attendanceChangeGroupId,
           created_by: user.id,
         },
       })
@@ -432,6 +458,7 @@ export async function POST(
           log_category: 'custom_events',
           student_id: studentId,
           custom_message: normalizedCustomMessage,
+          attendance_change_group_id: attendanceChangeGroupId,
           created_by: user.id,
         },
       })
