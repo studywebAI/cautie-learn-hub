@@ -1008,10 +1008,10 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
         <CardContent className="space-y-4">
           <div className="rounded-md bg-emerald-100/70 p-3 text-sm text-emerald-900">
             Slot preview: {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, Number(newScheduleSlot.day_of_week) - 1)]}
-            {' · '}P{newScheduleSlot.period_index || '?'}{' · '}
+            {' Â· '}P{newScheduleSlot.period_index || '?'}{' Â· '}
             {formatTimeLabel(newScheduleSlot.start_time)} - {formatTimeLabel(newScheduleSlot.end_time)}
             {scheduleDurationMinutes > 0 ? ` (${scheduleDurationMinutes} min)` : ''}
-            {newScheduleSlot.title.trim() ? ` · ${newScheduleSlot.title.trim()}` : ''}
+            {newScheduleSlot.title.trim() ? ` Â· ${newScheduleSlot.title.trim()}` : ''}
           </div>
 
           <div className="grid gap-3 md:grid-cols-3">
@@ -1155,10 +1155,10 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 <div key={slot.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="font-medium">
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, slot.day_of_week - 1)]} · P{slot.period_index} · {slot.title}
+                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, slot.day_of_week - 1)]} Â· P{slot.period_index} Â· {slot.title}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {slot.start_time} - {slot.end_time} {slot.is_break ? '· Break' : ''}
+                      {slot.start_time} - {slot.end_time} {slot.is_break ? 'Â· Break' : ''}
                     </p>
                   </div>
                   <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" size="sm" onClick={() => void deleteScheduleSlot(slot.id)}>
@@ -1189,7 +1189,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 <div className="min-w-0">
                   <p className="font-medium truncate">{request.requester_email || request.requester_user_id}</p>
                   <p className="text-xs text-muted-foreground">
-                    Subject: {request.subject_title || 'No subject provided'} · Requested {new Date(request.requested_at).toLocaleString()}
+                    Subject: {request.subject_title || 'No subject provided'} Â· Requested {new Date(request.requested_at).toLocaleString()}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1256,7 +1256,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Issued: {new Date(item.issued_at).toLocaleString()} · Expires: {new Date(item.expires_at).toLocaleString()}
+                  Issued: {new Date(item.issued_at).toLocaleString()} Â· Expires: {new Date(item.expires_at).toLocaleString()}
                 </p>
                 {item.used_at && (
                   <p className="text-xs text-muted-foreground">
