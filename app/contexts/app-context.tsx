@@ -112,7 +112,7 @@ export type AppContextType = {
   isCreatingClass: boolean;
   refetchClasses: () => Promise<void>;
   assignments: ClassAssignment[];
-  createAssignment: (newAssignment: Omit<ClassAssignment, 'id' | 'created_at'>) => Promise<void>;
+  createAssignment: (newAssignment: Omit<ClassAssignment, 'id' | 'created_at'>) => Promise<ClassAssignment | null>;
   deleteAssignment: (assignmentId: string) => Promise<void>;
   refetchAssignments: () => Promise<void>;
   students: Student[];
@@ -669,16 +669,28 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [session]);
 
-  const createAssignment = useCallback(async (newAssignmentData: Omit<ClassAssignment, 'id' | 'created_at'>) => {
+  const createAssignment = useCallback(async (newAssignmentData: Omit<ClassAssignment, 'id' | 'created_at'>): Promise<ClassAssignment | null> => {
     if (session) {
       const response = await fetch('/api/assignments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newAssignmentData),
       });
-      if (!response.ok) throw new Error('Failed');
+      if (!response.ok) {
+        let message = 'Failed to create assignment';
+        try {
+          const payload = await response.json();
+          message = payload?.error || message;
+        } catch {
+          // keep fallback message
+        }
+        throw new Error(message);
+      }
+      const created = await response.json();
       await refetchAssignments();
+      return created as ClassAssignment;
     }
+    return null;
   }, [session, refetchAssignments]);
 
   const deleteAssignment = useCallback(async (assignmentId: string) => {

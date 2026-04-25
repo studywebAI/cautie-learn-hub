@@ -4,6 +4,7 @@ import { NextResponse, NextRequest } from 'next/server'
 
 import { createBlockSchema } from '@/lib/validation/schemas'
 import { validateBody } from '@/lib/validation/validate'
+import { getClassPermission } from '@/lib/auth/class-permissions'
 
 
 export const dynamic = 'force-dynamic'
@@ -107,19 +108,20 @@ export async function POST(request: NextRequest) {
       if (assignment_id) {
         const { data: assignment } = await (supabase as any)
           .from('assignments')
-          .select('id, paragraphs!inner(id, chapters!inner(subjects!inner(id, user_id)))')
+          .select('id, class_id')
           .eq('id', assignment_id)
-          .single()
+          .maybeSingle()
 
         if (!assignment) {
           return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
         }
 
-        const paragraph = assignment.paragraphs
-        const chapter = paragraph?.chapters
-        const subject = chapter?.subjects
+        if (!assignment.class_id) {
+          return NextResponse.json({ error: 'Assignment is not linked to a class' }, { status: 400 })
+        }
 
-        if (subject?.user_id !== user.id) {
+        const perm = await getClassPermission(supabase as any, assignment.class_id, user.id)
+        if (!perm.isMember || !perm.isTeacher) {
           return NextResponse.json({ error: 'Access denied to this assignment' }, { status: 403 })
         }
       }
