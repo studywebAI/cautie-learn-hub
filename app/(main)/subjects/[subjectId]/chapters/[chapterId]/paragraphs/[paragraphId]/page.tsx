@@ -51,6 +51,17 @@ type Paragraph = {
   paragraph_number: number;
 };
 
+type BreadcrumbSubject = {
+  id: string;
+  title: string;
+};
+
+type BreadcrumbChapter = {
+  id: string;
+  title: string;
+  chapter_number?: number;
+};
+
 // Convert index to letter (0=a, 1=b, 26=aa, etc.)
 function indexToLetter(index: number): string {
   if (index < 26) {
@@ -94,6 +105,8 @@ export default function ParagraphDetailPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
   const [resolvedChapterId, setResolvedChapterId] = useState(chapterId);
+  const [subjectPath, setSubjectPath] = useState<BreadcrumbSubject | null>(null);
+  const [chapterPath, setChapterPath] = useState<BreadcrumbChapter | null>(null);
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
@@ -102,49 +115,49 @@ export default function ParagraphDetailPage() {
   const t = {
     backToChapters: isDutch ? 'Terug naar hoofdstukken' : 'Back to chapters',
     allSettings: isDutch ? 'Alle instellingen' : 'All settings',
-    addAssignment: isDutch ? '+ opdracht toevoegen' : '+ add assignment',
-    noAssignmentsYet: isDutch ? 'nog geen opdrachten' : 'no assignments yet',
-    createFirstAssignment: isDutch ? 'eerste opdracht maken' : 'create first assignment',
-    addAssignmentTitle: isDutch ? 'opdracht toevoegen' : 'add assignment',
-    addAssignmentDescription: isDutch ? 'maak een nieuwe opdracht voor deze paragraaf.' : 'create a new assignment for this paragraph.',
+    addAssignment: isDutch ? '+ Opdracht Toevoegen' : '+ Add Assignment',
+    noAssignmentsYet: isDutch ? 'Nog geen opdrachten' : 'No assignments yet',
+    createFirstAssignment: isDutch ? 'Eerste opdracht maken' : 'Create first assignment',
+    addAssignmentTitle: isDutch ? 'Opdracht toevoegen' : 'Add Assignment',
+    addAssignmentDescription: isDutch ? 'Maak een nieuwe opdracht voor deze paragraaf.' : 'Create a new assignment for this paragraph.',
     addAssignmentDescriptionWizard: isDutch ? 'Kies eerst wat je wil maken, daarna begeleiden we je stap voor stap.' : 'Choose what you are creating first, then we guide you step by step.',
-    title: isDutch ? 'titel' : 'title',
-    back: isDutch ? 'terug' : 'back',
-    assignmentTypeTitle: isDutch ? 'wat maak je?' : 'what are you creating?',
-    assignmentTypeDescription: isDutch ? 'kies eerst het doel. wij zetten slimme standaardinstellingen klaar.' : 'choose the goal first. we will apply smart defaults.',
-    homework: isDutch ? 'huiswerk' : 'homework',
-    test: isDutch ? 'toets' : 'test',
-    homeworkCaption: isDutch ? 'oefenen, reflectie, thuiswerk' : 'practice, reflection, take-home work',
-    testCaption: isDutch ? 'getimed, gecontroleerd, beoordelingsmodus' : 'timed, controlled, assessment mode',
-    starterTitle: isDutch ? 'kies een starter' : 'choose a starter',
-    starterDescription: isDutch ? 'begin met een bewezen opzet of start helemaal zelf.' : 'start with a proven layout or build your own.',
-    createYourOwn: isDutch ? 'zelf opbouwen' : 'create my own',
-    blockMix: isDutch ? 'blokverdeling' : 'block mix',
-    estimatedTime: isDutch ? 'geschatte tijd' : 'estimated time',
-    difficulty: isDutch ? 'moeilijkheid' : 'difficulty',
-    easy: isDutch ? 'makkelijk' : 'easy',
-    medium: isDutch ? 'gemiddeld' : 'medium',
-    hard: isDutch ? 'moeilijk' : 'hard',
-    homeworkSettingsTitle: isDutch ? 'huiswerk instellingen' : 'homework settings',
-    testSettingsTitle: isDutch ? 'toets instellingen' : 'test settings',
-    dueDate: isDutch ? 'inlevermoment' : 'due date',
-    openTime: isDutch ? 'starttijd' : 'open time',
-    closeTime: isDutch ? 'eindtijd' : 'close time',
-    timerMinutes: isDutch ? 'timer (minuten)' : 'timer (minutes)',
-    attemptLimit: isDutch ? 'max. pogingen' : 'attempt limit',
-    randomizeQuestions: isDutch ? 'vragen willekeurig' : 'randomize questions',
-    randomizeAnswers: isDutch ? 'antwoordopties willekeurig' : 'randomize options',
-    integrityMode: isDutch ? 'integriteitsmodus (anti-cheat)' : 'integrity mode (anti-cheat)',
-    addToAgenda: isDutch ? 'toevoegen aan agenda' : 'add to agenda',
-    createHomework: isDutch ? 'huiswerk maken' : 'create homework',
-    createTest: isDutch ? 'toets maken' : 'create test',
-    allAssignments: isDutch ? 'alles' : 'all',
-    onlyHomework: isDutch ? 'huiswerk' : 'homework',
-    onlyTests: isDutch ? 'toetsen' : 'tests',
-    filterByType: isDutch ? 'filter op type' : 'filter by type',
+    title: isDutch ? 'Titel' : 'Title',
+    back: isDutch ? 'Terug' : 'Back',
+    assignmentTypeTitle: isDutch ? 'Wat maak je?' : 'What are you creating?',
+    assignmentTypeDescription: isDutch ? 'Kies eerst het doel. Wij zetten slimme standaardinstellingen klaar.' : 'Choose the goal first. We apply smart defaults.',
+    homework: isDutch ? 'Huiswerk' : 'Homework',
+    test: isDutch ? 'Toets' : 'Test',
+    homeworkCaption: isDutch ? 'Oefenen, reflectie, thuiswerk' : 'Practice, reflection, take-home work',
+    testCaption: isDutch ? 'Getimed, gecontroleerd, beoordelingsmodus' : 'Timed, controlled, assessment mode',
+    starterTitle: isDutch ? 'Kies een starter' : 'Choose a starter',
+    starterDescription: isDutch ? 'Begin met een bewezen opzet of start helemaal zelf.' : 'Start with a proven layout or build your own.',
+    createYourOwn: isDutch ? 'Zelf opbouwen' : 'Create my own',
+    blockMix: isDutch ? 'Blokverdeling' : 'Block mix',
+    estimatedTime: isDutch ? 'Geschatte tijd' : 'Estimated time',
+    difficulty: isDutch ? 'Moeilijkheid' : 'Difficulty',
+    easy: isDutch ? 'Makkelijk' : 'Easy',
+    medium: isDutch ? 'Gemiddeld' : 'Medium',
+    hard: isDutch ? 'Moeilijk' : 'Hard',
+    homeworkSettingsTitle: isDutch ? 'Huiswerk Instellingen' : 'Homework Settings',
+    testSettingsTitle: isDutch ? 'Toets Instellingen' : 'Test Settings',
+    dueDate: isDutch ? 'Inlevermoment' : 'Due date',
+    openTime: isDutch ? 'Starttijd' : 'Open time',
+    closeTime: isDutch ? 'Eindtijd' : 'Close time',
+    timerMinutes: isDutch ? 'Timer (minuten)' : 'Timer (minutes)',
+    attemptLimit: isDutch ? 'Max. pogingen' : 'Attempt limit',
+    randomizeQuestions: isDutch ? 'Vragen willekeurig' : 'Randomize questions',
+    randomizeAnswers: isDutch ? 'Antwoordopties willekeurig' : 'Randomize options',
+    integrityMode: isDutch ? 'Integriteitsmodus (anti-cheat)' : 'Integrity mode (anti-cheat)',
+    addToAgenda: isDutch ? 'Toevoegen aan agenda' : 'Add to agenda',
+    createHomework: isDutch ? 'Huiswerk maken' : 'Create homework',
+    createTest: isDutch ? 'Toets maken' : 'Create test',
+    allAssignments: isDutch ? 'Alles' : 'All',
+    onlyHomework: isDutch ? 'Huiswerk' : 'Homework',
+    onlyTests: isDutch ? 'Toetsen' : 'Tests',
+    filterByType: isDutch ? 'Filter Op Type' : 'Filter By Type',
     agendaCreated: isDutch ? 'Agenda-item aangemaakt' : 'Agenda item created',
     failedAgendaCreate: isDutch ? 'Kon agenda-item niet maken' : 'Could not create agenda item',
-    continueBtn: isDutch ? 'doorgaan' : 'continue',
+    continueBtn: isDutch ? 'Doorgaan' : 'Continue',
     choosePresetFirst: isDutch ? 'Kies een preset of ga verder met zelf opbouwen.' : 'Select a preset or continue with create your own.',
     presetConceptCheck: isDutch ? 'concept check' : 'concept check',
     presetConceptCheckUse: isDutch ? 'Snelle controle na de les.' : 'Quick check after a lesson.',
@@ -154,9 +167,9 @@ export default function ParagraphDetailPage() {
     presetQuiz20Use: isDutch ? 'Korte toets op recente leerstof.' : 'Short test on recent material.',
     presetChapter45: isDutch ? 'hoofdstuktoets (45 min)' : 'chapter test (45 min)',
     presetChapter45Use: isDutch ? 'Formele hoofdstuktoets.' : 'Formal chapter assessment.',
-    cancel: isDutch ? 'annuleren' : 'cancel',
-    creating: isDutch ? 'aanmaken...' : 'creating...',
-    create: isDutch ? 'maken' : 'create',
+    cancel: isDutch ? 'Annuleren' : 'Cancel',
+    creating: isDutch ? 'Aanmaken...' : 'Creating...',
+    create: isDutch ? 'Maken' : 'Create',
     error: isDutch ? 'Fout' : 'Error',
     failedUpdate: isDutch ? 'Instellingen bijwerken mislukt' : 'Failed to update settings',
     failedBulkUpdate: isDutch ? 'Bijwerken mislukt' : 'Failed to update',
@@ -193,6 +206,8 @@ export default function ParagraphDetailPage() {
         }
         setParagraph(payload.paragraph || null);
         setAllParagraphs(Array.isArray(payload.allParagraphs) ? payload.allParagraphs : []);
+        setSubjectPath(payload.subject || null);
+        setChapterPath(payload.chapter || null);
         const normalizedAssignments = (payload.assignments || []).map((a: any) => ({
           ...a,
           is_visible: a.is_visible ?? true,
@@ -518,6 +533,14 @@ export default function ParagraphDetailPage() {
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div>
+          <div className="mb-1 text-xs text-muted-foreground">
+            {[
+              subjectPath?.title || 'Subject',
+              chapterPath?.title || 'Chapter',
+              paragraph?.title || 'Paragraph',
+              'Assignments',
+            ].join(' / ')}
+          </div>
           <Link prefetch={false}
             href={`/subjects/${subjectId}`}
             className="text-xs text-muted-foreground hover:text-foreground mb-1 block"
@@ -711,7 +734,7 @@ export default function ParagraphDetailPage() {
         setIsCreateAssignmentOpen(open);
         if (!open) resetCreateWizard();
       }}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-4xl p-6">
           <DialogHeader>
             <DialogTitle>{t.addAssignmentTitle}</DialogTitle>
             <DialogDescription>{t.addAssignmentDescriptionWizard}</DialogDescription>
@@ -730,7 +753,7 @@ export default function ParagraphDetailPage() {
                 <div className="grid gap-2 md:grid-cols-2">
                   <button
                     type="button"
-                    className={`rounded-lg border p-3 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40'}`}
+                    className={`rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
                     onClick={() => setCreateKind('homework')}
                   >
                     <p className="text-sm font-medium">{t.homework}</p>
@@ -738,7 +761,7 @@ export default function ParagraphDetailPage() {
                   </button>
                   <button
                     type="button"
-                    className={`rounded-lg border p-3 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40'}`}
+                    className={`rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
                     onClick={() => setCreateKind('test')}
                   >
                     <p className="text-sm font-medium">{t.test}</p>
@@ -758,22 +781,30 @@ export default function ParagraphDetailPage() {
                       key={preset.id}
                       type="button"
                       onClick={() => setSelectedPresetId(preset.id)}
-                      className={`w-full rounded-lg border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40'}`}
+                      className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium">{getPresetLabel(preset.key)}</p>
                           <p className="text-xs text-muted-foreground">{getPresetUsage(preset.key)}</p>
+                          <p className="mt-2 text-[11px] text-muted-foreground">{t.blockMix}</p>
+                          <div className="mt-1 flex flex-wrap gap-1.5">
+                            {preset.blockMix.map((block) => (
+                              <span key={`${preset.id}-${block.type}`} className="rounded-full border border-border px-2 py-0.5 text-[11px]">
+                                {block.type} x{block.count}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                         <span className="rounded-full bg-muted px-2 py-0.5 text-[10px]">{preset.estimatedTimeMin} min</span>
                       </div>
-                      <p className="mt-2 text-[11px] text-muted-foreground">{t.blockMix}</p>
-                      <div className="mt-1 flex flex-wrap gap-1.5">
-                        {preset.blockMix.map((block) => (
-                          <span key={`${preset.id}-${block.type}`} className="rounded-full border border-border px-2 py-0.5 text-[11px]">
-                            {block.type} x{block.count}
-                          </span>
-                        ))}
+                      <div className="mt-3 rounded-lg border border-dashed border-border/80 bg-muted/20 p-2">
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Layout Preview</p>
+                        <div className="mt-1.5 space-y-1.5">
+                          {preset.blockMix.slice(0, 3).map((block) => (
+                            <div key={`${preset.id}-preview-${block.type}`} className="h-2.5 rounded bg-muted-foreground/20" style={{ width: `${Math.max(45, 94 - block.count * 9)}%` }} />
+                          ))}
+                        </div>
                       </div>
                     </button>
                   ))}

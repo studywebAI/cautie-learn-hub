@@ -56,6 +56,13 @@ export default function ClassDetailsPage() {
   const [loadingTabs, setLoadingTabs] = useState<Record<string, boolean>>({});
   const inFlightTabLoadsRef = useRef<Partial<Record<string, Promise<any>>>>({});
 
+  useEffect(() => {
+    // Prevent showing stale tab payload from a previously viewed class.
+    setCachedTabData({});
+    setLoadingTabs({});
+    inFlightTabLoadsRef.current = {};
+  }, [classId]);
+
   const classInfo: ClassInfo | undefined = useMemo(() => {
     const contextClass = classes.find((c: any) => c.id === classId);
     if (contextClass) return contextClass;

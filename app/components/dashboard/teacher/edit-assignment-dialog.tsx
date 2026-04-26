@@ -51,6 +51,14 @@ function assignmentToKind(assignment: ClassAssignment | null): AssignmentCreateK
   return raw === 'small_test' || raw === 'big_test' ? 'test' : 'homework';
 }
 
+function formatBlockTypeLabel(type: string): string {
+  return String(type || '')
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }: EditAssignmentDialogProps) {
   const router = useRouter();
   const [title, setTitle] = useState('');
@@ -82,58 +90,58 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
   const isDutch = language === 'nl';
 
   const t = {
-    editAssignment: isDutch ? 'opdracht bewerken' : 'edit assignment',
+    editAssignment: isDutch ? 'Opdracht bewerken' : 'Edit Assignment',
     editDescription: isDutch ? 'Werk type, opzet en instellingen bij in duidelijke stappen.' : 'Update type, structure, and settings in clear steps.',
-    stepType: isDutch ? 'stap 1 van 3 - type' : 'step 1 of 3 - type',
-    stepPreset: isDutch ? 'stap 2 van 3 - preset' : 'step 2 of 3 - preset',
-    stepDetails: isDutch ? 'stap 3 van 3 - details' : 'step 3 of 3 - details',
-    whatCreating: isDutch ? 'welk type is dit?' : 'what type is this?',
-    homework: isDutch ? 'huiswerk' : 'homework',
-    test: isDutch ? 'toets' : 'test',
-    homeworkCaption: isDutch ? 'oefenen, reflectie, thuiswerk' : 'practice, reflection, take-home work',
-    testCaption: isDutch ? 'beoordeling, quiz, toetsmoment' : 'assessment, quiz, checkpoint',
-    chooseTemplate: isDutch ? 'pas eventueel een template toe' : 'optionally apply a template',
+    stepType: isDutch ? 'Stap 1 van 3 - Type' : 'Step 1 of 3 - Type',
+    stepPreset: isDutch ? 'Stap 2 van 3 - Preset' : 'Step 2 of 3 - Preset',
+    stepDetails: isDutch ? 'Stap 3 van 3 - Details' : 'Step 3 of 3 - Details',
+    whatCreating: isDutch ? 'Welk type is dit?' : 'What type is this?',
+    homework: isDutch ? 'Huiswerk' : 'Homework',
+    test: isDutch ? 'Toets' : 'Test',
+    homeworkCaption: isDutch ? 'Oefenen, reflectie, thuiswerk' : 'Practice, reflection, take-home work',
+    testCaption: isDutch ? 'Beoordeling, quiz, toetsmoment' : 'Assessment, quiz, checkpoint',
+    chooseTemplate: isDutch ? 'Pas eventueel een template toe' : 'Optionally apply a template',
     chooseTemplateDescription: isDutch ? 'Template past instellingen aan, maar verwijdert geen bestaande blokken.' : 'Template updates settings, but does not remove existing blocks.',
-    createYourOwn: isDutch ? 'huidige opzet behouden' : 'keep current setup',
+    createYourOwn: isDutch ? 'Huidige opzet behouden' : 'Keep current setup',
     createYourOwnCaption: isDutch ? 'Geen preset toepassen, alleen handmatige aanpassingen.' : 'No preset; keep manual settings.',
-    assignmentTitle: isDutch ? 'titel' : 'title',
-    contentOptional: isDutch ? 'inhoud (optioneel)' : 'content (optional)',
-    dueAt: isDutch ? 'inlevermoment' : 'due at',
-    startsAt: isDutch ? 'startmoment' : 'starts at',
-    endsAt: isDutch ? 'eindmoment' : 'ends at',
-    timerMinutes: isDutch ? 'timer (minuten)' : 'timer (minutes)',
-    attemptLimit: isDutch ? 'pogingen' : 'attempts',
-    randomizeQuestions: isDutch ? 'vragen husselen' : 'randomize questions',
-    randomizeAnswers: isDutch ? 'antwoorden husselen' : 'randomize answers',
-    integrityMode: isDutch ? 'integriteitsmodus (fullscreen + tabdetectie)' : 'integrity mode (fullscreen + tab switch detection)',
-    addToAgenda: isDutch ? 'op agenda zetten' : 'show in agenda',
+    assignmentTitle: isDutch ? 'Titel' : 'Title',
+    contentOptional: isDutch ? 'Inhoud (optioneel)' : 'Content (optional)',
+    dueAt: isDutch ? 'Inlevermoment' : 'Due at',
+    startsAt: isDutch ? 'Startmoment' : 'Starts at',
+    endsAt: isDutch ? 'Eindmoment' : 'Ends at',
+    timerMinutes: isDutch ? 'Timer (minuten)' : 'Timer (minutes)',
+    attemptLimit: isDutch ? 'Pogingen' : 'Attempts',
+    randomizeQuestions: isDutch ? 'Vragen husselen' : 'Randomize questions',
+    randomizeAnswers: isDutch ? 'Antwoorden husselen' : 'Randomize answers',
+    integrityMode: isDutch ? 'Integriteitsmodus (fullscreen + tabdetectie)' : 'Integrity mode (fullscreen + tab switch detection)',
+    addToAgenda: isDutch ? 'Op agenda zetten' : 'Show in agenda',
     addToAgendaHelp: isDutch ? 'Bij uitzetten verwijderen we gekoppelde agenda-item(s).' : 'Turning this off removes linked agenda item(s).',
-    materials: isDutch ? 'materiaal' : 'material',
+    materials: isDutch ? 'Materiaal' : 'Material',
     materialsHelp: isDutch ? 'Optioneel: wijzig het gekoppelde materiaal.' : 'Optional: change the linked material.',
-    createNewMaterial: isDutch ? 'nieuw materiaal maken...' : 'create new material...',
-    createNewQuiz: isDutch ? 'nieuwe quiz maken' : 'create new quiz',
-    createNewFlashcards: isDutch ? 'nieuwe flashcards maken' : 'create new flashcards',
-    attachExisting: isDutch ? 'bestaand koppelen' : 'attach existing',
-    attached: isDutch ? 'gekoppeld' : 'attached',
-    removeAttachedMaterial: isDutch ? 'gekoppeld materiaal verwijderen' : 'remove attached material',
-    chapterOptional: isDutch ? 'hoofdstuk (optioneel)' : 'chapter (optional)',
-    blockOptional: isDutch ? 'blok (optioneel)' : 'block (optional)',
-    chooseChapter: isDutch ? 'kies hoofdstuk' : 'choose chapter',
-    chooseBlock: isDutch ? 'kies blok' : 'choose block',
-    noChapters: isDutch ? 'geen hoofdstukken beschikbaar' : 'no chapters available',
-    noBlocks: isDutch ? 'geen blokken in dit hoofdstuk' : 'no blocks in this chapter',
-    loadingChapters: isDutch ? 'hoofdstukken laden...' : 'loading chapters...',
-    loadingBlocks: isDutch ? 'blokken laden...' : 'loading blocks...',
-    missingInfo: isDutch ? 'onvolledige informatie' : 'missing information',
+    createNewMaterial: isDutch ? 'Nieuw materiaal maken...' : 'Create new material...',
+    createNewQuiz: isDutch ? 'Nieuwe quiz maken' : 'Create new quiz',
+    createNewFlashcards: isDutch ? 'Nieuwe flashcards maken' : 'Create new flashcards',
+    attachExisting: isDutch ? 'Bestaand koppelen' : 'Attach existing',
+    attached: isDutch ? 'Gekoppeld' : 'Attached',
+    removeAttachedMaterial: isDutch ? 'Gekoppeld materiaal verwijderen' : 'Remove attached material',
+    chapterOptional: isDutch ? 'Hoofdstuk (optioneel)' : 'Chapter (optional)',
+    blockOptional: isDutch ? 'Blok (optioneel)' : 'Block (optional)',
+    chooseChapter: isDutch ? 'Kies hoofdstuk' : 'Choose chapter',
+    chooseBlock: isDutch ? 'Kies blok' : 'Choose block',
+    noChapters: isDutch ? 'Geen hoofdstukken beschikbaar' : 'No chapters available',
+    noBlocks: isDutch ? 'Geen blokken in dit hoofdstuk' : 'No blocks in this chapter',
+    loadingChapters: isDutch ? 'Hoofdstukken laden...' : 'Loading chapters...',
+    loadingBlocks: isDutch ? 'Blokken laden...' : 'Loading blocks...',
+    missingInfo: isDutch ? 'Onvolledige informatie' : 'Missing information',
     missingInfoDesc: isDutch ? 'Vul minimaal een titel in. Voeg bij huiswerk een inlevermoment toe, of bij een toets een start- en eindmoment.' : 'Enter at least a title. Add due time for homework, or both start and end times for tests.',
-    saveSuccess: isDutch ? 'opdracht bijgewerkt' : 'assignment updated',
+    saveSuccess: isDutch ? 'Opdracht bijgewerkt' : 'Assignment updated',
     saveSuccessDesc: isDutch ? 'Wijzigingen zijn opgeslagen.' : 'Changes have been saved.',
-    saveError: isDutch ? 'fout bij bijwerken' : 'error updating assignment',
-    saveCta: isDutch ? 'wijzigingen opslaan' : 'save changes',
-    cancel: isDutch ? 'annuleren' : 'cancel',
-    back: isDutch ? 'terug' : 'back',
-    next: isDutch ? 'volgende' : 'next',
-    recommended: isDutch ? 'aanbevolen' : 'recommended',
+    saveError: isDutch ? 'Fout bij bijwerken' : 'Error updating assignment',
+    saveCta: isDutch ? 'Wijzigingen opslaan' : 'Save changes',
+    cancel: isDutch ? 'Annuleren' : 'Cancel',
+    back: isDutch ? 'Terug' : 'Back',
+    next: isDutch ? 'Volgende' : 'Next',
+    recommended: isDutch ? 'Aanbevolen' : 'Recommended',
   };
 
   const filteredPresets = useMemo(
@@ -418,7 +426,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-6">
           <DialogHeader>
             <DialogTitle>{t.editAssignment}</DialogTitle>
             <DialogDescription>{t.editDescription}</DialogDescription>
@@ -436,7 +444,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                   <button
                     type="button"
                     onClick={() => setCreateKind('homework')}
-                    className={`w-full rounded-lg border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40'}`}
+                    className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
                   >
                     <p className="text-sm font-medium">{t.homework}</p>
                     <p className="text-xs text-muted-foreground mt-1">{t.homeworkCaption}</p>
@@ -444,7 +452,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                   <button
                     type="button"
                     onClick={() => setCreateKind('test')}
-                    className={`w-full rounded-lg border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40'}`}
+                    className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
                   >
                     <p className="text-sm font-medium">{t.test}</p>
                     <p className="text-xs text-muted-foreground mt-1">{t.testCaption}</p>
@@ -465,23 +473,38 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                       key={preset.id}
                       type="button"
                       onClick={() => setSelectedPresetId(preset.id)}
-                      className={`w-full rounded-lg border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40'}`}
+                      className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium">{getPresetLabel(preset.key)}</p>
                           <p className="text-xs text-muted-foreground">{getPresetUsage(preset.key)}</p>
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {preset.blockMix.map((mix) => (
+                              <span key={`${preset.id}-${mix.type}`} className="rounded-full bg-muted px-2 py-0.5 text-[10px]">
+                                {mix.count}x {formatBlockTypeLabel(mix.type)}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                         {preset.recommended && (
                           <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase">{t.recommended}</span>
                         )}
+                      </div>
+                      <div className="mt-3 rounded-lg border border-dashed border-border/80 bg-muted/20 p-2">
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Layout Preview</p>
+                        <div className="mt-1.5 space-y-1.5">
+                          {preset.blockMix.slice(0, 3).map((mix) => (
+                            <div key={`${preset.id}-preview-${mix.type}`} className="h-2.5 rounded bg-muted-foreground/20" style={{ width: `${Math.max(45, 94 - mix.count * 9)}%` }} />
+                          ))}
+                        </div>
                       </div>
                     </button>
                   ))}
                   <button
                     type="button"
                     onClick={() => setSelectedPresetId(null)}
-                    className={`w-full rounded-lg border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40'}`}
+                    className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
                   >
                     <p className="text-sm font-medium">{t.createYourOwn}</p>
                     <p className="text-xs text-muted-foreground">{t.createYourOwnCaption}</p>

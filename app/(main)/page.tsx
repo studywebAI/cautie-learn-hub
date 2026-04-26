@@ -163,7 +163,7 @@ function TeacherSummaryDashboard() {
               <h1 className="text-xl tracking-tight text-foreground">Welcome, {welcomeName}</h1>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
+              <Card className="border-sidebar-border/70 bg-sidebar-accent/25">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm">Total Classes</CardTitle>
                     <School className="h-4 w-4 text-muted-foreground" />
@@ -173,7 +173,7 @@ function TeacherSummaryDashboard() {
                     <p className="text-xs text-muted-foreground">classes managed</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-sidebar-border/70 bg-sidebar-accent/32">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm">Total Students</CardTitle>
                      <Users className="h-4 w-4 text-muted-foreground" />
@@ -183,7 +183,7 @@ function TeacherSummaryDashboard() {
                     <p className="text-xs text-muted-foreground">students across all classes</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-sidebar-border/70 bg-sidebar-accent/25">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm">Active Assignments</CardTitle>
                      <FileText className="h-4 w-4 text-muted-foreground" />
@@ -193,7 +193,7 @@ function TeacherSummaryDashboard() {
                     <p className="text-xs text-muted-foreground">upcoming assignments</p>
                 </CardContent>
               </Card>
-                <Card>
+                <Card className="border-sidebar-border/70 bg-sidebar-accent/32">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm">Active Alerts</CardTitle>
                        <Activity className="h-4 w-4 text-muted-foreground" />
@@ -208,8 +208,8 @@ function TeacherSummaryDashboard() {
             {teacherClasses.length === 0 && (
               <Card>
                 <CardContent className="text-center p-8">
-                  <p className="text-muted-foreground">You haven't created any classes yet.</p>
-                  <Button asChild className="mt-4"><Link href="/classes">Create one now</Link></Button>
+                  <p className="text-muted-foreground">You have not created any classes yet.</p>
+                  <Button asChild className="mt-4"><Link href="/classes">Create One Now</Link></Button>
                 </CardContent>
               </Card>
             )}

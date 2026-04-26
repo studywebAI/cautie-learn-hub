@@ -59,6 +59,7 @@ export default function SubjectDetailPage() {
   const [isCreateChapterOpen, setIsCreateChapterOpen] = useState(false);
   const [isCreateParagraphOpen, setIsCreateParagraphOpen] = useState(false);
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
+  const [lockSelectedChapter, setLockSelectedChapter] = useState(false);
   const [newChapterTitle, setNewChapterTitle] = useState('');
   const [newParagraphTitle, setNewParagraphTitle] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -288,6 +289,9 @@ export default function SubjectDetailPage() {
 
   return (
     <div className="space-y-0">
+      <div className="mb-2 text-xs text-muted-foreground">
+        Subjects / Chapters
+      </div>
       {/* Last activity banner */}
       {lastActivity && (
         <Link prefetch={false}
@@ -304,24 +308,27 @@ export default function SubjectDetailPage() {
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h1 className="text-lg lowercase">{subject.name}</h1>
+          <h1 className="text-xl font-medium tracking-tight">{subject.name}</h1>
           {subject.description && (
             <p className="text-sm text-muted-foreground mt-1">{subject.description}</p>
           )}
         </div>
         {isTeacher && (
           <div className="flex items-center gap-2">
-            <Button
-              onClick={() => {
-                setSelectedChapterId(chapters[0]?.id || null);
-                setNewParagraphTitle('');
-                setIsCreateParagraphOpen(true);
-              }}
-              size="sm"
-              variant="outline"
-            >
-              + Add Paragraph
-            </Button>
+            {chapters.length > 0 && (
+              <Button
+                onClick={() => {
+                  setLockSelectedChapter(false);
+                  setSelectedChapterId(chapters[0]?.id || null);
+                  setNewParagraphTitle('');
+                  setIsCreateParagraphOpen(true);
+                }}
+                size="sm"
+                variant="outline"
+              >
+                + Add Paragraph
+              </Button>
+            )}
             <Button onClick={() => setIsCreateChapterOpen(true)} size="sm">
               + Add Chapter
             </Button>
@@ -350,11 +357,11 @@ export default function SubjectDetailPage() {
             const remainingCount = allParagraphs.length - maxVisible;
 
             return (
-              <div key={chapter.id} className="overflow-hidden rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/30">
+              <div key={chapter.id} className="overflow-hidden rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/18">
                 <div className="flex min-h-[108px] items-stretch">
                   <Link prefetch={false}
                     href={`/subjects/${subjectId}/chapters/${chapter.id}`}
-                    className="relative w-32 shrink-0 bg-sidebar-accent/80 transition-colors hover:bg-sidebar-accent"
+                    className="relative w-32 shrink-0 bg-sidebar-accent/45 transition-colors hover:bg-sidebar-accent/60"
                   >
                     <div className="absolute inset-0 flex items-center justify-center text-2xl text-muted-foreground/60">
                       {chapter.chapter_number}
@@ -374,12 +381,13 @@ export default function SubjectDetailPage() {
                       <button
                         className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                         onClick={() => {
+                          setLockSelectedChapter(true);
                           setSelectedChapterId(chapter.id);
                           setNewParagraphTitle('');
                           setIsCreateParagraphOpen(true);
                         }}
                       >
-                        + paragraph
+                        + Add Paragraph
                       </button>
                     )}
                   </div>
@@ -395,7 +403,7 @@ export default function SubjectDetailPage() {
                           key={paragraph.id}
                           href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
                           onClick={() => handleParagraphClick(chapter, paragraph)}
-                          className="mx-2 mb-2 flex items-center gap-3 rounded-xl border border-sidebar-border/60 bg-sidebar-accent/45 px-4 py-3 transition-colors hover:bg-sidebar-accent/70"
+                          className="mx-2 mb-2 flex items-center gap-3 rounded-xl border border-sidebar-border/60 bg-sidebar-accent/28 px-4 py-3 transition-colors hover:bg-sidebar-accent/45"
                         >
                           <span className="w-14 text-xs text-sidebar-foreground tabular-nums">
                             {chapter.chapter_number}.{paragraph.paragraph_number}
@@ -429,9 +437,7 @@ export default function SubjectDetailPage() {
                       </button>
                     )}
                   </>
-                ) : (
-                  <p className="text-xs text-muted-foreground py-4 px-4">no paragraphs yet</p>
-                )}
+                ) : null}
               </div>
             );
           })}
@@ -465,7 +471,15 @@ export default function SubjectDetailPage() {
       </Dialog>
 
       {/* Create Paragraph Dialog */}
-      <Dialog open={isCreateParagraphOpen} onOpenChange={setIsCreateParagraphOpen}>
+      <Dialog
+        open={isCreateParagraphOpen}
+        onOpenChange={(open) => {
+          setIsCreateParagraphOpen(open);
+          if (!open) {
+            setLockSelectedChapter(false);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Paragraph</DialogTitle>
@@ -474,22 +488,31 @@ export default function SubjectDetailPage() {
           <div className="py-4 space-y-3">
             <div>
               <Label htmlFor="paragraph-chapter">Chapter</Label>
-              <select
-                id="paragraph-chapter"
-                value={selectedChapterId || ''}
-                onChange={(e) => {
-                  const nextChapterId = e.target.value || null;
-                  setSelectedChapterId(nextChapterId);
-                }}
-                className="mt-2 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="">Select chapter</option>
-                {chapters.map((chapter) => (
-                  <option key={chapter.id} value={chapter.id}>
-                    {chapter.chapter_number}. {chapter.title}
-                  </option>
-                ))}
-              </select>
+              {lockSelectedChapter && selectedChapterId ? (
+                <div className="mt-2 h-9 w-full rounded-md border border-input bg-muted/30 px-3 text-sm flex items-center">
+                  {(() => {
+                    const chapter = chapters.find((item) => item.id === selectedChapterId);
+                    return chapter ? `${chapter.chapter_number}. ${chapter.title}` : '';
+                  })()}
+                </div>
+              ) : (
+                <select
+                  id="paragraph-chapter"
+                  value={selectedChapterId || ''}
+                  onChange={(e) => {
+                    const nextChapterId = e.target.value || null;
+                    setSelectedChapterId(nextChapterId);
+                  }}
+                  className="mt-2 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">Select chapter</option>
+                  {chapters.map((chapter) => (
+                    <option key={chapter.id} value={chapter.id}>
+                      {chapter.chapter_number}. {chapter.title}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <Label htmlFor="paragraph-title">Title</Label>
             <Input

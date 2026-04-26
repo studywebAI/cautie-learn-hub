@@ -93,6 +93,8 @@ export function AppSidebar() {
 
   const isTeacher = context?.role === 'teacher';
   const isDutch = context?.language === 'nl';
+  const routeClassIdMatch = pathname?.match(/^\/class\/([^/?#]+)/);
+  const routeClassId = routeClassIdMatch?.[1] || searchParams?.get('classId') || '';
   const t = {
     manage: isDutch ? 'Beheer' : 'Manage',
     studyset: isDutch ? 'Studieset' : 'Studyset',
@@ -110,8 +112,8 @@ export function AppSidebar() {
     sectionTools: isDutch ? 'tools' : 'tools',
     sectionOther: isDutch ? 'overig' : 'other',
     sectionRecents: isDutch ? 'recent' : 'recents',
-    upgrade: isDutch ? 'upgraden' : 'upgrade',
-    selectDifferentClass: isDutch ? 'selecteer andere klas' : 'select different class',
+    upgrade: isDutch ? 'Upgraden' : 'Upgrade',
+    selectDifferentClass: isDutch ? 'Selecteer Andere Klas' : 'Select Different Class',
     joinClass: isDutch ? 'Deelnemen klas' : 'Join class',
     createNewClass: isDutch ? 'Nieuwe klas maken' : 'Create New Class',
     joinClassAsTeacher: isDutch ? 'Deelnemen als docent' : 'Join Class as Teacher',
@@ -135,6 +137,7 @@ export function AppSidebar() {
   const isRailCollapsed = !isPhone && sidebarState === 'collapsed';
   const activeClassTab = searchParams?.get('tab') || '';
   const effectiveTeacherClassId =
+    routeClassId ||
     activeTeacherClassId ||
     storedTeacherClassId ||
     classItems[0]?.id ||
@@ -232,7 +235,7 @@ export function AppSidebar() {
     const classIdFromStorage = window.localStorage.getItem('studyweb-last-class-id') || '';
     if (!classIdFromStorage) return;
     setStoredTeacherClassId(classIdFromStorage);
-    setActiveTeacherClassId((current) => current || classIdFromStorage);
+    setActiveTeacherClassId(classIdFromStorage);
   }, []);
 
   useEffect(() => {
@@ -242,7 +245,7 @@ export function AppSidebar() {
       const next = event.newValue || '';
       if (!next) return;
       setStoredTeacherClassId(next);
-      setActiveTeacherClassId((current) => current || next);
+      setActiveTeacherClassId(next);
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
@@ -255,13 +258,13 @@ export function AppSidebar() {
 
     const storageClassId =
       typeof window !== 'undefined' ? window.localStorage.getItem('studyweb-last-class-id') : null;
-    const preferredClassId = activeTeacherClassId || storedTeacherClassId || storageClassId || classDropdownItems[0].id;
+    const preferredClassId = routeClassId || activeTeacherClassId || storedTeacherClassId || storageClassId || classDropdownItems[0].id;
     const preferredClass =
       classDropdownItems.find((classItem) => classItem.id === preferredClassId) || classDropdownItems[0];
     if (preferredClass.id !== activeTeacherClassId || preferredClass.id !== storedTeacherClassId) {
       persistTeacherClassId(preferredClass.id);
     }
-  }, [isTeacher, classDropdownItems, activeTeacherClassId, storedTeacherClassId]);
+  }, [isTeacher, classDropdownItems, routeClassId, activeTeacherClassId, storedTeacherClassId]);
 
   useEffect(() => {
     if (!isTeacher) return;
@@ -613,14 +616,14 @@ export function AppSidebar() {
     return (
       <div
         ref={floatingRef}
-        className="fixed z-[120] rounded-2xl border border-border/80 bg-[hsl(var(--surface-1))/0.98] shadow-2xl shadow-black/20 backdrop-blur-xl"
+        className="fixed z-[120] rounded-2xl border border-border/80 bg-[hsl(var(--surface-1))/0.98] shadow-lg shadow-black/10 backdrop-blur-xl"
         style={{ left: dropdown.left, top: dropdown.top }}
         onMouseEnter={clearCloseTimer}
         onMouseLeave={scheduleClose}
       >
         <div className="w-max min-w-[11rem] max-w-[22rem] max-h-[65vh] overflow-auto p-1.5">
           {dropdown.kind === 'classes' && (
-            <div className="px-2 py-1 text-[12px] tracking-[0.08em] text-muted-foreground lowercase">
+            <div className="px-2 py-1 text-[12px] tracking-[0.08em] text-muted-foreground">
                 {t.selectDifferentClass}
             </div>
           )}
@@ -783,7 +786,7 @@ export function AppSidebar() {
       return (
         <div className="mb-2 px-2">
                       <label className="mb-1 block text-[11px] font-medium text-sidebar-foreground/80">
-            {isDutch ? 'klas' : 'class'}
+            {isDutch ? 'Klas' : 'Class'}
           </label>
           <select
             value={effectiveTeacherClassId}
@@ -819,7 +822,7 @@ export function AppSidebar() {
       <>
       <div className="mb-1.5 px-2">
                     <label className="mb-1 block text-[11px] font-medium text-sidebar-foreground/80">
-          {isDutch ? 'klas' : 'class'}
+          {isDutch ? 'Klas' : 'Class'}
         </label>
         <Button
           size="sm"
@@ -1186,7 +1189,7 @@ export function AppSidebar() {
 
   // Tablet + desktop: regular sidebar with trigger
   return (
-    <Sidebar className={cn(isTablet ? "w-[14.25rem]" : "w-[17rem] lg:w-[19.5rem]")} collapsible="icon">
+    <Sidebar className={cn(isTablet ? "w-[13.5rem]" : "w-[15.75rem] lg:w-[17.25rem]")} collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>

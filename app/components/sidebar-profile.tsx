@@ -10,7 +10,7 @@ import {
   Settings,
   HelpCircle,
   LogOut,
-  ChevronUp,
+  ChevronsUpDown,
   User,
   Crown,
 } from 'lucide-react';
@@ -96,20 +96,20 @@ export function SidebarProfile() {
         <Button
           variant="outline"
           size="sm"
-          className="w-full h-8 text-xs rounded-md border-border/55 bg-transparent hover:bg-sidebar-accent/45"
+          className="w-full h-9 justify-start rounded-lg border-sidebar-border/70 bg-sidebar-accent/35 text-xs hover:bg-sidebar-accent/55"
           asChild
         >
           <Link href="/login">
             <ArrowUpRight className="h-3 w-3 mr-1.5" />
-            sign up
+            Sign Up
           </Link>
         </Button>
 
         {/* Guest username - no avatar */}
         <div className="flex items-center gap-2 w-full rounded-md px-2 py-1 text-left">
           <div className="flex-1 min-w-0">
-              <p className="text-sm truncate">{resolvedDisplayName || 'guest'}</p>
-              <p className="text-[11px] text-muted-foreground leading-tight">free</p>
+              <p className="text-sm truncate">{resolvedDisplayName || 'Guest'}</p>
+              <p className="text-[11px] text-muted-foreground leading-tight">Free</p>
           </div>
         </div>
       </div>
@@ -158,11 +158,11 @@ export function SidebarProfile() {
           <DropdownMenuContent align="start" side="right" className="min-w-[180px]">
             <DropdownMenuItem onClick={() => router.push('/settings')}>
               <Settings className="h-4 w-4 mr-2" />
-              settings
+              Settings
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push('/settings?tab=help')}>
               <HelpCircle className="h-4 w-4 mr-2" />
-              help & faq
+              Help & FAQ
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
@@ -176,29 +176,29 @@ export function SidebarProfile() {
   }
 
   return (
-    <div className="px-2 py-1.5 space-y-1.5">
+    <div className="px-2 py-1.5 space-y-2">
       {/* Upgrade button for logged in users */}
       <Button
         variant="outline"
         size="sm"
-        className="w-full h-8 text-xs rounded-md border-border/55 bg-transparent hover:bg-sidebar-accent/45"
+        className="w-full h-9 justify-start rounded-lg border-sidebar-border/70 bg-sidebar-accent/35 text-xs hover:bg-sidebar-accent/55"
         asChild
       >
         <Link href="/upgrade">
           <ArrowUpRight className="h-3 w-3 mr-1.5" />
-          upgrade
+          Upgrade
         </Link>
       </Button>
 
       {/* Username dropdown - ChatGPT style */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors group hover:bg-sidebar-accent/45">
+          <button className="flex w-full items-center gap-2 rounded-lg border border-sidebar-border/60 bg-sidebar-accent/28 px-2.5 py-1.5 text-left transition-colors group hover:bg-sidebar-accent/45">
             <div className="flex-1 min-w-0">
               <p className="truncate text-sm">{profileName}</p>
               <p className="text-[11px] text-muted-foreground leading-tight">{tierLabel}</p>
             </div>
-            <ChevronUp className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-foreground" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -213,11 +213,11 @@ export function SidebarProfile() {
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => router.push('/settings')}>
             <Settings className="h-4 w-4 mr-2" />
-            settings
+            Settings
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => router.push('/settings?tab=help')}>
             <HelpCircle className="h-4 w-4 mr-2" />
-            help & faq
+            Help & FAQ
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">

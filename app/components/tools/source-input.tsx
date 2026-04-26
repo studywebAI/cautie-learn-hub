@@ -1553,20 +1553,20 @@ export function SourceInput({
 
         <div className="relative z-10 flex flex-wrap items-center gap-1.5">
           {enableMicrosoftSources && (
-            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={openMicrosoftPicker} disabled={disabled || isProcessing}>
+            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-sidebar-accent/35 px-3 text-xs hover:bg-sidebar-accent/65" onClick={openMicrosoftPicker} disabled={disabled || isProcessing}>
               <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
               Cloud
             </Button>
           )}
-          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
+          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-sidebar-accent/35 px-3 text-xs hover:bg-sidebar-accent/65" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
             <Image className="mr-1.5 h-3.5 w-3.5" />
             Photo
           </Button>
-          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
+          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-sidebar-accent/35 px-3 text-xs hover:bg-sidebar-accent/65" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
             <FileIcon className="mr-1.5 h-3.5 w-3.5" />
             Files
           </Button>
-          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => setRecentsOpen(true)} disabled={disabled || isProcessing}>
+          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-sidebar-accent/35 px-3 text-xs hover:bg-sidebar-accent/65" onClick={() => setRecentsOpen(true)} disabled={disabled || isProcessing}>
             <Clock3 className="mr-1.5 h-3.5 w-3.5" />
             Recents
           </Button>
@@ -1574,7 +1574,7 @@ export function SourceInput({
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40"
+            className="h-7 rounded-full border-sidebar-border bg-sidebar-accent/35 px-3 text-xs hover:bg-sidebar-accent/65"
             onClick={() => setLinkInputOpen((prev) => !prev)}
             disabled={disabled || isProcessing || isFetchingUrl}
           >
@@ -1582,13 +1582,13 @@ export function SourceInput({
             Links
           </Button>
           {enableMic && (
-            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
+            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-sidebar-accent/35 px-3 text-xs hover:bg-sidebar-accent/65" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
               {isFallbackRecording ? <StopCircle className="mr-1.5 h-3.5 w-3.5" /> : <Mic className="mr-1.5 h-3.5 w-3.5" />}
               Mic
             </Button>
           )}
           {enableCaptions && (
-            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-background/75 px-3 text-xs hover:bg-sidebar-accent/40" onClick={() => setCaptionsOpen((prev) => !prev)} disabled={disabled || !enableCaptions}>
+            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-sidebar-accent/35 px-3 text-xs hover:bg-sidebar-accent/65" onClick={() => setCaptionsOpen((prev) => !prev)} disabled={disabled || !enableCaptions}>
               <Captions className="mr-1.5 h-3.5 w-3.5" />
               Captions
             </Button>

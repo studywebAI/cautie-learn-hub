@@ -91,6 +91,9 @@ export default function ChapterOverviewPage() {
 
   return (
       <div className="space-y-5">
+      <div className="text-xs text-muted-foreground">
+        Subjects / Chapter / Paragraphs
+      </div>
       {/* Minimal header */}
       <div className="flex items-center justify-between">
         <div>
@@ -98,7 +101,7 @@ export default function ChapterOverviewPage() {
             href={`/subjects/${subjectId}`}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            {'<-'} {subject?.title || 'subjects'}
+            {'<-'} {subject?.title || 'Subjects'}
           </Link>
           <p className="text-sm mt-1">
             {chapter.chapter_number}. {chapter.title}
@@ -127,16 +130,14 @@ export default function ChapterOverviewPage() {
       </div>
 
       {/* Paragraphs list */}
-      {paragraphs.length === 0 ? (
-        <p className="text-sidebar-foreground text-sm">No paragraphs yet</p>
-      ) : (
+      {paragraphs.length > 0 ? (
         <div className="space-y-2">
           {paragraphs.map((paragraph) => (
             <Link prefetch={false}
               key={paragraph.id}
               href={`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraph.id}`}
               onClick={() => handleParagraphClick(paragraph.id, paragraph.paragraph_number, paragraph.title)}
-              className="flex items-center justify-between rounded-xl border border-sidebar-border/70 bg-sidebar-accent/40 px-3 py-3 transition-colors hover:bg-sidebar-accent/65"
+              className="flex items-center justify-between rounded-xl border border-sidebar-border/70 bg-sidebar-accent/25 px-3 py-3 transition-colors hover:bg-sidebar-accent/45"
             >
               <div className="flex items-center gap-3">
                 <span className="w-14 text-sm text-sidebar-foreground tabular-nums">
@@ -158,7 +159,7 @@ export default function ChapterOverviewPage() {
             </Link>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

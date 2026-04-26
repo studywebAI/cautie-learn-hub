@@ -55,7 +55,6 @@ export function RecentsSidebar() {
   const { session, language } = useContext(AppContext) as AppContextType;
   const isDutch = language === 'nl';
   const t = {
-    noLocalRecent: isDutch ? 'geen lokale recente activiteit' : 'no local recent activity',
     showLess: isDutch ? 'minder tonen' : 'show less',
     showMore: isDutch ? 'toon' : 'show',
     more: isDutch ? 'meer' : 'more',
@@ -215,13 +214,7 @@ export function RecentsSidebar() {
   }
 
   if (recents.length === 0) {
-    return (
-      <div className="px-2">
-        <p className="text-[12px] text-muted-foreground text-center py-1.5 rounded-md bg-muted/30">
-          {t.noLocalRecent}
-        </p>
-      </div>
-    );
+    return null;
   }
 
   return (

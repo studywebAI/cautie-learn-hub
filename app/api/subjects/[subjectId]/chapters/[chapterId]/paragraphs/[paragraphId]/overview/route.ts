@@ -105,7 +105,7 @@ export async function GET(
       return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
     }
 
-    const [paragraphListResult, assignmentsResult] = await Promise.all([
+    const [paragraphListResult, assignmentsResult, subjectResult, chapterResult] = await Promise.all([
       (supabase as any)
         .from('paragraphs')
         .select('id, title, paragraph_number')
@@ -116,6 +116,16 @@ export async function GET(
         .select('*')
         .eq('paragraph_id', paragraphId)
         .order('assignment_index', { ascending: true }),
+      (supabase as any)
+        .from('subjects')
+        .select('id, title')
+        .eq('id', subjectId)
+        .maybeSingle(),
+      (supabase as any)
+        .from('chapters')
+        .select('id, title, chapter_number')
+        .eq('id', canonicalChapterId)
+        .maybeSingle(),
     ]);
     subjectsLog('paragraph-overview', requestId, 'hierarchy.valid', {
       chapterId,
@@ -180,6 +190,8 @@ export async function GET(
       allParagraphs: paragraphListResult.data || [],
       assignments: transformedAssignments,
       canonicalChapterId,
+      subject: subjectResult.data || null,
+      chapter: chapterResult.data || null,
     };
     subjectsLog('paragraph-overview', requestId, 'response.ready', {
       assignmentCount: response.assignments.length,

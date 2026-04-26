@@ -452,7 +452,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     void warmBootstrapBundle(activeClassIds);
   }, [setPreloadState, warmBootstrapBundle]);
 
-  const fetchDashboardSnapshot = useCallback(async (force = false, source: 'init' | 'auth_signed_in' | 'manual' = 'manual') => {
+  const fetchDashboardSnapshot = useCallback(async (force = false, source: 'init' | 'auth_signed_in' | 'manual' | 'cache_revalidate' = 'manual') => {
     if (dashboardInFlightRef.current) {
       return await dashboardInFlightRef.current;
     }
@@ -561,7 +561,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        // If we already hydrated from local cache, do not immediately hit /api/dashboard again.
+        // Hydrate instantly from local cache, then revalidate in the background.
         if (cached) {
           const now = Date.now();
           setPreloadState('classes:list', { status: 'ready', updatedAt: now, error: null });
@@ -569,6 +569,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           void refreshRoleFromServer();
           console.log('[PRELOAD][TIER0] using cached dashboard snapshot', { durationMs: Date.now() - tier0StartedAt });
           setIsTier0Ready(true);
+          void (async () => {
+            const freshDashboard = await fetchDashboardSnapshot(true, 'cache_revalidate');
+            if (freshDashboard) {
+              applyDashboardData(freshDashboard);
+            } else {
+              await warmResources(['classes:list', 'subjects:list']);
+            }
+          })();
           return;
         }
 
