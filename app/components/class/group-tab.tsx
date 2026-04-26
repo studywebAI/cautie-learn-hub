@@ -268,20 +268,20 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
 
   return (
     <div className="space-y-4" data-testid="group-tab">
-      <div className="space-y-4 rounded-2xl bg-[hsl(var(--surface-1))] p-3 md:p-4">
+      <div className="space-y-4 rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/14 p-3 md:p-4">
           <div className="relative flex items-center justify-end">
             <Button
               variant={groupSettingsOpen ? 'default' : 'outline'}
               size="sm"
-              className="h-9 gap-2 rounded-xl"
+              className="h-9 gap-2 rounded-xl border-sidebar-border/70 bg-sidebar-accent/35 hover:bg-sidebar-accent/55"
               onClick={() => setGroupSettingsOpen((prev) => !prev)}
             >
               <Settings className="h-4 w-4" />
               {t.settings}
             </Button>
             {groupSettingsOpen && (
-              <div className="absolute right-0 top-11 z-20 flex w-full max-w-[520px] overflow-hidden rounded-xl border border-border bg-card shadow-xl md:w-[520px]">
-                <div className="w-44 border-r border-border bg-muted/20 p-2">
+              <div className="absolute right-0 top-11 z-20 flex w-full max-w-[520px] overflow-hidden rounded-xl border border-sidebar-border/80 bg-background shadow-[0_10px_22px_rgba(0,0,0,0.10)] md:w-[520px]">
+                <div className="w-44 border-r border-sidebar-border/80 bg-sidebar-accent/20 p-2">
                   <button
                     type="button"
                     className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors ${groupSettingsSection === 'rename' ? 'bg-muted/70 text-foreground' : 'text-muted-foreground hover:bg-muted/40'}`}
@@ -299,7 +299,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                     {t.help}
                   </button>
                 </div>
-                <div className="flex-1 p-3">
+                <div className="flex-1 bg-background p-3">
                   {groupSettingsSection === 'rename' ? (
                     <div className="space-y-2">
                       <p className="text-sm">{t.renameHint}</p>

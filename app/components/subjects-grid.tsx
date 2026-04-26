@@ -253,17 +253,17 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
         {isTeacher && (
           <div className="flex justify-end">
             <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[13px] text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
-              + create subject
+              + Create Subject
             </Button>
           </div>
         )}
 
         {subjects.length === 0 ? (
           <div className="py-16 text-center text-sidebar-foreground/80">
-            <p className="mb-4 text-[13px] lowercase">no subjects yet</p>
+            <p className="mb-4 text-[13px]">No Subjects Yet</p>
             {isTeacher && (
               <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[13px] text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
-                create first subject
+                Create First Subject
               </Button>
             )}
           </div>
@@ -280,7 +280,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="lowercase">create subject</DialogTitle>
+            <DialogTitle>Create Subject</DialogTitle>
             <DialogDescription>
               Add a new subject to your curriculum.
             </DialogDescription>
@@ -288,7 +288,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="subject-title" className="lowercase">title</Label>
+              <Label htmlFor="subject-title">Title</Label>
               <Input
                 id="subject-title"
                 placeholder=""
@@ -299,7 +299,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
             {/* Auto icons switch */}
             <div className="flex items-center justify-between">
-              <Label htmlFor="auto-icons" className="text-sm lowercase">auto-generated cover icons</Label>
+              <Label htmlFor="auto-icons" className="text-sm">Auto-generated cover icons</Label>
               <Switch
                 id="auto-icons"
                 checked={autoIcons}
@@ -309,7 +309,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
             {autoIcons && (
               <div className="space-y-2">
-                <Label htmlFor="subject-description" className="lowercase">what is this subject about?</Label>
+                <Label htmlFor="subject-description">What is this subject about?</Label>
                 <Textarea
                   id="subject-description"
                   placeholder="e.g., Study of living organisms, cells, genetics, and ecosystems..."
@@ -335,7 +335,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
             {!classId && classes.length > 0 && (
               <div className="space-y-2">
-                <Label className="lowercase">link to classes (optional)</Label>
+                <Label>Link to classes (optional)</Label>
                 <div className="space-y-2 max-h-40 overflow-y-auto border rounded p-2 bg-muted/30">
                   {classes.map((classItem) => (
                     <div key={classItem.id} className="flex items-center gap-2">
@@ -364,10 +364,10 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="rounded-xl">
-              cancel
+              Cancel
             </Button>
             <Button onClick={handleCreateSubject} disabled={isCreating || !newSubjectTitle.trim()} className="rounded-xl">
-              {isCreating ? 'creating...' : 'create'}
+              {isCreating ? 'Creating...' : 'Create'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -117,55 +117,55 @@ export default function ParagraphDetailPage() {
     allSettings: isDutch ? 'Alle instellingen' : 'All settings',
     addAssignment: isDutch ? '+ Opdracht Toevoegen' : '+ Add Assignment',
     noAssignmentsYet: isDutch ? 'Nog geen opdrachten' : 'No assignments yet',
-    createFirstAssignment: isDutch ? 'Eerste opdracht maken' : 'Create first assignment',
-    addAssignmentTitle: isDutch ? 'Opdracht toevoegen' : 'Add Assignment',
+    createFirstAssignment: isDutch ? 'Eerste opdracht maken' : 'Create First Assignment',
+    addAssignmentTitle: isDutch ? 'Opdracht Toevoegen' : 'Add Assignment',
     addAssignmentDescription: isDutch ? 'Maak een nieuwe opdracht voor deze paragraaf.' : 'Create a new assignment for this paragraph.',
-    addAssignmentDescriptionWizard: isDutch ? 'Kies eerst wat je wil maken, daarna begeleiden we je stap voor stap.' : 'Choose what you are creating first, then we guide you step by step.',
+    addAssignmentDescriptionWizard: isDutch ? 'Kies eerst wat je wilt maken, daarna begeleiden we je stap voor stap.' : 'Choose what you are creating first, then we guide you step by step.',
     title: isDutch ? 'Titel' : 'Title',
     back: isDutch ? 'Terug' : 'Back',
-    assignmentTypeTitle: isDutch ? 'Wat maak je?' : 'What are you creating?',
+    assignmentTypeTitle: isDutch ? 'Wat Maak Je?' : 'What Are You Creating?',
     assignmentTypeDescription: isDutch ? 'Kies eerst het doel. Wij zetten slimme standaardinstellingen klaar.' : 'Choose the goal first. We apply smart defaults.',
     homework: isDutch ? 'Huiswerk' : 'Homework',
     test: isDutch ? 'Toets' : 'Test',
     homeworkCaption: isDutch ? 'Oefenen, reflectie, thuiswerk' : 'Practice, reflection, take-home work',
     testCaption: isDutch ? 'Getimed, gecontroleerd, beoordelingsmodus' : 'Timed, controlled, assessment mode',
-    starterTitle: isDutch ? 'Kies een starter' : 'Choose a starter',
+    starterTitle: isDutch ? 'Kies een Starter' : 'Choose a Starter',
     starterDescription: isDutch ? 'Begin met een bewezen opzet of start helemaal zelf.' : 'Start with a proven layout or build your own.',
-    createYourOwn: isDutch ? 'Zelf opbouwen' : 'Create my own',
+    createYourOwn: isDutch ? 'Zelf Opbouwen' : 'Create Your Own',
     blockMix: isDutch ? 'Blokverdeling' : 'Block mix',
     estimatedTime: isDutch ? 'Geschatte tijd' : 'Estimated time',
     difficulty: isDutch ? 'Moeilijkheid' : 'Difficulty',
     easy: isDutch ? 'Makkelijk' : 'Easy',
     medium: isDutch ? 'Gemiddeld' : 'Medium',
     hard: isDutch ? 'Moeilijk' : 'Hard',
-    homeworkSettingsTitle: isDutch ? 'Huiswerk Instellingen' : 'Homework Settings',
-    testSettingsTitle: isDutch ? 'Toets Instellingen' : 'Test Settings',
+    homeworkSettingsTitle: isDutch ? 'Huiswerkinstellingen' : 'Homework Settings',
+    testSettingsTitle: isDutch ? 'Toetsinstellingen' : 'Test Settings',
     dueDate: isDutch ? 'Inlevermoment' : 'Due date',
     openTime: isDutch ? 'Starttijd' : 'Open time',
     closeTime: isDutch ? 'Eindtijd' : 'Close time',
     timerMinutes: isDutch ? 'Timer (minuten)' : 'Timer (minutes)',
     attemptLimit: isDutch ? 'Max. pogingen' : 'Attempt limit',
-    randomizeQuestions: isDutch ? 'Vragen willekeurig' : 'Randomize questions',
-    randomizeAnswers: isDutch ? 'Antwoordopties willekeurig' : 'Randomize options',
-    integrityMode: isDutch ? 'Integriteitsmodus (anti-cheat)' : 'Integrity mode (anti-cheat)',
-    addToAgenda: isDutch ? 'Toevoegen aan agenda' : 'Add to agenda',
+    randomizeQuestions: isDutch ? 'Vragen Willekeurig' : 'Randomize Questions',
+    randomizeAnswers: isDutch ? 'Antwoordopties Willekeurig' : 'Randomize Options',
+    integrityMode: isDutch ? 'Integriteitsmodus (Anti-Cheat)' : 'Integrity Mode (Anti-Cheat)',
+    addToAgenda: isDutch ? 'Toevoegen Aan Agenda' : 'Add to Agenda',
     createHomework: isDutch ? 'Huiswerk maken' : 'Create homework',
     createTest: isDutch ? 'Toets maken' : 'Create test',
     allAssignments: isDutch ? 'Alles' : 'All',
     onlyHomework: isDutch ? 'Huiswerk' : 'Homework',
     onlyTests: isDutch ? 'Toetsen' : 'Tests',
-    filterByType: isDutch ? 'Filter Op Type' : 'Filter By Type',
+    filterByType: isDutch ? 'Filter Op Type' : 'Filter by Type',
     agendaCreated: isDutch ? 'Agenda-item aangemaakt' : 'Agenda item created',
     failedAgendaCreate: isDutch ? 'Kon agenda-item niet maken' : 'Could not create agenda item',
     continueBtn: isDutch ? 'Doorgaan' : 'Continue',
     choosePresetFirst: isDutch ? 'Kies een preset of ga verder met zelf opbouwen.' : 'Select a preset or continue with create your own.',
-    presetConceptCheck: isDutch ? 'concept check' : 'concept check',
+    presetConceptCheck: isDutch ? 'Conceptcheck' : 'Concept check',
     presetConceptCheckUse: isDutch ? 'Snelle controle na de les.' : 'Quick check after a lesson.',
-    presetPracticeMix: isDutch ? 'oefenmix' : 'practice mix',
+    presetPracticeMix: isDutch ? 'Oefenmix' : 'Practice mix',
     presetPracticeMixUse: isDutch ? 'Afwisselende oefening voor huiswerk.' : 'Varied reinforcement practice.',
-    presetQuiz20: isDutch ? 'quiz (20 min)' : 'quiz (20 min)',
+    presetQuiz20: isDutch ? 'Quiz (20 min)' : 'Quiz (20 min)',
     presetQuiz20Use: isDutch ? 'Korte toets op recente leerstof.' : 'Short test on recent material.',
-    presetChapter45: isDutch ? 'hoofdstuktoets (45 min)' : 'chapter test (45 min)',
+    presetChapter45: isDutch ? 'Hoofdstuktoets (45 min)' : 'Chapter test (45 min)',
     presetChapter45Use: isDutch ? 'Formele hoofdstuktoets.' : 'Formal chapter assessment.',
     cancel: isDutch ? 'Annuleren' : 'Cancel',
     creating: isDutch ? 'Aanmaken...' : 'Creating...',
@@ -734,9 +734,9 @@ export default function ParagraphDetailPage() {
         setIsCreateAssignmentOpen(open);
         if (!open) resetCreateWizard();
       }}>
-        <DialogContent className="sm:max-w-4xl p-6">
+        <DialogContent className="sm:max-w-5xl p-7">
           <DialogHeader>
-            <DialogTitle>{t.addAssignmentTitle}</DialogTitle>
+            <DialogTitle className="text-xl">{t.addAssignmentTitle}</DialogTitle>
             <DialogDescription>{t.addAssignmentDescriptionWizard}</DialogDescription>
           </DialogHeader>
           <div className="py-2">
@@ -750,10 +750,10 @@ export default function ParagraphDetailPage() {
               <div className="space-y-3">
                 <p className="text-sm font-medium">{t.assignmentTypeTitle}</p>
                 <p className="text-xs text-muted-foreground">{t.assignmentTypeDescription}</p>
-                <div className="grid gap-2 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2">
                   <button
                     type="button"
-                    className={`rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
+                    className={`rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
                     onClick={() => setCreateKind('homework')}
                   >
                     <p className="text-sm font-medium">{t.homework}</p>
@@ -761,7 +761,7 @@ export default function ParagraphDetailPage() {
                   </button>
                   <button
                     type="button"
-                    className={`rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
+                    className={`rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
                     onClick={() => setCreateKind('test')}
                   >
                     <p className="text-sm font-medium">{t.test}</p>
@@ -775,13 +775,13 @@ export default function ParagraphDetailPage() {
               <div className="space-y-3">
                 <p className="text-sm font-medium">{t.starterTitle}</p>
                 <p className="text-xs text-muted-foreground">{t.starterDescription}</p>
-                <div className="max-h-[280px] space-y-2 overflow-auto pr-1">
+                <div className="max-h-[320px] space-y-2 overflow-auto pr-1">
                   {visiblePresets.map((preset) => (
                     <button
                       key={preset.id}
                       type="button"
                       onClick={() => setSelectedPresetId(preset.id)}
-                      className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
+                      className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
@@ -791,7 +791,7 @@ export default function ParagraphDetailPage() {
                           <div className="mt-1 flex flex-wrap gap-1.5">
                             {preset.blockMix.map((block) => (
                               <span key={`${preset.id}-${block.type}`} className="rounded-full border border-border px-2 py-0.5 text-[11px]">
-                                {block.type} x{block.count}
+                                {block.type.replace(/_/g, ' ')} x{block.count}
                               </span>
                             ))}
                           </div>
@@ -811,7 +811,7 @@ export default function ParagraphDetailPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedPresetId(null)}
-                    className={`w-full rounded-lg border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40'}`}
+                    className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
                   >
                     <p className="text-sm font-medium">{t.createYourOwn}</p>
                     <p className="text-xs text-muted-foreground">{t.choosePresetFirst}</p>
@@ -845,7 +845,7 @@ export default function ParagraphDetailPage() {
                         className="mt-1"
                       />
                     </div>
-                    <label className="flex items-center gap-2 text-sm">
+                    <label className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
                       <input type="checkbox" checked={addToAgenda} onChange={(e) => setAddToAgenda(e.target.checked)} />
                       {t.addToAgenda}
                     </label>
@@ -897,20 +897,20 @@ export default function ParagraphDetailPage() {
                         />
                       </div>
                     </div>
-                    <div className="space-y-1.5 text-sm">
-                      <label className="flex items-center gap-2">
+                    <div className="space-y-2 text-sm">
+                      <label className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
                         <input type="checkbox" checked={randomizeQuestions} onChange={(e) => setRandomizeQuestions(e.target.checked)} />
                         {t.randomizeQuestions}
                       </label>
-                      <label className="flex items-center gap-2">
+                      <label className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
                         <input type="checkbox" checked={randomizeAnswers} onChange={(e) => setRandomizeAnswers(e.target.checked)} />
                         {t.randomizeAnswers}
                       </label>
-                      <label className="flex items-center gap-2">
+                      <label className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
                         <input type="checkbox" checked={integrityMode} onChange={(e) => setIntegrityMode(e.target.checked)} />
                         {t.integrityMode}
                       </label>
-                      <label className="flex items-center gap-2">
+                      <label className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
                         <input type="checkbox" checked={addToAgenda} onChange={(e) => setAddToAgenda(e.target.checked)} />
                         {t.addToAgenda}
                       </label>

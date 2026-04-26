@@ -805,7 +805,7 @@ export function AppSidebar() {
             className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-3 text-[12px] text-sidebar-foreground transition-colors hover:bg-[hsl(var(--surface-2))] disabled:opacity-60"
           >
             {classDropdownItems.length === 0 ? (
-              <option value="">{isDutch ? 'geen klassen' : 'no classes'}</option>
+              <option value="">{isDutch ? 'Geen klassen' : 'No classes'}</option>
             ) : (
               classDropdownItems.map((classItem) => (
                 <option key={classItem.id} value={classItem.id}>
@@ -852,7 +852,7 @@ export function AppSidebar() {
         >
           <span className="flex items-center justify-between gap-2">
               <span className="truncate">
-              {classDropdownItems.find((classItem) => classItem.id === effectiveTeacherClassId)?.label || (isDutch ? 'geen klassen' : 'no classes')}
+              {classDropdownItems.find((classItem) => classItem.id === effectiveTeacherClassId)?.label || (isDutch ? 'Geen klassen' : 'No classes')}
             </span>
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </span>
@@ -1189,7 +1189,7 @@ export function AppSidebar() {
 
   // Tablet + desktop: regular sidebar with trigger
   return (
-    <Sidebar className={cn(isTablet ? "w-[13.5rem]" : "w-[15.75rem] lg:w-[17.25rem]")} collapsible="icon">
+    <Sidebar className={cn(isTablet ? "w-[12.75rem]" : "w-[14.5rem] lg:w-[15.5rem]")} collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>

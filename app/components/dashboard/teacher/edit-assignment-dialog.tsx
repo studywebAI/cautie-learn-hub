@@ -95,14 +95,14 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
     stepType: isDutch ? 'Stap 1 van 3 - Type' : 'Step 1 of 3 - Type',
     stepPreset: isDutch ? 'Stap 2 van 3 - Preset' : 'Step 2 of 3 - Preset',
     stepDetails: isDutch ? 'Stap 3 van 3 - Details' : 'Step 3 of 3 - Details',
-    whatCreating: isDutch ? 'Welk type is dit?' : 'What type is this?',
+    whatCreating: isDutch ? 'Welk Type Is Dit?' : 'What Type Is This?',
     homework: isDutch ? 'Huiswerk' : 'Homework',
     test: isDutch ? 'Toets' : 'Test',
     homeworkCaption: isDutch ? 'Oefenen, reflectie, thuiswerk' : 'Practice, reflection, take-home work',
     testCaption: isDutch ? 'Beoordeling, quiz, toetsmoment' : 'Assessment, quiz, checkpoint',
     chooseTemplate: isDutch ? 'Pas eventueel een template toe' : 'Optionally apply a template',
     chooseTemplateDescription: isDutch ? 'Template past instellingen aan, maar verwijdert geen bestaande blokken.' : 'Template updates settings, but does not remove existing blocks.',
-    createYourOwn: isDutch ? 'Huidige opzet behouden' : 'Keep current setup',
+    createYourOwn: isDutch ? 'Huidige Opzet Behouden' : 'Keep Current Setup',
     createYourOwnCaption: isDutch ? 'Geen preset toepassen, alleen handmatige aanpassingen.' : 'No preset; keep manual settings.',
     assignmentTitle: isDutch ? 'Titel' : 'Title',
     contentOptional: isDutch ? 'Inhoud (optioneel)' : 'Content (optional)',
@@ -111,10 +111,10 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
     endsAt: isDutch ? 'Eindmoment' : 'Ends at',
     timerMinutes: isDutch ? 'Timer (minuten)' : 'Timer (minutes)',
     attemptLimit: isDutch ? 'Pogingen' : 'Attempts',
-    randomizeQuestions: isDutch ? 'Vragen husselen' : 'Randomize questions',
-    randomizeAnswers: isDutch ? 'Antwoorden husselen' : 'Randomize answers',
-    integrityMode: isDutch ? 'Integriteitsmodus (fullscreen + tabdetectie)' : 'Integrity mode (fullscreen + tab switch detection)',
-    addToAgenda: isDutch ? 'Op agenda zetten' : 'Show in agenda',
+    randomizeQuestions: isDutch ? 'Vragen Husselen' : 'Randomize Questions',
+    randomizeAnswers: isDutch ? 'Antwoorden Husselen' : 'Randomize Answers',
+    integrityMode: isDutch ? 'Integriteitsmodus (Fullscreen + Tabdetectie)' : 'Integrity Mode (Fullscreen + Tab Switch Detection)',
+    addToAgenda: isDutch ? 'Op Agenda Zetten' : 'Show in Agenda',
     addToAgendaHelp: isDutch ? 'Bij uitzetten verwijderen we gekoppelde agenda-item(s).' : 'Turning this off removes linked agenda item(s).',
     materials: isDutch ? 'Materiaal' : 'Material',
     materialsHelp: isDutch ? 'Optioneel: wijzig het gekoppelde materiaal.' : 'Optional: change the linked material.',
@@ -126,12 +126,12 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
     removeAttachedMaterial: isDutch ? 'Gekoppeld materiaal verwijderen' : 'Remove attached material',
     chapterOptional: isDutch ? 'Hoofdstuk (optioneel)' : 'Chapter (optional)',
     blockOptional: isDutch ? 'Blok (optioneel)' : 'Block (optional)',
-    chooseChapter: isDutch ? 'Kies hoofdstuk' : 'Choose chapter',
-    chooseBlock: isDutch ? 'Kies blok' : 'Choose block',
+    chooseChapter: isDutch ? 'Kies Hoofdstuk' : 'Choose Chapter',
+    chooseBlock: isDutch ? 'Kies Blok' : 'Choose Block',
     noChapters: isDutch ? 'Geen hoofdstukken beschikbaar' : 'No chapters available',
     noBlocks: isDutch ? 'Geen blokken in dit hoofdstuk' : 'No blocks in this chapter',
-    loadingChapters: isDutch ? 'Hoofdstukken laden...' : 'Loading chapters...',
-    loadingBlocks: isDutch ? 'Blokken laden...' : 'Loading blocks...',
+    loadingChapters: isDutch ? 'Hoofdstukken Laden...' : 'Loading Chapters...',
+    loadingBlocks: isDutch ? 'Blokken Laden...' : 'Loading Blocks...',
     missingInfo: isDutch ? 'Onvolledige informatie' : 'Missing information',
     missingInfoDesc: isDutch ? 'Vul minimaal een titel in. Voeg bij huiswerk een inlevermoment toe, of bij een toets een start- en eindmoment.' : 'Enter at least a title. Add due time for homework, or both start and end times for tests.',
     saveSuccess: isDutch ? 'Opdracht bijgewerkt' : 'Assignment updated',
@@ -150,10 +150,10 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
   );
 
   const getPresetLabel = (key: string) => {
-    if (key === 'conceptCheck') return isDutch ? 'conceptcheck (20 min)' : 'concept check (20 min)';
-    if (key === 'practiceMix') return isDutch ? 'oefenmix (30 min)' : 'practice mix (30 min)';
-    if (key === 'quiz20') return isDutch ? 'quiz (20 min)' : 'quiz (20 min)';
-    if (key === 'chapter45') return isDutch ? 'hoofdstuktoets (45 min)' : 'chapter test (45 min)';
+    if (key === 'conceptCheck') return isDutch ? 'Conceptcheck (20 min)' : 'Concept check (20 min)';
+    if (key === 'practiceMix') return isDutch ? 'Oefenmix (30 min)' : 'Practice mix (30 min)';
+    if (key === 'quiz20') return isDutch ? 'Quiz (20 min)' : 'Quiz (20 min)';
+    if (key === 'chapter45') return isDutch ? 'Hoofdstuktoets (45 min)' : 'Chapter test (45 min)';
     return key;
   };
 
@@ -426,9 +426,9 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+        <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto p-7">
           <DialogHeader>
-            <DialogTitle>{t.editAssignment}</DialogTitle>
+            <DialogTitle className="text-xl">{t.editAssignment}</DialogTitle>
             <DialogDescription>{t.editDescription}</DialogDescription>
           </DialogHeader>
 
@@ -440,11 +440,11 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
             {createStep === 1 && (
               <div className="grid gap-3">
                 <p className="text-sm font-medium">{t.whatCreating}</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
                     type="button"
                     onClick={() => setCreateKind('homework')}
-                    className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
+                    className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
                   >
                     <p className="text-sm font-medium">{t.homework}</p>
                     <p className="text-xs text-muted-foreground mt-1">{t.homeworkCaption}</p>
@@ -452,7 +452,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                   <button
                     type="button"
                     onClick={() => setCreateKind('test')}
-                    className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
+                    className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
                   >
                     <p className="text-sm font-medium">{t.test}</p>
                     <p className="text-xs text-muted-foreground mt-1">{t.testCaption}</p>
@@ -467,13 +467,13 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                   <p className="text-sm font-medium">{t.chooseTemplate}</p>
                   <p className="text-xs text-muted-foreground mt-1">{t.chooseTemplateDescription}</p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {filteredPresets.map((preset) => (
                     <button
                       key={preset.id}
                       type="button"
                       onClick={() => setSelectedPresetId(preset.id)}
-                      className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
+                      className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
@@ -504,7 +504,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                   <button
                     type="button"
                     onClick={() => setSelectedPresetId(null)}
-                    className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/40'}`}
+                    className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
                   >
                     <p className="text-sm font-medium">{t.createYourOwn}</p>
                     <p className="text-xs text-muted-foreground">{t.createYourOwnCaption}</p>
@@ -579,22 +579,22 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                         />
                       </div>
                     </div>
-                    <label className="flex items-center justify-between text-sm">
+                    <label className="flex items-center justify-between rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
                       <span>{t.randomizeQuestions}</span>
                       <input type="checkbox" checked={randomizeQuestions} onChange={(e) => setRandomizeQuestions(e.target.checked)} />
                     </label>
-                    <label className="flex items-center justify-between text-sm">
+                    <label className="flex items-center justify-between rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
                       <span>{t.randomizeAnswers}</span>
                       <input type="checkbox" checked={randomizeAnswers} onChange={(e) => setRandomizeAnswers(e.target.checked)} />
                     </label>
-                    <label className="flex items-center justify-between text-sm">
+                    <label className="flex items-center justify-between rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
                       <span>{t.integrityMode}</span>
                       <input type="checkbox" checked={integrityMode} onChange={(e) => setIntegrityMode(e.target.checked)} />
                     </label>
                   </div>
                 )}
 
-                <label className="flex items-center justify-between rounded-md border p-3 text-sm">
+                <label className="flex items-center justify-between rounded-md border border-border/80 bg-muted/20 p-3 text-sm">
                   <span>
                     {t.addToAgenda}
                     <span className="ml-2 text-xs text-muted-foreground">{t.addToAgendaHelp}</span>

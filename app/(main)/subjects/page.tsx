@@ -52,7 +52,7 @@ function SubjectsPageContent() {
 
   if (isTeacher && !teacherClassId) {
     return (
-      <div className="h-full px-4 py-4 md:px-6 md:py-5">
+      <div className="h-full px-2 py-3 md:px-3 md:py-4">
         <div className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/40 p-8 text-[13px] text-sidebar-foreground">
           No active class selected. Select or create a class first.
         </div>
@@ -62,14 +62,14 @@ function SubjectsPageContent() {
 
   if (isTeacher) {
     return (
-      <div className="mx-auto h-full w-full max-w-6xl px-4 py-4 md:px-6 md:py-5">
+      <div className="h-full w-full px-2 py-3 md:px-3 md:py-4">
         <SubjectsGrid isTeacher={true} classId={teacherClassId} />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto h-full w-full max-w-6xl px-4 py-4 md:px-6 md:py-5">
+    <div className="h-full w-full px-2 py-3 md:px-3 md:py-4">
       <SubjectsGrid isTeacher={isTeacher} classId={isTeacher ? teacherClassId : undefined} />
     </div>
   );

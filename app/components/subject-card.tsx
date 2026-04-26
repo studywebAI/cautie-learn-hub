@@ -336,9 +336,9 @@ export function SubjectCard({ subject }: SubjectCardProps) {
           <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-foreground">
             <Icon className="h-4 w-4" strokeWidth={1.8} />
           </div>
-          <h3 className="truncate text-[13px] font-medium lowercase text-foreground">{subject.title}</h3>
+          <h3 className="truncate text-[13px] font-medium text-foreground">{subject.title}</h3>
           {className && (
-            <p className="mt-0.5 truncate text-[12px] lowercase text-sidebar-foreground">{className}</p>
+            <p className="mt-0.5 truncate text-[12px] text-sidebar-foreground">{className}</p>
           )}
           {lastWorkedParagraph && (
             <Link
@@ -348,7 +348,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
               className="mt-2 inline-flex max-w-full items-center rounded-lg bg-muted px-2 py-1 text-[11px] text-foreground hover:bg-muted/80"
             >
               <span className="truncate">
-                resume {lastWorkedParagraph.chapter_number}.{lastWorkedParagraph.paragraph_number} {lastWorkedParagraph.title}
+                Resume {lastWorkedParagraph.chapter_number}.{lastWorkedParagraph.paragraph_number} {lastWorkedParagraph.title}
               </span>
             </Link>
           )}

@@ -126,7 +126,7 @@ function StudentDashboard() {
 }
 
 function TeacherSummaryDashboard() {
-    const { classes, assignments, students, isLoading, session } = useContext(AppContext) as AppContextType;
+    const { classes, assignments, students, isLoading, session, refetchClasses, refetchAssignments } = useContext(AppContext) as AppContextType;
     const [displayName, setDisplayName] = useState<string>('');
 
     useEffect(() => {
@@ -144,6 +144,19 @@ function TeacherSummaryDashboard() {
       );
       if (metaName) setDisplayName(metaName);
     }, [session]);
+
+    useEffect(() => {
+      if (!session) return;
+      void refetchClasses();
+      void refetchAssignments();
+
+      const refresh = () => {
+        void refetchClasses();
+        void refetchAssignments();
+      };
+      window.addEventListener('focus', refresh);
+      return () => window.removeEventListener('focus', refresh);
+    }, [session, refetchClasses, refetchAssignments]);
 
     if (isLoading || !classes) return <DashboardSkeleton />;
 
@@ -170,7 +183,7 @@ function TeacherSummaryDashboard() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-xl">{teacherClasses.length}</div>
-                    <p className="text-xs text-muted-foreground">classes managed</p>
+                    <p className="text-xs text-muted-foreground">Classes managed</p>
                 </CardContent>
               </Card>
               <Card className="border-sidebar-border/70 bg-sidebar-accent/32">
@@ -180,7 +193,7 @@ function TeacherSummaryDashboard() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-xl">{totalStudents}</div>
-                    <p className="text-xs text-muted-foreground">students across all classes</p>
+                    <p className="text-xs text-muted-foreground">Students across all classes</p>
                 </CardContent>
               </Card>
               <Card className="border-sidebar-border/70 bg-sidebar-accent/25">
@@ -190,7 +203,7 @@ function TeacherSummaryDashboard() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-xl">{activeAssignments}</div>
-                    <p className="text-xs text-muted-foreground">upcoming assignments</p>
+                    <p className="text-xs text-muted-foreground">Upcoming assignments</p>
                 </CardContent>
               </Card>
                 <Card className="border-sidebar-border/70 bg-sidebar-accent/32">
@@ -200,13 +213,13 @@ function TeacherSummaryDashboard() {
                   </CardHeader>
                   <CardContent>
                       <div className="text-xl">0</div>
-                      <p className="text-xs text-muted-foreground">students need attention</p>
+                      <p className="text-xs text-muted-foreground">Students need attention</p>
                   </CardContent>
                 </Card>
             </div>
 
             {teacherClasses.length === 0 && (
-              <Card>
+              <Card className="border-sidebar-border/70 bg-sidebar-accent/20">
                 <CardContent className="text-center p-8">
                   <p className="text-muted-foreground">You have not created any classes yet.</p>
                   <Button asChild className="mt-4"><Link href="/classes">Create One Now</Link></Button>

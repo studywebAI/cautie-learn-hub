@@ -92,7 +92,7 @@ export default function ChapterOverviewPage() {
   return (
       <div className="space-y-5">
       <div className="text-xs text-muted-foreground">
-        Subjects / Chapter / Paragraphs
+        {`${subject?.title || 'Subjects'} / ${chapter?.title || 'Chapter'} / Paragraphs`}
       </div>
       {/* Minimal header */}
       <div className="flex items-center justify-between">

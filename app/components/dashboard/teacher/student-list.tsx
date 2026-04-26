@@ -3,7 +3,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
 import { MoreVertical, User, Copy, QrCode, Link as LinkIcon, Users, GraduationCap, UserPlus, CheckSquare, Trash2, Mail, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { Student } from '@/lib/teacher-types';
@@ -354,10 +353,7 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
                 <div>
                   <p className="font-medium">{student.name || student.email}</p>
                   <p className="text-xs text-muted-foreground">{student.email || 'No email'}</p>
-                  <div className="flex items-center gap-2">
-                      <Progress value={0} className="h-1.5 w-24" />
-                      <span className="text-xs text-muted-foreground">0%</span>
-                  </div>
+                  {/* Progress will render here once per-student analytics is connected. */}
                 </div>
               </div>
               {!isBulkMode && (

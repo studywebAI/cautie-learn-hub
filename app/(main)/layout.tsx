@@ -48,7 +48,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <div
                   className={`${
                     isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto"
-                  } ${isPhone ? "p-2" : isTablet ? "px-3 py-2.5" : "px-4 py-3"}`}
+                  } ${isPhone ? "p-2" : isTablet ? "px-3 py-2.5" : "px-3.5 py-3"}`}
                 >
                     {children}
                 </div>

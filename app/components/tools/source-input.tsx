@@ -1726,9 +1726,7 @@ export function SourceInput({
             <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-sidebar-border bg-sidebar-accent/20 p-2">
               {recentsLoading ? (
                 <div className="flex h-full items-center justify-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
-              ) : visibleRecents.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No local recents found.</p>
-              ) : (
+              ) : visibleRecents.length === 0 ? null : (
                 <div className="space-y-1.5">
                   {visibleRecents.slice(0, 50).map((item) => (
                     <button

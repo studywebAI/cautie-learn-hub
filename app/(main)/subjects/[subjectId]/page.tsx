@@ -290,7 +290,7 @@ export default function SubjectDetailPage() {
   return (
     <div className="space-y-0">
       <div className="mb-2 text-xs text-muted-foreground">
-        Subjects / Chapters
+        {`Subjects / ${subject?.name || 'Subject'} / Chapters`}
       </div>
       {/* Last activity banner */}
       {lastActivity && (
@@ -325,11 +325,12 @@ export default function SubjectDetailPage() {
                 }}
                 size="sm"
                 variant="outline"
+                className="border-sidebar-border/80 bg-sidebar-accent/35 hover:bg-sidebar-accent/55"
               >
                 + Add Paragraph
               </Button>
             )}
-            <Button onClick={() => setIsCreateChapterOpen(true)} size="sm">
+            <Button onClick={() => setIsCreateChapterOpen(true)} size="sm" variant="outline" className="border-sidebar-border/80 bg-sidebar-accent/35 hover:bg-sidebar-accent/55">
               + Add Chapter
             </Button>
           </div>
@@ -357,11 +358,11 @@ export default function SubjectDetailPage() {
             const remainingCount = allParagraphs.length - maxVisible;
 
             return (
-              <div key={chapter.id} className="overflow-hidden rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/18">
+              <div key={chapter.id} className="overflow-hidden rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/12">
                 <div className="flex min-h-[108px] items-stretch">
                   <Link prefetch={false}
                     href={`/subjects/${subjectId}/chapters/${chapter.id}`}
-                    className="relative w-32 shrink-0 bg-sidebar-accent/45 transition-colors hover:bg-sidebar-accent/60"
+                    className="relative w-32 shrink-0 bg-sidebar-accent/30 transition-colors hover:bg-sidebar-accent/40"
                   >
                     <div className="absolute inset-0 flex items-center justify-center text-2xl text-muted-foreground/60">
                       {chapter.chapter_number}
@@ -403,7 +404,7 @@ export default function SubjectDetailPage() {
                           key={paragraph.id}
                           href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
                           onClick={() => handleParagraphClick(chapter, paragraph)}
-                          className="mx-2 mb-2 flex items-center gap-3 rounded-xl border border-sidebar-border/60 bg-sidebar-accent/28 px-4 py-3 transition-colors hover:bg-sidebar-accent/45"
+                          className="mx-2 mb-2 flex items-center gap-3 rounded-xl border border-sidebar-border/60 bg-sidebar-accent/20 px-4 py-3 transition-colors hover:bg-sidebar-accent/35"
                         >
                           <span className="w-14 text-xs text-sidebar-foreground tabular-nums">
                             {chapter.chapter_number}.{paragraph.paragraph_number}
@@ -446,7 +447,7 @@ export default function SubjectDetailPage() {
 
       {/* Create Chapter Dialog */}
       <Dialog open={isCreateChapterOpen} onOpenChange={setIsCreateChapterOpen}>
-        <DialogContent>
+      <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add Chapter</DialogTitle>
             <DialogDescription>Create a new chapter for this subject.</DialogDescription>
@@ -483,7 +484,7 @@ export default function SubjectDetailPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Paragraph</DialogTitle>
-            <DialogDescription>Select a chapter and create a new paragraph.</DialogDescription>
+            <DialogDescription>Select a Chapter and create a new paragraph.</DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-3">
             <div>
@@ -505,7 +506,7 @@ export default function SubjectDetailPage() {
                   }}
                   className="mt-2 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
                 >
-                  <option value="">Select chapter</option>
+                  <option value="">Select Chapter</option>
                   {chapters.map((chapter) => (
                     <option key={chapter.id} value={chapter.id}>
                       {chapter.chapter_number}. {chapter.title}

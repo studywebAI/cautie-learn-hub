@@ -39,7 +39,7 @@ const ClassSettings = dynamic(
 
 // Cache for tab data - persists across tab switches
 const tabDataCache: Record<string, { data: any; timestamp: number }> = {};
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
 export default function ClassDetailsPage() {
   const params = useParams();
@@ -57,6 +57,7 @@ export default function ClassDetailsPage() {
   const inFlightTabLoadsRef = useRef<Partial<Record<string, Promise<any>>>>({});
 
   useEffect(() => {
+    setDirectClassInfo(null);
     // Prevent showing stale tab payload from a previously viewed class.
     setCachedTabData({});
     setLoadingTabs({});
@@ -136,6 +137,11 @@ export default function ClassDetailsPage() {
         level: 'debug',
       });
       setCachedTabData((prev: any) => ({ ...prev, [tabName]: cached.data }));
+      // Keep UI instant with cache, but always refresh in background for accuracy.
+      setTimeout(() => {
+        delete tabDataCache[cacheKey];
+        void loadTabData(tabName);
+      }, 0);
       return cached.data;
     }
 
@@ -364,7 +370,7 @@ export default function ClassDetailsPage() {
       {isTeacher && (
         <QuickGrader classId={classId} isOpen={isQuickGraderOpen} onClose={() => setIsQuickGraderOpen(false)} />
       )}
-      <div key={`tab-${tab}`}>{renderContent()}</div>
+      <div key={`class-${classId}-tab-${tab}`}>{renderContent()}</div>
     </>
   );
 }

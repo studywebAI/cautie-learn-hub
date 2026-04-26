@@ -11,11 +11,6 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
-  Archive,
-  Trash2,
-  Copy,
-  CheckSquare,
-  Square,
   LayoutGrid,
   Rows3,
   ArrowUpRight
@@ -33,8 +28,6 @@ export function TeacherDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [allClasses, setAllClasses] = useState<ClassInfo[]>([]);
   const [archivedClassesCount, setArchivedClassesCount] = useState(0);
-  const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
-  const [isBulkMode, setIsBulkMode] = useState(false);
   const [manageView, setManageView] = useState<'list' | 'grid'>('list');
   const [joinCode, setJoinCode] = useState('');
   const [isJoining, setIsJoining] = useState(false);
@@ -128,64 +121,6 @@ export function TeacherDashboard() {
     setShowArchived(!showArchived);
   };
 
-  // Bulk operations handlers
-  const handleSelectAll = () => {
-    const allIds = new Set(activeClasses.map(cls => cls.id));
-    setSelectedClasses(allIds);
-  };
-
-  const handleDeselectAll = () => {
-    setSelectedClasses(new Set());
-  };
-
-  const handleBulkAction = async (action: string) => {
-    if (selectedClasses.size === 0) return;
-
-    try {
-      const response = await fetch('/api/classes/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action,
-          classIds: Array.from(selectedClasses)
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Bulk operation failed');
-      }
-
-      toast({
-        title: 'Success',
-        description: `${action.charAt(0).toUpperCase() + action.slice(1)} operation completed for ${selectedClasses.size} classes`,
-      });
-
-      setSelectedClasses(new Set());
-      await refetchClasses();
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Bulk operation failed. Please try again.',
-      });
-    }
-  };
-
-  const toggleBulkMode = () => {
-    setIsBulkMode(!isBulkMode);
-    setSelectedClasses(new Set());
-  };
-
-  const toggleClassSelection = (classId: string) => {
-    const newSelected = new Set(selectedClasses);
-    if (newSelected.has(classId)) {
-      newSelected.delete(classId);
-    } else {
-      newSelected.add(classId);
-    }
-    setSelectedClasses(newSelected);
-  };
-  
   if (isLoading || !classes) {
       return (
         <div className="flex flex-col gap-8">
@@ -210,9 +145,9 @@ export function TeacherDashboard() {
     <div className="flex flex-col gap-6">
       <section className="rounded-xl border border-border/70 bg-[hsl(var(--surface-1))] p-4">
         <div className="flex flex-col gap-1">
-          <h2 className="text-base font-semibold lowercase">class access</h2>
+          <h2 className="text-base font-semibold">Class Access</h2>
           <p className="text-sm text-muted-foreground">
-            create a new class or join an existing class with a teacher code.
+            Create a new class or join an existing class with a teacher code.
           </p>
         </div>
         <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -242,9 +177,9 @@ export function TeacherDashboard() {
 
       <section className="rounded-xl border border-border/70 bg-[hsl(var(--surface-1))] p-4">
         <div className="mb-4 flex flex-col gap-1">
-          <h2 className="text-base font-semibold lowercase">manage classes</h2>
+          <h2 className="text-base font-semibold">Manage Classes</h2>
           <p className="text-sm text-muted-foreground">
-            keep class settings organized from one place.
+            Keep class settings organized from one place.
           </p>
         </div>
 
@@ -259,14 +194,6 @@ export function TeacherDashboard() {
             className="pl-10 rounded-full"
           />
             </div>
-            <Button
-              variant={isBulkMode ? "default" : "outline"}
-              onClick={toggleBulkMode}
-              size="sm"
-            >
-              {isBulkMode ? <Square className="mr-2 h-4 w-4" /> : <CheckSquare className="mr-2 h-4 w-4" />}
-              {isBulkMode ? 'Exit Bulk Mode' : 'Bulk Actions'}
-            </Button>
             <div className="inline-flex rounded-md border border-border/70 p-0.5">
               <Button
                 type="button"
@@ -291,54 +218,6 @@ export function TeacherDashboard() {
             </div>
           </div>
         </div>
-
-        {isBulkMode && (
-          <div className="mb-6 flex flex-wrap items-center gap-2">
-            {selectedClasses.size > 0 && (
-              <>
-                <span className="text-sm text-muted-foreground">
-                  {selectedClasses.size} selected
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleBulkAction('archive')}
-                >
-                  <Archive className="mr-1 h-3 w-3" />
-                  Archive
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleBulkAction('duplicate')}
-                >
-                  <Copy className="mr-1 h-3 w-3" />
-                  Duplicate
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleBulkAction('delete')}
-                >
-                  <Trash2 className="mr-1 h-3 w-3" />
-                  Delete
-                </Button>
-              </>
-            )}
-            {selectedClasses.size === 0 && activeClasses.length > 0 && (
-              <>
-                <Button variant="ghost" size="sm" onClick={handleSelectAll}>
-                  Select All
-                </Button>
-              </>
-            )}
-            {selectedClasses.size > 0 && (
-              <Button variant="ghost" size="sm" onClick={handleDeselectAll}>
-                Deselect All
-              </Button>
-            )}
-          </div>
-        )}
 
         {activeClasses.length === 0 && archivedClasses.length === 0 ? (
           <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed p-12 text-center">
@@ -366,10 +245,10 @@ export function TeacherDashboard() {
                       key={classInfo.id}
                       classInfo={classInfo}
                       isArchived={false}
-                      isBulkMode={isBulkMode}
-                      isSelected={selectedClasses.has(classInfo.id)}
+                      isBulkMode={false}
+                      isSelected={false}
                       priority={index < 12} // Load first 12 classes immediately
-                      onToggleSelect={toggleClassSelection}
+                      onToggleSelect={() => {}}
                     />
                   ))}
                 </div>
@@ -386,20 +265,12 @@ export function TeacherDashboard() {
                         key={classInfo.id}
                         className={cn(
                           'grid grid-cols-[minmax(0,1fr)_130px] items-center border-b px-3 py-3 last:border-b-0 md:grid-cols-[minmax(0,1.2fr)_220px_130px]',
-                          selectedClasses.has(classInfo.id) ? 'bg-primary/5' : 'bg-background'
+                          'bg-background'
                         )}
                       >
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            {isBulkMode && (
-                              <input
-                                type="checkbox"
-                                checked={selectedClasses.has(classInfo.id)}
-                                onChange={() => toggleClassSelection(classInfo.id)}
-                                className="h-4 w-4 accent-primary"
-                              />
-                            )}
-                            <p className="truncate text-sm font-medium lowercase">{classInfo.name}</p>
+                            <p className="truncate text-sm font-medium">{classInfo.name}</p>
                           </div>
                           {classInfo.description && (
                             <p className="truncate pl-0 text-xs text-muted-foreground md:pl-6">
@@ -409,13 +280,13 @@ export function TeacherDashboard() {
                         </div>
                         <div className="hidden md:block">
                           <span className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
-                            active
+                            Active
                           </span>
                         </div>
                         <div className="text-right">
                           <Button asChild size="sm" variant="ghost" className="h-8">
                         <Link prefetch={false} href={`/class/${classInfo.id}?tab=group`}>
-                              open
+                              Open
                               <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
                             </Link>
                           </Button>
@@ -458,9 +329,9 @@ export function TeacherDashboard() {
                             key={classInfo.id}
                             classInfo={classInfo}
                             isArchived={true}
-                            isBulkMode={isBulkMode}
-                            isSelected={selectedClasses.has(classInfo.id)}
-                            onToggleSelect={toggleClassSelection}
+                            isBulkMode={false}
+                            isSelected={false}
+                            onToggleSelect={() => {}}
                           />
                         ))}
                       </div>
@@ -471,25 +342,17 @@ export function TeacherDashboard() {
                             key={classInfo.id}
                             className={cn(
                               'grid grid-cols-[minmax(0,1fr)_130px] items-center border-b px-3 py-3 last:border-b-0',
-                              selectedClasses.has(classInfo.id) ? 'bg-primary/5' : 'bg-background'
+                              'bg-background'
                             )}
                           >
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                {isBulkMode && (
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedClasses.has(classInfo.id)}
-                                    onChange={() => toggleClassSelection(classInfo.id)}
-                                    className="h-4 w-4 accent-primary"
-                                  />
-                                )}
-                                <p className="truncate text-sm font-medium lowercase">{classInfo.name}</p>
+                                <p className="truncate text-sm font-medium">{classInfo.name}</p>
                               </div>
                             </div>
                             <div className="text-right">
                               <span className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
-                                archived
+                                Archived
                               </span>
                             </div>
                           </div>
