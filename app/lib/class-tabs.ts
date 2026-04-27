@@ -1,6 +1,7 @@
 export const TEACHER_CLASS_TAB_IDS = [
   'invite',
   'group',
+  'share',
   'schedule',
   'attendance',
   'grades',
@@ -9,7 +10,7 @@ export const TEACHER_CLASS_TAB_IDS = [
   'settings',
 ] as const;
 
-export const STUDENT_CLASS_TAB_IDS = ['invite', 'group'] as const;
+export const STUDENT_CLASS_TAB_IDS = ['invite', 'group', 'share'] as const;
 
 export type TeacherClassTabId = (typeof TEACHER_CLASS_TAB_IDS)[number];
 export type StudentClassTabId = (typeof STUDENT_CLASS_TAB_IDS)[number];

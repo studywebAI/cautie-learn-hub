@@ -24,7 +24,10 @@ import {
   Upload,
   X,
   Sparkles,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Eye,
+  Users,
+  Pencil
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -60,11 +63,29 @@ interface AssignmentBlock {
   settings?: any;
 }
 
+type OpenAnswerRow = {
+  id: string;
+  block_id: string;
+  student_name: string;
+  score: number | null;
+  max_points: number | null;
+  answer_data: any;
+};
+
+type OwnAnswer = {
+  id: string;
+  block_id: string;
+  answer_data: any;
+  score: number | null;
+  is_correct: boolean | null;
+};
+
 interface AssignmentEditorProps {
   assignmentId: string;
   subjectId: string;
   chapterId: string;
   paragraphId: string;
+  classId?: string | null;
   initialBlocks?: AssignmentBlock[];
   answersEnabled?: boolean;
   isVisible?: boolean;
@@ -183,6 +204,7 @@ export function AssignmentEditor({
   subjectId,
   chapterId,
   paragraphId,
+  classId = null,
   initialBlocks = [],
   answersEnabled = false,
   isVisible = true,
@@ -207,8 +229,9 @@ export function AssignmentEditor({
     on: isDutch ? 'Aan' : 'On',
     off: isDutch ? 'Uit' : 'Off',
     saving: isDutch ? 'opslaan...' : 'saving...',
-    studentView: isDutch ? 'Leerlingweergave' : 'Student View',
-    exitStudentView: isDutch ? 'Stop leerlingweergave' : 'Exit Student View',
+    viewStudentAnswers: isDutch ? 'Bekijk leerlingantwoorden' : 'View Student Answers',
+    viewOwnAnswer: isDutch ? 'Bekijk eigen antwoord' : 'View My Answer',
+    editQuestion: isDutch ? 'Bewerk vraag' : 'Edit Question',
     widthFor: isDutch ? 'Breedte voor' : 'Width for',
     selectBlockFirst: isDutch ? 'Selecteer eerst een blok' : 'Select a block first',
     noContentTitle: isDutch ? 'Nog geen inhoud' : 'No content yet',
@@ -252,12 +275,15 @@ export function AssignmentEditor({
   
   // Settings state
   const [aiSettingsBlockId, setAiSettingsBlockId] = useState<string | null>(null);
-  const [isStudentPreview, setIsStudentPreview] = useState(false);
   const [isEditMode, setIsEditMode] = useState(true);
   const [localAnswersEnabled, setLocalAnswersEnabled] = useState(answersEnabled);
   const [localIsVisible, setLocalIsVisible] = useState(isVisible);
   const [localAnswerMode, setLocalAnswerMode] = useState<'view_only' | 'editable' | 'self_grade'>(answerMode);
   const [localAiGradingEnabled, setLocalAiGradingEnabled] = useState(aiGradingEnabled);
+  const [expandedAnswersBlockId, setExpandedAnswersBlockId] = useState<string | null>(null);
+  const [expandedOwnAnswerBlockId, setExpandedOwnAnswerBlockId] = useState<string | null>(null);
+  const [openAnswerRows, setOpenAnswerRows] = useState<OpenAnswerRow[]>([]);
+  const [ownAnswers, setOwnAnswers] = useState<OwnAnswer[]>([]);
   const [localSettings, setLocalSettings] = useState<AssignmentSettings>(
     normalizeAssignmentSettings(initialSettings || DEFAULT_ASSIGNMENT_SETTINGS)
   );
@@ -300,7 +326,7 @@ export function AssignmentEditor({
   const paperRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const router = useRouter();
-  const showTeacherControls = isTeacher && !isStudentPreview && isEditMode;
+  const showTeacherControls = isTeacher && isEditMode;
   const selectedBlockRecord = selectedBlock ? blocks.find((b) => b.id === selectedBlock) || null : null;
   const handleEditModeToggle = () => {
     setIsEditMode((prev) => {
@@ -360,6 +386,38 @@ export function AssignmentEditor({
   useEffect(() => {
     aiGradingEnabledRef.current = localAiGradingEnabled;
   }, [localAiGradingEnabled]);
+
+  useEffect(() => {
+    const loadReadOnlyAnswers = async () => {
+      if (isEditMode) return;
+
+      if (isTeacher && classId) {
+        try {
+          const res = await fetch(
+            `/api/classes/${classId}/assignments/open-answers?assignmentId=${assignmentId}&status=graded&limit=200`,
+            { cache: 'no-store' }
+          );
+          const payload = await res.json().catch(() => ({}));
+          if (res.ok) {
+            setOpenAnswerRows(Array.isArray(payload?.rows) ? payload.rows : []);
+          }
+        } catch {}
+      }
+
+      try {
+        const res = await fetch(
+          `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/answers`,
+          { cache: 'no-store' }
+        );
+        const payload = await res.json().catch(() => []);
+        if (res.ok) {
+          setOwnAnswers(Array.isArray(payload) ? payload : []);
+        }
+      } catch {}
+    };
+
+    void loadReadOnlyAnswers();
+  }, [assignmentId, chapterId, classId, isEditMode, isTeacher, paragraphId, subjectId]);
 
   useEffect(() => {
     settingsRef.current = localSettings;
@@ -848,31 +906,34 @@ export function AssignmentEditor({
 
   const updateDropTargetFromPoint = (clientX: number, clientY: number) => {
     if (!isDragging || !paperRef.current) return;
-    
-    const paperRect = paperRef.current.getBoundingClientRect();
-    const y = clientY - paperRect.top;
-    const x = clientX - paperRect.left;
-    
-    const rows = getRows();
-    
-    // Calculate which row we're over
-    let rowIndex = 0;
-    let accumulatedHeight = 0;
-    const rowHeight = 80; // Approximate row height
-    
-    rowIndex = Math.floor(y / rowHeight);
-    rowIndex = Math.max(0, Math.min(rowIndex, rows.length));
-    
-    // Check if we're on left or right side
-    const paperWidth = paperRect.width;
-    let column: 'left' | 'right' | undefined = undefined;
-    
-    if (x < paperWidth * 0.4) {
-      column = 'left';
-    } else if (x > paperWidth * 0.6) {
-      column = 'right';
+
+    const rowElements = Array.from(
+      paperRef.current.querySelectorAll<HTMLElement>('[data-assignment-row-index]')
+    );
+
+    if (rowElements.length === 0) {
+      setDropTarget({ rowIndex: 0 });
+      return;
     }
-    
+
+    const hoveredRow = rowElements.find((rowEl) => {
+      const rect = rowEl.getBoundingClientRect();
+      return clientY >= rect.top && clientY <= rect.bottom;
+    });
+
+    if (!hoveredRow) {
+      const lastRect = rowElements[rowElements.length - 1].getBoundingClientRect();
+      const rowIndex = clientY > lastRect.bottom ? rowElements.length : 0;
+      setDropTarget({ rowIndex });
+      return;
+    }
+
+    const rowIndex = Number(hoveredRow.dataset.assignmentRowIndex || 0);
+    const rect = hoveredRow.getBoundingClientRect();
+    const xRatio = (clientX - rect.left) / Math.max(rect.width, 1);
+    let column: 'left' | 'right' | undefined;
+    if (xRatio < 0.45) column = 'left';
+    if (xRatio > 0.55) column = 'right';
     setDropTarget({ rowIndex, column });
   };
 
@@ -1055,6 +1116,79 @@ export function AssignmentEditor({
 
   const renderBlockContent = (block: AssignmentBlock) => {
     const canEditBlock = showTeacherControls && selectedBlock === block.id;
+    const renderReadOnlyActions = () => {
+      if (!isTeacher || isEditMode) return null;
+      return (
+        <div className="mt-3 border-t border-border/60 pt-3">
+          <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 bg-[hsl(var(--surface-1))]"
+            onClick={() => setExpandedAnswersBlockId((prev) => prev === block.id ? null : block.id)}
+          >
+            <Users className="mr-1.5 h-3.5 w-3.5" />
+            {t.viewStudentAnswers}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 bg-[hsl(var(--surface-1))]"
+            onClick={() => setExpandedOwnAnswerBlockId((prev) => prev === block.id ? null : block.id)}
+          >
+            <Eye className="mr-1.5 h-3.5 w-3.5" />
+            {t.viewOwnAnswer}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 bg-[hsl(var(--surface-1))]"
+            onClick={() => {
+              setIsEditMode(true);
+              setSelectedBlock(block.id);
+            }}
+          >
+            <Pencil className="mr-1.5 h-3.5 w-3.5" />
+            {t.editQuestion}
+          </Button>
+          </div>
+          {expandedAnswersBlockId === block.id && (
+            <div className="mt-2 space-y-2 rounded-lg border border-border/70 bg-[hsl(var(--surface-1))] p-2 text-xs">
+              {openAnswerRows.filter((row) => row.block_id === block.id).slice(0, 8).map((row) => {
+                const max = Number(row.max_points || 0);
+                const score = Number(row.score || 0);
+                const ratio = max > 0 ? score / max : 0;
+                const verdict = ratio >= 0.85 ? 'Correct' : ratio >= 0.45 ? 'Partially Correct' : 'Incorrect';
+                const verdictClass = ratio >= 0.85 ? 'text-emerald-600' : ratio >= 0.45 ? 'text-amber-600' : 'text-rose-600';
+                return (
+                  <div key={row.id} className="rounded-md border border-border/50 bg-background p-2">
+                    <div className="flex items-center justify-between">
+                      <span>{row.student_name || 'Student'}</span>
+                      <span className={verdictClass}>{verdict}</span>
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-muted-foreground">{String(row.answer_data?.text || row.answer_data?.answer || '')}</p>
+                  </div>
+                );
+              })}
+              {openAnswerRows.filter((row) => row.block_id === block.id).length === 0 && (
+                <div className="text-muted-foreground">No graded answers yet.</div>
+              )}
+            </div>
+          )}
+          {expandedOwnAnswerBlockId === block.id && (
+            <div className="mt-2 rounded-lg border border-border/70 bg-[hsl(var(--surface-1))] p-2 text-xs text-muted-foreground">
+              {(() => {
+                const own = ownAnswers.find((item) => item.block_id === block.id);
+                if (!own) return 'No submitted answer yet.';
+                const answerText = String(own.answer_data?.text || own.answer_data?.answer || own.answer_data?.value || '');
+                const scoreText = own.score === null ? '' : ` • Score: ${own.score}`;
+                return `${answerText || 'Answer recorded'}${scoreText}`;
+              })()}
+            </div>
+          )}
+        </div>
+      );
+    };
 
     switch (block.type) {
       case 'text':
@@ -1151,6 +1285,7 @@ export function AssignmentEditor({
       case 'open_question':
         return (
           <div className="space-y-2">
+            <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Question</Label>
             <Input
               value={block.data.question}
               onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
@@ -1161,6 +1296,7 @@ export function AssignmentEditor({
               disabled={!canEditBlock}
               autoFocus={canEditBlock && selectedBlock === block.id}
             />
+            <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Correct / Model Answer</Label>
             <Textarea
               value={block.data.correct_answer || ''}
               onChange={(e) => updateBlock(block.id, { ...block.data, correct_answer: e.target.value })}
@@ -1173,6 +1309,7 @@ export function AssignmentEditor({
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">({block.data.max_score} pts)</span>
             </div>
+            {renderReadOnlyActions()}
           </div>
         );
 
@@ -1425,16 +1562,6 @@ export function AssignmentEditor({
         
         <div className="flex items-center gap-2">
           {isSaving && <span className="text-xs text-muted-foreground animate-pulse">{t.saving}</span>}
-          {isTeacher && (
-            <Button
-              variant={isStudentPreview ? 'default' : 'outline'}
-              size="sm"
-              className="h-8 rounded-md px-3 text-sm bg-muted/50"
-              onClick={() => setIsStudentPreview((prev) => !prev)}
-            >
-              {isStudentPreview ? t.exitStudentView : t.studentView}
-            </Button>
-          )}
         </div>
       </div>
 
@@ -1466,7 +1593,7 @@ export function AssignmentEditor({
                     )}
                     
                     {/* Row */}
-                      <div className="flex gap-2.5">
+                      <div className="flex gap-2.5" data-assignment-row-index={rowIndex}>
                       {row.blocks[0]?.width === 'full' ? (
                         // Full width block
                         <div className="flex-1 relative group">
@@ -1640,8 +1767,12 @@ export function AssignmentEditor({
                                     {renderBlockContent(block)}
                                   </div>
                                 ) : (
-                                  <div className="h-full border border-dashed border-border rounded-lg flex items-center justify-center text-xs text-muted-foreground bg-background">
-                                    Drop Here
+                                  <div className="h-full rounded-lg border border-border bg-[hsl(var(--surface-1))] p-2">
+                                    <div className="rounded-md border border-border/70 bg-background p-2">
+                                      <div className="mb-1.5 h-2.5 w-24 rounded bg-muted" />
+                                      <div className="h-2 w-full rounded bg-muted/80" />
+                                      <div className="mt-1 h-2 w-4/5 rounded bg-muted/70" />
+                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -1664,8 +1795,19 @@ export function AssignmentEditor({
             
             {/* Empty drop zone at bottom */}
             {isDragging && rows.length > 0 && (
-              <div className="h-16 mt-4 border-2 border-dashed border-border rounded-lg flex items-center justify-center text-sm text-muted-foreground bg-background">
-                Drop Here For New Row
+              <div className="mt-4 rounded-xl border border-border bg-[hsl(var(--surface-1))] p-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg border border-border/80 bg-background p-2">
+                    <div className="mb-1.5 h-2.5 w-20 rounded bg-muted" />
+                    <div className="h-2 w-full rounded bg-muted/80" />
+                    <div className="mt-1 h-2 w-3/5 rounded bg-muted/70" />
+                  </div>
+                  <div className="rounded-lg border border-border/80 bg-background p-2">
+                    <div className="mb-1.5 h-2.5 w-28 rounded bg-muted" />
+                    <div className="h-2 w-full rounded bg-muted/80" />
+                    <div className="mt-1 h-2 w-2/3 rounded bg-muted/70" />
+                  </div>
+                </div>
               </div>
             )}
           </div>

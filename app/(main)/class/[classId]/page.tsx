@@ -36,6 +36,9 @@ const ClassAnalyticsDashboard = dynamic(
 const ClassSettings = dynamic(
   () => import('@/components/dashboard/teacher/class-settings').then((m) => m.ClassSettings)
 );
+const ShareTab = dynamic(
+  () => import('@/components/class/share-tab').then((m) => m.ShareTab)
+);
 
 // Cache for tab data - persists across tab switches
 const tabDataCache: Record<string, { data: any; timestamp: number }> = {};
@@ -340,6 +343,8 @@ export default function ClassDetailsPage() {
             parentLoading={!!loadingTabs['schedule']}
           />
         ) : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
+      case 'share':
+        return <ShareTab classId={classId} isTeacher={isTeacher} />;
       case 'grades':
         return isTeacher ? <GradesTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'analytics':

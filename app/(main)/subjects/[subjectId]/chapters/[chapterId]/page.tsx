@@ -137,7 +137,7 @@ export default function ChapterOverviewPage() {
               key={paragraph.id}
               href={`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraph.id}`}
               onClick={() => handleParagraphClick(paragraph.id, paragraph.paragraph_number, paragraph.title)}
-              className="flex items-center justify-between rounded-xl border border-sidebar-border/70 bg-sidebar-accent/25 px-3 py-3 transition-colors hover:bg-sidebar-accent/45"
+            className="flex items-center justify-between rounded-xl border border-transparent bg-sidebar-accent/25 px-3 py-3 transition-colors hover:bg-sidebar-accent/45"
             >
               <div className="flex items-center gap-3">
                 <span className="w-14 text-sm text-sidebar-foreground tabular-nums">

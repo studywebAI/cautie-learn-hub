@@ -296,7 +296,7 @@ export default function SubjectDetailPage() {
       {lastActivity && (
         <Link prefetch={false}
           href={`/subjects/${subjectId}/chapters/${lastActivity.chapterId}/paragraphs/${lastActivity.paragraphId}`}
-          className="mb-4 block rounded-xl border border-sidebar-border/70 bg-sidebar-accent/40 p-3 transition-colors hover:bg-sidebar-accent/65"
+          className="mb-4 block rounded-xl border border-transparent bg-sidebar-accent/42 p-3 transition-colors hover:bg-sidebar-accent/62"
         >
           <p className="text-sm">
             <span className="text-muted-foreground">Last active in </span>
@@ -325,12 +325,12 @@ export default function SubjectDetailPage() {
                 }}
                 size="sm"
                 variant="outline"
-                className="border-sidebar-border/80 bg-sidebar-accent/35 hover:bg-sidebar-accent/55"
+                className="border-transparent bg-sidebar-accent/45 hover:bg-sidebar-accent/62"
               >
                 + Add Paragraph
               </Button>
             )}
-            <Button onClick={() => setIsCreateChapterOpen(true)} size="sm" variant="outline" className="border-sidebar-border/80 bg-sidebar-accent/35 hover:bg-sidebar-accent/55">
+            <Button onClick={() => setIsCreateChapterOpen(true)} size="sm" variant="outline" className="border-transparent bg-sidebar-accent/45 hover:bg-sidebar-accent/62">
               + Add Chapter
             </Button>
           </div>
@@ -358,7 +358,7 @@ export default function SubjectDetailPage() {
             const remainingCount = allParagraphs.length - maxVisible;
 
             return (
-              <div key={chapter.id} className="overflow-hidden rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/12">
+              <div key={chapter.id} className="overflow-hidden rounded-2xl border border-transparent bg-sidebar-accent/12">
                 <div className="flex min-h-[108px] items-stretch">
                   <Link prefetch={false}
                     href={`/subjects/${subjectId}/chapters/${chapter.id}`}
@@ -404,7 +404,7 @@ export default function SubjectDetailPage() {
                           key={paragraph.id}
                           href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
                           onClick={() => handleParagraphClick(chapter, paragraph)}
-                          className="mx-2 mb-2 flex items-center gap-3 rounded-xl border border-sidebar-border/60 bg-sidebar-accent/20 px-4 py-3 transition-colors hover:bg-sidebar-accent/35"
+                          className="mx-2 mb-2 flex items-center gap-3 rounded-xl border border-transparent bg-sidebar-accent/20 px-4 py-3 transition-colors hover:bg-sidebar-accent/35"
                         >
                           <span className="w-14 text-xs text-sidebar-foreground tabular-nums">
                             {chapter.chapter_number}.{paragraph.paragraph_number}

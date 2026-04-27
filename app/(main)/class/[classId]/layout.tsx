@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useContext } from 'react';
 import { cn } from '@/lib/utils';
 import {
-  UsersRound, Settings2, UserCheck, UserRoundPlus, ChartColumnIncreasing, ClipboardCheck, History, CalendarRange
+  UsersRound, Settings2, UserCheck, UserRoundPlus, ChartColumnIncreasing, ClipboardCheck, History, CalendarRange, Share2
 } from 'lucide-react';
 import Link from 'next/link';
 import { AppContext } from '@/contexts/app-context';
@@ -20,6 +20,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const tabDefinitions = {
     invite: { label: isDutch ? 'Uitnodigen' : 'Invite', icon: UserRoundPlus, href: '?tab=invite' },
     group: { label: isDutch ? 'Groep' : 'Group', icon: UsersRound, href: '?tab=group' },
+    share: { label: isDutch ? 'Delen' : 'Share', icon: Share2, href: '?tab=share' },
     schedule: { label: isDutch ? 'Rooster' : 'Schedule', icon: CalendarRange, href: '?tab=schedule' },
     attendance: { label: isDutch ? 'Aanwezigheid' : 'Attendance', icon: UserCheck, href: '?tab=attendance' },
     grades: { label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardCheck, href: '?tab=grades' },

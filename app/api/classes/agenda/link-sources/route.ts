@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
         .limit(60),
       (supabase as any)
         .from('assignments')
-        .select('id, title, class_id, scheduled_start_at, due_date, created_at')
+        .select('id, title, class_id, paragraph_id, scheduled_start_at, due_date, created_at')
         .in('class_id', allowedClassIds.length > 0 ? allowedClassIds : ['00000000-0000-0000-0000-000000000000'])
         .order('created_at', { ascending: false })
         .limit(80),
@@ -65,6 +65,24 @@ export async function GET(req: NextRequest) {
         .order('updated_at', { ascending: false })
         .limit(40),
     ])
+
+    const assignmentsData = (assignmentsResult.data || []) as any[];
+    const paragraphIds = Array.from(new Set(assignmentsData.map((a: any) => a.paragraph_id).filter(Boolean)));
+    const { data: paragraphs } = paragraphIds.length > 0
+      ? await (supabase as any)
+          .from('paragraphs')
+          .select('id, chapter_id')
+          .in('id', paragraphIds)
+      : { data: [] as any[] };
+    const chapterIds = Array.from(new Set((paragraphs || []).map((p: any) => p.chapter_id).filter(Boolean)));
+    const { data: chapters } = chapterIds.length > 0
+      ? await (supabase as any)
+          .from('chapters')
+          .select('id, subject_id')
+          .in('id', chapterIds)
+      : { data: [] as any[] };
+    const paragraphById = new Map((paragraphs || []).map((p: any) => [p.id, p]));
+    const chapterById = new Map((chapters || []).map((c: any) => [c.id, c]));
 
     const items = [
       ...((toolRunsResult.data || []) as any[]).map((run: any) => ({
@@ -87,19 +105,28 @@ export async function GET(req: NextRequest) {
         sort_at: material.updated_at,
         metadata_json: { class_id: material.class_id, type: material.type || null },
       })),
-      ...((assignmentsResult.data || []) as any[]).map((assignment: any) => ({
-        id: `assignment:${assignment.id}`,
-        link_type: 'assignment',
-        link_ref_id: assignment.id,
-        label: assignment.title || 'Assignment',
-        subtitle: 'Assignment',
-        sort_at: assignment.scheduled_start_at || assignment.due_date || assignment.created_at,
-        metadata_json: {
-          class_id: assignment.class_id,
-          scheduled_start_at: assignment.scheduled_start_at || null,
-          due_date: assignment.due_date || null,
-        },
-      })),
+      ...assignmentsData.map((assignment: any) => {
+        const paragraph = paragraphById.get(assignment.paragraph_id);
+        const chapter = paragraph ? chapterById.get(paragraph.chapter_id) : null;
+        const href = paragraph && chapter
+          ? `/subjects/${chapter.subject_id}/chapters/${paragraph.chapter_id}/paragraphs/${paragraph.id}/assignments/${assignment.id}`
+          : null;
+        return {
+          id: `assignment:${assignment.id}`,
+          link_type: 'assignment',
+          link_ref_id: assignment.id,
+          label: assignment.title || 'Assignment',
+          subtitle: 'Assignment',
+          sort_at: assignment.scheduled_start_at || assignment.due_date || assignment.created_at,
+          metadata_json: {
+            class_id: assignment.class_id,
+            paragraph_id: assignment.paragraph_id || null,
+            scheduled_start_at: assignment.scheduled_start_at || null,
+            due_date: assignment.due_date || null,
+            href,
+          },
+        };
+      }),
       ...((studysetsResult.data || []) as any[]).map((studyset: any) => ({
         id: `studyset:${studyset.id}`,
         link_type: 'studyset',

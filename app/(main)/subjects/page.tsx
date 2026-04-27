@@ -54,7 +54,7 @@ function SubjectsPageContent() {
     return (
       <div className="h-full px-2 py-3 md:px-3 md:py-4">
         <div className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/40 p-8 text-[13px] text-sidebar-foreground">
-          No active class selected. Select or create a class first.
+          No Active Class Selected. Select or create a class first.
         </div>
       </div>
     );

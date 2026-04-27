@@ -96,7 +96,7 @@ export function SidebarProfile() {
         <Button
           variant="outline"
           size="sm"
-          className="w-full h-9 justify-start rounded-lg border-sidebar-border/70 bg-sidebar-accent/35 text-xs hover:bg-sidebar-accent/55"
+          className="w-full h-9 justify-start rounded-lg border-transparent bg-sidebar-accent/55 text-xs hover:bg-sidebar-accent/75"
           asChild
         >
           <Link href="/login">
@@ -181,7 +181,7 @@ export function SidebarProfile() {
       <Button
         variant="outline"
         size="sm"
-        className="w-full h-9 justify-start rounded-lg border-sidebar-border/70 bg-sidebar-accent/35 text-xs hover:bg-sidebar-accent/55"
+        className="w-full h-9 justify-start rounded-lg border-transparent bg-sidebar-accent/55 text-xs hover:bg-sidebar-accent/75"
         asChild
       >
         <Link href="/upgrade">
@@ -193,7 +193,7 @@ export function SidebarProfile() {
       {/* Username dropdown - ChatGPT style */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex w-full items-center gap-2 rounded-lg border border-sidebar-border/60 bg-sidebar-accent/28 px-2.5 py-1.5 text-left transition-colors group hover:bg-sidebar-accent/45">
+          <button className="flex w-full items-center gap-2 rounded-lg border border-transparent bg-sidebar-accent/42 px-2.5 py-1.5 text-left transition-colors group hover:bg-sidebar-accent/62">
             <div className="flex-1 min-w-0">
               <p className="truncate text-sm">{profileName}</p>
               <p className="text-[11px] text-muted-foreground leading-tight">{tierLabel}</p>

@@ -462,7 +462,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                           <Link
                             prefetch={false}
                             href={`/class/${classId}?tab=logs&student_id=${student.id}&category=events`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-accent/35 hover:bg-sidebar-accent/60"
                             onClick={(e) => e.stopPropagation()}
                             title={isDutch ? 'Bekijk tijdlijn' : 'View timeline'}
                           >
@@ -471,7 +471,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                           <Link
                             prefetch={false}
                             href={`/class/${classId}?tab=attendance&studentId=${student.id}`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-accent/35 hover:bg-sidebar-accent/60"
                             onClick={(e) => e.stopPropagation()}
                             title={t.attendance}
                           >
@@ -480,7 +480,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                           <Link
                             prefetch={false}
                             href={`/class/${classId}?tab=attendance&studentId=${student.id}&quick=event`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-accent/35 hover:bg-sidebar-accent/60"
                             onClick={(e) => e.stopPropagation()}
                             title={isDutch ? 'Aangepast event toevoegen' : 'Add custom event'}
                           >
@@ -488,7 +488,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                           </Link>
                           <button
                             type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-background/70"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-accent/35 hover:bg-sidebar-accent/60"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedStudent(student);

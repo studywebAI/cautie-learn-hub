@@ -798,11 +798,18 @@ export default function ParagraphDetailPage() {
                         </div>
                         <span className="rounded-full bg-muted px-2 py-0.5 text-[10px]">{preset.estimatedTimeMin} min</span>
                       </div>
-                      <div className="mt-3 rounded-lg border border-dashed border-border/80 bg-muted/20 p-2">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Layout Preview</p>
-                        <div className="mt-1.5 space-y-1.5">
-                          {preset.blockMix.slice(0, 3).map((block) => (
-                            <div key={`${preset.id}-preview-${block.type}`} className="h-2.5 rounded bg-muted-foreground/20" style={{ width: `${Math.max(45, 94 - block.count * 9)}%` }} />
+                      <div className="mt-3 rounded-lg border border-border/70 bg-background p-3">
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Actual Layout Preview</p>
+                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                          {preset.blockMix.slice(0, 4).map((block, idx) => (
+                            <div key={`${preset.id}-preview-${block.type}`} className="rounded-md border border-border/70 bg-[hsl(var(--surface-1))] p-2">
+                              <p className="text-[10px] font-medium capitalize">{block.type.replace(/_/g, ' ')}</p>
+                              <div className="mt-1.5 space-y-1">
+                                <div className="h-2 w-full rounded bg-muted" />
+                                <div className="h-2 rounded bg-muted/80" style={{ width: `${70 - (idx % 3) * 10}%` }} />
+                                <div className="h-2 rounded bg-muted/70" style={{ width: `${52 + (idx % 2) * 18}%` }} />
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>

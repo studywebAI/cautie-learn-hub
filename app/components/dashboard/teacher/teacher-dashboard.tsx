@@ -284,7 +284,7 @@ export function TeacherDashboard() {
                           </span>
                         </div>
                         <div className="text-right">
-                          <Button asChild size="sm" variant="ghost" className="h-8">
+                          <Button asChild size="sm" variant="outline" className="h-8 bg-sidebar-accent/35 hover:bg-sidebar-accent/60">
                         <Link prefetch={false} href={`/class/${classInfo.id}?tab=group`}>
                               Open
                               <ArrowUpRight className="ml-1 h-3.5 w-3.5" />

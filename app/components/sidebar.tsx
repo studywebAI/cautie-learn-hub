@@ -99,8 +99,8 @@ export function AppSidebar() {
     manage: isDutch ? 'Beheer' : 'Manage',
     studyset: isDutch ? 'Studieset' : 'Studyset',
     materials: isDutch ? 'Materialen' : 'Materials',
-    untitledClass: isDutch ? 'Naamloze klas' : 'Untitled class',
-    untitledSubject: isDutch ? 'Naamloos vak' : 'Untitled subject',
+    untitledClass: isDutch ? 'Naamloze Klas' : 'Untitled Class',
+    untitledSubject: isDutch ? 'Naamloos Vak' : 'Untitled Subject',
     classesLoadError: isDutch ? 'Kon klassen niet laden' : 'Could not load classes',
     subjectsLoadError: isDutch ? 'Kon vakken niet laden' : 'Could not load subjects',
     classCreated: isDutch ? 'Klas aangemaakt' : 'Class created',
@@ -108,13 +108,13 @@ export function AppSidebar() {
     createSubjectError: isDutch ? 'Kon vak niet aanmaken' : 'Could not create subject',
     joinClassError: isDutch ? 'Kon niet deelnemen aan klas' : 'Could not join class',
     tryAgain: isDutch ? 'Probeer opnieuw.' : 'Try again.',
-    sectionMain: isDutch ? 'hoofd' : 'main',
-    sectionTools: isDutch ? 'tools' : 'tools',
-    sectionOther: isDutch ? 'overig' : 'other',
-    sectionRecents: isDutch ? 'recent' : 'recents',
+    sectionMain: isDutch ? 'Hoofd' : 'Main',
+    sectionTools: isDutch ? 'Tools' : 'Tools',
+    sectionOther: isDutch ? 'Overig' : 'Other',
+    sectionRecents: isDutch ? 'Recent' : 'Recents',
     upgrade: isDutch ? 'Upgraden' : 'Upgrade',
     selectDifferentClass: isDutch ? 'Selecteer Andere Klas' : 'Select Different Class',
-    joinClass: isDutch ? 'Deelnemen klas' : 'Join class',
+    joinClass: isDutch ? 'Deelnemen Klas' : 'Join Class',
     createNewClass: isDutch ? 'Nieuwe klas maken' : 'Create New Class',
     joinClassAsTeacher: isDutch ? 'Deelnemen als docent' : 'Join Class as Teacher',
     createClassSubtitle: isDutch
@@ -124,14 +124,14 @@ export function AppSidebar() {
       ? 'Neem deel met een code en koppel je vak in deze klas.'
       : 'Join an existing class using a code and define your subject in that class.',
     close: isDutch ? 'Sluiten' : 'Close',
-    className: isDutch ? 'Klasnaam' : 'Class name',
+    className: isDutch ? 'Klasnaam' : 'Class Name',
     classDescriptionOptional: isDutch ? 'Beschrijving (optioneel)' : 'Description (optional)',
     firstSubject: isDutch ? 'Eerste vak' : 'First subject',
     cancel: isDutch ? 'Annuleren' : 'Cancel',
     creatingClass: isDutch ? 'Klas maken...' : 'Creating class...',
     createClass: isDutch ? 'Klas maken' : 'Create Class',
-    joinCode: isDutch ? 'Deelnamecode' : 'Join code',
-    yourSubject: isDutch ? 'Jouw vak' : 'Your subject',
+    joinCode: isDutch ? 'Deelnamecode' : 'Join Code',
+    yourSubject: isDutch ? 'Jouw Vak' : 'Your Subject',
     joining: isDutch ? 'Bezig met deelnemen...' : 'Joining...',
   };
   const isRailCollapsed = !isPhone && sidebarState === 'collapsed';
@@ -632,7 +632,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[12px] text-sidebar-foreground hover:bg-sidebar-accent/90"
+                className="h-8 rounded-xl border-transparent bg-sidebar-accent/55 px-3 text-[12px] text-sidebar-foreground hover:bg-sidebar-accent/75"
                 onClick={() => {
                   setNewClassMenuOpen(false);
                   setCreateClassOpen(false);
@@ -647,7 +647,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                  className="h-8 text-[12px] rounded-lg border-sidebar-border/80 bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-accent/90"
+                  className="h-8 text-[12px] rounded-lg border-transparent bg-sidebar-accent/55 text-sidebar-foreground hover:bg-sidebar-accent/75"
                 onClick={() => {
                   setJoinClassOpen((v) => !v);
                   setCreateClassOpen(false);
@@ -660,7 +660,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                  className="h-8 text-[12px] rounded-lg border-sidebar-border/80 bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-accent/90"
+                  className="h-8 text-[12px] rounded-lg border-transparent bg-sidebar-accent/55 text-sidebar-foreground hover:bg-sidebar-accent/75"
                 onClick={() => setCreateSubjectOpen((v) => !v)}
               >
                 + {isDutch ? 'Vak maken' : 'Create subject'}
@@ -669,11 +669,11 @@ export function AppSidebar() {
           </div>
 
           {createSubjectOpen && (
-            <div className="mb-1 space-y-1 rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
+            <div className="mb-1 space-y-1 rounded-xl bg-[hsl(var(--surface-2))] p-2">
               <select
                 value={selectedSubjectClassId}
                 onChange={(e) => setSelectedSubjectClassId(e.target.value)}
-                className="h-8 w-full rounded border border-border bg-background px-2 text-sm"
+                className="h-8 w-full rounded border border-border/30 bg-background px-2 text-sm"
               >
                 <option value="">{isDutch ? 'Selecteer klas' : 'Select class'}</option>
                 {classDropdownItems.map((classItem) => (
@@ -702,7 +702,7 @@ export function AppSidebar() {
           )}
 
           {dropdown.kind === 'classes' && isTeacher && newClassMenuOpen && !createClassOpen && !joinClassOpen && (
-            <div className="mb-1 space-y-1 rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-2">
+            <div className="mb-1 space-y-1 rounded-xl bg-[hsl(var(--surface-2))] p-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -802,7 +802,7 @@ export function AppSidebar() {
               setOpenMobile(false);
             }}
             disabled={classDropdownItems.length === 0}
-            className="h-8 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-3 text-[12px] text-sidebar-foreground transition-colors hover:bg-[hsl(var(--surface-2))] disabled:opacity-60"
+            className="h-8 w-full rounded-xl border-transparent bg-sidebar-accent/45 px-3 text-[12px] text-sidebar-foreground transition-colors hover:bg-sidebar-accent/62 disabled:opacity-60"
           >
             {classDropdownItems.length === 0 ? (
               <option value="">{isDutch ? 'Geen klassen' : 'No classes'}</option>
@@ -827,7 +827,7 @@ export function AppSidebar() {
         <Button
           size="sm"
           variant="outline"
-          className="mb-1 h-7 w-full justify-start rounded-xl border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-2.5 text-[11px] font-normal text-sidebar-foreground hover:bg-[hsl(var(--surface-2))]"
+          className="mb-1 h-7 w-full justify-start rounded-xl border-transparent bg-sidebar-accent/45 px-2.5 text-[11px] font-normal text-sidebar-foreground hover:bg-sidebar-accent/62"
           onClick={(event) => {
             openDropdownFor('classes', event.currentTarget);
             setNewClassMenuOpen(false);
@@ -848,7 +848,7 @@ export function AppSidebar() {
             openDropdownFor('classes', event.currentTarget);
           }}
           disabled={classDropdownItems.length === 0}
-          className="h-7 w-full rounded-xl border border-sidebar-border/80 bg-[hsl(var(--surface-1))] px-2.5 text-left text-[11px] text-sidebar-foreground transition-colors hover:bg-[hsl(var(--surface-2))] disabled:opacity-60"
+          className="h-7 w-full rounded-xl border-transparent bg-sidebar-accent/45 px-2.5 text-left text-[11px] text-sidebar-foreground transition-colors hover:bg-sidebar-accent/62 disabled:opacity-60"
         >
           <span className="flex items-center justify-between gap-2">
               <span className="truncate">

@@ -21,6 +21,7 @@ type Assignment = {
   id: string;
   title: string;
   assignment_index: number;
+  class_id?: string | null;
   answers_enabled: boolean;
   is_visible?: boolean | null;
   answer_mode?: 'view_only' | 'editable' | 'self_grade' | null;
@@ -167,6 +168,7 @@ export default function AssignmentDetailPage() {
         subjectId={subjectId}
         chapterId={chapterId}
         paragraphId={paragraphId}
+        classId={assignment.class_id || null}
         initialBlocks={blocks as any}
         answersEnabled={Boolean(assignment.answers_enabled)}
         isVisible={assignment.is_visible !== false}
