@@ -1492,7 +1492,7 @@ export function AssignmentEditor({
       style={{ touchAction: isDragging ? 'none' : 'auto' }}
     >
       {/* Top toolbar */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border bg-background">
+      <div className="flex items-center justify-between p-3 border-b border-border bg-background">
         <div className="flex items-center gap-1.5">
           <Button variant="outline" size="sm" onClick={() => router.back()} className="h-8 px-2.5 rounded-md bg-muted/50 gap-1.5">
             <ArrowLeft className="h-4 w-4" />

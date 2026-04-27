@@ -1173,7 +1173,7 @@ function PresentationPageContent() {
 
   return (
     <WorkbenchShell title="Presentation" sidebar={sidebar} hideSidebar>
-      <div className="relative mx-auto flex h-full w-full max-w-[1280px] flex-col gap-5 px-2 pb-6 pt-2 md:px-4 lg:px-6">
+      <div className="relative mx-auto flex h-full w-full max-w-[1280px] flex-col gap-5 p-2 md:p-4 lg:p-6">
         <input
           ref={uploadInputRef}
           type="file"

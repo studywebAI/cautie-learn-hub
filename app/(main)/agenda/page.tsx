@@ -633,7 +633,7 @@ function AgendaPageContent() {
   }
 
   return (
-    <div className="agenda-clean h-full pt-4 pl-4 pr-2 pb-2 md:pt-5 md:pl-5 md:pr-2.5 md:pb-2.5">
+    <div className="agenda-clean h-full p-4 md:p-5">
       <div className="flex h-full flex-col gap-6">
         <div className="rounded-2xl bg-[hsl(var(--surface-1))] p-2.5 md:p-3">
           <div className="flex flex-wrap items-center justify-between gap-2.5">
