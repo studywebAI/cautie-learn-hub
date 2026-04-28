@@ -192,7 +192,30 @@ export function RecentsSidebar() {
     }
   };
 
-  if (isCollapsed) return null;
+  if (isCollapsed) {
+    const compactItems = recents.slice(0, 4);
+    if (isLoading || compactItems.length === 0) return null;
+    return (
+      <div className="px-1">
+        <div className="flex flex-col items-center gap-1">
+          {compactItems.map((item) => {
+            const Icon = TYPE_ICONS[item.type] || FileSignature;
+            return (
+              <button
+                key={`${item.source}-${item.id}`}
+                type="button"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/80 hover:bg-sidebar-accent/55 hover:text-foreground"
+                title={item.title}
+                onClick={() => handleClick(item)}
+              >
+                <Icon className="h-3.5 w-3.5" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   const visibleRecents = activeTab === 'studysets'
     ? recents.filter((item) => item.source === 'studyset')

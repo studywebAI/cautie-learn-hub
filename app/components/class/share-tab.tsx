@@ -41,7 +41,6 @@ const resolveSourceHref = (post: SharePost): string | null => {
 
 export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: boolean }) {
   const [audienceFilter, setAudienceFilter] = useState<ShareAudience>(isTeacher ? 'teacher' : 'all');
-  const [composerAudience, setComposerAudience] = useState<ShareAudience>('teacher');
   const [text, setText] = useState('');
   const [attachmentLabel, setAttachmentLabel] = useState('');
   const [postKind, setPostKind] = useState<PostKind>('chat');
@@ -99,7 +98,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
         body: JSON.stringify({
           text: trimmed || `${postKind === 'chat' ? 'Class message' : postKind[0].toUpperCase() + postKind.slice(1)} shared`,
           attachmentLabel: attachmentLabel.trim() || `${postKind[0].toUpperCase() + postKind.slice(1)} item`,
-          audience: composerAudience,
+          audience: audienceFilter,
           source: sources.find((item) => item.id === selectedSourceId) || null,
         }),
       });
@@ -108,23 +107,15 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
       setText('');
       setAttachmentLabel('');
       setSelectedSourceId('');
-      if (composerAudience === audienceFilter) {
-        setPosts((prev) => [data, ...prev]);
-      }
+      setPosts((prev) => [data, ...prev]);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl bg-[hsl(var(--surface-1))] p-4">
-        <h3 className="text-base font-medium">Class Share</h3>
-        <p className="mt-1 text-sm text-foreground/70">
-          Share updates, files, materials, and linked class resources in one place.
-        </p>
-      </div>
-      <div className="flex items-center gap-2 rounded-xl bg-[hsl(var(--surface-1))] p-2">
+    <div className="class-shell">
+      <div className="flex items-center gap-2">
         <Button size="sm" variant={audienceFilter === 'teacher' ? 'default' : 'outline'} onClick={() => setAudienceFilter('teacher')} className="h-8">
           Teacher
         </Button>
@@ -134,19 +125,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
       </div>
 
       {isTeacher && (
-        <div className="space-y-3 rounded-xl bg-[hsl(var(--surface-1))] p-4">
-          <div>
-            <p className="text-sm font-medium">Create Share Post</p>
-            <p className="text-xs text-foreground/65">Choose audience, choose post type, then publish.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant={composerAudience === 'teacher' ? 'default' : 'outline'} onClick={() => setComposerAudience('teacher')} className="h-8">
-              Post to Teacher
-            </Button>
-            <Button size="sm" variant={composerAudience === 'all' ? 'default' : 'outline'} onClick={() => setComposerAudience('all')} className="h-8">
-              Post to All
-            </Button>
-          </div>
+        <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" variant={postKind === 'chat' ? 'default' : 'outline'} className="h-8" onClick={() => setPostKind('chat')}><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Chat</Button>
             <Button size="sm" variant={postKind === 'picture' ? 'default' : 'outline'} className="h-8" onClick={() => setPostKind('picture')}><ImageIcon className="mr-1.5 h-3.5 w-3.5" />Picture</Button>
@@ -163,30 +142,28 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
                   : 'Add context for this material...'}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="min-h-[90px] bg-background"
+            className="min-h-[140px] bg-[hsl(var(--surface-1))]"
           />
           <Input
-            placeholder={postKind === 'chat'
-              ? 'Optional label (example: Weekly update)'
-              : 'Attachment label (example: Chapter 2 assignment)'}
+            placeholder="Title (optional)"
             value={attachmentLabel}
             onChange={(e) => setAttachmentLabel(e.target.value)}
-            className="h-9 bg-background"
+            className="h-9 bg-[hsl(var(--surface-1))]"
           />
-          <select
-            value={selectedSourceId}
-            onChange={(e) => setSelectedSourceId(e.target.value)}
-            className="h-9 w-full rounded-md border border-border/70 bg-background px-3 text-sm"
-          >
-            <option value="">Link class resource (optional)</option>
-            {sources.map((source) => (
-              <option key={source.id} value={source.id}>
-                {source.label} ({source.subtitle})
-              </option>
-            ))}
-          </select>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" onClick={() => void createPost()} className="ml-auto h-8" disabled={isSubmitting}>
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedSourceId}
+              onChange={(e) => setSelectedSourceId(e.target.value)}
+              className="h-9 flex-1 rounded-md border border-border/70 bg-[hsl(var(--surface-1))] px-3 text-sm"
+            >
+              <option value="">Link class resource</option>
+              {sources.map((source) => (
+                <option key={source.id} value={source.id}>
+                  {source.label} ({source.subtitle})
+                </option>
+              ))}
+            </select>
+            <Button size="sm" onClick={() => void createPost()} className="h-9" disabled={isSubmitting}>
               {isSubmitting ? 'Sharing...' : 'Share'}
             </Button>
           </div>
@@ -195,13 +172,8 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
 
       <div className="space-y-2">
         {isLoading && <div className="text-xs text-foreground/70">Loading shared posts...</div>}
-        {!isLoading && visiblePosts.length === 0 && (
-          <div className="rounded-xl bg-[hsl(var(--surface-1))] p-4 text-sm text-foreground/70">
-            No posts yet for this view.
-          </div>
-        )}
         {visiblePosts.map((post) => (
-          <article key={post.id} className="rounded-xl bg-[hsl(var(--surface-1))] p-4">
+          <article key={post.id} className="border-b border-border/70 py-3">
             <div className="mb-1 flex items-center justify-between text-xs text-foreground/65">
               <span>{post.audience === 'teacher' ? 'Teacher' : 'All'}</span>
               <span>{new Date(post.createdAt).toLocaleString()}</span>
@@ -232,3 +204,4 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
     </div>
   );
 }
+

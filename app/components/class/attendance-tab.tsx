@@ -1,9 +1,8 @@
-﻿'use client';
+'use client';
 
-import { useState, useEffect, useContext, useMemo } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +11,6 @@ import { CheckCheck, XCircle, MessageSquareText, Clock3, NotebookPen, History, U
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { ToastAction } from '@/components/ui/toast';
 import { DEFAULT_CLASS_PREFERENCES, normalizeClassPreferences } from '@/lib/class-preferences';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
@@ -56,11 +54,6 @@ type PendingAction = {
   logCustomEvent?: boolean;
 };
 
-type PendingActionWithPatch = {
-  action: PendingAction;
-  optimisticPatch: Partial<StudentAttendance>;
-};
-
 export function AttendanceTab({ classId, cachedData = null, parentLoading = false }: AttendanceTabProps) {
   const appContext = useContext(AppContext) as AppContextType | null;
   const isDutch = appContext?.language === 'nl';
@@ -73,14 +66,10 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
   const [timelineStudentId, setTimelineStudentId] = useState<string | null>(null);
   const [isCustomEventDialogOpen, setIsCustomEventDialogOpen] = useState(false);
   const [customEventText, setCustomEventText] = useState('');
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<PendingActionWithPatch | null>(null);
   const [preferences, setPreferences] = useState(DEFAULT_CLASS_PREFERENCES);
   const [logCustomEvent, setLogCustomEvent] = useState(true);
   const [processingStudentIds, setProcessingStudentIds] = useState<Set<string>>(new Set());
   const [bulkSaving, setBulkSaving] = useState(false);
-  const [provisionalMode, setProvisionalMode] = useState(false);
-  const [stagedActions, setStagedActions] = useState<Record<string, PendingAction>>({});
   const { toast } = useToast();
   const selectedStudentId = searchParams?.get('studentId') || '';
   const quickAction = searchParams?.get('quick') || '';
@@ -101,10 +90,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
     showingOneStudent: isDutch ? 'Toont een leerling vanuit Groep.' : 'Showing one student from Group tab.',
     showAll: isDutch ? 'Toon alles' : 'Show all',
     noStudentsYet: isDutch ? 'Nog geen leerlingen in deze klas.' : 'No students in this class yet.',
-    confirmTitle: isDutch ? 'Bevestig aanwezigheidswijziging' : 'Confirm attendance change',
-    confirmDescription: isDutch ? 'Weet je zeker dat je deze wijziging wilt toepassen?' : 'Are you sure you want to apply this attendance update?',
     cancel: isDutch ? 'Annuleren' : 'Cancel',
-    confirm: isDutch ? 'Bevestigen' : 'Confirm',
     customEventFor: isDutch ? 'Aangepast event voor' : 'Custom event for',
     customEventDescription: isDutch ? 'Voeg een aangepast bericht toe voor dit event.' : 'Add a custom message for this student event.',
     saveEvent: isDutch ? 'Event opslaan' : 'Save event',
@@ -114,11 +100,6 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
     reasonMaterialMissing: isDutch ? 'Materiaal vergeten' : 'Forgot materials',
     reasonBehavior: isDutch ? 'Klasgedrag besproken' : 'Behavior discussed',
     reasonParentContact: isDutch ? 'Oudercontact gepland' : 'Parent contact planned',
-    provisionalMode: isDutch ? 'Voorlopige modus' : 'Provisional mode',
-    provisionalModeHint: isDutch ? 'Wijzigingen opslaan als concept. Publiceer later in bulk.' : 'Stage attendance changes, then publish in bulk.',
-    applyStaged: isDutch ? 'Publiceer conceptwijzigingen' : 'Apply staged changes',
-    discardStaged: isDutch ? 'Verwijder concept' : 'Discard staged',
-    stagedCount: isDutch ? 'concept' : 'staged',
     undo: isDutch ? 'Ongedaan maken' : 'Undo',
     timeline: isDutch ? 'tijdlijn' : 'timeline',
     timelineDescription: isDutch ? 'Recente aanwezigheid en events met docent en datum.' : 'Recent attendance and custom events with teacher and date.',
@@ -379,30 +360,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
       wasTooLate: student?.wasTooLate ?? false,
     };
 
-    if (provisionalMode) {
-      patchStudentLocal(studentId, { isPresent });
-      setStagedActions((prev) => ({
-        ...prev,
-        [studentId]: action,
-      }));
-      clearQuickAction();
-      return;
-    }
-
-    if (!preferences.attendance_require_confirmation) {
-      void postAttendanceAction(action, { isPresent });
-      return;
-    }
-
-    setPendingAction({ action, optimisticPatch: { isPresent } });
-    setIsConfirmDialogOpen(true);
-  };
-
-  const handleConfirm = async () => {
-    if (!pendingAction) return;
-    await postAttendanceAction(pendingAction.action, pendingAction.optimisticPatch);
-    setIsConfirmDialogOpen(false);
-    setPendingAction(null);
+    void postAttendanceAction(action, { isPresent });
   };
 
   const handleFlagToggle = (studentId: string, field: 'hasHomeworkIncomplete' | 'wasTooLate', value: boolean) => {
@@ -420,23 +378,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
       [field]: value,
     };
 
-    if (provisionalMode) {
-      patchStudentLocal(studentId, optimisticPatch);
-      setStagedActions((prev) => ({
-        ...prev,
-        [studentId]: action,
-      }));
-      clearQuickAction();
-      return;
-    }
-
-    if (!preferences.attendance_require_confirmation) {
-      void postAttendanceAction(action, optimisticPatch);
-      return;
-    }
-
-    setPendingAction({ action, optimisticPatch });
-    setIsConfirmDialogOpen(true);
+    void postAttendanceAction(action, optimisticPatch);
   };
 
   const handleBulkAttendance = async (isPresent: boolean) => {
@@ -468,42 +410,6 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
     }
   };
 
-  const applyStagedChanges = async () => {
-    const entries = Object.values(stagedActions);
-    if (entries.length === 0) return;
-    setBulkSaving(true);
-    try {
-      await Promise.all(
-        entries.map((action) =>
-          postAttendanceAction(
-            action,
-            {
-              isPresent: action.isPresent,
-              hasHomeworkIncomplete: action.hasHomeworkIncomplete,
-              wasTooLate: action.wasTooLate,
-            },
-            { silentSuccess: true }
-          )
-        )
-      );
-      setStagedActions({});
-      toast({
-        title: isDutch ? 'Conceptwijzigingen gepubliceerd' : 'Staged changes applied',
-        description: isDutch ? `${entries.length} wijzigingen opgeslagen.` : `Saved ${entries.length} changes.`,
-      });
-      void fetchAttendance(true);
-    } finally {
-      setBulkSaving(false);
-    }
-  };
-
-  const discardStagedChanges = async () => {
-    setStagedActions({});
-    await fetchAttendance(true);
-    toast({
-      title: isDutch ? 'Concept verwijderd' : 'Staged changes discarded',
-    });
-  };
 
   const handleSaveCustomEvent = async () => {
     if (!selectedStudent || !customEventText.trim()) return;
@@ -565,7 +471,6 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
   const visibleStudents = selectedStudentId
     ? students.filter((student) => student.id === selectedStudentId)
     : students;
-  const stagedCount = useMemo(() => Object.keys(stagedActions).length, [stagedActions]);
   const timelineStudent = timelineStudentId
     ? students.find((student) => student.id === timelineStudentId) || null
     : null;
@@ -599,7 +504,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
   }
 
   return (
-    <div className="space-y-6" data-testid="attendance-tab">
+    <div className="class-shell" data-testid="attendance-tab">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg">{t.attendance}</h2>
         <div className="flex flex-wrap items-center gap-2">
@@ -638,31 +543,6 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
         </div>
       </div>
 
-      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Switch checked={provisionalMode} onCheckedChange={(checked) => setProvisionalMode(Boolean(checked))} />
-            <p className="text-sm font-medium">{t.provisionalMode}</p>
-          </div>
-          <p className="text-xs text-muted-foreground">{t.provisionalModeHint}</p>
-          {provisionalMode && stagedCount > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {stagedCount} {t.stagedCount}
-            </Badge>
-          )}
-          {provisionalMode && (
-            <div className="ml-auto flex items-center gap-2">
-              <Button variant="outline" size="sm" className="h-8 text-xs" disabled={stagedCount === 0 || bulkSaving} onClick={() => void discardStagedChanges()}>
-                {t.discardStaged}
-              </Button>
-              <Button size="sm" className="h-8 text-xs" disabled={stagedCount === 0 || bulkSaving} onClick={() => void applyStagedChanges()}>
-                {t.applyStaged}
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-
       {selectedStudentId && (
         <div className="rounded-lg bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
           {t.showingOneStudent}
@@ -672,13 +552,13 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {visibleStudents.map((student) => (
           <div
             key={student.id}
             data-testid={`attendance-student-row-${student.id}`}
-            className={`rounded-xl bg-muted/25 px-3 py-2.5 transition-colors ${
-              selectedStudentId === student.id ? 'bg-muted/45' : 'hover:bg-muted/35'
+            className={`rounded-lg bg-[hsl(var(--surface-2))] px-3 py-2.5 transition-colors ${
+              selectedStudentId === student.id ? 'bg-[hsl(var(--surface-2))]' : 'hover:bg-[hsl(var(--surface-2))]'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -703,9 +583,9 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
 
                 <Button
                   data-testid={`attendance-action-homework-${student.id}`}
-                  variant={student.hasHomeworkIncomplete ? 'destructive' : 'outline'}
+                  variant="outline"
                   size="sm"
-                  className="h-10 gap-1 rounded-xl px-2 text-xs"
+                  className={`h-10 gap-1 rounded-xl px-2 text-xs ${student.hasHomeworkIncomplete ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
                   aria-label={t.homeworkIncomplete}
                   disabled={processingStudentIds.has(student.id)}
                   onClick={() => handleFlagToggle(student.id, 'hasHomeworkIncomplete', !student.hasHomeworkIncomplete)}
@@ -717,9 +597,9 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
 
                 <Button
                   data-testid={`attendance-action-late-${student.id}`}
-                  variant={student.wasTooLate ? 'destructive' : 'outline'}
+                  variant="outline"
                   size="sm"
-                  className="h-10 gap-1 rounded-xl px-2 text-xs"
+                  className={`h-10 gap-1 rounded-xl px-2 text-xs ${student.wasTooLate ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
                   aria-label={t.late}
                   disabled={processingStudentIds.has(student.id)}
                   onClick={() => handleFlagToggle(student.id, 'wasTooLate', !student.wasTooLate)}
@@ -749,9 +629,9 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
 
                 <Button
                   data-testid={`attendance-action-present-${student.id}`}
-                  variant={student.isPresent === true ? 'default' : 'outline'}
+                  variant="outline"
                   size="sm"
-                  className={`h-10 gap-1 rounded-xl px-2 text-xs ${student.isPresent === true ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                  className={`h-10 gap-1 rounded-xl px-2 text-xs ${student.isPresent === true ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
                   aria-label={t.present}
                   disabled={processingStudentIds.has(student.id)}
                   onClick={() => handleAttendanceToggle(student.id, true)}
@@ -763,9 +643,9 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
 
                 <Button
                   data-testid={`attendance-action-absent-${student.id}`}
-                  variant={student.isPresent === false ? 'destructive' : 'outline'}
+                  variant="outline"
                   size="sm"
-                  className="h-10 gap-1 rounded-xl px-2 text-xs"
+                  className={`h-10 gap-1 rounded-xl px-2 text-xs ${student.isPresent === false ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
                   aria-label={t.absent}
                   disabled={processingStudentIds.has(student.id)}
                   onClick={() => handleAttendanceToggle(student.id, false)}
@@ -778,7 +658,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
 
               <div className="hidden items-center gap-2 text-xs sm:flex">
                 {student.stats.totalAbsent > 0 && (
-                  <Badge variant="destructive" className="text-xs">
+                  <Badge variant="outline" className="text-xs bg-[hsl(var(--surface-2))]">
                     <XCircle className="mr-1 h-3 w-3" />
                     {student.stats.totalAbsent}
                   </Badge>
@@ -801,25 +681,10 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
       </div>
 
       {students.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">{t.noStudentsYet}</CardContent>
-        </Card>
+        <div className="rounded-md bg-[hsl(var(--surface-2))] py-10 text-center text-muted-foreground">
+          {t.noStudentsYet}
+        </div>
       )}
-
-      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t.confirmTitle}</DialogTitle>
-            <DialogDescription>{t.confirmDescription}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>
-              {t.cancel}
-            </Button>
-            <Button onClick={() => void handleConfirm()}>{t.confirm}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={isCustomEventDialogOpen} onOpenChange={setIsCustomEventDialogOpen}>
         <DialogContent>
@@ -829,7 +694,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
           </DialogHeader>
           <Textarea
             className="min-h-[100px]"
-            placeholder=""
+            placeholder={isDutch ? 'Beschrijf kort wat er is gebeurd' : 'Briefly describe what happened'}
             value={customEventText}
             onChange={(e) => setCustomEventText(e.target.value)}
           />
@@ -911,3 +776,4 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
     </div>
   );
 }
+

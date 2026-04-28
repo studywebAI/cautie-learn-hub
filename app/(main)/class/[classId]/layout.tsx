@@ -42,8 +42,8 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const currentTab = tabIds.has(requestedTab) ? requestedTab : defaultTab;
 
   return (
-    <div className="flex h-full flex-col gap-2.5">
-      <div className="rounded-2xl bg-[hsl(var(--surface-1))] p-3">
+    <div className="flex h-full flex-col gap-2">
+      <div className="px-1 py-1">
         <nav className="flex flex-wrap items-center gap-2">
           {visibleTabs.map((tab) => {
             const Icon = tab.icon;
@@ -55,10 +55,10 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
                 replace
                 prefetch={false}
                 className={cn(
-                  "inline-flex h-11 items-center gap-2 rounded-xl px-4 text-[13px] transition-colors",
+                  "inline-flex h-9 items-center gap-2 rounded-md px-3 text-[13px] transition-colors",
                   isActive
-                    ? "bg-[hsl(var(--surface-3))] text-foreground"
-                    : "bg-[hsl(var(--surface-2))] text-foreground/85 hover:bg-[hsl(var(--surface-3))] hover:text-foreground"
+                    ? "bg-[hsl(var(--sidebar-accent))] text-foreground"
+                    : "text-foreground/85 hover:bg-[hsl(var(--surface-2))] hover:text-foreground"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -68,7 +68,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
           })}
           <button
             type="button"
-            className="ml-auto inline-flex h-9 items-center rounded-xl bg-[hsl(var(--surface-2))] px-3 text-[12px] text-foreground/85 hover:bg-[hsl(var(--surface-3))] hover:text-foreground"
+            className="ml-auto inline-flex h-9 items-center rounded-md px-3 text-[12px] text-foreground/85 hover:bg-[hsl(var(--surface-2))] hover:text-foreground"
             onClick={() => {
               window.dispatchEvent(new Event('cautie:open-class-dropdown'));
             }}

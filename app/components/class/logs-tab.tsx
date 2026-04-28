@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, useContext } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { usePathname, useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -164,27 +163,9 @@ function toneIndex(input: string) {
 
 function getCategoryClass(categoryName: Category, action: string) {
   const tone = toneIndex(action || categoryName);
-  if (categoryName === 'academic') {
-    if (tone === 0) return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-100 dark:border-blue-800';
-    if (tone === 1) return 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-950/40 dark:text-indigo-100 dark:border-indigo-800';
-    return 'bg-cyan-100 text-cyan-800 border-cyan-300 dark:bg-cyan-950/40 dark:text-cyan-100 dark:border-cyan-800';
-  }
-  if (categoryName === 'events') {
-    if (tone === 0) return 'bg-green-100 text-green-800 border-green-300 dark:bg-green-950/40 dark:text-green-100 dark:border-green-800';
-    if (tone === 1) return 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-100 dark:border-emerald-800';
-    return 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950/40 dark:text-teal-100 dark:border-teal-800';
-  }
-  if (categoryName === 'custom_events') {
-    if (tone === 0) return 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-950/40 dark:text-orange-100 dark:border-orange-800';
-    if (tone === 1) return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-100 dark:border-amber-800';
-    return 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-950/40 dark:text-yellow-100 dark:border-yellow-800';
-  }
-  if (categoryName === 'roster') {
-    if (tone === 0) return 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/40 dark:text-rose-100 dark:border-rose-800';
-    if (tone === 1) return 'bg-pink-100 text-pink-800 border-pink-300 dark:bg-pink-950/40 dark:text-pink-100 dark:border-pink-800';
-    return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-950/40 dark:text-red-100 dark:border-red-800';
-  }
-  return 'bg-muted text-foreground border-border';
+  if (tone === 0) return 'bg-[hsl(var(--surface-2))] text-foreground border-border';
+  if (tone === 1) return 'bg-[hsl(var(--surface-3))] text-foreground border-border';
+  return 'bg-muted/60 text-foreground border-border';
 }
 
 export function LogsTab({ classId, cachedData = null, parentLoading = false }: LogsTabProps) {
@@ -457,17 +438,9 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
   const categories: Category[] = ['all', 'academic', 'events', 'custom_events', 'roster'];
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{isDutch ? 'Logs' : 'Logs'}</CardTitle>
-          <CardDescription>
-            {isDutch
-              ? 'Klaslogs gegroepeerd in Academisch, Events, Aangepaste events en Leden & rollen.'
-              : 'Class logs grouped into Academic, Events, Custom Events, and Roster & Roles.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+    <div className="class-shell">
+      <section className="class-panel space-y-3">
+          <h2>{isDutch ? 'Logs' : 'Logs'}</h2>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <Input
               value={search}
@@ -507,7 +480,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                     type="button"
                     variant={active ? 'default' : 'outline'}
                     size="sm"
-                    className="h-9 rounded-xl px-3 text-xs"
+                    className="h-8 rounded-md px-3 text-xs"
                     onClick={() => updateFiltersInQuery({ categoryValue: c })}
                   >
                     {labelByCategory[c]} ({counts[c]})
@@ -530,19 +503,9 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
               </Button>
             </div>
           </div>
-          <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-            {isDutch
-              ? 'Categorieen groeperen betekenis. Leerling/gebruiker-filter vernauwt de tijdlijn. Zoeken matcht ook metadata en aangepaste eventberichten.'
-              : 'Category groups log meaning. Student/actor filter narrows timeline ownership. Search also matches metadata and custom event messages.'}
-          </div>
-          <div className="rounded-md border border-border/60 bg-muted/15 px-3 py-2 text-xs text-muted-foreground">
-            {isDutch
-              ? 'Gebruik codezoeker in Instellingen > Logcodes voor uitleg van codes zoals EVT-ATT-001 en ROS-MEM-001.'
-              : 'Use Settings > Log codes to look up explanations for codes like EVT-ATT-001 and ROS-MEM-001.'}
-          </div>
 
           {loadError && (
-            <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            <div className="rounded-md border border-border/70 bg-[hsl(var(--surface-2))] px-3 py-2 text-xs text-foreground/80">
               {loadError}
             </div>
           )}
@@ -550,11 +513,9 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
           <div className="text-xs text-muted-foreground">
             {isDutch ? 'Toont' : 'Showing'} {filteredLogs.length} {isDutch ? 'van' : 'of'} {totalCount || logs.length} {isDutch ? 'logs' : 'logs'}
           </div>
-        </CardContent>
-      </Card>
+      </section>
 
-      <Card>
-        <CardContent className="pt-6">
+      <section className="class-panel">
           {loading ? (
             <div className="py-10 text-center text-muted-foreground">{isDutch ? 'Logs laden...' : 'Loading logs...'}</div>
           ) : filteredLogs.length === 0 ? (
@@ -567,7 +528,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                 const affectedStudentLabel = leadLog.metadata_user_labels?.student_id || affectedStudentId;
                 const canOpenAttendance = Boolean(affectedStudentId);
                 return (
-                  <div key={group.id} className="space-y-2 rounded-lg border bg-[hsl(var(--surface-1))] p-3">
+                  <div key={group.id} className="space-y-2 rounded-lg bg-[hsl(var(--surface-1))] p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate font-medium">
@@ -631,8 +592,8 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </section>
     </div>
   );
 }
+

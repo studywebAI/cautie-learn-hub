@@ -1279,7 +1279,7 @@ export function AppSidebar() {
           </>
         )}
 
-        <div className="space-y-2 group-data-[collapsible=icon]:hidden">
+        <div className="space-y-2">
           {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
               {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80">{t.sectionRecents}</p>}
           <RecentsSidebar />

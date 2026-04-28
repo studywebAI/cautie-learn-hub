@@ -248,7 +248,7 @@ export function ChapterEditor({
                     <Input
                       value={newChapterTitle}
                       onChange={(e) => setNewChapterTitle(e.target.value)}
-                      placeholder=""
+                      placeholder="Enter chapter title"
                     />
                   </div>
                   <div>
@@ -256,7 +256,7 @@ export function ChapterEditor({
                     <Textarea
                       value={newChapterDescription}
                       onChange={(e) => setNewChapterDescription(e.target.value)}
-                      placeholder=""
+                      placeholder="Add a short description"
                     />
                   </div>
                   <div className="flex justify-end gap-2">
@@ -313,7 +313,7 @@ export function ChapterEditor({
                 <Textarea
                   value={chapter.description || ''}
                   onChange={(e) => setChapter({ ...chapter, description: e.target.value })}
-                  placeholder=""
+                  placeholder="Add a short description"
                 />
                 <div className="flex gap-2">
                   <Button onClick={handleUpdateChapter} disabled={isSaving}>

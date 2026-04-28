@@ -20,6 +20,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
+    role,
     language,
     setLanguage,
     region,
@@ -36,7 +37,7 @@ export default function SettingsPage() {
 
   const [activeTab, setActiveTab] = useState('personalization');
   const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
-  const [subscriptionType, setSubscriptionType] = useState<string>('student');
+  const [subscriptionType, setSubscriptionType] = useState<string>(role === 'teacher' ? 'teacher' : 'student');
   const [displayName, setDisplayName] = useState('');
   const [displayNameSaving, setDisplayNameSaving] = useState(false);
   const [aiProvider, setAiProvider] = useState<'gemini' | 'openai' | 'auto'>('auto');
@@ -135,6 +136,12 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
+    if (role === 'teacher') {
+      setSubscriptionType('teacher');
+    }
+  }, [role]);
+
+  useEffect(() => {
     const fetchSubscription = async () => {
       if (!session?.user?.id) return;
       try {
@@ -154,7 +161,7 @@ export default function SettingsPage() {
         if (!response.ok) return;
         const data = await response.json();
         const nextTier = data.tier || 'free';
-        const nextType = data.type || 'student';
+        const nextType = data.type || (role === 'teacher' ? 'teacher' : 'student');
         setSubscriptionTier(nextTier);
         setSubscriptionType(nextType);
         if (typeof window !== 'undefined') {
@@ -173,7 +180,7 @@ export default function SettingsPage() {
     };
 
     void fetchSubscription();
-  }, [session?.user?.id]);
+  }, [session?.user?.id, role]);
 
   const isDutch = language === 'nl';
   const locale = (language || 'en').toLowerCase();
@@ -250,9 +257,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="h-full w-full overflow-auto bg-[hsl(var(--surface-1))] p-4 md:p-6">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-        <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-3 md:p-4">
+    <div className="h-full w-full overflow-auto bg-[hsl(var(--surface-1))]">
+      <div className="flex w-full flex-col gap-4">
+        <div className="flex items-center justify-between rounded-xl bg-[hsl(var(--surface-1))] px-1 py-1">
           <Button
             type="button"
             variant="outline"
@@ -271,9 +278,9 @@ export default function SettingsPage() {
           <h1 className="text-sm md:text-base">{ui.settings}</h1>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
+        <div className="rounded-xl bg-[hsl(var(--surface-1))] p-1">
           <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
-            <aside className="rounded-xl border border-border bg-muted/15 p-2">
+            <aside className="rounded-xl bg-[hsl(var(--surface-2))] p-2">
               <nav className="space-y-1">
                 {tabItems.map((tabItem) => (
                   <button
@@ -296,7 +303,7 @@ export default function SettingsPage() {
 
             <div className="space-y-5">
               {activeTab === 'personalization' && (
-              <Card className="border-border shadow-none">
+              <Card className="border-0 bg-[hsl(var(--surface-1))] shadow-none">
                 <CardHeader>
                   <CardTitle>{dictionary.settings.personalization.title}</CardTitle>
                   <CardDescription>{dictionary.settings.personalization.description}</CardDescription>
@@ -350,7 +357,7 @@ export default function SettingsPage() {
               )}
 
               {activeTab === 'general' && (
-              <Card className="border-border shadow-none">
+              <Card className="border-0 bg-[hsl(var(--surface-1))] shadow-none">
                 <CardHeader>
                   <CardTitle>{dictionary.settings.general.title}</CardTitle>
                   <CardDescription>{dictionary.settings.general.description}</CardDescription>
@@ -384,7 +391,7 @@ export default function SettingsPage() {
                         <SelectItem value="mx">Mexico</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">Now: influences localized wording and defaults. Target: also drives curriculum and exam format defaults per region.</p>
+                    <p className="text-xs text-muted-foreground">Influences localized wording and defaults.</p>
                   </div>
 
                   <div className="grid gap-2 max-w-md">
@@ -400,7 +407,7 @@ export default function SettingsPage() {
                         <SelectItem value="4">Advanced / Professional</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">Now: adjusts tool difficulty baseline. Target: should also drive pace, vocabulary, and assessment complexity by default.</p>
+                    <p className="text-xs text-muted-foreground">Adjusts baseline tool difficulty.</p>
                   </div>
 
                   <div className="grid gap-2 max-w-md">
@@ -421,7 +428,7 @@ export default function SettingsPage() {
                         <SelectItem value="openai">OpenAI</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">Auto uses Gemini first and switches to OpenAI on token/context, quota/rate-limit, and temporary provider failures.</p>
+                    <p className="text-xs text-muted-foreground">Auto routes between configured providers.</p>
                   </div>
 
                   <div className="grid gap-2 max-w-md">
@@ -456,7 +463,7 @@ export default function SettingsPage() {
               )}
 
               {activeTab === 'subscription' && (
-              <Card className="border-border shadow-none">
+              <Card className="border-0 bg-[hsl(var(--surface-1))] shadow-none">
                 <CardHeader>
                   <CardTitle>{ui.subscription}</CardTitle>
                   <CardDescription>
@@ -475,7 +482,7 @@ export default function SettingsPage() {
               )}
 
               {activeTab === 'help' && (
-                <Card className="border-border shadow-none">
+                <Card className="border-0 bg-[hsl(var(--surface-1))] shadow-none">
                   <CardHeader>
                     <CardTitle>{tr({ en: 'Help & FAQ', nl: 'Help & FAQ' })}</CardTitle>
                     <CardDescription>
@@ -503,7 +510,7 @@ export default function SettingsPage() {
               )}
 
               {activeTab === 'log-codes' && (
-                <Card className="border-border shadow-none">
+                <Card className="border-0 bg-[hsl(var(--surface-1))] shadow-none">
                   <CardHeader>
                     <CardTitle>{tr({ en: 'Log codes', nl: 'Logcodes' })}</CardTitle>
                     <CardDescription>

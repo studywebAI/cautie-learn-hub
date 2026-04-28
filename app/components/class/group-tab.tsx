@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useContext } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, ChevronDown, ChevronRight, MessageSquare, Info, Pencil, Check, Settings, CircleHelp, MoreHorizontal } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -250,16 +249,14 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
 
   if (!data) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          <div className="space-y-3">
-            <p>{error || t.failedLoad}</p>
-            <Button variant="outline" onClick={() => void fetchGroupData()}>
-              Retry
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="rounded-md bg-[hsl(var(--surface-2))] py-8 text-center text-muted-foreground">
+        <div className="space-y-3">
+          <p>{error || t.failedLoad}</p>
+          <Button variant="outline" onClick={() => void fetchGroupData()}>
+            Retry
+          </Button>
+        </div>
+      </div>
     );
   }
 
@@ -267,8 +264,8 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
   const sortedTeachers = [...data.teachers].sort((a, b) => (a.email || a.name).localeCompare(b.email || b.name));
 
   return (
-    <div className="space-y-4" data-testid="group-tab">
-      <div className="space-y-4 rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/14 p-3 md:p-4">
+    <div className="space-y-3" data-testid="group-tab">
+      <div className="space-y-3 p-1 md:p-1">
           <div className="relative flex items-center justify-end">
             <Button
               variant={groupSettingsOpen ? 'default' : 'outline'}
@@ -280,7 +277,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
               {t.settings}
             </Button>
             {groupSettingsOpen && (
-              <div className="absolute right-0 top-11 z-20 flex w-full max-w-[520px] overflow-hidden rounded-xl border border-sidebar-border/80 bg-background shadow-[0_10px_22px_rgba(0,0,0,0.10)] md:w-[520px]">
+              <div className="absolute right-0 top-11 z-20 flex w-full max-w-[520px] overflow-hidden rounded-xl border border-sidebar-border/80 bg-background md:w-[520px]">
                 <div className="w-44 border-r border-sidebar-border/80 bg-sidebar-accent/20 p-2">
                   <button
                     type="button"
@@ -366,8 +363,8 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
               </div>
             )}
           </div>
-          <div className="space-y-4">
-            <div className="rounded-2xl bg-muted/20 p-4" data-testid="group-section-teachers">
+          <div className="space-y-3">
+            <div className="rounded-md bg-[hsl(var(--surface-2))] p-3" data-testid="group-section-teachers">
                 <div className="flex items-center justify-between">
                   <button
                     type="button"
@@ -376,7 +373,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                     aria-label={teachersCollapsed ? t.expand : t.collapse}
                   >
                     {teachersCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      <CardTitle className="text-base font-normal" data-testid="group-heading-teachers">{t.teachers}</CardTitle>
+                      <h3 className="text-base font-normal" data-testid="group-heading-teachers">{t.teachers}</h3>
                     </button>
                   <span className="text-xs text-muted-foreground">
                     {data.teachers.length} {t.people}
@@ -392,7 +389,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                       <button
                         key={teacher.id}
                         type="button"
-                        className="group flex w-full items-center gap-3 rounded-lg border-l-4 border-l-sky-500 bg-muted/30 px-3 py-2 text-left transition-colors hover:bg-muted/55"
+                        className="group flex w-full items-center gap-3 rounded-md border border-border/60 bg-[hsl(var(--surface-2))] px-3 py-2 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
                         onClick={() => setSelectedTeacher(teacher)}
                       >
                         <div className="min-w-0 flex-1">
@@ -409,7 +406,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
               )}
             </div>
 
-            <div className="rounded-2xl bg-muted/20 p-4" data-testid="group-section-students">
+            <div className="rounded-md bg-[hsl(var(--surface-2))] p-3" data-testid="group-section-students">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <button
@@ -439,7 +436,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                       type="button"
                       key={student.id}
                       data-testid={`group-student-row-${student.id}`}
-                      className="group flex items-center gap-3 rounded-lg border-l-4 border-l-emerald-500 bg-muted/35 px-3 py-2 text-left transition-colors hover:bg-muted/55"
+                      className="group flex items-center gap-3 rounded-md border border-border/60 bg-[hsl(var(--surface-2))] px-3 py-2 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
                       onClick={() => {
                         setSelectedStudent(student);
                         void logClassTabEvent({
@@ -511,7 +508,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                   ))}
 
                   {sortedStudents.length === 0 && (
-                    <div className="rounded-xl bg-muted/20 py-12 text-center text-muted-foreground">
+                    <div className="rounded-md border border-border/60 bg-[hsl(var(--surface-2))] py-10 text-center text-muted-foreground">
                       <Users className="mx-auto mb-4 h-12 w-12 opacity-50" />
                       <p>{t.noStudentsFound}</p>
                     </div>
@@ -523,7 +520,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
       </div>
 
       <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
-        <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto rounded-2xl border-none">
+        <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto rounded-xl border border-border/70">
           {selectedStudent && (
             <>
               <DialogHeader>
@@ -581,7 +578,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
       </Dialog>
 
       <Dialog open={!!selectedTeacher} onOpenChange={() => setSelectedTeacher(null)}>
-        <DialogContent className="max-w-xl rounded-2xl border-none">
+        <DialogContent className="max-w-xl rounded-xl border border-border/70">
           {selectedTeacher && (
             <>
               <DialogHeader>
@@ -638,3 +635,4 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     </div>
   );
 }
+

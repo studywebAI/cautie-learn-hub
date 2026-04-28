@@ -10,7 +10,7 @@ const parseCanonicalHost = () => {
   }
 };
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const userAgent = request.headers.get('user-agent') || '';
   const isNoisePath =
@@ -25,7 +25,7 @@ export function middleware(request: NextRequest) {
   if (shouldLog) {
     const authHeader = request.headers.get('authorization') || '';
     const cookieHeader = request.headers.get('cookie') || '';
-    console.log('[request-debug] middleware', {
+    console.log('[request-debug] proxy', {
       ts: new Date().toISOString(),
       correlationId: request.headers.get('x-debug-request-id') || '',
       debugPagePath: request.headers.get('x-debug-page-path') || '',

@@ -1,16 +1,15 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Plus, ChevronRight, ChevronLeft, ArrowLeft, Trash2, 
+  Plus, ChevronRight, ArrowLeft, Trash2, 
   Edit, Eye, Loader2, Save, Send, X, Check, ClipboardList,
-  BarChart3, Users, BookOpen, Target, History, FileText
+  Users, Target, History, FileText
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -311,14 +310,10 @@ export function GradesTab({ classId }: { classId: string }) {
 
   // Main menu view
   return (
-    <div className="space-y-6">
+    <div className="class-shell">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Grades</h1>
-          <p className="text-muted-foreground">
-            Manage grades for your class
-            {preferences.grades_default_scale !== 'both' ? ` - default scale: ${preferences.grades_default_scale === 'a_f' ? 'A-F' : '1-10'}` : ''}
-          </p>
+          <h1 className="text-xl">Grades</h1>
         </div>
         <div className="w-full max-w-[280px]">
           <Label className="mb-1 block text-xs text-muted-foreground">Subject</Label>
@@ -340,136 +335,31 @@ export function GradesTab({ classId }: { classId: string }) {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {/* New Grades Card */}
-          <Card className="border-2 border-black/20 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => setView('new')}>
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Plus className="h-6 w-6 text-primary" />
-                </div>
-                New Grades
-              </CardTitle>
-              <CardDescription>
-                Create a new grade set and enter grades for your students
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Multi-step wizard to create tests, quizzes, or homework assignments and grade your students.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Edit Grades Card */}
-          <Card 
-            className="border-2 border-black/20 hover:border-primary/50 transition-colors cursor-pointer" 
-            onClick={() => setView('edit')}
-          >
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="p-2 rounded-lg bg-secondary/10">
-                  <Edit className="h-6 w-6 text-secondary-foreground" />
-                </div>
-                Edit Grades
-              </CardTitle>
-              <CardDescription>
-                View, edit, or delete existing grade sets
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                {gradeSets.length} grade set{gradeSets.length !== 1 ? 's' : ''} available. 
-                Click to view and manage.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* History Card */}
-          <Card
-            className="border-2 border-black/20 hover:border-primary/50 transition-colors cursor-pointer"
-            onClick={() => setView('history')}
-          >
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="p-2 rounded-lg bg-muted">
-                  <History className="h-6 w-6" />
-                </div>
-                History
-              </CardTitle>
-              <CardDescription>
-                Track every grade update with who changed what and when
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Audit timeline for compliance, transparency, and quick troubleshooting.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Reports Card */}
-          <Card
-            className="border-2 border-black/20 hover:border-primary/50 transition-colors cursor-pointer"
-            onClick={() => setView('reports')}
-          >
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="p-2 rounded-lg bg-muted">
-                  <FileText className="h-6 w-6" />
-                </div>
-                Reports
-              </CardTitle>
-              <CardDescription>
-                Get class-level performance insights from your grade sets
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Class averages, pass-rate signals, and top/bottom performers.
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+          <button type="button" className="h-16 rounded-md bg-[hsl(var(--surface-2))] px-4 text-left transition-colors hover:bg-[hsl(var(--surface-2))]" onClick={() => setView('new')}>
+            <p>New Grades</p>
+            <p className="text-xs text-foreground/70">Create and assign grades</p>
+          </button>
+          <button type="button" className="h-16 rounded-md bg-[hsl(var(--surface-2))] px-4 text-left transition-colors hover:bg-[hsl(var(--surface-2))]" onClick={() => setView('edit')}>
+            <p>Edit Grades</p>
+            <p className="text-xs text-foreground/70">{gradeSets.length} grade set{gradeSets.length !== 1 ? 's' : ''}</p>
+          </button>
+          <button type="button" className="h-16 rounded-md bg-[hsl(var(--surface-2))] px-4 text-left transition-colors hover:bg-[hsl(var(--surface-2))]" onClick={() => setView('history')}>
+            <p>History</p>
+            <p className="text-xs text-foreground/70">Audit changes</p>
+          </button>
+          <button type="button" className="h-16 rounded-md bg-[hsl(var(--surface-2))] px-4 text-left transition-colors hover:bg-[hsl(var(--surface-2))]" onClick={() => setView('reports')}>
+            <p>Reports</p>
+            <p className="text-xs text-foreground/70">Class insights</p>
+          </button>
         </div>
       )}
 
-      {/* Quick Stats */}
-      {gradeSets.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Quick Stats
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-3 bg-muted/30 rounded-lg">
-                <p className="text-2xl font-bold">{gradeSets.length}</p>
-                <p className="text-xs text-muted-foreground">Total Grade Sets</p>
-              </div>
-              <div className="text-center p-3 bg-muted/30 rounded-lg">
-                <p className="text-2xl font-bold">{gradeSets.filter(g => g.status === 'published').length}</p>
-                <p className="text-xs text-muted-foreground">Published</p>
-              </div>
-              <div className="text-center p-3 bg-muted/30 rounded-lg">
-                <p className="text-2xl font-bold">{gradeSets.filter(g => g.status === 'draft').length}</p>
-                <p className="text-xs text-muted-foreground">Drafts</p>
-              </div>
-              {preferences.grades_show_class_average && (
-                <div className="text-center p-3 bg-muted/30 rounded-lg">
-                  <p className="text-2xl font-bold">
-                    {gradeSets.filter(g => g.average !== null).length > 0 
-                      ? (gradeSets.filter(g => g.average !== null).reduce((sum, g) => sum + (g.average || 0), 0) / gradeSets.filter(g => g.average !== null).length).toFixed(1)
-                      : '-'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Class Average</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {gradeSets.length > 0 ? (
+        <div className="text-sm text-foreground/70">
+          {gradeSets.length} sets - {gradeSets.filter(g => g.status === 'published').length} published - {gradeSets.filter(g => g.status === 'draft').length} drafts
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -515,60 +405,48 @@ function GradesHistoryView({
   });
 
   return (
-    <div className="space-y-6">
+    <div className="class-shell">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={onBack}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Grade History</h1>
+          <h1 className="text-xl">Grade History</h1>
           <p className="text-muted-foreground">Audit timeline of grade changes</p>
         </div>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder=""
-          />
-        </CardContent>
-      </Card>
+      <div className="class-panel">
+        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by student, grade set, teacher, or reason" />
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Events</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No grade history found.</p>
-          ) : (
-            <div className="space-y-3">
-              {filtered.map((event) => (
-                <div key={event.id} className="rounded-lg border p-3">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <Badge variant="outline">{event.change_type}</Badge>
-                    <p className="font-medium">{event.student_name}</p>
-                    <span className="text-muted-foreground text-sm">in</span>
-                    <p className="text-sm">{event.grade_set_title}</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {event.old_value ?? '-'} {'->'} {event.new_value ?? '-'} · by {event.changed_by_name} · {format(new Date(event.created_at), 'PPp')}
-                  </p>
-                  {event.change_reason && (
-                    <p className="text-sm mt-1">Reason: {event.change_reason}</p>
-                  )}
+      <div className="space-y-3">
+        <h2 className="text-base">Events</h2>
+        {loading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No grade history found.</p>
+        ) : (
+          <div className="space-y-2">
+            {filtered.map((event) => (
+              <div key={event.id} className="class-panel">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">{event.change_type}</Badge>
+                  <p>{event.student_name}</p>
+                  <span className="text-sm text-muted-foreground">in</span>
+                  <p className="text-sm">{event.grade_set_title}</p>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <p className="text-sm text-muted-foreground">
+                  {event.old_value ?? '-'} {'->'} {event.new_value ?? '-'} - by {event.changed_by_name} - {format(new Date(event.created_at), 'PPp')}
+                </p>
+                {event.change_reason && <p className="mt-1 text-sm">Reason: {event.change_reason}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -591,80 +469,64 @@ function GradesReportsView({
   const lowSet = sortedByAverage[sortedByAverage.length - 1];
 
   return (
-    <div className="space-y-6">
+    <div className="class-shell">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={onBack}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Grade Reports</h1>
+          <h1 className="text-xl">Grade Reports</h1>
           <p className="text-muted-foreground">Class-level performance overview</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Grade Sets</p>
-            <p className="text-2xl font-bold mt-1">{gradeSets.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Published</p>
-            <p className="text-2xl font-bold mt-1">{publishedCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Drafts</p>
-            <p className="text-2xl font-bold mt-1">{draftCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Overall Average</p>
-            <p className="text-2xl font-bold mt-1">{classAverage !== null ? classAverage.toFixed(1) : '-'}</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+        <div className="class-panel">
+          <p className="text-xs text-muted-foreground">Grade Sets</p>
+          <p className="mt-1 text-xl">{gradeSets.length}</p>
+        </div>
+        <div className="class-panel">
+          <p className="text-xs text-muted-foreground">Published</p>
+          <p className="mt-1 text-xl">{publishedCount}</p>
+        </div>
+        <div className="class-panel">
+          <p className="text-xs text-muted-foreground">Drafts</p>
+          <p className="mt-1 text-xl">{draftCount}</p>
+        </div>
+        <div className="class-panel">
+          <p className="text-xs text-muted-foreground">Overall Average</p>
+          <p className="mt-1 text-xl">{classAverage !== null ? classAverage.toFixed(1) : '-'}</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Top Performing Grade Set</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {topSet ? (
-              <div>
-                <p className="font-semibold">{topSet.title}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Average: {topSet.average?.toFixed(1)} · {topSet.graded_count}/{topSet.total_students} graded
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No numeric grade data yet.</p>
-            )}
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+        <div className="class-panel-lg">
+          <h2 className="text-base">Top Performing Grade Set</h2>
+          {topSet ? (
+            <div className="mt-2">
+              <p>{topSet.title}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Average: {topSet.average?.toFixed(1)} - {topSet.graded_count}/{topSet.total_students} graded
+              </p>
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">No numeric grade data yet.</p>
+          )}
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Needs Attention</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {lowSet ? (
-              <div>
-                <p className="font-semibold">{lowSet.title}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Average: {lowSet.average?.toFixed(1)} · {lowSet.graded_count}/{lowSet.total_students} graded
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No numeric grade data yet.</p>
-            )}
-          </CardContent>
-        </Card>
+        <div className="class-panel-lg">
+          <h2 className="text-base">Needs Attention</h2>
+          {lowSet ? (
+            <div className="mt-2">
+              <p>{lowSet.title}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Average: {lowSet.average?.toFixed(1)} - {lowSet.graded_count}/{lowSet.total_students} graded
+              </p>
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">No numeric grade data yet.</p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -678,7 +540,7 @@ const toNumeric = (value: string): number | null => {
 };
 
 // =============================================
-// NEW GRADES WIZARD (MULTI-STEP)
+// NEW GRADES WIZARD
 // =============================================
 
 function NewGradesWizard({
@@ -695,18 +557,10 @@ function NewGradesWizard({
   onCancel: () => void;
 }) {
   const { toast } = useToast();
-  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  
-  // Step 1: Title
   const [title, setTitle] = useState('');
-  
-  // Step 2: Weight
   const [weight, setWeight] = useState(1);
-  
-  // Step 3: Students & Grades
   const [students, setStudents] = useState<StudentGrade[]>([]);
-  const [everyoneGrade, setEveryoneGrade] = useState('');
   const [subjects, setSubjects] = useState<Subject[]>(initialSubjects || []);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>(defaultSubjectId || '');
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -717,11 +571,9 @@ function NewGradesWizard({
   const [newPresetValues, setNewPresetValues] = useState('');
 
   useEffect(() => {
-    if (step >= 3) {
-      loadSubjects();
-      loadPresets();
-    }
-  }, [step]);
+    loadSubjects();
+    loadPresets();
+  }, []);
 
   useEffect(() => {
     if (defaultSubjectId) {
@@ -763,21 +615,6 @@ function NewGradesWizard({
       }
     } catch (error) {
       console.error('Failed to load grading presets:', error);
-    }
-  };
-
-  const handleNext = async () => {
-    if (step === 1) {
-      if (!title.trim()) {
-        toast({ title: 'Please enter a title', variant: 'destructive' });
-        return;
-      }
-      setStep(2);
-    } else if (step === 2) {
-      setStep(3);
-    } else if (step === 3) {
-      // Create grade set and save grades
-      await createGradeSet();
     }
   };
 
@@ -892,246 +729,136 @@ function NewGradesWizard({
     setNewPresetValues('');
   };
 
-  // Apply "everyone" grade to all students
-  const applyToAll = () => {
-    setValidationError(null);
-    const numeric = toNumeric(everyoneGrade);
-    setStudents(students.map(s => {
-      return {
-        ...s,
-        grade_value: everyoneGrade.trim() ? everyoneGrade : null,
-        grade_numeric: numeric
-      };
-    }));
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="class-shell">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={onCancel}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">New Grades</h1>
-          <p className="text-muted-foreground">Create a new grade set for your class</p>
+          <h1 className="text-xl">New Grades</h1>
         </div>
       </div>
 
-      {/* Progress Steps */}
-      <div className="flex items-center gap-2">
-        {[1, 2, 3].map((s) => (
-          <div key={s} className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              step >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-            }`}>
-              {step > s ? <Check className="h-4 w-4" /> : s}
-            </div>
-            {s < 3 && <div className={`w-12 h-0.5 ${step > s ? 'bg-primary' : 'bg-muted'}`} />}
+      <div className="class-panel-lg space-y-4">
+        <div className="space-y-2">
+          <Label className="text-base">Title</Label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} className="text-base border border-border/70" />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-base">Weight</Label>
+          <div className="flex gap-3 items-center">
+            {[1, 2, 3].map((w) => (
+              <Button key={w} variant={weight === w ? 'default' : 'outline'} onClick={() => setWeight(w)} className="w-16">
+                {w}x
+              </Button>
+            ))}
+            <Input
+              type="number"
+              value={weight}
+              onChange={(e) => setWeight(parseFloat(e.target.value) || 1)}
+              className="w-20 border border-border/70"
+              min={0.5}
+              max={10}
+              step={0.5}
+            />
           </div>
-        ))}
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-base">Grading Preset (Optional)</Label>
+          <select value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)} className="w-full p-2 border rounded-md">
+            <option value="">No preset (free input)</option>
+            {presets.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.name} ({preset.kind})
+              </option>
+            ))}
+          </select>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <Input value={newPresetName} onChange={(e) => setNewPresetName(e.target.value)} />
+            <select
+              value={newPresetKind}
+              onChange={(e) => setNewPresetKind(e.target.value as 'freeform' | 'numeric_range' | 'letter_scale')}
+              className="w-full p-2 border rounded-md"
+            >
+              <option value="freeform">Freeform</option>
+              <option value="numeric_range">Numeric Range</option>
+              <option value="letter_scale">Letter Scale</option>
+            </select>
+            <Button type="button" variant="outline" onClick={createPreset}>Save Preset</Button>
+          </div>
+          {newPresetKind === 'letter_scale' && (
+            <Input value={newPresetValues} onChange={(e) => setNewPresetValues(e.target.value)} />
+          )}
+        </div>
+
+        {subjects.length > 0 && (
+          <div className="space-y-2">
+            <Label className="text-base">
+              Subject
+            </Label>
+            <select value={selectedSubjectId} onChange={(e) => setSelectedSubjectId(e.target.value)} className="w-full p-2 border rounded-md">
+              <option value="">All subjects</option>
+              {subjects.map((subj) => (
+                <option key={subj.id} value={subj.id}>{subj.title}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <Label className="text-base">Students</Label>
+          {validationError && <p className="text-sm text-foreground/80">{validationError}</p>}
+          <div className="grid grid-cols-1 gap-3 px-3 text-xs text-muted-foreground md:grid-cols-12">
+            <div className="md:col-span-8">Student</div>
+            <div className="md:col-span-4 text-center">Grade</div>
+          </div>
+          <div className="max-h-96 overflow-auto rounded-lg border border-border/70 divide-y divide-border/70">
+            {students.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />
+                <p>Loading students...</p>
+              </div>
+            ) : (
+              students.map((student) => (
+                <div key={student.student_id} className="grid grid-cols-1 gap-3 p-3 items-center md:grid-cols-12">
+                  <div className="min-w-0 md:col-span-8">
+                    <p className="truncate">{student.student.full_name || student.student.email || 'Unknown Student'}</p>
+                    <p className="truncate text-xs text-muted-foreground">{student.student.email || 'No email available'}</p>
+                  </div>
+                  <Input
+                    value={student.grade_value ?? ''}
+                    onChange={(e) => updateStudentGrade(student.student_id, e.target.value)}
+                    className="md:col-span-4 text-center"
+                  />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-between border-t border-border/70 pt-3">
+          <Button variant="outline" onClick={onCancel}>Cancel</Button>
+          <Button
+            onClick={async () => {
+              if (!title.trim()) {
+                toast({ title: 'Please enter a title', variant: 'destructive' });
+                return;
+              }
+              await createGradeSet();
+            }}
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+            Create Grade Set
+          </Button>
+        </div>
       </div>
 
-      {/* Step Content */}
-      <Card>
-        <CardContent className="pt-6">
-          {step === 1 && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-base font-semibold flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  Title of Grade Set
-                </Label>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder=""
-                  className="text-lg border-2 border-black/20"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Give your grade set a descriptive title
-                </p>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">Weight (how much it counts)</Label>
-                <div className="flex gap-3 items-center">
-                  {[1, 2, 3].map((w) => (
-                    <Button
-                      key={w}
-                      variant={weight === w ? 'default' : 'outline'}
-                      onClick={() => setWeight(w)}
-                      className="w-16"
-                    >
-                      {w}x
-                    </Button>
-                  ))}
-                  <Input
-                    type="number"
-                    value={weight}
-                    onChange={(e) => setWeight(parseFloat(e.target.value) || 1)}
-                    className="w-20 border-2 border-black/20"
-                    min={0.5}
-                    max={10}
-                    step={0.5}
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  For example: 3x for a big test, 1x for a small quiz
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">Grading Preset</Label>
-                <select
-                  value={selectedPresetId}
-                  onChange={(e) => setSelectedPresetId(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="">No preset (free score)</option>
-                  {presets.map((preset) => (
-                    <option key={preset.id} value={preset.id}>
-                      {preset.name} ({preset.kind})
-                    </option>
-                  ))}
-                </select>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <Input
-                    value={newPresetName}
-                    onChange={(e) => setNewPresetName(e.target.value)}
-                    placeholder=""
-                  />
-                  <select
-                    value={newPresetKind}
-                    onChange={(e) => setNewPresetKind(e.target.value as 'freeform' | 'numeric_range' | 'letter_scale')}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="freeform">Freeform</option>
-                    <option value="numeric_range">Numeric Range</option>
-                    <option value="letter_scale">Letter Scale</option>
-                  </select>
-                  <Button type="button" variant="outline" onClick={createPreset}>Save Preset</Button>
-                </div>
-                {newPresetKind === 'letter_scale' && (
-                  <Input
-                    value={newPresetValues}
-                    onChange={(e) => setNewPresetValues(e.target.value)}
-                    placeholder=""
-                  />
-                )}
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-4">
-              {/* Subject selector */}
-              {subjects.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-base font-semibold flex items-center gap-2">
-                    <BookOpen className="h-4 w-4" />
-                    Subject (optional)
-                  </Label>
-                  <select
-                    value={selectedSubjectId}
-                    onChange={(e) => setSelectedSubjectId(e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="">No specific subject</option>
-                    {subjects.map((subj) => (
-                      <option key={subj.id} value={subj.id}>{subj.title}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Everyone grade */}
-              <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
-                <Label className="text-base font-semibold flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Everyone
-                </Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <Input
-                    value={everyoneGrade}
-                    onChange={(e) => setEveryoneGrade(e.target.value)}
-                    className="border-2 border-black/20"
-                    placeholder=""
-                  />
-                  <Button onClick={applyToAll} variant="outline">
-                    Apply
-                  </Button>
-                </div>
-              </div>
-
-              {/* Students list */}
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">Students</Label>
-                {validationError && (
-                  <p className="text-sm text-red-600">{validationError}</p>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 px-3 text-xs text-muted-foreground">
-                  <div className="md:col-span-8">Student</div>
-                  <div className="md:col-span-4 text-center">Score</div>
-                </div>
-                <div className="border rounded-lg divide-y max-h-96 overflow-auto">
-                  {students.length === 0 ? (
-                    <div className="p-8 text-center text-muted-foreground">
-                      <Loader2 className="h-6 w-6 mx-auto mb-2 animate-spin" />
-                      <p>Loading...</p>
-                    </div>
-                  ) : (
-                    students.map((student) => (
-                      <div key={student.student_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-3 items-center">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{student.student.full_name || student.student.email || 'Unknown Student'}</p>
-                          <p className="text-xs text-muted-foreground truncate">{student.student.email || 'No email available'}</p>
-                        </div>
-                        <Input
-                          value={student.grade_value ?? ''}
-                          onChange={(e) => updateStudentGrade(student.student_id, e.target.value)}
-                          className="md:col-span-4 text-center"
-                          placeholder=""
-                        />
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Navigation */}
-          <div className="flex justify-between mt-6 pt-4 border-t">
-            <Button variant="outline" onClick={step === 1 ? onCancel : () => setStep(step - 1)}>
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              {step === 1 ? 'Cancel' : 'Back'}
-            </Button>
-            <Button onClick={handleNext} disabled={loading}>
-              {loading ? (
-                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-              ) : step < 3 ? (
-                <>
-                  Next <ChevronRight className="h-4 w-4 ml-1" />
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-1" />
-                  Create Grade Set
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Load students when entering step 3 */}
-      {step === 3 && students.length === 0 && !loading && (
-        <StudentGrader classId={classId} onStudentsLoaded={setStudents} />
-      )}
+      {students.length === 0 && !loading && <StudentGrader classId={classId} onStudentsLoaded={setStudents} />}
     </div>
   );
 }
@@ -1144,15 +871,10 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
   useEffect(() => {
     const loadStudents = async () => {
       try {
-        console.log('[StudentGrader] Loading students for class:', classId);
-        
-        // Directly fetch class members (students) from the API
         const response = await fetch(`/api/classes/${classId}/members`);
-        console.log('[StudentGrader] Members API response:', response.status, response.ok);
         
         if (response.ok) {
-          const members = await response.json(); // Returns array directly
-          console.log('[StudentGrader] Members received:', members.length, members);
+          const members = await response.json();
           
           // Transform class members to student grades format
           const studentGrades: StudentGrade[] = members
@@ -1175,11 +897,10 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
               }
             }));
           
-          console.log('[StudentGrader] Student grades:', studentGrades.length, studentGrades);
           onStudentsLoaded(studentGrades);
         } else {
           const errorText = await response.text();
-          console.log('[StudentGrader] Members API error:', response.status, errorText);
+          console.error('[StudentGrader] Members API error:', response.status, errorText);
           
           setError('Could not load students. API error: ' + response.status);
         }
@@ -1205,7 +926,7 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-center">
+      <div className="rounded-lg bg-[hsl(var(--surface-2))] p-4 text-center text-foreground/80">
         {error}
       </div>
     );
@@ -1236,14 +957,13 @@ function EditGradesList({
   onBack: () => void;
 }) {
   return (
-    <div className="space-y-6">
+    <div className="class-shell">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={onBack}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Edit Grades</h1>
-          <p className="text-muted-foreground">Manage existing grade sets</p>
+          <h1 className="text-xl">Edit Grades</h1>
         </div>
         <Button variant="outline" onClick={onRefresh}>
           Refresh
@@ -1255,41 +975,36 @@ function EditGradesList({
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : gradeSets.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <ClipboardList className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">No grade sets yet</p>
-            <p className="text-sm text-muted-foreground">Create your first grade set to get started</p>
-          </CardContent>
-        </Card>
+        <div className="class-panel py-10 text-center">
+          <ClipboardList className="mx-auto mb-3 h-10 w-10 text-muted-foreground opacity-50" />
+          <p className="text-muted-foreground">No grade sets yet</p>
+        </div>
       ) : (
         <div className="space-y-3">
           {gradeSets.map((gs) => (
-            <Card 
+            <div 
               key={gs.id} 
-              className="hover:border-primary/50 transition-colors cursor-pointer"
+              className="class-panel-lg cursor-pointer transition-colors hover:bg-[hsl(var(--surface-2))]"
               onClick={() => onSelectGradeSet(gs.id)}
             >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold truncate">{gs.title}</h3>
-                      <Badge variant={gs.status === 'published' ? 'default' : 'secondary'}>
-                        {gs.status}
-                      </Badge>
-                      <Badge variant="outline">{gs.weight}x</Badge>
-                    </div>
-                    <div className="flex gap-4 mt-1 text-sm text-muted-foreground">
-                      <span>{gs.category}</span>
-                      <span>{gs.graded_count}/{gs.total_students} graded</span>
-                      {gs.average !== null && <span>Avg: {gs.average}</span>}
-                    </div>
+              <div className="flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="truncate">{gs.title}</h3>
+                    <Badge variant={gs.status === 'published' ? 'default' : 'secondary'}>
+                      {gs.status}
+                    </Badge>
+                    <Badge variant="outline">{gs.weight}x</Badge>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  <div className="mt-1 flex gap-4 text-sm text-muted-foreground">
+                    <span>{gs.category}</span>
+                    <span>{gs.graded_count}/{gs.total_students} graded</span>
+                    {gs.average !== null && <span>Avg: {gs.average}</span>}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -1320,11 +1035,14 @@ function EditGradesDetail({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
-  const [everyoneGrade, setEveryoneGrade] = useState('');
+  const [bulkGrade, setBulkGrade] = useState('');
+  const [bulkFeedback, setBulkFeedback] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [presets, setPresets] = useState<GradePreset[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
   const [selectedStudentId, setSelectedStudentId] = useState<string>(highlightedStudentId || '');
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  const lastSelectedIndexRef = useRef<number | null>(null);
 
   useEffect(() => {
     loadGradeSet();
@@ -1385,16 +1103,70 @@ function EditGradesDetail({
     ));
   };
 
-  const applyToAll = () => {
+  const applyBulkToSelected = () => {
     setValidationError(null);
-    const numeric = toNumeric(everyoneGrade);
+    if (selectedStudentIds.length === 0) return;
+    const numeric = toNumeric(bulkGrade);
     setStudents(students.map(s => {
+      if (!selectedStudentIds.includes(s.student_id)) return s;
       return {
         ...s,
-        grade_value: everyoneGrade.trim() ? everyoneGrade : null,
-        grade_numeric: numeric
+        grade_value: bulkGrade.trim() ? bulkGrade : null,
+        grade_numeric: numeric,
+        feedback_text: bulkFeedback.trim() ? bulkFeedback : s.feedback_text
       };
     }));
+  };
+
+  const toggleStudentSelection = (studentId: string, withRange: boolean = false) => {
+    const currentIndex = visibleStudents.findIndex((student) => student.student_id === studentId);
+    if (currentIndex < 0) return;
+
+    if (!withRange || lastSelectedIndexRef.current === null) {
+      setSelectedStudentIds((prev) =>
+        prev.includes(studentId) ? prev.filter((id) => id !== studentId) : [...prev, studentId]
+      );
+      lastSelectedIndexRef.current = currentIndex;
+      return;
+    }
+
+    const [start, end] =
+      currentIndex > lastSelectedIndexRef.current
+        ? [lastSelectedIndexRef.current, currentIndex]
+        : [currentIndex, lastSelectedIndexRef.current];
+    const rangeIds = visibleStudents.slice(start, end + 1).map((student) => student.student_id);
+    setSelectedStudentIds((prev) => Array.from(new Set([...prev, ...rangeIds])));
+    lastSelectedIndexRef.current = currentIndex;
+  };
+
+  const copyFromFirstSelected = (field: 'grade' | 'feedback') => {
+    if (selectedStudentIds.length < 2) return;
+    const source = students.find((row) => row.student_id === selectedStudentIds[0]);
+    if (!source) return;
+    if (field === 'grade') {
+      const nextValue = String(source.grade_value || '').trim();
+      if (!nextValue) return;
+      const numeric = toNumeric(nextValue);
+      setBulkGrade(nextValue);
+      setStudents((prev) =>
+        prev.map((row) =>
+          selectedStudentIds.includes(row.student_id)
+            ? { ...row, grade_value: nextValue, grade_numeric: numeric }
+            : row
+        )
+      );
+      return;
+    }
+    const nextFeedback = String(source.feedback_text || '').trim();
+    if (!nextFeedback) return;
+    setBulkFeedback(nextFeedback);
+    setStudents((prev) =>
+      prev.map((row) =>
+        selectedStudentIds.includes(row.student_id)
+          ? { ...row, feedback_text: nextFeedback }
+          : row
+      )
+    );
   };
 
   const saveGrades = async () => {
@@ -1423,7 +1195,8 @@ function EditGradesDetail({
           student_grades: students.map(s => ({
             id: s.id,
             grade_numeric: s.grade_numeric ?? null,
-            grade_value: s.grade_value
+            grade_value: s.grade_value,
+            feedback_text: s.feedback_text ?? null
           }))
         })
       });
@@ -1509,9 +1282,14 @@ function EditGradesDetail({
   const visibleStudents = selectedStudentId
     ? students.filter((student) => student.student_id === selectedStudentId)
     : students;
+  const recentValues = students
+    .map((student) => String(student.grade_value || '').trim())
+    .filter(Boolean)
+    .slice(0, 8);
+  const suggestedBulkValue = recentValues.length >= 5 && recentValues.every((value) => value === recentValues[0]) ? recentValues[0] : '';
 
   return (
-    <div className="space-y-6">
+    <div className="class-shell">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={onBack}>
@@ -1519,13 +1297,12 @@ function EditGradesDetail({
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{gradeSet.title}</h1>
+            <h1 className="text-xl font-semibold">{gradeSet.title}</h1>
             <Badge variant={gradeSet.status === 'published' ? 'default' : 'secondary'}>
               {gradeSet.status}
             </Badge>
-            <Badge variant="outline">Professional Mode</Badge>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {gradeSet.category} | {gradeSet.weight}x weight | {gradeSet.graded_count}/{gradeSet.total_students} graded
             {gradeSet.average !== null && ` | Avg: ${gradeSet.average}`}
           </p>
@@ -1578,40 +1355,8 @@ function EditGradesDetail({
         </select>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold">{gradeSet.total_students}</p>
-            <p className="text-xs text-muted-foreground">Students</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold">{gradeSet.graded_count}</p>
-            <p className="text-xs text-muted-foreground">Graded</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold">{gradeSet.total_students - gradeSet.graded_count}</p>
-            <p className="text-xs text-muted-foreground">Missing</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold">{gradeSet.average ?? '-'}</p>
-            <p className="text-xs text-muted-foreground">Average</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Grades Input */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Student Grades</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="class-panel-lg space-y-4">
+        <h2 className="text-base">Student Grades</h2>
           <div className="space-y-2">
             <Label className="font-semibold">Grading Preset</Label>
             <select
@@ -1627,58 +1372,110 @@ function EditGradesDetail({
               ))}
             </select>
           </div>
-          {validationError && (
-            <p className="text-sm text-red-600">{validationError}</p>
-          )}
-          {/* Everyone grade */}
-          <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
-            <Label className="font-semibold flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Everyone
-            </Label>
-            <div className="flex gap-2">
+        {validationError && <p className="text-sm text-foreground/80">{validationError}</p>}
+          <div className="class-panel space-y-2">
+            <Label className="font-semibold">Bulk for Selected</Label>
+            {suggestedBulkValue ? (
+              <button
+                type="button"
+                className="text-xs text-foreground/70 underline underline-offset-2"
+                onClick={() => setBulkGrade(suggestedBulkValue)}
+              >
+                Suggestion detected: apply "{suggestedBulkValue}"
+              </button>
+            ) : null}
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
               <Input
-                value={everyoneGrade}
-                onChange={(e) => setEveryoneGrade(e.target.value)}
-                className="border-2 border-black/20"
-                placeholder=""
+                value={bulkGrade}
+                onChange={(e) => setBulkGrade(e.target.value)}
+                className="md:col-span-1"
+                placeholder="Grade value"
               />
-              <Button onClick={applyToAll} variant="outline">
-                Apply
+              <Input
+                value={bulkFeedback}
+                onChange={(e) => setBulkFeedback(e.target.value)}
+                className="md:col-span-1"
+                placeholder="Feedback (optional)"
+              />
+              <Button onClick={applyBulkToSelected} variant="outline" className="md:col-span-1" disabled={selectedStudentIds.length === 0}>
+                Apply to selected ({selectedStudentIds.length})
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => copyFromFirstSelected('grade')}
+                disabled={selectedStudentIds.length < 2}
+              >
+                Copy first selected grade
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => copyFromFirstSelected('feedback')}
+                disabled={selectedStudentIds.length < 2}
+              >
+                Copy first selected notes
               </Button>
             </div>
           </div>
 
           {/* Students list */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 px-3 text-xs text-muted-foreground">
-            <div className="md:col-span-8">Student</div>
-            <div className="md:col-span-4 text-center">Score</div>
+          <div className="grid grid-cols-1 gap-3 px-3 text-xs text-muted-foreground md:grid-cols-12">
+            <div className="md:col-span-1">Select</div>
+            <div className="md:col-span-5">Student</div>
+            <div className="md:col-span-2">Grade</div>
+            <div className="md:col-span-4">Notes</div>
           </div>
-          <div className="border rounded-lg divide-y">
+          <div className="rounded-md border border-border/70">
             {visibleStudents.map((student) => (
               <div
                 id={`grade-student-${student.student_id}`}
                 key={student.student_id}
-                className={`grid grid-cols-1 md:grid-cols-12 gap-3 p-3 items-center ${
+                className={`grid grid-cols-1 gap-3 border-b border-border/60 p-3 md:grid-cols-12 md:items-center ${
                   highlightedStudentId === student.student_id ? 'bg-muted/45' : ''
                 }`}
               >
-                <div className="flex-1 min-w-0">
+                <div className="md:col-span-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedStudentIds.includes(student.student_id)}
+                    onClick={(event) => {
+                      toggleStudentSelection(student.student_id, event.shiftKey);
+                    }}
+                    onChange={() => {}}
+                    className="h-4 w-4 accent-[hsl(var(--primary-foreground))]"
+                  />
+                </div>
+                <div className="min-w-0 md:col-span-5">
                   <p className="font-medium truncate">{student.student?.full_name || student.student?.email || 'Unknown Student'}</p>
                   <p className="text-xs text-muted-foreground truncate">{student.student?.email || 'No email available'}</p>
                 </div>
                 <Input
                   value={student.grade_value ?? ''}
                   onChange={(e) => updateStudentGrade(student.student_id, e.target.value)}
-                  className="md:col-span-4 text-center"
-                  placeholder=""
+                  className="md:col-span-2"
+                  placeholder="Grade"
+                />
+                <Input
+                  value={student.feedback_text ?? ''}
+                  onChange={(e) => setStudents((prev) => prev.map((row) => row.student_id === student.student_id ? { ...row, feedback_text: e.target.value } : row))}
+                  className="md:col-span-4"
+                  placeholder="Optional note"
                 />
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }
+
+
+
+
+
 

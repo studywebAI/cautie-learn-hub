@@ -5,12 +5,14 @@ import type { NextConfig } from 'next';
 import withPWA from 'next-pwa';
 // @ts-ignore
 import withBundleAnalyzer from '@next/bundle-analyzer';
+import path from 'node:path';
 
 const bundleAnalyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: path.resolve(__dirname),
   typescript: {
     ignoreBuildErrors: true,
   },

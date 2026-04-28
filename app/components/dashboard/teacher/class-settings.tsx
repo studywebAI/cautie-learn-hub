@@ -2,7 +2,6 @@
 
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Archive, Copy, RotateCcw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -91,7 +90,7 @@ type SettingsSectionId =
 
 export function ClassSettings({ classId, className, onArchive, isArchived = false }: ClassSettingsProps) {
   const preferenceSwitchClassName =
-    'data-[state=checked]:bg-emerald-600 data-[state=unchecked]:bg-rose-600';
+    'data-[state=checked]:bg-[hsl(var(--primary-foreground))] data-[state=unchecked]:bg-[hsl(var(--muted-foreground))]';
   const formatTimeLabel = (time: string) => {
     const [hourText, minuteText] = time.split(':');
     const hour = Number(hourText);
@@ -733,23 +732,22 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     }
   };
 
-  const settingsSections: Array<{ id: SettingsSectionId; label: string; description: string }> = [
-    { id: 'profile', label: 'Class Profile', description: 'Name and description' },
-    { id: 'invite', label: 'Invite Access', description: 'Join codes and rotation' },
-    { id: 'defaults', label: 'Teaching Defaults', description: 'Grades, attendance, schedule flags' },
-    { id: 'schedule', label: 'School Schedule', description: 'Create and manage timetable slots' },
-    { id: 'requests', label: 'Teacher Requests', description: 'Approve or reject joins' },
-    { id: 'activity', label: 'Invite Activity', description: 'Recent invite code usage' },
-    { id: 'subjects', label: 'Subject Management', description: 'Owners and shared teachers' },
-    { id: 'import', label: 'Import Subject', description: 'Copy or link from another class' },
-    { id: 'danger', label: 'Danger Zone', description: 'Archive class' },
+  const settingsSections: Array<{ id: SettingsSectionId; label: string }> = [
+    { id: 'profile', label: 'Class Profile' },
+    { id: 'invite', label: 'Invite Access' },
+    { id: 'defaults', label: 'Teaching Defaults' },
+    { id: 'schedule', label: 'School Schedule' },
+    { id: 'requests', label: 'Teacher Requests' },
+    { id: 'activity', label: 'Invite Activity' },
+    { id: 'subjects', label: 'Subject Management' },
+    { id: 'import', label: 'Import Subject' },
+    { id: 'danger', label: 'Danger Zone' },
   ];
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
       <aside className="lg:sticky lg:top-4 self-start">
-        <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
-          <CardContent className="space-y-1 pt-4">
+        <div className="space-y-1 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
             {settingsSections.map((section) => (
               <Button
                 key={section.id}
@@ -765,18 +763,17 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 <span className="text-sm font-medium">{section.label}</span>
               </Button>
             ))}
-          </CardContent>
-        </Card>
+        </div>
       </aside>
 
       <div className="space-y-4 min-w-0">
       {activeSettingsSection === 'profile' && (
-      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
-        <CardHeader>
-          <CardTitle>Class Profile</CardTitle>
-          <CardDescription>Rename the class and update the class description.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+        <div className="space-y-1 pb-2">
+          <h2 className="text-base">Class Profile</h2>
+          
+        </div>
+        <div className="space-y-3">
           <div className="space-y-1">
             <Label>Class Name</Label>
             <Input
@@ -796,17 +793,17 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             />
           </div>
           <p className="text-xs text-muted-foreground">{savingProfile ? 'Saving changes...' : 'Changes autosave.'}</p>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
       )}
 
       {activeSettingsSection === 'invite' && (
-      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
-        <CardHeader>
-          <CardTitle>Invite Access</CardTitle>
-          <CardDescription>Copy current join codes or rotate them if they leaked.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+        <div className="space-y-1 pb-2">
+          <h2 className="text-base">Invite Access</h2>
+          
+        </div>
+        <div className="space-y-3">
           <div className="space-y-1">
             <Label>Student Join Code</Label>
             <div className="flex gap-2">
@@ -829,17 +826,17 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <RotateCcw className="mr-2 h-4 w-4" />
             {regeneratingCodes ? 'Regenerating...' : 'Regenerate Invite Codes'}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
       )}
 
       {activeSettingsSection === 'defaults' && (
-      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
-        <CardHeader>
-          <CardTitle>Teaching Defaults</CardTitle>
-          <CardDescription>Class-wide defaults used by grades, attendance, and invite flows.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+        <div className="space-y-1 pb-2">
+          <h2 className="text-base">Teaching Defaults</h2>
+          
+        </div>
+        <div className="space-y-4">
           <div className="space-y-1">
             <Label>Default Subject View</Label>
             <Select
@@ -851,7 +848,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 }))
               }
             >
-              <SelectTrigger className="h-9 rounded-md border-0 bg-white text-sm">
+              <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
                 <SelectValue placeholder="Choose default subject view" />
               </SelectTrigger>
               <SelectContent>
@@ -873,7 +870,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 }))
               }
             >
-              <SelectTrigger className="h-9 rounded-md border-0 bg-white text-sm">
+              <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
                 <SelectValue placeholder="Choose default grade scale" />
               </SelectTrigger>
               <SelectContent>
@@ -884,7 +881,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </Select>
           </div>
 
-          <div className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+          <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Show class average in grades</p>
               <p className="text-xs text-muted-foreground">Toggle class-level average cards in grades.</p>
@@ -903,7 +900,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+          <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Require attendance confirmation</p>
               <p className="text-xs text-muted-foreground">Prompt before attendance changes are saved.</p>
@@ -922,7 +919,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+          <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Allow teacher invite actions</p>
               <p className="text-xs text-muted-foreground">Enable or disable teacher invite section.</p>
@@ -941,7 +938,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+          <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Enable school schedule</p>
               <p className="text-xs text-muted-foreground">Turns on class timetable management for this class.</p>
@@ -960,7 +957,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+          <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Show school schedule to students</p>
               <p className="text-xs text-muted-foreground">Students can view timetable blocks in agenda/dashboard when enabled.</p>
@@ -981,15 +978,15 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           </div>
 
           <p className="text-xs text-muted-foreground">{savingPreferences ? 'Saving defaults...' : 'Defaults autosave.'}</p>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
       )}
 
       {activeSettingsSection === 'schedule' && (
-      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
-        <CardHeader>
+      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+        <div className="space-y-1 pb-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <CardTitle>School Schedule</CardTitle>
+            <h2 className="text-base">School Schedule</h2>
             <Button
               type="button"
               variant="outline"
@@ -1001,17 +998,15 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               Open Full Schedule Board
             </Button>
           </div>
-          <CardDescription>
-            Add one slot at a time: choose day, period, time range, and optional subject link.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-md bg-emerald-100/70 p-3 text-sm text-emerald-900">
+          
+        </div>
+        <div className="space-y-4">
+          <div className="rounded-md bg-[hsl(var(--surface-2))] p-3 text-sm text-foreground/85">
             Slot preview: {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, Number(newScheduleSlot.day_of_week) - 1)]}
-            {' · '}P{newScheduleSlot.period_index || '?'}{' · '}
+            {' - '}P{newScheduleSlot.period_index || '?'}{' - '}
             {formatTimeLabel(newScheduleSlot.start_time)} - {formatTimeLabel(newScheduleSlot.end_time)}
             {scheduleDurationMinutes > 0 ? ` (${scheduleDurationMinutes} min)` : ''}
-            {newScheduleSlot.title.trim() ? ` · ${newScheduleSlot.title.trim()}` : ''}
+            {newScheduleSlot.title.trim() ? ` - ${newScheduleSlot.title.trim()}` : ''}
           </div>
 
           <div className="grid gap-3 md:grid-cols-3">
@@ -1021,7 +1016,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 value={newScheduleSlot.day_of_week}
                 onValueChange={(value) => setNewScheduleSlot((prev) => ({ ...prev, day_of_week: value }))}
               >
-                <SelectTrigger className="h-9 rounded-md border-0 bg-white text-sm">
+                <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
                   <SelectValue placeholder="Choose a day" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1061,7 +1056,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 value={newScheduleSlot.start_time}
                 onValueChange={(value) => setNewScheduleSlot((prev) => ({ ...prev, start_time: value }))}
               >
-                <SelectTrigger className="h-9 rounded-md border-0 bg-white text-sm">
+                <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
                   <SelectValue placeholder="Choose start time" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1077,7 +1072,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 value={newScheduleSlot.end_time}
                 onValueChange={(value) => setNewScheduleSlot((prev) => ({ ...prev, end_time: value }))}
               >
-                <SelectTrigger className="h-9 rounded-md border-0 bg-white text-sm">
+                <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
                   <SelectValue placeholder="Choose end time" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1095,7 +1090,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                   setNewScheduleSlot((prev) => ({ ...prev, subject_id: value === '__none' ? '' : value }))
                 }
               >
-                <SelectTrigger className="h-9 rounded-md border-0 bg-white text-sm">
+                <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
                   <SelectValue placeholder="No subject link" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1109,13 +1104,13 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           </div>
 
           {!isSchedulePeriodValid && (
-            <p className="text-sm text-rose-700">Period must be a positive whole number.</p>
+            <p className="text-sm text-foreground/80">Period must be a positive whole number.</p>
           )}
           {!isScheduleTimeRangeValid && (
-            <p className="text-sm text-rose-700">End time must be after start time.</p>
+            <p className="text-sm text-foreground/80">End time must be after start time.</p>
           )}
 
-          <div className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+          <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Break slot</p>
               <p className="text-xs text-muted-foreground">Mark this timetable slot as pause/break.</p>
@@ -1155,7 +1150,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 <div key={slot.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="font-medium">
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, slot.day_of_week - 1)]} · P{slot.period_index} · {slot.title}
+                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, slot.day_of_week - 1)]} - P{slot.period_index} - {slot.title}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {slot.start_time} - {slot.end_time} {slot.is_break ? '· Break' : ''}
@@ -1168,28 +1163,28 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               ))
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
       )}
 
       {activeSettingsSection === 'requests' && (
-      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
-        <CardHeader>
-          <CardTitle>Teacher Join Requests</CardTitle>
-          <CardDescription>Approve or reject teachers who request access via teacher join code.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+        <div className="space-y-1 pb-2">
+          <h2 className="text-base">Teacher Join Requests</h2>
+          <p className="text-sm text-muted-foreground">Approve or reject teachers who request access via teacher join code.</p>
+        </div>
+        <div className="space-y-3">
           {loadingJoinRequests ? (
             <p className="text-sm text-muted-foreground">Loading requests...</p>
           ) : pendingJoinRequests.length === 0 ? (
             <p className="text-sm text-muted-foreground">No pending teacher join requests.</p>
           ) : (
             pendingJoinRequests.map((request) => (
-              <div key={request.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 flex items-center justify-between gap-3">
+              <div key={request.id} className="rounded-md bg-[hsl(var(--surface-2))] p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-medium truncate">{request.requester_email || request.requester_user_id}</p>
                   <p className="text-xs text-muted-foreground">
-                    Subject: {request.subject_title || 'No subject provided'} · Requested {new Date(request.requested_at).toLocaleString()}
+                    Subject: {request.subject_title || 'No subject provided'} - Requested {new Date(request.requested_at).toLocaleString()}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1214,26 +1209,26 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
       )}
 
       {activeSettingsSection === 'activity' && (
-      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
-        <CardHeader>
-          <CardTitle>Teacher Invite Activity</CardTitle>
-          <CardDescription>
+      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+        <div className="space-y-1 pb-2">
+          <h2 className="text-base">Teacher Invite Activity</h2>
+          <p className="text-sm text-muted-foreground">
             Categorized by status so you can track new teacher invite flow end-to-end.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+          </p>
+        </div>
+        <div className="space-y-3">
           {loadingInviteActivity ? (
             <p className="text-sm text-muted-foreground">Loading teacher invite activity...</p>
           ) : inviteActivity.length === 0 ? (
             <p className="text-sm text-muted-foreground">No teacher invite activity yet.</p>
           ) : (
             inviteActivity.map((item) => (
-              <div key={item.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+              <div key={item.id} className="rounded-md bg-[hsl(var(--surface-2))] p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-mono text-sm">{item.code}</p>
@@ -1242,21 +1237,13 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                     </p>
                   </div>
                   <span
-                    className={`rounded px-2 py-0.5 text-xs ${
-                      item.status === 'used'
-                        ? 'bg-green-100 text-green-700'
-                        : item.status === 'active'
-                        ? 'bg-blue-100 text-blue-700'
-                        : item.status === 'revoked'
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-gray-100 text-gray-700'
-                    }`}
+                    className="rounded px-2 py-0.5 text-xs bg-[hsl(var(--surface-3))] text-foreground/80"
                   >
                     {item.status === 'active' && item.is_expired ? 'expired' : item.status}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Issued: {new Date(item.issued_at).toLocaleString()} · Expires: {new Date(item.expires_at).toLocaleString()}
+                  Issued: {new Date(item.issued_at).toLocaleString()} - Expires: {new Date(item.expires_at).toLocaleString()}
                 </p>
                 {item.used_at && (
                   <p className="text-xs text-muted-foreground">
@@ -1266,26 +1253,26 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
       )}
 
       {activeSettingsSection === 'subjects' && (
-      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
-        <CardHeader>
-          <CardTitle>Subject Management</CardTitle>
-          <CardDescription>
+      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+        <div className="space-y-1 pb-2">
+          <h2 className="text-base">Subject Management</h2>
+          <p className="text-sm text-muted-foreground">
             See who owns which subject, change ownership, and share subjects between teachers.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </div>
+        <div className="space-y-4">
           {loadingSubjects ? (
             <p className="text-sm text-muted-foreground">Loading subject settings...</p>
           ) : subjects.length === 0 ? (
             <p className="text-sm text-muted-foreground">No subjects in this class yet.</p>
           ) : (
             subjects.map((subject) => (
-              <div key={subject.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-3">
+              <div key={subject.id} className="rounded-md bg-[hsl(var(--surface-2))] p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{subject.title}</p>
@@ -1306,7 +1293,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                       }}
                       disabled={savingSubjectId === subject.id}
                     >
-                      <SelectTrigger className="h-9 rounded-md border-0 bg-white text-sm">
+                      <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
                         <SelectValue placeholder="Select teacher" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1350,26 +1337,26 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
       )}
 
       {activeSettingsSection === 'import' && (
-      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
-        <CardHeader>
-          <CardTitle>Import Subject</CardTitle>
-          <CardDescription>
+      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+        <div className="space-y-1 pb-2">
+          <h2 className="text-base">Import Subject</h2>
+          <p className="text-sm text-muted-foreground">
             Import one of your subjects from another class. Copy duplicates content; Link reuses the same subject.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+          </p>
+        </div>
+        <div className="space-y-3">
           <div className="space-y-1">
             <Label>Source Subject</Label>
             <Select
               value={importSourceId || '__none'}
               onValueChange={(value) => setImportSourceId(value === '__none' ? '' : value)}
             >
-              <SelectTrigger className="h-9 rounded-md border-0 bg-white text-sm">
+              <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
                 <SelectValue placeholder="Select a subject" />
               </SelectTrigger>
               <SelectContent>
@@ -1389,7 +1376,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               value={importMode}
               onValueChange={(value) => setImportMode(value as 'copy' | 'link')}
             >
-              <SelectTrigger className="h-9 rounded-md border-0 bg-white text-sm">
+              <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
                 <SelectValue placeholder="Choose import mode" />
               </SelectTrigger>
               <SelectContent>
@@ -1413,23 +1400,23 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" onClick={() => void handleImport()} disabled={importing || !importSourceId}>
             {importing ? 'Importing...' : 'Import Subject'}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
       )}
 
       {activeSettingsSection === 'danger' && (
-      <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-none">
-        <CardHeader>
-          <CardTitle>Danger Zone</CardTitle>
-          <CardDescription>
+      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+        <div className="space-y-1 pb-2">
+          <h2 className="text-base">Danger Zone</h2>
+          <p className="text-sm text-muted-foreground">
             Archive class when it is no longer active.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div>
           {!isArchived ? (
-            <div className="flex items-center justify-between p-4 rounded-lg bg-zinc-200/70">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-[hsl(var(--surface-2))]">
               <div>
-                <h3 className="font-medium text-red-600">Archive Class</h3>
+                <h3 className="font-medium">Archive Class</h3>
                 <p className="text-sm text-muted-foreground">
                   Archiving this class hides it from active workflows while preserving stored data.
                 </p>
@@ -1450,7 +1437,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleArchiveClass} className="bg-red-600 hover:bg-red-700">
+                    <AlertDialogAction onClick={handleArchiveClass} className="bg-[hsl(var(--primary-foreground))] text-[hsl(var(--primary))] hover:opacity-90">
                       Archive Class
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -1458,22 +1445,25 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               </AlertDialog>
             </div>
           ) : (
-            <div className="flex items-center justify-center p-4 rounded-lg bg-zinc-200/70">
+            <div className="flex items-center justify-center p-4 rounded-lg bg-[hsl(var(--surface-2))]">
               <div className="text-center">
-                <h3 className="font-medium text-gray-600">Class Archived</h3>
+                <h3 className="font-medium text-foreground/80">Class Archived</h3>
                 <p className="text-sm text-muted-foreground">
                   This class has been archived and is no longer active.
                 </p>
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
       )}
       </div>
     </div>
   );
 }
+
+
+
 
 
 

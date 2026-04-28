@@ -550,8 +550,8 @@
     line-height: 1.3889;
   }
   .text-xl {
-    font-size: 22px !important;
-    line-height: 1.3636;
+    font-size: 18px !important;
+    line-height: 1.3889;
   }
   .font-bold,
   .font-semibold,
@@ -581,6 +581,28 @@
       --app-shell-space: 1.25rem;
     }
   }
+
+  /* Enforce consistent left/right/top spacing regardless of page-local centering wrappers */
+  .app-main-shell .mx-auto {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .app-main-shell [class*="max-w-"] {
+    max-width: none !important;
+  }
+
+  .class-shell {
+    @apply w-full space-y-4;
+  }
+
+  .class-panel {
+    @apply rounded-md border border-border/70 bg-[hsl(var(--surface-1))] p-3;
+  }
+
+  .class-panel-lg {
+    @apply rounded-md border border-border/70 bg-[hsl(var(--surface-1))] p-4;
+  }
 }
 
 @media (max-width: 767px) {
@@ -591,12 +613,6 @@
 }
 
 @layer utilities {
-  input::placeholder,
-  textarea::placeholder {
-    color: transparent !important;
-    opacity: 0 !important;
-  }
-
   .agenda-clean :is([class*="border"], [class*="divide-"]) {
     border-color: transparent !important;
     border-width: 0 !important;

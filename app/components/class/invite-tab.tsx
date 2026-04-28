@@ -1,7 +1,6 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -241,22 +240,22 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
   const validStudentEmails = studentEmails.filter(e => e.trim() !== '');
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4">
-      <Card className="bg-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
+    <div className="class-shell">
+      <section className="space-y-4">
+        <div className="space-y-1">
+          <h2 className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />
             Invite Students
-          </CardTitle>
-          <CardDescription className="text-sm">
+          </h2>
+          <p className="text-sm text-muted-foreground">
             Share the join code, QR code, or invite link with students to join your class.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <section className="rounded-xl bg-[hsl(var(--surface-2))] p-4">
+          </p>
+        </div>
+        <div className="space-y-4">
+          <section className="p-0">
             <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
               {studentQrCodeUrl ? (
-                <div className="flex flex-col items-center gap-2 rounded-lg bg-[hsl(var(--surface-1))] p-3">
+                <div className="flex flex-col items-center gap-2 rounded-lg bg-[hsl(var(--surface-2))] p-3">
                   <img src={studentQrCodeUrl} alt="QR Code" width={140} height={140} className="rounded" />
                   <p className="text-xs text-muted-foreground">Scan to join</p>
                 </div>
@@ -267,7 +266,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
                   <div className="flex gap-2">
                     <Input type="text" value={joinCode || 'Loading...'} readOnly className="font-mono text-base" />
                     <Button variant="outline" size="icon" onClick={() => copyToClipboard(joinCode || '', 'code')}>
-                      {copiedStudent ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                      {copiedStudent ? <Check className="h-4 w-4 text-foreground" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
@@ -277,7 +276,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
                     <div className="flex gap-2">
                       <Input type="text" value={studentInviteLink} readOnly className="text-sm" />
                       <Button variant="outline" size="icon" onClick={() => copyToClipboard(studentInviteLink, 'link')}>
-                        {copiedLink ? <Check className="h-4 w-4 text-green-600" /> : <LinkIcon className="h-4 w-4" />}
+                        {copiedLink ? <Check className="h-4 w-4 text-foreground" /> : <LinkIcon className="h-4 w-4" />}
                       </Button>
                     </div>
                   </div>
@@ -286,7 +285,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
             </div>
           </section>
 
-          <section className="rounded-xl bg-[hsl(var(--surface-2))] p-4 space-y-3">
+          <section className="space-y-3">
             <Label className="text-sm">Email Invites (optional)</Label>
             {studentEmails.map((email, index) => (
               <div key={index} className="flex gap-2">
@@ -303,7 +302,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
             </Button>
           </section>
 
-          <section className="rounded-xl bg-[hsl(var(--surface-2))] p-4 space-y-3">
+          <section className="space-y-3">
             <div className="space-y-1.5">
               <Label className="flex items-center gap-2 text-sm">
                 <Clock className="h-4 w-4" />
@@ -327,16 +326,16 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
               </div>
             ) : null}
           </section>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <Card className="bg-card">
-        <CardHeader className="pb-2">
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg">
+            <h2 className="flex items-center gap-2 text-lg">
               <BookUser className="h-5 w-5" />
               Invite Teachers
-            </CardTitle>
+            </h2>
             {preferences.invite_allow_teacher_invites ? (
               <Button variant="ghost" size="sm" onClick={() => setShowTeacherSection(!showTeacherSection)} className="gap-1">
                 {showTeacherSection ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -344,17 +343,17 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
               </Button>
             ) : null}
           </div>
-          <CardDescription className="text-sm">
+        </div>
+        <p className="text-sm text-muted-foreground">
             Invite other teachers to collaborate. {preferences.invite_allow_teacher_invites ? 'Teacher invites are enabled.' : 'Teacher invites are disabled in Manage settings.'}
-          </CardDescription>
-        </CardHeader>
+        </p>
 
         {preferences.invite_allow_teacher_invites && showTeacherSection ? (
-          <CardContent className="space-y-4">
-            <section className="rounded-xl bg-[hsl(var(--surface-2))] p-4">
+          <div className="space-y-4">
+            <section className="p-0">
               <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
                 {teacherQrCodeUrl ? (
-                  <div className="flex flex-col items-center gap-2 rounded-lg bg-[hsl(var(--surface-1))] p-3">
+                <div className="flex flex-col items-center gap-2 rounded-lg bg-[hsl(var(--surface-2))] p-3">
                     <img src={teacherQrCodeUrl} alt="Teacher QR Code" width={140} height={140} className="rounded" />
                     <p className="text-xs text-muted-foreground">Scan to join as teacher</p>
                   </div>
@@ -365,7 +364,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
                     <div className="flex gap-2">
                       <Input type="text" value={oneTimeTeacherCode || ''} readOnly placeholder="Generate one-time code" className="font-mono text-base" />
                       <Button variant="outline" size="icon" onClick={() => copyToClipboard(oneTimeTeacherCode || '', 'teacher')} disabled={!oneTimeTeacherCode}>
-                        {copiedTeacher ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                        {copiedTeacher ? <Check className="h-4 w-4 text-foreground" /> : <Copy className="h-4 w-4" />}
                       </Button>
                     </div>
                     <Button variant="outline" size="sm" onClick={generateOneTimeTeacherCode} disabled={isGeneratingTeacherCode}>
@@ -381,7 +380,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
                       <div className="flex gap-2">
                         <Input type="text" value={teacherInviteLink} readOnly className="text-sm" />
                         <Button variant="outline" size="icon" onClick={() => copyToClipboard(teacherInviteLink, 'teacherLink')}>
-                          {copiedTeacherLink ? <Check className="h-4 w-4 text-green-600" /> : <LinkIcon className="h-4 w-4" />}
+                          {copiedTeacherLink ? <Check className="h-4 w-4 text-foreground" /> : <LinkIcon className="h-4 w-4" />}
                         </Button>
                       </div>
                     </div>
@@ -390,7 +389,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
               </div>
             </section>
 
-            <section className="rounded-xl bg-[hsl(var(--surface-2))] p-4 space-y-3">
+            <section className="space-y-3">
               <Label className="text-sm">Email Invites</Label>
               {teacherEmails.map((email, index) => (
                 <div key={index} className="flex gap-2">
@@ -420,11 +419,12 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
                 </div>
               ) : null}
             </section>
-          </CardContent>
+          </div>
         ) : null}
-      </Card>
+      </section>
     </div>
   );
 }
+
 
 

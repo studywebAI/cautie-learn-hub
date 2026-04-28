@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, Clock3, CopyPlus, GripVertical, Pencil, Plus, Shuffle, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -360,32 +359,26 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
 
   if (!enabled) {
     return (
-      <Card className="border-0 bg-[hsl(var(--surface-1))]">
-        <CardHeader>
-          <CardTitle>School Schedule</CardTitle>
-          <CardDescription>Enable school schedule in Settings → Teaching Defaults to manage timetable.</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="class-panel-lg">
+        <h2>School Schedule</h2>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <Card className="border-0 bg-[hsl(var(--surface-1))]">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
+    <div className="class-shell">
+      <section className="class-panel">
+          <h2 className="flex items-center gap-2 text-base">
             <CalendarClock className="h-4 w-4" />
             Live School Schedule
-          </CardTitle>
-          <CardDescription>Drag timetable blocks between day/period cells. This updates schedule instantly.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2">
+          </h2>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
           <div className="rounded-xl bg-[hsl(var(--surface-2))] p-3">
             <p className="text-xs text-muted-foreground">Current class</p>
             <p className="mt-1 text-sm font-medium">{nowSummary.current ? nowSummary.current.title : 'No class right now'}</p>
             {nowSummary.current && (
               <p className="text-xs text-muted-foreground">
-                P{nowSummary.current.period_index} · {formatTime(nowSummary.current.start_time)} - {formatTime(nowSummary.current.end_time)}
+                P{nowSummary.current.period_index} - {formatTime(nowSummary.current.start_time)} - {formatTime(nowSummary.current.end_time)}
               </p>
             )}
           </div>
@@ -394,19 +387,16 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
             <p className="mt-1 text-sm font-medium">{nowSummary.next ? nowSummary.next.title : 'No more classes today'}</p>
             {nowSummary.next && (
               <p className="text-xs text-muted-foreground">
-                P{nowSummary.next.period_index} · {formatTime(nowSummary.next.start_time)} - {formatTime(nowSummary.next.end_time)}
+                P{nowSummary.next.period_index} - {formatTime(nowSummary.next.start_time)} - {formatTime(nowSummary.next.end_time)}
               </p>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <Card className="border-0 bg-[hsl(var(--surface-1))]">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Weekly Timetable</CardTitle>
-          <CardDescription>Drop onto any cell to move a class. Occupied targets are protected.</CardDescription>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
+      <section className="class-panel">
+          <h2 className="text-base">Weekly Timetable</h2>
+        <div className="mt-3 overflow-x-auto">
           <div className="hidden min-w-[840px] space-y-2 md:block">
             <div className="grid grid-cols-[80px_repeat(5,minmax(0,1fr))] gap-2">
               <div />
@@ -424,7 +414,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                   return (
                     <div
                       key={`${day.value}-${periodIndex}`}
-                      className="min-h-[78px] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-2"
+                      className="min-h-[78px] rounded-lg bg-[hsl(var(--surface-3))] p-2"
                       onDragOver={(event) => event.preventDefault()}
                       onDrop={(event) => {
                         event.preventDefault();
@@ -438,7 +428,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                           draggable
                           onDragStart={() => setDragSlotId(slot.id)}
                           onDragEnd={() => setDragSlotId(null)}
-                          className="h-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2"
+                          className="h-full rounded-md bg-[hsl(var(--surface-1))] p-2"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
@@ -492,17 +482,17 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
             {WEEK_DAYS.map((day) => {
               const daySlots = sortedSlots.filter((slot) => slot.day_of_week === day.value);
               return (
-                <div key={day.value} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-2">
+                <div key={day.value} className="rounded-lg bg-[hsl(var(--surface-3))] p-2">
                   <p className="mb-2 text-xs font-semibold text-muted-foreground">{day.label}</p>
                   {daySlots.length === 0 ? (
                     <p className="text-xs text-muted-foreground">No slots</p>
                   ) : (
                     <div className="space-y-2">
                       {daySlots.map((slot) => (
-                        <div key={slot.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2">
+                        <div key={slot.id} className="rounded-md bg-[hsl(var(--surface-1))] p-2">
                           <div className="flex items-center justify-between gap-2">
                             <div>
-                              <p className="text-xs font-semibold">P{slot.period_index} · {slot.title}</p>
+                              <p className="text-xs font-semibold">P{slot.period_index} - {slot.title}</p>
                               <p className="text-[11px] text-muted-foreground">{formatTime(slot.start_time)} - {formatTime(slot.end_time)}</p>
                             </div>
                             <div className="flex items-center gap-1">
@@ -525,17 +515,15 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <Card className="border-0 bg-[hsl(var(--surface-1))]">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
+      <section className="class-panel">
+          <h2 className="flex items-center gap-2 text-base">
             <Plus className="h-4 w-4" />
             Quick Add Slot
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-5">
+          </h2>
+        <div className="mt-3 grid gap-3 md:grid-cols-5">
           <div className="space-y-1">
             <Label>Day</Label>
             <Select value={newSlot.day_of_week} onValueChange={(value) => setNewSlot((prev) => ({ ...prev, day_of_week: value }))}>
@@ -573,8 +561,8 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
               {saving ? 'Saving...' : 'Add Slot'}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       <Dialog open={Boolean(editingSlot)} onOpenChange={(open) => !open && setEditingSlot(null)}>
         <DialogContent>
@@ -622,3 +610,5 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
     </div>
   );
 }
+
+

@@ -1,0 +1,97 @@
+# Unified UX Cleanup + Class/Grades Refactor
+
+Status tracking for the requested 100% pass.
+
+- [x] 1. Global layout consistency (shared shell spacing token)
+- [x] 2. Class tab header and boxed UI rollback
+- [x] 3. Sidebar recents/tool sources restoration
+- [x] 4. Share tab refactor (single Teacher/All switch)
+- [x] 5. Invite tab simplification
+- [x] 6. Attendance flow correction (autosave, no staged flow)
+- [x] 7. Grades UX rewrite (selection bulk flow, flexible grade values)
+- [x] 8. Assignment/editor cleanup pass
+- [x] 9. Theme/contrast normalization
+- [x] 10. Role and labeling integrity
+- [x] 11. SQL deliverable
+- [x] 12. Final quality sweep click-through
+
+Notes:
+- SQL migration file: `supabase/migrations/20260428_class_ui_and_grading_perf_hardening.sql`
+- Regression sweep executed: lint + production build.
+
+Latest implementation notes (most recent batches):
+- Major class-shell token rollout (checklist scope only):
+  - Standardized class tab root wrappers to shared shell token (`.class-shell`) in core class/grades flows.
+  - Converted repeated section wrappers to shared panel tokens (`.class-panel`, `.class-panel-lg`) for cleaner consistency.
+  - Cleaned newly surfaced UTF separators in grades summaries/history copy.
+  - Files:
+    - `app/components/class/attendance-tab.tsx`
+    - `app/components/class/grades-tab.tsx`
+    - `app/components/class/logs-tab.tsx`
+    - `app/components/class/schedule-tab.tsx`
+- Large consistency batch (strictly within unified UX + class/grades scope):
+  - Added reusable class-tab shell primitives to reduce repeated wrapper styles and keep spacing/visual rhythm aligned:
+    - `app/globals.css` (`.class-shell`, `.class-panel`, `.class-panel-lg`)
+  - Removed global placeholder suppression so teacher-facing placeholder copy is visible again.
+  - Applied extra flattening/consistency pass on class tab shells and surfaces:
+    - `app/components/class/grades-tab.tsx`
+    - `app/components/class/logs-tab.tsx`
+    - `app/components/class/schedule-tab.tsx`
+    - `app/components/class/share-tab.tsx`
+  - Normalized UTF-8 encoding on edited class files to prevent hidden character artifacts.
+- Global shell consistency hardening:
+  - Removed page-local settings padding/max-width wrapper so `/settings` inherits shared shell spacing exactly.
+  - File:
+    - `app/(main)/settings/page.tsx`
+- Class tabs visual flatten pass:
+  - Removed remaining heavy bordered wrappers from class tabs while keeping functional grouping/readability.
+  - Files:
+    - `app/components/class/grades-tab.tsx`
+    - `app/components/class/group-tab.tsx`
+    - `app/components/class/logs-tab.tsx`
+    - `app/components/class/schedule-tab.tsx`
+    - `app/components/class/attendance-tab.tsx`
+- Invite tab simplification follow-through:
+  - Flattened QR/info surfaces to unified subtle surfaces.
+  - File:
+    - `app/components/class/invite-tab.tsx`
+- Stability follow-up:
+  - Repaired `grades-tab.tsx` encoding and revalidated production build.
+- Final quality sweep follow-through inside class/grades scope:
+  - Removed remaining empty input placeholders and replaced with explicit teacher-facing copy in grades and attendance flows.
+  - Normalized grade history/report separators to clean UTF-safe text.
+  - Tightened chapter editor input placeholders for assignment/editor clarity.
+  - Files:
+    - `app/components/class/grades-tab.tsx`
+    - `app/components/class/attendance-tab.tsx`
+    - `app/components/class/ChapterEditor.tsx`
+- Framework stability pass to support unified UX rollout:
+  - Build script normalized to standard Next build invocation (removed custom NODE_ENV injection):
+    - `package.json`
+  - Next proxy convention migration and output tracing root hardening:
+    - `proxy.ts` (renamed from `middleware.ts`)
+    - `next.config.ts`
+  - Share composer simplification by removing duplicate mode controls:
+    - `app/components/class/share-tab.tsx`
+  - Repaired invalid file encoding in grades module (UTF-8 normalization):
+    - `app/components/class/grades-tab.tsx`
+- Removed remaining box-heavy borders from class settings section shells and class tab content shells while preserving row separators for readability.
+- Normalized attendance active states to theme-accent highlighting (no red/green dominance).
+- Tightened grades wizard labels (subject + custom free input flow) and removed leftover decorative icon usage.
+- Fixed schedule break label encoding artifact in class settings timetable list.
+- Flattened class settings section shells and removed card wrappers; normalized destructive styling to theme accent:
+  - `app/components/dashboard/teacher/class-settings.tsx`
+- Flattened class logs tab wrappers and normalized error surface:
+  - `app/components/class/logs-tab.tsx`
+- Flattened class schedule tab wrappers (disabled/live/timetable/quick-add sections):
+  - `app/components/class/schedule-tab.tsx`
+- Flattened grades views further (history/reports/edit/new/detail shells and copy cleanup):
+  - `app/components/class/grades-tab.tsx`
+- Flattened group/attendance fallback and empty states:
+  - `app/components/class/group-tab.tsx`
+  - `app/components/class/attendance-tab.tsx`
+- Invite/share/sidebar shell consistency and recents behavior updates:
+  - `app/components/class/invite-tab.tsx`
+  - `app/components/class/share-tab.tsx`
+  - `app/components/sidebar.tsx`
+  - `app/components/recents-sidebar.tsx`
