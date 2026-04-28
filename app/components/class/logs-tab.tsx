@@ -505,7 +505,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
           </div>
 
           {loadError && (
-            <div className="rounded-md border border-border/70 bg-[hsl(var(--surface-2))] px-3 py-2 text-xs text-foreground/80">
+            <div className="rounded-md bg-[hsl(var(--surface-1))] px-3 py-2 text-xs text-foreground/80">
               {loadError}
             </div>
           )}
@@ -569,7 +569,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                     </div>
 
                     {(leadLog.metadata as any)?.custom_message && (
-                      <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 py-1.5 text-xs">
+                      <div className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5 text-xs">
                         {String((leadLog.metadata as any)?.custom_message)}
                       </div>
                     )}
@@ -578,7 +578,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                       {group.logs.map((log) => {
                         const diffLines = getDiffSummary(log, isDutch);
                         return (
-                          <div key={log.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 py-1.5">
+                          <div key={log.id} className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5">
                             <p className="text-xs font-medium">{formatActionLabel(log, isDutch)}</p>
                             {diffLines.map((line) => (
                               <p key={line} className="text-[11px] text-muted-foreground">{line}</p>

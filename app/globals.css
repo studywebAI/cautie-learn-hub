@@ -597,11 +597,11 @@
   }
 
   .class-panel {
-    @apply rounded-md border border-border/70 bg-[hsl(var(--surface-1))] p-3;
+    @apply rounded-md bg-[hsl(var(--surface-2))] p-3;
   }
 
   .class-panel-lg {
-    @apply rounded-md border border-border/70 bg-[hsl(var(--surface-1))] p-4;
+    @apply rounded-md bg-[hsl(var(--surface-2))] p-4;
   }
 }
 

@@ -241,7 +241,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
 
   return (
     <div className="class-shell">
-      <section className="space-y-4">
+      <section className="class-panel-lg space-y-4">
         <div className="space-y-1">
           <h2 className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />
@@ -255,7 +255,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
           <section className="p-0">
             <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
               {studentQrCodeUrl ? (
-                <div className="flex flex-col items-center gap-2 rounded-lg bg-[hsl(var(--surface-2))] p-3">
+                <div className="flex flex-col items-center gap-2 rounded-md bg-[hsl(var(--surface-2))] p-3">
                   <img src={studentQrCodeUrl} alt="QR Code" width={140} height={140} className="rounded" />
                   <p className="text-xs text-muted-foreground">Scan to join</p>
                 </div>
@@ -329,9 +329,9 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section className="class-panel-lg space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <h2 className="flex items-center gap-2 text-lg">
               <BookUser className="h-5 w-5" />
               Invite Teachers
@@ -353,7 +353,7 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
             <section className="p-0">
               <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
                 {teacherQrCodeUrl ? (
-                <div className="flex flex-col items-center gap-2 rounded-lg bg-[hsl(var(--surface-2))] p-3">
+                <div className="flex flex-col items-center gap-2 rounded-md bg-[hsl(var(--surface-2))] p-3">
                     <img src={teacherQrCodeUrl} alt="Teacher QR Code" width={140} height={140} className="rounded" />
                     <p className="text-xs text-muted-foreground">Scan to join as teacher</p>
                   </div>

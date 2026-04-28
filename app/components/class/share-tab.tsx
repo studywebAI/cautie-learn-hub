@@ -125,7 +125,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
       </div>
 
       {isTeacher && (
-        <div className="space-y-3">
+        <div className="class-panel space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" variant={postKind === 'chat' ? 'default' : 'outline'} className="h-8" onClick={() => setPostKind('chat')}><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Chat</Button>
             <Button size="sm" variant={postKind === 'picture' ? 'default' : 'outline'} className="h-8" onClick={() => setPostKind('picture')}><ImageIcon className="mr-1.5 h-3.5 w-3.5" />Picture</Button>
@@ -173,7 +173,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
       <div className="space-y-2">
         {isLoading && <div className="text-xs text-foreground/70">Loading shared posts...</div>}
         {visiblePosts.map((post) => (
-          <article key={post.id} className="border-b border-border/70 py-3">
+          <article key={post.id} className="class-panel">
             <div className="mb-1 flex items-center justify-between text-xs text-foreground/65">
               <span>{post.audience === 'teacher' ? 'Teacher' : 'All'}</span>
               <span>{new Date(post.createdAt).toLocaleString()}</span>

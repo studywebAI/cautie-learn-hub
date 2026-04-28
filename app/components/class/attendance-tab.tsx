@@ -572,7 +572,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-info-${student.id}`}
                   variant="outline"
                   size="sm"
-                  className="h-10 gap-1 rounded-xl px-2 text-xs"
+                  className="h-10 gap-1 rounded-md px-2 text-xs"
                   aria-label={t.viewTimeline}
                   onClick={() => setTimelineStudentId(student.id)}
                   title={t.viewTimeline}
@@ -585,7 +585,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-homework-${student.id}`}
                   variant="outline"
                   size="sm"
-                  className={`h-10 gap-1 rounded-xl px-2 text-xs ${student.hasHomeworkIncomplete ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
+                  className={`h-10 gap-1 rounded-md px-2 text-xs ${student.hasHomeworkIncomplete ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
                   aria-label={t.homeworkIncomplete}
                   disabled={processingStudentIds.has(student.id)}
                   onClick={() => handleFlagToggle(student.id, 'hasHomeworkIncomplete', !student.hasHomeworkIncomplete)}
@@ -599,7 +599,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-late-${student.id}`}
                   variant="outline"
                   size="sm"
-                  className={`h-10 gap-1 rounded-xl px-2 text-xs ${student.wasTooLate ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
+                  className={`h-10 gap-1 rounded-md px-2 text-xs ${student.wasTooLate ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
                   aria-label={t.late}
                   disabled={processingStudentIds.has(student.id)}
                   onClick={() => handleFlagToggle(student.id, 'wasTooLate', !student.wasTooLate)}
@@ -613,7 +613,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-custom-${student.id}`}
                   variant="outline"
                   size="sm"
-                  className="h-10 gap-1 rounded-xl px-2 text-xs"
+                  className="h-10 gap-1 rounded-md px-2 text-xs"
                   aria-label={t.addAttendanceNote}
                   onClick={() => {
                     setSelectedStudent(student);
@@ -631,7 +631,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-present-${student.id}`}
                   variant="outline"
                   size="sm"
-                  className={`h-10 gap-1 rounded-xl px-2 text-xs ${student.isPresent === true ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
+                  className={`h-10 gap-1 rounded-md px-2 text-xs ${student.isPresent === true ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
                   aria-label={t.present}
                   disabled={processingStudentIds.has(student.id)}
                   onClick={() => handleAttendanceToggle(student.id, true)}
@@ -645,7 +645,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-absent-${student.id}`}
                   variant="outline"
                   size="sm"
-                  className={`h-10 gap-1 rounded-xl px-2 text-xs ${student.isPresent === false ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
+                  className={`h-10 gap-1 rounded-md px-2 text-xs ${student.isPresent === false ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
                   aria-label={t.absent}
                   disabled={processingStudentIds.has(student.id)}
                   onClick={() => handleAttendanceToggle(student.id, false)}
@@ -681,7 +681,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
       </div>
 
       {students.length === 0 && (
-        <div className="rounded-md bg-[hsl(var(--surface-2))] py-10 text-center text-muted-foreground">
+        <div className="class-panel py-10 text-center text-muted-foreground">
           {t.noStudentsYet}
         </div>
       )}

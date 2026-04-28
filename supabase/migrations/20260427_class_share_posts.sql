@@ -14,7 +14,7 @@ create table if not exists public.class_share_posts (
   source_href text null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
-);
+);a
 
 create index if not exists idx_class_share_posts_class_created_at
   on public.class_share_posts (class_id, created_at desc);

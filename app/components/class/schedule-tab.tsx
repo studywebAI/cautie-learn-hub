@@ -373,7 +373,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
             Live School Schedule
           </h2>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <div className="rounded-xl bg-[hsl(var(--surface-2))] p-3">
+          <div className="rounded-md bg-[hsl(var(--surface-2))] p-3">
             <p className="text-xs text-muted-foreground">Current class</p>
             <p className="mt-1 text-sm font-medium">{nowSummary.current ? nowSummary.current.title : 'No class right now'}</p>
             {nowSummary.current && (
@@ -382,7 +382,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
               </p>
             )}
           </div>
-          <div className="rounded-xl bg-[hsl(var(--surface-2))] p-3">
+          <div className="rounded-md bg-[hsl(var(--surface-2))] p-3">
             <p className="text-xs text-muted-foreground">Next class</p>
             <p className="mt-1 text-sm font-medium">{nowSummary.next ? nowSummary.next.title : 'No more classes today'}</p>
             {nowSummary.next && (
@@ -484,9 +484,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
               return (
                 <div key={day.value} className="rounded-lg bg-[hsl(var(--surface-3))] p-2">
                   <p className="mb-2 text-xs font-semibold text-muted-foreground">{day.label}</p>
-                  {daySlots.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No slots</p>
-                  ) : (
+                  {daySlots.length === 0 ? null : (
                     <div className="space-y-2">
                       {daySlots.map((slot) => (
                         <div key={slot.id} className="rounded-md bg-[hsl(var(--surface-1))] p-2">

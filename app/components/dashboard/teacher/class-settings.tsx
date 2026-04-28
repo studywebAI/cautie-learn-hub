@@ -747,7 +747,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
   return (
     <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
       <aside className="lg:sticky lg:top-4 self-start">
-        <div className="space-y-1 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
+        <div className="space-y-1 rounded-md bg-[hsl(var(--surface-2))] p-3">
             {settingsSections.map((section) => (
               <Button
                 key={section.id}
@@ -788,7 +788,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <Input
               value={classDescription}
               onChange={(e) => setClassDescription(e.target.value)}
-              placeholder="Optional class description"
+              placeholder="Class description"
               disabled={loadingClassConfig || savingProfile}
             />
           </div>
@@ -884,7 +884,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Show class average in grades</p>
-              <p className="text-xs text-muted-foreground">Toggle class-level average cards in grades.</p>
+              <p className="text-xs text-muted-foreground">Show or hide class-level average cards.</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">
@@ -903,7 +903,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Require attendance confirmation</p>
-              <p className="text-xs text-muted-foreground">Prompt before attendance changes are saved.</p>
+              <p className="text-xs text-muted-foreground">Require confirmation before attendance changes.</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">
@@ -922,7 +922,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Allow teacher invite actions</p>
-              <p className="text-xs text-muted-foreground">Enable or disable teacher invite section.</p>
+              <p className="text-xs text-muted-foreground">Enable teacher invite actions.</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">
@@ -941,7 +941,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Enable school schedule</p>
-              <p className="text-xs text-muted-foreground">Turns on class timetable management for this class.</p>
+              <p className="text-xs text-muted-foreground">Enable class timetable management.</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">
@@ -960,7 +960,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
             <div>
               <p className="text-sm font-medium">Show school schedule to students</p>
-              <p className="text-xs text-muted-foreground">Students can view timetable blocks in agenda/dashboard when enabled.</p>
+              <p className="text-xs text-muted-foreground">Allow students to view timetable blocks.</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">
@@ -1037,7 +1037,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, period_index: e.target.value }))}
                 inputMode="numeric"
               />
-              <p className="text-xs text-muted-foreground">Use 1, 2, 3...</p>
+              <p className="text-xs text-muted-foreground">Use whole numbers like 1, 2, 3.</p>
             </div>
             <div className="space-y-1">
               <Label>Title</Label>
@@ -1083,7 +1083,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>Subject (optional)</Label>
+              <Label>Subject</Label>
               <Select
                 value={newScheduleSlot.subject_id || '__none'}
                 onValueChange={(value) =>
@@ -1128,7 +1128,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           </div>
 
           <div className="space-y-1">
-            <Label>Notes (optional)</Label>
+            <Label>Notes</Label>
             <Input
               value={newScheduleSlot.notes}
               onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, notes: e.target.value }))}
@@ -1144,16 +1144,16 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             {loadingSchedule ? (
               <p className="text-sm text-muted-foreground">Loading schedule slots...</p>
             ) : scheduleSlots.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No schedule slots yet.</p>
+              <p className="text-sm text-foreground/70">No schedule slots yet.</p>
             ) : (
               scheduleSlots.map((slot) => (
-                <div key={slot.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 flex items-center justify-between gap-3">
+                <div key={slot.id} className="rounded-md bg-[hsl(var(--surface-2))] p-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="font-medium">
                       {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, slot.day_of_week - 1)]} - P{slot.period_index} - {slot.title}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {slot.start_time} - {slot.end_time} {slot.is_break ? '· Break' : ''}
+                      {slot.start_time} - {slot.end_time} {slot.is_break ? '- Break' : ''}
                     </p>
                   </div>
                   <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" size="sm" onClick={() => void deleteScheduleSlot(slot.id)}>
@@ -1177,7 +1177,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           {loadingJoinRequests ? (
             <p className="text-sm text-muted-foreground">Loading requests...</p>
           ) : pendingJoinRequests.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No pending teacher join requests.</p>
+            <p className="text-sm text-foreground/70">No pending teacher requests.</p>
           ) : (
             pendingJoinRequests.map((request) => (
               <div key={request.id} className="rounded-md bg-[hsl(var(--surface-2))] p-3 flex items-center justify-between gap-3">
@@ -1218,14 +1218,14 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
         <div className="space-y-1 pb-2">
           <h2 className="text-base">Teacher Invite Activity</h2>
           <p className="text-sm text-muted-foreground">
-            Categorized by status so you can track new teacher invite flow end-to-end.
+            Track teacher invite code activity by status.
           </p>
         </div>
         <div className="space-y-3">
           {loadingInviteActivity ? (
             <p className="text-sm text-muted-foreground">Loading teacher invite activity...</p>
           ) : inviteActivity.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No teacher invite activity yet.</p>
+            <p className="text-sm text-foreground/70">No invite activity yet.</p>
           ) : (
             inviteActivity.map((item) => (
               <div key={item.id} className="rounded-md bg-[hsl(var(--surface-2))] p-3">
@@ -1269,7 +1269,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           {loadingSubjects ? (
             <p className="text-sm text-muted-foreground">Loading subject settings...</p>
           ) : subjects.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No subjects in this class yet.</p>
+            <p className="text-sm text-foreground/70">No subjects in this class yet.</p>
           ) : (
             subjects.map((subject) => (
               <div key={subject.id} className="rounded-md bg-[hsl(var(--surface-2))] p-4 space-y-3">
@@ -1346,7 +1346,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
         <div className="space-y-1 pb-2">
           <h2 className="text-base">Import Subject</h2>
           <p className="text-sm text-muted-foreground">
-            Import one of your subjects from another class. Copy duplicates content; Link reuses the same subject.
+            Import a subject from another class by copy or link mode.
           </p>
         </div>
         <div className="space-y-3">
@@ -1388,7 +1388,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
 
           {importMode === 'copy' && (
             <div className="space-y-1">
-              <Label>New Subject Title (optional)</Label>
+              <Label>New Subject Title</Label>
               <Input
                 value={importTitle}
                 onChange={(e) => setImportTitle(e.target.value)}
@@ -1418,7 +1418,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <div>
                 <h3 className="font-medium">Archive Class</h3>
                 <p className="text-sm text-muted-foreground">
-                  Archiving this class hides it from active workflows while preserving stored data.
+                  Archive this class to remove it from active workflows.
                 </p>
               </div>
               <AlertDialog>
@@ -1461,6 +1461,8 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     </div>
   );
 }
+
+
 
 
 

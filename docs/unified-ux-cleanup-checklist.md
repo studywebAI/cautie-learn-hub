@@ -20,6 +20,52 @@ Notes:
 - Regression sweep executed: lint + production build.
 
 Latest implementation notes (most recent batches):
+- Class tab surface normalization pass:
+  - Removed remaining heavy borders from shared class panel tokens (`.class-panel`, `.class-panel-lg`) to enforce flat surfaces.
+  - File:
+    - `app/globals.css`
+- Group/Logs/Schedule/Settings cleanup:
+  - Flattened remaining bordered wrappers and neutralized residual high-contrast artifacts in:
+    - `app/components/class/group-tab.tsx`
+    - `app/components/class/logs-tab.tsx`
+    - `app/components/class/schedule-tab.tsx`
+    - `app/components/dashboard/teacher/class-settings.tsx`
+  - Replaced residual non-ASCII schedule separator with ASCII `- Break` to prevent rendering/encoding artifacts.
+- Final panel-token completion sweep:
+  - Promoted invite teacher/student containers to shared large panel tokens.
+  - Promoted share composer + post items to shared panel tokens.
+  - Standardized grades action tiles onto shared panel token with clearer hover delta.
+  - Files:
+    - `app/components/class/invite-tab.tsx`
+    - `app/components/class/share-tab.tsx`
+    - `app/components/class/grades-tab.tsx`
+- Final shape consistency sweep:
+  - Normalized remaining rounded-heavy controls/surfaces in attendance, schedule, and group flows to match the flattened class shell direction.
+  - Upgraded attendance empty-state wrapper to shared panel token.
+  - Files:
+    - `app/components/class/attendance-tab.tsx`
+    - `app/components/class/schedule-tab.tsx`
+    - `app/components/class/group-tab.tsx`
+- Final class-tab shell parity pass:
+  - Brought Group tab onto shared shell/panel tokens to match the rest of class/grades surfaces.
+  - Files:
+    - `app/components/class/group-tab.tsx`
+- Grades UX completion pass (selection-based flow):
+  - Added shift-range multi-select in grade rows.
+  - Added quick bulk actions for selected rows:
+    - copy first selected grade
+    - copy first selected notes
+  - Preserved flexible manual grade values and feedback persistence.
+  - File:
+    - `app/components/class/grades-tab.tsx`
+- Share tab wording cleanup:
+  - Replaced optional-style resource label text with direct action copy.
+  - File:
+    - `app/components/class/share-tab.tsx`
+- Settings wording cleanup:
+  - Shortened helper text to reduce obvious/explainer clutter in General settings.
+  - File:
+    - `app/(main)/settings/page.tsx`
 - Major class-shell token rollout (checklist scope only):
   - Standardized class tab root wrappers to shared shell token (`.class-shell`) in core class/grades flows.
   - Converted repeated section wrappers to shared panel tokens (`.class-panel`, `.class-panel-lg`) for cleaner consistency.
