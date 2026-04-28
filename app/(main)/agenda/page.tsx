@@ -642,14 +642,14 @@ function AgendaPageContent() {
               {isTeacher && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-9 rounded-xl bg-[hsl(var(--surface-2))] px-3.5 hover:bg-[hsl(var(--surface-3))]">
+                    <Button variant="ghost" size="sm" className="h-9 rounded-xl bg-[hsl(var(--surface-2))] px-3.5 text-foreground/90 hover:bg-[hsl(var(--surface-3))]">
                       <SlidersHorizontal className="mr-2 h-4 w-4" />
                       Classes ({overlayClassIds.length})
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-80 rounded-xl border-0 bg-[hsl(var(--surface-1))] p-3 shadow-md">
                     <div className="space-y-2.5">
-                      <p className="text-sm text-muted-foreground">Choose classes</p>
+                      <p className="text-sm text-foreground/85">Choose classes</p>
                       <div className="max-h-72 space-y-1.5 overflow-auto pr-1">
                         {teacherClasses.map((classItem) => {
                           const checked = overlayClassIds.includes(classItem.id);
@@ -658,7 +658,7 @@ function AgendaPageContent() {
                               key={classItem.id}
                               type="button"
                               onClick={() => toggleOverlayClass(classItem.id)}
-                              className="flex w-full items-center justify-between gap-2 rounded-lg bg-[hsl(var(--surface-2))] px-2.5 py-2 text-left hover:bg-[hsl(var(--surface-3))]"
+                              className="flex w-full items-center justify-between gap-2 rounded-lg bg-[hsl(var(--surface-2))] px-2.5 py-2 text-left text-foreground/90 hover:bg-[hsl(var(--surface-3))]"
                             >
                               <span className="text-sm">{classItem.name}</span>
                               <Checkbox

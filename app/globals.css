@@ -568,6 +568,21 @@
   }
 }
 
+@layer components {
+  .app-main-shell {
+    --app-shell-space: 1rem;
+    padding-top: var(--app-shell-space);
+    padding-left: var(--app-shell-space);
+    padding-right: var(--app-shell-space);
+    padding-bottom: var(--app-shell-space);
+  }
+  @media (min-width: 768px) {
+    .app-main-shell {
+      --app-shell-space: 1.25rem;
+    }
+  }
+}
+
 @media (max-width: 767px) {
   :root {
     --type-page: 20px;

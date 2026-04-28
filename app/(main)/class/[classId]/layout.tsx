@@ -58,7 +58,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
                   "inline-flex h-11 items-center gap-2 rounded-xl px-4 text-[13px] transition-colors",
                   isActive
                     ? "bg-[hsl(var(--surface-3))] text-foreground"
-                    : "bg-[hsl(var(--surface-2))] text-muted-foreground hover:text-foreground"
+                    : "bg-[hsl(var(--surface-2))] text-foreground/85 hover:bg-[hsl(var(--surface-3))] hover:text-foreground"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -68,7 +68,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
           })}
           <button
             type="button"
-            className="ml-auto inline-flex h-9 items-center rounded-xl bg-[hsl(var(--surface-2))] px-3 text-[12px] text-muted-foreground hover:text-foreground"
+            className="ml-auto inline-flex h-9 items-center rounded-xl bg-[hsl(var(--surface-2))] px-3 text-[12px] text-foreground/85 hover:bg-[hsl(var(--surface-3))] hover:text-foreground"
             onClick={() => {
               window.dispatchEvent(new Event('cautie:open-class-dropdown'));
             }}

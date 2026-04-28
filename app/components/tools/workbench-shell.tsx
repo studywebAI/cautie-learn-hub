@@ -26,7 +26,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
     <div className="relative h-full overflow-hidden">
       <div className="flex h-full">
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className={cn('flex items-center justify-between', isPhone ? 'px-3 pb-2 pt-3' : isTablet ? 'px-5 pb-2.5 pt-4' : 'px-7 pb-2 pt-5')}>
+          <div className={cn('flex items-center justify-between', isPhone ? 'px-3 pb-2 pt-3' : isTablet ? 'px-4 pb-2 pt-4' : 'px-5 pb-2 pt-5')}>
             <div>
               <h1 className="text-lg font-normal">{title}</h1>
               {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
@@ -37,7 +37,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               </Button>
             )}
           </div>
-          <div className={cn('flex-1 min-h-0', isPhone ? 'px-3 pb-4' : isTablet ? 'px-5 pb-5' : 'px-7 pb-7')}>
+          <div className={cn('flex-1 min-h-0', isPhone ? 'px-3 pb-4' : isTablet ? 'px-4 pb-5' : 'px-5 pb-7')}>
             {topAccessory && <div className="mb-3">{topAccessory}</div>}
             {children}
           </div>

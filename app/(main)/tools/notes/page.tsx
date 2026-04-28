@@ -200,6 +200,7 @@ function NotesPageContent() {
   const [showLaunchScreen, setShowLaunchScreen] = useState(Boolean(launchRequested && taskId && studysetId));
   const [launchStageIndex, setLaunchStageIndex] = useState(0);
   const [saveToRecents, setSaveToRecents] = useState(true);
+  const [isSharingToClass, setIsSharingToClass] = useState(false);
   const notesContentRef = useRef<HTMLDivElement>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
@@ -898,6 +899,29 @@ function NotesPageContent() {
     persistNotesState(nextHtml);
   }, [editMode, persistNotesState]);
 
+  const handleShareToClass = useCallback(async () => {
+    if (!classId || !generatedNotes) return;
+    setIsSharingToClass(true);
+    try {
+      const sections = editableSections.length;
+      const res = await fetch(`/api/classes/${classId}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          audience: 'teacher',
+          text: `Shared notes: ${customTitle.trim() || 'Untitled notes'}`,
+          attachmentLabel: `${sections} sections`,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to share notes');
+      toast({ title: 'Shared to class', description: 'Notes were posted in class share.' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Share failed', description: error?.message || 'Could not share notes.' });
+    } finally {
+      setIsSharingToClass(false);
+    }
+  }, [classId, customTitle, editableSections.length, generatedNotes, toast]);
+
   if (showLaunchScreen) {
     const currentStage = launchStages[Math.min(launchStageIndex, launchStages.length - 1)];
     return (
@@ -977,6 +1001,11 @@ function NotesPageContent() {
                 getHtml={() => noteHtml || notesToHtml(generatedNotes)}
                 getPrintHtml={() => notesContentRef.current?.innerHTML || noteHtml || notesToHtml(generatedNotes)}
               />
+              {classId ? (
+                <Button variant="outline" size="sm" className="rounded-full h-8" onClick={() => void handleShareToClass()} disabled={isSharingToClass}>
+                  <span className="text-xs">{isSharingToClass ? 'Sharing...' : 'Share to class'}</span>
+                </Button>
+              ) : null}
             </div>
           </div>
 

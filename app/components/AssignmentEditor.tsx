@@ -879,12 +879,16 @@ export function AssignmentEditor({
   };
 
   const handleGripPointerDown = (e: React.PointerEvent, blockId: string) => {
+    if (!showTeacherControls) return;
     e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     startDragBlock(blockId);
   };
 
   const handleTemplatePointerDown = (e: React.PointerEvent, templateId: string) => {
+    if (!showTeacherControls) return;
     e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     startDragTemplate(templateId);
   };
 
@@ -896,7 +900,10 @@ export function AssignmentEditor({
           addBlock(template, dropTarget.rowIndex, dropTarget.column);
         }
       } else {
-        moveBlock(dragSource.id, dropTarget.rowIndex, dropTarget.column);
+        const sourceRowIndex = rows.findIndex((row) => row.blocks.some((b) => b.id === dragSource.id));
+        if (!(sourceRowIndex === dropTarget.rowIndex && dropTarget.column === undefined)) {
+          moveBlock(dragSource.id, dropTarget.rowIndex, dropTarget.column);
+        }
       }
     }
     setIsDragging(false);
@@ -938,23 +945,39 @@ export function AssignmentEditor({
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
+    if (!showTeacherControls) return;
     updateDropTargetFromPoint(e.clientX, e.clientY);
   };
 
   useEffect(() => {
+    const handleGlobalPointerMove = (event: PointerEvent) => {
+      if (!isDragging || !showTeacherControls) return;
+      updateDropTargetFromPoint(event.clientX, event.clientY);
+    };
     const handleGlobalPointerUp = () => {
       if (isDragging) {
         handleMouseUp();
       }
     };
-    
+    const handleGlobalCancel = () => {
+      if (!isDragging) return;
+      setIsDragging(false);
+      setDragSource(null);
+      setDropTarget(null);
+    };
+    window.addEventListener('pointermove', handleGlobalPointerMove);
     window.addEventListener('pointerup', handleGlobalPointerUp);
+    window.addEventListener('pointercancel', handleGlobalCancel);
+    window.addEventListener('blur', handleGlobalCancel);
     window.addEventListener('touchend', handleGlobalPointerUp);
     return () => {
+      window.removeEventListener('pointermove', handleGlobalPointerMove);
       window.removeEventListener('pointerup', handleGlobalPointerUp);
+      window.removeEventListener('pointercancel', handleGlobalCancel);
+      window.removeEventListener('blur', handleGlobalCancel);
       window.removeEventListener('touchend', handleGlobalPointerUp);
     };
-  }, [isDragging, dragSource, dropTarget]);
+  }, [isDragging, showTeacherControls, dragSource, dropTarget]);
 
   const handleSilentSave = useCallback(async () => {
     if (!assignmentId || assignmentId === 'undefined') return;
@@ -1118,6 +1141,18 @@ export function AssignmentEditor({
     const canEditBlock = showTeacherControls && selectedBlock === block.id;
     const renderReadOnlyActions = () => {
       if (!isTeacher || isEditMode) return null;
+      const referenceAnswer = (() => {
+        if (block.type === 'multiple_choice') {
+          const answers = (block.data.options || [])
+            .filter((option: any) => option?.correct)
+            .map((option: any) => option?.text || '...')
+            .join(', ');
+          return answers || 'No reference answer set.';
+        }
+        if (block.type === 'open_question') return String(block.data.correct_answer || 'No reference answer set.');
+        if (block.type === 'fill_in_blank') return ((block.data.answers || []) as string[]).filter(Boolean).join(', ') || 'No reference answer set.';
+        return '';
+      })();
       return (
         <div className="mt-3 border-t border-border/60 pt-3">
           <div className="flex flex-wrap gap-2">
@@ -1154,6 +1189,16 @@ export function AssignmentEditor({
           </div>
           {expandedAnswersBlockId === block.id && (
             <div className="mt-2 space-y-2 rounded-lg border border-border/70 bg-[hsl(var(--surface-1))] p-2 text-xs">
+              <div className="rounded-md border border-border/50 bg-background p-2 text-foreground/80">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground/65">Question</p>
+                <p className="mt-1">{String(block.data.question || block.data.prompt || block.data.header || 'Untitled block')}</p>
+                {referenceAnswer ? (
+                  <>
+                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-foreground/65">Reference Answer</p>
+                    <p className="mt-1">{referenceAnswer}</p>
+                  </>
+                ) : null}
+              </div>
               {openAnswerRows.filter((row) => row.block_id === block.id).slice(0, 8).map((row) => {
                 const max = Number(row.max_points || 0);
                 const score = Number(row.score || 0);
@@ -1166,23 +1211,38 @@ export function AssignmentEditor({
                       <span>{row.student_name || 'Student'}</span>
                       <span className={verdictClass}>{verdict}</span>
                     </div>
-                    <p className="mt-1 line-clamp-2 text-muted-foreground">{String(row.answer_data?.text || row.answer_data?.answer || '')}</p>
+                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-foreground/65">Student Answer</p>
+                    <p className="mt-1 line-clamp-2 text-foreground/80">{String(row.answer_data?.text || row.answer_data?.answer || '')}</p>
                   </div>
                 );
               })}
               {openAnswerRows.filter((row) => row.block_id === block.id).length === 0 && (
-                <div className="text-muted-foreground">No graded answers yet.</div>
+                <div className="text-foreground/70">No graded answers yet.</div>
               )}
             </div>
           )}
           {expandedOwnAnswerBlockId === block.id && (
-            <div className="mt-2 rounded-lg border border-border/70 bg-[hsl(var(--surface-1))] p-2 text-xs text-muted-foreground">
+            <div className="mt-2 rounded-lg border border-border/70 bg-[hsl(var(--surface-1))] p-2 text-xs text-foreground/75">
               {(() => {
                 const own = ownAnswers.find((item) => item.block_id === block.id);
                 if (!own) return 'No submitted answer yet.';
-                const answerText = String(own.answer_data?.text || own.answer_data?.answer || own.answer_data?.value || '');
-                const scoreText = own.score === null ? '' : ` • Score: ${own.score}`;
-                return `${answerText || 'Answer recorded'}${scoreText}`;
+                const answerText = String(own.answer_data?.text || own.answer_data?.answer || own.answer_data?.value || 'Answer recorded');
+                const scoreText = own.score === null ? '' : `${own.score}`;
+                return (
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground/65">My Submitted Answer</p>
+                      <p className="mt-1 text-foreground/85">{answerText}</p>
+                    </div>
+                    {referenceAnswer ? (
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground/65">Reference Answer</p>
+                        <p className="mt-1 text-foreground/85">{referenceAnswer}</p>
+                      </div>
+                    ) : null}
+                    {scoreText ? <p className="text-foreground/75">Score: {scoreText}</p> : null}
+                  </div>
+                );
               })()}
             </div>
           )}
@@ -1220,6 +1280,7 @@ export function AssignmentEditor({
       case 'multiple_choice':
         return (
           <div className="space-y-2">
+            <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Question</Label>
             <Input
               value={block.data.question}
               onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
@@ -1262,7 +1323,7 @@ export function AssignmentEditor({
                     variant="ghost"
                     size="sm"
                     onClick={(e) => { e.stopPropagation(); removeOption(block.id, idx); }}
-                    className="opacity-0 group-hover:opacity-100 h-5 w-5 p-0 text-muted-foreground"
+                    className="h-5 w-5 p-0 text-muted-foreground"
                     disabled={!canEditBlock}
                   >
                     <X className="h-3 w-3" />
@@ -1279,6 +1340,15 @@ export function AssignmentEditor({
                 <Plus className="h-3 w-3 mr-1" /> Add
               </Button>
             </div>
+            <div className="rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Expected Answer</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {Array.isArray(block.data.options)
+                  ? block.data.options.filter((option: any) => option?.correct).map((option: any) => option?.text || '...').join(', ') || 'No correct option set.'
+                  : 'No options yet.'}
+              </p>
+            </div>
+            {renderReadOnlyActions()}
           </div>
         );
 
@@ -1370,6 +1440,7 @@ export function AssignmentEditor({
                 disabled={!canEditBlock}
               />
             </div>
+            {renderReadOnlyActions()}
           </div>
         );
       }
@@ -1395,6 +1466,16 @@ export function AssignmentEditor({
                 </React.Fragment>
               ))}
             </div>
+            <div className="rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Expected Matches</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {(block.data.pairs || [])
+                  .slice(0, 3)
+                  .map((pair: any) => `${pair?.left || '...'} → ${pair?.right || '...'}`)
+                  .join(' | ') || 'No pairs yet.'}
+              </p>
+            </div>
+            {renderReadOnlyActions()}
           </div>
         );
 
@@ -1441,7 +1522,7 @@ export function AssignmentEditor({
                       }
                     }}
                     disabled={!canEditBlock || block.data.items.length <= 2}
-                    className="opacity-0 group-hover:opacity-100 h-5 w-5 p-0 text-muted-foreground"
+                    className="h-5 w-5 p-0 text-muted-foreground"
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -1461,6 +1542,13 @@ export function AssignmentEditor({
                 <Plus className="h-3 w-3 mr-1" /> Add
               </Button>
             </div>
+            <div className="rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Expected Order</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {(block.data.items || []).map((item: string, idx: number) => `${idx + 1}. ${item || '...'}`).join(' | ') || 'No items yet.'}
+              </p>
+            </div>
+            {renderReadOnlyActions()}
           </div>
         );
 
@@ -1587,8 +1675,8 @@ export function AssignmentEditor({
                   <React.Fragment key={row.rowId}>
                     {/* Drop indicator before row */}
                     {isDragging && dropTarget?.rowIndex === rowIndex && !dropTarget.column && (
-                      <div className="h-2 flex items-center justify-center">
-                      <div className="w-4 h-4 bg-primary rounded-sm" />
+                      <div className="h-3 flex items-center justify-center">
+                      <div className="h-1 w-full rounded-full bg-primary/70" />
                       </div>
                     )}
                     
@@ -1599,14 +1687,14 @@ export function AssignmentEditor({
                         <div className="flex-1 relative group">
                           {/* Left drop zone */}
                           {isDragging && dropTarget?.rowIndex === rowIndex && dropTarget.column === 'left' && (
-                            <div className="absolute left-0 top-0 bottom-0 w-1/2 flex items-center justify-center pointer-events-none z-10">
-                            <div className="w-4 h-4 bg-primary rounded-sm" />
+                            <div className="absolute left-0 top-0 bottom-0 w-1/2 flex items-center justify-start pl-2 pointer-events-none z-10">
+                            <div className="h-full w-1 rounded-full bg-primary/70" />
                             </div>
                           )}
                           {/* Right drop zone */}
                           {isDragging && dropTarget?.rowIndex === rowIndex && dropTarget.column === 'right' && (
-                            <div className="absolute right-0 top-0 bottom-0 w-1/2 flex items-center justify-center pointer-events-none z-10">
-                            <div className="w-4 h-4 bg-primary rounded-sm" />
+                            <div className="absolute right-0 top-0 bottom-0 w-1/2 flex items-center justify-end pr-2 pointer-events-none z-10">
+                            <div className="h-full w-1 rounded-full bg-primary/70" />
                             </div>
                           )}
                           
@@ -1631,9 +1719,7 @@ export function AssignmentEditor({
                           >
                             {/* Controls */}
                             {showTeacherControls && (
-                            <div className={`absolute top-2 right-2 left-2 flex items-center justify-between gap-1 bg-background/95 border border-border rounded-lg px-1.5 py-1 shadow-sm transition-opacity ${
-                              selectedBlock === row.blocks[0].id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                            }`}>
+                            <div className="absolute top-2 right-2 left-2 flex items-center justify-between gap-1 bg-background/95 border border-border rounded-lg px-1.5 py-1 shadow-sm opacity-100">
                               <div className="text-[11px] font-medium text-muted-foreground">
                                 {BLOCK_TEMPLATES.find((t) => t.type === row.blocks[0].type)?.label || 'Block'}
                               </div>
@@ -1691,7 +1777,7 @@ export function AssignmentEditor({
                                 {/* Drop indicator */}
                                 {isDragging && dropTarget?.rowIndex === rowIndex && dropTarget.column === col && (
                                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                    <div className="w-4 h-4 bg-primary rounded-sm" />
+                    <div className="h-full w-1 rounded-full bg-primary/70" />
                                   </div>
                                 )}
                                 
@@ -1717,9 +1803,7 @@ export function AssignmentEditor({
                                   >
                                     {/* Controls */}
                                     {showTeacherControls && (
-                                    <div className={`absolute top-2 right-2 left-2 flex items-center justify-between gap-1 bg-background/95 border border-border rounded-lg px-1.5 py-1 shadow-sm transition-opacity ${
-                                      selectedBlock === block.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                                    }`}>
+                                    <div className="absolute top-2 right-2 left-2 flex items-center justify-between gap-1 bg-background/95 border border-border rounded-lg px-1.5 py-1 shadow-sm opacity-100">
                                       <div className="text-[11px] font-medium text-muted-foreground">
                                         {BLOCK_TEMPLATES.find((t) => t.type === block.type)?.label || 'Block'}
                                       </div>
@@ -1786,8 +1870,8 @@ export function AssignmentEditor({
                 
                 {/* Drop indicator after last row */}
                 {isDragging && dropTarget?.rowIndex === rows.length && !dropTarget.column && (
-                  <div className="h-2 flex items-center justify-center">
-                    <div className="w-4 h-4 bg-primary rounded-sm" />
+                  <div className="h-3 flex items-center justify-center">
+                    <div className="h-1 w-full rounded-full bg-primary/70" />
                   </div>
                 )}
               </div>

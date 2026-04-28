@@ -59,6 +59,7 @@ function FlashcardsPageContent() {
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [saveToRecents, setSaveToRecents] = useState(true);
   const [studyCompleted, setStudyCompleted] = useState(false);
+  const [isSharingToClass, setIsSharingToClass] = useState(false);
   const launchHandledRef = useRef(false);
   const sourceParamsHandledRef = useRef(false);
   const { toast } = useToast();
@@ -230,6 +231,29 @@ function FlashcardsPageContent() {
     }
   };
 
+  const handleShareToClass = useCallback(async () => {
+    if (!classId || !generatedCards) return;
+    setIsSharingToClass(true);
+    try {
+      const summary = `${generatedCards.length} cards | mode: ${studyMode}`;
+      const res = await fetch(`/api/classes/${classId}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          audience: 'teacher',
+          text: `Shared flashcards: ${customTitle.trim() || 'Untitled flashcards'}`,
+          attachmentLabel: summary,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to share flashcards');
+      toast({ title: 'Shared to class', description: 'Flashcards were posted in class share.' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Share failed', description: error?.message || 'Could not share flashcards.' });
+    } finally {
+      setIsSharingToClass(false);
+    }
+  }, [classId, customTitle, generatedCards, studyMode, toast]);
+
   if (isLoading) {
     return <FunLoader tool="flashcards" />;
   }
@@ -247,6 +271,11 @@ function FlashcardsPageContent() {
               getHtml={() => flashcardsToHtml(generatedCards)}
             />
           )}
+          {classId ? (
+            <Button variant="outline" onClick={() => void handleShareToClass()} className="rounded-full text-xs" disabled={isSharingToClass}>
+              {isSharingToClass ? 'Sharing...' : 'Share to class'}
+            </Button>
+          ) : null}
         </div>
         <div className="flex-1 min-h-0 overflow-auto">
           <FlashcardViewer

@@ -55,9 +55,10 @@ export function RecentsSidebar() {
   const { session, language } = useContext(AppContext) as AppContextType;
   const isDutch = language === 'nl';
   const t = {
-    showLess: isDutch ? 'minder tonen' : 'show less',
-    showMore: isDutch ? 'toon' : 'show',
+    showLess: isDutch ? 'Minder tonen' : 'Show less',
+    showMore: isDutch ? 'Toon' : 'Show',
     more: isDutch ? 'meer' : 'more',
+    keepGoing: isDutch ? 'Ga verder' : 'Keep going',
   };
   const userId = session?.user?.id ?? null;
   const [recents, setRecents] = useState<RecentItem[]>([]);
@@ -265,11 +266,11 @@ export function RecentsSidebar() {
               )}
               {item.source === 'studyset' && item.progressLabel ? (
                 <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-[10px] text-muted-foreground/90">
+                  <span className="text-[10px] text-foreground/75">
                     {item.progressLabel}
                   </span>
                   {typeof item.progressPercent === 'number' ? (
-                    <span className="text-[10px] text-muted-foreground/75">
+                    <span className="text-[10px] text-foreground/65">
                       {item.progressPercent}%
                     </span>
                   ) : null}
@@ -300,10 +301,10 @@ export function RecentsSidebar() {
                     router.push(item.nextTaskHref || `/tools/studyset/${item.id}`);
                   }}
                 >
-                  Keep going
+                  {t.keepGoing}
                 </button>
               ) : null}
-              <span className="text-[11px] text-muted-foreground/85 shrink-0">
+              <span className="text-[11px] text-foreground/65 shrink-0">
                 {dateStr}
               </span>
             </div>
@@ -315,7 +316,7 @@ export function RecentsSidebar() {
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-1 w-full px-2 py-1 text-[11px] text-muted-foreground/85 hover:text-foreground transition-colors mt-1"
+          className="flex items-center gap-1 w-full px-2 py-1 text-[11px] text-foreground/70 hover:text-foreground transition-colors mt-1"
         >
           {expanded ? (
             <>

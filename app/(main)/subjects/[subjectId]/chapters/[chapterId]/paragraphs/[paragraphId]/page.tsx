@@ -72,6 +72,15 @@ function indexToLetter(index: number): string {
   return String.fromCharCode(97 + first) + String.fromCharCode(97 + second);
 }
 
+function previewQuestionHint(type: string, isDutch: boolean): string {
+  if (type === 'open_question') return isDutch ? 'Open vraag met rubric' : 'Open response with rubric';
+  if (type === 'multiple_choice') return isDutch ? 'Meerkeuze vraag' : 'Multiple-choice question';
+  if (type === 'fill_in_blank') return isDutch ? 'Invulzin' : 'Fill in the blank';
+  if (type === 'matching') return isDutch ? 'Koppelbegrippen' : 'Match concepts';
+  if (type === 'ordering') return isDutch ? 'Zet stappen op volgorde' : 'Order the steps';
+  return isDutch ? 'Instructieblok' : 'Instruction block';
+}
+
 export default function ParagraphDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -799,15 +808,20 @@ export default function ParagraphDetailPage() {
                         <span className="rounded-full bg-muted px-2 py-0.5 text-[10px]">{preset.estimatedTimeMin} min</span>
                       </div>
                       <div className="mt-3 rounded-lg border border-border/70 bg-background p-3">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Actual Layout Preview</p>
-                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                          {preset.blockMix.slice(0, 4).map((block, idx) => (
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          {isDutch ? 'Live Layout Voorbeeld' : 'Live Layout Preview'}
+                        </p>
+                        <div className="mt-2 space-y-2">
+                          {preset.blockMix.slice(0, 3).map((block) => (
                             <div key={`${preset.id}-preview-${block.type}`} className="rounded-md border border-border/70 bg-[hsl(var(--surface-1))] p-2">
-                              <p className="text-[10px] font-medium capitalize">{block.type.replace(/_/g, ' ')}</p>
+                              <div className="flex items-center justify-between text-[10px]">
+                                <p className="font-medium capitalize">{block.type.replace(/_/g, ' ')}</p>
+                                <span>x{block.count}</span>
+                              </div>
+                              <p className="mt-1 text-[10px] text-foreground/70">{previewQuestionHint(block.type, isDutch)}</p>
                               <div className="mt-1.5 space-y-1">
                                 <div className="h-2 w-full rounded bg-muted" />
-                                <div className="h-2 rounded bg-muted/80" style={{ width: `${70 - (idx % 3) * 10}%` }} />
-                                <div className="h-2 rounded bg-muted/70" style={{ width: `${52 + (idx % 2) * 18}%` }} />
+                                <div className="h-2 w-5/6 rounded bg-muted/80" />
                               </div>
                             </div>
                           ))}

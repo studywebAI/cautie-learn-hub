@@ -19,7 +19,6 @@ import {
   Settings
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Switch } from '@/components/ui/switch';
 import { BlockRenderer } from './BlockRenderer';
 import { BaseBlock, BlockType } from './types';
 
@@ -114,7 +113,6 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
 }) => {
   const [blocks, setBlocks] = useState<BaseBlock[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showStudentView, setShowStudentView] = useState(false);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
@@ -302,35 +300,6 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
     setDragOverIndex(null);
   };
 
-  const renderStudentView = () => (
-    <div className="space-y-4 p-6 bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
-      <div className="flex items-center gap-2 mb-4">
-        <Eye className="h-5 w-5 text-blue-500" />
-        <h3 className="text-lg font-semibold">Student View Preview</h3>
-      </div>
-      {blocks.length === 0 ? (
-        <p className="text-muted-foreground text-center py-8">
-          This assignment has no content yet. Add some blocks to see the preview.
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {blocks.map((block, index) => (
-            <Card key={block.id} className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <BlockRenderer
-                  block={block}
-                  onUpdate={() => {}} // Read-only in student view
-                  onDelete={() => {}}
-                  isEditing={false}
-                />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -349,31 +318,19 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
 
   return (
     <div className={`word-style-editor ${className}`}>
-      {/* Header with student view toggle */}
+      {/* Header */}
       {isTeacher && (
         <div className="flex items-center justify-between mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg border">
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-semibold">Assignment Editor</h2>
             <Badge variant="outline" className="flex items-center gap-1">
-              {showStudentView ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-              {showStudentView ? 'Student View' : 'Teacher View'}
+              <EyeOff className="h-3 w-3" />
+              Teacher View
             </Badge>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Student View</span>
-            <Switch
-              checked={showStudentView}
-              onCheckedChange={setShowStudentView}
-            />
           </div>
         </div>
       )}
-
-      {showStudentView ? (
-        renderStudentView()
-      ) : (
-        <div className="space-y-4">
+      <div className="space-y-4">
           {/* Template insertion menu */}
           {showTemplateMenu && templateInsertIndex !== null && (
             <Card className="border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
@@ -502,8 +459,7 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
               </div>
             )}
           </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

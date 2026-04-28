@@ -146,7 +146,7 @@ export default function AssignmentDetailPage() {
               className="text-sm text-primary underline"
               onClick={() => router.push(`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}`)}
             >
-              go back to paragraph
+              Go back to paragraph
             </button>
           </div>
         </div>
@@ -155,7 +155,7 @@ export default function AssignmentDetailPage() {
     return <div className="flex items-center justify-center h-screen">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-muted-foreground">loading assignment...</p>
+        <p className="text-muted-foreground">Loading assignment...</p>
       </div>
     </div>;
   }

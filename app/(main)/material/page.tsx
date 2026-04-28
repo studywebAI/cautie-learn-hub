@@ -216,7 +216,7 @@ function MaterialPageContent() {
 
 export default function MaterialPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">Loading material workspace...</div>}>
       <MaterialPageContent />
     </Suspense>
   );

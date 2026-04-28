@@ -285,7 +285,7 @@ export default function SettingsPage() {
                     }}
                     className={cn(
                       'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors',
-                      activeTab === tabItem.id ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50'
+                      activeTab === tabItem.id ? 'bg-muted text-foreground' : 'text-foreground/85 hover:bg-muted/60 hover:text-foreground'
                     )}
                   >
                     {tabItem.label}

@@ -59,6 +59,23 @@ function formatBlockTypeLabel(type: string): string {
     .join(' ');
 }
 
+function previewRowClass(type: string): string {
+  if (type === 'open_question') return 'bg-blue-100/70 border-blue-200/80';
+  if (type === 'multiple_choice') return 'bg-emerald-100/70 border-emerald-200/80';
+  if (type === 'fill_in_blank') return 'bg-amber-100/70 border-amber-200/80';
+  if (type === 'matching' || type === 'ordering') return 'bg-purple-100/70 border-purple-200/80';
+  return 'bg-muted/50 border-border/80';
+}
+
+function previewQuestionHint(type: string, isDutch: boolean): string {
+  if (type === 'open_question') return isDutch ? 'Open vraag met rubric' : 'Open response with rubric';
+  if (type === 'multiple_choice') return isDutch ? 'Meerkeuze vraag' : 'Multiple-choice question';
+  if (type === 'fill_in_blank') return isDutch ? 'Invulzin' : 'Fill in the blank';
+  if (type === 'matching') return isDutch ? 'Koppelbegrippen' : 'Match concepts';
+  if (type === 'ordering') return isDutch ? 'Zet stappen op volgorde' : 'Order the steps';
+  return isDutch ? 'Instructieblok' : 'Instruction block';
+}
+
 export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }: EditAssignmentDialogProps) {
   const router = useRouter();
   const [title, setTitle] = useState('');
@@ -491,11 +508,23 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                           <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase">{t.recommended}</span>
                         )}
                       </div>
-                      <div className="mt-3 rounded-lg border border-dashed border-border/80 bg-muted/20 p-2">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Layout Preview</p>
-                        <div className="mt-1.5 space-y-1.5">
+                      <div className="mt-3 rounded-xl border border-border/80 bg-background p-2.5">
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {isDutch ? 'Live Layout Voorbeeld' : 'Live Layout Preview'}
+                        </p>
+                        <div className="mt-2 space-y-2 rounded-lg border border-border/70 bg-muted/20 p-2">
                           {preset.blockMix.slice(0, 3).map((mix) => (
-                            <div key={`${preset.id}-preview-${mix.type}`} className="h-2.5 rounded bg-muted-foreground/20" style={{ width: `${Math.max(45, 94 - mix.count * 9)}%` }} />
+                            <div key={`${preset.id}-preview-${mix.type}`} className={`rounded-md border p-2 ${previewRowClass(mix.type)}`}>
+                              <div className="flex items-center justify-between text-[10px]">
+                                <span className="font-medium">{formatBlockTypeLabel(mix.type)}</span>
+                                <span>x{mix.count}</span>
+                              </div>
+                              <p className="mt-1 text-[10px] text-foreground/70">{previewQuestionHint(mix.type, isDutch)}</p>
+                              <div className="mt-1.5 space-y-1">
+                                <div className="h-2 rounded bg-background/80" />
+                                <div className="h-2 w-5/6 rounded bg-background/70" />
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>

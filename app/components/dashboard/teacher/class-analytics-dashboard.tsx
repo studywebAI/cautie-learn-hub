@@ -15,6 +15,13 @@ import { AlertTriangle, BarChart3, RefreshCw } from "lucide-react";
 interface ClassAnalyticsDashboardProps {
   classId: string;
 }
+type NextAction = {
+  id: string;
+  title: string;
+  detail: string;
+  cta: string;
+  onClick: () => void;
+};
 
 const chartConfig = {
   "Average Score": {
@@ -137,6 +144,25 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
     updateFiltersInQuery({ assignmentId: nextAssignmentId });
   };
 
+  const openStudentGrades = (studentId: string, assignmentId?: string | null) => {
+    const params = new URLSearchParams();
+    params.set("tab", "grades");
+    params.set("studentId", studentId);
+    if (assignmentId) params.set("assignmentId", assignmentId);
+    router.push(`/class/${classId}?${params.toString()}`);
+  };
+
+  const openStudentLogs = (studentId: string) => {
+    router.push(`/class/${classId}?tab=logs&student_id=${studentId}`);
+  };
+
+  const openClassShare = (studentId?: string | null) => {
+    const params = new URLSearchParams();
+    params.set("tab", "share");
+    if (studentId) params.set("studentId", studentId);
+    router.push(`/class/${classId}?${params.toString()}`);
+  };
+
   const studentOptions = useMemo(() => {
     if (!analytics) return [];
     return analytics.studentRows
@@ -169,6 +195,66 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
       .filter((row) => row.warningCount > 0 || row.pendingOpenReviews > 0 || row.completionRate < 60)
       .slice(0, 8);
   }, [filteredStudentRows]);
+
+  const nextActions = useMemo<NextAction[]>(() => {
+    if (!analytics) return [];
+    const actions: NextAction[] = [];
+    const topWarning = filteredWarnings[0];
+    const topAttentionStudent = attentionQueue[0];
+
+    if (filteredWarnings.length > 0 && topWarning?.studentId) {
+      actions.push({
+        id: "review-warnings",
+        title: "Review warning signals",
+        detail: `${filteredWarnings.length} warning${filteredWarnings.length === 1 ? "" : "s"} need review for current filters.`,
+        cta: "Open warning grades",
+        onClick: () => openStudentGrades(topWarning.studentId!, topWarning.assignmentId),
+      });
+    }
+
+    if ((analytics.classOverview.pendingOpenReviews || 0) > 0) {
+      actions.push({
+        id: "grade-open",
+        title: "Grade open answers",
+        detail: `${analytics.classOverview.pendingOpenReviews} open response${analytics.classOverview.pendingOpenReviews === 1 ? "" : "s"} waiting for grading.`,
+        cta: "Open submissions",
+        onClick: () => router.push(`/class/${classId}?tab=submissions`),
+      });
+    }
+
+    if (topAttentionStudent) {
+      actions.push({
+        id: "support-student",
+        title: `Follow up with ${topAttentionStudent.studentName}`,
+        detail: `Completion ${Math.round(topAttentionStudent.completionRate)}% · Warnings ${topAttentionStudent.warningCount}.`,
+        cta: "Open student logs",
+        onClick: () => openStudentLogs(topAttentionStudent.studentId),
+      });
+    }
+
+    const lowCompletion = Math.round(analytics.classOverview.overallCompletionRate) < 70;
+    if (lowCompletion) {
+      actions.push({
+        id: "plan-homework",
+        title: "Schedule a catch-up assignment",
+        detail: `Class completion is ${Math.round(analytics.classOverview.overallCompletionRate)}%. Add a focused task to agenda.`,
+        cta: "Open agenda",
+        onClick: () => router.push(`/agenda?classId=${classId}`),
+      });
+    }
+
+    if (actions.length === 0) {
+      actions.push({
+        id: "healthy-class",
+        title: "Class is stable",
+        detail: "No urgent action needed. You can still create a new assignment or review trends.",
+        cta: "Create assignment",
+        onClick: () => router.push(`/class/${classId}?tab=group`),
+      });
+    }
+
+    return actions.slice(0, 4);
+  }, [analytics, filteredWarnings, attentionQueue, router, classId]);
 
   if (loading) {
     return (
@@ -295,6 +381,25 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
 
       <Card>
         <CardHeader>
+          <CardTitle>Action Center</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-2">
+            {nextActions.map((action) => (
+              <div key={action.id} className="rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-3">
+                <p className="text-sm font-medium">{action.title}</p>
+                <p className="mt-1 text-xs text-foreground/70">{action.detail}</p>
+                <Button size="sm" variant="outline" className="mt-3 h-8 px-3 text-xs" onClick={action.onClick}>
+                  {action.cta}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Performance Trend (30 days)</CardTitle>
         </CardHeader>
         <CardContent>
@@ -388,6 +493,36 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
                     {warning.classAverageSeconds ? <span>Class avg: {formatDuration(warning.classAverageSeconds)}</span> : null}
                     <span>{formatDateTime(warning.createdAt)}</span>
                   </div>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {warning.studentId ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => openStudentGrades(warning.studentId, warning.assignmentId)}
+                      >
+                        Review scores
+                      </Button>
+                    ) : null}
+                    {warning.studentId ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => openStudentLogs(warning.studentId)}
+                      >
+                        Open activity logs
+                      </Button>
+                    ) : null}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => openClassShare(warning.studentId)}
+                    >
+                      Message in class share
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -430,7 +565,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
                           size="sm"
                           variant="outline"
                           className="h-7 px-2 text-xs"
-                          onClick={() => router.push(`/class/${classId}?tab=grades&studentId=${row.studentId}`)}
+                          onClick={() => openStudentGrades(row.studentId)}
                         >
                           Grades
                         </Button>
@@ -446,9 +581,17 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
                           size="sm"
                           variant="outline"
                           className="h-7 px-2 text-xs"
-                          onClick={() => router.push(`/class/${classId}?tab=logs&student_id=${row.studentId}`)}
+                          onClick={() => openStudentLogs(row.studentId)}
                         >
                           Logs
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => openClassShare(row.studentId)}
+                        >
+                          Share note
                         </Button>
                       </div>
                     </td>
@@ -521,9 +664,17 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
                       size="sm"
                       variant="outline"
                       className="h-7 px-2 text-xs"
-                      onClick={() => router.push(`/class/${classId}?tab=logs&student_id=${row.studentId}`)}
+                      onClick={() => openStudentLogs(row.studentId)}
                     >
                       Open logs
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => openClassShare(row.studentId)}
+                    >
+                      Share support note
                     </Button>
                   </div>
                 </div>

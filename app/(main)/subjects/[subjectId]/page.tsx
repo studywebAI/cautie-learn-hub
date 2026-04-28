@@ -280,16 +280,16 @@ export default function SubjectDetailPage() {
   }
 
   if (loadError) {
-    return <div className="text-center py-8 text-muted-foreground">Failed to load subject: {loadError}</div>;
+    return <div className="text-center py-8 text-foreground/80">Failed to load subject: {loadError}</div>;
   }
 
   if (!subject) {
-    return <div className="text-center py-8 text-muted-foreground">Subject not found</div>;
+    return <div className="text-center py-8 text-foreground/80">Subject not found</div>;
   }
 
   return (
-    <div className="space-y-0">
-      <div className="mb-2 text-xs text-muted-foreground">
+    <div className="space-y-0 rounded-2xl bg-[hsl(var(--surface-1))] p-4">
+      <div className="mb-2 text-xs text-foreground/65">
         {`Subjects / ${subject?.name || 'Subject'} / Chapters`}
       </div>
       {/* Last activity banner */}
@@ -299,7 +299,7 @@ export default function SubjectDetailPage() {
           className="mb-4 block rounded-xl border border-transparent bg-sidebar-accent/42 p-3 transition-colors hover:bg-sidebar-accent/62"
         >
           <p className="text-sm">
-            <span className="text-muted-foreground">Last active in </span>
+            <span className="text-foreground/65">Last active in </span>
             <span>{lastActivity.chapterNumber}.{lastActivity.paragraphNumber} {lastActivity.paragraphTitle}</span>
           </p>
         </Link>
@@ -339,13 +339,14 @@ export default function SubjectDetailPage() {
 
       {/* Flat chapter + paragraph list */}
       {chapters.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <p className="text-sm mb-4">No chapters yet</p>
-          {isTeacher && (
-            <Button onClick={() => setIsCreateChapterOpen(true)} size="sm">
-              Create First Chapter
-            </Button>
-          )}
+        <div className="py-12">
+          {isTeacher ? (
+            <div className="flex justify-center">
+              <Button onClick={() => setIsCreateChapterOpen(true)} size="sm">
+                Create First Chapter
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="space-y-3">
@@ -380,7 +381,7 @@ export default function SubjectDetailPage() {
                       </Link>
                     {isTeacher && (
                       <button
-                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        className="rounded-md bg-sidebar-accent/35 px-2 py-1 text-xs text-sidebar-foreground transition-colors hover:bg-sidebar-accent/55"
                         onClick={() => {
                           setLockSelectedChapter(true);
                           setSelectedChapterId(chapter.id);
@@ -432,7 +433,7 @@ export default function SubjectDetailPage() {
                           next.add(chapter.id);
                           return next;
                         })}
-                        className="w-full py-3 px-4 text-sm text-muted-foreground hover:bg-muted/40 transition-colors"
+                        className="w-full rounded-lg bg-sidebar-accent/28 py-3 px-4 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/45"
                       >
                         +{remainingCount} more paragraph{remainingCount > 1 ? 's' : ''}
                       </button>

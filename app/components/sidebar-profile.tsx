@@ -106,10 +106,10 @@ export function SidebarProfile() {
         </Button>
 
         {/* Guest username - no avatar */}
-        <div className="flex items-center gap-2 w-full rounded-md px-2 py-1 text-left">
+        <div className="flex items-center gap-2 w-full rounded-lg bg-sidebar-accent/42 px-2.5 py-1.5 text-left">
           <div className="flex-1 min-w-0">
               <p className="text-sm truncate">{resolvedDisplayName || 'Guest'}</p>
-              <p className="text-[11px] text-muted-foreground leading-tight">Free</p>
+              <p className="text-[11px] text-sidebar-foreground/70 leading-tight">Free</p>
           </div>
         </div>
       </div>
@@ -193,12 +193,12 @@ export function SidebarProfile() {
       {/* Username dropdown - ChatGPT style */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex w-full items-center gap-2 rounded-lg border border-transparent bg-sidebar-accent/42 px-2.5 py-1.5 text-left transition-colors group hover:bg-sidebar-accent/62">
+          <button className="flex w-full items-center gap-2 rounded-lg border-0 bg-sidebar-accent/42 px-2.5 py-1.5 text-left outline-none transition-colors group hover:bg-sidebar-accent/62 focus-visible:ring-1 focus-visible:ring-sidebar-ring/40">
             <div className="flex-1 min-w-0">
               <p className="truncate text-sm">{profileName}</p>
-              <p className="text-[11px] text-muted-foreground leading-tight">{tierLabel}</p>
+              <p className="text-[11px] text-sidebar-foreground/70 leading-tight">{tierLabel}</p>
             </div>
-            <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-foreground" />
+            <ChevronsUpDown className="h-3.5 w-3.5 text-sidebar-foreground/70 transition-colors group-hover:text-foreground" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -208,7 +208,7 @@ export function SidebarProfile() {
         >
           <div className="px-3 py-2">
             <p className="text-sm">{profileName}</p>
-            <p className="text-xs text-muted-foreground">{email}</p>
+            <p className="text-xs text-foreground/70">{email}</p>
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => router.push('/settings')}>

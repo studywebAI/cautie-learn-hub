@@ -729,9 +729,9 @@ export function AppSidebar() {
           )}
 
           {loading ? (
-            <p className="px-2 py-1.5 text-xs text-muted-foreground">{isDutch ? 'Laden...' : 'Loading...'}</p>
+            <p className="px-2 py-1.5 text-xs text-sidebar-foreground/80">{isDutch ? 'Laden...' : 'Loading...'}</p>
           ) : items.length === 0 ? (
-            <p className="px-2 py-1.5 text-xs text-muted-foreground">{emptyText}</p>
+            <p className="px-2 py-1.5 text-xs text-sidebar-foreground/80">{emptyText}</p>
           ) : (
             items.map((entry) => (
               <Link
@@ -741,7 +741,7 @@ export function AppSidebar() {
                   'flex items-center justify-between gap-2 truncate rounded-xl px-2.5 py-2 text-[13px] transition-colors',
                   dropdown.kind === 'classes' && entry.id === effectiveTeacherClassId
                     ? 'bg-sidebar-accent text-sidebar-foreground'
-                    : 'hover:bg-sidebar-accent text-muted-foreground hover:text-sidebar-foreground'
+                    : 'hover:bg-sidebar-accent text-sidebar-foreground/85 hover:text-sidebar-foreground'
                 )}
                 onClick={(event) => {
                   if (dropdown.kind === 'classes' && isTeacher) {
@@ -854,7 +854,7 @@ export function AppSidebar() {
               <span className="truncate">
               {classDropdownItems.find((classItem) => classItem.id === effectiveTeacherClassId)?.label || (isDutch ? 'Geen klassen' : 'No classes')}
             </span>
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            <ChevronDown className="h-4 w-4 text-sidebar-foreground/70" />
           </span>
         </button>
       </div>

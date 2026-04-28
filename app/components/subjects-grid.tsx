@@ -260,7 +260,6 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
         {subjects.length === 0 ? (
           <div className="py-16 text-center text-sidebar-foreground/80">
-            <p className="mb-4 text-[13px]">No Subjects Yet</p>
             {isTeacher && (
               <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[13px] text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
                 Create First Subject

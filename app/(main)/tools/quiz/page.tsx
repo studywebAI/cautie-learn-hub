@@ -70,6 +70,7 @@ function QuizPageContent() {
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [saveToRecents, setSaveToRecents] = useState(true);
+  const [isSharingToClass, setIsSharingToClass] = useState(false);
   const launchHandledRef = useRef(false);
   const sourceParamsHandledRef = useRef(false);
   const { toast } = useToast();
@@ -229,6 +230,29 @@ function QuizPageContent() {
     }
   };
 
+  const handleShareToClass = useCallback(async () => {
+    if (!classId || !generatedQuiz) return;
+    setIsSharingToClass(true);
+    try {
+      const summary = `${generatedQuiz.questions?.length || 0} questions | mode: ${quizMode}`;
+      const res = await fetch(`/api/classes/${classId}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          audience: 'teacher',
+          text: `Shared quiz: ${customTitle.trim() || generatedQuiz.title || 'Untitled quiz'}`,
+          attachmentLabel: summary,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to share quiz');
+      toast({ title: 'Shared to class', description: 'Quiz was posted in class share.' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Share failed', description: error?.message || 'Could not share quiz.' });
+    } finally {
+      setIsSharingToClass(false);
+    }
+  }, [classId, customTitle, generatedQuiz, quizMode, toast]);
+
   if (isLoading) {
     return <FunLoader tool="quiz" />;
   }
@@ -244,6 +268,11 @@ function QuizPageContent() {
             getMarkdown={() => quizToMarkdown(generatedQuiz)}
             getHtml={() => quizToHtml(generatedQuiz)}
           />
+          {classId ? (
+            <Button variant="outline" onClick={() => void handleShareToClass()} className="rounded-full text-xs" disabled={isSharingToClass}>
+              {isSharingToClass ? 'Sharing...' : 'Share to class'}
+            </Button>
+          ) : null}
         </div>
         <div className="flex-1 min-h-0 overflow-auto">
           <QuizTaker

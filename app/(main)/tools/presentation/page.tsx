@@ -1279,9 +1279,7 @@ function PresentationPageContent() {
                       <div className="flex h-20 items-center justify-center">
                         <Loader2 className="h-4 w-4 animate-spin" />
                       </div>
-                    ) : visibleRecents.length === 0 ? (
-                      <p className="px-1 py-2 text-xs text-muted-foreground">No local recents found.</p>
-                    ) : (
+                    ) : visibleRecents.length === 0 ? null : (
                       <div className="space-y-1.5">
                         {visibleRecents.slice(0, 40).map((item) => (
                           <div key={item.id} className="flex items-center justify-between gap-2 rounded border border-border/50 px-2 py-1.5">
@@ -1361,9 +1359,7 @@ function PresentationPageContent() {
             <Card className="border border-border/60">
               <CardContent className="pt-4">
                 <div className="flex flex-wrap gap-2">
-                  {sourceAttachments.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No sources attached yet.</p>
-                  ) : (
+                  {sourceAttachments.length === 0 ? null : (
                     sourceAttachments.map((source) => (
                       <div key={source.key} className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-xs">
                         <p className="max-w-[260px] truncate font-medium">{source.fileName}</p>
@@ -1405,9 +1401,7 @@ function PresentationPageContent() {
                       <div className="flex h-20 items-center justify-center">
                         <Loader2 className="h-4 w-4 animate-spin" />
                       </div>
-                    ) : visibleRecents.length === 0 ? (
-                      <p className="px-1 py-2 text-xs text-muted-foreground">No recents found.</p>
-                    ) : (
+                    ) : visibleRecents.length === 0 ? null : (
                       <div className="space-y-1.5">
                         {visibleRecents.slice(0, 40).map((item) => (
                           <div key={item.id} className="flex items-center justify-between gap-2 rounded border border-border/50 px-2 py-1.5">
