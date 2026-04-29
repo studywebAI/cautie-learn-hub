@@ -13,7 +13,6 @@ import { MySubjects } from "@/components/dashboard/my-subjects";
 import { parseISO, isFuture, differenceInDays } from 'date-fns';
 import type { Alert, Subject } from '@/lib/types';
 import { TodaysAgenda } from "@/components/dashboard/todays-agenda";
-import { NextSchoolSlot } from "@/components/dashboard/next-school-slot";
 import { TodaysStudysetTasks } from "@/components/dashboard/todays-studyset-tasks";
 import { LearningPulse } from "@/components/dashboard/learning-pulse";
 import { useRouter } from "next/navigation";
@@ -109,7 +108,6 @@ function StudentDashboard() {
         </div>
         <div className="lg:col-span-2 flex flex-col gap-6 md:gap-8">
             <TodaysStudysetTasks />
-            <NextSchoolSlot slots={schoolSlots} />
             <TodaysAgenda assignments={assignments} personalTasks={personalTasks} classes={classes} />
             <Suspense fallback={<Card><CardHeader><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>}>
               <AnalyticsDashboard />
@@ -176,7 +174,7 @@ function TeacherSummaryDashboard() {
               <h1 className="text-xl tracking-tight text-foreground">Welcome, {welcomeName}</h1>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card className="border-sidebar-border/70 bg-sidebar-accent/25">
+              <Card className="surface-panel border-border/70">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm">Total Classes</CardTitle>
                     <School className="h-4 w-4 text-muted-foreground" />
@@ -186,7 +184,7 @@ function TeacherSummaryDashboard() {
                     <p className="text-xs text-muted-foreground">Classes managed</p>
                 </CardContent>
               </Card>
-              <Card className="border-sidebar-border/70 bg-sidebar-accent/32">
+              <Card className="surface-panel border-border/70">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm">Total Students</CardTitle>
                      <Users className="h-4 w-4 text-muted-foreground" />
@@ -196,7 +194,7 @@ function TeacherSummaryDashboard() {
                     <p className="text-xs text-muted-foreground">Students across all classes</p>
                 </CardContent>
               </Card>
-              <Card className="border-sidebar-border/70 bg-sidebar-accent/25">
+              <Card className="surface-panel border-border/70">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm">Active Assignments</CardTitle>
                      <FileText className="h-4 w-4 text-muted-foreground" />
@@ -206,7 +204,7 @@ function TeacherSummaryDashboard() {
                     <p className="text-xs text-muted-foreground">Upcoming assignments</p>
                 </CardContent>
               </Card>
-                <Card className="border-sidebar-border/70 bg-sidebar-accent/32">
+                <Card className="surface-panel border-border/70">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm">Active Alerts</CardTitle>
                        <Activity className="h-4 w-4 text-muted-foreground" />
@@ -219,7 +217,7 @@ function TeacherSummaryDashboard() {
             </div>
 
             {teacherClasses.length === 0 && (
-              <Card className="border-sidebar-border/70 bg-sidebar-accent/20">
+              <Card className="surface-panel border-border/70">
                 <CardContent className="text-center p-8">
                   <p className="text-muted-foreground">You have not created any classes yet.</p>
                   <Button asChild className="mt-4"><Link href="/classes">Create One Now</Link></Button>

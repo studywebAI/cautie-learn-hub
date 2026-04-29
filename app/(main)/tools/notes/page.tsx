@@ -142,6 +142,7 @@ const BASE_AUTO_HIGHLIGHT_TARGETS: AutoHighlightTarget[] = [
 
 function NotesPageContent() {
   const searchParams = useSearchParams();
+  const layoutPreset = (searchParams.get('layout') || '').toLowerCase();
   const runId = searchParams.get('runId');
   const classId = searchParams.get('classId');
   const taskId = searchParams.get('taskId');
@@ -200,6 +201,7 @@ function NotesPageContent() {
   const [showLaunchScreen, setShowLaunchScreen] = useState(Boolean(launchRequested && taskId && studysetId));
   const [launchStageIndex, setLaunchStageIndex] = useState(0);
   const [saveToRecents, setSaveToRecents] = useState(true);
+  const [premiumTier, setPremiumTier] = useState<'free' | 'premium' | 'pro'>('free');
   const [isSharingToClass, setIsSharingToClass] = useState(false);
   const notesContentRef = useRef<HTMLDivElement>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -213,6 +215,9 @@ function NotesPageContent() {
   const launchHandledRef = useRef(false);
   const lastReportedSignatureRef = useRef('');
   const { toast } = useToast();
+  const isWordwebPreset = layoutPreset === 'wordweb' || layoutPreset === 'mindmap';
+  const isTimelinePreset = layoutPreset === 'timeline';
+  const pageTitle = isWordwebPreset ? 'Wordweb' : isTimelinePreset ? 'Timeline Notes' : 'Notes';
 
   const launchStages: Array<{ title: string; detail: string }> = [
     { title: 'Opening study task', detail: 'Loading your saved studyset plan and task settings.' },
@@ -435,6 +440,38 @@ function NotesPageContent() {
   useEffect(() => {
     setIsSpeechSupported(Boolean(getSpeechRecognitionConstructor()));
   }, []);
+
+  useEffect(() => {
+    if (layoutPreset === 'wordweb' || layoutPreset === 'mindmap') {
+      setStyle('mindmap');
+    } else if (layoutPreset === 'timeline') {
+      setStyle('timeline');
+    }
+  }, [layoutPreset]);
+
+  useEffect(() => {
+    const loadTier = async () => {
+      try {
+        const res = await fetch('/api/subscription/upgrade', { cache: 'no-store' });
+        if (!res.ok) return;
+        const payload = await res.json().catch(() => ({}));
+        const tier = String(payload?.tier || 'free').toLowerCase();
+        if (tier === 'pro' || tier === 'premium') setPremiumTier(tier);
+        else setPremiumTier('free');
+      } catch {}
+    };
+    void loadTier();
+  }, []);
+
+  useEffect(() => {
+    if (premiumTier !== 'free') return;
+    if (!isWordwebPreset && !isTimelinePreset) return;
+    setStyle('structured');
+    toast({
+      title: 'Premium feature',
+      description: 'Wordweb and Timeline note presets require Premium.',
+    });
+  }, [premiumTier, isWordwebPreset, isTimelinePreset, toast]);
 
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`tools.notes.${k}`);
@@ -1212,7 +1249,7 @@ function NotesPageContent() {
         />
       </div>
 
-      <div className="flex items-center justify-between rounded-lg bg-sidebar-accent/30 px-2.5 py-2">
+      <div className="flex items-center justify-between rounded-lg surface-interactive px-2.5 py-2">
         <p className="text-xs text-muted-foreground">Save to recents</p>
         <Switch
           checked={saveToRecents}
@@ -1220,6 +1257,11 @@ function NotesPageContent() {
           className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
         />
       </div>
+      {premiumTier === 'free' ? (
+        <div className="rounded-lg surface-interactive px-2.5 py-2 text-[11px] text-muted-foreground">
+          Timeline/Wordweb presets with advanced visuals are Premium features.
+        </div>
+      ) : null}
 
       <ImportToolbar
         toolType="notes"
@@ -1239,7 +1281,7 @@ function NotesPageContent() {
   );
 
   return (
-    <WorkbenchShell title="Notes" sidebar={sidebar}>
+    <WorkbenchShell title={pageTitle} sidebar={sidebar}>
       <SourceInput
         toolId="notes"
         value={sourceText}

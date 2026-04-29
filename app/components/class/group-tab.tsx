@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useContext } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, ChevronDown, ChevronRight, MessageSquare, Info, Pencil, Check, Settings, CircleHelp, MoreHorizontal } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Users, ChevronDown, ChevronRight, MessageSquare, Info, Pencil, Check, Settings, MoreHorizontal, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
@@ -90,17 +90,11 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     collapse: isDutch ? 'Inklappen' : 'Collapse',
     settings: isDutch ? 'Instellingen' : 'Settings',
     rename: isDutch ? 'Hernoemen' : 'Rename',
-    help: isDutch ? 'Help' : 'Help',
     renameHint: isDutch ? 'Selecteer een leerling om te hernoemen.' : 'Select a student to rename.',
-    renameSavedHint: isDutch
-      ? 'Naam is klasgebonden en wordt in Supabase opgeslagen.'
-      : 'Rename is class-scoped and syncs to the class member alias in Supabase.',
-    renameVisibleHint: isDutch
-      ? 'Nieuwe naam is direct zichtbaar in Groep, Aanwezigheid en Logs.'
-      : 'The new name appears immediately in Group, Attendance, and Logs after save.',
+    renameHeader: isDutch ? 'Leerlingen hernoemen' : 'Rename students',
+    renameInputLabel: isDutch ? 'Nieuwe naam' : 'New name',
     renameStudent: isDutch ? 'Leerling hernoemen' : 'Rename student',
-    renameDescription: isDutch ? 'Deze naam wordt alleen voor deze klas opgeslagen.' : 'This name is saved only for this class and stored server-side.',
-    cancel: isDutch ? 'Annuleren' : 'Cancel',
+    close: isDutch ? 'Sluiten' : 'Close',
     save: isDutch ? 'Opslaan' : 'Save',
     noLinkedSubjects: isDutch ? 'Nog geen gekoppelde vakken' : 'No linked subjects yet',
     grades: isDutch ? 'Cijfers' : 'Grades',
@@ -121,19 +115,16 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
   const [teachersCollapsed, setTeachersCollapsed] = useState(false);
   const [studentsCollapsed, setStudentsCollapsed] = useState(false);
   const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
-  const [groupSettingsSection, setGroupSettingsSection] = useState<'rename' | 'help'>('rename');
-  const [renameStudent, setRenameStudent] = useState<Student | null>(null);
+  const [renameStudentId, setRenameStudentId] = useState<string>('');
   const [renameValue, setRenameValue] = useState('');
   const [savingRename, setSavingRename] = useState(false);
-  const [logCodeQuery, setLogCodeQuery] = useState('');
 
   useEffect(() => {
     setSelectedStudent(null);
     setSelectedTeacher(null);
-    setRenameStudent(null);
+    setRenameStudentId('');
     setRenameValue('');
     setGroupSettingsOpen(false);
-    setGroupSettingsSection('rename');
     if (!cachedData) setData(null);
     setLoading(!cachedData && !parentLoading);
     setError(null);
@@ -190,6 +181,8 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
   };
 
   const saveStudentRename = async () => {
+    if (!renameStudentId) return;
+    const renameStudent = sortedStudents.find((student) => student.id === renameStudentId);
     if (!renameStudent) return;
     setSavingRename(true);
     try {
@@ -221,9 +214,8 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
           ? { ...prev, name: renameValue.trim() || 'Unnamed student' }
           : prev
       );
-      setRenameStudent(null);
+      setRenameStudentId('');
       setRenameValue('');
-      setGroupSettingsOpen(false);
       void logClassTabEvent({
         classId,
         tab: 'group',
@@ -270,98 +262,12 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
             <Button
               variant={groupSettingsOpen ? 'default' : 'outline'}
               size="sm"
-              className="h-9 gap-2 rounded-md border-sidebar-border/70 bg-sidebar-accent/35 hover:bg-sidebar-accent/55"
-              onClick={() => setGroupSettingsOpen((prev) => !prev)}
+              className="h-9 gap-2 rounded-md"
+              onClick={() => setGroupSettingsOpen(true)}
             >
               <Settings className="h-4 w-4" />
               {t.settings}
             </Button>
-            {groupSettingsOpen && (
-              <div className="absolute right-0 top-11 z-20 flex w-full max-w-[520px] overflow-hidden rounded-md bg-background md:w-[520px]">
-                <div className="w-44 border-r border-sidebar-border/80 bg-sidebar-accent/20 p-2">
-                  <button
-                    type="button"
-                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors ${groupSettingsSection === 'rename' ? 'surface-chip text-foreground' : 'text-muted-foreground hover:surface-interactive'}`}
-                    onClick={() => setGroupSettingsSection('rename')}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    {t.rename}
-                  </button>
-                  <button
-                    type="button"
-                    className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors ${groupSettingsSection === 'help' ? 'surface-chip text-foreground' : 'text-muted-foreground hover:surface-interactive'}`}
-                    onClick={() => setGroupSettingsSection('help')}
-                  >
-                    <CircleHelp className="h-4 w-4" />
-                    {t.help}
-                  </button>
-                </div>
-                <div className="flex-1 bg-background p-3">
-                  {groupSettingsSection === 'rename' ? (
-                    <div className="space-y-2">
-                      <p className="text-sm">{t.renameHint}</p>
-                      <div className="max-h-64 space-y-1 overflow-y-auto">
-                        {sortedStudents.map((student) => (
-                          <button
-                            key={`rename-${student.id}`}
-                            type="button"
-                            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors hover:surface-interactive"
-                            onClick={() => {
-                              setRenameStudent(student);
-                              setRenameValue(student.name);
-                            }}
-                          >
-                            <div className="min-w-0">
-                              <p className="truncate">{student.name}</p>
-                              <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <p>{t.renameSavedHint}</p>
-                      <p>{t.renameVisibleHint}</p>
-                      <div className="space-y-2 rounded-lg surface-chip p-2">
-                        <p className="text-xs uppercase tracking-wide">{isDutch ? 'Log code hulp' : 'Log code help'}</p>
-                        <Input
-                          value={logCodeQuery}
-                          onChange={(event) => setLogCodeQuery(event.target.value.toUpperCase())}
-                          placeholder={isDutch ? 'Voer code in (bv. EVT-ATT-001)' : 'Enter code (e.g. EVT-ATT-001)'}
-                          className="h-9"
-                        />
-                        <div className="space-y-1 text-xs">
-                          {(isDutch
-                            ? [
-                                ['EVT-ATT-001', 'Aanwezigheidsstatus aangepast (check of x).'],
-                                ['EVT-ATT-002', 'Huiswerk-markering gewijzigd.'],
-                                ['EVT-ATT-003', 'Te-laat markering gewijzigd.'],
-                                ['EVT-CUS-001', 'Aangepast eventbericht toegevoegd.'],
-                                ['ROS-MEM-001', 'Leerlingnaam in deze klas hernoemd.'],
-                              ]
-                            : [
-                                ['EVT-ATT-001', 'Attendance state changed (check or x).'],
-                                ['EVT-ATT-002', 'Homework flag changed.'],
-                                ['EVT-ATT-003', 'Late flag changed.'],
-                                ['EVT-CUS-001', 'Custom event message added.'],
-                                ['ROS-MEM-001', 'Student alias renamed for this class.'],
-                              ]
-                          )
-                            .filter(([code]) => !logCodeQuery || code.includes(logCodeQuery))
-                            .map(([code, description]) => (
-                              <div key={code} className="rounded-md bg-background/80 px-2 py-1">
-                                <p className="font-mono text-[11px] text-foreground">{code}</p>
-                                <p>{description}</p>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
           <div className="space-y-3">
             <div className="class-panel" data-testid="group-section-teachers">
@@ -459,7 +365,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                           <Link
                             prefetch={false}
                             href={`/class/${classId}?tab=logs&student_id=${student.id}&category=events`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-accent/35 hover:bg-sidebar-accent/60"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
                             onClick={(e) => e.stopPropagation()}
                             title={isDutch ? 'Bekijk tijdlijn' : 'View timeline'}
                           >
@@ -468,7 +374,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                           <Link
                             prefetch={false}
                             href={`/class/${classId}?tab=attendance&studentId=${student.id}`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-accent/35 hover:bg-sidebar-accent/60"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
                             onClick={(e) => e.stopPropagation()}
                             title={t.attendance}
                           >
@@ -477,7 +383,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                           <Link
                             prefetch={false}
                             href={`/class/${classId}?tab=attendance&studentId=${student.id}&quick=event`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-accent/35 hover:bg-sidebar-accent/60"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
                             onClick={(e) => e.stopPropagation()}
                             title={isDutch ? 'Aangepast event toevoegen' : 'Add custom event'}
                           >
@@ -485,7 +391,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                           </Link>
                           <button
                             type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-accent/35 hover:bg-sidebar-accent/60"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedStudent(student);
@@ -612,26 +518,77 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
           )}
         </DialogContent>
       </Dialog>
-
-      <Dialog open={!!renameStudent} onOpenChange={() => setRenameStudent(null)}>
-        <DialogContent>
+      <Dialog open={groupSettingsOpen} onOpenChange={setGroupSettingsOpen}>
+        <DialogContent className="max-w-3xl rounded-md border-0">
           <DialogHeader>
-            <DialogTitle>{t.renameStudent}</DialogTitle>
-            <DialogDescription>
-              {t.renameDescription}
-            </DialogDescription>
+            <div className="flex items-center justify-between gap-3">
+              <div className="inline-flex items-center gap-2 text-sm">
+                <Pencil className="h-4 w-4" />
+                <span>{t.renameHeader}</span>
+              </div>
+              <button
+                type="button"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:surface-interactive"
+                onClick={() => setGroupSettingsOpen(false)}
+                aria-label={t.close}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </DialogHeader>
-          <Input value={renameValue} onChange={(event) => setRenameValue(event.target.value)} maxLength={100} />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameStudent(null)} disabled={savingRename}>
-              {t.cancel}
-            </Button>
-            <Button onClick={() => void saveStudentRename()} disabled={savingRename}>
-              {t.save}
-            </Button>
-          </DialogFooter>
+          <div className="grid gap-3 md:grid-cols-[1.2fr_1fr]">
+            <div className="rounded-md surface-panel p-2">
+              <div className="max-h-[54vh] space-y-1 overflow-y-auto pr-1">
+                {sortedStudents.map((student) => (
+                  <button
+                    key={`rename-${student.id}`}
+                    type="button"
+                    className={`flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors ${
+                      renameStudentId === student.id ? 'surface-chip' : 'hover:surface-interactive'
+                    }`}
+                    onClick={() => {
+                      setRenameStudentId(student.id);
+                      setRenameValue(student.name);
+                    }}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate">{student.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2 rounded-md surface-interactive p-3">
+              <p className="text-sm">
+                {renameStudentId ? t.renameInputLabel : t.renameHint}
+              </p>
+              <Input
+                value={renameValue}
+                onChange={(event) => setRenameValue(event.target.value)}
+                maxLength={100}
+                disabled={!renameStudentId || savingRename}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && renameStudentId && !savingRename) {
+                    event.preventDefault();
+                    void saveStudentRename();
+                  }
+                }}
+              />
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  onClick={() => void saveStudentRename()}
+                  disabled={!renameStudentId || savingRename}
+                >
+                  {t.save}
+                </Button>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

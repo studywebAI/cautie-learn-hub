@@ -20,6 +20,7 @@ import {
   BrainCircuit,
   Copy,
   FileSignature,
+  Network,
   Route,
   School,
   Calendar,
@@ -165,6 +166,8 @@ export function AppSidebar() {
     { href: '/tools/quiz', label: dictionary.sidebar.tools.quizGenerator, icon: BrainCircuit },
     { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: Copy },
     { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: FileSignature },
+    { href: '/tools/notes?layout=wordweb', label: isDutch ? 'Wordweb' : 'Wordweb', icon: Network },
+    { href: '/tools/notes?layout=timeline', label: isDutch ? 'Tijdlijn Notities' : 'Timeline Notes', icon: Calendar },
   ];
 
   const otherMenuItems = [
@@ -632,7 +635,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 rounded-xl border-transparent bg-sidebar-accent/55 px-3 text-[12px] text-sidebar-foreground hover:bg-sidebar-accent/75"
+                className="h-8 rounded-xl border-transparent surface-interactive px-3 text-[12px] text-sidebar-foreground hover:surface-chip"
                 onClick={() => {
                   setNewClassMenuOpen(false);
                   setCreateClassOpen(false);
@@ -647,7 +650,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                  className="h-8 text-[12px] rounded-lg border-transparent bg-sidebar-accent/55 text-sidebar-foreground hover:bg-sidebar-accent/75"
+                  className="h-8 text-[12px] rounded-lg border-transparent surface-interactive text-sidebar-foreground hover:surface-chip"
                 onClick={() => {
                   setJoinClassOpen((v) => !v);
                   setCreateClassOpen(false);
@@ -660,7 +663,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 variant="outline"
-                  className="h-8 text-[12px] rounded-lg border-transparent bg-sidebar-accent/55 text-sidebar-foreground hover:bg-sidebar-accent/75"
+                  className="h-8 text-[12px] rounded-lg border-transparent surface-interactive text-sidebar-foreground hover:surface-chip"
                 onClick={() => setCreateSubjectOpen((v) => !v)}
               >
                 + {isDutch ? 'Vak maken' : 'Create subject'}
@@ -740,8 +743,8 @@ export function AppSidebar() {
                 className={cn(
                   'flex items-center justify-between gap-2 truncate rounded-xl px-2.5 py-2 text-[13px] transition-colors',
                   dropdown.kind === 'classes' && entry.id === effectiveTeacherClassId
-                    ? 'bg-sidebar-accent text-sidebar-foreground'
-                    : 'hover:bg-sidebar-accent text-sidebar-foreground/85 hover:text-sidebar-foreground'
+                    ? 'surface-chip text-sidebar-foreground'
+                    : 'hover:surface-chip text-sidebar-foreground/85 hover:text-sidebar-foreground'
                 )}
                 onClick={(event) => {
                   if (dropdown.kind === 'classes' && isTeacher) {
@@ -802,7 +805,7 @@ export function AppSidebar() {
               setOpenMobile(false);
             }}
             disabled={classDropdownItems.length === 0}
-            className="h-8 w-full rounded-xl border-transparent bg-sidebar-accent/45 px-3 text-[12px] text-sidebar-foreground transition-colors hover:bg-sidebar-accent/62 disabled:opacity-60"
+            className="h-8 w-full rounded-xl border-transparent surface-interactive px-3 text-[12px] text-sidebar-foreground transition-colors hover:surface-chip disabled:opacity-60"
           >
             {classDropdownItems.length === 0 ? (
               <option value="">{isDutch ? 'Geen klassen' : 'No classes'}</option>
@@ -827,7 +830,7 @@ export function AppSidebar() {
         <Button
           size="sm"
           variant="outline"
-          className="mb-1 h-7 w-full justify-start rounded-xl border-transparent bg-sidebar-accent/45 px-2.5 text-[11px] font-normal text-sidebar-foreground hover:bg-sidebar-accent/62"
+          className="mb-1 h-7 w-full justify-start rounded-xl border-transparent surface-interactive px-2.5 text-[11px] font-normal text-sidebar-foreground hover:surface-chip"
           onClick={(event) => {
             openDropdownFor('classes', event.currentTarget);
             setNewClassMenuOpen(false);
@@ -848,7 +851,7 @@ export function AppSidebar() {
             openDropdownFor('classes', event.currentTarget);
           }}
           disabled={classDropdownItems.length === 0}
-          className="h-7 w-full rounded-xl border-transparent bg-sidebar-accent/45 px-2.5 text-left text-[11px] text-sidebar-foreground transition-colors hover:bg-sidebar-accent/62 disabled:opacity-60"
+          className="h-7 w-full rounded-xl border-transparent surface-interactive px-2.5 text-left text-[11px] text-sidebar-foreground transition-colors hover:surface-chip disabled:opacity-60"
         >
           <span className="flex items-center justify-between gap-2">
               <span className="truncate">
@@ -1013,8 +1016,8 @@ export function AppSidebar() {
                       className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                         isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)
-                          ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground dark:text-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
-                          : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
+                          ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                          : "text-sidebar-foreground hover:surface-interactive"
                       )}
                       title={item.label}
                     >
@@ -1027,8 +1030,8 @@ export function AppSidebar() {
                     className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                       isMenuItemActive(item.href)
-                        ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground dark:text-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
-                        : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
+                        ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                        : "text-sidebar-foreground hover:surface-interactive"
                     )}
                     title={item.label}
                   >
@@ -1045,8 +1048,8 @@ export function AppSidebar() {
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                   isMenuItemActive(item.href)
-                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground dark:text-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
-                    : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
+                    ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                    : "text-sidebar-foreground hover:surface-interactive"
                 )}
                 title={item.label}
               >
@@ -1061,8 +1064,8 @@ export function AppSidebar() {
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                   isMenuItemActive(item.href)
-                    ? "bg-[hsl(var(--sidebar-accent)/1)] text-sidebar-foreground dark:text-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
-                    : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
+                    ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                    : "text-sidebar-foreground hover:surface-interactive"
                 )}
                 title={item.label}
               >
@@ -1075,7 +1078,7 @@ export function AppSidebar() {
           <div className="mt-auto px-1.5">
             <Link
               href="/upgrade"
-              className="flex h-8 w-8 items-center justify-center rounded-md text-sidebar-foreground transition-colors hover:bg-[hsl(var(--sidebar-accent)/0.85)]"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-sidebar-foreground transition-colors hover:surface-interactive"
               title={isDutch ? 'Upgraden' : 'Upgrade'}
             >
               <ArrowUpRight className="h-4 w-4" />

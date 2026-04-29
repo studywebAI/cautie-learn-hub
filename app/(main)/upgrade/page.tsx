@@ -24,8 +24,8 @@ const pricingByType: Record<PlanType, Record<PlanTier, string>> = {
 
 const featureMap: Record<PlanType, Record<PlanTier, string[]>> = {
   student: {
-    premium: ['30 AI tool actions/day', 'Smart summaries + quizzes', 'Studyset planning'],
-    pro: ['Unlimited AI tool actions', 'Advanced study plans', 'Priority generation speed', 'Full Studyset tracking'],
+    premium: ['30 AI tool actions/day', 'Image-enhanced quiz generation', 'Source-backed deep questions', 'Timeline/Wordweb premium note presets'],
+    pro: ['Unlimited AI tool actions', 'Advanced study plans', 'Priority generation speed', 'Full Studyset tracking', 'Premium visual outputs (diagrams/timelines)'],
   },
   teacher: {
     premium: ['Up to 5 classes', 'Teacher collaboration tools', 'Manage + schedule controls'],

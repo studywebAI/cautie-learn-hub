@@ -33,7 +33,8 @@ const QuizDuel = dynamic(
   { ssr: false }
 );
 
-const VALID_QUIZ_MODES: QuizMode[] = ['normal', 'practice', 'exam', 'survival', 'speedrun', 'adaptive', 'duel', 'boss-fight'];
+const VALID_QUIZ_MODES: QuizMode[] = ['normal', 'practice', 'exam', 'adaptive', 'duel'];
+type KnowledgeLevel = 'beginner' | 'intermediate' | 'advanced';
 
 function normalizeQuizMode(value: string | null | undefined): QuizMode {
   const next = String(value || '').trim().toLowerCase();
@@ -66,10 +67,14 @@ function QuizPageContent() {
   const [quizMode, setQuizMode] = useState<QuizMode>('practice');
   const [questionCount, setQuestionCount] = useState(7);
   const [questionType, setQuestionType] = useState('mixed');
+  const [knowledgeLevel, setKnowledgeLevel] = useState<KnowledgeLevel>('intermediate');
   const [currentView, setCurrentView] = useState<'setup' | 'take' | 'duel'>('setup');
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [saveToRecents, setSaveToRecents] = useState(true);
+  const [includeImages, setIncludeImages] = useState(false);
+  const [sourceBackedDepth, setSourceBackedDepth] = useState(false);
+  const [premiumTier, setPremiumTier] = useState<'free' | 'premium' | 'pro'>('free');
   const [isSharingToClass, setIsSharingToClass] = useState(false);
   const launchHandledRef = useRef(false);
   const sourceParamsHandledRef = useRef(false);
@@ -88,7 +93,7 @@ function QuizPageContent() {
     setIsLoading(true);
     setGeneratedQuiz(null);
     try {
-      const requestedMode = overrides?.mode || quizMode;
+        const requestedMode = overrides?.mode || quizMode;
       const requestedQuestionCount = overrides?.questionCount ?? questionCount;
       const requestedQuestionType = overrides?.questionType || questionType;
       const requestedTitle = overrides?.title || customTitle.trim() || 'Generated Quiz';
@@ -96,7 +101,7 @@ function QuizPageContent() {
       if (requestedMode === 'duel') {
         setCurrentView('duel');
       } else {
-        const count = (requestedMode === 'survival' || requestedMode === 'adaptive' || requestedMode === 'boss-fight') ? 1 : requestedQuestionCount;
+        const count = requestedMode === 'adaptive' ? 1 : requestedQuestionCount;
         const run = await runToolFlowV2({
           toolId: 'quiz',
           flowName: 'generateQuiz',
@@ -113,6 +118,9 @@ function QuizPageContent() {
             regionCode: String(region || 'global').toUpperCase(),
             educationLevel: schoolingLevel,
             questionType: requestedQuestionType,
+            knowledgeLevel,
+            includeImages,
+            sourceBackedDepth,
           },
           computeClass: count > 20 ? 'heavy' : 'standard',
         });
@@ -132,7 +140,7 @@ function QuizPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [customTitle, imageDataUri, language, region, schoolingLevel, questionCount, questionType, quizMode, saveToRecents]);
+  }, [customTitle, imageDataUri, language, region, schoolingLevel, questionCount, questionType, quizMode, saveToRecents, knowledgeLevel, includeImages, sourceBackedDepth]);
 
   useEffect(() => {
     if (!sourceTextFromParams || isAssignmentContext || sourceParamsHandledRef.current) return;
@@ -209,16 +217,38 @@ function QuizPageContent() {
   }, [savedRun]);
 
   useEffect(() => {
+    const loadTier = async () => {
+      try {
+        const res = await fetch('/api/subscription/upgrade', { cache: 'no-store' });
+        if (!res.ok) return;
+        const payload = await res.json().catch(() => ({}));
+        const tier = String(payload?.tier || 'free').toLowerCase();
+        if (tier === 'pro' || tier === 'premium') setPremiumTier(tier);
+        else setPremiumTier('free');
+      } catch {}
+    };
+    void loadTier();
+  }, []);
+
+  useEffect(() => {
     const s = (k: string) => localStorage.getItem(`tools.quiz.${k}`);
     if (s('mode')) setQuizMode(normalizeQuizMode(s('mode')));
     if (s('count') && !Number.isNaN(Number(s('count')))) setQuestionCount(Number(s('count')));
     if (s('questionType')) setQuestionType(s('questionType')!);
+    if (s('knowledgeLevel') === 'beginner' || s('knowledgeLevel') === 'intermediate' || s('knowledgeLevel') === 'advanced') {
+      setKnowledgeLevel(s('knowledgeLevel') as KnowledgeLevel);
+    }
+    if (s('includeImages') === 'true') setIncludeImages(true);
+    if (s('sourceBackedDepth') === 'true') setSourceBackedDepth(true);
     if (s('saveToRecents') === 'false') setSaveToRecents(false);
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.quiz.mode', quizMode); }, [quizMode]);
   useEffect(() => { localStorage.setItem('tools.quiz.count', String(questionCount)); }, [questionCount]);
   useEffect(() => { localStorage.setItem('tools.quiz.questionType', questionType); }, [questionType]);
+  useEffect(() => { localStorage.setItem('tools.quiz.knowledgeLevel', knowledgeLevel); }, [knowledgeLevel]);
+  useEffect(() => { localStorage.setItem('tools.quiz.includeImages', String(includeImages)); }, [includeImages]);
+  useEffect(() => { localStorage.setItem('tools.quiz.sourceBackedDepth', String(sourceBackedDepth)); }, [sourceBackedDepth]);
   useEffect(() => { localStorage.setItem('tools.quiz.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
 
   const handleRestart = () => {
@@ -303,9 +333,26 @@ function QuizPageContent() {
         />
       </div>
 
-      <PillSelector label={t.quiz.labels.mode} options={t.quiz.modeOptions} value={quizMode} onChange={(v) => setQuizMode(v as QuizMode)} disabled={isLoading} />
+      <PillSelector
+        label={t.quiz.labels.mode}
+        options={t.quiz.modeOptions.filter((option) => ['practice', 'normal', 'exam', 'adaptive', 'duel'].includes(option.value))}
+        value={quizMode}
+        onChange={(v) => setQuizMode(v as QuizMode)}
+        disabled={isLoading}
+      />
 
       <PillSelector label={t.quiz.labels.questionType} options={t.quiz.questionTypeOptions} value={questionType} onChange={setQuestionType} disabled={isLoading} />
+      <PillSelector
+        label="How much do you already know?"
+        options={[
+          { value: 'beginner', label: 'Beginner', description: 'Starts with basics' },
+          { value: 'intermediate', label: 'Intermediate', description: 'Balanced depth' },
+          { value: 'advanced', label: 'Advanced', description: 'Harder wording and nuance' },
+        ]}
+        value={knowledgeLevel}
+        onChange={(v) => setKnowledgeLevel(v as KnowledgeLevel)}
+        disabled={isLoading}
+      />
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -329,6 +376,39 @@ function QuizPageContent() {
           onCheckedChange={setSaveToRecents}
           className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
         />
+      </div>
+      <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Include images in questions</p>
+          <Switch
+            checked={includeImages}
+            onCheckedChange={(next) => {
+              if (next && premiumTier === 'free') {
+                toast({ title: 'Premium feature', description: 'Image-enhanced quiz generation requires Premium.' });
+                router.push('/upgrade');
+                return;
+              }
+              setIncludeImages(next);
+            }}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Source-backed deep questions</p>
+          <Switch
+            checked={sourceBackedDepth}
+            onCheckedChange={(next) => {
+              if (next && premiumTier === 'free') {
+                toast({ title: 'Premium feature', description: 'Source-backed deep questions require Premium.' });
+                router.push('/upgrade');
+                return;
+              }
+              setSourceBackedDepth(next);
+            }}
+          />
+        </div>
+        {premiumTier === 'free' ? (
+          <p className="text-[11px] text-muted-foreground">Premium unlocks image-based and source-backed generation.</p>
+        ) : null}
       </div>
 
       <ImportToolbar

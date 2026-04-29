@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   Settings,
   HelpCircle,
+  Lightbulb,
   LogOut,
   ChevronsUpDown,
   User,
@@ -164,6 +165,10 @@ export function SidebarProfile() {
               <HelpCircle className="h-4 w-4 mr-2" />
               Help & FAQ
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push('/ideas-board')}>
+              <Lightbulb className="h-4 w-4 mr-2" />
+              Ideas Board
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
               <LogOut className="h-4 w-4 mr-2" />
@@ -218,6 +223,10 @@ export function SidebarProfile() {
           <DropdownMenuItem onClick={() => router.push('/settings?tab=help')}>
             <HelpCircle className="h-4 w-4 mr-2" />
             Help & FAQ
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push('/ideas-board')}>
+            <Lightbulb className="h-4 w-4 mr-2" />
+            Ideas Board
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">

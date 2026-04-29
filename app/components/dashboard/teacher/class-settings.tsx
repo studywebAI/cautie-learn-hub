@@ -736,7 +736,6 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     { id: 'profile', label: 'Class Profile' },
     { id: 'invite', label: 'Invite Access' },
     { id: 'defaults', label: 'Teaching Defaults' },
-    { id: 'schedule', label: 'School Schedule' },
     { id: 'requests', label: 'Teacher Requests' },
     { id: 'activity', label: 'Invite Activity' },
     { id: 'subjects', label: 'Subject Management' },
@@ -934,45 +933,6 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 onCheckedChange={(checked) =>
                   setPreferences((prev) => ({ ...prev, invite_allow_teacher_invites: Boolean(checked) }))
                 }
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between rounded-md surface-interactive p-3">
-            <div>
-              <p className="text-sm font-medium">Enable school schedule</p>
-              <p className="text-xs text-muted-foreground">Enable class timetable management.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">
-                {preferences.school_schedule_enabled ? 'On' : 'Off'}
-              </span>
-              <Switch
-                className={preferenceSwitchClassName}
-                checked={preferences.school_schedule_enabled}
-                onCheckedChange={(checked) =>
-                  setPreferences((prev) => ({ ...prev, school_schedule_enabled: Boolean(checked) }))
-                }
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between rounded-md surface-interactive p-3">
-            <div>
-              <p className="text-sm font-medium">Show school schedule to students</p>
-              <p className="text-xs text-muted-foreground">Allow students to view timetable blocks.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">
-                {preferences.school_schedule_visible_to_students ? 'On' : 'Off'}
-              </span>
-              <Switch
-                className={preferenceSwitchClassName}
-                checked={preferences.school_schedule_visible_to_students}
-                onCheckedChange={(checked) =>
-                  setPreferences((prev) => ({ ...prev, school_schedule_visible_to_students: Boolean(checked) }))
-                }
-                disabled={!preferences.school_schedule_enabled}
               />
             </div>
           </div>

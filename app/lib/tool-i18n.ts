@@ -118,7 +118,7 @@ const en: ToolStrings = {
     modeOptions: [
       { value: 'practice', label: 'Chill', description: 'Relaxed mode with hints and explanations after each question' },
       { value: 'normal', label: 'Classic', description: 'Standard quiz with score at the end' },
-      { value: 'exam', label: 'Lockdown', description: 'Strict timed exam — no going back, no hints' },
+      { value: 'exam', label: 'Exam Focus', description: 'Timed exam mode with stricter flow and limited hints' },
       { value: 'survival', label: 'Survival', description: 'Endless questions until you get one wrong' },
       { value: 'speedrun', label: 'Speedrun', description: 'Answer as many as possible in a time limit' },
       { value: 'adaptive', label: 'Smart', description: 'Difficulty adjusts based on your performance' },
@@ -307,7 +307,7 @@ const nl: ToolStrings = {
     modeOptions: [
       { value: 'practice', label: 'Relaxed', description: 'Ontspannen modus met hints en uitleg na elke vraag' },
       { value: 'normal', label: 'Klassiek', description: 'Standaard quiz met score aan het einde' },
-      { value: 'exam', label: 'Lockdown', description: 'Strikt getimed examen — geen terug, geen hints' },
+      { value: 'exam', label: 'Examen Focus', description: 'Getimede examenmodus met strakkere flow en beperkte hints' },
       { value: 'survival', label: 'Survival', description: 'Eindeloze vragen tot je er één fout hebt' },
       { value: 'speedrun', label: 'Speedrun', description: 'Beantwoord zoveel mogelijk binnen de tijdslimiet' },
       { value: 'adaptive', label: 'Slim', description: 'Moeilijkheid past zich aan op basis van je prestaties' },
