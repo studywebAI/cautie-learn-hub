@@ -178,7 +178,7 @@ export function PaintOverlay({
     >
       {/* Toolbar */}
       {active && (
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 rounded-full border bg-card/95 backdrop-blur-sm shadow-lg px-3 py-1.5">
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 rounded-full border surface-panel backdrop-blur-sm shadow-lg px-3 py-1.5">
         <Button
           variant={tool === 'pen' ? 'default' : 'ghost'}
           size="icon"

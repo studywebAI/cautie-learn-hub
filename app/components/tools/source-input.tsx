@@ -1533,7 +1533,7 @@ export function SourceInput({
                   {source.error && <span className="text-destructive">Error</span>}
                   <button
                     type="button"
-                    className="rounded-full p-0.5 hover:bg-muted"
+                    className="rounded-full p-0.5 hover:surface-interactive"
                     onClick={() => {
                       if (isRemote) {
                         void handleRemoveFileCard(source.id, true);
@@ -1661,14 +1661,14 @@ export function SourceInput({
                 }
               }}
               placeholder=""
-              className="min-h-[190px] flex-1 resize-none rounded-2xl border border-border bg-muted/70 text-sm"
+              className="min-h-[190px] flex-1 resize-none rounded-2xl border border-border surface-chip text-sm"
               disabled={disabled || isProcessing}
             />
           </div>
           <Button
             type="button"
             variant="outline"
-            className="w-[112px] rounded-2xl border-border bg-muted/80 text-xs hover:bg-muted"
+            className="w-[112px] rounded-2xl border-border surface-chip text-xs hover:surface-interactive"
             onClick={() => void submitAndSave()}
             disabled={disabled || isProcessing || !canGenerate}
           >

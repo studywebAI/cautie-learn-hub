@@ -165,7 +165,7 @@ function getCategoryClass(categoryName: Category, action: string) {
   const tone = toneIndex(action || categoryName);
   if (tone === 0) return 'surface-interactive text-foreground border-border';
   if (tone === 1) return 'surface-chip text-foreground border-border';
-  return 'bg-muted/60 text-foreground border-border';
+  return 'surface-chip text-foreground border-border';
 }
 
 export function LogsTab({ classId, cachedData = null, parentLoading = false }: LogsTabProps) {

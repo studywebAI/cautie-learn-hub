@@ -76,12 +76,12 @@ export const AnalyticsDashboard = React.memo(function AnalyticsDashboard() {
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-            <div className="h-32 bg-muted rounded"></div>
+            <div className="h-4 surface-interactive rounded w-3/4"></div>
+            <div className="h-32 surface-interactive rounded"></div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="h-20 bg-muted rounded"></div>
-              <div className="h-20 bg-muted rounded"></div>
-              <div className="h-20 bg-muted rounded"></div>
+              <div className="h-20 surface-interactive rounded"></div>
+              <div className="h-20 surface-interactive rounded"></div>
+              <div className="h-20 surface-interactive rounded"></div>
             </div>
           </div>
         </CardContent>
@@ -250,7 +250,7 @@ export const AnalyticsDashboard = React.memo(function AnalyticsDashboard() {
         <CardContent>
           <div className="space-y-3">
             {analytics.recommendations.map((recommendation, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+              <div key={index} className="flex items-start gap-3 p-3 surface-interactive rounded-lg">
                 <Badge variant="secondary" className="mt-0.5">
                   {index + 1}
                 </Badge>

@@ -292,7 +292,7 @@ export default function SettingsPage() {
                     }}
                     className={cn(
                       'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors',
-                      activeTab === tabItem.id ? 'surface-interactive text-foreground' : 'text-foreground/85 hover:surface-interactive/60 hover:text-foreground'
+                      activeTab === tabItem.id ? 'surface-interactive text-foreground' : 'text-foreground/85 hover:surface-interactive hover:text-foreground'
                     )}
                   >
                     {tabItem.label}
@@ -531,7 +531,7 @@ export default function SettingsPage() {
                         </p>
                       </div>
                     ) : (
-                      <div className="rounded-xl border border-border surface-interactive/15 p-4 text-sm text-muted-foreground">
+                      <div className="rounded-xl border border-border surface-interactive p-4 text-sm text-muted-foreground">
                         {normalizedCodeQuery
                           ? (isDutch
                             ? `Geen uitleg gevonden voor ${normalizedCodeQuery}.`

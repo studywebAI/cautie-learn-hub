@@ -118,7 +118,7 @@ export const MultipleChoiceBlock: React.FC<MultipleChoiceBlockProps> = ({
 
   const renderEditor = () => {
     return (
-      <div className={cn('w-full space-y-4 p-4 border rounded-lg bg-muted/50', className)}>
+      <div className={cn('w-full space-y-4 p-4 border rounded-lg surface-interactive', className)}>
         <div>
           <label className="text-sm font-medium">Question</label>
           <Input

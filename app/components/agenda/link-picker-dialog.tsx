@@ -221,7 +221,7 @@ export function LinkPickerDialog({ isOpen, onClose, onSelect, classId }: LinkPic
                         className={`w-full flex flex-col gap-1 p-3 rounded-lg text-left transition-colors ${
                           selectedItem?.url === assignment.path
                             ? 'bg-primary/10 border border-primary'
-                            : 'hover:bg-muted'
+                            : 'hover:surface-interactive'
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ export function LinkPickerDialog({ isOpen, onClose, onSelect, classId }: LinkPic
                         className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
                           selectedItem?.url === `/material/${material.id}`
                             ? 'bg-primary/10 border border-primary'
-                            : 'hover:bg-muted'
+                            : 'hover:surface-interactive'
                         }`}
                       >
                         <FileText className="h-4 w-4 text-primary flex-shrink-0" />
@@ -294,7 +294,7 @@ export function LinkPickerDialog({ isOpen, onClose, onSelect, classId }: LinkPic
                         className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
                           selectedItem?.url === subject.path
                             ? 'bg-primary/10 border border-primary'
-                            : 'hover:bg-muted'
+                            : 'hover:surface-interactive'
                         }`}
                       >
                         <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />

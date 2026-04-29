@@ -64,7 +64,7 @@ function previewRowClass(type: string): string {
   if (type === 'multiple_choice') return 'bg-emerald-100/70 border-emerald-200/80';
   if (type === 'fill_in_blank') return 'bg-amber-100/70 border-amber-200/80';
   if (type === 'matching' || type === 'ordering') return 'bg-purple-100/70 border-purple-200/80';
-  return 'bg-muted/50 border-border/80';
+  return 'surface-interactive border-border/80';
 }
 
 function previewQuestionHint(type: string, isDutch: boolean): string {
@@ -461,7 +461,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                   <button
                     type="button"
                     onClick={() => setCreateKind('homework')}
-                    className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+                    className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
                   >
                     <p className="text-sm font-medium">{t.homework}</p>
                     <p className="text-xs text-muted-foreground mt-1">{t.homeworkCaption}</p>
@@ -469,7 +469,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                   <button
                     type="button"
                     onClick={() => setCreateKind('test')}
-                    className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+                    className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
                   >
                     <p className="text-sm font-medium">{t.test}</p>
                     <p className="text-xs text-muted-foreground mt-1">{t.testCaption}</p>
@@ -490,7 +490,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                       key={preset.id}
                       type="button"
                       onClick={() => setSelectedPresetId(preset.id)}
-                      className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+                      className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
@@ -498,7 +498,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                           <p className="text-xs text-muted-foreground">{getPresetUsage(preset.key)}</p>
                           <div className="mt-2 flex flex-wrap gap-1">
                             {preset.blockMix.map((mix) => (
-                              <span key={`${preset.id}-${mix.type}`} className="rounded-full bg-muted px-2 py-0.5 text-[10px]">
+                              <span key={`${preset.id}-${mix.type}`} className="rounded-full surface-interactive px-2 py-0.5 text-[10px]">
                                 {mix.count}x {formatBlockTypeLabel(mix.type)}
                               </span>
                             ))}
@@ -512,7 +512,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                         <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                           {isDutch ? 'Live Layout Voorbeeld' : 'Live Layout Preview'}
                         </p>
-                        <div className="mt-2 space-y-2 rounded-lg border border-border/70 bg-muted/20 p-2">
+                        <div className="mt-2 space-y-2 rounded-lg border border-border/70 surface-chip p-2">
                           {preset.blockMix.slice(0, 3).map((mix) => (
                             <div key={`${preset.id}-preview-${mix.type}`} className={`rounded-md border p-2 ${previewRowClass(mix.type)}`}>
                               <div className="flex items-center justify-between text-[10px]">
@@ -533,7 +533,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                   <button
                     type="button"
                     onClick={() => setSelectedPresetId(null)}
-                    className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+                    className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
                   >
                     <p className="text-sm font-medium">{t.createYourOwn}</p>
                     <p className="text-xs text-muted-foreground">{t.createYourOwnCaption}</p>
@@ -608,22 +608,22 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                         />
                       </div>
                     </div>
-                    <label className="flex items-center justify-between rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
+                    <label className="flex items-center justify-between rounded-md border border-border/70 surface-chip px-3 py-2 text-sm">
                       <span>{t.randomizeQuestions}</span>
                       <input type="checkbox" checked={randomizeQuestions} onChange={(e) => setRandomizeQuestions(e.target.checked)} />
                     </label>
-                    <label className="flex items-center justify-between rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
+                    <label className="flex items-center justify-between rounded-md border border-border/70 surface-chip px-3 py-2 text-sm">
                       <span>{t.randomizeAnswers}</span>
                       <input type="checkbox" checked={randomizeAnswers} onChange={(e) => setRandomizeAnswers(e.target.checked)} />
                     </label>
-                    <label className="flex items-center justify-between rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
+                    <label className="flex items-center justify-between rounded-md border border-border/70 surface-chip px-3 py-2 text-sm">
                       <span>{t.integrityMode}</span>
                       <input type="checkbox" checked={integrityMode} onChange={(e) => setIntegrityMode(e.target.checked)} />
                     </label>
                   </div>
                 )}
 
-                <label className="flex items-center justify-between rounded-md border border-border/80 bg-muted/20 p-3 text-sm">
+                <label className="flex items-center justify-between rounded-md border border-border/80 surface-chip p-3 text-sm">
                   <span>
                     {t.addToAgenda}
                     <span className="ml-2 text-xs text-muted-foreground">{t.addToAgendaHelp}</span>
@@ -637,7 +637,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                   <Label>{t.materials}</Label>
                   <p className="text-sm text-muted-foreground">{t.materialsHelp}</p>
                   {selectedMaterial ? (
-                    <div className="flex items-center gap-2 p-2.5 rounded-md bg-muted/50 border text-sm">
+                    <div className="flex items-center gap-2 p-2.5 rounded-md surface-interactive border text-sm">
                       <Paperclip className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium truncate flex-1">{t.attached}: {selectedMaterial.title}</span>
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedMaterial(null)}>

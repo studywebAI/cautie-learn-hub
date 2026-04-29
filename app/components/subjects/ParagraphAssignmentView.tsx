@@ -252,7 +252,7 @@ export function ParagraphAssignmentView({
           assignments.map((assignment) => (
             <div
               key={assignment.id}
-              className="cursor-pointer hover:bg-muted p-3 rounded flex items-center justify-between"
+              className="cursor-pointer hover:surface-interactive p-3 rounded flex items-center justify-between"
               onClick={() => handleAssignmentClick(assignment.id)}
             >
               <div className="flex items-center gap-2">
@@ -261,7 +261,7 @@ export function ParagraphAssignmentView({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-16 bg-muted rounded-full h-2">
+                <div className="w-16 surface-interactive rounded-full h-2">
                   <div
                     className="bg-primary h-2 rounded-full transition-all duration-300"
                     style={{ width: `${assignment.completion_percent}%` }}

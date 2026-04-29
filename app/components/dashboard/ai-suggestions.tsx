@@ -36,7 +36,7 @@ export function AiSuggestions({ aiSuggestions }: AiSuggestionsProps) {
             <Button
               key={suggestion.id}
               variant="outline"
-              className="w-full justify-start h-auto p-3 text-left bg-background hover:bg-muted"
+              className="w-full justify-start h-auto p-3 text-left bg-background hover:surface-interactive"
             >
               <Icon className="h-5 w-5 mr-3 text-primary flex-shrink-0" />
               <span className="flex-1 whitespace-normal">{suggestion.title}</span>

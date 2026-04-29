@@ -99,11 +99,11 @@ export function StudentProgressDashboard({ classId }: ProgressDashboardProps) {
           {[...Array(6)].map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader>
-                <div className="h-4 bg-muted rounded w-3/4"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
+                <div className="h-4 surface-interactive rounded w-3/4"></div>
+                <div className="h-3 surface-interactive rounded w-1/2"></div>
               </CardHeader>
               <CardContent>
-                <div className="h-2 bg-muted rounded"></div>
+                <div className="h-2 surface-interactive rounded"></div>
               </CardContent>
             </Card>
           ))}

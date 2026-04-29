@@ -30,11 +30,11 @@ type HierarchicalLinkPickerProps = { isOpen: boolean; onClose: () => void; onSel
 // Keyboard shortcuts hint component
 function KeyboardHint() {
   return (
-    <div className="flex items-center gap-3 text-xs text-muted-foreground px-2 py-1 border-t bg-muted/30">
-      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">↑</kbd><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">↓</kbd> Navigate</span>
-      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">↵</kbd> Select</span>
-      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">←</kbd> Back</span>
-      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">esc</kbd> Close</span>
+    <div className="flex items-center gap-3 text-xs text-muted-foreground px-2 py-1 border-t surface-interactive">
+      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 surface-interactive rounded text-foreground">↑</kbd><kbd className="px-1.5 py-0.5 surface-interactive rounded text-foreground">↓</kbd> Navigate</span>
+      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 surface-interactive rounded text-foreground">↵</kbd> Select</span>
+      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 surface-interactive rounded text-foreground">←</kbd> Back</span>
+      <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 surface-interactive rounded text-foreground">esc</kbd> Close</span>
     </div>
   );
 }
@@ -58,8 +58,8 @@ function Breadcrumb({ items, currentLevel, onNavigate }: { items: { label: strin
 
 function ItemCard({ icon: Icon, label, badge, isSelected, onClick, showBadge }: { icon: any; label: string; badge?: string | number; isSelected: boolean; onClick: () => void; showBadge?: boolean }) {
   return (
-    <div onClick={onClick} className={cn("group relative flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer", isSelected ? "bg-primary/10 border-primary" : "hover:bg-muted hover:border-muted-foreground/25")}>
-      <div className={cn("w-8 h-8 rounded-md flex items-center justify-center text-sm font-medium transition-colors", isSelected ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground")}>
+    <div onClick={onClick} className={cn("group relative flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer", isSelected ? "bg-primary/10 border-primary" : "hover:surface-interactive hover:border-muted-foreground/25")}>
+      <div className={cn("w-8 h-8 rounded-md flex items-center justify-center text-sm font-medium transition-colors", isSelected ? "bg-primary/20 text-primary" : "surface-interactive text-muted-foreground")}>
         {showBadge ? badge : <Icon className="h-4 w-4" />}
       </div>
       <div className="flex-1 min-w-0"><h4 className="font-medium truncate">{label}</h4>{badge && showBadge && <p className="text-xs text-muted-foreground">{badge}</p>}</div>
@@ -298,7 +298,7 @@ export function HierarchicalLinkPicker({ isOpen, onClose, onSelect, classId }: H
                 filteredParagraphs.map((paragraph, index) => (
                   <div key={paragraph.id} className="space-y-1">
                     <ItemCard icon={BookOpen} label={paragraph.title} badge={paragraph.paragraph_number} isSelected={index === selectedIndex} onClick={() => navigateTo('assignments', { subjectId: currentNav.subjectId!, chapterId: currentNav.chapterId!, paragraphId: paragraph.id })} showBadge={true} />
-                    <button onClick={() => handleSelectParagraph(paragraph)} className="w-full text-xs text-muted-foreground hover:text-foreground py-1.5 px-3 rounded bg-muted/50 hover:bg-muted transition-colors ml-4">Select this paragraph</button>
+                    <button onClick={() => handleSelectParagraph(paragraph)} className="w-full text-xs text-muted-foreground hover:text-foreground py-1.5 px-3 rounded surface-interactive hover:surface-interactive transition-colors ml-4">Select this paragraph</button>
                   </div>
                 ))
               ) : <div className="text-center py-12 text-muted-foreground">No paragraphs found</div>}

@@ -201,7 +201,7 @@ export function JoinClassDialog({ isOpen, setIsOpen, onClassJoined, initialCode 
     if (classToJoin) {
         return (
             <div className="py-4 space-y-4">
-                <Card className="bg-muted/50">
+                <Card className="surface-interactive">
                     <CardHeader>
                         <CardTitle>{classToJoin.name}</CardTitle>
                         <CardDescription>{classToJoin.description || 'No description provided.'}</CardDescription>
@@ -213,7 +213,7 @@ export function JoinClassDialog({ isOpen, setIsOpen, onClassJoined, initialCode 
 
     if (scanMode) {
         return (
-             <div className="relative w-full aspect-square bg-muted rounded-lg overflow-hidden flex items-center justify-center my-4">
+             <div className="relative w-full aspect-square surface-interactive rounded-lg overflow-hidden flex items-center justify-center my-4">
                 <video ref={videoRef} playsInline className="w-full h-full object-cover" />
                 <canvas ref={canvasRef} className="hidden" />
                 <div className="absolute inset-0 border-[20px] border-black/30" />

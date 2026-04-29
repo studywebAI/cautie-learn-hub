@@ -281,15 +281,15 @@ export function ChapterEditor({
       <Card className={className}>
         <CardHeader>
           <div className="animate-pulse">
-            <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
+            <div className="h-6 surface-interactive rounded w-3/4 mb-2"></div>
+            <div className="h-4 surface-interactive rounded w-1/2"></div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-20 bg-muted rounded"></div>
+                <div className="h-20 surface-interactive rounded"></div>
               </div>
             ))}
           </div>

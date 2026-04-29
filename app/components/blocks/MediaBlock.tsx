@@ -49,7 +49,7 @@ export const MediaBlock: React.FC<MediaBlockProps> = ({
   const renderImage = () => {
     if (!url) {
       return (
-        <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
+        <div className="w-full h-48 surface-interactive rounded-lg flex items-center justify-center text-muted-foreground">
           No image URL provided
         </div>
       );
@@ -65,7 +65,7 @@ export const MediaBlock: React.FC<MediaBlockProps> = ({
             e.currentTarget.style.display = 'none';
             const parent = e.currentTarget.parentElement;
             if (parent) {
-              parent.innerHTML = '<div class="w-full h-48 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">Failed to load image</div>';
+              parent.innerHTML = '<div class="w-full h-48 surface-interactive rounded-lg flex items-center justify-center text-muted-foreground">Failed to load image</div>';
             }
           }}
         />
@@ -79,7 +79,7 @@ export const MediaBlock: React.FC<MediaBlockProps> = ({
   const renderEmbed = () => {
     if (!url) {
       return (
-        <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
+        <div className="w-full h-48 surface-interactive rounded-lg flex items-center justify-center text-muted-foreground">
           No embed URL provided
         </div>
       );
@@ -201,7 +201,7 @@ export const MediaBlock: React.FC<MediaBlockProps> = ({
 
   const renderEditor = () => {
     return (
-      <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+      <div className="space-y-4 p-4 border rounded-lg surface-interactive">
         <div>
           <label className="text-sm font-medium">URL</label>
           <Input

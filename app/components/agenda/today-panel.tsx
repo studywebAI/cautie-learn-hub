@@ -43,7 +43,7 @@ export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSugges
         homework: 'bg-blue-100',
         test: 'bg-orange-100',
         big_test: 'bg-red-100',
-        other: 'bg-muted',
+        other: 'surface-interactive',
       } as const;
       return {
         borderColor: visual.accentColor,
@@ -83,7 +83,7 @@ export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSugges
       homework: 'bg-blue-100',
       test: 'bg-orange-100',
       big_test: 'bg-red-100',
-      other: 'bg-muted',
+      other: 'surface-interactive',
     } as const;
     return {
       borderColor: visual.accentColor,
@@ -101,7 +101,7 @@ export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSugges
     
     const content = (
       <div
-        className="p-3 rounded-lg border-l-4 cursor-pointer hover:bg-muted/50 transition-colors"
+        className="p-3 rounded-lg border-l-4 cursor-pointer hover:surface-interactive transition-colors"
         style={{borderColor: style.borderColor, backgroundColor: style.bgColor}}
         onClick={() => {
           if ((event.type === 'assignment' || event.type === 'agenda_item') && onEventClick) {

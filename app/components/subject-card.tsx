@@ -345,7 +345,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
               prefetch={false}
               href={`/subjects/${subject.id}/chapters/${lastWorkedParagraph.chapter_id}/paragraphs/${lastWorkedParagraph.id}`}
               onClick={(event) => event.stopPropagation()}
-              className="mt-2 inline-flex max-w-full items-center rounded-lg surface-interactive px-2 py-1 text-[11px] text-foreground hover:surface-interactive/80"
+              className="mt-2 inline-flex max-w-full items-center rounded-lg surface-interactive px-2 py-1 text-[11px] text-foreground hover:surface-interactive"
             >
               <span className="truncate">
                 Resume {lastWorkedParagraph.chapter_number}.{lastWorkedParagraph.paragraph_number} {lastWorkedParagraph.title}
@@ -372,7 +372,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
                   prefetch={false}
                   href={`/subjects/${subject.id}/chapters/${p.chapter_id}/paragraphs/${p.id}`}
                   onClick={(event) => event.stopPropagation()}
-                  className={`grid min-h-8 grid-cols-[2.8rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:surface-interactive/80 ${
+                  className={`grid min-h-8 grid-cols-[2.8rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:surface-interactive ${
                     isLast ? 'surface-interactive' : ''
                   }`}
                 >

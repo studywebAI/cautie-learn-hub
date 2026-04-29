@@ -119,7 +119,7 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
       )}
 
       {gradingResult && (
-        <div className="mt-6 p-4 border rounded-lg bg-muted/50">
+        <div className="mt-6 p-4 border rounded-lg surface-interactive">
           <div className="flex items-center gap-2 mb-3">
             {gradingResult.graded_by_ai ? (
               <Sparkles className="h-5 w-5 text-purple-600" />

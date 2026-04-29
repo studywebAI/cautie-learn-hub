@@ -39,7 +39,7 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
               'p-0.5 rounded-full transition-colors',
               showInfo
                 ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                : 'text-muted-foreground hover:text-foreground hover:surface-interactive'
             )}
           >
             {showInfo ? <X className="h-3 w-3" /> : <Info className="h-3 w-3" />}

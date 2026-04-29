@@ -1325,7 +1325,7 @@ function EditGradesDetail({
         </div>
       </div>
       {showDeepLinkHint && (
-        <div className="rounded-lg bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+        <div className="rounded-lg surface-interactive px-3 py-2 text-xs text-muted-foreground">
           Focused from Group tab. Highlighted student moved to top.
         </div>
       )}
@@ -1436,7 +1436,7 @@ function EditGradesDetail({
                 id={`grade-student-${student.student_id}`}
                 key={student.student_id}
                 className={`grid grid-cols-1 gap-3 border-b border-border/60 p-3 md:grid-cols-12 md:items-center ${
-                  highlightedStudentId === student.student_id ? 'bg-muted/45' : ''
+                  highlightedStudentId === student.student_id ? 'surface-interactive' : ''
                 }`}
               >
                 <div className="md:col-span-1">

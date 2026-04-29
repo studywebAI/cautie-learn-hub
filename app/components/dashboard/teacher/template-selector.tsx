@@ -94,7 +94,7 @@ export function TemplateSelector({ isOpen, setIsOpen, onTemplateSelected }: Temp
               {templates.map((template) => (
                 <div
                   key={template.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:surface-interactive cursor-pointer"
                   onClick={() => {
                     onTemplateSelected(template);
                     setIsOpen(false);

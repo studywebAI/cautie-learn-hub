@@ -434,7 +434,7 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
                     <CardContent className="pt-4 space-y-2">
                       <p className="text-sm font-medium">{selectedOpenAnswer.question || 'Open question'}</p>
                       <p className="text-xs text-muted-foreground">Student answer</p>
-                      <div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap break-words">
+                      <div className="rounded-md border surface-interactive p-3 text-sm whitespace-pre-wrap break-words">
                         {typeof selectedOpenAnswer.answer_data?.text === 'string'
                           ? selectedOpenAnswer.answer_data.text
                           : JSON.stringify(selectedOpenAnswer.answer_data, null, 2)}

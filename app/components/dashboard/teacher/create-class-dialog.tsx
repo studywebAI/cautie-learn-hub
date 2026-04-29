@@ -1,4 +1,4 @@
-﻿
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -160,7 +160,7 @@ export function CreateClassDialog({ isOpen, setIsOpen, onClassCreated }: CreateC
           <div className="space-y-2">
             <Label>Template (Optional)</Label>
             {selectedTemplate ? (
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+              <div className="flex items-center justify-between p-3 border rounded-lg surface-interactive">
                 <div>
                   <p className="font-medium">{selectedTemplate.name}</p>
                   {selectedTemplate.description && (

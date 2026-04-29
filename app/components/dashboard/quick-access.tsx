@@ -1,4 +1,4 @@
-﻿import {
+import {
   Card,
   CardContent,
   CardDescription,
@@ -34,7 +34,7 @@ export function QuickAccess({ quickAccessItems }: QuickAccessProps) {
           const Icon = iconMap[item.icon] || File;
           return (
             <Link prefetch={false} key={item.id} href="#">
-              <div className="group flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg aspect-square text-center transition-colors hover:bg-muted">
+              <div className="group flex flex-col items-center justify-center p-4 surface-interactive rounded-lg aspect-square text-center transition-colors hover:surface-interactive">
                 <Icon className="h-8 w-8 mb-2 text-primary transition-transform group-hover:scale-110" />
                 <p className="text-sm font-medium leading-tight">
                   {item.title}

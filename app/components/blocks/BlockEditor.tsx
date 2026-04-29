@@ -363,7 +363,7 @@ export function BlockEditor({
               Edit raw data for "{block.type}" block:
             </p>
             <textarea
-              className="w-full min-h-[200px] font-mono text-xs p-3 rounded-md border bg-muted/30 resize-y"
+              className="w-full min-h-[200px] font-mono text-xs p-3 rounded-md border surface-interactive resize-y"
               value={JSON.stringify(block.data, null, 2)}
               onChange={(e) => {
                 try {

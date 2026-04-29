@@ -170,7 +170,7 @@ export function AuthForm({
           )}
 
               {searchParams?.message && (
-                <div className="rounded-lg border border-border surface-interactive/35 p-4 text-foreground">
+                <div className="rounded-lg border border-border surface-interactive p-4 text-foreground">
                   <p
                     className={
                       searchParams.type === 'info'

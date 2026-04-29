@@ -40,7 +40,7 @@ export const ComplexBlock: React.FC<ComplexBlockProps> = ({
       default:
         // Render raw JSON data in a structured way for unknown types
         return (
-          <div className="p-4 rounded-lg border bg-muted/30">
+          <div className="p-4 rounded-lg border surface-interactive">
             <p className="text-xs text-muted-foreground mb-2">
               {viewerType} viewer
             </p>
@@ -72,7 +72,7 @@ export const ComplexBlock: React.FC<ComplexBlockProps> = ({
           {renderViewer()}
         </div>
         {isEditingState && (
-          <div className="mt-4 p-4 border-t bg-muted/50 rounded">
+          <div className="mt-4 p-4 border-t surface-interactive rounded">
             <p className="text-sm text-muted-foreground">
               Complex blocks are edited through their respective viewer interfaces.
               Click "Done" when finished.

@@ -73,7 +73,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
 
       default:
         return (
-          <div className="p-4 border rounded-lg bg-muted/50 text-muted-foreground">
+          <div className="p-4 border rounded-lg surface-interactive text-muted-foreground">
             Unknown block type: {block.type}
           </div>
         );

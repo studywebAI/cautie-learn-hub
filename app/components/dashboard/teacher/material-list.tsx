@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useContext, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -264,7 +264,7 @@ function UploadFileDialog({ isOpen, setIsOpen, classId }: UploadFileDialogProps)
             <Label>File</Label>
             <div 
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+              className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:surface-interactive transition-colors"
             >
               {file ? (
                 <div className="flex items-center justify-center gap-2">
@@ -495,7 +495,7 @@ export function MaterialList({ materials, classId, isLoading, isTeacher = true }
           {materials.map((material) => {
             const Icon = iconMap[material.type] || File;
             return (
-              <div key={material.id} className="flex items-start justify-between p-4 rounded-lg bg-muted/50 border">
+              <div key={material.id} className="flex items-start justify-between p-4 rounded-lg surface-interactive border">
                 <Link prefetch={false} href={`/material/${material.id}`} className="flex items-start gap-4 flex-1 group">
                   <Icon className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
                   <div className="space-y-2">

@@ -1,4 +1,4 @@
-﻿
+
 'use client';
 
 import { useMemo } from 'react';
@@ -49,7 +49,7 @@ export function TodaysAgenda({ assignments, personalTasks, classes }: TodaysAgen
 
   const renderEvent = (event: typeof todaysEvents[0]) => {
     const content = (
-        <div className="p-3 bg-muted/50 rounded-lg border-l-4 w-full"
+        <div className="p-3 surface-interactive rounded-lg border-l-4 w-full"
              style={{ borderColor: `hsl(var(--${event.type === 'assignment' ? 'destructive' : 'primary'}))` }}>
           <div className='flex justify-between items-start'>
             <div>
@@ -66,7 +66,7 @@ export function TodaysAgenda({ assignments, personalTasks, classes }: TodaysAgen
     if (event.type === 'assignment') {
         const href = event.material_id ? `/material/${event.material_id}` : `/class/${event.class_id}`;
         return (
-            <Link prefetch={false} key={event.id} href={href} className="block hover:bg-muted/80 rounded-lg transition-colors">
+            <Link prefetch={false} key={event.id} href={href} className="block hover:surface-chip rounded-lg transition-colors">
                 {content}
             </Link>
         )

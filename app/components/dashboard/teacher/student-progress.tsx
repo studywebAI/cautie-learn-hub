@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -97,7 +97,7 @@ export function StudentProgressPanel({ classId }: StudentProgressPanelProps) {
       </CardHeader>
       <CardContent>
         {selectedStudentId && (
-          <div className="mb-4 rounded-lg bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+          <div className="mb-4 rounded-lg surface-interactive px-3 py-2 text-xs text-muted-foreground">
             Showing one student from Group tab.
             <Link prefetch={false} href={`/class/${classId}?tab=progress`} className="ml-2 underline underline-offset-2">
               Show all
@@ -119,7 +119,7 @@ export function StudentProgressPanel({ classId }: StudentProgressPanelProps) {
                   key={student.id}
                   href={`/class/${classId}?tab=progress&studentId=${student.id}`}
                   className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
-                    selectedStudentId === student.id ? 'bg-muted/45' : 'hover:bg-accent'
+                    selectedStudentId === student.id ? 'surface-interactive' : 'hover:bg-accent'
                   }`}
                 >
                   <Avatar>

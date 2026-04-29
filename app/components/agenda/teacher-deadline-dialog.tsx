@@ -486,7 +486,7 @@ export function TeacherDeadlineDialog({
             />
           </div>
 
-          <div className="relative rounded-xl bg-muted/30 px-3 py-2.5">
+          <div className="relative rounded-xl surface-interactive px-3 py-2.5">
             <span
               className={cn(
                 'absolute inset-y-2 left-2 w-1 rounded-full',

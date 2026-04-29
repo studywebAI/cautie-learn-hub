@@ -41,13 +41,13 @@ export function PresentationPreview({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
-          <div className="max-h-[540px] overflow-auto rounded-xl bg-muted/35 p-2">
+          <div className="max-h-[540px] overflow-auto rounded-xl surface-interactive p-2">
             {manifest.slides.map((slide, idx) => (
               <button
                 key={slide.slideId}
                 type="button"
                 onClick={() => onSelectSlide(idx)}
-                className={`mb-2 w-full rounded-lg border p-2 text-left ${idx === selectedSlideIndex ? 'border-foreground/50 bg-background' : 'border-border/50 bg-card/70 hover:bg-background/70'}`}
+                className={`mb-2 w-full rounded-lg border p-2 text-left ${idx === selectedSlideIndex ? 'border-foreground/50 bg-background' : 'border-border/50 surface-panel hover:bg-background/70'}`}
               >
                 <p className="text-[11px] text-muted-foreground">Slide {slide.index}</p>
                 <img src={slide.thumbUrl} alt={`Slide ${slide.index}`} className="mt-1 w-full rounded border" />
@@ -55,7 +55,7 @@ export function PresentationPreview({
             ))}
           </div>
 
-          <div className="flex items-center justify-center rounded-xl bg-muted/35 p-3">
+          <div className="flex items-center justify-center rounded-xl surface-interactive p-3">
             <img
               src={active.imageUrl}
               alt={`Slide ${active.index}`}

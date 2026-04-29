@@ -544,7 +544,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
       </div>
 
       {selectedStudentId && (
-        <div className="rounded-lg bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+        <div className="rounded-lg surface-interactive px-3 py-2 text-xs text-muted-foreground">
           {t.showingOneStudent}
           <Link prefetch={false} href={`/class/${classId}?tab=attendance`} className="ml-2 underline underline-offset-2">
             {t.showAll}
@@ -757,7 +757,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
               <p className="text-sm text-muted-foreground">{t.noEventsYet}</p>
             )}
             {(timelineStudent?.recentActivity || []).map((activity) => (
-              <div key={activity.id} className="rounded-md border bg-muted/20 p-2 text-sm">
+              <div key={activity.id} className="rounded-md border surface-chip p-2 text-sm">
                 <div className="flex items-center justify-between gap-2">
                   <span>{formatActivityLabel(activity.action, activity.details)}</span>
                   <span className="text-xs text-muted-foreground">{new Date(activity.createdAt).toLocaleString()}</span>

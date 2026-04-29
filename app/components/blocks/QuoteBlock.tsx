@@ -62,7 +62,7 @@ export const QuoteBlock: React.FC<QuoteBlockProps> = ({
 
   const renderEditor = () => {
     return (
-      <div className="space-y-4 p-4 border rounded-lg bg-muted/50 mb-4">
+      <div className="space-y-4 p-4 border rounded-lg surface-interactive mb-4">
         <div>
           <label className="text-sm font-medium">Quote</label>
           <Textarea

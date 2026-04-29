@@ -63,7 +63,7 @@ export const SimpleTextBlock: React.FC<SimpleTextBlockProps> = ({
 
   if (readOnly || !isTeacher) {
     return (
-      <div className="w-full p-4 border rounded-lg bg-muted/20">
+      <div className="w-full p-4 border rounded-lg surface-chip">
         <div
           className={`prose prose-sm max-w-none ${
             block.data.style === 'heading' ? 'text-xl font-bold' :
@@ -80,7 +80,7 @@ export const SimpleTextBlock: React.FC<SimpleTextBlockProps> = ({
   }
 
   return (
-    <div className="w-full p-4 border rounded-lg bg-muted/20">
+    <div className="w-full p-4 border rounded-lg surface-chip">
       {/* Teacher Controls */}
       <div className="flex items-center gap-2 mb-3">
         <Select value={style} onValueChange={setStyle}>

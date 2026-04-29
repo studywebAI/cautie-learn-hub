@@ -476,7 +476,7 @@ export function StudentAssignmentView({
     <div className={className}>
       {/* Deadline Context Banner - shows when coming from a deadline link */}
       {(assignment?.description || instructions || settings.delivery.instructionText) && (
-        <div className="mb-6 p-4 rounded-lg bg-muted border-l-4 border-primary">
+        <div className="mb-6 p-4 rounded-lg surface-interactive border-l-4 border-primary">
           <p className="text-sm text-muted-foreground mb-1">assignment instructions:</p>
           <p className="text-base">{settings.delivery.instructionText || assignment?.description || instructions}</p>
         </div>
@@ -484,14 +484,14 @@ export function StudentAssignmentView({
 
       {/* Linked Content - quick access to related materials */}
       {assignment?.linked_content && Array.isArray(assignment.linked_content) && assignment.linked_content.length > 0 && (
-        <div className="mb-6 p-4 rounded-lg bg-muted/50 border">
+        <div className="mb-6 p-4 rounded-lg surface-interactive border">
           <p className="text-sm font-medium mb-3">quick links:</p>
           <div className="space-y-2">
             {assignment.linked_content.map((link: any, idx: number) => (
               <a
                 key={idx}
                 href={link.url}
-                className="flex items-center gap-2 p-2 rounded-md bg-background border hover:bg-muted transition-colors"
+                className="flex items-center gap-2 p-2 rounded-md bg-background border hover:surface-interactive transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
               >

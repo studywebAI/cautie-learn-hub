@@ -90,7 +90,7 @@ export function MultipleChoiceView({ card, allCards, isFlipped, setIsFlipped, on
   if (!isFlipped) {
     return (
       <div className="flex w-full flex-col items-center justify-center gap-4">
-        <div className="flex min-h-[260px] w-full max-w-5xl items-center justify-center rounded-2xl border border-border/80 bg-card px-12 py-10 shadow-sm">
+        <div className="flex min-h-[260px] w-full max-w-5xl items-center justify-center rounded-2xl border border-border/80 surface-panel px-12 py-10 shadow-sm">
           <p className="max-w-[92%] text-center text-2xl leading-[1.35] text-foreground md:text-4xl">{card.front}</p>
         </div>
         <Button variant="secondary" onClick={() => setIsFlipped(true)} className="rounded-full px-6">
@@ -103,7 +103,7 @@ export function MultipleChoiceView({ card, allCards, isFlipped, setIsFlipped, on
 
   return (
     <div className="w-full max-w-5xl space-y-4">
-      <div className="rounded-2xl border border-border/80 bg-card px-8 py-6 shadow-sm">
+      <div className="rounded-2xl border border-border/80 surface-panel px-8 py-6 shadow-sm">
         <p className="text-center text-lg leading-[1.35] text-muted-foreground md:text-2xl">{card.front}</p>
       </div>
 
@@ -120,7 +120,7 @@ export function MultipleChoiceView({ card, allCards, isFlipped, setIsFlipped, on
               onClick={() => handleSelect(option)}
               className={cn(
                 'min-h-[130px] rounded-xl border px-4 py-3 text-left transition-colors',
-                'bg-card/90 hover:bg-muted/30',
+                'surface-panel hover:surface-interactive',
                 !isAnswered && 'cursor-pointer',
                 isAnswered && 'cursor-default',
                 showCorrect && 'border-emerald-500/60 bg-emerald-500/10',

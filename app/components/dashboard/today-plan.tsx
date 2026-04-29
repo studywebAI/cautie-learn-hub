@@ -60,7 +60,7 @@ export function TodayPlan({ tasks: initialTasks }: TodayPlanProps) {
             {currentTasks.length > 0 ? currentTasks.map((task) => (
               <div
                 key={task.id}
-                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                className="flex items-center justify-between p-3 surface-interactive rounded-lg"
               >
                 <div className="flex items-center gap-4">
                   <Checkbox

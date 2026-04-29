@@ -821,7 +821,7 @@ export default function ParagraphDetailPage() {
                               <p className="mt-1 text-[10px] text-foreground/70">{previewQuestionHint(block.type, isDutch)}</p>
                               <div className="mt-1.5 space-y-1">
                                 <div className="h-2 w-full rounded surface-interactive" />
-                                <div className="h-2 w-5/6 rounded surface-interactive/80" />
+                                <div className="h-2 w-5/6 rounded surface-interactive" />
                               </div>
                             </div>
                           ))}

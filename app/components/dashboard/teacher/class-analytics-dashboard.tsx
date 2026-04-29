@@ -267,9 +267,9 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-3">
-            <div className="h-4 w-52 rounded bg-muted" />
-            <div className="h-24 rounded bg-muted" />
-            <div className="h-24 rounded bg-muted" />
+            <div className="h-4 w-52 rounded surface-interactive" />
+            <div className="h-24 rounded surface-interactive" />
+            <div className="h-24 rounded surface-interactive" />
           </div>
         </CardContent>
       </Card>
@@ -628,7 +628,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
         <CardContent>
           <div className="space-y-2">
             {insights.map((insight, idx) => (
-              <div key={idx} className="rounded-md bg-muted/50 p-3 text-sm">{insight}</div>
+              <div key={idx} className="rounded-md surface-interactive p-3 text-sm">{insight}</div>
             ))}
           </div>
         </CardContent>
@@ -644,7 +644,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
           ) : (
             <div className="space-y-2">
               {attentionQueue.map((row) => (
-                <div key={row.studentId} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/35 p-2.5">
+                <div key={row.studentId} className="flex flex-wrap items-center justify-between gap-2 rounded-lg surface-interactive p-2.5">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{row.studentName}</p>
                     <p className="text-xs text-muted-foreground">

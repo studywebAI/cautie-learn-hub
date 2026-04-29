@@ -1,0 +1,222 @@
+C:\Projects\cautie-learn-hub\app\(main)\upgrade\page.tsx:109: <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+C:\Projects\cautie-learn-hub\app\(main)\upgrade\page.tsx:177: <div className="rounded-lg bg-muted/30 p-3 text-sm">
+C:\Projects\cautie-learn-hub\app\auth\confirm-email\page.tsx:79: <p className="p-4 bg-muted text-foreground text-center rounded-lg">
+C:\Projects\cautie-learn-hub\app\components\agenda\assignment-details-panel.tsx:195: <Card className="relative overflow-hidden rounded-xl border-0 bg-card p-4 shadow-sm">
+C:\Projects\cautie-learn-hub\app\components\agenda\assignment-details-panel.tsx:261: <div key={`${link.link_type}-${link.link_ref_id || index}`} className="flex items-center gap-2 rounded-lg bg-muted/25 px-2.5 py-2">
+C:\Projects\cautie-learn-hub\app\components\agenda\assignment-details-panel.tsx:291: <div className="flex items-center gap-2 rounded-md bg-muted/35 px-2.5 py-1.5">
+C:\Projects\cautie-learn-hub\app\components\agenda\hierarchical-link-picker-v2.tsx:283: <div key={item.id} className="flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-muted/50">
+C:\Projects\cautie-learn-hub\app\components\agenda\hierarchical-link-picker.tsx:33: <div className="flex items-center gap-3 text-xs text-muted-foreground px-2 py-1 border-t bg-muted/30">
+C:\Projects\cautie-learn-hub\app\components\agenda\hierarchical-link-picker.tsx:34: <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">?</kbd><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">?</kbd> Navigate</span>
+C:\Projects\cautie-learn-hub\app\components\agenda\hierarchical-link-picker.tsx:35: <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">?</kbd> Select</span>
+C:\Projects\cautie-learn-hub\app\components\agenda\hierarchical-link-picker.tsx:36: <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">?</kbd> Back</span>
+C:\Projects\cautie-learn-hub\app\components\agenda\hierarchical-link-picker.tsx:37: <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">esc</kbd> Close</span>
+C:\Projects\cautie-learn-hub\app\components\agenda\hierarchical-link-picker.tsx:61: <div onClick={onClick} className={cn("group relative flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer", isSelected ? "bg-primary/10 border-primary" : "hover:bg-muted hover:border-muted-foreground/25")}>
+C:\Projects\cautie-learn-hub\app\components\agenda\hierarchical-link-picker.tsx:62: <div className={cn("w-8 h-8 rounded-md flex items-center justify-center text-sm font-medium transition-colors", isSelected ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground")}>
+C:\Projects\cautie-learn-hub\app\components\agenda\hierarchical-link-picker.tsx:301: <button onClick={() => handleSelectParagraph(paragraph)} className="w-full text-xs text-muted-foreground hover:text-foreground py-1.5 px-3 rounded bg-muted/50 hover:bg-muted transition-colors ml-4">Select this paragraph</button>
+C:\Projects\cautie-learn-hub\app\components\agenda\link-picker-dialog.tsx:224: : 'hover:bg-muted'
+C:\Projects\cautie-learn-hub\app\components\agenda\link-picker-dialog.tsx:263: : 'hover:bg-muted'
+C:\Projects\cautie-learn-hub\app\components\agenda\link-picker-dialog.tsx:297: : 'hover:bg-muted'
+C:\Projects\cautie-learn-hub\app\components\agenda\task-overview-modal.tsx:49: other: 'bg-muted',
+C:\Projects\cautie-learn-hub\app\components\agenda\teacher-deadline-dialog.tsx:489: <div className="relative rounded-xl bg-muted/30 px-3 py-2.5">
+C:\Projects\cautie-learn-hub\app\components\agenda\teacher-deadlines-panel.tsx:49: other: 'bg-muted',
+C:\Projects\cautie-learn-hub\app\components\agenda\teacher-deadlines-panel.tsx:83: className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+C:\Projects\cautie-learn-hub\app\components\agenda\today-panel.tsx:46: other: 'bg-muted',
+C:\Projects\cautie-learn-hub\app\components\agenda\today-panel.tsx:86: other: 'bg-muted',
+C:\Projects\cautie-learn-hub\app\components\agenda\today-panel.tsx:104: className="p-3 rounded-lg border-l-4 cursor-pointer hover:bg-muted/50 transition-colors"
+C:\Projects\cautie-learn-hub\app\components\blocks\BlockEditor.tsx:366: className="w-full min-h-[200px] font-mono text-xs p-3 rounded-md border bg-muted/30 resize-y"
+C:\Projects\cautie-learn-hub\app\components\blocks\BlockRenderer.tsx:76: <div className="p-4 border rounded-lg bg-muted/50 text-muted-foreground">
+C:\Projects\cautie-learn-hub\app\components\blocks\CodeBlock.tsx:87: <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono">
+C:\Projects\cautie-learn-hub\app\components\blocks\CodeBlock.tsx:109: <div className="space-y-4 p-4 border rounded-lg bg-muted/50 mb-4">
+C:\Projects\cautie-learn-hub\app\components\blocks\ComplexBlock.tsx:43: <div className="p-4 rounded-lg border bg-muted/30">
+C:\Projects\cautie-learn-hub\app\components\blocks\ComplexBlock.tsx:75: <div className="mt-4 p-4 border-t bg-muted/50 rounded">
+C:\Projects\cautie-learn-hub\app\components\blocks\ExecutableCodeBlock.tsx:135: <div className="bg-muted px-4 py-2 flex items-center justify-between">
+C:\Projects\cautie-learn-hub\app\components\blocks\ExecutableCodeBlock.tsx:172: <pre className="bg-muted/50 p-3 rounded text-sm font-mono overflow-x-auto">
+C:\Projects\cautie-learn-hub\app\components\blocks\ExecutableCodeBlock.tsx:201: <div className={cn('w-full space-y-4 p-4 border rounded-lg bg-muted/50', className)}>
+C:\Projects\cautie-learn-hub\app\components\blocks\LayoutBlock.tsx:56: <div className="bg-muted/50 border-l-4 border-primary p-4 my-4 rounded-r-lg">
+C:\Projects\cautie-learn-hub\app\components\blocks\LayoutBlock.tsx:83: <div className="space-y-4 p-4 border rounded-lg bg-muted/50 mb-4">
+C:\Projects\cautie-learn-hub\app\components\blocks\MediaBlock.tsx:52: <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
+C:\Projects\cautie-learn-hub\app\components\blocks\MediaBlock.tsx:68: parent.innerHTML = '<div class="w-full h-48 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">Failed to load image</div>';
+C:\Projects\cautie-learn-hub\app\components\blocks\MediaBlock.tsx:82: <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
+C:\Projects\cautie-learn-hub\app\components\blocks\MediaBlock.tsx:204: <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+C:\Projects\cautie-learn-hub\app\components\blocks\MultipleChoiceBlock.tsx:121: <div className={cn('w-full space-y-4 p-4 border rounded-lg bg-muted/50', className)}>
+C:\Projects\cautie-learn-hub\app\components\blocks\OrderingBlock.tsx:80: : 'bg-muted/50 border-border hover:border-primary/50'
+C:\Projects\cautie-learn-hub\app\components\blocks\QuoteBlock.tsx:65: <div className="space-y-4 p-4 border rounded-lg bg-muted/50 mb-4">
+C:\Projects\cautie-learn-hub\app\components\blocks\SimpleTextBlock.tsx:66: <div className="w-full p-4 border rounded-lg bg-muted/20">
+C:\Projects\cautie-learn-hub\app\components\blocks\SimpleTextBlock.tsx:83: <div className="w-full p-4 border rounded-lg bg-muted/20">
+C:\Projects\cautie-learn-hub\app\components\blocks\StudentBlockRenderer.tsx:70: <div className="p-4 border rounded-lg bg-muted/50">
+C:\Projects\cautie-learn-hub\app\components\blocks\StudentBlockRenderer.tsx:85: <div className="rounded-md bg-muted p-2 text-xs text-muted-foreground">
+C:\Projects\cautie-learn-hub\app\components\blocks\StudentOpenQuestionBlock.tsx:122: <div className="mt-6 p-4 border rounded-lg bg-muted/50">
+C:\Projects\cautie-learn-hub\app\components\class\attendance-tab.tsx:547: <div className="rounded-lg bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+C:\Projects\cautie-learn-hub\app\components\class\attendance-tab.tsx:760: <div key={activity.id} className="rounded-md border bg-muted/20 p-2 text-sm">
+C:\Projects\cautie-learn-hub\app\components\class\ChapterEditor.tsx:284: <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+C:\Projects\cautie-learn-hub\app\components\class\ChapterEditor.tsx:285: <div className="h-4 bg-muted rounded w-1/2"></div>
+C:\Projects\cautie-learn-hub\app\components\class\ChapterEditor.tsx:292: <div className="h-20 bg-muted rounded"></div>
+C:\Projects\cautie-learn-hub\app\components\class\grades-tab.tsx:1328: <div className="rounded-lg bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+C:\Projects\cautie-learn-hub\app\components\class\grades-tab.tsx:1439: highlightedStudentId === student.student_id ? 'bg-muted/45' : ''
+C:\Projects\cautie-learn-hub\app\components\class\group-tab.tsx:284: className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors ${groupSettingsSection === 'rename' ? 'bg-muted/70 text-foreground' : 'text-muted-foreground hover:bg-muted/40'}`}
+C:\Projects\cautie-learn-hub\app\components\class\group-tab.tsx:292: className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors ${groupSettingsSection === 'help' ? 'bg-muted/70 text-foreground' : 'text-muted-foreground hover:bg-muted/40'}`}
+C:\Projects\cautie-learn-hub\app\components\class\group-tab.tsx:308: className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors hover:bg-muted/40"
+C:\Projects\cautie-learn-hub\app\components\class\group-tab.tsx:326: <div className="space-y-2 rounded-lg bg-muted/20 p-2">
+C:\Projects\cautie-learn-hub\app\components\class\logs-tab.tsx:168: return 'bg-muted/60 text-foreground border-border';
+C:\Projects\cautie-learn-hub\app\components\dashboard\stats\session-recap.tsx:31: <div className="flex flex-col items-center justify-center text-center h-full bg-muted/50 p-6 rounded-lg">
+C:\Projects\cautie-learn-hub\app\components\dashboard\student\join-class-dialog.tsx:204: <Card className="bg-muted/50">
+C:\Projects\cautie-learn-hub\app\components\dashboard\student\join-class-dialog.tsx:216: <div className="relative w-full aspect-square bg-muted rounded-lg overflow-hidden flex items-center justify-center my-4">
+C:\Projects\cautie-learn-hub\app\components\dashboard\student\submit-assignment-dialog.tsx:160: className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\attendance-manager.tsx:198: <div className="h-4 bg-muted rounded w-3/4"></div>
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\attendance-manager.tsx:199: <div className="h-3 bg-muted rounded w-1/2"></div>
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\class-analytics-dashboard.tsx:270: <div className="h-4 w-52 rounded bg-muted" />
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\class-analytics-dashboard.tsx:271: <div className="h-24 rounded bg-muted" />
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\class-analytics-dashboard.tsx:272: <div className="h-24 rounded bg-muted" />
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\class-analytics-dashboard.tsx:631: <div key={idx} className="rounded-md bg-muted/50 p-3 text-sm">{insight}</div>
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\class-analytics-dashboard.tsx:647: <div key={row.studentId} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/35 p-2.5">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-assignment-dialog.tsx:74: return 'bg-muted/50 border-border/80';
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-assignment-dialog.tsx:465: className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-assignment-dialog.tsx:473: className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-assignment-dialog.tsx:494: className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-assignment-dialog.tsx:502: <span key={`${preset.id}-${mix.type}`} className="rounded-full bg-muted px-2 py-0.5 text-[10px]">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-assignment-dialog.tsx:516: <div className="mt-2 space-y-2 rounded-lg border border-border/70 bg-muted/20 p-2">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-assignment-dialog.tsx:537: className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-assignment-dialog.tsx:612: <label className="flex items-center justify-between rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-assignment-dialog.tsx:616: <label className="flex items-center justify-between rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-assignment-dialog.tsx:620: <label className="flex items-center justify-between rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-assignment-dialog.tsx:627: <label className="flex items-center justify-between rounded-md border border-border/80 bg-muted/20 p-3 text-sm">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-assignment-dialog.tsx:641: <div className="flex items-center gap-2 p-2.5 rounded-md bg-muted/50 border text-sm">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\create-class-dialog.tsx:163: <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\edit-assignment-dialog.tsx:67: return 'bg-muted/50 border-border/80';
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\edit-assignment-dialog.tsx:464: className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\edit-assignment-dialog.tsx:472: className={`w-full rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\edit-assignment-dialog.tsx:493: className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\edit-assignment-dialog.tsx:501: <span key={`${preset.id}-${mix.type}`} className="rounded-full bg-muted px-2 py-0.5 text-[10px]">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\edit-assignment-dialog.tsx:515: <div className="mt-2 space-y-2 rounded-lg border border-border/70 bg-muted/20 p-2">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\edit-assignment-dialog.tsx:536: className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\edit-assignment-dialog.tsx:611: <label className="flex items-center justify-between rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\edit-assignment-dialog.tsx:615: <label className="flex items-center justify-between rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\edit-assignment-dialog.tsx:619: <label className="flex items-center justify-between rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\edit-assignment-dialog.tsx:626: <label className="flex items-center justify-between rounded-md border border-border/80 bg-muted/20 p-3 text-sm">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\edit-assignment-dialog.tsx:640: <div className="flex items-center gap-2 p-2.5 rounded-md bg-muted/50 border text-sm">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\material-list.tsx:267: className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\material-list.tsx:498: <div key={material.id} className="flex items-start justify-between p-4 rounded-lg bg-muted/50 border">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\quick-grader.tsx:437: <div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap break-words">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\select-material-dialog.tsx:78: isSelected ? "bg-primary/10 border-primary" : "hover:bg-muted/50"
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\student-progress-dashboard.tsx:102: <div className="h-4 bg-muted rounded w-3/4"></div>
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\student-progress-dashboard.tsx:103: <div className="h-3 bg-muted rounded w-1/2"></div>
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\student-progress-dashboard.tsx:106: <div className="h-2 bg-muted rounded"></div>
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\student-progress.tsx:100: <div className="mb-4 rounded-lg bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\student-progress.tsx:122: selectedStudentId === student.id ? 'bg-muted/45' : 'hover:bg-accent'
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\submissions-view.tsx:225: <div className="mt-1 p-3 bg-muted rounded-md">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\teacher-dashboard.tsx:257: <div className="grid grid-cols-[minmax(0,1fr)_130px] items-center border-b bg-muted/30 px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid-cols-[minmax(0,1.2fr)_220px_130px]">
+C:\Projects\cautie-learn-hub\app\components\dashboard\teacher\template-selector.tsx:97: className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer"
+C:\Projects\cautie-learn-hub\app\components\dashboard\ai-suggestions.tsx:39: className="w-full justify-start h-auto p-3 text-left bg-background hover:bg-muted"
+C:\Projects\cautie-learn-hub\app\components\dashboard\analytics-dashboard.tsx:79: <div className="h-4 bg-muted rounded w-3/4"></div>
+C:\Projects\cautie-learn-hub\app\components\dashboard\analytics-dashboard.tsx:80: <div className="h-32 bg-muted rounded"></div>
+C:\Projects\cautie-learn-hub\app\components\dashboard\analytics-dashboard.tsx:82: <div className="h-20 bg-muted rounded"></div>
+C:\Projects\cautie-learn-hub\app\components\dashboard\analytics-dashboard.tsx:83: <div className="h-20 bg-muted rounded"></div>
+C:\Projects\cautie-learn-hub\app\components\dashboard\analytics-dashboard.tsx:84: <div className="h-20 bg-muted rounded"></div>
+C:\Projects\cautie-learn-hub\app\components\dashboard\analytics-dashboard.tsx:253: <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+C:\Projects\cautie-learn-hub\app\components\dashboard\quick-access.tsx:37: <div className="group flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg aspect-square text-center transition-colors hover:bg-muted">
+C:\Projects\cautie-learn-hub\app\components\dashboard\today-plan.tsx:63: className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+C:\Projects\cautie-learn-hub\app\components\dashboard\todays-agenda.tsx:52: <div className="p-3 bg-muted/50 rounded-lg border-l-4 w-full"
+C:\Projects\cautie-learn-hub\app\components\dashboard\todays-agenda.tsx:69: <Link prefetch={false} key={event.id} href={href} className="block hover:bg-muted/80 rounded-lg transition-colors">
+C:\Projects\cautie-learn-hub\app\components\dashboard\upcoming-deadlines.tsx:82: <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg group-hover:bg-muted transition-colors">
+C:\Projects\cautie-learn-hub\app\components\presentation\onedrive-export-folder-picker.tsx:149: className={`w-full rounded-lg border p-2 text-left text-sm ${selectedId === folder.id ? 'border-foreground/50 bg-muted/50' : 'border-border hover:bg-muted/30'}`}
+C:\Projects\cautie-learn-hub\app\components\presentation\presentation-preview.tsx:44: <div className="max-h-[540px] overflow-auto rounded-xl bg-muted/35 p-2">
+C:\Projects\cautie-learn-hub\app\components\presentation\presentation-preview.tsx:50: className={`mb-2 w-full rounded-lg border p-2 text-left ${idx === selectedSlideIndex ? 'border-foreground/50 bg-background' : 'border-border/50 bg-card/70 hover:bg-background/70'}`}
+C:\Projects\cautie-learn-hub\app\components\presentation\presentation-preview.tsx:58: <div className="flex items-center justify-center rounded-xl bg-muted/35 p-3">
+C:\Projects\cautie-learn-hub\app\components\subjects\ParagraphAssignmentView.tsx:255: className="cursor-pointer hover:bg-muted p-3 rounded flex items-center justify-between"
+C:\Projects\cautie-learn-hub\app\components\subjects\ParagraphAssignmentView.tsx:264: <div className="w-16 bg-muted rounded-full h-2">
+C:\Projects\cautie-learn-hub\app\components\subjects\StudentAssignmentView.tsx:479: <div className="mb-6 p-4 rounded-lg bg-muted border-l-4 border-primary">
+C:\Projects\cautie-learn-hub\app\components\subjects\StudentAssignmentView.tsx:487: <div className="mb-6 p-4 rounded-lg bg-muted/50 border">
+C:\Projects\cautie-learn-hub\app\components\subjects\StudentAssignmentView.tsx:494: className="flex items-center gap-2 p-2 rounded-md bg-background border hover:bg-muted transition-colors"
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-editor.tsx:227: className="p-3 border rounded-lg bg-muted/50"
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-editor.tsx:276: <CardFooter className="flex justify-between bg-muted/50 py-4 border-t">
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-viewer.tsx:109: <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-12 py-10 shadow-sm [backface-visibility:hidden]">
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-viewer.tsx:112: <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-12 py-10 shadow-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-viewer.tsx:730: <div className="rounded-xl bg-card/80 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-viewer.tsx:734: <div className="rounded-xl bg-card/80 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-viewer.tsx:738: <div className="rounded-xl bg-card/80 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-viewer.tsx:742: <div className="rounded-xl bg-card/80 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-viewer.tsx:749: <div className="rounded-xl bg-card/80 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-viewer.tsx:767: <div className="rounded-xl bg-card/80 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-viewer.tsx:790: <div className="rounded-xl bg-card/80 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-viewer.tsx:811: <details className="rounded-xl bg-card/80 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\flashcard-viewer.tsx:883: <div className="max-h-[52vh] overflow-auto rounded-md bg-muted/60 p-3 text-sm leading-6">
+C:\Projects\cautie-learn-hub\app\components\tools\fun-loader.tsx:67: <div className="w-full max-w-2xl rounded-2xl border border-border bg-card p-5 md:p-6">
+C:\Projects\cautie-learn-hub\app\components\tools\fun-loader.tsx:69: <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-muted/30">
+C:\Projects\cautie-learn-hub\app\components\tools\fun-loader.tsx:79: <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+C:\Projects\cautie-learn-hub\app\components\tools\fun-loader.tsx:98: : 'bg-muted/40 text-muted-foreground'
+C:\Projects\cautie-learn-hub\app\components\tools\import-toolbar.tsx:70: className="flex-1 gap-1.5 text-xs rounded-full h-8 border-border bg-muted/80 hover:bg-muted"
+C:\Projects\cautie-learn-hub\app\components\tools\import-toolbar.tsx:81: className="flex-1 gap-1.5 text-xs rounded-full h-8 border-border bg-muted/80 hover:bg-muted"
+C:\Projects\cautie-learn-hub\app\components\tools\microsoft-app-strip.tsx:794: className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+C:\Projects\cautie-learn-hub\app\components\tools\multiple-choice-view.tsx:93: <div className="flex min-h-[260px] w-full max-w-5xl items-center justify-center rounded-2xl border border-border/80 bg-card px-12 py-10 shadow-sm">
+C:\Projects\cautie-learn-hub\app\components\tools\multiple-choice-view.tsx:106: <div className="rounded-2xl border border-border/80 bg-card px-8 py-6 shadow-sm">
+C:\Projects\cautie-learn-hub\app\components\tools\multiple-choice-view.tsx:123: 'bg-card/90 hover:bg-muted/30',
+C:\Projects\cautie-learn-hub\app\components\tools\paint-overlay.tsx:181: <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 rounded-full border bg-card/95 backdrop-blur-sm shadow-lg px-3 py-1.5">
+C:\Projects\cautie-learn-hub\app\components\tools\pill-selector.tsx:42: : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+C:\Projects\cautie-learn-hub\app\components\tools\preset-manager.tsx:88: <span className="text-[10px] font-mono bg-muted rounded-full px-1.5">{presets.length}</span>
+C:\Projects\cautie-learn-hub\app\components\tools\preset-manager.tsx:101: : 'border-border hover:bg-muted/50'
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-duel.tsx:199: <div key={index} className="h-2 w-6 rounded-full bg-muted relative overflow-hidden">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-duel.tsx:206: !round.winnerId && "bg-muted-foreground",
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-editor.tsx:342: className="p-4 border rounded-lg bg-muted/50"
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-editor.tsx:473: <CardFooter className="flex justify-between bg-muted/50 py-3 border-t">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:247: <div className="grid grid-cols-3 divide-x rounded-lg border bg-muted/50 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:367: <div className="p-4 bg-muted/50 rounded-lg">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:372: <div className="p-4 bg-muted/50 rounded-lg">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:391: <div className="rounded-lg bg-muted/50 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:395: <div className="rounded-lg bg-muted/50 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:399: <div className="rounded-lg bg-muted/50 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:406: <div className="rounded-lg bg-muted/50 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:416: <div className="rounded-lg bg-muted/50 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:429: <div className="rounded-lg bg-muted/50 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:440: <div className="rounded-lg bg-muted/50 p-3">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:460: <div key={q.id} className="p-4 rounded-lg bg-muted/50">
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:531: !disabled ? 'cursor-pointer hover:bg-muted/80' : 'cursor-default',
+C:\Projects\cautie-learn-hub\app\components\tools\quiz-taker.tsx:532: disabled && !isSelected && !isTheCorrectAnswer ? 'bg-muted/50 opacity-70' : ''
+C:\Projects\cautie-learn-hub\app\components\tools\source-input.tsx:1536: className="rounded-full p-0.5 hover:bg-muted"
+C:\Projects\cautie-learn-hub\app\components\tools\source-input.tsx:1664: className="min-h-[190px] flex-1 resize-none rounded-2xl border border-border bg-muted/70 text-sm"
+C:\Projects\cautie-learn-hub\app\components\tools\source-input.tsx:1671: className="w-[112px] rounded-2xl border-border bg-muted/80 text-xs hover:bg-muted"
+C:\Projects\cautie-learn-hub\app\components\tools\type-view.tsx:49: <div className="flex items-center justify-center p-6 w-full min-h-[10rem] bg-card border rounded-2xl">
+C:\Projects\cautie-learn-hub\app\components\ui\avatar.tsx:42: "flex h-full w-full items-center justify-center rounded-full bg-muted",
+C:\Projects\cautie-learn-hub\app\components\ui\card.tsx:12: "rounded-xl bg-card text-card-foreground shadow-none",
+C:\Projects\cautie-learn-hub\app\components\ui\dropdown-menu.tsx:165: className={cn("-mx-1 my-1 h-px bg-muted", className)}
+C:\Projects\cautie-learn-hub\app\components\ui\menubar.tsx:217: className={cn("-mx-1 my-1 h-px bg-muted", className)}
+C:\Projects\cautie-learn-hub\app\components\ui\select.tsx:143: className={cn("-mx-1 my-1 h-px bg-muted", className)}
+C:\Projects\cautie-learn-hub\app\components\ui\table.tsx:9: <div className="relative w-full overflow-auto rounded-2xl border border-border/70 bg-card">
+C:\Projects\cautie-learn-hub\app\components\ui\table.tsx:46: "border-t bg-muted/50 font-medium [&>tr]:last:border-b-0",
+C:\Projects\cautie-learn-hub\app\components\ui\table.tsx:61: "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+C:\Projects\cautie-learn-hub\app\components\ui\toaster.tsx:46: <span className="rounded-md border border-border/70 bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1343: <div className="rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1437: className="min-h-[32px] mt-1 border-0 shadow-none resize-none focus-visible:ring-0 bg-muted/30 text-xs rounded px-2 py-1"
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1464: <div className="p-1 bg-muted/50 rounded text-center">{pair.left || '...'}</div>
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1465: <div className="p-1 bg-muted/50 rounded text-center">{pair.right || '...'}</div>
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1469: <div className="rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1545: <div className="rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1585: <Button variant="outline" size="sm" onClick={() => router.back()} className="h-8 px-2.5 rounded-md bg-muted/50 gap-1.5">
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1589: <Button variant="outline" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-8 rounded-md px-2.5 bg-muted/50 gap-1.5" title={t.undo}>
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1593: <Button variant="outline" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-8 rounded-md px-2.5 bg-muted/50 gap-1.5" title={t.redo}>
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1598: <Button variant="outline" size="sm" onClick={handleExport} className="h-8 rounded-md px-2.5 bg-muted/50" title={t.export}>
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1608: className="h-8 rounded-md px-2.5 bg-muted/50"
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1636: <Button variant="outline" size="sm" onClick={handleImport} className="h-8 rounded-md px-2.5 bg-muted/50" title={t.import}>
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1663: className="bg-card border border-border rounded-xl shadow-sm min-h-[calc(100vh-130px)] p-3 relative w-full"
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1705: ? 'border-primary bg-card'
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1706: : 'border-border bg-background hover:bg-muted/30'
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1729: <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] bg-muted/60" title="Block size">
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1748: className="h-6 w-6 p-0 flex items-center justify-center cursor-grab bg-muted/70 hover:bg-muted rounded"
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1758: className="h-6 w-6 p-0 bg-muted/70 text-destructive"
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1789: ? 'border-primary bg-card'
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1790: : 'border-border bg-background hover:bg-muted/30'
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1813: <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] bg-muted/60" title="Block size">
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1832: className="h-6 w-6 p-0 flex items-center justify-center cursor-grab bg-muted/70 hover:bg-muted rounded"
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1842: className="h-6 w-6 p-0 bg-muted/70 text-destructive"
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1856: <div className="mb-1.5 h-2.5 w-24 rounded bg-muted" />
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1857: <div className="h-2 w-full rounded bg-muted/80" />
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1858: <div className="mt-1 h-2 w-4/5 rounded bg-muted/70" />
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1885: <div className="mb-1.5 h-2.5 w-20 rounded bg-muted" />
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1886: <div className="h-2 w-full rounded bg-muted/80" />
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1887: <div className="mt-1 h-2 w-3/5 rounded bg-muted/70" />
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1890: <div className="mb-1.5 h-2.5 w-28 rounded bg-muted" />
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1891: <div className="h-2 w-full rounded bg-muted/80" />
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1892: <div className="mt-1 h-2 w-2/3 rounded bg-muted/70" />
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1903: <div className="rounded-xl border border-border bg-card p-3">
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1910: className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-grab hover:bg-muted border border-transparent hover:border-border"
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1919: <div className="rounded-xl border border-border bg-card p-1">
+C:\Projects\cautie-learn-hub\app\components\AssignmentEditor.tsx:1931: <div className="rounded-xl border border-border bg-card p-3 space-y-2">

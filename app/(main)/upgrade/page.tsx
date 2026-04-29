@@ -106,7 +106,7 @@ export default function UpgradePage() {
               <CardDescription>You are now on {planLabel}. Reloading your workspace...</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div className="h-2 w-full overflow-hidden rounded-full surface-interactive">
                 <div className="h-full w-full animate-pulse bg-foreground/70" />
               </div>
             </CardContent>
@@ -174,7 +174,7 @@ export default function UpgradePage() {
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">3. Enter Code</h3>
-            <div className="rounded-lg bg-muted/30 p-3 text-sm">
+            <div className="rounded-lg surface-interactive p-3 text-sm">
               <p className="font-medium">{planLabel}</p>
               <p className="text-muted-foreground">{activePrice}</p>
               <div className="mt-2 space-y-1">

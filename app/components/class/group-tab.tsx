@@ -281,7 +281,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                 <div className="w-44 border-r border-sidebar-border/80 bg-sidebar-accent/20 p-2">
                   <button
                     type="button"
-                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors ${groupSettingsSection === 'rename' ? 'bg-muted/70 text-foreground' : 'text-muted-foreground hover:bg-muted/40'}`}
+                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors ${groupSettingsSection === 'rename' ? 'surface-chip text-foreground' : 'text-muted-foreground hover:surface-interactive'}`}
                     onClick={() => setGroupSettingsSection('rename')}
                   >
                     <Pencil className="h-4 w-4" />
@@ -289,7 +289,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                   </button>
                   <button
                     type="button"
-                    className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors ${groupSettingsSection === 'help' ? 'bg-muted/70 text-foreground' : 'text-muted-foreground hover:bg-muted/40'}`}
+                    className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors ${groupSettingsSection === 'help' ? 'surface-chip text-foreground' : 'text-muted-foreground hover:surface-interactive'}`}
                     onClick={() => setGroupSettingsSection('help')}
                   >
                     <CircleHelp className="h-4 w-4" />
@@ -305,7 +305,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                           <button
                             key={`rename-${student.id}`}
                             type="button"
-                            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors hover:bg-muted/40"
+                            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors hover:surface-interactive"
                             onClick={() => {
                               setRenameStudent(student);
                               setRenameValue(student.name);
@@ -323,7 +323,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                     <div className="space-y-2 text-sm text-muted-foreground">
                       <p>{t.renameSavedHint}</p>
                       <p>{t.renameVisibleHint}</p>
-                      <div className="space-y-2 rounded-lg bg-muted/20 p-2">
+                      <div className="space-y-2 rounded-lg surface-chip p-2">
                         <p className="text-xs uppercase tracking-wide">{isDutch ? 'Log code hulp' : 'Log code help'}</p>
                         <Input
                           value={logCodeQuery}

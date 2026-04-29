@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
@@ -46,7 +46,7 @@ export function TaskOverviewModal({ event, isOpen, onClose, onCompletionToggle }
       homework: 'bg-blue-100',
       test: 'bg-orange-100',
       big_test: 'bg-red-100',
-      other: 'bg-muted',
+      other: 'surface-interactive',
     } as const;
     return {
       borderColor: visual.accentColor,

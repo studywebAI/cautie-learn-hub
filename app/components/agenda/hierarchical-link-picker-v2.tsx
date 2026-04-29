@@ -280,7 +280,7 @@ export function HierarchicalLinkPickerV2({
             <div className="space-y-1 p-1">
               {filteredItems.length > 0 ? (
                 filteredItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-muted/50">
+                  <div key={item.id} className="flex items-center gap-2 rounded-lg px-2 py-2 hover:surface-interactive">
                     <button type="button" onClick={() => handleItemClick(item)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
                       {getItemIcon(item.type)}
                       <span className="truncate text-sm font-medium">{item.title}</span>

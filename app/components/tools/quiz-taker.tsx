@@ -244,7 +244,7 @@ function FinalResults({
                 <CardContent className="text-center space-y-4">
                     <div className="text-5xl font-bold font-headline">{speedrunScore.toLocaleString()}</div>
                     <p className="text-muted-foreground">Final Score</p>
-                    <div className="grid grid-cols-3 divide-x rounded-lg border bg-muted/50 p-3">
+                    <div className="grid grid-cols-3 divide-x rounded-lg border surface-interactive p-3">
                         <div>
                             <p className="text-sm text-muted-foreground">Correct</p>
                             <p className="text-xl font-semibold">{correctCount}</p>
@@ -364,12 +364,12 @@ function FinalResults({
                         </ChartContainer>
                      </div>
                      <div className="grid grid-cols-2 gap-4 text-center">
-                        <div className="p-4 bg-muted/50 rounded-lg">
+                        <div className="p-4 surface-interactive rounded-lg">
                             <Target className="h-7 w-7 text-primary mx-auto mb-2" />
                             <p className="text-2xl font-bold">{scorePercentage}%</p>
                             <p className="text-sm text-muted-foreground">Score</p>
                         </div>
-                         <div className="p-4 bg-muted/50 rounded-lg">
+                         <div className="p-4 surface-interactive rounded-lg">
                             <Clock className="h-7 w-7 text-primary mx-auto mb-2" />
                             <p className="text-2xl font-bold">{timeTaken}s</p>
                             <p className="text-sm text-muted-foreground">Time Taken</p>
@@ -388,22 +388,22 @@ function FinalResults({
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <div className="rounded-lg bg-muted/50 p-3">
+                    <div className="rounded-lg surface-interactive p-3">
                         <p className="text-xs text-muted-foreground">Completion</p>
                         <p className="text-xl font-semibold">{completionRate}%</p>
                     </div>
-                    <div className="rounded-lg bg-muted/50 p-3">
+                    <div className="rounded-lg surface-interactive p-3">
                         <p className="text-xs text-muted-foreground">Weak topics</p>
                         <p className="text-xl font-semibold">{weakTopics.length}</p>
                     </div>
-                    <div className="rounded-lg bg-muted/50 p-3">
+                    <div className="rounded-lg surface-interactive p-3">
                         <p className="text-xs text-muted-foreground">Confusion patterns</p>
                         <p className="text-xl font-semibold">{topConfusions.length}</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="rounded-lg bg-muted/50 p-3">
+                    <div className="rounded-lg surface-interactive p-3">
                         <p className="text-sm font-medium">Topics to retry</p>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                             {(weakTopics.length ? weakTopics : ['No weak topic detected']).map((topic) => (
@@ -413,7 +413,7 @@ function FinalResults({
                             ))}
                         </div>
                     </div>
-                    <div className="rounded-lg bg-muted/50 p-3">
+                    <div className="rounded-lg surface-interactive p-3">
                         <p className="text-sm font-medium">Topics done well</p>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                             {(strongTopics.length ? strongTopics : ['No strong topic detected']).map((topic) => (
@@ -426,7 +426,7 @@ function FinalResults({
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="rounded-lg bg-muted/50 p-3">
+                    <div className="rounded-lg surface-interactive p-3">
                         <p className="text-sm font-medium">Most common confusion</p>
                         <div className="mt-2 space-y-2">
                             {(topConfusions.length > 0 ? topConfusions : [['No confusion pattern detected', 0] as const]).map(([pair, count], index) => (
@@ -437,7 +437,7 @@ function FinalResults({
                             ))}
                         </div>
                     </div>
-                    <div className="rounded-lg bg-muted/50 p-3">
+                    <div className="rounded-lg surface-interactive p-3">
                         <p className="text-sm font-medium">Retry these questions first</p>
                         <div className="mt-2 space-y-2">
                             {(retryNow.length > 0 ? retryNow : ['No retry list needed']).map((item, index) => (
@@ -457,7 +457,7 @@ function FinalResults({
                         const isCorrect = correctOption?.id === selectedOptionId;
 
                         return (
-                            <div key={q.id} className="p-4 rounded-lg bg-muted/50">
+                            <div key={q.id} className="p-4 rounded-lg surface-interactive">
                                 <h4 className="font-semibold mb-2">{index + 1}. {q.question}</h4>
                                 <div className="space-y-2">
                                     {q.options.map(opt => {
@@ -528,8 +528,8 @@ function Question({ question, onAnswer, disabled, selectedOptionId, isBoss }: { 
                                     'flex items-center gap-3 p-3 rounded-md text-sm border transition-all',
                                     disabled && isTheCorrectAnswer ? 'bg-green-100 dark:bg-green-900/30 border-green-500/50' : '',
                                     disabled && isSelected && !isTheCorrectAnswer ? 'bg-red-100 dark:bg-red-900/30 border-red-500/50' : '',
-                                    !disabled ? 'cursor-pointer hover:bg-muted/80' : 'cursor-default',
-                                    disabled && !isSelected && !isTheCorrectAnswer ? 'bg-muted/50 opacity-70' : ''
+                                    !disabled ? 'cursor-pointer hover:surface-chip' : 'cursor-default',
+                                    disabled && !isSelected && !isTheCorrectAnswer ? 'surface-interactive opacity-70' : ''
                                 )}
                             >
                                 <RadioGroupItem value={opt.id} id={`${question.id}-${opt.id}`} className="flex-shrink-0" />

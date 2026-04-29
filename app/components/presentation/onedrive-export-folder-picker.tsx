@@ -146,7 +146,7 @@ export function OneDriveExportFolderPicker({ value, onChange }: OneDriveExportFo
               key={folder.id}
               type="button"
               onClick={() => setSelectedId(folder.id)}
-              className={`w-full rounded-lg border p-2 text-left text-sm ${selectedId === folder.id ? 'border-foreground/50 bg-muted/50' : 'border-border hover:bg-muted/30'}`}
+              className={`w-full rounded-lg border p-2 text-left text-sm ${selectedId === folder.id ? 'border-foreground/50 surface-interactive' : 'border-border hover:surface-interactive'}`}
             >
               <div className="flex items-center gap-2">
                 <Folder className="h-4 w-4" />

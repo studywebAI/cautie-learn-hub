@@ -224,7 +224,7 @@ export function FlashcardEditor({ cards, sourceText, onStartStudy, onBack, isAss
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.3 }}
-                className="p-3 border rounded-lg bg-muted/50"
+                className="p-3 border rounded-lg surface-interactive"
               >
                 <div className="flex justify-between items-start">
                   <div className="grid grid-cols-2 gap-4 flex-1">
@@ -273,7 +273,7 @@ export function FlashcardEditor({ cards, sourceText, onStartStudy, onBack, isAss
                 </div>
             </div>
         </div>
-      <CardFooter className="flex justify-between bg-muted/50 py-4 border-t">
+      <CardFooter className="flex justify-between surface-interactive py-4 border-t">
         <Button variant="outline" onClick={onBack}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Setup

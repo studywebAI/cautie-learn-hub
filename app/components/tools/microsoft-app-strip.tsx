@@ -791,7 +791,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
               <button
                 type="button"
                 onClick={closePicker}
-                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="rounded-md p-1 text-muted-foreground hover:surface-interactive hover:text-foreground"
                 aria-label="Close picker"
               >
                 <X className="h-4 w-4" />

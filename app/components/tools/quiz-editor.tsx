@@ -339,7 +339,7 @@ export function QuizEditor({ quiz, sourceText, onStartQuiz, onBack, isAssignment
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.3 }}
-                className="p-4 border rounded-lg bg-muted/50"
+                className="p-4 border rounded-lg surface-interactive"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -470,7 +470,7 @@ export function QuizEditor({ quiz, sourceText, onStartQuiz, onBack, isAssignment
         </Accordion>
       </div>
 
-      <CardFooter className="flex justify-between bg-muted/50 py-3 border-t">
+      <CardFooter className="flex justify-between surface-interactive py-3 border-t">
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={onBack}>
               <ArrowLeft className="mr-2 h-4 w-4" />

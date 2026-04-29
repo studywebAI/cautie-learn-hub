@@ -84,7 +84,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
             Edit
           </button>
         </div>
-        <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono">
+        <pre className="surface-interactive p-4 rounded-lg overflow-x-auto text-sm font-mono">
           <code>
             {showLineNumbers ? (
               lines.map((line: string, index: number) => (
@@ -106,7 +106,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
 
   const renderEditor = () => {
     return (
-      <div className="space-y-4 p-4 border rounded-lg bg-muted/50 mb-4">
+      <div className="space-y-4 p-4 border rounded-lg surface-interactive mb-4">
         <div className="flex gap-4 items-center">
           <div className="flex-1">
             <label className="text-sm font-medium">Language</label>

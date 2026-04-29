@@ -67,7 +67,7 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
       default:
         // For blocks that don't have student interaction, just display data
         return (
-          <div className="p-4 border rounded-lg bg-muted/50">
+          <div className="p-4 border rounded-lg surface-interactive">
             <div className="text-sm text-muted-foreground mb-2">
               {block.type.replace('_', ' ').toUpperCase()}
             </div>
@@ -82,7 +82,7 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
   return (
     <div className="space-y-2">
       {settings.hints.length > 0 && (
-        <div className="rounded-md bg-muted p-2 text-xs text-muted-foreground">
+        <div className="rounded-md surface-interactive p-2 text-xs text-muted-foreground">
           {settings.hints.map((hint, index) => (
             <div key={`${block.id}-hint-${index}`}>Hint {index + 1}: {hint}</div>
           ))}

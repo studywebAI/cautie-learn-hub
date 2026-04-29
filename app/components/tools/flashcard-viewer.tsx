@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -106,10 +106,10 @@ function FlipView({ card, isFlipped, setIsFlipped, height }: { card: Flashcard; 
           style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
           onClick={() => setIsFlipped(!isFlipped)}
         >
-          <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-12 py-10 shadow-sm [backface-visibility:hidden]">
+          <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 surface-panel px-12 py-10 shadow-sm [backface-visibility:hidden]">
             <p className="max-w-[92%] text-center text-2xl leading-[1.35] text-foreground md:text-4xl">{card.front}</p>
           </div>
-          <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-12 py-10 shadow-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+          <div className="absolute flex h-full w-full items-center justify-center rounded-2xl border border-border/80 surface-panel px-12 py-10 shadow-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
             <p className="max-w-[92%] text-center text-xl leading-[1.4] text-muted-foreground md:text-3xl">{card.back}</p>
           </div>
         </div>
@@ -727,26 +727,26 @@ export function FlashcardViewer({
         {sessionComplete && (
           <div className="w-full space-y-4 px-1">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl bg-card/80 p-3">
+              <div className="rounded-xl surface-panel p-3">
                 <p className="text-xs text-muted-foreground">Accuracy</p>
                 <p className="text-xl font-semibold">{sessionAnalytics.accuracy}%</p>
               </div>
-              <div className="rounded-xl bg-card/80 p-3">
+              <div className="rounded-xl surface-panel p-3">
                 <p className="text-xs text-muted-foreground">Reviewed</p>
                 <p className="text-xl font-semibold">{sessionAnalytics.reviewedCount}</p>
               </div>
-              <div className="rounded-xl bg-card/80 p-3">
+              <div className="rounded-xl surface-panel p-3">
                 <p className="text-xs text-muted-foreground">Incorrect</p>
                 <p className="text-xl font-semibold">{sessionAnalytics.incorrectCount}</p>
               </div>
-              <div className="rounded-xl bg-card/80 p-3">
+              <div className="rounded-xl surface-panel p-3">
                 <p className="text-xs text-muted-foreground">Avg response</p>
                 <p className="text-xl font-semibold">{Math.max(1, Math.round(sessionAnalytics.avgResponseMs / 1000))}s</p>
               </div>
             </div>
 
             <div className="grid gap-3 lg:grid-cols-2">
-              <div className="rounded-xl bg-card/80 p-3">
+              <div className="rounded-xl surface-panel p-3">
                 <p className="text-sm">Response speed</p>
                 <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                   <div className="rounded-md bg-background p-2">
@@ -764,7 +764,7 @@ export function FlashcardViewer({
                 </div>
               </div>
 
-              <div className="rounded-xl bg-card/80 p-3">
+              <div className="rounded-xl surface-panel p-3">
                 <p className="text-sm">Topic signals</p>
                 <div className="mt-2 space-y-2">
                   <div>
@@ -787,7 +787,7 @@ export function FlashcardViewer({
               </div>
             </div>
 
-            <div className="rounded-xl bg-card/80 p-3">
+            <div className="rounded-xl surface-panel p-3">
               <p className="text-sm">Per-card breakdown</p>
               <div className="mt-2 space-y-2">
                 {sessionAnalytics.perQuestionBreakdown.map((item, idx) => (
@@ -808,7 +808,7 @@ export function FlashcardViewer({
               </div>
             </div>
 
-            <details className="rounded-xl bg-card/80 p-3">
+            <details className="rounded-xl surface-panel p-3">
               <summary className="cursor-pointer text-sm">Topic web (optional)</summary>
               <div className="mt-2 space-y-1 text-xs">
                 {sessionAnalytics.topicLinks.length === 0 ? (
@@ -880,7 +880,7 @@ export function FlashcardViewer({
               Short explanation for the current card.
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-[52vh] overflow-auto rounded-md bg-muted/60 p-3 text-sm leading-6">
+          <div className="max-h-[52vh] overflow-auto rounded-md surface-chip p-3 text-sm leading-6">
             {explanation}
           </div>
           <DialogFooter>

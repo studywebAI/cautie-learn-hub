@@ -64,9 +64,9 @@ export function FunLoader({ tool }: FunLoaderProps) {
 
   return (
     <div className="flex flex-1 items-center justify-center p-8">
-      <div className="w-full max-w-2xl rounded-2xl border border-border bg-card p-5 md:p-6">
+      <div className="w-full max-w-2xl rounded-2xl border border-border surface-panel p-5 md:p-6">
         <div className="mb-4 flex items-center gap-3">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-muted/30">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border surface-interactive">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           </div>
           <div className="min-w-0">
@@ -76,7 +76,7 @@ export function FunLoader({ tool }: FunLoaderProps) {
         </div>
 
         <div className="w-full space-y-3">
-          <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-1 w-full overflow-hidden rounded-full surface-interactive">
             <div
               className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
               style={{ width: `${progress}%` }}
@@ -95,7 +95,7 @@ export function FunLoader({ tool }: FunLoaderProps) {
                       ? 'bg-primary/10 text-primary'
                       : isDone
                         ? 'bg-emerald-900/10 text-emerald-800'
-                        : 'bg-muted/40 text-muted-foreground'
+                        : 'surface-interactive text-muted-foreground'
                   }`}
                 >
                   {isDone ? (

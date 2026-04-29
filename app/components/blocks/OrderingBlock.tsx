@@ -77,7 +77,7 @@ export function OrderingBlock({ data, onSubmit, submitted, isCorrect }: Ordering
                     ? isInCorrectPosition 
                       ? 'bg-green-50 border-green-200' 
                       : 'bg-red-50 border-red-200'
-                    : 'bg-muted/50 border-border hover:border-primary/50'
+                    : 'surface-interactive border-border hover:border-primary/50'
                   }
                 `}
               >

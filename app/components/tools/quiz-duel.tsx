@@ -196,14 +196,14 @@ export function QuizDuel({ sourceText, onRestart }: QuizDuelProps) {
                  <p className="text-xs text-muted-foreground">Round History</p>
                  <div className="flex gap-1.5">
                     {rounds.map((round, index) => (
-                        <div key={index} className="h-2 w-6 rounded-full bg-muted relative overflow-hidden">
+                        <div key={index} className="h-2 w-6 rounded-full surface-interactive relative overflow-hidden">
                             {index <= currentRoundIndex && (
                                 <motion.div 
                                     initial={{ width: 0 }}
                                     animate={{ width: '100%' }}
                                     className={cn(
                                         "h-full",
-                                        !round.winnerId && "bg-muted-foreground",
+                                        !round.winnerId && "surface-interactive-foreground",
                                         round.winnerId === player1.id && "bg-primary",
                                         round.winnerId === player2.id && "bg-destructive",
                                     )} />

@@ -1213,7 +1213,7 @@ function PresentationPageContent() {
         )}
 
         {stage === 'preview' && activeShareUrl && (
-          <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 surface-interactive/35 p-2">
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 surface-interactive p-2">
             <Badge variant="secondary">Public preview active</Badge>
             <a href={activeShareUrl} target="_blank" rel="noreferrer" className="text-xs underline underline-offset-2">
               {activeShareUrl}
@@ -1301,7 +1301,7 @@ function PresentationPageContent() {
               </Card>
             )}
 
-            <div className="mt-auto rounded-2xl border border-border/60 surface-panel/90 p-3">
+            <div className="mt-auto rounded-2xl border border-border/60 surface-panel p-3">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
@@ -1337,7 +1337,7 @@ function PresentationPageContent() {
 
         {stage === 'settings' && (
           <div className="space-y-4">
-            <div className="rounded-2xl border border-border/60 surface-panel/90 p-3">
+            <div className="rounded-2xl border border-border/60 surface-panel p-3">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
                   <Upload className="mr-1.5 h-3.5 w-3.5" />

@@ -46,7 +46,7 @@ export function TeacherDeadlinesPanel({ events, selectedDay, onEventClick }: Tea
       homework: 'bg-blue-100',
       test: 'bg-orange-100',
       big_test: 'bg-red-100',
-      other: 'bg-muted',
+      other: 'surface-interactive',
     } as const;
     return {
       borderColor: visual.accentColor,
@@ -80,7 +80,7 @@ export function TeacherDeadlinesPanel({ events, selectedDay, onEventClick }: Tea
             return (
               <div
                 key={event.id}
-                className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                className="block p-3 rounded-lg border hover:surface-interactive transition-colors cursor-pointer"
                 style={{ borderLeftColor: style.borderColor, borderLeftWidth: '4px' }}
                 onClick={() => onEventClick?.(event)}
               >

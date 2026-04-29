@@ -75,7 +75,7 @@ export function SelectMaterialDialog({ isOpen, setIsOpen, classId, onMaterialSel
                         onClick={() => setSelectedId(material.id)}
                         className={cn(
                         "w-full text-left p-3 border rounded-lg flex items-center gap-4 transition-colors",
-                        isSelected ? "bg-primary/10 border-primary" : "hover:bg-muted/50"
+                        isSelected ? "bg-primary/10 border-primary" : "hover:surface-interactive"
                         )}
                     >
                         <Icon className="h-6 w-6 text-primary flex-shrink-0" />

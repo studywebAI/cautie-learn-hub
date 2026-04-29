@@ -85,7 +85,7 @@ export function PresetManager({ toolId, currentSettings, onLoadPreset }: PresetM
         className="flex items-center gap-1.5 w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
         <span>My Presets</span>
-        <span className="text-[10px] font-mono bg-muted rounded-full px-1.5">{presets.length}</span>
+        <span className="text-[10px] font-mono surface-interactive rounded-full px-1.5">{presets.length}</span>
         {expanded ? <ChevronUp className="h-3 w-3 ml-auto" /> : <ChevronDown className="h-3 w-3 ml-auto" />}
       </button>
 
@@ -98,7 +98,7 @@ export function PresetManager({ toolId, currentSettings, onLoadPreset }: PresetM
                 'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition-colors cursor-pointer',
                 activePresetId === preset.id
                   ? 'border-foreground bg-foreground/5'
-                  : 'border-border hover:bg-muted/50'
+                  : 'border-border hover:surface-interactive'
               )}
               onClick={() => handleLoad(preset)}
             >

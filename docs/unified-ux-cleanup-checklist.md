@@ -156,3 +156,9 @@ Latest implementation notes (most recent batches):
   - Verification:
     - Removed remaining `bg-[hsl(var(--surface-* ))]` usages under `app/`.
     - Lint/build rerun after token refactor and encoding cleanup.
+- Global color parity completion (strict follow-up sweep):
+  - Ran full app inventory and normalized remaining `bg-card*` and `bg-muted*` usages to surface token hierarchy (`surface-panel`, `surface-interactive`, `surface-chip`) across `app/`.
+  - Verified no remaining `bg-card`, `bg-muted`, or raw surface HSL classes under `app/`.
+  - Verification:
+    - `npm run lint` passed.
+    - `npm run build` passed.

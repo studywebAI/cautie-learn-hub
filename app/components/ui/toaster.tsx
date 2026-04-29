@@ -43,7 +43,7 @@ export function Toaster() {
                 <div className="flex items-center gap-2">
                   {title ? <ToastTitle>{title}</ToastTitle> : null}
                   {errorCode ? (
-                    <span className="rounded-md border border-border/70 bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
+                    <span className="rounded-md border border-border/70 surface-interactive px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
                       {errorCode}
                     </span>
                   ) : null}

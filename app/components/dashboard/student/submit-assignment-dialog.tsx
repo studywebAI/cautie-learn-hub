@@ -157,7 +157,7 @@ export function SubmitAssignmentDialog({
           <div className="space-y-2">
             <Label>Attachments</Label>
             <div
-              className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+              className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:surface-interactive transition-colors"
               onClick={() => document.getElementById('submission-file-input')?.click()}
             >
               <UploadCloud className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />

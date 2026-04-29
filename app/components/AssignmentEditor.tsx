@@ -1340,7 +1340,7 @@ export function AssignmentEditor({
                 <Plus className="h-3 w-3 mr-1" /> Add
               </Button>
             </div>
-            <div className="rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
+            <div className="rounded-md border border-dashed border-border/70 surface-chip p-2">
               <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Expected Answer</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {Array.isArray(block.data.options)
@@ -1434,7 +1434,7 @@ export function AssignmentEditor({
                   updateBlock(block.id, { ...block.data, text: newText, answers: newAnswers });
                 }}
                 placeholder="My shoes ... 100 euros."
-                className="min-h-[32px] mt-1 border-0 shadow-none resize-none focus-visible:ring-0 bg-muted/30 text-xs rounded px-2 py-1"
+                className="min-h-[32px] mt-1 border-0 shadow-none resize-none focus-visible:ring-0 surface-interactive text-xs rounded px-2 py-1"
                 onClick={(e) => e.stopPropagation()}
                 readOnly={!canEditBlock}
                 disabled={!canEditBlock}
@@ -1461,12 +1461,12 @@ export function AssignmentEditor({
             <div className="grid grid-cols-2 gap-2 text-xs">
               {block.data.pairs?.slice(0, 3).map((pair: any, idx: number) => (
                 <React.Fragment key={idx}>
-                  <div className="p-1 bg-muted/50 rounded text-center">{pair.left || '...'}</div>
-                  <div className="p-1 bg-muted/50 rounded text-center">{pair.right || '...'}</div>
+                  <div className="p-1 surface-interactive rounded text-center">{pair.left || '...'}</div>
+                  <div className="p-1 surface-interactive rounded text-center">{pair.right || '...'}</div>
                 </React.Fragment>
               ))}
             </div>
-            <div className="rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
+            <div className="rounded-md border border-dashed border-border/70 surface-chip p-2">
               <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Expected Matches</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {(block.data.pairs || [])
@@ -1542,7 +1542,7 @@ export function AssignmentEditor({
                 <Plus className="h-3 w-3 mr-1" /> Add
               </Button>
             </div>
-            <div className="rounded-md border border-dashed border-border/70 bg-muted/20 p-2">
+            <div className="rounded-md border border-dashed border-border/70 surface-chip p-2">
               <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Expected Order</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {(block.data.items || []).map((item: string, idx: number) => `${idx + 1}. ${item || '...'}`).join(' | ') || 'No items yet.'}
@@ -1582,20 +1582,20 @@ export function AssignmentEditor({
       {/* Top toolbar */}
       <div className="flex items-center justify-between p-3 border-b border-border bg-background">
         <div className="flex items-center gap-1.5">
-          <Button variant="outline" size="sm" onClick={() => router.back()} className="h-8 px-2.5 rounded-md bg-muted/50 gap-1.5">
+          <Button variant="outline" size="sm" onClick={() => router.back()} className="h-8 px-2.5 rounded-md surface-interactive gap-1.5">
             <ArrowLeft className="h-4 w-4" />
             {t.back}
           </Button>
-          <Button variant="outline" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-8 rounded-md px-2.5 bg-muted/50 gap-1.5" title={t.undo}>
+          <Button variant="outline" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-8 rounded-md px-2.5 surface-interactive gap-1.5" title={t.undo}>
             <Undo2 className="h-4 w-4" />
             {t.undo}
           </Button>
-          <Button variant="outline" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-8 rounded-md px-2.5 bg-muted/50 gap-1.5" title={t.redo}>
+          <Button variant="outline" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-8 rounded-md px-2.5 surface-interactive gap-1.5" title={t.redo}>
             <Redo2 className="h-4 w-4" />
             {t.redo}
           </Button>
           <div className="w-px h-4 bg-border mx-0.5" />
-          <Button variant="outline" size="sm" onClick={handleExport} className="h-8 rounded-md px-2.5 bg-muted/50" title={t.export}>
+          <Button variant="outline" size="sm" onClick={handleExport} className="h-8 rounded-md px-2.5 surface-interactive" title={t.export}>
             <Download className="h-4 w-4 mr-1.5" />
             {t.export}
           </Button>
@@ -1605,7 +1605,7 @@ export function AssignmentEditor({
                 data-testid="assignment-size-button"
                 variant="outline"
                 size="sm"
-                className="h-8 rounded-md px-2.5 bg-muted/50"
+                className="h-8 rounded-md px-2.5 surface-interactive"
                 title={t.size}
                 disabled={!isTeacher || !selectedBlockRecord || !isEditMode}
               >
@@ -1633,7 +1633,7 @@ export function AssignmentEditor({
               />
             </PopoverContent>
           </Popover>
-          <Button variant="outline" size="sm" onClick={handleImport} className="h-8 rounded-md px-2.5 bg-muted/50" title={t.import}>
+          <Button variant="outline" size="sm" onClick={handleImport} className="h-8 rounded-md px-2.5 surface-interactive" title={t.import}>
             <Upload className="h-4 w-4 mr-1.5" />
             {t.import}
           </Button>
@@ -1660,7 +1660,7 @@ export function AssignmentEditor({
           <div
             ref={paperRef}
             data-testid="assignment-paper"
-            className="bg-card border border-border rounded-xl shadow-sm min-h-[calc(100vh-130px)] p-3 relative w-full"
+            className="surface-panel border border-border rounded-xl shadow-sm min-h-[calc(100vh-130px)] p-3 relative w-full"
           >
               {rows.length === 0 ? (
                 <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -1702,8 +1702,8 @@ export function AssignmentEditor({
                             data-testid={`assignment-block-${row.blocks[0].id}`}
                             className={`${showTeacherControls ? 'px-3 pb-3 pt-11' : 'p-3'} border rounded-xl transition-all duration-200 ease-out ${
                               selectedBlock === row.blocks[0].id 
-                                ? 'border-primary bg-card' 
-                                : 'border-border bg-background hover:bg-muted/30'
+                                ? 'border-primary surface-panel' 
+                                : 'border-border bg-background hover:surface-interactive'
                             }`}
                             style={{
                               width: `${getBlockWidthPercent(row.blocks[0])}%`,
@@ -1726,7 +1726,7 @@ export function AssignmentEditor({
                               <div className="flex items-center gap-1">
                                 <Popover>
                                   <PopoverTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] bg-muted/60" title="Block size">
+                                    <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] surface-chip" title="Block size">
                                       <SlidersHorizontal className="h-3 w-3 mr-1" />
                                       Size
                                     </Button>
@@ -1745,7 +1745,7 @@ export function AssignmentEditor({
                                   </PopoverContent>
                                 </Popover>
                                 <div 
-                                  className="h-6 w-6 p-0 flex items-center justify-center cursor-grab bg-muted/70 hover:bg-muted rounded"
+                                  className="h-6 w-6 p-0 flex items-center justify-center cursor-grab surface-chip hover:surface-interactive rounded"
                                   onPointerDown={(e) => handleGripPointerDown(e, row.blocks[0].id)}
                                   title="Move block"
                                 >
@@ -1755,7 +1755,7 @@ export function AssignmentEditor({
                                   variant="ghost"
                                   size="sm"
                                   onClick={(e) => { e.stopPropagation(); deleteBlock(row.blocks[0].id); }}
-                                  className="h-6 w-6 p-0 bg-muted/70 text-destructive"
+                                  className="h-6 w-6 p-0 surface-chip text-destructive"
                                   title="Delete block"
                                 >
                                   <Trash2 className="h-3 w-3" />
@@ -1786,8 +1786,8 @@ export function AssignmentEditor({
                                     data-testid={`assignment-block-${block.id}`}
                                     className={`h-full ${showTeacherControls ? 'px-3 pb-3 pt-11' : 'p-3'} border rounded-xl transition-all duration-200 ease-out ${
                                       selectedBlock === block.id 
-                                        ? 'border-primary bg-card' 
-                                        : 'border-border bg-background hover:bg-muted/30'
+                                        ? 'border-primary surface-panel' 
+                                        : 'border-border bg-background hover:surface-interactive'
                                     }`}
                                     style={{
                                       width: `${getBlockWidthPercent(block)}%`,
@@ -1810,7 +1810,7 @@ export function AssignmentEditor({
                                       <div className="flex items-center gap-1">
                                         <Popover>
                                           <PopoverTrigger asChild>
-                                            <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] bg-muted/60" title="Block size">
+                                            <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] surface-chip" title="Block size">
                                               <SlidersHorizontal className="h-3 w-3 mr-1" />
                                               Size
                                             </Button>
@@ -1829,7 +1829,7 @@ export function AssignmentEditor({
                                           </PopoverContent>
                                         </Popover>
                                         <div 
-                                          className="h-6 w-6 p-0 flex items-center justify-center cursor-grab bg-muted/70 hover:bg-muted rounded"
+                                          className="h-6 w-6 p-0 flex items-center justify-center cursor-grab surface-chip hover:surface-interactive rounded"
                                           onPointerDown={(e) => handleGripPointerDown(e, block.id)}
                                           title="Move block"
                                         >
@@ -1839,7 +1839,7 @@ export function AssignmentEditor({
                                           variant="ghost"
                                           size="sm"
                                           onClick={(e) => { e.stopPropagation(); deleteBlock(block.id); }}
-                                          className="h-6 w-6 p-0 bg-muted/70 text-destructive"
+                                          className="h-6 w-6 p-0 surface-chip text-destructive"
                                           title="Delete block"
                                         >
                                           <Trash2 className="h-3 w-3" />
@@ -1853,9 +1853,9 @@ export function AssignmentEditor({
                                 ) : (
                                   <div className="h-full rounded-lg border border-border surface-panel p-2">
                                     <div className="rounded-md border border-border/70 bg-background p-2">
-                                      <div className="mb-1.5 h-2.5 w-24 rounded bg-muted" />
-                                      <div className="h-2 w-full rounded bg-muted/80" />
-                                      <div className="mt-1 h-2 w-4/5 rounded bg-muted/70" />
+                                      <div className="mb-1.5 h-2.5 w-24 rounded surface-interactive" />
+                                      <div className="h-2 w-full rounded surface-chip" />
+                                      <div className="mt-1 h-2 w-4/5 rounded surface-chip" />
                                     </div>
                                   </div>
                                 )}
@@ -1882,14 +1882,14 @@ export function AssignmentEditor({
               <div className="mt-4 rounded-xl border border-border surface-panel p-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-lg border border-border/80 bg-background p-2">
-                    <div className="mb-1.5 h-2.5 w-20 rounded bg-muted" />
-                    <div className="h-2 w-full rounded bg-muted/80" />
-                    <div className="mt-1 h-2 w-3/5 rounded bg-muted/70" />
+                    <div className="mb-1.5 h-2.5 w-20 rounded surface-interactive" />
+                    <div className="h-2 w-full rounded surface-chip" />
+                    <div className="mt-1 h-2 w-3/5 rounded surface-chip" />
                   </div>
                   <div className="rounded-lg border border-border/80 bg-background p-2">
-                    <div className="mb-1.5 h-2.5 w-28 rounded bg-muted" />
-                    <div className="h-2 w-full rounded bg-muted/80" />
-                    <div className="mt-1 h-2 w-2/3 rounded bg-muted/70" />
+                    <div className="mb-1.5 h-2.5 w-28 rounded surface-interactive" />
+                    <div className="h-2 w-full rounded surface-chip" />
+                    <div className="mt-1 h-2 w-2/3 rounded surface-chip" />
                   </div>
                 </div>
               </div>
@@ -1900,14 +1900,14 @@ export function AssignmentEditor({
         {showTeacherControls && (
           <aside className="w-[320px] border-l border-border bg-background p-3 overflow-y-auto">
             <div className="space-y-3">
-              <div className="rounded-xl border border-border bg-card p-3">
+              <div className="rounded-xl border border-border surface-panel p-3">
                 <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-2">Blocks</div>
                 <div className="space-y-1.5">
                   {BLOCK_TEMPLATES.map((template) => (
                     <div
                       key={template.id}
                       data-testid={`assignment-template-${template.id}`}
-                      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-grab hover:bg-muted border border-transparent hover:border-border"
+                      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-grab hover:surface-interactive border border-transparent hover:border-border"
                       onPointerDown={(e) => handleTemplatePointerDown(e, template.id)}
                     >
                       {template.icon}
@@ -1916,7 +1916,7 @@ export function AssignmentEditor({
                   ))}
                 </div>
               </div>
-              <div className="rounded-xl border border-border bg-card p-1">
+              <div className="rounded-xl border border-border surface-panel p-1">
                 <AssignmentSettingsOverlay
                   settings={localSettings}
                   onSettingsChange={handleAdvancedSettingsChange}
@@ -1928,7 +1928,7 @@ export function AssignmentEditor({
                 const s = normalizeBlockSettings(block.settings || {});
                 const isQuestionBlock = ['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'matching', 'ordering'].includes(block.type);
                 return (
-                  <div className="rounded-xl border border-border bg-card p-3 space-y-2">
+                  <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
                     <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.08em]">Question Settings</div>
                     {isQuestionBlock && localAnswersEnabled && (
                       <div className="flex items-center justify-between">

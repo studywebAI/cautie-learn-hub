@@ -132,7 +132,7 @@ export const ExecutableCodeBlock: React.FC<ExecutableCodeBlockProps> = ({
 
     return (
       <div className={cn('w-full border rounded-lg overflow-hidden', className)}>
-        <div className="bg-muted px-4 py-2 flex items-center justify-between">
+        <div className="surface-interactive px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{currentLang?.label || language}</span>
             {block.data.executionTime && (
@@ -169,7 +169,7 @@ export const ExecutableCodeBlock: React.FC<ExecutableCodeBlockProps> = ({
         </div>
 
         <div className="p-4">
-          <pre className="bg-muted/50 p-3 rounded text-sm font-mono overflow-x-auto">
+          <pre className="surface-interactive p-3 rounded text-sm font-mono overflow-x-auto">
             <code>{code || '// Write your code here...'}</code>
           </pre>
 
@@ -198,7 +198,7 @@ export const ExecutableCodeBlock: React.FC<ExecutableCodeBlockProps> = ({
 
   const renderEditor = () => {
     return (
-      <div className={cn('w-full space-y-4 p-4 border rounded-lg bg-muted/50', className)}>
+      <div className={cn('w-full space-y-4 p-4 border rounded-lg surface-interactive', className)}>
         <div className="flex items-center gap-4">
           <div className="flex-1">
             <label className="text-sm font-medium">Language</label>

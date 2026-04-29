@@ -230,7 +230,7 @@ export function RecentsSidebar() {
       <div className="px-2">
         <div className="space-y-1">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="animate-pulse h-5 surface-interactive/55 rounded-md" />
+            <div key={i} className="animate-pulse h-5 surface-interactive rounded-md" />
           ))}
         </div>
       </div>

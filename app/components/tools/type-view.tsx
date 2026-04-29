@@ -46,7 +46,7 @@ export function TypeView({ card, onAnswered }: TypeViewProps) {
 
     return (
         <div className="w-full max-w-5xl min-h-[18rem] flex flex-col items-center justify-center gap-4">
-            <div className="flex items-center justify-center p-6 w-full min-h-[10rem] bg-card border rounded-2xl">
+            <div className="flex items-center justify-center p-6 w-full min-h-[10rem] surface-panel border rounded-2xl">
                  <p className="text-center text-xl leading-[1.35] md:text-3xl">
                     {before}
                     <span className='inline-block w-40 border-b-2 border-dashed align-middle mx-2'></span>

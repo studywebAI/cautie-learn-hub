@@ -192,7 +192,7 @@ export function AssignmentDetailsPanel({
   };
 
   return (
-    <Card className="relative overflow-hidden rounded-xl border-0 bg-card p-4 shadow-sm">
+    <Card className="relative overflow-hidden rounded-xl border-0 surface-panel p-4 shadow-sm">
       <span className="absolute left-0 top-0 h-full w-1" style={{ backgroundColor: accent }} />
 
       <div className="mb-3 flex items-start justify-between gap-2 pl-2">
@@ -258,7 +258,7 @@ export function AssignmentDetailsPanel({
           <div className="space-y-1.5 pt-1">
             <p className="text-xs uppercase tracking-[0.03em] text-muted-foreground">Resources</p>
             {resourceLinks.map((link, index) => (
-              <div key={`${link.link_type}-${link.link_ref_id || index}`} className="flex items-center gap-2 rounded-lg bg-muted/25 px-2.5 py-2">
+              <div key={`${link.link_type}-${link.link_ref_id || index}`} className="flex items-center gap-2 rounded-lg surface-chip px-2.5 py-2">
                 <button
                   type="button"
                   className="min-w-0 flex-1 text-left"
@@ -288,7 +288,7 @@ export function AssignmentDetailsPanel({
 
         {isTeacher && (
           <div className="flex flex-wrap items-center gap-2 pt-2">
-            <div className="flex items-center gap-2 rounded-md bg-muted/35 px-2.5 py-1.5">
+            <div className="flex items-center gap-2 rounded-md surface-interactive px-2.5 py-1.5">
               <Switch checked={visible} onCheckedChange={toggleVisible} />
               <span className="text-xs">Visible to students</span>
             </div>

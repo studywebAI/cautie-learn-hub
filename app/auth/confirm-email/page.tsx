@@ -76,7 +76,7 @@ function ConfirmEmailForm() {
         </button>
 
         {(message || error) && (
-          <p className="p-4 bg-muted text-foreground text-center rounded-lg">
+          <p className="p-4 surface-interactive text-foreground text-center rounded-lg">
             {error || message}
           </p>
         )}

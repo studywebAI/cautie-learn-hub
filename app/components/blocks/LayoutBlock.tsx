@@ -53,7 +53,7 @@ export const LayoutBlock: React.FC<LayoutBlockProps> = ({
 
   const renderCallout = () => {
     return (
-      <div className="bg-muted/50 border-l-4 border-primary p-4 my-4 rounded-r-lg">
+      <div className="surface-interactive border-l-4 border-primary p-4 my-4 rounded-r-lg">
         <div className="flex items-start gap-3">
           {icon && <span className="text-xl">{icon}</span>}
           <div className="flex-1">
@@ -80,7 +80,7 @@ export const LayoutBlock: React.FC<LayoutBlockProps> = ({
     const { type } = block.data;
 
     return (
-      <div className="space-y-4 p-4 border rounded-lg bg-muted/50 mb-4">
+      <div className="space-y-4 p-4 border rounded-lg surface-interactive mb-4">
         {type === 'callout' && (
           <>
             <div>

@@ -222,7 +222,7 @@ export function SubmissionsView({ assignmentId }: SubmissionsViewProps) {
                     {submission.content?.text && (
                       <div>
                         <Label className="text-sm font-medium">Submission Content</Label>
-                        <div className="mt-1 p-3 bg-muted rounded-md">
+                        <div className="mt-1 p-3 surface-interactive rounded-md">
                           <p className="whitespace-pre-wrap">{submission.content.text}</p>
                         </div>
                       </div>

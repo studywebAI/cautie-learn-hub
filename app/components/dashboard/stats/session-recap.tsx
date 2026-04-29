@@ -28,7 +28,7 @@ export function SessionRecap({ sessionRecap }: SessionRecapProps) {
 
   if (!sessionRecap) {
     return (
-        <div className="flex flex-col items-center justify-center text-center h-full bg-muted/50 p-6 rounded-lg">
+        <div className="flex flex-col items-center justify-center text-center h-full surface-interactive p-6 rounded-lg">
             <FileQuestion className="h-10 w-10 text-muted-foreground mb-4" />
             <h3 className="font-semibold text-lg">No Session Data</h3>
             <p className="text-sm text-muted-foreground">Complete a quiz to see your results here.</p>
