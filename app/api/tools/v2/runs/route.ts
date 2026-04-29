@@ -12,6 +12,7 @@ import {
   recordMeterEvent,
 } from "@/lib/toolbox/server";
 import { resolveSelectedSourcesForRun } from "@/lib/integrations/run-source-resolver";
+import type { CanonicalDocument } from "@/lib/tools/canonical-model";
 
 const CreateRunSchema = z.object({
   toolId: z.string().min(1),
@@ -143,6 +144,12 @@ async function writeRunSources(supabase: any, runId: string, userId: string, sou
   }
 }
 
+function extractCanonicalFromOutput(output: any): CanonicalDocument | null {
+  const candidate = output?.canonical_v1;
+  if (!candidate || typeof candidate !== "object") return null;
+  return candidate as CanonicalDocument;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { supabase, user, plan, subscriptionType } = await getAuthedToolboxContext();
@@ -250,6 +257,25 @@ export async function POST(request: NextRequest) {
       let artifactId: string | null = null;
 
       if (payload.persistArtifact) {
+        const canonical = extractCanonicalFromOutput(output);
+        const artifactMetadata = {
+          mode: payload.mode || null,
+          runId: createdRun.id,
+          ...(canonical
+            ? {
+                canonical_v1: canonical,
+                payload_format: "canonical_v1",
+              }
+            : {}),
+        };
+        const artifactContent = canonical
+          ? {
+              ...(output && typeof output === "object" ? output : { value: output }),
+              format: "canonical_v1",
+              canonical_v1: canonical,
+            }
+          : output;
+
         const { data: artifact } = await supabase
           .from("artifacts")
           .insert({
@@ -258,10 +284,7 @@ export async function POST(request: NextRequest) {
             artifact_type: payload.artifactType || payload.toolId,
             title: payload.artifactTitle || `${payload.toolId} output`,
             latest_version: 1,
-            metadata: {
-              mode: payload.mode || null,
-              runId: createdRun.id,
-            },
+            metadata: artifactMetadata,
           })
           .select("*")
           .single();
@@ -271,9 +294,10 @@ export async function POST(request: NextRequest) {
           await supabase.from("artifact_versions").insert({
             artifact_id: artifact.id,
             version_number: 1,
-            content: output,
+            content: artifactContent,
             metadata: {
               createdByRun: createdRun.id,
+              ...(canonical ? { canonical_v1: canonical, payload_format: "canonical_v1" } : {}),
             },
           });
         }

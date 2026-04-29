@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import type { CanonicalDocument, CanonicalRelationType } from '@/lib/tools/canonical-model';
+import { useMemo, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import type { CanonicalDocument, CanonicalLayoutState, CanonicalRelationType } from '@/lib/tools/canonical-model';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -20,17 +20,36 @@ type PositionedNode = {
   level: number;
 };
 
-export function WordwebCanvas({ document }: Props) {
+function getWordwebLayout(document: CanonicalDocument): CanonicalLayoutState | null {
+  return document.layouts?.find((layout) => layout.view === 'wordweb') || null;
+}
+
+function setWordwebLayout(document: CanonicalDocument, nodePositions: Record<string, { x: number; y: number }>) {
+  const layouts = [...(document.layouts || [])];
+  const index = layouts.findIndex((layout) => layout.view === 'wordweb');
+  const nextLayout: CanonicalLayoutState = {
+    view: 'wordweb',
+    ...(layouts[index] || {}),
+    nodePositions,
+  };
+  if (index >= 0) layouts[index] = nextLayout;
+  else layouts.push(nextLayout);
+  return { ...document, layouts };
+}
+
+export function WordwebCanvas({ document, onChange }: Props) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [relationFrom, setRelationFrom] = useState('');
   const [relationTo, setRelationTo] = useState('');
   const [relationType, setRelationType] = useState<CanonicalRelationType>('references');
   const [relationLabel, setRelationLabel] = useState('');
+  const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
+  const [dragNodeId, setDragNodeId] = useState<string | null>(null);
 
   const { positioned, links } = useMemo(() => {
     const nodeMap = new Map(document.nodes.map((node) => [node.id, node]));
     const rootId = document.nodes.find((node) => node.id === 'root-notes')?.id || document.nodes[0]?.id;
-    if (!rootId) return { positioned: [] as PositionedNode[], links: [] as Array<{ from: string; to: string }> };
+    if (!rootId) return { positioned: [] as PositionedNode[], links: [] as Array<{ id: string; from: string; to: string; label?: string | null; relation?: CanonicalRelationType }> };
 
     const childrenByParent = document.edges.reduce<Record<string, string[]>>((acc, edge) => {
       if (edge.relation !== 'contains') return acc;
@@ -40,7 +59,7 @@ export function WordwebCanvas({ document }: Props) {
     }, {});
 
     const positionedNodes: PositionedNode[] = [];
-    const linksOut: Array<{ id: string; from: string; to: string; label?: string | null }> = [];
+    const linksOut: Array<{ id: string; from: string; to: string; label?: string | null; relation?: CanonicalRelationType }> = [];
     const levelSpacingX = 240;
     const rowSpacingY = 110;
 
@@ -61,7 +80,7 @@ export function WordwebCanvas({ document }: Props) {
       let cursorY = startY;
       for (const childId of children) {
         const edge = document.edges.find((candidate) => candidate.from === nodeId && candidate.to === childId && candidate.relation === 'contains');
-        linksOut.push({ id: edge?.id || `${nodeId}-${childId}`, from: nodeId, to: childId, label: edge?.label || null });
+        linksOut.push({ id: edge?.id || `${nodeId}-${childId}`, from: nodeId, to: childId, label: edge?.label || null, relation: edge?.relation });
         cursorY = walk(childId, level + 1, cursorY);
       }
       const middleY = (initialY + cursorY - rowSpacingY) / 2;
@@ -80,10 +99,17 @@ export function WordwebCanvas({ document }: Props) {
       const fromNode = nodeMap.get(edge.from);
       const toNode = nodeMap.get(edge.to);
       if (!fromNode || !toNode) continue;
-      linksOut.push({ id: edge.id, from: edge.from, to: edge.to, label: edge.label || edge.relation });
+      linksOut.push({ id: edge.id, from: edge.from, to: edge.to, label: edge.label || edge.relation, relation: edge.relation });
     }
     walk(rootId, 0, 40);
-    return { positioned: positionedNodes, links: linksOut };
+
+    const layoutPositions = getWordwebLayout(document)?.nodePositions || {};
+    const patchedPositioned = positionedNodes.map((node) => {
+      const saved = layoutPositions[node.id];
+      return saved ? { ...node, x: saved.x, y: saved.y } : node;
+    });
+
+    return { positioned: patchedPositioned, links: linksOut };
   }, [document]);
 
   const byId = useMemo(() => new Map(positioned.map((node) => [node.id, node])), [positioned]);
@@ -97,6 +123,18 @@ export function WordwebCanvas({ document }: Props) {
         : node
     );
     onChange({ ...document, nodes: nextNodes });
+  };
+
+  const updateEdgeLabel = (edgeId: string, label: string) => {
+    const nextEdges = document.edges.map((edge) =>
+      edge.id === edgeId
+        ? {
+            ...edge,
+            label: label.trim() ? label.trim() : null,
+          }
+        : edge
+    );
+    onChange({ ...document, edges: nextEdges });
   };
 
   const addRelation = () => {
@@ -125,9 +163,36 @@ export function WordwebCanvas({ document }: Props) {
     onChange({ ...document, edges: nextEdges });
   };
 
+  const handleNodePointerDown = (event: ReactPointerEvent<HTMLButtonElement>, nodeId: string) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDragNodeId(nodeId);
+  };
+
+  const handleNodePointerMove = (event: ReactPointerEvent<HTMLButtonElement>, nodeId: string) => {
+    if (dragNodeId !== nodeId) return;
+    const host = event.currentTarget.closest('[data-wordweb-host]') as HTMLDivElement | null;
+    if (!host) return;
+    const hostRect = host.getBoundingClientRect();
+    const x = Math.max(0, event.clientX - hostRect.left - 90);
+    const y = Math.max(0, event.clientY - hostRect.top - 18);
+    const current = getWordwebLayout(document)?.nodePositions || {};
+    const nextPositions = {
+      ...current,
+      [nodeId]: { x, y },
+    };
+    onChange(setWordwebLayout(document, nextPositions));
+  };
+
+  const handleNodePointerUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    setDragNodeId(null);
+  };
+
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="relative min-h-[560px] overflow-auto rounded-2xl border surface-panel p-4">
+      <div data-wordweb-host className="relative min-h-[560px] overflow-auto rounded-2xl border surface-panel p-4">
         <svg className="absolute inset-0 h-full w-full pointer-events-none">
           {links.map((link) => {
             const from = byId.get(link.from);
@@ -135,6 +200,7 @@ export function WordwebCanvas({ document }: Props) {
             if (!from || !to) return null;
             const midX = (from.x + to.x + 180) / 2;
             const midY = (from.y + to.y + 48) / 2;
+            const edge = document.edges.find((item) => item.id === link.id) || null;
             return (
               <g key={link.id}>
                 <path
@@ -143,11 +209,30 @@ export function WordwebCanvas({ document }: Props) {
                   stroke="hsl(var(--border))"
                   strokeWidth={1.5}
                 />
-                {link.label ? (
-                  <text x={midX} y={midY - 6} textAnchor="middle" fontSize="11" fill="hsl(var(--muted-foreground))">
-                    {link.label}
-                  </text>
-                ) : null}
+                <foreignObject x={midX - 80} y={midY - 18} width="160" height="28" className="pointer-events-auto">
+                  <input
+                    value={editingEdgeId === link.id ? relationLabel : edge?.label || ''}
+                    onFocus={() => {
+                      setEditingEdgeId(link.id);
+                      setRelationLabel(edge?.label || '');
+                    }}
+                    onChange={(event) => setRelationLabel(event.target.value)}
+                    onBlur={() => {
+                      updateEdgeLabel(link.id, relationLabel);
+                      setEditingEdgeId(null);
+                      setRelationLabel('');
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        updateEdgeLabel(link.id, relationLabel);
+                        setEditingEdgeId(null);
+                        setRelationLabel('');
+                      }
+                    }}
+                    placeholder="label"
+                    className="h-6 w-full rounded border border-border bg-background px-1 text-[10px]"
+                  />
+                </foreignObject>
               </g>
             );
           })}
@@ -158,12 +243,15 @@ export function WordwebCanvas({ document }: Props) {
             <button
               type="button"
               key={node.id}
-              className={`absolute w-[180px] rounded-md px-3 py-2 text-left text-sm shadow-[inset_0_0_0_1px_hsl(var(--border))] ${
+              className={`absolute w-[180px] cursor-grab rounded-md px-3 py-2 text-left text-sm shadow-[inset_0_0_0_1px_hsl(var(--border))] ${
                 selectedNodeId === node.id ? 'surface-chip' : 'surface-interactive'
               }`}
               style={{ left: `${node.x}px`, top: `${node.y}px` }}
               title={node.title}
               onClick={() => setSelectedNodeId(node.id)}
+              onPointerDown={(event) => handleNodePointerDown(event, node.id)}
+              onPointerMove={(event) => handleNodePointerMove(event, node.id)}
+              onPointerUp={handleNodePointerUp}
             >
               <p className="line-clamp-2">{node.title}</p>
             </button>

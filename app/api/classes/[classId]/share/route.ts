@@ -36,6 +36,15 @@ function parseShareContent(content: unknown): { text: string; attachmentLabel?: 
   return { text: '' };
 }
 
+function resolveProfileName(profile: any, fallbackEmail: string | null, fallbackId: string): string {
+  const display = String(profile?.display_name || '').trim();
+  if (display) return display;
+  const fullName = String(profile?.full_name || '').trim();
+  if (fullName) return fullName;
+  if (fallbackEmail) return fallbackEmail.split('@')[0];
+  return fallbackId.slice(0, 8);
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
@@ -57,7 +66,7 @@ export async function GET(
 
     let query = (supabase as any)
       .from('class_share_posts')
-      .select('id, audience, body_text, attachment_label, source_type, source_ref_id, source_href, created_at')
+      .select('id, audience, body_text, attachment_label, source_type, source_ref_id, source_href, created_at, created_by')
       .eq('class_id', classId)
       .order('created_at', { ascending: false })
       .limit(200);
@@ -99,12 +108,31 @@ export async function GET(
       return NextResponse.json({ rows: fallbackRows });
     }
 
+    const authorIds = Array.from(new Set((data || []).map((row: any) => String(row.created_by || '')).filter(Boolean)));
+    let profileMap = new Map<string, { name: string; email: string | null }>();
+    if (authorIds.length > 0) {
+      const { data: profiles } = await (supabase as any)
+        .from('profiles')
+        .select('id, full_name, display_name, email')
+        .in('id', authorIds);
+      for (const profile of profiles || []) {
+        const email = profile?.email ? String(profile.email) : null;
+        profileMap.set(String(profile.id), {
+          name: resolveProfileName(profile, email, String(profile.id)),
+          email,
+        });
+      }
+    }
+
     const rows = (data || []).map((row: any) => {
+      const author = profileMap.get(String(row.created_by || ''));
       return {
         id: row.id,
         createdAt: row.created_at,
         audience: row.audience === 'all' ? 'all' : 'teacher',
         text: String(row.body_text || ''),
+        authorName: author?.name || 'User',
+        authorEmail: author?.email || null,
         attachmentLabel: row.attachment_label || undefined,
         sourceType: row.source_type || undefined,
         sourceId: row.source_ref_id || undefined,
@@ -132,14 +160,15 @@ export async function POST(
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const perm = await getClassPermission(supabase as any, classId, user.id);
-    if (!perm.isMember || !perm.isTeacher) {
+    if (!perm.isMember) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json().catch(() => ({}));
     const text = String(body?.text || '').trim();
     const attachmentLabel = String(body?.attachmentLabel || '').trim();
-    const audience = String(body?.audience || 'teacher').toLowerCase() === 'all' ? 'all' : 'teacher';
+    const requestedAudience = String(body?.audience || 'all').toLowerCase() === 'teacher' ? 'teacher' : 'all';
+    const audience: ShareAudience = requestedAudience === 'teacher' && perm.isTeacher ? 'teacher' : 'all';
     const source = body?.source && typeof body.source === 'object' ? body.source : null;
 
     if (!text && !attachmentLabel) {
@@ -197,11 +226,19 @@ export async function POST(
       });
     }
 
+    const { data: profile } = await (supabase as any)
+      .from('profiles')
+      .select('id, full_name, display_name, email')
+      .eq('id', user.id)
+      .maybeSingle();
+    const authorEmail = profile?.email ? String(profile.email) : user.email || null;
     return NextResponse.json({
       id: data.id,
       createdAt: data.created_at,
       audience: data.audience === 'all' ? 'all' : 'teacher',
       text,
+      authorName: resolveProfileName(profile || {}, authorEmail, user.id),
+      authorEmail,
       attachmentLabel: payload.attachmentLabel,
       sourceType: payload.sourceType,
       sourceId: payload.sourceId,

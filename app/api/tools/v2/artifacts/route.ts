@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import type { CanonicalDocument } from "@/lib/tools/canonical-model";
 import { getAuthedToolboxContext } from "@/lib/toolbox/server";
 
 const CreateArtifactSchema = z.object({
@@ -11,10 +12,44 @@ const CreateArtifactSchema = z.object({
   metadata: z.record(z.any()).optional(),
 });
 
+function extractCanonical(content: any, metadata?: Record<string, any> | undefined): CanonicalDocument | null {
+  const fromContent = content?.canonical_v1;
+  const fromMetadata = metadata?.canonical_v1;
+  const candidate = fromContent && typeof fromContent === "object" ? fromContent : fromMetadata;
+  if (!candidate || typeof candidate !== "object") return null;
+  return candidate as CanonicalDocument;
+}
+
+function normalizePayload(content: any, metadata?: Record<string, any>) {
+  const canonical = extractCanonical(content, metadata);
+  if (!canonical) {
+    return {
+      content,
+      metadata: metadata || {},
+    };
+  }
+
+  const nextContent = {
+    ...(content && typeof content === "object" ? content : { value: content }),
+    format: "canonical_v1",
+    canonical_v1: canonical,
+  };
+
+  return {
+    content: nextContent,
+    metadata: {
+      ...(metadata || {}),
+      canonical_v1: canonical,
+      payload_format: "canonical_v1",
+    },
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { supabase, user } = await getAuthedToolboxContext();
     const payload = CreateArtifactSchema.parse(await request.json());
+    const normalized = normalizePayload(payload.content, payload.metadata);
 
     if (payload.artifactId) {
       const { data: existing } = await supabase
@@ -34,8 +69,8 @@ export async function POST(request: NextRequest) {
         .insert({
           artifact_id: existing.id,
           version_number: nextVersion,
-          content: payload.content,
-          metadata: payload.metadata || {},
+          content: normalized.content,
+          metadata: normalized.metadata,
         })
         .select("*")
         .single();
@@ -51,7 +86,7 @@ export async function POST(request: NextRequest) {
           latest_version: nextVersion,
           metadata: {
             ...(existing.metadata || {}),
-            ...(payload.metadata || {}),
+            ...(normalized.metadata || {}),
           },
           updated_at: new Date().toISOString(),
         })
@@ -68,7 +103,7 @@ export async function POST(request: NextRequest) {
         artifact_type: payload.artifactType,
         title: payload.title,
         latest_version: 1,
-        metadata: payload.metadata || {},
+        metadata: normalized.metadata,
       })
       .select("*")
       .single();
@@ -80,8 +115,8 @@ export async function POST(request: NextRequest) {
     const { error: versionError } = await supabase.from("artifact_versions").insert({
       artifact_id: artifact.id,
       version_number: 1,
-      content: payload.content,
-      metadata: payload.metadata || {},
+      content: normalized.content,
+      metadata: normalized.metadata,
     });
 
     if (versionError) {

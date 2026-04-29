@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { executeAIFlow } from "@/lib/ai/flow-executor";
+import type { CanonicalDocument } from "@/lib/tools/canonical-model";
 import {
   assertFeature,
   getAuthedToolboxContext,
@@ -14,6 +15,12 @@ const TransformSchema = z.object({
   transformInput: z.record(z.any()).optional(),
   title: z.string().optional(),
 });
+
+function extractCanonicalFromOutput(output: any): CanonicalDocument | null {
+  const candidate = output?.canonical_v1;
+  if (!candidate || typeof candidate !== "object") return null;
+  return candidate as CanonicalDocument;
+}
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -50,6 +57,18 @@ export async function POST(request: NextRequest, { params }: Params) {
       sourceArtifactId: artifact.id,
       ...payload.transformInput,
     });
+    const canonical = extractCanonicalFromOutput(transformed);
+    const transformedContent = canonical
+      ? {
+          ...(transformed && typeof transformed === "object" ? transformed : { value: transformed }),
+          format: "canonical_v1",
+          canonical_v1: canonical,
+        }
+      : transformed;
+    const transformedMetadata = {
+      transformedFrom: artifact.id,
+      ...(canonical ? { canonical_v1: canonical, payload_format: "canonical_v1" } : {}),
+    };
 
     const { data: newArtifact, error: newArtifactError } = await supabase
       .from("artifacts")
@@ -59,9 +78,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         artifact_type: payload.targetToolId,
         title: payload.title || `${artifact.title} -> ${payload.targetToolId}`,
         latest_version: 1,
-        metadata: {
-          transformedFrom: artifact.id,
-        },
+        metadata: transformedMetadata,
       })
       .select("*")
       .single();
@@ -73,10 +90,8 @@ export async function POST(request: NextRequest, { params }: Params) {
     await supabase.from("artifact_versions").insert({
       artifact_id: newArtifact.id,
       version_number: 1,
-      content: transformed,
-      metadata: {
-        transformedFrom: artifact.id,
-      },
+      content: transformedContent,
+      metadata: transformedMetadata,
     });
 
     await supabase.from("artifact_links").insert({

@@ -74,7 +74,6 @@ function QuizPageContent() {
   const [saveToRecents, setSaveToRecents] = useState(true);
   const [includeImages, setIncludeImages] = useState(false);
   const [sourceBackedDepth, setSourceBackedDepth] = useState(false);
-  const [premiumTier, setPremiumTier] = useState<'free' | 'premium' | 'pro'>('free');
   const [isSharingToClass, setIsSharingToClass] = useState(false);
   const launchHandledRef = useRef(false);
   const sourceParamsHandledRef = useRef(false);
@@ -215,20 +214,6 @@ function QuizPageContent() {
       if (savedRun.mode) setQuizMode(normalizeQuizMode(savedRun.mode));
     }
   }, [savedRun]);
-
-  useEffect(() => {
-    const loadTier = async () => {
-      try {
-        const res = await fetch('/api/subscription/upgrade', { cache: 'no-store' });
-        if (!res.ok) return;
-        const payload = await res.json().catch(() => ({}));
-        const tier = String(payload?.tier || 'free').toLowerCase();
-        if (tier === 'pro' || tier === 'premium') setPremiumTier(tier);
-        else setPremiumTier('free');
-      } catch {}
-    };
-    void loadTier();
-  }, []);
 
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`tools.quiz.${k}`);
@@ -382,33 +367,16 @@ function QuizPageContent() {
           <p className="text-xs text-muted-foreground">Include images in questions</p>
           <Switch
             checked={includeImages}
-            onCheckedChange={(next) => {
-              if (next && premiumTier === 'free') {
-                toast({ title: 'Premium feature', description: 'Image-enhanced quiz generation requires Premium.' });
-                router.push('/upgrade');
-                return;
-              }
-              setIncludeImages(next);
-            }}
+            onCheckedChange={setIncludeImages}
           />
         </div>
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">Source-backed deep questions</p>
           <Switch
             checked={sourceBackedDepth}
-            onCheckedChange={(next) => {
-              if (next && premiumTier === 'free') {
-                toast({ title: 'Premium feature', description: 'Source-backed deep questions require Premium.' });
-                router.push('/upgrade');
-                return;
-              }
-              setSourceBackedDepth(next);
-            }}
+            onCheckedChange={setSourceBackedDepth}
           />
         </div>
-        {premiumTier === 'free' ? (
-          <p className="text-[11px] text-muted-foreground">Premium unlocks image-based and source-backed generation.</p>
-        ) : null}
       </div>
 
       <ImportToolbar

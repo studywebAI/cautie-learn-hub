@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { CanonicalDocument } from '@/lib/tools/canonical-model';
+import type { CanonicalDocument, CanonicalLayoutState } from '@/lib/tools/canonical-model';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -19,12 +19,40 @@ type TimelineItem = {
   lane: string;
 };
 
+function getTimelineLayout(document: CanonicalDocument): CanonicalLayoutState | null {
+  return document.layouts?.find((layout) => layout.view === 'timeline') || null;
+}
+
+function setTimelineLayout(document: CanonicalDocument, laneOrder: string[]) {
+  const layouts = [...(document.layouts || [])];
+  const index = layouts.findIndex((layout) => layout.view === 'timeline');
+  const nextLayout: CanonicalLayoutState = {
+    view: 'timeline',
+    ...(layouts[index] || {}),
+    laneOrder,
+  };
+  if (index >= 0) layouts[index] = nextLayout;
+  else layouts.push(nextLayout);
+  return { ...document, layouts };
+}
+
+function toIsoDate(ms: number) {
+  const date = new Date(ms);
+  const year = date.getUTCFullYear();
+  const month = `${date.getUTCMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getUTCDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function TimelineBoard({ document, onChange }: Props) {
   const [timeScale, setTimeScale] = useState<'year' | 'month'>('year');
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('');
   const [newEnd, setNewEnd] = useState('');
   const [newLane, setNewLane] = useState('General');
+  const [dragState, setDragState] = useState<null | { nodeId: string; mode: 'move' | 'resize-start' | 'resize-end' }>(null);
+  const [depFrom, setDepFrom] = useState('');
+  const [depTo, setDepTo] = useState('');
 
   const items = useMemo<TimelineItem[]>(() => {
     const byId = new Map(document.nodes.map((node) => [node.id, node]));
@@ -60,9 +88,14 @@ export function TimelineBoard({ document, onChange }: Props) {
   }, [document]);
 
   const lanes = useMemo(() => {
-    const unique = Array.from(new Set(items.map((item) => item.lane || 'General')));
-    return unique.length > 0 ? unique : ['General'];
-  }, [items]);
+    const defaultLanes = Array.from(new Set(items.map((item) => item.lane || 'General')));
+    const savedLaneOrder = getTimelineLayout(document)?.laneOrder || [];
+    const ordered = savedLaneOrder.filter((lane) => defaultLanes.includes(lane));
+    for (const lane of defaultLanes) {
+      if (!ordered.includes(lane)) ordered.push(lane);
+    }
+    return ordered.length > 0 ? ordered : ['General'];
+  }, [document, items]);
 
   const minTime = items.length > 0 ? Math.min(...items.map((item) => new Date(item.startAt).getTime())) : Date.now();
   const maxTime = items.length > 0 ? Math.max(...items.map((item) => new Date(item.endAt || item.startAt).getTime())) : Date.now() + 86400000;
@@ -81,16 +114,27 @@ export function TimelineBoard({ document, onChange }: Props) {
           }
         : node
     );
-    const nextTemporal = document.temporal.map((entry) =>
-      entry.nodeId === nodeId
-        ? {
-            ...entry,
-            ...(patch.startAt ? { startAt: patch.startAt } : {}),
-            ...(patch.endAt ? { endAt: patch.endAt } : {}),
+    const temporalExists = document.temporal.some((entry) => entry.nodeId === nodeId);
+    const nextTemporal = temporalExists
+      ? document.temporal.map((entry) =>
+          entry.nodeId === nodeId
+            ? {
+                ...entry,
+                ...(patch.startAt ? { startAt: patch.startAt } : {}),
+                ...(patch.endAt ? { endAt: patch.endAt } : {}),
+                precision: timeScale === 'month' ? 'month' : 'year',
+              }
+            : entry
+        )
+      : [
+          ...document.temporal,
+          {
+            nodeId,
+            startAt: patch.startAt || '',
+            endAt: patch.endAt || patch.startAt || '',
             precision: timeScale === 'month' ? 'month' : 'year',
-          }
-        : entry
-    );
+          },
+        ];
     onChange({ ...document, nodes: nextNodes, temporal: nextTemporal });
   };
 
@@ -125,10 +169,57 @@ export function TimelineBoard({ document, onChange }: Props) {
         precision: timeScale === 'month' ? 'month' : 'year',
       },
     ];
-    onChange({ ...document, nodes: nextNodes, edges: nextEdges, temporal: nextTemporal });
+    onChange(setTimelineLayout({ ...document, nodes: nextNodes, edges: nextEdges, temporal: nextTemporal }, lanes));
     setNewTitle('');
     setNewStart('');
     setNewEnd('');
+  };
+
+  const addDependency = () => {
+    if (!depFrom || !depTo || depFrom === depTo) return;
+    const exists = document.edges.some((edge) => edge.from === depFrom && edge.to === depTo && edge.relation === 'depends_on');
+    if (exists) return;
+    onChange({
+      ...document,
+      edges: [
+        ...document.edges,
+        {
+          id: `edge-dep-${Date.now()}`,
+          from: depFrom,
+          to: depTo,
+          relation: 'depends_on',
+          label: 'depends on',
+        },
+      ],
+    });
+  };
+
+  const dependencyEdges = document.edges.filter((edge) => edge.relation === 'depends_on');
+
+  const applyDragFromClientX = (clientX: number, nodeId: string, mode: 'move' | 'resize-start' | 'resize-end', host: HTMLDivElement) => {
+    const rect = host.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const ms = minTime + pct * span;
+    const date = toIsoDate(ms);
+    const item = items.find((entry) => entry.id === nodeId);
+    if (!item) return;
+
+    if (mode === 'move') {
+      const lengthMs = Math.max(0, new Date(item.endAt).getTime() - new Date(item.startAt).getTime());
+      const startMs = new Date(date).getTime();
+      const endMs = startMs + lengthMs;
+      updateItem(nodeId, { startAt: toIsoDate(startMs), endAt: toIsoDate(endMs) });
+      return;
+    }
+
+    if (mode === 'resize-start') {
+      if (new Date(date).getTime() > new Date(item.endAt).getTime()) return;
+      updateItem(nodeId, { startAt: date });
+      return;
+    }
+
+    if (new Date(date).getTime() < new Date(item.startAt).getTime()) return;
+    updateItem(nodeId, { endAt: date });
   };
 
   return (
@@ -143,13 +234,39 @@ export function TimelineBoard({ document, onChange }: Props) {
           </Button>
         </div>
         <div className="relative h-[420px] overflow-x-auto">
-          <div className="relative h-full min-w-[980px]">
+          <div className="relative h-full min-w-[980px]" data-timeline-host>
             {lanes.map((lane, idx) => (
               <div key={lane} className="absolute left-0 right-0" style={{ top: `${idx * 92 + 48}px` }}>
                 <div className="mb-1 text-xs text-muted-foreground">{lane}</div>
                 <div className="h-px bg-border" />
               </div>
             ))}
+
+            <svg className="absolute inset-0 h-full w-full pointer-events-none">
+              {dependencyEdges.map((edge) => {
+                const source = items.find((item) => item.id === edge.from);
+                const target = items.find((item) => item.id === edge.to);
+                if (!source || !target) return null;
+                const startX = itemX(source.endAt || source.startAt);
+                const endX = itemX(target.startAt);
+                const y1 = laneY(source.lane) - 8;
+                const y2 = laneY(target.lane) - 8;
+                const mx = (startX + endX) / 2;
+                return (
+                  <g key={edge.id}>
+                    <path
+                      d={`M ${startX}% ${y1} C ${mx}% ${y1}, ${mx}% ${y2}, ${endX}% ${y2}`}
+                      stroke="hsl(var(--muted-foreground))"
+                      fill="none"
+                      strokeWidth="1.25"
+                      strokeDasharray="4 3"
+                    />
+                    <circle cx={`${endX}%`} cy={y2} r="2.5" fill="hsl(var(--muted-foreground))" />
+                  </g>
+                );
+              })}
+            </svg>
+
             {items.map((item) => {
               const xStart = itemX(item.startAt);
               const xEnd = itemX(item.endAt || item.startAt);
@@ -157,9 +274,34 @@ export function TimelineBoard({ document, onChange }: Props) {
               const y = laneY(item.lane);
               return (
                 <div key={item.id} className="absolute" style={{ left: `${xStart}%`, top: `${y - 32}px`, width: `${widthPct}%` }}>
-                  <div className="rounded-md surface-interactive p-2 text-xs shadow-[inset_0_0_0_1px_hsl(var(--border))]">
+                  <div
+                    className="relative rounded-md surface-interactive p-2 text-xs shadow-[inset_0_0_0_1px_hsl(var(--border))]"
+                    onPointerDown={(event) => {
+                      const host = event.currentTarget.closest('[data-timeline-host]') as HTMLDivElement | null;
+                      if (!host) return;
+                      const role = (event.target as HTMLElement).dataset.dragRole as 'move' | 'resize-start' | 'resize-end' | undefined;
+                      const mode = role || 'move';
+                      setDragState({ nodeId: item.id, mode });
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                      applyDragFromClientX(event.clientX, item.id, mode, host);
+                    }}
+                    onPointerMove={(event) => {
+                      if (!dragState || dragState.nodeId !== item.id) return;
+                      const host = event.currentTarget.closest('[data-timeline-host]') as HTMLDivElement | null;
+                      if (!host) return;
+                      applyDragFromClientX(event.clientX, item.id, dragState.mode, host);
+                    }}
+                    onPointerUp={(event) => {
+                      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                        event.currentTarget.releasePointerCapture(event.pointerId);
+                      }
+                      setDragState(null);
+                    }}
+                  >
+                    <span data-drag-role="resize-start" className="absolute left-0 top-0 h-full w-2 cursor-ew-resize rounded-l-md bg-border/40" />
+                    <span data-drag-role="resize-end" className="absolute right-0 top-0 h-full w-2 cursor-ew-resize rounded-r-md bg-border/40" />
                     <p className="line-clamp-2 font-medium">{item.title}</p>
-                    <p className="text-muted-foreground">{item.startAt} {item.endAt && item.endAt !== item.startAt ? `→ ${item.endAt}` : ''}</p>
+                    <p className="text-muted-foreground">{item.startAt} {item.endAt && item.endAt !== item.startAt ? `? ${item.endAt}` : ''}</p>
                   </div>
                 </div>
               );
@@ -186,6 +328,19 @@ export function TimelineBoard({ document, onChange }: Props) {
           <Button size="sm" onClick={addTimelineItem} disabled={!newTitle.trim() || !newStart}>
             Add event
           </Button>
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-sm">Dependencies</h3>
+          <select value={depFrom} onChange={(event) => setDepFrom(event.target.value)} className="h-8 rounded-md border border-border bg-background px-2 text-xs">
+            <option value="">From event</option>
+            {items.map((item) => <option key={`dep-from-${item.id}`} value={item.id}>{item.title}</option>)}
+          </select>
+          <select value={depTo} onChange={(event) => setDepTo(event.target.value)} className="h-8 rounded-md border border-border bg-background px-2 text-xs">
+            <option value="">Depends on event</option>
+            {items.map((item) => <option key={`dep-to-${item.id}`} value={item.id}>{item.title}</option>)}
+          </select>
+          <Button size="sm" onClick={addDependency} disabled={!depFrom || !depTo || depFrom === depTo}>Add dependency</Button>
         </div>
 
         <div className="space-y-2">
@@ -224,5 +379,5 @@ export function TimelineBoard({ document, onChange }: Props) {
         </div>
       </aside>
     </div>
-  )
+  );
 }

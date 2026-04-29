@@ -212,7 +212,6 @@ function NotesPageContent() {
   const [showLaunchScreen, setShowLaunchScreen] = useState(Boolean(launchRequested && taskId && studysetId));
   const [launchStageIndex, setLaunchStageIndex] = useState(0);
   const [saveToRecents, setSaveToRecents] = useState(true);
-  const [premiumTier, setPremiumTier] = useState<'free' | 'premium' | 'pro'>('free');
   const [isSharingToClass, setIsSharingToClass] = useState(false);
   const notesContentRef = useRef<HTMLDivElement>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -357,6 +356,7 @@ function NotesPageContent() {
   }, []);
 
   const persistNotesState = useCallback((nextHtml?: string, nextPaths?: DrawingPath[]) => {
+    const effectiveCanonical = canonicalDoc || (generatedNotes ? notesSectionsToCanonical(generatedNotes as NoteSection[], { title: customTitle.trim() || 'Notes' }) : null);
     const htmlToSave = typeof nextHtml === 'string' ? nextHtml : noteHtml;
     const pathsToSave = Array.isArray(nextPaths) ? nextPaths : annotationPaths;
     const payload = {
@@ -378,7 +378,13 @@ function NotesPageContent() {
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(async () => {
       const parsed = parseNotesFromHtml(htmlToSave);
-      const content = parsed && parsed.length > 0 ? parsed : notesToMarkdown(generatedNotes || []);
+      const noteSections = parsed && parsed.length > 0 ? parsed : (generatedNotes || []);
+      const content = {
+        format: 'canonical_v1',
+        canonical_v1: effectiveCanonical,
+        notes: noteSections,
+        markdown: notesToMarkdown(noteSections as any),
+      };
       try {
         const response = await fetch('/api/tools/v2/artifacts', {
           method: 'POST',
@@ -391,6 +397,7 @@ function NotesPageContent() {
             content,
             metadata: {
               editor: payload,
+              canonical_v1: effectiveCanonical,
             },
           }),
         });
@@ -412,6 +419,7 @@ function NotesPageContent() {
     autoHighlightColor,
     customTitle,
     generatedNotes,
+    canonicalDoc,
     noteFontFamily,
     noteFontSize,
     noteFontWeight,
@@ -464,10 +472,14 @@ function NotesPageContent() {
 
   useEffect(() => {
     if (savedRun?.output_payload && savedRun.status === 'succeeded') {
-      const output = savedRun.output_payload;
-      setNotesModel((output.notes || null) as GenerateNotesOutput['notes'] | null);
+      const output = savedRun.output_payload as any;
+      if (output?.canonical_v1 && typeof output.canonical_v1 === 'object') {
+        applyCanonicalDocument(output.canonical_v1 as CanonicalDocument);
+      } else {
+        setNotesModel((output.notes || null) as GenerateNotesOutput['notes'] | null);
+      }
     }
-  }, [savedRun, setNotesModel]);
+  }, [applyCanonicalDocument, savedRun, setNotesModel]);
 
   useEffect(() => {
     lectureFocusRef.current = lectureFocus;
@@ -485,29 +497,6 @@ function NotesPageContent() {
     }
   }, [mode]);
 
-  useEffect(() => {
-    const loadTier = async () => {
-      try {
-        const res = await fetch('/api/subscription/upgrade', { cache: 'no-store' });
-        if (!res.ok) return;
-        const payload = await res.json().catch(() => ({}));
-        const tier = String(payload?.tier || 'free').toLowerCase();
-        if (tier === 'pro' || tier === 'premium') setPremiumTier(tier);
-        else setPremiumTier('free');
-      } catch {}
-    };
-    void loadTier();
-  }, []);
-
-  useEffect(() => {
-    if (premiumTier !== 'free') return;
-    if (!isWordwebPreset && !isTimelinePreset) return;
-    setStyle('structured');
-    toast({
-      title: 'Premium feature',
-      description: 'Wordweb and Timeline note presets require Premium.',
-    });
-  }, [premiumTier, isWordwebPreset, isTimelinePreset, toast]);
 
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`${storagePrefix}.${k}`);
@@ -549,7 +538,8 @@ function NotesPageContent() {
     if (!noteHtml.trim()) {
       setNoteHtml(nextHtml);
     }
-  }, [generatedNotes, noteHtml]);
+  }, [generatedNotes,
+    canonicalDoc, noteHtml]);
 
   useEffect(() => {
     if (!liveTranscript.trim()) {
@@ -565,6 +555,7 @@ function NotesPageContent() {
   }, [
     autoHighlightColor,
     generatedNotes,
+    canonicalDoc,
     noteFontFamily,
     noteFontSize,
     noteFontWeight,
@@ -636,13 +627,18 @@ function NotesPageContent() {
           fontFamily: 'default',
         },
       });
-      const notes = (run?.output_payload?.notes || run?.notes || null) as GenerateNotesOutput['notes'] | null;
+      const runOutput = (run?.output_payload || {}) as any;
+      const notes = (runOutput.notes || run?.notes || null) as GenerateNotesOutput['notes'] | null;
+      const canonicalFromRun = runOutput?.canonical_v1 && typeof runOutput.canonical_v1 === 'object'
+        ? (runOutput.canonical_v1 as CanonicalDocument)
+        : (notes ? notesSectionsToCanonical(notes as NoteSection[], { title: requestedTitle }) : null);
       if (typeof run?.output_artifact_id === 'string' && run.output_artifact_id) {
         setArtifactId(run.output_artifact_id);
       }
       if (background) setLiveDraftNotes(notes);
       else {
-        setNotesModel(notes);
+        if (canonicalFromRun) applyCanonicalDocument(canonicalFromRun);
+        else setNotesModel(notes);
         setAnnotationPaths([]);
         await reportStudysetPerformance(textWithDirectives);
       }
@@ -661,7 +657,7 @@ function NotesPageContent() {
       if (background) setIsAutoDrafting(false);
       else setIsLoading(false);
     }
-  }, [audience, imageDataUri, length, region, schoolingLevel, selectedNoteBlocks, reportStudysetPerformance, saveToRecents, setNotesModel, style, t.notes.generatingTitle, toast]);
+  }, [applyCanonicalDocument, audience, imageDataUri, length, region, schoolingLevel, selectedNoteBlocks, reportStudysetPerformance, saveToRecents, setNotesModel, style, t.notes.generatingTitle, toast]);
 
   useEffect(() => {
     if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
@@ -965,7 +961,8 @@ function NotesPageContent() {
     if (parsed && parsed.length > 0) return parsed;
     if (canonicalDoc) return canonicalToNotesSections(canonicalDoc);
     return generatedNotes || [];
-  }, [canonicalDoc, generatedNotes, noteHtml]);
+  }, [canonicalDoc, generatedNotes,
+    canonicalDoc, noteHtml]);
 
   const applyInlineFormat = useCallback((command: 'bold' | 'italic' | 'underline') => {
     if (typeof document === 'undefined') return;
@@ -999,7 +996,8 @@ function NotesPageContent() {
     } finally {
       setIsSharingToClass(false);
     }
-  }, [classId, customTitle, editableSections.length, generatedNotes, toast]);
+  }, [classId, customTitle, editableSections.length, generatedNotes,
+    canonicalDoc, toast]);
 
   if (showLaunchScreen) {
     const currentStage = launchStages[Math.min(launchStageIndex, launchStages.length - 1)];
@@ -1312,12 +1310,6 @@ function NotesPageContent() {
           className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
         />
       </div>
-      {premiumTier === 'free' ? (
-        <div className="rounded-lg surface-interactive px-2.5 py-2 text-[11px] text-muted-foreground">
-          Timeline/Wordweb presets with advanced visuals are Premium features.
-        </div>
-      ) : null}
-
       <ImportToolbar
         toolType="notes"
         onImport={(text) => {
@@ -1364,3 +1356,4 @@ export default function NotesPage() {
     </Suspense>
   );
 }
+
