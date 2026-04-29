@@ -50,9 +50,8 @@ export async function POST(request: NextRequest) {
         code: 'TOOL_LIMIT_REACHED',
         limit: maxUsage,
         current: currentUsage,
-        upgradeUrl: '/upgrade',
         tier: tier,
-        message: `You've used ${currentUsage}/${maxUsage} AI tools today. Upgrade to Premium for 30/day or Pro for unlimited.`
+        message: `Daily AI action limit reached (${currentUsage}/${maxUsage}).`
       }, { status: 403 })
     }
 

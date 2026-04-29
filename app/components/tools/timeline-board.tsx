@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { CanonicalDocument, CanonicalLayoutState } from '@/lib/tools/canonical-model';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,14 @@ import { Button } from '@/components/ui/button';
 type Props = {
   document: CanonicalDocument;
   onChange: (nextDocument: CanonicalDocument) => void;
+  settings?: {
+    rangeStartYear?: number;
+    rangeEndYear?: number;
+    causalityStrength?: boolean;
+    altPaths?: boolean;
+    scaleMode?: "year" | "month" | "day" | "log";
+    eventImportanceScore?: boolean;
+  };
 };
 
 type TimelineItem = {
@@ -17,6 +25,7 @@ type TimelineItem = {
   startAt: string;
   endAt: string;
   lane: string;
+  importance: number;
 };
 
 function getTimelineLayout(document: CanonicalDocument): CanonicalLayoutState | null {
@@ -44,8 +53,10 @@ function toIsoDate(ms: number) {
   return `${year}-${month}-${day}`;
 }
 
-export function TimelineBoard({ document, onChange }: Props) {
-  const [timeScale, setTimeScale] = useState<'year' | 'month'>('year');
+export function TimelineBoard({ document, onChange, settings }: Props) {
+  const [timeScale, setTimeScale] = useState<'year' | 'month'>(() =>
+    settings?.scaleMode === 'month' ? 'month' : 'year'
+  );
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('');
   const [newEnd, setNewEnd] = useState('');
@@ -53,6 +64,11 @@ export function TimelineBoard({ document, onChange }: Props) {
   const [dragState, setDragState] = useState<null | { nodeId: string; mode: 'move' | 'resize-start' | 'resize-end' }>(null);
   const [depFrom, setDepFrom] = useState('');
   const [depTo, setDepTo] = useState('');
+
+  useEffect(() => {
+    if (settings?.scaleMode === 'month') setTimeScale('month');
+    if (settings?.scaleMode === 'year') setTimeScale('year');
+  }, [settings?.scaleMode]);
 
   const items = useMemo<TimelineItem[]>(() => {
     const byId = new Map(document.nodes.map((node) => [node.id, node]));
@@ -67,12 +83,27 @@ export function TimelineBoard({ document, onChange }: Props) {
           startAt: entry.startAt || '',
           endAt: entry.endAt || entry.startAt || '',
           lane,
+          importance: Number((node as any)?.meta?.importance ?? 0),
         };
       })
       .filter((item): item is TimelineItem => Boolean(item));
 
+    const startYear = settings?.rangeStartYear ?? -5000;
+    const endYear = settings?.rangeEndYear ?? 5000;
+    const inRange = (iso: string) => {
+      const year = Number(String(iso || "").slice(0, 4));
+      if (Number.isNaN(year)) return true;
+      return year >= startYear && year <= endYear;
+    };
+
     if (fromTemporal.length > 0) {
-      return fromTemporal.sort((a, b) => String(a.startAt).localeCompare(String(b.startAt)));
+      const sorted = fromTemporal
+        .filter((item) => inRange(item.startAt || item.endAt))
+        .sort((a, b) => {
+          if (settings?.eventImportanceScore) return b.importance - a.importance;
+          return String(a.startAt).localeCompare(String(b.startAt));
+        });
+      return sorted;
     }
 
     return document.nodes
@@ -83,9 +114,14 @@ export function TimelineBoard({ document, onChange }: Props) {
         startAt: `${2000 + idx}-01-01`,
         endAt: `${2000 + idx}-12-31`,
         lane: (node.tags && node.tags[0]) || 'General',
+        importance: Number((node as any)?.meta?.importance ?? 0),
       }))
-      .sort((a, b) => String(a.startAt).localeCompare(String(b.startAt)));
-  }, [document]);
+      .filter((item) => inRange(item.startAt || item.endAt))
+      .sort((a, b) => {
+        if (settings?.eventImportanceScore) return b.importance - a.importance;
+        return String(a.startAt).localeCompare(String(b.startAt));
+      });
+  }, [document, settings?.eventImportanceScore, settings?.rangeEndYear, settings?.rangeStartYear]);
 
   const lanes = useMemo(() => {
     const defaultLanes = Array.from(new Set(items.map((item) => item.lane || 'General')));
@@ -194,7 +230,15 @@ export function TimelineBoard({ document, onChange }: Props) {
     });
   };
 
-  const dependencyEdges = document.edges.filter((edge) => edge.relation === 'depends_on');
+  const dependencyEdges = document.edges.filter((edge) => {
+    if (edge.relation === 'depends_on') return true;
+    if (settings?.altPaths && edge.relation === 'next') return true;
+    return false;
+  });
+
+  const removeDependency = (edgeId: string) => {
+    onChange({ ...document, edges: document.edges.filter((edge) => edge.id !== edgeId) });
+  };
 
   const applyDragFromClientX = (clientX: number, nodeId: string, mode: 'move' | 'resize-start' | 'resize-end', host: HTMLDivElement) => {
     const rect = host.getBoundingClientRect();
@@ -258,8 +302,8 @@ export function TimelineBoard({ document, onChange }: Props) {
                       d={`M ${startX}% ${y1} C ${mx}% ${y1}, ${mx}% ${y2}, ${endX}% ${y2}`}
                       stroke="hsl(var(--muted-foreground))"
                       fill="none"
-                      strokeWidth="1.25"
-                      strokeDasharray="4 3"
+                      strokeWidth={settings?.causalityStrength ? "2" : "1.25"}
+                      strokeDasharray={edge.relation === "next" ? "2 4" : "4 3"}
                     />
                     <circle cx={`${endX}%`} cy={y2} r="2.5" fill="hsl(var(--muted-foreground))" />
                   </g>
@@ -301,7 +345,7 @@ export function TimelineBoard({ document, onChange }: Props) {
                     <span data-drag-role="resize-start" className="absolute left-0 top-0 h-full w-2 cursor-ew-resize rounded-l-md bg-border/40" />
                     <span data-drag-role="resize-end" className="absolute right-0 top-0 h-full w-2 cursor-ew-resize rounded-r-md bg-border/40" />
                     <p className="line-clamp-2 font-medium">{item.title}</p>
-                    <p className="text-muted-foreground">{item.startAt} {item.endAt && item.endAt !== item.startAt ? `? ${item.endAt}` : ''}</p>
+                    <p className="text-muted-foreground">{item.startAt} {item.endAt && item.endAt !== item.startAt ? `-> ${item.endAt}` : ''}</p>
                   </div>
                 </div>
               );
@@ -341,6 +385,24 @@ export function TimelineBoard({ document, onChange }: Props) {
             {items.map((item) => <option key={`dep-to-${item.id}`} value={item.id}>{item.title}</option>)}
           </select>
           <Button size="sm" onClick={addDependency} disabled={!depFrom || !depTo || depFrom === depTo}>Add dependency</Button>
+          <div className="max-h-36 space-y-1 overflow-auto rounded-md surface-interactive p-2">
+            {dependencyEdges.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No dependencies yet.</p>
+            ) : (
+              dependencyEdges.map((edge) => {
+                const from = items.find((item) => item.id === edge.from)?.title || edge.from;
+                const to = items.find((item) => item.id === edge.to)?.title || edge.to;
+                return (
+                  <div key={`dep-row-${edge.id}`} className="flex items-center justify-between gap-2 rounded-md surface-panel px-2 py-1">
+                    <p className="min-w-0 truncate text-xs">{from} {'->'} {to}</p>
+                    <Button type="button" size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => removeDependency(edge.id)}>
+                      Remove
+                    </Button>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
 
         <div className="space-y-2">

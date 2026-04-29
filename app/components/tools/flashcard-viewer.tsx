@@ -130,6 +130,7 @@ export function FlashcardViewer({
   taskId,
   studysetId,
   onCompletionChange,
+  settings,
 }: {
   cards: Flashcard[];
   mode: StudyMode;
@@ -138,6 +139,15 @@ export function FlashcardViewer({
   taskId?: string;
   studysetId?: string;
   onCompletionChange?: (completed: boolean) => void;
+  settings?: {
+    timePerCardSeconds?: number;
+    autoFlipDelayMs?: number;
+    activeRecallOnly?: boolean;
+    interleavingMode?: boolean;
+    semanticLinking?: boolean;
+    errorTagging?: boolean;
+    memoryStrengthMeter?: boolean;
+  };
 }) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -150,6 +160,8 @@ export function FlashcardViewer({
   const [cardsReviewed, setCardsReviewed] = useState<Set<string>>(new Set());
   const [correctCards, setCorrectCards] = useState(0);
   const [sessionMetrics, setSessionMetrics] = useState<Record<string, SessionCardMetrics>>({});
+  const [errorTags, setErrorTags] = useState<Record<string, string[]>>({});
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [sessionComplete, setSessionComplete] = useState(false);
   const [srsState, setSrsState] = useState<Record<string, CardSRSState>>({});
   const [sessionQueueIds, setSessionQueueIds] = useState<string[]>([]);
@@ -170,10 +182,31 @@ export function FlashcardViewer({
       else rest.push(card);
     }
 
-    if (due.length > 0) return due;
-    if (fresh.length > 0) return fresh;
-    return rest;
-  }, [cards, srsState]);
+    const base = due.length > 0 ? due : fresh.length > 0 ? fresh : rest;
+    if (!settings?.interleavingMode) return base;
+
+    const buckets = new Map<string, Flashcard[]>();
+    for (const card of base) {
+      const topic = extractTopicTokens(card.front)[0] || 'general';
+      buckets.set(topic, [...(buckets.get(topic) || []), card]);
+    }
+    const ordered: Flashcard[] = [];
+    const keys = Array.from(buckets.keys());
+    let progressed = true;
+    while (progressed) {
+      progressed = false;
+      for (const key of keys) {
+        const bucket = buckets.get(key) || [];
+        const next = bucket.shift();
+        if (next) {
+          ordered.push(next);
+          progressed = true;
+        }
+        buckets.set(key, bucket);
+      }
+    }
+    return ordered;
+  }, [cards, srsState, settings?.interleavingMode]);
 
   const queue = React.useMemo(() => {
     const map = new Map(cards.map((card) => [card.id, card]));
@@ -231,6 +264,33 @@ export function FlashcardViewer({
     setExplanation(null);
     setIsExplanationOpen(false);
   }, [currentIndex]);
+
+  useEffect(() => {
+    if (!settings?.timePerCardSeconds || settings.timePerCardSeconds <= 0 || sessionComplete) {
+      setSecondsLeft(null);
+      return;
+    }
+    setSecondsLeft(settings.timePerCardSeconds);
+    const timer = window.setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev === null) return prev;
+        if (prev <= 1) {
+          applyOutcome(false);
+          return settings.timePerCardSeconds;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, settings?.timePerCardSeconds, sessionComplete]);
+
+  useEffect(() => {
+    if (!settings?.autoFlipDelayMs || settings.autoFlipDelayMs <= 0) return;
+    if (mode !== 'flip' || isFlipped) return;
+    const timer = window.setTimeout(() => setIsFlipped(true), settings.autoFlipDelayMs);
+    return () => window.clearTimeout(timer);
+  }, [currentIndex, isFlipped, mode, settings?.autoFlipDelayMs]);
 
   useEffect(() => {
     const completed = queue.length > 0 && cardsReviewed.size >= queue.length;
@@ -350,6 +410,14 @@ export function FlashcardViewer({
     if (!card) return;
 
     const responseMs = Math.max(0, Date.now() - cardStartedAtRef.current);
+    if (!isCorrect && settings?.errorTagging) {
+      const tags: string[] = [];
+      if (responseMs > 12000) tags.push('slow-recall');
+      if (responseMs <= 4000) tags.push('overconfident-miss');
+      if (card.front.length > 90) tags.push('prompt-complexity');
+      if (tags.length === 0) tags.push('concept-miss');
+      setErrorTags((prevTags) => ({ ...prevTags, [card.id]: tags }));
+    }
     const quality = getQualityFromOutcome(isCorrect, responseMs);
     const prev = srsState[card.id] || defaultSRSState();
     const now = new Date();
@@ -447,7 +515,7 @@ export function FlashcardViewer({
   };
 
   const handleFlipOrCheck = () => {
-    if (mode === 'flip') {
+    if (effectiveMode === 'flip') {
       setIsFlipped((f) => !f);
       return;
     }
@@ -500,14 +568,14 @@ export function FlashcardViewer({
 
       switch (e.key) {
         case 'ArrowRight':
-          if (mode === 'flip' || isAnswered) handleNext();
+          if (effectiveMode === 'flip' || isAnswered) handleNext();
           break;
         case 'ArrowLeft':
           handlePrev();
           break;
         case ' ':
           e.preventDefault();
-          if (mode === 'flip' || mode === 'multiple-choice') handleFlipOrCheck();
+          if (effectiveMode === 'flip' || effectiveMode === 'multiple-choice') handleFlipOrCheck();
           break;
       }
     };
@@ -515,7 +583,7 @@ export function FlashcardViewer({
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, queue.length, mode, isAnswered]);
+  }, [currentIndex, queue.length, effectiveMode, isAnswered]);
 
   const card = queue[currentIndex];
   const displayCard = React.useMemo(() => {
@@ -526,7 +594,8 @@ export function FlashcardViewer({
     return card;
   }, [card, cardStartSide]);
   const deckHealth = computeDeckHealth();
-  const canRate = !!card && ((mode === 'flip' && isFlipped) || (mode !== 'flip' && isAnswered));
+  const effectiveMode: StudyMode = settings?.activeRecallOnly ? 'multiple-choice' : mode;
+  const canRate = !!card && ((effectiveMode === 'flip' && isFlipped) || (effectiveMode !== 'flip' && isAnswered));
   const currentFlipHeight = React.useMemo(() => {
     if (!displayCard) return 460;
     return computeAdaptiveHeight(displayCard.front, displayCard.back);
@@ -549,6 +618,21 @@ export function FlashcardViewer({
       .sort((a, b) => b.weakness - a.weakness)
       .slice(0, 5);
   }, [cards, srsState]);
+
+  const relatedCards = React.useMemo(() => {
+    if (!settings?.semanticLinking || !card) return [];
+    const activeTokens = new Set(extractTopicTokens(card.front));
+    return cards
+      .filter((candidate) => candidate.id !== card.id)
+      .map((candidate) => {
+        const overlap = extractTopicTokens(candidate.front).filter((token) => activeTokens.has(token)).length;
+        return { card: candidate, overlap };
+      })
+      .filter((item) => item.overlap > 0)
+      .sort((a, b) => b.overlap - a.overlap)
+      .slice(0, 3)
+      .map((item) => item.card);
+  }, [card, cards, settings?.semanticLinking]);
 
   const sessionAnalytics = React.useMemo(() => {
     const reviewedCount = cardsReviewed.size;
@@ -633,7 +717,7 @@ export function FlashcardViewer({
 
   const renderCardContent = () => {
     if (!card) return null;
-    if (mode === 'flip' && displayCard) return <FlipView card={displayCard} isFlipped={isFlipped} setIsFlipped={setIsFlipped} height={currentFlipHeight} />;
+    if (effectiveMode === 'flip' && displayCard) return <FlipView card={displayCard} isFlipped={isFlipped} setIsFlipped={setIsFlipped} height={currentFlipHeight} />;
     return (
       <MultipleChoiceView
         card={card}
@@ -645,7 +729,7 @@ export function FlashcardViewer({
     );
   };
 
-  const showExplanationButton = (mode === 'flip' && isFlipped) || (mode !== 'flip' && isAnswered);
+  const showExplanationButton = (effectiveMode === 'flip' && isFlipped) || (effectiveMode !== 'flip' && isAnswered);
   const explanationButtonLabel = isExplanationLoading
     ? 'Generating...'
     : explanation
@@ -657,7 +741,7 @@ export function FlashcardViewer({
       <CardHeader className="px-4 md:px-6 pb-2">
         <CardTitle className="font-headline">Study Flashcards</CardTitle>
         <CardDescription>
-          Card {queue.length === 0 ? 0 : currentIndex + 1} of {queue.length}. {mode === 'multiple-choice' ? 'Flip, pick the correct mini card, then mark result.' : 'Flip, then mark result.'}
+          Card {queue.length === 0 ? 0 : currentIndex + 1} of {queue.length}. {effectiveMode === 'multiple-choice' ? 'Flip, pick the correct mini card, then mark result.' : 'Flip, then mark result.'}
         </CardDescription>
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <Badge variant="outline">Deck Health {deckHealth.health}%</Badge>
@@ -693,6 +777,16 @@ export function FlashcardViewer({
             </AnimatePresence>
           </div>
         )}
+        {settings?.semanticLinking && relatedCards.length > 0 ? (
+          <div className="w-full rounded-xl surface-panel p-3">
+            <p className="text-xs text-muted-foreground">Related cards</p>
+            <div className="mt-2 space-y-1">
+              {relatedCards.map((item) => (
+                <p key={`related-${item.id}`} className="text-xs">{item.front}</p>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {showExplanationButton && (
           <div className="w-full max-w-2xl text-center">
@@ -786,6 +880,24 @@ export function FlashcardViewer({
                 </div>
               </div>
             </div>
+            {settings?.errorTagging ? (
+              <div className="rounded-xl surface-panel p-3">
+                <p className="text-sm">Error tags</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {Object.entries(errorTags).length === 0 ? (
+                    <Badge variant="secondary">No tagged errors</Badge>
+                  ) : (
+                    Object.entries(errorTags).flatMap(([id, tags]) =>
+                      tags.map((tag) => (
+                        <Badge key={`${id}-${tag}`} variant="secondary">
+                          {tag}
+                        </Badge>
+                      ))
+                    )
+                  )}
+                </div>
+              </div>
+            ) : null}
 
             <div className="rounded-xl surface-panel p-3">
               <p className="text-sm">Per-card breakdown</p>
@@ -846,6 +958,12 @@ export function FlashcardViewer({
             </Button>
           </div>
           <div className="flex justify-center">
+            {settings?.memoryStrengthMeter ? (
+              <Badge variant="outline" className="mr-2">Memory {deckHealth.health}%</Badge>
+            ) : null}
+            {secondsLeft !== null ? (
+              <Badge variant="secondary" className="mr-2">Timer {secondsLeft}s</Badge>
+            ) : null}
             <Button
               variant="ghost"
               onClick={() => { void saveFlashcardProgress(); onRestart(); }}

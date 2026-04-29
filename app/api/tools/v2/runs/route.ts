@@ -13,6 +13,12 @@ import {
 } from "@/lib/toolbox/server";
 import { resolveSelectedSourcesForRun } from "@/lib/integrations/run-source-resolver";
 import type { CanonicalDocument } from "@/lib/tools/canonical-model";
+import {
+  AdvancedToolSettingsSchema,
+  DEFAULT_ADVANCED_TOOL_SETTINGS,
+  detectAdvancedSettingsConflicts,
+  type ToolKey,
+} from "@/lib/tools/advanced-settings-schema";
 
 const CreateRunSchema = z.object({
   toolId: z.string().min(1),
@@ -28,6 +34,102 @@ const CreateRunSchema = z.object({
   artifactTitle: z.string().optional(),
   artifactType: z.string().optional(),
 });
+
+const ADVANCED_SETTINGS_KEY = "advanced_tool_settings_v1";
+
+async function readAdvancedSettings(supabase: any, userId: string) {
+  const { data } = await supabase
+    .from("user_preferences")
+    .select("preference_value")
+    .eq("user_id", userId)
+    .eq("preference_key", ADVANCED_SETTINGS_KEY)
+    .maybeSingle();
+  const parsed = AdvancedToolSettingsSchema.safeParse(data?.preference_value || {});
+  return parsed.success ? parsed.data : DEFAULT_ADVANCED_TOOL_SETTINGS;
+}
+
+function normalizeToolContext(toolId: string): ToolKey | undefined {
+  const normalized = String(toolId || "").trim().toLowerCase();
+  if (normalized === "quiz") return "quiz";
+  if (normalized === "notes") return "notes";
+  if (normalized === "flashcards") return "flashcards";
+  if (normalized === "wordweb") return "wordweb";
+  if (normalized === "timeline") return "timeline";
+  return undefined;
+}
+
+function enforceAndApplyAdvancedSettings(input: {
+  settings: ReturnType<typeof AdvancedToolSettingsSchema.parse>;
+  toolId: string;
+  mode?: string | null;
+  computeClass: ComputeClass;
+  payloadInput: Record<string, any>;
+  integrationSources: any[];
+}) {
+  const tool = normalizeToolContext(input.toolId);
+  const conflicts = detectAdvancedSettingsConflicts(input.settings, {
+    tool,
+    isLiveGeneratedQuiz: input.toolId === "quiz",
+  });
+  const blocking = conflicts.find((conflict) => conflict.severity === "error");
+  if (blocking && input.settings.safety.setting_conflict_detector) {
+    const err = new Error(blocking.message);
+    (err as any).code = "SETTING_CONFLICT";
+    throw err;
+  }
+
+  let nextComputeClass = input.computeClass;
+  const budget = input.settings.safety.performance_budget;
+  if (budget === "low") nextComputeClass = "light";
+  if (budget === "medium" && nextComputeClass === "heavy") nextComputeClass = "standard";
+
+  const maxSources = Math.max(1, Number(input.settings.sources.max_sources_per_run || 8));
+  const trimmedSources = Array.isArray(input.integrationSources)
+    ? input.integrationSources.slice(0, maxSources)
+    : [];
+
+  const nextInput: Record<string, any> = { ...(input.payloadInput || {}) };
+  if (!input.settings.visuals.images_in_questions) {
+    nextInput.includeImages = false;
+    nextInput.imagesInQuestions = false;
+  }
+
+  if (input.toolId === "quiz") {
+    nextInput.sourceBackedDepth = input.settings.quiz.source_policy === "source_required" ? true : Boolean(nextInput.sourceBackedDepth);
+    if (input.settings.quiz.source_policy === "source_required") {
+      const hasSourceText = String(nextInput.sourceText || "").trim().length > 0;
+      const hasSourceRefs = trimmedSources.length > 0;
+      if (!hasSourceText && !hasSourceRefs) {
+        const err = new Error("Source-required mode needs source text or selected source files.");
+        (err as any).code = "SOURCE_REQUIRED";
+        throw err;
+      }
+    }
+  }
+
+  const enforcementSummary = {
+    tool,
+    conflicts: conflicts.map((conflict) => ({
+      key: conflict.key,
+      severity: conflict.severity,
+      message: conflict.message,
+    })),
+    computeClassBefore: input.computeClass,
+    computeClassAfter: nextComputeClass,
+    maxSourcesPerRun: maxSources,
+    integrationSourcesBefore: Array.isArray(input.integrationSources) ? input.integrationSources.length : 0,
+    integrationSourcesAfter: trimmedSources.length,
+    imagesInQuestionsAllowed: Boolean(input.settings.visuals.images_in_questions),
+    sourcePolicy: input.toolId === "quiz" ? input.settings.quiz.source_policy : null,
+  };
+
+  return {
+    computeClass: nextComputeClass,
+    inputPayload: nextInput,
+    integrationSources: trimmedSources,
+    enforcementSummary,
+  };
+}
 
 async function writeRunEvent(supabase: any, runId: string, eventType: string, payload: Record<string, any>) {
   await supabase.from("tool_run_events").insert({
@@ -154,8 +256,7 @@ export async function POST(request: NextRequest) {
   try {
     const { supabase, user, plan, subscriptionType } = await getAuthedToolboxContext();
     const payload = CreateRunSchema.parse(await request.json());
-    const entitlements = await getEntitlementSummary(supabase, user.id, plan, subscriptionType);
-    assertRunAllowed(entitlements, payload.computeClass as ComputeClass);
+    const advancedSettings = await readAdvancedSettings(supabase, user.id);
 
     const { data: existingRun } = await supabase
       .from("tool_runs")
@@ -174,9 +275,23 @@ export async function POST(request: NextRequest) {
       toolId: payload.toolId,
       baseInput,
     });
+
+    const enforced = enforceAndApplyAdvancedSettings({
+      settings: advancedSettings,
+      toolId: payload.toolId,
+      mode: payload.mode || null,
+      computeClass: payload.computeClass as ComputeClass,
+      payloadInput: enriched.input,
+      integrationSources: enriched.sourceRefs || [],
+    });
+
+    const entitlements = await getEntitlementSummary(supabase, user.id, plan, subscriptionType);
+    assertRunAllowed(entitlements, enforced.computeClass);
+
     const contextPayload = {
       ...(payload.context || {}),
-      integration_sources: enriched.sourceRefs,
+      integration_sources: enforced.integrationSources,
+      settings_enforcement: enforced.enforcementSummary,
     };
 
     const { data: createdRun, error: runError } = await supabase
@@ -187,10 +302,10 @@ export async function POST(request: NextRequest) {
         flow_name: payload.flowName,
         mode: payload.mode || null,
         status: "queued",
-        input_payload: enriched.input,
+        input_payload: enforced.inputPayload,
         context_payload: contextPayload,
         options_payload: payload.options || {},
-        compute_class: payload.computeClass,
+        compute_class: enforced.computeClass,
         idempotency_key: payload.idempotencyKey,
       })
       .select("*")
@@ -203,6 +318,7 @@ export async function POST(request: NextRequest) {
     await writeRunEvent(supabase, createdRun.id, "queued", {
       toolId: payload.toolId,
       flowName: payload.flowName,
+      settingsEnforcement: enforced.enforcementSummary,
     });
 
     await supabase.from("tool_runs").update({ status: "running" }).eq("id", createdRun.id);
@@ -210,7 +326,7 @@ export async function POST(request: NextRequest) {
     await writeRunSources(supabase, createdRun.id, user.id, enriched.selectedSourcesRaw || []);
 
     try {
-      const inputPayload = enriched.input;
+      const inputPayload = enforced.inputPayload;
       const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id);
       const aiEvents: Array<{
         type: "primary_error" | "fallback_attempt" | "fallback_success" | "fallback_error";
@@ -314,11 +430,12 @@ export async function POST(request: NextRequest) {
         .eq("id", createdRun.id);
 
       await writeRunEvent(supabase, createdRun.id, "completed", { artifactId });
+      await writeRunEvent(supabase, createdRun.id, "settings_enforced", enforced.enforcementSummary);
       await recordMeterEvent(supabase, {
         userId: user.id,
         eventType: "tool_run",
         featureKey: payload.toolId,
-        computeClass: payload.computeClass as ComputeClass,
+        computeClass: enforced.computeClass,
         metadata: {
           runId: createdRun.id,
           flowName: payload.flowName,
@@ -375,7 +492,14 @@ export async function POST(request: NextRequest) {
         error: error?.message || "Failed to create tool run",
         code: error?.code || "INTERNAL_ERROR",
       },
-      { status: error?.code?.includes("LIMIT") || error?.code?.includes("ENTITLED") ? 403 : 500 }
+      {
+        status:
+          error?.code === "SETTING_CONFLICT" || error?.code === "SOURCE_REQUIRED"
+            ? 422
+            : error?.code?.includes("LIMIT") || error?.code?.includes("ENTITLED")
+              ? 403
+              : 500,
+      }
     );
   }
 }

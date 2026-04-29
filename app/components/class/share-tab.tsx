@@ -44,7 +44,6 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
   }, [classId, audienceFilter]);
 
   const sendMessage = async () => {
-    if (!isTeacher) return;
     const text = message.trim();
     if (!text) return;
     setIsSubmitting(true);
@@ -82,32 +81,13 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
       </div>
 
       <div className="rounded-md surface-panel p-3">
-        <Textarea
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-          placeholder="Write a message..."
-          className="min-h-[96px] surface-panel"
-          onKeyDown={(event) => {
-            if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-              event.preventDefault();
-              void sendMessage();
-            }
-          }}
-        />
-        <div className="mt-2 flex justify-end">
-          <Button size="sm" onClick={() => void sendMessage()} disabled={isSubmitting || !message.trim()}>
-            {isSubmitting ? 'Sending...' : 'Send'}
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
+        <div className="mb-3 max-h-[52vh] space-y-2 overflow-y-auto pr-1">
         {isLoading ? <p className="text-xs text-muted-foreground">Loading messages...</p> : null}
         {visiblePosts.length === 0 && !isLoading ? (
           <div className="rounded-md surface-panel p-4 text-sm text-muted-foreground">No messages yet.</div>
         ) : null}
         {visiblePosts.map((post) => (
-          <article key={post.id} className="rounded-md surface-panel p-3">
+          <article key={post.id} className="rounded-md surface-interactive p-3">
             <div className="mb-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
               <span className="truncate">{post.authorName || post.authorEmail || 'User'}</span>
               <span>{new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -115,6 +95,26 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
             <p className="whitespace-pre-wrap text-sm leading-relaxed">{post.text}</p>
           </article>
         ))}
+        </div>
+        <div className="border-t border-border pt-3">
+          <Textarea
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder="Write a message..."
+            className="min-h-[90px] bg-[hsl(var(--background))]"
+            onKeyDown={(event) => {
+              if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                event.preventDefault();
+                void sendMessage();
+              }
+            }}
+          />
+          <div className="mt-2 flex justify-end">
+            <Button size="sm" onClick={() => void sendMessage()} disabled={isSubmitting || !message.trim()}>
+              {isSubmitting ? 'Sending...' : 'Send'}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

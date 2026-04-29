@@ -22,6 +22,8 @@ import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/import-parsers';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { Switch } from '@/components/ui/switch';
+import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
+import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
 
 const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
   if (!value) return 'flip';
@@ -58,11 +60,20 @@ function FlashcardsPageContent() {
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [saveToRecents, setSaveToRecents] = useState(true);
+  const [activeRecallOnly, setActiveRecallOnly] = useState(false);
+  const [interleavingMode, setInterleavingMode] = useState(true);
+  const [semanticLinking, setSemanticLinking] = useState(true);
+  const [errorTagging, setErrorTagging] = useState(true);
+  const [memoryStrengthMeter, setMemoryStrengthMeter] = useState(true);
+  const [timePerCardSeconds, setTimePerCardSeconds] = useState(0);
+  const [autoFlipDelayMs, setAutoFlipDelayMs] = useState(0);
   const [studyCompleted, setStudyCompleted] = useState(false);
   const [isSharingToClass, setIsSharingToClass] = useState(false);
   const launchHandledRef = useRef(false);
   const sourceParamsHandledRef = useRef(false);
   const { toast } = useToast();
+  const { settings: advancedSettings, savePatch: saveAdvancedSettingsPatch } = useAdvancedToolSettings();
+  const advancedHydratedRef = useRef(false);
   const modeOptions = React.useMemo(
     () =>
       t.flashcards.studyModeOptions
@@ -76,6 +87,14 @@ function FlashcardsPageContent() {
         ),
     [t.flashcards.studyModeOptions]
   );
+
+  const resolveComputeClass = (requestedCount: number): 'light' | 'standard' | 'heavy' => {
+    const budget = advancedSettings?.safety.performance_budget || 'auto';
+    if (budget === 'low') return 'light';
+    if (budget === 'medium') return requestedCount > 24 ? 'standard' : 'light';
+    if (budget === 'high') return requestedCount > 16 ? 'heavy' : 'standard';
+    return requestedCount > 20 ? 'heavy' : 'standard';
+  };
   const startSideOptions = React.useMemo(
     () => [
       { value: 'term', label: 'Term first' },
@@ -93,9 +112,30 @@ function FlashcardsPageContent() {
     }>
   ) => {
     if (!text.trim()) return;
+    if (advancedSettings?.safety.offline_mode && typeof navigator !== 'undefined' && !navigator.onLine) {
+      toast({
+        variant: 'destructive',
+        title: t.flashcards.generatingTitle,
+        description: 'Offline mode is enabled and no connection is available.',
+      });
+      return;
+    }
     setIsLoading(true);
     setGeneratedCards(null);
     try {
+      if (advancedSettings?.safety.setting_conflict_detector && advancedSettings) {
+        const conflicts = detectAdvancedSettingsConflicts(advancedSettings, { tool: 'flashcards' });
+        const blocking = conflicts.find((conflict) => conflict.severity === 'error');
+        if (blocking) {
+          toast({
+            variant: 'destructive',
+            title: 'Settings conflict',
+            description: blocking.message,
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
       const requestedMode = overrides?.mode || studyMode;
       const requestedCount = overrides?.count ?? flashcardCount;
       const requestedTitle = overrides?.title || customTitle.trim() || 'Generated Flashcards';
@@ -116,8 +156,36 @@ function FlashcardsPageContent() {
             educationLevel: schoolingLevel,
             regionCode: String(region || 'global').toUpperCase(),
             studyMode: requestedMode,
+            flashcardsOptions: {
+              activeRecallOnly,
+              interleavingMode,
+              semanticLinking,
+              errorTagging,
+              memoryStrengthMeter,
+              timePerCardSeconds,
+              autoFlipDelayMs,
+            },
+            sourcePolicy: {
+              wikipediaEnabled: Boolean(advancedSettings?.sources.wikipedia_enabled),
+              wikipediaDepth: advancedSettings?.sources.wikipedia_depth,
+              youtubeTranscriptEnabled: Boolean(advancedSettings?.sources.youtube_transcript_enabled),
+              crossLanguageSearch: Boolean(advancedSettings?.sources.cross_language_search),
+              contradictionResolutionMode: advancedSettings?.sources.contradiction_resolution_mode,
+              sourceTraceback: Boolean(advancedSettings?.sources.source_traceback),
+              liveUpdateMode: Boolean(advancedSettings?.sources.live_update_mode),
+              biasDetection: Boolean(advancedSettings?.sources.bias_detection),
+              contextWindowPriority: advancedSettings?.sources.context_window_priority,
+              maxSourcesPerRun: advancedSettings?.sources.max_sources_per_run,
+            },
+            visuals: {
+              imagesInQuestions: Boolean(advancedSettings?.visuals.images_in_questions),
+              imageStyle: advancedSettings?.visuals.image_style,
+              progressiveReveal: Boolean(advancedSettings?.visuals.progressive_reveal),
+              focusMode: Boolean(advancedSettings?.visuals.focus_mode),
+              autoSimplification: Boolean(advancedSettings?.visuals.auto_simplification),
+            },
           },
-          computeClass: requestedCount > 20 ? 'heavy' : 'standard',
+          computeClass: resolveComputeClass(requestedCount),
       });
       const response = run?.output_payload || run;
       setGeneratedCards(response.flashcards);
@@ -135,7 +203,7 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [customTitle, flashcardCount, imageDataUri, language, region, schoolingLevel, saveToRecents, studyMode]);
+  }, [activeRecallOnly, advancedSettings, autoFlipDelayMs, customTitle, errorTagging, flashcardCount, imageDataUri, interleavingMode, language, memoryStrengthMeter, region, saveToRecents, schoolingLevel, semanticLinking, studyMode, t.flashcards.generatingTitle, timePerCardSeconds, toast]);
 
   useEffect(() => {
     if (!sourceTextFromParams || isAssignmentContext || sourceParamsHandledRef.current) return;
@@ -215,12 +283,38 @@ function FlashcardsPageContent() {
     if (s('cardStartSide') === 'explanation') setCardStartSide('explanation');
     if (s('count') && !Number.isNaN(Number(s('count')))) setFlashcardCount(Number(s('count')));
     if (s('saveToRecents') === 'false') setSaveToRecents(false);
+    if (s('activeRecallOnly') === 'true') setActiveRecallOnly(true);
+    if (s('interleavingMode') === 'false') setInterleavingMode(false);
+    if (s('semanticLinking') === 'false') setSemanticLinking(false);
+    if (s('errorTagging') === 'false') setErrorTagging(false);
+    if (s('memoryStrengthMeter') === 'false') setMemoryStrengthMeter(false);
+    if (s('timePerCardSeconds') && !Number.isNaN(Number(s('timePerCardSeconds')))) setTimePerCardSeconds(Number(s('timePerCardSeconds')));
+    if (s('autoFlipDelayMs') && !Number.isNaN(Number(s('autoFlipDelayMs')))) setAutoFlipDelayMs(Number(s('autoFlipDelayMs')));
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.flashcards.mode', studyMode); }, [studyMode]);
   useEffect(() => { localStorage.setItem('tools.flashcards.cardStartSide', cardStartSide); }, [cardStartSide]);
   useEffect(() => { localStorage.setItem('tools.flashcards.count', String(flashcardCount)); }, [flashcardCount]);
   useEffect(() => { localStorage.setItem('tools.flashcards.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.activeRecallOnly', String(activeRecallOnly)); }, [activeRecallOnly]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.interleavingMode', String(interleavingMode)); }, [interleavingMode]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.semanticLinking', String(semanticLinking)); }, [semanticLinking]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.errorTagging', String(errorTagging)); }, [errorTagging]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.memoryStrengthMeter', String(memoryStrengthMeter)); }, [memoryStrengthMeter]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.timePerCardSeconds', String(timePerCardSeconds)); }, [timePerCardSeconds]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.autoFlipDelayMs', String(autoFlipDelayMs)); }, [autoFlipDelayMs]);
+
+  useEffect(() => {
+    if (!advancedSettings || advancedHydratedRef.current) return;
+    advancedHydratedRef.current = true;
+    setActiveRecallOnly(Boolean(advancedSettings.flashcards.active_recall_only));
+    setInterleavingMode(Boolean(advancedSettings.flashcards.interleaving_mode));
+    setSemanticLinking(Boolean(advancedSettings.flashcards.semantic_linking));
+    setErrorTagging(Boolean(advancedSettings.flashcards.error_tagging));
+    setMemoryStrengthMeter(Boolean(advancedSettings.flashcards.memory_strength_meter));
+    setTimePerCardSeconds(Number(advancedSettings.flashcards.time_per_card_seconds || 0));
+    setAutoFlipDelayMs(Number(advancedSettings.flashcards.auto_flip_delay_ms || 0));
+  }, [advancedSettings]);
 
   const handleRestart = () => {
     setGeneratedCards(null);
@@ -286,6 +380,15 @@ function FlashcardsPageContent() {
             taskId={taskId || undefined}
             studysetId={studysetId || undefined}
             onCompletionChange={setStudyCompleted}
+            settings={{
+              activeRecallOnly,
+              interleavingMode,
+              semanticLinking,
+              errorTagging,
+              memoryStrengthMeter,
+              timePerCardSeconds,
+              autoFlipDelayMs,
+            }}
           />
         </div>
       </div>
@@ -299,7 +402,7 @@ function FlashcardsPageContent() {
         <Input
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
-          className="h-9 text-sm"
+          className="h-9 bg-[hsl(var(--background))] text-sm"
           disabled={isLoading}
         />
       </div>
@@ -335,6 +438,66 @@ function FlashcardsPageContent() {
           onCheckedChange={setSaveToRecents}
           className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
         />
+      </div>
+      <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Active recall only</p>
+          <Switch
+            checked={activeRecallOnly}
+            onCheckedChange={(checked) => {
+              setActiveRecallOnly(checked);
+              void saveAdvancedSettingsPatch({ flashcards: { active_recall_only: checked } as any }, { tool: 'flashcards' });
+            }}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Interleaving mode</p>
+          <Switch checked={interleavingMode} onCheckedChange={(checked) => {
+            setInterleavingMode(checked);
+            void saveAdvancedSettingsPatch({ flashcards: { interleaving_mode: checked } as any }, { tool: 'flashcards' });
+          }} />
+        </div>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Semantic linking</p>
+          <Switch checked={semanticLinking} onCheckedChange={(checked) => {
+            setSemanticLinking(checked);
+            void saveAdvancedSettingsPatch({ flashcards: { semantic_linking: checked } as any }, { tool: 'flashcards' });
+          }} />
+        </div>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Error tagging</p>
+          <Switch checked={errorTagging} onCheckedChange={(checked) => {
+            setErrorTagging(checked);
+            void saveAdvancedSettingsPatch({ flashcards: { error_tagging: checked } as any }, { tool: 'flashcards' });
+          }} />
+        </div>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Memory strength meter</p>
+          <Switch checked={memoryStrengthMeter} onCheckedChange={(checked) => {
+            setMemoryStrengthMeter(checked);
+            void saveAdvancedSettingsPatch({ flashcards: { memory_strength_meter: checked } as any }, { tool: 'flashcards' });
+          }} />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Time per card (seconds)</p>
+          <span className="text-xs font-mono tabular-nums">{timePerCardSeconds}</span>
+        </div>
+        <Slider value={[timePerCardSeconds]} onValueChange={([v]) => {
+          setTimePerCardSeconds(v);
+          void saveAdvancedSettingsPatch({ flashcards: { time_per_card_seconds: v } as any }, { tool: 'flashcards' });
+        }} min={0} max={120} step={1} disabled={isLoading} />
+      </div>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Auto flip delay (ms)</p>
+          <span className="text-xs font-mono tabular-nums">{autoFlipDelayMs}</span>
+        </div>
+        <Slider value={[autoFlipDelayMs]} onValueChange={([v]) => {
+          setAutoFlipDelayMs(v);
+          void saveAdvancedSettingsPatch({ flashcards: { auto_flip_delay_ms: v } as any }, { tool: 'flashcards' });
+        }} min={0} max={15000} step={250} disabled={isLoading} />
       </div>
 
       <ImportToolbar

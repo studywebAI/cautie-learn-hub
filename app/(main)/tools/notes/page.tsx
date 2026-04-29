@@ -19,6 +19,7 @@ import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseNotesFromMarkdown, parseNotesFromHtml } from '@/lib/import-parsers';
 import { AppContext } from '@/contexts/app-context';
 import { getToolStrings } from '@/lib/tool-i18n';
+import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
 import { PaintOverlay } from '@/components/tools/paint-overlay';
 import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
 import { Switch } from '@/components/ui/switch';
@@ -32,6 +33,7 @@ import {
   notesSectionsToCanonical,
   type NoteSection,
 } from '@/lib/tools/notes-canonical-adapter';
+import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -225,6 +227,7 @@ function NotesPageContent() {
   const launchHandledRef = useRef(false);
   const lastReportedSignatureRef = useRef('');
   const { toast } = useToast();
+  const { settings: advancedSettings, savePatch: saveAdvancedSettingsPatch } = useAdvancedToolSettings();
   const isWordwebPreset = mode === 'wordweb';
   const isTimelinePreset = mode === 'timeline';
   const pageTitle = isWordwebPreset ? 'Wordweb' : isTimelinePreset ? 'Timeline' : 'Notes';
@@ -237,6 +240,14 @@ function NotesPageContent() {
     { title: 'Generating notes', detail: 'Building clean notes from your selected study content.' },
     { title: 'Finalizing workspace', detail: 'Opening notes with the generated output ready to edit.' },
   ];
+
+  const resolveComputeClass = (textLength: number): 'light' | 'standard' | 'heavy' => {
+    const budget = advancedSettings?.safety.performance_budget || 'auto';
+    if (budget === 'low') return 'light';
+    if (budget === 'medium') return textLength > 3000 ? 'standard' : 'light';
+    if (budget === 'high') return textLength > 2000 ? 'heavy' : 'standard';
+    return textLength > 2500 ? 'heavy' : 'standard';
+  };
 
   const autoHighlightTargets = useMemo(() => {
     const code = String(region || 'global').toUpperCase();
@@ -588,6 +599,16 @@ function NotesPageContent() {
   ) => {
     const text = inputText.trim();
     if (!text) return null;
+    if (advancedSettings?.safety.offline_mode && typeof navigator !== 'undefined' && !navigator.onLine) {
+      if (!options?.background) {
+        toast({
+          variant: 'destructive',
+          title: t.notes.generatingTitle,
+          description: 'Offline mode is enabled and no connection is available.',
+        });
+      }
+      return null;
+    }
     const blockDirective = selectedNoteBlocks.length > 0
       ? `\n\n[Requested note blocks: ${selectedNoteBlocks.join(', ')}]`
       : '';
@@ -602,6 +623,22 @@ function NotesPageContent() {
     else setIsLoading(true);
 
     try {
+      if (advancedSettings?.safety.setting_conflict_detector && advancedSettings) {
+        const conflicts = detectAdvancedSettingsConflicts(advancedSettings, { tool: mode === 'wordweb' ? 'wordweb' : mode === 'timeline' ? 'timeline' : 'notes' });
+        const blocking = conflicts.find((conflict) => conflict.severity === 'error');
+        if (blocking) {
+          if (!background) {
+            toast({
+              variant: 'destructive',
+              title: 'Settings conflict',
+              description: blocking.message,
+            });
+          }
+          if (background) setIsAutoDrafting(false);
+          else setIsLoading(false);
+          return null;
+        }
+      }
       const run = await runToolFlowV2({
         toolId: 'notes',
         flowName: 'generateNotes',
@@ -625,7 +662,50 @@ function NotesPageContent() {
           imageDataUri: imageDataUri || undefined,
           highlightTitles: false,
           fontFamily: 'default',
+          notesOptions: {
+            autoGapDetection: Boolean(advancedSettings?.notes.auto_gap_detection),
+            argumentMapMode: Boolean(advancedSettings?.notes.argument_map_mode),
+            redundancyCleanup: Boolean(advancedSettings?.notes.redundancy_cleanup),
+            examPrediction: Boolean(advancedSettings?.notes.exam_prediction),
+            semanticZoom: Boolean(advancedSettings?.notes.semantic_zoom),
+            liveCollaboration: Boolean(advancedSettings?.notes.live_collaboration),
+          },
+          sourcePolicy: {
+            wikipediaEnabled: Boolean(advancedSettings?.sources.wikipedia_enabled),
+            wikipediaDepth: advancedSettings?.sources.wikipedia_depth,
+            youtubeTranscriptEnabled: Boolean(advancedSettings?.sources.youtube_transcript_enabled),
+            crossLanguageSearch: Boolean(advancedSettings?.sources.cross_language_search),
+            contradictionResolutionMode: advancedSettings?.sources.contradiction_resolution_mode,
+            sourceTraceback: Boolean(advancedSettings?.sources.source_traceback),
+            liveUpdateMode: Boolean(advancedSettings?.sources.live_update_mode),
+            biasDetection: Boolean(advancedSettings?.sources.bias_detection),
+            contextWindowPriority: advancedSettings?.sources.context_window_priority,
+            maxSourcesPerRun: advancedSettings?.sources.max_sources_per_run,
+          },
+          visuals: {
+            imagesInQuestions: Boolean(advancedSettings?.visuals.images_in_questions),
+            imageStyle: advancedSettings?.visuals.image_style,
+            timelineEmbedMode: Boolean(advancedSettings?.visuals.timeline_embed_mode),
+            customDiagramGeneration: Boolean(advancedSettings?.visuals.custom_diagram_generation),
+            wordwebDensity: advancedSettings?.visuals.wordweb_density,
+            focusMode: Boolean(advancedSettings?.visuals.focus_mode),
+            progressiveReveal: Boolean(advancedSettings?.visuals.progressive_reveal),
+            interactionRequired: Boolean(advancedSettings?.visuals.interaction_required),
+            memoryOverlay: Boolean(advancedSettings?.visuals.memory_overlay),
+            autoSimplification: Boolean(advancedSettings?.visuals.auto_simplification),
+            spatialQuizMode: Boolean(advancedSettings?.visuals.spatial_quiz_mode),
+          },
+          timelineOptions: {
+            rangeStartYear: advancedSettings?.timeline.range_start_year,
+            rangeEndYear: advancedSettings?.timeline.range_end_year,
+            scaleMode: advancedSettings?.timeline.scale_mode,
+            causalityStrength: Boolean(advancedSettings?.timeline.causality_strength),
+            altPaths: Boolean(advancedSettings?.timeline.alt_paths),
+            eventImportanceScore: Boolean(advancedSettings?.timeline.event_importance_score),
+            zoomFocusLock: Boolean(advancedSettings?.timeline.zoom_focus_lock),
+          },
         },
+        computeClass: resolveComputeClass(textWithDirectives.length),
       });
       const runOutput = (run?.output_payload || {}) as any;
       const notes = (runOutput.notes || run?.notes || null) as GenerateNotesOutput['notes'] | null;
@@ -657,7 +737,7 @@ function NotesPageContent() {
       if (background) setIsAutoDrafting(false);
       else setIsLoading(false);
     }
-  }, [applyCanonicalDocument, audience, imageDataUri, length, region, schoolingLevel, selectedNoteBlocks, reportStudysetPerformance, saveToRecents, setNotesModel, style, t.notes.generatingTitle, toast]);
+  }, [advancedSettings, applyCanonicalDocument, audience, imageDataUri, length, region, schoolingLevel, selectedNoteBlocks, reportStudysetPerformance, saveToRecents, setNotesModel, style, t.notes.generatingTitle, toast]);
 
   useEffect(() => {
     if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
@@ -1095,9 +1175,27 @@ function NotesPageContent() {
 
           <div className={cn('grid gap-4', !isVisualMode && showNotesPanel ? 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px]' : 'grid-cols-1')}>
             {mode === 'wordweb' && canonicalDoc ? (
-              <WordwebCanvas document={canonicalDoc} onChange={applyCanonicalDocument} />
+              <WordwebCanvas
+                document={canonicalDoc}
+                onChange={applyCanonicalDocument}
+                settings={{
+                  wordwebDensity: advancedSettings?.visuals.wordweb_density,
+                  interactionRequired: advancedSettings?.visuals.interaction_required,
+                }}
+              />
             ) : mode === 'timeline' && canonicalDoc ? (
-              <TimelineBoard document={canonicalDoc} onChange={applyCanonicalDocument} />
+              <TimelineBoard
+                document={canonicalDoc}
+                onChange={applyCanonicalDocument}
+                settings={{
+                  rangeStartYear: advancedSettings?.timeline.range_start_year,
+                  rangeEndYear: advancedSettings?.timeline.range_end_year,
+                  causalityStrength: advancedSettings?.timeline.causality_strength,
+                  altPaths: advancedSettings?.timeline.alt_paths,
+                  scaleMode: advancedSettings?.timeline.scale_mode,
+                  eventImportanceScore: advancedSettings?.timeline.event_importance_score,
+                }}
+              />
             ) : (
               <div
                 className="relative rounded-2xl border surface-panel p-5 md:p-6"
@@ -1280,7 +1378,7 @@ function NotesPageContent() {
         <Input
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
-          className="h-9 text-sm"
+          className="h-9 bg-[hsl(var(--background))] text-sm"
           disabled={isLoading}
         />
       </div>
@@ -1323,6 +1421,147 @@ function NotesPageContent() {
         }}
         disabled={isLoading}
       />
+      {mode === 'notes' && (
+        <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">Auto gap detection</p>
+            <Switch
+              checked={Boolean(advancedSettings?.notes.auto_gap_detection)}
+              onCheckedChange={(checked) => {
+                void saveAdvancedSettingsPatch({ notes: { auto_gap_detection: checked } as any }, { tool: 'notes' });
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">Argument map mode</p>
+            <Switch
+              checked={Boolean(advancedSettings?.notes.argument_map_mode)}
+              onCheckedChange={(checked) => {
+                void saveAdvancedSettingsPatch({ notes: { argument_map_mode: checked } as any }, { tool: 'notes' });
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">Redundancy cleanup</p>
+            <Switch
+              checked={Boolean(advancedSettings?.notes.redundancy_cleanup)}
+              onCheckedChange={(checked) => {
+                void saveAdvancedSettingsPatch({ notes: { redundancy_cleanup: checked } as any }, { tool: 'notes' });
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">Exam prediction</p>
+            <Switch
+              checked={Boolean(advancedSettings?.notes.exam_prediction)}
+              onCheckedChange={(checked) => {
+                void saveAdvancedSettingsPatch({ notes: { exam_prediction: checked } as any }, { tool: 'notes' });
+              }}
+            />
+          </div>
+        </div>
+      )}
+      {(mode === 'wordweb' || mode === 'timeline') && (
+        <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
+          {mode === 'wordweb' && (
+            <>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Wordweb density</p>
+                <span className="text-xs font-mono">{advancedSettings?.visuals.wordweb_density ?? 80}</span>
+              </div>
+              <Slider
+                value={[advancedSettings?.visuals.wordweb_density ?? 80]}
+                onValueChange={([v]) => {
+                  void saveAdvancedSettingsPatch({ visuals: { wordweb_density: v } as any }, { tool: 'wordweb' });
+                }}
+                min={8}
+                max={240}
+                step={1}
+                disabled={isLoading}
+              />
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Interaction required before drag</p>
+                <Switch
+                  checked={Boolean(advancedSettings?.visuals.interaction_required)}
+                  onCheckedChange={(checked) => {
+                    void saveAdvancedSettingsPatch({ visuals: { interaction_required: checked } as any }, { tool: 'wordweb' });
+                  }}
+                />
+              </div>
+            </>
+          )}
+          {mode === 'timeline' && (
+            <>
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">Timeline scale mode</p>
+                <select
+                  value={advancedSettings?.timeline.scale_mode ?? 'year'}
+                  onChange={(event) => {
+                    void saveAdvancedSettingsPatch({ timeline: { scale_mode: event.target.value as any } as any }, { tool: 'timeline' });
+                  }}
+                  className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
+                >
+                  <option value="year">Year</option>
+                  <option value="month">Month</option>
+                  <option value="day">Day</option>
+                  <option value="log">Log</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">Timeline range start year</p>
+                <Input
+                  type="number"
+                  value={advancedSettings?.timeline.range_start_year ?? 1800}
+                  onChange={(e) => {
+                    const v = Number(e.target.value || 0);
+                    void saveAdvancedSettingsPatch({ timeline: { range_start_year: v } as any }, { tool: 'timeline' });
+                  }}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">Timeline range end year</p>
+                <Input
+                  type="number"
+                  value={advancedSettings?.timeline.range_end_year ?? 2100}
+                  onChange={(e) => {
+                    const v = Number(e.target.value || 0);
+                    void saveAdvancedSettingsPatch({ timeline: { range_end_year: v } as any }, { tool: 'timeline' });
+                  }}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Causality strength</p>
+                <Switch
+                  checked={Boolean(advancedSettings?.timeline.causality_strength)}
+                  onCheckedChange={(checked) => {
+                    void saveAdvancedSettingsPatch({ timeline: { causality_strength: checked } as any }, { tool: 'timeline' });
+                  }}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Alternative paths</p>
+                <Switch
+                  checked={Boolean(advancedSettings?.timeline.alt_paths)}
+                  onCheckedChange={(checked) => {
+                    void saveAdvancedSettingsPatch({ timeline: { alt_paths: checked } as any }, { tool: 'timeline' });
+                  }}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Event importance scoring</p>
+                <Switch
+                  checked={Boolean(advancedSettings?.timeline.event_importance_score)}
+                  onCheckedChange={(checked) => {
+                    void saveAdvancedSettingsPatch({ timeline: { event_importance_score: checked } as any }, { tool: 'timeline' });
+                  }}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </>
   );
 

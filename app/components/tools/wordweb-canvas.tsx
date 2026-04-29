@@ -10,6 +10,10 @@ import { Textarea } from '@/components/ui/textarea';
 type Props = {
   document: CanonicalDocument;
   onChange: (nextDocument: CanonicalDocument) => void;
+  settings?: {
+    wordwebDensity?: number;
+    interactionRequired?: boolean;
+  };
 };
 
 type PositionedNode = {
@@ -37,7 +41,7 @@ function setWordwebLayout(document: CanonicalDocument, nodePositions: Record<str
   return { ...document, layouts };
 }
 
-export function WordwebCanvas({ document, onChange }: Props) {
+export function WordwebCanvas({ document, onChange, settings }: Props) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [relationFrom, setRelationFrom] = useState('');
   const [relationTo, setRelationTo] = useState('');
@@ -108,9 +112,13 @@ export function WordwebCanvas({ document, onChange }: Props) {
       const saved = layoutPositions[node.id];
       return saved ? { ...node, x: saved.x, y: saved.y } : node;
     });
+    const density = Math.max(8, Math.min(240, settings?.wordwebDensity ?? 80));
+    const limited = patchedPositioned.slice(0, density);
+    const allowedNodeIds = new Set(limited.map((node) => node.id));
+    const filteredLinks = linksOut.filter((link) => allowedNodeIds.has(link.from) && allowedNodeIds.has(link.to));
 
-    return { positioned: patchedPositioned, links: linksOut };
-  }, [document]);
+    return { positioned: limited, links: filteredLinks };
+  }, [document, settings?.wordwebDensity]);
 
   const byId = useMemo(() => new Map(positioned.map((node) => [node.id, node])), [positioned]);
   const selectedNode = document.nodes.find((node) => node.id === selectedNodeId) || null;
@@ -164,6 +172,10 @@ export function WordwebCanvas({ document, onChange }: Props) {
   };
 
   const handleNodePointerDown = (event: ReactPointerEvent<HTMLButtonElement>, nodeId: string) => {
+    if (settings?.interactionRequired && selectedNodeId !== nodeId) {
+      setSelectedNodeId(nodeId);
+      return;
+    }
     event.currentTarget.setPointerCapture(event.pointerId);
     setDragNodeId(nodeId);
   };

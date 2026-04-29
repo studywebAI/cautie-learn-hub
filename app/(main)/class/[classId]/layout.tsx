@@ -43,38 +43,42 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex h-full flex-col gap-2">
       <div className="px-1 py-1">
-        <nav className="flex flex-wrap items-center gap-2 rounded-md surface-panel p-2">
-          {visibleTabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = currentTab === tab.id;
-            return (
-              <Link
-                key={tab.id}
-                href={`/class/${classId}${tab.href}`}
-                replace
-                prefetch={false}
-                className={cn(
-                  "inline-flex h-9 items-center gap-2 rounded-md px-3 text-[13px] transition-colors",
-                  isActive
-                    ? "surface-chip text-foreground shadow-[inset_0_0_0_1px_hsl(var(--border))]"
-                    : "text-foreground/85 hover:surface-interactive hover:text-foreground"
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </Link>
-            );
-          })}
-          <button
-            type="button"
-            className="ml-auto inline-flex h-9 items-center rounded-md surface-panel px-3 text-[12px] text-foreground/85 hover:surface-interactive hover:text-foreground"
-            onClick={() => {
-              window.dispatchEvent(new Event('cautie:open-class-dropdown'));
-            }}
-          >
-            {isDutch ? 'Selecteer andere klas' : 'Select different class'}
-          </button>
-        </nav>
+        <div className="rounded-md surface-panel p-2">
+          <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
+            {visibleTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = currentTab === tab.id;
+              return (
+                <Link
+                  key={tab.id}
+                  href={`/class/${classId}${tab.href}`}
+                  replace
+                  prefetch={false}
+                  className={cn(
+                    "inline-flex h-9 shrink-0 items-center gap-2 rounded-md px-3 text-[13px] transition-colors",
+                    isActive
+                      ? "surface-chip text-foreground shadow-[inset_0_0_0_1px_hsl(var(--border))]"
+                      : "text-foreground/85 hover:surface-interactive hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="mt-1 flex justify-end">
+            <button
+              type="button"
+              className="inline-flex h-9 items-center rounded-md bg-white px-3 text-[12px] text-foreground/85 hover:surface-panel hover:text-foreground"
+              onClick={() => {
+                window.dispatchEvent(new Event('cautie:open-class-dropdown'));
+              }}
+            >
+              {isDutch ? 'Selecteer andere klas' : 'Select different class'}
+            </button>
+          </div>
+        </div>
       </div>
 
       <main className="flex-1 overflow-auto p-0">

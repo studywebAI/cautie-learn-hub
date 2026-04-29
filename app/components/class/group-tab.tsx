@@ -561,16 +561,17 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
               </div>
             </div>
             <div className="space-y-2 rounded-md surface-interactive p-3">
-              <p className="text-sm">
-                {renameStudentId
-                  ? `${t.renameFromTo} "${sortedStudents.find((student) => student.id === renameStudentId)?.name || ''}" ${t.renameTo}:`
-                  : t.renameHint}
-              </p>
+              {renameStudentId ? (
+                <p className="text-sm">
+                  {`${t.renameFromTo} "${sortedStudents.find((student) => student.id === renameStudentId)?.name || ''}" ${t.renameTo}:`}
+                </p>
+              ) : null}
               <Input
                 value={renameValue}
                 onChange={(event) => setRenameValue(event.target.value)}
                 maxLength={100}
                 disabled={!renameStudentId || savingRename}
+                placeholder={renameStudentId ? '' : t.renameHint}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' && renameStudentId && !savingRename) {
                     event.preventDefault();

@@ -24,6 +24,7 @@ import { normalizeForCompare } from '@/lib/study-grading';
 
 
 type AnswersState = { [questionId: string]: string };
+type ConfidenceLevel = "low" | "medium" | "high";
 export type QuizMode = "normal" | "practice" | "exam" | "survival" | "speedrun" | "adaptive" | "duel" | "boss-fight";
 
 const SURVIVAL_PENALTY_COUNT = 3;
@@ -100,6 +101,8 @@ function FinalResults({
     strikes = 0,
     taskId,
     studysetId,
+    scoringModel = "accuracy",
+    confidences = {},
 }: {
     quiz: Quiz,
     answers: AnswersState,
@@ -110,6 +113,8 @@ function FinalResults({
     strikes?: number,
     taskId?: string,
     studysetId?: string,
+    scoringModel?: 'accuracy' | 'speed_weighted' | 'negative_marking' | 'mastery_points',
+    confidences?: Record<string, ConfidenceLevel>,
 }) {
     const correctCount = quiz.questions.filter(q => {
         const selectedOptionId = answers[q.id];
@@ -122,12 +127,28 @@ function FinalResults({
     const totalQuestionsInQuiz = quiz.questions.length;
     const incorrectCount = totalQuestionsAnswered - correctCount;
     const scorePercentage = totalQuestionsInQuiz > 0 ? Math.round((correctCount / totalQuestionsInQuiz) * 100) : 0;
+    const weightedPoints = quiz.questions.reduce((sum, q) => {
+        const selectedOptionId = answers[q.id];
+        const correctOption = q.options.find((opt) => opt.isCorrect);
+        if (!selectedOptionId || !correctOption) return sum;
+        const isCorrectAnswer = correctOption.id === selectedOptionId;
+        const confidence = confidences[q.id] || 'medium';
+        const weight = confidence === 'high' ? 1.2 : confidence === 'low' ? 0.8 : 1;
+        if (scoringModel === 'negative_marking') return sum + (isCorrectAnswer ? 1 : -0.4);
+        if (scoringModel === 'mastery_points') return sum + (isCorrectAnswer ? weight : 0);
+        if (scoringModel === 'speed_weighted') return sum + (isCorrectAnswer ? 1.1 : 0);
+        return sum + (isCorrectAnswer ? 1 : 0);
+    }, 0);
+    const scoreModelPct = totalQuestionsInQuiz > 0
+      ? Math.max(0, Math.min(100, Math.round((weightedPoints / totalQuestionsInQuiz) * 100)))
+      : 0;
+    const effectiveScore = scoringModel === 'accuracy' ? scorePercentage : scoreModelPct;
     
     const reportedRef = useRef(false);
 
     useEffect(() => {
         setSessionRecap({
-            score: scorePercentage,
+            score: effectiveScore,
             correctAnswers: correctCount,
             totalQuestions: totalQuestionsAnswered,
             timeTaken: timeTaken,
@@ -141,7 +162,7 @@ function FinalResults({
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         activity_type: 'quiz',
-                        score: scorePercentage,
+                        score: effectiveScore,
                         total_items: totalQuestionsAnswered,
                         correct_items: correctCount,
                         time_spent_seconds: timeTaken,
@@ -189,7 +210,7 @@ function FinalResults({
 
         // Clear recap on unmount
         return () => setSessionRecap(null);
-    }, [answers, correctCount, quiz.questions, scorePercentage, setSessionRecap, studysetId, taskId, timeTaken, totalQuestionsAnswered, totalQuestionsInQuiz]);
+    }, [answers, correctCount, effectiveScore, quiz.questions, setSessionRecap, studysetId, taskId, timeTaken, totalQuestionsAnswered, totalQuestionsInQuiz]);
 
 
     if (mode === 'survival') {
@@ -367,7 +388,7 @@ function FinalResults({
                         <div className="p-4 surface-interactive rounded-lg">
                             <Target className="h-7 w-7 text-primary mx-auto mb-2" />
                             <p className="text-2xl font-bold">{scorePercentage}%</p>
-                            <p className="text-sm text-muted-foreground">Score</p>
+                            <p className="text-sm text-muted-foreground">{scoringModel === 'accuracy' ? 'Score' : `Score (${scoringModel})`}</p>
                         </div>
                          <div className="p-4 surface-interactive rounded-lg">
                             <Clock className="h-7 w-7 text-primary mx-auto mb-2" />
@@ -553,6 +574,7 @@ export function QuizTaker({
     onRestart,
     taskId,
     studysetId,
+    runtimeSettings,
 }: {
     quiz: Quiz;
     mode: QuizMode;
@@ -560,8 +582,18 @@ export function QuizTaker({
     onRestart: () => void;
     taskId?: string;
     studysetId?: string;
+    runtimeSettings?: {
+        answerRevisionWindowSeconds?: number;
+        timebankSystem?: boolean;
+        progressiveUnlock?: boolean;
+        progressiveUnlockStreak?: number;
+        questionDecay?: boolean;
+        confidenceScoring?: boolean;
+        scoringModel?: 'accuracy' | 'speed_weighted' | 'negative_marking' | 'mastery_points';
+    };
 }) {
     const [answers, setAnswers] = useState<AnswersState>({});
+    const [confidences, setConfidences] = useState<Record<string, ConfidenceLevel>>({});
     const [isFinished, setIsFinished] = useState(false);
     const { toast } = useToast();
     const { setSessionRecap } = useContext(AppContext) as AppContextType;
@@ -585,6 +617,11 @@ export function QuizTaker({
     // Adaptive mode states
     const [adaptiveLevel, setAdaptiveLevel] = useState(5); // Starts in the middle and shifts by performance
     const [isGeneratingNext, setIsGeneratingNext] = useState(false);
+    const [timebankSeconds, setTimebankSeconds] = useState(0);
+    const [correctStreak, setCorrectStreak] = useState(0);
+    const [unlockedCount, setUnlockedCount] = useState(() => (runtimeSettings?.progressiveUnlock ? Math.min(3, quiz.questions.length) : quiz.questions.length));
+    const [questionMisses, setQuestionMisses] = useState<Record<string, number>>({});
+    const answerFinalizeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Note: Duel mode is implemented separately in QuizDuel component
 
@@ -615,6 +652,7 @@ export function QuizTaker({
         setQuestionTimeLeft(SURVIVAL_QUESTION_TIME);
 
         const nextIndex = currentIndex + 1;
+        const effectiveQuestionCount = runtimeSettings?.progressiveUnlock ? Math.min(unlockedCount, currentQuestions.length) : currentQuestions.length;
 
         if (mode === 'adaptive') {
             if (nextIndex >= ADAPTIVE_QUESTION_COUNT) {
@@ -651,7 +689,7 @@ export function QuizTaker({
                 setIsGeneratingNext(false);
             }
         } else {
-            if (nextIndex < currentQuestions.length) {
+            if (nextIndex < effectiveQuestionCount) {
                 setCurrentIndex(nextIndex);
             } else {
                 handleFinishQuiz();
@@ -661,7 +699,7 @@ export function QuizTaker({
         setIsAnswered(false);
         setIsCorrect(false);
         setExplanation(null);
-    }, [adaptiveLevel, currentIndex, currentQuestions, handleFinishQuiz, mode, sourceText, toast]);
+    }, [adaptiveLevel, currentIndex, currentQuestions, handleFinishQuiz, mode, sourceText, toast, runtimeSettings?.progressiveUnlock, unlockedCount]);
 
     const handlePreviousQuestion = () => {
         if (currentIndex > 0) {
@@ -697,6 +735,8 @@ export function QuizTaker({
     // Per-Question Timer for Survival Mode
     useEffect(() => {
         if (mode === 'survival' && !isAnswered && !isFinished) {
+            const cap = Math.min(30, timebankSeconds);
+            setQuestionTimeLeft(SURVIVAL_QUESTION_TIME + cap);
             questionTimerRef.current = setInterval(() => {
                 setQuestionTimeLeft(prev => {
                     if (prev <= 1) {
@@ -719,7 +759,7 @@ export function QuizTaker({
         return () => {
             if (questionTimerRef.current) clearInterval(questionTimerRef.current);
         }
-    }, [mode, currentIndex, isAnswered, isFinished, handleIncorrectAnswer, toast]);
+    }, [mode, currentIndex, isAnswered, isFinished, handleIncorrectAnswer, toast, timebankSeconds]);
     
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -737,54 +777,93 @@ export function QuizTaker({
         };
     }, [isAnswered, handleNextQuestion]);
 
+    const finalizeAnswer = (questionId: string, optionId: string) => {
+        if (questionTimerRef.current) clearInterval(questionTimerRef.current);
+        const currentQuestion = currentQuestions.find(q => q.id === questionId) || question;
+        const correctOption = currentQuestion.options.find(o => o.isCorrect);
+        const isAnswerCorrect = optionId === correctOption?.id;
+        setIsCorrect(isAnswerCorrect);
+        setIsAnswered(true);
+
+        if (runtimeSettings?.timebankSystem && mode === 'survival' && isAnswerCorrect && questionTimeLeft > 0) {
+            setTimebankSeconds((prev) => Math.min(90, prev + Math.max(1, Math.floor(questionTimeLeft * 0.35))));
+        }
+
+        if (isAnswerCorrect) {
+            const nextStreak = correctStreak + 1;
+            setCorrectStreak(nextStreak);
+            if (runtimeSettings?.progressiveUnlock && nextStreak >= (runtimeSettings?.progressiveUnlockStreak || 4)) {
+                setUnlockedCount((prev) => Math.min(currentQuestions.length, prev + 1));
+                setCorrectStreak(0);
+            }
+        } else {
+            setCorrectStreak(0);
+            setQuestionMisses((prev) => ({ ...prev, [questionId]: (prev[questionId] || 0) + 1 }));
+            if (runtimeSettings?.questionDecay) {
+                const misses = (questionMisses[questionId] || 0) + 1;
+                if (misses >= 2) {
+                    setCurrentQuestions((prev) => {
+                        const idx = prev.findIndex((q) => q.id === questionId);
+                        if (idx === -1 || idx === prev.length - 1) return prev;
+                        const cloned = [...prev];
+                        const [item] = cloned.splice(idx, 1);
+                        cloned.push(item);
+                        return cloned;
+                    });
+                }
+            }
+        }
+        
+        const isBossQuestion = mode === 'boss-fight' && currentIndex === currentQuestions.length - 1;
+
+        if (!isAnswerCorrect) {
+             handleIncorrectAnswer();
+             if (mode === 'survival') {
+                handleSurvivalPenalty();
+             }
+             if (isBossQuestion) {
+                 toast({
+                    title: 'Boss Defeated You!',
+                    description: 'You answered the final question incorrectly. The quiz will now restart.',
+                    variant: 'destructive',
+                    duration: 5000,
+                 });
+                 setTimeout(() => {
+                     setCurrentIndex(0);
+                     setAnswers({});
+                     setIsAnswered(false);
+                     setIsCorrect(false);
+                     setStrikes(0);
+                 }, 2000);
+             }
+        } else {
+            if (isBossQuestion) {
+                handleFinishQuiz();
+            }
+        }
+
+        if (mode === 'adaptive') {
+            if (isAnswerCorrect) {
+                setAdaptiveLevel((level) => Math.min(10, level + 1));
+            } else {
+                setAdaptiveLevel((level) => Math.max(1, level - 1));
+            }
+        }
+    };
+
     const handleAnswerChange = (questionId: string, optionId: string) => {
         if (isAnswered && (mode !== 'normal')) return;
 
         setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
 
         if(mode !== 'normal') {
-            if (questionTimerRef.current) clearInterval(questionTimerRef.current);
-
-            const currentQuestion = currentQuestions.find(q => q.id === questionId) || question;
-            const correctOption = currentQuestion.options.find(o => o.isCorrect);
-            const isAnswerCorrect = optionId === correctOption?.id;
-            setIsCorrect(isAnswerCorrect);
-            setIsAnswered(true);
-            
-            const isBossQuestion = mode === 'boss-fight' && currentIndex === currentQuestions.length - 1;
-
-            if (!isAnswerCorrect) {
-                 handleIncorrectAnswer();
-                 if (mode === 'survival') {
-                    handleSurvivalPenalty();
-                 }
-                 if (isBossQuestion) {
-                     toast({
-                        title: 'Boss Defeated You!',
-                        description: 'You answered the final question incorrectly. The quiz will now restart.',
-                        variant: 'destructive',
-                        duration: 5000,
-                     });
-                     setTimeout(() => {
-                         setCurrentIndex(0);
-                         setAnswers({});
-                         setIsAnswered(false);
-                         setIsCorrect(false);
-                         setStrikes(0);
-                     }, 2000);
-                 }
+            if (answerFinalizeTimerRef.current) clearTimeout(answerFinalizeTimerRef.current);
+            const windowSeconds = runtimeSettings?.answerRevisionWindowSeconds ?? 0;
+            if (runtimeSettings?.confidenceScoring && !confidences[questionId]) return;
+            if (windowSeconds > 0) {
+                answerFinalizeTimerRef.current = setTimeout(() => finalizeAnswer(questionId, optionId), windowSeconds * 1000);
             } else {
-                if (isBossQuestion) {
-                    handleFinishQuiz();
-                }
-            }
-
-            if (mode === 'adaptive') {
-                if (isAnswerCorrect) {
-                    setAdaptiveLevel((level) => Math.min(10, level + 1));
-                } else {
-                    setAdaptiveLevel((level) => Math.max(1, level - 1));
-                }
+                finalizeAnswer(questionId, optionId);
             }
         }
     };
@@ -923,6 +1002,8 @@ export function QuizTaker({
                 strikes={strikes}
                 taskId={taskId}
                 studysetId={studysetId}
+                scoringModel={runtimeSettings?.scoringModel || 'accuracy'}
+                confidences={confidences}
             />
         )
     }
@@ -1085,6 +1166,35 @@ export function QuizTaker({
                                         )}
                                     </div>
                                 )}
+                                {!isAnswered && runtimeSettings?.confidenceScoring && selectedOptionId ? (
+                                  <div className="mt-4 rounded-md surface-interactive p-3">
+                                    <p className="mb-2 text-xs text-muted-foreground">How confident are you?</p>
+                                    <div className="flex gap-2">
+                                      {(['low', 'medium', 'high'] as const).map((level) => (
+                                        <Button
+                                          key={`confidence-${level}`}
+                                          type="button"
+                                          variant={confidences[question.id] === level ? 'default' : 'outline'}
+                                          size="sm"
+                                          onClick={() => {
+                                            setConfidences((prev) => ({ ...prev, [question.id]: level }));
+                                            if (mode !== 'normal') {
+                                              if (answerFinalizeTimerRef.current) clearTimeout(answerFinalizeTimerRef.current);
+                                              const windowSeconds = runtimeSettings?.answerRevisionWindowSeconds ?? 0;
+                                              if (windowSeconds > 0) {
+                                                answerFinalizeTimerRef.current = setTimeout(() => finalizeAnswer(question.id, selectedOptionId), windowSeconds * 1000);
+                                              } else {
+                                                finalizeAnswer(question.id, selectedOptionId);
+                                              }
+                                            }
+                                          }}
+                                        >
+                                          {level}
+                                        </Button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : null}
                                 </>
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-full text-center">
