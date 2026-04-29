@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
 import { Bold, Italic, Loader2, Paintbrush, PanelsRightBottom, Underline } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +24,14 @@ import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { WordwebCanvas } from '@/components/tools/wordweb-canvas';
+import { TimelineBoard } from '@/components/tools/timeline-board';
+import type { CanonicalDocument } from '@/lib/tools/canonical-model';
+import {
+  canonicalToNotesSections,
+  notesSectionsToCanonical,
+  type NoteSection,
+} from '@/lib/tools/notes-canonical-adapter';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -142,7 +150,9 @@ const BASE_AUTO_HIGHLIGHT_TARGETS: AutoHighlightTarget[] = [
 
 function NotesPageContent() {
   const searchParams = useSearchParams();
-  const layoutPreset = (searchParams.get('layout') || '').toLowerCase();
+  const pathname = usePathname();
+  const mode: 'notes' | 'wordweb' | 'timeline' =
+    pathname === '/tools/wordweb' ? 'wordweb' : pathname === '/tools/timeline' ? 'timeline' : 'notes';
   const runId = searchParams.get('runId');
   const classId = searchParams.get('classId');
   const taskId = searchParams.get('taskId');
@@ -169,6 +179,7 @@ function NotesPageContent() {
   const [audience, setAudience] = useState('student');
   const [isLoading, setIsLoading] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState<GenerateNotesOutput['notes'] | null>(null);
+  const [canonicalDoc, setCanonicalDoc] = useState<CanonicalDocument | null>(null);
   const [liveDraftNotes, setLiveDraftNotes] = useState<GenerateNotesOutput['notes'] | null>(null);
   const [customTitle, setCustomTitle] = useState('');
   const [paintActive, setPaintActive] = useState(false);
@@ -215,9 +226,10 @@ function NotesPageContent() {
   const launchHandledRef = useRef(false);
   const lastReportedSignatureRef = useRef('');
   const { toast } = useToast();
-  const isWordwebPreset = layoutPreset === 'wordweb' || layoutPreset === 'mindmap';
-  const isTimelinePreset = layoutPreset === 'timeline';
-  const pageTitle = isWordwebPreset ? 'Wordweb' : isTimelinePreset ? 'Timeline Notes' : 'Notes';
+  const isWordwebPreset = mode === 'wordweb';
+  const isTimelinePreset = mode === 'timeline';
+  const pageTitle = isWordwebPreset ? 'Wordweb' : isTimelinePreset ? 'Timeline' : 'Notes';
+  const storagePrefix = `tools.${mode}`;
 
   const launchStages: Array<{ title: string; detail: string }> = [
     { title: 'Opening study task', detail: 'Loading your saved studyset plan and task settings.' },
@@ -287,6 +299,29 @@ function NotesPageContent() {
     return targets;
   }, [language, region]);
 
+  const setNotesModel = useCallback(
+    (sections: NoteSection[] | null) => {
+      if (!sections || sections.length === 0) {
+        setGeneratedNotes(null);
+        setCanonicalDoc(null);
+        setNoteHtml('');
+        return;
+      }
+      const normalized = sections as GenerateNotesOutput['notes'];
+      setGeneratedNotes(normalized);
+      setCanonicalDoc(notesSectionsToCanonical(normalized, { title: customTitle.trim() || 'Notes' }));
+      setNoteHtml(notesToHtml(normalized));
+    },
+    [customTitle]
+  );
+
+  const applyCanonicalDocument = useCallback((nextDocument: CanonicalDocument) => {
+    setCanonicalDoc(nextDocument);
+    const projected = canonicalToNotesSections(nextDocument) as GenerateNotesOutput['notes'];
+    setGeneratedNotes(projected);
+    setNoteHtml(notesToHtml(projected));
+  }, []);
+
   const reportStudysetPerformance = useCallback(async (inputText: string) => {
     if (!taskId || !studysetId) return;
     const trimmed = inputText.trim();
@@ -337,7 +372,7 @@ function NotesPageContent() {
       autoHighlightColor,
       updatedAt: Date.now(),
     };
-    localStorage.setItem('tools.notes.editorState', JSON.stringify(payload));
+    localStorage.setItem(`${storagePrefix}.editorState`, JSON.stringify(payload));
 
     if (!saveToRecents || !htmlToSave.trim()) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
@@ -386,6 +421,7 @@ function NotesPageContent() {
     saveToRecents,
     selectedAutoHighlightTargets,
     selectedNoteBlocks,
+    storagePrefix,
   ]);
 
   const applyAutoHighlights = useCallback(() => {
@@ -429,9 +465,9 @@ function NotesPageContent() {
   useEffect(() => {
     if (savedRun?.output_payload && savedRun.status === 'succeeded') {
       const output = savedRun.output_payload;
-      setGeneratedNotes((output.notes || null) as GenerateNotesOutput['notes'] | null);
+      setNotesModel((output.notes || null) as GenerateNotesOutput['notes'] | null);
     }
-  }, [savedRun]);
+  }, [savedRun, setNotesModel]);
 
   useEffect(() => {
     lectureFocusRef.current = lectureFocus;
@@ -442,12 +478,12 @@ function NotesPageContent() {
   }, []);
 
   useEffect(() => {
-    if (layoutPreset === 'wordweb' || layoutPreset === 'mindmap') {
+    if (mode === 'wordweb') {
       setStyle('mindmap');
-    } else if (layoutPreset === 'timeline') {
+    } else if (mode === 'timeline') {
       setStyle('timeline');
     }
-  }, [layoutPreset]);
+  }, [mode]);
 
   useEffect(() => {
     const loadTier = async () => {
@@ -474,20 +510,20 @@ function NotesPageContent() {
   }, [premiumTier, isWordwebPreset, isTimelinePreset, toast]);
 
   useEffect(() => {
-    const s = (k: string) => localStorage.getItem(`tools.notes.${k}`);
+    const s = (k: string) => localStorage.getItem(`${storagePrefix}.${k}`);
     if (s('length') === 'short' || s('length') === 'medium' || s('length') === 'long') setLength(s('length') as any);
     if (s('style')) setStyle(s('style')!);
     if (s('audience')) setAudience(s('audience')!);
     if (s('saveToRecents') === 'false') setSaveToRecents(false);
 
-    const cachedTranscript = localStorage.getItem('tools.notes.liveTranscript');
+    const cachedTranscript = localStorage.getItem(`${storagePrefix}.liveTranscript`);
     if (cachedTranscript) {
       setLiveTranscript(cachedTranscript);
       setSourceText(cachedTranscript);
       lastAutoDraftLengthRef.current = cachedTranscript.length;
     }
 
-    const rawEditorState = localStorage.getItem('tools.notes.editorState');
+    const rawEditorState = localStorage.getItem(`${storagePrefix}.editorState`);
     if (rawEditorState) {
       try {
         const parsed = JSON.parse(rawEditorState);
@@ -505,7 +541,7 @@ function NotesPageContent() {
         // Ignore bad local state.
       }
     }
-  }, []);
+  }, [storagePrefix]);
 
   useEffect(() => {
     if (!generatedNotes) return;
@@ -517,11 +553,11 @@ function NotesPageContent() {
 
   useEffect(() => {
     if (!liveTranscript.trim()) {
-      localStorage.removeItem('tools.notes.liveTranscript');
+      localStorage.removeItem(`${storagePrefix}.liveTranscript`);
       return;
     }
-    localStorage.setItem('tools.notes.liveTranscript', liveTranscript);
-  }, [liveTranscript]);
+    localStorage.setItem(`${storagePrefix}.liveTranscript`, liveTranscript);
+  }, [liveTranscript, storagePrefix]);
 
   useEffect(() => {
     if (!generatedNotes) return;
@@ -606,8 +642,7 @@ function NotesPageContent() {
       }
       if (background) setLiveDraftNotes(notes);
       else {
-        setGeneratedNotes(notes);
-        setNoteHtml(notes ? notesToHtml(notes) : '');
+        setNotesModel(notes);
         setAnnotationPaths([]);
         await reportStudysetPerformance(textWithDirectives);
       }
@@ -626,7 +661,7 @@ function NotesPageContent() {
       if (background) setIsAutoDrafting(false);
       else setIsLoading(false);
     }
-  }, [audience, customTitle, imageDataUri, length, region, schoolingLevel, selectedNoteBlocks, reportStudysetPerformance, saveToRecents, style, t.notes.generatingTitle, toast]);
+  }, [audience, imageDataUri, length, region, schoolingLevel, selectedNoteBlocks, reportStudysetPerformance, saveToRecents, setNotesModel, style, t.notes.generatingTitle, toast]);
 
   useEffect(() => {
     if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
@@ -863,10 +898,15 @@ function NotesPageContent() {
     }
   }, [linkUrl, toast]);
 
-  useEffect(() => { localStorage.setItem('tools.notes.length', length); }, [length]);
-  useEffect(() => { localStorage.setItem('tools.notes.style', style); }, [style]);
-  useEffect(() => { localStorage.setItem('tools.notes.audience', audience); }, [audience]);
-  useEffect(() => { localStorage.setItem('tools.notes.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
+  useEffect(() => { localStorage.setItem(`${storagePrefix}.length`, length); }, [length, storagePrefix]);
+  useEffect(() => { localStorage.setItem(`${storagePrefix}.style`, style); }, [style, storagePrefix]);
+  useEffect(() => { localStorage.setItem(`${storagePrefix}.audience`, audience); }, [audience, storagePrefix]);
+  useEffect(() => { localStorage.setItem(`${storagePrefix}.saveToRecents`, String(saveToRecents)); }, [saveToRecents, storagePrefix]);
+
+  useEffect(() => {
+    if (!generatedNotes || generatedNotes.length === 0) return;
+    setCanonicalDoc(notesSectionsToCanonical(generatedNotes as NoteSection[], { title: customTitle.trim() || 'Notes' }));
+  }, [customTitle, generatedNotes]);
 
   useEffect(() => {
     if (!isListening || !autoDraftEnabled || isLoading || isAutoDrafting) return;
@@ -922,8 +962,10 @@ function NotesPageContent() {
   const lengthLabels: Record<string, string> = { short: t.short, medium: t.medium, long: t.long };
   const editableSections = useMemo(() => {
     const parsed = parseNotesFromHtml(noteHtml);
-    return parsed && parsed.length > 0 ? parsed : generatedNotes || [];
-  }, [generatedNotes, noteHtml]);
+    if (parsed && parsed.length > 0) return parsed;
+    if (canonicalDoc) return canonicalToNotesSections(canonicalDoc);
+    return generatedNotes || [];
+  }, [canonicalDoc, generatedNotes, noteHtml]);
 
   const applyInlineFormat = useCallback((command: 'bold' | 'italic' | 'underline') => {
     if (typeof document === 'undefined') return;
@@ -977,6 +1019,7 @@ function NotesPageContent() {
   }
 
   if (generatedNotes) {
+    const isVisualMode = mode === 'wordweb' || mode === 'timeline';
     return (
       <div className="h-full overflow-auto p-4 md:p-6">
         <div className="mx-auto max-w-6xl space-y-4">
@@ -985,6 +1028,7 @@ function NotesPageContent() {
               variant="ghost"
               onClick={() => {
                 setGeneratedNotes(null);
+                setCanonicalDoc(null);
                 setPaintActive(false);
                 setHighlightActive(false);
                 setEditMode(false);
@@ -999,38 +1043,43 @@ function NotesPageContent() {
                 size="sm"
                 className="rounded-full h-8 gap-1.5"
                 onClick={() => setShowNotesPanel((value) => !value)}
+                disabled={isVisualMode}
               >
                 <PanelsRightBottom className="h-3.5 w-3.5" />
                 <span className="text-xs">Edit panel</span>
               </Button>
-              <TextHighlighterToolbar
-                active={highlightActive}
-                onToggle={() => { setHighlightActive(h => !h); if (paintActive) setPaintActive(false); }}
-                containerRef={notesContentRef}
-                singleUse
-                onApplied={() => setHighlightActive(false)}
-                onContentChanged={(html) => {
-                  setNoteHtml(html);
-                  persistNotesState(html);
-                }}
-              />
-              <Button
-                variant={paintActive ? 'default' : 'outline'}
-                size="sm"
-                className="rounded-full h-8 gap-1.5"
-                onClick={() => { setPaintActive(p => !p); if (highlightActive) setHighlightActive(false); }}
-              >
-                <Paintbrush className="h-3.5 w-3.5" />
-                <span className="text-xs">Annotate</span>
-              </Button>
-              <Button
-                variant={editMode ? 'default' : 'outline'}
-                size="sm"
-                className="rounded-full h-8 gap-1.5"
-                onClick={() => setEditMode((v) => !v)}
-              >
-                <span className="text-xs">{editMode ? 'Stop edit' : 'Edit text'}</span>
-              </Button>
+              {!isVisualMode ? (
+                <>
+                  <TextHighlighterToolbar
+                    active={highlightActive}
+                    onToggle={() => { setHighlightActive(h => !h); if (paintActive) setPaintActive(false); }}
+                    containerRef={notesContentRef}
+                    singleUse
+                    onApplied={() => setHighlightActive(false)}
+                    onContentChanged={(html) => {
+                      setNoteHtml(html);
+                      persistNotesState(html);
+                    }}
+                  />
+                  <Button
+                    variant={paintActive ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-full h-8 gap-1.5"
+                    onClick={() => { setPaintActive(p => !p); if (highlightActive) setHighlightActive(false); }}
+                  >
+                    <Paintbrush className="h-3.5 w-3.5" />
+                    <span className="text-xs">Annotate</span>
+                  </Button>
+                  <Button
+                    variant={editMode ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-full h-8 gap-1.5"
+                    onClick={() => setEditMode((v) => !v)}
+                  >
+                    <span className="text-xs">{editMode ? 'Stop edit' : 'Edit text'}</span>
+                  </Button>
+                </>
+              ) : null}
               <ExportToolbar
                 toolType="notes"
                 title={customTitle.trim() || undefined}
@@ -1046,50 +1095,56 @@ function NotesPageContent() {
             </div>
           </div>
 
-          <div className={cn('grid gap-4', showNotesPanel ? 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px]' : 'grid-cols-1')}>
-            <div
-              className="relative rounded-2xl border surface-panel p-5 md:p-6"
-              style={{
-                fontFamily: noteFontFamily,
-                fontSize: `${noteFontSize}px`,
-                fontWeight: noteFontWeight,
-                lineHeight: noteLineHeight,
-                color: noteTextColor,
-              }}
-            >
+          <div className={cn('grid gap-4', !isVisualMode && showNotesPanel ? 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px]' : 'grid-cols-1')}>
+            {mode === 'wordweb' && canonicalDoc ? (
+              <WordwebCanvas document={canonicalDoc} onChange={applyCanonicalDocument} />
+            ) : mode === 'timeline' && canonicalDoc ? (
+              <TimelineBoard document={canonicalDoc} onChange={applyCanonicalDocument} />
+            ) : (
               <div
-                ref={notesContentRef}
-                className={cn(
-                  'prose prose-sm md:prose-base max-w-none focus:outline-none',
-                  editMode ? 'rounded-xl border border-dashed border-border p-3' : ''
-                )}
-                contentEditable={editMode}
-                suppressContentEditableWarning
-                dangerouslySetInnerHTML={{ __html: noteHtml || notesToHtml(generatedNotes) }}
-                onInput={(event) => {
-                  const html = (event.currentTarget as HTMLDivElement).innerHTML;
-                  setNoteHtml(html);
-                  persistNotesState(html);
+                className="relative rounded-2xl border surface-panel p-5 md:p-6"
+                style={{
+                  fontFamily: noteFontFamily,
+                  fontSize: `${noteFontSize}px`,
+                  fontWeight: noteFontWeight,
+                  lineHeight: noteLineHeight,
+                  color: noteTextColor,
                 }}
-                onBlur={(event) => {
-                  const html = (event.currentTarget as HTMLDivElement).innerHTML;
-                  setNoteHtml(html);
-                  persistNotesState(html);
-                }}
-              />
-              <PaintOverlay
-                active={paintActive}
-                onClose={() => setPaintActive(false)}
-                singleUse
-                initialPaths={annotationPaths}
-                onPathsChange={(nextPaths) => {
-                  setAnnotationPaths(nextPaths);
-                  persistNotesState(noteHtml, nextPaths);
-                }}
-              />
-            </div>
+              >
+                <div
+                  ref={notesContentRef}
+                  className={cn(
+                    'prose prose-sm md:prose-base max-w-none focus:outline-none',
+                    editMode ? 'rounded-xl border border-dashed border-border p-3' : ''
+                  )}
+                  contentEditable={editMode}
+                  suppressContentEditableWarning
+                  dangerouslySetInnerHTML={{ __html: noteHtml || notesToHtml(generatedNotes) }}
+                  onInput={(event) => {
+                    const html = (event.currentTarget as HTMLDivElement).innerHTML;
+                    setNoteHtml(html);
+                    persistNotesState(html);
+                  }}
+                  onBlur={(event) => {
+                    const html = (event.currentTarget as HTMLDivElement).innerHTML;
+                    setNoteHtml(html);
+                    persistNotesState(html);
+                  }}
+                />
+                <PaintOverlay
+                  active={paintActive}
+                  onClose={() => setPaintActive(false)}
+                  singleUse
+                  initialPaths={annotationPaths}
+                  onPathsChange={(nextPaths) => {
+                    setAnnotationPaths(nextPaths);
+                    persistNotesState(noteHtml, nextPaths);
+                  }}
+                />
+              </div>
+            )}
 
-            {showNotesPanel && (
+            {!isVisualMode && showNotesPanel && (
               <aside className="rounded-2xl border surface-panel p-4 space-y-4 h-fit xl:sticky xl:top-4">
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">Include blocks (multi-select)</p>
@@ -1268,8 +1323,7 @@ function NotesPageContent() {
         onImport={(text) => {
           const notes = text.includes('<') ? parseNotesFromHtml(text) : parseNotesFromMarkdown(text);
           if (notes && notes.length > 0) {
-            setGeneratedNotes(notes as any);
-            setNoteHtml(notesToHtml(notes as any));
+            setNotesModel(notes as any);
             setAnnotationPaths([]);
           } else {
             toast({ variant: 'destructive', title: t.couldNotParse, description: t.notes.parseError });

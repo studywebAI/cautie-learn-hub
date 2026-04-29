@@ -92,7 +92,8 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     rename: isDutch ? 'Hernoemen' : 'Rename',
     renameHint: isDutch ? 'Selecteer een leerling om te hernoemen.' : 'Select a student to rename.',
     renameHeader: isDutch ? 'Leerlingen hernoemen' : 'Rename students',
-    renameInputLabel: isDutch ? 'Nieuwe naam' : 'New name',
+    renameFromTo: isDutch ? 'Hernoem van' : 'Rename from',
+    renameTo: isDutch ? 'naar' : 'to',
     renameStudent: isDutch ? 'Leerling hernoemen' : 'Rename student',
     close: isDutch ? 'Sluiten' : 'Close',
     save: isDutch ? 'Opslaan' : 'Save',
@@ -561,7 +562,9 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
             </div>
             <div className="space-y-2 rounded-md surface-interactive p-3">
               <p className="text-sm">
-                {renameStudentId ? t.renameInputLabel : t.renameHint}
+                {renameStudentId
+                  ? `${t.renameFromTo} "${sortedStudents.find((student) => student.id === renameStudentId)?.name || ''}" ${t.renameTo}:`
+                  : t.renameHint}
               </p>
               <Input
                 value={renameValue}

@@ -166,8 +166,8 @@ export function AppSidebar() {
     { href: '/tools/quiz', label: dictionary.sidebar.tools.quizGenerator, icon: BrainCircuit },
     { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: Copy },
     { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: FileSignature },
-    { href: '/tools/notes?layout=wordweb', label: isDutch ? 'Wordweb' : 'Wordweb', icon: Network },
-    { href: '/tools/notes?layout=timeline', label: isDutch ? 'Tijdlijn Notities' : 'Timeline Notes', icon: Calendar },
+    { href: '/tools/wordweb', label: 'Wordweb', icon: Network },
+    { href: '/tools/timeline', label: isDutch ? 'Tijdlijn' : 'Timeline', icon: Calendar },
   ];
 
   const otherMenuItems = [
