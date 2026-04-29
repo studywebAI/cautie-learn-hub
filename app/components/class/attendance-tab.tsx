@@ -557,8 +557,8 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
           <div
             key={student.id}
             data-testid={`attendance-student-row-${student.id}`}
-            className={`rounded-lg bg-[hsl(var(--surface-2))] px-3 py-2.5 transition-colors ${
-              selectedStudentId === student.id ? 'bg-[hsl(var(--surface-2))]' : 'hover:bg-[hsl(var(--surface-2))]'
+            className={`rounded-lg surface-interactive px-3 py-2.5 transition-colors ${
+              selectedStudentId === student.id ? 'surface-interactive' : 'hover:surface-interactive'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -585,7 +585,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-homework-${student.id}`}
                   variant="outline"
                   size="sm"
-                  className={`h-10 gap-1 rounded-md px-2 text-xs ${student.hasHomeworkIncomplete ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
+                  className={`h-10 gap-1 rounded-md px-2 text-xs ${student.hasHomeworkIncomplete ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'surface-panel'}`}
                   aria-label={t.homeworkIncomplete}
                   disabled={processingStudentIds.has(student.id)}
                   onClick={() => handleFlagToggle(student.id, 'hasHomeworkIncomplete', !student.hasHomeworkIncomplete)}
@@ -599,7 +599,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-late-${student.id}`}
                   variant="outline"
                   size="sm"
-                  className={`h-10 gap-1 rounded-md px-2 text-xs ${student.wasTooLate ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
+                  className={`h-10 gap-1 rounded-md px-2 text-xs ${student.wasTooLate ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'surface-panel'}`}
                   aria-label={t.late}
                   disabled={processingStudentIds.has(student.id)}
                   onClick={() => handleFlagToggle(student.id, 'wasTooLate', !student.wasTooLate)}
@@ -631,7 +631,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-present-${student.id}`}
                   variant="outline"
                   size="sm"
-                  className={`h-10 gap-1 rounded-md px-2 text-xs ${student.isPresent === true ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
+                  className={`h-10 gap-1 rounded-md px-2 text-xs ${student.isPresent === true ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'surface-panel'}`}
                   aria-label={t.present}
                   disabled={processingStudentIds.has(student.id)}
                   onClick={() => handleAttendanceToggle(student.id, true)}
@@ -645,7 +645,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
                   data-testid={`attendance-action-absent-${student.id}`}
                   variant="outline"
                   size="sm"
-                  className={`h-10 gap-1 rounded-md px-2 text-xs ${student.isPresent === false ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'bg-[hsl(var(--surface-1))]'}`}
+                  className={`h-10 gap-1 rounded-md px-2 text-xs ${student.isPresent === false ? 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-ring))]' : 'surface-panel'}`}
                   aria-label={t.absent}
                   disabled={processingStudentIds.has(student.id)}
                   onClick={() => handleAttendanceToggle(student.id, false)}
@@ -658,7 +658,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
 
               <div className="hidden items-center gap-2 text-xs sm:flex">
                 {student.stats.totalAbsent > 0 && (
-                  <Badge variant="outline" className="text-xs bg-[hsl(var(--surface-2))]">
+                  <Badge variant="outline" className="text-xs surface-interactive">
                     <XCircle className="mr-1 h-3 w-3" />
                     {student.stats.totalAbsent}
                   </Badge>

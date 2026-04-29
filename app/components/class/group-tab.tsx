@@ -389,7 +389,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                       <button
                         key={teacher.id}
                         type="button"
-                        className="group flex w-full items-center gap-3 rounded-md bg-[hsl(var(--surface-1))] px-3 py-2 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
+                        className="group flex w-full items-center gap-3 rounded-md surface-panel px-3 py-2 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
                         onClick={() => setSelectedTeacher(teacher)}
                       >
                         <div className="min-w-0 flex-1">
@@ -436,7 +436,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                       type="button"
                       key={student.id}
                       data-testid={`group-student-row-${student.id}`}
-                      className="group flex items-center gap-3 rounded-md bg-[hsl(var(--surface-1))] px-3 py-2 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
+                      className="group flex items-center gap-3 rounded-md surface-panel px-3 py-2 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
                       onClick={() => {
                         setSelectedStudent(student);
                         void logClassTabEvent({
@@ -508,7 +508,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                   ))}
 
                   {sortedStudents.length === 0 && (
-                    <div className="rounded-md bg-[hsl(var(--surface-1))] py-10 text-center text-foreground/75">
+                    <div className="rounded-md surface-panel py-10 text-center text-foreground/75">
                       <Users className="mx-auto mb-4 h-12 w-12 opacity-50" />
                       <p>{t.noStudentsFound}</p>
                     </div>

@@ -141,3 +141,18 @@ Latest implementation notes (most recent batches):
   - `app/components/class/share-tab.tsx`
   - `app/components/sidebar.tsx`
   - `app/components/recents-sidebar.tsx`
+- Global color parity completion (full app token normalization pass):
+  - Added shared non-class surface primitives and aligned class panel primitives in:
+    - `app/globals.css`
+  - Replaced ad-hoc raw surface background utilities and standardized panel/interactive/chip hierarchy across:
+    - dashboard/main shell
+    - class tabs and class detail screens
+    - settings and agenda
+    - subjects list/detail/paragraph assignment flows
+    - materials pages
+    - tools pages
+    - auth/login/shared shells (header/sidebar/command palette/self-grading)
+    - public token preview page
+  - Verification:
+    - Removed remaining `bg-[hsl(var(--surface-* ))]` usages under `app/`.
+    - Lint/build rerun after token refactor and encoding cleanup.

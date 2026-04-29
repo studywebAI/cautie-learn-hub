@@ -336,19 +336,19 @@ export function GradesTab({ classId }: { classId: string }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
-          <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:bg-[hsl(var(--surface-3))]" onClick={() => setView('new')}>
+          <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('new')}>
             <p>New Grades</p>
             <p className="text-xs text-foreground/70">Create and assign grades</p>
           </button>
-          <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:bg-[hsl(var(--surface-3))]" onClick={() => setView('edit')}>
+          <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('edit')}>
             <p>Edit Grades</p>
             <p className="text-xs text-foreground/70">{gradeSets.length} grade set{gradeSets.length !== 1 ? 's' : ''}</p>
           </button>
-          <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:bg-[hsl(var(--surface-3))]" onClick={() => setView('history')}>
+          <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('history')}>
             <p>History</p>
             <p className="text-xs text-foreground/70">Audit changes</p>
           </button>
-          <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:bg-[hsl(var(--surface-3))]" onClick={() => setView('reports')}>
+          <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('reports')}>
             <p>Reports</p>
             <p className="text-xs text-foreground/70">Class insights</p>
           </button>
@@ -926,7 +926,7 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
 
   if (error) {
     return (
-      <div className="rounded-lg bg-[hsl(var(--surface-2))] p-4 text-center text-foreground/80">
+      <div className="rounded-lg surface-interactive p-4 text-center text-foreground/80">
         {error}
       </div>
     );
@@ -984,7 +984,7 @@ function EditGradesList({
           {gradeSets.map((gs) => (
             <div 
               key={gs.id} 
-              className="class-panel-lg cursor-pointer transition-colors hover:bg-[hsl(var(--surface-2))]"
+              className="class-panel-lg cursor-pointer transition-colors hover:surface-interactive"
               onClick={() => onSelectGradeSet(gs.id)}
             >
               <div className="flex items-center justify-between">

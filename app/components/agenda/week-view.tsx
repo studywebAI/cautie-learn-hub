@@ -105,7 +105,7 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
           type="button"
           variant="ghost"
           size="sm"
-          className="h-8 rounded-lg bg-[hsl(var(--surface-2))] px-2.5 hover:bg-[hsl(var(--surface-3))]"
+          className="h-8 rounded-lg surface-interactive px-2.5 hover:surface-chip"
           onClick={() => setWeekOffset((prev) => prev - 1)}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -118,7 +118,7 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
           type="button"
           variant="ghost"
           size="sm"
-          className="h-8 rounded-lg bg-[hsl(var(--surface-2))] px-2.5 hover:bg-[hsl(var(--surface-3))]"
+          className="h-8 rounded-lg surface-interactive px-2.5 hover:surface-chip"
           onClick={() => setWeekOffset((prev) => prev + 1)}
         >
           <span className="mr-1 text-xs">Next</span>

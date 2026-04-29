@@ -576,7 +576,7 @@ export default function StudysetPage() {
                       key={item.id}
                       type="button"
                       onClick={() => router.push(`/tools/studyset/${item.id}`)}
-                      className="w-full rounded-xl bg-card px-3 py-2 text-left transition-colors hover:bg-muted"
+                      className="w-full rounded-xl surface-panel px-3 py-2 text-left transition-colors hover:surface-interactive"
                     >
                       <p className="text-sm font-medium">{item.name}</p>
                       <p className="text-xs text-muted-foreground">
@@ -603,7 +603,7 @@ export default function StudysetPage() {
                     <div
                       key={title}
                       className={`rounded-full px-3 py-1 text-xs ${
-                        index === step ? 'bg-muted text-foreground' : 'bg-background text-muted-foreground'
+                        index === step ? 'surface-interactive text-foreground' : 'bg-background text-muted-foreground'
                       }`}
                     >
                       {index + 1}. {title}

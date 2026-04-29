@@ -55,7 +55,7 @@ export function AppHeader() {
   };
 
   return (
-    <header className="Sticky top-0 z-30 flex h-16 items-center gap-4 bg-card/80 backdrop-blur-sm px-4 md:px-6">
+    <header className="Sticky top-0 z-30 flex h-16 items-center gap-4 surface-panel/80 backdrop-blur-sm px-4 md:px-6">
 
       <div className="flex-1">
         <h1 className="text-[24px] leading-7 tracking-tight">

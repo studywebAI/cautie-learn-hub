@@ -152,7 +152,7 @@ function MaterialPageContent() {
       }
 
       return (
-        <pre className="rounded-md border bg-muted/30 p-3 text-xs overflow-auto">
+        <pre className="rounded-md border surface-interactive p-3 text-xs overflow-auto">
           {JSON.stringify(latestContent, null, 2)}
         </pre>
       );

@@ -69,7 +69,7 @@ export default function OtherMaterialsPage() {
           <p className="text-sm text-muted-foreground">Auto-saved files, images, OneDrive docs, and text sources.</p>
         </div>
 
-        <section className="rounded-2xl border border-border bg-card p-3">
+        <section className="rounded-2xl border border-border surface-panel p-3">
           <div className="relative mb-3">
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <input
@@ -95,11 +95,11 @@ export default function OtherMaterialsPage() {
                       className={`rounded-xl border p-2 text-left transition-colors ${
                         selected
                           ? 'border-[hsl(var(--sidebar-accent)/0.9)] bg-[hsl(var(--sidebar-accent)/0.14)]'
-                          : 'border-border bg-background hover:bg-muted/40'
+                          : 'border-border bg-background hover:surface-interactive'
                       }`}
                     >
                       <p className="truncate text-xs font-medium">{material.title}</p>
-                      <div className="mt-1 rounded-md border border-border bg-muted/40 p-2">
+                      <div className="mt-1 rounded-md border border-border surface-interactive p-2">
                         <div className="h-24 overflow-hidden rounded bg-background p-1 text-[10px] text-muted-foreground">
                           {material.type === 'image' ? (
                             <img src={material.preview} alt={material.title} className="h-full w-full object-cover" />
@@ -120,7 +120,7 @@ export default function OtherMaterialsPage() {
                   <p className="text-sm font-medium">{selectedMaterial.title}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{selectedMaterial.type}</p>
                   <p className="text-xs text-muted-foreground">{new Date(selectedMaterial.dateIso).toLocaleString()}</p>
-                  <div className="mt-3 rounded-md border border-border bg-muted/30 p-2">
+                  <div className="mt-3 rounded-md border border-border surface-interactive p-2">
                     {selectedMaterial.type === 'image' ? (
                       <img src={selectedMaterial.preview} alt={selectedMaterial.title} className="h-40 w-full rounded object-cover" />
                     ) : (

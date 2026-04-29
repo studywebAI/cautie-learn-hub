@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AppContext, AppContextType, ThemeType } from '@/contexts/app-context';
@@ -526,7 +526,7 @@ export function FirstTimeSetupGate() {
                 {flowSteps.map((stepKey, index) => (
                   <span
                     key={stepKey}
-                    className={`h-2.5 w-14 rounded-full border transition-colors ${index <= currentStepIndex ? 'border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-accent))]' : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-3))]'}`}
+                    className={`h-2.5 w-14 rounded-full border transition-colors ${index <= currentStepIndex ? 'border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-accent))]' : 'border-[hsl(var(--border))] surface-chip'}`}
                   />
                 ))}
               </div>
@@ -540,7 +540,7 @@ export function FirstTimeSetupGate() {
           </div>
         </aside>
 
-        <main className="overflow-auto bg-[hsl(var(--surface-1))] p-6 md:p-10">
+        <main className="overflow-auto surface-panel p-6 md:p-10">
           <div key={step} className={`setup-step-anim mx-auto w-full max-w-5xl space-y-5 ${isRTL ? 'setup-rtl' : ''}`}>
             {step === 'language' && (
               <div className="space-y-5">

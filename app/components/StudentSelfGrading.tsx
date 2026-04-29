@@ -109,7 +109,7 @@ export function StudentSelfGrading({
 
       <div className="space-y-6">
         {/* Question */}
-        <div className="bg-muted/50 p-4 rounded-lg">
+        <div className="surface-interactive p-4 rounded-lg">
           <h3 className="font-medium mb-2">Question:</h3>
           <p className="text-sm">{question}</p>
         </div>

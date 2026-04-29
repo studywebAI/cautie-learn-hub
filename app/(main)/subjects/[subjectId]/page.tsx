@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useContext } from 'react';
 import { useParams } from 'next/navigation';
@@ -266,10 +266,10 @@ export default function SubjectDetailPage() {
           <Card key={i} className="animate-pulse">
             <CardContent className="p-4">
               <div className="flex gap-4">
-                <div className="w-20 h-20 bg-muted rounded" />
+                <div className="w-20 h-20 surface-interactive rounded" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-muted rounded w-1/3" />
-                  <div className="h-3 bg-muted rounded w-full" />
+                  <div className="h-4 surface-interactive rounded w-1/3" />
+                  <div className="h-3 surface-interactive rounded w-full" />
                 </div>
               </div>
             </CardContent>
@@ -288,7 +288,7 @@ export default function SubjectDetailPage() {
   }
 
   return (
-    <div className="space-y-0 rounded-2xl bg-[hsl(var(--surface-1))] p-4">
+    <div className="space-y-0 rounded-2xl surface-panel p-4">
       <div className="mb-2 text-xs text-foreground/65">
         {`Subjects / ${subject?.name || 'Subject'} / Chapters`}
       </div>
@@ -491,7 +491,7 @@ export default function SubjectDetailPage() {
             <div>
               <Label htmlFor="paragraph-chapter">Chapter</Label>
               {lockSelectedChapter && selectedChapterId ? (
-                <div className="mt-2 h-9 w-full rounded-md border border-input bg-muted/30 px-3 text-sm flex items-center">
+                <div className="mt-2 h-9 w-full rounded-md border border-input surface-interactive px-3 text-sm flex items-center">
                   {(() => {
                     const chapter = chapters.find((item) => item.id === selectedChapterId);
                     return chapter ? `${chapter.chapter_number}. ${chapter.title}` : '';

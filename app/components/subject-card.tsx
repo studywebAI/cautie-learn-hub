@@ -320,7 +320,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
 
   return (
     <Card
-      className="h-full cursor-pointer overflow-hidden rounded-2xl border-none bg-card transition-all duration-200 hover:bg-card hover:shadow-sm"
+      className="h-full cursor-pointer overflow-hidden rounded-2xl border-none surface-panel transition-all duration-200 hover:surface-panel hover:shadow-sm"
       role="button"
       tabIndex={0}
       onClick={() => router.push(subjectHref)}
@@ -333,7 +333,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
     >
       <CardContent className="p-0 flex flex-col h-full">
         <div className="px-4 pt-4 pb-3">
-          <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-foreground">
+          <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg surface-interactive text-foreground">
             <Icon className="h-4 w-4" strokeWidth={1.8} />
           </div>
           <h3 className="truncate text-[13px] font-medium text-foreground">{subject.title}</h3>
@@ -345,7 +345,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
               prefetch={false}
               href={`/subjects/${subject.id}/chapters/${lastWorkedParagraph.chapter_id}/paragraphs/${lastWorkedParagraph.id}`}
               onClick={(event) => event.stopPropagation()}
-              className="mt-2 inline-flex max-w-full items-center rounded-lg bg-muted px-2 py-1 text-[11px] text-foreground hover:bg-muted/80"
+              className="mt-2 inline-flex max-w-full items-center rounded-lg surface-interactive px-2 py-1 text-[11px] text-foreground hover:surface-interactive/80"
             >
               <span className="truncate">
                 Resume {lastWorkedParagraph.chapter_number}.{lastWorkedParagraph.paragraph_number} {lastWorkedParagraph.title}
@@ -372,18 +372,18 @@ export function SubjectCard({ subject }: SubjectCardProps) {
                   prefetch={false}
                   href={`/subjects/${subject.id}/chapters/${p.chapter_id}/paragraphs/${p.id}`}
                   onClick={(event) => event.stopPropagation()}
-                  className={`grid min-h-8 grid-cols-[2.8rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-muted/80 ${
-                    isLast ? 'bg-muted' : ''
+                  className={`grid min-h-8 grid-cols-[2.8rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:surface-interactive/80 ${
+                    isLast ? 'surface-interactive' : ''
                   }`}
                 >
-                  <span className="rounded-md bg-muted px-1.5 py-0.5 text-center text-[11px] font-medium tabular-nums text-foreground">
+                  <span className="rounded-md surface-interactive px-1.5 py-0.5 text-center text-[11px] font-medium tabular-nums text-foreground">
                     {p.chapter_number}.{p.paragraph_number}
                   </span>
                   <span className="truncate text-xs text-foreground">{p.title}</span>
                   <span className="text-right text-xs tabular-nums text-muted-foreground">
                     {roundedProgress}%
                   </span>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div className="h-1.5 overflow-hidden rounded-full surface-interactive">
                     <div
                       className="h-full rounded-full bg-foreground transition-all"
                       style={{ width: `${roundedProgress}%` }}

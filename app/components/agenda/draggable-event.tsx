@@ -87,8 +87,8 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
       }}
       {...attributes}
       {...listeners}
-      className={`rounded-md border-l-4 border-l-transparent bg-[hsl(var(--surface-1))] px-2 py-1 cursor-grab active:cursor-grabbing ${
-        isDragging ? 'opacity-50' : 'hover:bg-[hsl(var(--surface-2))]'
+      className={`rounded-md border-l-4 border-l-transparent surface-panel px-2 py-1 cursor-grab active:cursor-grabbing ${
+        isDragging ? 'opacity-50' : 'hover:surface-interactive'
       }`}
       onClick={handleClick}
     >

@@ -309,7 +309,7 @@ export default function StudysetDetailPage() {
                                 <p className={`text-sm ${task.completed ? 'line-through text-muted-foreground' : 'font-medium'}`}>
                                   {task.title}
                                 </p>
-                                <Badge variant="outline" className="bg-card">
+                                <Badge variant="outline" className="surface-panel">
                                   {toolLabel(task.task_type)}
                                 </Badge>
                               </div>

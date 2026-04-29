@@ -142,19 +142,19 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
                   : 'Add context for this material...'}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="min-h-[140px] bg-[hsl(var(--surface-1))]"
+            className="min-h-[140px] surface-panel"
           />
           <Input
             placeholder="Title (optional)"
             value={attachmentLabel}
             onChange={(e) => setAttachmentLabel(e.target.value)}
-            className="h-9 bg-[hsl(var(--surface-1))]"
+            className="h-9 surface-panel"
           />
           <div className="flex items-center gap-2">
             <select
               value={selectedSourceId}
               onChange={(e) => setSelectedSourceId(e.target.value)}
-              className="h-9 flex-1 rounded-md border border-border/70 bg-[hsl(var(--surface-1))] px-3 text-sm"
+              className="h-9 flex-1 rounded-md border border-border/70 surface-panel px-3 text-sm"
             >
               <option value="">Link class resource</option>
               {sources.map((source) => (

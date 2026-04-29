@@ -669,7 +669,7 @@ export function AppSidebar() {
           </div>
 
           {createSubjectOpen && (
-            <div className="mb-1 space-y-1 rounded-xl bg-[hsl(var(--surface-2))] p-2">
+            <div className="mb-1 space-y-1 rounded-xl surface-interactive p-2">
               <select
                 value={selectedSubjectClassId}
                 onChange={(e) => setSelectedSubjectClassId(e.target.value)}
@@ -702,7 +702,7 @@ export function AppSidebar() {
           )}
 
           {dropdown.kind === 'classes' && isTeacher && newClassMenuOpen && !createClassOpen && !joinClassOpen && (
-            <div className="mb-1 space-y-1 rounded-xl bg-[hsl(var(--surface-2))] p-2">
+            <div className="mb-1 space-y-1 rounded-xl surface-interactive p-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -860,7 +860,7 @@ export function AppSidebar() {
       </div>
       {(createClassOpen || joinClassOpen) && (
         <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-3xl rounded-3xl border border-border bg-[hsl(var(--surface-1))] shadow-2xl">
+          <div className="w-full max-w-3xl rounded-3xl border border-border surface-panel shadow-2xl">
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
               <div>
                 <h3 className="text-xl leading-tight">

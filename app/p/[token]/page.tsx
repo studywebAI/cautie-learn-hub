@@ -74,7 +74,7 @@ export default function PublicPresentationPage() {
 
       <div className="space-y-4">
         {data.previewManifest.slides.map((slide) => (
-          <div key={slide.slideId} className="overflow-hidden rounded-xl border bg-card">
+          <div key={slide.slideId} className="overflow-hidden rounded-xl border surface-panel">
             <img
               src={slide.imageUrl}
               alt={`Slide ${slide.index}`}

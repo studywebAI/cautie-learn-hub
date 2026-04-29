@@ -400,7 +400,7 @@ function AgendaPageContent() {
           if (dayDate < base) return;
           scheduleEvents.push({
             id: `schedule-${slot.id}-${format(dayDate, 'yyyy-MM-dd')}`,
-            title: slot.is_break ? `Break · ${slot.title}` : slot.title,
+            title: slot.is_break ? `Break Â· ${slot.title}` : slot.title,
             subject: (slot as any).class_name || 'School schedule',
             class_id: slot.class_id,
             class_name: slot.class_name,
@@ -635,19 +635,19 @@ function AgendaPageContent() {
   return (
     <div className="agenda-clean h-full p-4 md:p-5">
       <div className="flex h-full flex-col gap-6">
-        <div className="rounded-2xl bg-[hsl(var(--surface-1))] p-2.5 md:p-3">
+        <div className="rounded-2xl surface-panel p-2.5 md:p-3">
           <div className="flex flex-wrap items-center justify-between gap-2.5">
             <div className="flex flex-wrap items-center gap-2.5">
               <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
               {isTeacher && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-9 rounded-xl bg-[hsl(var(--surface-2))] px-3.5 text-foreground/90 hover:bg-[hsl(var(--surface-3))]">
+                    <Button variant="ghost" size="sm" className="h-9 rounded-xl surface-interactive px-3.5 text-foreground/90 hover:surface-chip">
                       <SlidersHorizontal className="mr-2 h-4 w-4" />
                       Classes ({overlayClassIds.length})
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-80 rounded-xl border-0 bg-[hsl(var(--surface-1))] p-3 shadow-md">
+                  <PopoverContent className="w-80 rounded-xl border-0 surface-panel p-3 shadow-md">
                     <div className="space-y-2.5">
                       <p className="text-sm text-foreground/85">Choose classes</p>
                       <div className="max-h-72 space-y-1.5 overflow-auto pr-1">
@@ -658,7 +658,7 @@ function AgendaPageContent() {
                               key={classItem.id}
                               type="button"
                               onClick={() => toggleOverlayClass(classItem.id)}
-                              className="flex w-full items-center justify-between gap-2 rounded-lg bg-[hsl(var(--surface-2))] px-2.5 py-2 text-left text-foreground/90 hover:bg-[hsl(var(--surface-3))]"
+                              className="flex w-full items-center justify-between gap-2 rounded-lg surface-interactive px-2.5 py-2 text-left text-foreground/90 hover:surface-chip"
                             >
                               <span className="text-sm">{classItem.name}</span>
                               <Checkbox
@@ -684,7 +684,7 @@ function AgendaPageContent() {
             )}
 
             {isTeacher && (
-              <Button className="h-9 rounded-xl bg-[hsl(var(--surface-2))] px-3.5 text-foreground hover:bg-[hsl(var(--surface-3))]" onClick={() => setIsTeacherDialogOpen(true)}>
+              <Button className="h-9 rounded-xl surface-interactive px-3.5 text-foreground hover:surface-chip" onClick={() => setIsTeacherDialogOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Agenda Item
               </Button>

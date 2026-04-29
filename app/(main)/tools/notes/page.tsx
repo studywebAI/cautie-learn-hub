@@ -927,7 +927,7 @@ function NotesPageContent() {
     return (
       <div className="h-full overflow-auto p-4 md:p-6">
         <div className="mx-auto flex min-h-[52vh] w-full max-w-3xl items-center justify-center">
-          <div className="w-full rounded-2xl border border-border bg-card p-5 md:p-6">
+          <div className="w-full rounded-2xl border border-border surface-panel p-5 md:p-6">
             <div className="mb-3 flex items-center gap-3 text-sm text-foreground">
               <Loader2 className="h-5 w-5 animate-spin" />
               <span className="font-medium">{currentStage.title}</span>
@@ -1011,7 +1011,7 @@ function NotesPageContent() {
 
           <div className={cn('grid gap-4', showNotesPanel ? 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px]' : 'grid-cols-1')}>
             <div
-              className="relative rounded-2xl border bg-card p-5 md:p-6"
+              className="relative rounded-2xl border surface-panel p-5 md:p-6"
               style={{
                 fontFamily: noteFontFamily,
                 fontSize: `${noteFontSize}px`,
@@ -1053,7 +1053,7 @@ function NotesPageContent() {
             </div>
 
             {showNotesPanel && (
-              <aside className="rounded-2xl border bg-card p-4 space-y-4 h-fit xl:sticky xl:top-4">
+              <aside className="rounded-2xl border surface-panel p-4 space-y-4 h-fit xl:sticky xl:top-4">
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">Include blocks (multi-select)</p>
                   <div className="flex flex-wrap gap-1.5">

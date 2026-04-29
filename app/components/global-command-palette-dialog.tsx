@@ -109,7 +109,7 @@ export function GlobalCommandPaletteDialog({ open, onOpenChange }: GlobalCommand
                     key={item.id}
                     type="button"
                     className={cn(
-                      'w-full text-left px-3 py-2.5 hover:bg-muted/50 transition-colors',
+                      'w-full text-left px-3 py-2.5 hover:surface-interactive transition-colors',
                       'flex items-center justify-between gap-3'
                     )}
                     onClick={() => {

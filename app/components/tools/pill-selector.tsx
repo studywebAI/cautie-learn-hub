@@ -53,7 +53,7 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
             <div key={opt.value}>
               <span className="font-medium text-foreground">{opt.label}</span>
               {opt.description && (
-                <span className="text-muted-foreground"> — {opt.description}</span>
+                <span className="text-muted-foreground"> â€” {opt.description}</span>
               )}
             </div>
           ))}
@@ -72,7 +72,7 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
             }}
             className={cn(
               'px-3 py-1 text-xs rounded-full border-0 outline-none transition-none',
-              'hover:bg-[hsl(var(--surface-1))]',
+              'hover:surface-panel',
               'focus-visible:ring-1 focus-visible:ring-ring',
               'disabled:opacity-50 disabled:pointer-events-none',
               activeValue === opt.value

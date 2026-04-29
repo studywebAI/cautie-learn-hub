@@ -373,7 +373,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
             Live School Schedule
           </h2>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <div className="rounded-md bg-[hsl(var(--surface-2))] p-3">
+          <div className="rounded-md surface-interactive p-3">
             <p className="text-xs text-muted-foreground">Current class</p>
             <p className="mt-1 text-sm font-medium">{nowSummary.current ? nowSummary.current.title : 'No class right now'}</p>
             {nowSummary.current && (
@@ -382,7 +382,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
               </p>
             )}
           </div>
-          <div className="rounded-md bg-[hsl(var(--surface-2))] p-3">
+          <div className="rounded-md surface-interactive p-3">
             <p className="text-xs text-muted-foreground">Next class</p>
             <p className="mt-1 text-sm font-medium">{nowSummary.next ? nowSummary.next.title : 'No more classes today'}</p>
             {nowSummary.next && (
@@ -401,20 +401,20 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
             <div className="grid grid-cols-[80px_repeat(5,minmax(0,1fr))] gap-2">
               <div />
               {WEEK_DAYS.map((day) => (
-                <div key={day.value} className="rounded-lg bg-[hsl(var(--surface-2))] px-3 py-2 text-sm font-medium">
+                <div key={day.value} className="rounded-lg surface-interactive px-3 py-2 text-sm font-medium">
                   {day.short}
                 </div>
               ))}
             </div>
             {periodRows.map((periodIndex) => (
               <div key={periodIndex} className="grid grid-cols-[80px_repeat(5,minmax(0,1fr))] gap-2">
-                <div className="rounded-lg bg-[hsl(var(--surface-2))] px-3 py-2 text-xs text-muted-foreground">P{periodIndex}</div>
+                <div className="rounded-lg surface-interactive px-3 py-2 text-xs text-muted-foreground">P{periodIndex}</div>
                 {WEEK_DAYS.map((day) => {
                   const slot = slotByCell.get(`${day.value}-${periodIndex}`) || null;
                   return (
                     <div
                       key={`${day.value}-${periodIndex}`}
-                      className="min-h-[78px] rounded-lg bg-[hsl(var(--surface-3))] p-2"
+                      className="min-h-[78px] rounded-lg surface-chip p-2"
                       onDragOver={(event) => event.preventDefault()}
                       onDrop={(event) => {
                         event.preventDefault();
@@ -428,7 +428,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                           draggable
                           onDragStart={() => setDragSlotId(slot.id)}
                           onDragEnd={() => setDragSlotId(null)}
-                          className="h-full rounded-md bg-[hsl(var(--surface-1))] p-2"
+                          className="h-full rounded-md surface-panel p-2"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
@@ -482,12 +482,12 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
             {WEEK_DAYS.map((day) => {
               const daySlots = sortedSlots.filter((slot) => slot.day_of_week === day.value);
               return (
-                <div key={day.value} className="rounded-lg bg-[hsl(var(--surface-3))] p-2">
+                <div key={day.value} className="rounded-lg surface-chip p-2">
                   <p className="mb-2 text-xs font-semibold text-muted-foreground">{day.label}</p>
                   {daySlots.length === 0 ? null : (
                     <div className="space-y-2">
                       {daySlots.map((slot) => (
-                        <div key={slot.id} className="rounded-md bg-[hsl(var(--surface-1))] p-2">
+                        <div key={slot.id} className="rounded-md surface-panel p-2">
                           <div className="flex items-center justify-between gap-2">
                             <div>
                               <p className="text-xs font-semibold">P{slot.period_index} - {slot.title}</p>

@@ -1159,7 +1159,7 @@ export function AssignmentEditor({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 bg-[hsl(var(--surface-1))]"
+            className="h-8 surface-panel"
             onClick={() => setExpandedAnswersBlockId((prev) => prev === block.id ? null : block.id)}
           >
             <Users className="mr-1.5 h-3.5 w-3.5" />
@@ -1168,7 +1168,7 @@ export function AssignmentEditor({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 bg-[hsl(var(--surface-1))]"
+            className="h-8 surface-panel"
             onClick={() => setExpandedOwnAnswerBlockId((prev) => prev === block.id ? null : block.id)}
           >
             <Eye className="mr-1.5 h-3.5 w-3.5" />
@@ -1177,7 +1177,7 @@ export function AssignmentEditor({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 bg-[hsl(var(--surface-1))]"
+            className="h-8 surface-panel"
             onClick={() => {
               setIsEditMode(true);
               setSelectedBlock(block.id);
@@ -1188,7 +1188,7 @@ export function AssignmentEditor({
           </Button>
           </div>
           {expandedAnswersBlockId === block.id && (
-            <div className="mt-2 space-y-2 rounded-lg border border-border/70 bg-[hsl(var(--surface-1))] p-2 text-xs">
+            <div className="mt-2 space-y-2 rounded-lg border border-border/70 surface-panel p-2 text-xs">
               <div className="rounded-md border border-border/50 bg-background p-2 text-foreground/80">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground/65">Question</p>
                 <p className="mt-1">{String(block.data.question || block.data.prompt || block.data.header || 'Untitled block')}</p>
@@ -1222,7 +1222,7 @@ export function AssignmentEditor({
             </div>
           )}
           {expandedOwnAnswerBlockId === block.id && (
-            <div className="mt-2 rounded-lg border border-border/70 bg-[hsl(var(--surface-1))] p-2 text-xs text-foreground/75">
+            <div className="mt-2 rounded-lg border border-border/70 surface-panel p-2 text-xs text-foreground/75">
               {(() => {
                 const own = ownAnswers.find((item) => item.block_id === block.id);
                 if (!own) return 'No submitted answer yet.';
@@ -1471,7 +1471,7 @@ export function AssignmentEditor({
               <p className="mt-1 text-xs text-muted-foreground">
                 {(block.data.pairs || [])
                   .slice(0, 3)
-                  .map((pair: any) => `${pair?.left || '...'} → ${pair?.right || '...'}`)
+                  .map((pair: any) => `${pair?.left || '...'} â†’ ${pair?.right || '...'}`)
                   .join(' | ') || 'No pairs yet.'}
               </p>
             </div>
@@ -1656,7 +1656,7 @@ export function AssignmentEditor({
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Paper area */}
-        <div className="flex-1 overflow-auto p-2 md:p-3 bg-[hsl(var(--surface-1))]">
+        <div className="flex-1 overflow-auto p-2 md:p-3 surface-panel">
           <div
             ref={paperRef}
             data-testid="assignment-paper"
@@ -1851,7 +1851,7 @@ export function AssignmentEditor({
                                     {renderBlockContent(block)}
                                   </div>
                                 ) : (
-                                  <div className="h-full rounded-lg border border-border bg-[hsl(var(--surface-1))] p-2">
+                                  <div className="h-full rounded-lg border border-border surface-panel p-2">
                                     <div className="rounded-md border border-border/70 bg-background p-2">
                                       <div className="mb-1.5 h-2.5 w-24 rounded bg-muted" />
                                       <div className="h-2 w-full rounded bg-muted/80" />
@@ -1879,7 +1879,7 @@ export function AssignmentEditor({
             
             {/* Empty drop zone at bottom */}
             {isDragging && rows.length > 0 && (
-              <div className="mt-4 rounded-xl border border-border bg-[hsl(var(--surface-1))] p-3">
+              <div className="mt-4 rounded-xl border border-border surface-panel p-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-lg border border-border/80 bg-background p-2">
                     <div className="mb-1.5 h-2.5 w-20 rounded bg-muted" />

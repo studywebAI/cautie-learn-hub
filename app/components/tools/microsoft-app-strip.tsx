@@ -753,7 +753,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
             type="button"
             onClick={() => void openEmbeddedPicker()}
             disabled={opening}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-[hsl(var(--surface-1))] p-0 transition-colors hover:bg-[hsl(var(--surface-2))] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border surface-panel p-0 transition-colors hover:surface-interactive disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="OneDrive"
           >
             {opening ? (
@@ -766,8 +766,8 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
       )}
 
       {pickerOpen && (
-        <div className="mx-auto flex min-h-[620px] max-h-[78vh] w-full max-w-[1040px] flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-[hsl(var(--surface-1))] shadow-xl">
-          <div className="flex items-center justify-between border-b border-border bg-[hsl(var(--surface-1))] px-4 py-3">
+        <div className="mx-auto flex min-h-[620px] max-h-[78vh] w-full max-w-[1040px] flex-1 flex-col overflow-hidden rounded-2xl border border-border surface-panel shadow-xl">
+          <div className="flex items-center justify-between border-b border-border surface-panel px-4 py-3">
             <div className="flex items-center gap-2">
               <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-4 w-4 object-contain" />
               <span className="text-sm font-medium">OneDrive</span>
@@ -784,7 +784,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
               <button
                 type="button"
                 onClick={handleSwitchAccount}
-                className="rounded-lg border border-border bg-[hsl(var(--surface-2))] px-2.5 py-1 text-xs text-foreground hover:bg-[hsl(var(--surface-3))]"
+                className="rounded-lg border border-border surface-interactive px-2.5 py-1 text-xs text-foreground hover:surface-chip"
               >
                 {switchingAccount ? 'Switching...' : 'Use another account'}
               </button>
@@ -799,12 +799,12 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
             </div>
           </div>
           {pickerStatus !== 'Ready to select' && (
-            <div className="flex items-center gap-2 border-b border-border bg-[hsl(var(--surface-1))] px-4 py-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 border-b border-border surface-panel px-4 py-2 text-xs text-muted-foreground">
               {pickerStatus === 'Ready to use in Cautie' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Loader2 className={`h-3.5 w-3.5 ${pickerStatus === 'Import failed' ? 'hidden' : 'animate-spin'}`} />}
               <span>{pickerStatus}</span>
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-1.5 border-b border-border bg-[hsl(var(--surface-1))] px-4 py-2 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-border surface-panel px-4 py-2 text-xs">
             <span className="mr-1 text-muted-foreground">Filter:</span>
             {([
               ['all', 'All'],
@@ -821,7 +821,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                 className={`rounded-full border px-2.5 py-1 transition-colors ${
                   activeFilter === value
                     ? 'border-primary/40 bg-primary/10 text-primary'
-                    : 'border-border bg-[hsl(var(--surface-2))] text-muted-foreground hover:bg-[hsl(var(--surface-3))]'
+                    : 'border-border surface-interactive text-muted-foreground hover:surface-chip'
                 }`}
               >
                 {label}
@@ -829,11 +829,11 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
             ))}
           </div>
           {authTransitioning && (
-            <div className="border-b border-border bg-[hsl(var(--surface-2))] px-4 py-2 text-xs text-muted-foreground">
+            <div className="border-b border-border surface-interactive px-4 py-2 text-xs text-muted-foreground">
               Redirecting to Microsoft sign-in in this tab and returning automatically.
             </div>
           )}
-          <div className="min-h-0 flex-1 bg-[hsl(var(--surface-1))]">
+          <div className="min-h-0 flex-1 surface-panel">
             {fallbackMode === 'graph' ? (
               <div className="flex h-full flex-col">
                 <div className="space-y-2 border-b border-border px-4 py-3">
@@ -841,13 +841,13 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                     <div className="min-w-0">
                       <p className="text-sm font-medium">Microsoft Files</p>
                       <p className="text-xs text-muted-foreground">
-                        {visibleFallbackFiles.length} results · {selectedFallbackIds.length} selected
+                        {visibleFallbackFiles.length} results Â· {selectedFallbackIds.length} selected
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => void loadFallbackFiles(fallbackSource)}
-                      className="rounded-lg border border-border bg-[hsl(var(--surface-2))] px-2.5 py-1 text-xs hover:bg-[hsl(var(--surface-3))]"
+                      className="rounded-lg border border-border surface-interactive px-2.5 py-1 text-xs hover:surface-chip"
                     >
                       Refresh
                     </button>
@@ -857,11 +857,11 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                     value={fallbackSearch}
                     onChange={(event) => setFallbackSearch(event.target.value)}
                     placeholder="Search files..."
-                    className="h-9 w-full rounded-xl border border-border bg-[hsl(var(--surface-2))] px-3 text-xs outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                    className="h-9 w-full rounded-xl border border-border surface-interactive px-3 text-xs outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                   />
                 </div>
                 <div className="min-h-0 flex flex-1">
-                  <aside className="flex w-20 flex-col items-center gap-2 border-r border-border bg-[hsl(var(--surface-2))] py-2">
+                  <aside className="flex w-20 flex-col items-center gap-2 border-r border-border surface-interactive py-2">
                     {([
                       ['all', 'All', Layers],
                       ['files', 'Files', Folder],
@@ -878,7 +878,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                         className={`inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors ${
                           fallbackSource === value
                             ? 'border-primary/40 bg-primary/10 text-primary'
-                            : 'border-transparent text-muted-foreground hover:bg-[hsl(var(--surface-3))]'
+                            : 'border-transparent text-muted-foreground hover:surface-chip'
                         }`}
                       >
                         <Icon className="h-4 w-4" />
@@ -891,7 +891,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                       </div>
                     ) : visibleFallbackFiles.length === 0 ? (
-                      <div className="flex h-full min-h-[220px] items-center justify-center rounded-xl border border-dashed border-border bg-[hsl(var(--surface-2))] text-xs text-muted-foreground">
+                      <div className="flex h-full min-h-[220px] items-center justify-center rounded-xl border border-dashed border-border surface-interactive text-xs text-muted-foreground">
                         No files match this filter.
                       </div>
                     ) : (
@@ -910,10 +910,10 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                               className={`text-left rounded-xl border p-2.5 transition ${
                                 selected
                                   ? 'border-primary/50 bg-primary/10 shadow-sm'
-                                  : 'border-border bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))]'
+                                  : 'border-border surface-panel hover:surface-interactive'
                               }`}
                             >
-                              <div className="relative mb-2 h-24 overflow-hidden rounded-lg bg-[hsl(var(--surface-2))]">
+                              <div className="relative mb-2 h-24 overflow-hidden rounded-lg surface-interactive">
                                 {selected && (
                                   <div className="absolute right-1.5 top-1.5 z-10 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
                                     Selected
@@ -950,7 +950,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                 <div className="flex items-center justify-end gap-2 border-t border-border px-4 py-2">
                   <button
                     type="button"
-                    className="rounded-lg border border-border bg-[hsl(var(--surface-2))] px-3 py-1.5 text-sm hover:bg-[hsl(var(--surface-3))]"
+                    className="rounded-lg border border-border surface-interactive px-3 py-1.5 text-sm hover:surface-chip"
                     onClick={closePicker}
                   >
                     Cancel

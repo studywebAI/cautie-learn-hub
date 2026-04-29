@@ -55,9 +55,9 @@ export function AuthForm({
   }
 
   return (
-    <div className="min-h-screen w-full bg-[hsl(var(--surface-1))] p-4 md:p-8">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] w-full max-w-6xl grid-cols-1 overflow-hidden rounded-3xl border border-border bg-card md:grid-cols-[1.15fr_1fr] md:min-h-[calc(100vh-4rem)]">
-        <div className="hidden border-r border-border bg-[hsl(var(--surface-2))] p-10 md:flex md:flex-col md:justify-between">
+    <div className="min-h-screen w-full surface-panel p-4 md:p-8">
+      <div className="mx-auto grid min-h-[calc(100vh-2rem)] w-full max-w-6xl grid-cols-1 overflow-hidden rounded-3xl border border-border surface-panel md:grid-cols-[1.15fr_1fr] md:min-h-[calc(100vh-4rem)]">
+        <div className="hidden border-r border-border surface-interactive p-10 md:flex md:flex-col md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">cautie</p>
             <h1 className="mt-4 text-4xl font-semibold leading-tight">Learn faster with clean workflows.</h1>
@@ -170,7 +170,7 @@ export function AuthForm({
           )}
 
               {searchParams?.message && (
-                <div className="rounded-lg border border-border bg-muted/35 p-4 text-foreground">
+                <div className="rounded-lg border border-border surface-interactive/35 p-4 text-foreground">
                   <p
                     className={
                       searchParams.type === 'info'

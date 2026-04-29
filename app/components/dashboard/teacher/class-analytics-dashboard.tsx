@@ -226,7 +226,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
       actions.push({
         id: "support-student",
         title: `Follow up with ${topAttentionStudent.studentName}`,
-        detail: `Completion ${Math.round(topAttentionStudent.completionRate)}% · Warnings ${topAttentionStudent.warningCount}.`,
+        detail: `Completion ${Math.round(topAttentionStudent.completionRate)}% Â· Warnings ${topAttentionStudent.warningCount}.`,
         cta: "Open student logs",
         onClick: () => openStudentLogs(topAttentionStudent.studentId),
       });
@@ -362,7 +362,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
           <CardContent>
             <div className="text-2xl font-bold">{Math.round(analytics.attendanceSignals?.absentRate || 0)}%</div>
             <p className="text-xs text-muted-foreground">
-              Absent rate (14d) · Late {Math.round(analytics.attendanceSignals?.lateRate || 0)}%
+              Absent rate (14d) Â· Late {Math.round(analytics.attendanceSignals?.lateRate || 0)}%
             </p>
           </CardContent>
         </Card>
@@ -373,7 +373,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
           <CardContent>
             <div className="text-2xl font-bold">{analytics.scheduleSignals?.slotsCount || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Today {analytics.scheduleSignals?.todaySlotsCount || 0} · {analytics.scheduleSignals?.hasLiveClassNow ? "Live now" : "No live class"}
+              Today {analytics.scheduleSignals?.todaySlotsCount || 0} Â· {analytics.scheduleSignals?.hasLiveClassNow ? "Live now" : "No live class"}
             </p>
           </CardContent>
         </Card>
@@ -386,7 +386,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
         <CardContent>
           <div className="grid gap-3 md:grid-cols-2">
             {nextActions.map((action) => (
-              <div key={action.id} className="rounded-xl border border-border/70 bg-[hsl(var(--surface-2))] p-3">
+              <div key={action.id} className="rounded-xl border border-border/70 surface-interactive p-3">
                 <p className="text-sm font-medium">{action.title}</p>
                 <p className="mt-1 text-xs text-foreground/70">{action.detail}</p>
                 <Button size="sm" variant="outline" className="mt-3 h-8 px-3 text-xs" onClick={action.onClick}>

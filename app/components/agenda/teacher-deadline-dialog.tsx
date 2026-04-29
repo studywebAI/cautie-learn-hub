@@ -377,7 +377,7 @@ export function TeacherDeadlineDialog({
                             key={classItem.id}
                             type="button"
                             onClick={() => toggleClassSelection(classItem.id)}
-                            className="flex w-full items-center justify-between rounded-md bg-[hsl(var(--surface-2))] px-2.5 py-2 text-left"
+                            className="flex w-full items-center justify-between rounded-md surface-interactive px-2.5 py-2 text-left"
                           >
                             <span className="text-sm">{classItem.name}</span>
                             <Checkbox
@@ -427,7 +427,7 @@ export function TeacherDeadlineDialog({
                     <button
                       type="button"
                       onClick={() => setSelectedSubjectIds([])}
-                      className="w-full rounded-md bg-[hsl(var(--surface-2))] px-2.5 py-2 text-left text-sm"
+                      className="w-full rounded-md surface-interactive px-2.5 py-2 text-left text-sm"
                     >
                       No subject
                     </button>
@@ -438,7 +438,7 @@ export function TeacherDeadlineDialog({
                           key={`${subject.classId}-${subject.id}`}
                           type="button"
                           onClick={() => toggleSubjectSelection(subject.id)}
-                          className="flex w-full items-center justify-between rounded-md bg-[hsl(var(--surface-2))] px-2.5 py-2 text-left"
+                          className="flex w-full items-center justify-between rounded-md surface-interactive px-2.5 py-2 text-left"
                         >
                           <span className="text-sm">
                             {subject.title}
@@ -570,7 +570,7 @@ export function TeacherDeadlineDialog({
                       <button
                         key={source.id}
                         type="button"
-                        className="w-full rounded-lg bg-[hsl(var(--surface-1))] px-3 py-2 text-left hover:bg-[hsl(var(--surface-2))]"
+                        className="w-full rounded-lg surface-panel px-3 py-2 text-left hover:surface-interactive"
                         onClick={() => addSourceAsLink(source)}
                       >
                         <div className="text-sm font-medium truncate">{source.label}</div>
@@ -585,7 +585,7 @@ export function TeacherDeadlineDialog({
             {links.length > 0 && (
               <div className="space-y-2">
                 {links.map((link, index) => (
-                  <div key={`${link.link_type}-${link.link_ref_id || index}`} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--surface-2))] p-2">
+                  <div key={`${link.link_type}-${link.link_ref_id || index}`} className="flex items-center gap-2 rounded-lg surface-interactive p-2">
                     <Badge variant="secondary">{link.link_type.replace('_', ' ')}</Badge>
                     <span className="text-sm truncate flex-1">{link.label}</span>
                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeLink(index)}>

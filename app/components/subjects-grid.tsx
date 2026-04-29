@@ -235,10 +235,10 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
         {[...Array(6)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-0">
-              <div className="aspect-[4/3] bg-muted" />
+              <div className="aspect-[4/3] surface-interactive" />
               <div className="p-4 space-y-2">
-                <div className="h-3 bg-muted rounded w-3/4" />
-                <div className="h-2 bg-muted rounded w-1/2" />
+                <div className="h-3 surface-interactive rounded w-3/4" />
+                <div className="h-2 surface-interactive rounded w-1/2" />
               </div>
             </CardContent>
           </Card>
@@ -324,7 +324,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
             )}
 
             {!autoIcons && (
-              <div className="space-y-2 p-3 border rounded bg-muted/30">
+              <div className="space-y-2 p-3 border rounded surface-interactive">
                 <p className="text-xs text-muted-foreground">
                   Custom image upload will be available after creating the subject.
                   You can upload a cover image from the subject settings.
@@ -335,7 +335,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
             {!classId && classes.length > 0 && (
               <div className="space-y-2">
                 <Label>Link to classes (optional)</Label>
-                <div className="space-y-2 max-h-40 overflow-y-auto border rounded p-2 bg-muted/30">
+                <div className="space-y-2 max-h-40 overflow-y-auto border rounded p-2 surface-interactive">
                   {classes.map((classItem) => (
                     <div key={classItem.id} className="flex items-center gap-2">
                       <Checkbox

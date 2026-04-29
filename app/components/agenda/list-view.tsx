@@ -45,7 +45,7 @@ export function ListView({ events, onEventClick }: ListViewProps) {
 
   if (events.length === 0) {
     return (
-      <div className="rounded-xl bg-[hsl(var(--surface-1))] p-8 text-center">
+      <div className="rounded-xl surface-panel p-8 text-center">
         <p className="text-muted-foreground">No events scheduled</p>
       </div>
     );
@@ -108,7 +108,7 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
   const href = buildHref();
 
   const content = (
-    <div className="flex items-center gap-3 rounded-md bg-[hsl(var(--surface-1))] px-3 py-2 transition-colors hover:bg-[hsl(var(--surface-2))]">
+    <div className="flex items-center gap-3 rounded-md surface-panel px-3 py-2 transition-colors hover:surface-interactive">
       <div
         className="h-10 w-1 flex-shrink-0 rounded-full"
         style={{ backgroundColor: getEventAccent() }}

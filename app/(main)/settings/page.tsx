@@ -257,9 +257,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="h-full w-full overflow-auto bg-[hsl(var(--surface-1))]">
+    <div className="h-full w-full overflow-auto surface-panel">
       <div className="flex w-full flex-col gap-4">
-        <div className="flex items-center justify-between rounded-xl bg-[hsl(var(--surface-1))] px-1 py-1">
+        <div className="flex items-center justify-between rounded-xl surface-panel px-1 py-1">
           <Button
             type="button"
             variant="outline"
@@ -278,9 +278,9 @@ export default function SettingsPage() {
           <h1 className="text-sm md:text-base">{ui.settings}</h1>
         </div>
 
-        <div className="rounded-xl bg-[hsl(var(--surface-1))] p-1">
+        <div className="rounded-xl surface-panel p-1">
           <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
-            <aside className="rounded-xl bg-[hsl(var(--surface-2))] p-2">
+            <aside className="rounded-xl surface-interactive p-2">
               <nav className="space-y-1">
                 {tabItems.map((tabItem) => (
                   <button
@@ -292,7 +292,7 @@ export default function SettingsPage() {
                     }}
                     className={cn(
                       'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors',
-                      activeTab === tabItem.id ? 'bg-muted text-foreground' : 'text-foreground/85 hover:bg-muted/60 hover:text-foreground'
+                      activeTab === tabItem.id ? 'surface-interactive text-foreground' : 'text-foreground/85 hover:surface-interactive/60 hover:text-foreground'
                     )}
                   >
                     {tabItem.label}
@@ -303,7 +303,7 @@ export default function SettingsPage() {
 
             <div className="space-y-5">
               {activeTab === 'personalization' && (
-              <Card className="border-0 bg-[hsl(var(--surface-1))] shadow-none">
+              <Card className="border-0 surface-panel shadow-none">
                 <CardHeader>
                   <CardTitle>{dictionary.settings.personalization.title}</CardTitle>
                   <CardDescription>{dictionary.settings.personalization.description}</CardDescription>
@@ -317,18 +317,18 @@ export default function SettingsPage() {
                       </SelectTrigger>
                       <SelectContent>
                           <SelectItem value="en">English</SelectItem>
-                          <SelectItem value="zh">中文 (Chinese)</SelectItem>
-                          <SelectItem value="hi">हिन्दी (Hindi)</SelectItem>
-                          <SelectItem value="es">Español (Spanish)</SelectItem>
-                          <SelectItem value="fr">Français (French)</SelectItem>
-                          <SelectItem value="ar">العربية (Arabic)</SelectItem>
-                          <SelectItem value="bn">বাংলা (Bangla)</SelectItem>
-                          <SelectItem value="pt">Português (Portuguese)</SelectItem>
-                          <SelectItem value="ru">Русский (Russian)</SelectItem>
-                          <SelectItem value="ur">اردو (Urdu)</SelectItem>
+                          <SelectItem value="zh">Chinese</SelectItem>
+                          <SelectItem value="hi">Hindi</SelectItem>
+                          <SelectItem value="es">Spanish</SelectItem>
+                          <SelectItem value="fr">French</SelectItem>
+                          <SelectItem value="ar">Arabic</SelectItem>
+                          <SelectItem value="bn">Bangla</SelectItem>
+                          <SelectItem value="pt">Portuguese</SelectItem>
+                          <SelectItem value="ru">Russian</SelectItem>
+                          <SelectItem value="ur">Urdu</SelectItem>
                           <SelectItem value="de">Deutsch (German)</SelectItem>
                           <SelectItem value="id">Bahasa Indonesia</SelectItem>
-                          <SelectItem value="tr">Türkçe (Turkish)</SelectItem>
+                          <SelectItem value="tr">Turkish</SelectItem>
                           <SelectItem value="it">Italiano (Italian)</SelectItem>
                           <SelectItem value="nl">Nederlands (Dutch)</SelectItem>
                           <SelectItem value="pl">Polski (Polish)</SelectItem>
@@ -357,7 +357,7 @@ export default function SettingsPage() {
               )}
 
               {activeTab === 'general' && (
-              <Card className="border-0 bg-[hsl(var(--surface-1))] shadow-none">
+              <Card className="border-0 surface-panel shadow-none">
                 <CardHeader>
                   <CardTitle>{dictionary.settings.general.title}</CardTitle>
                   <CardDescription>{dictionary.settings.general.description}</CardDescription>
@@ -377,8 +377,8 @@ export default function SettingsPage() {
                         <SelectItem value="eu">Europe</SelectItem>
                         <SelectItem value="nl">Netherlands</SelectItem>
                         <SelectItem value="de">Germany</SelectItem>
-                        <SelectItem value="fr">France</SelectItem>
-                        <SelectItem value="es">Spain</SelectItem>
+                        <SelectItem value="fr">French</SelectItem>
+                        <SelectItem value="es">Spanish</SelectItem>
                         <SelectItem value="pl">Poland</SelectItem>
                         <SelectItem value="it">Italy</SelectItem>
                         <SelectItem value="au">Australia</SelectItem>
@@ -463,7 +463,7 @@ export default function SettingsPage() {
               )}
 
               {activeTab === 'subscription' && (
-              <Card className="border-0 bg-[hsl(var(--surface-1))] shadow-none">
+              <Card className="border-0 surface-panel shadow-none">
                 <CardHeader>
                   <CardTitle>{ui.subscription}</CardTitle>
                   <CardDescription>
@@ -482,7 +482,7 @@ export default function SettingsPage() {
               )}
 
               {activeTab === 'help' && (
-                <Card className="border-0 bg-[hsl(var(--surface-1))] shadow-none">
+                <Card className="border-0 surface-panel shadow-none">
                   <CardHeader>
                     <CardTitle>{tr({ en: 'Help & FAQ', nl: 'Help & FAQ' })}</CardTitle>
                     <CardDescription>
@@ -510,7 +510,7 @@ export default function SettingsPage() {
               )}
 
               {activeTab === 'log-codes' && (
-                <Card className="border-0 bg-[hsl(var(--surface-1))] shadow-none">
+                <Card className="border-0 surface-panel shadow-none">
                   <CardHeader>
                     <CardTitle>{tr({ en: 'Log codes', nl: 'Logcodes' })}</CardTitle>
                     <CardDescription>
@@ -524,14 +524,14 @@ export default function SettingsPage() {
                       placeholder={tr({ en: 'Enter log code...', nl: 'Voer logcode in...' })}
                     />
                     {selectedLogCodeDoc ? (
-                      <div className="rounded-xl border border-border bg-muted/20 p-4">
+                      <div className="rounded-xl border border-border surface-interactive p-4">
                         <p className="text-sm">{selectedLogCodeDoc.title}</p>
                         <p className="mt-2 text-sm text-muted-foreground">
                           {isDutch ? selectedLogCodeDoc.descriptionNl : selectedLogCodeDoc.descriptionEn}
                         </p>
                       </div>
                     ) : (
-                      <div className="rounded-xl border border-border bg-muted/15 p-4 text-sm text-muted-foreground">
+                      <div className="rounded-xl border border-border surface-interactive/15 p-4 text-sm text-muted-foreground">
                         {normalizedCodeQuery
                           ? (isDutch
                             ? `Geen uitleg gevonden voor ${normalizedCodeQuery}.`

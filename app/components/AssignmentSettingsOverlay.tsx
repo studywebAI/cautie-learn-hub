@@ -39,7 +39,7 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
   const Section = ({ id, title, children }: { id: 'time' | 'attempts' | 'access' | 'grading' | 'antiCheat' | 'delivery' | 'advanced'; title: string; children: React.ReactNode }) => {
     const isOpen = openSection === id;
     return (
-      <section className="rounded-lg border border-border/60 bg-[hsl(var(--surface-1))]">
+      <section className="rounded-lg border border-border/60 surface-panel">
         <button
           type="button"
           onClick={() => setOpenSection(id)}

@@ -747,7 +747,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
   return (
     <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
       <aside className="lg:sticky lg:top-4 self-start">
-        <div className="space-y-1 rounded-md bg-[hsl(var(--surface-2))] p-3">
+        <div className="space-y-1 rounded-md surface-interactive p-3">
             {settingsSections.map((section) => (
               <Button
                 key={section.id}
@@ -756,7 +756,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 onClick={() => setActiveSettingsSection(section.id)}
                 className={`h-auto w-full justify-start rounded-md px-3 py-2 text-left ${
                   activeSettingsSection === section.id
-                    ? 'bg-[hsl(var(--surface-3))] text-foreground shadow-[inset_0_0_0_1px_hsl(var(--border))] hover:bg-[hsl(var(--surface-3))]'
+                    ? 'surface-chip text-foreground shadow-[inset_0_0_0_1px_hsl(var(--border))] hover:surface-chip'
                     : 'text-foreground/80 hover:bg-[hsl(var(--interactive-hover))]'
                 }`}
               >
@@ -768,7 +768,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
 
       <div className="space-y-4 min-w-0">
       {activeSettingsSection === 'profile' && (
-      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+      <section className="rounded-md surface-panel p-4">
         <div className="space-y-1 pb-2">
           <h2 className="text-base">Class Profile</h2>
           
@@ -798,7 +798,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'invite' && (
-      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+      <section className="rounded-md surface-panel p-4">
         <div className="space-y-1 pb-2">
           <h2 className="text-base">Invite Access</h2>
           
@@ -808,7 +808,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <Label>Student Join Code</Label>
             <div className="flex gap-2">
               <Input value={studentJoinCode} readOnly />
-              <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" size="icon" onClick={() => void copyText(studentJoinCode, 'Student join code')}>
+              <Button className="border border-[hsl(var(--border))] surface-interactive text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" size="icon" onClick={() => void copyText(studentJoinCode, 'Student join code')}>
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
@@ -817,12 +817,12 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <Label>Teacher Join Code</Label>
             <div className="flex gap-2">
               <Input value={teacherJoinCode} readOnly />
-              <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" size="icon" onClick={() => void copyText(teacherJoinCode, 'Teacher join code')}>
+              <Button className="border border-[hsl(var(--border))] surface-interactive text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" size="icon" onClick={() => void copyText(teacherJoinCode, 'Teacher join code')}>
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
           </div>
-          <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" onClick={() => void handleRegenerateCodes()} disabled={regeneratingCodes}>
+          <Button className="border border-[hsl(var(--border))] surface-interactive text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" onClick={() => void handleRegenerateCodes()} disabled={regeneratingCodes}>
             <RotateCcw className="mr-2 h-4 w-4" />
             {regeneratingCodes ? 'Regenerating...' : 'Regenerate Invite Codes'}
           </Button>
@@ -831,7 +831,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'defaults' && (
-      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+      <section className="rounded-md surface-panel p-4">
         <div className="space-y-1 pb-2">
           <h2 className="text-base">Teaching Defaults</h2>
           
@@ -848,7 +848,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 }))
               }
             >
-              <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
+              <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] surface-panel text-sm">
                 <SelectValue placeholder="Choose default subject view" />
               </SelectTrigger>
               <SelectContent>
@@ -870,7 +870,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 }))
               }
             >
-              <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
+              <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] surface-panel text-sm">
                 <SelectValue placeholder="Choose default grade scale" />
               </SelectTrigger>
               <SelectContent>
@@ -881,7 +881,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </Select>
           </div>
 
-          <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
+          <div className="flex items-center justify-between rounded-md surface-interactive p-3">
             <div>
               <p className="text-sm font-medium">Show class average in grades</p>
               <p className="text-xs text-muted-foreground">Show or hide class-level average cards.</p>
@@ -900,7 +900,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
+          <div className="flex items-center justify-between rounded-md surface-interactive p-3">
             <div>
               <p className="text-sm font-medium">Require attendance confirmation</p>
               <p className="text-xs text-muted-foreground">Require confirmation before attendance changes.</p>
@@ -919,7 +919,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
+          <div className="flex items-center justify-between rounded-md surface-interactive p-3">
             <div>
               <p className="text-sm font-medium">Allow teacher invite actions</p>
               <p className="text-xs text-muted-foreground">Enable teacher invite actions.</p>
@@ -938,7 +938,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
+          <div className="flex items-center justify-between rounded-md surface-interactive p-3">
             <div>
               <p className="text-sm font-medium">Enable school schedule</p>
               <p className="text-xs text-muted-foreground">Enable class timetable management.</p>
@@ -957,7 +957,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
+          <div className="flex items-center justify-between rounded-md surface-interactive p-3">
             <div>
               <p className="text-sm font-medium">Show school schedule to students</p>
               <p className="text-xs text-muted-foreground">Allow students to view timetable blocks.</p>
@@ -983,14 +983,14 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'schedule' && (
-      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+      <section className="rounded-md surface-panel p-4">
         <div className="space-y-1 pb-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-base">School Schedule</h2>
             <Button
               type="button"
               variant="outline"
-              className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]"
+              className="border border-[hsl(var(--border))] surface-interactive text-foreground hover:bg-[hsl(var(--interactive-hover))]"
               onClick={() => {
                 window.location.href = `/class/${classId}?tab=schedule`;
               }}
@@ -1001,7 +1001,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
           
         </div>
         <div className="space-y-4">
-          <div className="rounded-md bg-[hsl(var(--surface-2))] p-3 text-sm text-foreground/85">
+          <div className="rounded-md surface-interactive p-3 text-sm text-foreground/85">
             Slot preview: {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, Number(newScheduleSlot.day_of_week) - 1)]}
             {' - '}P{newScheduleSlot.period_index || '?'}{' - '}
             {formatTimeLabel(newScheduleSlot.start_time)} - {formatTimeLabel(newScheduleSlot.end_time)}
@@ -1016,7 +1016,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 value={newScheduleSlot.day_of_week}
                 onValueChange={(value) => setNewScheduleSlot((prev) => ({ ...prev, day_of_week: value }))}
               >
-                <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
+                <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] surface-panel text-sm">
                   <SelectValue placeholder="Choose a day" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1056,7 +1056,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 value={newScheduleSlot.start_time}
                 onValueChange={(value) => setNewScheduleSlot((prev) => ({ ...prev, start_time: value }))}
               >
-                <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
+                <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] surface-panel text-sm">
                   <SelectValue placeholder="Choose start time" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1072,7 +1072,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 value={newScheduleSlot.end_time}
                 onValueChange={(value) => setNewScheduleSlot((prev) => ({ ...prev, end_time: value }))}
               >
-                <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
+                <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] surface-panel text-sm">
                   <SelectValue placeholder="Choose end time" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1090,7 +1090,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                   setNewScheduleSlot((prev) => ({ ...prev, subject_id: value === '__none' ? '' : value }))
                 }
               >
-                <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
+                <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] surface-panel text-sm">
                   <SelectValue placeholder="No subject link" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1110,7 +1110,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <p className="text-sm text-foreground/80">End time must be after start time.</p>
           )}
 
-          <div className="flex items-center justify-between rounded-md bg-[hsl(var(--surface-2))] p-3">
+          <div className="flex items-center justify-between rounded-md surface-interactive p-3">
             <div>
               <p className="text-sm font-medium">Break slot</p>
               <p className="text-xs text-muted-foreground">Mark this timetable slot as pause/break.</p>
@@ -1136,7 +1136,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             />
           </div>
 
-          <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" onClick={() => void createScheduleSlot()} disabled={!canCreateScheduleSlot}>
+          <Button className="border border-[hsl(var(--border))] surface-interactive text-foreground hover:bg-[hsl(var(--interactive-hover))]" onClick={() => void createScheduleSlot()} disabled={!canCreateScheduleSlot}>
             {creatingScheduleSlot ? 'Adding...' : 'Add schedule slot'}
           </Button>
 
@@ -1147,7 +1147,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <p className="text-sm text-foreground/70">No schedule slots yet.</p>
             ) : (
               scheduleSlots.map((slot) => (
-                <div key={slot.id} className="rounded-md bg-[hsl(var(--surface-2))] p-3 flex items-center justify-between gap-3">
+                <div key={slot.id} className="rounded-md surface-interactive p-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="font-medium">
                       {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, slot.day_of_week - 1)]} - P{slot.period_index} - {slot.title}
@@ -1156,7 +1156,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                       {slot.start_time} - {slot.end_time} {slot.is_break ? '- Break' : ''}
                     </p>
                   </div>
-                  <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" size="sm" onClick={() => void deleteScheduleSlot(slot.id)}>
+                  <Button className="border border-[hsl(var(--border))] surface-interactive text-foreground hover:bg-[hsl(var(--interactive-hover))]" variant="outline" size="sm" onClick={() => void deleteScheduleSlot(slot.id)}>
                     Remove
                   </Button>
                 </div>
@@ -1168,7 +1168,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'requests' && (
-      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+      <section className="rounded-md surface-panel p-4">
         <div className="space-y-1 pb-2">
           <h2 className="text-base">Teacher Join Requests</h2>
           <p className="text-sm text-muted-foreground">Approve or reject teachers who request access via teacher join code.</p>
@@ -1180,7 +1180,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <p className="text-sm text-foreground/70">No pending teacher requests.</p>
           ) : (
             pendingJoinRequests.map((request) => (
-              <div key={request.id} className="rounded-md bg-[hsl(var(--surface-2))] p-3 flex items-center justify-between gap-3">
+              <div key={request.id} className="rounded-md surface-interactive p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-medium truncate">{request.requester_email || request.requester_user_id}</p>
                   <p className="text-xs text-muted-foreground">
@@ -1189,7 +1189,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
-                    className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]"
+                    className="border border-[hsl(var(--border))] surface-interactive text-foreground hover:bg-[hsl(var(--interactive-hover))]"
                     size="sm"
                     onClick={() => void resolveJoinRequest(request.id, 'approve')}
                     disabled={processingJoinRequestId === request.id}
@@ -1197,7 +1197,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                     Approve
                   </Button>
                   <Button
-                    className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]"
+                    className="border border-[hsl(var(--border))] surface-interactive text-foreground hover:bg-[hsl(var(--interactive-hover))]"
                     size="sm"
                     variant="outline"
                     onClick={() => void resolveJoinRequest(request.id, 'reject')}
@@ -1214,7 +1214,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'activity' && (
-      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+      <section className="rounded-md surface-panel p-4">
         <div className="space-y-1 pb-2">
           <h2 className="text-base">Teacher Invite Activity</h2>
           <p className="text-sm text-muted-foreground">
@@ -1228,7 +1228,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <p className="text-sm text-foreground/70">No invite activity yet.</p>
           ) : (
             inviteActivity.map((item) => (
-              <div key={item.id} className="rounded-md bg-[hsl(var(--surface-2))] p-3">
+              <div key={item.id} className="rounded-md surface-interactive p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-mono text-sm">{item.code}</p>
@@ -1237,7 +1237,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                     </p>
                   </div>
                   <span
-                    className="rounded px-2 py-0.5 text-xs bg-[hsl(var(--surface-3))] text-foreground/80"
+                    className="rounded px-2 py-0.5 text-xs surface-chip text-foreground/80"
                   >
                     {item.status === 'active' && item.is_expired ? 'expired' : item.status}
                   </span>
@@ -1258,7 +1258,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'subjects' && (
-      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+      <section className="rounded-md surface-panel p-4">
         <div className="space-y-1 pb-2">
           <h2 className="text-base">Subject Management</h2>
           <p className="text-sm text-muted-foreground">
@@ -1272,7 +1272,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <p className="text-sm text-foreground/70">No subjects in this class yet.</p>
           ) : (
             subjects.map((subject) => (
-              <div key={subject.id} className="rounded-md bg-[hsl(var(--surface-2))] p-4 space-y-3">
+              <div key={subject.id} className="rounded-md surface-interactive p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{subject.title}</p>
@@ -1293,7 +1293,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
                       }}
                       disabled={savingSubjectId === subject.id}
                     >
-                      <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
+                      <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] surface-panel text-sm">
                         <SelectValue placeholder="Select teacher" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1342,7 +1342,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'import' && (
-      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+      <section className="rounded-md surface-panel p-4">
         <div className="space-y-1 pb-2">
           <h2 className="text-base">Import Subject</h2>
           <p className="text-sm text-muted-foreground">
@@ -1356,7 +1356,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               value={importSourceId || '__none'}
               onValueChange={(value) => setImportSourceId(value === '__none' ? '' : value)}
             >
-              <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
+              <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] surface-panel text-sm">
                 <SelectValue placeholder="Select a subject" />
               </SelectTrigger>
               <SelectContent>
@@ -1376,7 +1376,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               value={importMode}
               onValueChange={(value) => setImportMode(value as 'copy' | 'link')}
             >
-              <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm">
+              <SelectTrigger className="h-9 rounded-md border border-[hsl(var(--border))] surface-panel text-sm">
                 <SelectValue placeholder="Choose import mode" />
               </SelectTrigger>
               <SelectContent>
@@ -1397,7 +1397,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             </div>
           )}
 
-          <Button className="border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-foreground hover:bg-[hsl(var(--interactive-hover))]" onClick={() => void handleImport()} disabled={importing || !importSourceId}>
+          <Button className="border border-[hsl(var(--border))] surface-interactive text-foreground hover:bg-[hsl(var(--interactive-hover))]" onClick={() => void handleImport()} disabled={importing || !importSourceId}>
             {importing ? 'Importing...' : 'Import Subject'}
           </Button>
         </div>
@@ -1405,7 +1405,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
       )}
 
       {activeSettingsSection === 'danger' && (
-      <section className="rounded-md bg-[hsl(var(--surface-1))] p-4">
+      <section className="rounded-md surface-panel p-4">
         <div className="space-y-1 pb-2">
           <h2 className="text-base">Danger Zone</h2>
           <p className="text-sm text-muted-foreground">
@@ -1414,7 +1414,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
         </div>
         <div>
           {!isArchived ? (
-            <div className="flex items-center justify-between p-4 rounded-lg bg-[hsl(var(--surface-2))]">
+            <div className="flex items-center justify-between p-4 rounded-lg surface-interactive">
               <div>
                 <h3 className="font-medium">Archive Class</h3>
                 <p className="text-sm text-muted-foreground">
@@ -1445,7 +1445,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               </AlertDialog>
             </div>
           ) : (
-            <div className="flex items-center justify-center p-4 rounded-lg bg-[hsl(var(--surface-2))]">
+            <div className="flex items-center justify-center p-4 rounded-lg surface-interactive">
               <div className="text-center">
                 <h3 className="font-medium text-foreground/80">Class Archived</h3>
                 <p className="text-sm text-muted-foreground">

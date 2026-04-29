@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { Suspense, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -1213,7 +1213,7 @@ function PresentationPageContent() {
         )}
 
         {stage === 'preview' && activeShareUrl && (
-          <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-muted/35 p-2">
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 surface-interactive/35 p-2">
             <Badge variant="secondary">Public preview active</Badge>
             <a href={activeShareUrl} target="_blank" rel="noreferrer" className="text-xs underline underline-offset-2">
               {activeShareUrl}
@@ -1229,7 +1229,7 @@ function PresentationPageContent() {
             <Card className="border border-border/60">
               <CardContent className="pt-5">
                 {sourceAttachments.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-5 py-7 text-center">
+                  <div className="rounded-2xl border border-dashed border-border/60 surface-interactive px-5 py-7 text-center">
                     <p className="text-sm font-medium">Add material to start</p>
                     <p className="mt-1 text-xs text-muted-foreground">Upload files or import recents</p>
                   </div>
@@ -1238,7 +1238,7 @@ function PresentationPageContent() {
                     {sourceAttachments.map((source) => (
                       <div
                         key={source.key}
-                        className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-xs transition-colors hover:border-emerald-500/60"
+                        className="rounded-xl border border-border/60 surface-interactive px-3 py-2 text-xs transition-colors hover:border-emerald-500/60"
                       >
                         <p className="max-w-[260px] truncate font-medium">{source.fileName}</p>
                         <p className="text-[11px] text-muted-foreground">{source.sourceType.replace('_', ' ')}</p>
@@ -1301,7 +1301,7 @@ function PresentationPageContent() {
               </Card>
             )}
 
-            <div className="mt-auto rounded-2xl border border-border/60 bg-card/90 p-3">
+            <div className="mt-auto rounded-2xl border border-border/60 surface-panel/90 p-3">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
@@ -1337,7 +1337,7 @@ function PresentationPageContent() {
 
         {stage === 'settings' && (
           <div className="space-y-4">
-            <div className="rounded-2xl border border-border/60 bg-card/90 p-3">
+            <div className="rounded-2xl border border-border/60 surface-panel/90 p-3">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
                   <Upload className="mr-1.5 h-3.5 w-3.5" />
@@ -1361,7 +1361,7 @@ function PresentationPageContent() {
                 <div className="flex flex-wrap gap-2">
                   {sourceAttachments.length === 0 ? null : (
                     sourceAttachments.map((source) => (
-                      <div key={source.key} className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-xs">
+                      <div key={source.key} className="rounded-xl border border-border/60 surface-interactive px-3 py-2 text-xs">
                         <p className="max-w-[260px] truncate font-medium">{source.fileName}</p>
                         <p className="text-[11px] text-muted-foreground">{source.sourceType.replace('_', ' ')}</p>
                       </div>
@@ -1589,7 +1589,7 @@ function PresentationPageContent() {
             <CardContent className="py-10">
               <div className="mx-auto max-w-xl space-y-4 text-center">
                 <p className="text-sm text-muted-foreground">Building presentation in 2 AI steps (plan to generate)...</p>
-                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div className="h-2 overflow-hidden rounded-full surface-interactive">
                   <div className="h-full w-1/2 animate-pulse rounded-full bg-foreground" />
                 </div>
               </div>

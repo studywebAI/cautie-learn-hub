@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useContext } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -498,10 +498,10 @@ export default function ParagraphDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-6 bg-muted rounded w-1/3 animate-pulse" />
+        <div className="h-6 surface-interactive rounded w-1/3 animate-pulse" />
         <div className="space-y-2">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-12 bg-muted rounded animate-pulse" />
+            <div key={i} className="h-12 surface-interactive rounded animate-pulse" />
           ))}
         </div>
       </div>
@@ -666,7 +666,7 @@ export default function ParagraphDetailPage() {
                     <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
                       {roundedProgress}%
                     </span>
-                    <div className="w-20 h-2 bg-muted rounded-full overflow-hidden flex">
+                    <div className="w-20 h-2 surface-interactive rounded-full overflow-hidden flex">
                   {correctPct > 0 && (
                         <div
                           className="h-full bg-success/70 transition-all"
@@ -750,9 +750,9 @@ export default function ParagraphDetailPage() {
           </DialogHeader>
           <div className="py-2">
             <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
-              <span className={`rounded-full px-2 py-0.5 ${createStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>1</span>
-              <span className={`rounded-full px-2 py-0.5 ${createStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>2</span>
-              <span className={`rounded-full px-2 py-0.5 ${createStep === 3 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>3</span>
+              <span className={`rounded-full px-2 py-0.5 ${createStep === 1 ? 'bg-primary text-primary-foreground' : 'surface-interactive'}`}>1</span>
+              <span className={`rounded-full px-2 py-0.5 ${createStep === 2 ? 'bg-primary text-primary-foreground' : 'surface-interactive'}`}>2</span>
+              <span className={`rounded-full px-2 py-0.5 ${createStep === 3 ? 'bg-primary text-primary-foreground' : 'surface-interactive'}`}>3</span>
             </div>
 
             {createStep === 1 && (
@@ -762,7 +762,7 @@ export default function ParagraphDetailPage() {
                 <div className="grid gap-3 md:grid-cols-2">
                   <button
                     type="button"
-                    className={`rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+                    className={`rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
                     onClick={() => setCreateKind('homework')}
                   >
                     <p className="text-sm font-medium">{t.homework}</p>
@@ -770,7 +770,7 @@ export default function ParagraphDetailPage() {
                   </button>
                   <button
                     type="button"
-                    className={`rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+                    className={`rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
                     onClick={() => setCreateKind('test')}
                   >
                     <p className="text-sm font-medium">{t.test}</p>
@@ -790,7 +790,7 @@ export default function ParagraphDetailPage() {
                       key={preset.id}
                       type="button"
                       onClick={() => setSelectedPresetId(preset.id)}
-                      className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+                      className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
@@ -805,7 +805,7 @@ export default function ParagraphDetailPage() {
                             ))}
                           </div>
                         </div>
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px]">{preset.estimatedTimeMin} min</span>
+                        <span className="rounded-full surface-interactive px-2 py-0.5 text-[10px]">{preset.estimatedTimeMin} min</span>
                       </div>
                       <div className="mt-3 rounded-lg border border-border/70 bg-background p-3">
                         <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -813,15 +813,15 @@ export default function ParagraphDetailPage() {
                         </p>
                         <div className="mt-2 space-y-2">
                           {preset.blockMix.slice(0, 3).map((block) => (
-                            <div key={`${preset.id}-preview-${block.type}`} className="rounded-md border border-border/70 bg-[hsl(var(--surface-1))] p-2">
+                            <div key={`${preset.id}-preview-${block.type}`} className="rounded-md border border-border/70 surface-panel p-2">
                               <div className="flex items-center justify-between text-[10px]">
                                 <p className="font-medium capitalize">{block.type.replace(/_/g, ' ')}</p>
                                 <span>x{block.count}</span>
                               </div>
                               <p className="mt-1 text-[10px] text-foreground/70">{previewQuestionHint(block.type, isDutch)}</p>
                               <div className="mt-1.5 space-y-1">
-                                <div className="h-2 w-full rounded bg-muted" />
-                                <div className="h-2 w-5/6 rounded bg-muted/80" />
+                                <div className="h-2 w-full rounded surface-interactive" />
+                                <div className="h-2 w-5/6 rounded surface-interactive/80" />
                               </div>
                             </div>
                           ))}
@@ -832,7 +832,7 @@ export default function ParagraphDetailPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedPresetId(null)}
-                    className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:bg-muted/40'}`}
+                    className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
                   >
                     <p className="text-sm font-medium">{t.createYourOwn}</p>
                     <p className="text-xs text-muted-foreground">{t.choosePresetFirst}</p>
@@ -866,7 +866,7 @@ export default function ParagraphDetailPage() {
                         className="mt-1"
                       />
                     </div>
-                    <label className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2 text-sm">
+                    <label className="flex items-center gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2 text-sm">
                       <input type="checkbox" checked={addToAgenda} onChange={(e) => setAddToAgenda(e.target.checked)} />
                       {t.addToAgenda}
                     </label>
@@ -919,19 +919,19 @@ export default function ParagraphDetailPage() {
                       </div>
                     </div>
                     <div className="space-y-2 text-sm">
-                      <label className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+                      <label className="flex items-center gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2">
                         <input type="checkbox" checked={randomizeQuestions} onChange={(e) => setRandomizeQuestions(e.target.checked)} />
                         {t.randomizeQuestions}
                       </label>
-                      <label className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+                      <label className="flex items-center gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2">
                         <input type="checkbox" checked={randomizeAnswers} onChange={(e) => setRandomizeAnswers(e.target.checked)} />
                         {t.randomizeAnswers}
                       </label>
-                      <label className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+                      <label className="flex items-center gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2">
                         <input type="checkbox" checked={integrityMode} onChange={(e) => setIntegrityMode(e.target.checked)} />
                         {t.integrityMode}
                       </label>
-                      <label className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+                      <label className="flex items-center gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2">
                         <input type="checkbox" checked={addToAgenda} onChange={(e) => setAddToAgenda(e.target.checked)} />
                         {t.addToAgenda}
                       </label>

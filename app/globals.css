@@ -597,11 +597,31 @@
   }
 
   .class-panel {
-    @apply rounded-md bg-[hsl(var(--surface-2))] p-3;
+    @apply rounded-md surface-panel p-3;
   }
 
   .class-panel-lg {
-    @apply rounded-md bg-[hsl(var(--surface-2))] p-4;
+    @apply rounded-md surface-panel p-4;
+  }
+
+  .surface-shell {
+    @apply w-full;
+  }
+
+  .surface-panel {
+    background-color: hsl(var(--surface-1));
+  }
+
+  .surface-panel-lg {
+    background-color: hsl(var(--surface-1));
+  }
+
+  .surface-interactive {
+    background-color: hsl(var(--surface-2));
+  }
+
+  .surface-chip {
+    background-color: hsl(var(--surface-3));
   }
 }
 

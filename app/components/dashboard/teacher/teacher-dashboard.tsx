@@ -1,4 +1,4 @@
-﻿
+
 'use client';
 
 import { useState, useContext, useEffect } from 'react';
@@ -143,7 +143,7 @@ export function TeacherDashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="rounded-xl border border-border/70 bg-[hsl(var(--surface-1))] p-4">
+      <section className="rounded-xl border border-border/70 surface-panel p-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-base font-semibold">Class Access</h2>
           <p className="text-sm text-muted-foreground">
@@ -175,7 +175,7 @@ export function TeacherDashboard() {
         </div>
       </section>
 
-      <section className="rounded-xl border border-border/70 bg-[hsl(var(--surface-1))] p-4">
+      <section className="rounded-xl border border-border/70 surface-panel p-4">
         <div className="mb-4 flex flex-col gap-1">
           <h2 className="text-base font-semibold">Manage Classes</h2>
           <p className="text-sm text-muted-foreground">

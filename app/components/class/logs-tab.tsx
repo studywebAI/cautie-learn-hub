@@ -163,8 +163,8 @@ function toneIndex(input: string) {
 
 function getCategoryClass(categoryName: Category, action: string) {
   const tone = toneIndex(action || categoryName);
-  if (tone === 0) return 'bg-[hsl(var(--surface-2))] text-foreground border-border';
-  if (tone === 1) return 'bg-[hsl(var(--surface-3))] text-foreground border-border';
+  if (tone === 0) return 'surface-interactive text-foreground border-border';
+  if (tone === 1) return 'surface-chip text-foreground border-border';
   return 'bg-muted/60 text-foreground border-border';
 }
 
@@ -505,7 +505,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
           </div>
 
           {loadError && (
-            <div className="rounded-md bg-[hsl(var(--surface-1))] px-3 py-2 text-xs text-foreground/80">
+            <div className="rounded-md surface-panel px-3 py-2 text-xs text-foreground/80">
               {loadError}
             </div>
           )}
@@ -528,7 +528,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                 const affectedStudentLabel = leadLog.metadata_user_labels?.student_id || affectedStudentId;
                 const canOpenAttendance = Boolean(affectedStudentId);
                 return (
-                  <div key={group.id} className="space-y-2 rounded-lg bg-[hsl(var(--surface-1))] p-3">
+                  <div key={group.id} className="space-y-2 rounded-lg surface-panel p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate font-medium">
@@ -569,7 +569,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                     </div>
 
                     {(leadLog.metadata as any)?.custom_message && (
-                      <div className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5 text-xs">
+                      <div className="rounded-md surface-interactive px-2 py-1.5 text-xs">
                         {String((leadLog.metadata as any)?.custom_message)}
                       </div>
                     )}
@@ -578,7 +578,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                       {group.logs.map((log) => {
                         const diffLines = getDiffSummary(log, isDutch);
                         return (
-                          <div key={log.id} className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5">
+                          <div key={log.id} className="rounded-md surface-interactive px-2 py-1.5">
                             <p className="text-xs font-medium">{formatActionLabel(log, isDutch)}</p>
                             {diffLines.map((line) => (
                               <p key={line} className="text-[11px] text-muted-foreground">{line}</p>
