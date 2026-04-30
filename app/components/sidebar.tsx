@@ -788,9 +788,6 @@ export function AppSidebar() {
     if (isPhone) {
       return (
         <div className="mb-2 px-2">
-                      <label className="mb-1 block text-[11px] font-medium text-sidebar-foreground/80">
-            {isDutch ? 'Klas' : 'Class'}
-          </label>
           <select
             value={effectiveTeacherClassId}
             onChange={(event) => {
@@ -805,7 +802,7 @@ export function AppSidebar() {
               setOpenMobile(false);
             }}
             disabled={classDropdownItems.length === 0}
-            className="h-8 w-full rounded-xl border-transparent surface-interactive px-3 text-[12px] text-sidebar-foreground transition-colors hover:surface-chip disabled:opacity-60"
+            className="h-9 w-full rounded-md border border-border/70 surface-panel px-3 text-[12px] text-sidebar-foreground transition-colors hover:surface-interactive disabled:opacity-60"
           >
             {classDropdownItems.length === 0 ? (
               <option value="">{isDutch ? 'Geen klassen' : 'No classes'}</option>
@@ -824,13 +821,10 @@ export function AppSidebar() {
     return (
       <>
       <div className="mb-1.5 px-2">
-                    <label className="mb-1 block text-[11px] font-medium text-sidebar-foreground/80">
-          {isDutch ? 'Klas' : 'Class'}
-        </label>
         <Button
           size="sm"
           variant="outline"
-          className="mb-1 h-7 w-full justify-start rounded-xl border-transparent surface-interactive px-2.5 text-[11px] font-normal text-sidebar-foreground hover:surface-chip"
+          className="mb-1 h-9 w-full justify-start rounded-md border border-border/70 surface-panel px-2.5 text-[12px] font-normal text-sidebar-foreground hover:surface-interactive"
           onClick={(event) => {
             openDropdownFor('classes', event.currentTarget);
             setNewClassMenuOpen(false);
@@ -851,7 +845,7 @@ export function AppSidebar() {
             openDropdownFor('classes', event.currentTarget);
           }}
           disabled={classDropdownItems.length === 0}
-          className="h-7 w-full rounded-xl border-transparent surface-interactive px-2.5 text-left text-[11px] text-sidebar-foreground transition-colors hover:surface-chip disabled:opacity-60"
+          className="h-9 w-full rounded-md border border-border/70 surface-panel px-2.5 text-left text-[12px] text-sidebar-foreground transition-colors hover:surface-interactive disabled:opacity-60"
         >
           <span className="flex items-center justify-between gap-2">
               <span className="truncate">

@@ -174,7 +174,7 @@ function TeacherSummaryDashboard() {
               <h1 className="text-xl tracking-tight text-foreground">Welcome, {welcomeName}</h1>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card className="surface-panel border-border/70">
+              <Card className="surface-panel border border-border shadow-[0_1px_0_hsl(var(--border))]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm">Total Classes</CardTitle>
                     <School className="h-4 w-4 text-muted-foreground" />
@@ -184,7 +184,7 @@ function TeacherSummaryDashboard() {
                     <p className="text-xs text-muted-foreground">Classes managed</p>
                 </CardContent>
               </Card>
-              <Card className="surface-panel border-border/70">
+              <Card className="surface-panel border border-border shadow-[0_1px_0_hsl(var(--border))]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm">Total Students</CardTitle>
                      <Users className="h-4 w-4 text-muted-foreground" />
@@ -194,7 +194,7 @@ function TeacherSummaryDashboard() {
                     <p className="text-xs text-muted-foreground">Students across all classes</p>
                 </CardContent>
               </Card>
-              <Card className="surface-panel border-border/70">
+              <Card className="surface-panel border border-border shadow-[0_1px_0_hsl(var(--border))]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm">Active Assignments</CardTitle>
                      <FileText className="h-4 w-4 text-muted-foreground" />
@@ -204,7 +204,7 @@ function TeacherSummaryDashboard() {
                     <p className="text-xs text-muted-foreground">Upcoming assignments</p>
                 </CardContent>
               </Card>
-                <Card className="surface-panel border-border/70">
+                <Card className="surface-panel border border-border shadow-[0_1px_0_hsl(var(--border))]">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm">Active Alerts</CardTitle>
                        <Activity className="h-4 w-4 text-muted-foreground" />

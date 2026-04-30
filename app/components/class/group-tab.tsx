@@ -544,8 +544,8 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                   <button
                     key={`rename-${student.id}`}
                     type="button"
-                    className={`flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors ${
-                      renameStudentId === student.id ? 'surface-chip' : 'hover:surface-interactive'
+                    className={`flex w-full items-center gap-2 rounded-md border px-2 py-2 text-left text-sm transition-colors ${
+                      renameStudentId === student.id ? 'border-border surface-chip' : 'border-transparent hover:border-border hover:surface-interactive'
                     }`}
                     onClick={() => {
                       setRenameStudentId(student.id);
@@ -560,7 +560,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                 ))}
               </div>
             </div>
-            <div className="space-y-2 rounded-md surface-interactive p-3">
+            <div className="space-y-2 rounded-md surface-panel p-3">
               {renameStudentId ? (
                 <p className="text-sm">
                   {`${t.renameFromTo} "${sortedStudents.find((student) => student.id === renameStudentId)?.name || ''}" ${t.renameTo}:`}
