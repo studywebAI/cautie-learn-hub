@@ -143,9 +143,13 @@ export async function executeAIFlow(
     return await flow(enrichedInput);
   } catch (error) {
     const shouldFallback =
-      (providerPreference === "auto" || providerPreference === "gemini") &&
       canFallback &&
-      shouldFallbackToOpenAI(error);
+      (
+        // Explicit Gemini preference: always attempt OpenAI fallback on runtime failure.
+        providerPreference === "gemini" ||
+        // Auto mode: fallback only when the error looks provider/runtime-related.
+        (providerPreference === "auto" && shouldFallbackToOpenAI(error))
+      );
 
     emit?.({
       type: "primary_error",
