@@ -38,7 +38,10 @@ export function shouldFallbackToOpenAI(error: unknown) {
     combined.includes("validation") ||
     combined.includes("zod") ||
     combined.includes("unauthorized") ||
-    combined.includes("forbidden")
+    combined.includes("forbidden") ||
+    combined.includes("source_required") ||
+    combined.includes("setting_conflict") ||
+    combined.includes("invalid payload")
   ) {
     return false;
   }
@@ -47,7 +50,7 @@ export function shouldFallbackToOpenAI(error: unknown) {
     return true;
   }
 
-  return (
+  if (
     combined.includes("token") ||
     combined.includes("context length") ||
     combined.includes("maximum context") ||
@@ -58,7 +61,12 @@ export function shouldFallbackToOpenAI(error: unknown) {
     combined.includes("deadline exceeded") ||
     combined.includes("unavailable") ||
     combined.includes("overloaded")
-  );
+  ) {
+    return true;
+  }
+
+  // Auto-mode policy: unknown Gemini/runtime failures should still attempt OpenAI fallback.
+  return true;
 }
 
 function parseJsonFromModel(content: string) {

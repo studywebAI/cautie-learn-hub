@@ -329,7 +329,7 @@ export async function POST(request: NextRequest) {
       const inputPayload = enforced.inputPayload;
       const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id);
       const aiEvents: Array<{
-        type: "primary_error" | "fallback_attempt" | "fallback_success" | "fallback_error";
+        type: "primary_error" | "fallback_attempt" | "fallback_success" | "fallback_error" | "fallback_skipped";
         provider: "gemini" | "openai";
         flowName: string;
         message?: string;
