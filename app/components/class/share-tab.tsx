@@ -3,6 +3,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 type ShareAudience = 'teacher' | 'all';
 
@@ -13,6 +24,14 @@ type SharePost = {
   text: string;
   authorName?: string;
   authorEmail?: string | null;
+  attachmentLabel?: string;
+  sourceType?: string;
+  sourceHref?: string;
+};
+type ShareSettings = {
+  allChatEnabled: boolean;
+  teacherChatEnabled: boolean;
+  mutedUsers: Array<{ userId: string; until: string }>;
 };
 
 export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: boolean }) {
@@ -21,10 +40,50 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
   const [posts, setPosts] = useState<SharePost[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settings, setSettings] = useState<ShareSettings>({
+    allChatEnabled: true,
+    teacherChatEnabled: true,
+    mutedUsers: [],
+  });
+  const [muteUserId, setMuteUserId] = useState('');
+  const [muteMinutes, setMuteMinutes] = useState('30');
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [composerMode, setComposerMode] = useState<'text' | 'photo' | 'file' | 'link'>('text');
+  const [attachmentLabel, setAttachmentLabel] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [attachmentMimeType, setAttachmentMimeType] = useState('');
+  const [attachmentSizeBytes, setAttachmentSizeBytes] = useState<number>(0);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     if (!isTeacher) setAudienceFilter('all');
   }, [isTeacher]);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await fetch(`/api/classes/${classId}/share/settings`, { cache: 'no-store' });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) return;
+        setSettings({
+          allChatEnabled: data?.settings?.allChatEnabled !== false,
+          teacherChatEnabled: data?.settings?.teacherChatEnabled !== false,
+          mutedUsers: Array.isArray(data?.settings?.mutedUsers) ? data.settings.mutedUsers : [],
+        });
+      } catch {}
+    };
+    void loadSettings();
+  }, [classId]);
+
+  useEffect(() => {
+    if (audienceFilter === 'all' && !settings.allChatEnabled && isTeacher && settings.teacherChatEnabled) {
+      setAudienceFilter('teacher');
+    }
+    if (audienceFilter === 'teacher' && !settings.teacherChatEnabled) {
+      setAudienceFilter('all');
+    }
+  }, [audienceFilter, isTeacher, settings.allChatEnabled, settings.teacherChatEnabled]);
 
   useEffect(() => {
     const load = async () => {
@@ -43,44 +102,156 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
     void load();
   }, [classId, audienceFilter]);
 
+  const isValidLink = (url: string) => {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
   const sendMessage = async () => {
+    setStatusMessage(null);
     const text = message.trim();
-    if (!text) return;
+    const hasAttachment = Boolean(attachmentLabel || linkUrl.trim());
+    if (!text && !hasAttachment) return;
+    if (composerMode === 'link' && linkUrl.trim() && !isValidLink(linkUrl.trim())) {
+      setStatusMessage({ type: 'error', text: 'Use a valid http/https link.' });
+      return;
+    }
     setIsSubmitting(true);
     try {
+      const source =
+        composerMode === 'link' && linkUrl.trim()
+          ? {
+              link_type: 'link',
+              link_ref_id: null,
+              metadata_json: { href: linkUrl.trim() },
+            }
+          : composerMode === 'photo' || composerMode === 'file'
+            ? {
+                link_type: composerMode,
+                link_ref_id: null,
+                metadata_json: {
+                  file_name: attachmentLabel || null,
+                  mime_type: attachmentMimeType || null,
+                  size_bytes: attachmentSizeBytes || 0,
+                },
+              }
+            : null;
       const res = await fetch(`/api/classes/${classId}/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text,
           audience: audienceFilter,
+          attachmentLabel: attachmentLabel || undefined,
+          source,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Failed to send message');
       setMessage('');
+      setAttachmentLabel('');
+      setLinkUrl('');
+      setAttachmentMimeType('');
+      setAttachmentSizeBytes(0);
+      setComposerMode('text');
       setPosts((prev) => [data, ...prev]);
+      setStatusMessage({ type: 'success', text: 'Message sent.' });
+    } catch (error: any) {
+      console.error('share send failed', error);
+      setStatusMessage({ type: 'error', text: error?.message || 'Failed to send message.' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const saveSettings = async () => {
+    setSavingSettings(true);
+    setStatusMessage(null);
+    try {
+      const response = await fetch(`/api/classes/${classId}/share/settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+      if (!response.ok) throw new Error('Failed to save settings');
+      setSettingsOpen(false);
+      setStatusMessage({ type: 'success', text: 'Share settings saved.' });
+    } catch {
+      setStatusMessage({ type: 'error', text: 'Failed to save settings.' });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const addMute = () => {
+    const userId = muteUserId.trim();
+    const mins = Number(muteMinutes || 0);
+    if (!userId || !Number.isFinite(mins) || mins <= 0) return;
+    const until = new Date(Date.now() + mins * 60_000).toISOString();
+    setSettings((prev) => ({
+      ...prev,
+      mutedUsers: [...prev.mutedUsers.filter((entry) => entry.userId !== userId), { userId, until }],
+    }));
+    setMuteUserId('');
+  };
+
+  const removeMute = (userId: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      mutedUsers: prev.mutedUsers.filter((entry) => entry.userId !== userId),
+    }));
+  };
+
   const visiblePosts = useMemo(() => posts, [posts]);
+
+  const onPickFile = (event: React.ChangeEvent<HTMLInputElement>, mode: 'photo' | 'file') => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setComposerMode(mode);
+    setAttachmentLabel(file.name);
+    setAttachmentMimeType(file.type || '');
+    setAttachmentSizeBytes(file.size || 0);
+  };
 
   return (
     <div className="class-shell space-y-3">
       <div className="flex items-center gap-2">
-        {isTeacher ? (
+        {isTeacher && settings.teacherChatEnabled ? (
           <Button size="sm" variant={audienceFilter === 'teacher' ? 'default' : 'outline'} onClick={() => setAudienceFilter('teacher')} className="h-8">
             Teacher
           </Button>
         ) : null}
-        <Button size="sm" variant={audienceFilter === 'all' ? 'default' : 'outline'} onClick={() => setAudienceFilter('all')} className="h-8">
+        {settings.allChatEnabled ? (
+          <Button size="sm" variant={audienceFilter === 'all' ? 'default' : 'outline'} onClick={() => setAudienceFilter('all')} className="h-8">
           All
-        </Button>
+          </Button>
+        ) : null}
+        {isTeacher ? (
+          <Button size="sm" variant="outline" onClick={() => setSettingsOpen(true)} className="h-8 ml-auto">
+            Settings
+          </Button>
+        ) : null}
       </div>
+      {!settings.allChatEnabled && !settings.teacherChatEnabled ? (
+        <div className="rounded-md surface-panel p-4 text-sm text-muted-foreground">Chat is disabled by class settings.</div>
+      ) : null}
 
       <div className="rounded-md surface-panel p-3">
+        {statusMessage ? (
+          <div
+            className={`mb-3 rounded-md px-3 py-2 text-xs ${
+              statusMessage.type === 'error'
+                ? 'border border-destructive/40 bg-destructive/10 text-destructive'
+                : 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-700'
+            }`}
+          >
+            {statusMessage.text}
+          </div>
+        ) : null}
         <div className="mb-3 max-h-[52vh] space-y-2 overflow-y-auto pr-1">
         {isLoading ? <p className="text-xs text-muted-foreground">Loading messages...</p> : null}
         {visiblePosts.length === 0 && !isLoading ? (
@@ -93,10 +264,65 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
               <span>{new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
             <p className="whitespace-pre-wrap text-sm leading-relaxed">{post.text}</p>
+            {post.attachmentLabel ? (
+              <p className="mt-1 text-xs text-muted-foreground">Attachment: {post.attachmentLabel}</p>
+            ) : null}
+            {post.sourceHref ? (
+              <a className="mt-1 inline-flex text-xs underline text-foreground/80" href={post.sourceHref} target="_blank" rel="noreferrer">
+                Open link
+              </a>
+            ) : null}
           </article>
         ))}
         </div>
         <div className="border-t border-border pt-3">
+          <div className="mb-2 flex flex-wrap gap-2">
+            <label className="inline-flex">
+              <input type="file" accept="image/*" className="hidden" onChange={(event) => onPickFile(event, 'photo')} />
+              <Button type="button" size="sm" variant={composerMode === 'photo' ? 'default' : 'outline'} className="h-7 text-xs" asChild>
+                <span>Photo</span>
+              </Button>
+            </label>
+            <label className="inline-flex">
+              <input type="file" className="hidden" onChange={(event) => onPickFile(event, 'file')} />
+              <Button type="button" size="sm" variant={composerMode === 'file' ? 'default' : 'outline'} className="h-7 text-xs" asChild>
+                <span>Files</span>
+              </Button>
+            </label>
+            <Button type="button" size="sm" variant={composerMode === 'link' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setComposerMode('link')}>
+              Links
+            </Button>
+          </div>
+          {composerMode === 'link' ? (
+            <Input
+              value={linkUrl}
+              onChange={(event) => setLinkUrl(event.target.value)}
+              placeholder="https://..."
+              className="mb-2 h-8 text-sm"
+            />
+          ) : null}
+          {(composerMode === 'photo' || composerMode === 'file') && attachmentLabel ? (
+            <div className="mb-2 flex items-center justify-between gap-2 rounded-md surface-interactive px-2 py-1 text-xs text-muted-foreground">
+              <span className="truncate">
+                {attachmentLabel}
+                {attachmentSizeBytes > 0 ? ` (${Math.ceil(attachmentSizeBytes / 1024)} KB)` : ''}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px]"
+                onClick={() => {
+                  setAttachmentLabel('');
+                  setAttachmentMimeType('');
+                  setAttachmentSizeBytes(0);
+                  if (!linkUrl.trim()) setComposerMode('text');
+                }}
+              >
+                Remove
+              </Button>
+            </div>
+          ) : null}
           <Textarea
             value={message}
             onChange={(event) => setMessage(event.target.value)}
@@ -110,12 +336,62 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
             }}
           />
           <div className="mt-2 flex justify-end">
-            <Button size="sm" onClick={() => void sendMessage()} disabled={isSubmitting || !message.trim()}>
+            <Button
+              size="sm"
+              onClick={() => void sendMessage()}
+              disabled={isSubmitting || (!message.trim() && !attachmentLabel && !linkUrl.trim())}
+            >
               {isSubmitting ? 'Sending...' : 'Send'}
             </Button>
           </div>
         </div>
       </div>
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share settings</DialogTitle>
+            <DialogDescription>Control all chat, teacher chat, and mute users.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-md surface-interactive p-2">
+              <Label>All chat enabled</Label>
+              <Switch
+                checked={settings.allChatEnabled}
+                onCheckedChange={(checked) => setSettings((prev) => ({ ...prev, allChatEnabled: Boolean(checked) }))}
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-md surface-interactive p-2">
+              <Label>Teacher chat enabled</Label>
+              <Switch
+                checked={settings.teacherChatEnabled}
+                onCheckedChange={(checked) => setSettings((prev) => ({ ...prev, teacherChatEnabled: Boolean(checked) }))}
+              />
+            </div>
+            <div className="space-y-2 rounded-md surface-interactive p-2">
+              <Label>Mute user</Label>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                <Input value={muteUserId} onChange={(event) => setMuteUserId(event.target.value)} placeholder="User ID" className="md:col-span-2" />
+                <Input value={muteMinutes} onChange={(event) => setMuteMinutes(event.target.value)} placeholder="Minutes" />
+              </div>
+              <Button type="button" size="sm" variant="outline" onClick={addMute}>Add mute timeout</Button>
+              <div className="space-y-1">
+                {settings.mutedUsers.map((entry) => (
+                  <div key={`${entry.userId}-${entry.until}`} className="flex items-center justify-between rounded-md bg-background px-2 py-1 text-xs">
+                    <span className="truncate">{entry.userId} until {new Date(entry.until).toLocaleString()}</span>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => removeMute(entry.userId)}>Remove</Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setSettingsOpen(false)}>Cancel</Button>
+            <Button type="button" onClick={() => void saveSettings()} disabled={savingSettings}>
+              {savingSettings ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
   UsersRound, Settings2, UserCheck, UserRoundPlus, ChartColumnIncreasing, ClipboardCheck, History, Share2
@@ -16,6 +16,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const { role, isLoading, language } = useContext(AppContext) as any;
   const classId = params.classId as string;
   const isDutch = language === 'nl';
+  const [shareVisibility, setShareVisibility] = useState({ allChatEnabled: true, teacherChatEnabled: true });
 
   const tabDefinitions = {
     invite: { label: isDutch ? 'Uitnodigen' : 'Invite', icon: UserRoundPlus, href: '?tab=invite' },
@@ -31,11 +32,31 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const teacherTabs = TEACHER_CLASS_TAB_IDS.map((id) => ({ id, ...tabDefinitions[id] }));
   const studentTabs = STUDENT_CLASS_TAB_IDS.map((id) => ({ id, ...tabDefinitions[id] }));
 
+  useEffect(() => {
+    const loadShareSettings = async () => {
+      try {
+        const response = await fetch(`/api/classes/${classId}/share/settings`, { cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json().catch(() => ({}));
+        setShareVisibility({
+          allChatEnabled: data?.settings?.allChatEnabled !== false,
+          teacherChatEnabled: data?.settings?.teacherChatEnabled !== false,
+        });
+      } catch {}
+    };
+    if (classId) void loadShareSettings();
+  }, [classId]);
+
   const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
   const requestedTabRaw = searchParams?.get('tab') || '';
   const requestedTab = requestedTabRaw.trim().toLowerCase();
   const requestedTeacherTab = teacherTabs.some((tab) => tab.id === requestedTab);
-  const visibleTabs = (isTeacherRole || (isLoading && requestedTeacherTab)) ? teacherTabs : studentTabs;
+  const rawVisibleTabs = (isTeacherRole || (isLoading && requestedTeacherTab)) ? teacherTabs : studentTabs;
+  const visibleTabs = rawVisibleTabs.filter((tab) => {
+    if (tab.id !== 'share') return true;
+    if (isTeacherRole) return shareVisibility.allChatEnabled || shareVisibility.teacherChatEnabled;
+    return shareVisibility.allChatEnabled;
+  });
   const tabIds = new Set<string>(visibleTabs.map((tab) => tab.id));
   const defaultTab = isTeacherRole ? 'group' : 'invite';
   const currentTab = tabIds.has(requestedTab) ? requestedTab : defaultTab;
@@ -70,7 +91,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
           <div className="mt-1 flex justify-end">
             <button
               type="button"
-              className="inline-flex h-9 items-center rounded-md bg-white px-3 text-[12px] text-foreground/85 hover:surface-panel hover:text-foreground"
+              className="inline-flex h-9 items-center rounded-md surface-interactive px-3 text-[12px] text-foreground/85 hover:text-foreground"
               onClick={() => {
                 window.dispatchEvent(new Event('cautie:open-class-dropdown'));
               }}

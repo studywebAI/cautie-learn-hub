@@ -6,6 +6,43 @@ import { getClassPermission } from '@/lib/auth/class-permissions';
 export const dynamic = 'force-dynamic';
 
 type ShareAudience = 'teacher' | 'all';
+type ShareSettings = {
+  allChatEnabled: boolean;
+  teacherChatEnabled: boolean;
+  mutedUsers: Array<{ userId: string; until: string }>;
+};
+
+const defaultShareSettings: ShareSettings = {
+  allChatEnabled: true,
+  teacherChatEnabled: true,
+  mutedUsers: [],
+};
+
+function sanitizeHref(input: unknown): string | undefined {
+  const raw = String(input || '').trim();
+  if (!raw) return undefined;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined;
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+function sanitizeAttachmentMeta(meta: any): { fileName?: string; mimeType?: string; sizeBytes?: number } | undefined {
+  if (!meta || typeof meta !== 'object') return undefined;
+  const fileName = String(meta.file_name || '').slice(0, 220);
+  const mimeType = String(meta.mime_type || '').slice(0, 120);
+  const sizeNum = Number(meta.size_bytes || 0);
+  const sizeBytes = Number.isFinite(sizeNum) && sizeNum > 0 ? Math.min(sizeNum, 50 * 1024 * 1024) : undefined;
+  if (!fileName && !mimeType && !sizeBytes) return undefined;
+  return {
+    fileName: fileName || undefined,
+    mimeType: mimeType || undefined,
+    sizeBytes,
+  };
+}
 
 function parseShareContent(content: unknown): { text: string; attachmentLabel?: string; sourceType?: string; sourceId?: string; sourceHref?: string } {
   if (!content) return { text: '' };
@@ -43,6 +80,18 @@ function resolveProfileName(profile: any, fallbackEmail: string | null, fallback
   if (fullName) return fullName;
   if (fallbackEmail) return fallbackEmail.split('@')[0];
   return fallbackId.slice(0, 8);
+}
+
+async function readShareSettings(supabase: any, classId: string): Promise<ShareSettings> {
+  const { data } = await supabase
+    .from('audit_logs')
+    .select('changes, created_at')
+    .eq('class_id', classId)
+    .eq('entity_type', 'class_share_settings')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return { ...defaultShareSettings, ...((data?.changes as any) || {}) };
 }
 
 async function notifyClassMembers(
@@ -110,6 +159,7 @@ export async function GET(
 
     const perm = await getClassPermission(supabase as any, classId, user.id);
     if (!perm.isMember) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const settings = await readShareSettings(supabase as any, classId);
 
     const { searchParams } = new URL(request.url);
     const requestedAudience = (searchParams.get('audience') || 'teacher').toLowerCase() as ShareAudience;
@@ -122,9 +172,15 @@ export async function GET(
       .order('created_at', { ascending: false })
       .limit(200);
 
-    if (audience === 'all') query = query.eq('audience', 'all');
+    if (audience === 'all') {
+      if (!settings.allChatEnabled) return NextResponse.json({ rows: [] });
+      query = query.eq('audience', 'all');
+    }
     if (audience === 'teacher' && !perm.isTeacher) query = query.eq('audience', 'all');
-    if (audience === 'teacher' && perm.isTeacher) query = query.eq('audience', 'teacher');
+    if (audience === 'teacher' && perm.isTeacher) {
+      if (!settings.teacherChatEnabled) return NextResponse.json({ rows: [] });
+      query = query.eq('audience', 'teacher');
+    }
 
     const { data, error } = await query;
     if (error) {
@@ -220,6 +276,22 @@ export async function POST(
     const attachmentLabel = String(body?.attachmentLabel || '').trim();
     const requestedAudience = String(body?.audience || 'all').toLowerCase() === 'teacher' ? 'teacher' : 'all';
     const audience: ShareAudience = requestedAudience === 'teacher' && perm.isTeacher ? 'teacher' : 'all';
+    const settings = await readShareSettings(supabase as any, classId);
+    const muteEntry = Array.isArray(settings.mutedUsers)
+      ? settings.mutedUsers.find((entry) => String(entry.userId) === user.id)
+      : null;
+    if (muteEntry) {
+      const untilMs = new Date(String(muteEntry.until)).getTime();
+      if (Number.isFinite(untilMs) && untilMs > Date.now()) {
+        return NextResponse.json({ error: 'You are temporarily muted in class chat' }, { status: 403 });
+      }
+    }
+    if (audience === 'all' && !settings.allChatEnabled) {
+      return NextResponse.json({ error: 'All chat is disabled' }, { status: 403 });
+    }
+    if (audience === 'teacher' && !settings.teacherChatEnabled) {
+      return NextResponse.json({ error: 'Teacher chat is disabled' }, { status: 403 });
+    }
     const source = body?.source && typeof body.source === 'object' ? body.source : null;
 
     if (!text && !attachmentLabel) {
@@ -231,7 +303,8 @@ export async function POST(
       attachmentLabel: attachmentLabel || undefined,
       sourceType: source?.link_type ? String(source.link_type) : undefined,
       sourceId: source?.link_ref_id ? String(source.link_ref_id) : undefined,
-      sourceHref: source?.metadata_json?.href ? String(source.metadata_json.href) : undefined,
+      sourceHref: sanitizeHref(source?.metadata_json?.href),
+      sourceMeta: sanitizeAttachmentMeta(source?.metadata_json),
     };
 
     const { data, error } = await (supabase as any)
@@ -282,6 +355,7 @@ export async function POST(
         sourceType: payload.sourceType,
         sourceId: payload.sourceId,
         sourceHref: payload.sourceHref,
+        sourceMeta: payload.sourceMeta,
       });
     }
 
@@ -310,6 +384,7 @@ export async function POST(
       sourceType: payload.sourceType,
       sourceId: payload.sourceId,
       sourceHref: payload.sourceHref,
+      sourceMeta: payload.sourceMeta,
     });
   } catch (error) {
     console.error('[class-share] POST failed', error);

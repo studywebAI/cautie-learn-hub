@@ -36,7 +36,7 @@ export async function GET(
         *,
         subject:subjects(id, title),
         grading_preset:class_grading_presets(id, name, kind, config, is_default),
-        student_grades(id, student_id, grade_value, grade_numeric, max_points, status, tag)
+        student_grades(id, student_id, grade_value, grade_numeric, status, tag)
       `)
       .eq('class_id', classId)
       .order('created_at', { ascending: false })
@@ -192,25 +192,41 @@ export async function POST(
     }
 
     // Get all class members first
-    const { data: classMembers, error: membersError } = await supabase
+    let classMembers: any[] = []
+    let membersError: any = null
+    const withRole = await supabase
       .from('class_members')
       .select('user_id, role')
       .eq('class_id', classId)
+    if (withRole.error) {
+      const fallback = await supabase
+        .from('class_members')
+        .select('user_id')
+        .eq('class_id', classId)
+      classMembers = fallback.data || []
+      membersError = fallback.error
+    } else {
+      classMembers = withRole.data || []
+      membersError = null
+    }
 
     const studentIds = (classMembers || [])
       .filter((m: any) => {
-        const role = String(m.role || '').toLowerCase()
+        const role = String(m?.role || '').toLowerCase()
         return role === 'student' || role === ''
       })
       .map((m: any) => m.user_id)
+    const resolvedStudentIds = studentIds.length > 0
+      ? studentIds
+      : (classMembers || []).map((m: any) => m.user_id).filter(Boolean)
 
     // Get student profiles
     let students: any[] = []
-    if (studentIds.length > 0) {
+    if (resolvedStudentIds.length > 0) {
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, email')
-        .in('id', studentIds)
+        .in('id', resolvedStudentIds)
       
       if (profilesError) {
         console.error('[GRADES] POST - Error fetching students:', profilesError)

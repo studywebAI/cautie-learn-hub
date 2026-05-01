@@ -99,7 +99,6 @@ export function AppSidebar() {
   const t = {
     manage: isDutch ? 'Beheer' : 'Manage',
     studyset: isDutch ? 'Studieset' : 'Studyset',
-    materials: isDutch ? 'Materialen' : 'Materials',
     untitledClass: isDutch ? 'Naamloze Klas' : 'Untitled Class',
     untitledSubject: isDutch ? 'Naamloos Vak' : 'Untitled Subject',
     classesLoadError: isDutch ? 'Kon klassen niet laden' : 'Could not load classes',
@@ -170,9 +169,7 @@ export function AppSidebar() {
     { href: '/tools/timeline', label: isDutch ? 'Tijdlijn' : 'Timeline', icon: Calendar },
   ];
 
-  const otherMenuItems = [
-    { href: '/other/materials', label: t.materials, icon: FolderOpen },
-  ];
+  const otherMenuItems: Array<{ href: string; label: string; icon: typeof FolderOpen }> = [];
 
   useEffect(() => {
     const warmResources = context?.warmResources;

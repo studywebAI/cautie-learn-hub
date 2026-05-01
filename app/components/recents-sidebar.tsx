@@ -3,6 +3,7 @@
 import { useState, useEffect, useContext } from 'react';
 import {
   BrainCircuit,
+  ChevronRight,
   Copy,
   FileSignature,
   BookOpen,
@@ -12,7 +13,6 @@ import {
   StickyNote,
   MoreHorizontal,
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useRouter } from 'next/navigation';
@@ -21,9 +21,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
@@ -107,6 +104,9 @@ export function RecentsSidebar() {
   const [selectedClassId, setSelectedClassId] = useState('');
   const [classAudience, setClassAudience] = useState<'all' | 'teacher'>('all');
   const [isSubmittingShare, setIsSubmittingShare] = useState(false);
+  const [isRecentsSettingsOpen, setIsRecentsSettingsOpen] = useState(false);
+  const [shareLinkDays, setShareLinkDays] = useState('30');
+  const [shareStatus, setShareStatus] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
   const { state } = useSidebar();
   const router = useRouter();
   const { toast } = useToast();
@@ -237,6 +237,14 @@ export function RecentsSidebar() {
     fetchClasses();
   }, [userId]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = window.localStorage.getItem('studyweb-recents-share-days');
+    if (saved && ['1', '7', '30'].includes(saved)) {
+      setShareLinkDays(saved);
+    }
+  }, []);
+
   const handleClick = (item: RecentItem) => {
     router.push(getOpenHref(item));
   };
@@ -254,33 +262,58 @@ export function RecentsSidebar() {
   };
 
   const handleCopyLink = async (item: RecentItem) => {
+    try {
+      const safeUrl = await createSafeShareLink(item);
+      await navigator.clipboard.writeText(safeUrl);
+      toast({ title: isDutch ? 'Veilige share-link gekopieerd' : 'Safe share link copied' });
+      return;
+    } catch {}
     const href = getOpenHref(item);
     const absolute = typeof window === 'undefined' ? href : `${window.location.origin}${href}`;
     await navigator.clipboard.writeText(absolute);
     toast({ title: isDutch ? 'Link gekopieerd' : 'Link copied' });
   };
 
-  const handleShareViaApp = async (item: RecentItem) => {
+  const createSafeShareLink = async (item: RecentItem) => {
     const href = getOpenHref(item);
     const absolute = typeof window === 'undefined' ? href : `${window.location.origin}${href}`;
+    const response = await fetch('/api/share/public-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source: item.source,
+        id: item.id,
+        title: item.title,
+        href: absolute,
+        expiresInDays: Number(shareLinkDays || 30),
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok && payload?.url && typeof window !== 'undefined') {
+      return `${window.location.origin}${String(payload.url)}`;
+    }
+    return absolute;
+  };
+
+  const handleShareViaApp = async (item: RecentItem) => {
+    const safeUrl = await createSafeShareLink(item);
     if (navigator.share) {
-      await navigator.share({ title: item.title, url: absolute });
+      await navigator.share({ title: item.title, url: safeUrl });
       return;
     }
-    await navigator.clipboard.writeText(absolute);
+    await navigator.clipboard.writeText(safeUrl);
     toast({ title: isDutch ? 'Deel-link gekopieerd' : 'Share link copied' });
   };
 
   const handleSendToUser = async (item: RecentItem, recipient: string) => {
-    const href = getOpenHref(item);
-    const absolute = typeof window === 'undefined' ? href : `${window.location.origin}${href}`;
+    const safeUrl = await createSafeShareLink(item);
     const response = await fetch('/api/share/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         recipient: recipient.trim(),
         title: item.title,
-        url: absolute,
+        url: safeUrl,
       }),
     });
     const payload = await response.json().catch(() => ({}));
@@ -294,8 +327,7 @@ export function RecentsSidebar() {
   };
 
   const handleShareToClass = async (item: RecentItem, classId: string, audience: 'all' | 'teacher') => {
-    const href = getOpenHref(item);
-    const absolute = typeof window === 'undefined' ? href : `${window.location.origin}${href}`;
+    const safeUrl = await createSafeShareLink(item);
     const response = await fetch(`/api/classes/${classId}/share`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -306,7 +338,7 @@ export function RecentsSidebar() {
         source: {
           link_type: item.source,
           link_ref_id: item.id,
-          metadata_json: { href: absolute },
+          metadata_json: { href: safeUrl },
         },
       }),
     });
@@ -321,6 +353,7 @@ export function RecentsSidebar() {
   const openShareToUserDialog = (item: RecentItem) => {
     setShareTargetItem(item);
     setRecipientInput('');
+    setShareStatus(null);
     setIsShareToUserOpen(true);
   };
 
@@ -328,6 +361,7 @@ export function RecentsSidebar() {
     setShareTargetItem(item);
     setSelectedClassId(classes[0]?.id || '');
     setClassAudience('all');
+    setShareStatus(null);
     setIsShareToClassOpen(true);
   };
 
@@ -345,9 +379,11 @@ export function RecentsSidebar() {
     setIsSubmittingShare(true);
     try {
       await handleSendToUser(shareTargetItem, trimmedRecipient);
+      setShareStatus({ type: 'success', text: isDutch ? 'Verzonden.' : 'Sent.' });
       setIsShareToUserOpen(false);
       setShareTargetItem(null);
     } catch (error: any) {
+      setShareStatus({ type: 'error', text: error?.message || 'Share failed.' });
       toast({
         title: isDutch ? 'Delen mislukt' : 'Share failed',
         description: error?.message || (isDutch ? 'Kon niet delen.' : 'Could not share.'),
@@ -371,9 +407,11 @@ export function RecentsSidebar() {
     setIsSubmittingShare(true);
     try {
       await handleShareToClass(shareTargetItem, selectedClassId, classAudience);
+      setShareStatus({ type: 'success', text: isDutch ? 'Gedeeld met class.' : 'Shared to class.' });
       setIsShareToClassOpen(false);
       setShareTargetItem(null);
     } catch (error: any) {
+      setShareStatus({ type: 'error', text: error?.message || 'Share to class failed.' });
       toast({
         title: isDutch ? 'Delen met class mislukt' : 'Share to class failed',
         description: error?.message || (isDutch ? 'Kon niet delen.' : 'Could not share.'),
@@ -456,7 +494,10 @@ export function RecentsSidebar() {
       >
         {displayItems.map((item) => {
           const Icon = TYPE_ICONS[item.type] || FileSignature;
-          const dateStr = format(new Date(item.date), 'MMM d, HH:mm');
+          const dateObj = new Date(item.date);
+          const dateStr = Number.isNaN(dateObj.getTime())
+            ? item.date
+            : dateObj.toISOString().slice(0, 16).replace('T', ' ');
 
           return (
             <div
@@ -534,24 +575,31 @@ export function RecentsSidebar() {
                     <MoreHorizontal className="h-3.5 w-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52" onClick={(event) => event.stopPropagation()}>
-                    <DropdownMenuItem onClick={() => router.push(getOpenHref(item))}>Open</DropdownMenuItem>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>Share</DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem onClick={() => void handleCopyLink(item)}>Copy link</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => void handleShareViaApp(item)}>Share via app</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openShareToUserDialog(item)}>
-                        Send to Cautie user
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openShareToClassDialog(item)} disabled={classes.length === 0}>
-                        Share to class
-                      </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                  <DropdownMenuItem onClick={() => router.push(`${getOpenHref(item)}${getOpenHref(item).includes('?') ? '&' : '?'}settings=1`)}>
-                    Settings
-                  </DropdownMenuItem>
+                  <DropdownMenuContent align="end" className="w-56" onClick={(event) => event.stopPropagation()}>
+                    <DropdownMenuItem onClick={() => router.push(getOpenHref(item))}>
+                      <span>Open</span>
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsRecentsSettingsOpen(true)}>
+                      <span>Settings</span>
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => void handleCopyLink(item)}>
+                      <span>Copy link</span>
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openShareToUserDialog(item)}>
+                      <span>Share to user</span>
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => void handleShareViaApp(item)}>
+                      <span>Share via</span>
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openShareToClassDialog(item)} disabled={classes.length === 0}>
+                      <span>Share to class</span>
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -590,6 +638,11 @@ export function RecentsSidebar() {
             <DialogTitle>{isDutch ? 'Stuur naar Cautie gebruiker' : 'Send to Cautie user'}</DialogTitle>
             <DialogDescription>{shareTargetItem?.title}</DialogDescription>
           </DialogHeader>
+          {shareStatus?.type === 'error' ? (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {shareStatus.text}
+            </div>
+          ) : null}
           <div className="space-y-2">
             <Label htmlFor="share-user-recipient">{isDutch ? 'Gebruiker (naam of email)' : 'User (name or email)'}</Label>
             <Input
@@ -604,7 +657,48 @@ export function RecentsSidebar() {
               {isDutch ? 'Annuleren' : 'Cancel'}
             </Button>
             <Button type="button" onClick={() => void submitShareToUser()} disabled={isSubmittingShare}>
-              {isDutch ? 'Versturen' : 'Send'}
+              {isSubmittingShare ? (isDutch ? 'Versturen...' : 'Sending...') : (isDutch ? 'Versturen' : 'Send')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={isRecentsSettingsOpen}
+        onOpenChange={setIsRecentsSettingsOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{isDutch ? 'Recents share settings' : 'Recents share settings'}</DialogTitle>
+            <DialogDescription>
+              {isDutch
+                ? 'Bepaal hoe lang veilige deel-links geldig blijven.'
+                : 'Choose how long safe share links stay valid.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>{isDutch ? 'Link geldigheid' : 'Link validity'}</Label>
+            <Select
+              value={shareLinkDays}
+              onValueChange={(value) => {
+                setShareLinkDays(value);
+                if (typeof window !== 'undefined') {
+                  window.localStorage.setItem('studyweb-recents-share-days', value);
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 day</SelectItem>
+                <SelectItem value="7">7 days</SelectItem>
+                <SelectItem value="30">30 days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={() => setIsRecentsSettingsOpen(false)}>
+              {isDutch ? 'Klaar' : 'Done'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -621,6 +715,11 @@ export function RecentsSidebar() {
             <DialogTitle>{isDutch ? 'Deel met class' : 'Share to class'}</DialogTitle>
             <DialogDescription>{shareTargetItem?.title}</DialogDescription>
           </DialogHeader>
+          {shareStatus?.type === 'error' ? (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {shareStatus.text}
+            </div>
+          ) : null}
           <div className="space-y-2">
             <Label>{isDutch ? 'Class' : 'Class'}</Label>
             <Select value={selectedClassId} onValueChange={setSelectedClassId}>
@@ -635,6 +734,11 @@ export function RecentsSidebar() {
                 ))}
               </SelectContent>
             </Select>
+            {classes.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {isDutch ? 'Geen class beschikbaar om mee te delen.' : 'No class available to share to yet.'}
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label>{isDutch ? 'Publiek' : 'Audience'}</Label>
@@ -653,7 +757,7 @@ export function RecentsSidebar() {
               {isDutch ? 'Annuleren' : 'Cancel'}
             </Button>
             <Button type="button" onClick={() => void submitShareToClass()} disabled={isSubmittingShare}>
-              {isDutch ? 'Delen' : 'Share'}
+              {isSubmittingShare ? (isDutch ? 'Delen...' : 'Sharing...') : (isDutch ? 'Delen' : 'Share')}
             </Button>
           </DialogFooter>
         </DialogContent>
