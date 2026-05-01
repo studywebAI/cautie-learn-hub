@@ -570,15 +570,17 @@
 
 @layer components {
   .app-main-shell {
-    --app-shell-space: 1rem;
-    padding-top: var(--app-shell-space);
-    padding-left: var(--app-shell-space);
-    padding-right: var(--app-shell-space);
-    padding-bottom: var(--app-shell-space);
+    --app-shell-space-top: 0.45rem;
+    --app-shell-space-left: 0.45rem;
+    padding-top: var(--app-shell-space-top);
+    padding-left: var(--app-shell-space-left);
+    padding-right: 0;
+    padding-bottom: 0;
   }
   @media (min-width: 768px) {
     .app-main-shell {
-      --app-shell-space: 1.25rem;
+      --app-shell-space-top: 0.5rem;
+      --app-shell-space-left: 0.5rem;
     }
   }
 

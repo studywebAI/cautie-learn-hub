@@ -150,6 +150,18 @@ const BASE_AUTO_HIGHLIGHT_TARGETS: AutoHighlightTarget[] = [
   { value: 'dates', label: 'Dates and years', regex: /\b(?:\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}|(?:19|20)\d{2})\b/g },
 ];
 
+const sanitizeEditorHtml = (input: string) => {
+  if (!input) return '';
+  let html = String(input).trim();
+  html = html.replace(/<!doctype[^>]*>/gi, '');
+  html = html.replace(/<html[^>]*>/gi, '');
+  html = html.replace(/<\/html>/gi, '');
+  html = html.replace(/<head[\s\S]*?<\/head>/gi, '');
+  html = html.replace(/<body[^>]*>/gi, '');
+  html = html.replace(/<\/body>/gi, '');
+  return html.trim();
+};
+
 function NotesPageContent() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -476,7 +488,7 @@ function NotesPageContent() {
       parent.replaceChild(wrapper, node);
     });
 
-    const nextHtml = container.innerHTML;
+    const nextHtml = sanitizeEditorHtml(container.innerHTML);
     setNoteHtml(nextHtml);
     persistNotesState(nextHtml);
   }, [autoHighlightColor, autoHighlightTargets, persistNotesState, selectedAutoHighlightTargets]);
@@ -527,7 +539,7 @@ function NotesPageContent() {
     if (rawEditorState) {
       try {
         const parsed = JSON.parse(rawEditorState);
-        if (typeof parsed?.html === 'string') setNoteHtml(parsed.html);
+        if (typeof parsed?.html === 'string') setNoteHtml(sanitizeEditorHtml(parsed.html));
         if (Array.isArray(parsed?.annotationPaths)) setAnnotationPaths(parsed.annotationPaths as DrawingPath[]);
         if (typeof parsed?.fontFamily === 'string') setNoteFontFamily(parsed.fontFamily);
         if (typeof parsed?.fontSize === 'number') setNoteFontSize(parsed.fontSize);
@@ -545,7 +557,7 @@ function NotesPageContent() {
 
   useEffect(() => {
     if (!generatedNotes) return;
-    const nextHtml = notesToHtml(generatedNotes);
+    const nextHtml = sanitizeEditorHtml(notesToHtml(generatedNotes));
     if (!noteHtml.trim()) {
       setNoteHtml(nextHtml);
     }
@@ -1050,7 +1062,7 @@ function NotesPageContent() {
     document.execCommand(command);
     const container = notesContentRef.current;
     if (!container) return;
-    const nextHtml = container.innerHTML;
+    const nextHtml = sanitizeEditorHtml(container.innerHTML);
     setNoteHtml(nextHtml);
     persistNotesState(nextHtml);
   }, [editMode, persistNotesState]);
@@ -1099,8 +1111,8 @@ function NotesPageContent() {
   if (generatedNotes) {
     const isVisualMode = mode === 'wordweb' || mode === 'timeline';
     return (
-      <div className="h-full overflow-auto p-4 md:p-6">
-        <div className="mx-auto max-w-6xl space-y-4">
+      <div className="h-full overflow-auto pl-1.5 pr-0 pt-1.5 pb-0">
+        <div className="w-full space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <Button
               variant="ghost"
@@ -1135,8 +1147,9 @@ function NotesPageContent() {
                     singleUse
                     onApplied={() => setHighlightActive(false)}
                     onContentChanged={(html) => {
-                      setNoteHtml(html);
-                      persistNotesState(html);
+                      const cleaned = sanitizeEditorHtml(html);
+                      setNoteHtml(cleaned);
+                      persistNotesState(cleaned);
                     }}
                   />
                   <Button
@@ -1212,14 +1225,14 @@ function NotesPageContent() {
                   )}
                   contentEditable={editMode}
                   suppressContentEditableWarning
-                  dangerouslySetInnerHTML={{ __html: noteHtml || notesToHtml(generatedNotes) }}
+                  dangerouslySetInnerHTML={{ __html: noteHtml || sanitizeEditorHtml(notesToHtml(generatedNotes)) }}
                   onInput={(event) => {
-                    const html = (event.currentTarget as HTMLDivElement).innerHTML;
+                    const html = sanitizeEditorHtml((event.currentTarget as HTMLDivElement).innerHTML);
                     setNoteHtml(html);
                     persistNotesState(html);
                   }}
                   onBlur={(event) => {
-                    const html = (event.currentTarget as HTMLDivElement).innerHTML;
+                    const html = sanitizeEditorHtml((event.currentTarget as HTMLDivElement).innerHTML);
                     setNoteHtml(html);
                     persistNotesState(html);
                   }}
@@ -1490,32 +1503,36 @@ function NotesPageContent() {
           )}
           {mode === 'timeline' && (
             <>
-              <p className="text-[11px] text-muted-foreground">
-                Timeline defaults voor Auto/Custom. In de timeline zelf kies je datum-tot-datum, maand-tot-maand of text filter.
-              </p>
-              <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground">Default start year</p>
-                <Input
-                  type="number"
-                  value={advancedSettings?.timeline.range_start_year ?? 1800}
-                  onChange={(e) => {
-                    const v = Number(e.target.value || 0);
-                    void saveAdvancedSettingsPatch({ timeline: { range_start_year: v } as any }, { tool: 'timeline' });
-                  }}
-                  className="h-8 text-sm"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground">Default end year</p>
-                <Input
-                  type="number"
-                  value={advancedSettings?.timeline.range_end_year ?? 2100}
-                  onChange={(e) => {
-                    const v = Number(e.target.value || 0);
-                    void saveAdvancedSettingsPatch({ timeline: { range_end_year: v } as any }, { tool: 'timeline' });
-                  }}
-                  className="h-8 text-sm"
-                />
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">From - To</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    type="text"
+                    inputMode="text"
+                    value={String(advancedSettings?.timeline.range_start_year ?? '')}
+                    onChange={(e) => {
+                      const raw = e.target.value.trim();
+                      const parsed = Number(raw);
+                      if (!raw || Number.isNaN(parsed)) return;
+                      void saveAdvancedSettingsPatch({ timeline: { range_start_year: parsed } as any }, { tool: 'timeline' });
+                    }}
+                    placeholder="From"
+                    className="h-8 text-sm bg-[hsl(var(--background))]"
+                  />
+                  <Input
+                    type="text"
+                    inputMode="text"
+                    value={String(advancedSettings?.timeline.range_end_year ?? '')}
+                    onChange={(e) => {
+                      const raw = e.target.value.trim();
+                      const parsed = Number(raw);
+                      if (!raw || Number.isNaN(parsed)) return;
+                      void saveAdvancedSettingsPatch({ timeline: { range_end_year: parsed } as any }, { tool: 'timeline' });
+                    }}
+                    placeholder="To"
+                    className="h-8 text-sm bg-[hsl(var(--background))]"
+                  />
+                </div>
               </div>
             </>
           )}

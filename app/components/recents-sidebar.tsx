@@ -644,7 +644,7 @@ export function RecentsSidebar() {
             </div>
           ) : null}
           <div className="space-y-2">
-            <Label htmlFor="share-user-recipient">{isDutch ? 'Gebruiker (naam of email)' : 'User (name or email)'}</Label>
+            <Label htmlFor="share-user-recipient">{isDutch ? 'Gebruiker (display name of email)' : 'User (display name or email)'}</Label>
             <Input
               id="share-user-recipient"
               value={recipientInput}
