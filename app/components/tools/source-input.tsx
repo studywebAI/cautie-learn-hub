@@ -1649,7 +1649,7 @@ export function SourceInput({
           </div>
         )}
 
-        <div className="mb-1 flex items-stretch gap-2">
+        <div className="mb-1 flex items-start gap-2">
           <div className="relative flex-1">
             <Textarea
               value={manualText}
@@ -1661,7 +1661,7 @@ export function SourceInput({
                 }
               }}
               placeholder=""
-              className="min-h-[190px] flex-1 resize-none rounded-2xl border border-border surface-chip text-sm"
+              className="h-[120px] min-h-[120px] flex-1 resize-none rounded-2xl border border-border surface-chip text-sm"
               disabled={disabled || isProcessing}
             />
           </div>
