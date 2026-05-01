@@ -230,7 +230,7 @@ function NotesPageContent() {
   const { settings: advancedSettings, savePatch: saveAdvancedSettingsPatch } = useAdvancedToolSettings();
   const isWordwebPreset = mode === 'wordweb';
   const isTimelinePreset = mode === 'timeline';
-  const pageTitle = isWordwebPreset ? 'Wordweb' : isTimelinePreset ? 'Timeline' : 'Notes';
+  const pageTitle = isWordwebPreset ? 'Mindmap' : isTimelinePreset ? 'Timeline' : 'Notes';
   const storagePrefix = `tools.${mode}`;
 
   const launchStages: Array<{ title: string; detail: string }> = [
@@ -1124,7 +1124,7 @@ function NotesPageContent() {
                 disabled={isVisualMode}
               >
                 <PanelsRightBottom className="h-3.5 w-3.5" />
-                <span className="text-xs">Edit panel</span>
+                <span className="text-xs">Editor</span>
               </Button>
               {!isVisualMode ? (
                 <>
@@ -1190,10 +1190,7 @@ function NotesPageContent() {
                 settings={{
                   rangeStartYear: advancedSettings?.timeline.range_start_year,
                   rangeEndYear: advancedSettings?.timeline.range_end_year,
-                  causalityStrength: advancedSettings?.timeline.causality_strength,
-                  altPaths: advancedSettings?.timeline.alt_paths,
                   scaleMode: advancedSettings?.timeline.scale_mode,
-                  eventImportanceScore: advancedSettings?.timeline.event_importance_score,
                 }}
               />
             ) : (
@@ -1465,8 +1462,9 @@ function NotesPageContent() {
         <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
           {mode === 'wordweb' && (
             <>
+              <p className="text-[11px] text-muted-foreground">Mindmap defaults. Je kunt altijd per node direct editen in het canvas.</p>
               <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">Wordweb density</p>
+                <p className="text-xs text-muted-foreground">Mindmap density</p>
                 <span className="text-xs font-mono">{advancedSettings?.visuals.wordweb_density ?? 80}</span>
               </div>
               <Slider
@@ -1480,7 +1478,7 @@ function NotesPageContent() {
                 disabled={isLoading}
               />
               <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">Interaction required before drag</p>
+                <p className="text-xs text-muted-foreground">Click once before drag</p>
                 <Switch
                   checked={Boolean(advancedSettings?.visuals.interaction_required)}
                   onCheckedChange={(checked) => {
@@ -1492,23 +1490,11 @@ function NotesPageContent() {
           )}
           {mode === 'timeline' && (
             <>
+              <p className="text-[11px] text-muted-foreground">
+                Timeline defaults voor Auto/Custom. In de timeline zelf kies je datum-tot-datum, maand-tot-maand of text filter.
+              </p>
               <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground">Timeline scale mode</p>
-                <select
-                  value={advancedSettings?.timeline.scale_mode ?? 'year'}
-                  onChange={(event) => {
-                    void saveAdvancedSettingsPatch({ timeline: { scale_mode: event.target.value as any } as any }, { tool: 'timeline' });
-                  }}
-                  className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
-                >
-                  <option value="year">Year</option>
-                  <option value="month">Month</option>
-                  <option value="day">Day</option>
-                  <option value="log">Log</option>
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground">Timeline range start year</p>
+                <p className="text-xs text-muted-foreground">Default start year</p>
                 <Input
                   type="number"
                   value={advancedSettings?.timeline.range_start_year ?? 1800}
@@ -1520,7 +1506,7 @@ function NotesPageContent() {
                 />
               </div>
               <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground">Timeline range end year</p>
+                <p className="text-xs text-muted-foreground">Default end year</p>
                 <Input
                   type="number"
                   value={advancedSettings?.timeline.range_end_year ?? 2100}
@@ -1529,33 +1515,6 @@ function NotesPageContent() {
                     void saveAdvancedSettingsPatch({ timeline: { range_end_year: v } as any }, { tool: 'timeline' });
                   }}
                   className="h-8 text-sm"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">Causality strength</p>
-                <Switch
-                  checked={Boolean(advancedSettings?.timeline.causality_strength)}
-                  onCheckedChange={(checked) => {
-                    void saveAdvancedSettingsPatch({ timeline: { causality_strength: checked } as any }, { tool: 'timeline' });
-                  }}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">Alternative paths</p>
-                <Switch
-                  checked={Boolean(advancedSettings?.timeline.alt_paths)}
-                  onCheckedChange={(checked) => {
-                    void saveAdvancedSettingsPatch({ timeline: { alt_paths: checked } as any }, { tool: 'timeline' });
-                  }}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">Event importance scoring</p>
-                <Switch
-                  checked={Boolean(advancedSettings?.timeline.event_importance_score)}
-                  onCheckedChange={(checked) => {
-                    void saveAdvancedSettingsPatch({ timeline: { event_importance_score: checked } as any }, { tool: 'timeline' });
-                  }}
                 />
               </div>
             </>

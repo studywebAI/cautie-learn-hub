@@ -49,6 +49,14 @@ export function WordwebCanvas({ document, onChange, settings }: Props) {
   const [relationLabel, setRelationLabel] = useState('');
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [dragNodeId, setDragNodeId] = useState<string | null>(null);
+  const [newNodeTitle, setNewNodeTitle] = useState('');
+  const [newNodeBody, setNewNodeBody] = useState('');
+  const [attachMode, setAttachMode] = useState<'existing' | 'new-branch'>('existing');
+  const [attachToId, setAttachToId] = useState('root-notes');
+  const [quickAddMode, setQuickAddMode] = useState<'existing' | 'new-branch'>('existing');
+  const [quickAddTitle, setQuickAddTitle] = useState('');
+  const [quickAddBody, setQuickAddBody] = useState('');
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const { positioned, links } = useMemo(() => {
     const nodeMap = new Map(document.nodes.map((node) => [node.id, node]));
@@ -123,6 +131,9 @@ export function WordwebCanvas({ document, onChange, settings }: Props) {
   const byId = useMemo(() => new Map(positioned.map((node) => [node.id, node])), [positioned]);
   const selectedNode = document.nodes.find((node) => node.id === selectedNodeId) || null;
   const relationCandidates = document.nodes.filter((node) => node.id !== 'root-notes');
+  const NODE_WIDTH = 180;
+  const NODE_HEIGHT = 56;
+  const NODE_GAP = 14;
 
   const updateNode = (nodeId: string, patch: { title?: string; body?: string | null }) => {
     const nextNodes = document.nodes.map((node) =>
@@ -171,7 +182,87 @@ export function WordwebCanvas({ document, onChange, settings }: Props) {
     onChange({ ...document, edges: nextEdges });
   };
 
+  const isPositionFree = (x: number, y: number, ignoreNodeId?: string | null) => {
+    return !positioned.some((node) => {
+      if (ignoreNodeId && node.id === ignoreNodeId) return false;
+      return Math.abs(node.x - x) < NODE_WIDTH + NODE_GAP && Math.abs(node.y - y) < NODE_HEIGHT + NODE_GAP;
+    });
+  };
+
+  const findFreeNear = (x: number, y: number, ignoreNodeId?: string | null) => {
+    const maxRadius = 16;
+    const xStep = NODE_WIDTH + NODE_GAP;
+    const yStep = NODE_HEIGHT + NODE_GAP;
+    for (let r = 0; r <= maxRadius; r += 1) {
+      for (let dy = -r; dy <= r; dy += 1) {
+        for (let dx = -r; dx <= r; dx += 1) {
+          const nx = Math.max(20, x + dx * xStep);
+          const ny = Math.max(20, y + dy * yStep);
+          if (isPositionFree(nx, ny, ignoreNodeId)) return { x: nx, y: ny };
+        }
+      }
+    }
+    return { x: Math.max(20, x), y: Math.max(20, y) };
+  };
+
+  const getNextFreePosition = () => {
+    const occupied = new Set(positioned.map((node) => `${Math.round(node.x / 20)}-${Math.round(node.y / 20)}`));
+    for (let y = 40; y <= 920; y += 72) {
+      for (let x = 40; x <= 1800; x += 210) {
+        const key = `${Math.round(x / 20)}-${Math.round(y / 20)}`;
+        if (!occupied.has(key)) return { x, y };
+      }
+    }
+    return { x: 40, y: 40 };
+  };
+
+  const addMindmapNode = (
+    inputTitle: string,
+    inputBody: string,
+    mode: 'existing' | 'new-branch',
+    explicitParentId?: string | null
+  ) => {
+    if (!inputTitle.trim()) return;
+    const parentId = mode === 'existing' ? (explicitParentId || attachToId || 'root-notes') : 'root-notes';
+    const id = `node-${Date.now()}`;
+    const nextNodes = [
+      ...document.nodes,
+      {
+        id,
+        type: 'concept',
+        title: inputTitle.trim(),
+        body: inputBody.trim(),
+      },
+    ];
+    const nextEdges = [
+      ...document.edges,
+      {
+        id: `edge-contains-${Date.now()}`,
+        from: parentId,
+        to: id,
+        relation: 'contains' as const,
+      },
+    ];
+    const parentPos = byId.get(parentId) || null;
+    const preferred = parentPos
+      ? findFreeNear(parentPos.x + NODE_WIDTH + NODE_GAP * 2, parentPos.y)
+      : getNextFreePosition();
+    const pos = preferred;
+    const current = getWordwebLayout(document)?.nodePositions || {};
+    const next = setWordwebLayout(
+      { ...document, nodes: nextNodes, edges: nextEdges },
+      { ...current, [id]: pos }
+    );
+    onChange(next);
+    setSelectedNodeId(id);
+    setNewNodeTitle('');
+    setNewNodeBody('');
+    setQuickAddTitle('');
+    setQuickAddBody('');
+  };
+
   const handleNodePointerDown = (event: ReactPointerEvent<HTMLButtonElement>, nodeId: string) => {
+    if (!isEditMode) return;
     if (settings?.interactionRequired && selectedNodeId !== nodeId) {
       setSelectedNodeId(nodeId);
       return;
@@ -181,16 +272,18 @@ export function WordwebCanvas({ document, onChange, settings }: Props) {
   };
 
   const handleNodePointerMove = (event: ReactPointerEvent<HTMLButtonElement>, nodeId: string) => {
+    if (!isEditMode) return;
     if (dragNodeId !== nodeId) return;
     const host = event.currentTarget.closest('[data-wordweb-host]') as HTMLDivElement | null;
     if (!host) return;
     const hostRect = host.getBoundingClientRect();
-    const x = Math.max(0, event.clientX - hostRect.left - 90);
-    const y = Math.max(0, event.clientY - hostRect.top - 18);
+    const rawX = Math.max(0, event.clientX - hostRect.left - 90);
+    const rawY = Math.max(0, event.clientY - hostRect.top - 18);
+    const snapped = findFreeNear(rawX, rawY, nodeId);
     const current = getWordwebLayout(document)?.nodePositions || {};
     const nextPositions = {
       ...current,
-      [nodeId]: { x, y },
+      [nodeId]: { x: snapped.x, y: snapped.y },
     };
     onChange(setWordwebLayout(document, nextPositions));
   };
@@ -255,7 +348,7 @@ export function WordwebCanvas({ document, onChange, settings }: Props) {
             <button
               type="button"
               key={node.id}
-              className={`absolute w-[180px] cursor-grab rounded-md px-3 py-2 text-left text-sm shadow-[inset_0_0_0_1px_hsl(var(--border))] ${
+              className={`absolute w-[180px] rounded-md px-3 py-2 text-left text-sm shadow-[inset_0_0_0_1px_hsl(var(--border))] ${isEditMode ? 'cursor-grab' : 'cursor-pointer'} ${
                 selectedNodeId === node.id ? 'surface-chip' : 'surface-interactive'
               }`}
               style={{ left: `${node.x}px`, top: `${node.y}px` }}
@@ -273,7 +366,10 @@ export function WordwebCanvas({ document, onChange, settings }: Props) {
 
       <aside className="rounded-2xl border surface-panel p-4 space-y-4">
         <div className="space-y-2">
-          <h3 className="text-sm">Node editor</h3>
+          <h3 className="text-sm">Mindmap editor</h3>
+          <Button type="button" size="sm" variant={isEditMode ? 'default' : 'outline'} onClick={() => setIsEditMode((v) => !v)}>
+            {isEditMode ? 'Edit mode on' : 'Edit mode off'}
+          </Button>
           {!selectedNode ? (
             <p className="text-xs text-muted-foreground">Select a node in the graph to edit.</p>
           ) : (
@@ -297,6 +393,97 @@ export function WordwebCanvas({ document, onChange, settings }: Props) {
             </>
           )}
         </div>
+
+        <div className="space-y-2">
+          <h3 className="text-sm">Add block</h3>
+          <Input
+            value={newNodeTitle}
+            onChange={(event) => setNewNodeTitle(event.target.value)}
+            placeholder="Block title"
+            className="h-8 text-sm"
+          />
+          <Textarea
+            value={newNodeBody}
+            onChange={(event) => setNewNodeBody(event.target.value)}
+            placeholder="Block description"
+            className="min-h-[74px] text-sm"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              className={`h-8 rounded-md border text-xs ${attachMode === 'existing' ? 'surface-chip' : 'surface-panel'}`}
+              onClick={() => setAttachMode('existing')}
+            >
+              Existing branch
+            </button>
+            <button
+              type="button"
+              className={`h-8 rounded-md border text-xs ${attachMode === 'new-branch' ? 'surface-chip' : 'surface-panel'}`}
+              onClick={() => setAttachMode('new-branch')}
+            >
+              New branch
+            </button>
+          </div>
+          {attachMode === 'existing' ? (
+            <select
+              value={attachToId}
+              onChange={(event) => setAttachToId(event.target.value)}
+              className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+            >
+              <option value="root-notes">Root</option>
+              {relationCandidates.map((node) => (
+                <option key={`attach-${node.id}`} value={node.id}>
+                  {node.title}
+                </option>
+              ))}
+            </select>
+          ) : null}
+          <Button size="sm" onClick={() => addMindmapNode(newNodeTitle, newNodeBody, attachMode)} disabled={!newNodeTitle.trim()}>
+            Add block
+          </Button>
+        </div>
+
+        {selectedNode ? (
+          <div className="space-y-2">
+            <h3 className="text-sm">Add from selected block</h3>
+            <p className="text-xs text-muted-foreground truncate">Selected: {selectedNode.title}</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className={`h-8 rounded-md border text-xs ${quickAddMode === 'existing' ? 'surface-chip' : 'surface-panel'}`}
+                onClick={() => setQuickAddMode('existing')}
+              >
+                Existing string
+              </button>
+              <button
+                type="button"
+                className={`h-8 rounded-md border text-xs ${quickAddMode === 'new-branch' ? 'surface-chip' : 'surface-panel'}`}
+                onClick={() => setQuickAddMode('new-branch')}
+              >
+                New string
+              </button>
+            </div>
+            <Input
+              value={quickAddTitle}
+              onChange={(event) => setQuickAddTitle(event.target.value)}
+              placeholder="New block title"
+              className="h-8 text-sm"
+            />
+            <Textarea
+              value={quickAddBody}
+              onChange={(event) => setQuickAddBody(event.target.value)}
+              placeholder="New block description"
+              className="min-h-[70px] text-sm"
+            />
+            <Button
+              size="sm"
+              onClick={() => addMindmapNode(quickAddTitle, quickAddBody, quickAddMode, selectedNode.id)}
+              disabled={!quickAddTitle.trim()}
+            >
+              Add connected block
+            </Button>
+          </div>
+        ) : null}
 
         <div className="space-y-2">
           <h3 className="text-sm">Relations</h3>
@@ -343,7 +530,7 @@ export function WordwebCanvas({ document, onChange, settings }: Props) {
               placeholder="Relation label (optional)"
               className="h-8 text-sm"
             />
-            <Button size="sm" onClick={addRelation} disabled={!relationFrom || !relationTo || relationFrom === relationTo}>
+            <Button size="sm" onClick={() => addRelation()} disabled={!relationFrom || !relationTo || relationFrom === relationTo}>
               Add relation
             </Button>
           </div>

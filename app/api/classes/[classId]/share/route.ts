@@ -45,6 +45,57 @@ function resolveProfileName(profile: any, fallbackEmail: string | null, fallback
   return fallbackId.slice(0, 8);
 }
 
+async function notifyClassMembers(
+  supabase: any,
+  classId: string,
+  authorUserId: string,
+  audience: ShareAudience,
+  title: string,
+  sharedUrl?: string
+) {
+  const { data: members, error: membersError } = await supabase
+    .from('class_members')
+    .select('user_id')
+    .eq('class_id', classId);
+
+  if (membersError || !members?.length) return;
+
+  const memberIds = Array.from(
+    new Set(
+      members
+        .map((member: any) => String(member?.user_id || ''))
+        .filter((id: string) => id && id !== authorUserId)
+    )
+  );
+  if (!memberIds.length) return;
+
+  let targetIds = memberIds;
+  if (audience === 'teacher') {
+    const { data: teacherProfiles } = await supabase
+      .from('profiles')
+      .select('id, subscription_type')
+      .in('id', memberIds)
+      .eq('subscription_type', 'teacher');
+    targetIds = (teacherProfiles || []).map((profile: any) => String(profile.id));
+  }
+
+  if (!targetIds.length) return;
+
+  const rows = targetIds.map((userId: string) => ({
+    user_id: userId,
+    type: 'shared_item',
+    title: 'New shared class item',
+    message: title,
+    data: {
+      class_id: classId,
+      audience,
+      shared_url: sharedUrl || null,
+    },
+  }));
+
+  await supabase.from('notifications').insert(rows);
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ classId: string }> }
@@ -214,6 +265,14 @@ export async function POST(
         .select('id, created_at, is_public')
         .single();
       if (fallbackError) return NextResponse.json({ error: fallbackError.message }, { status: 500 });
+      await notifyClassMembers(
+        supabase as any,
+        classId,
+        user.id,
+        fallbackData.is_public ? 'all' : 'teacher',
+        payload.attachmentLabel || payload.text || 'Shared class item',
+        payload.sourceHref
+      );
       return NextResponse.json({
         id: fallbackData.id,
         createdAt: fallbackData.created_at,
@@ -232,6 +291,14 @@ export async function POST(
       .eq('id', user.id)
       .maybeSingle();
     const authorEmail = profile?.email ? String(profile.email) : user.email || null;
+    await notifyClassMembers(
+      supabase as any,
+      classId,
+      user.id,
+      data.audience === 'all' ? 'all' : 'teacher',
+      payload.attachmentLabel || payload.text || 'Shared class item',
+      payload.sourceHref
+    );
     return NextResponse.json({
       id: data.id,
       createdAt: data.created_at,

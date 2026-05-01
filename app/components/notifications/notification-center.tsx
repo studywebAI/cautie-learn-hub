@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, Settings, Check, CheckCheck, X } from 'lucide-react';
+import { Bell, Check, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -37,11 +37,10 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
   const fetchNotifications = async () => {
     try {
       const response = await fetch('/api/notifications?limit=50');
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data);
-        setUnreadCount(data.filter((n: Notification) => !n.read).length);
-      }
+      if (!response.ok) return;
+      const data = await response.json();
+      setNotifications(data);
+      setUnreadCount(data.filter((n: Notification) => !n.read).length);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -52,10 +51,9 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
   const fetchUnreadCount = async () => {
     try {
       const response = await fetch('/api/notifications/mark-read');
-      if (response.ok) {
-        const data = await response.json();
-        setUnreadCount(data.count);
-      }
+      if (!response.ok) return;
+      const data = await response.json();
+      setUnreadCount(data.count);
     } catch (error) {
       console.error('Error fetching unread count:', error);
     }
@@ -64,14 +62,16 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
   useEffect(() => {
     fetchNotifications();
     fetchUnreadCount();
-
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(() => {
-      fetchUnreadCount();
-    }, 30000);
-
+    const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 15000);
+    return () => clearInterval(interval);
+  }, [isOpen]);
 
   const markAsRead = async (notificationIds: string[], markAll = false) => {
     try {
@@ -80,20 +80,17 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notification_ids: markAll ? null : notificationIds, mark_all: markAll }),
       });
+      if (!response.ok) throw new Error('Failed to mark as read');
 
-      if (response.ok) {
-        setNotifications(prev =>
-          prev.map(n =>
-            markAll || notificationIds.includes(n.id)
-              ? { ...n, read: true, read_at: new Date().toISOString() }
-              : n
-          )
-        );
-        setUnreadCount(prev => markAll ? 0 : Math.max(0, prev - notificationIds.length));
-      } else {
-        throw new Error('Failed to mark as read');
-      }
-    } catch (error) {
+      setNotifications((prev) =>
+        prev.map((n) =>
+          markAll || notificationIds.includes(n.id)
+            ? { ...n, read: true, read_at: new Date().toISOString() }
+            : n
+        )
+      );
+      setUnreadCount((prev) => (markAll ? 0 : Math.max(0, prev - notificationIds.length)));
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to mark notifications as read.',
@@ -104,84 +101,52 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'announcement':
-        return '📢';
-      case 'submission_graded':
-        return '📝';
-      case 'assignment_created':
-        return '📚';
-      case 'assignment_due':
-        return '⏰';
-      case 'ai_content_generated':
-        return '🤖';
-      case 'ai_grading_completed':
-        return '✅';
-      case 'comment_added':
-        return '💬';
-      case 'deadline_reminder':
-        return '🚨';
-      default:
-        return '🔔';
+      case 'announcement': return '📢';
+      case 'submission_graded': return '📝';
+      case 'assignment_created': return '📚';
+      case 'assignment_due': return '⏰';
+      case 'ai_content_generated': return '🤖';
+      case 'ai_grading_completed': return '✅';
+      case 'comment_added': return '💬';
+      case 'deadline_reminder': return '🚨';
+      case 'shared_item': return '🔗';
+      default: return '🔔';
     }
   };
 
   const getNotificationColor = (type: string) => {
     switch (type) {
-      case 'announcement':
-        return 'bg-blue-100 text-blue-800';
-      case 'submission_graded':
-        return 'bg-green-100 text-green-800';
-      case 'assignment_created':
-        return 'bg-purple-100 text-purple-800';
-      case 'assignment_due':
-        return 'bg-red-100 text-red-800';
-      case 'ai_content_generated':
-        return 'bg-indigo-100 text-indigo-800';
-      case 'ai_grading_completed':
-        return 'bg-emerald-100 text-emerald-800';
-      case 'comment_added':
-        return 'bg-orange-100 text-orange-800';
-      case 'deadline_reminder':
-        return 'bg-red-100 text-red-800';
-      case 'teacher_join_request':
-        return 'bg-amber-100 text-amber-800';
-      case 'teacher_join_request_result':
-        return 'bg-cyan-100 text-cyan-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'announcement': return 'bg-blue-100 text-blue-800';
+      case 'submission_graded': return 'bg-green-100 text-green-800';
+      case 'assignment_created': return 'bg-purple-100 text-purple-800';
+      case 'assignment_due': return 'bg-red-100 text-red-800';
+      case 'ai_content_generated': return 'bg-indigo-100 text-indigo-800';
+      case 'ai_grading_completed': return 'bg-emerald-100 text-emerald-800';
+      case 'comment_added': return 'bg-orange-100 text-orange-800';
+      case 'deadline_reminder': return 'bg-red-100 text-red-800';
+      case 'teacher_join_request': return 'bg-amber-100 text-amber-800';
+      case 'teacher_join_request_result': return 'bg-cyan-100 text-cyan-800';
+      case 'shared_item': return 'bg-sky-100 text-sky-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const handleTeacherJoinDecision = async (notification: Notification, decision: 'approve' | 'reject') => {
     const requestId = notification?.data?.request_id;
     const classId = notification?.data?.class_id;
-    if (!requestId || !classId) {
-      toast({
-        title: 'Missing request details',
-        description: 'Cannot process this request.',
-        variant: 'destructive',
-      });
-      return;
-    }
+    if (!requestId || !classId) return;
 
     setProcessingRequestId(requestId);
     try {
       const response = await fetch(`/api/classes/${classId}/teacher-join-requests`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          request_id: requestId,
-          decision,
-        }),
+        body: JSON.stringify({ request_id: requestId, decision }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data?.error || 'Failed to process join request');
-      }
+      if (!response.ok) throw new Error(data?.error || 'Failed to process join request');
 
-      toast({
-        title: decision === 'approve' ? 'Teacher approved' : 'Teacher rejected',
-      });
+      toast({ title: decision === 'approve' ? 'Teacher approved' : 'Teacher rejected' });
       await markAsRead([notification.id]);
       await fetchNotifications();
       await fetchUnreadCount();
@@ -198,9 +163,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
+    const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
     if (diffInSeconds < 60) return 'Just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
@@ -213,10 +176,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
         <Button variant="outline" size="sm" className={`relative ${className}`}>
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-            >
+            <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
           )}
@@ -227,16 +187,10 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
           <div className="flex items-center justify-between">
             <div>
               <SheetTitle>Notifications</SheetTitle>
-              <SheetDescription>
-                Stay updated with your latest activities
-              </SheetDescription>
+              <SheetDescription>Stay updated with your latest activities</SheetDescription>
             </div>
             {notifications.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => markAsRead([], true)}
-              >
+              <Button variant="outline" size="sm" onClick={() => markAsRead([], true)}>
                 <CheckCheck className="h-4 w-4 mr-2" />
                 Mark all read
               </Button>
@@ -266,39 +220,23 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Bell className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No notifications yet</h3>
-              <p className="text-muted-foreground">
-                You'll see updates about your classes and activities here.
-              </p>
+              <p className="text-muted-foreground">You&apos;ll see updates about your classes and activities here.</p>
             </div>
           ) : (
             <div className="space-y-4">
               {notifications.map((notification) => (
-                <Card
-                  key={notification.id}
-                  className={`transition-colors ${!notification.read ? 'bg-blue-50/50 border-blue-200' : ''}`}
-                >
+                <Card key={notification.id} className={`transition-colors ${!notification.read ? 'bg-blue-50/50 border-blue-200' : ''}`}>
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-2">
                         <span className="text-lg">{getNotificationIcon(notification.type)}</span>
-                        <CardTitle className="text-sm font-medium">
-                          {notification.title}
-                        </CardTitle>
-                        {!notification.read && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                        )}
+                        <CardTitle className="text-sm font-medium">{notification.title}</CardTitle>
+                        {!notification.read && <div className="w-2 h-2 bg-blue-500 rounded-full" />}
                       </div>
                       <div className="flex items-center space-x-1">
-                        <span className="text-xs text-muted-foreground">
-                          {formatTimeAgo(notification.created_at)}
-                        </span>
+                        <span className="text-xs text-muted-foreground">{formatTimeAgo(notification.created_at)}</span>
                         {!notification.read && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => markAsRead([notification.id])}
-                            className="h-6 w-6 p-0"
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => markAsRead([notification.id])} className="h-6 w-6 p-0">
                             <Check className="h-3 w-3" />
                           </Button>
                         )}
@@ -308,27 +246,20 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
                       {notification.type.replace('_', ' ')}
                     </Badge>
                   </CardHeader>
+
                   {notification.message && (
                     <CardContent>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {notification.message}
-                      </p>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{notification.message}</p>
                       {notification.type === 'teacher_join_request' && (
                         <div className="mt-3 flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleTeacherJoinDecision(notification, 'approve')}
-                            disabled={processingRequestId === notification?.data?.request_id}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleTeacherJoinDecision(notification, 'reject')}
-                            disabled={processingRequestId === notification?.data?.request_id}
-                          >
-                            Reject
+                          <Button size="sm" onClick={() => handleTeacherJoinDecision(notification, 'approve')} disabled={processingRequestId === notification?.data?.request_id}>Approve</Button>
+                          <Button size="sm" variant="outline" onClick={() => handleTeacherJoinDecision(notification, 'reject')} disabled={processingRequestId === notification?.data?.request_id}>Reject</Button>
+                        </div>
+                      )}
+                      {notification.type === 'shared_item' && notification?.data?.shared_url && (
+                        <div className="mt-3">
+                          <Button size="sm" variant="outline" onClick={() => { window.location.href = String(notification.data.shared_url); }}>
+                            Open shared item
                           </Button>
                         </div>
                       )}

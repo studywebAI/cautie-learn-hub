@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import type { CanonicalDocument, CanonicalLayoutState } from '@/lib/tools/canonical-model';
+import { useMemo, useState } from 'react';
+import type { CanonicalDocument } from '@/lib/tools/canonical-model';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 type Props = {
   document: CanonicalDocument;
@@ -12,37 +13,22 @@ type Props = {
   settings?: {
     rangeStartYear?: number;
     rangeEndYear?: number;
-    causalityStrength?: boolean;
-    altPaths?: boolean;
-    scaleMode?: "year" | "month" | "day" | "log";
-    eventImportanceScore?: boolean;
+    scaleMode?: 'year' | 'month' | 'day' | 'log';
   };
 };
 
 type TimelineItem = {
   id: string;
   title: string;
+  body: string;
   startAt: string;
   endAt: string;
   lane: string;
-  importance: number;
 };
 
-function getTimelineLayout(document: CanonicalDocument): CanonicalLayoutState | null {
-  return document.layouts?.find((layout) => layout.view === 'timeline') || null;
-}
-
-function setTimelineLayout(document: CanonicalDocument, laneOrder: string[]) {
-  const layouts = [...(document.layouts || [])];
-  const index = layouts.findIndex((layout) => layout.view === 'timeline');
-  const nextLayout: CanonicalLayoutState = {
-    view: 'timeline',
-    ...(layouts[index] || {}),
-    laneOrder,
-  };
-  if (index >= 0) layouts[index] = nextLayout;
-  else layouts.push(nextLayout);
-  return { ...document, layouts };
+function toDate(iso: string) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function toIsoDate(ms: number) {
@@ -54,111 +40,163 @@ function toIsoDate(ms: number) {
 }
 
 export function TimelineBoard({ document, onChange, settings }: Props) {
-  const [timeScale, setTimeScale] = useState<'year' | 'month'>(() =>
-    settings?.scaleMode === 'month' ? 'month' : 'year'
-  );
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [displayMode, setDisplayMode] = useState<'auto' | 'year' | 'month' | 'custom'>('auto');
+  const [customMode, setCustomMode] = useState<'date' | 'month' | 'text'>('date');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  const [customStartMonth, setCustomStartMonth] = useState('');
+  const [customEndMonth, setCustomEndMonth] = useState('');
+  const [customQuery, setCustomQuery] = useState('');
   const [newTitle, setNewTitle] = useState('');
+  const [newBody, setNewBody] = useState('');
   const [newStart, setNewStart] = useState('');
   const [newEnd, setNewEnd] = useState('');
   const [newLane, setNewLane] = useState('General');
-  const [dragState, setDragState] = useState<null | { nodeId: string; mode: 'move' | 'resize-start' | 'resize-end' }>(null);
-  const [depFrom, setDepFrom] = useState('');
-  const [depTo, setDepTo] = useState('');
-
-  useEffect(() => {
-    if (settings?.scaleMode === 'month') setTimeScale('month');
-    if (settings?.scaleMode === 'year') setTimeScale('year');
-  }, [settings?.scaleMode]);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
 
   const items = useMemo<TimelineItem[]>(() => {
-    const byId = new Map(document.nodes.map((node) => [node.id, node]));
-    const fromTemporal = document.temporal
+    const nodeById = new Map(document.nodes.map((node) => [node.id, node]));
+    return document.temporal
       .map((entry) => {
-        const node = byId.get(entry.nodeId);
+        const node = nodeById.get(entry.nodeId);
         if (!node) return null;
-        const lane = (node.tags && node.tags[0]) || 'General';
         return {
           id: node.id,
           title: node.title,
+          body: node.body || '',
           startAt: entry.startAt || '',
           endAt: entry.endAt || entry.startAt || '',
-          lane,
-          importance: Number((node as any)?.meta?.importance ?? 0),
+          lane: node.tags?.[0] || 'General',
         };
       })
-      .filter((item): item is TimelineItem => Boolean(item));
+      .filter((item): item is TimelineItem => Boolean(item))
+      .filter((item) => item.startAt)
+      .sort((a, b) => String(a.startAt).localeCompare(String(b.startAt)));
+  }, [document.nodes, document.temporal]);
 
-    const startYear = settings?.rangeStartYear ?? -5000;
-    const endYear = settings?.rangeEndYear ?? 5000;
-    const inRange = (iso: string) => {
-      const year = Number(String(iso || "").slice(0, 4));
-      if (Number.isNaN(year)) return true;
-      return year >= startYear && year <= endYear;
+  const filtered = useMemo(() => {
+    const startFromSettings = settings?.rangeStartYear ? `${settings.rangeStartYear}-01-01` : '';
+    const endFromSettings = settings?.rangeEndYear ? `${settings.rangeEndYear}-12-31` : '';
+    const monthStartIso = customStartMonth ? `${customStartMonth}-01` : '';
+    const monthEndIso = customEndMonth ? `${customEndMonth}-31` : '';
+    const customMinIso =
+      customMode === 'month'
+        ? monthStartIso
+        : customMode === 'date'
+          ? customStart
+          : '';
+    const customMaxIso =
+      customMode === 'month'
+        ? monthEndIso
+        : customMode === 'date'
+          ? customEnd
+          : '';
+    const minIso = displayMode === 'custom' ? customMinIso || startFromSettings : startFromSettings;
+    const maxIso = displayMode === 'custom' ? customMaxIso || endFromSettings : endFromSettings;
+    const minMs = minIso ? toDate(minIso)?.getTime() ?? null : null;
+    const maxMs = maxIso ? toDate(maxIso)?.getTime() ?? null : null;
+    return items.filter((item) => {
+      if (displayMode === 'custom' && customMode === 'text' && customQuery.trim()) {
+        const haystack = `${item.title} ${item.body} ${item.lane}`.toLowerCase();
+        if (!haystack.includes(customQuery.trim().toLowerCase())) return false;
+      }
+      const ms = toDate(item.startAt)?.getTime();
+      if (ms == null) return false;
+      if (minMs != null && ms < minMs) return false;
+      if (maxMs != null && ms > maxMs) return false;
+      return true;
+    });
+  }, [customEnd, customEndMonth, customMode, customQuery, customStart, customStartMonth, displayMode, items, settings?.rangeEndYear, settings?.rangeStartYear]);
+
+  const range = useMemo(() => {
+    if (filtered.length === 0) {
+      const now = Date.now();
+      return { min: now - 86400000, max: now + 86400000 };
+    }
+    const allTimes = filtered
+      .map((item) => toDate(item.startAt)?.getTime())
+      .filter((value): value is number => typeof value === 'number');
+    const min = Math.min(...allTimes);
+    const max = Math.max(...allTimes);
+    return { min, max: Math.max(max, min + 86400000) };
+  }, [filtered]);
+
+  const effectiveScale = useMemo(() => {
+    if (displayMode === 'year') return 'year';
+    if (displayMode === 'month') return 'month';
+    if (displayMode === 'custom') return settings?.scaleMode === 'month' ? 'month' : 'year';
+    const spanDays = (range.max - range.min) / 86400000;
+    if (spanDays <= 120) return 'day';
+    if (spanDays <= 900) return 'month';
+    return 'year';
+  }, [displayMode, range.max, range.min, settings?.scaleMode]);
+
+  const placed = useMemo(() => {
+    const span = Math.max(1, range.max - range.min);
+    const TRACK_MIN_WIDTH_PX = 980;
+    const CARD_WIDTH_PX = 230;
+    const COLLISION_GAP_PX = 18;
+    const CARD_WIDTH_PCT = (CARD_WIDTH_PX / TRACK_MIN_WIDTH_PX) * 100;
+    const GAP_PCT = (COLLISION_GAP_PX / TRACK_MIN_WIDTH_PX) * 100;
+    const upRows: number[] = [];
+    const downRows: number[] = [];
+
+    const nextRowForLeft = (rows: number[], left: number) => {
+      for (let i = 0; i < rows.length; i += 1) {
+        if (left >= rows[i] + GAP_PCT) {
+          rows[i] = left + CARD_WIDTH_PCT;
+          return i;
+        }
+      }
+      rows.push(left + CARD_WIDTH_PCT);
+      return rows.length - 1;
     };
 
-    if (fromTemporal.length > 0) {
-      const sorted = fromTemporal
-        .filter((item) => inRange(item.startAt || item.endAt))
-        .sort((a, b) => {
-          if (settings?.eventImportanceScore) return b.importance - a.importance;
-          return String(a.startAt).localeCompare(String(b.startAt));
-        });
-      return sorted;
+    return filtered.map((item, index) => {
+      const t = toDate(item.startAt)?.getTime() ?? range.min;
+      const markerX = ((t - range.min) / span) * 100;
+      const clampedX = Math.max(CARD_WIDTH_PCT / 2, Math.min(100 - CARD_WIDTH_PCT / 2, markerX));
+      const left = clampedX - CARD_WIDTH_PCT / 2;
+      const side = index % 2 === 0 ? 'up' : 'down';
+      const row = side === 'up' ? nextRowForLeft(upRows, left) : nextRowForLeft(downRows, left);
+      return { ...item, markerX, cardX: clampedX, side, row };
+    });
+  }, [filtered, range.max, range.min]);
+
+  const selected = placed.find((item) => item.id === selectedId) || null;
+
+  const effectiveRangeLabel = useMemo(() => {
+    if (displayMode !== 'custom') return 'Auto range';
+    if (customMode === 'text' && customQuery.trim()) return `Filtered by "${customQuery.trim()}"`;
+    if (customMode === 'month' && (customStartMonth || customEndMonth)) {
+      return `${customStartMonth || '...'} -> ${customEndMonth || '...'}`;
     }
+    if (customStart || customEnd) return `${customStart || '...'} -> ${customEnd || '...'}`;
+    return 'Custom range';
+  }, [customEnd, customEndMonth, customMode, customQuery, customStart, customStartMonth, displayMode]);
 
-    return document.nodes
-      .filter((node) => node.id !== 'root-notes')
-      .map((node, idx) => ({
-        id: node.id,
-        title: node.title,
-        startAt: `${2000 + idx}-01-01`,
-        endAt: `${2000 + idx}-12-31`,
-        lane: (node.tags && node.tags[0]) || 'General',
-        importance: Number((node as any)?.meta?.importance ?? 0),
-      }))
-      .filter((item) => inRange(item.startAt || item.endAt))
-      .sort((a, b) => {
-        if (settings?.eventImportanceScore) return b.importance - a.importance;
-        return String(a.startAt).localeCompare(String(b.startAt));
-      });
-  }, [document, settings?.eventImportanceScore, settings?.rangeEndYear, settings?.rangeStartYear]);
-
-  const lanes = useMemo(() => {
-    const defaultLanes = Array.from(new Set(items.map((item) => item.lane || 'General')));
-    const savedLaneOrder = getTimelineLayout(document)?.laneOrder || [];
-    const ordered = savedLaneOrder.filter((lane) => defaultLanes.includes(lane));
-    for (const lane of defaultLanes) {
-      if (!ordered.includes(lane)) ordered.push(lane);
-    }
-    return ordered.length > 0 ? ordered : ['General'];
-  }, [document, items]);
-
-  const minTime = items.length > 0 ? Math.min(...items.map((item) => new Date(item.startAt).getTime())) : Date.now();
-  const maxTime = items.length > 0 ? Math.max(...items.map((item) => new Date(item.endAt || item.startAt).getTime())) : Date.now() + 86400000;
-  const span = Math.max(86400000, maxTime - minTime);
-
-  const itemX = (iso: string) => ((new Date(iso).getTime() - minTime) / span) * 100;
-  const laneY = (lane: string) => lanes.indexOf(lane) * 92 + 48;
-
-  const updateItem = (nodeId: string, patch: Partial<{ title: string; startAt: string; endAt: string; lane: string }>) => {
+  const upsertNode = (nodeId: string, patch: Partial<{ title: string; body: string; lane: string; startAt: string; endAt: string }>) => {
     const nextNodes = document.nodes.map((node) =>
       node.id === nodeId
         ? {
             ...node,
-            ...(patch.title ? { title: patch.title } : {}),
-            ...(patch.lane ? { tags: [patch.lane] } : {}),
+            ...(patch.title !== undefined ? { title: patch.title } : {}),
+            ...(patch.body !== undefined ? { body: patch.body } : {}),
+            ...(patch.lane !== undefined ? { tags: [patch.lane] } : {}),
           }
         : node
     );
-    const temporalExists = document.temporal.some((entry) => entry.nodeId === nodeId);
-    const nextTemporal = temporalExists
+    const hasTemporal = document.temporal.some((entry) => entry.nodeId === nodeId);
+    const nextTemporal = hasTemporal
       ? document.temporal.map((entry) =>
           entry.nodeId === nodeId
             ? {
                 ...entry,
                 ...(patch.startAt ? { startAt: patch.startAt } : {}),
                 ...(patch.endAt ? { endAt: patch.endAt } : {}),
-                precision: timeScale === 'month' ? 'month' : 'year',
+                precision: effectiveScale,
               }
             : entry
         )
@@ -166,187 +204,133 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
           ...document.temporal,
           {
             nodeId,
-            startAt: patch.startAt || '',
-            endAt: patch.endAt || patch.startAt || '',
-            precision: timeScale === 'month' ? 'month' : 'year',
+            startAt: patch.startAt || toIsoDate(Date.now()),
+            endAt: patch.endAt || patch.startAt || toIsoDate(Date.now()),
+            precision: effectiveScale,
           },
         ];
     onChange({ ...document, nodes: nextNodes, temporal: nextTemporal });
   };
 
-  const addTimelineItem = () => {
+  const addEvent = () => {
     if (!newTitle.trim() || !newStart) return;
     const id = `timeline-${Date.now()}`;
-    const nextNodes = [
-      ...document.nodes,
-      {
-        id,
-        type: 'event',
-        title: newTitle.trim(),
-        body: '',
-        tags: [newLane || 'General'],
-      },
-    ];
-    const nextEdges = [
-      ...document.edges,
-      {
-        id: `edge-root-${id}`,
-        from: 'root-notes',
-        to: id,
-        relation: 'contains' as const,
-      },
-    ];
-    const nextTemporal = [
-      ...document.temporal,
-      {
-        nodeId: id,
-        startAt: newStart,
-        endAt: newEnd || newStart,
-        precision: timeScale === 'month' ? 'month' : 'year',
-      },
-    ];
-    onChange(setTimelineLayout({ ...document, nodes: nextNodes, edges: nextEdges, temporal: nextTemporal }, lanes));
+    const nextNodes = [...document.nodes, { id, type: 'event', title: newTitle.trim(), body: newBody.trim(), tags: [newLane || 'General'] }];
+    const nextEdges = [...document.edges, { id: `edge-root-${id}`, from: 'root-notes', to: id, relation: 'contains' as const }];
+    const nextTemporal = [...document.temporal, { nodeId: id, startAt: newStart, endAt: newEnd || newStart, precision: effectiveScale }];
+    onChange({ ...document, nodes: nextNodes, edges: nextEdges, temporal: nextTemporal });
+    setSelectedId(id);
     setNewTitle('');
+    setNewBody('');
     setNewStart('');
     setNewEnd('');
   };
 
-  const addDependency = () => {
-    if (!depFrom || !depTo || depFrom === depTo) return;
-    const exists = document.edges.some((edge) => edge.from === depFrom && edge.to === depTo && edge.relation === 'depends_on');
-    if (exists) return;
-    onChange({
-      ...document,
-      edges: [
-        ...document.edges,
-        {
-          id: `edge-dep-${Date.now()}`,
-          from: depFrom,
-          to: depTo,
-          relation: 'depends_on',
-          label: 'depends on',
-        },
-      ],
-    });
-  };
-
-  const dependencyEdges = document.edges.filter((edge) => {
-    if (edge.relation === 'depends_on') return true;
-    if (settings?.altPaths && edge.relation === 'next') return true;
-    return false;
-  });
-
-  const removeDependency = (edgeId: string) => {
-    onChange({ ...document, edges: document.edges.filter((edge) => edge.id !== edgeId) });
-  };
-
-  const applyDragFromClientX = (clientX: number, nodeId: string, mode: 'move' | 'resize-start' | 'resize-end', host: HTMLDivElement) => {
+  const dragToDate = (clientX: number, host: HTMLDivElement, item: TimelineItem) => {
     const rect = host.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const ms = minTime + pct * span;
-    const date = toIsoDate(ms);
-    const item = items.find((entry) => entry.id === nodeId);
-    if (!item) return;
-
-    if (mode === 'move') {
-      const lengthMs = Math.max(0, new Date(item.endAt).getTime() - new Date(item.startAt).getTime());
-      const startMs = new Date(date).getTime();
-      const endMs = startMs + lengthMs;
-      updateItem(nodeId, { startAt: toIsoDate(startMs), endAt: toIsoDate(endMs) });
-      return;
-    }
-
-    if (mode === 'resize-start') {
-      if (new Date(date).getTime() > new Date(item.endAt).getTime()) return;
-      updateItem(nodeId, { startAt: date });
-      return;
-    }
-
-    if (new Date(date).getTime() < new Date(item.startAt).getTime()) return;
-    updateItem(nodeId, { endAt: date });
+    const span = Math.max(1, range.max - range.min);
+    const nextStartMs = range.min + pct * span;
+    const oldStartMs = toDate(item.startAt)?.getTime() ?? nextStartMs;
+    const oldEndMs = toDate(item.endAt)?.getTime() ?? oldStartMs;
+    const duration = Math.max(0, oldEndMs - oldStartMs);
+    upsertNode(item.id, {
+      startAt: toIsoDate(nextStartMs),
+      endAt: toIsoDate(nextStartMs + duration),
+    });
   };
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="rounded-2xl border surface-panel p-4">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <Button size="sm" variant={timeScale === 'year' ? 'default' : 'outline'} onClick={() => setTimeScale('year')}>
-            Year scale
+          <Button type="button" size="sm" variant={isEditMode ? 'default' : 'outline'} onClick={() => setIsEditMode((v) => !v)}>
+            {isEditMode ? 'Edit mode on' : 'Edit mode off'}
           </Button>
-          <Button size="sm" variant={timeScale === 'month' ? 'default' : 'outline'} onClick={() => setTimeScale('month')}>
-            Month scale
-          </Button>
+          <Button type="button" size="sm" variant={displayMode === 'auto' ? 'default' : 'outline'} onClick={() => setDisplayMode('auto')}>Auto</Button>
+          <Button type="button" size="sm" variant={displayMode === 'year' ? 'default' : 'outline'} onClick={() => setDisplayMode('year')}>Year</Button>
+          <Button type="button" size="sm" variant={displayMode === 'month' ? 'default' : 'outline'} onClick={() => setDisplayMode('month')}>Month</Button>
+          <Button type="button" size="sm" variant={displayMode === 'custom' ? 'default' : 'outline'} onClick={() => setDisplayMode('custom')}>Custom range</Button>
+          <span className="rounded-full surface-interactive px-2 py-0.5 text-xs text-muted-foreground">{effectiveRangeLabel}</span>
+          {isEditMode ? <span className="text-xs text-muted-foreground">Drag event dots to reorder by date.</span> : null}
         </div>
-        <div className="relative h-[420px] overflow-x-auto">
-          <div className="relative h-full min-w-[980px]" data-timeline-host>
-            {lanes.map((lane, idx) => (
-              <div key={lane} className="absolute left-0 right-0" style={{ top: `${idx * 92 + 48}px` }}>
-                <div className="mb-1 text-xs text-muted-foreground">{lane}</div>
-                <div className="h-px bg-border" />
+
+        {displayMode === 'custom' ? (
+          <div className="mb-3 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" variant={customMode === 'date' ? 'default' : 'outline'} onClick={() => setCustomMode('date')}>Date to date</Button>
+              <Button type="button" size="sm" variant={customMode === 'month' ? 'default' : 'outline'} onClick={() => setCustomMode('month')}>Month to month</Button>
+              <Button type="button" size="sm" variant={customMode === 'text' ? 'default' : 'outline'} onClick={() => setCustomMode('text')}>Custom text</Button>
+            </div>
+            {customMode === 'date' ? (
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <Input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} />
+                <Input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} />
               </div>
-            ))}
+            ) : null}
+            {customMode === 'month' ? (
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <Input type="month" value={customStartMonth} onChange={(e) => setCustomStartMonth(e.target.value)} />
+                <Input type="month" value={customEndMonth} onChange={(e) => setCustomEndMonth(e.target.value)} />
+              </div>
+            ) : null}
+            {customMode === 'text' ? (
+              <Input value={customQuery} onChange={(e) => setCustomQuery(e.target.value)} placeholder="Filter events by title, lane, or description" />
+            ) : null}
+          </div>
+        ) : null}
 
-            <svg className="absolute inset-0 h-full w-full pointer-events-none">
-              {dependencyEdges.map((edge) => {
-                const source = items.find((item) => item.id === edge.from);
-                const target = items.find((item) => item.id === edge.to);
-                if (!source || !target) return null;
-                const startX = itemX(source.endAt || source.startAt);
-                const endX = itemX(target.startAt);
-                const y1 = laneY(source.lane) - 8;
-                const y2 = laneY(target.lane) - 8;
-                const mx = (startX + endX) / 2;
-                return (
-                  <g key={edge.id}>
-                    <path
-                      d={`M ${startX}% ${y1} C ${mx}% ${y1}, ${mx}% ${y2}, ${endX}% ${y2}`}
-                      stroke="hsl(var(--muted-foreground))"
-                      fill="none"
-                      strokeWidth={settings?.causalityStrength ? "2" : "1.25"}
-                      strokeDasharray={edge.relation === "next" ? "2 4" : "4 3"}
-                    />
-                    <circle cx={`${endX}%`} cy={y2} r="2.5" fill="hsl(var(--muted-foreground))" />
-                  </g>
-                );
-              })}
-            </svg>
+        <div className="relative min-h-[460px] overflow-x-auto rounded-xl border border-border/70 p-4">
+          <div data-timeline-track className="relative mx-auto h-[420px] min-w-[980px]">
+            <div className="absolute left-0 right-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-gradient-to-r from-sky-400 via-emerald-400 to-orange-400" />
+            <p className="absolute left-0 top-[56%] rounded-full surface-panel px-2 py-0.5 text-[10px] text-muted-foreground">{toIsoDate(range.min)}</p>
+            <p className="absolute right-0 top-[56%] rounded-full surface-panel px-2 py-0.5 text-[10px] text-muted-foreground">{toIsoDate(range.max)}</p>
 
-            {items.map((item) => {
-              const xStart = itemX(item.startAt);
-              const xEnd = itemX(item.endAt || item.startAt);
-              const widthPct = Math.max(6, xEnd - xStart);
-              const y = laneY(item.lane);
+            {placed.map((item) => {
+              const isSelected = selectedId === item.id;
+              const stemHeight = 88 + item.row * 44;
+              const isUp = item.side === 'up';
               return (
-                <div key={item.id} className="absolute" style={{ left: `${xStart}%`, top: `${y - 32}px`, width: `${widthPct}%` }}>
-                  <div
-                    className="relative rounded-md surface-interactive p-2 text-xs shadow-[inset_0_0_0_1px_hsl(var(--border))]"
+                <div key={item.id} className="absolute top-1/2 -translate-y-1/2" style={{ left: `${item.markerX}%` }}>
+                  <button
+                    type="button"
+                    className={`absolute left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-sm ${isSelected ? 'bg-foreground' : 'bg-background'} border-foreground ${isEditMode ? 'cursor-ew-resize' : ''}`}
+                    onClick={() => setSelectedId(item.id)}
+                    title={item.title}
                     onPointerDown={(event) => {
-                      const host = event.currentTarget.closest('[data-timeline-host]') as HTMLDivElement | null;
+                      if (!isEditMode) return;
+                      const host = event.currentTarget.closest('[data-timeline-track]') as HTMLDivElement | null;
                       if (!host) return;
-                      const role = (event.target as HTMLElement).dataset.dragRole as 'move' | 'resize-start' | 'resize-end' | undefined;
-                      const mode = role || 'move';
-                      setDragState({ nodeId: item.id, mode });
                       event.currentTarget.setPointerCapture(event.pointerId);
-                      applyDragFromClientX(event.clientX, item.id, mode, host);
+                      setDraggingId(item.id);
+                      dragToDate(event.clientX, host, item);
                     }}
                     onPointerMove={(event) => {
-                      if (!dragState || dragState.nodeId !== item.id) return;
-                      const host = event.currentTarget.closest('[data-timeline-host]') as HTMLDivElement | null;
+                      if (!isEditMode || draggingId !== item.id) return;
+                      const host = event.currentTarget.closest('[data-timeline-track]') as HTMLDivElement | null;
                       if (!host) return;
-                      applyDragFromClientX(event.clientX, item.id, dragState.mode, host);
+                      dragToDate(event.clientX, host, item);
                     }}
                     onPointerUp={(event) => {
                       if (event.currentTarget.hasPointerCapture(event.pointerId)) {
                         event.currentTarget.releasePointerCapture(event.pointerId);
                       }
-                      setDragState(null);
+                      setDraggingId(null);
                     }}
+                  />
+                  <div className="absolute left-1/2 w-[2px] -translate-x-1/2 bg-foreground/85" style={isUp ? { bottom: '50%', height: `${stemHeight}px` } : { top: '50%', height: `${stemHeight}px` }} />
+                  <button
+                    type="button"
+                    className={`absolute left-1/2 w-[230px] -translate-x-1/2 rounded-xl border px-2.5 py-2 text-left text-xs shadow-sm ${isSelected ? 'surface-chip border-foreground/30' : 'surface-panel border-border'}`}
+                    style={isUp ? { left: `${item.cardX - item.markerX}%`, bottom: `calc(50% + ${stemHeight + 8}px)` } : { left: `${item.cardX - item.markerX}%`, top: `calc(50% + ${stemHeight + 8}px)` }}
+                    onClick={() => setSelectedId(item.id)}
                   >
-                    <span data-drag-role="resize-start" className="absolute left-0 top-0 h-full w-2 cursor-ew-resize rounded-l-md bg-border/40" />
-                    <span data-drag-role="resize-end" className="absolute right-0 top-0 h-full w-2 cursor-ew-resize rounded-r-md bg-border/40" />
-                    <p className="line-clamp-2 font-medium">{item.title}</p>
-                    <p className="text-muted-foreground">{item.startAt} {item.endAt && item.endAt !== item.startAt ? `-> ${item.endAt}` : ''}</p>
-                  </div>
+                    <p className="truncate">
+                      <span className="rounded-full bg-foreground text-background px-1.5 py-0.5 text-[10px] font-medium">{item.title}</span>
+                    </p>
+                    <p className="truncate text-muted-foreground">{item.startAt}{item.endAt && item.endAt !== item.startAt ? ` -> ${item.endAt}` : ''}</p>
+                    <p className="mt-1 inline-flex rounded-full surface-interactive px-1.5 py-0.5 text-[10px] text-muted-foreground">{item.lane}</p>
+                  </button>
                 </div>
               );
             })}
@@ -354,90 +338,49 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
         </div>
       </div>
 
-      <aside className="rounded-2xl border surface-panel p-4 space-y-3">
+      <aside className="rounded-2xl border surface-panel p-4 space-y-4">
         <div className="space-y-2">
           <h3 className="text-sm">Add event</h3>
-          <Input value={newTitle} onChange={(event) => setNewTitle(event.target.value)} placeholder="Event title" className="h-8 text-sm" />
+          <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Title" className="h-8 text-sm" />
+          <Textarea value={newBody} onChange={(e) => setNewBody(e.target.value)} placeholder="Description" className="min-h-[74px] text-sm" />
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="text-xs">Start</Label>
-              <Input type="date" value={newStart} onChange={(event) => setNewStart(event.target.value)} className="h-8 text-xs" />
+              <Input type="date" value={newStart} onChange={(e) => setNewStart(e.target.value)} className="h-8 text-xs" />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">End</Label>
-              <Input type="date" value={newEnd} onChange={(event) => setNewEnd(event.target.value)} className="h-8 text-xs" />
+              <Input type="date" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} className="h-8 text-xs" />
             </div>
           </div>
-          <Input value={newLane} onChange={(event) => setNewLane(event.target.value)} placeholder="Lane (e.g. History)" className="h-8 text-sm" />
-          <Button size="sm" onClick={addTimelineItem} disabled={!newTitle.trim() || !newStart}>
-            Add event
-          </Button>
+          <Input value={newLane} onChange={(e) => setNewLane(e.target.value)} placeholder="Group (optional)" className="h-8 text-sm" />
+          <Button size="sm" onClick={addEvent} disabled={!newTitle.trim() || !newStart}>Add event</Button>
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-sm">Dependencies</h3>
-          <select value={depFrom} onChange={(event) => setDepFrom(event.target.value)} className="h-8 rounded-md border border-border bg-background px-2 text-xs">
-            <option value="">From event</option>
-            {items.map((item) => <option key={`dep-from-${item.id}`} value={item.id}>{item.title}</option>)}
-          </select>
-          <select value={depTo} onChange={(event) => setDepTo(event.target.value)} className="h-8 rounded-md border border-border bg-background px-2 text-xs">
-            <option value="">Depends on event</option>
-            {items.map((item) => <option key={`dep-to-${item.id}`} value={item.id}>{item.title}</option>)}
-          </select>
-          <Button size="sm" onClick={addDependency} disabled={!depFrom || !depTo || depFrom === depTo}>Add dependency</Button>
-          <div className="max-h-36 space-y-1 overflow-auto rounded-md surface-interactive p-2">
-            {dependencyEdges.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No dependencies yet.</p>
-            ) : (
-              dependencyEdges.map((edge) => {
-                const from = items.find((item) => item.id === edge.from)?.title || edge.from;
-                const to = items.find((item) => item.id === edge.to)?.title || edge.to;
-                return (
-                  <div key={`dep-row-${edge.id}`} className="flex items-center justify-between gap-2 rounded-md surface-panel px-2 py-1">
-                    <p className="min-w-0 truncate text-xs">{from} {'->'} {to}</p>
-                    <Button type="button" size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => removeDependency(edge.id)}>
-                      Remove
-                    </Button>
+          <h3 className="text-sm">Selected event</h3>
+          {!selected ? (
+            <p className="text-xs text-muted-foreground">Click an event on the timeline.</p>
+          ) : (
+            <div className="space-y-2 rounded-md surface-interactive p-2">
+              {isEditMode ? (
+                <>
+                  <Input value={selected.title} onChange={(e) => upsertNode(selected.id, { title: e.target.value })} className="h-8 text-sm" />
+                  <Textarea value={selected.body} onChange={(e) => upsertNode(selected.id, { body: e.target.value })} className="min-h-[80px] text-sm" />
+                  <div className="grid grid-cols-2 gap-1">
+                    <Input type="date" value={selected.startAt} onChange={(e) => upsertNode(selected.id, { startAt: e.target.value })} className="h-8 text-xs" />
+                    <Input type="date" value={selected.endAt} onChange={(e) => upsertNode(selected.id, { endAt: e.target.value })} className="h-8 text-xs" />
                   </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="text-sm">Edit events</h3>
-          <div className="max-h-[260px] space-y-2 overflow-auto pr-1">
-            {items.map((item) => (
-              <div key={`edit-${item.id}`} className="rounded-md surface-interactive p-2">
-                <Input
-                  value={item.title}
-                  onChange={(event) => updateItem(item.id, { title: event.target.value })}
-                  className="mb-1 h-8 text-xs"
-                />
-                <div className="grid grid-cols-2 gap-1">
-                  <Input
-                    type="date"
-                    value={item.startAt}
-                    onChange={(event) => updateItem(item.id, { startAt: event.target.value })}
-                    className="h-8 text-[11px]"
-                  />
-                  <Input
-                    type="date"
-                    value={item.endAt}
-                    onChange={(event) => updateItem(item.id, { endAt: event.target.value })}
-                    className="h-8 text-[11px]"
-                  />
-                </div>
-                <Input
-                  value={item.lane}
-                  onChange={(event) => updateItem(item.id, { lane: event.target.value })}
-                  className="mt-1 h-8 text-xs"
-                />
-              </div>
-            ))}
-            {items.length === 0 ? <p className="text-xs text-muted-foreground">No events yet.</p> : null}
-          </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-medium">{selected.title}</p>
+                  <p className="text-xs text-muted-foreground">{selected.startAt}{selected.endAt && selected.endAt !== selected.startAt ? ` -> ${selected.endAt}` : ''}</p>
+                  <p className="text-sm whitespace-pre-wrap">{selected.body || 'No description yet.'}</p>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </aside>
     </div>

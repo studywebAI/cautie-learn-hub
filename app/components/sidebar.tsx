@@ -166,7 +166,7 @@ export function AppSidebar() {
     { href: '/tools/quiz', label: dictionary.sidebar.tools.quizGenerator, icon: BrainCircuit },
     { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: Copy },
     { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: FileSignature },
-    { href: '/tools/wordweb', label: 'Wordweb', icon: Network },
+    { href: '/tools/wordweb', label: 'Mindmap', icon: Network },
     { href: '/tools/timeline', label: isDutch ? 'Tijdlijn' : 'Timeline', icon: Calendar },
   ];
 
