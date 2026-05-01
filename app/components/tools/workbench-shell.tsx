@@ -37,7 +37,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               </Button>
             )}
           </div>
-          <div className={cn('flex-1 min-h-0', isPhone ? 'px-3 pb-4' : isTablet ? 'pl-2 pr-0 pb-0' : 'pl-2 pr-0 pb-0')}>
+          <div className={cn('flex-1 min-h-0', isPhone ? 'px-3 pb-4' : isTablet ? 'pl-2 pr-0 pb-0.5' : 'pl-2 pr-0 pb-0.5')}>
             {topAccessory && <div className="mb-3">{topAccessory}</div>}
             {children}
           </div>

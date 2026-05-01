@@ -1513,7 +1513,7 @@ export function SourceInput({
 
       {topContent}
 
-      <div className="mt-auto flex flex-col gap-2">
+      <div className="flex flex-col gap-2">
         {attachmentSources.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
             {attachmentSources.map((source) => {
