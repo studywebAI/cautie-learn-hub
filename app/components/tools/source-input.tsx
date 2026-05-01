@@ -1551,7 +1551,7 @@ export function SourceInput({
           </div>
         )}
 
-        <div className="relative z-10 mb-1 flex flex-wrap items-center gap-1.5">
+        <div className="relative z-10 flex flex-wrap items-center gap-1.5">
           {enableMicrosoftSources && (
             <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={openMicrosoftPicker} disabled={disabled || isProcessing}>
               <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
