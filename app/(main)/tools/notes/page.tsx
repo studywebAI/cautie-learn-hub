@@ -332,7 +332,7 @@ function NotesPageContent() {
       const normalized = sections as GenerateNotesOutput['notes'];
       setGeneratedNotes(normalized);
       setCanonicalDoc(notesSectionsToCanonical(normalized, { title: customTitle.trim() || 'Notes' }));
-      setNoteHtml(notesToHtml(normalized));
+      setNoteHtml(sanitizeEditorHtml(notesToHtml(normalized)));
     },
     [customTitle]
   );
@@ -341,7 +341,7 @@ function NotesPageContent() {
     setCanonicalDoc(nextDocument);
     const projected = canonicalToNotesSections(nextDocument) as GenerateNotesOutput['notes'];
     setGeneratedNotes(projected);
-    setNoteHtml(notesToHtml(projected));
+    setNoteHtml(sanitizeEditorHtml(notesToHtml(projected)));
   }, []);
 
   const reportStudysetPerformance = useCallback(async (inputText: string) => {
@@ -1053,8 +1053,7 @@ function NotesPageContent() {
     if (parsed && parsed.length > 0) return parsed;
     if (canonicalDoc) return canonicalToNotesSections(canonicalDoc);
     return generatedNotes || [];
-  }, [canonicalDoc, generatedNotes,
-    canonicalDoc, noteHtml]);
+  }, [canonicalDoc, generatedNotes, noteHtml]);
 
   const applyInlineFormat = useCallback((command: 'bold' | 'italic' | 'underline') => {
     if (typeof document === 'undefined') return;
@@ -1088,8 +1087,7 @@ function NotesPageContent() {
     } finally {
       setIsSharingToClass(false);
     }
-  }, [classId, customTitle, editableSections.length, generatedNotes,
-    canonicalDoc, toast]);
+  }, [classId, customTitle, editableSections.length, generatedNotes, toast]);
 
   if (showLaunchScreen) {
     const currentStage = launchStages[Math.min(launchStageIndex, launchStages.length - 1)];
