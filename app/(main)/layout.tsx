@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { usePathname } from "next/navigation";
 import { FirstTimeSetupGate } from "@/components/onboarding/first-time-setup-gate";
@@ -19,7 +18,6 @@ const GlobalCommandPalette = dynamic(
 );
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-    const isMobile = useIsMobile();
     const deviceTier = useDeviceTier();
     const pathname = usePathname();
     const [routePulseVisible, setRoutePulseVisible] = useState(false);
@@ -44,7 +42,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <Suspense fallback={null}>
                 <AppSidebar />
             </Suspense>
-            <SidebarInset className={`h-screen bg-background ${isMobile ? 'ml-11' : ''} relative text-[hsl(var(--sidebar-active-foreground))]`}>
+            <SidebarInset className="h-screen bg-background relative text-[hsl(var(--sidebar-active-foreground))]">
                 <div
                   className={`${
                     isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto"

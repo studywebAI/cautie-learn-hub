@@ -1183,7 +1183,7 @@ export function AppSidebar() {
 
   // Tablet + desktop: regular sidebar with trigger
   return (
-    <Sidebar className={cn(isTablet ? "w-[12.75rem]" : "w-[14.5rem] lg:w-[15.5rem]")} collapsible="icon">
+    <Sidebar className={cn(isTablet ? "w-[11rem]" : "w-[12rem]")} collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
