@@ -81,8 +81,8 @@ export async function GET(req: NextRequest) {
           .select('id, subject_id')
           .in('id', chapterIds)
       : { data: [] as any[] };
-    const paragraphById = new Map((paragraphs || []).map((p: any) => [p.id, p]));
-    const chapterById = new Map((chapters || []).map((c: any) => [c.id, c]));
+    const paragraphById = new Map<string, any>((paragraphs || []).map((p: any) => [String(p.id), p]));
+    const chapterById = new Map<string, any>((chapters || []).map((c: any) => [String(c.id), c]));
 
     const items = [
       ...((toolRunsResult.data || []) as any[]).map((run: any) => ({

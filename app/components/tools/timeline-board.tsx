@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { CanonicalDocument } from '@/lib/tools/canonical-model';
+import type { CanonicalDatePrecision, CanonicalDocument, CanonicalNode, CanonicalTemporal } from '@/lib/tools/canonical-model';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -196,7 +196,7 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
                 ...entry,
                 ...(patch.startAt ? { startAt: patch.startAt } : {}),
                 ...(patch.endAt ? { endAt: patch.endAt } : {}),
-                precision: effectiveScale,
+                precision: effectiveScale as CanonicalDatePrecision,
               }
             : entry
         )
@@ -206,7 +206,7 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
             nodeId,
             startAt: patch.startAt || toIsoDate(Date.now()),
             endAt: patch.endAt || patch.startAt || toIsoDate(Date.now()),
-            precision: effectiveScale,
+            precision: effectiveScale as CanonicalDatePrecision,
           },
         ];
     onChange({ ...document, nodes: nextNodes, temporal: nextTemporal });
@@ -215,9 +215,9 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
   const addEvent = () => {
     if (!newTitle.trim() || !newStart) return;
     const id = `timeline-${Date.now()}`;
-    const nextNodes = [...document.nodes, { id, type: 'event', title: newTitle.trim(), body: newBody.trim(), tags: [newLane || 'General'] }];
+    const nextNodes: CanonicalNode[] = [...document.nodes, { id, type: 'event', title: newTitle.trim(), body: newBody.trim(), tags: [newLane || 'General'] }];
     const nextEdges = [...document.edges, { id: `edge-root-${id}`, from: 'root-notes', to: id, relation: 'contains' as const }];
-    const nextTemporal = [...document.temporal, { nodeId: id, startAt: newStart, endAt: newEnd || newStart, precision: effectiveScale }];
+    const nextTemporal: CanonicalTemporal[] = [...document.temporal, { nodeId: id, startAt: newStart, endAt: newEnd || newStart, precision: effectiveScale as CanonicalDatePrecision }];
     onChange({ ...document, nodes: nextNodes, edges: nextEdges, temporal: nextTemporal });
     setSelectedId(id);
     setNewTitle('');

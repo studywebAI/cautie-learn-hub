@@ -47,12 +47,14 @@ const DASHBOARD_LAST_FETCH_KEY = 'studyweb-dashboard-last-fetch-at';
 export type ClassInfo = Tables<'classes'>;
 export type ClassAssignment = Tables<'assignments'> & {
   chapter_id?: string | null;
+  block_id?: string | null;
   class_id?: string | null;
   due_date?: string | null;
   material_id?: string | null;
   scheduled_start_at?: string | null;
   scheduled_end_at?: string | null;
   scheduled_answer_release_at?: string | null;
+  settings?: Record<string, any> | null;
   type?: 'homework' | 'small_test' | 'big_test' | null;
   completed?: boolean | null;
   description?: string | null;

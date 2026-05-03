@@ -168,6 +168,7 @@ export function FlashcardViewer({
   const startTimeRef = React.useRef(Date.now());
   const cardStartedAtRef = React.useRef(Date.now());
   const { toast } = useToast();
+  const effectiveMode: StudyMode = settings?.activeRecallOnly ? 'multiple-choice' : mode;
 
   const initialQueue = React.useMemo(() => {
     const due: Flashcard[] = [];
@@ -266,17 +267,18 @@ export function FlashcardViewer({
   }, [currentIndex]);
 
   useEffect(() => {
-    if (!settings?.timePerCardSeconds || settings.timePerCardSeconds <= 0 || sessionComplete) {
+    const perCardSeconds = settings?.timePerCardSeconds;
+    if (!perCardSeconds || perCardSeconds <= 0 || sessionComplete) {
       setSecondsLeft(null);
       return;
     }
-    setSecondsLeft(settings.timePerCardSeconds);
+    setSecondsLeft(perCardSeconds);
     const timer = window.setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev === null) return prev;
         if (prev <= 1) {
           applyOutcome(false);
-          return settings.timePerCardSeconds;
+          return perCardSeconds;
         }
         return prev - 1;
       });
@@ -594,7 +596,6 @@ export function FlashcardViewer({
     return card;
   }, [card, cardStartSide]);
   const deckHealth = computeDeckHealth();
-  const effectiveMode: StudyMode = settings?.activeRecallOnly ? 'multiple-choice' : mode;
   const canRate = !!card && ((effectiveMode === 'flip' && isFlipped) || (effectiveMode !== 'flip' && isAnswered));
   const currentFlipHeight = React.useMemo(() => {
     if (!displayCard) return 460;

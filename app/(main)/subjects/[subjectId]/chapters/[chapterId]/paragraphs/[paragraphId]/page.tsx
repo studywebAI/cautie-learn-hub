@@ -948,12 +948,12 @@ export default function ParagraphDetailPage() {
                 resetCreateWizard();
                 return;
               }
-              setCreateStep((prev) => Math.max(1, (prev - 1) as 1 | 2 | 3));
+              setCreateStep((prev) => (prev === 1 ? 1 : (prev - 1) as 1 | 2 | 3));
             }}>
               {createStep === 1 ? t.cancel : t.back}
             </Button>
             {createStep < 3 ? (
-              <Button onClick={() => setCreateStep((prev) => Math.min(3, (prev + 1) as 1 | 2 | 3))}>
+              <Button onClick={() => setCreateStep((prev) => (prev === 3 ? 3 : (prev + 1) as 1 | 2 | 3))}>
                 {t.continueBtn}
               </Button>
             ) : (

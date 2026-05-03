@@ -109,7 +109,7 @@ async function notifyClassMembers(
 
   if (membersError || !members?.length) return;
 
-  const memberIds = Array.from(
+  const memberIds: string[] = Array.from(
     new Set(
       members
         .map((member: any) => String(member?.user_id || ''))
@@ -118,7 +118,7 @@ async function notifyClassMembers(
   );
   if (!memberIds.length) return;
 
-  let targetIds = memberIds;
+  let targetIds: string[] = memberIds;
   if (audience === 'teacher') {
     const { data: teacherProfiles } = await supabase
       .from('profiles')

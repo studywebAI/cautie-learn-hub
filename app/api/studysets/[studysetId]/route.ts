@@ -443,8 +443,8 @@ export async function GET(
     const recent6 = attempts.slice(0, 6).map((row: any) => Number(row?.score || 0))
     const recent3 = recent6.slice(0, 3)
     const prior3 = recent6.slice(3, 6)
-    const recent3Avg = recent3.length > 0 ? Math.round(recent3.reduce((s, v) => s + v, 0) / recent3.length) : 0
-    const prior3Avg = prior3.length > 0 ? Math.round(prior3.reduce((s, v) => s + v, 0) / prior3.length) : 0
+    const recent3Avg = recent3.length > 0 ? Math.round(recent3.reduce((s: number, v: number) => s + v, 0) / recent3.length) : 0
+    const prior3Avg = prior3.length > 0 ? Math.round(prior3.reduce((s: number, v: number) => s + v, 0) / prior3.length) : 0
     const momentumDelta = recent3.length > 0 && prior3.length > 0 ? recent3Avg - prior3Avg : 0
     const momentum =
       momentumDelta >= 6 ? 'up'

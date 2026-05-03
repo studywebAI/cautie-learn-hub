@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import type { CanonicalDocument, CanonicalLayoutState, CanonicalRelationType } from '@/lib/tools/canonical-model';
+import type { CanonicalDocument, CanonicalLayoutState, CanonicalNode, CanonicalRelationType } from '@/lib/tools/canonical-model';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -32,8 +32,8 @@ function setWordwebLayout(document: CanonicalDocument, nodePositions: Record<str
   const layouts = [...(document.layouts || [])];
   const index = layouts.findIndex((layout) => layout.view === 'wordweb');
   const nextLayout: CanonicalLayoutState = {
-    view: 'wordweb',
     ...(layouts[index] || {}),
+    view: 'wordweb',
     nodePositions,
   };
   if (index >= 0) layouts[index] = nextLayout;
@@ -225,7 +225,7 @@ export function WordwebCanvas({ document, onChange, settings }: Props) {
     if (!inputTitle.trim()) return;
     const parentId = mode === 'existing' ? (explicitParentId || attachToId || 'root-notes') : 'root-notes';
     const id = `node-${Date.now()}`;
-    const nextNodes = [
+    const nextNodes: CanonicalNode[] = [
       ...document.nodes,
       {
         id,

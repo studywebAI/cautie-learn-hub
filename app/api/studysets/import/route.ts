@@ -177,9 +177,9 @@ export async function POST(req: NextRequest) {
       .sort();
     const earliestSourceDate = sourceDayDates[0] || null;
     let dayOffset = 0;
-    if (earliestSourceDate && earliestSourceDate < todayIso) {
+    if (earliestSourceDate && earliestSourceDate < todayIsoForStatus) {
       const earliest = new Date(`${earliestSourceDate}T00:00:00`);
-      const today = new Date(`${todayIso}T00:00:00`);
+      const today = new Date(`${todayIsoForStatus}T00:00:00`);
       dayOffset = Math.round((today.getTime() - earliest.getTime()) / (24 * 60 * 60 * 1000));
     }
 

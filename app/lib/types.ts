@@ -328,6 +328,7 @@ export type ClassAnalytics = {
     totalAssignments: number;
     averageClassScore: number;
     overallCompletionRate: number;
+    pendingOpenReviews?: number;
   };
   attendanceSignals?: {
     recordsCount: number;
