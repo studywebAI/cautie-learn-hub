@@ -33,6 +33,7 @@ const QUIZ_TYPES = [
 ] as const;
 
 const PRESET_STORAGE_KEY = 'quiz.mode.presets.v2';
+const QUIZ_SETTINGS_STORAGE_KEY = 'tools.quiz.settings.v1';
 
 function pill(active: boolean) {
   return active
@@ -74,7 +75,7 @@ function QuizPageContent() {
   const [questionTypes, setQuestionTypes] = useState<string[]>(['multiple-choice']);
   const [knowledgeScore, setKnowledgeScore] = useState(50);
   const [questionCount, setQuestionCount] = useState(12);
-  const [gradingModes, setGradingModes] = useState<GradingMode[]>(['accuracy']);
+  const [gradingModes, setGradingModes] = useState<GradingMode[]>(['accuracy', 'speed', 'progression']);
 
   const [presets, setPresets] = useState<Array<{ id: string; name: string; config: any }>>([]);
   const [newPresetName, setNewPresetName] = useState('');
@@ -82,6 +83,48 @@ function QuizPageContent() {
   const [showPresetOverlay, setShowPresetOverlay] = useState(false);
 
   const adaptiveCap = 50;
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(QUIZ_SETTINGS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (typeof parsed?.title === 'string') setTitle(parsed.title);
+      if (parsed?.mode === 'classic' || parsed?.mode === 'assisted' || parsed?.mode === 'adaptive') setMode(parsed.mode);
+      if (parsed?.answerFeedback === 'immediate' || parsed?.answerFeedback === 'end') setAnswerFeedback(parsed.answerFeedback);
+      if (Array.isArray(parsed?.questionTypes) && parsed.questionTypes.length > 0) {
+        const allowed = parsed.questionTypes.filter((entry: string) => QUIZ_TYPES.some((item) => item.value === entry));
+        if (allowed.length > 0) setQuestionTypes(allowed);
+      }
+      if (Number.isFinite(parsed?.knowledgeScore)) setKnowledgeScore(Math.max(0, Math.min(100, Number(parsed.knowledgeScore))));
+      if (Number.isFinite(parsed?.questionCount)) setQuestionCount(Math.max(1, Math.min(25, Number(parsed.questionCount))));
+      if (Array.isArray(parsed?.gradingModes) && parsed.gradingModes.length > 0) {
+        const next = parsed.gradingModes.filter((entry: string) => ['accuracy', 'speed', 'progression'].includes(entry)) as GradingMode[];
+        setGradingModes(next.length > 0 ? next : ['accuracy', 'speed', 'progression']);
+      }
+    } catch {
+      // ignore broken saved settings
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        QUIZ_SETTINGS_STORAGE_KEY,
+        JSON.stringify({
+          title,
+          mode,
+          answerFeedback,
+          questionTypes,
+          knowledgeScore,
+          questionCount,
+          gradingModes,
+        })
+      );
+    } catch {
+      // ignore storage write failures
+    }
+  }, [answerFeedback, gradingModes, knowledgeScore, mode, questionCount, questionTypes, title]);
 
   useEffect(() => {
     if (mode === 'classic') {

@@ -137,6 +137,7 @@ function defaultSubjectSeed(count: number) {
 }
 
 const IMPORT_USAGE_STORAGE_KEY = 'presentation.import.usage.v1';
+const PRESENTATION_SETTINGS_STORAGE_KEY = 'tools.presentation.settings.v1';
 const RECENT_TYPE_LABELS: Record<string, string> = {
   flashcards: 'Flashcards',
   notes: 'Notes',
@@ -575,6 +576,91 @@ function PresentationPageContent() {
     if (!files || files.length === 0) return;
     await ingestUploadedFiles(Array.from(files), { origin: 'local' });
   }, [ingestUploadedFiles]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || projectIdFromParams) return;
+    try {
+      const raw = window.localStorage.getItem(PRESENTATION_SETTINGS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<{
+        customTitle: string;
+        platform: PresentationPlatform;
+        autoMode: boolean;
+        outputLanguage: 'auto' | 'nl' | 'en';
+        uiConfig: Partial<PresentationUiConfig>;
+        presetTitle: string;
+        themePreset: string;
+        fontPreset: string;
+        layoutPreset: string;
+        bulletPreset: string;
+        slideSetup: SlideSetupItem[];
+      }>;
+      if (typeof parsed.customTitle === 'string') setCustomTitle(parsed.customTitle);
+      if (parsed.platform === 'powerpoint' || parsed.platform === 'google-slides' || parsed.platform === 'keynote') setPlatform(parsed.platform);
+      if (typeof parsed.autoMode === 'boolean') setAutoMode(parsed.autoMode);
+      if (parsed.outputLanguage === 'auto' || parsed.outputLanguage === 'nl' || parsed.outputLanguage === 'en') setOutputLanguage(parsed.outputLanguage);
+      if (parsed.uiConfig && typeof parsed.uiConfig === 'object') setUiConfig((prev) => ({ ...prev, ...parsed.uiConfig }));
+      if (typeof parsed.presetTitle === 'string') setPresetTitle(parsed.presetTitle);
+      if (typeof parsed.themePreset === 'string' && THEME_PRESETS.some((item) => item.id === parsed.themePreset)) {
+        setThemePreset(parsed.themePreset as (typeof THEME_PRESETS)[number]['id']);
+      }
+      if (typeof parsed.fontPreset === 'string' && FONT_PRESETS.some((item) => item.id === parsed.fontPreset)) {
+        setFontPreset(parsed.fontPreset as (typeof FONT_PRESETS)[number]['id']);
+      }
+      if (typeof parsed.layoutPreset === 'string' && LAYOUT_PRESETS.some((item) => item.id === parsed.layoutPreset)) {
+        setLayoutPreset(parsed.layoutPreset as (typeof LAYOUT_PRESETS)[number]['id']);
+      }
+      if (typeof parsed.bulletPreset === 'string' && BULLET_PRESETS.some((item) => item.id === parsed.bulletPreset)) {
+        setBulletPreset(parsed.bulletPreset as (typeof BULLET_PRESETS)[number]['id']);
+      }
+      if (Array.isArray(parsed.slideSetup) && parsed.slideSetup.length > 0) {
+        setSlideSetup(
+          parsed.slideSetup.map((item, idx) => ({
+            title: normalizeSubject(String(item?.title || `Slide ${idx + 1}`), idx),
+            subject: normalizeSubject(String(item?.subject || `Subject ${idx + 1}`), idx),
+          }))
+        );
+      }
+    } catch {
+      // Ignore invalid local settings payloads.
+    }
+  }, [projectIdFromParams]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        PRESENTATION_SETTINGS_STORAGE_KEY,
+        JSON.stringify({
+          customTitle,
+          platform,
+          autoMode,
+          outputLanguage,
+          uiConfig,
+          presetTitle,
+          themePreset,
+          fontPreset,
+          layoutPreset,
+          bulletPreset,
+          slideSetup,
+        })
+      );
+    } catch {
+      // Ignore local storage write failures.
+    }
+  }, [
+    customTitle,
+    platform,
+    autoMode,
+    outputLanguage,
+    uiConfig,
+    presetTitle,
+    themePreset,
+    fontPreset,
+    layoutPreset,
+    bulletPreset,
+    slideSetup,
+  ]);
 
   useEffect(() => {
     const target = Math.max(4, Math.min(20, uiConfig.slideCount || 10));
