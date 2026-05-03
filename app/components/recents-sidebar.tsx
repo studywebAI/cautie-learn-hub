@@ -82,6 +82,20 @@ const TYPE_LABELS: Record<string, string> = {
 const RECENTS_CACHE_KEY = 'studyweb-recents-cache-v1';
 const RECENTS_CACHE_TTL_MS = 60_000;
 
+const formatRecentTimestamp = (value?: string) => {
+  if (!value) return '-';
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return '-';
+  const now = new Date();
+  if (dt.toDateString() === now.toDateString()) {
+    return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (dt.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return dt.toLocaleDateString();
+};
+
 export function RecentsSidebar() {
   const { session, language } = useContext(AppContext) as AppContextType;
   const isDutch = language === 'nl';
@@ -148,9 +162,12 @@ export function RecentsSidebar() {
           .filter((r: any) => r.status === 'succeeded')
           .map((r: any) => ({
             id: r.id,
-            title: r.mode
-              ? `${TYPE_LABELS[r.tool_id] || r.tool_id} - ${r.mode}`
-              : TYPE_LABELS[r.tool_id] || r.tool_id,
+            title:
+              String(r?.artifact_title || '').trim() ||
+              String(r?.outputs?.title || '').trim() ||
+              String(r?.inputs?.title || '').trim() ||
+              TYPE_LABELS[r.tool_id] ||
+              r.tool_id,
             type: r.tool_id as RecentItem['type'],
             date: r.finished_at || r.created_at,
             source: 'tool_run' as const,
@@ -494,10 +511,7 @@ export function RecentsSidebar() {
       >
         {displayItems.map((item) => {
           const Icon = TYPE_ICONS[item.type] || FileSignature;
-          const dateObj = new Date(item.date);
-          const dateStr = Number.isNaN(dateObj.getTime())
-            ? item.date
-            : dateObj.toISOString().slice(0, 16).replace('T', ' ');
+          const dateStr = formatRecentTimestamp(item.date);
 
           return (
             <div

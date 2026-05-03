@@ -63,6 +63,7 @@ function normalizeQuestionShape(question: any, index: number, requestedTypes: st
     category,
     difficulty,
     options: [],
+    explanation: typeof question?.explanation === 'string' ? question.explanation.trim() : undefined,
   };
 
   if (type === 'fill-blank' || type === 'short-answer') {
@@ -98,13 +99,13 @@ function normalizeQuestionShape(question: any, index: number, requestedTypes: st
   }
 
   const rawOptions = Array.isArray(question?.options) ? question.options : [];
-  const options = rawOptions
+  const options: Array<{ id: string; text: string; isCorrect: boolean }> = rawOptions
     .map((option: any, optionIndex: number) => ({
       id: String(option?.id || `o${optionIndex + 1}`),
       text: String(option?.text || '').trim(),
       isCorrect: Boolean(option?.isCorrect),
     }))
-    .filter((option: any) => option.text);
+    .filter((option: { id: string; text: string; isCorrect: boolean }) => option.text);
 
   let finalOptions = options.slice(0, 4);
   if (finalOptions.length < 2) {
@@ -117,12 +118,12 @@ function normalizeQuestionShape(question: any, index: number, requestedTypes: st
   if (type === 'true-false' && finalOptions.length < 2) {
     finalOptions = [makeOption('true', 'True', true), makeOption('false', 'False', false)];
   }
-  const hasCorrect = finalOptions.some((option) => option.isCorrect);
+  const hasCorrect = finalOptions.some((option: { isCorrect: boolean }) => option.isCorrect);
   if (!hasCorrect) {
-    finalOptions = finalOptions.map((option, idx) => ({ ...option, isCorrect: idx === 0 }));
+    finalOptions = finalOptions.map((option: { id: string; text: string; isCorrect: boolean }, idx: number) => ({ ...option, isCorrect: idx === 0 }));
   } else {
     let found = false;
-    finalOptions = finalOptions.map((option) => {
+    finalOptions = finalOptions.map((option: { id: string; text: string; isCorrect: boolean }) => {
       if (option.isCorrect && !found) {
         found = true;
         return option;
@@ -132,7 +133,7 @@ function normalizeQuestionShape(question: any, index: number, requestedTypes: st
   }
 
   normalized.options = finalOptions;
-  normalized.correctOptionId = finalOptions.find((option) => option.isCorrect)?.id;
+  normalized.correctOptionId = finalOptions.find((option: { id: string; text: string; isCorrect: boolean }) => option.isCorrect)?.id;
   normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
 
   if (type === 'image-analysis' || type === 'video-analysis' || type === 'drawing-analysis') {
@@ -151,7 +152,7 @@ function normalizeQuestionShape(question: any, index: number, requestedTypes: st
   return normalized;
 }
 
-function normalizeQuizOutput(raw: Quiz | undefined, input: GenerateQuizInput, allowedVideoUrls: Set<string>): Quiz {
+function normalizeQuizOutput(raw: Quiz | undefined | null, input: GenerateQuizInput, allowedVideoUrls: Set<string>): Quiz {
   const requestedCount = clamp(Number(input.questionCount || 7), 1, 50);
   const requestedTypes = Array.isArray(input.questionTypes) && input.questionTypes.length
     ? input.questionTypes
@@ -246,6 +247,7 @@ Each question must include:
 - type (one of: multiple-choice, true-false, fill-blank, short-answer, matching, ordering, image-analysis, video-analysis, drawing-analysis)
 - category (short topic label, e.g. "start-of-ww1")
 - difficulty (integer 1-10)
+- explanation (1-2 short lines on why the correct answer is correct, strictly from source text)
 If type is multiple-choice/true-false/image-analysis/video-analysis/drawing-analysis, include 3-4 options and exactly one correct answer.
 If type is fill-blank/short-answer, include acceptableAnswers as an array of valid answers.
 If type is matching, include matchingPairs as array of {left,right}.

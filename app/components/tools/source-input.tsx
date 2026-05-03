@@ -10,6 +10,9 @@ import {
   FileText,
   Image,
   ImageIcon,
+  BrainCircuit,
+  NotebookPen,
+  Layers3,
   Search,
   X,
   Loader2,
@@ -117,6 +120,28 @@ const formatDateTimeStable = (value?: string) => {
   const dt = new Date(value);
   if (Number.isNaN(dt.getTime())) return value;
   return dt.toISOString().slice(0, 16).replace('T', ' ');
+};
+
+const formatRecentTimestamp = (value?: string) => {
+  if (!value) return '-';
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return '-';
+  const now = new Date();
+  const sameDay = dt.toDateString() === now.toDateString();
+  if (sameDay) return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (dt.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return dt.toLocaleDateString();
+};
+
+const toolDisplay: Record<string, { label: string; icon: 'quiz' | 'flashcards' | 'notes' | 'other' }> = {
+  quiz: { label: 'Quiz', icon: 'quiz' },
+  flashcards: { label: 'Flashcards', icon: 'flashcards' },
+  notes: { label: 'Notes', icon: 'notes' },
+  timeline: { label: 'Timeline', icon: 'other' },
+  wordweb: { label: 'Mindmap', icon: 'other' },
+  mindmap: { label: 'Mindmap', icon: 'other' },
 };
 
 const normalizeUrl = (raw: string): string | null => {
@@ -530,8 +555,13 @@ export function SourceInput({
         .filter((run: any) => run?.options_payload?.saveToRecents !== false)
         .map((run: any) => {
           const tool = String(run?.tool_id || 'tool');
-          const mode = String(run?.mode || '').trim();
-          const title = mode ? `${tool} | ${mode}` : tool;
+          const display = toolDisplay[tool] || { label: tool, icon: 'other' as const };
+          const title = String(
+            run?.artifact_title ||
+            run?.output_payload?.title ||
+            run?.input_payload?.title ||
+            display.label
+          ).trim();
           const sourceText = String(
             run?.input_payload?.sourceText ||
             run?.input_payload?.source_text ||
@@ -546,7 +576,7 @@ export function SourceInput({
           ).trim();
           return {
             id: `tool-run:${String(run?.id || '')}`,
-            name: title,
+            name: title || display.label,
             sourceType: 'tool_run' as const,
             text: sourceText || description,
             webUrl: `/tools/${tool}?runId=${String(run?.id || '')}`,
@@ -802,6 +832,17 @@ export function SourceInput({
     });
     return sorted;
   }, [getRecentsUsageMap, recentsCatalog, recentsSearch, recentsSort]);
+
+  const recentToolIcon = useCallback((item: RecentCatalogItem) => {
+    if (item.sourceType === 'material') return <FileText className="h-4 w-4 shrink-0 text-primary" />;
+    const match = String(item.webUrl || '').match(/\/tools\/([^/?]+)/);
+    const tool = match?.[1] || '';
+    const iconType = (toolDisplay[tool]?.icon || 'other');
+    if (iconType === 'quiz') return <BrainCircuit className="h-4 w-4 shrink-0 text-primary" />;
+    if (iconType === 'flashcards') return <Layers3 className="h-4 w-4 shrink-0 text-primary" />;
+    if (iconType === 'notes') return <NotebookPen className="h-4 w-4 shrink-0 text-primary" />;
+    return <FileText className="h-4 w-4 shrink-0 text-primary" />;
+  }, []);
 
   useEffect(() => {
     void loadRecentsCatalog();
@@ -1745,10 +1786,10 @@ export function SourceInput({
                         setRecentsOpen(false);
                       }}
                     >
-                      <FileText className="h-4 w-4 shrink-0 text-primary" />
+                      {recentToolIcon(item)}
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs">{item.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{formatDateTimeStable(item.lastModifiedDateTime)}</p>
+                        <p className="text-[10px] text-muted-foreground">{formatRecentTimestamp(item.lastModifiedDateTime)}</p>
                       </div>
                     </button>
                   ))}

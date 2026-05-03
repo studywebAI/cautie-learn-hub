@@ -119,6 +119,7 @@ export const QuizQuestionSchema = z.object({
   })).optional(),
   orderingItems: z.array(z.string()).optional(),
   hint: z.string().optional(),
+  explanation: z.string().optional(),
 });
 
 export const QuizSchema = z.object({

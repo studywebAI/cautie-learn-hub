@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import React, { Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, Copy, Download, Plus } from 'lucide-react';
+import { Loader2, Plus, X, Trash2 } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
@@ -79,6 +79,7 @@ function QuizPageContent() {
   const [presets, setPresets] = useState<Array<{ id: string; name: string; config: any }>>([]);
   const [newPresetName, setNewPresetName] = useState('');
   const [importCode, setImportCode] = useState('');
+  const [showPresetOverlay, setShowPresetOverlay] = useState(false);
 
   const adaptiveCap = 50;
 
@@ -134,6 +135,10 @@ function QuizPageContent() {
     setPresets((prev) => [{ id: crypto.randomUUID(), name, config }, ...prev].slice(0, 100));
     setNewPresetName('');
     toast({ title: 'Preset saved' });
+  };
+
+  const handleDeletePreset = (id: string) => {
+    setPresets((prev) => prev.filter((preset) => preset.id !== id));
   };
 
   const applyPreset = (config: any) => {
@@ -207,7 +212,12 @@ function QuizPageContent() {
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-xs text-muted-foreground">Mode</p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Mode</p>
+          <Button type="button" variant="ghost" size="sm" className="h-6 px-1.5" onClick={() => setShowPresetOverlay(true)}>
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+        </div>
         <div className="flex flex-wrap gap-1.5">
           {[
             { value: 'classic', label: 'Classic' },
@@ -217,6 +227,34 @@ function QuizPageContent() {
             <button key={entry.value} type="button" className={pill(mode === entry.value)} onClick={() => setMode(entry.value as QuizMode)}>
               {entry.label}
             </button>
+          ))}
+          {presets.map((preset) => (
+            <div key={preset.id} className="group relative">
+              <button
+                type="button"
+                className={pill(false)}
+                onClick={() => applyPreset(preset.config)}
+                onDoubleClick={async () => {
+                  await navigator.clipboard.writeText(encodePresetCode({ config: preset.config }));
+                  toast({ title: 'Preset code copied' });
+                }}
+                onContextMenu={async (event) => {
+                  event.preventDefault();
+                  await navigator.clipboard.writeText(encodePresetCode({ config: preset.config }));
+                  toast({ title: 'Preset code copied' });
+                }}
+              >
+                {preset.name}
+              </button>
+              <button
+                type="button"
+                className="absolute -right-1 -top-1 hidden rounded-full bg-white p-0.5 text-red-600 shadow-sm group-hover:block"
+                onClick={() => handleDeletePreset(preset.id)}
+                aria-label={`Delete ${preset.name}`}
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
           ))}
         </div>
       </div>
@@ -248,7 +286,6 @@ function QuizPageContent() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">How much do you already know?</p>
-          <span className="text-xs font-mono">{knowledgeScore}</span>
         </div>
         <Slider value={[knowledgeScore]} onValueChange={([value]) => setKnowledgeScore(value)} min={0} max={100} step={1} disabled={loading} />
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -287,45 +324,55 @@ function QuizPageContent() {
         </div>
       </div>
 
-      <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
-        <p className="text-xs text-muted-foreground">Mode presets</p>
-        <div className="flex items-center gap-2">
-          <Input value={newPresetName} onChange={(event) => setNewPresetName(event.target.value)} className="h-8 bg-background text-xs" placeholder="Preset name" />
-          <Button type="button" size="sm" className="h-8 px-2" onClick={handleSavePreset}><Plus className="h-3.5 w-3.5" /></Button>
-        </div>
-        <div className="flex items-center gap-2">
-          <Input value={importCode} onChange={(event) => setImportCode(event.target.value)} className="h-8 bg-background text-xs" placeholder="Import preset code" />
-          <Button type="button" size="sm" className="h-8 px-2" onClick={handleImportPreset}><Download className="h-3.5 w-3.5" /></Button>
-        </div>
-        <div className="max-h-40 overflow-auto space-y-1.5">
-          {presets.map((preset) => (
-            <div key={preset.id} className="flex items-center justify-between rounded-md bg-background px-2 py-1.5">
-              <button
-                type="button"
-                className="text-xs text-left"
-                onClick={() => applyPreset(preset.config)}
-                onDoubleClick={async () => {
-                  await navigator.clipboard.writeText(encodePresetCode({ config: preset.config }));
-                  toast({ title: 'Preset code copied' });
-                }}
-                onContextMenu={async (event) => {
-                  event.preventDefault();
-                  await navigator.clipboard.writeText(encodePresetCode({ config: preset.config }));
-                  toast({ title: 'Preset code copied' });
-                }}
-              >
-                {preset.name}
-              </button>
-              <Button type="button" variant="ghost" size="sm" className="h-7 px-2" onClick={async () => {
-                await navigator.clipboard.writeText(encodePresetCode({ config: preset.config }));
-                toast({ title: 'Preset code copied' });
-              }}>
-                <Copy className="h-3.5 w-3.5" />
+      {showPresetOverlay ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-background p-4 shadow-xl">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-medium">Mode presets</p>
+              <Button type="button" variant="ghost" size="sm" className="h-7 px-2" onClick={() => setShowPresetOverlay(false)}>
+                <X className="h-4 w-4" />
               </Button>
             </div>
-          ))}
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Save current preset</p>
+                <div className="flex items-center gap-2">
+                  <Input value={newPresetName} onChange={(event) => setNewPresetName(event.target.value)} className="h-9 bg-background text-xs" placeholder="Preset name" />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => {
+                      handleSavePreset();
+                      setShowPresetOverlay(false);
+                    }}
+                  >
+                    Save current
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Import preset code</p>
+                <div className="flex items-center gap-2">
+                  <Input value={importCode} onChange={(event) => setImportCode(event.target.value)} className="h-9 bg-background text-xs" placeholder="Paste code" />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => {
+                      handleImportPreset();
+                      setShowPresetOverlay(false);
+                    }}
+                  >
+                    Import
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      ) : null}
+
     </>
   );
 
@@ -334,9 +381,6 @@ function QuizPageContent() {
   if (quiz) {
     return (
       <div className="h-full flex flex-col">
-        <div className="p-3 md:p-4 flex items-center justify-between">
-          <Button variant="ghost" onClick={() => setQuiz(null)} className="rounded-full text-xs">Back</Button>
-        </div>
         <div className="flex-1 min-h-0 overflow-auto px-2 pb-2">
           <QuizTaker
             quiz={quiz}

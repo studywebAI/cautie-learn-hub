@@ -146,6 +146,20 @@ const RECENT_TYPE_LABELS: Record<string, string> = {
   presentation: 'Presentation',
 };
 
+function formatRecentTimestamp(value?: string) {
+  if (!value) return '-';
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return '-';
+  const now = new Date();
+  if (dt.toDateString() === now.toDateString()) {
+    return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  const y = new Date(now);
+  y.setDate(now.getDate() - 1);
+  if (dt.toDateString() === y.toDateString()) return 'Yesterday';
+  return dt.toLocaleDateString();
+}
+
 function mergeAttachments(prev: SourceAttachment[], next: SourceAttachment[]) {
   const map = new Map<string, SourceAttachment>();
   for (const item of prev) map.set(item.key, item);
@@ -381,11 +395,11 @@ function PresentationPageContent() {
         .filter((run: any) => run?.options_payload?.saveToRecents !== false)
         .map((run: any) => {
           const toolId = String(run?.tool_id || 'tool');
-          const mode = typeof run?.mode === 'string' ? run.mode : '';
           const toolLabel = RECENT_TYPE_LABELS[toolId] || toolId;
+          const title = String(run?.artifact_title || run?.output_payload?.title || run?.input_payload?.title || toolLabel).trim();
           return {
             id: `run:${String(run?.id || '')}`,
-            name: mode ? `${toolLabel} - ${mode}` : toolLabel,
+            name: title || toolLabel,
             source: 'sidebar_recent' as const,
             recentType: 'tool_run' as const,
             runId: String(run?.id || ''),
@@ -1286,7 +1300,7 @@ function PresentationPageContent() {
                             <div className="min-w-0">
                               <p className="truncate text-xs font-medium">{item.name}</p>
                               <p className="text-[11px] text-muted-foreground">
-                                {item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleDateString() : '-'}
+                                {formatRecentTimestamp(item.lastModifiedDateTime)}
                               </p>
                             </div>
                             <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => void importRecentsFiles([item])}>
@@ -1408,7 +1422,7 @@ function PresentationPageContent() {
                             <div className="min-w-0">
                               <p className="truncate text-xs font-medium">{item.name}</p>
                               <p className="text-[11px] text-muted-foreground">
-                                {item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleDateString() : '-'}
+                                {formatRecentTimestamp(item.lastModifiedDateTime)}
                               </p>
                             </div>
                             <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => void importRecentsFiles([item])}>
