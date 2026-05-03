@@ -1789,7 +1789,7 @@ export function SourceInput({
                       {recentToolIcon(item)}
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs">{item.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{formatRecentTimestamp(item.lastModifiedDateTime)}</p>
+                        <p suppressHydrationWarning className="text-[10px] text-muted-foreground">{formatRecentTimestamp(item.lastModifiedDateTime)}</p>
                       </div>
                     </button>
                   ))}

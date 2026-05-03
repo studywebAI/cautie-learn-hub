@@ -128,7 +128,7 @@ function MatchingComparison({
             <span className="font-medium">{pair.left}</span>
             <span className="truncate">{user || '-'}</span>
             <span className="truncate">{pair.right}</span>
-            <span className={ok ? 'text-emerald-700' : 'text-red-700'}>{ok ? '✓' : '✕'}</span>
+            <span className={ok ? 'text-emerald-700' : 'text-red-700'}>{ok ? 'OK' : 'X'}</span>
           </div>
         );
       })}
@@ -345,14 +345,14 @@ function QuizResults({ quiz, answers, signals, runtimeSettings, sourceText, onRe
               <div className="mb-2 flex flex-wrap gap-1.5">
                 {rows.map((row) => (
                   <button key={row.id} type="button" onClick={() => setSelectedIdx(row.idx)} className={`rounded-full px-2.5 py-1 text-xs ${selected?.id === row.id ? 'bg-foreground text-background' : row.correct ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-                    Q{row.idx + 1} {row.correct ? '✓' : '✕'}
+                    Q{row.idx + 1} {row.correct ? 'OK' : 'X'}
                   </button>
                 ))}
               </div>
               {selected ? (
                 <div className="rounded-lg border border-border p-3">
                   <p className="mb-1 text-sm font-medium">{selected.question.question}</p>
-                  <p className="mb-2 text-xs text-muted-foreground">Category: {selected.category} · Accuracy on this question: {selected.accuracy}%</p>
+                  <p className="mb-2 text-xs text-muted-foreground">Category: {selected.category} � Accuracy on this question: {selected.accuracy}%</p>
                   <div className="grid gap-2 md:grid-cols-2">
                     <div className="rounded-md bg-muted/30 p-2"><p className="text-xs text-muted-foreground">Your answer</p><p className="text-sm">{selected.given}</p></div>
                     <div className="rounded-md bg-muted/30 p-2"><p className="text-xs text-muted-foreground">Correct answer</p><p className="text-sm">{selected.correctValue}</p></div>
@@ -603,7 +603,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
               const isCorrect = answered ? evaluateQuestionAnswer(question, answered) : null;
               return (
                 <button key={question.id} type="button" onClick={() => setCurrentIndex(index)} className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-[11px] ${isCurrent ? 'bg-foreground text-background' : isCorrect === true ? 'bg-emerald-100 text-emerald-800' : isCorrect === false ? 'bg-red-100 text-red-800' : 'bg-background text-muted-foreground border border-border'}`}>
-                  {isCorrect === true ? '✓' : isCorrect === false ? '✕' : index + 1}
+                  {isCorrect === true ? 'OK' : isCorrect === false ? 'X' : index + 1}
                 </button>
               );
             })}

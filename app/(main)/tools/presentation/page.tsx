@@ -1299,7 +1299,7 @@ function PresentationPageContent() {
                           <div key={item.id} className="flex items-center justify-between gap-2 rounded border border-border/50 px-2 py-1.5">
                             <div className="min-w-0">
                               <p className="truncate text-xs font-medium">{item.name}</p>
-                              <p className="text-[11px] text-muted-foreground">
+                              <p suppressHydrationWarning className="text-[11px] text-muted-foreground">
                                 {formatRecentTimestamp(item.lastModifiedDateTime)}
                               </p>
                             </div>
@@ -1421,7 +1421,7 @@ function PresentationPageContent() {
                           <div key={item.id} className="flex items-center justify-between gap-2 rounded border border-border/50 px-2 py-1.5">
                             <div className="min-w-0">
                               <p className="truncate text-xs font-medium">{item.name}</p>
-                              <p className="text-[11px] text-muted-foreground">
+                              <p suppressHydrationWarning className="text-[11px] text-muted-foreground">
                                 {formatRecentTimestamp(item.lastModifiedDateTime)}
                               </p>
                             </div>

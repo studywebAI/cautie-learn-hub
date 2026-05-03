@@ -6,6 +6,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { usePathname } from "next/navigation";
 import { FirstTimeSetupGate } from "@/components/onboarding/first-time-setup-gate";
+import { AppErrorBoundary } from "@/components/ui/app-error-boundary";
 
 const AppSidebar = dynamic(
     () => import("@/components/sidebar").then((m) => m.AppSidebar),
@@ -48,7 +49,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                     isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto"
                   } app-main-shell`}
                 >
-                    {children}
+                    <AppErrorBoundary key={pathname || 'main'}>
+                        {children}
+                    </AppErrorBoundary>
                 </div>
             </SidebarInset>
         </SidebarProvider>

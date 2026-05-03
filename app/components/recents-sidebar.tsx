@@ -574,7 +574,7 @@ export function RecentsSidebar() {
                   {t.keepGoing}
                 </button>
               ) : null}
-              <span className="text-[11px] text-foreground/65 shrink-0">
+              <span suppressHydrationWarning className="text-[11px] text-foreground/65 shrink-0">
                 {dateStr}
               </span>
               <DropdownMenu>

@@ -209,6 +209,11 @@ export default function ClassDetailsPage() {
         });
         return data;
       }
+      if (tabName === 'grades') {
+        const fallback = { grade_sets: [] };
+        tabDataCache[cacheKey] = { data: fallback, timestamp: Date.now() };
+        setCachedTabData((prev: any) => ({ ...prev, [tabName]: fallback }));
+      }
       void logClassTabEvent({
         classId,
         tab: tabName,
