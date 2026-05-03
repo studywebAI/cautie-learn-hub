@@ -128,7 +128,7 @@ const formatRecentTimestamp = (value?: string) => {
   if (Number.isNaN(dt.getTime())) return '-';
   const now = new Date();
   const sameDay = dt.toDateString() === now.toDateString();
-  if (sameDay) return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (sameDay) return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
   if (dt.toDateString() === yesterday.toDateString()) return 'Yesterday';
@@ -1709,7 +1709,7 @@ export function SourceInput({
                 }
               }}
               placeholder=""
-              className="h-[96px] min-h-[96px] flex-1 resize-none rounded-2xl border border-border surface-chip text-sm"
+              className="h-[168px] min-h-[168px] flex-1 resize-none rounded-2xl border border-border surface-chip text-sm"
               disabled={disabled || isProcessing}
             />
           </div>

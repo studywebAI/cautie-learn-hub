@@ -88,7 +88,7 @@ const formatRecentTimestamp = (value?: string) => {
   if (Number.isNaN(dt.getTime())) return '-';
   const now = new Date();
   if (dt.toDateString() === now.toDateString()) {
-    return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   }
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
@@ -164,8 +164,8 @@ export function RecentsSidebar() {
             id: r.id,
             title:
               String(r?.artifact_title || '').trim() ||
-              String(r?.outputs?.title || '').trim() ||
-              String(r?.inputs?.title || '').trim() ||
+              String(r?.output_payload?.title || '').trim() ||
+              String(r?.input_payload?.title || '').trim() ||
               TYPE_LABELS[r.tool_id] ||
               r.tool_id,
             type: r.tool_id as RecentItem['type'],

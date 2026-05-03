@@ -34,6 +34,7 @@ const QUIZ_TYPES = [
 
 const PRESET_STORAGE_KEY = 'quiz.mode.presets.v2';
 const QUIZ_SETTINGS_STORAGE_KEY = 'tools.quiz.settings.v1';
+const QUIZ_PAGE_SESSION_KEY = 'tools.quiz.page.session.v1';
 
 function pill(active: boolean) {
   return active
@@ -83,6 +84,11 @@ function QuizPageContent() {
   const [showPresetOverlay, setShowPresetOverlay] = useState(false);
 
   const adaptiveCap = 50;
+  const runCounterRef = useRef(0);
+  const quizRunKey = useMemo(
+    () => (quiz ? `${quiz.title || 'quiz'}::${(quiz.questions || []).slice(0, 24).map((question) => question.id).join('|')}` : ''),
+    [quiz]
+  );
 
   useEffect(() => {
     try {
@@ -109,6 +115,31 @@ function QuizPageContent() {
 
   useEffect(() => {
     try {
+      const raw = sessionStorage.getItem(QUIZ_PAGE_SESSION_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (typeof parsed?.sourceText === 'string') setSourceText(parsed.sourceText);
+      if (typeof parsed?.title === 'string') setTitle(parsed.title);
+      if (parsed?.mode === 'classic' || parsed?.mode === 'assisted' || parsed?.mode === 'adaptive') setMode(parsed.mode);
+      if (parsed?.answerFeedback === 'immediate' || parsed?.answerFeedback === 'end') setAnswerFeedback(parsed.answerFeedback);
+      if (Array.isArray(parsed?.questionTypes) && parsed.questionTypes.length > 0) {
+        const allowed = parsed.questionTypes.filter((entry: string) => QUIZ_TYPES.some((item) => item.value === entry));
+        if (allowed.length > 0) setQuestionTypes(allowed);
+      }
+      if (Number.isFinite(parsed?.knowledgeScore)) setKnowledgeScore(Math.max(0, Math.min(100, Number(parsed.knowledgeScore))));
+      if (Number.isFinite(parsed?.questionCount)) setQuestionCount(Math.max(1, Math.min(25, Number(parsed.questionCount))));
+      if (Array.isArray(parsed?.gradingModes) && parsed.gradingModes.length > 0) {
+        const next = parsed.gradingModes.filter((entry: string) => ['accuracy', 'speed', 'progression'].includes(entry)) as GradingMode[];
+        setGradingModes(next.length > 0 ? next : ['accuracy', 'speed', 'progression']);
+      }
+      if (parsed?.quiz && Array.isArray(parsed.quiz?.questions)) setQuiz(parsed.quiz as Quiz);
+    } catch {
+      // ignore broken session state
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
       localStorage.setItem(
         QUIZ_SETTINGS_STORAGE_KEY,
         JSON.stringify({
@@ -125,6 +156,27 @@ function QuizPageContent() {
       // ignore storage write failures
     }
   }, [answerFeedback, gradingModes, knowledgeScore, mode, questionCount, questionTypes, title]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        QUIZ_PAGE_SESSION_KEY,
+        JSON.stringify({
+          sourceText,
+          title,
+          mode,
+          answerFeedback,
+          questionTypes,
+          knowledgeScore,
+          questionCount,
+          gradingModes,
+          quiz,
+        })
+      );
+    } catch {
+      // ignore storage write failures
+    }
+  }, [answerFeedback, gradingModes, knowledgeScore, mode, questionCount, questionTypes, quiz, sourceText, title]);
 
   useEffect(() => {
     if (mode === 'classic') {
@@ -207,6 +259,7 @@ function QuizPageContent() {
 
   const buildGenerationInput = useCallback((compiledText: string) => {
     const requestedCount = mode === 'adaptive' ? 12 : questionCount;
+    runCounterRef.current += 1;
     return {
       sourceText: compiledText,
       imageDataUri: imageDataUri || undefined,
@@ -219,6 +272,13 @@ function QuizPageContent() {
       gradingModes,
       feedbackTiming: answerFeedback,
       quizMode: mode,
+      runNonce: `${Date.now()}-${runCounterRef.current}-${Math.random().toString(36).slice(2, 8)}`,
+      qualityConstraints: {
+        enforceLanguage: true,
+        enforceGrammar: true,
+        enforcePlausibleDistractors: true,
+        enforceNoDuplicates: true,
+      },
     };
   }, [answerFeedback, gradingModes, imageDataUri, knowledgeScore, language, mode, questionCount, questionTypes, region, schoolingLevel]);
 
@@ -232,7 +292,7 @@ function QuizPageContent() {
         flowName: 'generateQuiz',
         mode,
         artifactType: 'quiz',
-        artifactTitle: title.trim() || 'Quiz',
+        artifactTitle: title.trim(),
         options: { saveToRecents: true },
         persistArtifact: true,
         input: buildGenerationInput(compiledText),
@@ -246,6 +306,19 @@ function QuizPageContent() {
       setLoading(false);
     }
   }, [buildGenerationInput, mode, title, toast]);
+
+  const handleRestart = useCallback(() => {
+    setQuiz(null);
+    try {
+      const raw = sessionStorage.getItem(QUIZ_PAGE_SESSION_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      delete parsed.quiz;
+      sessionStorage.setItem(QUIZ_PAGE_SESSION_KEY, JSON.stringify(parsed));
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const sidebar = (
     <>
@@ -429,7 +502,8 @@ function QuizPageContent() {
             quiz={quiz}
             mode={mode}
             sourceText={sourceText}
-            onRestart={() => setQuiz(null)}
+            onRestart={handleRestart}
+            runKey={quizRunKey}
             runtimeSettings={{
               answerFeedback,
               gradingModes,

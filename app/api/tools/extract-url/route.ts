@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Readability } from '@mozilla/readability';
-import { JSDOM } from 'jsdom';
+export const runtime = 'nodejs';
 
 const MIN_MEANINGFUL_TEXT_LENGTH = 140;
+const timeoutFetch = async (input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 15000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+};
 
 const toHttpUrl = (input: string) => {
   const trimmed = String(input || '').trim();
@@ -56,21 +64,6 @@ const cleanupExtractedText = (text: string) => {
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
-};
-
-const extractReadableArticleText = (html: string, pageUrl: string) => {
-  try {
-    const dom = new JSDOM(html, { url: pageUrl });
-    const reader = new Readability(dom.window.document);
-    const article = reader.parse();
-    const title = cleanupExtractedText(String(article?.title || ''));
-    const byline = cleanupExtractedText(String(article?.byline || ''));
-    const body = cleanupExtractedText(String(article?.textContent || ''));
-    const combined = cleanupExtractedText([title, byline, body].filter(Boolean).join('\n\n'));
-    return combined;
-  } catch {
-    return '';
-  }
 };
 
 const decodeHtmlEntities = (value: string) => {
@@ -135,14 +128,13 @@ const parseCaptionTracks = (watchHtml: string) => {
 };
 
 const fetchYouTubeTranscript = async (videoId: string) => {
-  const watchResponse = await fetch(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, {
+  const watchResponse = await timeoutFetch(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (compatible; CautieLearn/1.0; +https://cautie.app)',
       Accept: 'text/html,application/xhtml+xml',
     },
-    signal: AbortSignal.timeout(15000),
     cache: 'no-store',
-  });
+  }, 15000);
   if (!watchResponse.ok) return '';
   const watchHtml = await watchResponse.text();
   const tracks = parseCaptionTracks(watchHtml);
@@ -158,14 +150,13 @@ const fetchYouTubeTranscript = async (videoId: string) => {
   for (const track of sortedTracks) {
     try {
       const base = track.baseUrl.includes('&fmt=') ? track.baseUrl : `${track.baseUrl}&fmt=json3`;
-      const transcriptResponse = await fetch(base, {
+      const transcriptResponse = await timeoutFetch(base, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; CautieLearn/1.0; +https://cautie.app)',
           Accept: 'application/json,text/plain,*/*',
         },
-        signal: AbortSignal.timeout(10000),
         cache: 'no-store',
-      });
+      }, 10000);
       if (!transcriptResponse.ok) continue;
       const payload = await transcriptResponse.json().catch(() => null);
       const events = Array.isArray(payload?.events) ? payload.events : [];
@@ -188,11 +179,10 @@ const fetchYouTubeTranscript = async (videoId: string) => {
 
 const fetchViaJinaReader = async (url: string) => {
   const readerUrl = `https://r.jina.ai/http://${url.replace(/^https?:\/\//i, '')}`;
-  const response = await fetch(readerUrl, {
+  const response = await timeoutFetch(readerUrl, {
     headers: { Accept: 'text/plain, text/markdown;q=0.9, */*;q=0.8' },
-    signal: AbortSignal.timeout(20000),
     cache: 'no-store',
-  });
+  }, 20000);
   if (!response.ok) return '';
   const text = await response.text();
   return cleanupExtractedText(text);
@@ -219,14 +209,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const directRes = await fetch(parsedUrl.toString(), {
+    const directRes = await timeoutFetch(parsedUrl.toString(), {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; CautieLearn/1.0; +https://cautie.app)',
         Accept: 'text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.7',
       },
-      signal: AbortSignal.timeout(15000),
       cache: 'no-store',
-    });
+    }, 15000);
 
     if (!directRes.ok) {
       const fallback = await fetchViaJinaReader(parsedUrl.toString());
@@ -244,18 +233,12 @@ export async function POST(req: NextRequest) {
     if (contentType.includes('text/plain')) {
       extracted = cleanupExtractedText(raw);
     } else {
-      // Primary article extraction path for random websites.
-      const readabilityText = extractReadableArticleText(raw, parsedUrl.toString());
-      if (readabilityText.length >= MIN_MEANINGFUL_TEXT_LENGTH) {
-        extracted = readabilityText;
-      } else {
-        const title = extractTitle(raw);
-        const ogTitle = extractMeta(raw, 'og:title');
-        const description = extractMeta(raw, 'description') || extractMeta(raw, 'og:description');
-        const bodyText = cleanupExtractedText(stripHtmlToText(raw));
-        const header = [ogTitle || title, description].filter(Boolean).join('\n\n');
-        extracted = cleanupExtractedText([header, bodyText].filter(Boolean).join('\n\n'));
-      }
+      const title = extractTitle(raw);
+      const ogTitle = extractMeta(raw, 'og:title');
+      const description = extractMeta(raw, 'description') || extractMeta(raw, 'og:description');
+      const bodyText = cleanupExtractedText(stripHtmlToText(raw));
+      const header = [ogTitle || title, description].filter(Boolean).join('\n\n');
+      extracted = cleanupExtractedText([header, bodyText].filter(Boolean).join('\n\n'));
     }
 
     // YouTube commonly blocks usable transcript extraction from page HTML.

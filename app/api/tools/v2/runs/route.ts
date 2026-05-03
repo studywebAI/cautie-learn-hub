@@ -372,6 +372,17 @@ export async function POST(request: NextRequest) {
       });
       let artifactId: string | null = null;
 
+      const outputTitle =
+        typeof (output as any)?.title === "string" && String((output as any).title).trim()
+          ? String((output as any).title).trim()
+          : "";
+      const resolvedArtifactTitle =
+        (typeof payload.artifactTitle === "string" && payload.artifactTitle.trim()
+          ? payload.artifactTitle.trim()
+          : "") ||
+        outputTitle ||
+        `${payload.toolId} output`;
+
       if (payload.persistArtifact) {
         const canonical = extractCanonicalFromOutput(output);
         const artifactMetadata = {
@@ -398,7 +409,7 @@ export async function POST(request: NextRequest) {
             user_id: user.id,
             tool_id: payload.toolId,
             artifact_type: payload.artifactType || payload.toolId,
-            title: payload.artifactTitle || `${payload.toolId} output`,
+            title: resolvedArtifactTitle,
             latest_version: 1,
             metadata: artifactMetadata,
           })
@@ -423,6 +434,7 @@ export async function POST(request: NextRequest) {
         .from("tool_runs")
         .update({
           status: "succeeded" as ToolRunStatus,
+          artifact_title: resolvedArtifactTitle,
           output_payload: output,
           output_artifact_id: artifactId,
           finished_at: new Date().toISOString(),
