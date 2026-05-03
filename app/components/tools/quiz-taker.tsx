@@ -352,7 +352,7 @@ function QuizResults({ quiz, answers, signals, runtimeSettings, sourceText, onRe
               {selected ? (
                 <div className="rounded-lg border border-border p-3">
                   <p className="mb-1 text-sm font-medium">{selected.question.question}</p>
-                  <p className="mb-2 text-xs text-muted-foreground">Category: {selected.category} · Accuracy on this question: {selected.accuracy}%</p>
+                  <p className="mb-2 text-xs text-muted-foreground">Category: {selected.category} Â· Accuracy on this question: {selected.accuracy}%</p>
                   <div className="grid gap-2 md:grid-cols-2">
                     <div className="rounded-md bg-muted/30 p-2"><p className="text-xs text-muted-foreground">Your answer</p><p className="text-sm">{selected.given}</p></div>
                     <div className="rounded-md bg-muted/30 p-2"><p className="text-xs text-muted-foreground">Correct answer</p><p className="text-sm">{selected.correctValue}</p></div>
