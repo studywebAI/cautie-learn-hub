@@ -562,7 +562,6 @@ export function AppSidebar() {
         '/tools/quiz',
         '/tools/flashcards',
         '/tools/notes',
-        '/other/materials',
       ])
     ).slice(0, 10);
 

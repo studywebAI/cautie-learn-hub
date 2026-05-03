@@ -1,667 +1,370 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import React, { useState, useEffect, Suspense, useCallback, useContext, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useSavedRun } from '@/hooks/use-saved-run';
-import { Loader2 } from 'lucide-react';
-import { FunLoader } from '@/components/tools/fun-loader';
-import type { QuizMode } from '@/components/tools/quiz-taker';
+import React, { Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Loader2, Copy, Download, Plus } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
-import type { Quiz } from '@/lib/types';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SourceInput } from '@/components/tools/source-input';
-import { PillSelector } from '@/components/tools/pill-selector';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
-import { ExportToolbar } from '@/components/tools/export-toolbar';
-import { quizToMarkdown, quizToHtml } from '@/lib/export-formatters';
-import { ImportToolbar } from '@/components/tools/import-toolbar';
-import { parseQuizFromMarkdown, parseQuizFromHtml } from '@/lib/import-parsers';
-import { getToolStrings } from '@/lib/tool-i18n';
-import { Switch } from '@/components/ui/switch';
-import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
+import type { Quiz } from '@/lib/types';
 
-const QuizTaker = dynamic(
-  () => import('@/components/tools/quiz-taker').then((m) => m.QuizTaker),
-  { ssr: false }
-);
-const QuizDuel = dynamic(
-  () => import('@/components/tools/quiz-duel').then((m) => m.QuizDuel),
-  { ssr: false }
-);
+const QuizTaker = dynamic(() => import('@/components/tools/quiz-taker').then((module) => module.QuizTaker), { ssr: false });
 
-const VALID_QUIZ_MODES: QuizMode[] = ['normal', 'practice', 'exam', 'adaptive', 'duel'];
-type KnowledgeLevel = 'beginner' | 'intermediate' | 'advanced';
+type QuizMode = 'classic' | 'assisted' | 'adaptive';
+type AnswerFeedback = 'immediate' | 'end';
+type GradingMode = 'accuracy' | 'speed' | 'progression';
 
-function normalizeQuizMode(value: string | null | undefined): QuizMode {
-  const next = String(value || '').trim().toLowerCase();
-  if (next === 'classic') return 'practice';
-  if ((VALID_QUIZ_MODES as string[]).includes(next)) return next as QuizMode;
-  return 'practice';
+const QUIZ_TYPES = [
+  { value: 'multiple-choice', label: 'Multiple Choice' },
+  { value: 'true-false', label: 'True/False' },
+  { value: 'fill-blank', label: 'Fill in Blank' },
+  { value: 'short-answer', label: 'Short Answer' },
+  { value: 'matching', label: 'Matching' },
+  { value: 'ordering', label: 'Ordering' },
+  { value: 'image-analysis', label: 'Image analysis' },
+  { value: 'video-analysis', label: 'Video analysis' },
+  { value: 'drawing-analysis', label: 'Drawing analysis' },
+] as const;
+
+const PRESET_STORAGE_KEY = 'quiz.mode.presets.v2';
+
+function pill(active: boolean) {
+  return active
+    ? 'px-3 py-1 text-xs rounded-full bg-white text-foreground'
+    : 'px-3 py-1 text-xs rounded-full bg-[hsl(var(--background))] text-foreground';
+}
+
+function decodePresetCode(value: string) {
+  try {
+    const raw = atob(value.trim());
+    const parsed = JSON.parse(raw);
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function encodePresetCode(value: unknown) {
+  return btoa(JSON.stringify(value));
 }
 
 function QuizPageContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const sourceTextFromParams = searchParams.get('sourceText');
-  const runId = searchParams.get('runId');
-  const taskId = searchParams.get('taskId');
-  const studysetId = searchParams.get('studysetId');
-  const launchRequested = searchParams.get('launch') === '1';
-  const context = searchParams.get('context');
-  const classId = searchParams.get('classId');
-  const isAssignmentContext = context === 'assignment';
-  const { run: savedRun, isLoading: isLoadingRun } = useSavedRun(runId);
+  const { toast } = useToast();
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
   const region = appContext?.region ?? 'global';
   const schoolingLevel = appContext?.schoolingLevel ?? 2;
-  const t = getToolStrings(language);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
-  const [isLoading, setIsLoading] = useState(false);
-  const [generatedQuiz, setGeneratedQuiz] = useState<Quiz | null>(null);
-  const [quizMode, setQuizMode] = useState<QuizMode>('practice');
-  const [questionCount, setQuestionCount] = useState(7);
-  const [questionType, setQuestionType] = useState('mixed');
-  const [knowledgeLevel, setKnowledgeLevel] = useState<KnowledgeLevel>('intermediate');
-  const [currentView, setCurrentView] = useState<'setup' | 'take' | 'duel'>('setup');
-  const [customTitle, setCustomTitle] = useState('');
+  const [sourceText, setSourceText] = useState(searchParams.get('sourceText') || '');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
-  const [saveToRecents, setSaveToRecents] = useState(true);
-  const [includeImages, setIncludeImages] = useState(false);
-  const [sourceBackedDepth, setSourceBackedDepth] = useState(false);
-  const [adaptiveGoal, setAdaptiveGoal] = useState<'balanced' | 'speed' | 'mastery'>('balanced');
-  const [answerRevisionWindowSeconds, setAnswerRevisionWindowSeconds] = useState(5);
-  const [scoringModel, setScoringModel] = useState<'accuracy' | 'speed_weighted' | 'negative_marking' | 'mastery_points'>('accuracy');
-  const [timebankSystem, setTimebankSystem] = useState(false);
-  const [progressiveUnlock, setProgressiveUnlock] = useState(false);
-  const [progressiveUnlockStreak, setProgressiveUnlockStreak] = useState(4);
-  const [questionDecay, setQuestionDecay] = useState(true);
-  const [confidenceScoring, setConfidenceScoring] = useState(false);
-  const [isSharingToClass, setIsSharingToClass] = useState(false);
-  const launchHandledRef = useRef(false);
-  const sourceParamsHandledRef = useRef(false);
-  const advancedHydratedRef = useRef(false);
-  const { toast } = useToast();
-  const {
-    settings: advancedSettings,
-    conflicts: advancedConflicts,
-    savePatch: saveAdvancedSettingsPatch,
-  } = useAdvancedToolSettings();
+  const [title, setTitle] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
 
-  const resolveComputeClass = (requestedCount: number): 'light' | 'standard' | 'heavy' => {
-    const budget = advancedSettings?.safety.performance_budget || 'auto';
-    if (budget === 'low') return 'light';
-    if (budget === 'medium') return requestedCount > 24 ? 'standard' : 'light';
-    if (budget === 'high') return requestedCount > 16 ? 'heavy' : 'standard';
-    return requestedCount > 20 ? 'heavy' : 'standard';
+  const [mode, setMode] = useState<QuizMode>('classic');
+  const [answerFeedback, setAnswerFeedback] = useState<AnswerFeedback>('end');
+  const [questionTypes, setQuestionTypes] = useState<string[]>(['multiple-choice']);
+  const [knowledgeScore, setKnowledgeScore] = useState(50);
+  const [questionCount, setQuestionCount] = useState(12);
+  const [gradingModes, setGradingModes] = useState<GradingMode[]>(['accuracy']);
+
+  const [presets, setPresets] = useState<Array<{ id: string; name: string; config: any }>>([]);
+  const [newPresetName, setNewPresetName] = useState('');
+  const [importCode, setImportCode] = useState('');
+
+  const adaptiveCap = 50;
+
+  useEffect(() => {
+    if (mode === 'classic') {
+      setAnswerFeedback('end');
+      setQuestionCount((prev) => (prev < 1 ? 12 : Math.min(25, prev || 12)));
+    }
+    if (mode === 'assisted') {
+      setAnswerFeedback('immediate');
+      setQuestionCount((prev) => (prev < 1 ? 12 : Math.min(25, prev || 12)));
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PRESET_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) setPresets(parsed);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
+  }, [presets]);
+
+  const toggleQuestionType = (value: string) => {
+    setQuestionTypes((prev) => {
+      if (prev.includes(value)) {
+        const next = prev.filter((entry) => entry !== value);
+        return next.length ? next : ['multiple-choice'];
+      }
+      return [...prev, value];
+    });
   };
 
-  const handleGenerate = useCallback(async (
-    text: string,
-    overrides?: Partial<{
-      mode: QuizMode;
-      questionCount: number;
-      questionType: string;
-      title: string;
-    }>
-  ) => {
-    if (!text.trim()) return;
-    if (advancedSettings?.safety.offline_mode && typeof navigator !== 'undefined' && !navigator.onLine) {
-      toast({
-        variant: 'destructive',
-        title: t.quiz.generatingTitle,
-        description: 'Offline mode is enabled and no connection is available.',
-      });
+  const toggleGrading = (value: GradingMode) => {
+    setGradingModes((prev) => {
+      if (prev.includes(value)) {
+        const next = prev.filter((entry) => entry !== value);
+        return next.length ? next : ['accuracy'];
+      }
+      return [...prev, value];
+    });
+  };
+
+  const handleSavePreset = () => {
+    const name = newPresetName.trim() || `Preset ${presets.length + 1}`;
+    const config = { mode, answerFeedback, questionTypes, knowledgeScore, questionCount, gradingModes };
+    setPresets((prev) => [{ id: crypto.randomUUID(), name, config }, ...prev].slice(0, 100));
+    setNewPresetName('');
+    toast({ title: 'Preset saved' });
+  };
+
+  const applyPreset = (config: any) => {
+    if (!config) return;
+    if (config.mode === 'classic' || config.mode === 'assisted' || config.mode === 'adaptive') setMode(config.mode);
+    if (config.answerFeedback === 'immediate' || config.answerFeedback === 'end') setAnswerFeedback(config.answerFeedback);
+    if (Array.isArray(config.questionTypes) && config.questionTypes.length > 0) setQuestionTypes(config.questionTypes);
+    if (Number.isFinite(config.knowledgeScore)) setKnowledgeScore(Math.max(0, Math.min(100, Number(config.knowledgeScore))));
+    if (Number.isFinite(config.questionCount)) setQuestionCount(Math.max(1, Math.min(25, Number(config.questionCount))));
+    if (Array.isArray(config.gradingModes) && config.gradingModes.length > 0) setGradingModes(config.gradingModes.filter((v: string) => ['accuracy', 'speed', 'progression'].includes(v)) as GradingMode[]);
+  };
+
+  const handleImportPreset = () => {
+    const decoded = decodePresetCode(importCode);
+    if (!decoded || typeof decoded !== 'object') {
+      toast({ variant: 'destructive', title: 'Invalid preset code' });
       return;
     }
-    setIsLoading(true);
-    setGeneratedQuiz(null);
-    try {
-        const requestedMode = overrides?.mode || quizMode;
-      const requestedQuestionCount = overrides?.questionCount ?? questionCount;
-      const requestedQuestionType = overrides?.questionType || questionType;
-      const requestedTitle = overrides?.title || customTitle.trim() || 'Generated Quiz';
-      const effectiveSettings = advancedSettings;
-      if (effectiveSettings?.safety.setting_conflict_detector) {
-        const conflicts = detectAdvancedSettingsConflicts(effectiveSettings, {
-          tool: 'quiz',
-          isLiveGeneratedQuiz: true,
-        });
-        const blocking = conflicts.find((conflict) => conflict.severity === 'error');
-        if (blocking) {
-          toast({
-            variant: 'destructive',
-            title: 'Settings conflict',
-            description: blocking.message,
-          });
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      if (requestedMode === 'duel') {
-        setCurrentView('duel');
-      } else {
-        const count = requestedMode === 'adaptive' ? 1 : requestedQuestionCount;
-        const run = await runToolFlowV2({
-          toolId: 'quiz',
-          flowName: 'generateQuiz',
-          mode: requestedMode,
-          artifactType: 'quiz',
-          artifactTitle: requestedTitle,
-          options: { saveToRecents },
-          persistArtifact: saveToRecents,
-          input: {
-            sourceText: text,
-            imageDataUri: imageDataUri || undefined,
-            questionCount: count,
-            language,
-            regionCode: String(region || 'global').toUpperCase(),
-            educationLevel: schoolingLevel,
-            questionType: requestedQuestionType,
-            knowledgeLevel,
-            includeImages,
-            sourceBackedDepth,
-            answerRevisionWindowSeconds,
-            scoringModel,
-            sourcePolicy: {
-              wikipediaEnabled: Boolean(advancedSettings?.sources.wikipedia_enabled),
-              wikipediaDepth: advancedSettings?.sources.wikipedia_depth,
-              youtubeTranscriptEnabled: Boolean(advancedSettings?.sources.youtube_transcript_enabled),
-              crossLanguageSearch: Boolean(advancedSettings?.sources.cross_language_search),
-              contradictionResolutionMode: advancedSettings?.sources.contradiction_resolution_mode,
-              sourceTraceback: Boolean(advancedSettings?.sources.source_traceback),
-              liveUpdateMode: Boolean(advancedSettings?.sources.live_update_mode),
-              biasDetection: Boolean(advancedSettings?.sources.bias_detection),
-              contextWindowPriority: advancedSettings?.sources.context_window_priority,
-              maxSourcesPerRun: advancedSettings?.sources.max_sources_per_run,
-            },
-            visuals: {
-              imagesInQuestions: Boolean(advancedSettings?.visuals.images_in_questions),
-              imageStyle: advancedSettings?.visuals.image_style,
-              timelineEmbedMode: Boolean(advancedSettings?.visuals.timeline_embed_mode),
-              customDiagramGeneration: Boolean(advancedSettings?.visuals.custom_diagram_generation),
-              progressiveReveal: Boolean(advancedSettings?.visuals.progressive_reveal),
-              focusMode: Boolean(advancedSettings?.visuals.focus_mode),
-              interactionRequired: Boolean(advancedSettings?.visuals.interaction_required),
-              autoSimplification: Boolean(advancedSettings?.visuals.auto_simplification),
-              spatialQuizMode: Boolean(advancedSettings?.visuals.spatial_quiz_mode),
-            },
-            adaptiveTimer: {
-              enabled: Boolean(advancedSettings?.adaptiveTimer.enabled),
-              baseSeconds: advancedSettings?.adaptiveTimer.base_seconds,
-              goal: adaptiveGoal,
-              readingSpeedWpm: advancedSettings?.adaptiveTimer.reading_speed_wpm,
-              knownTopicDiscountPct: advancedSettings?.adaptiveTimer.known_topic_discount_pct,
-              uncertainTopicBonusPct: advancedSettings?.adaptiveTimer.uncertain_topic_bonus_pct,
-              mediaBonusSeconds: advancedSettings?.adaptiveTimer.media_bonus_seconds,
-              minSeconds: advancedSettings?.adaptiveTimer.min_seconds,
-              maxSeconds: advancedSettings?.adaptiveTimer.max_seconds,
-              fatigueDetection: advancedSettings?.adaptiveTimer.fatigue_detection,
-              hesitationDetection: advancedSettings?.adaptiveTimer.hesitation_detection,
-              deviceAdjustment: advancedSettings?.adaptiveTimer.device_adjustment,
-            },
-          },
-          computeClass: resolveComputeClass(count),
-        });
-        const response = run?.output_payload || run;
-        setGeneratedQuiz(response as Quiz);
-        setCurrentView('take');
-      }
-    } catch (error) {
-      console.error('Error generating quiz:', error);
-      toast({
-        variant: 'destructive',
-        title: t.quiz.generatingTitle,
-        description: (error as any)?.message || 'Unable to generate quiz',
-        errorCode: (error as any)?.code ? String((error as any).code) : undefined,
-      });
-      setCurrentView('setup');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [customTitle, imageDataUri, language, region, schoolingLevel, questionCount, questionType, quizMode, saveToRecents, knowledgeLevel, includeImages, sourceBackedDepth, answerRevisionWindowSeconds, scoringModel, advancedSettings, adaptiveGoal, t.quiz.generatingTitle, toast]);
-
-  useEffect(() => {
-    if (!sourceTextFromParams || isAssignmentContext || sourceParamsHandledRef.current) return;
-    sourceParamsHandledRef.current = true;
-    void handleGenerate(sourceTextFromParams);
-  }, [sourceTextFromParams, isAssignmentContext, handleGenerate]);
-
-  useEffect(() => {
-    if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
-    launchHandledRef.current = true;
-    console.info('[STUDYSET_LAUNCH][QUIZ] launch requested', {
-      taskId,
-      studysetId,
-      launchRequested,
-    });
-
-    const runLaunch = async () => {
-      try {
-        const response = await fetch(`/api/studysets/plan-tasks/${taskId}/launch`);
-        if (!response.ok) throw new Error(`Could not load studyset task preset (${response.status})`);
-        const payload = await response.json();
-        const source = String(payload?.launch?.sourceText || '').trim();
-        const preset = payload?.launch?.quizPreset || {};
-        const title = String(payload?.launch?.artifactTitle || '').trim();
-        console.info('[STUDYSET_LAUNCH][QUIZ] launch payload loaded', {
-          taskId,
-          studysetId,
-          sourceLength: source.length,
-          preset,
-          hasTitle: Boolean(title),
-        });
-
-        if (source) setSourceText(source);
-        if (preset?.mode) setQuizMode(normalizeQuizMode(String(preset.mode)));
-        if (typeof preset?.questionCount === 'number') setQuestionCount(preset.questionCount);
-        if (preset?.questionType) setQuestionType(String(preset.questionType));
-        if (title) setCustomTitle(title);
-
-        if (source) {
-          await handleGenerate(source, {
-            mode: normalizeQuizMode(String(preset?.mode || 'practice')),
-            questionCount: typeof preset?.questionCount === 'number' ? preset.questionCount : undefined,
-            questionType: preset?.questionType ? String(preset.questionType) : undefined,
-            title: title || undefined,
-          });
-          console.info('[STUDYSET_LAUNCH][QUIZ] generation completed', { taskId, studysetId });
-        }
-      } catch (error: any) {
-        console.error('[STUDYSET_LAUNCH][QUIZ] launch failed', {
-          taskId,
-          studysetId,
-          message: error?.message || String(error),
-        });
-        toast({
-          variant: 'destructive',
-          title: 'Could not start studyset task',
-          description: error?.message || 'Please refresh and try again.',
-          errorCode: error?.code ? String(error.code) : undefined,
-        });
-      }
-    };
-
-    void runLaunch();
-  }, [handleGenerate, launchRequested, studysetId, taskId, toast]);
-
-  useEffect(() => {
-    if (savedRun?.output_payload && savedRun.status === 'succeeded') {
-      const output = savedRun.output_payload;
-      setGeneratedQuiz(output as Quiz);
-      setCurrentView('take');
-      if (savedRun.input_payload?.sourceText) setSourceText(savedRun.input_payload.sourceText);
-      if (savedRun.mode) setQuizMode(normalizeQuizMode(savedRun.mode));
-    }
-  }, [savedRun]);
-
-  useEffect(() => {
-    const s = (k: string) => localStorage.getItem(`tools.quiz.${k}`);
-    if (s('mode')) setQuizMode(normalizeQuizMode(s('mode')));
-    if (s('count') && !Number.isNaN(Number(s('count')))) setQuestionCount(Number(s('count')));
-    if (s('questionType')) setQuestionType(s('questionType')!);
-    if (s('knowledgeLevel') === 'beginner' || s('knowledgeLevel') === 'intermediate' || s('knowledgeLevel') === 'advanced') {
-      setKnowledgeLevel(s('knowledgeLevel') as KnowledgeLevel);
-    }
-    if (s('includeImages') === 'true') setIncludeImages(true);
-    if (s('sourceBackedDepth') === 'true') setSourceBackedDepth(true);
-    if (s('saveToRecents') === 'false') setSaveToRecents(false);
-  }, []);
-
-  useEffect(() => { localStorage.setItem('tools.quiz.mode', quizMode); }, [quizMode]);
-  useEffect(() => { localStorage.setItem('tools.quiz.count', String(questionCount)); }, [questionCount]);
-  useEffect(() => { localStorage.setItem('tools.quiz.questionType', questionType); }, [questionType]);
-  useEffect(() => { localStorage.setItem('tools.quiz.knowledgeLevel', knowledgeLevel); }, [knowledgeLevel]);
-  useEffect(() => { localStorage.setItem('tools.quiz.includeImages', String(includeImages)); }, [includeImages]);
-  useEffect(() => { localStorage.setItem('tools.quiz.sourceBackedDepth', String(sourceBackedDepth)); }, [sourceBackedDepth]);
-  useEffect(() => { localStorage.setItem('tools.quiz.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
-  useEffect(() => { localStorage.setItem('tools.quiz.answerRevisionWindowSeconds', String(answerRevisionWindowSeconds)); }, [answerRevisionWindowSeconds]);
-  useEffect(() => { localStorage.setItem('tools.quiz.scoringModel', scoringModel); }, [scoringModel]);
-  useEffect(() => { localStorage.setItem('tools.quiz.adaptiveGoal', adaptiveGoal); }, [adaptiveGoal]);
-  useEffect(() => { localStorage.setItem('tools.quiz.timebankSystem', String(timebankSystem)); }, [timebankSystem]);
-  useEffect(() => { localStorage.setItem('tools.quiz.progressiveUnlock', String(progressiveUnlock)); }, [progressiveUnlock]);
-  useEffect(() => { localStorage.setItem('tools.quiz.progressiveUnlockStreak', String(progressiveUnlockStreak)); }, [progressiveUnlockStreak]);
-  useEffect(() => { localStorage.setItem('tools.quiz.questionDecay', String(questionDecay)); }, [questionDecay]);
-  useEffect(() => { localStorage.setItem('tools.quiz.confidenceScoring', String(confidenceScoring)); }, [confidenceScoring]);
-
-  useEffect(() => {
-    const s = (k: string) => localStorage.getItem(`tools.quiz.${k}`);
-    if (s('answerRevisionWindowSeconds') && !Number.isNaN(Number(s('answerRevisionWindowSeconds')))) {
-      setAnswerRevisionWindowSeconds(Number(s('answerRevisionWindowSeconds')));
-    }
-    const sm = s('scoringModel');
-    if (sm === 'accuracy' || sm === 'speed_weighted' || sm === 'negative_marking' || sm === 'mastery_points') {
-      setScoringModel(sm);
-    }
-    const ag = s('adaptiveGoal');
-    if (ag === 'balanced' || ag === 'speed' || ag === 'mastery') setAdaptiveGoal(ag);
-    if (s('timebankSystem') === 'true') setTimebankSystem(true);
-    if (s('progressiveUnlock') === 'true') setProgressiveUnlock(true);
-    if (s('progressiveUnlockStreak') && !Number.isNaN(Number(s('progressiveUnlockStreak')))) setProgressiveUnlockStreak(Number(s('progressiveUnlockStreak')));
-    if (s('questionDecay') === 'false') setQuestionDecay(false);
-    if (s('confidenceScoring') === 'true') setConfidenceScoring(true);
-  }, []);
-
-  useEffect(() => {
-    if (!advancedSettings || advancedHydratedRef.current) return;
-    advancedHydratedRef.current = true;
-    setAnswerRevisionWindowSeconds(Number(advancedSettings.quiz.answer_revision_window_seconds || 0));
-    setScoringModel(advancedSettings.quiz.scoring_model as typeof scoringModel);
-    setTimebankSystem(Boolean(advancedSettings.quiz.timebank_system));
-    setProgressiveUnlock(Boolean(advancedSettings.quiz.progressive_unlock));
-    setProgressiveUnlockStreak(Number(advancedSettings.quiz.progressive_unlock_streak || 4));
-    setQuestionDecay(Boolean(advancedSettings.quiz.question_decay));
-    setConfidenceScoring(Boolean(advancedSettings.quiz.confidence_scoring));
-    setAdaptiveGoal((advancedSettings.adaptiveTimer.user_goal_alignment || 'balanced') as typeof adaptiveGoal);
-  }, [advancedSettings]);
-
-  const handleRestart = () => {
-    setGeneratedQuiz(null);
-    setCurrentView('setup');
-    if (isAssignmentContext) {
-      if (classId) router.push(`/class/${classId}`);
-      else router.push('/classes');
-    }
+    applyPreset((decoded as any).config || decoded);
+    toast({ title: 'Preset imported' });
+    setImportCode('');
   };
 
-  const handleShareToClass = useCallback(async () => {
-    if (!classId || !generatedQuiz) return;
-    setIsSharingToClass(true);
+  const buildGenerationInput = useCallback((compiledText: string) => {
+    const requestedCount = mode === 'adaptive' ? 12 : questionCount;
+    return {
+      sourceText: compiledText,
+      imageDataUri: imageDataUri || undefined,
+      questionCount: requestedCount,
+      language,
+      regionCode: String(region || 'global').toUpperCase(),
+      educationLevel: schoolingLevel,
+      questionTypes,
+      knowledgeScore,
+      gradingModes,
+      feedbackTiming: answerFeedback,
+      quizMode: mode,
+    };
+  }, [answerFeedback, gradingModes, imageDataUri, knowledgeScore, language, mode, questionCount, questionTypes, region, schoolingLevel]);
+
+  const handleGenerate = useCallback(async (compiledText: string) => {
+    if (!compiledText.trim()) return;
+    setLoading(true);
+    setQuiz(null);
     try {
-      const summary = `${generatedQuiz.questions?.length || 0} questions | mode: ${quizMode}`;
-      const res = await fetch(`/api/classes/${classId}/share`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          audience: 'teacher',
-          text: `Shared quiz: ${customTitle.trim() || generatedQuiz.title || 'Untitled quiz'}`,
-          attachmentLabel: summary,
-        }),
+      const run = await runToolFlowV2({
+        toolId: 'quiz',
+        flowName: 'generateQuiz',
+        mode,
+        artifactType: 'quiz',
+        artifactTitle: title.trim() || 'Quiz',
+        options: { saveToRecents: true },
+        persistArtifact: true,
+        input: buildGenerationInput(compiledText),
+        computeClass: mode === 'adaptive' ? 'heavy' : 'standard',
       });
-      if (!res.ok) throw new Error('Failed to share quiz');
-      toast({ title: 'Shared to class', description: 'Quiz was posted in class share.' });
+      const output = run?.output_payload || run;
+      setQuiz(output as Quiz);
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Share failed', description: error?.message || 'Could not share quiz.' });
+      toast({ variant: 'destructive', title: 'Quiz generation failed', description: error?.message || 'Unknown error' });
     } finally {
-      setIsSharingToClass(false);
+      setLoading(false);
     }
-  }, [classId, customTitle, generatedQuiz, quizMode, toast]);
+  }, [buildGenerationInput, mode, title, toast]);
 
-  if (isLoading) {
-    return <FunLoader tool="quiz" />;
-  }
+  const sidebar = (
+    <>
+      <div className="space-y-1.5">
+        <p className="text-xs text-muted-foreground">Title</p>
+        <Input value={title} onChange={(event) => setTitle(event.target.value)} className="h-9 bg-[hsl(var(--background))] text-sm" disabled={loading} />
+      </div>
 
-  if (generatedQuiz && currentView === 'take') {
+      <div className="space-y-1.5">
+        <p className="text-xs text-muted-foreground">Mode</p>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { value: 'classic', label: 'Classic' },
+            { value: 'assisted', label: 'Assisted' },
+            { value: 'adaptive', label: 'Adaptive' },
+          ].map((entry) => (
+            <button key={entry.value} type="button" className={pill(mode === entry.value)} onClick={() => setMode(entry.value as QuizMode)}>
+              {entry.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Answer reveal</p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {['immediate', 'end'].map((entry) => (
+            <button key={entry} type="button" className={pill(answerFeedback === entry)} onClick={() => setAnswerFeedback(entry as AnswerFeedback)}>
+              {entry === 'immediate' ? 'Immediate' : 'At end'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="text-xs text-muted-foreground">Question type (multi-select)</p>
+        <div className="flex flex-wrap gap-1.5">
+          {QUIZ_TYPES.map((entry) => (
+            <button key={entry.value} type="button" className={pill(questionTypes.includes(entry.value))} onClick={() => toggleQuestionType(entry.value)}>
+              {entry.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">How much do you already know?</p>
+          <span className="text-xs font-mono">{knowledgeScore}</span>
+        </div>
+        <Slider value={[knowledgeScore]} onValueChange={([value]) => setKnowledgeScore(value)} min={0} max={100} step={1} disabled={loading} />
+        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+          <span>Nothing</span>
+          <span>Almost everything</span>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Questions</p>
+          <span className="text-xs font-mono">{mode === 'adaptive' ? 12 : questionCount}</span>
+        </div>
+        <Slider
+          value={[mode === 'adaptive' ? 12 : questionCount]}
+          onValueChange={([value]) => mode !== 'adaptive' && setQuestionCount(value)}
+          min={1}
+          max={25}
+          step={1}
+          disabled={loading || mode === 'adaptive'}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="text-xs text-muted-foreground">Grading (multi-select)</p>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { value: 'accuracy', label: 'Accuracy' },
+            { value: 'speed', label: 'Speed' },
+            { value: 'progression', label: 'Progression' },
+          ].map((entry) => (
+            <button key={entry.value} type="button" className={pill(gradingModes.includes(entry.value as GradingMode))} onClick={() => toggleGrading(entry.value as GradingMode)}>
+              {entry.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
+        <p className="text-xs text-muted-foreground">Mode presets</p>
+        <div className="flex items-center gap-2">
+          <Input value={newPresetName} onChange={(event) => setNewPresetName(event.target.value)} className="h-8 bg-background text-xs" placeholder="Preset name" />
+          <Button type="button" size="sm" className="h-8 px-2" onClick={handleSavePreset}><Plus className="h-3.5 w-3.5" /></Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Input value={importCode} onChange={(event) => setImportCode(event.target.value)} className="h-8 bg-background text-xs" placeholder="Import preset code" />
+          <Button type="button" size="sm" className="h-8 px-2" onClick={handleImportPreset}><Download className="h-3.5 w-3.5" /></Button>
+        </div>
+        <div className="max-h-40 overflow-auto space-y-1.5">
+          {presets.map((preset) => (
+            <div key={preset.id} className="flex items-center justify-between rounded-md bg-background px-2 py-1.5">
+              <button
+                type="button"
+                className="text-xs text-left"
+                onClick={() => applyPreset(preset.config)}
+                onDoubleClick={async () => {
+                  await navigator.clipboard.writeText(encodePresetCode({ config: preset.config }));
+                  toast({ title: 'Preset code copied' });
+                }}
+                onContextMenu={async (event) => {
+                  event.preventDefault();
+                  await navigator.clipboard.writeText(encodePresetCode({ config: preset.config }));
+                  toast({ title: 'Preset code copied' });
+                }}
+              >
+                {preset.name}
+              </button>
+              <Button type="button" variant="ghost" size="sm" className="h-7 px-2" onClick={async () => {
+                await navigator.clipboard.writeText(encodePresetCode({ config: preset.config }));
+                toast({ title: 'Preset code copied' });
+              }}>
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+
+  if (loading) return <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+
+  if (quiz) {
     return (
       <div className="h-full flex flex-col">
         <div className="p-3 md:p-4 flex items-center justify-between">
-          <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">{t.back}</Button>
-          <ExportToolbar
-            toolType="quiz"
-            title={customTitle.trim() || generatedQuiz.title}
-            getMarkdown={() => quizToMarkdown(generatedQuiz)}
-            getHtml={() => quizToHtml(generatedQuiz)}
-          />
-          {classId ? (
-            <Button variant="outline" onClick={() => void handleShareToClass()} className="rounded-full text-xs" disabled={isSharingToClass}>
-              {isSharingToClass ? 'Sharing...' : 'Share to class'}
-            </Button>
-          ) : null}
+          <Button variant="ghost" onClick={() => setQuiz(null)} className="rounded-full text-xs">Back</Button>
         </div>
-        <div className="flex-1 min-h-0 overflow-auto">
+        <div className="flex-1 min-h-0 overflow-auto px-2 pb-2">
           <QuizTaker
-            quiz={generatedQuiz}
-            mode={quizMode}
+            quiz={quiz}
+            mode={mode}
             sourceText={sourceText}
-            onRestart={handleRestart}
-            taskId={taskId || undefined}
-            studysetId={studysetId || undefined}
+            onRestart={() => setQuiz(null)}
             runtimeSettings={{
-              answerRevisionWindowSeconds,
-              timebankSystem,
-              progressiveUnlock,
-              progressiveUnlockStreak,
-              questionDecay,
-              confidenceScoring,
-              scoringModel,
+              answerFeedback,
+              gradingModes,
+              adaptiveCap,
+              questionTypes,
+              knowledgeScore,
             }}
           />
         </div>
       </div>
     );
   }
-  if (currentView === 'duel') {
-    return <QuizDuel sourceText={sourceText} onRestart={handleRestart} />;
-  }
-
-  const sidebar = (
-    <>
-      <div className="space-y-1.5">
-        <p className="text-xs text-muted-foreground">{t.title}</p>
-        <Input
-          value={customTitle}
-          onChange={(e) => setCustomTitle(e.target.value)}
-          className="h-9 bg-[hsl(var(--background))] text-sm"
-          disabled={isLoading}
-        />
-      </div>
-
-      <PillSelector
-        label={t.quiz.labels.mode}
-        options={t.quiz.modeOptions.filter((option) => ['practice', 'normal', 'exam', 'adaptive', 'duel'].includes(option.value))}
-        value={quizMode}
-        onChange={(v) => setQuizMode(v as QuizMode)}
-        disabled={isLoading}
-      />
-
-      <PillSelector label={t.quiz.labels.questionType} options={t.quiz.questionTypeOptions} value={questionType} onChange={setQuestionType} disabled={isLoading} />
-      <PillSelector
-        label="How much do you already know?"
-        options={[
-          { value: 'beginner', label: 'Beginner', description: 'Starts with basics' },
-          { value: 'intermediate', label: 'Intermediate', description: 'Balanced depth' },
-          { value: 'advanced', label: 'Advanced', description: 'Harder wording and nuance' },
-        ]}
-        value={knowledgeLevel}
-        onChange={(v) => setKnowledgeLevel(v as KnowledgeLevel)}
-        disabled={isLoading}
-      />
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">{t.questions}</p>
-          <span className="text-xs font-mono tabular-nums">{questionCount}</span>
-        </div>
-        <Slider
-          value={[questionCount]}
-          onValueChange={([v]) => setQuestionCount(v)}
-          min={1}
-          max={50}
-          step={1}
-          disabled={isLoading}
-        />
-      </div>
-
-      <div className="flex items-center justify-between rounded-lg bg-sidebar-accent/30 px-2.5 py-2">
-        <p className="text-xs text-muted-foreground">Save to recents</p>
-        <Switch
-          checked={saveToRecents}
-          onCheckedChange={setSaveToRecents}
-          className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
-        />
-      </div>
-      <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Include images in questions</p>
-          <Switch
-            checked={includeImages}
-            onCheckedChange={setIncludeImages}
-          />
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Source-backed deep questions</p>
-          <Switch
-            checked={sourceBackedDepth}
-            onCheckedChange={setSourceBackedDepth}
-          />
-        </div>
-      </div>
-      <PillSelector
-        label="Scoring model"
-        options={[
-          { value: 'accuracy', label: 'Accuracy', description: 'Pure correctness based score.' },
-          { value: 'speed_weighted', label: 'Speed weighted', description: 'Correctness plus time pressure bonus.' },
-          { value: 'negative_marking', label: 'Negative marking', description: 'Wrong answers deduct score.' },
-          { value: 'mastery_points', label: 'Mastery points', description: 'Progress-oriented skill score.' },
-        ]}
-        value={scoringModel}
-        onChange={(v) => {
-          const next = v as typeof scoringModel;
-          setScoringModel(next);
-          void saveAdvancedSettingsPatch({ quiz: { scoring_model: next } as any }, { tool: 'quiz' });
-        }}
-        disabled={isLoading}
-      />
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Answer revision window (seconds)</p>
-          <span className="text-xs font-mono tabular-nums">{answerRevisionWindowSeconds}</span>
-        </div>
-        <Slider
-          value={[answerRevisionWindowSeconds]}
-          onValueChange={([v]) => {
-            setAnswerRevisionWindowSeconds(v);
-            void saveAdvancedSettingsPatch({ quiz: { answer_revision_window_seconds: v } as any }, { tool: 'quiz' });
-          }}
-          min={0}
-          max={30}
-          step={1}
-          disabled={isLoading}
-        />
-      </div>
-      <PillSelector
-        label="Adaptive timer goal"
-        options={[
-          { value: 'balanced', label: 'Balanced', description: 'Mix speed and mastery constraints.' },
-          { value: 'speed', label: 'Speed', description: 'Aggressive timer profile with tighter pacing.' },
-          { value: 'mastery', label: 'Mastery', description: 'More generous timing for depth.' },
-        ]}
-        value={adaptiveGoal}
-        onChange={(v) => {
-          const next = v as typeof adaptiveGoal;
-          setAdaptiveGoal(next);
-          void saveAdvancedSettingsPatch({ adaptiveTimer: { user_goal_alignment: next } as any }, { tool: 'quiz' });
-        }}
-        disabled={isLoading}
-      />
-      <div className="rounded-lg surface-interactive px-2.5 py-2 space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Adaptive timer</p>
-          <Switch
-            checked={Boolean(advancedSettings?.adaptiveTimer.enabled)}
-            onCheckedChange={(checked) => {
-              void saveAdvancedSettingsPatch({ adaptiveTimer: { enabled: checked } as any }, { tool: 'quiz' });
-            }}
-          />
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Speedrun mode (curated sets only)</p>
-          <Switch
-            checked={Boolean(advancedSettings?.speedrun.mode_enabled)}
-            onCheckedChange={(checked) => {
-              void saveAdvancedSettingsPatch({ speedrun: { mode_enabled: checked, curated_only: true } as any }, { tool: 'quiz', isLiveGeneratedQuiz: true });
-            }}
-          />
-        </div>
-        {advancedConflicts.length > 0 ? (
-          <div className="space-y-1">
-            {advancedConflicts.slice(0, 2).map((conflict) => (
-              <p key={`${conflict.key}-${conflict.message}`} className="text-[11px] text-muted-foreground">
-                {conflict.message}
-              </p>
-            ))}
-          </div>
-        ) : null}
-      </div>
-      <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Timebank system</p>
-          <Switch checked={timebankSystem} onCheckedChange={(checked) => {
-            setTimebankSystem(checked);
-            void saveAdvancedSettingsPatch({ quiz: { timebank_system: checked } as any }, { tool: 'quiz' });
-          }} />
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Progressive unlock</p>
-          <Switch checked={progressiveUnlock} onCheckedChange={(checked) => {
-            setProgressiveUnlock(checked);
-            void saveAdvancedSettingsPatch({ quiz: { progressive_unlock: checked } as any }, { tool: 'quiz' });
-          }} />
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Question decay</p>
-          <Switch checked={questionDecay} onCheckedChange={(checked) => {
-            setQuestionDecay(checked);
-            void saveAdvancedSettingsPatch({ quiz: { question_decay: checked } as any }, { tool: 'quiz' });
-          }} />
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Confidence scoring</p>
-          <Switch checked={confidenceScoring} onCheckedChange={(checked) => {
-            setConfidenceScoring(checked);
-            void saveAdvancedSettingsPatch({ quiz: { confidence_scoring: checked } as any }, { tool: 'quiz' });
-          }} />
-        </div>
-      </div>
-      {progressiveUnlock ? (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Unlock streak</p>
-            <span className="text-xs font-mono tabular-nums">{progressiveUnlockStreak}</span>
-          </div>
-          <Slider value={[progressiveUnlockStreak]} onValueChange={([v]) => {
-            setProgressiveUnlockStreak(v);
-            void saveAdvancedSettingsPatch({ quiz: { progressive_unlock_streak: v } as any }, { tool: 'quiz' });
-          }} min={2} max={10} step={1} disabled={isLoading} />
-        </div>
-      ) : null}
-
-      <ImportToolbar
-        toolType="quiz"
-        onImport={(text) => {
-          const quiz = text.includes('<') ? parseQuizFromHtml(text) : parseQuizFromMarkdown(text);
-          if (quiz && quiz.questions.length > 0) {
-            setGeneratedQuiz(quiz);
-            setCurrentView('take');
-          } else {
-            toast({ variant: 'destructive', title: t.couldNotParse, description: t.quiz.parseError });
-          }
-        }}
-        disabled={isLoading}
-      />
-    </>
-  );
 
   return (
-    <WorkbenchShell
-      title={isAssignmentContext ? t.quiz.createQuiz : 'Quiz'}
-      sidebar={sidebar}
-    >
+    <WorkbenchShell title="Quiz" sidebar={sidebar}>
       <SourceInput
         toolId="quiz"
         value={sourceText}
         onChange={setSourceText}
         onImageDataUriChange={setImageDataUri}
         onSubmit={(compiledText) => handleGenerate(String(compiledText || sourceText))}
-        placeholder={t.sourceInputPlaceholder}
+        placeholder=""
         speechLanguage={language}
         enableMic={false}
         enableCaptions={false}
@@ -673,7 +376,7 @@ function QuizPageContent() {
 
 export default function QuizPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+    <Suspense fallback={<div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
       <QuizPageContent />
     </Suspense>
   );

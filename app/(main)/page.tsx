@@ -16,6 +16,7 @@ import { TodaysAgenda } from "@/components/dashboard/todays-agenda";
 import { TodaysStudysetTasks } from "@/components/dashboard/todays-studyset-tasks";
 import { LearningPulse } from "@/components/dashboard/learning-pulse";
 import { useRouter } from "next/navigation";
+import { NotificationCenter } from "@/components/notifications/notification-center";
 
 const AnalyticsDashboard = lazy(() => import("@/components/dashboard/analytics-dashboard").then(module => ({ default: module.AnalyticsDashboard })));
 const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i;
@@ -103,8 +104,9 @@ function StudentDashboard() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-        <div className="lg:col-span-3 mb-2">
+        <div className="lg:col-span-3 mb-2 flex items-start justify-between gap-3">
           <h1 className="text-xl tracking-tight text-foreground">Welcome, {welcomeName}</h1>
+          <NotificationCenter />
         </div>
         <div className="lg:col-span-2 flex flex-col gap-6 md:gap-8">
             <TodaysStudysetTasks />
@@ -170,8 +172,9 @@ function TeacherSummaryDashboard() {
 
     return (
         <div className="flex flex-col gap-8">
-            <div>
+            <div className="flex items-start justify-between gap-3">
               <h1 className="text-xl tracking-tight text-foreground">Welcome, {welcomeName}</h1>
+              <NotificationCenter />
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card className="surface-panel border border-border shadow-[0_1px_0_hsl(var(--border))]">

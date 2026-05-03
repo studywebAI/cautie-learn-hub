@@ -45,10 +45,37 @@ export async function GET(
       gradeSetsQuery = gradeSetsQuery.eq('subject_id', subjectId)
     }
 
-    const { data: gradeSets, error } = await gradeSetsQuery
+    let { data: gradeSets, error } = await gradeSetsQuery
 
     if (error) {
-      return NextResponse.json({ error: error.message, details: 'Failed to query grade_sets table' }, { status: 500 })
+      // Migration-safe fallback: older schemas may miss joined tables/columns.
+      const fallbackQuery = (supabase as any)
+        .from('grade_sets')
+        .select(`
+          id,
+          class_id,
+          subject_id,
+          title,
+          description,
+          category,
+          weight,
+          created_at,
+          status,
+          student_grades(id, student_id, grade_value, grade_numeric, status, tag)
+        `)
+        .eq('class_id', classId)
+        .order('created_at', { ascending: false })
+
+      const filteredFallbackQuery = subjectId && subjectId !== 'all'
+        ? fallbackQuery.eq('subject_id', subjectId)
+        : fallbackQuery
+
+      const fallbackResult = await filteredFallbackQuery
+      if (fallbackResult.error) {
+        return NextResponse.json({ error: fallbackResult.error.message, details: 'Failed to query grade_sets table' }, { status: 500 })
+      }
+      gradeSets = fallbackResult.data || []
+      error = null
     }
 
     // Calculate stats for each grade set

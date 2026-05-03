@@ -102,7 +102,6 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     subjects: isDutch ? 'Vakken' : 'Subjects',
     completion: isDutch ? 'Voltooiing' : 'Completion',
     attendance: isDutch ? 'Aanwezigheid' : 'Attendance',
-    files: isDutch ? 'Bestanden' : 'Files',
     assignEvent: isDutch ? 'Event toevoegen' : 'Assign Event',
     logs: isDutch ? 'Logs' : 'Logs',
     activity: isDutch ? 'Activiteit' : 'Activity',
@@ -455,11 +454,6 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
                   <Button variant="outline" asChild>
                     <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}&quick=timeline`}>
                       {t.attendance}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/other/materials?classId=${classId}`}>
-                      {t.files}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>

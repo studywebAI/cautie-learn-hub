@@ -112,6 +112,13 @@ const formatTime = (epochMs?: number) => {
   return `${hh}:${mm}:${ss}`;
 };
 
+const formatDateTimeStable = (value?: string) => {
+  if (!value) return '-';
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return value;
+  return dt.toISOString().slice(0, 16).replace('T', ' ');
+};
+
 const normalizeUrl = (raw: string): string | null => {
   const input = raw.trim();
   if (!input) return null;
@@ -1661,7 +1668,7 @@ export function SourceInput({
                 }
               }}
               placeholder=""
-              className="h-[120px] min-h-[120px] flex-1 resize-none rounded-2xl border border-border surface-chip text-sm"
+              className="h-[96px] min-h-[96px] flex-1 resize-none rounded-2xl border border-border surface-chip text-sm"
               disabled={disabled || isProcessing}
             />
           </div>
@@ -1728,9 +1735,9 @@ export function SourceInput({
                 <div className="flex h-full items-center justify-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
               ) : visibleRecents.length === 0 ? null : (
                 <div className="space-y-1.5">
-                  {visibleRecents.slice(0, 50).map((item) => (
+                  {visibleRecents.slice(0, 50).map((item, index) => (
                     <button
-                      key={item.id}
+                      key={`${item.sourceType}:${item.id}:${index}`}
                       type="button"
                       className="flex w-full items-center gap-2 rounded-md border border-sidebar-border bg-background px-2 py-1.5 text-left hover:bg-sidebar-accent/30"
                       onClick={() => {
@@ -1741,7 +1748,7 @@ export function SourceInput({
                       <FileText className="h-4 w-4 shrink-0 text-primary" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs">{item.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).toLocaleString() : '-'}</p>
+                        <p className="text-[10px] text-muted-foreground">{formatDateTimeStable(item.lastModifiedDateTime)}</p>
                       </div>
                     </button>
                   ))}

@@ -1,1235 +1,669 @@
-
-
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-// import { explainAnswer } from '@/ai/flows/explain-answer';
-// import { generateQuiz } from '@/ai/flows/generate-quiz';
-// import { generateSingleQuestion } from '@/ai/flows/generate-single-question';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, CheckCircle, XCircle, RefreshCw, ArrowRight, Lightbulb, Timer, ShieldAlert, Trophy, Zap, Bomb, TrendingUp, BookOpen, Clock, Target, ArrowLeft, Shield } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AnimatePresence, motion } from 'framer-motion';
-import { AppContext, AppContextType } from '@/contexts/app-context';
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart';
-import { Pie, PieChart } from 'recharts';
-import { Progress } from '../ui/progress';
-import type { Quiz, QuizQuestion, SessionRecapData } from '@/lib/types';
-import { normalizeForCompare } from '@/lib/study-grading';
+import { Loader2, CheckCircle2, XCircle, ArrowRight, Trophy, Gauge, Flag } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import type { Quiz, QuizQuestion } from '@/lib/types';
 
+export type QuizMode = 'classic' | 'assisted' | 'adaptive' | 'practice';
 
-type AnswersState = { [questionId: string]: string };
-type ConfidenceLevel = "low" | "medium" | "high";
-export type QuizMode = "normal" | "practice" | "exam" | "survival" | "speedrun" | "adaptive" | "duel" | "boss-fight";
-
-const SURVIVAL_PENALTY_COUNT = 3;
-const SURVIVAL_QUESTION_TIME = 20; // 20 seconds per question
-const ADAPTIVE_QUESTION_COUNT = 10;
-const MAX_STRIKES = 3;
-
-const modeDetails: Record<QuizMode, { title: string; description: string }> = {
-    normal: {
-        title: "Quiz",
-        description: "Answer all questions and submit at the end."
-    },
-    practice: {
-        title: "Practice Mode",
-        description: "Learn as you go with immediate feedback and explanations."
-    },
-    exam: {
-        title: "Exam Simulation",
-        description: "This is a timed test. No hints or going back. Good luck."
-    },
-    survival: {
-        title: "Survival Mode",
-        description: `Answer correctly or get more questions. You have ${MAX_STRIKES} lives.`
-    },
-    speedrun: {
-        title: "Speedrun Mode",
-        description: "Answer as fast as you can. Three strikes and you\'re out."
-    },
-    adaptive: {
-        title: "Adaptive Mode",
-        description: "The question challenge adapts to your performance."
-    },
-    "boss-fight": {
-        title: "Boss Fight",
-        description: "Reach the final boss question. If you fail, you start over."
-    },
-    duel: {
-        title: "Duel Mode",
-        description: "Challenge another player in a real-time quiz battle."
-    }
-}
-
-const chartConfig = {
-  correct: {
-    label: "Correct",
-    color: "hsl(var(--chart-2))",
-  },
-  incorrect: {
-    label: "Incorrect",
-    color: "hsl(var(--chart-5))",
-  },
-} satisfies ChartConfig;
-
-const QUIZ_TOPIC_STOP_WORDS = new Set([
-  'what', 'which', 'when', 'where', 'with', 'from', 'into', 'your', 'this', 'that', 'about', 'question',
-  'following', 'correct', 'incorrect', 'answer', 'option', 'true', 'false', 'best', 'most', 'least',
-]);
-
-const extractQuizTopicTokens = (text: string): string[] => {
-  return normalizeForCompare(text)
-    .split(' ')
-    .map((token) => token.trim())
-    .filter((token) => token.length >= 4 && !QUIZ_TOPIC_STOP_WORDS.has(token));
+type QuizRuntimeSettings = {
+  answerFeedback: 'immediate' | 'end';
+  gradingModes: Array<'accuracy' | 'speed' | 'progression'>;
+  adaptiveCap: number;
+  questionTypes: string[];
+  knowledgeScore: number;
 };
 
+type AnswerValue =
+  | { kind: 'option'; value: string }
+  | { kind: 'text'; value: string }
+  | { kind: 'matching'; value: Record<string, string> }
+  | { kind: 'ordering'; value: string[] };
 
-function FinalResults({
-    quiz,
-    answers,
-    onRestart,
-    mode,
-    timeTaken = 0,
-    setSessionRecap,
-    strikes = 0,
-    taskId,
-    studysetId,
-    scoringModel = "accuracy",
-    confidences = {},
+type AnswerMap = Record<string, AnswerValue>;
+
+type AdaptivePerformanceSignal = {
+  category: string;
+  isCorrect: boolean;
+  difficulty?: number;
+  responseMs?: number;
+};
+
+type GradingSummary = {
+  accuracy: number;
+  speed: number;
+  progression: number;
+  answered: number;
+  correct: number;
+};
+
+function normalizeText(value: string) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/[.,!?;:]/g, '');
+}
+
+function evaluateQuestionAnswer(question: QuizQuestion, answer?: AnswerValue | null): boolean {
+  if (!question || !answer) return false;
+  const type = question.type || 'multiple-choice';
+
+  if (type === 'multiple-choice' || type === 'true-false' || type === 'image-analysis' || type === 'video-analysis' || type === 'drawing-analysis') {
+    if (answer.kind !== 'option') return false;
+    const correctOption = question.options.find((option) => option.isCorrect) || (question.correctOptionId ? question.options.find((option) => option.id === question.correctOptionId) : undefined);
+    return Boolean(correctOption && correctOption.id === answer.value);
+  }
+
+  if (type === 'fill-blank' || type === 'short-answer') {
+    if (answer.kind !== 'text') return false;
+    const targetAnswers = (question.acceptableAnswers || []).map(normalizeText).filter(Boolean);
+    if (targetAnswers.length === 0) return false;
+    const given = normalizeText(answer.value);
+    return targetAnswers.includes(given);
+  }
+
+  if (type === 'matching') {
+    if (answer.kind !== 'matching') return false;
+    const pairs = question.matchingPairs || [];
+    if (pairs.length === 0) return false;
+    return pairs.every((pair) => normalizeText(answer.value[pair.left] || '') === normalizeText(pair.right));
+  }
+
+  if (type === 'ordering') {
+    if (answer.kind !== 'ordering') return false;
+    const expected = (question.orderingItems || []).map(normalizeText);
+    const actual = answer.value.map(normalizeText);
+    if (expected.length === 0 || expected.length !== actual.length) return false;
+    return expected.every((entry, index) => entry === actual[index]);
+  }
+
+  return false;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getAdaptiveStorageKey(sourceText: string, questionTypes: string[]) {
+  const compactSource = normalizeText(sourceText).slice(0, 180);
+  const compactTypes = [...questionTypes].sort().join(',');
+  return `quiz.adaptive.profile.v1::${compactSource}::${compactTypes}`;
+}
+
+function scoreProgression(signals: AdaptivePerformanceSignal[]) {
+  if (signals.length < 6) return 50;
+  const recent = signals.slice(-12);
+  const midpoint = Math.floor(recent.length / 2);
+  const head = recent.slice(0, midpoint);
+  const tail = recent.slice(midpoint);
+  const headAcc = head.length ? head.filter((s) => s.isCorrect).length / head.length : 0;
+  const tailAcc = tail.length ? tail.filter((s) => s.isCorrect).length / tail.length : 0;
+  const delta = (tailAcc - headAcc) * 100;
+  return Math.round(clamp(50 + delta, 0, 100));
+}
+
+function scoreSpeed(signals: AdaptivePerformanceSignal[]) {
+  const valid = signals.map((s) => Number(s.responseMs || 0)).filter((n) => n > 0);
+  if (valid.length === 0) return 50;
+  const avgMs = valid.reduce((acc, n) => acc + n, 0) / valid.length;
+  const anchorMs = 30000;
+  const raw = 100 - ((avgMs - anchorMs) / anchorMs) * 40;
+  return Math.round(clamp(raw, 0, 100));
+}
+
+function buildGradingSummary(questions: QuizQuestion[], answers: AnswerMap, signals: AdaptivePerformanceSignal[]): GradingSummary {
+  const evaluated = questions.map((question) => evaluateQuestionAnswer(question, answers[question.id]));
+  const correct = evaluated.filter(Boolean).length;
+  const accuracy = Math.round((correct / Math.max(1, questions.length)) * 100);
+  return {
+    accuracy,
+    speed: scoreSpeed(signals),
+    progression: scoreProgression(signals),
+    answered: Object.keys(answers).length,
+    correct,
+  };
+}
+
+function QuestionView({
+  question,
+  answer,
+  disabled,
+  showHint,
+  onChange,
 }: {
-    quiz: Quiz,
-    answers: AnswersState,
-    onRestart: () => void,
-    mode: QuizMode,
-    timeTaken?: number,
-    setSessionRecap: (data: SessionRecapData | null) => void,
-    strikes?: number,
-    taskId?: string,
-    studysetId?: string,
-    scoringModel?: 'accuracy' | 'speed_weighted' | 'negative_marking' | 'mastery_points',
-    confidences?: Record<string, ConfidenceLevel>,
+  question: QuizQuestion;
+  answer: AnswerValue | undefined;
+  disabled: boolean;
+  showHint: boolean;
+  onChange: (next: AnswerValue) => void;
 }) {
-    const correctCount = quiz.questions.filter(q => {
-        const selectedOptionId = answers[q.id];
-        if (!selectedOptionId) return false;
-        const correctOption = q.options.find(opt => opt.isCorrect);
-        return correctOption?.id === selectedOptionId;
-    }).length;
+  const type = question.type || 'multiple-choice';
 
-    const totalQuestionsAnswered = Object.keys(answers).length;
-    const totalQuestionsInQuiz = quiz.questions.length;
-    const incorrectCount = totalQuestionsAnswered - correctCount;
-    const scorePercentage = totalQuestionsInQuiz > 0 ? Math.round((correctCount / totalQuestionsInQuiz) * 100) : 0;
-    const weightedPoints = quiz.questions.reduce((sum, q) => {
-        const selectedOptionId = answers[q.id];
-        const correctOption = q.options.find((opt) => opt.isCorrect);
-        if (!selectedOptionId || !correctOption) return sum;
-        const isCorrectAnswer = correctOption.id === selectedOptionId;
-        const confidence = confidences[q.id] || 'medium';
-        const weight = confidence === 'high' ? 1.2 : confidence === 'low' ? 0.8 : 1;
-        if (scoringModel === 'negative_marking') return sum + (isCorrectAnswer ? 1 : -0.4);
-        if (scoringModel === 'mastery_points') return sum + (isCorrectAnswer ? weight : 0);
-        if (scoringModel === 'speed_weighted') return sum + (isCorrectAnswer ? 1.1 : 0);
-        return sum + (isCorrectAnswer ? 1 : 0);
-    }, 0);
-    const scoreModelPct = totalQuestionsInQuiz > 0
-      ? Math.max(0, Math.min(100, Math.round((weightedPoints / totalQuestionsInQuiz) * 100)))
-      : 0;
-    const effectiveScore = scoringModel === 'accuracy' ? scorePercentage : scoreModelPct;
-    
-    const reportedRef = useRef(false);
-
-    useEffect(() => {
-        setSessionRecap({
-            score: effectiveScore,
-            correctAnswers: correctCount,
-            totalQuestions: totalQuestionsAnswered,
-            timeTaken: timeTaken,
-        });
-
-        // Persist quiz results to database
-        const saveQuizResult = async () => {
-            try {
-                await fetch('/api/activity', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        activity_type: 'quiz',
-                        score: effectiveScore,
-                        total_items: totalQuestionsAnswered,
-                        correct_items: correctCount,
-                        time_spent_seconds: timeTaken,
-                        metadata: {
-                            quiz_title: quiz.title,
-                            mode: mode,
-                            strikes: strikes,
-                            total_questions_in_quiz: totalQuestionsInQuiz,
-                        }
-                    })
-                });
-                console.log('Quiz result saved to database');
-            } catch (error) {
-                console.error('Failed to save quiz result:', error);
-            }
-        };
-        saveQuizResult();
-
-        if (taskId && studysetId && !reportedRef.current) {
-            reportedRef.current = true;
-            const weakTopics = quiz.questions
-                .filter((q) => {
-                    const selectedOptionId = answers[q.id];
-                    const correctOption = q.options.find((opt) => opt.isCorrect);
-                    return Boolean(selectedOptionId) && correctOption?.id !== selectedOptionId;
-                })
-                .slice(0, 5)
-                .map((q) => q.question.slice(0, 120));
-
-            fetch(`/api/studysets/plan-tasks/${taskId}/performance`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    studysetId,
-                    toolId: 'quiz',
-                    score: scorePercentage,
-                    totalItems: totalQuestionsInQuiz,
-                    correctItems: correctCount,
-                    timeSpentSeconds: timeTaken,
-                    weakTopics,
-                    markCompleted: true,
-                }),
-            }).catch(() => {});
-        }
-
-        // Clear recap on unmount
-        return () => setSessionRecap(null);
-    }, [answers, correctCount, effectiveScore, quiz.questions, setSessionRecap, studysetId, taskId, timeTaken, totalQuestionsAnswered, totalQuestionsInQuiz]);
-
-
-    if (mode === 'survival') {
-        const survived = strikes < MAX_STRIKES;
-        if (survived && correctCount === totalQuestionsInQuiz && totalQuestionsAnswered === totalQuestionsInQuiz) {
-            return (
-                 <Card>
-                    <CardHeader className="items-center text-center">
-                        <Trophy className="h-16 w-16 text-yellow-500" />
-                        <CardTitle className="font-headline text-3xl mt-4">You Survived!</CardTitle>
-                        <CardDescription>You answered all {totalQuestionsInQuiz} questions correctly without losing all your lives. Well done.</CardDescription>
-                    </CardHeader>
-                    <CardFooter className="justify-center">
-                        <Button onClick={onRestart}>
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Play Again
-                        </Button>
-                    </CardFooter>
-                </Card>
-            )
-        } else if (!survived) {
-             return (
-                 <Card>
-                    <CardHeader className="items-center text-center">
-                        <ShieldAlert className="h-16 w-16 text-destructive" />
-                        <CardTitle className="font-headline text-3xl mt-4">Game Over</CardTitle>
-                        <CardDescription>You ran out of lives. You answered {correctCount} questions correctly.</CardDescription>
-                    </CardHeader>
-                     <CardContent className="text-center">
-                        <p className="font-semibold">You made {incorrectCount} mistakes.</p>
-                     </CardContent>
-                    <CardFooter className="justify-center">
-                        <Button onClick={onRestart}>
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Try Again
-                        </Button>
-                    </CardFooter>
-                </Card>
-            )
-        }
-    }
-
-
-    if (mode === 'speedrun') {
-        const speedrunScore = Math.max(0, (correctCount * 1000) - (timeTaken * 10));
-        return (
-             <Card>
-                <CardHeader className="items-center text-center">
-                    <Zap className="h-16 w-16 text-primary" />
-                    <CardTitle className="font-headline text-3xl mt-4">Speedrun Complete!</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center space-y-4">
-                    <div className="text-5xl font-bold font-headline">{speedrunScore.toLocaleString()}</div>
-                    <p className="text-muted-foreground">Final Score</p>
-                    <div className="grid grid-cols-3 divide-x rounded-lg border surface-interactive p-3">
-                        <div>
-                            <p className="text-sm text-muted-foreground">Correct</p>
-                            <p className="text-xl font-semibold">{correctCount}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Strikes</p>
-                            <p className="text-xl font-semibold">{strikes}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Time</p>
-                            <p className="text-xl font-semibold">{timeTaken}s</p>
-                        </div>
-                    </div>
-                </CardContent>
-                <CardFooter className="justify-center">
-                    <Button onClick={onRestart}>
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        Try Again
-                    </Button>
-                </CardFooter>
-            </Card>
-        )
-    }
-
-    if (mode === 'boss-fight') {
-        return (
-            <Card>
-                <CardHeader className="items-center text-center">
-                    <Trophy className="h-16 w-16 text-yellow-500" />
-                    <CardTitle className="font-headline text-3xl mt-4">Victory!</CardTitle>
-                    <CardDescription>You have defeated the boss question and completed the quiz.</CardDescription>
-                </CardHeader>
-                <CardContent className="text-center space-y-2">
-                    <p className="font-semibold">You earned the "Topic Master" badge!</p>
-                    <p className="text-muted-foreground text-sm">+500 EXP</p>
-                </CardContent>
-                <CardFooter className="justify-center">
-                    <Button onClick={onRestart}>
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        Challenge Another Topic
-                    </Button>
-                </CardFooter>
-            </Card>
-        );
-    }
-
-    const answeredQuestions = quiz.questions
-        .map((q) => {
-            const selectedOptionId = answers[q.id];
-            const selectedOption = q.options.find((opt) => opt.id === selectedOptionId);
-            const correctOption = q.options.find((opt) => opt.isCorrect);
-            if (!selectedOptionId || !selectedOption || !correctOption) return null;
-            return {
-                id: q.id,
-                question: q.question,
-                selectedText: selectedOption.text,
-                correctText: correctOption.text,
-                isCorrect: selectedOption.id === correctOption.id,
-            };
-        })
-        .filter((item): item is NonNullable<typeof item> => Boolean(item));
-
-    const topicMisses = new Map<string, number>();
-    const topicHits = new Map<string, number>();
-    const confusionPairs = new Map<string, number>();
-
-    for (const item of answeredQuestions) {
-        const topicTokens = extractQuizTopicTokens(item.question);
-        for (const token of topicTokens) {
-            if (item.isCorrect) topicHits.set(token, (topicHits.get(token) || 0) + 1);
-            else topicMisses.set(token, (topicMisses.get(token) || 0) + 1);
-        }
-        if (!item.isCorrect) {
-            const confusionKey = `${item.selectedText} -> ${item.correctText}`;
-            confusionPairs.set(confusionKey, (confusionPairs.get(confusionKey) || 0) + 1);
-        }
-    }
-
-    const weakTopics = [...topicMisses.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([topic]) => topic);
-    const strongTopics = [...topicHits.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([topic]) => topic);
-    const topConfusions = [...confusionPairs.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-    const completionRate = totalQuestionsInQuiz > 0 ? Math.round((totalQuestionsAnswered / totalQuestionsInQuiz) * 100) : 0;
-    const retryNow = quiz.questions
-        .filter((q) => {
-            const selectedOptionId = answers[q.id];
-            const correctOption = q.options.find((opt) => opt.isCorrect);
-            return Boolean(selectedOptionId) && Boolean(correctOption) && selectedOptionId !== correctOption?.id;
-        })
-        .slice(0, 5)
-        .map((q) => q.question);
-
-    const chartData = [
-        { name: 'correct', value: correctCount, fill: 'var(--color-correct)' },
-        { name: 'incorrect', value: incorrectCount, fill: 'var(--color-incorrect)' },
-    ]
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Quiz Results</CardTitle>
-                <CardDescription>Here\'s how you did on the "{quiz.title}" quiz.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                     <div className='flex justify-center'>
-                         <ChartContainer config={chartConfig} className="h-48 w-48">
-                            <PieChart>
-                                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                                <Pie 
-                                    data={chartData} 
-                                    dataKey="value" 
-                                    nameKey="name" 
-                                    innerRadius={50}
-                                    strokeWidth={2}
-                                />
-                            </PieChart>
-                        </ChartContainer>
-                     </div>
-                     <div className="grid grid-cols-2 gap-4 text-center">
-                        <div className="p-4 surface-interactive rounded-lg">
-                            <Target className="h-7 w-7 text-primary mx-auto mb-2" />
-                            <p className="text-2xl font-bold">{scorePercentage}%</p>
-                            <p className="text-sm text-muted-foreground">{scoringModel === 'accuracy' ? 'Score' : `Score (${scoringModel})`}</p>
-                        </div>
-                         <div className="p-4 surface-interactive rounded-lg">
-                            <Clock className="h-7 w-7 text-primary mx-auto mb-2" />
-                            <p className="text-2xl font-bold">{timeTaken}s</p>
-                            <p className="text-sm text-muted-foreground">Time Taken</p>
-                        </div>
-                         <div className="p-4 bg-green-500/10 rounded-lg text-green-700 dark:text-green-400">
-                            <CheckCircle className="h-7 w-7 mx-auto mb-2" />
-                            <p className="text-2xl font-bold">{correctCount}</p>
-                            <p className="text-sm ">Correct</p>
-                        </div>
-                         <div className="p-4 bg-red-500/10 rounded-lg text-red-700 dark:text-red-500">
-                            <XCircle className="h-7 w-7 mx-auto mb-2" />
-                            <p className="text-2xl font-bold">{incorrectCount}</p>
-                            <p className="text-sm">Incorrect</p>
-                        </div>
-                     </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <div className="rounded-lg surface-interactive p-3">
-                        <p className="text-xs text-muted-foreground">Completion</p>
-                        <p className="text-xl font-semibold">{completionRate}%</p>
-                    </div>
-                    <div className="rounded-lg surface-interactive p-3">
-                        <p className="text-xs text-muted-foreground">Weak topics</p>
-                        <p className="text-xl font-semibold">{weakTopics.length}</p>
-                    </div>
-                    <div className="rounded-lg surface-interactive p-3">
-                        <p className="text-xs text-muted-foreground">Confusion patterns</p>
-                        <p className="text-xl font-semibold">{topConfusions.length}</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="rounded-lg surface-interactive p-3">
-                        <p className="text-sm font-medium">Topics to retry</p>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                            {(weakTopics.length ? weakTopics : ['No weak topic detected']).map((topic) => (
-                                <span key={`weak-topic-${topic}`} className="rounded-full bg-background px-2 py-1 text-xs">
-                                    {topic}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="rounded-lg surface-interactive p-3">
-                        <p className="text-sm font-medium">Topics done well</p>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                            {(strongTopics.length ? strongTopics : ['No strong topic detected']).map((topic) => (
-                                <span key={`strong-topic-${topic}`} className="rounded-full bg-background px-2 py-1 text-xs">
-                                    {topic}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="rounded-lg surface-interactive p-3">
-                        <p className="text-sm font-medium">Most common confusion</p>
-                        <div className="mt-2 space-y-2">
-                            {(topConfusions.length > 0 ? topConfusions : [['No confusion pattern detected', 0] as const]).map(([pair, count], index) => (
-                                <div key={`confusion-${pair}-${index}`} className="rounded-md bg-background p-2 text-xs">
-                                    <p>{pair}</p>
-                                    {count > 0 && <p className="text-muted-foreground">Count: {count}</p>}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="rounded-lg surface-interactive p-3">
-                        <p className="text-sm font-medium">Retry these questions first</p>
-                        <div className="mt-2 space-y-2">
-                            {(retryNow.length > 0 ? retryNow : ['No retry list needed']).map((item, index) => (
-                                <div key={`retry-${index}`} className="rounded-md bg-background p-2 text-xs">
-                                    {item}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg flex items-center gap-2"><BookOpen className="h-5 w-5" /> Review Your Answers</h3>
-                    {quiz.questions.map((q, index) => {
-                        const selectedOptionId = answers[q.id];
-                        const correctOption = q.options.find(opt => opt.isCorrect);
-                        const isCorrect = correctOption?.id === selectedOptionId;
-
-                        return (
-                            <div key={q.id} className="p-4 rounded-lg surface-interactive">
-                                <h4 className="font-semibold mb-2">{index + 1}. {q.question}</h4>
-                                <div className="space-y-2">
-                                    {q.options.map(opt => {
-                                        const isSelected = selectedOptionId === opt.id;
-                                        const isTheCorrectAnswer = correctOption?.id === opt.id;
-
-                                        return (
-                                            <div key={opt.id} className={cn(`flex items-center gap-3 p-2 rounded-md text-sm border`,
-                                                isTheCorrectAnswer ? 'bg-green-100 dark:bg-green-900/30 border-green-500/50' : '',
-                                                isSelected && !isTheCorrectAnswer ? 'bg-red-100 dark:bg-red-900/30 border-red-500/50' : '',
-                                                !isSelected && !isTheCorrectAnswer ? 'bg-background/50' : ''
-                                            )}>
-                                                {isCorrect && isSelected && <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />}
-                                                {!isCorrect && isSelected && <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />}
-                                                {isTheCorrectAnswer && !isSelected && <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />}
-                                                {!isTheCorrectAnswer && !isSelected && <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/50 flex-shrink-0" />}
-                                                <span>{opt.text}</span>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-                        )
-                    })}
-                </div>
-
-            </CardContent>
-            <CardFooter className="justify-end">
-                <Button onClick={onRestart}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Take Another Quiz
-                </Button>
-            </CardFooter>
-        </Card>
-    )
-}
-
-function Question({ question, onAnswer, disabled, selectedOptionId, isBoss }: { question: QuizQuestion, onAnswer: (optionId: string) => void, disabled: boolean, selectedOptionId: string | null, isBoss?: boolean }) {
-    const correctOption = question.options.find(o => o.isCorrect);
-    
-    return (
-        <div>
-            {isBoss && (
-                <div className="mb-4 text-center">
-                    <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.2, type: 'spring', stiffness: 150 }}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-destructive/10 border border-destructive/50 text-destructive rounded-full font-semibold"
-                    >
-                        <ShieldAlert className="h-5 w-5" />
-                        BOSS QUESTION
-                    </motion.div>
-                </div>
-            )}
-            <p className="font-semibold mb-4 text-lg">{question.question}</p>
-            <RadioGroup onValueChange={onAnswer} value={selectedOptionId || ''} disabled={disabled}>
-                <div className="space-y-3">
-                    {question.options.map((opt) => {
-                         const isTheCorrectAnswer = correctOption?.id === opt.id;
-                         const isSelected = selectedOptionId === opt.id;
-
-                        return (
-                            <Label
-                                key={opt.id}
-                                htmlFor={`${question.id}-${opt.id}`}
-                                className={cn(
-                                    'flex items-center gap-3 p-3 rounded-md text-sm border transition-all',
-                                    disabled && isTheCorrectAnswer ? 'bg-green-100 dark:bg-green-900/30 border-green-500/50' : '',
-                                    disabled && isSelected && !isTheCorrectAnswer ? 'bg-red-100 dark:bg-red-900/30 border-red-500/50' : '',
-                                    !disabled ? 'cursor-pointer hover:surface-chip' : 'cursor-default',
-                                    disabled && !isSelected && !isTheCorrectAnswer ? 'surface-interactive opacity-70' : ''
-                                )}
-                            >
-                                <RadioGroupItem value={opt.id} id={`${question.id}-${opt.id}`} className="flex-shrink-0" />
-                                <span>{opt.text}</span>
-
-                                {disabled && (selectedOptionId === opt.id) && (isTheCorrectAnswer ? <CheckCircle className="h-5 w-5 text-green-600 ml-auto" /> : <XCircle className="h-5 w-5 text-red-600 ml-auto" />) }
-                            </Label>
-                        )
-                    })}
-                </div>
-            </RadioGroup>
+  const renderMedia = () => {
+    if (!question.media?.url) return null;
+    if (question.media.kind === 'video') {
+      return (
+        <div className="rounded-xl border border-border overflow-hidden bg-black/5">
+          <iframe
+            src={question.media.url}
+            title={question.media.title || 'Video context'}
+            className="h-64 w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
         </div>
-    )
+      );
+    }
+
+    return (
+      <div className="rounded-xl border border-border overflow-hidden bg-black/5">
+        <img src={question.media.url} alt={question.media.title || 'Question media'} className="max-h-64 w-full object-contain" />
+      </div>
+    );
+  };
+
+  const renderBody = () => {
+    if (type === 'fill-blank' || type === 'short-answer') {
+      return (
+        <Textarea
+          value={answer?.kind === 'text' ? answer.value : ''}
+          onChange={(event) => onChange({ kind: 'text', value: event.target.value })}
+          disabled={disabled}
+          className="min-h-[96px] bg-background"
+          placeholder={type === 'fill-blank' ? 'Fill in the blank...' : 'Type your answer...'}
+        />
+      );
+    }
+
+    if (type === 'matching') {
+      const pairs = question.matchingPairs || [];
+      const rights = pairs.map((pair) => pair.right);
+      const mapping = answer?.kind === 'matching' ? answer.value : {};
+      return (
+        <div className="space-y-3">
+          {pairs.map((pair) => (
+            <div key={pair.left} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+              <div className="rounded-lg surface-interactive px-3 py-2 text-sm">{pair.left}</div>
+              <select
+                value={mapping[pair.left] || ''}
+                onChange={(event) => onChange({ kind: 'matching', value: { ...mapping, [pair.left]: event.target.value } })}
+                disabled={disabled}
+                className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
+              >
+                <option value="">Select match</option>
+                {rights.map((right) => (
+                  <option key={`${pair.left}-${right}`} value={right}>{right}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (type === 'ordering') {
+      const items = question.orderingItems || [];
+      const selected = answer?.kind === 'ordering' ? answer.value : Array.from({ length: items.length }, () => '');
+      return (
+        <div className="space-y-2">
+          {items.map((_, index) => (
+            <div key={`order-${index}`} className="grid grid-cols-[90px_minmax(0,1fr)] gap-2 items-center">
+              <Label className="text-xs text-muted-foreground">Position {index + 1}</Label>
+              <select
+                value={selected[index] || ''}
+                onChange={(event) => {
+                  const next = [...selected];
+                  next[index] = event.target.value;
+                  onChange({ kind: 'ordering', value: next });
+                }}
+                disabled={disabled}
+                className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
+              >
+                <option value="">Select item</option>
+                {items.map((item) => (
+                  <option key={`item-${item}`} value={item}>{item}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <RadioGroup
+        value={answer?.kind === 'option' ? answer.value : ''}
+        onValueChange={(value) => onChange({ kind: 'option', value })}
+        className="space-y-2"
+      >
+        {question.options.map((option) => (
+          <div key={option.id} className="flex items-center gap-2 rounded-lg surface-interactive px-3 py-2">
+            <RadioGroupItem id={`${question.id}-${option.id}`} value={option.id} disabled={disabled} />
+            <Label htmlFor={`${question.id}-${option.id}`} className="text-sm">{option.text}</Label>
+          </div>
+        ))}
+      </RadioGroup>
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span className="rounded-full bg-background px-2 py-0.5">{type}</span>
+        <span className="rounded-full bg-background px-2 py-0.5">{question.category || 'general'}</span>
+        <span className="rounded-full bg-background px-2 py-0.5">difficulty {question.difficulty || 5}</span>
+      </div>
+      <p className="text-base leading-relaxed">{question.question}</p>
+      {renderMedia()}
+      {renderBody()}
+      {showHint && question.hint ? (
+        <p className="text-xs text-muted-foreground">Hint: {question.hint}</p>
+      ) : null}
+    </div>
+  );
 }
 
+function QuizResults({
+  quiz,
+  answers,
+  gradingSummary,
+  selectedGrading,
+  onRestart,
+}: {
+  quiz: Quiz;
+  answers: AnswerMap;
+  gradingSummary: GradingSummary;
+  selectedGrading: Array<'accuracy' | 'speed' | 'progression'>;
+  onRestart: () => void;
+}) {
+  const rows = quiz.questions.map((question) => {
+    const answer = answers[question.id];
+    const correct = evaluateQuestionAnswer(question, answer);
+    let given = '-';
+    let correctValue = '-';
+
+    if (question.type === 'fill-blank' || question.type === 'short-answer') {
+      given = answer?.kind === 'text' ? answer.value : '-';
+      correctValue = (question.acceptableAnswers || []).join(' / ') || '-';
+    } else if (question.type === 'matching') {
+      given = answer?.kind === 'matching' ? JSON.stringify(answer.value) : '-';
+      correctValue = JSON.stringify(question.matchingPairs || []);
+    } else if (question.type === 'ordering') {
+      given = answer?.kind === 'ordering' ? answer.value.join(' -> ') : '-';
+      correctValue = (question.orderingItems || []).join(' -> ');
+    } else {
+      const selected = answer?.kind === 'option' ? question.options.find((option) => option.id === answer.value)?.text : undefined;
+      const right = question.options.find((option) => option.isCorrect)?.text || question.options.find((option) => option.id === question.correctOptionId)?.text;
+      given = selected || '-';
+      correctValue = right || '-';
+    }
+
+    return {
+      id: question.id,
+      question: question.question,
+      category: question.category || 'general',
+      correct,
+      given,
+      correctValue,
+    };
+  });
+
+  const correctCount = rows.filter((row) => row.correct).length;
+  const score = rows.length > 0 ? Math.round((correctCount / rows.length) * 100) : 0;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Quiz overview</CardTitle>
+        <CardDescription>{correctCount}/{rows.length} correct ({score}%)</CardDescription>
+        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+          {selectedGrading.includes('accuracy') ? <span className="rounded-full bg-background px-2 py-1">Accuracy {gradingSummary.accuracy}%</span> : null}
+          {selectedGrading.includes('speed') ? <span className="rounded-full bg-background px-2 py-1">Speed {gradingSummary.speed}%</span> : null}
+          {selectedGrading.includes('progression') ? <span className="rounded-full bg-background px-2 py-1">Progression {gradingSummary.progression}%</span> : null}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3 max-h-[65vh] overflow-auto">
+        {rows.map((row) => (
+          <div key={row.id} className="rounded-xl border border-border surface-interactive p-3">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="text-sm font-medium">{row.question}</p>
+              <span className={`text-xs ${row.correct ? 'text-emerald-700' : 'text-red-700'}`}>{row.correct ? 'Correct' : 'Incorrect'}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Category: {row.category}</p>
+            <p className="mt-2 text-xs"><strong>Your answer:</strong> {row.given}</p>
+            <p className="text-xs"><strong>Correct answer:</strong> {row.correctValue}</p>
+          </div>
+        ))}
+      </CardContent>
+      <CardFooter>
+        <Button onClick={onRestart}><Trophy className="mr-2 h-4 w-4" />Start new quiz</Button>
+      </CardFooter>
+    </Card>
+  );
+}
 
 export function QuizTaker({
-    quiz,
-    mode,
-    sourceText,
-    onRestart,
-    taskId,
-    studysetId,
-    runtimeSettings,
+  quiz,
+  mode,
+  sourceText,
+  onRestart,
+  runtimeSettings,
 }: {
-    quiz: Quiz;
-    mode: QuizMode;
-    sourceText: string;
-    onRestart: () => void;
-    taskId?: string;
-    studysetId?: string;
-    runtimeSettings?: {
-        answerRevisionWindowSeconds?: number;
-        timebankSystem?: boolean;
-        progressiveUnlock?: boolean;
-        progressiveUnlockStreak?: number;
-        questionDecay?: boolean;
-        confidenceScoring?: boolean;
-        scoringModel?: 'accuracy' | 'speed_weighted' | 'negative_marking' | 'mastery_points';
-    };
+  quiz: Quiz;
+  mode: QuizMode;
+  sourceText: string;
+  onRestart: () => void;
+  runtimeSettings?: QuizRuntimeSettings;
 }) {
-    const [answers, setAnswers] = useState<AnswersState>({});
-    const [confidences, setConfidences] = useState<Record<string, ConfidenceLevel>>({});
-    const [isFinished, setIsFinished] = useState(false);
-    const { toast } = useToast();
-    const { setSessionRecap } = useContext(AppContext) as AppContextType;
+  const { toast } = useToast();
+  const [questions, setQuestions] = useState<QuizQuestion[]>(quiz.questions || []);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState<AnswerMap>({});
+  const [isAnswered, setIsAnswered] = useState(false);
+  const [isCurrentCorrect, setIsCurrentCorrect] = useState<boolean | null>(null);
+  const [isFinished, setIsFinished] = useState(false);
+  const [adaptiveBuffer, setAdaptiveBuffer] = useState<QuizQuestion[]>([]);
+  const [isAdaptiveLoading, setIsAdaptiveLoading] = useState(false);
+  const [adaptiveSignals, setAdaptiveSignals] = useState<AdaptivePerformanceSignal[]>([]);
+  const [questionStartedAt, setQuestionStartedAt] = useState<number>(() => Date.now());
 
+  const effectiveMode: 'classic' | 'assisted' | 'adaptive' = mode === 'practice' ? 'classic' : mode;
+  const adaptiveCap = Math.max(1, Math.min(50, Number(runtimeSettings?.adaptiveCap || 50)));
+  const selectedTypes = runtimeSettings?.questionTypes?.length ? runtimeSettings.questionTypes : ['multiple-choice'];
+  const selectedGrading = runtimeSettings?.gradingModes?.length ? runtimeSettings.gradingModes : ['accuracy'];
+  const adaptiveStorageKey = getAdaptiveStorageKey(sourceText, selectedTypes);
 
-    // Mode-specific state
-    const [currentQuestions, setCurrentQuestions] = useState<QuizQuestion[]>(quiz.questions);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isAnswered, setIsAnswered] = useState(false);
-    const [isCorrect, setIsCorrect] = useState(false);
-    const [explanation, setExplanation] = useState<string | null>(null);
-    const [isExplanationLoading, setIsExplanationLoading] = useState(false);
-    const [isPenaltyLoading, setIsPenaltyLoading] = useState(false);
-    
-    // Timer states
-    const [examTimeLeft, setExamTimeLeft] = useState(currentQuestions.length * 60);
-    const [mainTimer, setMainTimer] = useState(0);
-    const [strikes, setStrikes] = useState(0);
-    const [questionTimeLeft, setQuestionTimeLeft] = useState(SURVIVAL_QUESTION_TIME);
-    
-    // Adaptive mode states
-    const [adaptiveLevel, setAdaptiveLevel] = useState(5); // Starts in the middle and shifts by performance
-    const [isGeneratingNext, setIsGeneratingNext] = useState(false);
-    const [timebankSeconds, setTimebankSeconds] = useState(0);
-    const [correctStreak, setCorrectStreak] = useState(0);
-    const [unlockedCount, setUnlockedCount] = useState(() => (runtimeSettings?.progressiveUnlock ? Math.min(3, quiz.questions.length) : quiz.questions.length));
-    const [questionMisses, setQuestionMisses] = useState<Record<string, number>>({});
-    const answerFinalizeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const currentQuestion = questions[currentIndex];
+  const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
+  const gradingSummary = buildGradingSummary(questions, answers, adaptiveSignals);
 
-    // Note: Duel mode is implemented separately in QuizDuel component
+  const answeredCount = Object.keys(answers).length;
+  const canAdvance = Boolean(currentQuestion && currentAnswer);
 
+  useEffect(() => {
+    setQuestionStartedAt(Date.now());
+  }, [currentIndex, currentQuestion?.id]);
 
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
-    const questionTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const question = currentQuestions[currentIndex];
-
-    const handleFinishQuiz = useCallback(() => {
-        if (timerRef.current) clearInterval(timerRef.current);
-        if (questionTimerRef.current) clearInterval(questionTimerRef.current);
-        setIsFinished(true);
-    }, []);
-
-    const handleIncorrectAnswer = useCallback(() => {
-        const newStrikes = strikes + 1;
-        setStrikes(newStrikes);
-        
-        if (mode === 'survival' || mode === 'speedrun') {
-            if (newStrikes >= MAX_STRIKES) {
-                handleFinishQuiz();
-            }
-        }
-    }, [strikes, mode, handleFinishQuiz]);
-
-    const handleNextQuestion = useCallback(async () => {
-        if (questionTimerRef.current) clearInterval(questionTimerRef.current);
-        setQuestionTimeLeft(SURVIVAL_QUESTION_TIME);
-
-        const nextIndex = currentIndex + 1;
-        const effectiveQuestionCount = runtimeSettings?.progressiveUnlock ? Math.min(unlockedCount, currentQuestions.length) : currentQuestions.length;
-
-        if (mode === 'adaptive') {
-            if (nextIndex >= ADAPTIVE_QUESTION_COUNT) {
-                handleFinishQuiz();
-                return;
-            }
-            setIsGeneratingNext(true);
-            try {
-                const response = await fetch('/api/ai/handle', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        flowName: 'generateSingleQuestion',
-                        input: {
-                            sourceText,
-                            difficulty: adaptiveLevel,
-                            existingQuestionIds: currentQuestions.map(q => q.id),
-                        },
-                    }),
-                });
-                if (!response.ok) {
-                    throw new Error(`API call failed: ${response.statusText}`);
-                }
-                const newQuestion = await response.json();
-                setCurrentQuestions(prev => [...prev, newQuestion]);
-                setCurrentIndex(nextIndex);
-            } catch(e) {
-                toast({
-                    variant: 'destructive',
-                    title: 'Failed to generate next question',
-                    description: 'Please try again.',
-                });
-            } finally {
-                setIsGeneratingNext(false);
-            }
-        } else {
-            if (nextIndex < effectiveQuestionCount) {
-                setCurrentIndex(nextIndex);
-            } else {
-                handleFinishQuiz();
-            }
-        }
-        
-        setIsAnswered(false);
-        setIsCorrect(false);
-        setExplanation(null);
-    }, [adaptiveLevel, currentIndex, currentQuestions, handleFinishQuiz, mode, sourceText, toast, runtimeSettings?.progressiveUnlock, unlockedCount]);
-
-    const handlePreviousQuestion = () => {
-        if (currentIndex > 0) {
-            setCurrentIndex(prev => prev - 1);
-        }
+  useEffect(() => {
+    if (effectiveMode !== 'adaptive') return;
+    try {
+      const raw = localStorage.getItem(adaptiveStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed?.signals)) return;
+      const restored = parsed.signals
+        .filter((entry: any) => entry && typeof entry.category === 'string' && typeof entry.isCorrect === 'boolean')
+        .slice(-40) as AdaptivePerformanceSignal[];
+      if (restored.length > 0) {
+        setAdaptiveSignals((prev) => (prev.length > 0 ? prev : restored));
+      }
+    } catch {
+      // ignore invalid local profile
     }
+  }, [adaptiveStorageKey, effectiveMode]);
 
-    // Overall Quiz Timer
-    useEffect(() => {
-        if (isFinished) return;
+  useEffect(() => {
+    if (effectiveMode !== 'adaptive') return;
+    try {
+      localStorage.setItem(adaptiveStorageKey, JSON.stringify({
+        updatedAt: Date.now(),
+        signals: adaptiveSignals.slice(-40),
+      }));
+    } catch {
+      // ignore storage write failures
+    }
+  }, [adaptiveSignals, adaptiveStorageKey, effectiveMode]);
 
-        if (mode === 'exam') {
-            timerRef.current = setInterval(() => {
-                setExamTimeLeft(prevTime => {
-                    if (prevTime <= 1) {
-                        clearInterval(timerRef.current!);
-                        handleFinishQuiz();
-                        return 0;
-                    }
-                    return prevTime - 1;
-                });
-            }, 1000);
-        } else if (mode === 'speedrun' || mode === 'normal' || mode === 'practice') {
-            timerRef.current = setInterval(() => {
-                setMainTimer(prevTime => prevTime + 1);
-            }, 1000);
-        }
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-        };
-    }, [mode, isFinished, handleFinishQuiz]);
+  const getCorrectAnswerText = useCallback((question: QuizQuestion) => {
+    if (!question) return '-';
+    const type = question.type || 'multiple-choice';
+    if (type === 'fill-blank' || type === 'short-answer') {
+      return (question.acceptableAnswers || []).join(' / ') || '-';
+    }
+    if (type === 'matching') {
+      return (question.matchingPairs || []).map((pair) => `${pair.left} -> ${pair.right}`).join(' | ') || '-';
+    }
+    if (type === 'ordering') {
+      return (question.orderingItems || []).join(' -> ') || '-';
+    }
+    const right = question.options.find((option) => option.isCorrect)?.text || question.options.find((option) => option.id === question.correctOptionId)?.text;
+    return right || '-';
+  }, []);
 
-    // Per-Question Timer for Survival Mode
-    useEffect(() => {
-        if (mode === 'survival' && !isAnswered && !isFinished) {
-            const cap = Math.min(30, timebankSeconds);
-            setQuestionTimeLeft(SURVIVAL_QUESTION_TIME + cap);
-            questionTimerRef.current = setInterval(() => {
-                setQuestionTimeLeft(prev => {
-                    if (prev <= 1) {
-                        clearInterval(questionTimerRef.current!); 
-                        toast({
-                            title: "Time's up!",
-                            variant: 'destructive'
-                        })
-                        handleIncorrectAnswer();
-                        // Artificially mark as answered to allow moving next
-                        setIsAnswered(true);
-                        setIsCorrect(false); 
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        }
-        
-        return () => {
-            if (questionTimerRef.current) clearInterval(questionTimerRef.current);
-        }
-    }, [mode, currentIndex, isAnswered, isFinished, handleIncorrectAnswer, toast, timebankSeconds]);
-    
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-                return;
-            }
-            if ((e.key === 'ArrowRight' || e.key === 'Enter') && isAnswered) {
-                handleNextQuestion();
-            }
-        };
+  const ensureAdaptiveBuffer = useCallback(async () => {
+    if (effectiveMode !== 'adaptive') return;
+    if (isAdaptiveLoading) return;
 
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [isAnswered, handleNextQuestion]);
+    const knownIds = new Set<string>([...questions.map((question) => question.id), ...adaptiveBuffer.map((question) => question.id)]);
+    if (knownIds.size >= adaptiveCap) return;
+    if (adaptiveBuffer.length >= 6) return;
 
-    const finalizeAnswer = (questionId: string, optionId: string) => {
-        if (questionTimerRef.current) clearInterval(questionTimerRef.current);
-        const currentQuestion = currentQuestions.find(q => q.id === questionId) || question;
-        const correctOption = currentQuestion.options.find(o => o.isCorrect);
-        const isAnswerCorrect = optionId === correctOption?.id;
-        setIsCorrect(isAnswerCorrect);
-        setIsAnswered(true);
+    setIsAdaptiveLoading(true);
+    try {
+      const requested = Math.min(10, Math.max(4, adaptiveCap - knownIds.size));
+      const categoryWeights = adaptiveSignals.reduce<Record<string, number>>((acc, signal) => {
+        const weight = signal.isCorrect ? -0.2 : 0.8;
+        acc[signal.category] = Number((acc[signal.category] || 0) + weight);
+        return acc;
+      }, {});
 
-        if (runtimeSettings?.timebankSystem && mode === 'survival' && isAnswerCorrect && questionTimeLeft > 0) {
-            setTimebankSeconds((prev) => Math.min(90, prev + Math.max(1, Math.floor(questionTimeLeft * 0.35))));
-        }
+      const response = await fetch('/api/ai/handle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          flowName: 'generateQuiz',
+          input: {
+            sourceText,
+            questionCount: requested,
+            quizMode: 'adaptive',
+            questionTypes: selectedTypes,
+            feedbackTiming: runtimeSettings?.answerFeedback || 'immediate',
+            gradingModes: runtimeSettings?.gradingModes || ['accuracy'],
+            knowledgeScore: runtimeSettings?.knowledgeScore || 50,
+            adaptiveProfile: {
+              cap: adaptiveCap,
+              recentAnswers: adaptiveSignals.slice(-18),
+              categoryWeights,
+            },
+            existingQuestionIds: Array.from(knownIds),
+          },
+        }),
+      });
 
-        if (isAnswerCorrect) {
-            const nextStreak = correctStreak + 1;
-            setCorrectStreak(nextStreak);
-            if (runtimeSettings?.progressiveUnlock && nextStreak >= (runtimeSettings?.progressiveUnlockStreak || 4)) {
-                setUnlockedCount((prev) => Math.min(currentQuestions.length, prev + 1));
-                setCorrectStreak(0);
-            }
-        } else {
-            setCorrectStreak(0);
-            setQuestionMisses((prev) => ({ ...prev, [questionId]: (prev[questionId] || 0) + 1 }));
-            if (runtimeSettings?.questionDecay) {
-                const misses = (questionMisses[questionId] || 0) + 1;
-                if (misses >= 2) {
-                    setCurrentQuestions((prev) => {
-                        const idx = prev.findIndex((q) => q.id === questionId);
-                        if (idx === -1 || idx === prev.length - 1) return prev;
-                        const cloned = [...prev];
-                        const [item] = cloned.splice(idx, 1);
-                        cloned.push(item);
-                        return cloned;
-                    });
-                }
-            }
-        }
-        
-        const isBossQuestion = mode === 'boss-fight' && currentIndex === currentQuestions.length - 1;
+      if (!response.ok) throw new Error('Adaptive generation request failed');
+      const payload = await response.json();
+      const nextQuestions = Array.isArray(payload?.questions) ? payload.questions : [];
+      const cleaned = nextQuestions.filter((question: QuizQuestion) => question?.id && !knownIds.has(question.id));
+      if (cleaned.length > 0) {
+        setAdaptiveBuffer((prev) => [...prev, ...cleaned].slice(0, 20));
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Adaptive update failed', description: error?.message || 'Could not load next questions.' });
+    } finally {
+      setIsAdaptiveLoading(false);
+    }
+  }, [adaptiveBuffer, adaptiveCap, adaptiveSignals, effectiveMode, isAdaptiveLoading, questions, runtimeSettings?.answerFeedback, runtimeSettings?.gradingModes, runtimeSettings?.knowledgeScore, selectedTypes, sourceText, toast]);
 
-        if (!isAnswerCorrect) {
-             handleIncorrectAnswer();
-             if (mode === 'survival') {
-                handleSurvivalPenalty();
-             }
-             if (isBossQuestion) {
-                 toast({
-                    title: 'Boss Defeated You!',
-                    description: 'You answered the final question incorrectly. The quiz will now restart.',
-                    variant: 'destructive',
-                    duration: 5000,
-                 });
-                 setTimeout(() => {
-                     setCurrentIndex(0);
-                     setAnswers({});
-                     setIsAnswered(false);
-                     setIsCorrect(false);
-                     setStrikes(0);
-                 }, 2000);
-             }
-        } else {
-            if (isBossQuestion) {
-                handleFinishQuiz();
-            }
-        }
+  useEffect(() => {
+    if (effectiveMode !== 'adaptive') return;
+    void ensureAdaptiveBuffer();
+  }, [effectiveMode, ensureAdaptiveBuffer]);
 
-        if (mode === 'adaptive') {
-            if (isAnswerCorrect) {
-                setAdaptiveLevel((level) => Math.min(10, level + 1));
-            } else {
-                setAdaptiveLevel((level) => Math.max(1, level - 1));
-            }
-        }
+  const handleSetAnswer = (next: AnswerValue) => {
+    if (!currentQuestion) return;
+    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: next }));
+    if (effectiveMode === 'classic') return;
+    if (effectiveMode === 'assisted') {
+      setIsAnswered(false);
+      setIsCurrentCorrect(null);
+    }
+  };
+
+  const handleAnswerPress = () => {
+    if (!currentQuestion || !currentAnswer) return;
+    const correct = evaluateQuestionAnswer(currentQuestion, currentAnswer);
+    setIsAnswered(true);
+    setIsCurrentCorrect(correct);
+    const responseMs = Math.max(0, Date.now() - questionStartedAt);
+
+    const signal: AdaptivePerformanceSignal = {
+      category: currentQuestion.category || 'general',
+      isCorrect: correct,
+      difficulty: currentQuestion.difficulty,
+      responseMs,
     };
+    setAdaptiveSignals((prev) => [...prev, signal].slice(-40));
 
-    const handleAnswerChange = (questionId: string, optionId: string) => {
-        if (isAnswered && (mode !== 'normal')) return;
+    if (effectiveMode === 'adaptive') {
+      void ensureAdaptiveBuffer();
+    }
+  };
 
-        setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
+  const advanceQuestion = () => {
+    if (!currentQuestion) return;
 
-        if(mode !== 'normal') {
-            if (answerFinalizeTimerRef.current) clearTimeout(answerFinalizeTimerRef.current);
-            const windowSeconds = runtimeSettings?.answerRevisionWindowSeconds ?? 0;
-            if (runtimeSettings?.confidenceScoring && !confidences[questionId]) return;
-            if (windowSeconds > 0) {
-                answerFinalizeTimerRef.current = setTimeout(() => finalizeAnswer(questionId, optionId), windowSeconds * 1000);
-            } else {
-                finalizeAnswer(questionId, optionId);
-            }
+    if (effectiveMode === 'adaptive') {
+      if (currentIndex >= questions.length - 1) {
+        if (adaptiveBuffer.length > 0) {
+          const [next, ...rest] = adaptiveBuffer;
+          setQuestions((prev) => {
+            const merged = [...prev, next];
+            return merged.slice(0, adaptiveCap);
+          });
+          setAdaptiveBuffer(rest);
+          setCurrentIndex((prev) => prev + 1);
+          setIsAnswered(false);
+          setIsCurrentCorrect(null);
+          void ensureAdaptiveBuffer();
+          return;
         }
-    };
-        
-    const [followUpQuestion, setFollowUpQuestion] = useState('');
-    const [followUpConversation, setFollowUpConversation] = useState<{role: 'user' | 'assistant', content: string}[]>([]);
-    const [isFollowUpLoading, setIsFollowUpLoading] = useState(false);
+        toast({ title: 'Generating next questions...', description: 'Please press next again in a moment.' });
+        void ensureAdaptiveBuffer();
+        return;
+      }
 
-    const handleGetExplanation = async () => {
-        const selectedOptionId = answers[question.id];
-        const correctOption = question.options.find(o => o.isCorrect);
-        if (!selectedOptionId || !correctOption) return;
-        
-        setIsExplanationLoading(true);
-        setExplanation(null);
-        setFollowUpConversation([]);
-        try {
-            const selectedAnswer = question.options.find(o => o.id === selectedOptionId)?.text || '';
-            const response = await fetch('/api/ai/handle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    flowName: 'explainAnswer',
-                    input: {
-                        question: question.question,
-                        selectedAnswer: selectedAnswer,
-                        correctAnswer: correctOption.text,
-                        isCorrect: isCorrect,
-                    },
-                }),
-            });
-            if (!response.ok) {
-                throw new Error(`API call failed: ${response.statusText}`);
-            }
-            const result = await response.json();
-            setExplanation(result.explanation);
-            setFollowUpConversation([{role: 'assistant', content: result.explanation}]);
-        } catch (error) {
-            toast({
-                variant: 'destructive',
-                title: 'Could not get explanation',
-                description: 'The AI failed to generate an explanation. Please try again.',
-            })
-        } finally {
-            setIsExplanationLoading(false);
-        }
+      setCurrentIndex((prev) => prev + 1);
+      setIsAnswered(false);
+      setIsCurrentCorrect(null);
+      if (questions.length - (currentIndex + 1) <= 3) {
+        void ensureAdaptiveBuffer();
+      }
+      return;
     }
 
-    const handleFollowUp = async () => {
-        if (!followUpQuestion.trim()) return;
-        
-        setIsFollowUpLoading(true);
-        try {
-            setFollowUpConversation(prev => [...prev, {role: 'user', content: followUpQuestion}]);
-            
-            const response = await fetch('/api/ai/handle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    flowName: 'explainAnswer',
-                    input: {
-                        question: `${question.question}\n\nFollow-up: ${followUpQuestion}`,
-                        selectedAnswer: '',
-                        correctAnswer: question.options.find(o => o.isCorrect)?.text || '',
-                        isCorrect: false
-                    },
-                }),
-            });
-            if (!response.ok) {
-                throw new Error(`API call failed: ${response.statusText}`);
-            }
-            const result = await response.json();
-
-            setFollowUpConversation(prev => [...prev, {role: 'assistant', content: result.explanation}]);
-            setFollowUpQuestion('');
-        } catch (error) {
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Failed to get response to your follow-up question'
-            });
-        } finally {
-            setIsFollowUpLoading(false);
-        }
+    if (currentIndex >= questions.length - 1) {
+      setIsFinished(true);
+      return;
     }
 
-    const handleSurvivalPenalty = async () => {
-        setIsPenaltyLoading(true);
-        toast({
-            title: 'Incorrect!',
-            description: `Penalty! Adding ${SURVIVAL_PENALTY_COUNT} new questions to the queue.`,
-            variant: 'destructive',
-        });
-        try {
-            const existingIds = currentQuestions.map(q => q.id);
-            const response = await fetch('/api/ai/handle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    flowName: 'generateQuiz',
-                    input: {
-                        sourceText,
-                        questionCount: SURVIVAL_PENALTY_COUNT,
-                        existingQuestionIds: existingIds
-                    },
-                }),
-            });
-            if (!response.ok) {
-                throw new Error(`API call failed: ${response.statusText}`);
-            }
-            const penaltyQuiz = await response.json();
-            setCurrentQuestions(prev => [...prev, ...penaltyQuiz.questions]);
-        } catch(e) {
-             toast({
-                variant: 'destructive',
-                title: 'Failed to add penalty questions',
-                description: 'Please proceed to the next question.',
-            })
-        } finally {
-            setIsPenaltyLoading(false);
-        }
-    }
-    
-    if (isFinished) {
-        let finalTime = mainTimer;
-        if(mode === 'exam') finalTime = (quiz.questions.length * 60) - examTimeLeft;
+    setCurrentIndex((prev) => prev + 1);
+    setIsAnswered(false);
+    setIsCurrentCorrect(null);
+  };
 
-        return (
-            <FinalResults
-                quiz={{...quiz, questions: currentQuestions}}
-                answers={answers}
-                onRestart={onRestart}
-                mode={mode}
-                timeTaken={finalTime}
-                setSessionRecap={setSessionRecap}
-                strikes={strikes}
-                taskId={taskId}
-                studysetId={studysetId}
-                scoringModel={runtimeSettings?.scoringModel || 'accuracy'}
-                confidences={confidences}
-            />
-        )
-    }
-    
-    const formatTime = (seconds: number) => {
-        const minutes = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
+  const finishQuizNow = () => {
+    setIsFinished(true);
+  };
 
-    const selectedOptionId = question ? answers[question.id] || null : null;
-
-    const renderHeaderInfo = () => {
-        const strikeIcons = Array.from({ length: MAX_STRIKES }).map((_, i) => (
-            <Bomb key={i} className={cn("h-5 w-5", i < strikes ? "text-destructive" : "text-muted-foreground/50")} />
-        ));
-
-        if (mode === 'exam') {
-             return (
-                <div className="flex items-center gap-2 text-lg font-semibold text-primary">
-                    <Timer className="h-5 w-5" />
-                    <span>{formatTime(examTimeLeft)}</span>
-                </div>
-            );
-        }
-        if (mode === 'speedrun' || mode === 'survival') {
-            return (
-                <div className="flex items-center gap-4 text-lg font-semibold">
-                    {mode === 'speedrun' && (
-                        <div className="flex items-center gap-2 text-primary">
-                            <Timer className="h-5 w-5" />
-                            <span>{formatTime(mainTimer)}</span>
-                        </div>
-                    )}
-                     <div className="flex items-center gap-1.5">
-                       {strikeIcons}
-                    </div>
-                </div>
-            );
-        }
-         if (mode === 'adaptive') {
-            return (
-                <div className="flex items-center gap-2 text-lg font-semibold text-primary">
-                    <TrendingUp className="h-5 w-5" />
-                    <span>Level: {adaptiveLevel}</span>
-                </div>
-            );
-        }
-        return null;
-    }
-
-    const questionCounter = () => {
-        if (mode === 'adaptive') return `${currentIndex + 1} / ${ADAPTIVE_QUESTION_COUNT}`;
-        if (mode === 'normal' || mode === 'exam' || mode === 'boss-fight') return `${currentIndex + 1} / ${currentQuestions.length}`;
-        return `${currentIndex + 1} / ${currentQuestions.length}`;
-    }
-
+  if (isFinished) {
     return (
-        <Card>
-            <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <CardTitle className="font-headline">{modeDetails[mode].title}: {quiz.title.replace("a comprehensive quiz", "")}</CardTitle>
-                        <CardDescription>{modeDetails[mode].description}</CardDescription>
-                    </div>
-                   {renderHeaderInfo()}
-                </div>
-                 <div className="pt-2 space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">
-                        Question: {questionCounter()}
-                    </p>
-                    {(mode === 'survival' || mode === 'exam' || mode === 'boss-fight') && <Progress value={(currentIndex / currentQuestions.length) * 100} className="h-1.5" />}
-                    {mode === 'survival' && <Progress value={(questionTimeLeft / SURVIVAL_QUESTION_TIME) * 100} className="h-1.5" />}
-                 </div>
-            </CardHeader>
-            <CardContent className="space-y-8 overflow-hidden min-h-[20rem]">
-                {mode === 'normal' ? (
-                     currentQuestions.map((q, index) => (
-                        <div key={q.id}>
-                           <p className="font-semibold mb-4">{index + 1}. {q.question}</p>
-                            <RadioGroup onValueChange={(value) => handleAnswerChange(q.id, value)} value={answers[q.id] || ""}>
-                                <div className="space-y-2">
-                                    {q.options.map((opt) => (
-                                        <div key={opt.id} className="flex items-center space-x-2">
-                                            <RadioGroupItem value={opt.id} id={`${q.id}-${opt.id}`} />
-                                            <Label htmlFor={`${q.id}-${opt.id}`}>{opt.text}</Label>
-                                        </div>
-                                    ))}
-                                </div>
-                            </RadioGroup>
-                        </div>
-                    ))
-                ) : (
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={currentIndex}
-                            initial={{ opacity: 0, x: 50 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -50 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            {question ? (
-                                <>
-                                <Question
-                                    question={question}
-                                    onAnswer={(optionId) => handleAnswerChange(question.id, optionId)}
-                                    disabled={(isAnswered && mode !== 'exam') || isGeneratingNext}
-                                    selectedOptionId={selectedOptionId}
-                                    isBoss={mode === 'boss-fight' && currentIndex === currentQuestions.length - 1}
-                                />
-                                {isAnswered && (
-                                    <div className="mt-4 space-y-4">
-                                    {(mode === 'practice' || (mode === 'adaptive' && !isCorrect)) && (
-                                        <Button variant="outline" size="sm" onClick={handleGetExplanation} disabled={isExplanationLoading}>
-                                            {isExplanationLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lightbulb className="mr-2 h-4 w-4" />}
-                                            {isExplanationLoading ? 'Generating...' : 'Hint'}
-                                        </Button>
-                                    )}
-                                        <div className="space-y-4">
-                                            {followUpConversation.map((msg, idx) => (
-                                                <Card key={idx} className={msg.role === 'user' ? 'ml-auto bg-blue-50 dark:bg-blue-900/30 max-w-[85%]' : 'max-w-[90%]'}>
-                                                    <CardContent className="p-4">
-                                                        <div className="flex items-start gap-2">
-                                                            {msg.role === 'assistant' && <Lightbulb className="h-5 w-5 text-blue-500 dark:text-blue-300 mt-1 flex-shrink-0" />}
-                                                            <div className="space-y-2">
-                                                                {msg.content.split('\n').map((line, i) => (
-                                                                    <p key={i} className="text-sm">{line}</p>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
-                                            ))}
-                                            <div className="flex gap-2">
-                                                <textarea
-                                                    placeholder="Ask a follow-up question..."
-                                                    value={followUpQuestion}
-                                                    onChange={(e) => setFollowUpQuestion(e.target.value)}
-                                                    className="flex-1"
-                                                    disabled={isFollowUpLoading}
-                                                />
-                                                <Button
-                                                    onClick={handleFollowUp}
-                                                    disabled={isFollowUpLoading || !followUpQuestion.trim()}
-                                                >
-                                                    {isFollowUpLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                                    Ask
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        {mode === 'survival' && isPenaltyLoading && (
-                                            <Alert variant="destructive">
-                                                <ShieldAlert className="h-4 w-4" />
-                                                <AlertTitle>Penalty Incurred!</AlertTitle>
-                                                <AlertDescription>
-                                                    <Loader2 className="inline-block mr-2 h-4 w-4 animate-spin" />
-                                                    Adding {SURVIVAL_PENALTY_COUNT} new questions to the queue...
-                                                </AlertDescription>
-                                            </Alert>
-                                        )}
-                                    </div>
-                                )}
-                                {!isAnswered && runtimeSettings?.confidenceScoring && selectedOptionId ? (
-                                  <div className="mt-4 rounded-md surface-interactive p-3">
-                                    <p className="mb-2 text-xs text-muted-foreground">How confident are you?</p>
-                                    <div className="flex gap-2">
-                                      {(['low', 'medium', 'high'] as const).map((level) => (
-                                        <Button
-                                          key={`confidence-${level}`}
-                                          type="button"
-                                          variant={confidences[question.id] === level ? 'default' : 'outline'}
-                                          size="sm"
-                                          onClick={() => {
-                                            setConfidences((prev) => ({ ...prev, [question.id]: level }));
-                                            if (mode !== 'normal') {
-                                              if (answerFinalizeTimerRef.current) clearTimeout(answerFinalizeTimerRef.current);
-                                              const windowSeconds = runtimeSettings?.answerRevisionWindowSeconds ?? 0;
-                                              if (windowSeconds > 0) {
-                                                answerFinalizeTimerRef.current = setTimeout(() => finalizeAnswer(question.id, selectedOptionId), windowSeconds * 1000);
-                                              } else {
-                                                finalizeAnswer(question.id, selectedOptionId);
-                                              }
-                                            }
-                                          }}
-                                        >
-                                          {level}
-                                        </Button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ) : null}
-                                </>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-center">
-                                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                                    <p className="mt-4 text-muted-foreground">Generating next question...</p>
-                                </div>
-                            )}
-                        </motion.div>
-                    </AnimatePresence>
-                )}
-            </CardContent>
-            <CardFooter className="flex justify-between items-center">
-                <div>
-                   {isAnswered && isCorrect && <div className="flex items-center gap-2 text-green-600"><CheckCircle className="h-5 w-5" /><span>Correct!</span></div>}
-                   {isAnswered && !isCorrect && <div className="flex items-center gap-2 text-red-600"><XCircle className="h-5 w-5" /><span>Incorrect</span></div>}
-                </div>
-                {mode === 'normal' ? (
-                    <Button onClick={handleFinishQuiz} disabled={Object.keys(answers).length !== currentQuestions.length}>
-                        Submit Quiz
-                    </Button>
-                ) : (
-                    <div className="flex items-center gap-2">
-                        {mode === 'exam' && (
-                            <Button variant="outline" onClick={handlePreviousQuestion} disabled={currentIndex === 0}>
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Previous
-                            </Button>
-                        )}
-                        <Button onClick={handleNextQuestion} disabled={isPenaltyLoading || isGeneratingNext || !isAnswered }>
-                            {currentIndex === currentQuestions.length -1 && mode !== 'adaptive' ? 'Finish Quiz' : 'Next Question' }
-                            {(isPenaltyLoading || isGeneratingNext) ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <ArrowRight className="ml-2 h-4 w-4" />}
-                        </Button>
-                    </div>
-                )}
-            </CardFooter>
-        </Card>
-    )
+      <QuizResults
+        quiz={{ ...quiz, questions }}
+        answers={answers}
+        gradingSummary={gradingSummary}
+        selectedGrading={selectedGrading}
+        onRestart={onRestart}
+      />
+    );
+  }
+
+  if (!currentQuestion) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
+  const modeTitle = effectiveMode === 'classic' ? 'Classic' : effectiveMode === 'assisted' ? 'Assisted' : 'Adaptive';
+  const progressText = `${Math.min(currentIndex + 1, questions.length)} / ${effectiveMode === 'adaptive' ? `${adaptiveCap} max` : questions.length}`;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle>{modeTitle} mode</CardTitle>
+            <CardDescription>{quiz.title}</CardDescription>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            <div className="flex items-center gap-1"><Gauge className="h-3.5 w-3.5" /> {progressText}</div>
+            {effectiveMode === 'adaptive' ? <div className="mt-1 flex items-center gap-1"><Flag className="h-3.5 w-3.5" /> cap {adaptiveCap}</div> : null}
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <QuestionView
+          question={currentQuestion}
+          answer={currentAnswer}
+          disabled={effectiveMode !== 'classic' && isAnswered}
+          showHint={effectiveMode === 'assisted'}
+          onChange={handleSetAnswer}
+        />
+
+        {effectiveMode !== 'classic' && isAnswered ? (
+          <Alert variant={isCurrentCorrect ? 'default' : 'destructive'}>
+            {isCurrentCorrect ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+            <AlertTitle>{isCurrentCorrect ? 'Correct' : 'Incorrect'}</AlertTitle>
+            <AlertDescription>
+              {isCurrentCorrect ? 'Good answer.' : `Correct answer is shown in the final overview${effectiveMode === 'assisted' ? ' and immediately now.' : '.'}`}
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
+        {effectiveMode === 'assisted' && isAnswered ? (
+          <div className="rounded-xl border border-border surface-interactive p-3">
+            <p className="text-xs text-muted-foreground">Correct answer</p>
+            <p className="mt-1 text-sm">{getCorrectAnswerText(currentQuestion)}</p>
+          </div>
+        ) : null}
+      </CardContent>
+
+      <CardFooter className="flex items-center justify-between">
+        <div className="text-xs text-muted-foreground">Answered: {answeredCount}</div>
+        <div className="flex items-center gap-2">
+          {effectiveMode === 'adaptive' ? (
+            <Button type="button" variant="outline" onClick={finishQuizNow}>Finish</Button>
+          ) : null}
+
+          {effectiveMode === 'assisted' && !isAnswered ? (
+            <Button type="button" onClick={handleAnswerPress} disabled={!canAdvance}>Answer</Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={() => {
+                if (effectiveMode === 'classic' && !isAnswered) {
+                  handleAnswerPress();
+                }
+                advanceQuestion();
+              }}
+              disabled={effectiveMode === 'assisted' ? !isAnswered : !canAdvance}
+            >
+              {effectiveMode !== 'adaptive' && currentIndex >= questions.length - 1 ? 'Finish' : 'Next'}
+              {(effectiveMode === 'adaptive' && isAdaptiveLoading) ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <ArrowRight className="ml-2 h-4 w-4" />}
+            </Button>
+          )}
+        </div>
+      </CardFooter>
+    </Card>
+  );
 }

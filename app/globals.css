@@ -572,15 +572,19 @@
   .app-main-shell {
     --app-shell-space-top: 0.2rem;
     --app-shell-space-left: 0.2rem;
+    --app-shell-space-right: 0.2rem;
+    --app-shell-space-bottom: 0.2rem;
     padding-top: var(--app-shell-space-top);
     padding-left: var(--app-shell-space-left);
-    padding-right: 0;
-    padding-bottom: 0;
+    padding-right: var(--app-shell-space-right);
+    padding-bottom: var(--app-shell-space-bottom);
   }
   @media (min-width: 768px) {
     .app-main-shell {
       --app-shell-space-top: 0.2rem;
       --app-shell-space-left: 0.2rem;
+      --app-shell-space-right: 0.2rem;
+      --app-shell-space-bottom: 0.2rem;
     }
   }
 

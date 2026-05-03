@@ -130,6 +130,10 @@ export async function executeOpenAIFallbackFlow(flowName: string, input: any, ap
         `Region: ${String(input?.regionCode || "global")}`,
         `Education level: ${String(input?.educationLevel || "2")}`,
         `Question count: ${String(Number.isFinite(questionCount) ? Math.max(1, Math.min(50, questionCount)) : 7)}`,
+        `Quiz mode: ${String(input?.quizMode || 'classic')}`,
+        `Question types: ${Array.isArray(input?.questionTypes) ? input.questionTypes.join(', ') : String(input?.questionType || 'multiple-choice')}`,
+        `Knowledge score (0-100): ${String(Number.isFinite(Number(input?.knowledgeScore)) ? Number(input.knowledgeScore) : 50)}`,
+        `Feedback timing: ${String(input?.feedbackTiming || 'end')}`,
         "Return JSON with fields: title, description, questions[].id/question/options[].id/text/isCorrect.",
         `Source:\n${sourceText}`,
       ]

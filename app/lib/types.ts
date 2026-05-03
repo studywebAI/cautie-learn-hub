@@ -81,13 +81,44 @@ export type ProcessMaterialResult = {
 export const QuizOptionSchema = z.object({
   id: z.string().describe('Unique identifier for the option (e.g., "a", "b", "c").'),
   text: z.string().describe('The text of the answer option.'),
-  isCorrect: z.boolean().describe('Whether this option is the correct answer.'),
+  isCorrect: z.boolean().optional().describe('Whether this option is the correct answer.'),
+});
+
+export const QuizQuestionTypeSchema = z.enum([
+  'multiple-choice',
+  'true-false',
+  'fill-blank',
+  'short-answer',
+  'matching',
+  'ordering',
+  'image-analysis',
+  'video-analysis',
+  'drawing-analysis',
+]);
+
+export const QuizQuestionMediaSchema = z.object({
+  kind: z.enum(['image', 'video', 'drawing']),
+  url: z.string(),
+  title: z.string().optional(),
+  source: z.string().optional(),
 });
 
 export const QuizQuestionSchema = z.object({
   id: z.string().describe('Unique identifier for the question.'),
   question: z.string().describe('The text of the question.'),
-  options: z.array(QuizOptionSchema).describe('An array of 3 to 4 possible answer options.'),
+  type: QuizQuestionTypeSchema.optional(),
+  category: z.string().optional(),
+  difficulty: z.number().int().min(1).max(10).optional(),
+  options: z.array(QuizOptionSchema).optional().default([]).describe('An array of possible answer options.'),
+  correctOptionId: z.string().optional(),
+  acceptableAnswers: z.array(z.string()).optional(),
+  media: QuizQuestionMediaSchema.optional(),
+  matchingPairs: z.array(z.object({
+    left: z.string(),
+    right: z.string(),
+  })).optional(),
+  orderingItems: z.array(z.string()).optional(),
+  hint: z.string().optional(),
 });
 
 export const QuizSchema = z.object({
