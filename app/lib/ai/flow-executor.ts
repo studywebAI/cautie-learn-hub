@@ -95,6 +95,14 @@ const flowMap: Record<string, () => Promise<FlowHandler>> = {
     import("@/ai/flows/modify-content").then((m) => m.modifyContent),
   explainAnswer: () =>
     import("@/ai/flows/explain-answer").then((m) => m.explainAnswer),
+  extractTimelineEvents: () =>
+    import("@/ai/flows/extract-timeline-events").then((m) => m.extractTimelineEvents),
+  buildTimelineQuizContext: () =>
+    import("@/ai/flows/build-timeline-quiz-context").then((m) => m.buildTimelineQuizContext),
+  imageSearchForQuestionContext: () =>
+    import("@/ai/flows/image-search-for-question-context").then((m) => m.imageSearchForQuestionContext),
+  videoContextFromWhitelist: () =>
+    import("@/ai/flows/video-context-from-whitelist").then((m) => m.videoContextFromWhitelist),
 };
 
 export function getSupportedFlows() {

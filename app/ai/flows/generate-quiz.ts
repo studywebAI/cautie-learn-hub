@@ -9,6 +9,9 @@ import { ai, getGoogleAIModel } from '@/ai/genkit';
 import { z } from 'genkit';
 import { QuizSchema, type Quiz } from '@/lib/types';
 import { pickWhitelistedChannelsForTopic } from '@/lib/ai/educational-youtube-whitelist';
+import { buildTimelineQuizContext } from '@/ai/flows/build-timeline-quiz-context';
+import { imageSearchForQuestionContext } from '@/ai/flows/image-search-for-question-context';
+import { videoContextFromWhitelist } from '@/ai/flows/video-context-from-whitelist';
 
 type QuizQuestion = Quiz['questions'][number];
 
@@ -179,14 +182,23 @@ function normalizeQuestionShape(question: any, index: number, requestedTypes: st
   if (type === 'image-analysis' || type === 'video-analysis' || type === 'drawing-analysis') {
     const expectedKind = type === 'video-analysis' ? 'video' : (type === 'drawing-analysis' ? 'drawing' : 'image');
     const mediaUrl = normalizeMediaUrl(type, question?.media?.url, allowedVideoUrls);
-    if (mediaUrl) {
-      normalized.media = {
-        kind: expectedKind,
-        url: mediaUrl,
-        title: typeof question?.media?.title === 'string' ? question.media.title : undefined,
-        source: typeof question?.media?.source === 'string' ? question.media.source : undefined,
-      };
+    if (!mediaUrl) {
+      // Prevent fake media-analysis questions that have no usable media.
+      normalized.type = 'multiple-choice';
+      normalized.options = [
+        makeOption('a', 'Option A', true),
+        makeOption('b', 'Option B', false),
+        makeOption('c', 'Option C', false),
+      ];
+      normalized.correctOptionId = 'a';
+      return normalized;
     }
+    normalized.media = {
+      kind: expectedKind,
+      url: mediaUrl,
+      title: typeof question?.media?.title === 'string' ? question.media.title : undefined,
+      source: typeof question?.media?.source === 'string' ? question.media.source : undefined,
+    };
   }
 
   return normalized;
@@ -194,11 +206,19 @@ function normalizeQuestionShape(question: any, index: number, requestedTypes: st
 
 function normalizeQuizOutput(raw: Quiz | undefined | null, input: GenerateQuizInput, allowedVideoUrls: Set<string>): Quiz {
   const requestedCount = clamp(Number(input.questionCount || 7), 1, 50);
-  const requestedTypes = Array.isArray(input.questionTypes) && input.questionTypes.length
+  const baseRequestedTypes = Array.isArray(input.questionTypes) && input.questionTypes.length
     ? input.questionTypes
     : (input.questionType ? [input.questionType] : ['multiple-choice']);
+  const hasImageContext = Boolean(String(input.imageDataUri || '').trim());
+  const hasVideoContext = /youtube\.com|youtu\.be|vimeo\.com/i.test(String(input.sourceText || ''));
+  const requestedTypes = baseRequestedTypes.filter((type) => {
+    if ((type === 'image-analysis' || type === 'drawing-analysis') && !hasImageContext) return false;
+    if (type === 'video-analysis' && !hasVideoContext) return false;
+    return true;
+  });
+  const safeRequestedTypes = requestedTypes.length > 0 ? requestedTypes : ['multiple-choice'];
   const sourceQuestions = Array.isArray(raw?.questions) ? raw!.questions : [];
-  const normalized = sourceQuestions.map((question, index) => normalizeQuestionShape(question, index, requestedTypes, allowedVideoUrls));
+  const normalized = sourceQuestions.map((question, index) => normalizeQuestionShape(question, index, safeRequestedTypes, allowedVideoUrls));
   const deduped: QuizQuestion[] = [];
   const seen = new Set<string>();
   for (const question of normalized) {
@@ -212,7 +232,7 @@ function normalizeQuizOutput(raw: Quiz | undefined | null, input: GenerateQuizIn
   const questions = shuffled.slice(0, requestedCount);
 
   while (questions.length < requestedCount) {
-    questions.push(normalizeQuestionShape({}, questions.length, requestedTypes, allowedVideoUrls));
+    questions.push(normalizeQuestionShape({}, questions.length, safeRequestedTypes, allowedVideoUrls));
   }
 
   return {
@@ -256,6 +276,16 @@ const GenerateQuizInputSchema = z.object({
     enforcePlausibleDistractors: z.boolean().optional(),
     enforceNoDuplicates: z.boolean().optional(),
   }).optional().describe('Explicit quality constraints for generation behavior.'),
+  timelineContext: z.object({
+    enabled: z.boolean().optional(),
+  }).optional(),
+  imageContext: z.object({
+    enabled: z.boolean().optional(),
+    query: z.string().optional(),
+  }).optional(),
+  videoContext: z.object({
+    enabled: z.boolean().optional(),
+  }).optional(),
   groundingInstruction: z.string().optional().describe('Mandatory grounding constraints for factual outputs.'),
 });
 type GenerateQuizInput = z.infer<typeof GenerateQuizInputSchema>;
@@ -281,6 +311,20 @@ const generateQuizFlow = ai.defineFlow(
     const questionTypes = Array.isArray(input.questionTypes) && input.questionTypes.length > 0
       ? input.questionTypes
       : (input.questionType ? [input.questionType] : ['multiple-choice']);
+    const timelineEnabled = input.timelineContext?.enabled !== false;
+    const imageEnabled = input.imageContext?.enabled !== false;
+    const videoEnabled = input.videoContext?.enabled !== false;
+    const [timelineContext, imageContext, videoContext] = await Promise.all([
+      timelineEnabled
+        ? buildTimelineQuizContext({ sourceText: input.sourceText, maxMarkers: 12 }).catch(() => ({ markers: [], contextBlock: '', suggestedQuestions: [] }))
+        : Promise.resolve({ markers: [], contextBlock: '', suggestedQuestions: [] as string[] }),
+      imageEnabled
+        ? imageSearchForQuestionContext({ sourceText: input.sourceText, query: input.imageContext?.query, limit: 6 }).catch(() => ({ query: '', results: [] }))
+        : Promise.resolve({ query: '', results: [] as any[] }),
+      videoEnabled
+        ? videoContextFromWhitelist({ sourceText: input.sourceText, limit: 6 }).catch(() => ({ clips: [] }))
+        : Promise.resolve({ clips: [] as any[] }),
+    ]);
     const prompt = ai.definePrompt({
       name: 'generateQuizPrompt',
       model,
@@ -308,8 +352,13 @@ If type is multiple-choice/true-false/image-analysis/video-analysis/drawing-anal
 If type is fill-blank/short-answer, include acceptableAnswers as an array of valid answers.
 If type is matching, include matchingPairs as array of {left,right}.
 If type is ordering, include orderingItems as array of strings in correct order.
-For media analysis types, include media {kind,url,title,source}.
+For media analysis types, include media {kind,url,title,source}. If valid media is unavailable, do NOT emit media-analysis question types.
 For video-analysis media URLs, use only channels from the provided whitelist list below.
+Media mode policy:
+- image-analysis: only when answerable from visible evidence in an image/diagram/map.
+- drawing-analysis: only when answerable from a drawing/sketch/chart-like visual.
+- video-analysis: only when answerable from time-based video context (clip/timestamp relevance).
+- never choose media-analysis if the same question can be answered equally well without media evidence.
 When in adaptive mode, rebalance subtlely toward weaker categories from adaptiveProfile and lower difficulty for repeatedly wrong categories.
 Hard requirements:
 - Output language MUST match {{{language}}}.
@@ -332,6 +381,22 @@ Adapt language and framing to:
 - Grading modes: {{{gradingModes}}}
 - Feedback timing: {{{feedbackTiming}}}
 - Quiz mode: {{{quizMode}}}
+{{#if timelineMarkers}}
+Timeline context markers (use these for timeline-aware questions):
+{{{timelineMarkers}}}
+{{/if}}
+{{#if timelineSuggestedQuestions}}
+Timeline question anchors:
+{{{timelineSuggestedQuestions}}}
+{{/if}}
+{{#if imageContextResults}}
+Curated image context:
+{{{imageContextResults}}}
+{{/if}}
+{{#if videoContextClips}}
+Whitelisted video clip context (timestamps in seconds):
+{{{videoContextClips}}}
+{{/if}}
 {{#if existingQuestionIds}}
 Do not generate questions that are identical or very similar to the questions represented by these IDs: {{{existingQuestionIds}}}.
 {{/if}}
@@ -343,7 +408,7 @@ Adaptive profile context:
 Whitelisted educational YouTube channels (video-analysis must use one of these):
 {{{whitelistedChannels}}}
 
-For each question, if needed, include 'source_info' referencing only the provided source text.
+For each question, if needed, include 'source_info' referencing only the provided source text and provided context blocks.
 
 Source Text:
 {{{sourceText}}}
@@ -358,6 +423,14 @@ Image Context:
       const { output } = await prompt({
         ...input,
         questionTypes,
+        timelineMarkers: timelineContext.contextBlock,
+        timelineSuggestedQuestions: (timelineContext.suggestedQuestions || []).join('\n'),
+        imageContextResults: (imageContext.results || [])
+          .map((item: any, idx: number) => `I${idx + 1} | ${item.title} | ${item.imageUrl} | ${item.pageUrl}`)
+          .join('\n'),
+        videoContextClips: (videoContext.clips || [])
+          .map((clip: any, idx: number) => `V${idx + 1} | ${clip.channel} | ${clip.videoUrl} | ${clip.startSec}-${clip.endSec} | ${clip.reason}`)
+          .join('\n'),
         whitelistedChannels: selectedChannels
           .map((channel) => `${channel.channel} | focuses on: ${channel.focus.join(', ')} | urls: ${channel.sampleVideos.join(' ')}`)
           .join('\n'),

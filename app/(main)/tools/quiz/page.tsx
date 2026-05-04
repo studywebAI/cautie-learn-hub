@@ -27,9 +27,6 @@ const QUIZ_TYPES = [
   { value: 'short-answer', label: 'Short Answer' },
   { value: 'matching', label: 'Matching' },
   { value: 'ordering', label: 'Ordering' },
-  { value: 'image-analysis', label: 'Image analysis' },
-  { value: 'video-analysis', label: 'Video analysis' },
-  { value: 'drawing-analysis', label: 'Drawing analysis' },
 ] as const;
 
 const PRESET_STORAGE_KEY = 'quiz.mode.presets.v2';
@@ -85,6 +82,10 @@ function QuizPageContent() {
 
   const adaptiveCap = 50;
   const runCounterRef = useRef(0);
+  const hasVideoContext = useMemo(
+    () => /(youtube\.com|youtu\.be|vimeo\.com)/i.test(String(sourceText || '')),
+    [sourceText]
+  );
   const quizRunKey = useMemo(
     () => (quiz ? `${quiz.title || 'quiz'}::${(quiz.questions || []).slice(0, 24).map((question) => question.id).join('|')}` : ''),
     [quiz]
@@ -260,6 +261,14 @@ function QuizPageContent() {
   const buildGenerationInput = useCallback((compiledText: string) => {
     const requestedCount = mode === 'adaptive' ? 12 : questionCount;
     runCounterRef.current += 1;
+    const derivedTypes = new Set(questionTypes);
+    if (imageDataUri) {
+      derivedTypes.add('image-analysis');
+      derivedTypes.add('drawing-analysis');
+    }
+    if (hasVideoContext) {
+      derivedTypes.add('video-analysis');
+    }
     return {
       sourceText: compiledText,
       imageDataUri: imageDataUri || undefined,
@@ -267,7 +276,7 @@ function QuizPageContent() {
       language,
       regionCode: String(region || 'global').toUpperCase(),
       educationLevel: schoolingLevel,
-      questionTypes,
+      questionTypes: Array.from(derivedTypes),
       knowledgeScore,
       gradingModes,
       feedbackTiming: answerFeedback,
@@ -279,8 +288,11 @@ function QuizPageContent() {
         enforcePlausibleDistractors: true,
         enforceNoDuplicates: true,
       },
+      timelineContext: { enabled: true },
+      imageContext: { enabled: true },
+      videoContext: { enabled: true },
     };
-  }, [answerFeedback, gradingModes, imageDataUri, knowledgeScore, language, mode, questionCount, questionTypes, region, schoolingLevel]);
+  }, [answerFeedback, gradingModes, hasVideoContext, imageDataUri, knowledgeScore, language, mode, questionCount, questionTypes, region, schoolingLevel]);
 
   const handleGenerate = useCallback(async (compiledText: string) => {
     if (!compiledText.trim()) return;
@@ -396,6 +408,16 @@ function QuizPageContent() {
               {entry.label}
             </button>
           ))}
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Image/video/drawing analysis are automatic capabilities. Uploading an image enables image+drawing analysis; adding a video link enables video analysis.
+        </p>
+        <div className="rounded-md border border-border bg-background px-2.5 py-2 text-[11px] text-muted-foreground space-y-1">
+          <p className="font-medium text-foreground/80">Media guidelines</p>
+          <p>Use <span className="font-medium">Image analysis</span> for facts visible in a photo/diagram/map.</p>
+          <p>Use <span className="font-medium">Drawing analysis</span> for interpretation of a sketch/chart/hand-drawn process.</p>
+          <p>Use <span className="font-medium">Video analysis</span> only when a relevant video link exists and the question depends on time-based context.</p>
+          <p>Fallback to regular question types when media evidence is missing or weak.</p>
         </div>
       </div>
 
