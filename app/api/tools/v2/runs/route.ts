@@ -460,8 +460,15 @@ export async function POST(request: NextRequest) {
       const errorCode = err?.code || "RUN_FAILED";
       const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id).catch(() => ({ providerPreference: "auto" as const }));
       const normalizedMessage = String(err?.message || "").toLowerCase();
+      const hasCauseOpenAI = Boolean(err?.cause?.openai);
+      const hasCauseGemini = Boolean(err?.cause?.gemini);
       const inferredProvider: "gemini" | "openai" =
-        normalizedMessage.includes("openai") ? "openai" : "gemini";
+        hasCauseOpenAI || normalizedMessage.includes("openai") ? "openai" : "gemini";
+      const fallbackAttempted =
+        hasCauseOpenAI ||
+        hasCauseGemini ||
+        normalizedMessage.includes("fallback") ||
+        normalizedMessage.includes("openai");
       await supabase
         .from("tool_runs")
         .update({
@@ -482,7 +489,7 @@ export async function POST(request: NextRequest) {
         providerPreference: runtimeOptions.providerPreference || "auto",
         providerAttempted: inferredProvider,
         stage: "run_failed",
-        fallbackAttempted: String(err?.message || "").toLowerCase().includes("fallback"),
+        fallbackAttempted,
         fallbackSucceeded: false,
         code: errorCode,
         message: err?.message || "Run failed",

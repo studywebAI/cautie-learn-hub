@@ -1,4 +1,3 @@
-import OpenAI from "openai";
 import { z } from "zod";
 import { FlashcardSchema, McqQuestionSchema, QuizSchema } from "@/lib/types";
 
@@ -95,18 +94,33 @@ async function callOpenAIJson<T>({
   user: string;
   schema: z.ZodType<T>;
 }) {
-  const client = new OpenAI({ apiKey });
-  const response = await client.chat.completions.create({
-    model,
-    temperature: 0.2,
-    response_format: { type: "json_object" },
-    messages: [
-      { role: "system", content: system },
-      { role: "user", content: user },
-    ],
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    }),
   });
-
-  const content = response.choices?.[0]?.message?.content || "";
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({} as any));
+    const err = new Error(
+      `OpenAI ${response.status}: ${String(payload?.error?.message || response.statusText || "Request failed")}`
+    ) as Error & { code?: string; status?: number };
+    err.code = String(payload?.error?.code || `OPENAI_HTTP_${response.status}`);
+    err.status = response.status;
+    throw err;
+  }
+  const json: any = await response.json();
+  const content = json?.choices?.[0]?.message?.content || "";
   const parsed = parseJsonFromModel(content);
   return schema.parse(parsed);
 }
@@ -114,7 +128,12 @@ async function callOpenAIJson<T>({
 export async function executeOpenAIFallbackFlow(flowName: string, input: any, apiKey: string) {
   const model = process.env.OPENAI_FALLBACK_MODEL || "gpt-4o-mini";
   const grounding = String(input?.groundingInstruction || "").trim();
-  const sourceText = String(input?.sourceText || "").trim();
+  const rawSourceText = String(input?.sourceText || "").trim();
+  const maxSourceChars = 22000;
+  const sourceText =
+    rawSourceText.length > maxSourceChars
+      ? `${rawSourceText.slice(0, maxSourceChars)}\n\n[TRUNCATED_FOR_OPENAI_FALLBACK]`
+      : rawSourceText;
 
   if (flowName === "generateQuiz") {
     const questionCount = Number(input?.questionCount || 7);

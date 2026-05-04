@@ -133,8 +133,15 @@ export async function executeAIFlow(
   const openaiApiKey = options?.openaiApiKey || process.env.OPENAI_API_KEY || "";
   const canFallback = canUseOpenAIFallback(flowName) && !!openaiApiKey;
   const emit = options?.onEvent;
+  const summarizeError = (err: unknown) => {
+    const anyErr = err as any;
+    const code = anyErr?.code ? String(anyErr.code) : "";
+    const message = anyErr?.message ? String(anyErr.message) : String(err || "Unknown error");
+    return code ? `${code}: ${message}` : message;
+  };
 
   if (providerPreference === "openai" && canFallback) {
+    console.info(`[AI_FLOW] ${flowName} provider=openai (explicit)`);
     return executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey);
   }
   if (providerPreference === "openai" && !canFallback) {
@@ -148,9 +155,11 @@ export async function executeAIFlow(
   }
 
   if (providerPreference === "auto" && canFallback) {
+    console.info(`[AI_FLOW] ${flowName} provider=openai (auto-primary)`);
     try {
       return await executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey);
     } catch (openaiError) {
+      console.warn(`[AI_FLOW] ${flowName} openai failed: ${summarizeError(openaiError)}`);
       emit?.({
         type: "primary_error",
         provider: "openai",
@@ -163,6 +172,7 @@ export async function executeAIFlow(
         provider: "gemini",
         flowName,
       });
+      console.info(`[AI_FLOW] ${flowName} provider=gemini (auto-fallback)`);
       try {
         const result = await flow(enrichedInput);
         emit?.({
@@ -172,6 +182,7 @@ export async function executeAIFlow(
         });
         return result;
       } catch (geminiError) {
+        console.warn(`[AI_FLOW] ${flowName} gemini fallback failed: ${summarizeError(geminiError)}`);
         emit?.({
           type: "fallback_error",
           provider: "gemini",
@@ -180,7 +191,7 @@ export async function executeAIFlow(
           code: (geminiError as any)?.code ? String((geminiError as any).code) : undefined,
         });
         const combined = new Error(
-          `OpenAI failed and Gemini fallback also failed: ${(geminiError as any)?.message || String(geminiError)}`
+          `OpenAI failed (${summarizeError(openaiError)}) and Gemini fallback also failed (${summarizeError(geminiError)})`
         ) as Error & { code?: string; cause?: unknown };
         combined.code =
           (geminiError as any)?.code || (openaiError as any)?.code || "DUAL_PROVIDER_FAILED";
@@ -191,6 +202,7 @@ export async function executeAIFlow(
   }
 
   try {
+    console.info(`[AI_FLOW] ${flowName} provider=gemini (primary)`);
     return await flow(enrichedInput);
   } catch (error) {
     const eligibleByPolicy =
@@ -208,6 +220,7 @@ export async function executeAIFlow(
     });
 
     if (eligibleByPolicy && !canFallback) {
+      console.info(`[AI_FLOW] ${flowName} openai fallback skipped (missing key or unsupported flow)`);
       emit?.({
         type: "fallback_skipped",
         provider: "openai",
@@ -220,6 +233,7 @@ export async function executeAIFlow(
     }
 
     if (shouldFallback) {
+      console.info(`[AI_FLOW] ${flowName} provider=openai (fallback-after-gemini-error)`);
       emit?.({
         type: "fallback_attempt",
         provider: "openai",
@@ -234,6 +248,7 @@ export async function executeAIFlow(
         });
         return result;
       } catch (fallbackError) {
+        console.warn(`[AI_FLOW] ${flowName} openai fallback failed: ${summarizeError(fallbackError)}`);
         emit?.({
           type: "fallback_error",
           provider: "openai",
@@ -242,7 +257,7 @@ export async function executeAIFlow(
           code: (fallbackError as any)?.code ? String((fallbackError as any).code) : undefined,
         });
         const combined = new Error(
-          `Gemini failed and OpenAI fallback also failed: ${(fallbackError as any)?.message || String(fallbackError)}`
+          `Gemini failed (${summarizeError(error)}) and OpenAI fallback also failed (${summarizeError(fallbackError)})`
         ) as Error & { code?: string; cause?: unknown };
         combined.code = (fallbackError as any)?.code || (error as any)?.code || "DUAL_PROVIDER_FAILED";
         combined.cause = { gemini: error, openai: fallbackError };
