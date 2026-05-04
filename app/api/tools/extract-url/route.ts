@@ -242,17 +242,22 @@ export async function POST(req: NextRequest) {
     }
 
     // YouTube commonly blocks usable transcript extraction from page HTML.
-    // In that case we return a clear message so the client can show why.
+    // Return a lightweight but usable context block instead of hard failure.
     if (isYouTube && extracted.length < MIN_MEANINGFUL_TEXT_LENGTH) {
       const fallback = await fetchViaJinaReader(parsedUrl.toString());
       if (fallback.length >= MIN_MEANINGFUL_TEXT_LENGTH) {
         const text = fallback.length > 50000 ? `${fallback.slice(0, 50000)}\n\n[Content truncated...]` : fallback;
         return NextResponse.json({ text, source: hostname, mode: 'reader_fallback' });
       }
-      return NextResponse.json(
-        { error: 'YouTube transcript is not available from this link. Try article links or paste transcript text.' },
-        { status: 422 }
-      );
+      const title = extractTitle(raw) || extractMeta(raw, 'og:title') || 'YouTube video context';
+      const description = extractMeta(raw, 'description') || extractMeta(raw, 'og:description') || '';
+      const lightweight = cleanupExtractedText([
+        `Video URL: ${parsedUrl.toString()}`,
+        `Title: ${title}`,
+        description ? `Description: ${description}` : '',
+        'Transcript unavailable; use this as metadata context and rely on whitelisted clip context when generating video-fragment questions.',
+      ].filter(Boolean).join('\n'));
+      return NextResponse.json({ text: lightweight, source: hostname, mode: 'youtube_metadata_fallback' });
     }
 
     if (extracted.length < MIN_MEANINGFUL_TEXT_LENGTH) {

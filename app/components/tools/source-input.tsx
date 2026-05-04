@@ -306,6 +306,7 @@ export function SourceInput({
   const integrationHydratedRef = useRef(false);
   const integrationPollTimeoutRef = useRef<number | null>(null);
   const integrationPendingPollCountRef = useRef(0);
+  const sourcesRef = useRef<SourceEntry[]>([]);
 
   const [manualText, setManualText] = useState('');
   const [sources, setSources] = useState<SourceEntry[]>([]);
@@ -319,7 +320,6 @@ export function SourceInput({
   const [recentsSourceFilter, setRecentsSourceFilter] = useState<'all' | 'tool_runs' | 'materials'>('all');
   const [recentsSort, setRecentsSort] = useState<'newest' | 'oldest' | 'most_used' | 'name'>('newest');
   const [recentsSearch, setRecentsSearch] = useState('');
-  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [linkInputOpen, setLinkInputOpen] = useState(false);
   const [linkInputValue, setLinkInputValue] = useState('');
   const [removingSourceIds, setRemovingSourceIds] = useState<string[]>([]);
@@ -330,6 +330,10 @@ export function SourceInput({
   const [isTranscribingFallback, setIsTranscribingFallback] = useState(false);
   const [isFinalizingRecording, setIsFinalizingRecording] = useState(false);
   const [captionsOpen, setCaptionsOpen] = useState(false);
+
+  useEffect(() => {
+    sourcesRef.current = sources;
+  }, [sources]);
 
   useEffect(() => {
     isFinalizingRecordingRef.current = isFinalizingRecording;
@@ -904,7 +908,6 @@ export function SourceInput({
       return;
     }
 
-    setIsFetchingUrl(true);
     let timeout: ReturnType<typeof setTimeout> | null = null;
     try {
       const controller = new AbortController();
@@ -947,7 +950,6 @@ export function SourceInput({
       toast({ variant: 'destructive', title: 'Import failed', description: message });
     } finally {
       if (timeout) clearTimeout(timeout);
-      setIsFetchingUrl(false);
     }
   }, [toast]);
 
@@ -1469,7 +1471,8 @@ export function SourceInput({
   const hasFileSourceWithoutText = sources.some(
     (source) => source.kind === 'file' && !source.loading && !source.text.trim() && !source.previewUrl
   );
-  const canGenerate = (compiledSource.trim().length > 0 || hasImageContext) && !hasPendingSource && !hasFileSourceWithoutText;
+  const hasUsableSource = sources.some((source) => source.kind !== 'file' && (source.text.trim().length > 0 || Boolean(source.previewUrl)));
+  const canGenerate = (compiledSource.trim().length > 0 || hasImageContext || hasUsableSource) && !hasFileSourceWithoutText;
 
   const openMicrosoftPicker = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -1502,7 +1505,7 @@ export function SourceInput({
         await Promise.all(rawUrls.map((url) => upsertUrlSource(url)));
       }
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      const finalized = compileSourceText(nextManualText, sources, sourceMergeMode);
+      const finalized = compileSourceText(nextManualText, sourcesRef.current, sourceMergeMode);
       onChange(finalized);
       await onSubmit?.(finalized);
     } finally {
@@ -1576,8 +1579,22 @@ export function SourceInput({
               return (
                 <div key={source.id} className="flex max-w-full items-center gap-2 rounded-full border border-sidebar-border bg-background px-3 py-1.5 text-xs">
                   {icon}
-                  <span className="truncate">{label}</span>
+                  {source.kind === 'url' && source.url ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (typeof window !== 'undefined') window.open(source.url, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="truncate underline-offset-2 hover:underline"
+                      title={source.url}
+                    >
+                      {label}
+                    </button>
+                  ) : (
+                    <span className="truncate">{label}</span>
+                  )}
                   {source.loading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+                  {!source.loading && !source.error && source.kind === 'url' && source.text.trim() ? <span className="text-emerald-700">Ready</span> : null}
                   {source.error && <span className="text-destructive">Error</span>}
                   <button
                     type="button"
@@ -1624,7 +1641,7 @@ export function SourceInput({
             size="sm"
             className="h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel"
             onClick={() => setLinkInputOpen((prev) => !prev)}
-            disabled={disabled || isProcessing || isFetchingUrl}
+            disabled={disabled || isProcessing}
           >
             <Link2 className="mr-1.5 h-3.5 w-3.5" />
             Links
@@ -1662,14 +1679,14 @@ export function SourceInput({
                 }}
                 placeholder="Paste link..."
                 className="h-8 flex-1 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
-                disabled={disabled || isProcessing || isFetchingUrl}
+                disabled={disabled || isProcessing}
               />
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="h-8 px-2 text-xs"
-                disabled={disabled || isProcessing || isFetchingUrl || !linkInputValue.trim()}
+                disabled={disabled || isProcessing || !linkInputValue.trim()}
                 onClick={() => {
                   const value = linkInputValue.trim();
                   if (!value) return;

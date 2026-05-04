@@ -22,6 +22,9 @@ const SUPPORTED_TYPES = new Set([
   'short-answer',
   'matching',
   'ordering',
+  'internet-photo',
+  'video-fragment',
+  'timeline',
   'image-analysis',
   'video-analysis',
   'drawing-analysis',
@@ -83,13 +86,21 @@ function sanitizeQuestionType(type: unknown, fallback: string): QuizQuestion['ty
 function normalizeMediaUrl(type: QuizQuestion['type'], url: string | undefined, allowedUrls: Set<string>) {
   const safe = String(url || '').trim();
   if (!safe) return '';
-  if (type === 'video-analysis') {
+  if (type === 'video-analysis' || type === 'video-fragment') {
     for (const allowed of allowedUrls) {
       if (safe.startsWith(allowed)) return safe;
     }
     return Array.from(allowedUrls)[0] || '';
   }
   return safe;
+}
+
+function normalizeVideoClipWindow(startRaw: unknown, endRaw: unknown) {
+  const maxClipSeconds = 45;
+  const start = Number.isFinite(Number(startRaw)) ? Math.max(0, Math.floor(Number(startRaw))) : 0;
+  const endCandidate = Number.isFinite(Number(endRaw)) ? Math.max(start + 3, Math.floor(Number(endRaw))) : start + 8;
+  const end = Math.min(start + maxClipSeconds, endCandidate);
+  return { startSec: start, endSec: Math.max(start + 3, end) };
 }
 
 function normalizeQuestionShape(question: any, index: number, requestedTypes: string[], allowedVideoUrls: Set<string>): QuizQuestion {
@@ -179,8 +190,11 @@ function normalizeQuestionShape(question: any, index: number, requestedTypes: st
   normalized.correctOptionId = finalOptions.find((option: { id: string; text: string; isCorrect: boolean }) => option.isCorrect)?.id;
   normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
 
-  if (type === 'image-analysis' || type === 'video-analysis' || type === 'drawing-analysis') {
-    const expectedKind = type === 'video-analysis' ? 'video' : (type === 'drawing-analysis' ? 'drawing' : 'image');
+  if (type === 'image-analysis' || type === 'video-analysis' || type === 'drawing-analysis' || type === 'internet-photo' || type === 'video-fragment') {
+    const expectedKind =
+      (type === 'video-analysis' || type === 'video-fragment')
+        ? 'video'
+        : (type === 'drawing-analysis' ? 'drawing' : 'image');
     const mediaUrl = normalizeMediaUrl(type, question?.media?.url, allowedVideoUrls);
     if (!mediaUrl) {
       // Prevent fake media-analysis questions that have no usable media.
@@ -193,12 +207,23 @@ function normalizeQuestionShape(question: any, index: number, requestedTypes: st
       normalized.correctOptionId = 'a';
       return normalized;
     }
+    const clip = normalizeVideoClipWindow(question?.media?.startSec, question?.media?.endSec);
     normalized.media = {
       kind: expectedKind,
       url: mediaUrl,
       title: typeof question?.media?.title === 'string' ? question.media.title : undefined,
       source: typeof question?.media?.source === 'string' ? question.media.source : undefined,
+      startSec: type === 'video-fragment'
+        ? clip.startSec
+        : (Number.isFinite(Number(question?.media?.startSec)) ? Math.max(0, Math.floor(Number(question.media.startSec))) : undefined),
+      endSec: type === 'video-fragment'
+        ? clip.endSec
+        : (Number.isFinite(Number(question?.media?.endSec)) ? Math.max(1, Math.floor(Number(question.media.endSec))) : undefined),
     };
+    if (type === 'internet-photo' && normalized.media.kind !== 'image') {
+      normalized.type = 'multiple-choice';
+      normalized.media = undefined;
+    }
   }
 
   return normalized;
@@ -210,10 +235,8 @@ function normalizeQuizOutput(raw: Quiz | undefined | null, input: GenerateQuizIn
     ? input.questionTypes
     : (input.questionType ? [input.questionType] : ['multiple-choice']);
   const hasImageContext = Boolean(String(input.imageDataUri || '').trim());
-  const hasVideoContext = /youtube\.com|youtu\.be|vimeo\.com/i.test(String(input.sourceText || ''));
   const requestedTypes = baseRequestedTypes.filter((type) => {
     if ((type === 'image-analysis' || type === 'drawing-analysis') && !hasImageContext) return false;
-    if (type === 'video-analysis' && !hasVideoContext) return false;
     return true;
   });
   const safeRequestedTypes = requestedTypes.length > 0 ? requestedTypes : ['multiple-choice'];
@@ -344,7 +367,7 @@ Your task is to generate a high-quality quiz from the provided source text.
 The quiz should have a concise and relevant title (without phrases like "a comprehensive quiz") and a brief description.
 Create exactly {{{questionCount}}} questions.
 Each question must include:
-- type (one of: multiple-choice, true-false, fill-blank, short-answer, matching, ordering, image-analysis, video-analysis, drawing-analysis)
+- type (one of: multiple-choice, true-false, fill-blank, short-answer, matching, ordering, timeline, internet-photo, video-fragment, image-analysis, video-analysis, drawing-analysis)
 - category (short topic label, e.g. "start-of-ww1")
 - difficulty (integer 1-10)
 - explanation (1-2 short lines on why the correct answer is correct, strictly from source text)
@@ -352,12 +375,15 @@ If type is multiple-choice/true-false/image-analysis/video-analysis/drawing-anal
 If type is fill-blank/short-answer, include acceptableAnswers as an array of valid answers.
 If type is matching, include matchingPairs as array of {left,right}.
 If type is ordering, include orderingItems as array of strings in correct order.
-For media analysis types, include media {kind,url,title,source}. If valid media is unavailable, do NOT emit media-analysis question types.
+For media analysis types, include media {kind,url,title,source,startSec,endSec}. If valid media is unavailable, do NOT emit media-analysis question types.
 For video-analysis media URLs, use only channels from the provided whitelist list below.
 Media mode policy:
 - image-analysis: only when answerable from visible evidence in an image/diagram/map.
 - drawing-analysis: only when answerable from a drawing/sketch/chart-like visual.
-- video-analysis: only when answerable from time-based video context (clip/timestamp relevance).
+- video-analysis/video-fragment: only when answerable from time-based video context (clip/timestamp relevance).
+- video-fragment: include startSec and endSec for a short clip segment.
+- internet-photo: use a real image URL from curated image context, never AI-generated placeholders.
+- timeline: ask timeline-anchor questions (for example "what happened at marker T3?").
 - never choose media-analysis if the same question can be answered equally well without media evidence.
 When in adaptive mode, rebalance subtlely toward weaker categories from adaptiveProfile and lower difficulty for repeatedly wrong categories.
 Hard requirements:

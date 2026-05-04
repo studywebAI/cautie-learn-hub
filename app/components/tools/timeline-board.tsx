@@ -11,8 +11,8 @@ type Props = {
   document: CanonicalDocument;
   onChange: (nextDocument: CanonicalDocument) => void;
   settings?: {
-    rangeStartYear?: number;
-    rangeEndYear?: number;
+    rangeStart?: string;
+    rangeEnd?: string;
     scaleMode?: 'year' | 'month' | 'day' | 'log';
   };
 };
@@ -37,6 +37,30 @@ function toIsoDate(ms: number) {
   const month = `${date.getUTCMonth() + 1}`.padStart(2, '0');
   const day = `${date.getUTCDate()}`.padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function parseTemporalBoundary(raw: string | undefined, isEnd = false): { iso: string; isText: false } | { text: string; isText: true } | null {
+  const value = String(raw || '').trim();
+  if (!value) return null;
+  if (/^-?\d{1,4}$/.test(value)) {
+    return { iso: `${value}-${isEnd ? '12-31' : '01-01'}`, isText: false };
+  }
+  if (/^-?\d{1,4}-\d{1,2}$/.test(value)) {
+    const [year, month] = value.split('-');
+    const paddedMonth = String(Number(month)).padStart(2, '0');
+    return { iso: `${year}-${paddedMonth}-${isEnd ? '31' : '01'}`, isText: false };
+  }
+  if (/^-?\d{1,4}-\d{1,2}-\d{1,2}$/.test(value)) {
+    const [year, month, day] = value.split('-');
+    const paddedMonth = String(Number(month)).padStart(2, '0');
+    const paddedDay = String(Number(day)).padStart(2, '0');
+    return { iso: `${year}-${paddedMonth}-${paddedDay}`, isText: false };
+  }
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return { iso: toIsoDate(parsed.getTime()), isText: false };
+  }
+  return { text: value.toLowerCase(), isText: true };
 }
 
 export function TimelineBoard({ document, onChange, settings }: Props) {
@@ -77,8 +101,8 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
   }, [document.nodes, document.temporal]);
 
   const filtered = useMemo(() => {
-    const startFromSettings = settings?.rangeStartYear ? `${settings.rangeStartYear}-01-01` : '';
-    const endFromSettings = settings?.rangeEndYear ? `${settings.rangeEndYear}-12-31` : '';
+    const startFromSettings = parseTemporalBoundary(settings?.rangeStart, false);
+    const endFromSettings = parseTemporalBoundary(settings?.rangeEnd, true);
     const monthStartIso = customStartMonth ? `${customStartMonth}-01` : '';
     const monthEndIso = customEndMonth ? `${customEndMonth}-31` : '';
     const customMinIso =
@@ -93,22 +117,26 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
         : customMode === 'date'
           ? customEnd
           : '';
-    const minIso = displayMode === 'custom' ? customMinIso || startFromSettings : startFromSettings;
-    const maxIso = displayMode === 'custom' ? customMaxIso || endFromSettings : endFromSettings;
+    const minIso = displayMode === 'custom' ? customMinIso || (startFromSettings?.isText ? '' : startFromSettings?.iso || '') : (startFromSettings?.isText ? '' : startFromSettings?.iso || '');
+    const maxIso = displayMode === 'custom' ? customMaxIso || (endFromSettings?.isText ? '' : endFromSettings?.iso || '') : (endFromSettings?.isText ? '' : endFromSettings?.iso || '');
     const minMs = minIso ? toDate(minIso)?.getTime() ?? null : null;
     const maxMs = maxIso ? toDate(maxIso)?.getTime() ?? null : null;
+    const settingsTextFilter = displayMode === 'custom'
+      ? ''
+      : [startFromSettings?.isText ? startFromSettings.text : '', endFromSettings?.isText ? endFromSettings.text : ''].filter(Boolean).join(' ');
     return items.filter((item) => {
+      const haystack = `${item.title} ${item.body} ${item.lane}`.toLowerCase();
       if (displayMode === 'custom' && customMode === 'text' && customQuery.trim()) {
-        const haystack = `${item.title} ${item.body} ${item.lane}`.toLowerCase();
         if (!haystack.includes(customQuery.trim().toLowerCase())) return false;
       }
+      if (settingsTextFilter && !haystack.includes(settingsTextFilter)) return false;
       const ms = toDate(item.startAt)?.getTime();
       if (ms == null) return false;
       if (minMs != null && ms < minMs) return false;
       if (maxMs != null && ms > maxMs) return false;
       return true;
     });
-  }, [customEnd, customEndMonth, customMode, customQuery, customStart, customStartMonth, displayMode, items, settings?.rangeEndYear, settings?.rangeStartYear]);
+  }, [customEnd, customEndMonth, customMode, customQuery, customStart, customStartMonth, displayMode, items, settings?.rangeEnd, settings?.rangeStart]);
 
   const range = useMemo(() => {
     if (filtered.length === 0) {

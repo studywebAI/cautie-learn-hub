@@ -70,7 +70,7 @@ function getCorrectAnswerText(question: QuizQuestion) {
 function evaluateQuestionAnswer(question: QuizQuestion, answer?: AnswerValue | null): boolean {
   if (!question || !answer) return false;
   const type = question.type || 'multiple-choice';
-  if (['multiple-choice', 'true-false', 'image-analysis', 'video-analysis', 'drawing-analysis'].includes(type)) {
+  if (['multiple-choice', 'true-false', 'image-analysis', 'video-analysis', 'drawing-analysis', 'internet-photo', 'video-fragment', 'timeline'].includes(type)) {
     if (answer.kind !== 'option') return false;
     const correctOption =
       question.options.find((option) => option.isCorrect) ||
@@ -312,6 +312,50 @@ function QuestionView({ question, answer, disabled, onChange }: { question: Quiz
           </button>
         );
       })}
+    </div>
+  );
+}
+
+function MediaPrompt({ question }: { question: QuizQuestion }) {
+  const media = question.media;
+  const type = question.type || 'multiple-choice';
+  if (!media || !media.url || !['image-analysis', 'video-analysis', 'drawing-analysis', 'internet-photo', 'video-fragment'].includes(type)) return null;
+  if (media.kind === 'video') {
+    const withClip = (() => {
+      try {
+        const url = new URL(media.url);
+        if (Number.isFinite(Number(media.startSec))) url.searchParams.set('start', String(Math.max(0, Number(media.startSec))));
+        if (Number.isFinite(Number(media.endSec))) url.searchParams.set('end', String(Math.max(1, Number(media.endSec))));
+        return url.toString();
+      } catch {
+        return media.url;
+      }
+    })();
+    return (
+      <div className="rounded-lg border border-border bg-background p-2.5">
+        <div className="aspect-video w-full overflow-hidden rounded-md bg-muted">
+          <iframe
+            src={withClip}
+            title={media.title || 'Video context'}
+            className="h-full w-full border-0"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+        {media.source ? <p className="mt-1.5 text-xs text-muted-foreground">{media.source}</p> : null}
+        {(Number.isFinite(Number(media.startSec)) || Number.isFinite(Number(media.endSec))) ? (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Clip: {Number.isFinite(Number(media.startSec)) ? `${Number(media.startSec)}s` : '0s'} - {Number.isFinite(Number(media.endSec)) ? `${Number(media.endSec)}s` : 'end'}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-lg border border-border bg-background p-2.5">
+      <img src={media.url} alt={media.title || 'Question context'} className="max-h-[280px] w-full rounded-md object-contain bg-muted" />
+      {media.source ? <p className="mt-1.5 text-xs text-muted-foreground">{media.source}</p> : null}
     </div>
   );
 }
@@ -717,6 +761,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
           {currentQuestion.type === 'matching' ? <p className="mt-1 text-xs text-muted-foreground">Match each item to the correct term. {/multiple times|more than once|reuse/i.test(String(currentQuestion.hint || '')) ? 'Terms may be reused.' : 'Each term can be used once unless noted.'}</p> : null}
         </div>
 
+        <MediaPrompt question={currentQuestion} />
         <QuestionView question={currentQuestion} answer={currentAnswer} disabled={effectiveMode !== 'classic' && isAnswered} onChange={handleSetAnswer} />
 
         {(effectiveMode !== 'classic' && isAnswered && !shouldHideCorrectnessUntilEnd && lastAnsweredQuestionId === currentQuestion.id) ? (

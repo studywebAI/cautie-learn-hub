@@ -93,8 +93,10 @@ const VisualsSchema = z.object({
 });
 
 const TimelineSchema = z.object({
-  range_start_year: z.number().int().min(-5000).max(5000).default(1800),
-  range_end_year: z.number().int().min(-5000).max(5000).default(2100),
+  range_start: z.string().default("1800"),
+  range_end: z.string().default("2100"),
+  range_start_year: z.number().int().min(-5000).max(5000).optional(),
+  range_end_year: z.number().int().min(-5000).max(5000).optional(),
   scale_mode: z.enum(["year", "month", "day", "log"]).default("year"),
   causality_strength: z.boolean().default(true),
   alt_paths: z.boolean().default(false),
@@ -164,8 +166,17 @@ export function mergeAdvancedToolSettings(
   patch: Partial<AdvancedToolSettings>
 ): AdvancedToolSettings {
   const merged = deepMerge(current || DEFAULT_ADVANCED_TOOL_SETTINGS, patch || {});
+  const timeline = (merged.timeline || {}) as Record<string, unknown>;
+  const nextTimeline = { ...timeline };
+  if (!String(nextTimeline.range_start || "").trim() && Number.isFinite(Number(nextTimeline.range_start_year))) {
+    nextTimeline.range_start = String(nextTimeline.range_start_year);
+  }
+  if (!String(nextTimeline.range_end || "").trim() && Number.isFinite(Number(nextTimeline.range_end_year))) {
+    nextTimeline.range_end = String(nextTimeline.range_end_year);
+  }
   return AdvancedToolSettingsSchema.parse({
     ...merged,
+    timeline: nextTimeline,
     version: 1,
     updatedAt: new Date().toISOString(),
   });
@@ -211,11 +222,20 @@ export function detectAdvancedSettingsConflicts(
       message: "Spatial quiz mode requires images/diagrams enabled.",
     });
   }
-  if (settings.timeline.range_end_year < settings.timeline.range_start_year) {
+  const parseYear = (raw: string) => {
+    const trimmed = String(raw || "").trim();
+    const m = trimmed.match(/^-?\d{1,4}/);
+    if (!m) return null;
+    const parsed = Number(m[0]);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+  const startYear = parseYear(settings.timeline.range_start);
+  const endYear = parseYear(settings.timeline.range_end);
+  if (startYear !== null && endYear !== null && endYear < startYear) {
     conflicts.push({
-      key: "timeline.range_end_year",
+      key: "timeline.range_end",
       severity: "error",
-      message: "Timeline end year must be greater than or equal to start year.",
+      message: "Timeline end must be greater than or equal to start when both are year-like values.",
     });
   }
   if (context?.tool === "wordweb" && settings.flashcards.time_per_card_seconds > 0) {

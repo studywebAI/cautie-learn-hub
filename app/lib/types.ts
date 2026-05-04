@@ -91,6 +91,9 @@ export const QuizQuestionTypeSchema = z.enum([
   'short-answer',
   'matching',
   'ordering',
+  'internet-photo',
+  'video-fragment',
+  'timeline',
   'image-analysis',
   'video-analysis',
   'drawing-analysis',
@@ -101,6 +104,8 @@ export const QuizQuestionMediaSchema = z.object({
   url: z.string(),
   title: z.string().optional(),
   source: z.string().optional(),
+  startSec: z.number().int().nonnegative().optional(),
+  endSec: z.number().int().positive().optional(),
 });
 
 export const QuizQuestionSchema = z.object({

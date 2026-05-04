@@ -708,8 +708,8 @@ function NotesPageContent() {
             spatialQuizMode: Boolean(advancedSettings?.visuals.spatial_quiz_mode),
           },
           timelineOptions: {
-            rangeStartYear: advancedSettings?.timeline.range_start_year,
-            rangeEndYear: advancedSettings?.timeline.range_end_year,
+            rangeStart: advancedSettings?.timeline.range_start,
+            rangeEnd: advancedSettings?.timeline.range_end,
             scaleMode: advancedSettings?.timeline.scale_mode,
             causalityStrength: Boolean(advancedSettings?.timeline.causality_strength),
             altPaths: Boolean(advancedSettings?.timeline.alt_paths),
@@ -1199,8 +1199,8 @@ function NotesPageContent() {
                 document={canonicalDoc}
                 onChange={applyCanonicalDocument}
                 settings={{
-                  rangeStartYear: advancedSettings?.timeline.range_start_year,
-                  rangeEndYear: advancedSettings?.timeline.range_end_year,
+                  rangeStart: advancedSettings?.timeline.range_start ?? String(advancedSettings?.timeline.range_start_year ?? ''),
+                  rangeEnd: advancedSettings?.timeline.range_end ?? String(advancedSettings?.timeline.range_end_year ?? ''),
                   scaleMode: advancedSettings?.timeline.scale_mode,
                 }}
               />
@@ -1391,7 +1391,9 @@ function NotesPageContent() {
         />
       </div>
 
-      <PillSelector label="Format" options={noteStyleOptions} value={style} onChange={setStyle} disabled={isLoading} />
+      {mode === 'notes' ? (
+        <PillSelector label="Format" options={noteStyleOptions} value={style} onChange={setStyle} disabled={isLoading} />
+      ) : null}
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -1507,12 +1509,10 @@ function NotesPageContent() {
                   <Input
                     type="text"
                     inputMode="text"
-                    value={String(advancedSettings?.timeline.range_start_year ?? '')}
+                    value={String(advancedSettings?.timeline.range_start ?? advancedSettings?.timeline.range_start_year ?? '')}
                     onChange={(e) => {
                       const raw = e.target.value.trim();
-                      const parsed = Number(raw);
-                      if (!raw || Number.isNaN(parsed)) return;
-                      void saveAdvancedSettingsPatch({ timeline: { range_start_year: parsed } as any }, { tool: 'timeline' });
+                      void saveAdvancedSettingsPatch({ timeline: { range_start: raw } as any }, { tool: 'timeline' });
                     }}
                     placeholder="From"
                     className="h-8 text-sm bg-[hsl(var(--background))]"
@@ -1520,12 +1520,10 @@ function NotesPageContent() {
                   <Input
                     type="text"
                     inputMode="text"
-                    value={String(advancedSettings?.timeline.range_end_year ?? '')}
+                    value={String(advancedSettings?.timeline.range_end ?? advancedSettings?.timeline.range_end_year ?? '')}
                     onChange={(e) => {
                       const raw = e.target.value.trim();
-                      const parsed = Number(raw);
-                      if (!raw || Number.isNaN(parsed)) return;
-                      void saveAdvancedSettingsPatch({ timeline: { range_end_year: parsed } as any }, { tool: 'timeline' });
+                      void saveAdvancedSettingsPatch({ timeline: { range_end: raw } as any }, { tool: 'timeline' });
                     }}
                     placeholder="To"
                     className="h-8 text-sm bg-[hsl(var(--background))]"
