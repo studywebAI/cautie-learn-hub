@@ -257,7 +257,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="h-full w-full overflow-auto surface-panel">
+    <div className="page-content">
       <div className="flex w-full flex-col gap-4">
         <div className="flex items-center justify-between rounded-xl surface-panel px-1 py-1">
           <Button
@@ -275,7 +275,7 @@ export default function SettingsPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             {ui.back}
           </Button>
-          <h1 className="text-sm md:text-base">{ui.settings}</h1>
+          <h1 className="page-title">{ui.settings}</h1>
         </div>
 
         <div className="rounded-xl surface-panel p-1">

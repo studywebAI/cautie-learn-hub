@@ -335,7 +335,7 @@ export function GradesTab({ classId }: { classId: string }) {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
           <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('new')}>
             <p>New Grades</p>
             <p className="text-xs text-foreground/70">Create and assign grades</p>
@@ -480,7 +480,7 @@ function GradesReportsView({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
         <div className="class-panel">
           <p className="text-xs text-muted-foreground">Grade Sets</p>
           <p className="mt-1 text-xl">{gradeSets.length}</p>
@@ -499,7 +499,7 @@ function GradesReportsView({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <div className="class-panel-lg">
           <h2 className="text-base">Top Performing Grade Set</h2>
           {topSet ? (

@@ -47,7 +47,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <div
                   className={`${
                     isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto"
-                  } app-main-shell`}
+                  } app-main-shell ${isClassPage ? "app-main-shell--class" : "app-main-shell--page"}`}
                 >
                     <AppErrorBoundary key={pathname || 'main'}>
                         {children}

@@ -62,10 +62,9 @@ export default function OtherMaterialsPage() {
   );
 
   return (
-    <div className="h-full overflow-auto">
-      <div className="mx-auto w-full max-w-7xl p-4 md:p-6">
+    <div className="page-content">
         <div className="mb-4">
-          <h1 className="text-xl font-semibold">Materials</h1>
+          <h1 className="page-title">Materials</h1>
           <p className="text-sm text-muted-foreground">Auto-saved files, images, OneDrive docs, and text sources.</p>
         </div>
 
@@ -134,7 +133,6 @@ export default function OtherMaterialsPage() {
             </div>
           )}
         </section>
-      </div>
     </div>
   );
 }

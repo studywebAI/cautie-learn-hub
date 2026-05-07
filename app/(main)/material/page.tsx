@@ -114,7 +114,7 @@ function MaterialPageContent() {
 
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="page-content">
       <Card>
         <CardHeader>
           <CardTitle>{materialDict.importTitle}</CardTitle>
@@ -168,16 +168,16 @@ function MaterialPageContent() {
       {result && (
         <Card>
             <CardHeader>
-                <CardTitle className="font-headline">{result.analysis.title}</CardTitle>
+            <CardTitle>{result.analysis.title}</CardTitle>
                 <CardDescription>Topic: {result.analysis.topic}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div>
-                    <h3 className="font-semibold mb-2">{materialDict.summary}</h3>
+                    <h3 className="mb-2">{materialDict.summary}</h3>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.analysis.summary}</p>
                 </div>
                  <div>
-                    <h3 className="font-semibold mb-2">{materialDict.suggestedActions}</h3>
+                    <h3 className="mb-2">{materialDict.suggestedActions}</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {result.suggestedActions.map((action) => {
                             const Icon = iconMap[action.icon] || BrainCircuit;

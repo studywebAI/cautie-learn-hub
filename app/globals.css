@@ -72,6 +72,9 @@
     --accent-purple: #262626;
     --accent-teal: #22c55e;
     --brand-coral: #d97757;
+    --page-max-width: 1280px;
+    --page-inline-padding: 12px;
+    --page-block-padding: 12px;
   }
 
   .dark {
@@ -484,8 +487,9 @@
     @apply border-border;
     font-family: var(--font-ui) !important;
     font-weight: 400 !important;
-    font-stretch: 90% !important;
-    font-variation-settings: "wght" 400, "wdth" 90;
+    font-stretch: 100% !important;
+    font-synthesis: none;
+    font-variation-settings: "wght" 400, "wdth" 100;
   }
   *:focus,
   *:focus-visible {
@@ -499,9 +503,9 @@
     line-height: 1.4667;
     letter-spacing: 0;
     font-weight: 400;
-    -webkit-font-smoothing: auto;
-    -moz-osx-font-smoothing: auto;
-    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
   }
   button, input, textarea, select, option {
     font-family: var(--font-ui);
@@ -556,7 +560,8 @@
   .font-bold,
   .font-semibold,
   .font-medium,
-  .font-normal {
+  .font-normal,
+  .font-headline {
     font-weight: 400 !important;
   }
   b,
@@ -579,6 +584,15 @@
     padding-right: var(--app-shell-space-right);
     padding-bottom: var(--app-shell-space-bottom);
   }
+
+  .app-main-shell--page > * {
+    width: 100%;
+    max-width: var(--page-max-width);
+    margin-inline: auto;
+    padding-inline: var(--page-inline-padding);
+    padding-top: var(--page-block-padding);
+    padding-bottom: calc(var(--page-block-padding) + var(--nav-bottom-bar-height));
+  }
   @media (min-width: 768px) {
     .app-main-shell {
       --app-shell-space-top: 0.2rem;
@@ -600,6 +614,28 @@
 
   .class-shell {
     @apply w-full space-y-4;
+  }
+
+  .page-content {
+    @apply w-full space-y-4;
+  }
+
+  .page-header {
+    @apply flex items-center justify-between gap-2;
+  }
+
+  .page-title {
+    font-size: var(--type-page);
+    line-height: 1.35;
+    font-weight: 400 !important;
+    letter-spacing: -0.01em;
+  }
+
+  .page-subtitle {
+    font-size: var(--type-body);
+    line-height: 1.45;
+    color: hsl(var(--muted-foreground));
+    font-weight: 400 !important;
   }
 
   .class-panel {
@@ -633,8 +669,28 @@
 
 @media (max-width: 767px) {
   :root {
+    --type-body: 14px;
+    --type-micro: 11px;
     --type-page: 20px;
     --type-section: 17px;
+    --page-inline-padding: 10px;
+    --page-block-padding: 10px;
+  }
+
+  .class-shell {
+    @apply space-y-3;
+  }
+
+  .class-panel {
+    @apply p-2.5;
+  }
+
+  .class-panel-lg {
+    @apply p-3;
+  }
+
+  .page-content {
+    @apply space-y-3;
   }
 }
 
