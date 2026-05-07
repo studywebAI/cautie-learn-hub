@@ -94,12 +94,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
     customEventFor: isDutch ? 'Aangepast event voor' : 'Custom event for',
     customEventDescription: isDutch ? 'Voeg een aangepast bericht toe voor dit event.' : 'Add a custom message for this student event.',
     saveEvent: isDutch ? 'Event opslaan' : 'Save event',
-    quickReason: isDutch ? 'Snelle reden' : 'Quick reason',
     alsoLogEvent: isDutch ? 'Ook toevoegen aan class logs' : 'Also add to class logs',
-    reasonLateTraffic: isDutch ? 'Te laat door vervoer' : 'Late due to transport',
-    reasonMaterialMissing: isDutch ? 'Materiaal vergeten' : 'Forgot materials',
-    reasonBehavior: isDutch ? 'Klasgedrag besproken' : 'Behavior discussed',
-    reasonParentContact: isDutch ? 'Oudercontact gepland' : 'Parent contact planned',
     undo: isDutch ? 'Ongedaan maken' : 'Undo',
     timeline: isDutch ? 'tijdlijn' : 'timeline',
     timelineDescription: isDutch ? 'Recente aanwezigheid en events met docent en datum.' : 'Recent attendance and custom events with teacher and date.',
@@ -317,7 +312,60 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
           ),
         });
       }
-      void fetchAttendance(true);
+      if (!noop) {
+        setStudents((prev) =>
+          prev.map((student) => {
+            if (student.id !== action.studentId) return student;
+
+            const recentActivity = [...(student.recentActivity || [])];
+            const now = new Date().toISOString();
+            if (typeof action.isPresent === 'boolean' && student.isPresent !== action.isPresent) {
+              recentActivity.unshift({
+                id: `local-attendance-${now}`,
+                action: 'attendance_state_changed',
+                entityType: 'attendance',
+                entityId: payload?.attendance?.id || null,
+                details: {
+                  to_is_present: action.isPresent,
+                },
+                createdAt: now,
+              });
+            }
+            if (typeof action.hasHomeworkIncomplete === 'boolean' && student.hasHomeworkIncomplete !== action.hasHomeworkIncomplete) {
+              recentActivity.unshift({
+                id: `local-homework-${now}`,
+                action: 'attendance_event_homework_incomplete',
+                entityType: 'attendance',
+                entityId: payload?.attendance?.id || null,
+                details: {
+                  to_active: action.hasHomeworkIncomplete,
+                },
+                createdAt: now,
+              });
+            }
+            if (typeof action.wasTooLate === 'boolean' && student.wasTooLate !== action.wasTooLate) {
+              recentActivity.unshift({
+                id: `local-late-${now}`,
+                action: 'attendance_event_late',
+                entityType: 'attendance',
+                entityId: payload?.attendance?.id || null,
+                details: {
+                  to_active: action.wasTooLate,
+                },
+                createdAt: now,
+              });
+            }
+
+            return {
+              ...student,
+              isPresent: action.isPresent,
+              hasHomeworkIncomplete: Boolean(action.hasHomeworkIncomplete),
+              wasTooLate: Boolean(action.wasTooLate),
+              recentActivity: recentActivity.slice(0, 12),
+            };
+          })
+        );
+      }
       void logClassTabEvent({
         classId,
         tab: 'attendance',
@@ -434,11 +482,31 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
       }
 
       clearQuickAction();
+      const now = new Date().toISOString();
+      setStudents((prev) =>
+        prev.map((student) =>
+          student.id === selectedStudent.id
+            ? {
+                ...student,
+                recentActivity: [
+                  {
+                    id: `local-custom-${now}`,
+                    action: 'attendance_event_custom',
+                    entityType: 'attendance',
+                    entityId: null,
+                    details: { custom_message: customEventText.trim() },
+                    createdAt: now,
+                  },
+                  ...(student.recentActivity || []),
+                ].slice(0, 12),
+              }
+            : student
+        )
+      );
       toast({
         title: isDutch ? 'Opgeslagen' : 'Saved',
         description: isDutch ? 'Aangepast event opgeslagen.' : 'Custom event saved.',
       });
-      void fetchAttendance(true);
       void logClassTabEvent({
         classId,
         tab: 'attendance',
@@ -484,7 +552,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
     } else {
       nextParams.delete('studentId');
     }
-    router.replace(`${pathname}?${nextParams.toString()}`);
+    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
   };
 
   const clearQuickAction = () => {
@@ -492,7 +560,7 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
     const nextParams = new URLSearchParams(searchParams?.toString() || '');
     nextParams.set('tab', 'attendance');
     nextParams.delete('quick');
-    router.replace(`${pathname}?${nextParams.toString()}`);
+    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
   };
 
   if (loading) {
@@ -698,27 +766,6 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
             value={customEventText}
             onChange={(e) => setCustomEventText(e.target.value)}
           />
-          <div className="grid gap-2 md:grid-cols-[160px_minmax(0,1fr)] md:items-center">
-            <Label>{t.quickReason}</Label>
-            <Select
-              value="__none"
-              onValueChange={(value) => {
-                if (value === '__none') return;
-                setCustomEventText(value);
-              }}
-            >
-              <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder={t.quickReason} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none">{t.quickReason}</SelectItem>
-                <SelectItem value={t.reasonLateTraffic}>{t.reasonLateTraffic}</SelectItem>
-                <SelectItem value={t.reasonMaterialMissing}>{t.reasonMaterialMissing}</SelectItem>
-                <SelectItem value={t.reasonBehavior}>{t.reasonBehavior}</SelectItem>
-                <SelectItem value={t.reasonParentContact}>{t.reasonParentContact}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
             <Checkbox checked={logCustomEvent} onCheckedChange={(checked) => setLogCustomEvent(Boolean(checked))} />
             <span>{t.alsoLogEvent}</span>

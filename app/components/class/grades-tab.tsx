@@ -569,6 +569,7 @@ function NewGradesWizard({
   const [newPresetName, setNewPresetName] = useState('');
   const [newPresetKind, setNewPresetKind] = useState<'freeform' | 'numeric_range' | 'letter_scale'>('freeform');
   const [newPresetValues, setNewPresetValues] = useState('');
+  const [presetCodeInput, setPresetCodeInput] = useState('');
 
   useEffect(() => {
     loadSubjects();
@@ -729,6 +730,71 @@ function NewGradesWizard({
     setNewPresetValues('');
   };
 
+  const encodePresetCode = (preset: { name: string; kind: GradePreset['kind']; config: any }) => {
+    try {
+      return btoa(unescape(encodeURIComponent(JSON.stringify(preset))));
+    } catch {
+      return '';
+    }
+  };
+
+  const importPresetFromCode = async () => {
+    const raw = presetCodeInput.trim();
+    if (!raw) return;
+    try {
+      const decoded = decodeURIComponent(escape(atob(raw)));
+      const parsed = JSON.parse(decoded) as { name?: string; kind?: GradePreset['kind']; config?: any };
+      if (!parsed?.name || !parsed?.kind) {
+        throw new Error('Invalid preset code.');
+      }
+
+      const response = await fetch(`/api/classes/${classId}/grading-presets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: String(parsed.name).trim(),
+          kind: parsed.kind,
+          config: parsed.config || {},
+          is_default: presets.length === 0,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error?.error || 'Failed to import preset');
+      }
+
+      const data = await response.json();
+      const created = data.preset as GradePreset;
+      setPresets((prev) => [...prev, created]);
+      setSelectedPresetId(created.id);
+      setPresetCodeInput('');
+      toast({ title: 'Preset imported' });
+    } catch (error: any) {
+      toast({ title: error?.message || 'Invalid preset code', variant: 'destructive' });
+    }
+  };
+
+  const copySelectedPresetCode = async () => {
+    const selected = presets.find((preset) => preset.id === selectedPresetId);
+    if (!selected) return;
+    const code = encodePresetCode({
+      name: selected.name,
+      kind: selected.kind,
+      config: selected.config || {},
+    });
+    if (!code) {
+      toast({ title: 'Could not generate preset code', variant: 'destructive' });
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(code);
+      toast({ title: 'Preset code copied' });
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="class-shell">
       {/* Header */}
@@ -769,7 +835,7 @@ function NewGradesWizard({
 
         <div className="space-y-2">
           <Label className="text-base">Grading Preset (Optional)</Label>
-          <select value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)} className="w-full p-2 border rounded-md">
+          <select value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
             <option value="">No preset (free input)</option>
             {presets.map((preset) => (
               <option key={preset.id} value={preset.id}>
@@ -778,21 +844,38 @@ function NewGradesWizard({
             ))}
           </select>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-            <Input value={newPresetName} onChange={(e) => setNewPresetName(e.target.value)} />
+            <Input value={newPresetName} onChange={(e) => setNewPresetName(e.target.value)} placeholder="Preset name" />
             <select
               value={newPresetKind}
               onChange={(e) => setNewPresetKind(e.target.value as 'freeform' | 'numeric_range' | 'letter_scale')}
-              className="w-full p-2 border rounded-md"
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
               <option value="freeform">Freeform</option>
               <option value="numeric_range">Numeric Range</option>
               <option value="letter_scale">Letter Scale</option>
             </select>
-            <Button type="button" variant="outline" onClick={createPreset}>Save Preset</Button>
+            <Button type="button" variant="outline" onClick={createPreset}>Save current options</Button>
           </div>
           {newPresetKind === 'letter_scale' && (
-            <Input value={newPresetValues} onChange={(e) => setNewPresetValues(e.target.value)} />
+            <Input value={newPresetValues} onChange={(e) => setNewPresetValues(e.target.value)} placeholder="A,B,C,D,F" />
           )}
+          <div className="rounded-md border border-border/60 p-2">
+            <p className="mb-2 text-xs text-muted-foreground">Preset code</p>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto_auto]">
+              <Input
+                value={presetCodeInput}
+                onChange={(e) => setPresetCodeInput(e.target.value)}
+                placeholder="Paste preset code..."
+                className="border-sidebar-border bg-sidebar-accent/40"
+              />
+              <Button type="button" variant="outline" onClick={importPresetFromCode}>
+                Import code
+              </Button>
+              <Button type="button" variant="outline" onClick={copySelectedPresetCode} disabled={!selectedPresetId}>
+                Copy preset code
+              </Button>
+            </div>
+          </div>
         </div>
 
         {subjects.length > 0 && (

@@ -276,30 +276,62 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
         ))}
         </div>
         <div className="border-t border-border pt-3">
-          <div className="mb-2 flex flex-wrap gap-2">
+          <div className="relative z-10 mb-2 flex flex-wrap items-center gap-1.5">
             <label className="inline-flex">
               <input type="file" accept="image/*" className="hidden" onChange={(event) => onPickFile(event, 'photo')} />
-              <Button type="button" size="sm" variant={composerMode === 'photo' ? 'default' : 'outline'} className="h-7 text-xs" asChild>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className={`h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel ${composerMode === 'photo' ? 'ring-1 ring-primary/30' : ''}`}
+                asChild
+              >
                 <span>Photo</span>
               </Button>
             </label>
             <label className="inline-flex">
               <input type="file" className="hidden" onChange={(event) => onPickFile(event, 'file')} />
-              <Button type="button" size="sm" variant={composerMode === 'file' ? 'default' : 'outline'} className="h-7 text-xs" asChild>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className={`h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel ${composerMode === 'file' ? 'ring-1 ring-primary/30' : ''}`}
+                asChild
+              >
                 <span>Files</span>
               </Button>
             </label>
-            <Button type="button" size="sm" variant={composerMode === 'link' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setComposerMode('link')}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className={`h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel ${composerMode === 'link' ? 'ring-1 ring-primary/30' : ''}`}
+              onClick={() => setComposerMode('link')}
+            >
               Links
             </Button>
           </div>
           {composerMode === 'link' ? (
-            <Input
-              value={linkUrl}
-              onChange={(event) => setLinkUrl(event.target.value)}
-              placeholder="https://..."
-              className="mb-2 h-8 text-sm"
-            />
+            <div className="mb-2 rounded-xl border border-sidebar-border bg-background/80 p-2">
+              <div className="flex items-center gap-2">
+                <Input
+                  value={linkUrl}
+                  onChange={(event) => setLinkUrl(event.target.value)}
+                  placeholder="Paste link..."
+                  className="h-8 flex-1 border-sidebar-border bg-sidebar-accent/50 text-xs"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
+                  disabled={!linkUrl.trim()}
+                  onClick={() => setComposerMode('text')}
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
           ) : null}
           {(composerMode === 'photo' || composerMode === 'file') && attachmentLabel ? (
             <div className="mb-2 flex items-center justify-between gap-2 rounded-md surface-interactive px-2 py-1 text-xs text-muted-foreground">
@@ -323,21 +355,23 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
               </Button>
             </div>
           ) : null}
-          <Textarea
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            placeholder="Write a message..."
-            className="min-h-[90px] bg-[hsl(var(--background))]"
-            onKeyDown={(event) => {
-              if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-                event.preventDefault();
-                void sendMessage();
-              }
-            }}
-          />
-          <div className="mt-2 flex justify-end">
+          <div className="mb-1 flex items-start gap-2">
+            <Textarea
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              placeholder="Write a message..."
+              className="h-[132px] min-h-[132px] flex-1 resize-none rounded-2xl border border-border surface-chip text-sm"
+              onKeyDown={(event) => {
+                if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                  event.preventDefault();
+                  void sendMessage();
+                }
+              }}
+            />
             <Button
               size="sm"
+              variant="outline"
+              className="w-[112px] rounded-2xl border-sidebar-border bg-white text-xs hover:surface-panel"
               onClick={() => void sendMessage()}
               disabled={isSubmitting || (!message.trim() && !attachmentLabel && !linkUrl.trim())}
             >
