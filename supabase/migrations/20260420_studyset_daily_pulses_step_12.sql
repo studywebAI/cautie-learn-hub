@@ -3,7 +3,7 @@
 
 create extension if not exists pgcrypto;
 
-create table if not exists public.studyset_daily_pulses (
+create table if not exists public.studayset_daily_pulses (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
   studyset_id uuid not null references public.studysets(id) on delete cascade,
