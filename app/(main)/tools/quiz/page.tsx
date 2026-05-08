@@ -299,11 +299,23 @@ function QuizPageContent() {
       const output = run?.output_payload || run;
       setQuiz(output as Quiz);
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Quiz generation failed', description: error?.message || 'Unknown error' });
+      const msg = String(error?.message || 'Unknown error');
+      const isQuota = /quota|insufficient|rate limit|billing/i.test(msg);
+      const detail = isQuota
+        ? `Provider quota/billing error detected. ${msg}`
+        : msg;
+      console.error('[quiz.generate] failed', {
+        message: msg,
+        code: error?.code || null,
+        runId: error?.runId || null,
+        mode,
+        questionTypes,
+      });
+      toast({ variant: 'destructive', title: 'Quiz generation failed', description: detail });
     } finally {
       setLoading(false);
     }
-  }, [buildGenerationInput, mode, title, toast]);
+  }, [buildGenerationInput, mode, questionTypes, title, toast]);
 
   const handleRestart = useCallback(() => {
     setQuiz(null);
@@ -524,8 +536,8 @@ function QuizPageContent() {
         onSubmit={(compiledText) => handleGenerate(String(compiledText || sourceText))}
         placeholder=""
         speechLanguage={language}
-        enableMic={false}
-        enableCaptions={false}
+        enableMic
+        enableCaptions
         sourceMergeMode="append_labeled"
       />
     </WorkbenchShell>

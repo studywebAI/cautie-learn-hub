@@ -546,22 +546,6 @@ export function RecentsSidebar() {
                   ) : null}
                 </div>
               ) : null}
-              {item.source === 'studyset' && typeof item.pendingInterventions === 'number' && item.pendingInterventions > 0 ? (
-                <span
-                  className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-300"
-                  title={`Priority queue: ${item.pendingInterventions} intervention${item.pendingInterventions === 1 ? '' : 's'} to address first.`}
-                >
-                  Queue {item.pendingInterventions}
-                </span>
-              ) : null}
-              {item.source === 'studyset' && item.weakestTool ? (
-                <span
-                  className="rounded bg-sidebar-accent/40 px-1.5 py-0.5 text-[10px] text-sidebar-foreground/90"
-                  title="Current weakest tool based on recent performance."
-                >
-                  Focus {item.weakestTool}
-                </span>
-              ) : null}
               {item.source === 'studyset' && item.nextTaskHref && !item.isComplete ? (
                 <button
                   type="button"

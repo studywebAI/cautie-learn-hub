@@ -258,171 +258,115 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
   return (
     <div className="class-shell" data-testid="group-tab">
       <div className="space-y-3 p-1 md:p-1">
-          <div className="relative flex items-center justify-end">
-            <Button
-              variant={groupSettingsOpen ? 'default' : 'outline'}
-              size="sm"
-              className="h-9 gap-2 rounded-md"
-              onClick={() => setGroupSettingsOpen(true)}
-            >
-              <Settings className="h-4 w-4" />
-              {t.settings}
-            </Button>
-          </div>
-          <div className="space-y-3">
-            <div className="class-panel" data-testid="group-section-teachers">
-                <div className="flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => setTeachersCollapsed((v) => !v)}
-                    className="inline-flex items-center gap-1.5 text-left"
-                    aria-label={teachersCollapsed ? t.expand : t.collapse}
-                  >
-                    {teachersCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      <h3 className="text-base font-normal" data-testid="group-heading-teachers">{t.teachers}</h3>
-                    </button>
-                  <span className="text-xs text-muted-foreground">
-                    {data.teachers.length} {t.people}
-                  </span>
-                </div>
-                {!teachersCollapsed && <p className="text-xs text-muted-foreground">{t.teacherListHint}</p>}
-              {!teachersCollapsed && (
-                <div className="mt-3 space-y-1.5">
-                  {sortedTeachers.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">{t.noTeachers}</p>
-                  ) : (
-                    sortedTeachers.map((teacher) => (
-                      <button
-                        key={teacher.id}
-                        type="button"
-                        className="group flex w-full items-center gap-3 rounded-md surface-panel px-3 py-2 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
-                        onClick={() => setSelectedTeacher(teacher)}
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate">{teacher.email || teacher.name}</p>
-                          <p className="truncate text-xs text-muted-foreground">
-                            {(teacher.subjects || []).map((s) => s.title).join(', ') || t.noLinkedSubjects}
-                          </p>
-                        </div>
-                        <MoreHorizontal className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
+        <div className="relative flex items-center justify-end">
+          <Button
+            variant={groupSettingsOpen ? 'default' : 'outline'}
+            size="sm"
+            className="h-9 gap-2 rounded-md"
+            onClick={() => setGroupSettingsOpen(true)}
+          >
+            <Settings className="h-4 w-4" />
+            {t.settings}
+          </Button>
+        </div>
 
-            <div className="class-panel" data-testid="group-section-students">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => setStudentsCollapsed((v) => !v)}
-                      className="inline-flex items-center gap-1.5 text-left"
-                      aria-label={studentsCollapsed ? t.expand : t.collapse}
-                    >
-                      {studentsCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      <h3 className="text-base" data-testid="group-heading-students">{t.students}</h3>
-                    </button>
-                    {!studentsCollapsed && <p className="text-xs text-muted-foreground">{t.studentListHint}</p>}
+        <div className="class-panel" data-testid="group-section-students">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-base font-medium" data-testid="group-heading-students">{t.students}</h3>
+            <span className="text-xs text-muted-foreground">{sortedStudents.length} {t.people}</span>
+          </div>
+          <div className="space-y-1.5">
+            {sortedStudents.length === 0 ? (
+              <div className="rounded-md surface-panel py-8 text-center text-foreground/75">
+                <Users className="mx-auto mb-3 h-10 w-10 opacity-50" />
+                <p>{t.noStudentsFound}</p>
+              </div>
+            ) : (
+              sortedStudents.map((student) => (
+                <button
+                  type="button"
+                  key={student.id}
+                  data-testid={`group-student-row-${student.id}`}
+                  className="group flex w-full items-center gap-3 rounded-md surface-panel px-3 py-2 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
+                  onClick={() => {
+                    setSelectedStudent(student);
+                    void logClassTabEvent({
+                      classId,
+                      tab: 'group',
+                      event: 'student_opened',
+                      stage: 'action',
+                      level: 'debug',
+                      meta: { student_id: student.id },
+                    });
+                  }}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm">{student.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
                   </div>
-                  {!studentsCollapsed && (
-                    <div className="flex items-center gap-2 pr-1">
-                      <span className="text-xs text-muted-foreground">
-                        {sortedStudents.length} {t.people}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-              {!studentsCollapsed && (
-                <div className="mt-3 space-y-1.5">
-                  {sortedStudents.map((student) => (
-                    <button
-                      type="button"
-                      key={student.id}
-                      data-testid={`group-student-row-${student.id}`}
-                      className="group flex items-center gap-3 rounded-md surface-panel px-3 py-2 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
-                      onClick={() => {
-                        setSelectedStudent(student);
-                        void logClassTabEvent({
-                          classId,
-                          tab: 'group',
-                          event: 'student_opened',
-                          stage: 'action',
-                          level: 'debug',
-                          meta: { student_id: student.id },
-                        });
-                      }}
+                  <div className="flex items-center gap-1">
+                    <Link
+                      prefetch={false}
+                      href={`/class/${classId}?tab=logs&student_id=${student.id}&category=events`}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
+                      onClick={(e) => e.stopPropagation()}
+                      title={isDutch ? 'Bekijk tijdlijn' : 'View timeline'}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm">{student.name}</p>
-                          <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                          <Link
-                            prefetch={false}
-                            href={`/class/${classId}?tab=logs&student_id=${student.id}&category=events`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
-                            onClick={(e) => e.stopPropagation()}
-                            title={isDutch ? 'Bekijk tijdlijn' : 'View timeline'}
-                          >
-                            <Info className="h-4 w-4" />
-                          </Link>
-                          <Link
-                            prefetch={false}
-                            href={`/class/${classId}?tab=attendance&studentId=${student.id}`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
-                            onClick={(e) => e.stopPropagation()}
-                            title={t.attendance}
-                          >
-                            <Check className="h-4 w-4" />
-                          </Link>
-                          <Link
-                            prefetch={false}
-                            href={`/class/${classId}?tab=attendance&studentId=${student.id}&quick=event`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
-                            onClick={(e) => e.stopPropagation()}
-                            title={isDutch ? 'Aangepast event toevoegen' : 'Add custom event'}
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                          </Link>
-                          <button
-                            type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedStudent(student);
-                              void logClassTabEvent({
-                                classId,
-                                tab: 'group',
-                                event: 'student_opened',
-                                stage: 'action',
-                                level: 'debug',
-                                meta: { student_id: student.id },
-                              });
-                            }}
-                            title={isDutch ? 'Meer acties' : 'More actions'}
-                          >
-                            <MoreHorizontal className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
-                          </button>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-
-                  {sortedStudents.length === 0 && (
-                    <div className="rounded-md surface-panel py-10 text-center text-foreground/75">
-                      <Users className="mx-auto mb-4 h-12 w-12 opacity-50" />
-                      <p>{t.noStudentsFound}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                      <Info className="h-4 w-4" />
+                    </Link>
+                    <Link
+                      prefetch={false}
+                      href={`/class/${classId}?tab=attendance&studentId=${student.id}`}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
+                      onClick={(e) => e.stopPropagation()}
+                      title={t.attendance}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Link>
+                    <Link
+                      prefetch={false}
+                      href={`/class/${classId}?tab=attendance&studentId=${student.id}&quick=event`}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
+                      onClick={(e) => e.stopPropagation()}
+                      title={isDutch ? 'Aangepast event toevoegen' : 'Add custom event'}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </Link>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
+        </div>
+
+        <div className="class-panel" data-testid="group-section-teachers">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-base font-medium" data-testid="group-heading-teachers">{t.teachers}</h3>
+            <span className="text-xs text-muted-foreground">{sortedTeachers.length} {t.people}</span>
+          </div>
+          <div className="space-y-1.5">
+            {sortedTeachers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t.noTeachers}</p>
+            ) : (
+              sortedTeachers.map((teacher) => (
+                <button
+                  key={teacher.id}
+                  type="button"
+                  className="group flex w-full items-center gap-3 rounded-md surface-panel px-3 py-2 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
+                  onClick={() => setSelectedTeacher(teacher)}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate">{teacher.email || teacher.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {(teacher.subjects || []).map((s) => s.title).join(', ') || t.noLinkedSubjects}
+                    </p>
+                  </div>
+                  <MoreHorizontal className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                </button>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>

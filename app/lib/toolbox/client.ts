@@ -14,29 +14,47 @@ type RunToolFlowInput = {
 };
 
 export async function runToolFlowV2(payload: RunToolFlowInput) {
+  const controller = new AbortController();
+  const timeoutMs = 120_000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   const idempotencyKey =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random()}`;
 
-  const response = await fetch("/api/tools/v2/runs", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      ...payload,
-      idempotencyKey,
-      computeClass: payload.computeClass || "standard",
-      persistArtifact: payload.persistArtifact ?? true,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch("/api/tools/v2/runs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        ...payload,
+        idempotencyKey,
+        computeClass: payload.computeClass || "standard",
+        persistArtifact: payload.persistArtifact ?? true,
+      }),
+    });
+  } catch (error: any) {
+    if (error?.name === "AbortError") {
+      const timeoutError = new Error(`Tool run timed out after ${Math.round(timeoutMs / 1000)}s`) as Error & { code?: string };
+      timeoutError.code = "CLIENT_TIMEOUT";
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const data = await response.json();
   if (!response.ok) {
     const message = data?.error || "Tool execution failed";
     const code = data?.code ? String(data.code) : "";
-    const enriched = code ? `${message} (code: ${code})` : message;
-    const error = new Error(enriched) as Error & { code?: string };
+    const runId = data?.runId ? String(data.runId) : "";
+    const enriched = [message, code ? `(code: ${code})` : "", runId ? `(run: ${runId})` : ""].filter(Boolean).join(" ");
+    const error = new Error(enriched) as Error & { code?: string; runId?: string };
     if (code) error.code = code;
+    if (runId) error.runId = runId;
     throw error;
   }
   return data;

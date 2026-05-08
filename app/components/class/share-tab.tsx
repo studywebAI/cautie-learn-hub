@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Send, Link2, Image as ImageIcon, Paperclip, Settings2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,8 @@ type SharePost = {
   createdAt: string;
   audience: ShareAudience;
   text: string;
+  replyToId?: string;
+  authorId?: string;
   authorName?: string;
   authorEmail?: string | null;
   attachmentLabel?: string;
@@ -55,6 +58,10 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
   const [attachmentMimeType, setAttachmentMimeType] = useState('');
   const [attachmentSizeBytes, setAttachmentSizeBytes] = useState<number>(0);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [viewerUserId, setViewerUserId] = useState('');
+  const [replyToId, setReplyToId] = useState<string | null>(null);
+  const [typingUserIds, setTypingUserIds] = useState<string[]>([]);
+  const [readByUser, setReadByUser] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!isTeacher) setAudienceFilter('all');
@@ -93,6 +100,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || 'Failed to load class chat');
         setPosts(Array.isArray(data?.rows) ? data.rows : []);
+        setViewerUserId(typeof data?.viewerUserId === 'string' ? data.viewerUserId : '');
       } catch {
         setPosts([]);
       } finally {
@@ -100,6 +108,42 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
       }
     };
     void load();
+  }, [classId, audienceFilter]);
+
+  useEffect(() => {
+    const timer = window.setInterval(async () => {
+      try {
+        const res = await fetch(`/api/classes/${classId}/share/presence`, { cache: 'no-store' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return;
+        setTypingUserIds(Array.isArray(data?.typingUserIds) ? data.typingUserIds : []);
+        setReadByUser(data?.readByUser && typeof data.readByUser === 'object' ? data.readByUser : {});
+      } catch {}
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [classId]);
+
+  useEffect(() => {
+    const lastMessage = posts[posts.length - 1];
+    if (!lastMessage?.id) return;
+    void fetch(`/api/classes/${classId}/share/presence`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event: 'read', lastSeenMessageId: lastMessage.id }),
+    }).catch(() => {});
+  }, [classId, posts]);
+
+  useEffect(() => {
+    const timer = window.setInterval(async () => {
+      try {
+        const res = await fetch(`/api/classes/${classId}/share?audience=${audienceFilter}`, { cache: 'no-store' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return;
+        setPosts(Array.isArray(data?.rows) ? data.rows : []);
+        if (typeof data?.viewerUserId === 'string') setViewerUserId(data.viewerUserId);
+      } catch {}
+    }, 5000);
+    return () => window.clearInterval(timer);
   }, [classId, audienceFilter]);
 
   const isValidLink = (url: string) => {
@@ -145,6 +189,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text,
+          replyToId: replyToId || undefined,
           audience: audienceFilter,
           attachmentLabel: attachmentLabel || undefined,
           source,
@@ -158,7 +203,8 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
       setAttachmentMimeType('');
       setAttachmentSizeBytes(0);
       setComposerMode('text');
-      setPosts((prev) => [data, ...prev]);
+      setReplyToId(null);
+      setPosts((prev) => [...prev, data]);
       setStatusMessage({ type: 'success', text: 'Message sent.' });
     } catch (error: any) {
       console.error('share send failed', error);
@@ -217,6 +263,15 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
     setAttachmentSizeBytes(file.size || 0);
   };
 
+  const replyTarget = replyToId ? posts.find((p) => p.id === replyToId) || null : null;
+  const markTyping = () => {
+    void fetch(`/api/classes/${classId}/share/presence`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event: 'typing' }),
+    }).catch(() => {});
+  };
+
   return (
     <div className="class-shell space-y-3">
       <div className="flex items-center gap-2">
@@ -232,6 +287,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
         ) : null}
         {isTeacher ? (
           <Button size="sm" variant="outline" onClick={() => setSettingsOpen(true)} className="h-8 ml-auto">
+            <Settings2 className="mr-1 h-3.5 w-3.5" />
             Settings
           </Button>
         ) : null}
@@ -240,7 +296,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
         <div className="rounded-md surface-panel p-4 text-sm text-muted-foreground">Chat is disabled by class settings.</div>
       ) : null}
 
-      <div className="rounded-md surface-panel p-3">
+      <div className="rounded-xl border surface-panel p-3">
         {statusMessage ? (
           <div
             className={`mb-3 rounded-md px-3 py-2 text-xs ${
@@ -258,24 +314,53 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
           <div className="rounded-md surface-panel p-4 text-sm text-muted-foreground">No messages yet.</div>
         ) : null}
         {visiblePosts.map((post) => (
-          <article key={post.id} className="rounded-md surface-interactive p-3">
-            <div className="mb-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-              <span className="truncate">{post.authorName || post.authorEmail || 'User'}</span>
-              <span>{new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          <article key={post.id} className={`flex ${post.authorId && post.authorId === viewerUserId ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[86%] rounded-2xl px-3 py-2 ${post.authorId && post.authorId === viewerUserId ? 'bg-primary text-primary-foreground' : 'surface-interactive text-foreground'}`}>
+              <div className={`mb-1 flex items-center justify-between gap-2 text-[11px] ${post.authorId && post.authorId === viewerUserId ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                <span className="truncate">{post.authorName || post.authorEmail || 'User'}</span>
+                <span>{new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+              {post.replyToId ? (
+                <div className={`mb-1 rounded-lg px-2 py-1 text-[11px] ${post.authorId && post.authorId === viewerUserId ? 'bg-primary-foreground/15 text-primary-foreground/90' : 'bg-background/60 text-muted-foreground'}`}>
+                  Replying to: {posts.find((p) => p.id === post.replyToId)?.text?.slice(0, 80) || 'message'}
+                </div>
+              ) : null}
+              <p className="whitespace-pre-wrap text-sm leading-relaxed">{post.text}</p>
+              {post.attachmentLabel ? (
+                <p className={`mt-1 text-xs ${post.authorId && post.authorId === viewerUserId ? 'text-primary-foreground/85' : 'text-muted-foreground'}`}>Attachment: {post.attachmentLabel}</p>
+              ) : null}
+              {post.sourceHref ? (
+                <a className={`mt-1 inline-flex text-xs underline ${post.authorId && post.authorId === viewerUserId ? 'text-primary-foreground' : 'text-foreground/80'}`} href={post.sourceHref} target="_blank" rel="noreferrer">
+                  Open link
+                </a>
+              ) : null}
+              <div className="mt-1 flex justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className={`h-6 px-1.5 text-[11px] ${post.authorId && post.authorId === viewerUserId ? 'text-primary-foreground/80 hover:text-primary-foreground' : 'text-muted-foreground'}`}
+                  onClick={() => setReplyToId(post.id)}
+                >
+                  Reply
+                </Button>
+              </div>
             </div>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">{post.text}</p>
-            {post.attachmentLabel ? (
-              <p className="mt-1 text-xs text-muted-foreground">Attachment: {post.attachmentLabel}</p>
-            ) : null}
-            {post.sourceHref ? (
-              <a className="mt-1 inline-flex text-xs underline text-foreground/80" href={post.sourceHref} target="_blank" rel="noreferrer">
-                Open link
-              </a>
-            ) : null}
           </article>
         ))}
         </div>
+        <div className="mb-2 min-h-5 text-xs text-muted-foreground">
+          {typingUserIds.length > 0 ? `${typingUserIds.length} typing...` : ''}
+        </div>
         <div className="border-t border-border pt-3">
+          {replyTarget ? (
+            <div className="mb-2 flex items-center justify-between rounded-md surface-interactive px-2 py-1 text-xs">
+              <span className="truncate">Replying to: {replyTarget.text.slice(0, 100)}</span>
+              <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => setReplyToId(null)}>
+                Cancel
+              </Button>
+            </div>
+          ) : null}
           <div className="relative z-10 mb-2 flex flex-wrap items-center gap-1.5">
             <label className="inline-flex">
               <input type="file" accept="image/*" className="hidden" onChange={(event) => onPickFile(event, 'photo')} />
@@ -286,7 +371,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
                 className={`h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel ${composerMode === 'photo' ? 'ring-1 ring-primary/30' : ''}`}
                 asChild
               >
-                <span>Photo</span>
+                <span><ImageIcon className="mr-1 h-3.5 w-3.5" />Photo</span>
               </Button>
             </label>
             <label className="inline-flex">
@@ -298,7 +383,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
                 className={`h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel ${composerMode === 'file' ? 'ring-1 ring-primary/30' : ''}`}
                 asChild
               >
-                <span>Files</span>
+                <span><Paperclip className="mr-1 h-3.5 w-3.5" />Files</span>
               </Button>
             </label>
             <Button
@@ -308,6 +393,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
               className={`h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel ${composerMode === 'link' ? 'ring-1 ring-primary/30' : ''}`}
               onClick={() => setComposerMode('link')}
             >
+              <Link2 className="mr-1 h-3.5 w-3.5" />
               Links
             </Button>
           </div>
@@ -358,7 +444,10 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
           <div className="mb-1 flex items-start gap-2">
             <Textarea
               value={message}
-              onChange={(event) => setMessage(event.target.value)}
+              onChange={(event) => {
+                setMessage(event.target.value);
+                markTyping();
+              }}
               placeholder="Write a message..."
               className="h-[132px] min-h-[132px] flex-1 resize-none rounded-2xl border border-border surface-chip text-sm"
               onKeyDown={(event) => {
@@ -370,14 +459,17 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
             />
             <Button
               size="sm"
-              variant="outline"
-              className="w-[112px] rounded-2xl border-sidebar-border bg-white text-xs hover:surface-panel"
+              className="w-[112px] rounded-2xl text-xs"
               onClick={() => void sendMessage()}
               disabled={isSubmitting || (!message.trim() && !attachmentLabel && !linkUrl.trim())}
             >
+              <Send className="mr-1.5 h-3.5 w-3.5" />
               {isSubmitting ? 'Sending...' : 'Send'}
             </Button>
           </div>
+        </div>
+        <div className="mt-2 text-[11px] text-muted-foreground">
+          {Object.keys(readByUser).length > 0 ? `Seen by ${Object.keys(readByUser).length}` : ''}
         </div>
       </div>
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>

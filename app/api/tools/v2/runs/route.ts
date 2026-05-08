@@ -494,8 +494,21 @@ export async function POST(request: NextRequest) {
         code: errorCode,
         message: err?.message || "Run failed",
       });
+      console.error("[tools.v2.runs] run failed", {
+        runId: createdRun.id,
+        toolId: payload.toolId,
+        flowName: payload.flowName,
+        errorCode,
+        providerPreference: runtimeOptions.providerPreference || "auto",
+        inferredProvider,
+        message: err?.message || "Run failed",
+      });
+      const safeMessage = String(err?.message || "Tool execution failed");
+      const clientMessage = /quota|insufficient_quota|billing|rate limit/i.test(safeMessage)
+        ? "AI quota or billing limit reached for the selected provider/model."
+        : safeMessage;
       return NextResponse.json(
-        { error: err?.message || "Tool execution failed", code: errorCode, runId: createdRun.id },
+        { error: clientMessage, code: errorCode, runId: createdRun.id },
         { status: errorCode === "SOURCE_GUARD_FAILED" ? 422 : 500 }
       );
     }

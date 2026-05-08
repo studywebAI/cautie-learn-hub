@@ -73,6 +73,21 @@ function parseShareContent(content: unknown): { text: string; attachmentLabel?: 
   return { text: '' };
 }
 
+function parseBodyTextPayload(value: unknown): { text: string; replyToId?: string } {
+  const raw = String(value || '').trim();
+  if (!raw) return { text: '' };
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      return {
+        text: String((parsed as any).text || ''),
+        replyToId: (parsed as any).replyToId ? String((parsed as any).replyToId) : undefined,
+      };
+    }
+  } catch {}
+  return { text: raw };
+}
+
 function resolveProfileName(profile: any, fallbackEmail: string | null, fallbackId: string): string {
   const display = String(profile?.display_name || '').trim();
   if (display) return display;
@@ -169,7 +184,7 @@ export async function GET(
       .from('class_share_posts')
       .select('id, audience, body_text, attachment_label, source_type, source_ref_id, source_href, created_at, created_by')
       .eq('class_id', classId)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: true })
       .limit(200);
 
     if (audience === 'all') {
@@ -190,7 +205,7 @@ export async function GET(
         .select('id, title, content, metadata, created_at, user_id, is_public')
         .eq('class_id', classId)
         .eq('type', 'share_post')
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: true })
         .limit(200);
 
       const { data: fallbackData, error: fallbackError } = await (audience === 'all'
@@ -206,13 +221,14 @@ export async function GET(
           createdAt: row.created_at,
           audience: rowAudience,
           text: parsed.text,
+          authorId: String(row.user_id || ''),
           attachmentLabel: parsed.attachmentLabel || row.title || undefined,
           sourceType: parsed.sourceType,
           sourceId: parsed.sourceId,
           sourceHref: parsed.sourceHref,
         };
       });
-      return NextResponse.json({ rows: fallbackRows });
+      return NextResponse.json({ rows: fallbackRows, viewerUserId: user.id });
     }
 
     const authorIds = Array.from(new Set((data || []).map((row: any) => String(row.created_by || '')).filter(Boolean)));
@@ -237,7 +253,9 @@ export async function GET(
         id: row.id,
         createdAt: row.created_at,
         audience: row.audience === 'all' ? 'all' : 'teacher',
-        text: String(row.body_text || ''),
+        text: parseBodyTextPayload(row.body_text).text,
+        replyToId: parseBodyTextPayload(row.body_text).replyToId,
+        authorId: String(row.created_by || ''),
         authorName: author?.name || 'User',
         authorEmail: author?.email || null,
         attachmentLabel: row.attachment_label || undefined,
@@ -247,7 +265,7 @@ export async function GET(
       };
     });
 
-    return NextResponse.json({ rows });
+    return NextResponse.json({ rows, viewerUserId: user.id });
   } catch (error) {
     console.error('[class-share] GET failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -273,6 +291,7 @@ export async function POST(
 
     const body = await request.json().catch(() => ({}));
     const text = String(body?.text || '').trim();
+    const replyToId = String(body?.replyToId || '').trim();
     const attachmentLabel = String(body?.attachmentLabel || '').trim();
     const requestedAudience = String(body?.audience || 'all').toLowerCase() === 'teacher' ? 'teacher' : 'all';
     const audience: ShareAudience = requestedAudience === 'teacher' && perm.isTeacher ? 'teacher' : 'all';
@@ -300,6 +319,7 @@ export async function POST(
 
     const payload = {
       text,
+      replyToId: replyToId || undefined,
       attachmentLabel: attachmentLabel || undefined,
       sourceType: source?.link_type ? String(source.link_type) : undefined,
       sourceId: source?.link_ref_id ? String(source.link_ref_id) : undefined,
@@ -313,7 +333,7 @@ export async function POST(
         class_id: classId,
         created_by: user.id,
         audience,
-        body_text: text,
+        body_text: JSON.stringify({ text, replyToId: payload.replyToId || undefined }),
         attachment_label: payload.attachmentLabel ?? null,
         source_type: payload.sourceType ?? null,
         source_ref_id: payload.sourceId ?? null,
@@ -351,6 +371,8 @@ export async function POST(
         createdAt: fallbackData.created_at,
         audience: fallbackData.is_public ? 'all' : 'teacher',
         text,
+        replyToId: payload.replyToId,
+        authorId: user.id,
         attachmentLabel: payload.attachmentLabel,
         sourceType: payload.sourceType,
         sourceId: payload.sourceId,
@@ -378,6 +400,8 @@ export async function POST(
       createdAt: data.created_at,
       audience: data.audience === 'all' ? 'all' : 'teacher',
       text,
+      replyToId: payload.replyToId,
+      authorId: user.id,
       authorName: resolveProfileName(profile || {}, authorEmail, user.id),
       authorEmail,
       attachmentLabel: payload.attachmentLabel,

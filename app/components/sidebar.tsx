@@ -1182,7 +1182,7 @@ export function AppSidebar() {
 
   // Tablet + desktop: regular sidebar with trigger
   return (
-    <Sidebar className={cn(isTablet ? "w-[11rem]" : "w-[12rem]", "overflow-hidden rounded-r-xl")} collapsible="icon">
+    <Sidebar className={cn(isTablet ? "w-[13rem]" : "w-[14.5rem]", "overflow-hidden rounded-r-xl")} collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
@@ -1228,7 +1228,7 @@ export function AppSidebar() {
 
         {visibleToolsItems.length > 0 && (
           <>
-            {showSectionHeaders && visibleMainItems.length > 0 && <div className="h-5" />}
+            {showSectionHeaders && visibleMainItems.length > 0 && <div className="h-2" />}
                 {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{t.sectionTools}</p>}
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
@@ -1251,7 +1251,7 @@ export function AppSidebar() {
 
         {visibleOtherItems.length > 0 && (
           <>
-            {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-5" />}
+            {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-2" />}
                 {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{t.sectionOther}</p>}
             <SidebarMenu className="group-data-[collapsible=icon]:hidden">
               {visibleOtherItems.map((item) => (
@@ -1273,7 +1273,7 @@ export function AppSidebar() {
         )}
 
         <div className="space-y-2">
-          {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
+          {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-2" />}
               {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80">{t.sectionRecents}</p>}
           <RecentsSidebar />
         </div>
