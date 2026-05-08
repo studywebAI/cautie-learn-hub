@@ -280,15 +280,15 @@ export default function SubjectDetailPage() {
   }
 
   if (loadError) {
-    return <div className="text-center py-8 text-foreground/80">Failed to load subject: {loadError}</div>;
+    return <div className="page-content text-center py-8 text-foreground/80">Failed to load subject: {loadError}</div>;
   }
 
   if (!subject) {
-    return <div className="text-center py-8 text-foreground/80">Subject not found</div>;
+    return <div className="page-content text-center py-8 text-foreground/80">Subject not found</div>;
   }
 
   return (
-    <div className="space-y-0 rounded-2xl surface-panel p-4">
+    <div className="page-content rounded-2xl surface-panel p-4">
       <div className="mb-2 text-xs text-foreground/65">
         {`Subjects / ${subject?.name || 'Subject'} / Chapters`}
       </div>
@@ -308,7 +308,7 @@ export default function SubjectDetailPage() {
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h1 className="text-xl font-medium tracking-tight">{subject.name}</h1>
+          <h1 className="page-title">{subject.name}</h1>
           {subject.description && (
             <p className="text-sm text-muted-foreground mt-1">{subject.description}</p>
           )}

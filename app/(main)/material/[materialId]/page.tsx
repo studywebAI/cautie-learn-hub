@@ -229,7 +229,7 @@ function MaterialPageContent() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="page-content">
       <div className="flex items-center justify-between">
         <Button variant="ghost" asChild className="-ml-4">
           <Link href={material ? `/class/${material.class_id}` : '/other/materials'}>
@@ -250,7 +250,7 @@ function MaterialPageContent() {
 
       <div className="flex flex-col gap-2">
         <Badge variant="outline">{material ? material.type : artifact?.artifact_type?.toUpperCase()}</Badge>
-        <h1 className="text-3xl font-bold font-headline">{material ? material.title : artifact?.title}</h1>
+        <h1 className="page-title">{material ? material.title : artifact?.title}</h1>
         <p className="text-sm text-muted-foreground">
           {material
             ? `Created on ${format(new Date(material.created_at), 'MMMM d, yyyy')}`

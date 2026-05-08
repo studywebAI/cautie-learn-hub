@@ -524,7 +524,9 @@ function NotesPageContent() {
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`${storagePrefix}.${k}`);
     if (s('length') === 'short' || s('length') === 'medium' || s('length') === 'long') setLength(s('length') as any);
-    if (s('style')) setStyle(s('style')!);
+    if (mode === 'wordweb') setStyle('mindmap');
+    else if (mode === 'timeline') setStyle('timeline');
+    else if (s('style')) setStyle(s('style')!);
     if (s('audience')) setAudience(s('audience')!);
     if (s('saveToRecents') === 'false') setSaveToRecents(false);
 
@@ -628,7 +630,12 @@ function NotesPageContent() {
 
     const background = options?.background === true;
     const requestedLength = options?.preset?.length || length;
-    const requestedStyle = options?.preset?.style || style;
+    const requestedStyle =
+      mode === 'wordweb'
+        ? 'mindmap'
+        : mode === 'timeline'
+          ? 'timeline'
+          : (options?.preset?.style || style);
     const requestedAudience = options?.preset?.audience || audience;
     const requestedTitle = options?.preset?.title || customTitle.trim() || 'Generated Notes';
     if (background) setIsAutoDrafting(true);
@@ -1199,8 +1206,8 @@ function NotesPageContent() {
                 document={canonicalDoc}
                 onChange={applyCanonicalDocument}
                 settings={{
-                  rangeStart: advancedSettings?.timeline.range_start ?? String(advancedSettings?.timeline.range_start_year ?? ''),
-                  rangeEnd: advancedSettings?.timeline.range_end ?? String(advancedSettings?.timeline.range_end_year ?? ''),
+                  rangeStart: advancedSettings?.timeline.range_start ?? '',
+                  rangeEnd: advancedSettings?.timeline.range_end ?? '',
                   scaleMode: advancedSettings?.timeline.scale_mode,
                 }}
               />
@@ -1509,7 +1516,7 @@ function NotesPageContent() {
                   <Input
                     type="text"
                     inputMode="text"
-                    value={String(advancedSettings?.timeline.range_start ?? advancedSettings?.timeline.range_start_year ?? '')}
+                    value={String(advancedSettings?.timeline.range_start ?? '')}
                     onChange={(e) => {
                       const raw = e.target.value.trim();
                       void saveAdvancedSettingsPatch({ timeline: { range_start: raw } as any }, { tool: 'timeline' });
@@ -1520,7 +1527,7 @@ function NotesPageContent() {
                   <Input
                     type="text"
                     inputMode="text"
-                    value={String(advancedSettings?.timeline.range_end ?? advancedSettings?.timeline.range_end_year ?? '')}
+                    value={String(advancedSettings?.timeline.range_end ?? '')}
                     onChange={(e) => {
                       const raw = e.target.value.trim();
                       void saveAdvancedSettingsPatch({ timeline: { range_end: raw } as any }, { tool: 'timeline' });

@@ -107,9 +107,17 @@ function escapeHtml(value: string) {
 }
 
 function inlineFormat(value: string) {
-  return escapeHtml(value)
+  const withMarkup = escapeHtml(value)
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+  const withMarkdownLinks = withMarkup.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_m, label, href) => {
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+  });
+
+  return withMarkdownLinks.replace(/(^|\s)(https?:\/\/[^\s<]+)/g, (_m, prefix, url) => {
+    return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+  });
 }
 
 function markdownishToHtml(raw: string) {

@@ -299,8 +299,8 @@ export default function ClassDetailsPage() {
       );
     }
     return (
-      <div>
-        <h1 className="text-xl">Class not found</h1>
+      <div className="page-content">
+        <h1 className="page-title">Class not found</h1>
         <p className="text-muted-foreground">The class you are looking for does not exist or you do not have permission to view it.</p>
       </div>
     );

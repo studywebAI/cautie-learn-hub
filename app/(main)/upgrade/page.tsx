@@ -90,7 +90,7 @@ export default function UpgradePage() {
 
   if (success) {
     return (
-      <div className="space-y-4">
+      <div className="page-content">
         <div className="flex items-center">
           <Button variant="outline" asChild>
             <Link prefetch={false} href="/settings">
@@ -102,7 +102,7 @@ export default function UpgradePage() {
         <div className="mx-auto max-w-2xl">
           <Card>
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Upgrade successful</CardTitle>
+              <CardTitle>Upgrade successful</CardTitle>
               <CardDescription>You are now on {planLabel}. Reloading your workspace...</CardDescription>
             </CardHeader>
             <CardContent>
@@ -117,7 +117,7 @@ export default function UpgradePage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="page-content">
       <div className="flex items-center">
         <Button variant="outline" asChild>
           <Link prefetch={false} href="/settings">
@@ -129,12 +129,12 @@ export default function UpgradePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Upgrade Plan</CardTitle>
+          <CardTitle>Upgrade Plan</CardTitle>
           <CardDescription>Select role, select tier, enter your code.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <section className="space-y-3">
-            <h3 className="text-sm font-semibold">1. Choose Role</h3>
+            <h3 className="text-sm">1. Choose Role</h3>
             <div className="grid gap-2 sm:grid-cols-2">
               {(['student', 'teacher'] as PlanType[]).map((type) => (
                 <Button
@@ -153,7 +153,7 @@ export default function UpgradePage() {
           <Separator />
 
           <section className="space-y-3">
-            <h3 className="text-sm font-semibold">2. Choose Tier</h3>
+            <h3 className="text-sm">2. Choose Tier</h3>
             <div className="grid gap-2 sm:grid-cols-2">
               {(['premium', 'pro'] as PlanTier[]).map((tier) => (
                 <Button
@@ -173,9 +173,9 @@ export default function UpgradePage() {
           <Separator />
 
           <section className="space-y-3">
-            <h3 className="text-sm font-semibold">3. Enter Code</h3>
+            <h3 className="text-sm">3. Enter Code</h3>
             <div className="rounded-lg surface-interactive p-3 text-sm">
-              <p className="font-medium">{planLabel}</p>
+              <p>{planLabel}</p>
               <p className="text-muted-foreground">{activePrice}</p>
               <div className="mt-2 space-y-1">
                 {activeFeatures.map((feature) => (

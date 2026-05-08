@@ -49,7 +49,7 @@ export async function videoContextFromWhitelist(input: z.infer<typeof VideoConte
     .flatMap((channel) => channel.sampleVideos.slice(0, 2).map((videoUrl, idx) => {
       const baseStart = hints[idx] ?? 30;
       const startSec = Math.max(0, baseStart);
-      const endSec = startSec + 60;
+      const endSec = startSec + 12;
       return {
         channel: channel.channel,
         videoUrl,
@@ -62,4 +62,3 @@ export async function videoContextFromWhitelist(input: z.infer<typeof VideoConte
 
   return VideoContextFromWhitelistOutputSchema.parse({ clips });
 }
-

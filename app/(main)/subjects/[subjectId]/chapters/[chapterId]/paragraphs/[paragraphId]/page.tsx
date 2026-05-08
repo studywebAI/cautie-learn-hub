@@ -497,7 +497,7 @@ export default function ParagraphDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="page-content">
         <div className="h-6 surface-interactive rounded w-1/3 animate-pulse" />
         <div className="space-y-2">
           {[1, 2, 3].map(i => (
@@ -509,7 +509,7 @@ export default function ParagraphDetailPage() {
   }
 
   if (!paragraph) {
-    return <div className="text-center py-8 text-muted-foreground">Paragraph not found</div>;
+    return <div className="page-content text-center py-8 text-muted-foreground">Paragraph not found</div>;
   }
 
   const bulkSettings = assignments.length > 0
@@ -538,7 +538,7 @@ export default function ParagraphDetailPage() {
   const visiblePresets = ASSIGNMENT_PRESETS.filter((preset) => preset.kind === createKind);
 
   return (
-    <div className="space-y-0">
+    <div className="page-content">
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div>
@@ -556,7 +556,7 @@ export default function ParagraphDetailPage() {
           >
             {t.backToChapters}
           </Link>
-          <h1 className="text-lg">
+          <h1 className="page-title">
             {paragraph.paragraph_number}. {paragraph.title}
           </h1>
         </div>

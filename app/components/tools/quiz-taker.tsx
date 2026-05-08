@@ -320,17 +320,32 @@ function MediaPrompt({ question }: { question: QuizQuestion }) {
   const media = question.media;
   const type = question.type || 'multiple-choice';
   if (!media || !media.url || !['image-analysis', 'video-analysis', 'drawing-analysis', 'internet-photo', 'video-fragment'].includes(type)) return null;
-  if (media.kind === 'video') {
-    const withClip = (() => {
-      try {
-        const url = new URL(media.url);
-        if (Number.isFinite(Number(media.startSec))) url.searchParams.set('start', String(Math.max(0, Number(media.startSec))));
-        if (Number.isFinite(Number(media.endSec))) url.searchParams.set('end', String(Math.max(1, Number(media.endSec))));
-        return url.toString();
-      } catch {
-        return media.url;
+  const normalizeVideoUrl = (rawUrl: string, startSec?: number, endSec?: number) => {
+    try {
+      const parsed = new URL(rawUrl);
+      const host = parsed.hostname.toLowerCase();
+      const start = Number.isFinite(Number(startSec)) ? Math.max(0, Math.floor(Number(startSec))) : undefined;
+      const end = Number.isFinite(Number(endSec)) ? Math.max(1, Math.floor(Number(endSec))) : undefined;
+      if (host.includes('youtube.com') || host.includes('youtu.be')) {
+        const videoId = host.includes('youtu.be')
+          ? parsed.pathname.split('/').filter(Boolean)[0]
+          : (parsed.searchParams.get('v') || parsed.pathname.match(/\/embed\/([^/?#]+)/)?.[1] || parsed.pathname.match(/\/shorts\/([^/?#]+)/)?.[1] || '');
+        if (videoId) {
+          const embed = new URL(`https://www.youtube.com/embed/${videoId}`);
+          if (start !== undefined) embed.searchParams.set('start', String(start));
+          if (end !== undefined) embed.searchParams.set('end', String(end));
+          return embed.toString();
+        }
       }
-    })();
+      if (start !== undefined) parsed.searchParams.set('start', String(start));
+      if (end !== undefined) parsed.searchParams.set('end', String(end));
+      return parsed.toString();
+    } catch {
+      return rawUrl;
+    }
+  };
+  if (media.kind === 'video') {
+    const withClip = normalizeVideoUrl(media.url, media.startSec, media.endSec);
     return (
       <div className="rounded-lg border border-border bg-background p-2.5">
         <div className="aspect-video w-full overflow-hidden rounded-md bg-muted">
@@ -343,7 +358,13 @@ function MediaPrompt({ question }: { question: QuizQuestion }) {
             allowFullScreen
           />
         </div>
-        {media.source ? <p className="mt-1.5 text-xs text-muted-foreground">{media.source}</p> : null}
+        {media.source ? (
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            <a href={media.source} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+              {media.source}
+            </a>
+          </p>
+        ) : null}
         {(Number.isFinite(Number(media.startSec)) || Number.isFinite(Number(media.endSec))) ? (
           <p className="mt-1 text-xs text-muted-foreground">
             Clip: {Number.isFinite(Number(media.startSec)) ? `${Number(media.startSec)}s` : '0s'} - {Number.isFinite(Number(media.endSec)) ? `${Number(media.endSec)}s` : 'end'}
@@ -355,7 +376,13 @@ function MediaPrompt({ question }: { question: QuizQuestion }) {
   return (
     <div className="rounded-lg border border-border bg-background p-2.5">
       <img src={media.url} alt={media.title || 'Question context'} className="max-h-[280px] w-full rounded-md object-contain bg-muted" />
-      {media.source ? <p className="mt-1.5 text-xs text-muted-foreground">{media.source}</p> : null}
+      {media.source ? (
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          <a href={media.source} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+            {media.source}
+          </a>
+        </p>
+      ) : null}
     </div>
   );
 }

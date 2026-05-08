@@ -76,7 +76,7 @@ function StudentDashboard() {
      return (
         <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed p-12 text-center">
             <div className="flex flex-col items-center gap-2">
-                <h3 className="text-2xl font-bold tracking-tight">Welcome to cautie</h3>
+                <h3 className="page-title">Welcome to cautie</h3>
                 <p className="text-sm text-muted-foreground">Log in to save your progress and access your classes.</p>
                 <Button asChild className="mt-4"><Link href="/login">Log In / Sign Up</Link></Button>
             </div>
@@ -103,12 +103,12 @@ function StudentDashboard() {
     'Guest';
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+    <div className="page-content grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         <div className="lg:col-span-3 mb-2 flex items-start justify-between gap-3">
           <h1 className="text-xl tracking-tight text-foreground">Welcome, {welcomeName}</h1>
           <NotificationCenter />
         </div>
-        <div className="lg:col-span-2 flex flex-col gap-6 md:gap-8">
+        <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6">
             <TodaysStudysetTasks />
             <TodaysAgenda assignments={assignments} personalTasks={personalTasks} classes={classes} />
             <Suspense fallback={<Card><CardHeader><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>}>
@@ -116,7 +116,7 @@ function StudentDashboard() {
             </Suspense>
             <MySubjects subjects={subjects} />
         </div>
-        <div className="lg:col-span-1 flex flex-col gap-6 md:gap-8">
+        <div className="lg:col-span-1 flex flex-col gap-4 md:gap-6">
             <LearningPulse />
             <Alerts alerts={alerts} />
             <UpcomingDeadlines />
@@ -171,7 +171,7 @@ function TeacherSummaryDashboard() {
       'Guest';
 
     return (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between gap-3">
               <h1 className="text-xl tracking-tight text-foreground">Welcome, {welcomeName}</h1>
               <NotificationCenter />
@@ -221,7 +221,7 @@ function TeacherSummaryDashboard() {
 
             {teacherClasses.length === 0 && (
               <Card className="surface-panel border-border/70">
-                <CardContent className="text-center p-8">
+                <CardContent className="text-center p-6">
                   <p className="text-muted-foreground">You have not created any classes yet.</p>
                   <Button asChild className="mt-4"><Link href="/classes">Create One Now</Link></Button>
                 </CardContent>

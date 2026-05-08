@@ -93,7 +93,7 @@ export default function JoinClassPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="page-content flex items-center justify-center min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -101,7 +101,7 @@ export default function JoinClassPage() {
 
   if (!classData) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="page-content flex items-center justify-center min-h-[50vh]">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Class not found</CardTitle>
@@ -116,7 +116,7 @@ export default function JoinClassPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
+    <div className="page-content flex items-center justify-center min-h-[50vh]">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Join Class</CardTitle>
@@ -124,7 +124,7 @@ export default function JoinClassPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold text-lg">{classData.name}</h3>
+            <h3 className="text-lg">{classData.name}</h3>
             {classData.description && (
               <p className="text-muted-foreground mt-1">{classData.description}</p>
             )}

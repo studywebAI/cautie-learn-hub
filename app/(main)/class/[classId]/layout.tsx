@@ -62,9 +62,9 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const currentTab = tabIds.has(requestedTab) ? requestedTab : defaultTab;
 
   return (
-    <div className="flex h-full flex-col gap-2">
-      <div className="px-1 py-1">
-        <div className="rounded-md surface-panel p-2">
+    <div className="flex h-full flex-col gap-1.5">
+      <div className="px-2 pt-2">
+        <div className="rounded-md surface-panel p-1.5">
           <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
             {visibleTabs.map((tab) => {
               const Icon = tab.icon;
@@ -102,7 +102,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
         </div>
       </div>
 
-      <main className="flex-1 overflow-auto p-0">
+      <main className="flex-1 overflow-auto px-2 pb-2">
         {children}
       </main>
     </div>

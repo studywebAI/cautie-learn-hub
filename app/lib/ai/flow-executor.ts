@@ -8,6 +8,7 @@ import {
 export type AIExecutionOptions = {
   providerPreference?: "auto" | "gemini" | "openai";
   openaiApiKey?: string;
+  openaiModel?: string;
   onEvent?: (event: {
     type: "primary_error" | "fallback_attempt" | "fallback_success" | "fallback_error" | "fallback_skipped";
     provider: "gemini" | "openai";
@@ -131,6 +132,7 @@ export async function executeAIFlow(
 
   const providerPreference = options?.providerPreference || "auto";
   const openaiApiKey = options?.openaiApiKey || process.env.OPENAI_API_KEY || "";
+  const openaiModel = options?.openaiModel || process.env.OPENAI_FALLBACK_MODEL || "gpt-4o-mini";
   const canFallback = canUseOpenAIFallback(flowName) && !!openaiApiKey;
   const emit = options?.onEvent;
   const summarizeError = (err: unknown) => {
@@ -142,7 +144,7 @@ export async function executeAIFlow(
 
   if (providerPreference === "openai" && canFallback) {
     console.info(`[AI_FLOW] ${flowName} provider=openai (explicit)`);
-    return executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey);
+    return executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey, openaiModel);
   }
   if (providerPreference === "openai" && !canFallback) {
     const error = new Error(
@@ -157,7 +159,7 @@ export async function executeAIFlow(
   if (providerPreference === "auto" && canFallback) {
     console.info(`[AI_FLOW] ${flowName} provider=openai (auto-primary)`);
     try {
-      return await executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey);
+      return await executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey, openaiModel);
     } catch (openaiError) {
       console.warn(`[AI_FLOW] ${flowName} openai failed: ${summarizeError(openaiError)}`);
       emit?.({
@@ -240,7 +242,7 @@ export async function executeAIFlow(
         flowName,
       });
       try {
-        const result = await executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey);
+        const result = await executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey, openaiModel);
         emit?.({
           type: "fallback_success",
           provider: "openai",

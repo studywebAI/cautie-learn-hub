@@ -5,6 +5,8 @@ export type AIProviderPreference = "auto" | "gemini" | "openai";
 export type AIRuntimeOptions = {
   providerPreference: AIProviderPreference;
   openaiApiKey?: string;
+  openaiModel?: string;
+  sttProviderStrategy?: "deepgram_with_openai_fallback" | "openai_only";
 };
 
 type UserAISettingsRow = {
@@ -13,6 +15,8 @@ type UserAISettingsRow = {
 };
 
 const DEFAULT_PROVIDER: AIProviderPreference = "auto";
+const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
+const DEFAULT_STT_PROVIDER_STRATEGY: AIRuntimeOptions["sttProviderStrategy"] = "deepgram_with_openai_fallback";
 
 export async function readUserAIRuntimeOptions(
   supabase: any,
@@ -21,6 +25,8 @@ export async function readUserAIRuntimeOptions(
   const fallback: AIRuntimeOptions = {
     providerPreference: DEFAULT_PROVIDER,
     openaiApiKey: process.env.OPENAI_API_KEY || undefined,
+    openaiModel: DEFAULT_OPENAI_MODEL,
+    sttProviderStrategy: DEFAULT_STT_PROVIDER_STRATEGY,
   };
 
   try {
@@ -47,9 +53,32 @@ export async function readUserAIRuntimeOptions(
       }
     }
 
+    let openaiModel = DEFAULT_OPENAI_MODEL;
+    let sttProviderStrategy = DEFAULT_STT_PROVIDER_STRATEGY;
+    try {
+      const { data: prefRows } = await supabase
+        .from("user_preferences")
+        .select("preference_key, preference_value")
+        .eq("user_id", userId)
+        .in("preference_key", ["openai_model", "stt_provider_strategy"]);
+      const rows = Array.isArray(prefRows) ? prefRows : [];
+      const modelRow = rows.find((row: any) => row?.preference_key === "openai_model");
+      const modelCandidate = String(modelRow?.preference_value || "").trim();
+      if (modelCandidate) openaiModel = modelCandidate;
+      const sttRow = rows.find((row: any) => row?.preference_key === "stt_provider_strategy");
+      const sttCandidate = String(sttRow?.preference_value || "").trim().toLowerCase();
+      if (sttCandidate === "openai_only" || sttCandidate === "deepgram_with_openai_fallback") {
+        sttProviderStrategy = sttCandidate as AIRuntimeOptions["sttProviderStrategy"];
+      }
+    } catch {
+      // Keep default model when preferences table/row is unavailable.
+    }
+
     return {
       providerPreference,
       openaiApiKey: userOpenAIKey || process.env.OPENAI_API_KEY || undefined,
+      openaiModel,
+      sttProviderStrategy,
     };
   } catch {
     return fallback;
@@ -62,6 +91,8 @@ export async function saveUserAISettings(
   payload: {
     providerPreference: AIProviderPreference;
     openaiApiKey?: string | null;
+    openaiModel?: string | null;
+    sttProviderStrategy?: AIRuntimeOptions["sttProviderStrategy"] | null;
   }
 ) {
   const providerPreference =
@@ -71,6 +102,11 @@ export async function saveUserAISettings(
 
   const openaiApiKey = String(payload.openaiApiKey || "").trim();
   const encryptedOpenAIKey = openaiApiKey ? encryptSecret(openaiApiKey) : null;
+  const openaiModel = String(payload.openaiModel || DEFAULT_OPENAI_MODEL).trim() || DEFAULT_OPENAI_MODEL;
+  const sttProviderStrategy =
+    payload.sttProviderStrategy === "openai_only" || payload.sttProviderStrategy === "deepgram_with_openai_fallback"
+      ? payload.sttProviderStrategy
+      : DEFAULT_STT_PROVIDER_STRATEGY;
 
   const { error } = await supabase.from("user_ai_settings").upsert(
     {
@@ -84,8 +120,33 @@ export async function saveUserAISettings(
 
   if (error) throw error;
 
+  try {
+    await supabase.from("user_preferences").upsert(
+      {
+        user_id: userId,
+        preference_key: "openai_model",
+        preference_value: openaiModel,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,preference_key" }
+    );
+    await supabase.from("user_preferences").upsert(
+      {
+        user_id: userId,
+        preference_key: "stt_provider_strategy",
+        preference_value: sttProviderStrategy,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,preference_key" }
+    );
+  } catch {
+    // Non-fatal: keep provider/key save successful even if model preference persistence fails.
+  }
+
   return {
     providerPreference,
     hasOpenAIKey: Boolean(encryptedOpenAIKey),
+    openaiModel,
+    sttProviderStrategy,
   };
 }

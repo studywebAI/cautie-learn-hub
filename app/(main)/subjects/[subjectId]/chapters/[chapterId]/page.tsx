@@ -73,7 +73,7 @@ export default function ChapterOverviewPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 p-6">
+      <div className="page-content">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-4 w-32" />
         <div className="space-y-2 mt-6">
@@ -86,11 +86,11 @@ export default function ChapterOverviewPage() {
   }
 
   if (!chapter) {
-    return <div className="p-6 text-muted-foreground">Chapter not found</div>;
+    return <div className="page-content text-muted-foreground">Chapter not found</div>;
   }
 
   return (
-      <div className="space-y-5">
+      <div className="page-content">
       <div className="text-xs text-muted-foreground">
         {`${subject?.title || 'Subjects'} / ${chapter?.title || 'Chapter'} / Paragraphs`}
       </div>
@@ -103,7 +103,7 @@ export default function ChapterOverviewPage() {
           >
             {'<-'} {subject?.title || 'Subjects'}
           </Link>
-          <p className="text-sm mt-1">
+          <p className="text-base mt-1">
             {chapter.chapter_number}. {chapter.title}
           </p>
         </div>

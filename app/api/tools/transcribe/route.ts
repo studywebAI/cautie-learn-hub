@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
+import { readUserAIRuntimeOptions } from '@/lib/ai/runtime-settings';
 
 export const runtime = 'nodejs';
 
@@ -8,6 +11,13 @@ const normalizeLanguage = (value?: string | null) => {
   if (!value) return undefined;
   const lower = value.toLowerCase();
   return lower.includes('-') ? lower.split('-')[0] : lower;
+};
+
+const parseDeepgramText = (payload: any) => {
+  const text = String(
+    payload?.results?.channels?.[0]?.alternatives?.[0]?.transcript || ''
+  ).trim();
+  return text;
 };
 
 export async function POST(request: NextRequest) {
@@ -24,14 +34,12 @@ export async function POST(request: NextRequest) {
 
   try {
     log('transcribe_request_received');
-    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_STT_API_KEY;
-    if (!apiKey) {
-      log('transcribe_missing_api_key');
-      return NextResponse.json(
-        { error: 'OPENAI_API_KEY is not configured on the server.' },
-        { status: 503 }
-      );
-    }
+    const supabase = await createClient(cookies());
+    const { data: { user } } = await supabase.auth.getUser();
+    const runtimeOptions = user ? await readUserAIRuntimeOptions(supabase, user.id).catch(() => null) : null;
+    const sttStrategy = runtimeOptions?.sttProviderStrategy || 'deepgram_with_openai_fallback';
+    const deepgramApiKey = String(process.env.DEEPGRAM_API_KEY || '').trim();
+    const openaiApiKey = runtimeOptions?.openaiApiKey || process.env.OPENAI_API_KEY || process.env.OPENAI_STT_API_KEY;
 
     const formData = await request.formData();
     const input = formData.get('file');
@@ -78,45 +86,101 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const upstreamForm = new FormData();
-    upstreamForm.append('model', 'whisper-1');
-    upstreamForm.append('file', input, input.name || 'speech.webm');
-    if (language) upstreamForm.append('language', language);
-    log('transcribe_upstream_request_start', {
-      model: 'whisper-1',
-      language: language || null,
-      micSessionId: micSessionId || null,
-    });
+    const tryDeepgram = async () => {
+      if (!deepgramApiKey) {
+        throw new Error('DEEPGRAM_API_KEY is not configured on the server.');
+      }
+      const query = new URLSearchParams({
+        model: 'nova-3',
+        punctuate: 'true',
+        smart_format: 'true',
+      });
+      if (language && language !== 'auto') query.set('language', language);
+      const deepgramResponse = await fetch(`https://api.deepgram.com/v1/listen?${query.toString()}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Token ${deepgramApiKey}`,
+          'Content-Type': input.type || 'audio/webm',
+        },
+        body: input,
+      });
+      const payload = await deepgramResponse.json().catch(() => null);
+      const text = parseDeepgramText(payload);
+      log('transcribe_upstream_response', {
+        provider: 'deepgram',
+        ok: deepgramResponse.ok,
+        status: deepgramResponse.status,
+        durationMs: Date.now() - startedAt,
+        micSessionId: micSessionId || null,
+        textLength: text.length,
+        errorMessage: payload?.err_msg || payload?.error || null,
+      });
+      if (!deepgramResponse.ok) {
+        throw new Error(payload?.err_msg || `Deepgram transcription failed (${deepgramResponse.status}).`);
+      }
+      return text;
+    };
 
-    const upstream = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: upstreamForm,
-    });
+    const tryOpenAI = async () => {
+      if (!openaiApiKey) {
+        throw new Error('OPENAI_API_KEY is not configured on the server.');
+      }
+      const upstreamForm = new FormData();
+      upstreamForm.append('model', 'whisper-1');
+      upstreamForm.append('file', input, input.name || 'speech.webm');
+      if (language) upstreamForm.append('language', language);
+      const upstream = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${openaiApiKey}`,
+        },
+        body: upstreamForm,
+      });
+      const payload = await upstream.json().catch(() => null);
+      const text = typeof payload?.text === 'string' ? payload.text.trim() : '';
+      log('transcribe_upstream_response', {
+        provider: 'openai',
+        ok: upstream.ok,
+        status: upstream.status,
+        durationMs: Date.now() - startedAt,
+        micSessionId: micSessionId || null,
+        textLength: text.length,
+        errorMessage: payload?.error?.message || null,
+        errorType: payload?.error?.type || null,
+        errorCode: payload?.error?.code || null,
+      });
+      if (!upstream.ok) {
+        throw new Error(payload?.error?.message || `OpenAI transcription failed (${upstream.status}).`);
+      }
+      return text;
+    };
 
-    const payload = await upstream.json().catch(() => null);
-    log('transcribe_upstream_response', {
-      ok: upstream.ok,
-      status: upstream.status,
-      durationMs: Date.now() - startedAt,
-      micSessionId: micSessionId || null,
-      payloadKeys: payload ? Object.keys(payload) : [],
-      textLength: typeof payload?.text === 'string' ? payload.text.length : 0,
-      errorMessage: payload?.error?.message || null,
-      errorType: payload?.error?.type || null,
-      errorCode: payload?.error?.code || null,
-    });
-    if (!upstream.ok) {
-      const message =
-        payload?.error?.message || `Transcription provider request failed (${upstream.status}).`;
-      log('transcribe_upstream_failed', { message });
-      return NextResponse.json({ error: message }, { status: upstream.status });
+    let text = '';
+    let providerUsed: 'deepgram' | 'openai' | null = null;
+    let fallbackReason: string | null = null;
+
+    if (sttStrategy === 'openai_only') {
+      text = await tryOpenAI();
+      providerUsed = 'openai';
+    } else {
+      try {
+        text = await tryDeepgram();
+        providerUsed = 'deepgram';
+      } catch (deepgramError: any) {
+        fallbackReason = deepgramError?.message || 'deepgram_failed';
+        log('transcribe_fallback_to_openai', {
+          reason: fallbackReason,
+          micSessionId: micSessionId || null,
+        });
+        text = await tryOpenAI();
+        providerUsed = 'openai';
+      }
     }
 
-    const text = typeof payload?.text === 'string' ? payload.text.trim() : '';
     log('transcribe_success', {
+      providerUsed,
+      sttStrategy,
+      fallbackReason,
       textLength: text.length,
       durationMs: Date.now() - startedAt,
       micSessionId: micSessionId || null,

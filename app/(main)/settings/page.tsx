@@ -42,6 +42,9 @@ export default function SettingsPage() {
   const [displayNameSaving, setDisplayNameSaving] = useState(false);
   const [aiProvider, setAiProvider] = useState<'gemini' | 'openai' | 'auto'>('auto');
   const [openaiApiKeyDraft, setOpenaiApiKeyDraft] = useState('');
+  const [openaiModel, setOpenaiModel] = useState('gpt-4o-mini');
+  const [sttProviderStrategy, setSttProviderStrategy] = useState<'deepgram_with_openai_fallback' | 'openai_only'>('deepgram_with_openai_fallback');
+  const [effectiveSttProvider, setEffectiveSttProvider] = useState<'deepgram' | 'openai' | 'unavailable'>('unavailable');
   const [aiSettingsLoading, setAiSettingsLoading] = useState(true);
   const [aiSettingsSaving, setAiSettingsSaving] = useState(false);
   const [aiSettingsStatus, setAiSettingsStatus] = useState('');
@@ -80,6 +83,15 @@ export default function SettingsPage() {
         if (data?.providerPreference === 'gemini' || data?.providerPreference === 'openai' || data?.providerPreference === 'auto') {
           setAiProvider(data.providerPreference);
         }
+        if (typeof data?.openaiModel === 'string' && data.openaiModel.trim()) {
+          setOpenaiModel(data.openaiModel.trim());
+        }
+        if (data?.sttProviderStrategy === 'openai_only' || data?.sttProviderStrategy === 'deepgram_with_openai_fallback') {
+          setSttProviderStrategy(data.sttProviderStrategy);
+        }
+        if (data?.effectiveSttProvider === 'deepgram' || data?.effectiveSttProvider === 'openai' || data?.effectiveSttProvider === 'unavailable') {
+          setEffectiveSttProvider(data.effectiveSttProvider);
+        }
         setHasOpenAIKey(Boolean(data?.hasOpenAIKey));
         setUsesDefaultOpenAIKey(Boolean(data?.usesDefaultOpenAIKey));
       } catch {
@@ -101,12 +113,17 @@ export default function SettingsPage() {
         body: JSON.stringify({
           providerPreference: aiProvider,
           openaiApiKey: openaiApiKeyDraft.trim(),
+          openaiModel,
+          sttProviderStrategy,
         }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.error || 'Could not save AI settings');
       setHasOpenAIKey(Boolean(data?.hasOpenAIKey));
       setUsesDefaultOpenAIKey(Boolean(data?.usesDefaultOpenAIKey));
+      if (data?.effectiveSttProvider === 'deepgram' || data?.effectiveSttProvider === 'openai' || data?.effectiveSttProvider === 'unavailable') {
+        setEffectiveSttProvider(data.effectiveSttProvider);
+      }
       setOpenaiApiKeyDraft('');
       setAiSettingsStatus('Saved');
     } catch (error: any) {
@@ -249,6 +266,8 @@ export default function SettingsPage() {
     usingDefaultOpenAIKey: tr({ en: 'Using platform default OpenAI key.', nl: 'Standaard OpenAI-sleutel van het platform wordt gebruikt.' }),
     keyEncrypted: tr({ en: 'Your key is encrypted server-side and never returned to the client after saving.', nl: 'Je sleutel wordt server-side versleuteld en na opslaan niet teruggestuurd naar de client.' }),
     saveAiSettings: tr({ en: 'Save AI settings', nl: 'AI-instellingen opslaan' }),
+    openAIModel: tr({ en: 'OpenAI model', nl: 'OpenAI-model' }),
+    sttStrategy: tr({ en: 'STT strategy', nl: 'STT-strategie' }),
     subscription: tr({ en: 'Subscription', nl: 'Abonnement' }),
     current: tr({ en: 'Current', nl: 'Huidig' }),
     teacher: tr({ en: 'Teacher', nl: 'Docent' }),
@@ -457,6 +476,45 @@ export default function SettingsPage() {
                       </Button>
                       {aiSettingsStatus ? <span className="text-xs text-muted-foreground">{aiSettingsStatus}</span> : null}
                     </div>
+                  </div>
+
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="openai-model">{ui.openAIModel}</Label>
+                    <Select value={openaiModel} onValueChange={setOpenaiModel}>
+                      <SelectTrigger id="openai-model">
+                        <SelectValue placeholder="Select model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gpt-4o-mini">gpt-4o-mini</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Current configured OpenAI model for fallback/tool runs.</p>
+                  </div>
+
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="stt-strategy">{ui.sttStrategy}</Label>
+                    <Select
+                      value={sttProviderStrategy}
+                      onValueChange={(value) => {
+                        if (value === 'openai_only' || value === 'deepgram_with_openai_fallback') {
+                          setSttProviderStrategy(value);
+                        }
+                      }}
+                    >
+                      <SelectTrigger id="stt-strategy">
+                        <SelectValue placeholder="Select STT strategy" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="deepgram_with_openai_fallback">Deepgram primary + OpenAI fallback</SelectItem>
+                        <SelectItem value="openai_only">OpenAI only</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Controls microphone transcription provider order.</p>
+                  </div>
+
+                  <div className="grid gap-1 max-w-md">
+                    <p className="text-xs text-muted-foreground">STT strategy: {sttProviderStrategy}</p>
+                    <p className="text-xs text-muted-foreground">Effective STT provider: {effectiveSttProvider}</p>
                   </div>
                 </CardContent>
               </Card>

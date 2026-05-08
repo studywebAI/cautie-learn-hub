@@ -103,7 +103,13 @@ function normalizeVideoClipWindow(startRaw: unknown, endRaw: unknown) {
   return { startSec: start, endSec: Math.max(start + 3, end) };
 }
 
-function normalizeQuestionShape(question: any, index: number, requestedTypes: string[], allowedVideoUrls: Set<string>): QuizQuestion {
+function normalizeQuestionShape(
+  question: any,
+  index: number,
+  requestedTypes: string[],
+  allowedVideoUrls: Set<string>,
+  imageSourceByUrl: Map<string, string>
+): QuizQuestion {
   const fallbackType = requestedTypes[index % Math.max(1, requestedTypes.length)] || 'multiple-choice';
   const type = sanitizeQuestionType(question?.type, fallbackType);
   const qid = typeof question?.id === 'string' && question.id.trim() ? question.id.trim() : `q-${index + 1}-${Date.now()}`;
@@ -223,13 +229,22 @@ function normalizeQuestionShape(question: any, index: number, requestedTypes: st
     if (type === 'internet-photo' && normalized.media.kind !== 'image') {
       normalized.type = 'multiple-choice';
       normalized.media = undefined;
+    } else if (type === 'internet-photo' && normalized.media.kind === 'image') {
+      const mappedSource = imageSourceByUrl.get(normalized.media.url) || '';
+      const fallbackSource = normalized.media.source || mappedSource || normalized.media.url;
+      normalized.media.source = fallbackSource;
     }
   }
 
   return normalized;
 }
 
-function normalizeQuizOutput(raw: Quiz | undefined | null, input: GenerateQuizInput, allowedVideoUrls: Set<string>): Quiz {
+function normalizeQuizOutput(
+  raw: Quiz | undefined | null,
+  input: GenerateQuizInput,
+  allowedVideoUrls: Set<string>,
+  imageContextResults?: Array<{ imageUrl?: string; pageUrl?: string }>
+): Quiz {
   const requestedCount = clamp(Number(input.questionCount || 7), 1, 50);
   const baseRequestedTypes = Array.isArray(input.questionTypes) && input.questionTypes.length
     ? input.questionTypes
@@ -240,8 +255,18 @@ function normalizeQuizOutput(raw: Quiz | undefined | null, input: GenerateQuizIn
     return true;
   });
   const safeRequestedTypes = requestedTypes.length > 0 ? requestedTypes : ['multiple-choice'];
+  const imageSourceByUrl = new Map<string, string>();
+  for (const item of imageContextResults || []) {
+    const imageUrl = String(item?.imageUrl || '').trim();
+    const pageUrl = String(item?.pageUrl || '').trim();
+    if (imageUrl && pageUrl && !imageSourceByUrl.has(imageUrl)) {
+      imageSourceByUrl.set(imageUrl, pageUrl);
+    }
+  }
   const sourceQuestions = Array.isArray(raw?.questions) ? raw!.questions : [];
-  const normalized = sourceQuestions.map((question, index) => normalizeQuestionShape(question, index, safeRequestedTypes, allowedVideoUrls));
+  const normalized = sourceQuestions.map((question, index) =>
+    normalizeQuestionShape(question, index, safeRequestedTypes, allowedVideoUrls, imageSourceByUrl)
+  );
   const deduped: QuizQuestion[] = [];
   const seen = new Set<string>();
   for (const question of normalized) {
@@ -255,7 +280,7 @@ function normalizeQuizOutput(raw: Quiz | undefined | null, input: GenerateQuizIn
   const questions = shuffled.slice(0, requestedCount);
 
   while (questions.length < requestedCount) {
-    questions.push(normalizeQuestionShape({}, questions.length, safeRequestedTypes, allowedVideoUrls));
+    questions.push(normalizeQuestionShape({}, questions.length, safeRequestedTypes, allowedVideoUrls, imageSourceByUrl));
   }
 
   return {
@@ -461,7 +486,7 @@ Image Context:
           .map((channel) => `${channel.channel} | focuses on: ${channel.focus.join(', ')} | urls: ${channel.sampleVideos.join(' ')}`)
           .join('\n'),
       } as any);
-      const normalized = normalizeQuizOutput(output, input, allowedVideoUrls);
+      const normalized = normalizeQuizOutput(output, input, allowedVideoUrls, imageContext.results || []);
       console.log(`[generateQuizFlow] Success: quiz title: ${normalized.title}`);
       return normalized;
     } catch (err) {

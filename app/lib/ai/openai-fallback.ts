@@ -125,8 +125,8 @@ async function callOpenAIJson<T>({
   return schema.parse(parsed);
 }
 
-export async function executeOpenAIFallbackFlow(flowName: string, input: any, apiKey: string) {
-  const model = process.env.OPENAI_FALLBACK_MODEL || "gpt-4o-mini";
+export async function executeOpenAIFallbackFlow(flowName: string, input: any, apiKey: string, modelOverride?: string) {
+  const model = String(modelOverride || process.env.OPENAI_FALLBACK_MODEL || "gpt-4o-mini").trim() || "gpt-4o-mini";
   const grounding = String(input?.groundingInstruction || "").trim();
   const rawSourceText = String(input?.sourceText || "").trim();
   const maxSourceChars = 22000;
