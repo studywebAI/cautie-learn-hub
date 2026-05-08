@@ -131,8 +131,8 @@ export async function executeAIFlow(
       : input;
 
   const providerPreference = options?.providerPreference || "auto";
-  const openaiApiKey = options?.openaiApiKey || process.env.OPENAI_API_KEY || "";
-  const openaiModel = options?.openaiModel || process.env.OPENAI_FALLBACK_MODEL || "gpt-4o-mini";
+  const openaiApiKey = options?.openaiApiKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "";
+  const openaiModel = options?.openaiModel || process.env.OPENAI_FALLBACK_MODEL || "google/gemini-2.5-flash-lite";
   const canFallback = canUseOpenAIFallback(flowName) && !!openaiApiKey;
   const emit = options?.onEvent;
   const summarizeError = (err: unknown) => {
@@ -175,8 +175,8 @@ export async function executeAIFlow(
     return await flow(enrichedInput);
   } catch (error) {
     const eligibleByPolicy =
-      providerPreference === "gemini" ||
-      (providerPreference === "auto" && shouldFallbackToOpenAI(error));
+      providerPreference === "gemini" &&
+      shouldFallbackToOpenAI(error);
     const shouldFallback =
       canFallback && eligibleByPolicy;
 

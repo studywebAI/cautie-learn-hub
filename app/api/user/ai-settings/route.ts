@@ -20,13 +20,13 @@ function normalizeOpenAIKey(value: unknown) {
 
 function normalizeOpenAIModel(value: unknown) {
   const model = String(value || "").trim();
-  return model || "gpt-4o-mini";
+  return model || "google/gemini-2.5-flash-lite";
 }
 
-function normalizeSttProviderStrategy(value: unknown): "deepgram_with_openai_fallback" | "openai_only" {
+function normalizeSttProviderStrategy(value: unknown): "groq_with_openai_fallback" | "openai_only" {
   const raw = String(value || "").trim().toLowerCase();
   if (raw === "openai_only") return "openai_only";
-  return "deepgram_with_openai_fallback";
+  return "groq_with_openai_fallback";
 }
 
 export async function GET() {
@@ -37,21 +37,22 @@ export async function GET() {
   }
 
   const runtime = await readUserAIRuntimeOptions(supabase, user.id);
-  const hasDeepgramKey = Boolean(String(process.env.DEEPGRAM_API_KEY || "").trim());
-  const hasOpenAIKey = Boolean(runtime.openaiApiKey && runtime.openaiApiKey !== process.env.OPENAI_API_KEY);
-  const usesDefaultOpenAIKey = Boolean(process.env.OPENAI_API_KEY) && !(runtime.openaiApiKey && runtime.openaiApiKey !== process.env.OPENAI_API_KEY);
+  const hasGroqKey = Boolean(String(process.env.GROQ_API_KEY || "").trim());
+  const defaultAiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "";
+  const hasOpenAIKey = Boolean(runtime.openaiApiKey && runtime.openaiApiKey !== defaultAiKey);
+  const usesDefaultOpenAIKey = Boolean(defaultAiKey) && !(runtime.openaiApiKey && runtime.openaiApiKey !== defaultAiKey);
   const effectiveSttProvider =
     runtime.sttProviderStrategy === "openai_only"
       ? "openai"
-      : hasDeepgramKey
-        ? "deepgram"
-        : (runtime.openaiApiKey || process.env.OPENAI_API_KEY ? "openai" : "unavailable");
+      : hasGroqKey
+        ? "groq"
+        : (runtime.openaiApiKey || defaultAiKey ? "openai" : "unavailable");
   return NextResponse.json({
     providerPreference: runtime.providerPreference,
-    openaiModel: runtime.openaiModel || "gpt-4o-mini",
-    sttProviderStrategy: runtime.sttProviderStrategy || "deepgram_with_openai_fallback",
+    openaiModel: runtime.openaiModel || "google/gemini-2.5-flash-lite",
+    sttProviderStrategy: runtime.sttProviderStrategy || "groq_with_openai_fallback",
     effectiveSttProvider,
-    hasDeepgramKey,
+    hasGroqKey,
     hasOpenAIKey,
     usesDefaultOpenAIKey,
   });
@@ -76,9 +77,9 @@ export async function PUT(request: NextRequest) {
   const openaiModel = normalizeOpenAIModel(body?.openaiModel);
   const sttProviderStrategy = normalizeSttProviderStrategy(body?.sttProviderStrategy);
 
-  if (openaiApiKey && !openaiApiKey.startsWith("sk-")) {
+  if (openaiApiKey && !(openaiApiKey.startsWith("sk-") || openaiApiKey.startsWith("sk-or-") || openaiApiKey.startsWith("sk-or-v1-"))) {
     return NextResponse.json(
-      { error: "OpenAI key format is invalid", code: "OPENAI_KEY_INVALID" },
+      { error: "API key format is invalid", code: "OPENAI_KEY_INVALID" },
       { status: 422 }
     );
   }
@@ -90,21 +91,21 @@ export async function PUT(request: NextRequest) {
       openaiModel,
       sttProviderStrategy,
     });
-    const hasDeepgramKey = Boolean(String(process.env.DEEPGRAM_API_KEY || "").trim());
+    const hasGroqKey = Boolean(String(process.env.GROQ_API_KEY || "").trim());
     const effectiveSttProvider =
       saved.sttProviderStrategy === "openai_only"
         ? "openai"
-        : hasDeepgramKey
-          ? "deepgram"
-          : (openaiApiKey || process.env.OPENAI_API_KEY ? "openai" : "unavailable");
+        : hasGroqKey
+          ? "groq"
+          : (openaiApiKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY ? "openai" : "unavailable");
     return NextResponse.json({
       providerPreference: saved.providerPreference,
-      openaiModel: saved.openaiModel || "gpt-4o-mini",
-      sttProviderStrategy: saved.sttProviderStrategy || "deepgram_with_openai_fallback",
+      openaiModel: saved.openaiModel || "google/gemini-2.5-flash-lite",
+      sttProviderStrategy: saved.sttProviderStrategy || "groq_with_openai_fallback",
       effectiveSttProvider,
-      hasDeepgramKey,
+      hasGroqKey,
       hasOpenAIKey: saved.hasOpenAIKey,
-      usesDefaultOpenAIKey: Boolean(process.env.OPENAI_API_KEY) && !saved.hasOpenAIKey,
+      usesDefaultOpenAIKey: Boolean(process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY) && !saved.hasOpenAIKey,
     });
   } catch (error: any) {
     return NextResponse.json(

@@ -87,18 +87,28 @@ async function callOpenAIJson<T>({
   system,
   user,
   schema,
+  baseUrl,
 }: {
   apiKey: string;
   model: string;
   system: string;
   user: string;
   schema: z.ZodType<T>;
+  baseUrl?: string;
 }) {
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const normalizedBaseUrl = String(baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
+  const isOpenRouter = normalizedBaseUrl.includes("openrouter.ai");
+  const response = await fetch(`${normalizedBaseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
+      ...(isOpenRouter
+        ? {
+            "HTTP-Referer": process.env.OPENROUTER_HTTP_REFERER || process.env.NEXT_PUBLIC_APP_URL || "",
+            "X-Title": process.env.OPENROUTER_APP_TITLE || "Cautie Learn Hub",
+          }
+        : {}),
     },
     body: JSON.stringify({
       model,
@@ -126,7 +136,8 @@ async function callOpenAIJson<T>({
 }
 
 export async function executeOpenAIFallbackFlow(flowName: string, input: any, apiKey: string, modelOverride?: string) {
-  const model = String(modelOverride || process.env.OPENAI_FALLBACK_MODEL || "gpt-4o-mini").trim() || "gpt-4o-mini";
+  const model = String(modelOverride || process.env.OPENAI_FALLBACK_MODEL || "google/gemini-2.5-flash-lite").trim() || "google/gemini-2.5-flash-lite";
+  const baseUrl = String(process.env.OPENAI_COMPAT_BASE_URL || "https://openrouter.ai/api/v1").trim();
   const grounding = String(input?.groundingInstruction || "").trim();
   const rawSourceText = String(input?.sourceText || "").trim();
   const maxSourceChars = 22000;
@@ -140,6 +151,7 @@ export async function executeOpenAIFallbackFlow(flowName: string, input: any, ap
     return callOpenAIJson({
       apiKey,
       model,
+      baseUrl,
       schema: QuizSchema,
       system:
         "Generate clean educational quiz JSON only. Use only supplied source content. Never invent facts.",
@@ -166,6 +178,7 @@ export async function executeOpenAIFallbackFlow(flowName: string, input: any, ap
     return callOpenAIJson({
       apiKey,
       model,
+      baseUrl,
       schema: FlashcardsSchema,
       system:
         "Generate flashcards as strict JSON only. Use only source content. Do not hallucinate.",
@@ -187,6 +200,7 @@ export async function executeOpenAIFallbackFlow(flowName: string, input: any, ap
     return callOpenAIJson({
       apiKey,
       model,
+      baseUrl,
       schema: NotesSchema,
       system:
         "Generate structured notes JSON only. Use only source content and stay concise and useful.",
@@ -210,6 +224,7 @@ export async function executeOpenAIFallbackFlow(flowName: string, input: any, ap
     return callOpenAIJson({
       apiKey,
       model,
+      baseUrl,
       schema: McqQuestionSchema,
       system: "Generate exactly one MCQ as strict JSON.",
       user: [

@@ -6,7 +6,7 @@ export type AIRuntimeOptions = {
   providerPreference: AIProviderPreference;
   openaiApiKey?: string;
   openaiModel?: string;
-  sttProviderStrategy?: "deepgram_with_openai_fallback" | "openai_only";
+  sttProviderStrategy?: "groq_with_openai_fallback" | "openai_only";
 };
 
 type UserAISettingsRow = {
@@ -15,8 +15,8 @@ type UserAISettingsRow = {
 };
 
 const DEFAULT_PROVIDER: AIProviderPreference = "auto";
-const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
-const DEFAULT_STT_PROVIDER_STRATEGY: AIRuntimeOptions["sttProviderStrategy"] = "deepgram_with_openai_fallback";
+const DEFAULT_OPENAI_MODEL = "google/gemini-2.5-flash-lite";
+const DEFAULT_STT_PROVIDER_STRATEGY: AIRuntimeOptions["sttProviderStrategy"] = "groq_with_openai_fallback";
 
 export async function readUserAIRuntimeOptions(
   supabase: any,
@@ -24,7 +24,7 @@ export async function readUserAIRuntimeOptions(
 ): Promise<AIRuntimeOptions> {
   const fallback: AIRuntimeOptions = {
     providerPreference: DEFAULT_PROVIDER,
-    openaiApiKey: process.env.OPENAI_API_KEY || undefined,
+    openaiApiKey: process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || undefined,
     openaiModel: DEFAULT_OPENAI_MODEL,
     sttProviderStrategy: DEFAULT_STT_PROVIDER_STRATEGY,
   };
@@ -67,7 +67,7 @@ export async function readUserAIRuntimeOptions(
       if (modelCandidate) openaiModel = modelCandidate;
       const sttRow = rows.find((row: any) => row?.preference_key === "stt_provider_strategy");
       const sttCandidate = String(sttRow?.preference_value || "").trim().toLowerCase();
-      if (sttCandidate === "openai_only" || sttCandidate === "deepgram_with_openai_fallback") {
+      if (sttCandidate === "openai_only" || sttCandidate === "groq_with_openai_fallback") {
         sttProviderStrategy = sttCandidate as AIRuntimeOptions["sttProviderStrategy"];
       }
     } catch {
@@ -92,7 +92,7 @@ export async function saveUserAISettings(
     providerPreference: AIProviderPreference;
     openaiApiKey?: string | null;
     openaiModel?: string | null;
-    sttProviderStrategy?: AIRuntimeOptions["sttProviderStrategy"] | null;
+      sttProviderStrategy?: AIRuntimeOptions["sttProviderStrategy"] | null;
   }
 ) {
   const providerPreference =
@@ -104,7 +104,7 @@ export async function saveUserAISettings(
   const encryptedOpenAIKey = openaiApiKey ? encryptSecret(openaiApiKey) : null;
   const openaiModel = String(payload.openaiModel || DEFAULT_OPENAI_MODEL).trim() || DEFAULT_OPENAI_MODEL;
   const sttProviderStrategy =
-    payload.sttProviderStrategy === "openai_only" || payload.sttProviderStrategy === "deepgram_with_openai_fallback"
+    payload.sttProviderStrategy === "openai_only" || payload.sttProviderStrategy === "groq_with_openai_fallback"
       ? payload.sttProviderStrategy
       : DEFAULT_STT_PROVIDER_STRATEGY;
 

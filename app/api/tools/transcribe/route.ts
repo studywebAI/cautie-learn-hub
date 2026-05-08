@@ -13,11 +13,8 @@ const normalizeLanguage = (value?: string | null) => {
   return lower.includes('-') ? lower.split('-')[0] : lower;
 };
 
-const parseDeepgramText = (payload: any) => {
-  const text = String(
-    payload?.results?.channels?.[0]?.alternatives?.[0]?.transcript || ''
-  ).trim();
-  return text;
+const parseGroqText = (payload: any) => {
+  return String(payload?.text || '').trim();
 };
 
 export async function POST(request: NextRequest) {
@@ -37,9 +34,12 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient(cookies());
     const { data: { user } } = await supabase.auth.getUser();
     const runtimeOptions = user ? await readUserAIRuntimeOptions(supabase, user.id).catch(() => null) : null;
-    const sttStrategy = runtimeOptions?.sttProviderStrategy || 'deepgram_with_openai_fallback';
-    const deepgramApiKey = String(process.env.DEEPGRAM_API_KEY || '').trim();
-    const openaiApiKey = runtimeOptions?.openaiApiKey || process.env.OPENAI_API_KEY || process.env.OPENAI_STT_API_KEY;
+    const sttStrategy = runtimeOptions?.sttProviderStrategy || 'groq_with_openai_fallback';
+    const groqApiKey = String(process.env.GROQ_API_KEY || '').trim();
+    const openaiApiKey =
+      process.env.OPENAI_STT_API_KEY ||
+      process.env.OPENAI_API_KEY ||
+      runtimeOptions?.openaiApiKey;
 
     const formData = await request.formData();
     const input = formData.get('file');
@@ -86,37 +86,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tryDeepgram = async () => {
-      if (!deepgramApiKey) {
-        throw new Error('DEEPGRAM_API_KEY is not configured on the server.');
+    const tryGroq = async () => {
+      if (!groqApiKey) {
+        throw new Error('GROQ_API_KEY is not configured on the server.');
       }
-      const query = new URLSearchParams({
-        model: 'nova-3',
-        punctuate: 'true',
-        smart_format: 'true',
-      });
-      if (language && language !== 'auto') query.set('language', language);
-      const deepgramResponse = await fetch(`https://api.deepgram.com/v1/listen?${query.toString()}`, {
+      const upstreamForm = new FormData();
+      upstreamForm.append('model', 'whisper-large-v3-turbo');
+      upstreamForm.append('file', input, input.name || 'speech.webm');
+      if (language) upstreamForm.append('language', language);
+      upstreamForm.append('temperature', '0');
+      upstreamForm.append('response_format', 'json');
+      const upstream = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
         method: 'POST',
         headers: {
-          Authorization: `Token ${deepgramApiKey}`,
-          'Content-Type': input.type || 'audio/webm',
+          Authorization: `Bearer ${groqApiKey}`,
         },
-        body: input,
+        body: upstreamForm,
       });
-      const payload = await deepgramResponse.json().catch(() => null);
-      const text = parseDeepgramText(payload);
+      const payload = await upstream.json().catch(() => null);
+      const text = parseGroqText(payload);
       log('transcribe_upstream_response', {
-        provider: 'deepgram',
-        ok: deepgramResponse.ok,
-        status: deepgramResponse.status,
+        provider: 'groq',
+        ok: upstream.ok,
+        status: upstream.status,
         durationMs: Date.now() - startedAt,
         micSessionId: micSessionId || null,
         textLength: text.length,
-        errorMessage: payload?.err_msg || payload?.error || null,
+        errorMessage: payload?.error?.message || null,
+        errorType: payload?.error?.type || null,
+        errorCode: payload?.error?.code || null,
       });
-      if (!deepgramResponse.ok) {
-        throw new Error(payload?.err_msg || `Deepgram transcription failed (${deepgramResponse.status}).`);
+      if (!upstream.ok) {
+        throw new Error(payload?.error?.message || `Groq transcription failed (${upstream.status}).`);
       }
       return text;
     };
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
     };
 
     let text = '';
-    let providerUsed: 'deepgram' | 'openai' | null = null;
+    let providerUsed: 'groq' | 'openai' | null = null;
     let fallbackReason: string | null = null;
 
     if (sttStrategy === 'openai_only') {
@@ -164,10 +165,10 @@ export async function POST(request: NextRequest) {
       providerUsed = 'openai';
     } else {
       try {
-        text = await tryDeepgram();
-        providerUsed = 'deepgram';
-      } catch (deepgramError: any) {
-        fallbackReason = deepgramError?.message || 'deepgram_failed';
+        text = await tryGroq();
+        providerUsed = 'groq';
+      } catch (groqError: any) {
+        fallbackReason = groqError?.message || 'groq_failed';
         log('transcribe_fallback_to_openai', {
           reason: fallbackReason,
           micSessionId: micSessionId || null,

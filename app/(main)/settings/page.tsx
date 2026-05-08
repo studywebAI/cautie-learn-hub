@@ -42,9 +42,9 @@ export default function SettingsPage() {
   const [displayNameSaving, setDisplayNameSaving] = useState(false);
   const [aiProvider, setAiProvider] = useState<'gemini' | 'openai' | 'auto'>('auto');
   const [openaiApiKeyDraft, setOpenaiApiKeyDraft] = useState('');
-  const [openaiModel, setOpenaiModel] = useState('gpt-4o-mini');
-  const [sttProviderStrategy, setSttProviderStrategy] = useState<'deepgram_with_openai_fallback' | 'openai_only'>('deepgram_with_openai_fallback');
-  const [effectiveSttProvider, setEffectiveSttProvider] = useState<'deepgram' | 'openai' | 'unavailable'>('unavailable');
+  const [openaiModel, setOpenaiModel] = useState('google/gemini-2.5-flash-lite');
+  const [sttProviderStrategy, setSttProviderStrategy] = useState<'groq_with_openai_fallback' | 'openai_only'>('groq_with_openai_fallback');
+  const [effectiveSttProvider, setEffectiveSttProvider] = useState<'groq' | 'openai' | 'unavailable'>('unavailable');
   const [aiSettingsLoading, setAiSettingsLoading] = useState(true);
   const [aiSettingsSaving, setAiSettingsSaving] = useState(false);
   const [aiSettingsStatus, setAiSettingsStatus] = useState('');
@@ -86,10 +86,10 @@ export default function SettingsPage() {
         if (typeof data?.openaiModel === 'string' && data.openaiModel.trim()) {
           setOpenaiModel(data.openaiModel.trim());
         }
-        if (data?.sttProviderStrategy === 'openai_only' || data?.sttProviderStrategy === 'deepgram_with_openai_fallback') {
+        if (data?.sttProviderStrategy === 'openai_only' || data?.sttProviderStrategy === 'groq_with_openai_fallback') {
           setSttProviderStrategy(data.sttProviderStrategy);
         }
-        if (data?.effectiveSttProvider === 'deepgram' || data?.effectiveSttProvider === 'openai' || data?.effectiveSttProvider === 'unavailable') {
+        if (data?.effectiveSttProvider === 'groq' || data?.effectiveSttProvider === 'openai' || data?.effectiveSttProvider === 'unavailable') {
           setEffectiveSttProvider(data.effectiveSttProvider);
         }
         setHasOpenAIKey(Boolean(data?.hasOpenAIKey));
@@ -121,7 +121,7 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error(data?.error || 'Could not save AI settings');
       setHasOpenAIKey(Boolean(data?.hasOpenAIKey));
       setUsesDefaultOpenAIKey(Boolean(data?.usesDefaultOpenAIKey));
-      if (data?.effectiveSttProvider === 'deepgram' || data?.effectiveSttProvider === 'openai' || data?.effectiveSttProvider === 'unavailable') {
+      if (data?.effectiveSttProvider === 'groq' || data?.effectiveSttProvider === 'openai' || data?.effectiveSttProvider === 'unavailable') {
         setEffectiveSttProvider(data.effectiveSttProvider);
       }
       setOpenaiApiKeyDraft('');
@@ -485,7 +485,8 @@ export default function SettingsPage() {
                         <SelectValue placeholder="Select model" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="gpt-4o-mini">gpt-4o-mini</SelectItem>
+                        <SelectItem value="google/gemini-2.5-flash-lite">google/gemini-2.5-flash-lite</SelectItem>
+                        <SelectItem value="google/gemini-2.5-flash-lite:nitro">google/gemini-2.5-flash-lite:nitro</SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">Current configured OpenAI model for fallback/tool runs.</p>
@@ -496,7 +497,7 @@ export default function SettingsPage() {
                     <Select
                       value={sttProviderStrategy}
                       onValueChange={(value) => {
-                        if (value === 'openai_only' || value === 'deepgram_with_openai_fallback') {
+                        if (value === 'openai_only' || value === 'groq_with_openai_fallback') {
                           setSttProviderStrategy(value);
                         }
                       }}
@@ -505,7 +506,7 @@ export default function SettingsPage() {
                         <SelectValue placeholder="Select STT strategy" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="deepgram_with_openai_fallback">Deepgram primary + OpenAI fallback</SelectItem>
+                        <SelectItem value="groq_with_openai_fallback">Groq Whisper primary + OpenAI fallback</SelectItem>
                         <SelectItem value="openai_only">OpenAI only</SelectItem>
                       </SelectContent>
                     </Select>
