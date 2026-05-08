@@ -41,10 +41,39 @@ const THEME_OPTIONS: Array<{ value: ThemeType; label: string }> = [
 
 const GUEST_SETUP_DONE_KEY = 'studyweb-first-time-setup-guest-final-v1';
 const ACCOUNT_SETUP_DONE_KEY_PREFIX = 'studyweb-first-time-setup-account-final-v1';
+const GUEST_SETUP_PROGRESS_KEY = 'studyweb-first-time-setup-guest-progress-v1';
+const ACCOUNT_SETUP_PROGRESS_KEY_PREFIX = 'studyweb-first-time-setup-account-progress-v1';
 const RTL_LANGUAGES = new Set<LanguageOption>(['ar', 'ur']);
 
 function accountSetupDoneKey(userId: string): string {
   return `${ACCOUNT_SETUP_DONE_KEY_PREFIX}:${userId}`;
+}
+
+function accountSetupProgressKey(userId: string): string {
+  return `${ACCOUNT_SETUP_PROGRESS_KEY_PREFIX}:${userId}`;
+}
+
+type SetupProgressSnapshot = {
+  step?: SetupStep;
+  role?: SetupRole;
+  language?: LanguageOption;
+  theme?: ThemeType;
+  displayName?: string;
+};
+
+function readProgressSnapshot(raw: string | null): SetupProgressSnapshot {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as SetupProgressSnapshot;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function resolveStep(value: unknown): SetupStep | null {
+  if (value === 'language' || value === 'role' || value === 'appearance' || value === 'displayName') return value;
+  return null;
 }
 
 function normalizeDisplayName(value: unknown): string {
@@ -76,6 +105,7 @@ export function FirstTimeSetupGate() {
   const [theme, setThemeChoice] = useState<ThemeType>('light');
   const [displayName, setDisplayName] = useState('');
   const [savingFinal, setSavingFinal] = useState(false);
+  const progressStorageKey = session?.user?.id ? accountSetupProgressKey(session.user.id) : GUEST_SETUP_PROGRESS_KEY;
 
   const uiText = useMemo(() => {
     const byLang: Record<LanguageOption, Record<string, string>> = {
@@ -119,6 +149,26 @@ export function FirstTimeSetupGate() {
           return;
         }
         if (!alive) return;
+        const guestSnapshot = typeof window !== 'undefined' ? readProgressSnapshot(window.localStorage.getItem(GUEST_SETUP_PROGRESS_KEY)) : {};
+        const snapshotLanguage = LANGUAGE_OPTIONS.some((item) => item.value === guestSnapshot.language) ? guestSnapshot.language as LanguageOption : null;
+        const snapshotTheme = THEME_OPTIONS.some((item) => item.value === guestSnapshot.theme) ? guestSnapshot.theme as ThemeType : null;
+        const snapshotStep = resolveStep(guestSnapshot.step);
+        const snapshotRole = guestSnapshot.role === 'teacher' ? 'teacher' : 'student';
+        const snapshotDisplayName = normalizeDisplayName(guestSnapshot.displayName);
+        if (snapshotLanguage) {
+          setLanguageChoice(snapshotLanguage);
+          setLanguage(snapshotLanguage);
+        }
+        if (snapshotTheme) {
+          setThemeChoice(snapshotTheme);
+        }
+        setRole(snapshotRole);
+        if (snapshotDisplayName) {
+          setDisplayName(snapshotDisplayName);
+        }
+        if (snapshotStep) {
+          setStep(snapshotStep);
+        }
         setVisible(true);
         setHydrated(true);
         return;
@@ -169,17 +219,39 @@ export function FirstTimeSetupGate() {
           setDisplayName(resolvedDisplayName);
         }
 
+        const accountSnapshot = typeof window !== 'undefined' ? readProgressSnapshot(window.localStorage.getItem(accountSetupProgressKey(session.user.id))) : {};
+        const snapshotLanguage = LANGUAGE_OPTIONS.some((item) => item.value === accountSnapshot.language) ? accountSnapshot.language as LanguageOption : null;
+        const snapshotTheme = THEME_OPTIONS.some((item) => item.value === accountSnapshot.theme) ? accountSnapshot.theme as ThemeType : null;
+        const snapshotStep = resolveStep(accountSnapshot.step);
+        const snapshotRole = accountSnapshot.role === 'teacher' ? 'teacher' : 'student';
+        const snapshotDisplayName = normalizeDisplayName(accountSnapshot.displayName);
+        if (snapshotLanguage) {
+          setLanguageChoice(snapshotLanguage);
+          setLanguage(snapshotLanguage);
+        }
+        if (snapshotTheme) {
+          setThemeChoice(snapshotTheme);
+        }
+        setRole(snapshotRole);
+        if (snapshotDisplayName) {
+          setDisplayName(snapshotDisplayName);
+        }
+
         const looksAlreadyConfigured = Boolean(profileLanguage) && Boolean(profileTheme) && Boolean(resolvedDisplayName);
 
         if (hasCompletedSetup || looksAlreadyConfigured) {
           if (typeof window !== 'undefined') {
             window.localStorage.setItem(accountSetupDoneKey(session.user.id), 'true');
+            window.localStorage.removeItem(accountSetupProgressKey(session.user.id));
           }
           setVisible(false);
           setHydrated(true);
           return;
         }
 
+        if (snapshotStep) {
+          setStep(snapshotStep);
+        }
         setVisible(true);
         setHydrated(true);
       } catch {
@@ -194,6 +266,19 @@ export function FirstTimeSetupGate() {
       alive = false;
     };
   }, [currentTheme, isLoading, session?.user?.id, setLanguage, supabase]);
+
+  useEffect(() => {
+    if (!visible) return;
+    if (typeof window === 'undefined') return;
+    const payload: SetupProgressSnapshot = {
+      step,
+      role,
+      language,
+      theme,
+      displayName: displayName.trim(),
+    };
+    window.localStorage.setItem(progressStorageKey, JSON.stringify(payload));
+  }, [displayName, language, progressStorageKey, role, step, theme, visible]);
 
   const flowSteps: SetupStep[] = ['language', 'role', 'appearance', 'displayName'];
   const currentStepIndex = Math.max(0, flowSteps.indexOf(step));
@@ -239,8 +324,10 @@ export function FirstTimeSetupGate() {
         window.localStorage.removeItem('studyweb-display-name');
       }
       window.localStorage.setItem(GUEST_SETUP_DONE_KEY, 'true');
+      window.localStorage.removeItem(GUEST_SETUP_PROGRESS_KEY);
       if (session?.user?.id) {
         window.localStorage.setItem(accountSetupDoneKey(session.user.id), 'true');
+        window.localStorage.removeItem(accountSetupProgressKey(session.user.id));
       }
     }
 
