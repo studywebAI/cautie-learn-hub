@@ -76,7 +76,7 @@ export async function readUserAIRuntimeOptions(
 
     return {
       providerPreference,
-      openaiApiKey: userOpenAIKey || process.env.OPENAI_API_KEY || undefined,
+      openaiApiKey: userOpenAIKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || undefined,
       openaiModel,
       sttProviderStrategy,
     };

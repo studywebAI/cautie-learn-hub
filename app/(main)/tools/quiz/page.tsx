@@ -38,8 +38,8 @@ const QUIZ_PAGE_SESSION_KEY = 'tools.quiz.page.session.v1';
 
 function pill(active: boolean) {
   return active
-    ? 'px-3 py-1 text-xs rounded-full bg-white text-foreground'
-    : 'px-3 py-1 text-xs rounded-full bg-[hsl(var(--background))] text-foreground';
+    ? 'px-3 py-1 text-xs rounded-full border border-[hsl(var(--foreground)/0.28)] bg-[hsl(var(--foreground)/0.16)] text-foreground'
+    : 'px-3 py-1 text-xs rounded-full border border-border bg-[hsl(var(--background))] text-foreground hover:bg-[hsl(var(--accent))]';
 }
 
 function decodePresetCode(value: string) {

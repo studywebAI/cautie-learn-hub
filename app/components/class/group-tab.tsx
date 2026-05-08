@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useContext } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, ChevronDown, ChevronRight, MessageSquare, Info, Pencil, Check, Settings, MoreHorizontal, X } from 'lucide-react';
+import { Users, MessageSquare, Info, Pencil, Check, Settings, MoreHorizontal, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -112,8 +112,6 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
   const [error, setError] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
-  const [teachersCollapsed, setTeachersCollapsed] = useState(false);
-  const [studentsCollapsed, setStudentsCollapsed] = useState(false);
   const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
   const [renameStudentId, setRenameStudentId] = useState<string>('');
   const [renameValue, setRenameValue] = useState('');
@@ -129,25 +127,6 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     setLoading(!cachedData && !parentLoading);
     setError(null);
   }, [classId, cachedData, parentLoading]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const saved = window.localStorage.getItem(`group-panel-state:${classId}`);
-    if (!saved) return;
-    try {
-      const parsed = JSON.parse(saved) as { teachersCollapsed?: boolean; studentsCollapsed?: boolean };
-      setTeachersCollapsed(parsed.teachersCollapsed === true);
-      setStudentsCollapsed(parsed.studentsCollapsed === true);
-    } catch {}
-  }, [classId]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(
-      `group-panel-state:${classId}`,
-      JSON.stringify({ teachersCollapsed, studentsCollapsed })
-    );
-  }, [classId, teachersCollapsed, studentsCollapsed]);
 
   useEffect(() => {
     if (!cachedData) return;
@@ -257,7 +236,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
 
   return (
     <div className="class-shell" data-testid="group-tab">
-      <div className="space-y-3 p-1 md:p-1">
+      <div className="space-y-2 p-0">
         <div className="relative flex items-center justify-end">
           <Button
             variant={groupSettingsOpen ? 'default' : 'outline'}
@@ -275,6 +254,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
             <h3 className="text-base font-medium" data-testid="group-heading-students">{t.students}</h3>
             <span className="text-xs text-muted-foreground">{sortedStudents.length} {t.people}</span>
           </div>
+          <p className="mb-2 text-xs text-muted-foreground">{t.studentListHint}</p>
           <div className="space-y-1.5">
             {sortedStudents.length === 0 ? (
               <div className="rounded-md surface-panel py-8 text-center text-foreground/75">
@@ -344,6 +324,7 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
             <h3 className="text-base font-medium" data-testid="group-heading-teachers">{t.teachers}</h3>
             <span className="text-xs text-muted-foreground">{sortedTeachers.length} {t.people}</span>
           </div>
+          <p className="mb-2 text-xs text-muted-foreground">{t.teacherListHint}</p>
           <div className="space-y-1.5">
             {sortedTeachers.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t.noTeachers}</p>

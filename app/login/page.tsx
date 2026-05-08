@@ -4,17 +4,32 @@ import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { AuthForm } from '@/components/auth-form';
+import { useToast } from '@/hooks/use-toast';
 
 function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
+  const { toast } = useToast();
   const authSearchParams = {
     message: searchParams.get('message') || '',
     type: searchParams.get('type') || '',
     email: searchParams.get('email') || '',
   };
+
+  useEffect(() => {
+    const message = searchParams.get('message');
+    if (!message) return;
+    const type = searchParams.get('type') || 'info';
+    toast({
+      title: type === 'error' ? 'Authentication error' : type === 'warning' ? 'Notice' : 'Notification',
+      description: message,
+      duration: 7000,
+      variant: type === 'error' ? 'destructive' : 'default',
+    });
+    router.replace('/login');
+  }, [router, searchParams, toast]);
 
   // Redirect if already logged in...........................................................................
   useEffect(() => {

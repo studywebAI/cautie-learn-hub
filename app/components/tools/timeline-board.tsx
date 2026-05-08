@@ -26,6 +26,11 @@ type TimelineItem = {
   lane: string;
 };
 
+type ParsedTemporalValue = {
+  ms: number | null;
+  textKey: string;
+};
+
 function toDate(iso: string) {
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? null : d;
@@ -37,6 +42,23 @@ function toIsoDate(ms: number) {
   const month = `${date.getUTCMonth() + 1}`.padStart(2, '0');
   const day = `${date.getUTCDate()}`.padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function parseTemporalValue(value: string): ParsedTemporalValue {
+  const normalized = String(value || '').trim();
+  if (!normalized) return { ms: null, textKey: '' };
+  const parsedDirect = toDate(normalized);
+  if (parsedDirect) {
+    return { ms: parsedDirect.getTime(), textKey: normalized.toLowerCase() };
+  }
+  const boundary = parseTemporalBoundary(normalized, false);
+  if (boundary && !boundary.isText) {
+    const parsedBoundary = toDate(boundary.iso);
+    if (parsedBoundary) {
+      return { ms: parsedBoundary.getTime(), textKey: normalized.toLowerCase() };
+    }
+  }
+  return { ms: null, textKey: normalized.toLowerCase() };
 }
 
 function parseTemporalBoundary(raw: string | undefined, isEnd = false): { iso: string; isText: false } | { text: string; isText: true } | null {
@@ -97,7 +119,14 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
       })
       .filter((item): item is TimelineItem => Boolean(item))
       .filter((item) => item.startAt)
-      .sort((a, b) => String(a.startAt).localeCompare(String(b.startAt)));
+      .sort((a, b) => {
+        const aParsed = parseTemporalValue(a.startAt);
+        const bParsed = parseTemporalValue(b.startAt);
+        if (aParsed.ms != null && bParsed.ms != null) return aParsed.ms - bParsed.ms;
+        if (aParsed.ms != null) return -1;
+        if (bParsed.ms != null) return 1;
+        return aParsed.textKey.localeCompare(bParsed.textKey);
+      });
   }, [document.nodes, document.temporal]);
 
   const filtered = useMemo(() => {
@@ -130,8 +159,12 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
         if (!haystack.includes(customQuery.trim().toLowerCase())) return false;
       }
       if (settingsTextFilter && !haystack.includes(settingsTextFilter)) return false;
-      const ms = toDate(item.startAt)?.getTime();
-      if (ms == null) return false;
+      const parsed = parseTemporalValue(item.startAt);
+      const ms = parsed.ms;
+      if (ms == null) {
+        if (minMs != null || maxMs != null) return false;
+        return true;
+      }
       if (minMs != null && ms < minMs) return false;
       if (maxMs != null && ms > maxMs) return false;
       return true;
@@ -144,8 +177,12 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
       return { min: now - 86400000, max: now + 86400000 };
     }
     const allTimes = filtered
-      .map((item) => toDate(item.startAt)?.getTime())
+      .map((item) => parseTemporalValue(item.startAt).ms)
       .filter((value): value is number => typeof value === 'number');
+    if (allTimes.length === 0) {
+      const now = Date.now();
+      return { min: now - 86400000, max: now + 86400000 };
+    }
     const min = Math.min(...allTimes);
     const max = Math.max(...allTimes);
     return { min, max: Math.max(max, min + 86400000) };
@@ -183,7 +220,9 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
     };
 
     return filtered.map((item, index) => {
-      const t = toDate(item.startAt)?.getTime() ?? range.min;
+      const parsed = parseTemporalValue(item.startAt);
+      const fallbackSlot = range.min + ((index + 1) / (filtered.length + 1)) * (range.max - range.min);
+      const t = parsed.ms ?? fallbackSlot;
       const markerX = ((t - range.min) / span) * 100;
       const clampedX = Math.max(CARD_WIDTH_PCT / 2, Math.min(100 - CARD_WIDTH_PCT / 2, markerX));
       const left = clampedX - CARD_WIDTH_PCT / 2;
@@ -292,8 +331,8 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
             </div>
             {customMode === 'date' ? (
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                <Input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} />
-                <Input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} />
+                <Input type="text" inputMode="text" value={customStart} onChange={(e) => setCustomStart(e.target.value)} placeholder="From (free text/date)" />
+                <Input type="text" inputMode="text" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} placeholder="To (free text/date)" />
               </div>
             ) : null}
             {customMode === 'month' ? (
@@ -374,11 +413,11 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="text-xs">Start</Label>
-              <Input type="date" value={newStart} onChange={(e) => setNewStart(e.target.value)} className="h-8 text-xs" />
+              <Input type="text" inputMode="text" value={newStart} onChange={(e) => setNewStart(e.target.value)} placeholder="From (free text/date)" className="h-8 text-xs" />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">End</Label>
-              <Input type="date" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} className="h-8 text-xs" />
+              <Input type="text" inputMode="text" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} placeholder="To (free text/date)" className="h-8 text-xs" />
             </div>
           </div>
           <Input value={newLane} onChange={(e) => setNewLane(e.target.value)} placeholder="Group (optional)" className="h-8 text-sm" />
@@ -396,8 +435,8 @@ export function TimelineBoard({ document, onChange, settings }: Props) {
                   <Input value={selected.title} onChange={(e) => upsertNode(selected.id, { title: e.target.value })} className="h-8 text-sm" />
                   <Textarea value={selected.body} onChange={(e) => upsertNode(selected.id, { body: e.target.value })} className="min-h-[80px] text-sm" />
                   <div className="grid grid-cols-2 gap-1">
-                    <Input type="date" value={selected.startAt} onChange={(e) => upsertNode(selected.id, { startAt: e.target.value })} className="h-8 text-xs" />
-                    <Input type="date" value={selected.endAt} onChange={(e) => upsertNode(selected.id, { endAt: e.target.value })} className="h-8 text-xs" />
+                    <Input type="text" inputMode="text" value={selected.startAt} onChange={(e) => upsertNode(selected.id, { startAt: e.target.value })} placeholder="From (free text/date)" className="h-8 text-xs" />
+                    <Input type="text" inputMode="text" value={selected.endAt} onChange={(e) => upsertNode(selected.id, { endAt: e.target.value })} placeholder="To (free text/date)" className="h-8 text-xs" />
                   </div>
                 </>
               ) : (

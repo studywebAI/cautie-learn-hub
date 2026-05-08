@@ -7,9 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 
-type SetupMode = 'new' | 'account';
 type SetupRole = 'student' | 'teacher';
-type SetupStep = 'language' | 'role' | 'auth' | 'appearance' | 'displayName';
+type SetupStep = 'language' | 'role' | 'appearance' | 'displayName';
 type LanguageOption = 'en' | 'nl' | 'de' | 'fr' | 'es' | 'pt' | 'pl' | 'ru' | 'ar' | 'ur' | 'hi' | 'bn' | 'zh' | 'it' | 'tr' | 'id';
 
 const LANGUAGE_OPTIONS: Array<{ value: LanguageOption; label: string }> = [
@@ -65,28 +64,6 @@ function resolveBrowserLanguage(): LanguageOption {
   return 'en';
 }
 
-function firstTimePromptForLanguage(language: LanguageOption): string {
-  const map: Record<LanguageOption, string> = {
-    en: 'First time here?',
-    nl: 'Eerste keer hier?',
-    de: 'Zum ersten Mal hier?',
-    fr: 'Premiere fois ici?',
-    es: 'Primera vez aqui?',
-    pt: 'Primeira vez aqui?',
-    pl: 'Pierwszy raz tutaj?',
-    ru: 'Первый раз здесь?',
-    ar: 'اول مرة هنا؟',
-    ur: 'پہلی بار یہاں؟',
-    hi: 'पहली बार यहां?',
-    bn: 'প্রথমবার এখানে?',
-    zh: '第一次来这里？',
-    it: 'Prima volta qui?',
-    tr: 'Buraya ilk kez mi geliyorsun?',
-    id: 'Pertama kali ke sini?',
-  };
-  return map[language] || map.en;
-}
-
 export function FirstTimeSetupGate() {
   const { session, isLoading, setLanguage, setTheme, theme: currentTheme } = useContext(AppContext) as AppContextType;
   const supabase = useMemo(() => createClient(), []);
@@ -94,164 +71,30 @@ export function FirstTimeSetupGate() {
   const [hydrated, setHydrated] = useState(false);
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState<SetupStep>('language');
-  const [mode, setMode] = useState<SetupMode>('new');
   const [role, setRole] = useState<SetupRole>('student');
   const [language, setLanguageChoice] = useState<LanguageOption>('en');
   const [theme, setThemeChoice] = useState<ThemeType>('light');
   const [displayName, setDisplayName] = useState('');
-  const [typedPrompt, setTypedPrompt] = useState('');
-  const [cursorVisible, setCursorVisible] = useState(true);
   const [savingFinal, setSavingFinal] = useState(false);
-  const [optionTypeTick, setOptionTypeTick] = useState(0);
 
   const uiText = useMemo(() => {
     const byLang: Record<LanguageOption, Record<string, string>> = {
-      en: {
-        firstTime: 'First time here?',
-        iAmNew: "I'm new",
-        iHaveAccount: 'I have an account',
-        step: 'Step',
-        of: 'of',
-        selectLanguage: 'Select language',
-        selectRole: 'Select role',
-        selectAuth: 'Sign in or create your account',
-        selectAppearance: 'Select appearance',
-        teacherCode: 'Teacher code',
-        enterTeacherCode: 'Enter teacher code',
-        enterDisplayName: 'Enter display name',
-        yourDisplayName: 'Your display name',
-        student: 'Student',
-        teacher: 'Teacher',
-        next: 'Next',
-        back: 'Back',
-        finish: 'Finish',
-        createAccount: 'Create account',
-        signIn: 'Sign in',
-        continueGuest: 'Continue as guest',
-        saving: 'Saving...',
-        welcomePrefix: 'Welcome',
-        loginToContinueSetup: 'Sign in to continue setup',
-        createYourAccount: 'Create your account',
-      },
-      nl: {
-        firstTime: 'Eerste keer hier?',
-        iAmNew: 'Ik ben nieuw',
-        iHaveAccount: 'Ik heb een account',
-        step: 'Stap',
-        of: 'van',
-        selectLanguage: 'Kies taal',
-        selectRole: 'Kies rol',
-        selectAuth: 'Inloggen of account maken',
-        selectAppearance: 'Kies uiterlijk',
-        teacherCode: 'Docentcode',
-        enterTeacherCode: 'Voer docentcode in',
-        enterDisplayName: 'Voer weergavenaam in',
-        yourDisplayName: 'Jouw weergavenaam',
-        student: 'Leerling',
-        teacher: 'Docent',
-        next: 'Volgende',
-        back: 'Terug',
-        finish: 'Afronden',
-        createAccount: 'Account maken',
-        signIn: 'Inloggen',
-        continueGuest: 'Doorgaan als gast',
-        saving: 'Opslaan...',
-        welcomePrefix: 'Welkom',
-        loginToContinueSetup: 'Log in om door te gaan met instellen',
-        createYourAccount: 'Maak je account aan',
-      },
-      de: {
-        firstTime: 'Zum ersten Mal hier?',
-        iAmNew: 'Ich bin neu',
-        iHaveAccount: 'Ich habe ein Konto',
-        step: 'Schritt',
-        of: 'von',
-        selectLanguage: 'Sprache wählen',
-        selectRole: 'Rolle wählen',
-        selectAppearance: 'Design wählen',
-        selectAuth: 'Anmelden oder Konto erstellen',
-        teacherCode: 'Lehrercode',
-        enterTeacherCode: 'Lehrercode eingeben',
-        enterDisplayName: 'Anzeigename eingeben',
-        yourDisplayName: 'Dein Anzeigename',
-        student: 'Schüler',
-        teacher: 'Lehrer',
-        next: 'Weiter',
-        back: 'Zurück',
-        finish: 'Fertig',
-        createAccount: 'Konto erstellen',
-        signIn: 'Anmelden',
-        continueGuest: 'Als Gast fortfahren',
-        saving: 'Speichern...',
-        welcomePrefix: 'Willkommen',
-        loginToContinueSetup: 'Melde dich an, um mit der Einrichtung fortzufahren',
-        createYourAccount: 'Erstelle dein Konto',
-      },
-      fr: {
-        firstTime: 'Premiere fois ici?',
-        iAmNew: 'Je suis nouveau',
-        iHaveAccount: "J'ai un compte",
-        step: 'Etape',
-        of: 'sur',
-        selectLanguage: 'Choisir la langue',
-        selectRole: 'Choisir le role',
-        selectAppearance: "Choisir l'apparence",
-        selectAuth: 'Connectez-vous ou creez votre compte',
-        teacherCode: 'Code enseignant',
-        enterTeacherCode: 'Entrer le code enseignant',
-        enterDisplayName: "Entrer le nom d'affichage",
-        yourDisplayName: "Votre nom d'affichage",
-        student: 'Etudiant',
-        teacher: 'Enseignant',
-        next: 'Suivant',
-        back: 'Retour',
-        finish: 'Terminer',
-        createAccount: 'Creer un compte',
-        signIn: 'Se connecter',
-        continueGuest: 'Continuer en invite',
-        saving: 'Enregistrement...',
-        welcomePrefix: 'Bienvenue',
-        loginToContinueSetup: 'Connectez-vous pour continuer la configuration',
-        createYourAccount: 'Creez votre compte',
-      },
-      es: {
-        firstTime: 'Primera vez aqui?',
-        iAmNew: 'Soy nuevo',
-        iHaveAccount: 'Tengo una cuenta',
-        step: 'Paso',
-        of: 'de',
-        selectLanguage: 'Seleccionar idioma',
-        selectRole: 'Seleccionar rol',
-        selectAppearance: 'Seleccionar apariencia',
-        selectAuth: 'Inicia sesion o crea tu cuenta',
-        teacherCode: 'Codigo docente',
-        enterTeacherCode: 'Ingresa el codigo docente',
-        enterDisplayName: 'Ingresa nombre visible',
-        yourDisplayName: 'Tu nombre visible',
-        student: 'Estudiante',
-        teacher: 'Docente',
-        next: 'Siguiente',
-        back: 'Atras',
-        finish: 'Finalizar',
-        createAccount: 'Crear cuenta',
-        signIn: 'Iniciar sesion',
-        continueGuest: 'Continuar como invitado',
-        saving: 'Guardando...',
-        welcomePrefix: 'Bienvenido',
-        loginToContinueSetup: 'Inicia sesion para continuar la configuracion',
-        createYourAccount: 'Crea tu cuenta',
-      },
-      pt: { firstTime: 'Primeira vez aqui?', iAmNew: 'Sou novo', iHaveAccount: 'Tenho conta', step: 'Passo', of: 'de', selectLanguage: 'Selecionar idioma', selectRole: 'Selecionar papel', selectAuth: 'Entrar ou criar conta', selectAppearance: 'Selecionar aparencia', teacherCode: 'Codigo do professor', enterTeacherCode: 'Digite o codigo do professor', enterDisplayName: 'Digite nome de exibicao', yourDisplayName: 'Seu nome de exibicao', student: 'Aluno', teacher: 'Professor', next: 'Proximo', back: 'Voltar', finish: 'Concluir', createAccount: 'Criar conta', signIn: 'Entrar', continueGuest: 'Continuar como convidado', saving: 'Salvando...', welcomePrefix: 'Bem-vindo', loginToContinueSetup: 'Entre para continuar a configuracao', createYourAccount: 'Crie sua conta' },
-      pl: { firstTime: 'Pierwszy raz tutaj?', iAmNew: 'Jestem nowy', iHaveAccount: 'Mam konto', step: 'Krok', of: 'z', selectLanguage: 'Wybierz jezyk', selectRole: 'Wybierz role', selectAuth: 'Zaloguj sie lub utworz konto', selectAppearance: 'Wybierz wyglad', teacherCode: 'Kod nauczyciela', enterTeacherCode: 'Wpisz kod nauczyciela', enterDisplayName: 'Wpisz nazwe wyswietlana', yourDisplayName: 'Twoja nazwa wyswietlana', student: 'Uczen', teacher: 'Nauczyciel', next: 'Dalej', back: 'Wstecz', finish: 'Zakoncz', createAccount: 'Utworz konto', signIn: 'Zaloguj sie', continueGuest: 'Kontynuuj jako gosc', saving: 'Zapisywanie...', welcomePrefix: 'Witamy', loginToContinueSetup: 'Zaloguj sie, aby kontynuowac konfiguracje', createYourAccount: 'Utworz swoje konto' },
-      ru: { firstTime: 'Первый раз здесь?', iAmNew: 'Я новый', iHaveAccount: 'У меня есть аккаунт', step: 'Шаг', of: 'из', selectLanguage: 'Выберите язык', selectRole: 'Выберите роль', selectAuth: 'Войдите или создайте аккаунт', selectAppearance: 'Выберите тему', teacherCode: 'Код учителя', enterTeacherCode: 'Введите код учителя', enterDisplayName: 'Введите отображаемое имя', yourDisplayName: 'Ваше отображаемое имя', student: 'Ученик', teacher: 'Учитель', next: 'Далее', back: 'Назад', finish: 'Завершить', createAccount: 'Создать аккаунт', signIn: 'Войти', continueGuest: 'Продолжить как гость', saving: 'Сохранение...', welcomePrefix: 'Добро пожаловать', loginToContinueSetup: 'Войдите, чтобы продолжить настройку', createYourAccount: 'Создайте аккаунт' },
-      ar: { firstTime: 'اول مرة هنا؟', iAmNew: 'انا جديد', iHaveAccount: 'لدي حساب', step: 'الخطوة', of: 'من', selectLanguage: 'اختر اللغة', selectRole: 'اختر الدور', selectAuth: 'سجل الدخول او انشئ حسابك', selectAppearance: 'اختر المظهر', teacherCode: 'رمز المعلم', enterTeacherCode: 'ادخل رمز المعلم', enterDisplayName: 'ادخل اسم العرض', yourDisplayName: 'اسم العرض', student: 'طالب', teacher: 'معلم', next: 'التالي', back: 'رجوع', finish: 'انهاء', createAccount: 'انشاء حساب', signIn: 'تسجيل الدخول', continueGuest: 'المتابعة كضيف', saving: 'جار الحفظ...', welcomePrefix: 'اهلا بك', loginToContinueSetup: 'سجل الدخول للمتابعة في الاعداد', createYourAccount: 'انشئ حسابك' },
-      ur: { firstTime: 'پہلی بار یہاں؟', iAmNew: 'میں نیا ہوں', iHaveAccount: 'میرے پاس اکاؤنٹ ہے', step: 'مرحلہ', of: 'میں سے', selectLanguage: 'زبان منتخب کریں', selectRole: 'کردار منتخب کریں', selectAuth: 'سائن ان کریں یا اکاؤنٹ بنائیں', selectAppearance: 'ظاہری شکل منتخب کریں', teacherCode: 'استاد کوڈ', enterTeacherCode: 'استاد کوڈ درج کریں', enterDisplayName: 'ڈسپلے نام درج کریں', yourDisplayName: 'آپ کا ڈسپلے نام', student: 'طالب علم', teacher: 'استاد', next: 'اگلا', back: 'واپس', finish: 'مکمل کریں', createAccount: 'اکاؤنٹ بنائیں', signIn: 'سائن ان', continueGuest: 'بطور مہمان جاری رکھیں', saving: 'محفوظ ہو رہا ہے...', welcomePrefix: 'خوش آمدید', loginToContinueSetup: 'سیٹ اپ جاری رکھنے کے لیے سائن ان کریں', createYourAccount: 'اپنا اکاؤنٹ بنائیں' },
-      hi: { firstTime: 'पहली बार यहां?', iAmNew: 'मैं नया हूं', iHaveAccount: 'मेरे पास अकाउंट है', step: 'चरण', of: 'का', selectLanguage: 'भाषा चुनें', selectRole: 'भूमिका चुनें', selectAuth: 'साइन इन करें या अकाउंट बनाएं', selectAppearance: 'रूप चुनें', teacherCode: 'शिक्षक कोड', enterTeacherCode: 'शिक्षक कोड दर्ज करें', enterDisplayName: 'डिस्प्ले नाम दर्ज करें', yourDisplayName: 'आपका डिस्प्ले नाम', student: 'छात्र', teacher: 'शिक्षक', next: 'अगला', back: 'वापस', finish: 'पूरा करें', createAccount: 'अकाउंट बनाएं', signIn: 'साइन इन', continueGuest: 'मेहमान के रूप में जारी रखें', saving: 'सहेजा जा रहा है...', welcomePrefix: 'स्वागत है', loginToContinueSetup: 'सेटअप जारी रखने के लिए साइन इन करें', createYourAccount: 'अपना अकाउंट बनाएं' },
-      bn: { firstTime: 'প্রথমবার এখানে?', iAmNew: 'আমি নতুন', iHaveAccount: 'আমার অ্যাকাউন্ট আছে', step: 'ধাপ', of: 'এর', selectLanguage: 'ভাষা বাছুন', selectRole: 'ভূমিকা বাছুন', selectAuth: 'সাইন ইন করুন বা অ্যাকাউন্ট তৈরি করুন', selectAppearance: 'থিম বাছুন', teacherCode: 'শিক্ষক কোড', enterTeacherCode: 'শিক্ষক কোড লিখুন', enterDisplayName: 'ডিসপ্লে নাম লিখুন', yourDisplayName: 'আপনার ডিসপ্লে নাম', student: 'শিক্ষার্থী', teacher: 'শিক্ষক', next: 'পরবর্তী', back: 'পিছনে', finish: 'শেষ করুন', createAccount: 'অ্যাকাউন্ট তৈরি করুন', signIn: 'সাইন ইন', continueGuest: 'অতিথি হিসেবে চালিয়ে যান', saving: 'সংরক্ষণ হচ্ছে...', welcomePrefix: 'স্বাগতম', loginToContinueSetup: 'সেটআপ চালিয়ে যেতে সাইন ইন করুন', createYourAccount: 'আপনার অ্যাকাউন্ট তৈরি করুন' },
-      zh: { firstTime: '第一次来这里？', iAmNew: '我是新用户', iHaveAccount: '我有账号', step: '步骤', of: '共', selectLanguage: '选择语言', selectRole: '选择身份', selectAuth: '登录或创建账号', selectAppearance: '选择外观', teacherCode: '教师代码', enterTeacherCode: '输入教师代码', enterDisplayName: '输入显示名称', yourDisplayName: '你的显示名称', student: '学生', teacher: '老师', next: '下一步', back: '返回', finish: '完成', createAccount: '创建账号', signIn: '登录', continueGuest: '以访客继续', saving: '正在保存...', welcomePrefix: '欢迎', loginToContinueSetup: '登录以继续设置', createYourAccount: '创建你的账号' },
-      it: { firstTime: 'Prima volta qui?', iAmNew: 'Sono nuovo', iHaveAccount: 'Ho un conto', step: 'Fare un passo', of: 'Di', selectLanguage: 'Seleziona la lingua', selectRole: 'Seleziona ruolo', selectAuth: 'Accedi o crea il tuo account', selectAppearance: 'Seleziona aspetto', teacherCode: 'Codice insegnante', enterTeacherCode: 'Inserisci il codice insegnante', enterDisplayName: 'Inserisci il nome visualizzato', yourDisplayName: 'Il tuo nome visualizzato', student: 'Studente', teacher: 'Insegnante', next: 'Prossimo', back: 'Indietro', finish: 'Fine', createAccount: 'Creare account', signIn: 'Accedi', continueGuest: 'Continua come ospite', saving: 'Salvataggio...', welcomePrefix: 'Benvenuto', loginToContinueSetup: 'Accedi per continuare la configurazione', createYourAccount: 'Crea il tuo account' },
-      tr: { firstTime: 'Buraya ilk kez mi geliyorsun?', iAmNew: 'Ben yeniyim', iHaveAccount: 'Bir hesabim var', step: 'Adim', of: 'ile ilgili', selectLanguage: 'Dil secin', selectRole: 'Rol secin', selectAuth: 'Oturum acin veya hesabinizi olusturun', selectAppearance: 'Gorunumu secin', teacherCode: 'Ogretmen kodu', enterTeacherCode: 'Ogretmen kodunu girin', enterDisplayName: 'Gorunen adi girin', yourDisplayName: 'Gorunen adiniz', student: 'Ogrenci', teacher: 'Ogretmen', next: 'Sonraki', back: 'Geri', finish: 'Bitir', createAccount: 'Hesap olustur', signIn: 'Oturum ac', continueGuest: 'Konuk olarak devam et', saving: 'Kaydediliyor...', welcomePrefix: 'Hos geldin', loginToContinueSetup: 'Kuruluma devam etmek icin oturum ac', createYourAccount: 'Hesabini olustur' },
-      id: { firstTime: 'Pertama kali ke sini?', iAmNew: 'Saya baru', iHaveAccount: 'Saya punya akun', step: 'Langkah', of: 'dari', selectLanguage: 'Pilih bahasa', selectRole: 'Pilih peran', selectAuth: 'Masuk atau buat akun Anda', selectAppearance: 'Pilih tampilan', teacherCode: 'Kode guru', enterTeacherCode: 'Masukkan kode guru', enterDisplayName: 'Masukkan nama tampilan', yourDisplayName: 'Nama tampilan Anda', student: 'Murid', teacher: 'Guru', next: 'Berikutnya', back: 'Kembali', finish: 'Selesai', createAccount: 'Buat akun', signIn: 'Masuk', continueGuest: 'Lanjutkan sebagai tamu', saving: 'Menyimpan...', welcomePrefix: 'Selamat datang', loginToContinueSetup: 'Masuk untuk melanjutkan pengaturan', createYourAccount: 'Buat akun Anda' },
+      en: { step: 'Step', of: 'of', selectLanguage: 'Select language', selectRole: 'Select role', selectAppearance: 'Select appearance', enterDisplayName: 'Enter display name', yourDisplayName: 'Your display name', student: 'Student', teacher: 'Teacher', next: 'Next', back: 'Back', finish: 'Finish', saving: 'Saving...', welcomePrefix: 'Welcome' },
+      nl: { step: 'Stap', of: 'van', selectLanguage: 'Kies taal', selectRole: 'Kies rol', selectAppearance: 'Kies uiterlijk', enterDisplayName: 'Voer weergavenaam in', yourDisplayName: 'Jouw weergavenaam', student: 'Leerling', teacher: 'Docent', next: 'Volgende', back: 'Terug', finish: 'Afronden', saving: 'Opslaan...', welcomePrefix: 'Welkom' },
+      de: { step: 'Schritt', of: 'von', selectLanguage: 'Sprache', selectRole: 'Rolle', selectAppearance: 'Aussehen', enterDisplayName: 'Anzeigename', yourDisplayName: 'Dein Anzeigename', student: 'Schuler', teacher: 'Lehrer', next: 'Weiter', back: 'Zuruck', finish: 'Fertig', saving: 'Speichern...', welcomePrefix: 'Willkommen' },
+      fr: { step: 'Etape', of: 'sur', selectLanguage: 'Langue', selectRole: 'Role', selectAppearance: 'Apparence', enterDisplayName: 'Nom affiche', yourDisplayName: 'Votre nom affiche', student: 'Etudiant', teacher: 'Enseignant', next: 'Suivant', back: 'Retour', finish: 'Terminer', saving: 'Enregistrement...', welcomePrefix: 'Bienvenue' },
+      es: { step: 'Paso', of: 'de', selectLanguage: 'Idioma', selectRole: 'Rol', selectAppearance: 'Apariencia', enterDisplayName: 'Nombre visible', yourDisplayName: 'Tu nombre visible', student: 'Estudiante', teacher: 'Docente', next: 'Siguiente', back: 'Atras', finish: 'Finalizar', saving: 'Guardando...', welcomePrefix: 'Bienvenido' },
+      pt: { step: 'Passo', of: 'de', selectLanguage: 'Idioma', selectRole: 'Papel', selectAppearance: 'Aparencia', enterDisplayName: 'Nome de exibicao', yourDisplayName: 'Seu nome de exibicao', student: 'Aluno', teacher: 'Professor', next: 'Proximo', back: 'Voltar', finish: 'Concluir', saving: 'Salvando...', welcomePrefix: 'Bem-vindo' },
+      pl: { step: 'Krok', of: 'z', selectLanguage: 'Jezyk', selectRole: 'Rola', selectAppearance: 'Wyglad', enterDisplayName: 'Nazwa wyswietlana', yourDisplayName: 'Twoja nazwa wyswietlana', student: 'Uczen', teacher: 'Nauczyciel', next: 'Dalej', back: 'Wstecz', finish: 'Zakoncz', saving: 'Zapisywanie...', welcomePrefix: 'Witamy' },
+      ru: { step: 'Step', of: 'of', selectLanguage: 'Select language', selectRole: 'Select role', selectAppearance: 'Select appearance', enterDisplayName: 'Enter display name', yourDisplayName: 'Your display name', student: 'Student', teacher: 'Teacher', next: 'Next', back: 'Back', finish: 'Finish', saving: 'Saving...', welcomePrefix: 'Welcome' },
+      ar: { step: 'Step', of: 'of', selectLanguage: 'Select language', selectRole: 'Select role', selectAppearance: 'Select appearance', enterDisplayName: 'Enter display name', yourDisplayName: 'Your display name', student: 'Student', teacher: 'Teacher', next: 'Next', back: 'Back', finish: 'Finish', saving: 'Saving...', welcomePrefix: 'Welcome' },
+      ur: { step: 'Step', of: 'of', selectLanguage: 'Select language', selectRole: 'Select role', selectAppearance: 'Select appearance', enterDisplayName: 'Enter display name', yourDisplayName: 'Your display name', student: 'Student', teacher: 'Teacher', next: 'Next', back: 'Back', finish: 'Finish', saving: 'Saving...', welcomePrefix: 'Welcome' },
+      hi: { step: 'Step', of: 'of', selectLanguage: 'Select language', selectRole: 'Select role', selectAppearance: 'Select appearance', enterDisplayName: 'Enter display name', yourDisplayName: 'Your display name', student: 'Student', teacher: 'Teacher', next: 'Next', back: 'Back', finish: 'Finish', saving: 'Saving...', welcomePrefix: 'Welcome' },
+      bn: { step: 'Step', of: 'of', selectLanguage: 'Select language', selectRole: 'Select role', selectAppearance: 'Select appearance', enterDisplayName: 'Enter display name', yourDisplayName: 'Your display name', student: 'Student', teacher: 'Teacher', next: 'Next', back: 'Back', finish: 'Finish', saving: 'Saving...', welcomePrefix: 'Welcome' },
+      zh: { step: 'Step', of: 'of', selectLanguage: 'Select language', selectRole: 'Select role', selectAppearance: 'Select appearance', enterDisplayName: 'Enter display name', yourDisplayName: 'Your display name', student: 'Student', teacher: 'Teacher', next: 'Next', back: 'Back', finish: 'Finish', saving: 'Saving...', welcomePrefix: 'Welcome' },
+      it: { step: 'Step', of: 'of', selectLanguage: 'Select language', selectRole: 'Select role', selectAppearance: 'Select appearance', enterDisplayName: 'Enter display name', yourDisplayName: 'Your display name', student: 'Student', teacher: 'Teacher', next: 'Next', back: 'Back', finish: 'Finish', saving: 'Saving...', welcomePrefix: 'Welcome' },
+      tr: { step: 'Step', of: 'of', selectLanguage: 'Select language', selectRole: 'Select role', selectAppearance: 'Select appearance', enterDisplayName: 'Enter display name', yourDisplayName: 'Your display name', student: 'Student', teacher: 'Teacher', next: 'Next', back: 'Back', finish: 'Finish', saving: 'Saving...', welcomePrefix: 'Welcome' },
+      id: { step: 'Step', of: 'of', selectLanguage: 'Select language', selectRole: 'Select role', selectAppearance: 'Select appearance', enterDisplayName: 'Enter display name', yourDisplayName: 'Your display name', student: 'Student', teacher: 'Teacher', next: 'Next', back: 'Back', finish: 'Finish', saving: 'Saving...', welcomePrefix: 'Welcome' },
     };
     return byLang[language] || byLang.en;
   }, [language]);
@@ -259,12 +102,12 @@ export function FirstTimeSetupGate() {
   useEffect(() => {
     if (isLoading) return;
     let alive = true;
+
     const init = async () => {
       const browserLanguage = resolveBrowserLanguage();
       setLanguageChoice(browserLanguage);
       setThemeChoice(currentTheme || 'light');
       setStep('language');
-      setMode(session?.user?.id ? 'account' : 'new');
       setRole('student');
       setDisplayName('');
 
@@ -306,15 +149,18 @@ export function FirstTimeSetupGate() {
           .maybeSingle();
 
         if (!alive) return;
+
         const profileLanguage = String(profile?.language || '').toLowerCase();
         if (LANGUAGE_OPTIONS.some((option) => option.value === profileLanguage)) {
           setLanguageChoice(profileLanguage as LanguageOption);
           setLanguage(profileLanguage as LanguageOption);
         }
+
         const profileTheme = String(profile?.theme || '').toLowerCase();
         if (THEME_OPTIONS.some((option) => option.value === profileTheme)) {
           setThemeChoice(profileTheme as ThemeType);
         }
+
         const profileDisplayName = normalizeDisplayName(profile?.display_name);
         const profileFullName = normalizeDisplayName(profile?.full_name);
         const localDisplayName = typeof window !== 'undefined' ? normalizeDisplayName(window.localStorage.getItem('studyweb-display-name')) : '';
@@ -323,7 +169,9 @@ export function FirstTimeSetupGate() {
           setDisplayName(resolvedDisplayName);
         }
 
-        if (hasCompletedSetup) {
+        const looksAlreadyConfigured = Boolean(profileLanguage) && Boolean(profileTheme) && Boolean(resolvedDisplayName);
+
+        if (hasCompletedSetup || looksAlreadyConfigured) {
           if (typeof window !== 'undefined') {
             window.localStorage.setItem(accountSetupDoneKey(session.user.id), 'true');
           }
@@ -345,33 +193,45 @@ export function FirstTimeSetupGate() {
     return () => {
       alive = false;
     };
-  }, [isLoading, session?.user?.id, supabase]);
+  }, [currentTheme, isLoading, session?.user?.id, setLanguage, supabase]);
 
-  const persistAndRedirectToLogin = useCallback(() => {
-    const message = encodeURIComponent(uiText.loginToContinueSetup || 'Sign in to continue setup');
-    window.location.href = `/login?message=${message}&type=info`;
-  }, [uiText.loginToContinueSetup]);
+  const flowSteps: SetupStep[] = ['language', 'role', 'appearance', 'displayName'];
+  const currentStepIndex = Math.max(0, flowSteps.indexOf(step));
+  const totalSteps = flowSteps.length;
+  const isRTL = RTL_LANGUAGES.has(language);
 
-  const redirectToCreateAccount = useCallback(async () => {
-    try {
-      if (session?.user?.id) {
-        await supabase.auth.signOut();
-      }
-    } catch {
-      // Continue to auth page even if sign-out fails.
+  const stepPrompt = useMemo(() => {
+    if (step === 'language') return uiText.selectLanguage || 'Select language';
+    if (step === 'role') return uiText.selectRole || 'Select role';
+    if (step === 'appearance') return uiText.selectAppearance || 'Select appearance';
+    if (step === 'displayName') return uiText.enterDisplayName || 'Enter display name';
+    return 'Select language';
+  }, [step, uiText.enterDisplayName, uiText.selectAppearance, uiText.selectLanguage, uiText.selectRole]);
+
+  const getOptionClasses = (active: boolean) => {
+    if (active) {
+      return 'border-[hsl(var(--foreground)/0.28)] bg-[hsl(var(--foreground)/0.10)] text-foreground shadow-sm';
     }
-    const message = encodeURIComponent(uiText.createYourAccount || 'Create your account');
-    window.location.href = `/login?message=${message}&type=info`;
-  }, [session?.user?.id, supabase.auth, uiText.createYourAccount]);
+    return 'border-[hsl(var(--border))] bg-[hsl(var(--card))] text-foreground hover:border-[hsl(var(--foreground)/0.20)] hover:bg-[hsl(var(--accent))]';
+  };
+
+  const goNext = () => {
+    if (currentStepIndex >= totalSteps - 1) return;
+    setStep(flowSteps[currentStepIndex + 1]);
+  };
+
+  const goBack = () => {
+    if (currentStepIndex <= 0) return;
+    setStep(flowSteps[currentStepIndex - 1]);
+  };
 
   const finishSetup = useCallback(async () => {
     const normalizedDisplayName = displayName.trim();
-    const persistedDisplayName =
-      normalizedDisplayName ||
-      (typeof window !== 'undefined' ? (window.localStorage.getItem('studyweb-display-name') || '').trim() : '');
+    const persistedDisplayName = normalizedDisplayName || (typeof window !== 'undefined' ? (window.localStorage.getItem('studyweb-display-name') || '').trim() : '');
 
     setLanguage(language);
     setTheme(theme);
+
     if (typeof window !== 'undefined') {
       if (persistedDisplayName) {
         window.localStorage.setItem('studyweb-display-name', persistedDisplayName);
@@ -400,7 +260,6 @@ export function FirstTimeSetupGate() {
             user_id: session.user.id,
             preference_key: 'first_time_setup_final',
             preference_value: {
-              mode,
               role,
               language,
               theme,
@@ -411,116 +270,24 @@ export function FirstTimeSetupGate() {
           { onConflict: 'user_id,preference_key' }
         );
       } catch {
-        // Keep UX moving even if backend save fails.
+        // keep UX moving
       } finally {
         setSavingFinal(false);
       }
     }
 
     setVisible(false);
-  }, [displayName, language, mode, role, session?.user?.id, setLanguage, setTheme, supabase, theme]);
+  }, [displayName, language, role, session?.user?.id, setLanguage, setTheme, supabase, theme]);
 
-  const flowSteps: SetupStep[] = mode === 'account'
-    ? ['language', 'role', 'appearance', 'displayName']
-    : ['language', 'role', 'auth', 'appearance', 'displayName'];
-  useEffect(() => {
-    if (!flowSteps.includes(step)) {
-      setStep(flowSteps[0]);
-    }
-  }, [flowSteps, step]);
-  const currentStepIndex = Math.max(0, flowSteps.indexOf(step));
-  const totalSteps = flowSteps.length;
-  const isRTL = RTL_LANGUAGES.has(language);
-  const getOptionClasses = (active: boolean) => {
-    if (active) {
-      return 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm';
-    }
-    return 'border-[hsl(var(--border))] bg-[hsl(var(--card))] text-foreground hover:border-[hsl(var(--primary))/0.35] hover:bg-[hsl(var(--accent))]';
-  };
-  const stepPrompt = useMemo(() => {
-    if (step === 'language') return uiText.firstTime || firstTimePromptForLanguage(language);
-    if (step === 'role') return uiText.selectRole || 'Select role';
-    if (step === 'auth') return uiText.selectAuth || 'Sign in or create your account';
-    if (step === 'appearance') return uiText.selectAppearance || 'Select appearance';
-    if (step === 'displayName') return uiText.enterDisplayName || 'Enter display name';
-    return uiText.firstTime || firstTimePromptForLanguage(language);
-  }, [language, step, uiText.enterDisplayName, uiText.firstTime, uiText.selectAppearance, uiText.selectAuth, uiText.selectRole]);
-
-  useEffect(() => {
-    if (!visible) return;
-    const prompt = stepPrompt;
-    let active = true;
-    const run = async () => {
-      setTypedPrompt('');
-      for (let i = 1; i <= prompt.length && active; i += 1) {
-        if (isRTL) {
-          setTypedPrompt(prompt.slice(Math.max(0, prompt.length - i)));
-        } else {
-          setTypedPrompt(prompt.slice(0, i));
-        }
-        await new Promise((resolve) => window.setTimeout(resolve, 32));
-      }
-    };
-    void run();
-
-    const blink = window.setInterval(() => setCursorVisible((prev) => !prev), 420);
-    return () => {
-      active = false;
-      window.clearInterval(blink);
-    };
-  }, [isRTL, stepPrompt, visible]);
-
-  const optionLabels: string[] =
-    step === 'language'
-      ? LANGUAGE_OPTIONS.map((item) => item.label)
-      : step === 'appearance'
-        ? THEME_OPTIONS.map((item) => item.label)
-        : step === 'role'
-          ? [uiText.student, uiText.teacher]
-          : [];
-  const maxOptionLength = optionLabels.reduce((max, label) => Math.max(max, label.length), 0);
-
-  useEffect(() => {
-    setOptionTypeTick(0);
-    if (maxOptionLength === 0) return;
-    const timer = window.setInterval(() => {
-      setOptionTypeTick((prev) => {
-        if (prev >= maxOptionLength) {
-          window.clearInterval(timer);
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 16);
-    return () => window.clearInterval(timer);
-  }, [maxOptionLength, step]);
-
-  const typedOptionLabel = (label: string) => {
-    const visibleChars = Math.max(1, optionTypeTick);
-    if (isRTL) {
-      return label.slice(Math.max(0, label.length - visibleChars));
-    }
-    return label.slice(0, visibleChars);
-  };
-
-  const goNext = () => {
-    if (currentStepIndex >= totalSteps - 1) return;
-    setStep(flowSteps[currentStepIndex + 1]);
-  };
-
-  const goBack = () => {
-    if (currentStepIndex <= 0) return;
-    setStep(flowSteps[currentStepIndex - 1]);
-  };
   if (!hydrated || !visible) return null;
 
   return (
     <div className="fixed inset-0 z-[260] bg-[hsl(var(--background))]" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="grid h-full w-full grid-cols-1 lg:grid-cols-[minmax(320px,38vw)_1fr]">
-        <aside className="border-b border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] p-6 lg:border-b-0 lg:border-r lg:p-10">
+        <aside className="border-b border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] p-5 lg:border-b-0 lg:border-r lg:p-10">
           <div className="mx-auto flex h-full w-full max-w-xl flex-col justify-between gap-8">
             <div className="space-y-3">
-              <h2 className="text-4xl font-semibold tracking-tight">{typedPrompt}<span className={cursorVisible ? 'opacity-100' : 'opacity-0'}>|</span></h2>
+              <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">{stepPrompt}</h2>
               <p className="text-sm text-muted-foreground">{uiText.step} {currentStepIndex + 1} {uiText.of} {totalSteps}</p>
               <div className="flex flex-wrap gap-2">
                 {flowSteps.map((stepKey, index) => (
@@ -540,8 +307,8 @@ export function FirstTimeSetupGate() {
           </div>
         </aside>
 
-        <main className="overflow-auto surface-panel p-6 md:p-10">
-          <div key={step} className={`setup-step-anim mx-auto w-full max-w-5xl space-y-5 ${isRTL ? 'setup-rtl' : ''}`}>
+        <main className="overflow-auto surface-panel p-4 md:p-10">
+          <div key={step} className={`setup-step-anim mx-auto w-full max-w-5xl space-y-5 rounded-2xl border border-border/70 p-4 md:p-6 ${isRTL ? 'setup-rtl' : ''}`}>
             {step === 'language' && (
               <div className="space-y-5">
                 <Label>{uiText.selectLanguage}</Label>
@@ -553,12 +320,11 @@ export function FirstTimeSetupGate() {
                       onClick={() => {
                         setLanguageChoice(option.value);
                         setLanguage(option.value);
-                        window.setTimeout(goNext, 110);
                       }}
                       className={`setup-option ${isRTL ? 'setup-option-rtl' : ''} rounded-2xl border px-4 py-3 text-left text-sm transition ${getOptionClasses(language === option.value)}`}
-                      style={{ animationDelay: `${index * 28}ms` }}
+                      style={{ animationDelay: `${index * 16}ms` }}
                     >
-                      {typedOptionLabel(option.label)}
+                      {option.label}
                     </button>
                   ))}
                 </div>
@@ -569,40 +335,13 @@ export function FirstTimeSetupGate() {
               <div className="max-w-xl space-y-5">
                 <Label>{uiText.selectRole}</Label>
                 <div className="grid grid-cols-2 gap-3">
-                  <Button className="h-12" variant={role === 'student' ? 'default' : 'outline'} onClick={() => {
-                    setRole('student');
-                    window.setTimeout(goNext, 110);
-                  }}>
-                    {typedOptionLabel(uiText.student)}
+                  <Button className="h-12" variant={role === 'student' ? 'default' : 'outline'} onClick={() => setRole('student')}>
+                    {uiText.student}
                   </Button>
-                  <Button className="h-12" variant={role === 'teacher' ? 'default' : 'outline'} onClick={() => {
-                    setRole('teacher');
-                    window.setTimeout(goNext, 110);
-                  }}>
-                    {typedOptionLabel(uiText.teacher)}
+                  <Button className="h-12" variant={role === 'teacher' ? 'default' : 'outline'} onClick={() => setRole('teacher')}>
+                    {uiText.teacher}
                   </Button>
                 </div>
-              </div>
-            )}
-
-            {mode === 'new' && step === 'auth' && (
-              <div className="max-w-xl space-y-5">
-                <Label>{uiText.selectAuth || 'Sign in or create your account'}</Label>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Button className="h-12" onClick={() => void redirectToCreateAccount()}>
-                    {uiText.createAccount}
-                  </Button>
-                  <Button className="h-12" variant="outline" onClick={() => persistAndRedirectToLogin()}>
-                    {uiText.signIn || 'Sign in'}
-                  </Button>
-                </div>
-                {role === 'student' && (
-                  <div className="flex justify-end">
-                    <Button variant="ghost" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={goNext}>
-                      {uiText.continueGuest}
-                    </Button>
-                  </div>
-                )}
               </div>
             )}
 
@@ -617,23 +356,26 @@ export function FirstTimeSetupGate() {
                       onClick={() => {
                         setThemeChoice(option.value);
                         setTheme(option.value);
-                        window.setTimeout(goNext, 110);
                       }}
                       className={`setup-option ${isRTL ? 'setup-option-rtl' : ''} rounded-2xl border px-4 py-3 text-left text-sm transition ${getOptionClasses(theme === option.value)}`}
-                      style={{ animationDelay: `${index * 28}ms` }}
+                      style={{ animationDelay: `${index * 16}ms` }}
                     >
-                      {typedOptionLabel(option.label)}
+                      {option.label}
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
+            {step !== 'displayName' && (
+              <div className="flex justify-end">
+                <Button onClick={goNext}>{uiText.next || 'Next'}</Button>
+              </div>
+            )}
+
             {step === 'displayName' && (
               <div className="max-w-xl space-y-5">
-                <p className="text-sm text-muted-foreground">
-                  {displayName.trim() ? `${uiText.welcomePrefix || 'Welcome'}, ${displayName.trim()}.` : ''}
-                </p>
+                <p className="text-sm text-muted-foreground">{displayName.trim() ? `${uiText.welcomePrefix || 'Welcome'}, ${displayName.trim()}.` : ''}</p>
                 <Label htmlFor="display-name">{uiText.enterDisplayName}</Label>
                 <Input
                   id="display-name"
@@ -649,58 +391,21 @@ export function FirstTimeSetupGate() {
           </div>
         </main>
       </div>
+
       <style jsx>{`
         .setup-step-anim {
-          animation: setupStepIn 240ms cubic-bezier(0.22, 1, 0.36, 1);
+          animation: setupStepIn 220ms ease-out;
         }
         .setup-option {
-          animation: setupOptionIn 260ms ease-out both;
+          animation: setupOptionIn 220ms ease-out both;
         }
         @keyframes setupStepIn {
-          from {
-            opacity: 0;
-            transform: translateX(12px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        .setup-rtl {
-          animation-name: setupStepInRtl;
-        }
-        @keyframes setupStepInRtl {
-          from {
-            opacity: 0;
-            transform: translateX(-12px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes setupOptionIn {
-          from {
-            opacity: 0;
-            transform: translateY(6px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .setup-option-rtl {
-          animation-name: setupOptionInRtl;
-        }
-        @keyframes setupOptionInRtl {
-          from {
-            opacity: 0;
-            transform: translateX(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @media (prefers-reduced-motion: reduce) {
           .setup-step-anim,

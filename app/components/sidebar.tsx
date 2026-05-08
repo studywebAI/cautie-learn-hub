@@ -1077,8 +1077,8 @@ export function AppSidebar() {
         </div>
 
         {/* Full drawer sidebar (when hamburger is clicked) */}
-        <Sidebar className="w-[min(17rem,calc(100vw-3rem))] overflow-hidden rounded-r-xl">
-          <SidebarContent className="flex-1 px-2.5 py-2.5">
+        <Sidebar className="w-[min(18rem,calc(100vw-2.5rem))] overflow-hidden rounded-r-xl">
+          <SidebarContent className="flex-1 px-2 py-2">
             {renderTeacherClassSwitcher()}
             {visibleMainItems.length > 0 && (
               <>
@@ -1171,7 +1171,7 @@ export function AppSidebar() {
               <RecentsSidebar />
             </div>
           </SidebarContent>
-          <SidebarFooter className="flex flex-col gap-2 px-2.5 pb-2.5 pt-2">
+          <SidebarFooter className="flex flex-col gap-2 px-2 pb-2 pt-2">
             <SidebarProfile />
           </SidebarFooter>
         </Sidebar>
@@ -1182,11 +1182,11 @@ export function AppSidebar() {
 
   // Tablet + desktop: regular sidebar with trigger
   return (
-    <Sidebar className={cn(isTablet ? "w-[13rem]" : "w-[14.5rem]", "overflow-hidden rounded-r-xl")} collapsible="icon">
+    <Sidebar className={cn(isTablet ? "w-[15rem]" : "w-[16.5rem]", "overflow-hidden rounded-r-xl")} collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
-      <SidebarContent className="px-2.5 py-2.5 flex-1">
+      <SidebarContent className="px-2 py-2 flex-1">
         {renderTeacherClassSwitcher()}
         {visibleMainItems.length > 0 && (
           <>
@@ -1278,7 +1278,7 @@ export function AppSidebar() {
           <RecentsSidebar />
         </div>
       </SidebarContent>
-      <SidebarFooter className="px-2.5 pt-2 pb-2.5 flex flex-col gap-2">
+      <SidebarFooter className="px-2 pt-2 pb-2 flex flex-col gap-2">
         <SidebarProfile />
       </SidebarFooter>
       {renderFloatingDropdown()}

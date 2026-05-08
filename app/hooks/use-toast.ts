@@ -9,7 +9,7 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 4
-const TOAST_REMOVE_DELAY = 3500
+const TOAST_REMOVE_DELAY = 7000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -156,8 +156,9 @@ function toast({ ...props }: Toast) {
   dispatch({
     type: "ADD_TOAST",
     toast: {
+      title: props.title ?? "Notification",
       ...props,
-      duration: props.duration ?? 3000,
+      duration: props.duration ?? 7000,
       id,
       open: true,
       onOpenChange: (open) => {

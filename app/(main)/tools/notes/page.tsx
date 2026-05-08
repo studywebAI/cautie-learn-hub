@@ -1265,8 +1265,10 @@ function NotesPageContent() {
                         key={option.value}
                         type="button"
                         className={cn(
-                          'px-3 py-1 rounded-full text-xs border-0',
-                          selectedNoteBlocks.includes(option.value) ? 'bg-white text-foreground' : 'bg-[hsl(var(--background))] text-foreground'
+                          'px-3 py-1 rounded-full text-xs border',
+                          selectedNoteBlocks.includes(option.value)
+                            ? 'border-[hsl(var(--foreground)/0.28)] bg-[hsl(var(--foreground)/0.16)] text-foreground'
+                            : 'border-border bg-[hsl(var(--background))] text-foreground hover:bg-[hsl(var(--accent))]'
                         )}
                         onClick={() => toggleMulti(option.value, setSelectedNoteBlocks)}
                       >
@@ -1284,8 +1286,10 @@ function NotesPageContent() {
                         key={target.value}
                         type="button"
                         className={cn(
-                          'px-3 py-1 rounded-full text-xs border-0',
-                          selectedAutoHighlightTargets.includes(target.value) ? 'bg-white text-foreground' : 'bg-[hsl(var(--background))] text-foreground'
+                          'px-3 py-1 rounded-full text-xs border',
+                          selectedAutoHighlightTargets.includes(target.value)
+                            ? 'border-[hsl(var(--foreground)/0.28)] bg-[hsl(var(--foreground)/0.16)] text-foreground'
+                            : 'border-border bg-[hsl(var(--background))] text-foreground hover:bg-[hsl(var(--accent))]'
                         )}
                         onClick={() => toggleMulti(target.value, setSelectedAutoHighlightTargets)}
                       >
@@ -1422,7 +1426,7 @@ function NotesPageContent() {
         <Switch
           checked={saveToRecents}
           onCheckedChange={setSaveToRecents}
-          className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
+          className="h-5 w-9 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
         />
       </div>
       <ImportToolbar
@@ -1559,8 +1563,8 @@ function NotesPageContent() {
         }}
         placeholder={t.sourceInputPlaceholder}
         speechLanguage={language}
-        enableMic={false}
-        enableCaptions={false}
+        enableMic
+        enableCaptions
         sourceMergeMode="append_labeled"
       />
     </WorkbenchShell>

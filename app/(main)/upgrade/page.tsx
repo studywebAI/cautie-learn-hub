@@ -127,13 +127,13 @@ export default function UpgradePage() {
         </Button>
       </div>
 
-      <Card>
+      <Card className="mx-auto w-full max-w-4xl border-border/80">
         <CardHeader>
           <CardTitle>Upgrade Plan</CardTitle>
           <CardDescription>Select role, select tier, enter your code.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <section className="space-y-3">
+          <section className="space-y-3 rounded-xl border border-border/70 p-4">
             <h3 className="text-sm">1. Choose Role</h3>
             <div className="grid gap-2 sm:grid-cols-2">
               {(['student', 'teacher'] as PlanType[]).map((type) => (
@@ -152,7 +152,7 @@ export default function UpgradePage() {
 
           <Separator />
 
-          <section className="space-y-3">
+          <section className="space-y-3 rounded-xl border border-border/70 p-4">
             <h3 className="text-sm">2. Choose Tier</h3>
             <div className="grid gap-2 sm:grid-cols-2">
               {(['premium', 'pro'] as PlanTier[]).map((tier) => (
@@ -172,7 +172,7 @@ export default function UpgradePage() {
 
           <Separator />
 
-          <section className="space-y-3">
+          <section className="space-y-3 rounded-xl border border-border/70 p-4">
             <h3 className="text-sm">3. Enter Code</h3>
             <div className="rounded-lg surface-interactive p-3 text-sm">
               <p>{planLabel}</p>
