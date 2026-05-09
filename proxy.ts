@@ -12,6 +12,29 @@ const parseCanonicalHost = () => {
 
 export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  const accessCookie = request.cookies.get('cautie_access')?.value;
+  const isAccessPath = path === '/access';
+  const isAccessApiPath = path === '/api/access';
+  const isPublicAsset =
+    path.startsWith('/_next/') ||
+    path.startsWith('/images/') ||
+    path.startsWith('/icons/') ||
+    path === '/favicon.ico' ||
+    path === '/manifest.json' ||
+    path === '/robots.txt' ||
+    path === '/sitemap.xml';
+
+  if (!isAccessPath && !isAccessApiPath && !isPublicAsset && accessCookie !== 'granted') {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = '/access';
+    redirectUrl.search = '';
+    const target = `${path}${request.nextUrl.search || ''}`;
+    if (target && target !== '/access') {
+      redirectUrl.searchParams.set('next', target);
+    }
+    return NextResponse.redirect(redirectUrl, 307);
+  }
+
   const userAgent = request.headers.get('user-agent') || '';
   const isNoisePath =
     path === '/manifest.json' ||
