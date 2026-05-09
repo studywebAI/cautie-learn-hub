@@ -41,6 +41,7 @@ export function SidebarProfile() {
   const router = useRouter();
   const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
   const [resolvedDisplayName, setResolvedDisplayName] = useState<string>('');
+  const [menuOpen, setMenuOpen] = useState(false);
   const SUBSCRIPTION_CACHE_KEY = 'studyweb-subscription-cache-v1';
   const SUBSCRIPTION_CACHE_TTL_MS = 300_000;
 
@@ -86,6 +87,12 @@ export function SidebarProfile() {
       normalizeDisplayName((session as any)?.user?.user_metadata?.name);
     setResolvedDisplayName(local || meta || '');
   }, [session?.user?.id]);
+
+  useEffect(() => {
+    const openProfileMenu = () => setMenuOpen(true);
+    window.addEventListener('cautie:open-profile-menu', openProfileMenu);
+    return () => window.removeEventListener('cautie:open-profile-menu', openProfileMenu);
+  }, []);
 
   // Not logged in - show guest state with sign up button
   if (!session) {
@@ -150,7 +157,7 @@ export function SidebarProfile() {
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </Button>
-        <DropdownMenu>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md" aria-label="Account menu">
               {isPremium ? <Crown className="h-4 w-4" /> : <User className="h-4 w-4" />}
@@ -196,7 +203,7 @@ export function SidebarProfile() {
       </Button>
 
       {/* Username dropdown - ChatGPT style */}
-      <DropdownMenu>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
           <button className="flex w-full items-center gap-2 rounded-lg border-0 bg-sidebar-accent/42 px-2.5 py-1.5 text-left outline-none transition-colors group hover:bg-sidebar-accent/62 focus-visible:ring-1 focus-visible:ring-sidebar-ring/40">
             <div className="flex-1 min-w-0">

@@ -81,6 +81,34 @@ function parseJsonFromModel(content: string) {
   }
 }
 
+function extractAssistantText(payload: any): string {
+  const choice = payload?.choices?.[0];
+  const message = choice?.message;
+  const content = message?.content;
+
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    const text = content
+      .map((part: any) => (typeof part?.text === "string" ? part.text : ""))
+      .filter(Boolean)
+      .join("\n");
+    if (text.trim()) return text;
+  }
+
+  const refusal =
+    (typeof message?.refusal === "string" && message.refusal) ||
+    (typeof choice?.finish_reason === "string" && choice.finish_reason === "content_filter"
+      ? "Response blocked by content filter."
+      : "");
+  if (refusal) {
+    const err = new Error(refusal) as Error & { code?: string };
+    err.code = "OPENAI_RESPONSE_BLOCKED";
+    throw err;
+  }
+
+  return "";
+}
+
 function normalizeNoteContentEntry(value: unknown): string {
   if (typeof value === "string") return value.trim();
   if (typeof value === "number" || typeof value === "boolean") return String(value);
@@ -166,7 +194,14 @@ async function callOpenAIJson<T>({
     throw err;
   }
   const json: any = await response.json();
-  const content = json?.choices?.[0]?.message?.content || "";
+  const content = extractAssistantText(json);
+  if (!String(content || "").trim()) {
+    const err = new Error(
+      `OpenAI returned empty content (finish_reason=${String(json?.choices?.[0]?.finish_reason || "unknown")})`
+    ) as Error & { code?: string };
+    err.code = "OPENAI_EMPTY_OUTPUT";
+    throw err;
+  }
   const parsed = parseJsonFromModel(content);
   return schema.parse(parsed);
 }

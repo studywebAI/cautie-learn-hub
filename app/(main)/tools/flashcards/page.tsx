@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense, useContext, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
-import { Loader2 } from 'lucide-react';
+import { Copy, Loader2 } from 'lucide-react';
 import { FunLoader } from '@/components/tools/fun-loader';
 import { FlashcardViewer, StudyMode } from '@/components/tools/flashcard-viewer';
 import { AppContext } from '@/contexts/app-context';
@@ -520,6 +520,7 @@ function FlashcardsPageContent() {
     <WorkbenchShell
       title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'}
       sidebar={sidebar}
+      breadcrumbIcon={<Copy className="h-4 w-4" />}
     >
       <SourceInput
         toolId="flashcards"

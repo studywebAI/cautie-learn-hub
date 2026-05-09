@@ -67,6 +67,7 @@ export function AppSidebar() {
   const [dropdown, setDropdown] = useState<DropdownState>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didWarmTeacherResourcesRef = useRef(false);
+  const didPrefetchLikelyRoutesRef = useRef(false);
   const floatingRef = useRef<HTMLDivElement | null>(null);
   const classDropdownTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [classItems, setClassItems] = useState<DropdownClassItem[]>([]);
@@ -74,6 +75,7 @@ export function AppSidebar() {
   const [createClassOpen, setCreateClassOpen] = useState(false);
   const [createSubjectOpen, setCreateSubjectOpen] = useState(false);
   const [joinClassOpen, setJoinClassOpen] = useState(false);
+  const [classPickerOpen, setClassPickerOpen] = useState(false);
   const [newClassMenuOpen, setNewClassMenuOpen] = useState(false);
   const [className, setClassName] = useState('');
   const [classDescription, setClassDescription] = useState('');
@@ -232,6 +234,8 @@ export function AppSidebar() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (didPrefetchLikelyRoutesRef.current) return;
+    didPrefetchLikelyRoutesRef.current = true;
     const classIdFromStorage = window.localStorage.getItem('studyweb-last-class-id') || '';
     if (!classIdFromStorage) return;
     setStoredTeacherClassId(classIdFromStorage);
@@ -306,11 +310,11 @@ export function AppSidebar() {
 
   useEffect(() => {
     const openClassDropdown = () => {
-      if (!isTeacher || !classDropdownTriggerRef.current) return;
+      if (!isTeacher) return;
       setNewClassMenuOpen(false);
       setCreateClassOpen(false);
       setJoinClassOpen(false);
-      openDropdownFor('classes', classDropdownTriggerRef.current);
+      setClassPickerOpen(true);
     };
 
     window.addEventListener('cautie:open-class-dropdown', openClassDropdown);
@@ -599,7 +603,7 @@ export function AppSidebar() {
         void router.prefetch(target);
       } catch {}
     }
-  }, [isTeacher, classDropdownItems, router, pathname, searchParams]);
+  }, [isTeacher, classDropdownItems, router]);
 
   const renderFloatingDropdown = () => {
     if (!dropdown) return null;
@@ -833,12 +837,12 @@ export function AppSidebar() {
         <button
           ref={classDropdownTriggerRef}
           type="button"
-          data-nav-dropdown-trigger="true"
           onClick={(event) => {
+            event.preventDefault();
             setNewClassMenuOpen(false);
             setCreateClassOpen(false);
             setJoinClassOpen(false);
-            openDropdownFor('classes', event.currentTarget);
+            setClassPickerOpen(true);
           }}
           disabled={classDropdownItems.length === 0}
           className="h-9 w-full rounded-md border border-border/70 surface-panel px-2.5 text-left text-[12px] text-sidebar-foreground transition-colors hover:surface-interactive disabled:opacity-60"
@@ -851,6 +855,44 @@ export function AppSidebar() {
           </span>
         </button>
       </div>
+      {classPickerOpen && (
+        <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/45 p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-border surface-panel shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <h3 className="text-xl leading-tight">{t.selectDifferentClass}</h3>
+              <Button variant="ghost" className="h-8 px-3" onClick={() => setClassPickerOpen(false)}>
+                {t.close}
+              </Button>
+            </div>
+            <div className="max-h-[65vh] overflow-auto px-3 py-3">
+              {classDropdownItems.length === 0 ? (
+                <p className="px-3 py-2 text-sm text-muted-foreground">{isDutch ? 'Geen klassen' : 'No classes'}</p>
+              ) : (
+                classDropdownItems.map((classItem) => (
+                  <button
+                    key={classItem.id}
+                    type="button"
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition-colors',
+                      classItem.id === effectiveTeacherClassId ? 'surface-chip' : 'hover:surface-interactive'
+                    )}
+                    onClick={() => {
+                      persistTeacherClassId(classItem.id);
+                      const nextRoute = resolveTeacherClassRoute(classItem.id);
+                      setClassPickerOpen(false);
+                      setOpenMobile(false);
+                      router.replace(nextRoute);
+                    }}
+                  >
+                    <span className="truncate">{classItem.label}</span>
+                    {classItem.id === effectiveTeacherClassId ? <Check className="h-4 w-4 text-foreground/80" /> : null}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {(createClassOpen || joinClassOpen) && (
         <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/45 p-4">
           <div className="w-full max-w-3xl rounded-3xl border border-border surface-panel shadow-2xl">

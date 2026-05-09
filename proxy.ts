@@ -21,7 +21,8 @@ export function proxy(request: NextRequest) {
     path.startsWith('/images/') ||
     path.startsWith('/icons/');
   const isKnownBotUa = /(vercel-screenshot|vercel-favicon|HeadlessChrome|bot|crawler|spider)/i.test(userAgent);
-  const shouldLog = !isNoisePath && !isKnownBotUa;
+  const debugRequestsEnabled = String(process.env.REQUEST_DEBUG_LOGS || '').toLowerCase() === 'true';
+  const shouldLog = debugRequestsEnabled && !isNoisePath && !isKnownBotUa;
 
   if (shouldLog) {
     const authHeader = request.headers.get('authorization') || '';

@@ -1272,8 +1272,8 @@ function PresentationPageContent() {
   }, [getImportUsageMap, importCatalog, importSearch, importSort]);
 
   return (
-    <WorkbenchShell title="Presentation" sidebar={sidebar} hideSidebar>
-      <div className="relative mx-auto flex h-full w-full max-w-[1280px] flex-col gap-5 p-2 md:p-4 lg:p-6">
+    <WorkbenchShell title="Presentation" sidebar={sidebar} hideSidebar breadcrumbIcon={<FileUp className="h-4 w-4" />}>
+      <div className="relative mx-auto flex h-full w-full max-w-[1280px] flex-col gap-5 px-3 pb-3">
         <input
           ref={uploadInputRef}
           type="file"

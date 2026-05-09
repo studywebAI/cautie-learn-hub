@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
-import { Bold, Italic, Loader2, Paintbrush, PanelsRightBottom, Underline } from 'lucide-react';
+import { Bold, Calendar, FileSignature, Italic, Loader2, Network, Paintbrush, PanelsRightBottom, Underline } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { SourceInput } from '@/components/tools/source-input';
@@ -243,6 +243,11 @@ function NotesPageContent() {
   const isWordwebPreset = mode === 'wordweb';
   const isTimelinePreset = mode === 'timeline';
   const pageTitle = isWordwebPreset ? 'Mindmap' : isTimelinePreset ? 'Timeline' : 'Notes';
+  const breadcrumbIcon = isWordwebPreset
+    ? <Network className="h-4 w-4" />
+    : isTimelinePreset
+      ? <Calendar className="h-4 w-4" />
+      : <FileSignature className="h-4 w-4" />;
   const storagePrefix = `tools.${mode}`;
 
   const launchStages: Array<{ title: string; detail: string }> = [
@@ -1567,7 +1572,7 @@ function NotesPageContent() {
   );
 
   return (
-    <WorkbenchShell title={pageTitle} sidebar={sidebar}>
+    <WorkbenchShell title={pageTitle} sidebar={sidebar} breadcrumbIcon={breadcrumbIcon}>
       <SourceInput
         toolId="notes"
         value={sourceText}

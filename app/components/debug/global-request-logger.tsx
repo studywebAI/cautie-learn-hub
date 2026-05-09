@@ -67,6 +67,10 @@ export function GlobalRequestLogger() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const debugEnabled =
+      String(process.env.NEXT_PUBLIC_REQUEST_DEBUG || '').toLowerCase() === 'true' ||
+      window.location.search.includes('debugRequests=1');
+    if (!debugEnabled) return;
     if (window.__studywebRequestLoggerInstalled) return;
 
     window.__studywebRequestLoggerInstalled = true;
@@ -226,6 +230,10 @@ export function GlobalRequestLogger() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const debugEnabled =
+      String(process.env.NEXT_PUBLIC_REQUEST_DEBUG || '').toLowerCase() === 'true' ||
+      window.location.search.includes('debugRequests=1');
+    if (!debugEnabled) return;
 
     debugLog('navigation', {
       pathname,

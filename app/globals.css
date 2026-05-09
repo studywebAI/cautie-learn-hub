@@ -575,7 +575,7 @@
 
 @layer components {
   .app-main-shell {
-    --app-shell-space-top: 0.2rem;
+    --app-shell-space-top: 0.35rem;
     --app-shell-space-left: 0.2rem;
     --app-shell-space-right: 0.2rem;
     --app-shell-space-bottom: 0.2rem;
@@ -595,7 +595,7 @@
   }
   @media (min-width: 768px) {
     .app-main-shell {
-      --app-shell-space-top: 0.2rem;
+      --app-shell-space-top: 0.35rem;
       --app-shell-space-left: 0.2rem;
       --app-shell-space-right: 0.2rem;
       --app-shell-space-bottom: 0.2rem;

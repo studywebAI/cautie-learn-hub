@@ -1,11 +1,12 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useContext, useMemo, useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeviceTier } from '@/hooks/use-device-tier';
 import { cn } from '@/lib/utils';
+import { AppContext, AppContextType } from '@/contexts/app-context';
 
 type WorkbenchShellProps = {
   title: string;
@@ -14,21 +15,45 @@ type WorkbenchShellProps = {
   sidebar: ReactNode;
   topAccessory?: ReactNode;
   hideSidebar?: boolean;
+  breadcrumbIcon?: ReactNode;
 };
 
-export function WorkbenchShell({ title, description, children, sidebar, topAccessory, hideSidebar = false }: WorkbenchShellProps) {
+export function WorkbenchShell({ title, description, children, sidebar, topAccessory, hideSidebar = false, breadcrumbIcon }: WorkbenchShellProps) {
+  const context = useContext(AppContext) as AppContextType | null;
   const deviceTier = useDeviceTier();
   const isPhone = deviceTier === 'phone';
   const isTablet = deviceTier === 'tablet';
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const profileName = useMemo(() => {
+    const displayName = String((context?.session?.user?.user_metadata as any)?.display_name || '').trim();
+    if (displayName) return displayName;
+    const fullName = String((context?.session?.user?.user_metadata as any)?.full_name || '').trim();
+    if (fullName) return fullName;
+    const email = String(context?.session?.user?.email || '').trim();
+    return email ? email.split('@')[0] : 'User';
+  }, [context?.session?.user]);
 
   return (
     <div className="relative h-full overflow-hidden">
       <div className="flex h-full">
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className={cn('flex items-center justify-between', isPhone ? 'px-3 pb-2 pt-3' : isTablet ? 'px-3 pb-2 pt-3' : 'px-3 pb-2 pt-3')}>
+          <div className={cn('flex items-center justify-between px-3 pb-2 pt-3')}>
             <div>
-              <h1 className="text-lg font-normal">{title}</h1>
+              <div className="mb-0.5 flex items-center gap-1.5 text-sm">
+                <button
+                  type="button"
+                  className="text-foreground hover:underline"
+                  onClick={() => window.dispatchEvent(new Event('cautie:open-profile-menu'))}
+                >
+                  {profileName}
+                </button>
+                <span className="text-muted-foreground">&gt;</span>
+                <span className="inline-flex items-center gap-1 text-foreground">
+                  {breadcrumbIcon ? <span className="text-foreground/80">{breadcrumbIcon}</span> : null}
+                  <span>{title}</span>
+                </span>
+              </div>
+              <h1 className="sr-only">{title}</h1>
               {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
             </div>
             {isPhone && !hideSidebar && (
@@ -65,7 +90,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               </div>
             </>
           ) : (
-            <div className={cn('shrink-0 border-l border-sidebar-border bg-sidebar', isTablet ? 'w-[240px]' : 'w-[280px]')}>
+            <div className={cn('shrink-0 border-l border-sidebar-border bg-sidebar', isTablet ? 'w-[230px]' : 'w-[264px]')}>
               <ScrollArea className="h-full">
                 <div className={cn('space-y-5', isTablet ? 'p-3.5' : 'p-4')}>{sidebar}</div>
               </ScrollArea>

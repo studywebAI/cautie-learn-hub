@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import React, { Suspense, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, Plus, X, Trash2 } from 'lucide-react';
+import { BrainCircuit, Loader2, Plus, X, Trash2 } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
@@ -38,8 +38,8 @@ const QUIZ_PAGE_SESSION_KEY = 'tools.quiz.page.session.v1';
 
 function pill(active: boolean) {
   return active
-    ? 'px-3 py-1 text-xs rounded-full border border-[hsl(var(--foreground)/0.28)] bg-[hsl(var(--foreground)/0.16)] text-foreground'
-    : 'px-3 py-1 text-xs rounded-full border border-border bg-[hsl(var(--background))] text-foreground hover:bg-[hsl(var(--accent))]';
+    ? 'px-3 py-1 text-xs rounded-full border border-border surface-chip text-foreground'
+    : 'px-3 py-1 text-xs rounded-full border border-border surface-panel text-foreground hover:surface-interactive';
 }
 
 function decodePresetCode(value: string) {
@@ -339,7 +339,7 @@ function QuizPageContent() {
     <>
       <div className="space-y-1.5">
         <p className="text-xs text-muted-foreground">Title</p>
-        <Input value={title} onChange={(event) => setTitle(event.target.value)} className="h-9 bg-[hsl(var(--background))] text-sm" disabled={loading} />
+        <Input value={title} onChange={(event) => setTitle(event.target.value)} className="h-9 surface-panel text-sm" disabled={loading} />
       </div>
 
       <div className="space-y-1.5">
@@ -532,7 +532,7 @@ function QuizPageContent() {
   }
 
   return (
-    <WorkbenchShell title="Quiz" sidebar={sidebar}>
+    <WorkbenchShell title="Quiz" sidebar={sidebar} breadcrumbIcon={<BrainCircuit className="h-4 w-4" />}>
       <SourceInput
         toolId="quiz"
         value={sourceText}
