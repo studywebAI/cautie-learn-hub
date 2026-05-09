@@ -5,7 +5,7 @@ const NotesSchema = z.object({
   notes: z.array(
     z.object({
       title: z.string().min(1),
-      content: z.union([z.string(), z.array(z.string())]),
+      content: z.union([z.string(), z.array(z.any())]),
     })
   ),
 });
@@ -79,6 +79,42 @@ function parseJsonFromModel(content: string) {
     if (fenced?.[1]) return JSON.parse(fenced[1].trim());
     throw new Error("Invalid JSON from fallback model");
   }
+}
+
+function normalizeNoteContentEntry(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    const preferred =
+      (typeof obj.text === "string" && obj.text) ||
+      (typeof obj.content === "string" && obj.content) ||
+      (typeof obj.value === "string" && obj.value) ||
+      (typeof obj.title === "string" && obj.title);
+    if (preferred) return preferred.trim();
+    try {
+      return JSON.stringify(obj);
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
+function normalizeNotesOutput(payload: z.infer<typeof NotesSchema>) {
+  return {
+    notes: (payload.notes || []).map((section) => {
+      const title = String(section.title || "Section").trim() || "Section";
+      const rawContent = section.content;
+      if (typeof rawContent === "string") {
+        return { title, content: rawContent.trim() };
+      }
+      const normalizedList = (Array.isArray(rawContent) ? rawContent : [])
+        .map((entry) => normalizeNoteContentEntry(entry))
+        .filter(Boolean);
+      return { title, content: normalizedList.length > 0 ? normalizedList : ["No content provided."] };
+    }),
+  };
 }
 
 async function callOpenAIJson<T>({
@@ -197,7 +233,7 @@ export async function executeOpenAIFallbackFlow(flowName: string, input: any, ap
   }
 
   if (flowName === "generateNotes") {
-    return callOpenAIJson({
+    const raw = await callOpenAIJson({
       apiKey,
       model,
       baseUrl,
@@ -216,6 +252,7 @@ export async function executeOpenAIFallbackFlow(flowName: string, input: any, ap
         .filter(Boolean)
         .join("\n\n"),
     });
+    return normalizeNotesOutput(raw);
   }
 
   if (flowName === "generateMultipleChoiceFromFlashcard") {

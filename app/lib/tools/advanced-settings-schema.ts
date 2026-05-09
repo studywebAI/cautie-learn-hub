@@ -93,8 +93,9 @@ const VisualsSchema = z.object({
 });
 
 const TimelineSchema = z.object({
-  range_start: z.string().default("1800"),
-  range_end: z.string().default("2100"),
+  range_enabled: z.boolean().default(false),
+  range_start: z.string().default(""),
+  range_end: z.string().default(""),
   range_start_year: z.number().int().min(-5000).max(5000).optional(),
   range_end_year: z.number().int().min(-5000).max(5000).optional(),
   scale_mode: z.enum(["year", "month", "day", "log"]).default("year"),
@@ -231,7 +232,7 @@ export function detectAdvancedSettingsConflicts(
   };
   const startYear = parseYear(settings.timeline.range_start);
   const endYear = parseYear(settings.timeline.range_end);
-  if (startYear !== null && endYear !== null && endYear < startYear) {
+  if (settings.timeline.range_enabled && startYear !== null && endYear !== null && endYear < startYear) {
     conflicts.push({
       key: "timeline.range_end",
       severity: "error",

@@ -1206,8 +1206,8 @@ function NotesPageContent() {
                 document={canonicalDoc}
                 onChange={applyCanonicalDocument}
                 settings={{
-                  rangeStart: advancedSettings?.timeline.range_start ?? '',
-                  rangeEnd: advancedSettings?.timeline.range_end ?? '',
+                  rangeStart: advancedSettings?.timeline.range_enabled ? (advancedSettings?.timeline.range_start ?? '') : '',
+                  rangeEnd: advancedSettings?.timeline.range_enabled ? (advancedSettings?.timeline.range_end ?? '') : '',
                   scaleMode: advancedSettings?.timeline.scale_mode,
                 }}
               />
@@ -1514,32 +1514,45 @@ function NotesPageContent() {
           )}
           {mode === 'timeline' && (
             <>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Use From - To range</p>
+                <Switch
+                  checked={Boolean(advancedSettings?.timeline.range_enabled)}
+                  onCheckedChange={(checked) => {
+                    void saveAdvancedSettingsPatch({ timeline: { range_enabled: checked } as any }, { tool: 'timeline' });
+                  }}
+                />
+              </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">From - To</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    type="text"
-                    inputMode="text"
-                    value={String(advancedSettings?.timeline.range_start ?? '')}
-                    onChange={(e) => {
-                      const raw = e.target.value.trim();
-                      void saveAdvancedSettingsPatch({ timeline: { range_start: raw } as any }, { tool: 'timeline' });
-                    }}
-                    placeholder="From"
-                    className="h-8 text-sm bg-[hsl(var(--background))]"
-                  />
-                  <Input
-                    type="text"
-                    inputMode="text"
-                    value={String(advancedSettings?.timeline.range_end ?? '')}
-                    onChange={(e) => {
-                      const raw = e.target.value.trim();
-                      void saveAdvancedSettingsPatch({ timeline: { range_end: raw } as any }, { tool: 'timeline' });
-                    }}
-                    placeholder="To"
-                    className="h-8 text-sm bg-[hsl(var(--background))]"
-                  />
-                </div>
+                {advancedSettings?.timeline.range_enabled ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      type="text"
+                      inputMode="text"
+                      value={String(advancedSettings?.timeline.range_start ?? '')}
+                      onChange={(e) => {
+                        const raw = e.target.value.trim();
+                        void saveAdvancedSettingsPatch({ timeline: { range_start: raw } as any }, { tool: 'timeline' });
+                      }}
+                      placeholder="From (text/number/date)"
+                      className="h-8 text-sm bg-[hsl(var(--background))]"
+                    />
+                    <Input
+                      type="text"
+                      inputMode="text"
+                      value={String(advancedSettings?.timeline.range_end ?? '')}
+                      onChange={(e) => {
+                        const raw = e.target.value.trim();
+                        void saveAdvancedSettingsPatch({ timeline: { range_end: raw } as any }, { tool: 'timeline' });
+                      }}
+                      placeholder="To (text/number/date)"
+                      className="h-8 text-sm bg-[hsl(var(--background))]"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">Range filter is off. Timeline uses full detected range.</p>
+                )}
               </div>
             </>
           )}
@@ -1564,7 +1577,7 @@ function NotesPageContent() {
         placeholder={t.sourceInputPlaceholder}
         speechLanguage={language}
         enableMic
-        enableCaptions
+        enableCaptions={false}
         sourceMergeMode="append_labeled"
       />
     </WorkbenchShell>

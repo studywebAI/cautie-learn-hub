@@ -537,7 +537,7 @@ function QuizPageContent() {
         placeholder=""
         speechLanguage={language}
         enableMic
-        enableCaptions
+        enableCaptions={false}
         sourceMergeMode="append_labeled"
       />
     </WorkbenchShell>
