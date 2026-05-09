@@ -297,6 +297,11 @@ function QuizPageContent() {
         computeClass: mode === 'adaptive' ? 'heavy' : 'standard',
       });
       const output = run?.output_payload || run;
+      if (!output || !Array.isArray((output as any).questions) || (output as any).questions.length === 0) {
+        const err = new Error(`Quiz run returned no questions (run: ${String((run as any)?.id || 'unknown')})`);
+        (err as any).code = "EMPTY_QUIZ_OUTPUT";
+        throw err;
+      }
       setQuiz(output as Quiz);
     } catch (error: any) {
       const msg = String(error?.message || 'Unknown error');

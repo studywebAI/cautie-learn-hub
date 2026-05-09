@@ -256,6 +256,12 @@ export async function POST(request: NextRequest) {
   try {
     const { supabase, user, plan, subscriptionType } = await getAuthedToolboxContext();
     const payload = CreateRunSchema.parse(await request.json());
+    console.info("[tools.v2.runs] create_run_received", {
+      toolId: payload.toolId,
+      flowName: payload.flowName,
+      mode: payload.mode || null,
+      computeClass: payload.computeClass,
+    });
     const advancedSettings = await readAdvancedSettings(supabase, user.id);
 
     const { data: existingRun } = await supabase
@@ -314,6 +320,11 @@ export async function POST(request: NextRequest) {
     if (runError || !createdRun) {
       return NextResponse.json({ error: runError?.message || "Failed to create run" }, { status: 500 });
     }
+    console.info("[tools.v2.runs] run_created", {
+      runId: createdRun.id,
+      toolId: payload.toolId,
+      flowName: payload.flowName,
+    });
 
     await writeRunEvent(supabase, createdRun.id, "queued", {
       toolId: payload.toolId,
@@ -455,6 +466,12 @@ export async function POST(request: NextRequest) {
       });
 
       const { data: finalRun } = await supabase.from("tool_runs").select("*").eq("id", createdRun.id).single();
+      console.info("[tools.v2.runs] run_succeeded", {
+        runId: createdRun.id,
+        toolId: payload.toolId,
+        flowName: payload.flowName,
+        hasOutput: Boolean(finalRun?.output_payload),
+      });
       return NextResponse.json(finalRun || createdRun);
     } catch (err: any) {
       const errorCode = err?.code || "RUN_FAILED";

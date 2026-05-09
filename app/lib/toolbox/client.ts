@@ -23,6 +23,14 @@ export async function runToolFlowV2(payload: RunToolFlowInput) {
       : `${Date.now()}-${Math.random()}`;
 
   let response: Response;
+  const startedAt = Date.now();
+  console.info("[toolflow.client] run_start", {
+    toolId: payload.toolId,
+    flowName: payload.flowName,
+    mode: payload.mode || null,
+    computeClass: payload.computeClass || "standard",
+    idempotencyKey,
+  });
   try {
     response = await fetch("/api/tools/v2/runs", {
       method: "POST",
@@ -55,7 +63,23 @@ export async function runToolFlowV2(payload: RunToolFlowInput) {
     const error = new Error(enriched) as Error & { code?: string; runId?: string };
     if (code) error.code = code;
     if (runId) error.runId = runId;
+    console.error("[toolflow.client] run_error", {
+      toolId: payload.toolId,
+      flowName: payload.flowName,
+      status: response.status,
+      code: code || null,
+      runId: runId || null,
+      durationMs: Date.now() - startedAt,
+      message,
+    });
     throw error;
   }
+  console.info("[toolflow.client] run_success", {
+    toolId: payload.toolId,
+    flowName: payload.flowName,
+    runId: data?.id || null,
+    status: data?.status || null,
+    durationMs: Date.now() - startedAt,
+  });
   return data;
 }

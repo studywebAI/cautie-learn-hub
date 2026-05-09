@@ -728,6 +728,11 @@ function NotesPageContent() {
       });
       const runOutput = (run?.output_payload || {}) as any;
       const notes = (runOutput.notes || run?.notes || null) as GenerateNotesOutput['notes'] | null;
+      if (!notes || !Array.isArray(notes) || notes.length === 0) {
+        const err = new Error(`Notes run returned empty output (run: ${String((run as any)?.id || 'unknown')})`);
+        (err as any).code = "EMPTY_NOTES_OUTPUT";
+        throw err;
+      }
       const canonicalFromRun = runOutput?.canonical_v1 && typeof runOutput.canonical_v1 === 'object'
         ? (runOutput.canonical_v1 as CanonicalDocument)
         : (notes ? notesSectionsToCanonical(notes as NoteSection[], { title: requestedTitle }) : null);
