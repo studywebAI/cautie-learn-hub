@@ -1,7 +1,16 @@
 import { listIntegrationSources } from '@/lib/integrations/source-store';
 
-const SOURCE_ENABLED_TOOLS = new Set(['quiz', 'notes', 'flashcards']);
+const SOURCE_ENABLED_TOOLS = new Set([
+  'quiz',
+  'notes',
+  'flashcards',
+  'timeline',
+  'wordweb',
+  'mindmap',
+  'presentation',
+]);
 const MAX_INTEGRATION_SOURCE_TEXT_CHARS = 40_000;
+const INLINE_URL_REGEX = /\bhttps?:\/\/[^\s<>"')]+/gi;
 
 function mergeSourceText(base: string, additions: string[]) {
   const cleanBase = (base || '').trim();
@@ -25,6 +34,10 @@ function isLikelyImageSource(source: any) {
   const mime = String(source?.mime_type || '').toLowerCase();
   const name = String(source?.name || '').toLowerCase();
   return mime.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|svg)$/.test(name);
+}
+
+function stripInlineUrls(value: string) {
+  return String(value || '').replace(INLINE_URL_REGEX, '').replace(/\s{2,}/g, ' ').trim();
 }
 
 export async function resolveSelectedSourcesForRun(
@@ -66,10 +79,18 @@ export async function resolveSelectedSourcesForRun(
 
   const extractedBlocks = selectedSources
     .map((source, index) => {
-      const text = (source.extracted_text || '').trim();
+      const text = stripInlineUrls(source.extracted_text || '');
       if (!text) return '';
-      // Keep prompt input grounded in extracted content only (no file metadata fallback).
-      return `[Imported source ${index + 1}]\n${text}`;
+      const sourceUrl = typeof source?.web_url === 'string' ? source.web_url.trim() : '';
+      const sourceDomain = sourceUrl ? (() => {
+        try {
+          return new URL(sourceUrl).hostname;
+        } catch {
+          return '';
+        }
+      })() : '';
+      const sourceLabel = sourceDomain || source.name || `Imported source ${index + 1}`;
+      return `[LINK_SOURCE ${index + 1}: ${sourceLabel}${sourceUrl ? ` | ${sourceUrl}` : ''}]\n${text}`;
     })
     .filter(Boolean);
 

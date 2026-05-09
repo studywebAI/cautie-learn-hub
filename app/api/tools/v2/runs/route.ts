@@ -83,9 +83,8 @@ function enforceAndApplyAdvancedSettings(input: {
   if (budget === "low") nextComputeClass = "light";
   if (budget === "medium" && nextComputeClass === "heavy") nextComputeClass = "standard";
 
-  const maxSources = Math.max(1, Number(input.settings.sources.max_sources_per_run || 8));
   const trimmedSources = Array.isArray(input.integrationSources)
-    ? input.integrationSources.slice(0, maxSources)
+    ? input.integrationSources
     : [];
 
   const nextInput: Record<string, any> = { ...(input.payloadInput || {}) };
@@ -116,7 +115,7 @@ function enforceAndApplyAdvancedSettings(input: {
     })),
     computeClassBefore: input.computeClass,
     computeClassAfter: nextComputeClass,
-    maxSourcesPerRun: maxSources,
+    maxSourcesPerRun: null,
     integrationSourcesBefore: Array.isArray(input.integrationSources) ? input.integrationSources.length : 0,
     integrationSourcesAfter: trimmedSources.length,
     imagesInQuestionsAllowed: Boolean(input.settings.visuals.images_in_questions),
@@ -441,7 +440,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      await supabase
+      const { error: finalizeError } = await supabase
         .from("tool_runs")
         .update({
           status: "succeeded" as ToolRunStatus,
@@ -451,6 +450,11 @@ export async function POST(request: NextRequest) {
           finished_at: new Date().toISOString(),
         })
         .eq("id", createdRun.id);
+      if (finalizeError) {
+        throw Object.assign(new Error(finalizeError.message || "Failed to finalize tool run"), {
+          code: "RUN_FINALIZE_FAILED",
+        });
+      }
 
       await writeRunEvent(supabase, createdRun.id, "completed", { artifactId });
       await writeRunEvent(supabase, createdRun.id, "settings_enforced", enforced.enforcementSummary);
@@ -466,13 +470,23 @@ export async function POST(request: NextRequest) {
       });
 
       const { data: finalRun } = await supabase.from("tool_runs").select("*").eq("id", createdRun.id).single();
+      const responseRun = finalRun
+        ? finalRun
+        : {
+            ...createdRun,
+            status: "succeeded",
+            artifact_title: resolvedArtifactTitle,
+            output_payload: output,
+            output_artifact_id: artifactId,
+            finished_at: new Date().toISOString(),
+          };
       console.info("[tools.v2.runs] run_succeeded", {
         runId: createdRun.id,
         toolId: payload.toolId,
         flowName: payload.flowName,
-        hasOutput: Boolean(finalRun?.output_payload),
+        hasOutput: Boolean(responseRun?.output_payload),
       });
-      return NextResponse.json(finalRun || createdRun);
+      return NextResponse.json(responseRun);
     } catch (err: any) {
       const errorCode = err?.code || "RUN_FAILED";
       const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id).catch(() => ({ providerPreference: "auto" as const }));

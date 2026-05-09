@@ -33,7 +33,7 @@ interface SourceInputProps {
   onSubmit?: (compiledText?: string) => void | Promise<unknown>;
   placeholder?: string;
   disabled?: boolean;
-  toolId?: 'notes' | 'quiz' | 'flashcards' | 'presentation';
+  toolId?: 'notes' | 'quiz' | 'flashcards' | 'presentation' | 'timeline' | 'wordweb' | 'mindmap';
   enableMic?: boolean;
   enableCaptions?: boolean;
   speechLanguage?: string;
