@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import React, { Suspense, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { BrainCircuit, Loader2, Plus, X, Trash2 } from 'lucide-react';
+import { BrainCircuit, Loader2, Plus, Minus, X, Trash2 } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
@@ -41,8 +41,8 @@ const QUIZ_PAGE_SESSION_KEY = 'tools.quiz.page.session.v1';
 
 function pill(active: boolean) {
   return active
-    ? 'px-[11px] py-[5px] text-[11px] rounded-[16px] border border-[#d0d0d0] bg-white text-[#333]'
-    : 'px-[11px] py-[5px] text-[11px] rounded-[16px] border border-[#d0d0d0] bg-[#f8f8f8] text-[#333] hover:border-[var(--accent-brand)]';
+    ? 'px-[11px] py-[5px] text-[11px] rounded-[16px] border border-[#bcbcbc] bg-[#e2e2e2] text-[#222]'
+    : 'px-[11px] py-[5px] text-[11px] rounded-[16px] border border-[#d0d0d0] bg-white text-[#333] hover:border-[var(--accent-brand)]';
 }
 
 function decodePresetCode(value: string) {
@@ -86,6 +86,7 @@ function QuizPageContent() {
   const [newPresetName, setNewPresetName] = useState('');
   const [importCode, setImportCode] = useState('');
   const [showPresetOverlay, setShowPresetOverlay] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [isSharingToClass, setIsSharingToClass] = useState(false);
   const shareableClasses = React.useMemo(
     () => extractShareableClasses((appContext as any)?.classes || []),
@@ -373,11 +374,17 @@ function QuizPageContent() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <p className="text-xs font-medium text-[#666]">Mode</p>
-          <Button type="button" variant="ghost" size="sm" className="h-6 px-1.5" onClick={() => setShowPresetOverlay(true)}>
-            <Plus className="h-3.5 w-3.5" />
-          </Button>
+          <button
+            type="button"
+            className="inline-flex h-6 w-6 items-center justify-center rounded-md text-[#444] hover:bg-[#ebebeb]"
+            onClick={() => setOptionsOpen((prev) => !prev)}
+            aria-label={optionsOpen ? 'Hide options' : 'Show options'}
+          >
+            {optionsOpen ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+          </button>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className={`overflow-hidden transition-all duration-300 ${optionsOpen ? 'max-h-[2000px] translate-x-0 opacity-100' : 'max-h-0 translate-x-2 opacity-0'}`}>
+        <div className="flex flex-wrap gap-1.5 pt-1">
           {[
             { value: 'classic', label: 'Classic' },
             { value: 'assisted', label: 'Assisted' },
@@ -416,8 +423,10 @@ function QuizPageContent() {
             </div>
           ))}
         </div>
+        </div>
       </div>
 
+      <div className={`overflow-hidden transition-all duration-300 ${optionsOpen ? 'max-h-[2000px] translate-x-0 opacity-100' : 'max-h-0 translate-x-2 opacity-0'}`}>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <p className="text-xs font-medium text-[#666]">Answer reveal</p>
@@ -491,6 +500,7 @@ function QuizPageContent() {
         {loading ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-1.5 h-4 w-4" />}
         Generate
       </Button>
+      </div>
 
       {showPresetOverlay ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">

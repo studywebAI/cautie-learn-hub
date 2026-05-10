@@ -1673,9 +1673,8 @@ export function SourceInput({
           </div>
         )}
 
-        <p className="text-xs font-medium text-[#666]">Your content</p>
 
-        <div className="ml-2 w-full max-w-[1024px]">
+        <div className="ml-2 w-full max-w-[760px]">
           <div className="relative z-10 flex flex-wrap items-center gap-2">
             <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
               <UploadCloud className="mr-1.5 h-3.5 w-3.5" />

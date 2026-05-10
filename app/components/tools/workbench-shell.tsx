@@ -43,7 +43,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
         <div className="w-full border-b border-sidebar-border bg-sidebar px-3 py-1.5">
           <div className="flex items-center justify-between">
             <div className="ml-2">
-              <div className="mb-0.5 flex items-center gap-1.5 text-[14px] font-medium leading-none">
+              <div className="mb-0.5 flex items-center gap-1.5 text-[13px] font-normal leading-none text-[hsl(var(--sidebar-foreground))]">
                 <button
                   type="button"
                   className="text-[var(--accent-brand)] hover:underline"
@@ -51,9 +51,9 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
                 >
                   {profileName}
                 </button>
-                <span className="text-[var(--accent-brand)]">&gt;</span>
-                <span className="inline-flex items-center gap-1.5 text-[var(--accent-brand)]">
-                  {breadcrumbIcon ? <span className="text-[var(--accent-brand)]">{breadcrumbIcon}</span> : null}
+                <span className="text-[hsl(var(--sidebar-foreground))]">&gt;</span>
+                <span className="inline-flex items-center gap-1.5 text-[hsl(var(--sidebar-foreground))]">
+                  {breadcrumbIcon ? <span className="text-[hsl(var(--sidebar-foreground))]">{breadcrumbIcon}</span> : null}
                   <span>{title}</span>
                 </span>
               </div>

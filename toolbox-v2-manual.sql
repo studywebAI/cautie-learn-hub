@@ -75,6 +75,7 @@ create table if not exists public.tool_runs (
   options_payload jsonb not null default '{}'::jsonb,
   output_payload jsonb,
   output_artifact_id uuid,
+  artifact_title text,
   error_message text,
   started_at timestamptz,
   finished_at timestamptz,
