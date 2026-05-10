@@ -579,7 +579,15 @@ function QuizPageContent() {
 
   return (
     <WorkbenchShell title="Quiz" sidebar={sidebar} breadcrumbIcon={<BrainCircuit className="h-4 w-4" />}>
-      <div className="flex h-full w-full flex-col">
+      <div className="flex h-full w-full flex-col gap-3 pl-3">
+        <div className="min-h-[280px] w-full rounded-md border border-[#d0d0d0] bg-[linear-gradient(135deg,#fafafa_0%,#fff_100%)]">
+          {loading ? (
+            <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Generating...</span>
+            </div>
+          ) : null}
+        </div>
         <SourceInput
           toolId="quiz"
           value={sourceText}
