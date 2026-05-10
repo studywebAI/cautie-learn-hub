@@ -35,11 +35,11 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
 
   return (
     <div className="relative h-full overflow-hidden font-[var(--font-ui-legacy)]">
-      <div className="mx-auto flex h-full w-full gap-4 px-3">
+      <div className="mx-auto flex h-full w-full gap-3 px-2">
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className={cn('flex items-center justify-between px-0 pb-2 pt-3')}>
+          <div className={cn('mb-2 flex items-center justify-between rounded-md border border-[#d0d0d0] bg-transparent px-3 py-2')}>
             <div>
-              <div className="mb-0.5 flex items-center gap-2 text-lg font-medium">
+              <div className="mb-0.5 flex items-center gap-2 text-[20px] font-semibold leading-none">
                 <button
                   type="button"
                   className="text-[var(--accent-brand)] hover:underline"
@@ -62,7 +62,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               </Button>
             )}
           </div>
-          <div className={cn('flex-1 min-h-0', isPhone ? 'px-0 pb-4' : isTablet ? 'px-0 pb-4' : 'px-0 pb-4')}>
+          <div className={cn('flex-1 min-h-0', isPhone ? 'px-0 pb-2' : isTablet ? 'px-0 pb-2' : 'px-0 pb-2')}>
             {topAccessory && <div className="mb-3">{topAccessory}</div>}
             {children}
           </div>

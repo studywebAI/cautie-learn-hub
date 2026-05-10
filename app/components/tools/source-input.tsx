@@ -1616,7 +1616,7 @@ export function SourceInput({
 
       {topContent}
 
-      <div className="flex flex-col gap-3 pb-1">
+      <div className="flex h-full flex-col justify-end gap-2 pb-0">
         {attachmentSources.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
             {attachmentSources.map((source) => {
@@ -1669,6 +1669,36 @@ export function SourceInput({
         )}
 
         <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[#666]">Your content</p>
+
+        <div className="mb-1 space-y-2">
+          <div className="relative">
+            <Textarea
+              value={manualText}
+              onChange={(e) => handleManualTextChange(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                  e.preventDefault();
+                  void submitAndSave();
+                }
+              }}
+              placeholder="Paste your notes, article, textbook, or any study material..."
+              className="min-h-[140px] w-full resize-y rounded-md border border-[#d0d0d0] bg-white p-[14px] text-[13px] font-normal text-[#333]"
+              disabled={disabled || isProcessing}
+            />
+          </div>
+          {showSubmitButton ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full rounded-md border-none bg-[var(--accent-brand)] text-[13px] font-semibold text-white hover:opacity-90"
+              onClick={() => void submitAndSave()}
+              disabled={disabled || isProcessing || !canGenerate}
+            >
+              {isProcessing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+              {submitLabel}
+            </Button>
+          ) : null}
+        </div>
 
         <div className="relative z-10 flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
@@ -1776,36 +1806,6 @@ export function SourceInput({
             </div>
           </div>
         )}
-
-        <div className="mb-1 space-y-2">
-          <div className="relative">
-            <Textarea
-              value={manualText}
-              onChange={(e) => handleManualTextChange(e.target.value)}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                  e.preventDefault();
-                  void submitAndSave();
-                }
-              }}
-              placeholder="Paste your notes, article, textbook, or any study material..."
-              className="min-h-[140px] w-full resize-y rounded-md border border-[#d0d0d0] bg-white p-[14px] text-[13px] font-normal text-[#333]"
-              disabled={disabled || isProcessing}
-            />
-          </div>
-          {showSubmitButton ? (
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full rounded-md border-none bg-[var(--accent-brand)] text-[13px] font-semibold text-white hover:opacity-90"
-              onClick={() => void submitAndSave()}
-              disabled={disabled || isProcessing || !canGenerate}
-            >
-              {isProcessing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
-              {submitLabel}
-            </Button>
-          ) : null}
-        </div>
 
         <span className="text-[10px] text-[#999]">PDF, DOCX, images, YouTube links, or paste text</span>
         {hasPendingSource && (
