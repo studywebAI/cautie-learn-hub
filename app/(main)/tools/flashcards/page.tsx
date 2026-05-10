@@ -404,9 +404,9 @@ function FlashcardsPageContent() {
   }
 
   const sidebar = (
-    <>
-      <div className="space-y-1.5">
-        <p className="text-xs text-muted-foreground">{t.title}</p>
+    <div className="space-y-3">
+      <div className="space-y-1.5 rounded-xl border border-border bg-background p-3">
+        <p className="text-xs font-semibold tracking-wide text-muted-foreground">TITLE</p>
         <Input
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
@@ -415,18 +415,22 @@ function FlashcardsPageContent() {
         />
       </div>
 
-      <PillSelector label="Mode" options={modeOptions} value={studyMode} onChange={(v) => setStudyMode(normalizeStudyMode(v))} disabled={isLoading} />
-      <PillSelector
-        label="Card side"
-        options={startSideOptions}
-        value={cardStartSide}
-        onChange={(v) => setCardStartSide(v === 'explanation' ? 'explanation' : 'term')}
-        disabled={isLoading}
-      />
+      <div className="rounded-xl border border-border bg-background p-3">
+        <PillSelector label="Mode" options={modeOptions} value={studyMode} onChange={(v) => setStudyMode(normalizeStudyMode(v))} disabled={isLoading} />
+      </div>
+      <div className="rounded-xl border border-border bg-background p-3">
+        <PillSelector
+          label="Card side"
+          options={startSideOptions}
+          value={cardStartSide}
+          onChange={(v) => setCardStartSide(v === 'explanation' ? 'explanation' : 'term')}
+          disabled={isLoading}
+        />
+      </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">{t.cards}</p>
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground">QUESTION COUNT</p>
           <span className="text-xs font-mono tabular-nums">{flashcardCount}</span>
         </div>
         <Slider
@@ -439,7 +443,7 @@ function FlashcardsPageContent() {
         />
       </div>
 
-      <div className="flex items-center justify-between rounded-lg bg-sidebar-accent/30 px-2.5 py-2">
+      <div className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2.5">
         <p className="text-xs text-muted-foreground">Save to recents</p>
         <Switch
           checked={saveToRecents}
@@ -447,7 +451,7 @@ function FlashcardsPageContent() {
           className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
         />
       </div>
-      <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
+      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">Active recall only</p>
           <Switch
@@ -487,7 +491,7 @@ function FlashcardsPageContent() {
           }} />
         </div>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">Time per card (seconds)</p>
           <span className="text-xs font-mono tabular-nums">{timePerCardSeconds}</span>
@@ -497,7 +501,7 @@ function FlashcardsPageContent() {
           void saveAdvancedSettingsPatch({ flashcards: { time_per_card_seconds: v } as any }, { tool: 'flashcards' });
         }} min={0} max={120} step={1} disabled={isLoading} />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">Auto flip delay (ms)</p>
           <span className="text-xs font-mono tabular-nums">{autoFlipDelayMs}</span>
@@ -521,7 +525,7 @@ function FlashcardsPageContent() {
         }}
         disabled={isLoading}
       />
-    </>
+    </div>
   );
 
   return (

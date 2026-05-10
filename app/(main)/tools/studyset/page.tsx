@@ -538,7 +538,7 @@ export default function StudysetPage() {
 
   return (
     <div className="h-full min-h-0 overflow-auto">
-      <div className="flex min-h-full w-full flex-col gap-4">
+      <div className="mx-auto flex min-h-full w-full max-w-[1180px] flex-col gap-4 px-4 pb-4 pt-3">
         <Card className="border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

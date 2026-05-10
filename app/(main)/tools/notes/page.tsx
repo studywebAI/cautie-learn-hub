@@ -1411,9 +1411,9 @@ function NotesPageContent() {
   }
 
   const sidebar = (
-    <>
-      <div className="space-y-1.5">
-        <p className="text-xs text-muted-foreground">{t.title}</p>
+    <div className="space-y-3">
+      <div className="space-y-1.5 rounded-xl border border-border bg-background p-3">
+        <p className="text-xs font-semibold tracking-wide text-muted-foreground">TITLE</p>
         <Input
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
@@ -1423,12 +1423,14 @@ function NotesPageContent() {
       </div>
 
       {mode === 'notes' ? (
-        <PillSelector label="Format" options={noteStyleOptions} value={style} onChange={setStyle} disabled={isLoading} />
+        <div className="rounded-xl border border-border bg-background p-3">
+          <PillSelector label="Format" options={noteStyleOptions} value={style} onChange={setStyle} disabled={isLoading} />
+        </div>
       ) : null}
 
-      <div className="space-y-2">
+      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">{t.length}</p>
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground">LENGTH</p>
           <span className="text-xs font-mono capitalize">{lengthLabels[length]}</span>
         </div>
         <Slider
@@ -1441,7 +1443,7 @@ function NotesPageContent() {
         />
       </div>
 
-      <div className="flex items-center justify-between rounded-lg surface-interactive px-2.5 py-2">
+      <div className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2.5">
         <p className="text-xs text-muted-foreground">Save to recents</p>
         <Switch
           checked={saveToRecents}
@@ -1463,7 +1465,7 @@ function NotesPageContent() {
         disabled={isLoading}
       />
       {mode === 'notes' && (
-        <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
+        <div className="space-y-2 rounded-xl border border-border bg-background p-3">
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">Auto gap detection</p>
             <Switch
@@ -1503,7 +1505,7 @@ function NotesPageContent() {
         </div>
       )}
       {(mode === 'wordweb' || mode === 'timeline') && (
-        <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
+        <div className="space-y-2 rounded-xl border border-border bg-background p-3">
           {mode === 'wordweb' && (
             <>
               <p className="text-[11px] text-muted-foreground">Mindmap defaults. Je kunt altijd per node direct editen in het canvas.</p>
@@ -1578,7 +1580,7 @@ function NotesPageContent() {
           )}
         </div>
       )}
-    </>
+    </div>
   );
 
   return (

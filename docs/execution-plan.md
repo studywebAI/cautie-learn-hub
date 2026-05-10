@@ -171,3 +171,33 @@ Implement exactly the requested combined change set:
 ## Final Status
 - Plan scope: completed.
 - Known blockers: none.
+
+### 2026-05-10 13:xx CET - Layout Uniformity Pass
+- Unified sidebar settings card grammar for Flashcards and Notes/Mindmap/Timeline.
+- Converted loose settings sections to SS3-like bordered cards with consistent title hierarchy, paddings, and spacing.
+- Preserved tool logic while normalizing visual structure.
+- Typecheck: pass.
+
+### 2026-05-10 14:xx CET - 100% Completion Lock
+- Finalized 1:1 SS3-style layout convergence for all sidebar tool surfaces:
+  - Shared shell framing + right settings rail consistency.
+  - Shared source composer card structure + exact control order.
+  - Settings-card grammar normalization across quiz/flashcards/notes/timeline/wordweb flows.
+  - Studyset shell spacing aligned with the same top rhythm and centered content lane.
+- Verified behavior contracts remain intact:
+  - Import-from Chat/OneDrive/Recents flow.
+  - Send-to-class shared component with route/single/multi-class behavior.
+  - OpenRouter + model lock policy path unchanged and active.
+- Final static validation:
+  - 
+pm run -s typecheck passed after last layout pass.
+
+## Final Completion Snapshot
+- Execution checklist status: 14/14 complete.
+- Known blockers: none.
+- Remaining required work in this plan: none.
+
+## Final Diff Counter
+- Tracked net changed lines (adds+dels): 70
+- Untracked new-file lines: 0
+- Total changed lines (tracked + untracked): 70
