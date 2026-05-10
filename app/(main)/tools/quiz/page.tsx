@@ -536,7 +536,7 @@ function QuizPageContent() {
 
   return (
     <WorkbenchShell title="Quiz" sidebar={sidebar} breadcrumbIcon={<BrainCircuit className="h-4 w-4 text-[var(--accent-brand)]" />}>
-      <div className="flex h-full w-full flex-col pl-0">
+      <div className="flex h-full w-full flex-col justify-end pl-0">
         <SourceInput
           toolId="quiz"
           value={sourceText}
