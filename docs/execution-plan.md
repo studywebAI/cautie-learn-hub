@@ -275,3 +275,21 @@ pm run -s typecheck passed after last layout pass.
   - expand/collapse chevrons use accent.
 - Validation:
   - `npm run -s typecheck` passed.
+
+### 2026-05-10 13:46 CET - Quiz density + interaction pass
+- Tightened generated-quiz play layout spacing:
+  - reduced excessive top/bottom and inter-section whitespace,
+  - kept fullscreen behavior while improving readable density.
+- Normalized generated-quiz feedback labels to stable ASCII markers (`[correct]` / `[wrong]`) to avoid character rendering artifacts.
+- Ensured OneDrive import item in `Import from...` is always clickable (open picker event always dispatched from menu item).
+- Validation:
+  - `npm run -s typecheck` passed.
+
+### 2026-05-10 13:58 CET - OpenRouter telemetry hardening pass
+- Removed remaining Gemini-provider typing from run telemetry path:
+  - flow executor event provider type now OpenRouter/OpenAI route only,
+  - run error logger `providerAttempted` is now strict `openai`,
+  - failed-run provider inference now hard-set to `openai` to match lock policy.
+- Removed stale `hasCauseGemini` branch in run failure handling.
+- Validation:
+  - `npm run -s typecheck` passed.

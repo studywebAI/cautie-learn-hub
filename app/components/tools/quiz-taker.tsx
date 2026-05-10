@@ -850,7 +850,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
           }}
           disabled={currentIndex === 0}
         >
-          <- Back
+          {'<- Back'}
         </Button>
         <div />
         <Button

@@ -16,7 +16,7 @@ export type AIExecutionOptions = {
   openaiModel?: string;
   onEvent?: (event: {
     type: "primary_error" | "fallback_attempt" | "fallback_success" | "fallback_error" | "fallback_skipped";
-    provider: "gemini" | "openai";
+    provider: "openai";
     flowName: string;
     message?: string;
     code?: string;
@@ -139,7 +139,6 @@ export async function executeAIFlow(
   const openaiApiKey = options?.openaiApiKey || resolveOpenRouterApiKey();
   const openaiModel = options?.openaiModel || process.env.OPENAI_FALLBACK_MODEL || OPENROUTER_LOCKED_MODEL;
   const canFallback = canUseOpenAIFallback(flowName) && !!openaiApiKey;
-  const emit = options?.onEvent;
   if (providerPreference === "openai" && canFallback) {
     console.info(`[AI_FLOW] ${flowName} provider=openrouter model=${openaiModel} fallback=disabled lock=enforced policy=${OPENROUTER_PROVIDER_PREFERENCE}`);
     return executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey, openaiModel);

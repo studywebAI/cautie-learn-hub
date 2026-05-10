@@ -157,7 +157,7 @@ async function writeAIErrorLog(
     toolId: string;
     flowName: string;
     providerPreference: "openai";
-    providerAttempted: "gemini" | "openai";
+    providerAttempted: "openai";
     stage: "primary_error" | "fallback_error" | "run_failed";
     fallbackAttempted: boolean;
     fallbackSucceeded: boolean;
@@ -341,7 +341,7 @@ export async function POST(request: NextRequest) {
       const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id);
       const aiEvents: Array<{
         type: "primary_error" | "fallback_attempt" | "fallback_success" | "fallback_error" | "fallback_skipped";
-        provider: "gemini" | "openai";
+        provider: "openai";
         flowName: string;
         message?: string;
         code?: string;
@@ -493,12 +493,9 @@ export async function POST(request: NextRequest) {
       const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id).catch(() => ({ providerPreference: OPENROUTER_PROVIDER_PREFERENCE }));
       const normalizedMessage = String(err?.message || "").toLowerCase();
       const hasCauseOpenAI = Boolean(err?.cause?.openai);
-      const hasCauseGemini = Boolean(err?.cause?.gemini);
-      const inferredProvider: "gemini" | "openai" =
-        hasCauseOpenAI || normalizedMessage.includes("openai") ? "openai" : "gemini";
+      const inferredProvider: "openai" = "openai";
       const fallbackAttempted =
         hasCauseOpenAI ||
-        hasCauseGemini ||
         normalizedMessage.includes("fallback") ||
         normalizedMessage.includes("openai");
       await supabase

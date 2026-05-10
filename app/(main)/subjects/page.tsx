@@ -4,6 +4,7 @@ import { Suspense, useContext, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { SubjectsGrid } from '@/components/subjects-grid';
+import { TodaysAgenda } from '@/components/dashboard/todays-agenda';
 
 export default function SubjectsPage() {
   return (
@@ -61,8 +62,39 @@ function SubjectsPageContent() {
   }
 
   if (isTeacher) {
+    const teacherAssignments = Array.isArray(context?.assignments)
+      ? context.assignments.filter((item) => !teacherClassId || item.class_id === teacherClassId)
+      : [];
+    const teacherTasks = Array.isArray(context?.personalTasks) ? context.personalTasks : [];
+    const teacherSubjects = Array.isArray(context?.subjects)
+      ? context.subjects.filter((subject) => {
+          if (!teacherClassId) return true;
+          const classIds = Array.isArray(subject?.classes) ? subject.classes.map((classItem: any) => classItem?.id) : [];
+          return classIds.includes(teacherClassId);
+        })
+      : [];
+
     return (
       <div className="page-content">
+        <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+          <div className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/35 p-4">
+            <p className="text-[11px] uppercase tracking-wide text-sidebar-foreground/80">Subjects</p>
+            <p className="mt-1 text-2xl leading-none text-sidebar-foreground">{teacherSubjects.length}</p>
+          </div>
+          <div className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/35 p-4">
+            <p className="text-[11px] uppercase tracking-wide text-sidebar-foreground/80">Assignments</p>
+            <p className="mt-1 text-2xl leading-none text-sidebar-foreground">{teacherAssignments.length}</p>
+          </div>
+          <div className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/35 p-4">
+            <p className="text-[11px] uppercase tracking-wide text-sidebar-foreground/80">Today</p>
+            <p className="mt-1 text-2xl leading-none text-sidebar-foreground">{teacherTasks.length}</p>
+          </div>
+        </div>
+        <TodaysAgenda
+          assignments={teacherAssignments}
+          personalTasks={teacherTasks}
+          classes={Array.isArray(context?.classes) ? context.classes : []}
+        />
         <SubjectsGrid isTeacher={true} classId={teacherClassId} />
       </div>
     );
@@ -74,4 +106,3 @@ function SubjectsPageContent() {
     </div>
   );
 }
-
