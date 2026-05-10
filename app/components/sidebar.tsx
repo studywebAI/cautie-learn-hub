@@ -1119,7 +1119,7 @@ export function AppSidebar() {
         </div>
 
         {/* Full drawer sidebar (when hamburger is clicked) */}
-        <Sidebar className="w-[min(18rem,calc(100vw-2.5rem))] overflow-hidden rounded-r-xl">
+        <Sidebar className="w-[min(18rem,calc(100vw-2.5rem))] overflow-hidden">
           <SidebarContent className="flex-1 px-2 py-2">
             {renderTeacherClassSwitcher()}
             {visibleMainItems.length > 0 && (
@@ -1224,7 +1224,7 @@ export function AppSidebar() {
 
   // Tablet + desktop: regular sidebar with trigger
   return (
-    <Sidebar className={cn(isTablet ? "w-[15rem]" : "w-[16.5rem]", "overflow-hidden rounded-r-xl")} collapsible="icon">
+    <Sidebar className={cn(isTablet ? "w-[15rem]" : "w-[16.5rem]", "overflow-hidden")} collapsible="icon">
       <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
         <SidebarTrigger />
       </div>
