@@ -201,3 +201,42 @@ pm run -s typecheck passed after last layout pass.
 - Tracked net changed lines (adds+dels): 70
 - Untracked new-file lines: 0
 - Total changed lines (tracked + untracked): 70
+
+### 2026-05-10 11:29 CET - Update 7 (Designer 1:1 pass in progress)
+- Reworked shared tool shell sizing/rhythm for 3-column behavior:
+  - wider center lane, explicit inter-column gap, right rail width tightened to ~296px.
+- Introduced shared `tool-right-rail` + `tool-right-rail-inner` CSS contract to remove boxed option-group cards and enforce open stacked groups with separators.
+- Reworked `SourceInput` to match designer structure:
+  - Added top preview area with gradient + centered empty state.
+  - Added generate animation behavior (fade/zoom placeholder + spinner during processing).
+  - Enforced toolbar order visual grammar and button styling (0.5 border, accent hover border).
+  - Enforced content textarea + hint-text styling per spec direction.
+- Updated quiz right sidebar labels/pills toward micro-label + rounded pill spec and removed card-heavy grouping.
+
+## Diff Counter
+- Current net changed lines since this execution start: 127
+- +2500 milestone reached: no
+
+### 2026-05-10 11:35 CET - Update 8 (Implemented + verified)
+- Applied shared right-rail no-box grammar via `tool-right-rail` system in shell + globals.
+- Converted quiz/flashcards/notes sidebar groups to micro-label + open-stack behavior (no large grouped cards).
+- Updated source composer to spec direction:
+  - preview area with gradient + empty state,
+  - ordered control row: Upload -> Photo -> Mic -> Import from... -> Link,
+  - accent-hover borders on control buttons,
+  - textarea/spec-like typography + hint,
+  - accent generate CTA and loading transition.
+- Re-validated root typecheck after final pass: `npm run -s typecheck` passed.
+
+## Diff Counter
+- Current net changed lines since this execution start: 205
+- +2500 milestone reached: no
+
+### 2026-05-10 11:48 CET - Update 9 (Quiz 1:1 CTA placement)
+- Added `showSubmitButton` switch to shared `SourceInput` so pages can choose CTA position without forking component.
+- For Quiz route, moved primary generation CTA to the right settings rail (spec-aligned) and disabled duplicate lower CTA.
+- Verified compile status again: root `npm run -s typecheck` passed.
+
+## Diff Counter
+- Current net changed lines since this execution start: 236
+- +2500 milestone reached: no

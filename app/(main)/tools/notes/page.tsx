@@ -1411,9 +1411,9 @@ function NotesPageContent() {
   }
 
   const sidebar = (
-    <div className="space-y-3">
-      <div className="space-y-1.5 rounded-xl border border-border bg-background p-3">
-        <p className="text-xs font-semibold tracking-wide text-muted-foreground">TITLE</p>
+    <div className="space-y-6">
+      <div className="space-y-1.5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Title</p>
         <Input
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
@@ -1428,9 +1428,9 @@ function NotesPageContent() {
         </div>
       ) : null}
 
-      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
+      <div className="space-y-2 border-t border-[#d0d0d0] pt-4">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground">LENGTH</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Length</p>
           <span className="text-xs font-mono capitalize">{lengthLabels[length]}</span>
         </div>
         <Slider
@@ -1443,8 +1443,8 @@ function NotesPageContent() {
         />
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2.5">
-        <p className="text-xs text-muted-foreground">Save to recents</p>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Save to recents</p>
         <Switch
           checked={saveToRecents}
           onCheckedChange={setSaveToRecents}

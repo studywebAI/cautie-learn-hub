@@ -46,6 +46,7 @@ interface SourceInputProps {
   topContent?: ReactNode;
   submitLabel?: string;
   enableMicrosoftSources?: boolean;
+  showSubmitButton?: boolean;
 }
 
 type SourceKind = 'url' | 'file' | 'caption' | 'image';
@@ -271,7 +272,13 @@ export function SourceInput({
   topContent,
   submitLabel = 'Generate',
   enableMicrosoftSources = false,
+  showSubmitButton = true,
 }: SourceInputProps) {
+  const previewTitle = toolId === 'notes' || toolId === 'mindmap' || toolId === 'wordweb' || toolId === 'timeline'
+    ? 'Create your notes'
+    : toolId === 'flashcards'
+      ? 'Create your flashcards'
+      : 'Create your quiz';
   const appContext = useContext(AppContext) as AppContextType | null;
   const { toast } = useToast();
   const micSessionIdRef = useRef<string>('');
@@ -1615,6 +1622,21 @@ export function SourceInput({
       {topContent}
 
       <div className="flex flex-col gap-3 pb-1">
+        <div className="relative min-h-[380px] overflow-hidden rounded-[8px] border border-[#d0d0d0] bg-[linear-gradient(135deg,#fafafa_0%,#fff_100%)] px-8 py-14">
+          <div
+            className={`absolute inset-0 flex flex-col items-center justify-center gap-2 text-center transition-all duration-700 ease-in ${isProcessing ? 'scale-[0.85] opacity-0' : 'scale-100 opacity-100'}`}
+          >
+            <Sparkles className="h-[52px] w-[52px] text-[#d0d0d0]" />
+            <p className="text-[20px] font-semibold text-black">{previewTitle}</p>
+            <p className="text-[13px] text-[#999]">Add your study material below and click generate.</p>
+          </div>
+          {isProcessing ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="h-10 w-10 animate-spin text-[var(--accent-brand)]" />
+            </div>
+          ) : null}
+        </div>
+
         {attachmentSources.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
             {attachmentSources.map((source) => {
@@ -1666,24 +1688,26 @@ export function SourceInput({
           </div>
         )}
 
-        <div className="relative z-10 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-background p-2.5">
-          <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[#666]">Your content</p>
+
+        <div className="relative z-10 flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
             <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
             Upload
           </Button>
-          <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
+          <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
             <Image className="mr-1.5 h-3.5 w-3.5" />
             Photo
           </Button>
           {enableMic && (
-            <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
+            <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
               {isFallbackRecording ? <StopCircle className="mr-1.5 h-3.5 w-3.5" /> : <Mic className="mr-1.5 h-3.5 w-3.5" />}
               Mic
             </Button>
           )}
           <DropdownMenu open={importMenuOpen} onOpenChange={setImportMenuOpen}>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel" disabled={disabled || isProcessing}>
+              <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" disabled={disabled || isProcessing}>
                 <FileIcon className="mr-1.5 h-3.5 w-3.5" />
                 Import from...
               </Button>
@@ -1704,7 +1728,7 @@ export function SourceInput({
             type="button"
             variant="outline"
             size="sm"
-            className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel"
+            className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]"
             onClick={() => setLinkInputOpen((prev) => !prev)}
             disabled={disabled || isProcessing}
           >
@@ -1773,8 +1797,7 @@ export function SourceInput({
           </div>
         )}
 
-        <div className="mb-1 space-y-2 rounded-2xl border border-border bg-background p-3">
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground">YOUR STUDY MATERIAL</p>
+        <div className="mb-1 space-y-2">
           <div className="relative">
             <Textarea
               value={manualText}
@@ -1785,28 +1808,26 @@ export function SourceInput({
                   void submitAndSave();
                 }
               }}
-              placeholder=""
-              className="h-[220px] min-h-[220px] w-full resize-none rounded-xl border border-border surface-chip text-sm"
+              placeholder="Paste your notes, article, textbook, or any study material..."
+              className="min-h-[140px] w-full resize-y rounded-md border border-[#d0d0d0] bg-white p-[14px] text-[13px] font-normal text-[#333]"
               disabled={disabled || isProcessing}
             />
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 w-full rounded-lg border-transparent bg-[var(--accent-brand)] text-sm font-semibold text-white hover:brightness-95"
-            onClick={() => void submitAndSave()}
-            disabled={disabled || isProcessing || !canGenerate}
-          >
-            {isProcessing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
-            {submitLabel}
-          </Button>
+          {showSubmitButton ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full rounded-md border-none bg-[var(--accent-brand)] text-[13px] font-semibold text-white hover:opacity-90"
+              onClick={() => void submitAndSave()}
+              disabled={disabled || isProcessing || !canGenerate}
+            >
+              {isProcessing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+              {submitLabel}
+            </Button>
+          ) : null}
         </div>
 
-        {charCount > 0 && (
-          <span className="text-[10px] text-muted-foreground font-mono tabular-nums pl-1">
-            {wordCount} words - {charCount} chars
-          </span>
-        )}
+        <span className="text-[10px] text-[#999]">PDF, DOCX, images, YouTube links, or paste text</span>
         {hasPendingSource && (
           <span className="text-[11px] text-muted-foreground pl-1">
             Still extracting text from selected source...

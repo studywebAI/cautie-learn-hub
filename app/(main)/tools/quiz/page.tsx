@@ -41,8 +41,8 @@ const QUIZ_PAGE_SESSION_KEY = 'tools.quiz.page.session.v1';
 
 function pill(active: boolean) {
   return active
-    ? 'px-3 py-1.5 text-xs rounded-md border border-border bg-[var(--accent-brand)] text-white'
-    : 'px-3 py-1.5 text-xs rounded-md border border-border surface-panel text-foreground hover:surface-interactive';
+    ? 'px-[11px] py-[5px] text-[11px] rounded-[16px] border border-[var(--accent-brand)] bg-[var(--accent-brand)] text-white'
+    : 'px-[11px] py-[5px] text-[11px] rounded-[16px] border border-[#d0d0d0] bg-[#f8f8f8] text-[#333] hover:border-[var(--accent-brand)]';
 }
 
 function decodePresetCode(value: string) {
@@ -364,15 +364,15 @@ function QuizPageContent() {
   }, [mode, questionCount, quiz, title, toast]);
 
   const sidebar = (
-    <div className="space-y-3">
-      <div className="space-y-1.5 rounded-xl border border-border bg-background p-3">
-        <p className="text-xs font-semibold tracking-wide text-muted-foreground">TITLE</p>
+    <div className="space-y-6">
+      <div className="space-y-1.5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Title</p>
         <Input value={title} onChange={(event) => setTitle(event.target.value)} className="h-9 surface-panel text-sm" disabled={loading} />
       </div>
 
-      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground">QUIZ MODE</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Mode</p>
           <Button type="button" variant="ghost" size="sm" className="h-6 px-1.5" onClick={() => setShowPresetOverlay(true)}>
             <Plus className="h-3.5 w-3.5" />
           </Button>
@@ -418,9 +418,9 @@ function QuizPageContent() {
         </div>
       </div>
 
-      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground">ANSWER REVEAL</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Answer reveal</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {['immediate', 'end'].map((entry) => (
@@ -431,8 +431,8 @@ function QuizPageContent() {
         </div>
       </div>
 
-      <div className="space-y-1.5 rounded-xl border border-border bg-background p-3">
-        <p className="text-xs font-semibold tracking-wide text-muted-foreground">QUESTION TYPES</p>
+      <div className="space-y-1.5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Question types</p>
         <div className="flex flex-wrap gap-1.5">
           {QUIZ_TYPES.map((entry) => (
             <button key={entry.value} type="button" className={pill(questionTypes.includes(entry.value))} onClick={() => toggleQuestionType(entry.value)}>
@@ -442,9 +442,9 @@ function QuizPageContent() {
         </div>
       </div>
 
-      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground">KNOWLEDGE</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Knowledge</p>
         </div>
         <Slider value={[knowledgeScore]} onValueChange={([value]) => setKnowledgeScore(value)} min={0} max={100} step={1} disabled={loading} />
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -453,9 +453,9 @@ function QuizPageContent() {
         </div>
       </div>
 
-      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
+      <div className="space-y-2 border-t border-[#d0d0d0] pt-4">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground">QUESTION COUNT</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Questions</p>
           <span className="text-xs font-mono">{mode === 'adaptive' ? 12 : questionCount}</span>
         </div>
         <Slider
@@ -468,8 +468,8 @@ function QuizPageContent() {
         />
       </div>
 
-      <div className="space-y-1.5 rounded-xl border border-border bg-background p-3">
-        <p className="text-xs font-semibold tracking-wide text-muted-foreground">GRADING</p>
+      <div className="space-y-1.5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Focus on</p>
         <div className="flex flex-wrap gap-1.5">
           {[
             { value: 'accuracy', label: 'Accuracy' },
@@ -482,6 +482,15 @@ function QuizPageContent() {
           ))}
         </div>
       </div>
+      <Button
+        type="button"
+        className="h-11 w-full rounded-md border-none bg-[var(--accent-brand)] text-[13px] font-semibold text-white hover:opacity-90"
+        onClick={() => void handleGenerate(sourceText)}
+        disabled={loading || !sourceText.trim()}
+      >
+        {loading ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-1.5 h-4 w-4" />}
+        Generate
+      </Button>
 
       {showPresetOverlay ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
@@ -612,6 +621,7 @@ function QuizPageContent() {
           enableMic
           enableCaptions={false}
           sourceMergeMode="append_labeled"
+          showSubmitButton={false}
         />
       </div>
     </WorkbenchShell>
