@@ -97,7 +97,11 @@ function ClassesPageContent() {
   }, [role, classes, router]);
 
   if (role === 'student') {
-    return <StudentClasses />;
+    return (
+      <div className="page-content">
+        <StudentClasses />
+      </div>
+    );
   }
 
   return null;

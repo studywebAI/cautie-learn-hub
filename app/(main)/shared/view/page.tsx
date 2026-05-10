@@ -55,9 +55,9 @@ export default function SharedViewPage() {
     }
   }, [token]);
 
-  if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Loading shared content...</div>;
-  if (error) return <div className="p-4 text-sm text-destructive">{error}</div>;
-  if (!data) return <div className="p-4 text-sm text-muted-foreground">No shared data found.</div>;
+  if (isLoading) return <div className="page-content text-sm text-muted-foreground">Loading shared content...</div>;
+  if (error) return <div className="page-content text-sm text-destructive">{error}</div>;
+  if (!data) return <div className="page-content text-sm text-muted-foreground">No shared data found.</div>;
 
   const copyCurrentUrl = async () => {
     if (typeof window === 'undefined') return;
@@ -67,7 +67,7 @@ export default function SharedViewPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-3 p-4">
+    <div className="page-content w-full max-w-5xl space-y-3">
       <div className="flex items-start justify-between gap-2">
         <h1 className="text-xl font-medium">{data.title}</h1>
         <Button type="button" variant="outline" size="sm" onClick={() => void copyCurrentUrl()}>

@@ -102,7 +102,8 @@ export default function IdeasBoardPage() {
   const myVoteOptionId = activePoll ? myPollVotes.find((vote) => vote.poll_id === activePoll.id)?.option_id : undefined
 
   return (
-    <div className="space-y-3">
+    <div className="page-content">
+      <div className="space-y-3">
       <div className="rounded-md surface-panel p-4">
         <h1 className="text-xl">Ideas Board</h1>
         <p className="mt-1 text-sm text-muted-foreground">Submit ideas and vote on the top 3 poll options.</p>
@@ -163,6 +164,7 @@ export default function IdeasBoardPage() {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   )
