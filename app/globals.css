@@ -49,8 +49,9 @@
     --type-body: 15px;
     --type-section: 18px;
     --type-page: 22px;
-    --font-ui: "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --font-ui-legacy: "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-ui-previous: "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-ui: "Arial Text G2", var(--font-ui-previous);
+    --font-ui-legacy: var(--font-ui-previous);
     --accent-brand: #7f8962;
     --background: 0 0% 92.8%;
     --foreground: 0 0% 10.2%;

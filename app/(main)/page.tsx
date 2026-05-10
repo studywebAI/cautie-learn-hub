@@ -171,7 +171,7 @@ function TeacherSummaryDashboard() {
       'Guest';
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="page-content flex flex-col gap-6">
             <div className="flex items-start justify-between gap-3">
               <h1 className="text-xl tracking-tight text-foreground">Welcome, {welcomeName}</h1>
               <NotificationCenter />
