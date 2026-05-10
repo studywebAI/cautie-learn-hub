@@ -1445,6 +1445,11 @@ export function SourceInput({
       cleanupFallbackStream();
       setMicError(error?.message || 'Could not access microphone for fallback recording.');
       setIsFinalizingRecording(false);
+      toast({
+        variant: 'destructive',
+        title: 'Microphone error',
+        description: error?.message || 'Could not access microphone.',
+      });
       debugMic('media_devices_request_error', {
         message: error?.message || null,
       });
@@ -1810,6 +1815,16 @@ export function SourceInput({
         )}
 
         <span className="ml-2 w-full max-w-[760px] text-[10px] text-[#999]">PDF, DOCX, images, YouTube links, or paste text</span>
+        {isFallbackRecording && (
+          <span className="ml-2 w-full max-w-[760px] text-[11px] text-muted-foreground">
+            Recording... click Mic again to stop.
+          </span>
+        )}
+        {micError && (
+          <span className="ml-2 w-full max-w-[760px] text-[11px] text-destructive">
+            {micError}
+          </span>
+        )}
         {hasPendingSource && (
           <span className="text-[11px] text-muted-foreground pl-1">
             Still extracting text from selected source...
