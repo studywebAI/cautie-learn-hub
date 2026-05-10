@@ -1572,7 +1572,7 @@ export function SourceInput({
 
   return (
     <div
-      className="flex flex-col gap-3 relative"
+      className="relative mt-auto flex flex-col gap-3"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
