@@ -1725,7 +1725,7 @@ export function SourceInput({
           </div>
         </div>
 
-        <div className="mb-1 ml-2 w-full max-w-[1024px] space-y-2">
+        <div className="mb-1 ml-2 w-full max-w-[760px] space-y-2">
           <div className="relative">
             <Textarea
               value={manualText}
@@ -1809,7 +1809,7 @@ export function SourceInput({
           </div>
         )}
 
-        <span className="ml-2 w-full max-w-[1024px] text-[10px] text-[#999]">PDF, DOCX, images, YouTube links, or paste text</span>
+        <span className="ml-2 w-full max-w-[760px] text-[10px] text-[#999]">PDF, DOCX, images, YouTube links, or paste text</span>
         {hasPendingSource && (
           <span className="text-[11px] text-muted-foreground pl-1">
             Still extracting text from selected source...
