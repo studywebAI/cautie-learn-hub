@@ -42,7 +42,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
       <div className="flex h-full w-full flex-col">
         <div className="w-full border-b border-sidebar-border bg-sidebar px-3 py-1.5">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="ml-2">
               <div className="mb-0.5 flex items-center gap-1.5 text-[14px] font-medium leading-none">
                 <button
                   type="button"
