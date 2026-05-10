@@ -321,7 +321,7 @@ function QuestionView({
         const isCorrect = option.id === correctOptionId;
         const showCorrect = reveal && isCorrect;
         const showWrongSelected = reveal && selected && !isCorrect;
-        let rowClass = 'border-[0.5px] border-[#d0d0d0] bg-white hover:bg-[#f8f8f8] hover:border-[#7f8962] dark:border-[#444] dark:bg-[#1a1a1a] dark:hover:bg-[#222]';
+        let rowClass = 'border-[0.5px] border-[#d0d0d0] bg-[#f8f8f8] hover:bg-white hover:border-[#7f8962] dark:border-[#444] dark:bg-[#222] dark:hover:bg-[#1a1a1a]';
         let textClass = 'text-[#333] dark:text-[#ddd]';
         let prefix = '';
         if (showWrongSelected) {
@@ -337,7 +337,7 @@ function QuestionView({
           textClass = 'text-[#558b2f] dark:text-[#81c784]';
           prefix = '✅';
         } else if (selected) {
-          rowClass = 'border-2 border-[#7f8962] bg-[#f8f8f8] dark:bg-[#222]';
+          rowClass = 'border-2 border-[#7f8962] bg-white dark:bg-[#1a1a1a]';
         }
         return (
           <button
