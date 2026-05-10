@@ -3,6 +3,7 @@ import { createHash } from "crypto";
 import { z } from "zod";
 import { executeAIFlow } from "@/lib/ai/flow-executor";
 import { readUserAIRuntimeOptions } from "@/lib/ai/runtime-settings";
+import { OPENROUTER_PROVIDER_PREFERENCE } from "@/lib/ai/openrouter-policy";
 import type { ComputeClass, ToolRunStatus } from "@/lib/toolbox/contracts";
 import { enforceSourceOnlyGuard } from "@/lib/toolbox/source-guard";
 import {
@@ -155,7 +156,7 @@ async function writeAIErrorLog(
     userId: string;
     toolId: string;
     flowName: string;
-    providerPreference: "auto" | "gemini" | "openai";
+    providerPreference: "openai";
     providerAttempted: "gemini" | "openai";
     stage: "primary_error" | "fallback_error" | "run_failed";
     fallbackAttempted: boolean;
@@ -364,7 +365,7 @@ export async function POST(request: NextRequest) {
             userId: user.id,
             toolId: payload.toolId,
             flowName: payload.flowName,
-            providerPreference: runtimeOptions.providerPreference || "auto",
+            providerPreference: runtimeOptions.providerPreference || OPENROUTER_PROVIDER_PREFERENCE,
             providerAttempted: event.provider,
             stage: event.type,
             fallbackAttempted: aiEvents.some((item) => item.type === "fallback_attempt"),
@@ -489,7 +490,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(responseRun);
     } catch (err: any) {
       const errorCode = err?.code || "RUN_FAILED";
-      const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id).catch(() => ({ providerPreference: "auto" as const }));
+      const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id).catch(() => ({ providerPreference: OPENROUTER_PROVIDER_PREFERENCE }));
       const normalizedMessage = String(err?.message || "").toLowerCase();
       const hasCauseOpenAI = Boolean(err?.cause?.openai);
       const hasCauseGemini = Boolean(err?.cause?.gemini);
@@ -517,7 +518,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         toolId: payload.toolId,
         flowName: payload.flowName,
-        providerPreference: runtimeOptions.providerPreference || "auto",
+        providerPreference: runtimeOptions.providerPreference || OPENROUTER_PROVIDER_PREFERENCE,
         providerAttempted: inferredProvider,
         stage: "run_failed",
         fallbackAttempted,
@@ -530,7 +531,7 @@ export async function POST(request: NextRequest) {
         toolId: payload.toolId,
         flowName: payload.flowName,
         errorCode,
-        providerPreference: runtimeOptions.providerPreference || "auto",
+        providerPreference: runtimeOptions.providerPreference || OPENROUTER_PROVIDER_PREFERENCE,
         inferredProvider,
         message: err?.message || "Run failed",
       });

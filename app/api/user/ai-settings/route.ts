@@ -6,11 +6,15 @@ import {
   saveUserAISettings,
   type AIProviderPreference,
 } from "@/lib/ai/runtime-settings";
+import {
+  OPENROUTER_LOCKED_MODEL,
+  normalizeOpenRouterModel,
+  normalizeOpenRouterProviderPreference,
+  resolveOpenRouterApiKey,
+} from "@/lib/ai/openrouter-policy";
 
 function normalizeProvider(value: unknown): AIProviderPreference {
-  const raw = String(value || "").toLowerCase();
-  if (raw === "openai" || raw === "gemini" || raw === "auto") return raw;
-  return "auto";
+  return normalizeOpenRouterProviderPreference(value);
 }
 
 function normalizeOpenAIKey(value: unknown) {
@@ -19,8 +23,7 @@ function normalizeOpenAIKey(value: unknown) {
 }
 
 function normalizeOpenAIModel(value: unknown) {
-  const model = String(value || "").trim();
-  return model || "google/gemini-2.5-flash-lite";
+  return normalizeOpenRouterModel(value);
 }
 
 function normalizeSttProviderStrategy(value: unknown): "groq_with_openai_fallback" | "openai_only" {
@@ -38,7 +41,7 @@ export async function GET() {
 
   const runtime = await readUserAIRuntimeOptions(supabase, user.id);
   const hasGroqKey = Boolean(String(process.env.GROQ_API_KEY || "").trim());
-  const defaultAiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "";
+  const defaultAiKey = resolveOpenRouterApiKey();
   const hasOpenAIKey = Boolean(runtime.openaiApiKey && runtime.openaiApiKey !== defaultAiKey);
   const usesDefaultOpenAIKey = Boolean(defaultAiKey) && !(runtime.openaiApiKey && runtime.openaiApiKey !== defaultAiKey);
   const effectiveSttProvider =
@@ -49,7 +52,7 @@ export async function GET() {
         : (runtime.openaiApiKey || defaultAiKey ? "openai" : "unavailable");
   return NextResponse.json({
     providerPreference: runtime.providerPreference,
-    openaiModel: runtime.openaiModel || "google/gemini-2.5-flash-lite",
+    openaiModel: runtime.openaiModel || OPENROUTER_LOCKED_MODEL,
     sttProviderStrategy: runtime.sttProviderStrategy || "groq_with_openai_fallback",
     effectiveSttProvider,
     hasGroqKey,
@@ -100,12 +103,12 @@ export async function PUT(request: NextRequest) {
           : (openaiApiKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY ? "openai" : "unavailable");
     return NextResponse.json({
       providerPreference: saved.providerPreference,
-      openaiModel: saved.openaiModel || "google/gemini-2.5-flash-lite",
+      openaiModel: saved.openaiModel || OPENROUTER_LOCKED_MODEL,
       sttProviderStrategy: saved.sttProviderStrategy || "groq_with_openai_fallback",
       effectiveSttProvider,
       hasGroqKey,
       hasOpenAIKey: saved.hasOpenAIKey,
-      usesDefaultOpenAIKey: Boolean(process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY) && !saved.hasOpenAIKey,
+      usesDefaultOpenAIKey: Boolean(resolveOpenRouterApiKey()) && !saved.hasOpenAIKey,
     });
   } catch (error: any) {
     return NextResponse.json(

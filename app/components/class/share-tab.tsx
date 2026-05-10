@@ -459,7 +459,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
             />
             <Button
               size="sm"
-              className="w-[112px] rounded-2xl text-xs"
+              className="w-[112px] rounded-2xl border-transparent bg-[var(--accent-brand)] text-xs text-white hover:brightness-95"
               onClick={() => void sendMessage()}
               disabled={isSubmitting || (!message.trim() && !attachmentLabel && !linkUrl.trim())}
             >

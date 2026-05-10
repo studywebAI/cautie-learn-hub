@@ -24,6 +24,9 @@ import { getToolStrings } from '@/lib/tool-i18n';
 import { Switch } from '@/components/ui/switch';
 import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
 import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
+import { SendToClassButton } from '@/components/tools/send-to-class-button';
+import { extractShareableClasses } from '@/lib/classes/shareable-classes';
+import { postClassShareItem } from '@/lib/class-share/client';
 
 const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
   if (!value) return 'flip';
@@ -49,6 +52,10 @@ function FlashcardsPageContent() {
   const region = appContext?.region ?? 'global';
   const schoolingLevel = appContext?.schoolingLevel ?? 2;
   const t = getToolStrings(language);
+  const shareableClasses = React.useMemo(
+    () => extractShareableClasses((appContext as any)?.classes || []),
+    [appContext]
+  );
 
   const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
   const [isLoading, setIsLoading] = useState(false);
@@ -325,28 +332,25 @@ function FlashcardsPageContent() {
     }
   };
 
-  const handleShareToClass = useCallback(async () => {
-    if (!classId || !generatedCards) return;
+  const handleShareToClass = useCallback(async (targetClassId: string) => {
+    if (!targetClassId || !generatedCards) return;
     setIsSharingToClass(true);
     try {
       const summary = `${generatedCards.length} cards | mode: ${studyMode}`;
-      const res = await fetch(`/api/classes/${classId}/share`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          audience: 'teacher',
-          text: `Shared flashcards: ${customTitle.trim() || 'Untitled flashcards'}`,
-          attachmentLabel: summary,
-        }),
+      await postClassShareItem({
+        classId: targetClassId,
+        audience: 'teacher',
+        text: `Shared flashcards: ${customTitle.trim() || 'Untitled flashcards'}`,
+        attachmentLabel: summary,
       });
-      if (!res.ok) throw new Error('Failed to share flashcards');
       toast({ title: 'Shared to class', description: 'Flashcards were posted in class share.' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Share failed', description: error?.message || 'Could not share flashcards.' });
     } finally {
       setIsSharingToClass(false);
     }
-  }, [classId, customTitle, generatedCards, studyMode, toast]);
+  }, [customTitle, generatedCards, studyMode, toast]);
+
 
   if (isLoading) {
     return <FunLoader tool="flashcards" />;
@@ -354,6 +358,7 @@ function FlashcardsPageContent() {
 
   if (generatedCards && currentView === 'study') {
     return (
+      <>
       <div className="h-full flex flex-col">
         <div className="p-3 md:p-4 flex items-center justify-between">
           <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">{t.back}</Button>
@@ -365,11 +370,13 @@ function FlashcardsPageContent() {
               getHtml={() => flashcardsToHtml(generatedCards)}
             />
           )}
-          {classId ? (
-            <Button variant="outline" onClick={() => void handleShareToClass()} className="rounded-full text-xs" disabled={isSharingToClass}>
-              {isSharingToClass ? 'Sharing...' : 'Share to class'}
-            </Button>
-          ) : null}
+          <SendToClassButton
+            classes={shareableClasses}
+            classIdFromRoute={classId}
+            sending={isSharingToClass}
+            onSend={handleShareToClass}
+            className="rounded-full text-xs"
+          />
         </div>
         <div className="flex-1 min-h-0 overflow-auto">
           <FlashcardViewer
@@ -392,6 +399,7 @@ function FlashcardsPageContent() {
           />
         </div>
       </div>
+      </>
     );
   }
 
@@ -517,6 +525,7 @@ function FlashcardsPageContent() {
   );
 
   return (
+    <>
     <WorkbenchShell
       title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'}
       sidebar={sidebar}
@@ -535,6 +544,7 @@ function FlashcardsPageContent() {
         sourceMergeMode="append_labeled"
       />
     </WorkbenchShell>
+    </>
   );
 }
 

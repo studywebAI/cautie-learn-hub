@@ -2,11 +2,16 @@ type FlowHandler = (input: any) => Promise<any> | any;
 import {
   canUseOpenAIFallback,
   executeOpenAIFallbackFlow,
-  shouldFallbackToOpenAI,
 } from "@/lib/ai/openai-fallback";
+import {
+  OPENROUTER_LOCKED_MODEL,
+  OPENROUTER_PROVIDER_PREFERENCE,
+  normalizeOpenRouterProviderPreference,
+  resolveOpenRouterApiKey,
+} from "@/lib/ai/openrouter-policy";
 
 export type AIExecutionOptions = {
-  providerPreference?: "auto" | "gemini" | "openai";
+  providerPreference?: "openai";
   openaiApiKey?: string;
   openaiModel?: string;
   onEvent?: (event: {
@@ -130,20 +135,13 @@ export async function executeAIFlow(
       ? { ...input, groundingInstruction: SOURCE_GROUNDING_INSTRUCTION }
       : input;
 
-  const providerPreference = options?.providerPreference || "auto";
-  const openaiApiKey = options?.openaiApiKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "";
-  const openaiModel = options?.openaiModel || process.env.OPENAI_FALLBACK_MODEL || "google/gemini-2.5-flash-lite";
+  const providerPreference = normalizeOpenRouterProviderPreference(options?.providerPreference);
+  const openaiApiKey = options?.openaiApiKey || resolveOpenRouterApiKey();
+  const openaiModel = options?.openaiModel || process.env.OPENAI_FALLBACK_MODEL || OPENROUTER_LOCKED_MODEL;
   const canFallback = canUseOpenAIFallback(flowName) && !!openaiApiKey;
   const emit = options?.onEvent;
-  const summarizeError = (err: unknown) => {
-    const anyErr = err as any;
-    const code = anyErr?.code ? String(anyErr.code) : "";
-    const message = anyErr?.message ? String(anyErr.message) : String(err || "Unknown error");
-    return code ? `${code}: ${message}` : message;
-  };
-
   if (providerPreference === "openai" && canFallback) {
-    console.info(`[AI_FLOW] ${flowName} provider=openai (explicit-no-fallback)`);
+    console.info(`[AI_FLOW] ${flowName} provider=openrouter model=${openaiModel} fallback=disabled lock=enforced policy=${OPENROUTER_PROVIDER_PREFERENCE}`);
     return executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey, openaiModel);
   }
   if (providerPreference === "openai" && !canFallback) {
@@ -156,119 +154,9 @@ export async function executeAIFlow(
     throw error;
   }
 
-  if (providerPreference === "auto") {
-    try {
-      console.info(`[AI_FLOW] ${flowName} provider=gemini (auto-primary)`);
-      return await flow(enrichedInput);
-    } catch (error) {
-      emit?.({
-        type: "primary_error",
-        provider: "gemini",
-        flowName,
-        message: (error as any)?.message || String(error),
-        code: (error as any)?.code ? String((error as any).code) : undefined,
-      });
-
-      if (!canFallback || !shouldFallbackToOpenAI(error)) {
-        throw error;
-      }
-
-      console.info(`[AI_FLOW] ${flowName} provider=openai (auto-fallback-after-gemini-error)`);
-      emit?.({
-        type: "fallback_attempt",
-        provider: "openai",
-        flowName,
-      });
-
-      try {
-        const result = await executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey, openaiModel);
-        emit?.({
-          type: "fallback_success",
-          provider: "openai",
-          flowName,
-        });
-        return result;
-      } catch (fallbackError) {
-        emit?.({
-          type: "fallback_error",
-          provider: "openai",
-          flowName,
-          message: (fallbackError as any)?.message || String(fallbackError),
-          code: (fallbackError as any)?.code ? String((fallbackError as any).code) : undefined,
-        });
-        const combined = new Error(
-          `Gemini failed (${summarizeError(error)}) and OpenAI fallback also failed (${summarizeError(fallbackError)})`
-        ) as Error & { code?: string; cause?: unknown };
-        combined.code = (fallbackError as any)?.code || (error as any)?.code || "DUAL_PROVIDER_FAILED";
-        combined.cause = { gemini: error, openai: fallbackError };
-        throw combined;
-      }
-    }
-  }
-
-  try {
-    console.info(`[AI_FLOW] ${flowName} provider=gemini (primary)`);
-    return await flow(enrichedInput);
-  } catch (error) {
-    const eligibleByPolicy =
-      providerPreference === "gemini" &&
-      shouldFallbackToOpenAI(error);
-    const shouldFallback =
-      canFallback && eligibleByPolicy;
-
-    emit?.({
-      type: "primary_error",
-      provider: "gemini",
-      flowName,
-      message: (error as any)?.message || String(error),
-      code: (error as any)?.code ? String((error as any).code) : undefined,
-    });
-
-    if (eligibleByPolicy && !canFallback) {
-      console.info(`[AI_FLOW] ${flowName} openai fallback skipped (missing key or unsupported flow)`);
-      emit?.({
-        type: "fallback_skipped",
-        provider: "openai",
-        flowName,
-        code: "OPENAI_FALLBACK_UNAVAILABLE",
-        message: canUseOpenAIFallback(flowName)
-          ? "OpenAI fallback skipped: OPENAI_API_KEY/user OpenAI key is missing."
-          : `OpenAI fallback skipped: flow '${flowName}' is not mapped for OpenAI fallback.`,
-      });
-    }
-
-    if (shouldFallback) {
-      console.info(`[AI_FLOW] ${flowName} provider=openai (fallback-after-gemini-error)`);
-      emit?.({
-        type: "fallback_attempt",
-        provider: "openai",
-        flowName,
-      });
-      try {
-        const result = await executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey, openaiModel);
-        emit?.({
-          type: "fallback_success",
-          provider: "openai",
-          flowName,
-        });
-        return result;
-      } catch (fallbackError) {
-        console.warn(`[AI_FLOW] ${flowName} openai fallback failed: ${summarizeError(fallbackError)}`);
-        emit?.({
-          type: "fallback_error",
-          provider: "openai",
-          flowName,
-          message: (fallbackError as any)?.message || String(fallbackError),
-          code: (fallbackError as any)?.code ? String((fallbackError as any).code) : undefined,
-        });
-        const combined = new Error(
-          `Gemini failed (${summarizeError(error)}) and OpenAI fallback also failed (${summarizeError(fallbackError)})`
-        ) as Error & { code?: string; cause?: unknown };
-        combined.code = (fallbackError as any)?.code || (error as any)?.code || "DUAL_PROVIDER_FAILED";
-        combined.cause = { gemini: error, openai: fallbackError };
-        throw combined;
-      }
-    }
-    throw error;
-  }
+  const unavailable = new Error(
+    `OpenRouter lock is enabled but no key is configured for flow '${flowName}'`
+  ) as Error & { code?: string };
+  unavailable.code = "OPENROUTER_PROVIDER_UNAVAILABLE";
+  throw unavailable;
 }

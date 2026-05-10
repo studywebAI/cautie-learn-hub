@@ -1,6 +1,12 @@
 import { decryptSecret, encryptSecret } from "@/lib/security/encrypted-secrets";
+import {
+  OPENROUTER_LOCKED_MODEL,
+  OPENROUTER_PROVIDER_PREFERENCE,
+  normalizeOpenRouterProviderPreference,
+  resolveOpenRouterApiKey,
+} from "@/lib/ai/openrouter-policy";
 
-export type AIProviderPreference = "auto" | "gemini" | "openai";
+export type AIProviderPreference = "openai";
 
 export type AIRuntimeOptions = {
   providerPreference: AIProviderPreference;
@@ -14,8 +20,8 @@ type UserAISettingsRow = {
   encrypted_openai_key: string | null;
 };
 
-const DEFAULT_PROVIDER: AIProviderPreference = "auto";
-const DEFAULT_OPENAI_MODEL = "google/gemini-2.5-flash-lite";
+const DEFAULT_PROVIDER: AIProviderPreference = "openai";
+const DEFAULT_OPENAI_MODEL: string = OPENROUTER_LOCKED_MODEL;
 const DEFAULT_STT_PROVIDER_STRATEGY: AIRuntimeOptions["sttProviderStrategy"] = "groq_with_openai_fallback";
 
 export async function readUserAIRuntimeOptions(
@@ -24,7 +30,7 @@ export async function readUserAIRuntimeOptions(
 ): Promise<AIRuntimeOptions> {
   const fallback: AIRuntimeOptions = {
     providerPreference: DEFAULT_PROVIDER,
-    openaiApiKey: process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || undefined,
+    openaiApiKey: resolveOpenRouterApiKey() || undefined,
     openaiModel: DEFAULT_OPENAI_MODEL,
     sttProviderStrategy: DEFAULT_STT_PROVIDER_STRATEGY,
   };
@@ -39,10 +45,7 @@ export async function readUserAIRuntimeOptions(
     if (error || !data) return fallback;
     const row = data as UserAISettingsRow;
 
-    const providerPreference =
-      row.provider_preference === "gemini" || row.provider_preference === "openai" || row.provider_preference === "auto"
-        ? row.provider_preference
-        : DEFAULT_PROVIDER;
+    const providerPreference = normalizeOpenRouterProviderPreference(row.provider_preference);
 
     let userOpenAIKey = "";
     if (row.encrypted_openai_key) {
@@ -76,7 +79,7 @@ export async function readUserAIRuntimeOptions(
 
     return {
       providerPreference,
-      openaiApiKey: userOpenAIKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || undefined,
+      openaiApiKey: userOpenAIKey || resolveOpenRouterApiKey() || undefined,
       openaiModel,
       sttProviderStrategy,
     };
@@ -95,10 +98,7 @@ export async function saveUserAISettings(
       sttProviderStrategy?: AIRuntimeOptions["sttProviderStrategy"] | null;
   }
 ) {
-  const providerPreference =
-    payload.providerPreference === "gemini" || payload.providerPreference === "openai" || payload.providerPreference === "auto"
-      ? payload.providerPreference
-      : DEFAULT_PROVIDER;
+  const providerPreference = normalizeOpenRouterProviderPreference(payload.providerPreference);
 
   const openaiApiKey = String(payload.openaiApiKey || "").trim();
   const encryptedOpenAIKey = openaiApiKey ? encryptSecret(openaiApiKey) : null;

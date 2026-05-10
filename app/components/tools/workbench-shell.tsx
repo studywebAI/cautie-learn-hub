@@ -42,14 +42,14 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               <div className="mb-0.5 flex items-center gap-1.5 text-sm">
                 <button
                   type="button"
-                  className="text-foreground hover:underline"
+                  className="text-[var(--accent-brand)] hover:underline"
                   onClick={() => window.dispatchEvent(new Event('cautie:open-profile-menu'))}
                 >
                   {profileName}
                 </button>
                 <span className="text-muted-foreground">&gt;</span>
                 <span className="inline-flex items-center gap-1 text-foreground">
-                  {breadcrumbIcon ? <span className="text-foreground/80">{breadcrumbIcon}</span> : null}
+                  {breadcrumbIcon ? <span className="text-[var(--accent-brand)]">{breadcrumbIcon}</span> : null}
                   <span>{title}</span>
                 </span>
               </div>

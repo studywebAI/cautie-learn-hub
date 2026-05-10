@@ -27,6 +27,9 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { WordwebCanvas } from '@/components/tools/wordweb-canvas';
 import { TimelineBoard } from '@/components/tools/timeline-board';
+import { SendToClassButton } from '@/components/tools/send-to-class-button';
+import { extractShareableClasses } from '@/lib/classes/shareable-classes';
+import { postClassShareItem } from '@/lib/class-share/client';
 import type { CanonicalDocument } from '@/lib/tools/canonical-model';
 import {
   canonicalToNotesSections,
@@ -178,6 +181,10 @@ function NotesPageContent() {
   const region = appContext?.region ?? 'global';
   const schoolingLevel = appContext?.schoolingLevel ?? 2;
   const t = getToolStrings(language);
+  const shareableClasses = useMemo(
+    () => extractShareableClasses((appContext as any)?.classes || []),
+    [appContext]
+  );
   const noteStyleOptions = [
     { value: 'structured', label: 'Structured', description: 'Clear headings and concise key points' },
     { value: 'standard', label: 'Standard', description: 'Balanced summary style for general studying' },
@@ -1083,32 +1090,30 @@ function NotesPageContent() {
     persistNotesState(nextHtml);
   }, [editMode, persistNotesState]);
 
-  const handleShareToClass = useCallback(async () => {
-    if (!classId || !generatedNotes) return;
+  const handleShareToClass = useCallback(async (targetClassId: string) => {
+    if (!targetClassId || !generatedNotes) return;
     setIsSharingToClass(true);
     try {
       const sections = editableSections.length;
-      const res = await fetch(`/api/classes/${classId}/share`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          audience: 'teacher',
-          text: `Shared notes: ${customTitle.trim() || 'Untitled notes'}`,
-          attachmentLabel: `${sections} sections`,
-        }),
+      await postClassShareItem({
+        classId: targetClassId,
+        audience: 'teacher',
+        text: `Shared notes: ${customTitle.trim() || 'Untitled notes'}`,
+        attachmentLabel: `${sections} sections`,
       });
-      if (!res.ok) throw new Error('Failed to share notes');
       toast({ title: 'Shared to class', description: 'Notes were posted in class share.' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Share failed', description: error?.message || 'Could not share notes.' });
     } finally {
       setIsSharingToClass(false);
     }
-  }, [classId, customTitle, editableSections.length, generatedNotes, toast]);
+  }, [customTitle, editableSections.length, generatedNotes, toast]);
+
 
   if (showLaunchScreen) {
     const currentStage = launchStages[Math.min(launchStageIndex, launchStages.length - 1)];
     return (
+      <>
       <div className="h-full overflow-auto p-4 md:p-6">
         <div className="mx-auto flex min-h-[52vh] w-full max-w-3xl items-center justify-center">
           <div className="w-full rounded-2xl border border-border surface-panel p-5 md:p-6">
@@ -1120,12 +1125,14 @@ function NotesPageContent() {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   if (generatedNotes) {
     const isVisualMode = mode === 'wordweb' || mode === 'timeline';
     return (
+      <>
       <div className="h-full overflow-auto pl-1.5 pr-0 pt-1.5 pb-0">
         <div className="w-full space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -1193,11 +1200,13 @@ function NotesPageContent() {
                 getHtml={() => noteHtml || notesToHtml(generatedNotes)}
                 getPrintHtml={() => notesContentRef.current?.innerHTML || noteHtml || notesToHtml(generatedNotes)}
               />
-              {classId ? (
-                <Button variant="outline" size="sm" className="rounded-full h-8" onClick={() => void handleShareToClass()} disabled={isSharingToClass}>
-                  <span className="text-xs">{isSharingToClass ? 'Sharing...' : 'Share to class'}</span>
-                </Button>
-              ) : null}
+              <SendToClassButton
+                classes={shareableClasses}
+                classIdFromRoute={classId}
+                sending={isSharingToClass}
+                onSend={handleShareToClass}
+                className="rounded-full h-8"
+              />
             </div>
           </div>
 
@@ -1397,6 +1406,7 @@ function NotesPageContent() {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
@@ -1572,6 +1582,7 @@ function NotesPageContent() {
   );
 
   return (
+    <>
     <WorkbenchShell title={pageTitle} sidebar={sidebar} breadcrumbIcon={breadcrumbIcon}>
       <SourceInput
         toolId="notes"
@@ -1591,6 +1602,7 @@ function NotesPageContent() {
         sourceMergeMode="append_labeled"
       />
     </WorkbenchShell>
+    </>
   );
 }
 

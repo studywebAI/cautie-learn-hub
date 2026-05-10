@@ -1053,7 +1053,7 @@ export function AppSidebar() {
                       )}
                       title={item.label}
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className={cn("h-4 w-4", item.href.startsWith('/tools') ? "text-[var(--accent-brand)]" : undefined)} />
                     </button>
                   </>
                 ) : (
@@ -1067,7 +1067,7 @@ export function AppSidebar() {
                     )}
                     title={item.label}
                   >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className={cn("h-4 w-4", item.href.startsWith('/tools') ? "text-[var(--accent-brand)]" : undefined)} />
                   </Link>
                 )}
               </div>
@@ -1085,7 +1085,7 @@ export function AppSidebar() {
                 )}
                 title={item.label}
               >
-                <item.icon className="h-4 w-4" />
+                <item.icon className={cn("h-4 w-4", item.href.startsWith('/tools') ? "text-[var(--accent-brand)]" : undefined)} />
               </Link>
             ))}
             {showSectionHeaders && visibleToolsItems.length > 0 && visibleOtherItems.length > 0 && <div className="h-px bg-sidebar-border my-2" />}
@@ -1101,7 +1101,7 @@ export function AppSidebar() {
                 )}
                 title={item.label}
               >
-                <item.icon className="h-4 w-4" />
+                <item.icon className={cn("h-4 w-4", item.href.startsWith('/tools') ? "text-[var(--accent-brand)]" : undefined)} />
               </Link>
             ))}
           </nav>
@@ -1138,7 +1138,7 @@ export function AppSidebar() {
                             isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
                             tooltip={item.label}
                           >
-                            <item.icon className="h-4 w-4" />
+                            <item.icon className={cn("h-4 w-4", item.href.startsWith('/tools') ? "text-[var(--accent-brand)]" : undefined)} />
                             <span className="text-[12px] leading-4">{item.label}</span>
                           </SidebarMenuButton>
                         </>
@@ -1148,8 +1148,8 @@ export function AppSidebar() {
                           isActive={isMenuItemActive(item.href)}
                           tooltip={item.label}
                         >
-                          <Link href={item.href} onClick={() => setOpenMobile(false)}>
-                            <item.icon className="h-4 w-4" />
+                          <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
+                            <item.icon className={cn("h-4 w-4", item.href.startsWith('/tools') ? "text-[var(--accent-brand)]" : undefined)} />
                             <span className="text-[12px] leading-4">{item.label}</span>
                           </Link>
                         </SidebarMenuButton>
@@ -1173,8 +1173,8 @@ export function AppSidebar() {
                         isActive={isMenuItemActive(item.href)}
                         tooltip={item.label}
                       >
-                        <Link href={item.href} onClick={() => setOpenMobile(false)}>
-                          <item.icon className="h-4 w-4" />
+                        <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
+                          <item.icon className={cn("h-4 w-4", item.href.startsWith('/tools') ? "text-[var(--accent-brand)]" : undefined)} />
                           <span className="text-[12px] leading-4">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
@@ -1196,8 +1196,8 @@ export function AppSidebar() {
                         isActive={isMenuItemActive(item.href)}
                         tooltip={item.label}
                       >
-                        <Link href={item.href} onClick={() => setOpenMobile(false)}>
-                          <item.icon className="h-4 w-4" />
+                        <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
+                          <item.icon className={cn("h-4 w-4", item.href.startsWith('/tools') ? "text-[var(--accent-brand)]" : undefined)} />
                           <span className="text-[12px] leading-4">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
@@ -1246,7 +1246,7 @@ export function AppSidebar() {
                         isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
                         tooltip={item.label}
                       >
-                        <item.icon className="h-4 w-4" />
+                        <item.icon className={cn("h-4 w-4", item.href.startsWith('/tools') ? "text-[var(--accent-brand)]" : undefined)} />
                         <span className="text-[12px] leading-4">{item.label}</span>
                       </SidebarMenuButton>
                     </>
@@ -1256,8 +1256,8 @@ export function AppSidebar() {
                       isActive={isMenuItemActive(item.href)}
                       tooltip={item.label}
                     >
-                      <Link href={item.href}>
-                        <item.icon className="h-4 w-4" />
+                      <Link prefetch={false} href={item.href}>
+                        <item.icon className={cn("h-4 w-4", item.href.startsWith('/tools') ? "text-[var(--accent-brand)]" : undefined)} />
                         <span className="text-[12px] leading-4">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -1280,8 +1280,8 @@ export function AppSidebar() {
                     isActive={isMenuItemActive(item.href)}
                     tooltip={item.label}
                   >
-                    <Link href={item.href}>
-                      <item.icon className="h-4 w-4" />
+                    <Link prefetch={false} href={item.href}>
+                      <item.icon className={cn("h-4 w-4", item.href.startsWith('/tools') ? "text-[var(--accent-brand)]" : undefined)} />
                       <span className="text-[12px] leading-4">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -1303,8 +1303,8 @@ export function AppSidebar() {
                     isActive={isMenuItemActive(item.href)}
                     tooltip={item.label}
                   >
-                    <Link href={item.href}>
-                      <item.icon className="h-4 w-4" />
+                    <Link prefetch={false} href={item.href}>
+                      <item.icon className={cn("h-4 w-4", item.href.startsWith('/tools') ? "text-[var(--accent-brand)]" : undefined)} />
                       <span className="text-[12px] leading-4">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -1327,5 +1327,7 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
+
 
 

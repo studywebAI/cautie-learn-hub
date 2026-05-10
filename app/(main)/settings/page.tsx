@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { OPENROUTER_LOCKED_MODEL } from '@/lib/ai/openrouter-policy';
 
 const SUBSCRIPTION_CACHE_KEY = 'studyweb-subscription-cache-v1';
 const SUBSCRIPTION_CACHE_TTL_MS = 300_000;
@@ -40,9 +41,9 @@ export default function SettingsPage() {
   const [subscriptionType, setSubscriptionType] = useState<string>(role === 'teacher' ? 'teacher' : 'student');
   const [displayName, setDisplayName] = useState('');
   const [displayNameSaving, setDisplayNameSaving] = useState(false);
-  const [aiProvider, setAiProvider] = useState<'gemini' | 'openai' | 'auto'>('auto');
+  const [aiProvider, setAiProvider] = useState<'openai'>('openai');
   const [openaiApiKeyDraft, setOpenaiApiKeyDraft] = useState('');
-  const [openaiModel, setOpenaiModel] = useState('google/gemini-2.5-flash-lite');
+  const [openaiModel, setOpenaiModel] = useState<string>(OPENROUTER_LOCKED_MODEL);
   const [sttProviderStrategy, setSttProviderStrategy] = useState<'groq_with_openai_fallback' | 'openai_only'>('groq_with_openai_fallback');
   const [effectiveSttProvider, setEffectiveSttProvider] = useState<'groq' | 'openai' | 'unavailable'>('unavailable');
   const [aiSettingsLoading, setAiSettingsLoading] = useState(true);
@@ -80,9 +81,7 @@ export default function SettingsPage() {
         const response = await fetch('/api/user/ai-settings', { cache: 'no-store' });
         if (!response.ok) return;
         const data = await response.json();
-        if (data?.providerPreference === 'gemini' || data?.providerPreference === 'openai' || data?.providerPreference === 'auto') {
-          setAiProvider(data.providerPreference);
-        }
+        setAiProvider('openai');
         if (typeof data?.openaiModel === 'string' && data.openaiModel.trim()) {
           setOpenaiModel(data.openaiModel.trim());
         }
@@ -433,21 +432,17 @@ export default function SettingsPage() {
                     <Label htmlFor="provider">{ui.aiProvider}</Label>
                     <Select
                       value={aiProvider}
-                      onValueChange={(value) => {
-                        const next = (value as 'gemini' | 'openai' | 'auto');
-                        setAiProvider(next);
-                      }}
+                      onValueChange={() => setAiProvider('openai')}
+                      disabled
                     >
                       <SelectTrigger id="provider">
                         <SelectValue placeholder={ui.aiProviderPlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="auto">{ui.autoRecommended}</SelectItem>
-                        <SelectItem value="gemini">Gemini</SelectItem>
-                        <SelectItem value="openai">OpenAI</SelectItem>
+                        <SelectItem value="openai">OpenRouter</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">Auto routes between configured providers.</p>
+                    <p className="text-xs text-muted-foreground">Locked: OpenRouter route only.</p>
                   </div>
 
                   <div className="grid gap-2 max-w-md">
@@ -480,16 +475,15 @@ export default function SettingsPage() {
 
                   <div className="grid gap-2 max-w-md">
                     <Label htmlFor="openai-model">{ui.openAIModel}</Label>
-                    <Select value={openaiModel} onValueChange={setOpenaiModel}>
+                    <Select value={openaiModel} onValueChange={setOpenaiModel} disabled>
                       <SelectTrigger id="openai-model">
                         <SelectValue placeholder="Select model" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="google/gemini-2.5-flash-lite">google/gemini-2.5-flash-lite</SelectItem>
-                        <SelectItem value="google/gemini-2.5-flash-lite:nitro">google/gemini-2.5-flash-lite:nitro</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">Current configured OpenAI model for fallback/tool runs.</p>
+                    <p className="text-xs text-muted-foreground">Locked model for tool runs via OpenRouter.</p>
                   </div>
 
                   <div className="grid gap-2 max-w-md">
