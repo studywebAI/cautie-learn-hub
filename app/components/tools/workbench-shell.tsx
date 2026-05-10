@@ -38,11 +38,11 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
   }, [context?.session?.user]);
 
   return (
-    <div className="relative h-full w-full font-[var(--font-ui-legacy)]">
+    <div className="relative h-full w-full">
       <div className="flex h-full w-full flex-col">
-        <div className="w-full border-b border-sidebar-border bg-sidebar px-3 py-1.5">
-          <div className="flex items-center justify-between">
-            <div className="ml-2">
+        <div className="w-full border-b border-sidebar-border bg-sidebar">
+          <div className="flex min-h-9 items-center justify-between px-3">
+            <div>
               <div className="mb-0.5 flex items-center gap-1.5 text-[13px] font-normal leading-none text-[hsl(var(--sidebar-foreground))]">
                 <button
                   type="button"
@@ -68,9 +68,9 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 gap-2 px-1 py-1">
+        <div className="flex min-h-0 flex-1 gap-2 px-0 py-1">
           <div className="flex min-w-0 flex-1 flex-col">
-          <div className={cn('min-h-0 flex-1', isPhone ? 'pl-1 pr-0 pb-1' : isTablet ? 'pl-2 pr-0 pb-1' : 'pl-2 pr-0 pb-1')}>
+          <div className={cn('min-h-0 flex-1', isPhone ? 'pl-3 pr-2 pb-1' : isTablet ? 'pl-3 pr-2 pb-1' : 'pl-3 pr-2 pb-1')}>
             {topAccessory && <div className="mb-3">{topAccessory}</div>}
             {children}
           </div>

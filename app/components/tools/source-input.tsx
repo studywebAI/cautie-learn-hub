@@ -1572,7 +1572,7 @@ export function SourceInput({
 
   return (
     <div
-      className="h-full flex flex-col gap-3 relative"
+      className="flex flex-col gap-3 relative"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
@@ -1621,7 +1621,7 @@ export function SourceInput({
 
       {topContent}
 
-      <div className="flex h-full flex-col justify-end gap-2 pb-0">
+      <div className="flex w-full flex-col gap-2 pb-0">
         {attachmentSources.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
             {attachmentSources.map((source) => {
@@ -1674,7 +1674,7 @@ export function SourceInput({
         )}
 
 
-        <div className="ml-2 w-full max-w-[760px]">
+        <div className="w-full max-w-[760px]">
           <div className="relative z-10 flex flex-wrap items-center gap-2">
             <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
               <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
@@ -1729,7 +1729,7 @@ export function SourceInput({
           </div>
         </div>
 
-        <div className="mb-1 ml-2 w-full max-w-[760px] space-y-2">
+        <div className="mb-1 w-full max-w-[760px] space-y-2">
           <div className="relative">
             <Textarea
               value={manualText}
@@ -1813,14 +1813,14 @@ export function SourceInput({
           </div>
         )}
 
-        <span className="ml-2 w-full max-w-[760px] text-[10px] text-[#999]">PDF, DOCX, images, YouTube links, or paste text</span>
+        <span className="w-full max-w-[760px] text-[10px] text-[#999]">PDF, DOCX, images, YouTube links, or paste text</span>
         {isFallbackRecording && (
-          <span className="ml-2 w-full max-w-[760px] text-[11px] text-muted-foreground">
+          <span className="w-full max-w-[760px] text-[11px] text-muted-foreground">
             Recording... click Mic again to stop.
           </span>
         )}
         {micError && (
-          <span className="ml-2 w-full max-w-[760px] text-[11px] text-destructive">
+          <span className="w-full max-w-[760px] text-[11px] text-destructive">
             {micError}
           </span>
         )}

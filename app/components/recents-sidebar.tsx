@@ -438,8 +438,10 @@ export function RecentsSidebar() {
     }
   };
 
+  const filteredRecents = recents.filter((item) => String(item.title || '').trim().toLowerCase() !== 'keep going');
+
   if (isCollapsed) {
-    const compactItems = recents.slice(0, 4);
+    const compactItems = filteredRecents.slice(0, 4);
     if (isLoading || compactItems.length === 0) return null;
     return (
       <div className="px-1">
@@ -463,9 +465,10 @@ export function RecentsSidebar() {
     );
   }
 
-  const visibleRecents = activeTab === 'studysets'
-    ? recents.filter((item) => item.source === 'studyset')
-    : recents;
+  const visibleRecentsRaw = activeTab === 'studysets'
+    ? filteredRecents.filter((item) => item.source === 'studyset')
+    : filteredRecents;
+  const visibleRecents = visibleRecentsRaw.filter((item) => String(item.title || '').trim().toLowerCase() !== 'keep going');
   const displayCount = expanded ? visibleRecents.length : 3;
   const displayItems = visibleRecents.slice(0, displayCount);
   const hasMore = visibleRecents.length > 3;
@@ -483,7 +486,7 @@ export function RecentsSidebar() {
     );
   }
 
-  if (recents.length === 0) {
+  if (filteredRecents.length === 0) {
     return null;
   }
 
@@ -557,33 +560,33 @@ export function RecentsSidebar() {
                     className="h-6 w-6 shrink-0 rounded-md"
                     onClick={(event) => event.stopPropagation()}
                   >
-                    <MoreHorizontal className="h-3.5 w-3.5" />
+                    <MoreHorizontal className="h-3.5 w-3.5 text-[var(--accent-brand)]" />
                   </Button>
                 </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56" onClick={(event) => event.stopPropagation()}>
                     <DropdownMenuItem onClick={() => router.push(getOpenHref(item))}>
                       <span>Open</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--accent-brand)]" />
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setIsRecentsSettingsOpen(true)}>
                       <span>Settings</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--accent-brand)]" />
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => void handleCopyLink(item)}>
                       <span>Copy link</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--accent-brand)]" />
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => openShareToUserDialog(item)}>
                       <span>Share to user</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--accent-brand)]" />
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => void handleShareViaApp(item)}>
                       <span>Share via</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--accent-brand)]" />
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => openShareToClassDialog(item)} disabled={classes.length === 0}>
                       <span>Share to class</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--accent-brand)]" />
                     </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -600,12 +603,12 @@ export function RecentsSidebar() {
         >
           {expanded ? (
             <>
-              <ChevronUp className="h-3 w-3" />
+              <ChevronUp className="h-3 w-3 text-[var(--accent-brand)]" />
               {t.showLess}
             </>
           ) : (
             <>
-              <ChevronDown className="h-3 w-3" />
+              <ChevronDown className="h-3 w-3 text-[var(--accent-brand)]" />
               {t.showMore} {visibleRecents.length - 3} {t.more}
             </>
           )}

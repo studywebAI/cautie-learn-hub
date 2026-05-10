@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle2, XCircle, ArrowRight, HelpCircle, ChevronRight, Flag } from 'lucide-react';
+import { Loader2, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Quiz, QuizQuestion } from '@/lib/types';
 
@@ -230,7 +230,19 @@ function MatchingBoard({ question, answer, disabled, onChange }: { question: Qui
   );
 }
 
-function QuestionView({ question, answer, disabled, onChange }: { question: QuizQuestion; answer: AnswerValue | undefined; disabled: boolean; onChange: (next: AnswerValue) => void }) {
+function QuestionView({
+  question,
+  answer,
+  disabled,
+  onChange,
+  reveal,
+}: {
+  question: QuizQuestion;
+  answer: AnswerValue | undefined;
+  disabled: boolean;
+  onChange: (next: AnswerValue) => void;
+  reveal: boolean;
+}) {
   const type = question.type || 'multiple-choice';
   const blank = type === 'fill-blank' ? question.question.match(/_{3,}/) : null;
   if (type === 'fill-blank' && blank) {
@@ -294,28 +306,51 @@ function QuestionView({ question, answer, disabled, onChange }: { question: Quiz
       </div>
     );
   }
+  const correctOptionId =
+    question.options.find((option) => option.isCorrect)?.id ||
+    question.correctOptionId ||
+    '';
   return (
-    <div className="space-y-2">
+    <div className={type === 'true-false' ? 'grid gap-3 sm:grid-cols-2' : 'space-y-3'}>
       {question.options.map((option) => {
         const selected = answer?.kind === 'option' && answer.value === option.id;
+        const isCorrect = option.id === correctOptionId;
+        const showCorrect = reveal && isCorrect;
+        const showWrongSelected = reveal && selected && !isCorrect;
+        let rowClass = 'border border-[#d0d0d0] bg-white hover:bg-[#f8f8f8] hover:border-[#7f8962] dark:border-[#444] dark:bg-[#1a1a1a] dark:hover:bg-[#222]';
+        let textClass = 'text-[#333] dark:text-[#ddd]';
+        let prefix = '';
+        if (showWrongSelected) {
+          rowClass = 'border-2 border-[#f44336] bg-[#ffebee] dark:border-[#ef5350] dark:bg-[#b71c1c]';
+          textClass = 'text-[#c62828] dark:text-[#ef5350]';
+          prefix = '✕';
+        } else if (showCorrect && selected) {
+          rowClass = 'border-2 border-[#4caf50] bg-[#e8f5e9] dark:border-[#81c784] dark:bg-[#1b5e20]';
+          textClass = 'text-[#2e7d32] dark:text-[#81c784]';
+          prefix = '✓';
+        } else if (showCorrect && !selected) {
+          rowClass = 'border-2 border-[#9ccc65] bg-[#f1f8e9] dark:border-[#81c784] dark:bg-[#1b5e20]';
+          textClass = 'text-[#558b2f] dark:text-[#81c784]';
+          prefix = '✓';
+        } else if (selected) {
+          rowClass = 'border-2 border-[#7f8962] bg-[#f8f8f8] dark:bg-[#222]';
+        }
         return (
           <button
             key={option.id}
             type="button"
             onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition ${selected ? 'border-primary bg-primary/10' : 'border-border bg-background hover:bg-muted/40'}`}
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left transition ${rowClass}`}
           >
-            <span className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-foreground bg-background' : 'border-black/70 bg-background'}`}>
-              <span className={`h-2 w-2 rounded-full ${selected ? 'bg-foreground' : 'bg-transparent'}`} />
-            </span>
-            <span className="text-sm">{option.text}</span>
+            <input type="radio" checked={selected} readOnly className="h-4 w-4 accent-[var(--accent-brand)]" />
+            {prefix ? <span className={textClass}>{prefix}</span> : null}
+            <span className={`text-sm ${textClass}`}>{option.text}</span>
           </button>
         );
       })}
     </div>
   );
 }
-
 function MediaPrompt({ question }: { question: QuizQuestion }) {
   const media = question.media;
   const type = question.type || 'multiple-choice';
@@ -764,70 +799,85 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
   if (isFinished) return <QuizResults quiz={{ ...quiz, questions }} answers={answers} signals={adaptiveSignals} runtimeSettings={runtimeSettings} sourceText={sourceText} />;
   if (!currentQuestion) return <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
+  const revealCurrent = !shouldHideCorrectnessUntilEnd && finalizedMap[currentQuestion.id] === true;
+  const progressPct = Math.round(((currentIndex + 1) / Math.max(1, questions.length)) * 100);
   return (
-    <Card>
-      <CardHeader className="pb-1.5 pt-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            {questions.map((question, index) => {
-              const answered = answers[question.id];
-              const isCurrent = index === currentIndex;
-              const score = answered ? getQuestionAccuracy(question, answered) : null;
-              const canReveal = isFinished || (!shouldHideCorrectnessUntilEnd && finalizedMap[question.id] === true);
-              const cls = isCurrent ? 'bg-foreground text-background' : canReveal && score ? (score.accuracy >= 100 ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : score.accuracy <= 0 ? 'border border-rose-200 bg-rose-50 text-rose-700' : 'border border-border bg-muted text-foreground') : 'border border-border bg-background text-muted-foreground';
-              return <button key={question.id} type="button" onClick={() => setCurrentIndex(index)} className={`inline-flex h-10 min-w-10 items-center justify-center rounded-full px-3 text-sm ${cls}`}>{String(index + 1)}</button>;
-            })}
+    <div className="h-full w-full overflow-hidden bg-white px-0 py-5 dark:bg-[#1a1a1a]">
+      <div className="mb-10 flex items-center justify-between px-0">
+        <div className="text-[13px] font-medium text-[#7f8962]">Dashboard &gt; Quiz &gt; Question</div>
+        <div className="flex items-center gap-4">
+          <span className="text-xs text-[#666] dark:text-[#999]">{currentIndex + 1} of {questions.length}</span>
+          <div className="h-1 w-[150px] overflow-hidden rounded bg-[#f0f0f0] md:w-[200px] dark:bg-[#333]">
+            <div className="h-full bg-[var(--accent-brand)] transition-all duration-300" style={{ width: `${progressPct}%` }} />
           </div>
-          <Button type="button" variant="outline" size="sm" className="h-8" onClick={advanceQuestion} disabled={!canAdvance && !isAnswered}>Next<ChevronRight className="ml-1 h-4 w-4" /></Button>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-2.5 pt-1.5">
-        <div className="rounded-lg border border-border bg-background px-3 py-3.5">
-          <p className="text-[15px] leading-relaxed text-foreground/75">{currentQuestion.question.replace(/_{3,}/g, '____')}</p>
-          {currentQuestion.type === 'matching' ? <p className="mt-1 text-xs text-muted-foreground">Match each item to the correct term. {/multiple times|more than once|reuse/i.test(String(currentQuestion.hint || '')) ? 'Terms may be reused.' : 'Each term can be used once unless noted.'}</p> : null}
-        </div>
+      <div className="max-w-[800px]">
+        <p className="mb-10 text-[16px] font-semibold leading-[1.5] text-black md:text-[20px] dark:text-white">{currentQuestion.question.replace(/_{3,}/g, '____')}</p>
+      </div>
 
+      <div className="mb-10 max-w-[800px]">
         <MediaPrompt question={currentQuestion} />
-        <QuestionView question={currentQuestion} answer={currentAnswer} disabled={effectiveMode !== 'classic' && isAnswered} onChange={handleSetAnswer} />
+        <QuestionView question={currentQuestion} answer={currentAnswer} disabled={effectiveMode !== 'classic' && isAnswered} onChange={handleSetAnswer} reveal={revealCurrent} />
+      </div>
 
-        {(effectiveMode !== 'classic' && isAnswered && !shouldHideCorrectnessUntilEnd && lastAnsweredQuestionId === currentQuestion.id) ? (
-          <div className={`rounded-xl border p-3 ${isCurrentCorrect ? 'border-emerald-300 bg-emerald-50/40' : 'border-red-300 bg-red-50/40'}`}>
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium">{isCurrentCorrect ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <XCircle className="h-4 w-4 text-red-600" />}<span>{isCurrentCorrect ? 'Correct' : 'Incorrect'}</span></div>
-            <div className="grid gap-2 md:grid-cols-2">
-              <div className="rounded-lg bg-background px-3 py-2"><p className="text-xs text-muted-foreground">Your answer</p><p className="text-sm">{formatAnswer(currentQuestion, currentAnswer)}</p></div>
-              <div className="rounded-lg bg-background px-3 py-2"><p className="text-xs text-muted-foreground">Correct answer</p><p className="text-sm">{getCorrectAnswerText(currentQuestion)}</p></div>
-            </div>
-            {currentQuestion.type === 'matching' ? <div className="mt-2 rounded-lg bg-background px-3 py-2"><p className="mb-1 text-xs text-muted-foreground">Pair review</p><MatchingComparison question={currentQuestion} answer={currentAnswer} /></div> : null}
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => setShowWhy((prev) => !prev)}><HelpCircle className="mr-1.5 h-3.5 w-3.5" />Why is this correct?</Button>
-              {isCurrentCorrect === false ? <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => void loadWhyIncorrect()} disabled={whyIncorrectLoading}>{whyIncorrectLoading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}Why is this incorrect?</Button> : null}
-            </div>
-            {showWhy ? <div className="mt-2 rounded-lg bg-background px-3 py-2 text-xs text-muted-foreground">{currentQuestion.explanation?.trim() || 'This follows directly from the source material used to generate the question.'}</div> : null}
-            {whyIncorrect ? <div className="mt-2 rounded-lg bg-background px-3 py-2 text-xs text-muted-foreground">{whyIncorrect}</div> : null}
+      {(effectiveMode !== 'classic' && isAnswered && revealCurrent && lastAnsweredQuestionId === currentQuestion.id) ? (
+        <div className="mb-6 max-w-[800px] rounded-md border-l-4 border-[var(--accent-brand)] bg-[#f5f5f5] p-4 dark:bg-[#222]">
+          <div className="mb-2 text-sm">
+            Your answer: {formatAnswer(currentQuestion, currentAnswer)} {isCurrentCorrect ? '✓' : '✕'}
           </div>
-        ) : null}
-
-        <div className="flex flex-wrap gap-1.5 pt-0.5">
-          <span className="rounded-full bg-background px-2 py-0.5 text-xs text-muted-foreground">{currentQuestion.type || 'multiple-choice'}</span>
-          <span className="rounded-full bg-background px-2 py-0.5 text-xs text-muted-foreground">{currentQuestion.category || 'general'}</span>
-          <span className="rounded-full bg-background px-2 py-0.5 text-xs text-muted-foreground">difficulty {currentQuestion.difficulty || 5}</span>
+          <div className="mb-2 text-sm">Correct answer: {getCorrectAnswerText(currentQuestion)} ✓</div>
+          {showWhy ? <div className="text-[13px] text-[#333] dark:text-[#ddd]">{currentQuestion.explanation?.trim() || 'Explanation unavailable.'}</div> : null}
+          {whyIncorrect ? <div className="mt-2 text-[13px] text-[#333] dark:text-[#ddd]">{whyIncorrect}</div> : null}
+          <div className="mt-3 flex gap-2">
+            <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => setShowWhy((prev) => !prev)}><HelpCircle className="mr-1.5 h-3.5 w-3.5" />Explanation</Button>
+            {isCurrentCorrect === false ? <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => void loadWhyIncorrect()} disabled={whyIncorrectLoading}>{whyIncorrectLoading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}Why incorrect?</Button> : null}
+          </div>
         </div>
-      </CardContent>
+      ) : null}
 
-      <CardFooter className="flex items-center justify-end pt-1">
-        <div className="flex items-center gap-2">
-          {effectiveMode === 'adaptive' ? <Button type="button" variant="outline" className="h-8" onClick={() => setIsFinished(true)}><Flag className="mr-1 h-4 w-4" />Finish</Button> : null}
-          {effectiveMode === 'assisted' && !isAnswered ? (
-            <Button type="button" onClick={handleAnswerPress} disabled={!canAdvance} className="h-8">Answer</Button>
-          ) : (
-            <Button type="button" onClick={() => { if (effectiveMode === 'classic' && !isAnswered) handleAnswerPress(); advanceQuestion(); }} disabled={effectiveMode === 'assisted' ? !isAnswered : !canAdvance} className="h-8">
-              {effectiveMode !== 'adaptive' && currentIndex >= questions.length - 1 ? 'Finish' : 'Next'}
-              {(effectiveMode === 'adaptive' && isAdaptiveLoading) ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <ArrowRight className="ml-2 h-4 w-4" />}
-            </Button>
-          )}
-        </div>
-      </CardFooter>
-    </Card>
+      <div className="mt-10 flex items-center justify-between border-t border-[#d0d0d0] pt-10 dark:border-[#444]">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 rounded-md border border-[#d0d0d0] bg-white px-5 text-[13px] text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#f8f8f8] dark:border-[#444] dark:bg-[#1a1a1a] dark:text-[#ddd] dark:hover:bg-[#222]"
+          onClick={() => {
+            if (currentIndex > 0) {
+              setCurrentIndex((prev) => Math.max(0, prev - 1));
+              setIsAnswered(Boolean(finalizedMap[questions[Math.max(0, currentIndex - 1)]?.id || '']));
+            }
+          }}
+          disabled={currentIndex === 0}
+        >
+          ← Back
+        </Button>
+        <div />
+        <Button
+          type="button"
+          onClick={() => {
+            if (effectiveMode === 'assisted' && !isAnswered) {
+              handleAnswerPress();
+              return;
+            }
+            if (!canAdvance) return;
+            if (!isAnswered) {
+              handleAnswerPress();
+              if (shouldHideCorrectnessUntilEnd) {
+                advanceQuestion();
+              }
+              return;
+            }
+            advanceQuestion();
+          }}
+          disabled={effectiveMode === 'assisted' ? (!canAdvance && !isAnswered) : !canAdvance}
+          className="h-10 rounded-md bg-[var(--accent-brand)] px-5 text-[13px] font-medium text-white hover:opacity-90"
+        >
+          {effectiveMode !== 'adaptive' && currentIndex >= questions.length - 1 ? 'Finish Quiz' : 'Next →'}
+        </Button>
+      </div>
+    </div>
   );
 }
+
+

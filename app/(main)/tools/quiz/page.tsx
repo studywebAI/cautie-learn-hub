@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import React, { Suspense, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { BrainCircuit, Loader2, Plus, Minus, X, Trash2 } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
@@ -10,9 +10,6 @@ import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SourceInput } from '@/components/tools/source-input';
-import { SendToClassButton } from '@/components/tools/send-to-class-button';
-import { extractShareableClasses } from '@/lib/classes/shareable-classes';
-import { postClassShareItem } from '@/lib/class-share/client';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import type { Quiz } from '@/lib/types';
@@ -65,9 +62,7 @@ function QuizPageContent() {
   const language = appContext?.language ?? 'en';
   const region = appContext?.region ?? 'global';
   const schoolingLevel = appContext?.schoolingLevel ?? 2;
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const classId = searchParams.get('classId');
 
   const [sourceText, setSourceText] = useState(searchParams.get('sourceText') || '');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
@@ -87,11 +82,6 @@ function QuizPageContent() {
   const [importCode, setImportCode] = useState('');
   const [showPresetOverlay, setShowPresetOverlay] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [isSharingToClass, setIsSharingToClass] = useState(false);
-  const shareableClasses = React.useMemo(
-    () => extractShareableClasses((appContext as any)?.classes || []),
-    [appContext]
-  );
 
   const adaptiveCap = 50;
   const runCounterRef = useRef(0);
@@ -345,25 +335,6 @@ function QuizPageContent() {
     }
   }, []);
 
-  const handleShareToClass = useCallback(async (targetClassId: string) => {
-    if (!targetClassId || !quiz) return;
-    setIsSharingToClass(true);
-    try {
-      const count = Array.isArray(quiz.questions) ? quiz.questions.length : questionCount;
-      await postClassShareItem({
-        classId: targetClassId,
-        audience: 'teacher',
-        text: `Shared quiz: ${title.trim() || 'Untitled quiz'}`,
-        attachmentLabel: `${count} questions | mode: ${mode}`,
-      });
-      toast({ title: 'Shared to class', description: 'Quiz was posted in class share.' });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Share failed', description: error?.message || 'Could not share quiz.' });
-    } finally {
-      setIsSharingToClass(false);
-    }
-  }, [mode, questionCount, quiz, title, toast]);
-
   const sidebar = (
     <div className="space-y-6">
       <div className="space-y-1.5">
@@ -554,21 +525,10 @@ function QuizPageContent() {
     </div>
   );
 
-  if (loading) return <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
-
   if (quiz) {
     return (
       <div className="h-full flex flex-col">
-        <div className="px-2 pb-2 pt-1.5 flex items-center justify-end">
-          <SendToClassButton
-            classes={shareableClasses}
-            classIdFromRoute={classId}
-            sending={isSharingToClass}
-            onSend={handleShareToClass}
-            className="rounded-full h-8"
-          />
-        </div>
-        <div className="flex-1 min-h-0 overflow-auto px-2 pb-2">
+        <div className="flex-1 min-h-0 overflow-auto px-0 pb-0">
           <QuizTaker
             quiz={quiz}
             mode={mode}
@@ -589,7 +549,7 @@ function QuizPageContent() {
 
   return (
     <WorkbenchShell title="Quiz" sidebar={sidebar} breadcrumbIcon={<BrainCircuit className="h-4 w-4" />}>
-      <div className="flex h-full w-full flex-col pl-3">
+      <div className="flex h-full w-full flex-col pl-0">
         <SourceInput
           toolId="quiz"
           value={sourceText}
@@ -597,6 +557,7 @@ function QuizPageContent() {
           onImageDataUriChange={setImageDataUri}
           onSubmit={(compiledText) => handleGenerate(String(compiledText || sourceText))}
           placeholder=""
+          disabled={loading}
           speechLanguage={language}
           enableMic
           enableCaptions={false}

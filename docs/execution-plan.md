@@ -253,3 +253,25 @@ pm run -s typecheck passed after last layout pass.
 - Validation: root typecheck passed.
 
 - 2026-05-10 layout checkpoint: Added app-main-shell--tool full-width mode (no max-width), reduced tool shell paddings, and made tool header full-width with sidebar-style border/background to push content below header.
+
+### 2026-05-10 13:20 CET - Completion pass
+- Finalized tool-shell alignment and spacing corrections:
+  - removed forced legacy tool font override in shared shell,
+  - aligned breadcrumb and content start line,
+  - restored small left content padding without re-centering.
+- Finalized source composer width/position fixes:
+  - textarea, controls row and hint share same max width,
+  - removed extra left offset on input blocks,
+  - removed h-full stretch behavior that created large empty top area.
+- Finalized recents cleanup:
+  - removed `Keep going` entries from expanded and collapsed recents lists (no replacement).
+- Verification:
+  - `npm run -s typecheck` passed.
+
+### 2026-05-10 13:33 CET - Recents icon consistency pass
+- Aligned recents icon accent behavior with sidebar icon contract:
+  - action menu icon (`...`) uses accent,
+  - submenu chevrons use accent,
+  - expand/collapse chevrons use accent.
+- Validation:
+  - `npm run -s typecheck` passed.
