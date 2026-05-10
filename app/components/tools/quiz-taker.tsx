@@ -134,6 +134,10 @@ function formatAnswer(question: QuizQuestion, answer?: AnswerValue) {
   return '-';
 }
 
+function cleanOptionText(text: string) {
+  return String(text || '').replace(/^\s*[A-Da-d][\)\.\:\-]\s*/, '').trim();
+}
+
 function buildLearningNotes(rows: Array<{ category: string; accuracy: number }>, overallAccuracy: number, speedPct: number) {
   const category = rows.reduce<Record<string, { count: number; total: number }>>((acc, row) => {
     acc[row.category] = acc[row.category] || { count: 0, total: 0 };
@@ -256,7 +260,7 @@ function QuestionView({
           onFocus={(e) => e.currentTarget.select()}
           onChange={(e) => onChange({ kind: 'text', value: e.target.value })}
           disabled={disabled}
-          className="mx-2 inline-flex h-9 w-52 align-middle"
+          className="mx-2 inline-flex h-9 w-52 rounded-md border-[0.5px] border-[#d0d0d0] bg-white px-[14px] text-[12px] text-[#333] align-middle md:text-[13px] lg:text-[14px] dark:border-[#444] dark:bg-[#1a1a1a] dark:text-[#ddd]"
           placeholder="..."
         />
         {after}
@@ -271,7 +275,7 @@ function QuestionView({
         onFocus={(e) => e.currentTarget.select()}
         onChange={(e) => onChange({ kind: 'text', value: e.target.value })}
         disabled={disabled}
-        className="h-10 bg-background"
+        className="h-10 rounded-md border-[0.5px] border-[#d0d0d0] bg-white px-[14px] text-[12px] text-[#333] md:text-[13px] lg:text-[14px] dark:border-[#444] dark:bg-[#1a1a1a] dark:text-[#ddd]"
         placeholder={type === 'fill-blank' ? 'Fill in the blank...' : 'Type your answer...'}
       />
     );
@@ -317,21 +321,21 @@ function QuestionView({
         const isCorrect = option.id === correctOptionId;
         const showCorrect = reveal && isCorrect;
         const showWrongSelected = reveal && selected && !isCorrect;
-        let rowClass = 'border border-[#d0d0d0] bg-white hover:bg-[#f8f8f8] hover:border-[#7f8962] dark:border-[#444] dark:bg-[#1a1a1a] dark:hover:bg-[#222]';
+        let rowClass = 'border-[0.5px] border-[#d0d0d0] bg-white hover:bg-[#f8f8f8] hover:border-[#7f8962] dark:border-[#444] dark:bg-[#1a1a1a] dark:hover:bg-[#222]';
         let textClass = 'text-[#333] dark:text-[#ddd]';
         let prefix = '';
         if (showWrongSelected) {
           rowClass = 'border-2 border-[#f44336] bg-[#ffebee] dark:border-[#ef5350] dark:bg-[#b71c1c]';
           textClass = 'text-[#c62828] dark:text-[#ef5350]';
-          prefix = '✕';
+          prefix = '❌';
         } else if (showCorrect && selected) {
           rowClass = 'border-2 border-[#4caf50] bg-[#e8f5e9] dark:border-[#81c784] dark:bg-[#1b5e20]';
           textClass = 'text-[#2e7d32] dark:text-[#81c784]';
-          prefix = '✓';
+          prefix = '✅';
         } else if (showCorrect && !selected) {
           rowClass = 'border-2 border-[#9ccc65] bg-[#f1f8e9] dark:border-[#81c784] dark:bg-[#1b5e20]';
           textClass = 'text-[#558b2f] dark:text-[#81c784]';
-          prefix = '✓';
+          prefix = '✅';
         } else if (selected) {
           rowClass = 'border-2 border-[#7f8962] bg-[#f8f8f8] dark:bg-[#222]';
         }
@@ -339,12 +343,15 @@ function QuestionView({
           <button
             key={option.id}
             type="button"
-            onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left transition ${rowClass}`}
+            onClick={() => {
+              if (disabled) return;
+              onChange({ kind: 'option', value: option.id });
+            }}
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-[14px] text-left transition ${rowClass}`}
           >
             <input type="radio" checked={selected} readOnly className="h-4 w-4 accent-[var(--accent-brand)]" />
             {prefix ? <span className={textClass}>{prefix}</span> : null}
-            <span className={`text-sm ${textClass}`}>{option.text}</span>
+            <span className={`text-[12px] font-normal md:text-[13px] lg:text-[14px] ${textClass}`}>{cleanOptionText(option.text)}</span>
           </button>
         );
       })}
@@ -802,8 +809,8 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
   const revealCurrent = !shouldHideCorrectnessUntilEnd && finalizedMap[currentQuestion.id] === true;
   const progressPct = Math.round(((currentIndex + 1) / Math.max(1, questions.length)) * 100);
   return (
-    <div className="h-full w-full overflow-hidden bg-white px-0 py-3 dark:bg-[#1a1a1a]">
-      <div className="mb-4 flex items-center justify-between px-0">
+    <div className="h-full w-full overflow-hidden bg-white px-0 py-5 dark:bg-[#1a1a1a]">
+      <div className="mb-10 flex h-[60px] items-center justify-between px-0">
         <div className="text-[13px] font-medium text-[#7f8962]">Dashboard &gt; Quiz &gt; Question</div>
         <div className="flex items-center gap-4">
           <span className="text-xs text-[#666] dark:text-[#999]">{currentIndex + 1} of {questions.length}</span>
@@ -814,10 +821,10 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
       </div>
 
       <div className="max-w-[800px]">
-        <p className="mb-6 text-[16px] font-semibold leading-[1.5] text-black md:text-[20px] dark:text-white">{currentQuestion.question.replace(/_{3,}/g, '____')}</p>
+        <p className="mb-10 text-[16px] font-semibold leading-[1.5] text-black md:text-[18px] lg:text-[20px] dark:text-white">{currentQuestion.question.replace(/_{3,}/g, '____')}</p>
       </div>
 
-      <div className="mb-6 max-w-[800px]">
+      <div className="mb-10 max-w-[800px]">
         <MediaPrompt question={currentQuestion} />
         <QuestionView question={currentQuestion} answer={currentAnswer} disabled={effectiveMode !== 'classic' && isAnswered} onChange={handleSetAnswer} reveal={revealCurrent} />
       </div>
@@ -825,9 +832,9 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
       {(effectiveMode !== 'classic' && isAnswered && revealCurrent && lastAnsweredQuestionId === currentQuestion.id) ? (
         <div className="mb-6 max-w-[800px] rounded-md border-l-4 border-[var(--accent-brand)] bg-[#f5f5f5] p-4 dark:bg-[#222]">
           <div className="mb-2 text-sm">
-            Your answer: {formatAnswer(currentQuestion, currentAnswer)} {isCurrentCorrect ? '[correct]' : '[wrong]'}
+            Your answer: {formatAnswer(currentQuestion, currentAnswer)} {isCurrentCorrect ? '✅' : '❌'}
           </div>
-          <div className="mb-2 text-sm">Correct answer: {getCorrectAnswerText(currentQuestion)} [correct]</div>
+          <div className="mb-2 text-sm">Correct answer: {getCorrectAnswerText(currentQuestion)} ✅</div>
           {showWhy ? <div className="text-[13px] text-[#333] dark:text-[#ddd]">{currentQuestion.explanation?.trim() || 'Explanation unavailable.'}</div> : null}
           {whyIncorrect ? <div className="mt-2 text-[13px] text-[#333] dark:text-[#ddd]">{whyIncorrect}</div> : null}
           <div className="mt-3 flex gap-2">
@@ -837,11 +844,11 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
         </div>
       ) : null}
 
-      <div className="mt-6 flex items-center justify-between border-t border-[#d0d0d0] pt-6 dark:border-[#444]">
+      <div className="mt-0 flex items-center justify-between border-t border-t-[0.5px] border-[#d0d0d0] pt-10 dark:border-[#444]">
         <Button
           type="button"
           variant="outline"
-          className="h-10 rounded-md border border-[#d0d0d0] bg-white px-5 text-[13px] text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#f8f8f8] dark:border-[#444] dark:bg-[#1a1a1a] dark:text-[#ddd] dark:hover:bg-[#222]"
+          className="h-10 rounded-md border-[0.5px] border-[#d0d0d0] bg-white px-5 text-[13px] text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#f8f8f8] dark:border-[#444] dark:bg-[#1a1a1a] dark:text-[#ddd] dark:hover:bg-[#222]"
           onClick={() => {
             if (currentIndex > 0) {
               setCurrentIndex((prev) => Math.max(0, prev - 1));
@@ -850,7 +857,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
           }}
           disabled={currentIndex === 0}
         >
-          {'<- Back'}
+          {'← Back'}
         </Button>
         <div />
         <Button
@@ -873,7 +880,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
           disabled={effectiveMode === 'assisted' ? (!canAdvance && !isAnswered) : !canAdvance}
           className="h-10 rounded-md bg-[var(--accent-brand)] px-5 text-[13px] font-medium text-white hover:opacity-90"
         >
-          {effectiveMode !== 'adaptive' && currentIndex >= questions.length - 1 ? 'Finish Quiz' : 'Next ->'}
+          {effectiveMode !== 'adaptive' && currentIndex >= questions.length - 1 ? 'Finish Quiz' : 'Next →'}
         </Button>
       </div>
     </div>
