@@ -1670,60 +1670,62 @@ export function SourceInput({
 
         <p className="text-xs font-medium text-[#666]">Your content</p>
 
-        <div className="relative z-10 flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
-            <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
-            Upload
-          </Button>
-          <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
-            <Image className="mr-1.5 h-3.5 w-3.5" />
-            Photo
-          </Button>
-          {enableMic && (
-            <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
-              {isFallbackRecording ? <StopCircle className="mr-1.5 h-3.5 w-3.5" /> : <Mic className="mr-1.5 h-3.5 w-3.5" />}
-              Mic
+        <div className="ml-2 w-full max-w-[1024px]">
+          <div className="relative z-10 flex flex-wrap items-center gap-2">
+            <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
+              <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
+              Upload
             </Button>
-          )}
-          <DropdownMenu open={importMenuOpen} onOpenChange={setImportMenuOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" disabled={disabled || isProcessing}>
-                <FileIcon className="mr-1.5 h-3.5 w-3.5" />
-                Import from...
+            <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
+              <Image className="mr-1.5 h-3.5 w-3.5" />
+              Photo
+            </Button>
+            {enableMic && (
+              <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
+                {isFallbackRecording ? <StopCircle className="mr-1.5 h-3.5 w-3.5" /> : <Mic className="mr-1.5 h-3.5 w-3.5" />}
+                Mic
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[180px]">
-              <DropdownMenuItem onClick={() => { openChatImport(); }}>
-                Chat
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { if (enableMicrosoftSources) openMicrosoftPicker(); }} disabled={!enableMicrosoftSources}>
-                Microsoft OneDrive
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setRecentsSourceFilter('all'); setRecentsOpen(true); }}>
-                Recents
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]"
-            onClick={() => setLinkInputOpen((prev) => !prev)}
-            disabled={disabled || isProcessing}
-          >
-            <Link2 className="mr-1.5 h-3.5 w-3.5" />
-            Link
-          </Button>
-          {enableCaptions && (
-            <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => setCaptionsOpen((prev) => !prev)} disabled={disabled || !enableCaptions}>
-              <Captions className="mr-1.5 h-3.5 w-3.5" />
-              Captions
+            )}
+            <DropdownMenu open={importMenuOpen} onOpenChange={setImportMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" disabled={disabled || isProcessing}>
+                  <FileIcon className="mr-1.5 h-3.5 w-3.5" />
+                  Import from...
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[180px]">
+                <DropdownMenuItem onClick={() => { openChatImport(); }}>
+                  Chat
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { if (enableMicrosoftSources) openMicrosoftPicker(); }} disabled={!enableMicrosoftSources}>
+                  Microsoft OneDrive
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setRecentsSourceFilter('all'); setRecentsOpen(true); }}>
+                  Recents
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]"
+              onClick={() => setLinkInputOpen((prev) => !prev)}
+              disabled={disabled || isProcessing}
+            >
+              <Link2 className="mr-1.5 h-3.5 w-3.5" />
+              Link
             </Button>
-          )}
+            {enableCaptions && (
+              <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => setCaptionsOpen((prev) => !prev)} disabled={disabled || !enableCaptions}>
+                <Captions className="mr-1.5 h-3.5 w-3.5" />
+                Captions
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="mb-1 space-y-2">
+        <div className="mb-1 ml-2 w-full max-w-[1024px] space-y-2">
           <div className="relative">
             <Textarea
               value={manualText}
@@ -1807,7 +1809,7 @@ export function SourceInput({
           </div>
         )}
 
-        <span className="text-[10px] text-[#999]">PDF, DOCX, images, YouTube links, or paste text</span>
+        <span className="ml-2 w-full max-w-[1024px] text-[10px] text-[#999]">PDF, DOCX, images, YouTube links, or paste text</span>
         {hasPendingSource && (
           <span className="text-[11px] text-muted-foreground pl-1">
             Still extracting text from selected source...

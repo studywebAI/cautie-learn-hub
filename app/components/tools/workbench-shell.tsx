@@ -25,6 +25,10 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
   const isTablet = deviceTier === 'tablet';
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const profileName = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const savedDisplayName = String(window.localStorage.getItem('studyweb-display-name') || '').trim();
+      if (savedDisplayName) return savedDisplayName;
+    }
     const displayName = String((context?.session?.user?.user_metadata as any)?.display_name || '').trim();
     if (displayName) return displayName;
     const fullName = String((context?.session?.user?.user_metadata as any)?.full_name || '').trim();
