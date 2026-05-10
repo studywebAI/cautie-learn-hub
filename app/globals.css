@@ -114,8 +114,8 @@
     --accent-teal: #22c55e;
     --brand-coral: #d97757;
     --page-max-width: 1280px;
-    --page-inline-padding: 6px;
-    --page-block-padding: 8px;
+    --page-inline-padding: 4px;
+    --page-block-padding: 4px;
   }
 
   .dark {
@@ -617,8 +617,8 @@
 @layer components {
   .app-main-shell {
     --app-shell-space-top: 0.35rem;
-    --app-shell-space-left: 0.2rem;
-    --app-shell-space-right: 0.2rem;
+    --app-shell-space-left: 8px;
+    --app-shell-space-right: 8px;
     --app-shell-space-bottom: 0.2rem;
     padding-top: var(--app-shell-space-top);
     padding-left: var(--app-shell-space-left);
@@ -639,9 +639,9 @@
     width: 100%;
     max-width: none;
     margin-inline: 0;
-    padding-inline: 2px;
-    padding-top: 2px;
-    padding-bottom: calc(2px + var(--nav-bottom-bar-height));
+    padding-inline: 4px;
+    padding-top: 4px;
+    padding-bottom: calc(4px + var(--nav-bottom-bar-height));
   }
 
   .app-main-shell.app-main-shell--tool {
@@ -657,8 +657,8 @@
   @media (min-width: 768px) {
     .app-main-shell {
       --app-shell-space-top: 0.35rem;
-      --app-shell-space-left: 0.2rem;
-      --app-shell-space-right: 0.2rem;
+      --app-shell-space-left: 8px;
+      --app-shell-space-right: 8px;
       --app-shell-space-bottom: 0.2rem;
     }
   }
@@ -675,7 +675,7 @@
     width: 100%;
     max-width: 1180px;
     margin-inline: auto;
-    padding: 6px;
+    padding: 4px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -736,7 +736,7 @@
     --type-page: 20px;
     --type-section: 17px;
     --page-inline-padding: 4px;
-    --page-block-padding: 6px;
+    --page-block-padding: 4px;
   }
 
   .class-shell {
