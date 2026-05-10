@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { useToast } from '@/hooks/use-toast';
+import { PageSection } from '@/components/layout/page-section';
 
 type StudysetTask = {
   id: string;
@@ -175,8 +176,7 @@ export default function StudysetDetailPage() {
   }, [days, fallbackDay, showAllDays, todayDay]);
 
   return (
-    <div className="h-full overflow-auto">
-      <div className="w-full space-y-4">
+    <PageSection variant="tool">
         <div className="flex items-center justify-between gap-3">
           <Button asChild variant="outline" size="sm">
             <Link href="/tools/studyset">
@@ -343,7 +343,6 @@ export default function StudysetDetailPage() {
             ))}
           </div>
         )}
-      </div>
-    </div>
+    </PageSection>
   );
 }

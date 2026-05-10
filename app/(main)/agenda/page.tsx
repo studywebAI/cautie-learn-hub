@@ -14,6 +14,7 @@ import { ViewToggle } from '@/components/agenda/view-toggle';
 import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dialog';
 import { AssignmentDetailsPanel } from '@/components/agenda/assignment-details-panel';
 import { CautieLoader } from '@/components/ui/cautie-loader';
+import { PageSection } from '@/components/layout/page-section';
 import { PlusCircle, SlidersHorizontal } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -633,7 +634,7 @@ function AgendaPageContent() {
   }
 
   return (
-    <div className="agenda-clean h-full p-4 md:p-5">
+    <PageSection className="agenda-clean h-full !space-y-0">
       <div className="flex h-full flex-col gap-6">
         <div className="rounded-2xl surface-panel p-2.5 md:p-3">
           <div className="flex flex-wrap items-center justify-between gap-2.5">
@@ -743,7 +744,7 @@ function AgendaPageContent() {
           initialDate={selectedDay}
         />
       )}
-    </div>
+    </PageSection>
   );
 }
 

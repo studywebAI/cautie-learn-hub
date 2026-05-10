@@ -680,6 +680,17 @@
     @apply w-full space-y-4;
   }
 
+  .tool-page-content {
+    width: 100%;
+    max-width: 1180px;
+    margin-inline: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 100%;
+  }
+
   .page-header {
     @apply flex items-center justify-between gap-2;
   }
@@ -751,6 +762,11 @@
 
   .page-content {
     @apply space-y-3;
+  }
+
+  .tool-page-content {
+    padding: 10px;
+    gap: 12px;
   }
 }
 
