@@ -766,7 +766,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
       )}
 
       {pickerOpen && (
-        <div className="mx-auto flex min-h-[620px] max-h-[78vh] w-full max-w-[1040px] flex-1 flex-col overflow-hidden rounded-2xl border border-border surface-panel shadow-xl">
+        <div className="flex h-[82vh] w-full flex-1 flex-col overflow-hidden rounded-2xl border border-border surface-panel shadow-xl">
           <div className="flex items-center justify-between border-b border-border surface-panel px-4 py-3">
             <div className="flex items-center gap-2">
               <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-4 w-4 object-contain" />

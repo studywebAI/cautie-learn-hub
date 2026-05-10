@@ -34,12 +34,12 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
   }, [context?.session?.user]);
 
   return (
-    <div className="relative h-full overflow-hidden">
-      <div className="mx-auto flex h-full w-full max-w-[1600px] gap-5 px-5">
+    <div className="relative h-full overflow-hidden font-[var(--font-ui-legacy)]">
+      <div className="mx-auto flex h-full w-full gap-4 px-3">
         <div className="flex min-w-0 flex-1 flex-col">
           <div className={cn('flex items-center justify-between px-0 pb-2 pt-3')}>
             <div>
-              <div className="mb-0.5 flex items-center gap-1.5 text-sm">
+              <div className="mb-0.5 flex items-center gap-2 text-lg font-medium">
                 <button
                   type="button"
                   className="text-[var(--accent-brand)] hover:underline"
@@ -47,8 +47,8 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
                 >
                   {profileName}
                 </button>
-                <span className="text-muted-foreground">&gt;</span>
-                <span className="inline-flex items-center gap-1 text-foreground">
+                <span className="text-[var(--accent-brand)]">&gt;</span>
+                <span className="inline-flex items-center gap-1.5 text-[var(--accent-brand)]">
                   {breadcrumbIcon ? <span className="text-[var(--accent-brand)]">{breadcrumbIcon}</span> : null}
                   <span>{title}</span>
                 </span>

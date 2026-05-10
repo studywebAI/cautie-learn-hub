@@ -240,3 +240,14 @@ pm run -s typecheck passed after last layout pass.
 ## Diff Counter
 - Current net changed lines since this execution start: 236
 - +2500 milestone reached: no
+
+### 2026-05-10 12:02 CET - Update 10 (requested cleanup pass)
+- Removed top dual blocks from quiz left lane (the 2 boxes shown in ss1).
+- Removed large preview box in source composer (ss4 middle box removed).
+- Set selected option pills back to white/gray (quiz + shared pill selector).
+- Removed `Keep going` button from recents studyset rows without replacement.
+- Set sidebar icons green for all tabs (not only tool tabs) and recents icons green.
+- Expanded tool working area usage (removed restrictive center max width on quiz and widened shell behavior with tiny page padding).
+- Increased tool breadcrumb/path header size and made path text green (including tool name).
+- Adjusted embedded OneDrive picker panel sizing to use available window area and reduce whitespace.
+- Validation: root typecheck passed.

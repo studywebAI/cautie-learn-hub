@@ -274,11 +274,6 @@ export function SourceInput({
   enableMicrosoftSources = false,
   showSubmitButton = true,
 }: SourceInputProps) {
-  const previewTitle = toolId === 'notes' || toolId === 'mindmap' || toolId === 'wordweb' || toolId === 'timeline'
-    ? 'Create your notes'
-    : toolId === 'flashcards'
-      ? 'Create your flashcards'
-      : 'Create your quiz';
   const appContext = useContext(AppContext) as AppContextType | null;
   const { toast } = useToast();
   const micSessionIdRef = useRef<string>('');
@@ -1622,21 +1617,6 @@ export function SourceInput({
       {topContent}
 
       <div className="flex flex-col gap-3 pb-1">
-        <div className="relative min-h-[380px] overflow-hidden rounded-[8px] border border-[#d0d0d0] bg-[linear-gradient(135deg,#fafafa_0%,#fff_100%)] px-8 py-14">
-          <div
-            className={`absolute inset-0 flex flex-col items-center justify-center gap-2 text-center transition-all duration-700 ease-in ${isProcessing ? 'scale-[0.85] opacity-0' : 'scale-100 opacity-100'}`}
-          >
-            <Sparkles className="h-[52px] w-[52px] text-[#d0d0d0]" />
-            <p className="text-[20px] font-semibold text-black">{previewTitle}</p>
-            <p className="text-[13px] text-[#999]">Add your study material below and click generate.</p>
-          </div>
-          {isProcessing ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="h-10 w-10 animate-spin text-[var(--accent-brand)]" />
-            </div>
-          ) : null}
-        </div>
-
         {attachmentSources.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
             {attachmentSources.map((source) => {

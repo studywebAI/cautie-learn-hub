@@ -103,7 +103,6 @@ export function RecentsSidebar() {
     showLess: isDutch ? 'Minder tonen' : 'Show less',
     showMore: isDutch ? 'Toon' : 'Show',
     more: isDutch ? 'meer' : 'more',
-    keepGoing: isDutch ? 'Ga verder' : 'Keep going',
   };
   const userId = session?.user?.id ?? null;
   const [recents, setRecents] = useState<RecentItem[]>([]);
@@ -455,7 +454,7 @@ export function RecentsSidebar() {
                 title={item.title}
                 onClick={() => handleClick(item)}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="h-3.5 w-3.5 text-[var(--accent-brand)]" />
               </button>
             );
           })}
@@ -519,7 +518,7 @@ export function RecentsSidebar() {
               className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent/45 transition-colors cursor-pointer group"
               onClick={() => handleClick(item)}
             >
-              <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
+              <Icon className="h-3 w-3 text-[var(--accent-brand)] shrink-0" />
               {item.source === 'studyset' ? (
                 <button
                   type="button"
@@ -545,18 +544,6 @@ export function RecentsSidebar() {
                     </span>
                   ) : null}
                 </div>
-              ) : null}
-              {item.source === 'studyset' && item.nextTaskHref && !item.isComplete ? (
-                <button
-                  type="button"
-                  className="rounded bg-sidebar-accent/40 px-1.5 py-0.5 text-[10px] text-sidebar-foreground/90 hover:bg-sidebar-accent/65"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    router.push(item.nextTaskHref || `/tools/studyset/${item.id}`);
-                  }}
-                >
-                  {t.keepGoing}
-                </button>
               ) : null}
               <span suppressHydrationWarning className="text-[11px] text-foreground/65 shrink-0">
                 {dateStr}

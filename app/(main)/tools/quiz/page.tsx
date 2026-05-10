@@ -41,7 +41,7 @@ const QUIZ_PAGE_SESSION_KEY = 'tools.quiz.page.session.v1';
 
 function pill(active: boolean) {
   return active
-    ? 'px-[11px] py-[5px] text-[11px] rounded-[16px] border border-[var(--accent-brand)] bg-[var(--accent-brand)] text-white'
+    ? 'px-[11px] py-[5px] text-[11px] rounded-[16px] border border-[#d0d0d0] bg-white text-[#333]'
     : 'px-[11px] py-[5px] text-[11px] rounded-[16px] border border-[#d0d0d0] bg-[#f8f8f8] text-[#333] hover:border-[var(--accent-brand)]';
 }
 
@@ -579,37 +579,7 @@ function QuizPageContent() {
 
   return (
     <WorkbenchShell title="Quiz" sidebar={sidebar} breadcrumbIcon={<BrainCircuit className="h-4 w-4" />}>
-      <div className="mx-auto w-full max-w-[880px] space-y-3">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="rounded-xl border border-border bg-background p-4">
-            <p className="text-xs font-semibold tracking-wide text-muted-foreground">QUIZ MODE</p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {[
-                { value: 'classic', label: 'Classic mode' },
-                { value: 'adaptive', label: 'Adaptive learning' },
-                { value: 'assisted', label: 'Assisted mode' },
-              ].map((entry) => (
-                <button key={entry.value} type="button" className={pill(mode === entry.value)} onClick={() => setMode(entry.value as QuizMode)}>
-                  {entry.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-xl border border-border bg-background p-4">
-            <p className="text-xs font-semibold tracking-wide text-muted-foreground">QUESTION COUNT</p>
-            <div className="mt-2">
-              <Slider
-                value={[mode === 'adaptive' ? 12 : questionCount]}
-                onValueChange={([value]) => mode !== 'adaptive' && setQuestionCount(value)}
-                min={1}
-                max={25}
-                step={1}
-                disabled={loading || mode === 'adaptive'}
-              />
-              <p className="mt-2 text-sm font-semibold">{mode === 'adaptive' ? 12 : questionCount}</p>
-            </div>
-          </div>
-        </div>
+      <div className="w-full space-y-3">
         <SourceInput
           toolId="quiz"
           value={sourceText}

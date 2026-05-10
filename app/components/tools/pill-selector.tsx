@@ -76,7 +76,7 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
               'focus-visible:ring-1 focus-visible:ring-ring',
               'disabled:opacity-50 disabled:pointer-events-none',
               activeValue === opt.value
-                ? 'bg-[var(--accent-brand)] text-white border-[var(--accent-brand)]'
+                ? 'bg-white text-[#333] border-[#d0d0d0]'
                 : 'bg-[#f8f8f8] text-[#333]'
             )}
           >
