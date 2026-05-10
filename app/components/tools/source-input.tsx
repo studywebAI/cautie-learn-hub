@@ -1614,7 +1614,7 @@ export function SourceInput({
 
       {topContent}
 
-      <div className="mt-auto flex flex-col gap-2 pb-1">
+      <div className="flex flex-col gap-3 pb-1">
         {attachmentSources.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
             {attachmentSources.map((source) => {
@@ -1666,24 +1666,24 @@ export function SourceInput({
           </div>
         )}
 
-        <div className="relative z-10 flex flex-wrap items-center gap-1.5">
-          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
+        <div className="relative z-10 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-background p-2.5">
+          <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
             <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
             Upload
           </Button>
-          <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
+          <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
             <Image className="mr-1.5 h-3.5 w-3.5" />
             Photo
           </Button>
           {enableMic && (
-            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
+            <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
               {isFallbackRecording ? <StopCircle className="mr-1.5 h-3.5 w-3.5" /> : <Mic className="mr-1.5 h-3.5 w-3.5" />}
               Mic
             </Button>
           )}
           <DropdownMenu open={importMenuOpen} onOpenChange={setImportMenuOpen}>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel" disabled={disabled || isProcessing}>
+              <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel" disabled={disabled || isProcessing}>
                 <FileIcon className="mr-1.5 h-3.5 w-3.5" />
                 Import from...
               </Button>
@@ -1704,7 +1704,7 @@ export function SourceInput({
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel"
+            className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel"
             onClick={() => setLinkInputOpen((prev) => !prev)}
             disabled={disabled || isProcessing}
           >
@@ -1712,7 +1712,7 @@ export function SourceInput({
             Link
           </Button>
           {enableCaptions && (
-            <Button type="button" variant="outline" size="sm" className="h-7 rounded-full border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => setCaptionsOpen((prev) => !prev)} disabled={disabled || !enableCaptions}>
+            <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => setCaptionsOpen((prev) => !prev)} disabled={disabled || !enableCaptions}>
               <Captions className="mr-1.5 h-3.5 w-3.5" />
               Captions
             </Button>
@@ -1773,8 +1773,9 @@ export function SourceInput({
           </div>
         )}
 
-        <div className="mb-1 flex items-start gap-2">
-          <div className="relative flex-1">
+        <div className="mb-1 space-y-2 rounded-2xl border border-border bg-background p-3">
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground">YOUR STUDY MATERIAL</p>
+          <div className="relative">
             <Textarea
               value={manualText}
               onChange={(e) => handleManualTextChange(e.target.value)}
@@ -1785,14 +1786,14 @@ export function SourceInput({
                 }
               }}
               placeholder=""
-              className="h-[168px] min-h-[168px] flex-1 resize-none rounded-2xl border border-border surface-chip text-sm"
+              className="h-[220px] min-h-[220px] w-full resize-none rounded-xl border border-border surface-chip text-sm"
               disabled={disabled || isProcessing}
             />
           </div>
           <Button
             type="button"
             variant="outline"
-            className="w-[112px] rounded-2xl border-transparent bg-[var(--accent-brand)] text-xs text-white hover:brightness-95"
+            className="h-11 w-full rounded-lg border-transparent bg-[var(--accent-brand)] text-sm font-semibold text-white hover:brightness-95"
             onClick={() => void submitAndSave()}
             disabled={disabled || isProcessing || !canGenerate}
           >

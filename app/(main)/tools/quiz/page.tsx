@@ -41,8 +41,8 @@ const QUIZ_PAGE_SESSION_KEY = 'tools.quiz.page.session.v1';
 
 function pill(active: boolean) {
   return active
-    ? 'px-3 py-1 text-xs rounded-full border border-border surface-chip text-foreground'
-    : 'px-3 py-1 text-xs rounded-full border border-border surface-panel text-foreground hover:surface-interactive';
+    ? 'px-3 py-1.5 text-xs rounded-md border border-border bg-[var(--accent-brand)] text-white'
+    : 'px-3 py-1.5 text-xs rounded-md border border-border surface-panel text-foreground hover:surface-interactive';
 }
 
 function decodePresetCode(value: string) {
@@ -364,15 +364,15 @@ function QuizPageContent() {
   }, [mode, questionCount, quiz, title, toast]);
 
   const sidebar = (
-    <>
-      <div className="space-y-1.5">
-        <p className="text-xs text-muted-foreground">Title</p>
+    <div className="space-y-3">
+      <div className="space-y-1.5 rounded-xl border border-border bg-background p-3">
+        <p className="text-xs font-semibold tracking-wide text-muted-foreground">TITLE</p>
         <Input value={title} onChange={(event) => setTitle(event.target.value)} className="h-9 surface-panel text-sm" disabled={loading} />
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Mode</p>
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground">QUIZ MODE</p>
           <Button type="button" variant="ghost" size="sm" className="h-6 px-1.5" onClick={() => setShowPresetOverlay(true)}>
             <Plus className="h-3.5 w-3.5" />
           </Button>
@@ -418,9 +418,9 @@ function QuizPageContent() {
         </div>
       </div>
 
-      <div className="space-y-2 rounded-lg surface-interactive px-2.5 py-2">
+      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Answer reveal</p>
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground">ANSWER REVEAL</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {['immediate', 'end'].map((entry) => (
@@ -431,8 +431,8 @@ function QuizPageContent() {
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <p className="text-xs text-muted-foreground">Question type (multi-select)</p>
+      <div className="space-y-1.5 rounded-xl border border-border bg-background p-3">
+        <p className="text-xs font-semibold tracking-wide text-muted-foreground">QUESTION TYPES</p>
         <div className="flex flex-wrap gap-1.5">
           {QUIZ_TYPES.map((entry) => (
             <button key={entry.value} type="button" className={pill(questionTypes.includes(entry.value))} onClick={() => toggleQuestionType(entry.value)}>
@@ -442,9 +442,9 @@ function QuizPageContent() {
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">How much do you already know?</p>
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground">KNOWLEDGE</p>
         </div>
         <Slider value={[knowledgeScore]} onValueChange={([value]) => setKnowledgeScore(value)} min={0} max={100} step={1} disabled={loading} />
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -453,9 +453,9 @@ function QuizPageContent() {
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 rounded-xl border border-border bg-background p-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Questions</p>
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground">QUESTION COUNT</p>
           <span className="text-xs font-mono">{mode === 'adaptive' ? 12 : questionCount}</span>
         </div>
         <Slider
@@ -468,8 +468,8 @@ function QuizPageContent() {
         />
       </div>
 
-      <div className="space-y-1.5">
-        <p className="text-xs text-muted-foreground">Grading (multi-select)</p>
+      <div className="space-y-1.5 rounded-xl border border-border bg-background p-3">
+        <p className="text-xs font-semibold tracking-wide text-muted-foreground">GRADING</p>
         <div className="flex flex-wrap gap-1.5">
           {[
             { value: 'accuracy', label: 'Accuracy' },
@@ -532,7 +532,7 @@ function QuizPageContent() {
         </div>
       ) : null}
 
-    </>
+    </div>
   );
 
   if (loading) return <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
@@ -570,18 +570,50 @@ function QuizPageContent() {
 
   return (
     <WorkbenchShell title="Quiz" sidebar={sidebar} breadcrumbIcon={<BrainCircuit className="h-4 w-4" />}>
-      <SourceInput
-        toolId="quiz"
-        value={sourceText}
-        onChange={setSourceText}
-        onImageDataUriChange={setImageDataUri}
-        onSubmit={(compiledText) => handleGenerate(String(compiledText || sourceText))}
-        placeholder=""
-        speechLanguage={language}
-        enableMic
-        enableCaptions={false}
-        sourceMergeMode="append_labeled"
-      />
+      <div className="mx-auto w-full max-w-[880px] space-y-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="rounded-xl border border-border bg-background p-4">
+            <p className="text-xs font-semibold tracking-wide text-muted-foreground">QUIZ MODE</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {[
+                { value: 'classic', label: 'Classic mode' },
+                { value: 'adaptive', label: 'Adaptive learning' },
+                { value: 'assisted', label: 'Assisted mode' },
+              ].map((entry) => (
+                <button key={entry.value} type="button" className={pill(mode === entry.value)} onClick={() => setMode(entry.value as QuizMode)}>
+                  {entry.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-xl border border-border bg-background p-4">
+            <p className="text-xs font-semibold tracking-wide text-muted-foreground">QUESTION COUNT</p>
+            <div className="mt-2">
+              <Slider
+                value={[mode === 'adaptive' ? 12 : questionCount]}
+                onValueChange={([value]) => mode !== 'adaptive' && setQuestionCount(value)}
+                min={1}
+                max={25}
+                step={1}
+                disabled={loading || mode === 'adaptive'}
+              />
+              <p className="mt-2 text-sm font-semibold">{mode === 'adaptive' ? 12 : questionCount}</p>
+            </div>
+          </div>
+        </div>
+        <SourceInput
+          toolId="quiz"
+          value={sourceText}
+          onChange={setSourceText}
+          onImageDataUriChange={setImageDataUri}
+          onSubmit={(compiledText) => handleGenerate(String(compiledText || sourceText))}
+          placeholder=""
+          speechLanguage={language}
+          enableMic
+          enableCaptions={false}
+          sourceMergeMode="append_labeled"
+        />
+      </div>
     </WorkbenchShell>
   );
 }

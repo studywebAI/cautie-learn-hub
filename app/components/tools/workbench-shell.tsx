@@ -35,9 +35,9 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
 
   return (
     <div className="relative h-full overflow-hidden">
-      <div className="flex h-full">
+      <div className="mx-auto flex h-full w-full max-w-[1380px]">
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className={cn('flex items-center justify-between px-3 pb-2 pt-3')}>
+          <div className={cn('flex items-center justify-between px-4 pb-2 pt-3')}>
             <div>
               <div className="mb-0.5 flex items-center gap-1.5 text-sm">
                 <button
@@ -62,7 +62,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               </Button>
             )}
           </div>
-          <div className={cn('flex-1 min-h-0', isPhone ? 'px-3 pb-4' : isTablet ? 'px-3 pb-3' : 'px-3 pb-3')}>
+          <div className={cn('flex-1 min-h-0', isPhone ? 'px-3 pb-4' : isTablet ? 'px-4 pb-4' : 'px-4 pb-4')}>
             {topAccessory && <div className="mb-3">{topAccessory}</div>}
             {children}
           </div>
@@ -90,7 +90,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               </div>
             </>
           ) : (
-            <div className={cn('shrink-0 border-l border-sidebar-border bg-sidebar', isTablet ? 'w-[230px]' : 'w-[264px]')}>
+            <div className={cn('shrink-0 border-l border-sidebar-border bg-sidebar', isTablet ? 'w-[300px]' : 'w-[360px]')}>
               <ScrollArea className="h-full">
                 <div className={cn('space-y-5', isTablet ? 'p-3.5' : 'p-4')}>{sidebar}</div>
               </ScrollArea>
