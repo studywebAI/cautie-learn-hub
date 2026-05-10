@@ -1668,7 +1668,7 @@ export function SourceInput({
           </div>
         )}
 
-        <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[#666]">Your content</p>
+        <p className="text-xs font-medium text-[#666]">Your content</p>
 
         <div className="mb-1 space-y-2">
           <div className="relative">

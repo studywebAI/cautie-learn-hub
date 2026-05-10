@@ -366,13 +366,13 @@ function QuizPageContent() {
   const sidebar = (
     <div className="space-y-6">
       <div className="space-y-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Title</p>
+        <p className="text-xs font-medium text-[#666]">Title</p>
         <Input value={title} onChange={(event) => setTitle(event.target.value)} className="h-9 surface-panel text-sm" disabled={loading} />
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Mode</p>
+          <p className="text-xs font-medium text-[#666]">Mode</p>
           <Button type="button" variant="ghost" size="sm" className="h-6 px-1.5" onClick={() => setShowPresetOverlay(true)}>
             <Plus className="h-3.5 w-3.5" />
           </Button>
@@ -420,7 +420,7 @@ function QuizPageContent() {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Answer reveal</p>
+          <p className="text-xs font-medium text-[#666]">Answer reveal</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {['immediate', 'end'].map((entry) => (
@@ -432,7 +432,7 @@ function QuizPageContent() {
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Question types</p>
+        <p className="text-xs font-medium text-[#666]">Question types</p>
         <div className="flex flex-wrap gap-1.5">
           {QUIZ_TYPES.map((entry) => (
             <button key={entry.value} type="button" className={pill(questionTypes.includes(entry.value))} onClick={() => toggleQuestionType(entry.value)}>
@@ -444,7 +444,7 @@ function QuizPageContent() {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Knowledge</p>
+          <p className="text-xs font-medium text-[#666]">Knowledge</p>
         </div>
         <Slider value={[knowledgeScore]} onValueChange={([value]) => setKnowledgeScore(value)} min={0} max={100} step={1} disabled={loading} />
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -455,7 +455,7 @@ function QuizPageContent() {
 
       <div className="space-y-2 border-t border-[#d0d0d0] pt-4">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Questions</p>
+          <p className="text-xs font-medium text-[#666]">Questions</p>
           <span className="text-xs font-mono">{mode === 'adaptive' ? 12 : questionCount}</span>
         </div>
         <Slider
@@ -469,7 +469,7 @@ function QuizPageContent() {
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Focus on</p>
+        <p className="text-xs font-medium text-[#666]">Focus on</p>
         <div className="flex flex-wrap gap-1.5">
           {[
             { value: 'accuracy', label: 'Accuracy' },

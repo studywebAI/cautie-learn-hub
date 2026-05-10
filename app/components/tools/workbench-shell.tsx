@@ -36,10 +36,10 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
   return (
     <div className="relative h-full w-full font-[var(--font-ui-legacy)]">
       <div className="flex h-full w-full flex-col">
-        <div className="w-full border border-sidebar-border bg-sidebar px-3 py-2">
+        <div className="w-full border-b border-sidebar-border bg-sidebar px-3 py-1.5">
           <div className="flex items-center justify-between">
             <div>
-              <div className="mb-0.5 flex items-center gap-2 text-[24px] font-semibold leading-none">
+              <div className="mb-0.5 flex items-center gap-1.5 text-[14px] font-medium leading-none">
                 <button
                   type="button"
                   className="text-[var(--accent-brand)] hover:underline"
