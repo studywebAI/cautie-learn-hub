@@ -663,12 +663,12 @@
   }
 
   /* Enforce consistent left/right/top spacing regardless of page-local centering wrappers */
-  .app-main-shell .mx-auto {
+  .app-main-shell:not(.app-main-shell--tool) .mx-auto {
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
 
-  .app-main-shell [class*="max-w-"] {
+  .app-main-shell:not(.app-main-shell--tool) [class*="max-w-"] {
     max-width: none !important;
   }
 
