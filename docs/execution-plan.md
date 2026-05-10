@@ -293,3 +293,11 @@ pm run -s typecheck passed after last layout pass.
 - Removed stale `hasCauseGemini` branch in run failure handling.
 - Validation:
   - `npm run -s typecheck` passed.
+
+### 2026-05-10 14:12 CET - Teacher subjects dashboard density pass
+- Improved teacher `Subjects` page to reduce visual emptiness and surface actionable data:
+  - added compact top stats strip (`Subjects`, `Assignments`, `Today`),
+  - added today's agenda block directly above subject grid using existing dashboard agenda component,
+  - kept class-scoped filtering so stats and agenda respect selected teacher class.
+- Validation:
+  - `npm run -s typecheck` passed.
