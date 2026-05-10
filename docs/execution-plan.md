@@ -251,3 +251,5 @@ pm run -s typecheck passed after last layout pass.
 - Increased tool breadcrumb/path header size and made path text green (including tool name).
 - Adjusted embedded OneDrive picker panel sizing to use available window area and reduce whitespace.
 - Validation: root typecheck passed.
+
+- 2026-05-10 layout checkpoint: Added app-main-shell--tool full-width mode (no max-width), reduced tool shell paddings, and made tool header full-width with sidebar-style border/background to push content below header.

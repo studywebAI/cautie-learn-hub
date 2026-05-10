@@ -633,6 +633,15 @@
     padding-top: var(--page-block-padding);
     padding-bottom: calc(var(--page-block-padding) + var(--nav-bottom-bar-height));
   }
+
+  .app-main-shell--tool > * {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    padding-inline: 4px;
+    padding-top: 4px;
+    padding-bottom: calc(4px + var(--nav-bottom-bar-height));
+  }
   @media (min-width: 768px) {
     .app-main-shell {
       --app-shell-space-top: 0.35rem;

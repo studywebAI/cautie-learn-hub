@@ -24,6 +24,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     const [routePulseVisible, setRoutePulseVisible] = useState(false);
 
     const isClassPage = pathname?.startsWith('/class/');
+    const isToolPage = pathname?.startsWith('/tools/');
     const isTablet = deviceTier === "tablet";
     const isPhone = deviceTier === "phone";
 
@@ -47,7 +48,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <div
                   className={`${
                     isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto"
-                  } app-main-shell ${isClassPage ? "app-main-shell--class" : "app-main-shell--page"}`}
+                  } app-main-shell ${
+                    isClassPage
+                      ? "app-main-shell--class"
+                      : isToolPage
+                        ? "app-main-shell--tool"
+                        : "app-main-shell--page"
+                  }`}
                 >
                     <AppErrorBoundary key={pathname || 'main'}>
                         {children}

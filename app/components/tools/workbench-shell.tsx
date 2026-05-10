@@ -34,12 +34,12 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
   }, [context?.session?.user]);
 
   return (
-    <div className="relative h-full overflow-hidden font-[var(--font-ui-legacy)]">
-      <div className="mx-auto flex h-full w-full gap-3 px-2">
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className={cn('mb-2 flex items-center justify-between rounded-md border border-[#d0d0d0] bg-transparent px-3 py-2')}>
+    <div className="relative h-full w-full font-[var(--font-ui-legacy)]">
+      <div className="flex h-full w-full flex-col">
+        <div className="w-full border border-sidebar-border bg-sidebar px-3 py-2">
+          <div className="flex items-center justify-between">
             <div>
-              <div className="mb-0.5 flex items-center gap-2 text-[20px] font-semibold leading-none">
+              <div className="mb-0.5 flex items-center gap-2 text-[24px] font-semibold leading-none">
                 <button
                   type="button"
                   className="text-[var(--accent-brand)] hover:underline"
@@ -62,7 +62,11 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               </Button>
             )}
           </div>
-          <div className={cn('flex-1 min-h-0', isPhone ? 'px-0 pb-2' : isTablet ? 'px-0 pb-2' : 'px-0 pb-2')}>
+        </div>
+
+        <div className="flex min-h-0 flex-1 gap-2 px-1 py-1">
+          <div className="flex min-w-0 flex-1 flex-col">
+          <div className={cn('min-h-0 flex-1', isPhone ? 'px-0 pb-1' : isTablet ? 'px-0 pb-1' : 'px-0 pb-1')}>
             {topAccessory && <div className="mb-3">{topAccessory}</div>}
             {children}
           </div>
@@ -96,6 +100,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               </ScrollArea>
             </div>
           ))}
+        </div>
       </div>
     </div>
   );
