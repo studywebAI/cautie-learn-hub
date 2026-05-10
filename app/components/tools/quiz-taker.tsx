@@ -802,8 +802,8 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
   const revealCurrent = !shouldHideCorrectnessUntilEnd && finalizedMap[currentQuestion.id] === true;
   const progressPct = Math.round(((currentIndex + 1) / Math.max(1, questions.length)) * 100);
   return (
-    <div className="h-full w-full overflow-hidden bg-white px-0 py-5 dark:bg-[#1a1a1a]">
-      <div className="mb-10 flex items-center justify-between px-0">
+    <div className="h-full w-full overflow-hidden bg-white px-0 py-3 dark:bg-[#1a1a1a]">
+      <div className="mb-4 flex items-center justify-between px-0">
         <div className="text-[13px] font-medium text-[#7f8962]">Dashboard &gt; Quiz &gt; Question</div>
         <div className="flex items-center gap-4">
           <span className="text-xs text-[#666] dark:text-[#999]">{currentIndex + 1} of {questions.length}</span>
@@ -814,10 +814,10 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
       </div>
 
       <div className="max-w-[800px]">
-        <p className="mb-10 text-[16px] font-semibold leading-[1.5] text-black md:text-[20px] dark:text-white">{currentQuestion.question.replace(/_{3,}/g, '____')}</p>
+        <p className="mb-6 text-[16px] font-semibold leading-[1.5] text-black md:text-[20px] dark:text-white">{currentQuestion.question.replace(/_{3,}/g, '____')}</p>
       </div>
 
-      <div className="mb-10 max-w-[800px]">
+      <div className="mb-6 max-w-[800px]">
         <MediaPrompt question={currentQuestion} />
         <QuestionView question={currentQuestion} answer={currentAnswer} disabled={effectiveMode !== 'classic' && isAnswered} onChange={handleSetAnswer} reveal={revealCurrent} />
       </div>
@@ -825,9 +825,9 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
       {(effectiveMode !== 'classic' && isAnswered && revealCurrent && lastAnsweredQuestionId === currentQuestion.id) ? (
         <div className="mb-6 max-w-[800px] rounded-md border-l-4 border-[var(--accent-brand)] bg-[#f5f5f5] p-4 dark:bg-[#222]">
           <div className="mb-2 text-sm">
-            Your answer: {formatAnswer(currentQuestion, currentAnswer)} {isCurrentCorrect ? '✓' : '✕'}
+            Your answer: {formatAnswer(currentQuestion, currentAnswer)} {isCurrentCorrect ? '[correct]' : '[wrong]'}
           </div>
-          <div className="mb-2 text-sm">Correct answer: {getCorrectAnswerText(currentQuestion)} ✓</div>
+          <div className="mb-2 text-sm">Correct answer: {getCorrectAnswerText(currentQuestion)} [correct]</div>
           {showWhy ? <div className="text-[13px] text-[#333] dark:text-[#ddd]">{currentQuestion.explanation?.trim() || 'Explanation unavailable.'}</div> : null}
           {whyIncorrect ? <div className="mt-2 text-[13px] text-[#333] dark:text-[#ddd]">{whyIncorrect}</div> : null}
           <div className="mt-3 flex gap-2">
@@ -837,7 +837,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
         </div>
       ) : null}
 
-      <div className="mt-10 flex items-center justify-between border-t border-[#d0d0d0] pt-10 dark:border-[#444]">
+      <div className="mt-6 flex items-center justify-between border-t border-[#d0d0d0] pt-6 dark:border-[#444]">
         <Button
           type="button"
           variant="outline"
@@ -850,7 +850,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
           }}
           disabled={currentIndex === 0}
         >
-          ← Back
+          <- Back
         </Button>
         <div />
         <Button
@@ -873,7 +873,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
           disabled={effectiveMode === 'assisted' ? (!canAdvance && !isAnswered) : !canAdvance}
           className="h-10 rounded-md bg-[var(--accent-brand)] px-5 text-[13px] font-medium text-white hover:opacity-90"
         >
-          {effectiveMode !== 'adaptive' && currentIndex >= questions.length - 1 ? 'Finish Quiz' : 'Next →'}
+          {effectiveMode !== 'adaptive' && currentIndex >= questions.length - 1 ? 'Finish Quiz' : 'Next ->'}
         </Button>
       </div>
     </div>

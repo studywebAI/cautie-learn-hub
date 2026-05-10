@@ -1701,7 +1701,7 @@ export function SourceInput({
                 <DropdownMenuItem onClick={() => { openChatImport(); }}>
                   Chat
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => { if (enableMicrosoftSources) openMicrosoftPicker(); }} disabled={!enableMicrosoftSources}>
+                <DropdownMenuItem onClick={() => { openMicrosoftPicker(); }}>
                   OneDrive
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => { setRecentsSourceFilter('all'); setRecentsOpen(true); }}>
