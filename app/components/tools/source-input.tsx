@@ -271,7 +271,7 @@ export function SourceInput({
   sourceMergeMode = 'append_labeled',
   topContent,
   submitLabel = 'Generate',
-  enableMicrosoftSources = false,
+  enableMicrosoftSources = true,
   showSubmitButton = true,
 }: SourceInputProps) {
   const appContext = useContext(AppContext) as AppContextType | null;
@@ -1693,12 +1693,12 @@ export function SourceInput({
                   Import from...
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-[180px]">
+              <DropdownMenuContent side="top" align="start" sideOffset={6} className="min-w-[180px]">
                 <DropdownMenuItem onClick={() => { openChatImport(); }}>
                   Chat
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => { if (enableMicrosoftSources) openMicrosoftPicker(); }} disabled={!enableMicrosoftSources}>
-                  Microsoft OneDrive
+                  OneDrive
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => { setRecentsSourceFilter('all'); setRecentsOpen(true); }}>
                   Recents
