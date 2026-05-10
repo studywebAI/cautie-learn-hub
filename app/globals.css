@@ -113,8 +113,8 @@
     --accent-teal: #22c55e;
     --brand-coral: #d97757;
     --page-max-width: 1280px;
-    --page-inline-padding: 12px;
-    --page-block-padding: 12px;
+    --page-inline-padding: 6px;
+    --page-block-padding: 8px;
   }
 
   .dark {
@@ -627,8 +627,8 @@
 
   .app-main-shell--page > * {
     width: 100%;
-    max-width: var(--page-max-width);
-    margin-inline: auto;
+    max-width: none;
+    margin-inline: 0;
     padding-inline: var(--page-inline-padding);
     padding-top: var(--page-block-padding);
     padding-bottom: calc(var(--page-block-padding) + var(--nav-bottom-bar-height));
@@ -638,9 +638,9 @@
     width: 100%;
     max-width: none;
     margin-inline: 0;
-    padding-inline: 4px;
-    padding-top: 4px;
-    padding-bottom: calc(4px + var(--nav-bottom-bar-height));
+    padding-inline: 2px;
+    padding-top: 2px;
+    padding-bottom: calc(2px + var(--nav-bottom-bar-height));
   }
 
   .app-main-shell.app-main-shell--tool {
@@ -684,7 +684,7 @@
     width: 100%;
     max-width: 1180px;
     margin-inline: auto;
-    padding: 12px;
+    padding: 6px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -744,8 +744,8 @@
     --type-micro: 11px;
     --type-page: 20px;
     --type-section: 17px;
-    --page-inline-padding: 10px;
-    --page-block-padding: 10px;
+    --page-inline-padding: 4px;
+    --page-block-padding: 6px;
   }
 
   .class-shell {
@@ -765,7 +765,7 @@
   }
 
   .tool-page-content {
-    padding: 10px;
+    padding: 4px;
     gap: 12px;
   }
 }
