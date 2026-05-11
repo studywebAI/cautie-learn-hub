@@ -35,6 +35,7 @@ import { useDeviceTier } from '@/hooks/use-device-tier';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -100,6 +101,7 @@ export function AppSidebar() {
   const routeClassId = routeClassIdMatch?.[1] || searchParams?.get('classId') || '';
   const t = {
     manage: isDutch ? 'Beheer' : 'Manage',
+    classes: isDutch ? 'Klassen' : 'Classes',
     studyset: isDutch ? 'Studieset' : 'Studyset',
     untitledClass: isDutch ? 'Naamloze Klas' : 'Untitled Class',
     untitledSubject: isDutch ? 'Naamloos Vak' : 'Untitled Subject',
@@ -158,7 +160,7 @@ export function AppSidebar() {
     : [
         { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
         { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
-        { href: '/classes', label: t.manage, icon: School },
+        { href: '/classes', label: t.classes, icon: School },
         { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
       ];
 
@@ -673,18 +675,20 @@ export function AppSidebar() {
 
           {createSubjectOpen && (
             <div className="mb-1 space-y-1 rounded-xl surface-interactive p-2">
-              <select
-                value={selectedSubjectClassId}
-                onChange={(e) => setSelectedSubjectClassId(e.target.value)}
-                className="h-8 w-full rounded border border-border/30 bg-background px-2 text-sm"
+              <Select
+                value={selectedSubjectClassId || '__none__'}
+                onValueChange={(val) => setSelectedSubjectClassId(val === '__none__' ? '' : val)}
               >
-                <option value="">{isDutch ? 'Selecteer klas' : 'Select class'}</option>
-                {classDropdownItems.map((classItem) => (
-                  <option key={classItem.id} value={classItem.id}>
-                    {classItem.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-8 w-full text-sm">
+                  <SelectValue placeholder={isDutch ? 'Selecteer klas' : 'Select class'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__" disabled>{isDutch ? 'Selecteer klas' : 'Select class'}</SelectItem>
+                  {classDropdownItems.map((classItem) => (
+                    <SelectItem key={classItem.id} value={classItem.id}>{classItem.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Input
                 placeholder={isDutch ? 'Vaktitel' : 'Subject title'}
                 value={subjectTitle}
@@ -788,32 +792,31 @@ export function AppSidebar() {
     if (isPhone) {
       return (
         <div className="mb-2 px-2">
-          <select
-            value={effectiveTeacherClassId}
-            onChange={(event) => {
-              const nextClassId = event.target.value;
-              if (!nextClassId) return;
-              persistTeacherClassId(nextClassId);
-              const nextRoute = resolveTeacherClassRoute(nextClassId);
-              try {
-                void router.prefetch(nextRoute);
-              } catch {}
+          <Select
+            value={effectiveTeacherClassId || '__none__'}
+            disabled={classDropdownItems.length === 0}
+            onValueChange={(val) => {
+              if (!val || val === '__none__') return;
+              persistTeacherClassId(val);
+              const nextRoute = resolveTeacherClassRoute(val);
+              try { void router.prefetch(nextRoute); } catch {}
               router.replace(nextRoute);
               setOpenMobile(false);
             }}
-            disabled={classDropdownItems.length === 0}
-            className="h-9 w-full rounded-md border border-border/70 surface-panel px-3 text-[12px] text-sidebar-foreground transition-colors hover:surface-interactive disabled:opacity-60"
           >
-            {classDropdownItems.length === 0 ? (
-              <option value="">{isDutch ? 'Geen klassen' : 'No classes'}</option>
-            ) : (
-              classDropdownItems.map((classItem) => (
-                <option key={classItem.id} value={classItem.id}>
-                  {classItem.label}
-                </option>
-              ))
-            )}
-          </select>
+            <SelectTrigger className="h-9 w-full text-[12px]">
+              <SelectValue placeholder={isDutch ? 'Geen klassen' : 'No classes'} />
+            </SelectTrigger>
+            <SelectContent>
+              {classDropdownItems.length === 0 ? (
+                <SelectItem value="__none__" disabled>{isDutch ? 'Geen klassen' : 'No classes'}</SelectItem>
+              ) : (
+                classDropdownItems.map((classItem) => (
+                  <SelectItem key={classItem.id} value={classItem.id}>{classItem.label}</SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
         </div>
       );
     }
@@ -1139,7 +1142,7 @@ export function AppSidebar() {
                             tooltip={item.label}
                           >
                             <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
-                            <span className="text-[12px] leading-4">{item.label}</span>
+                            <span className="text-[13px] font-medium leading-4">{item.label}</span>
                           </SidebarMenuButton>
                         </>
                       ) : (
@@ -1150,7 +1153,7 @@ export function AppSidebar() {
                         >
                           <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
                             <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
-                            <span className="text-[12px] leading-4">{item.label}</span>
+                            <span className="text-[13px] font-medium leading-4">{item.label}</span>
                           </Link>
                         </SidebarMenuButton>
                       )}
@@ -1175,7 +1178,7 @@ export function AppSidebar() {
                       >
                         <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
                           <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
-                          <span className="text-[12px] leading-4">{item.label}</span>
+                          <span className="text-[13px] font-medium leading-4">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -1198,7 +1201,7 @@ export function AppSidebar() {
                       >
                         <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
                           <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
-                          <span className="text-[12px] leading-4">{item.label}</span>
+                          <span className="text-[13px] font-medium leading-4">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -1247,7 +1250,7 @@ export function AppSidebar() {
                         tooltip={item.label}
                       >
                         <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
-                        <span className="text-[12px] leading-4">{item.label}</span>
+                        <span className="text-[13px] font-medium leading-4">{item.label}</span>
                       </SidebarMenuButton>
                     </>
                   ) : (
@@ -1258,7 +1261,7 @@ export function AppSidebar() {
                     >
                       <Link prefetch={false} href={item.href}>
                         <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
-                        <span className="text-[12px] leading-4">{item.label}</span>
+                        <span className="text-[13px] font-medium leading-4">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   )}
@@ -1282,7 +1285,7 @@ export function AppSidebar() {
                   >
                     <Link prefetch={false} href={item.href}>
                       <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
-                      <span className="text-[12px] leading-4">{item.label}</span>
+                      <span className="text-[13px] font-medium leading-4">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -1305,7 +1308,7 @@ export function AppSidebar() {
                   >
                     <Link prefetch={false} href={item.href}>
                       <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
-                      <span className="text-[12px] leading-4">{item.label}</span>
+                      <span className="text-[13px] font-medium leading-4">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

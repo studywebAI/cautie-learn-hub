@@ -84,6 +84,26 @@ export async function POST(request: Request) {
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    if (data) {
+      const { data: adminProfiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('subscription_type', ['admin', 'owner', 'creator'])
+      const adminIds = (adminProfiles || []).map((p) => p.id).filter((id) => id !== userId)
+      if (adminIds.length > 0) {
+        void supabase.from('notifications').insert(
+          adminIds.map((adminId) => ({
+            user_id: adminId,
+            type: 'idea_submitted',
+            title: 'New idea submitted',
+            message: data.title,
+            data: { idea_id: data.id, submitted_by: userId },
+          }))
+        )
+      }
+    }
+
     return NextResponse.json({ idea: data }, { status: 201 })
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 })
