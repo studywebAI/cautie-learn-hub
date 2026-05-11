@@ -59,7 +59,7 @@ export function ListView({ events, onEventClick }: ListViewProps) {
 
         return (
           <div key={groupKey}>
-            <h3 className="mb-3 text-sm text-muted-foreground">{groupLabels[groupKey]}</h3>
+            <h3 className={`mb-3 text-sm font-semibold ${groupKey === 'today' ? 'text-[var(--accent-brand)]' : 'text-muted-foreground'}`}>{groupLabels[groupKey]}</h3>
             <div className="space-y-2">
               {groupEvents
                 .sort((a, b) => a.date.getTime() - b.date.getTime())

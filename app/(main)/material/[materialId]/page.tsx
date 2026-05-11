@@ -6,6 +6,7 @@ import { useEffect, useState, Suspense } from 'react';
 import type { MaterialReference } from '@/lib/teacher-types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, ArrowLeft, Edit } from 'lucide-react';
 import Link from 'next/link';
@@ -201,15 +202,8 @@ function MaterialPageContent() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-1/4" />
-        <Skeleton className="h-10 w-3/4" />
-        <Skeleton className="h-4 w-1/2" />
-        <Card>
-          <CardContent className="p-6">
-            <Skeleton className="h-64 w-full" />
-          </CardContent>
-        </Card>
+      <div className="flex min-h-[55vh] items-center justify-center">
+        <CautieLoader label="Loading material" sublabel="Fetching content" size="lg" />
       </div>
     );
   }

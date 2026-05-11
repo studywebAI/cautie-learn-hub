@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { AppContext, AppContextType, ClassInfo } from "@/contexts/app-context";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { School, Users, FileText, Activity } from "lucide-react";
+import { School, Users, FileText, Activity, ChevronRight, ClipboardList, BarChart2, Calendar, BookOpen } from "lucide-react";
 import { CautieLoader } from "@/components/ui/cautie-loader";
 import { Alerts } from "@/components/dashboard/alerts";
 import { MySubjects } from "@/components/dashboard/my-subjects";
@@ -15,7 +15,6 @@ import type { Alert, Subject } from '@/lib/types';
 import { TodaysAgenda } from "@/components/dashboard/todays-agenda";
 import { TodaysStudysetTasks } from "@/components/dashboard/todays-studyset-tasks";
 import { LearningPulse } from "@/components/dashboard/learning-pulse";
-import { useRouter } from "next/navigation";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 
 const AnalyticsDashboard = lazy(() => import("@/components/dashboard/analytics-dashboard").then(module => ({ default: module.AnalyticsDashboard })));
@@ -105,7 +104,7 @@ function StudentDashboard() {
   return (
     <div className="page-content grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         <div className="lg:col-span-3 mb-2 flex items-start justify-between gap-3">
-          <h1 className="text-xl tracking-tight text-foreground">Welcome, {welcomeName}</h1>
+          <h1 className="page-title">Welcome, {welcomeName}</h1>
           <NotificationCenter />
         </div>
         <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6">
@@ -170,62 +169,110 @@ function TeacherSummaryDashboard() {
       normalizeDisplayName(session?.user?.email ? session.user.email.split('@')[0] : '') ||
       'Guest';
 
+    const activeClass = teacherClasses[0];
+    const activeClassId = typeof window !== 'undefined'
+      ? (window.localStorage.getItem('studyweb-last-class-id') || activeClass?.id || '')
+      : (activeClass?.id || '');
+    const resolvedClassId = teacherClasses.find(c => c.id === activeClassId)?.id || activeClass?.id || '';
+
     return (
-        <div className="page-content flex flex-col gap-6">
+        <div className="page-content flex flex-col gap-5">
             <div className="flex items-start justify-between gap-3">
-              <h1 className="text-xl tracking-tight text-foreground">Welcome, {welcomeName}</h1>
+              <h1 className="page-title">Welcome, {welcomeName}</h1>
               <NotificationCenter />
             </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card className="surface-panel border border-border shadow-[0_1px_0_hsl(var(--border))]">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm">Total Classes</CardTitle>
-                    <School className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-xl">{teacherClasses.length}</div>
-                    <p className="text-xs text-muted-foreground">Classes managed</p>
-                </CardContent>
-              </Card>
-              <Card className="surface-panel border border-border shadow-[0_1px_0_hsl(var(--border))]">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm">Total Students</CardTitle>
-                     <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-xl">{totalStudents}</div>
-                    <p className="text-xs text-muted-foreground">Students across all classes</p>
-                </CardContent>
-              </Card>
-              <Card className="surface-panel border border-border shadow-[0_1px_0_hsl(var(--border))]">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm">Active Assignments</CardTitle>
-                     <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-xl">{activeAssignments}</div>
-                    <p className="text-xs text-muted-foreground">Upcoming assignments</p>
-                </CardContent>
-              </Card>
-                <Card className="surface-panel border border-border shadow-[0_1px_0_hsl(var(--border))]">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm">Active Alerts</CardTitle>
-                       <Activity className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                      <div className="text-xl">0</div>
-                      <p className="text-xs text-muted-foreground">Students need attention</p>
-                  </CardContent>
-                </Card>
+
+            {/* Stat row */}
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+              <div className="rounded-xl surface-panel border border-border p-3.5">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-muted-foreground">Classes</span>
+                  <School className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-semibold">{teacherClasses.length}</div>
+              </div>
+              <div className="rounded-xl surface-panel border border-border p-3.5">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-muted-foreground">Students</span>
+                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-semibold">{totalStudents}</div>
+              </div>
+              <div className="rounded-xl surface-panel border border-border p-3.5">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-muted-foreground">Assignments</span>
+                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-semibold">{activeAssignments}</div>
+              </div>
+              <div className="rounded-xl surface-panel border border-border p-3.5">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-muted-foreground">Alerts</span>
+                  <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-semibold">0</div>
+              </div>
             </div>
 
-            {teacherClasses.length === 0 && (
-              <Card className="surface-panel border-border/70">
-                <CardContent className="text-center p-6">
-                  <p className="text-muted-foreground">You have not created any classes yet.</p>
-                  <Button asChild className="mt-4"><Link href="/classes">Create One Now</Link></Button>
-                </CardContent>
-              </Card>
+            {teacherClasses.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-10 text-center">
+                <p className="text-muted-foreground mb-4">You have not created any classes yet.</p>
+                <Button asChild size="sm"><Link href="/classes">Create your first class</Link></Button>
+              </div>
+            ) : (
+              <div className="grid gap-4 lg:grid-cols-3">
+                {/* Quick actions */}
+                <div className="rounded-xl surface-panel border border-border p-4 space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground mb-2.5">Quick actions</p>
+                  {resolvedClassId && (
+                    <>
+                      <Link href={`/class/${resolvedClassId}?tab=group`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:surface-interactive transition-colors">
+                        <span className="flex items-center gap-2"><Users className="h-4 w-4 text-[var(--accent-brand)]" /> Class overview</span>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Link>
+                      <Link href={`/class/${resolvedClassId}?tab=grades`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:surface-interactive transition-colors">
+                        <span className="flex items-center gap-2"><ClipboardList className="h-4 w-4 text-[var(--accent-brand)]" /> Grades</span>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Link>
+                      <Link href={`/class/${resolvedClassId}?tab=analytics`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:surface-interactive transition-colors">
+                        <span className="flex items-center gap-2"><BarChart2 className="h-4 w-4 text-[var(--accent-brand)]" /> Analytics</span>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Link>
+                      <Link href={`/agenda?classId=${resolvedClassId}`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:surface-interactive transition-colors">
+                        <span className="flex items-center gap-2"><Calendar className="h-4 w-4 text-[var(--accent-brand)]" /> Agenda</span>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Link>
+                      <Link href={`/subjects?classId=${resolvedClassId}`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:surface-interactive transition-colors">
+                        <span className="flex items-center gap-2"><BookOpen className="h-4 w-4 text-[var(--accent-brand)]" /> Subjects</span>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Link>
+                    </>
+                  )}
+                </div>
+
+                {/* Classes list */}
+                <div className="lg:col-span-2 rounded-xl surface-panel border border-border p-4">
+                  <p className="text-xs font-medium text-muted-foreground mb-2.5">Your classes</p>
+                  <div className="space-y-1.5">
+                    {teacherClasses.slice(0, 6).map((cls) => (
+                      <Link
+                        key={cls.id}
+                        href={`/class/${cls.id}?tab=group`}
+                        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:surface-interactive transition-colors"
+                      >
+                        <span className="flex items-center gap-2">
+                          <School className="h-4 w-4 text-[var(--accent-brand)] shrink-0" />
+                          <span className="truncate">{cls.name}</span>
+                        </span>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      </Link>
+                    ))}
+                    {teacherClasses.length > 6 && (
+                      <p className="text-xs text-muted-foreground px-3 pt-1">+{teacherClasses.length - 6} more classes</p>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
         </div>
     );
@@ -241,7 +288,6 @@ function DashboardSkeleton() {
 
 export default function DashboardPage() {
   const { role, isLoading, session, classes } = useContext(AppContext) as AppContextType;
-  const router = useRouter();
   
   // Check for cached data directly to avoid skeleton flash
   const cached = typeof window !== 'undefined' 
@@ -249,24 +295,7 @@ export default function DashboardPage() {
     : null;
   const hasCachedData = cached && cached.classes && cached.classes.length > 0;
 
-  useEffect(() => {
-    if (!session || role !== 'student' || isLoading) return;
-    if (typeof window === 'undefined') return;
-
-    const savedLane = window.localStorage.getItem('studyweb-student-lane');
-    if (savedLane === 'tools') {
-      const lastToolsRoute = window.localStorage.getItem('studyweb-last-tools-route') || '/tools';
-      const current = `${window.location.pathname}${window.location.search}`;
-      if (current === lastToolsRoute) return;
-      router.replace(lastToolsRoute);
-      return;
-    }
-
-    const lastSchoolRoute = window.localStorage.getItem('studyweb-last-school-route') || '/classes';
-    const current = `${window.location.pathname}${window.location.search}`;
-    if (current === lastSchoolRoute) return;
-    router.replace(lastSchoolRoute);
-  }, [session, role, isLoading, router]);
+  // Note: no redirect — students see the full dashboard at /
 
   // Show skeleton ONLY if truly loading AND no cached data available
   if (isLoading && !hasCachedData) {

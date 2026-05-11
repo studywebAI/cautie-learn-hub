@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { format, startOfWeek, addWeeks, parseISO } from 'date-fns';
+import { format, startOfWeek, addWeeks, parseISO, isToday } from 'date-fns';
 import type { CalendarEvent } from '@/lib/types';
 import {
   DndContext,
@@ -127,12 +127,18 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
       </div>
 
       <div className="grid grid-cols-5 gap-2">
-        {activeWeek.days.map((day) => (
-          <div key={`label-${format(day, 'yyyy-MM-dd')}`} className="rounded-xl bg-white px-2 py-2 text-center">
-            <p className="text-sm text-foreground/90">{format(day, 'EEEE')}</p>
-            <p className="text-[11px] text-muted-foreground">{format(day, 'MMM d')}</p>
-          </div>
-        ))}
+        {activeWeek.days.map((day) => {
+          const todayDay = isToday(day);
+          return (
+            <div
+              key={`label-${format(day, 'yyyy-MM-dd')}`}
+              className={`rounded-xl px-2 py-2 text-center ${todayDay ? 'bg-[var(--accent-brand)] text-white' : 'bg-white'}`}
+            >
+              <p className={`text-sm ${todayDay ? 'text-white font-semibold' : 'text-foreground/90'}`}>{format(day, 'EEEE')}</p>
+              <p className={`text-[11px] ${todayDay ? 'text-white/80' : 'text-muted-foreground'}`}>{format(day, 'MMM d')}</p>
+            </div>
+          );
+        })}
       </div>
 
       <DndContext
