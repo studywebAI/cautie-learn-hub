@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { RotateCcw } from 'lucide-react'
 
 type IdeaItem = {
   id: string
@@ -30,10 +32,13 @@ export default function IdeasBoardPage() {
   const [polls, setPolls] = useState<PollItem[]>([])
   const [pollOptions, setPollOptions] = useState<PollOption[]>([])
   const [myPollVotes, setMyPollVotes] = useState<Array<{ poll_id: string; option_id: string }>>([])
+  const [canManagePolls, setCanManagePolls] = useState(false)
   const [title, setTitle] = useState('')
   const [loading, setLoading] = useState(true)
   const [submittingIdea, setSubmittingIdea] = useState(false)
   const [votingPollId, setVotingPollId] = useState<string | null>(null)
+  const [rotatePollStatus, setRotatePollStatus] = useState<string>('')
+  const [rotatingPoll, setRotatingPoll] = useState(false)
 
   const loadBoard = async () => {
     setLoading(true)
@@ -44,6 +49,7 @@ export default function IdeasBoardPage() {
       setPolls(Array.isArray(payload?.polls) ? payload.polls : [])
       setPollOptions(Array.isArray(payload?.pollOptions) ? payload.pollOptions : [])
       setMyPollVotes(Array.isArray(payload?.myPollVotes) ? payload.myPollVotes : [])
+      setCanManagePolls(Boolean(payload?.canManagePolls))
     } finally {
       setLoading(false)
     }
@@ -99,13 +105,30 @@ export default function IdeasBoardPage() {
     }
   }
 
+  const rotatePoll = async () => {
+    if (!window.confirm('Close the current open poll and prepare for next month? This cannot be undone.')) return
+    setRotatingPoll(true)
+    setRotatePollStatus('')
+    try {
+      const res = await fetch('/api/ideas-board/admin/rotate-poll', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.error || 'Rotation failed')
+      setRotatePollStatus(`Done — ${data.closed_count} poll(s) closed. Next month key: ${data.next_month_key}`)
+      await loadBoard()
+    } catch (e: any) {
+      setRotatePollStatus(e?.message || 'Failed')
+    } finally {
+      setRotatingPoll(false)
+    }
+  }
+
   const myVoteOptionId = activePoll ? myPollVotes.find((vote) => vote.poll_id === activePoll.id)?.option_id : undefined
 
   return (
     <div className="page-content">
       <div className="space-y-3">
       <div className="rounded-md surface-panel p-4">
-        <h1 className="text-xl">Ideas Board</h1>
+        <h1 className="page-title">Ideas Board</h1>
         <p className="mt-1 text-sm text-muted-foreground">Submit ideas and vote on the top 3 poll options.</p>
       </div>
 
@@ -165,6 +188,40 @@ export default function IdeasBoardPage() {
           </div>
         )}
       </div>
+
+      {canManagePolls && (
+        <div className="rounded-md border border-border surface-panel p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-medium">Admin controls</h2>
+            <Badge variant="secondary" className="text-[11px]">admin</Badge>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Monthly rotation: closes the current open poll so you can create a fresh one for next month.
+              {process.env.NEXT_PUBLIC_ADMIN_NOTIFY_ENABLED
+                ? ' Webhook notification will be sent on rotation.'
+                : ' Set ADMIN_NOTIFY_WEBHOOK_URL to receive email/webhook notifications.'}
+            </p>
+            <div className="flex items-center gap-3">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={rotatingPoll || !activePoll}
+                onClick={() => void rotatePoll()}
+              >
+                <RotateCcw className="mr-2 h-3.5 w-3.5" />
+                {rotatingPoll ? 'Rotating...' : 'Rotate poll (close & prepare next month)'}
+              </Button>
+              {!activePoll && !rotatingPoll && (
+                <span className="text-xs text-muted-foreground">No open poll to rotate.</span>
+              )}
+            </div>
+            {rotatePollStatus && (
+              <p className="text-xs text-muted-foreground">{rotatePollStatus}</p>
+            )}
+          </div>
+        </div>
+      )}
       </div>
     </div>
   )

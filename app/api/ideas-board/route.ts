@@ -84,6 +84,21 @@ export async function POST(request: Request) {
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    const webhookUrl = process.env.ADMIN_NOTIFY_WEBHOOK_URL
+    if (webhookUrl && data) {
+      void fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'idea_submitted',
+          idea: { id: data.id, title: data.title, description: data.description },
+          submitted_by: userId,
+          submitted_at: data.created_at,
+        }),
+      }).catch(() => {})
+    }
+
     return NextResponse.json({ idea: data }, { status: 201 })
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 })

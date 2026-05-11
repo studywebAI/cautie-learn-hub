@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CheckCircle, XCircle, Clock, Save, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CheckCircle, Clock, Save, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type Submission = {
@@ -297,39 +298,48 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
                   placeholder="Search student, assignment, question..."
                 />
                 <div className="grid grid-cols-2 gap-2">
-                  <select
-                    className="h-9 rounded-md border bg-background px-2 text-sm"
-                    value={filterAssignmentId}
-                    onChange={(e) => {
+                  <Select
+                    value={filterAssignmentId || '__all__'}
+                    onValueChange={(val) => {
                       setOpenAnswersPage(1);
-                      setFilterAssignmentId(e.target.value);
+                      setFilterAssignmentId(val === '__all__' ? '' : val);
                     }}
                   >
-                    <option value="">All assignments</option>
-                    {assignmentOptions.map((item) => (
-                      <option key={item.id} value={item.id}>{item.title}</option>
-                    ))}
-                  </select>
-                  <select
-                    className="h-9 rounded-md border bg-background px-2 text-sm"
-                    value={filterStudentId}
-                    onChange={(e) => {
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="All assignments" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All assignments</SelectItem>
+                      {assignmentOptions.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>{item.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={filterStudentId || '__all__'}
+                    onValueChange={(val) => {
                       setOpenAnswersPage(1);
-                      setFilterStudentId(e.target.value);
+                      setFilterStudentId(val === '__all__' ? '' : val);
                     }}
                   >
-                    <option value="">All students</option>
-                    {studentOptions.map((item) => (
-                      <option key={item.id} value={item.id}>{item.name}</option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="All students" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All students</SelectItem>
+                      {studentOptions.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}
             <ScrollArea className="h-full">
               {loading ? (
-                <div className="flex justify-center p-4">
-                  <Loader2 className="h-6 w-6 animate-spin" />
+                <div className="flex flex-col items-center justify-center gap-2 py-10 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-xs">Loading...</span>
                 </div>
               ) : mode === 'submissions' && submissions.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">No submissions to grade</p>
