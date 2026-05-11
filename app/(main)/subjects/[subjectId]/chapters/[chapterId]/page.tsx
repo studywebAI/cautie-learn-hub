@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 import Link from 'next/link';
 
 interface Chapter {
@@ -73,14 +73,8 @@ export default function ChapterOverviewPage() {
 
   if (isLoading) {
     return (
-      <div className="page-content">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-32" />
-        <div className="space-y-2 mt-6">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
-          ))}
-        </div>
+      <div className="flex min-h-[55vh] items-center justify-center">
+        <CautieLoader label="Loading chapter" sublabel="Fetching paragraphs" size="lg" />
       </div>
     );
   }

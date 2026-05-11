@@ -387,12 +387,18 @@ export async function POST(request: NextRequest) {
         typeof (output as any)?.title === "string" && String((output as any).title).trim()
           ? String((output as any).title).trim()
           : "";
+      const contextSourceTitle =
+        String((payload.context as any)?.materialTitle || (payload.context as any)?.source_title || (payload.context as any)?.title || "").trim();
+      const inputSourceTitle =
+        String((payload.input as any)?.title || (payload.input as any)?.sourceTitle || "").trim();
       const resolvedArtifactTitle =
         (typeof payload.artifactTitle === "string" && payload.artifactTitle.trim()
           ? payload.artifactTitle.trim()
           : "") ||
         outputTitle ||
-        `${payload.toolId} output`;
+        contextSourceTitle ||
+        inputSourceTitle ||
+        payload.toolId;
 
       if (payload.persistArtifact) {
         const canonical = extractCanonicalFromOutput(output);

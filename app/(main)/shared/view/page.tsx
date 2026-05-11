@@ -69,7 +69,7 @@ export default function SharedViewPage() {
   return (
     <div className="page-content w-full max-w-5xl space-y-3">
       <div className="flex items-start justify-between gap-2">
-        <h1 className="text-xl font-medium">{data.title}</h1>
+        <h1 className="page-title">{data.title}</h1>
         <Button type="button" variant="outline" size="sm" onClick={() => void copyCurrentUrl()}>
           Copy view link
         </Button>

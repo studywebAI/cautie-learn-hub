@@ -159,18 +159,26 @@ export function RecentsSidebar() {
         const toolItems: RecentItem[] = (Array.isArray(runsRes) ? runsRes : [])
           .filter((r: any) => r?.options_payload?.saveToRecents !== false)
           .filter((r: any) => r.status === 'succeeded')
-          .map((r: any) => ({
-            id: r.id,
-            title:
-              String(r?.artifact_title || '').trim() ||
-              String(r?.output_payload?.title || '').trim() ||
-              String(r?.input_payload?.title || '').trim() ||
-              TYPE_LABELS[r.tool_id] ||
-              r.tool_id,
-            type: r.tool_id as RecentItem['type'],
-            date: r.finished_at || r.created_at,
-            source: 'tool_run' as const,
-          }));
+          .map((r: any) => {
+            const rawArtifactTitle = String(r?.artifact_title || '').trim();
+            const isGenericArtifactTitle = !rawArtifactTitle || /^(quiz|flashcards|notes|wordweb|timeline|presentation|studyset)\s*(output)?$/i.test(rawArtifactTitle);
+            const specificTitle = isGenericArtifactTitle
+              ? (
+                  String(r?.output_payload?.title || '').trim() ||
+                  String(r?.input_payload?.title || '').trim() ||
+                  String(r?.options_payload?.customTitle || r?.options_payload?.title || '').trim() ||
+                  String(r?.context?.materialTitle || r?.context?.source_title || '').trim() ||
+                  ''
+                )
+              : rawArtifactTitle;
+            return {
+              id: r.id,
+              title: specificTitle || TYPE_LABELS[r.tool_id] || r.tool_id,
+              type: r.tool_id as RecentItem['type'],
+              date: r.finished_at || r.created_at,
+              source: 'tool_run' as const,
+            };
+          });
 
         const materialItems: RecentItem[] = (materialsRes.materials || [])
           .filter((m: any) => String(m?.type || '').toLowerCase() !== 'onedrive')

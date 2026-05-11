@@ -8,7 +8,7 @@ import { JoinClassDialog } from './join-class-dialog';
 import { PlusCircle, Search } from 'lucide-react';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { ClassCard } from '../teacher/class-card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -131,18 +131,20 @@ export function StudentClasses() {
     );
 
   if (isLoading || !classes) {
-      return (
-         <div className="flex flex-col gap-8">
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-64" />)}
-            </div>
-        </div>
-      );
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <CautieLoader label="Loading classes" sublabel="Fetching your enrolled classes" size="lg" />
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex justify-end">
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="page-title">My Classes</h1>
+          <p className="page-subtitle mt-0.5">Classes you are enrolled in</p>
+        </div>
         <Button onClick={() => {
             setInitialCode(undefined);
             setIsJoinDialogOpen(true);
@@ -152,24 +154,23 @@ export function StudentClasses() {
         </Button>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-        <Input
-          placeholder="Search classes..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 rounded-full"
-        />
-      </div>
+      {enrolledClasses.length > 3 && (
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Search classes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      )}
 
       {enrolledClasses.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed p-12 text-center">
+        <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed p-12 text-center">
           <div className="flex flex-col items-center gap-2">
-            <h3 className="text-2xl font-bold tracking-tight">
-              You are not in any classes yet.
-            </h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="page-title">You are not in any classes yet.</h3>
+            <p className="page-subtitle">
               Join a class using a code from your teacher to get started.
             </p>
             <Button className="mt-4" onClick={() => {
@@ -182,13 +183,14 @@ export function StudentClasses() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {enrolledClasses.map((classInfo) => (
             <div key={classInfo.id} className="space-y-2">
               <ClassCard classInfo={classInfo} isArchived={false} />
               <Button
-                variant="outline"
-                className="w-full"
+                variant="ghost"
+                size="sm"
+                className="w-full text-muted-foreground hover:text-destructive text-xs"
                 onClick={() => handleLeaveClass(classInfo.id, classInfo.name)}
               >
                 Leave class
