@@ -28,19 +28,23 @@ export async function POST() {
     const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
     const nextMonthKey = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`
 
-    const webhookUrl = process.env.ADMIN_NOTIFY_WEBHOOK_URL
-    if (webhookUrl && closedIds.length > 0) {
-      void fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event: 'poll_rotated',
-          closed_poll_ids: closedIds,
-          next_month_key: nextMonthKey,
-          rotated_by: userId,
-          rotated_at: new Date().toISOString(),
-        }),
-      }).catch(() => {})
+    if (closedIds.length > 0) {
+      const { data: adminProfiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('subscription_type', ['admin', 'owner', 'creator'])
+      const adminIds = (adminProfiles || []).map((p) => p.id)
+      if (adminIds.length > 0) {
+        void supabase.from('notifications').insert(
+          adminIds.map((adminId) => ({
+            user_id: adminId,
+            type: 'poll_rotated',
+            title: 'Poll rotated',
+            message: `${closedIds.length} poll(s) closed. Next month: ${nextMonthKey}`,
+            data: { closed_poll_ids: closedIds, next_month_key: nextMonthKey, rotated_by: userId },
+          }))
+        )
+      }
     }
 
     return NextResponse.json({

@@ -197,10 +197,7 @@ export default function IdeasBoardPage() {
           </div>
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
-              Monthly rotation: closes the current open poll so you can create a fresh one for next month.
-              {process.env.NEXT_PUBLIC_ADMIN_NOTIFY_ENABLED
-                ? ' Webhook notification will be sent on rotation.'
-                : ' Set ADMIN_NOTIFY_WEBHOOK_URL to receive email/webhook notifications.'}
+              Monthly rotation: closes the current open poll so you can create a fresh one for next month. Admins receive an in-app notification when ideas are submitted or a poll is rotated.
             </p>
             <div className="flex items-center gap-3">
               <Button

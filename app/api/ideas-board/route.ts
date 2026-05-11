@@ -85,18 +85,23 @@ export async function POST(request: Request) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    const webhookUrl = process.env.ADMIN_NOTIFY_WEBHOOK_URL
-    if (webhookUrl && data) {
-      void fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event: 'idea_submitted',
-          idea: { id: data.id, title: data.title, description: data.description },
-          submitted_by: userId,
-          submitted_at: data.created_at,
-        }),
-      }).catch(() => {})
+    if (data) {
+      const { data: adminProfiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('subscription_type', ['admin', 'owner', 'creator'])
+      const adminIds = (adminProfiles || []).map((p) => p.id).filter((id) => id !== userId)
+      if (adminIds.length > 0) {
+        void supabase.from('notifications').insert(
+          adminIds.map((adminId) => ({
+            user_id: adminId,
+            type: 'idea_submitted',
+            title: 'New idea submitted',
+            message: data.title,
+            data: { idea_id: data.id, submitted_by: userId },
+          }))
+        )
+      }
     }
 
     return NextResponse.json({ idea: data }, { status: 201 })
