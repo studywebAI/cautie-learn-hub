@@ -304,6 +304,47 @@ export async function PUT(
       return NextResponse.json({ student_grades: updatedRows })
     }
 
+    // Upsert a single student grade by student_id (create or update)
+    if (action === 'upsert_student_grade') {
+      const studentId = String(body?.student_id || '').trim()
+      if (!studentId) {
+        return NextResponse.json({ error: 'student_id is required' }, { status: 400 })
+      }
+
+      const gradeNumericRaw = body?.grade_numeric
+      const gradeNumeric = gradeNumericRaw === null || gradeNumericRaw === undefined || gradeNumericRaw === ''
+        ? null
+        : Number(gradeNumericRaw)
+      const gradeValue = body?.grade_value != null ? String(body.grade_value).trim() || null : null
+
+      // Check if a row already exists for this student in this grade set
+      const { data: existing } = await supabase
+        .from('student_grades')
+        .select('id')
+        .eq('grade_set_id', gradeSetId)
+        .eq('student_id', studentId)
+        .maybeSingle()
+
+      if (existing) {
+        const { data: updated, error: updateErr } = await supabase
+          .from('student_grades')
+          .update({ grade_numeric: gradeNumeric, grade_value: gradeValue, updated_at: new Date().toISOString() })
+          .eq('id', existing.id)
+          .select()
+          .single()
+        if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 })
+        return NextResponse.json({ student_grade: updated })
+      } else {
+        const { data: inserted, error: insertErr } = await supabase
+          .from('student_grades')
+          .insert({ grade_set_id: gradeSetId, student_id: studentId, grade_numeric: gradeNumeric, grade_value: gradeValue })
+          .select()
+          .single()
+        if (insertErr) return NextResponse.json({ error: insertErr.message }, { status: 500 })
+        return NextResponse.json({ student_grade: inserted })
+      }
+    }
+
     if (action === 'publish') {
       // Publish grades - update status to published
       const { data: updatedGradeSet, error } = await supabase

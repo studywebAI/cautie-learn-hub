@@ -274,6 +274,21 @@ export async function GET(
         .filter((s: any) => s.grade !== null)
         .sort((a: any, b: any) => new Date(b.submitted_at || 0).getTime() - new Date(a.submitted_at || 0).getTime())[0]
 
+      // Derive absence count from audit logs (attendance_state_changed with is_present=false)
+      const absenceCount = studentLogs.filter((log: any) => {
+        const action = String(log?.action || '')
+        if (action === 'attendance_state_changed') {
+          return log?.metadata?.is_present === false || log?.changes?.is_present === false
+        }
+        return false
+      }).length
+
+      // Note count: audit logs with action attendance_event_custom or teacher notes
+      const noteCount = studentLogs.filter((log: any) => {
+        const action = String(log?.action || '')
+        return action === 'attendance_event_custom' || action === 'student_note_added'
+      }).length
+
       return {
         id: studentId,
         name: studentDisplayName(classMemberByUserId.get(studentId)?.display_name, profile?.display_name, profile?.full_name),
@@ -287,7 +302,9 @@ export async function GET(
           completedAssignments,
           gradedAssignments,
           averageGrade,
-          completionRate: totalAssignments > 0 ? Math.round((completedAssignments / totalAssignments) * 100) : 0
+          completionRate: totalAssignments > 0 ? Math.round((completedAssignments / totalAssignments) * 100) : 0,
+          absenceCount,
+          noteCount,
         },
         lastGraded: lastGraded ? {
           assignmentId: lastGraded.assignment_id,

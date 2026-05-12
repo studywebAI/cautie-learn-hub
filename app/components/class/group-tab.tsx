@@ -2,37 +2,33 @@
 
 import { useState, useEffect, useContext } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, MessageSquare, Info, Pencil, Check, Settings, MoreHorizontal, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Pencil, Check, Settings, X, BookOpen, CalendarDays, ClipboardCheck } from 'lucide-react';
 import Link from 'next/link';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { CautieLoader } from '@/components/ui/cautie-loader';
+import { formatDistanceToNow } from 'date-fns';
+
+type StudentStats = {
+  totalAssignments: number;
+  completedAssignments: number;
+  gradedAssignments: number;
+  averageGrade: number | null;
+  completionRate: number;
+  absenceCount?: number;
+  noteCount?: number;
+};
 
 type Student = {
   id: string;
   name: string;
   email: string | null;
   role: string;
-  joinedAt: string | null;
   lastSeen: string | null;
   onlineStatus: 'online' | 'offline';
-  stats: {
-    totalAssignments: number;
-    completedAssignments: number;
-    gradedAssignments: number;
-    averageGrade: number | null;
-    completionRate: number;
-  };
-  recentActivity: Array<{
-    id: string;
-    action: string;
-    entityType: string;
-    entityId: string;
-    details: Record<string, any>;
-    createdAt: string;
-  }>;
+  stats: StudentStats;
 };
 
 type Teacher = {
@@ -40,28 +36,16 @@ type Teacher = {
   name: string;
   email: string | null;
   role: string;
-  joinedAt: string | null;
   lastSeen: string | null;
   onlineStatus: 'online' | 'offline';
-  subjects?: Array<{
-    id: string;
-    title: string;
-    ownerName: string | null;
-    ownerEmail: string | null;
-  }>;
+  subjects?: Array<{ id: string; title: string }>;
 };
 
 type GroupData = {
   classId: string;
   students: Student[];
   teachers: Teacher[];
-  assignments: Array<{ id: string; title: string; dueDate: string | null }>;
-  stats: {
-    totalStudents: number;
-    onlineStudents: number;
-    totalTeachers: number;
-    onlineTeachers: number;
-  };
+  stats: { totalStudents: number; onlineStudents: number; totalTeachers: number; onlineTeachers: number };
 };
 
 type GroupTabProps = {
@@ -71,67 +55,45 @@ type GroupTabProps = {
   parentLoading?: boolean;
 };
 
+function formatLastSeen(lastSeen: string | null, onlineStatus: 'online' | 'offline'): string {
+  if (onlineStatus === 'online') return 'Online';
+  if (!lastSeen) return 'Never seen';
+  try {
+    return 'Last seen ' + formatDistanceToNow(new Date(lastSeen), { addSuffix: true });
+  } catch {
+    return 'Offline';
+  }
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .slice(0, 2)
+    .map(p => p[0]?.toUpperCase() || '')
+    .join('');
+}
+
 export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTabProps) {
   const appContext = useContext(AppContext) as AppContextType | null;
   const language = appContext?.language || 'en';
   const isDutch = language === 'nl';
 
-  const t = {
-    failedLoad: isDutch ? 'Kon groepsdata niet laden' : 'Failed to load group data',
-    teachers: isDutch ? 'Docenten' : 'Teachers',
-    students: isDutch ? 'Leerlingen' : 'Students',
-    noTeachers: isDutch ? 'Geen docenten gevonden' : 'No teachers found',
-    noStudentsFound: isDutch ? 'Geen leerlingen gevonden' : 'No students found',
-    noEmail: isDutch ? 'Gast' : 'Guest',
-    people: isDutch ? 'personen' : 'people',
-    teacherListHint: isDutch ? 'Klik een docent om gekoppelde vakken te bekijken' : 'Click a teacher to view linked subjects',
-    studentListHint: isDutch ? 'Klik een leerling voor acties en details' : 'Click a student for actions and details',
-    expand: isDutch ? 'Uitklappen' : 'Expand',
-    collapse: isDutch ? 'Inklappen' : 'Collapse',
-    settings: isDutch ? 'Instellingen' : 'Settings',
-    rename: isDutch ? 'Hernoemen' : 'Rename',
-    renameHint: isDutch ? 'Selecteer een leerling om te hernoemen.' : 'Select a student to rename.',
-    renameHeader: isDutch ? 'Leerlingen hernoemen' : 'Rename students',
-    renameFromTo: isDutch ? 'Hernoem van' : 'Rename from',
-    renameTo: isDutch ? 'naar' : 'to',
-    renameStudent: isDutch ? 'Leerling hernoemen' : 'Rename student',
-    close: isDutch ? 'Sluiten' : 'Close',
-    save: isDutch ? 'Opslaan' : 'Save',
-    noLinkedSubjects: isDutch ? 'Nog geen gekoppelde vakken' : 'No linked subjects yet',
-    grades: isDutch ? 'Cijfers' : 'Grades',
-    subjects: isDutch ? 'Vakken' : 'Subjects',
-    completion: isDutch ? 'Voltooiing' : 'Completion',
-    attendance: isDutch ? 'Aanwezigheid' : 'Attendance',
-    assignEvent: isDutch ? 'Event toevoegen' : 'Assign Event',
-    logs: isDutch ? 'Logs' : 'Logs',
-    activity: isDutch ? 'Activiteit' : 'Activity',
-  };
-
   const [data, setData] = useState<GroupData | null>(cachedData || null);
   const [loading, setLoading] = useState(!cachedData && !parentLoading);
   const [error, setError] = useState<string | null>(null);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
-  const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
-  const [renameStudentId, setRenameStudentId] = useState<string>('');
+  const [search, setSearch] = useState('');
+  const [renameStudent, setRenameStudent] = useState<Student | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [savingRename, setSavingRename] = useState(false);
 
   useEffect(() => {
-    setSelectedStudent(null);
-    setSelectedTeacher(null);
-    setRenameStudentId('');
-    setRenameValue('');
-    setGroupSettingsOpen(false);
     if (!cachedData) setData(null);
     setLoading(!cachedData && !parentLoading);
     setError(null);
   }, [classId, cachedData, parentLoading]);
 
   useEffect(() => {
-    if (!cachedData) return;
-    setData(cachedData);
-    setLoading(false);
+    if (cachedData) { setData(cachedData); setLoading(false); }
   }, [cachedData]);
 
   useEffect(() => {
@@ -139,81 +101,45 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
     void fetchGroupData();
   }, [classId, cachedData, parentLoading, data]);
 
-  const fetchGroupData = async () => {
+  async function fetchGroupData() {
     if (!data) setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/classes/${classId}/group`);
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload?.error || `Request failed (${response.status})`);
-      }
-      const result = await response.json();
-      setData(result);
+      const res = await fetch(`/api/classes/${classId}/group`);
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+      setData(await res.json());
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t.failedLoad;
-      setError(msg);
+      setError(e instanceof Error ? e.message : 'Failed to load group data');
       setData(null);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const saveStudentRename = async () => {
-    if (!renameStudentId) return;
-    const renameStudent = sortedStudents.find((student) => student.id === renameStudentId);
-    if (!renameStudent) return;
+  async function saveRename() {
+    if (!renameStudent || !renameValue.trim()) return;
     setSavingRename(true);
     try {
-      const response = await fetch(`/api/classes/${classId}/members`, {
+      const res = await fetch(`/api/classes/${classId}/members`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: renameStudent.id,
-          display_name: renameValue.trim(),
-        }),
+        body: JSON.stringify({ user_id: renameStudent.id, display_name: renameValue.trim() }),
       });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.error || 'Failed to save rename');
-      }
-      setData((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          students: prev.students.map((student) =>
-            student.id === renameStudent.id
-              ? { ...student, name: renameValue.trim() || 'Unnamed student' }
-              : student
-          ),
-        };
-      });
-      setSelectedStudent((prev) =>
-        prev && prev.id === renameStudent.id
-          ? { ...prev, name: renameValue.trim() || 'Unnamed student' }
-          : prev
-      );
-      setRenameStudentId('');
-      setRenameValue('');
-      void logClassTabEvent({
-        classId,
-        tab: 'group',
-        event: 'student_renamed',
-        stage: 'action',
-        level: 'info',
-        meta: { student_id: renameStudent.id },
-      });
-    } catch (error) {
-      console.error('Rename failed:', error);
-    } finally {
-      setSavingRename(false);
-    }
-  };
+      if (!res.ok) throw new Error('Failed');
+      setData(prev => prev ? {
+        ...prev,
+        students: prev.students.map(s => s.id === renameStudent.id ? { ...s, name: renameValue.trim() } : s),
+      } : prev);
+      setRenameStudent(null);
+      void logClassTabEvent({ classId, tab: 'group', event: 'student_renamed', stage: 'action', level: 'info', meta: { student_id: renameStudent.id } });
+    } catch { /* ignore */ }
+    finally { setSavingRename(false); }
+  }
 
   if ((loading || parentLoading) && !data) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <CautieLoader label="Loading group" sublabel="Fetching teachers and students" size="md" />
+        <CautieLoader label={isDutch ? 'Groep laden' : 'Loading group'} sublabel={isDutch ? 'Docenten en leerlingen ophalen' : 'Fetching teachers and students'} size="md" />
       </div>
     );
   }
@@ -221,298 +147,192 @@ export function GroupTab({ classId, cachedData, parentLoading = false }: GroupTa
   if (!data) {
     return (
       <div className="class-panel py-8 text-center text-muted-foreground">
-        <div className="space-y-3">
-          <p>{error || t.failedLoad}</p>
-          <Button variant="outline" onClick={() => void fetchGroupData()}>
-            Retry
-          </Button>
-        </div>
+        <p>{error || 'Failed to load group data'}</p>
+        <Button variant="outline" className="mt-3" onClick={() => void fetchGroupData()}>Retry</Button>
       </div>
     );
   }
 
-  const sortedStudents = [...data.students].sort((a, b) => a.name.localeCompare(b.name));
-  const sortedTeachers = [...data.teachers].sort((a, b) => (a.email || a.name).localeCompare(b.email || b.name));
+  const q = search.toLowerCase();
+  const filteredStudents = data.students.filter(s =>
+    !q || s.name.toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q)
+  ).sort((a, b) => a.name.localeCompare(b.name));
+  const filteredTeachers = data.teachers.filter(t =>
+    !q || t.name.toLowerCase().includes(q) || (t.email || '').toLowerCase().includes(q)
+  ).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <div className="class-shell" data-testid="group-tab">
-      <div className="space-y-2 p-0">
-        <div className="relative flex items-center justify-end">
-          <Button
-            variant={groupSettingsOpen ? 'default' : 'outline'}
-            size="sm"
-            className="h-9 gap-2 rounded-md"
-            onClick={() => setGroupSettingsOpen(true)}
-          >
-            <Settings className="h-4 w-4" />
-            {t.settings}
-          </Button>
-        </div>
-
-        <div className="class-panel" data-testid="group-section-students">
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-base font-medium" data-testid="group-heading-students">{t.students}</h3>
-            <span className="text-xs text-muted-foreground">{sortedStudents.length} {t.people}</span>
-          </div>
-          <p className="mb-2 text-xs text-muted-foreground">{t.studentListHint}</p>
-          <div className="space-y-1.5">
-            {sortedStudents.length === 0 ? (
-              <div className="rounded-md surface-panel py-8 text-center text-foreground/75">
-                <Users className="mx-auto mb-3 h-10 w-10 opacity-50" />
-                <p>{t.noStudentsFound}</p>
-              </div>
-            ) : (
-              sortedStudents.map((student) => (
-                <button
-                  type="button"
-                  key={student.id}
-                  data-testid={`group-student-row-${student.id}`}
-                  className="group flex w-full items-center gap-3 rounded-md surface-panel px-3 py-2 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
-                  onClick={() => {
-                    setSelectedStudent(student);
-                    void logClassTabEvent({
-                      classId,
-                      tab: 'group',
-                      event: 'student_opened',
-                      stage: 'action',
-                      level: 'debug',
-                      meta: { student_id: student.id },
-                    });
-                  }}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm">{student.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Link
-                      prefetch={false}
-                      href={`/class/${classId}?tab=logs&student_id=${student.id}&category=events`}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
-                      onClick={(e) => e.stopPropagation()}
-                      title={isDutch ? 'Bekijk tijdlijn' : 'View timeline'}
-                    >
-                      <Info className="h-4 w-4" />
-                    </Link>
-                    <Link
-                      prefetch={false}
-                      href={`/class/${classId}?tab=attendance&studentId=${student.id}`}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
-                      onClick={(e) => e.stopPropagation()}
-                      title={t.attendance}
-                    >
-                      <Check className="h-4 w-4" />
-                    </Link>
-                    <Link
-                      prefetch={false}
-                      href={`/class/${classId}?tab=attendance&studentId=${student.id}&quick=event`}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md surface-interactive hover:surface-chip"
-                      onClick={(e) => e.stopPropagation()}
-                      title={isDutch ? 'Aangepast event toevoegen' : 'Add custom event'}
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                    </Link>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="class-panel" data-testid="group-section-teachers">
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-base font-medium" data-testid="group-heading-teachers">{t.teachers}</h3>
-            <span className="text-xs text-muted-foreground">{sortedTeachers.length} {t.people}</span>
-          </div>
-          <p className="mb-2 text-xs text-muted-foreground">{t.teacherListHint}</p>
-          <div className="space-y-1.5">
-            {sortedTeachers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t.noTeachers}</p>
-            ) : (
-              sortedTeachers.map((teacher) => (
-                <button
-                  key={teacher.id}
-                  type="button"
-                  className="group flex w-full items-center gap-3 rounded-md surface-panel px-3 py-2 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
-                  onClick={() => setSelectedTeacher(teacher)}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate">{teacher.email || teacher.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {(teacher.subjects || []).map((s) => s.title).join(', ') || t.noLinkedSubjects}
-                    </p>
-                  </div>
-                  <MoreHorizontal className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
-                </button>
-              ))
-            )}
-          </div>
+    <div className="class-shell space-y-3">
+      {/* Topbar */}
+      <div className="flex items-center gap-3">
+        <Input
+          placeholder={isDutch ? 'Zoek leden…' : 'Search members…'}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="h-8 max-w-xs text-sm"
+        />
+        <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#5b9bd5]" />
+            {isDutch ? 'Leerlingen' : 'Students'}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--accent-brand)]" />
+            {isDutch ? 'Docenten' : 'Teachers'}
+          </span>
         </div>
       </div>
 
-      <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
-        <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto rounded-md border-0">
-          {selectedStudent && (
-            <>
-              <DialogHeader>
-                <DialogTitle>{selectedStudent.name}</DialogTitle>
-              </DialogHeader>
-              <p className="text-sm text-muted-foreground">{selectedStudent.email || t.noEmail}</p>
+      {/* Member table */}
+      <div className="class-panel overflow-hidden p-0">
+        {/* Column headers */}
+        <div className="grid items-center gap-3 border-b border-border px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+          style={{ gridTemplateColumns: '40px 1fr 80px 80px 80px 60px' }}>
+          <div />
+          <div>{isDutch ? 'Naam' : 'Name'}</div>
+          <div className="text-right">{isDutch ? 'Notities' : 'Notes'}</div>
+          <div className="text-right">{isDutch ? 'Absent' : 'Absences'}</div>
+          <div className="text-right">{isDutch ? 'Gem. cijfer' : 'Avg grade'}</div>
+          <div className="text-right">{isDutch ? 'Agenda' : 'Agenda'}</div>
+        </div>
 
-              <div className="mt-4 space-y-4">
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=grades&studentId=${selectedStudent.id}`}>
-                      {t.grades}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/subjects?classId=${classId}`}>
-                      {t.subjects}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=analytics&studentId=${selectedStudent.id}`}>
-                      {t.completion}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}&quick=timeline`}>
-                      {t.attendance}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=attendance&studentId=${selectedStudent.id}&quick=event`}>
-                      {t.assignEvent}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=logs&student_id=${selectedStudent.id}&category=events`}>
-                      {t.logs}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=logs&student_id=${selectedStudent.id}&category=all`}>
-                      {t.activity}
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+        {/* Teachers */}
+        {filteredTeachers.map(teacher => (
+          <div
+            key={teacher.id}
+            className="grid items-center gap-3 border-b border-border px-4 py-2.5 transition-colors hover:bg-[hsl(var(--interactive-hover))]"
+            style={{ gridTemplateColumns: '40px 1fr 80px 80px 80px 60px', borderLeftWidth: '3px', borderLeftColor: 'hsl(var(--accent-brand) / 0.8)', borderLeftStyle: 'solid' }}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[hsl(var(--accent-brand)/0.12)] text-[11px] font-bold text-[var(--accent-brand)] ring-2 ring-[var(--accent-brand)]">
+              {getInitials(teacher.name)}
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold leading-tight">{teacher.name}</p>
+              <p className={`text-[11px] leading-tight ${teacher.onlineStatus === 'online' ? 'text-[var(--accent-brand)]' : 'text-muted-foreground'}`}>
+                {formatLastSeen(teacher.lastSeen, teacher.onlineStatus)}
+              </p>
+            </div>
+            <div className="text-right text-[11px] text-muted-foreground">—</div>
+            <div className="text-right text-[11px] text-muted-foreground">—</div>
+            <div className="text-right text-[11px] text-muted-foreground">—</div>
+            <div className="text-right text-[11px] text-muted-foreground">—</div>
+          </div>
+        ))}
 
-      <Dialog open={!!selectedTeacher} onOpenChange={() => setSelectedTeacher(null)}>
-        <DialogContent className="max-w-xl rounded-md border-0">
-          {selectedTeacher && (
-            <>
-              <DialogHeader>
-                <DialogTitle>{selectedTeacher.email || selectedTeacher.name}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=attendance`}>
-                      {t.attendance}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=grades`}>
-                      {t.grades}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=analytics`}>
-                      {isDutch ? 'Analyse' : 'Analytics'}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link prefetch={false} href={`/class/${classId}?tab=logs`}>
-                      {t.logs}
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-      <Dialog open={groupSettingsOpen} onOpenChange={setGroupSettingsOpen}>
-        <DialogContent className="max-w-3xl rounded-md border-0">
-          <DialogHeader>
-            <div className="flex items-center justify-between gap-3">
-              <div className="inline-flex items-center gap-2 text-sm">
-                <Pencil className="h-4 w-4" />
-                <span>{t.renameHeader}</span>
-              </div>
-              <button
-                type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:surface-interactive"
-                onClick={() => setGroupSettingsOpen(false)}
-                aria-label={t.close}
+        {/* Students */}
+        {filteredStudents.length === 0 && filteredTeachers.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">{isDutch ? 'Geen leden gevonden' : 'No members found'}</p>
+        ) : filteredStudents.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">{isDutch ? 'Geen leerlingen gevonden' : 'No students found'}</p>
+        ) : (
+          filteredStudents.map(student => {
+            const avg = student.stats.averageGrade;
+            const avgColor = avg === null ? 'text-muted-foreground'
+              : avg >= 7 ? 'text-[var(--accent-brand)]'
+              : avg >= 5.5 ? 'text-amber-600'
+              : 'text-destructive';
+            const absences = student.stats.absenceCount ?? 0;
+            const notes = student.stats.noteCount ?? 0;
+
+            return (
+              <div
+                key={student.id}
+                className="group grid items-center gap-3 border-b border-border px-4 py-2.5 transition-colors hover:bg-[hsl(var(--interactive-hover))]"
+                style={{ gridTemplateColumns: '40px 1fr 80px 80px 80px 60px', borderLeftWidth: '3px', borderLeftColor: '#5b9bd5', borderLeftStyle: 'solid' }}
               >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </DialogHeader>
-          <div className="grid gap-3 md:grid-cols-[1.2fr_1fr]">
-            <div className="rounded-md surface-panel p-2">
-              <div className="max-h-[54vh] space-y-1 overflow-y-auto pr-1">
-                {sortedStudents.map((student) => (
-                  <button
-                    key={`rename-${student.id}`}
-                    type="button"
-                    className={`flex w-full items-center gap-2 rounded-md border px-2 py-2 text-left text-sm transition-colors ${
-                      renameStudentId === student.id ? 'border-border surface-chip' : 'border-transparent hover:border-border hover:surface-interactive'
-                    }`}
-                    onClick={() => {
-                      setRenameStudentId(student.id);
-                      setRenameValue(student.name);
-                    }}
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e5eef8] text-[11px] font-bold text-[#3a7fc1] ring-2 ring-[#5b9bd5]">
+                  {getInitials(student.name)}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[13px] font-semibold leading-tight">{student.name}</p>
+                    <button
+                      type="button"
+                      className="invisible text-muted-foreground opacity-0 transition-all group-hover:visible group-hover:opacity-100"
+                      onClick={() => { setRenameStudent(student); setRenameValue(student.name); }}
+                      title={isDutch ? 'Hernoemen' : 'Rename'}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <p className={`text-[11px] leading-tight ${student.onlineStatus === 'online' ? 'text-[var(--accent-brand)]' : 'text-muted-foreground'}`}>
+                    {formatLastSeen(student.lastSeen, student.onlineStatus)}
+                  </p>
+                </div>
+
+                {/* Notes */}
+                <div className="text-right">
+                  {notes > 0 ? (
+                    <Link
+                      prefetch={false}
+                      href={`/class/${classId}?tab=attendance&studentId=${student.id}`}
+                      className="text-[12px] font-semibold text-[var(--accent-brand)] underline underline-offset-2 hover:opacity-80"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      {notes}
+                    </Link>
+                  ) : (
+                    <span className="text-[12px] text-muted-foreground">0</span>
+                  )}
+                </div>
+
+                {/* Absences */}
+                <div className="text-right">
+                  <span className={`text-[12px] font-semibold ${absences > 2 ? 'text-destructive' : absences > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>
+                    {absences}
+                  </span>
+                </div>
+
+                {/* Avg grade */}
+                <div className="text-right">
+                  <span className={`text-[13px] font-bold ${avgColor}`}>
+                    {avg !== null ? avg : '—'}
+                  </span>
+                </div>
+
+                {/* Agenda */}
+                <div className="text-right">
+                  <Link
+                    prefetch={false}
+                    href={`/agenda?classId=${classId}&studentId=${student.id}`}
+                    className="inline-flex items-center justify-end gap-1 text-[11px] text-[var(--accent-brand)] hover:underline"
+                    onClick={e => e.stopPropagation()}
                   >
-                    <div className="min-w-0">
-                      <p className="truncate">{student.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">{student.email || t.noEmail}</p>
-                    </div>
-                  </button>
-                ))}
+                    <CalendarDays className="h-3 w-3" />
+                  </Link>
+                </div>
               </div>
-            </div>
-            <div className="space-y-2 rounded-md surface-panel p-3">
-              {renameStudentId ? (
-                <p className="text-sm">
-                  {`${t.renameFromTo} "${sortedStudents.find((student) => student.id === renameStudentId)?.name || ''}" ${t.renameTo}:`}
-                </p>
-              ) : null}
-              <Input
-                value={renameValue}
-                onChange={(event) => setRenameValue(event.target.value)}
-                maxLength={100}
-                disabled={!renameStudentId || savingRename}
-                placeholder={renameStudentId ? '' : t.renameHint}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && renameStudentId && !savingRename) {
-                    event.preventDefault();
-                    void saveStudentRename();
-                  }
-                }}
-              />
-              <div className="flex justify-end">
-                <Button
-                  size="sm"
-                  onClick={() => void saveStudentRename()}
-                  disabled={!renameStudentId || savingRename}
-                >
-                  {t.save}
-                </Button>
-              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Rename dialog */}
+      <Dialog open={!!renameStudent} onOpenChange={() => setRenameStudent(null)}>
+        <DialogContent className="max-w-sm rounded-xl border-0">
+          <DialogHeader>
+            <DialogTitle className="text-base">{isDutch ? 'Leerling hernoemen' : 'Rename student'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <p className="text-sm text-muted-foreground">{renameStudent?.name}</p>
+            <Input
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && void saveRename()}
+              placeholder={isDutch ? 'Nieuwe naam…' : 'New name…'}
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setRenameStudent(null)}>
+                {isDutch ? 'Annuleren' : 'Cancel'}
+              </Button>
+              <Button size="sm" disabled={savingRename || !renameValue.trim()} onClick={() => void saveRename()}>
+                {savingRename ? (isDutch ? 'Opslaan…' : 'Saving…') : (isDutch ? 'Opslaan' : 'Save')}
+              </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }
-

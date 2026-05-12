@@ -341,9 +341,9 @@ export default function ClassDetailsPage() {
       case 'share':
         return <ShareTab classId={classId} />;
       case 'grades':
-        return isTeacher ? <GradesTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
+        return <GradesTab classId={classId} />;
       case 'schedule':
-        return isTeacher ? <ScheduleTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
+        return <ScheduleTab classId={classId} cachedData={cachedTabData['schedule']} parentLoading={!!loadingTabs['schedule']} />;
       case 'analytics':
         return isTeacher ? <ClassAnalyticsDashboard classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'logs':

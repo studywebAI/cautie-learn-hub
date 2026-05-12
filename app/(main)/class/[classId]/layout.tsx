@@ -21,7 +21,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const tabDefinitions = {
     invite: { label: isDutch ? 'Uitnodigen' : 'Invite', icon: UserRoundPlus, href: '?tab=invite' },
     group: { label: isDutch ? 'Groep' : 'Group', icon: UsersRound, href: '?tab=group' },
-    share: { label: isDutch ? 'Chat' : 'Chat', icon: MessageSquare, href: '?tab=share' },
+    share: { label: isDutch ? 'Berichten' : 'Messenger', icon: MessageSquare, href: '?tab=share' },
     attendance: { label: isDutch ? 'Aanwezigheid' : 'Attendance', icon: UserCheck, href: '?tab=attendance' },
     grades: { label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardCheck, href: '?tab=grades' },
     analytics: { label: isDutch ? 'Analyse' : 'Analytics', icon: ChartColumnIncreasing, href: '?tab=analytics' },

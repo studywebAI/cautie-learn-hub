@@ -1,187 +1,341 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Send, Paperclip, Pin, PinOff, Search } from 'lucide-react';
+import { useState, useEffect, useRef, useContext } from 'react';
+import { Send, Paperclip, Image, Upload, SmilePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { AppContext, AppContextType } from '@/contexts/app-context';
+import { CautieLoader } from '@/components/ui/cautie-loader';
+
+type Reaction = { emoji: string; count: number; reactedByMe: boolean };
 
 type Message = {
   id: string;
-  author: string;
-  role: 'teacher' | 'student';
+  authorId: string;
+  authorName: string;
+  isTeacher: boolean;
   content: string;
-  timestamp: string;
-  isPinned: boolean;
-  attachments?: { name: string; url: string }[];
+  createdAt: string;
+  channel: 'all' | 'teachers';
+  reactions: Reaction[];
 };
 
-type Audience = 'all' | 'teachers' | 'pinned';
+type Channel = 'all' | 'teachers';
+
+const EMOJI_OPTIONS = ['👍', '❤️', '😂', '🙌', '✅', '❓'];
+
+function formatTime(iso: string): string {
+  try {
+    const d = new Date(iso);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    if (isToday) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch { return ''; }
+}
+
+function getInitials(name: string) {
+  return name.split(' ').slice(0, 2).map(p => p[0]?.toUpperCase() || '').join('');
+}
+
+// Map share API row to our Message type
+function mapRow(row: any): Message {
+  const text = String(row?.text || '');
+  const authorName = String(row?.authorName || row?.authorEmail || 'User');
+  return {
+    id: String(row?.id || ''),
+    authorId: String(row?.authorId || ''),
+    authorName,
+    isTeacher: false, // share API doesn't expose role — we derive below from viewer
+    content: text,
+    createdAt: String(row?.createdAt || ''),
+    channel: row?.audience === 'teacher' ? 'teachers' : 'all',
+    reactions: [],
+  };
+}
 
 export function ChatShareTabRedesigned({ classId }: { classId: string }) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      author: 'Teacher',
-      role: 'teacher',
-      content: 'Welcome to the class. Please check the assignment brief.',
-      timestamp: '2:30 PM',
-      isPinned: true,
-      attachments: [{ name: 'Assignment_Brief.pdf', url: '#' }],
-    },
-    {
-      id: '2',
-      author: 'Alex Johnson',
-      role: 'student',
-      content: 'What is the deadline?',
-      timestamp: '2:45 PM',
-      isPinned: false,
-    },
-    {
-      id: '3',
-      author: 'Teacher',
-      role: 'teacher',
-      content: 'Deadline is Friday at 5 PM.',
-      timestamp: '2:50 PM',
-      isPinned: false,
-    },
-  ]);
+  const appContext = useContext(AppContext) as AppContextType | null;
+  const role = appContext?.role || 'student';
+  const session = appContext?.session;
+  const language = appContext?.language || 'en';
+  const isDutch = language === 'nl';
+  const isTeacher = ['teacher', 'owner', 'admin', 'creator'].includes(String(role));
 
-  const [audience, setAudience] = useState<Audience>('all');
-  const [messageText, setMessageText] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [channel, setChannel] = useState<Channel>('all');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [text, setText] = useState('');
+  const [showEmojis, setShowEmojis] = useState<string | null>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
+  const currentUserId = session?.user?.id || '';
 
-  const filtered = messages.filter(m => {
-    if (audience === 'pinned') return m.isPinned;
-    if (audience === 'teachers') return m.role === 'teacher';
-    return true;
-  }).filter(m => m.content.toLowerCase().includes(searchQuery.toLowerCase()));
+  useEffect(() => {
+    void loadMessages();
+  }, [classId, channel]);
 
-  const handleSendMessage = () => {
-    if (!messageText.trim()) return;
-    const newMessage: Message = {
-      id: String(messages.length + 1),
-      author: 'You',
-      role: 'teacher', // Assuming teacher for now
-      content: messageText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isPinned: false,
-    };
-    setMessages([...messages, newMessage]);
-    setMessageText('');
-  };
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-  const togglePin = (messageId: string) => {
-    setMessages(prev =>
-      prev.map(m =>
-        m.id === messageId ? { ...m, isPinned: !m.isPinned } : m
-      )
-    );
-  };
+  async function loadMessages() {
+    setLoading(true);
+    try {
+      // The share API uses audience=all|teacher (not channel)
+      const audience = channel === 'all' ? 'all' : 'teacher';
+      const res = await fetch(`/api/classes/${classId}/share?audience=${audience}`);
+      if (res.ok) {
+        const data = await res.json();
+        const rows = data.rows || [];
+        setMessages(rows.map(mapRow));
+      } else {
+        setMessages([]);
+      }
+    } catch {
+      setMessages([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function sendMessage() {
+    const content = text.trim();
+    if (!content || sending) return;
+    setSending(true);
+    setText('');
+    try {
+      const audience = channel === 'all' ? 'all' : 'teacher';
+      const res = await fetch(`/api/classes/${classId}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: content, audience }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(prev => [...prev, mapRow(data)]);
+      }
+    } catch { /* ignore */ }
+    finally { setSending(false); textRef.current?.focus(); }
+  }
+
+  // Reactions are optimistic-only (no backend reaction endpoint yet)
+  function toggleReaction(msgId: string, emoji: string) {
+    setShowEmojis(null);
+    setMessages(prev => prev.map(m => {
+      if (m.id !== msgId) return m;
+      const existing = m.reactions.find(r => r.emoji === emoji);
+      if (existing) {
+        return {
+          ...m,
+          reactions: m.reactions.map(r =>
+            r.emoji === emoji
+              ? { ...r, count: r.reactedByMe ? r.count - 1 : r.count + 1, reactedByMe: !r.reactedByMe }
+              : r
+          ).filter(r => r.count > 0),
+        };
+      }
+      return { ...m, reactions: [...m.reactions, { emoji, count: 1, reactedByMe: true }] };
+    }));
+  }
 
   return (
-    <div className="flex flex-col h-full p-4 space-y-3">
-      {/* Audience Filter */}
-      <div className="flex gap-1.5 flex-wrap">
-        {(['all', 'pinned', 'teachers'] as const).map(a => (
-          <button
-            key={a}
-            onClick={() => setAudience(a)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-              audience === a
-                ? 'bg-[var(--accent-brand)] text-white border-[var(--accent-brand)]'
-                : 'bg-background text-muted-foreground border-border hover:border-[var(--accent-brand)]'
-            }`}
-          >
-            {a === 'all' ? 'All Messages' : a === 'pinned' ? 'Pinned' : 'Teachers Only'}
-          </button>
-        ))}
-      </div>
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Search messages..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          className="w-full pl-9 pr-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-brand)]"
-        />
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-        {filtered.map(message => (
-          <div
-            key={message.id}
-            className={`p-3 rounded-lg border ${
-              message.role === 'teacher'
-                ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]10'
-                : 'border-border bg-background'
-            }`}
-          >
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-foreground">{message.author}</span>
-                <span className="text-xs text-muted-foreground">{message.timestamp}</span>
-              </div>
-              <button
-                onClick={() => togglePin(message.id)}
-                className="p-1 rounded hover:bg-[hsl(var(--interactive-hover))] text-muted-foreground hover:text-foreground transition-colors"
-                title={message.isPinned ? 'Unpin' : 'Pin'}
-              >
-                {message.isPinned ? (
-                  <PinOff className="h-3.5 w-3.5" />
-                ) : (
-                  <Pin className="h-3.5 w-3.5" />
-                )}
-              </button>
-            </div>
-
-            <p className="text-sm text-foreground mb-2">{message.content}</p>
-
-            {message.attachments && message.attachments.length > 0 && (
-              <div className="space-y-1 mt-2">
-                {message.attachments.map((attachment, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-2 p-2 rounded bg-background border border-border text-xs hover:bg-[hsl(var(--interactive-hover))] cursor-pointer transition-colors"
-                  >
-                    <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-muted-foreground">{attachment.name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Input Area */}
-      <div className="border-t border-border pt-3 space-y-2">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Type a message..."
-            value={messageText}
-            onChange={e => setMessageText(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
-            className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-brand)]"
-          />
-          <Button
-            size="sm"
-            onClick={handleSendMessage}
-            disabled={!messageText.trim()}
-            className="gap-2"
-          >
-            <Send className="h-4 w-4" />
-            Send
-          </Button>
+    <div className="class-shell flex h-[calc(100vh-12rem)] min-h-0 overflow-hidden rounded-xl surface-panel border border-border">
+      {/* Channel sidebar */}
+      <div className="flex w-44 flex-shrink-0 flex-col border-r border-border">
+        <div className="px-3 pb-1 pt-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          {isDutch ? 'Kanalen' : 'Channels'}
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="gap-2">
-            <Paperclip className="h-4 w-4" />
-            Attach File
-          </Button>
+
+        <button
+          type="button"
+          onClick={() => setChannel('all')}
+          className={cn(
+            'mx-1.5 mb-1 flex items-center gap-2 rounded-md px-2 py-2 text-[13px] transition-colors',
+            channel === 'all'
+              ? 'bg-[hsl(var(--accent-brand)/0.12)] font-semibold text-[var(--accent-brand)]'
+              : 'text-foreground/75 hover:bg-[hsl(var(--interactive-hover))]'
+          )}
+        >
+          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-[#e5eef8] text-[11px] font-bold text-[#3a7fc1]">A</span>
+          {isDutch ? 'Iedereen' : 'All'}
+        </button>
+
+        {isTeacher && (
+          <button
+            type="button"
+            onClick={() => setChannel('teachers')}
+            className={cn(
+              'mx-1.5 flex items-center gap-2 rounded-md px-2 py-2 text-[13px] transition-colors',
+              channel === 'teachers'
+                ? 'bg-[hsl(var(--accent-brand)/0.12)] font-semibold text-[var(--accent-brand)]'
+                : 'text-foreground/75 hover:bg-[hsl(var(--interactive-hover))]'
+            )}
+          >
+            <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-[hsl(var(--accent-brand)/0.1)] text-[11px] font-bold text-[var(--accent-brand)]">T</span>
+            {isDutch ? 'Docenten' : 'Teachers'}
+          </button>
+        )}
+      </div>
+
+      {/* Thread area */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Thread header */}
+        <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+          <p className="text-[13px] font-semibold">
+            {channel === 'all' ? (isDutch ? 'Iedereen' : 'All') : (isDutch ? 'Docenten' : 'Teachers')}
+          </p>
+          <button
+            type="button"
+            onClick={() => void loadMessages()}
+            className="text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            {isDutch ? 'Vernieuwen' : 'Refresh'}
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
+          {loading ? (
+            <div className="flex flex-1 items-center justify-center">
+              <CautieLoader size="sm" label="" sublabel="" />
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-1 items-center justify-center text-center">
+              <p className="text-sm text-muted-foreground">
+                {channel === 'all'
+                  ? (isDutch ? 'Nog geen berichten. Stuur het eerste!' : 'No messages yet. Send the first one!')
+                  : (isDutch ? 'Nog geen berichten van docenten.' : 'No teacher messages yet.')}
+              </p>
+            </div>
+          ) : (
+            messages.map(msg => {
+              const isOwn = msg.authorId === currentUserId;
+              return (
+                <div key={msg.id} className={cn('group flex gap-2.5', isOwn && 'flex-row-reverse')}>
+                  {/* Avatar */}
+                  <div className={cn(
+                    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
+                    isOwn
+                      ? 'bg-[hsl(var(--accent-brand)/0.12)] text-[var(--accent-brand)] ring-2 ring-[var(--accent-brand)]'
+                      : 'bg-[#e5eef8] text-[#3a7fc1] ring-2 ring-[#5b9bd5]'
+                  )}>
+                    {getInitials(msg.authorName)}
+                  </div>
+
+                  {/* Bubble */}
+                  <div className={cn('min-w-0 flex-1', isOwn && 'flex flex-col items-end')}>
+                    <p className="mb-1 text-[11px] text-muted-foreground">
+                      <span className="font-semibold text-foreground/80">{isOwn ? (isDutch ? 'Jij' : 'You') : msg.authorName}</span>
+                      {' · '}
+                      {formatTime(msg.createdAt)}
+                    </p>
+                    <div className={cn(
+                      'max-w-[80%] rounded-xl px-3 py-2 text-[13px] leading-relaxed',
+                      isOwn
+                        ? 'bg-[var(--accent-brand)] text-white'
+                        : 'bg-[hsl(var(--surface-2))]'
+                    )}>
+                      {msg.content}
+                    </div>
+
+                    {/* Reactions row */}
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      {msg.reactions.map(r => (
+                        <button
+                          key={r.emoji}
+                          type="button"
+                          onClick={() => toggleReaction(msg.id, r.emoji)}
+                          className={cn(
+                            'rounded-full border px-2 py-0.5 text-[12px] transition-colors',
+                            r.reactedByMe
+                              ? 'border-[var(--accent-brand)] bg-[hsl(var(--accent-brand)/0.08)]'
+                              : 'border-border bg-[hsl(var(--surface-1))] hover:border-[var(--accent-brand)]'
+                          )}
+                        >
+                          {r.emoji} {r.count}
+                        </button>
+                      ))}
+
+                      {/* Add reaction */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setShowEmojis(showEmojis === msg.id ? null : msg.id)}
+                          className="invisible rounded-full border border-border bg-[hsl(var(--surface-1))] px-1.5 py-0.5 text-[11px] text-muted-foreground transition-all hover:border-[var(--accent-brand)] group-hover:visible"
+                        >
+                          <SmilePlus className="h-3 w-3" />
+                        </button>
+                        {showEmojis === msg.id && (
+                          <div className="absolute bottom-full mb-1 left-0 z-10 flex gap-1 rounded-lg border border-border bg-white p-1.5 shadow-md dark:bg-[hsl(var(--surface-2))]">
+                            {EMOJI_OPTIONS.map(e => (
+                              <button
+                                key={e}
+                                type="button"
+                                onClick={() => toggleReaction(msg.id, e)}
+                                className="rounded px-1 py-0.5 text-[16px] hover:bg-[hsl(var(--interactive-hover))]"
+                              >
+                                {e}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={endRef} />
+        </div>
+
+        {/* Composer */}
+        <div className="border-t border-border p-3">
+          <div className="overflow-hidden rounded-xl border border-border bg-[hsl(var(--surface-1))]">
+            <textarea
+              ref={textRef}
+              value={text}
+              onChange={e => setText(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  void sendMessage();
+                }
+              }}
+              placeholder={channel === 'all'
+                ? (isDutch ? 'Bericht sturen naar iedereen…' : 'Send a message to All…')
+                : (isDutch ? 'Bericht naar docenten…' : 'Message teachers…')}
+              rows={2}
+              className="w-full resize-none bg-transparent px-3 pt-2.5 text-[13px] outline-none placeholder:text-muted-foreground/60"
+            />
+            <div className="flex items-center gap-1 border-t border-border bg-[hsl(var(--surface-2))] px-2 py-1.5">
+              {/* File / image attach buttons — functional hooks ready for upload API */}
+              <button type="button" title={isDutch ? 'Bestand toevoegen' : 'Attach file'}
+                className="flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] text-muted-foreground hover:border-[var(--accent-brand)] hover:text-[var(--accent-brand)] dark:bg-[hsl(var(--surface-3))]">
+                <Paperclip className="h-3 w-3" /> {isDutch ? 'Bestand' : 'File'}
+              </button>
+              <button type="button" title={isDutch ? 'Afbeelding toevoegen' : 'Attach image'}
+                className="flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] text-muted-foreground hover:border-[var(--accent-brand)] hover:text-[var(--accent-brand)] dark:bg-[hsl(var(--surface-3))]">
+                <Image className="h-3 w-3" /> {isDutch ? 'Afbeelding' : 'Image'}
+              </button>
+              <button type="button" title="Import from OneDrive / Google Drive"
+                className="flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] text-muted-foreground hover:border-[var(--accent-brand)] hover:text-[var(--accent-brand)] dark:bg-[hsl(var(--surface-3))]">
+                <Upload className="h-3 w-3" /> Import
+              </button>
+              <span className="pl-1 text-[10px] text-muted-foreground/50">OneDrive · Drive</span>
+              <Button
+                size="sm"
+                disabled={!text.trim() || sending}
+                onClick={() => void sendMessage()}
+                className="ml-auto h-7 gap-1.5 px-3 text-[12px]"
+              >
+                <Send className="h-3 w-3" />
+                {isDutch ? 'Stuur' : 'Send'}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
