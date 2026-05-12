@@ -1125,7 +1125,7 @@ export function AppSidebar() {
         </div>
 
         {/* Full drawer sidebar (when hamburger is clicked) */}
-        <Sidebar className="w-[min(18rem,calc(100vw-2.5rem))] overflow-hidden">
+        <Sidebar className="overflow-hidden">
           <SidebarContent className="flex-1 px-2 py-2">
             {renderTeacherClassSwitcher()}
             {visibleMainItems.length > 0 && (
