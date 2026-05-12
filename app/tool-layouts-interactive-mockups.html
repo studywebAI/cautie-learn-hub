@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cautie Tools - Interactive Mockups</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: white;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 200px;
+            background: #7f8962;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 10px;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-bottom: 5px;
+            transition: background 0.2s;
+        }
+
+        .sidebar a:hover { background: rgba(255,255,255,0.2); }
+        .sidebar a.active { background: rgba(255,255,255,0.3); font-weight: 600; }
+
+        /* MAIN */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h2 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .header-meta {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .content {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        /* MOCKUP VIEWS */
+        .mockup-view { display: none; }
+        .mockup-view.active { display: flex; }
+
+        /* TOOL LAYOUT STYLES */
+        .tool-layout {
+            display: flex;
+            height: 100%;
+            gap: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .tool-sidebar {
+            width: 280px;
+            background: #fafafa;
+            border-right: 1px solid #e0e0e0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tool-sidebar-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 13px;
+        }
+
+        .tool-sidebar-item:hover { background: #f0f0f0; }
+        .tool-sidebar-item.active {
+            background: #e8ede0;
+            border-left: 3px solid #7f8962;
+            padding-left: 12px;
+            font-weight: 500;
+        }
+
+        .tool-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tool-toolbar {
+            background: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .tool-button {
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .tool-button:hover { background: #f5f5f5; border-color: #7f8962; }
+        .tool-button.primary {
+            background: #7f8962;
+            color: white;
+            border-color: #7f8962;
+        }
+
+        .tool-editor {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .tool-input-area {
+            background: #f9f9f9;
+            border-top: 1px solid #e0e0e0;
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .tool-input-area input, .tool-input-area textarea {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        /* CANVAS LAYOUTS */
+        .canvas-view {
+            position: relative;
+            background: white;
+            border: 1px solid #e0e0e0;
+        }
+
+        .canvas-node {
+            position: absolute;
+            width: 100px;
+            height: 60px;
+            background: #7f8962;
+            color: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            text-align: center;
+            padding: 8px;
+            cursor: move;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* FLASHCARD STACK */
+        .card-stack {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .flashcard {
+            width: 400px;
+            height: 250px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            font-size: 24px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* GRID VIEW */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .grid-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .grid-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #7f8962;
+        }
+
+        /* QUIZ */
+        .quiz-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .quiz-progress {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .quiz-question {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-question-text {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quiz-option {
+            padding: 15px;
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-option:hover {
+            border-color: #7f8962;
+            background: #f5f5f5;
+        }
+
+        .quiz-option.selected {
+            border-color: #7f8962;
+            background: #e8ede0;
+        }
+
+        /* TIMELINE */
+        .timeline-container {
+            position: relative;
+            padding: 40px 0;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #7f8962;
+        }
+
+        .timeline-item {
+            margin-bottom: 30px;
+            width: 45%;
+        }
+
+        .timeline-item:nth-child(odd) {
+            margin-left: 0;
+            text-align: right;
+            padding-right: 50px;
+        }
+
+        .timeline-item:nth-child(even) {
+            margin-left: 55%;
+            padding-left: 50px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #7f8962;
+            border: 3px solid white;
+            border-radius: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 0;
+        }
+
+        .timeline-content {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* AGENDA VIEW */
+        .agenda-container {
+            max-width: 900px;
+        }
+
+        .agenda-section {
+            margin-bottom: 25px;
+        }
+
+        .agenda-section-header {
+            background: #7f8962;
+            color: white;
+            padding: 10px 15px;
+            font-weight: 600;
+            font-size: 12px;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .agenda-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            background: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .agenda-item:hover { background: #fafafa; }
+        .agenda-item:last-child { border-bottom: none; border-radius: 0 0 4px 4px; }
+
+        .agenda-time {
+            min-width: 50px;
+            font-weight: 600;
+            color: #7f8962;
+            font-size: 14px;
+        }
+
+        .agenda-content {
+            flex: 1;
+        }
+
+        .agenda-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #222;
+            margin-bottom: 4px;
+        }
+
+        .agenda-meta {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .agenda-accent {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: #7f8962;
+            border-radius: 2px;
+        }
+
+        /* SETUP WIZARD */
+        .wizard-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .wizard-progress {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .wizard-step-indicator {
+            flex: 1;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .wizard-step-indicator.complete {
+            background: #7f8962;
+        }
+
+        .wizard-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .wizard-step-number {
+            display: inline-flex;
+            width: 40px;
+            height: 40px;
+            background: #7f8962;
+            color: white;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .wizard-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .wizard-description {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #7f8962;
+            box-shadow: 0 0 0 3px rgba(127, 137, 98, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            accent-color: #7f8962;
+        }
+
+        .wizard-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #7f8962;
+            color: white;
+        }
+
+        .btn-primary:hover { background: #6b7551; }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover { background: #e8e8e8; }
+
+        /* DETAIL PANEL */
+        .detail-panel {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 350px;
+            height: 100vh;
+            background: white;
+            border-left: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+        }
+
+        .detail-close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            width: 24px;
+            height: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #888;
+        }
+
+        .detail-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            padding-right: 30px;
+        }
+
+        .detail-meta {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .detail-content {
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .detail-button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .detail-button.primary {
+            background: #7f8962;
+            color: white;
+        }
+
+        .detail-button.secondary {
+            background: white;
+            color: #7f8962;
+            border: 1px solid #7f8962;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <h3>Tools</h3>
+            <a href="#" data-tool="notes-vertical" class="tool-link active">Notes: Vertical Split</a>
+            <a href="#" data-tool="notes-canvas" class="tool-link">Notes: Canvas</a>
+
+            <a href="#" data-tool="flashcards-stack" class="tool-link">Flashcards: Stack</a>
+            <a href="#" data-tool="flashcards-grid" class="tool-link">Flashcards: Grid</a>
+
+            <a href="#" data-tool="quiz-focus" class="tool-link">Quiz: Focus</a>
+            <a href="#" data-tool="quiz-detail" class="tool-link">Quiz: Detail</a>
+
+            <a href="#" data-tool="mindmap-radial" class="tool-link">Mindmap: Radial</a>
+            <a href="#" data-tool="mindmap-outline" class="tool-link">Mindmap: Outline</a>
+
+            <a href="#" data-tool="conceptmap-node" class="tool-link">Concept Map: Nodes</a>
+            <a href="#" data-tool="conceptmap-table" class="tool-link">Concept Map: Table</a>
+
+            <a href="#" data-tool="timeline-vertical" class="tool-link">Timeline: Vertical</a>
+            <a href="#" data-tool="timeline-horizontal" class="tool-link">Timeline: Horizontal</a>
+
+            <a href="#" data-tool="annotate-doc" class="tool-link">Annotate: Doc Center</a>
+            <a href="#" data-tool="annotate-full" class="tool-link">Annotate: Full Screen</a>
+
+            <a href="#" data-tool="summary-breakdown" class="tool-link">Summary: Breakdown</a>
+
+            <h3 style="margin-top: 30px;">Other</h3>
+            <a href="#" data-tool="agenda-view" class="tool-link">Agenda/List View</a>
+            <a href="#" data-tool="setup-wizard" class="tool-link">Setup Wizard</a>
+        </div>
+
+        <div class="main">
+            <div class="header">
+                <div>
+                    <h2 id="tool-title">Notes: Vertical Split Layout</h2>
+                    <div class="header-meta" id="tool-description">Left sidebar for notes list, right editor panel</div>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- NOTES VERTICAL -->
+                <div class="mockup-view active" id="notes-vertical">
+                    <div class="tool-layout">
+                        <div class="tool-sidebar">
+                            <div style="padding: 12px 15px; background: #f9f9f9; border-bottom: 1px solid #e0e0e0; font-weight: 600; font-size: 12px;">My Notes</div>
+                            <div class="tool-sidebar-item active">Chapter 1: Introduction</div>
+                            <div class="tool-sidebar-item">Chapter 2: Concepts</div>
+                            <div class="tool-sidebar-item">Chapter 3: Applications</div>
+                            <div class="tool-sidebar-item">Study Questions</div>
+                        </div>
+                        <div class="tool-content">
+                            <div class="tool-toolbar">
+                                <button class="tool-button">📝 B</button>
+                                <button class="tool-button">📝 I</button>
+                                <button class="tool-button">📝 U</button>
+                                <button class="tool-button">• List</button>
+                                <button class="tool-button primary">✨ AI Summary</button>
+                                <button class="tool-button primary">❓ Extract Q's</button>
+                            </div>
+                            <div class="tool-editor">
+                                <h3 style="margin-bottom: 15px;">Chapter 1: Introduction</h3>
+                                <p style="margin-bottom: 12px; line-height: 1.6;">
+                                    The fundamental concept here is that <strong>photosynthesis converts light energy</strong> into chemical energy. This process occurs in chloroplasts and involves two main stages.
+                                </p>
+                                <p style="margin-bottom: 12px; line-height: 1.6;">
+                                    <strong>Key points:</strong>
+                                </p>
+                                <ul style="margin-left: 20px; margin-bottom: 12px;">
+                                    <li>Light reactions happen in thylakoids</li>
+                                    <li>Calvin cycle happens in stroma</li>
+                                    <li>Produces glucose from CO₂ and H₂O</li>
+                                </ul>
+                            </div>
+                            <div class="tool-input-area">
+                                <textarea placeholder="Add notes..."></textarea>
+                                <button class="tool-button primary" style="flex: 0 0 auto;">→</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOTES CANVAS -->
+                <div class="mockup-view" id="notes-canvas">
+                    <div class="tool-layout">
+                        <div class="tool-sidebar" style="width: 200px;">
+                            <div style="padding: 12px 15px; background: #f9f9f9; border-bottom: 1px solid #e0e0e0; font-weight: 600; font-size: 12px;">Canvas</div>
+                            <div class="tool-sidebar-item active">Untitled</div>
+                            <div class="tool-sidebar-item">Physics Notes</div>
+                            <div class="tool-sidebar-item">Study Guide</div>
+                        </div>
+                        <div class="tool-content">
+                            <div class="tool-toolbar">
+                                <button class="tool-button">+ Add Text</button>
+                                <button class="tool-button">+ Add Image</button>
+                                <button class="tool-button primary">✨ Organize</button>
+                            </div>
+                            <div class="canvas-view" style="flex: 1;">
+                                <div class="canvas-node" style="top: 20%; left: 10%;">Photosynthesis</div>
+                                <div class="canvas-node" style="top: 20%; right: 10%; background: #c5956e;">Light Reactions</div>
+                                <div class="canvas-node" style="bottom: 20%; right: 10%; background: #7f8962;">Calvin Cycle</div>
+                                <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                                    <line x1="30%" y1="25%" x2="60%" y2="25%" stroke="#ddd" stroke-width="2" />
+                                    <line x1="75%" y1="30%" x2="75%" y2="60%" stroke="#ddd" stroke-width="2" />
+                                </svg>
+                            </div>
+                            <div class="tool-input-area">
+                                <input type="text" placeholder="Click canvas to add notes...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FLASHCARDS STACK -->
+                <div class="mockup-view" id="flashcards-stack">
+                    <div class="tool-layout" style="flex-direction: column;">
+                        <div class="tool-toolbar">
+                            <button class="tool-button">Deck: Biology</button>
+                            <button class="tool-button">🔀 Shuffle</button>
+                            <button class="tool-button">⚙️ Settings</button>
+                            <span style="margin-left: auto; font-size: 12px; color: #888;">3 / 15</span>
+                        </div>
+                        <div class="card-stack">
+                            <div class="flashcard">
+                                <div>What is photosynthesis?</div>
+                            </div>
+                        </div>
+                        <div class="tool-input-area" style="justify-content: center; gap: 20px;">
+                            <button class="tool-button">← Wrong (Easy)</button>
+                            <button class="tool-button">Again (Hard)</button>
+                            <button class="tool-button primary">Correct →</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FLASHCARDS GRID -->
+                <div class="mockup-view" id="flashcards-grid">
+                    <div class="tool-layout" style="flex-direction: column;">
+                        <div class="tool-toolbar">
+                            <input type="text" placeholder="Search cards..." style="flex: 1; max-width: 300px;">
+                            <button class="tool-button">+ Add Card</button>
+                            <button class="tool-button primary">Edit Mode</button>
+                        </div>
+                        <div style="flex: 1; overflow-y: auto;">
+                            <div class="grid-container">
+                                <div class="grid-item"><strong>Q:</strong> What is photosynthesis?<br><strong>A:</strong> Energy conversion...</div>
+                                <div class="grid-item"><strong>Q:</strong> Two stages?<br><strong>A:</strong> Light & Calvin...</div>
+                                <div class="grid-item"><strong>Q:</strong> Where do reactions happen?<br><strong>A:</strong> Chloroplasts...</div>
+                                <div class="grid-item"><strong>Q:</strong> Main product?<br><strong>A:</strong> Glucose...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUIZ FOCUS -->
+                <div class="mockup-view" id="quiz-focus">
+                    <div class="tool-layout" style="flex-direction: column;">
+                        <div class="tool-toolbar">
+                            <span style="font-size: 12px; color: #888;">Question 3 / 10</span>
+                            <span style="margin-left: auto; font-size: 12px; color: #7f8962; font-weight: 600;">⏱️ 2:30</span>
+                        </div>
+                        <div class="quiz-container" style="flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 20px;">
+                            <div class="quiz-question">
+                                <div class="quiz-question-text">
+                                    Which process converts light energy into chemical energy?
+                                </div>
+                                <div class="quiz-options">
+                                    <div class="quiz-option">A) Respiration</div>
+                                    <div class="quiz-option">B) Photosynthesis</div>
+                                    <div class="quiz-option">C) Fermentation</div>
+                                    <div class="quiz-option">D) Combustion</div>
+                                </div>
+                            </div>
+                            <div style="text-align: center; margin-top: 30px;">
+                                <button class="tool-button primary" style="max-width: 200px;">Confirm Answer</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUIZ DETAIL -->
+                <div class="mockup-view" id="quiz-detail">
+                    <div class="tool-layout">
+                        <div class="tool-sidebar">
+                            <div style="padding: 12px 15px; background: #f9f9f9; border-bottom: 1px solid #e0e0e0; font-weight: 600; font-size: 12px;">Questions (10)</div>
+                            <div class="tool-sidebar-item" style="background: #90c890; color: white;">Q1 ✓</div>
+                            <div class="tool-sidebar-item" style="background: #d9534f; color: white;">Q2 ✗</div>
+                            <div class="tool-sidebar-item active">Q3</div>
+                            <div class="tool-sidebar-item">Q4</div>
+                        </div>
+                        <div class="tool-content">
+                            <div class="tool-editor">
+                                <div style="margin-bottom: 25px;">
+                                    <strong style="font-size: 14px;">Q3: What are the two main stages of photosynthesis?</strong>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <div style="font-size: 12px; color: #888; margin-bottom: 8px;">Your answer:</div>
+                                    <div style="padding: 12px; background: #e8ede0; border-radius: 4px; font-size: 13px;">Light reactions and Calvin cycle</div>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <div style="font-size: 12px; color: #888; margin-bottom: 8px;">Explanation:</div>
+                                    <div style="padding: 12px; background: #f9f9f9; border-radius: 4px; font-size: 13px; border-left: 3px solid #7f8962;">
+                                        Correct! The light reactions occur in the thylakoid membranes and the Calvin cycle occurs in the stroma. This is a fundamental concept in photosynthesis.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MINDMAP RADIAL -->
+                <div class="mockup-view" id="mindmap-radial">
+                    <div class="tool-layout" style="flex-direction: column;">
+                        <div class="tool-toolbar">
+                            <button class="tool-button">+ Add Branch</button>
+                            <select class="form-select" style="width: auto; flex: none;">
+                                <option>Radial</option>
+                                <option>Outline</option>
+                                <option>Organic</option>
+                            </select>
+                            <button class="tool-button primary">Export</button>
+                        </div>
+                        <div style="flex: 1; display: flex; align-items: center; justify-content: center; position: relative;">
+                            <div class="canvas-node" style="position: static; margin: 0;">Photosynthesis</div>
+                            <svg style="position: absolute; width: 80%; height: 80%;">
+                                <circle cx="50%" cy="50%" r="200" fill="none" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="5,5"/>
+                                <line x1="50%" y1="50%" x2="80%" y2="30%" stroke="#ddd" stroke-width="2" />
+                                <line x1="50%" y1="50%" x2="70%" y2="80%" stroke="#ddd" stroke-width="2" />
+                                <line x1="50%" y1="50%" x2="20%" y2="70%" stroke="#ddd" stroke-width="2" />
+                            </svg>
+                            <div class="canvas-node" style="position: absolute; right: 10%; top: 20%; width: 80px; height: 50px; font-size: 11px;">Light Reactions</div>
+                            <div class="canvas-node" style="position: absolute; right: 15%; bottom: 15%; width: 80px; height: 50px; font-size: 11px;">Calvin Cycle</div>
+                            <div class="canvas-node" style="position: absolute; left: 10%; bottom: 20%; width: 80px; height: 50px; font-size: 11px;">Chloroplasts</div>
+                        </div>
+                        <div class="tool-input-area">
+                            <input type="text" placeholder="Add new branch...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MINDMAP OUTLINE -->
+                <div class="mockup-view" id="mindmap-outline">
+                    <div class="tool-layout" style="flex-direction: column;">
+                        <div class="tool-toolbar">
+                            <button class="tool-button">+ Add Item</button>
+                            <button class="tool-button">Expand All</button>
+                            <button class="tool-button">Collapse All</button>
+                        </div>
+                        <div class="tool-editor">
+                            <div style="font-size: 13px; line-height: 2;">
+                                <div><strong>▼ Photosynthesis</strong></div>
+                                <div style="margin-left: 20px;">
+                                    <div><strong>▼ Light Reactions</strong></div>
+                                    <div style="margin-left: 20px; color: #888;">
+                                        <div>• Occurs in thylakoids</div>
+                                        <div>• Produces ATP & NADPH</div>
+                                        <div>• Releases oxygen</div>
+                                    </div>
+                                </div>
+                                <div style="margin-left: 20px;">
+                                    <div><strong>▼ Calvin Cycle</strong></div>
+                                    <div style="margin-left: 20px; color: #888;">
+                                        <div>• Occurs in stroma</div>
+                                        <div>• Uses ATP & NADPH</div>
+                                        <div>• Produces glucose</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tool-input-area">
+                            <input type="text" placeholder="Add item...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONCEPT MAP -->
+                <div class="mockup-view" id="conceptmap-node">
+                    <div class="tool-layout" style="flex-direction: column;">
+                        <div class="tool-toolbar">
+                            <button class="tool-button">+ Node</button>
+                            <button class="tool-button">+ Link</button>
+                            <select style="width: auto; flex: none; padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option>Relationship: --</option>
+                                <option>causes</option>
+                                <option>produces</option>
+                                <option>related to</option>
+                            </select>
+                        </div>
+                        <div class="canvas-view" style="flex: 1;">
+                            <div class="canvas-node" style="top: 20%; left: 10%;">Light</div>
+                            <div class="canvas-node" style="top: 20%; right: 10%;">Photosynthesis</div>
+                            <div class="canvas-node" style="bottom: 20%; left: 20%;">ATP</div>
+                            <div class="canvas-node" style="bottom: 20%; right: 20%; background: #c5956e;">Glucose</div>
+                            <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                                <line x1="30%" y1="25%" x2="60%" y2="25%" stroke="#ddd" stroke-width="2" />
+                                <text x="35%" y="20%" font-size="10" fill="#888">causes</text>
+                                <line x1="65%" y1="30%" x2="35%" y2="70%" stroke="#ddd" stroke-width="2" />
+                                <line x1="70%" y1="30%" x2="70%" y2="70%" stroke="#ddd" stroke-width="2" />
+                                <text x="72%" y="50%" font-size="10" fill="#888">produces</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIMELINE VERTICAL -->
+                <div class="mockup-view" id="timeline-vertical">
+                    <div class="tool-layout" style="flex-direction: column;">
+                        <div class="tool-toolbar">
+                            <button class="tool-button">+ Add Event</button>
+                            <select style="width: auto; flex: none; padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option>All Time</option>
+                                <option>By Century</option>
+                                <option>By Decade</option>
+                            </select>
+                        </div>
+                        <div class="tool-editor">
+                            <div class="timeline-container">
+                                <div class="timeline-line"></div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-content">
+                                        <strong>1622 - Discovery of Photosynthesis</strong>
+                                        <div style="font-size: 12px; color: #888; margin-top: 5px;">First observations by Jan Baptist van Helmont</div>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-content">
+                                        <strong>1776 - Role of Light</strong>
+                                        <div style="font-size: 12px; color: #888; margin-top: 5px;">Jan Ingenhousz discovers light requirement</div>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-content">
+                                        <strong>1905 - Light vs Dark Reactions</strong>
+                                        <div style="font-size: 12px; color: #888; margin-top: 5px;">Frederick Blackman distinguishes two stages</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AGENDA VIEW -->
+                <div class="mockup-view" id="agenda-view">
+                    <div class="agenda-container">
+                        <div class="agenda-section">
+                            <div class="agenda-section-header">TODAY</div>
+                            <div class="agenda-item">
+                                <div class="agenda-time">16m</div>
+                                <div class="agenda-content" style="position: relative;">
+                                    <div class="agenda-accent"></div>
+                                    <div class="agenda-title" style="margin-left: 12px;">Notes refinement: a (day 2)</div>
+                                    <div class="agenda-meta" style="margin-left: 12px;">Studyset • Tue, 12 May</div>
+                                </div>
+                            </div>
+                            <div class="agenda-item">
+                                <div class="agenda-time">11m</div>
+                                <div class="agenda-content" style="position: relative;">
+                                    <div class="agenda-accent"></div>
+                                    <div class="agenda-title" style="margin-left: 12px;">Checkpoint quiz: a</div>
+                                    <div class="agenda-meta" style="margin-left: 12px;">Studyset • Tue, 12 May</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="agenda-section">
+                            <div class="agenda-section-header" style="background: #f5f5f5; color: #666;">TOMORROW</div>
+                            <div class="agenda-item">
+                                <div class="agenda-time">18m</div>
+                                <div class="agenda-content" style="position: relative;">
+                                    <div class="agenda-accent"></div>
+                                    <div class="agenda-title" style="margin-left: 12px;">Notes refinement: a (day 3)</div>
+                                    <div class="agenda-meta" style="margin-left: 12px;">Studyset • Wed, 13 May</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="agenda-section">
+                            <div class="agenda-section-header" style="background: #f5f5f5; color: #666;">THIS WEEK</div>
+                            <div class="agenda-item">
+                                <div class="agenda-time">18m</div>
+                                <div class="agenda-content" style="position: relative;">
+                                    <div class="agenda-accent"></div>
+                                    <div class="agenda-title" style="margin-left: 12px;">Notes refinement: a (day 4)</div>
+                                    <div class="agenda-meta" style="margin-left: 12px;">Studyset • Thu, 14 May</div>
+                                </div>
+                            </div>
+                            <div class="agenda-item">
+                                <div class="agenda-time">18m</div>
+                                <div class="agenda-content" style="position: relative;">
+                                    <div class="agenda-accent"></div>
+                                    <div class="agenda-title" style="margin-left: 12px;">Notes refinement: a (day 5)</div>
+                                    <div class="agenda-meta" style="margin-left: 12px;">Studyset • Fri, 15 May</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SETUP WIZARD -->
+                <div class="mockup-view" id="setup-wizard">
+                    <div class="wizard-container">
+                        <div class="wizard-progress">
+                            <div class="wizard-step-indicator complete"></div>
+                            <div class="wizard-step-indicator complete"></div>
+                            <div class="wizard-step-indicator active"></div>
+                            <div class="wizard-step-indicator"></div>
+                            <div class="wizard-step-indicator"></div>
+                            <div class="wizard-step-indicator"></div>
+                        </div>
+                        <div class="wizard-content">
+                            <div class="wizard-step-number">3</div>
+                            <div class="wizard-title">Create First Material</div>
+                            <div class="wizard-description">Start with what you have. We'll organize it for you.</div>
+
+                            <div class="form-group">
+                                <div class="wizard-description" style="margin-top: 20px; margin-bottom: 15px;">Choose how you want to start:</div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <button class="tool-button" style="padding: 15px; text-align: left; cursor: pointer; border: 2px solid #ddd; transition: all 0.2s;">
+                                        📤 <strong>Upload PDF</strong>
+                                        <div style="font-size: 11px; color: #888; margin-top: 5px;">Or paste text</div>
+                                    </button>
+                                    <button class="tool-button" style="padding: 15px; text-align: left; cursor: pointer; border: 2px solid #7f8962;">
+                                        ✏️ <strong>Create Empty</strong>
+                                        <div style="font-size: 11px; color: #888; margin-top: 5px;">Start blank</div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 30px;">
+                                <label class="form-label">Or paste your notes:</label>
+                                <textarea class="form-textarea" placeholder="Paste notes, text, or study material here..."></textarea>
+                            </div>
+
+                            <div class="wizard-buttons">
+                                <button class="btn btn-secondary">← Back</button>
+                                <button class="btn btn-primary">Next →</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const toolLinks = document.querySelectorAll('.tool-link');
+        const views = document.querySelectorAll('.mockup-view');
+        const titleEl = document.getElementById('tool-title');
+        const descriptionEl = document.getElementById('tool-description');
+
+        const toolInfo = {
+            'notes-vertical': {
+                title: 'Notes: Vertical Split',
+                description: 'Left sidebar for notes list, right editor panel. Classic layout like OneNote/Notion.',
+            },
+            'notes-canvas': {
+                title: 'Notes: Canvas View',
+                description: 'Infinite canvas for spatial note-taking. Visual learners love this.',
+            },
+            'flashcards-stack': {
+                title: 'Flashcards: Stack',
+                description: 'Immersive card review. One card at a time, focus learning.',
+            },
+            'flashcards-grid': {
+                title: 'Flashcards: Grid',
+                description: 'Manage and bulk edit cards. Good for large decks.',
+            },
+            'quiz-focus': {
+                title: 'Quiz: Focus',
+                description: 'Question-centered. Minimizes distractions.',
+            },
+            'quiz-detail': {
+                title: 'Quiz: Detail View',
+                description: 'See all questions + detailed answers after taking quiz.',
+            },
+            'mindmap-radial': {
+                title: 'Mindmap: Radial',
+                description: 'Center concept with branches radiating outward.',
+            },
+            'mindmap-outline': {
+                title: 'Mindmap: Outline',
+                description: 'Hierarchical outline with collapse/expand.',
+            },
+            'conceptmap-node': {
+                title: 'Concept Map: Nodes & Links',
+                description: 'Show relationships between concepts with labeled connections.',
+            },
+            'conceptmap-table': {
+                title: 'Concept Map: Table',
+                description: 'Tabular view of concepts and relationships.',
+            },
+            'timeline-vertical': {
+                title: 'Timeline: Vertical',
+                description: 'Events aligned to central vertical line. Alternating left/right.',
+            },
+            'timeline-horizontal': {
+                title: 'Timeline: Horizontal',
+                description: 'Events along horizontal timeline. Good for dense timelines.',
+            },
+            'annotate-doc': {
+                title: 'Annotate: Document Center',
+                description: 'PDF/doc in center with thumbnails/notes on sides.',
+            },
+            'annotate-full': {
+                title: 'Annotate: Full Screen',
+                description: 'Document full-width with note panel on right.',
+            },
+            'summary-breakdown': {
+                title: 'Summary: Topic Breakdown',
+                description: 'Hierarchical sections with expandable content blocks.',
+            },
+            'agenda-view': {
+                title: 'Improved Agenda/List View',
+                description: 'Time-grouped (Today/Tomorrow/This Week), better cards, structured detail panel.',
+            },
+            'setup-wizard': {
+                title: 'Setup Wizard - Step 3',
+                description: '6-step progressive onboarding. This is step 3: Create first material.',
+            },
+        };
+
+        toolLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const toolId = link.getAttribute('data-tool');
+
+                // Update active states
+                toolLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                views.forEach(v => v.classList.remove('active'));
+                document.getElementById(toolId).classList.add('active');
+
+                // Update header
+                const info = toolInfo[toolId];
+                titleEl.textContent = info.title;
+                descriptionEl.textContent = info.description;
+
+                // Scroll content to top
+                document.querySelector('.content').scrollTop = 0;
+            });
+        });
+
+        // Quiz interactions
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>

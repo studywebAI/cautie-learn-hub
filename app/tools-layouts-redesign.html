@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cautie Learn Hub - Tools Layout Redesign & Setup Wizard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            color: #222;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        h1 { font-size: 28px; margin: 30px 0 10px; color: #7f8962; font-weight: 600; }
+        h2 { font-size: 20px; margin: 25px 0 10px; color: #333; font-weight: 600; }
+        h3 { font-size: 16px; margin: 15px 0 8px; color: #555; font-weight: 500; }
+        p { margin: 10px 0; color: #444; }
+
+        .research-summary {
+            background: #fff9e6;
+            border-left: 4px solid #7f8962;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .section {
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .mockup-card {
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .mockup-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        .mockup-header {
+            background: linear-gradient(135deg, #7f8962 0%, #6b7551 100%);
+            color: white;
+            padding: 15px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .mockup-preview {
+            height: 280px;
+            background: #fafafa;
+            padding: 15px;
+            font-size: 12px;
+            overflow: hidden;
+            border: 1px dashed #ddd;
+            position: relative;
+        }
+
+        .tool-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 10px;
+        }
+
+        .header-area { background: #e8ede0; padding: 8px; border-radius: 3px; height: 35px; }
+        .sidebar { background: #f0f0f0; width: 100%; height: 25px; border-radius: 3px; }
+        .content-area { flex: 1; background: #fff; border: 1px solid #ddd; border-radius: 3px; padding: 8px; }
+        .input-area { background: #f5f5f5; padding: 8px; border-radius: 3px; height: 30px; }
+
+        .mockup-description {
+            padding: 15px;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .mockup-description strong { color: #7f8962; }
+        .mockup-description em { color: #666; }
+
+        .feature-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .feature-list li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #7f8962;
+            font-weight: bold;
+        }
+
+        .agenda-mockup {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .agenda-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            align-items: flex-start;
+        }
+
+        .agenda-item:last-child { border-bottom: none; }
+        .agenda-time { color: #999; font-size: 12px; min-width: 45px; font-weight: 500; }
+        .agenda-content { flex: 1; }
+        .agenda-title { font-weight: 600; font-size: 13px; color: #222; }
+        .agenda-meta { font-size: 11px; color: #888; margin-top: 2px; }
+        .agenda-accent { height: 3px; background: #7f8962; margin-bottom: 8px; }
+
+        .wizard-step {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .wizard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .wizard-step-number {
+            display: inline-flex;
+            width: 32px;
+            height: 32px;
+            background: #7f8962;
+            color: white;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #7f8962;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .comparison-item {
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .comparison-item.good { background: #f0f8f0; border-color: #90c890; }
+        .comparison-item.bad { background: #f8f0f0; border-color: #c89090; }
+
+        .label {
+            display: inline-block;
+            background: #7f8962;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .source-links {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-size: 12px;
+        }
+
+        .source-links a {
+            color: #7f8962;
+            text-decoration: none;
+            border-bottom: 1px solid #7f8962;
+            display: block;
+            margin: 5px 0;
+        }
+
+        .source-links a:hover { text-decoration: underline; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Cautie Learn Hub - Tools Redesign & Setup Wizard</h1>
+        <p style="color: #888; font-size: 14px; margin-bottom: 30px;">Comprehensive design proposal based on student research and UX best practices</p>
+
+        <!-- RESEARCH SUMMARY -->
+        <div class="section">
+            <h2>📊 Research Foundation</h2>
+
+            <div class="research-summary">
+                <strong>What Students Actually Want (Based on Research):</strong>
+                <ul class="feature-list">
+                    <li><strong>Active Learning:</strong> Spaced repetition, quizzes, and practice increase retention from 10% to 75%</li>
+                    <li><strong>Integration:</strong> One unified workflow instead of switching between tools</li>
+                    <li><strong>Progressive Learning:</strong> Learn as you go, not all-at-once onboarding</li>
+                    <li><strong>Clean UI:</strong> Clear hierarchy, single action per step, no clutter</li>
+                    <li><strong>No Gimmicks:</strong> Real features students need, not gamification BS or AI modes nobody wants</li>
+                    <li><strong>Multi-Format:</strong> Mix flashcards, quizzes, mind maps, audio notes in one place</li>
+                </ul>
+            </div>
+
+            <div class="source-links">
+                <strong>Research Sources:</strong>
+                <a href="https://www.5staressays.com/blog/best-study-apps-for-college-students">15 Best Study Apps for College Students in 2025</a>
+                <a href="https://okti.app/en/blog/best-study-apps-for-students-2025/">Best Study Apps: Anki vs ChatGPT 2025</a>
+                <a href="https://flashrecall.app/blog/best-flashcard-app-reddit">What Reddit Students Want in Flashcard Apps</a>
+                <a href="https://www.userguiding.com/blog/what-is-an-onboarding-wizard/">Onboarding Wizard Best Practices</a>
+                <a href="https://www.eleken.co/blog-posts/wizard-ui-pattern-explained">Wizard UI Pattern: When to Use It</a>
+            </div>
+        </div>
+
+        <!-- AGENDA VIEW ISSUE -->
+        <div class="section">
+            <h2>❌ Current Issues - Agenda/List View</h2>
+
+            <div class="comparison">
+                <div class="comparison-item bad">
+                    <strong>Problem 1: Unstructured Items</strong>
+                    <p>Items are just text blobs with no visual hierarchy. When clicked, shows unstructured text with unclear default icons.</p>
+                </div>
+                <div class="comparison-item bad">
+                    <strong>Problem 2: Poor Organization</strong>
+                    <p>List is infinite (should be grouped by Today/Tomorrow/This Week). Hard to scan and prioritize tasks.</p>
+                </div>
+            </div>
+
+            <h3>✅ Improved Agenda/List View</h3>
+            <p><strong>Design Principle:</strong> Group by time, clear visual hierarchy, scannable at a glance, single-click actions</p>
+
+            <div class="agenda-mockup">
+                <div style="background: #7f8962; color: white; padding: 12px 15px; font-weight: 600; font-size: 12px;">TODAY</div>
+
+                <div class="agenda-item">
+                    <div class="agenda-time">16m</div>
+                    <div style="flex: 1;">
+                        <div class="agenda-accent"></div>
+                        <div class="agenda-title">Notes refinement: a (day 2)</div>
+                        <div class="agenda-meta">Studyset • Tue, 12 May</div>
+                    </div>
+                    <div style="font-size: 20px; opacity: 0.3;">▸</div>
+                </div>
+
+                <div class="agenda-item">
+                    <div class="agenda-time">11m</div>
+                    <div style="flex: 1;">
+                        <div class="agenda-accent"></div>
+                        <div class="agenda-title">Checkpoint quiz: a</div>
+                        <div class="agenda-meta">Studyset • Tue, 12 May</div>
+                    </div>
+                    <div style="font-size: 20px; opacity: 0.3;">▸</div>
+                </div>
+
+                <div style="background: #f5f5f5; padding: 12px 15px; font-weight: 600; font-size: 12px; color: #666;">TOMORROW</div>
+
+                <div class="agenda-item">
+                    <div class="agenda-time">18m</div>
+                    <div style="flex: 1;">
+                        <div class="agenda-accent"></div>
+                        <div class="agenda-title">Notes refinement: a (day 3)</div>
+                        <div class="agenda-meta">Studyset • Wed, 13 May</div>
+                    </div>
+                    <div style="font-size: 20px; opacity: 0.3;">▸</div>
+                </div>
+            </div>
+
+            <h3>Details Panel (Right Sidebar)</h3>
+            <p style="font-size: 12px; color: #666; margin-bottom: 15px;">When clicked, shows structured information with clear actions - NOT more text blobs</p>
+
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; border-left: 4px solid #7f8962;">
+                <strong>Recall deck: a</strong><br>
+                <span style="font-size: 12px; color: #888;">Wednesday 13 May 2026</span>
+
+                <div style="margin-top: 12px; padding: 10px; background: white; border-radius: 4px; border: 1px solid #e0e0e0;">
+                    <strong style="font-size: 12px;">Turn key terms and definitions from a into active recall cards.</strong>
+                    <div style="font-size: 11px; color: #888; margin-top: 8px;">Spaced repetition exercise</div>
+                </div>
+
+                <div style="margin-top: 12px; display: flex; gap: 10px;">
+                    <button style="flex: 1; padding: 8px; background: #7f8962; color: white; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Open →</button>
+                    <button style="flex: 1; padding: 8px; background: white; color: #7f8962; border: 1px solid #7f8962; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Snooze 1d</button>
+                </div>
+
+                <div style="margin-top: 12px; padding: 10px; background: #f0f8f0; border-radius: 4px; font-size: 11px; color: #666;">
+                    ✓ Visible to students
+                </div>
+            </div>
+        </div>
+
+        <!-- TOOL LAYOUTS -->
+        <div class="section">
+            <h2>🔧 15 Universal Tool Layouts</h2>
+            <p style="color: #666; margin-bottom: 20px;"><strong>Design Rules:</strong> Same layout structure for all tools (except Studyset later). Input at bottom/middle (never top). Options sidebar can be top/bottom/right (never left). Each layout is visually unique but structurally consistent.</p>
+
+            <h3>LAYOUT 1: Notes Tool</h3>
+            <div class="mockup-grid">
+                <div class="mockup-card">
+                    <div class="mockup-header">NOTES - Layout 1: Vertical Split</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="display: flex; gap: 8px; flex: 1;">
+                                <div style="flex: 0 0 35%; background: #f0f0f0; border-radius: 3px;"></div>
+                                <div style="flex: 1; background: #fff; border: 1px solid #ddd; border-radius: 3px; display: flex; flex-direction: column;">
+                                    <div style="flex: 1;"></div>
+                                    <div style="background: #f5f5f5; height: 40px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Left sidebar (note list) + right editor<br>
+                        <strong>Input:</strong> Text editor at bottom right for new content<br>
+                        <strong>Options:</strong> Top right - font, formatting, AI tools<br>
+                        <strong>Why:</strong> Natural for sequential note-taking, common in Notion/OneNote
+                    </div>
+                </div>
+
+                <div class="mockup-card">
+                    <div class="mockup-header">NOTES - Layout 2: Canvas View</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="flex: 1; background: #fff; border: 1px solid #ddd; border-radius: 3px; position: relative;">
+                                <div style="position: absolute; width: 50px; height: 40px; background: #f0f0f0; margin: 10px; border-radius: 3px;"></div>
+                                <div style="position: absolute; width: 50px; height: 40px; background: #f0f0f0; right: 10px; top: 10px; border-radius: 3px;"></div>
+                            </div>
+                            <div class="input-area"></div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Infinite canvas (like Miro/FigJam)<br>
+                        <strong>Input:</strong> Bottom input bar or click-to-add on canvas<br>
+                        <strong>Options:</strong> Right sidebar for block types<br>
+                        <strong>Why:</strong> Students with visual learning style prefer spatial layouts
+                    </div>
+                </div>
+            </div>
+
+            <h3>LAYOUT 2: Flashcards Tool</h3>
+            <div class="mockup-grid">
+                <div class="mockup-card">
+                    <div class="mockup-header">FLASHCARDS - Layout 3: Card Stack</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                                <div style="width: 80%; height: 60%; background: white; border: 2px solid #ddd; border-radius: 6px;"></div>
+                            </div>
+                            <div style="background: #f5f5f5; height: 50px; display: flex; gap: 8px; align-items: center; padding: 0 15px;">
+                                <button style="flex: 1; padding: 8px; background: #f0f0f0; border: none; border-radius: 3px; font-size: 10px;">← Wrong</button>
+                                <button style="flex: 1; padding: 8px; background: #7f8962; color: white; border: none; border-radius: 3px; font-size: 10px;">Correct →</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Large card centered, action buttons below<br>
+                        <strong>Input:</strong> N/A (review mode), separate creation panel<br>
+                        <strong>Options:</strong> Top right - deck selection, shuffle, settings<br>
+                        <strong>Why:</strong> Matches physical flashcard experience, minimizes distractions
+                    </div>
+                </div>
+
+                <div class="mockup-card">
+                    <div class="mockup-header">FLASHCARDS - Layout 4: Grid View</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px;">
+                                <div style="background: #f5f5f5; border-radius: 3px;"></div>
+                                <div style="background: #f5f5f5; border-radius: 3px;"></div>
+                                <div style="background: #f5f5f5; border-radius: 3px;"></div>
+                                <div style="background: #f5f5f5; border-radius: 3px;"></div>
+                            </div>
+                            <div class="input-area"></div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Grid of cards, bulk editing mode<br>
+                        <strong>Input:</strong> Bottom add card form<br>
+                        <strong>Options:</strong> Right sidebar for filters/views<br>
+                        <strong>Why:</strong> Quizlet-style, good for managing large decks
+                    </div>
+                </div>
+            </div>
+
+            <h3>LAYOUT 3: Quiz Tool</h3>
+            <div class="mockup-grid">
+                <div class="mockup-card">
+                    <div class="mockup-header">QUIZ - Layout 5: Question Focus</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="flex: 1; padding: 12px; background: #fff;">
+                                <div style="height: 60px; background: #f5f5f5; border-radius: 3px; margin-bottom: 10px;"></div>
+                                <div style="height: 20px; background: #f0f0f0; border-radius: 3px; margin-bottom: 8px;"></div>
+                                <div style="height: 20px; background: #f0f0f0; border-radius: 3px;"></div>
+                            </div>
+                            <div class="input-area"></div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Question text centered, options below<br>
+                        <strong>Input:</strong> Answer selection buttons at bottom<br>
+                        <strong>Options:</strong> Top right - timer, question counter, difficulty<br>
+                        <strong>Why:</strong> Quiz-focused, minimal distractions
+                    </div>
+                </div>
+
+                <div class="mockup-card">
+                    <div class="mockup-header">QUIZ - Layout 6: Detailed View</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="display: flex; gap: 8px; flex: 1;">
+                                <div style="flex: 0 0 30%; background: #f0f0f0; border-radius: 3px;"></div>
+                                <div style="flex: 1; background: #fff; border: 1px solid #ddd; border-radius: 3px;"></div>
+                            </div>
+                            <div class="input-area"></div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Question list left, detail/answers right<br>
+                        <strong>Input:</strong> Answer at bottom in main panel<br>
+                        <strong>Options:</strong> Top - filters, time spent, score<br>
+                        <strong>Why:</strong> Good for review mode, see all questions, track progress
+                    </div>
+                </div>
+            </div>
+
+            <h3>LAYOUT 4: Mind Map Tool</h3>
+            <div class="mockup-grid">
+                <div class="mockup-card">
+                    <div class="mockup-header">MINDMAP - Layout 7: Radial</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                                <div style="width: 40px; height: 40px; background: #7f8962; border-radius: 50%;"></div>
+                            </div>
+                            <div class="input-area"></div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Central node, expandable branches<br>
+                        <strong>Input:</strong> Bottom form to add nodes/branches<br>
+                        <strong>Options:</strong> Right sidebar for colors, shapes, layout<br>
+                        <strong>Why:</strong> Natural for hierarchical thinking, visual learners
+                    </div>
+                </div>
+
+                <div class="mockup-card">
+                    <div class="mockup-header">MINDMAP - Layout 8: Outline</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="flex: 1; padding: 8px;">
+                                <div style="height: 15px; background: #f0f0f0; border-radius: 2px; margin-bottom: 6px;"></div>
+                                <div style="margin-left: 15px; height: 12px; background: #f5f5f5; border-radius: 2px; margin-bottom: 4px;"></div>
+                                <div style="margin-left: 15px; height: 12px; background: #f5f5f5; border-radius: 2px; margin-bottom: 6px;"></div>
+                                <div style="height: 15px; background: #f0f0f0; border-radius: 2px;"></div>
+                            </div>
+                            <div class="input-area"></div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Hierarchical outline, collapsible branches<br>
+                        <strong>Input:</strong> Bottom add-node form or inline editing<br>
+                        <strong>Options:</strong> Right sidebar for hierarchy levels, expand/collapse all<br>
+                        <strong>Why:</strong> Text-oriented students prefer this format
+                    </div>
+                </div>
+            </div>
+
+            <h3>LAYOUT 5: Concept Map Tool</h3>
+            <div class="mockup-grid">
+                <div class="mockup-card">
+                    <div class="mockup-header">CONCEPTMAP - Layout 9: Node+Link</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="flex: 1; background: white; border: 1px solid #ddd; border-radius: 3px; position: relative;">
+                                <div style="position: absolute; left: 20%; top: 20%; width: 40px; height: 30px; background: #f5f5f5; border-radius: 3px;"></div>
+                                <div style="position: absolute; right: 20%; bottom: 20%; width: 40px; height: 30px; background: #f5f5f5; border-radius: 3px;"></div>
+                                <div style="position: absolute; top: 35%; left: 25%; right: 25%; height: 1px; background: #ddd;"></div>
+                            </div>
+                            <div class="input-area"></div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Nodes + relationship links on canvas<br>
+                        <strong>Input:</strong> Bottom form or click-to-add on canvas<br>
+                        <strong>Options:</strong> Right sidebar for relationship types, link labels<br>
+                        <strong>Why:</strong> Perfect for understanding relationships between concepts
+                    </div>
+                </div>
+
+                <div class="mockup-card">
+                    <div class="mockup-header">CONCEPTMAP - Layout 10: Graph</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="flex: 1; padding: 8px;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 9px;">
+                                    <tr style="background: #f5f5f5; height: 20px;">
+                                        <td style="border: 1px solid #ddd; padding: 3px;">Concept</td>
+                                        <td style="border: 1px solid #ddd; padding: 3px;">Links</td>
+                                        <td style="border: 1px solid #ddd; padding: 3px;">Type</td>
+                                    </tr>
+                                    <tr style="height: 18px;">
+                                        <td style="border: 1px solid #ddd; padding: 3px;"></td>
+                                        <td style="border: 1px solid #ddd; padding: 3px;"></td>
+                                        <td style="border: 1px solid #ddd; padding: 3px;"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="input-area"></div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Tabular view of nodes and connections<br>
+                        <strong>Input:</strong> Bottom add form or inline table editing<br>
+                        <strong>Options:</strong> Right sidebar for export, views, filters<br>
+                        <strong>Why:</strong> Data-heavy learners prefer tabular structure
+                    </div>
+                </div>
+            </div>
+
+            <h3>LAYOUT 6: Timeline Tool</h3>
+            <div class="mockup-grid">
+                <div class="mockup-card">
+                    <div class="mockup-header">TIMELINE - Layout 11: Vertical</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="flex: 1; padding: 10px; position: relative;">
+                                <div style="position: absolute; left: 50%; top: 10%; bottom: 10%; width: 2px; background: #7f8962;"></div>
+                                <div style="margin-left: 20%; height: 25px; background: #f5f5f5; border-radius: 3px; margin-bottom: 15px;"></div>
+                                <div style="margin-right: 20%; margin-left: 60%; height: 25px; background: #f5f5f5; border-radius: 3px; margin-bottom: 15px;"></div>
+                                <div style="margin-left: 20%; height: 25px; background: #f5f5f5; border-radius: 3px;"></div>
+                            </div>
+                            <div class="input-area"></div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Central timeline, alternating left/right events<br>
+                        <strong>Input:</strong> Bottom form to add events<br>
+                        <strong>Options:</strong> Right sidebar for date, descriptions, categories<br>
+                        <strong>Why:</strong> History/chronological learning, visual narrative
+                    </div>
+                </div>
+
+                <div class="mockup-card">
+                    <div class="mockup-header">TIMELINE - Layout 12: Horizontal</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="flex: 1; padding: 10px; position: relative;">
+                                <div style="position: absolute; top: 50%; left: 10%; right: 10%; height: 2px; background: #7f8962;"></div>
+                                <div style="position: absolute; top: 15%; left: 10%; width: 40px; height: 30px; background: #f5f5f5; border-radius: 3px;"></div>
+                                <div style="position: absolute; bottom: 15%; right: 10%; width: 40px; height: 30px; background: #f5f5f5; border-radius: 3px;"></div>
+                            </div>
+                            <div class="input-area"></div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Horizontal timeline, stacked events above/below<br>
+                        <strong>Input:</strong> Bottom form or drag-to-add on timeline<br>
+                        <strong>Options:</strong> Right sidebar for zoom, date range, filters<br>
+                        <strong>Why:</strong> Better for dense timelines, scrollable
+                    </div>
+                </div>
+            </div>
+
+            <h3>LAYOUT 7: Annotation/PDF Tool</h3>
+            <div class="mockup-grid">
+                <div class="mockup-card">
+                    <div class="mockup-header">ANNOTATE - Layout 13: Document Center</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="display: flex; gap: 8px; flex: 1;">
+                                <div style="flex: 0 0 30%; background: #f0f0f0; border-radius: 3px; display: flex; flex-direction: column;">
+                                    <div style="flex: 1; border: 1px solid #ddd; margin: 8px;"></div>
+                                    <div style="background: #f5f5f5; height: 30px; margin: 8px;"></div>
+                                </div>
+                                <div style="flex: 1; background: white; border: 1px solid #ddd; border-radius: 3px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Left thumbnails/outline, right main document<br>
+                        <strong>Input:</strong> Highlight to annotate, right-click options<br>
+                        <strong>Options:</strong> Top - color picker, note types, search<br>
+                        <strong>Why:</strong> Same as traditional PDF readers (Adobe, Notability)
+                    </div>
+                </div>
+
+                <div class="mockup-card">
+                    <div class="mockup-header">ANNOTATE - Layout 14: Full Screen</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="flex: 1; display: flex; gap: 8px; padding: 8px;">
+                                <div style="flex: 1; background: white; border: 1px solid #ddd; border-radius: 3px;"></div>
+                                <div style="flex: 0 0 25%; background: #f0f0f0; border-radius: 3px; display: flex; flex-direction: column;">
+                                    <div style="flex: 1; margin: 8px; border: 1px solid #ddd;"></div>
+                                    <div style="background: #f5f5f5; height: 30px; margin: 8px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Document full-width, right sidebar for notes<br>
+                        <strong>Input:</strong> Highlight creates note in sidebar<br>
+                        <strong>Options:</strong> Top right - view mode, colors, search<br>
+                        <strong>Why:</strong> Document focused, minimizes switching between views
+                    </div>
+                </div>
+            </div>
+
+            <h3>LAYOUT 8: Summary/Recap Tool</h3>
+            <div class="mockup-grid">
+                <div class="mockup-card">
+                    <div class="mockup-header">SUMMARY - Layout 15: Topic Breakdown</div>
+                    <div class="mockup-preview">
+                        <div class="tool-layout">
+                            <div class="header-area"></div>
+                            <div style="flex: 1; padding: 8px;">
+                                <div style="height: 20px; background: #f0f0f0; border-radius: 3px; margin-bottom: 8px;"></div>
+                                <div style="height: 80px; background: #fff; border: 1px solid #ddd; border-radius: 3px; margin-bottom: 8px;"></div>
+                                <div style="height: 20px; background: #f0f0f0; border-radius: 3px; margin-bottom: 8px;"></div>
+                                <div style="height: 60px; background: #fff; border: 1px solid #ddd; border-radius: 3px;"></div>
+                            </div>
+                            <div class="input-area"></div>
+                        </div>
+                    </div>
+                    <div class="mockup-description">
+                        <strong>Structure:</strong> Sections with content blocks, expandable<br>
+                        <strong>Input:</strong> Bottom form to add sections/summaries<br>
+                        <strong>Options:</strong> Right sidebar for AI generation, tone, length<br>
+                        <strong>Why:</strong> Hierarchical organization, works for summaries/study guides
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETUP WIZARD REDESIGN -->
+        <div class="section">
+            <h2>🚀 Setup Wizard Redesign</h2>
+            <p style="color: #666; margin-bottom: 20px;"><strong>Current Issues:</strong> Glitches, duplicate screens, unclear text, poor security, not feeling complete. <strong>New Approach:</strong> Progressive onboarding, required steps only, save progress, optional later.</p>
+
+            <h3>Wizard Flow (6 Required Steps)</h3>
+
+            <div class="wizard-step">
+                <div class="wizard-header">
+                    <div>
+                        <div class="wizard-step-number">1</div>
+                    </div>
+                    <div style="flex: 1; margin-left: 15px;">
+                        <strong>School/Subject Selection</strong>
+                        <div style="font-size: 12px; color: #888;">Choose what you're studying</div>
+                    </div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 16.6%;"></div></div>
+
+                <h3 style="margin-top: 15px;">Why This Step:</h3>
+                <p>Personalizes the app to student's context. Used to recommend relevant tools and organize materials.</p>
+
+                <h3 style="margin-top: 15px;">Questions (2-3 only):</h3>
+                <ul class="feature-list">
+                    <li>What school/university are you at? (Autocomplete)</li>
+                    <li>What subjects are you studying? (Multi-select, max 5)</li>
+                    <li>What grade/year? (Dropdown)</li>
+                </ul>
+
+                <p style="font-size: 12px; color: #888; margin-top: 10px;">⏱️ Time: 30 seconds | 💾 Auto-saved</p>
+            </div>
+
+            <div class="wizard-step">
+                <div class="wizard-header">
+                    <div>
+                        <div class="wizard-step-number">2</div>
+                    </div>
+                    <div style="flex: 1; margin-left: 15px;">
+                        <strong>Study Goals & Schedule</strong>
+                        <div style="font-size: 12px; color: #888;">When and how much do you study</div>
+                    </div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 33%;"></div></div>
+
+                <h3 style="margin-top: 15px;">Why This Step:</h3>
+                <p>Calculates smart spaced repetition schedules and helps with time management. Prevents overload.</p>
+
+                <h3 style="margin-top: 15px;">Questions (3 only):</h3>
+                <ul class="feature-list">
+                    <li>How much time do you study per day? (Radio: 15m / 30m / 1h / 2h+ )</li>
+                    <li>When do you usually study? (Multi-select: Morning / Afternoon / Evening)</li>
+                    <li>How many days until your first exam/test? (Date picker)</li>
+                </ul>
+
+                <p style="font-size: 12px; color: #888; margin-top: 10px;">⏱️ Time: 45 seconds | 💾 Auto-saved</p>
+            </div>
+
+            <div class="wizard-step">
+                <div class="wizard-header">
+                    <div>
+                        <div class="wizard-step-number">3</div>
+                    </div>
+                    <div style="flex: 1; margin-left: 15px;">
+                        <strong>Create First Material</strong>
+                        <div style="font-size: 12px; color: #888;">Start with what you have</div>
+                    </div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 50%;"></div></div>
+
+                <h3 style="margin-top: 15px;">Why This Step:</h3>
+                <p>Gets students using the app immediately. Success early = higher engagement and retention.</p>
+
+                <h3 style="margin-top: 15px;">Options:</h3>
+                <ul class="feature-list">
+                    <li><strong>Quick upload:</strong> Paste notes or upload PDF → AI creates flashcards</li>
+                    <li><strong>Create empty:</strong> Start with blank notebook/deck</li>
+                    <li><strong>Import:</strong> From Quizlet, Anki, or pasted text</li>
+                </ul>
+
+                <p style="font-size: 12px; color: #888; margin-top: 10px;">⏱️ Time: 2-3 min | 💾 Auto-saved | 🤖 AI auto-processes in background</p>
+            </div>
+
+            <div class="wizard-step">
+                <div class="wizard-header">
+                    <div>
+                        <div class="wizard-step-number">4</div>
+                    </div>
+                    <div style="flex: 1; margin-left: 15px;">
+                        <strong>Create Study Schedule</strong>
+                        <div style="font-size: 12px; color: #888;">When to review what</div>
+                    </div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 66%;"></div></div>
+
+                <h3 style="margin-top: 15px;">Why This Step:</h3>
+                <p>Spaced repetition requires scheduling. Students don't know when to study what. We automate this.</p>
+
+                <h3 style="margin-top: 15px;">Questions (2 only):</h3>
+                <ul class="feature-list">
+                    <li>Should we auto-schedule your reviews? (Yes / Let me customize)</li>
+                    <li>Reminder notifications? (Push / Email / Both / None)</li>
+                </ul>
+
+                <p style="font-size: 12px; color: #888; margin-top: 10px;">⏱️ Time: 30 seconds | 💾 Auto-saved | 🔒 Optional (can set later)</p>
+            </div>
+
+            <div class="wizard-step">
+                <div class="wizard-header">
+                    <div>
+                        <div class="wizard-step-number">5</div>
+                    </div>
+                    <div style="flex: 1; margin-left: 15px;">
+                        <strong>Privacy & Security</strong>
+                        <div style="font-size: 12px; color: #888;">Who can see your stuff</div>
+                    </div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 83%;"></div></div>
+
+                <h3 style="margin-top: 15px;">Why This Step:</h3>
+                <p>Critical for student safety. Must be explicit. Vague privacy = liability and user distrust.</p>
+
+                <h3 style="margin-top: 15px;">Clear Checkboxes:</h3>
+                <ul class="feature-list">
+                    <li>☑️ My materials are <strong>private</strong> (only I can see)</li>
+                    <li>☐ Share materials with my class (if applicable)</li>
+                    <li>☐ Allow teacher to see my progress</li>
+                    <li>☑️ Enable backup to cloud</li>
+                </ul>
+
+                <p style="font-size: 12px; color: #888; margin-top: 10px;">⏱️ Time: 1 min | 💾 Must confirm before next | 🔐 Defaults to most private</p>
+            </div>
+
+            <div class="wizard-step">
+                <div class="wizard-header">
+                    <div>
+                        <div class="wizard-step-number">6</div>
+                    </div>
+                    <div style="flex: 1; margin-left: 15px;">
+                        <strong>You're Ready!</strong>
+                        <div style="font-size: 12px; color: #888;">Start studying</div>
+                    </div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 100%;"></div></div>
+
+                <h3 style="margin-top: 15px;">On This Screen:</h3>
+                <ul class="feature-list">
+                    <li>Summary of what was set up</li>
+                    <li>Quick links to first material + first study session</li>
+                    <li>"Skip for now" link to dashboard (can setup later)</li>
+                    <li>FAQ section: "What is spaced repetition?" etc</li>
+                </ul>
+
+                <p style="font-size: 12px; color: #888; margin-top: 10px;">⏱️ Total wizard time: ~5-7 minutes (can be completed in parts)</p>
+            </div>
+
+            <h3 style="margin-top: 30px;">Key Improvements Over Current Wizard</h3>
+
+            <div class="comparison">
+                <div class="comparison-item bad">
+                    <strong>❌ Old Problems:</strong>
+                    <ul class="feature-list">
+                        <li>Asked too many questions at once</li>
+                        <li>Could repeat/glitch and show twice</li>
+                        <li>Text was unclear/jargon-heavy</li>
+                        <li>Unclear security implications</li>
+                        <li>No way to skip and come back</li>
+                        <li>Didn't get students using app immediately</li>
+                    </ul>
+                </div>
+                <div class="comparison-item good">
+                    <strong>✅ New Design:</strong>
+                    <ul class="feature-list">
+                        <li>Max 3 questions per step, 6 steps total</li>
+                        <li>State saved after each step, no repeats</li>
+                        <li>Simple language, no jargon</li>
+                        <li>Explicit checkbox-based privacy</li>
+                        <li>Can skip, resume on dashboard anytime</li>
+                        <li>Step 3 = immediate action, AI auto-processes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOOL OPTIONS -->
+        <div class="section">
+            <h2>⚙️ Tool Options/Settings (What to Include)</h2>
+            <p style="color: #666; margin-bottom: 20px;"><strong>Based on Research:</strong> Only include features students actually asked for on Reddit/forums. Skip AI BS modes.</p>
+
+            <h3>NOTES Tool Options</h3>
+            <table>
+                <tr>
+                    <th>Option</th>
+                    <th>What It Does</th>
+                    <th>Why Students Want It</th>
+                </tr>
+                <tr>
+                    <td><strong>Rich Text Formatting</strong></td>
+                    <td>Bold, italic, colors, lists, code blocks, tables</td>
+                    <td>Standard in OneNote/Notion. Makes notes scannable.</td>
+                </tr>
+                <tr>
+                    <td><strong>AI Summary</strong></td>
+                    <td>Generates TL;DR of a note (not full BS AI)</td>
+                    <td>Reddit users asked for this - saves time reviewing notes</td>
+                </tr>
+                <tr>
+                    <td><strong>Auto-extract Questions</strong></td>
+                    <td>AI turns note content into practice questions</td>
+                    <td>Bridges gap between notes → study. Huge time saver.</td>
+                </tr>
+                <tr>
+                    <td><strong>Markdown Support</strong></td>
+                    <td>Write in Markdown, render as formatted text</td>
+                    <td>Tech students, CS majors prefer this</td>
+                </tr>
+                <tr>
+                    <td><strong>Shared Editing</strong></td>
+                    <td>Collaborate with classmates in real-time</td>
+                    <td>Group studying, shared class notes</td>
+                </tr>
+            </table>
+
+            <h3>FLASHCARDS Tool Options</h3>
+            <table>
+                <tr>
+                    <th>Option</th>
+                    <th>What It Does</th>
+                    <th>Why Students Want It</th>
+                </tr>
+                <tr>
+                    <td><strong>Spaced Repetition</strong></td>
+                    <td>Auto-schedules based on difficulty + confidence</td>
+                    <td>Science-backed. 23% higher exam scores (studies show)</td>
+                </tr>
+                <tr>
+                    <td><strong>Multiple Formats</strong></td>
+                    <td>Multiple choice, fill-blank, matching, image cards</td>
+                    <td>Not all studying is Q&A. Variety improves retention.</td>
+                </tr>
+                <tr>
+                    <td><strong>Image Support</strong></td>
+                    <td>Add diagrams, charts, or images to cards</td>
+                    <td>Medical/science students need visual flashcards</td>
+                </tr>
+                <tr>
+                    <td><strong>Study Streaks</strong></td>
+                    <td>Track consecutive days studied (visual counter)</td>
+                    <td>NOT gamification, just habit tracking. Works psychologically.</td>
+                </tr>
+                <tr>
+                    <td><strong>Cram Mode</strong></td>
+                    <td>All cards once, no spaced repetition (before exam)</td>
+                    <td>Last-minute cramming happens anyway. Better to support it.</td>
+                </tr>
+                <tr>
+                    <td><strong>Audio Cards</strong></td>
+                    <td>Add audio files or text-to-speech</td>
+                    <td>Language learning, commute studying, learning differences</td>
+                </tr>
+            </table>
+
+            <h3>QUIZ Tool Options</h3>
+            <p style="font-size: 12px; color: #888; margin-bottom: 10px;">*(You've already done this manually, adding here for completeness)*</p>
+            <table>
+                <tr>
+                    <th>Option</th>
+                    <th>What It Does</th>
+                    <th>Why Students Want It</th>
+                </tr>
+                <tr>
+                    <td><strong>Timed Mode</strong></td>
+                    <td>Question timer, section timer, total test timer</td>
+                    <td>Simulates real exam pressure. SAT/AP students need this.</td>
+                </tr>
+                <tr>
+                    <td><strong>Show Explanations</strong></td>
+                    <td>After answering, show why answer is correct/wrong</td>
+                    <td>Learning from mistakes is critical. Not cheating.</td>
+                </tr>
+                <tr>
+                    <td><strong>Difficulty Filtering</strong></td>
+                    <td>Only show easy/medium/hard questions</td>
+                    <td>Progressive learning. Builds confidence.</td>
+                </tr>
+                <tr>
+                    <td><strong>Shuffle Questions</strong></td>
+                    <td>Randomize order and options</td>
+                    <td>Prevents memorization by position, improves understanding</td>
+                </tr>
+                <tr>
+                    <td><strong>Review Mode</strong></td>
+                    <td>After quiz, can review answers with explanations</td>
+                    <td>Post-test learning = most effective time to learn</td>
+                </tr>
+            </table>
+
+            <h3>MINDMAP Tool Options</h3>
+            <table>
+                <tr>
+                    <th>Option</th>
+                    <th>What It Does</th>
+                    <th>Why Students Want It</th>
+                </tr>
+                <tr>
+                    <td><strong>Multiple Layouts</strong></td>
+                    <td>Radial, outline, organic, top-down</td>
+                    <td>Different subjects need different structures</td>
+                </tr>
+                <tr>
+                    <td><strong>Color Coding</strong></td>
+                    <td>Assign colors to branches (theme-based)</td>
+                    <td>Visual learners need color differentiation</td>
+                </tr>
+                <tr>
+                    <td><strong>Collapse/Expand</strong></td>
+                    <td>Fold branches to focus on one topic</td>
+                    <td>Reduces cognitive load, focuses studying</td>
+                </tr>
+                <tr>
+                    <td><strong>Export to Outline</strong></td>
+                    <td>Convert mind map to text outline/document</td>
+                    <td>Study guides, essay prep. Bridge between visual and text.</td>
+                </tr>
+            </table>
+
+            <h3>CONCEPTMAP Tool Options</h3>
+            <table>
+                <tr>
+                    <th>Option</th>
+                    <th>What It Does</th>
+                    <th>Why Students Want It</th>
+                </tr>
+                <tr>
+                    <td><strong>Relationship Labels</strong></td>
+                    <td>Label links: "causes", "leads to", "related to", custom</td>
+                    <td>Specificity matters. "protein causes" ≠ "protein relates to"</td>
+                </tr>
+                <tr>
+                    <td><strong>Bidirectional Links</strong></td>
+                    <td>Links go both ways (not directed)</td>
+                    <td>Some concepts interact bidirectionally (chemistry reactions)</td>
+                </tr>
+                <tr>
+                    <td><strong>Hierarchy Levels</strong></td>
+                    <td>Define main vs secondary vs tertiary concepts</td>
+                    <td>Helps understand relative importance</td>
+                </tr>
+            </table>
+
+            <h3>TIMELINE Tool Options</h3>
+            <table>
+                <tr>
+                    <th>Option</th>
+                    <th>What It Does</th>
+                    <th>Why Students Want It</th>
+                </tr>
+                <tr>
+                    <td><strong>Multiple Timescales</strong></td>
+                    <td>Years, decades, centuries, or minutes/hours</td>
+                    <td>Different subjects use different scales</td>
+                </tr>
+                <tr>
+                    <td><strong>Categorization</strong></td>
+                    <td>Color-code events by type/category</td>
+                    <td>Political events vs natural events vs culture (history)</td>
+                </tr>
+                <tr>
+                    <td><strong>Date Precision</strong></td>
+                    <td>Exact date, month, year, or era (BC/AD)</td>
+                    <td>Some events only known by era or century</td>
+                </tr>
+            </table>
+
+            <h3>ANNOTATE Tool Options</h3>
+            <table>
+                <tr>
+                    <th>Option</th>
+                    <th>What It Does</th>
+                    <th>Why Students Want It</th>
+                </tr>
+                <tr>
+                    <td><strong>Highlight Colors</strong></td>
+                    <td>Yellow, pink, blue, green highlights + notes</td>
+                    <td>Color system helps organize information</td>
+                </tr>
+                <tr>
+                    <td><strong>Side Notes</strong></td>
+                    <td>Add margin notes while reading</td>
+                    <td>Mimics paper annotation. Natural for reading.</td>
+                </tr>
+                <tr>
+                    <td><strong>Auto-generate Notes</strong></td>
+                    <td>AI summarizes highlighted sections</td>
+                    <td>Reddit students asked for this - fast study guide creation</td>
+                </tr>
+                <tr>
+                    <td><strong>Full Text Search</strong></td>
+                    <td>Search annotations across PDFs</td>
+                    <td>Large textbooks, finding earlier mentions</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- NEXT STEPS -->
+        <div class="section">
+            <h2>📋 Next Steps</h2>
+            <ul class="feature-list">
+                <li><strong>Implement 15 Tool Layouts:</strong> Each tool gets one of these layouts (refined visually)</li>
+                <li><strong>Redesign Setup Wizard:</strong> 6-step progressive onboarding, fix glitches and security</li>
+                <li><strong>Add Tool Options:</strong> Implement settings panels for each tool based on the table above</li>
+                <li><strong>Improve Agenda View:</strong> Time-grouped list, better item cards, structured detail panel</li>
+                <li><strong>Fix Visual Issues:</strong> Black button → use accent green, placeholder grades → real data mockups</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; padding: 30px; color: #999; font-size: 12px; border-top: 1px solid #e0e0e0; margin-top: 40px;">
+            Document Generated: May 12, 2026 | Based on student research from Reddit, YouTube, forums, and UX best practices
+        </div>
+    </div>
+</body>
+</html>

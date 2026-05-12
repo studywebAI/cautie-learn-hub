@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cautie Tools - Setup Layouts</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            color: #222;
+        }
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: white;
+        }
+        .sidebar {
+            width: 180px;
+            background: #7f8962;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .sidebar a {
+            display: block;
+            padding: 8px 12px;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 4px;
+            transition: background 0.2s;
+        }
+        .sidebar a:hover { background: rgba(255,255,255,0.2); }
+        .sidebar a.active { background: rgba(255,255,255,0.3); font-weight: 600; }
+        .sidebar h3 {
+            font-size: 10px;
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px 20px;
+        }
+        .header h2 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .header-sub {
+            font-size: 12px;
+            color: #888;
+        }
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .mockup-view { display: none; }
+        .mockup-view.active { display: block; }
+
+        /* LAYOUT STYLES */
+        .setup-layout {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            height: 100%;
+            overflow: hidden;
+        }
+        .setup-layout.right-sidebar { grid-template-columns: 1fr 280px; }
+        .setup-layout.no-sidebar { grid-template-columns: 1fr; }
+        .setup-layout.bottom-options { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+
+        .setup-main {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .setup-input-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .setup-footer {
+            background: #f9f9f9;
+            border-top: 1px solid #e0e0e0;
+            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        .setup-sidebar {
+            background: #fafafa;
+            border-left: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .setup-bottom {
+            background: #fafafa;
+            border-top: 1px solid #e0e0e0;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-input, .form-select, .form-textarea {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 13px;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #7f8962;
+            box-shadow: 0 0 0 3px rgba(127,137,98,0.1);
+        }
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: "IBM Plex Mono", monospace;
+        }
+        .upload-box {
+            border: 2px dashed #ddd;
+            border-radius: 6px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+        .upload-box:hover {
+            border-color: #7f8962;
+            background: #f9f9f9;
+        }
+        .upload-box-text {
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .option-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .option-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .option-item input[type="checkbox"],
+        .option-item input[type="radio"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: #7f8962;
+        }
+        .option-item label {
+            cursor: pointer;
+            font-size: 12px;
+            flex: 1;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #7f8962;
+            color: white;
+        }
+        .btn-primary:hover { background: #6b7551; }
+        .btn-secondary {
+            background: white;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+        .btn-secondary:hover { background: #f5f5f5; }
+
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .section-header {
+            font-size: 11px;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <h3>Notes</h3>
+            <a href="#" data-tool="notes-1" class="tool-link active">Notes Setup 1</a>
+            <a href="#" data-tool="notes-2" class="tool-link">Notes Setup 2</a>
+
+            <h3>Flashcards</h3>
+            <a href="#" data-tool="flash-1" class="tool-link">Cards Setup 1</a>
+            <a href="#" data-tool="flash-2" class="tool-link">Cards Setup 2</a>
+
+            <h3>Quiz</h3>
+            <a href="#" data-tool="quiz-1" class="tool-link">Quiz Setup 1</a>
+            <a href="#" data-tool="quiz-2" class="tool-link">Quiz Setup 2</a>
+
+            <h3>Mindmap</h3>
+            <a href="#" data-tool="mind-1" class="tool-link">Mindmap Setup 1</a>
+            <a href="#" data-tool="mind-2" class="tool-link">Mindmap Setup 2</a>
+
+            <h3>Concept Map</h3>
+            <a href="#" data-tool="concept-1" class="tool-link">Concept Setup 1</a>
+            <a href="#" data-tool="concept-2" class="tool-link">Concept Setup 2</a>
+
+            <h3>Timeline</h3>
+            <a href="#" data-tool="time-1" class="tool-link">Timeline Setup 1</a>
+            <a href="#" data-tool="time-2" class="tool-link">Timeline Setup 2</a>
+
+            <h3>Annotate</h3>
+            <a href="#" data-tool="anno-1" class="tool-link">Annotate Setup 1</a>
+            <a href="#" data-tool="anno-2" class="tool-link">Annotate Setup 2</a>
+
+            <h3>Summary</h3>
+            <a href="#" data-tool="sum-1" class="tool-link">Summary Setup</a>
+        </div>
+
+        <div class="main">
+            <div class="header">
+                <h2 id="tool-title">Notes Setup 1</h2>
+                <div class="header-sub" id="tool-desc">Input left, options right sidebar</div>
+            </div>
+
+            <div class="content">
+                <!-- NOTES 1: LEFT INPUT, RIGHT OPTIONS -->
+                <div class="mockup-view active" id="notes-1">
+                    <div class="setup-layout right-sidebar">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Note Title</label>
+                                    <input type="text" class="form-input" placeholder="e.g., Chapter 1: Introduction">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Paste or Upload Content</label>
+                                    <div class="upload-box">
+                                        <div>📄</div>
+                                        <div class="upload-box-text">Click to upload PDF or paste text below</div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Your Notes</label>
+                                    <textarea class="form-textarea" placeholder="Paste notes, text, or paste from PDF..."></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <button class="btn btn-secondary">Cancel</button>
+                                <button class="btn btn-primary">Create Notes</button>
+                            </div>
+                        </div>
+                        <div class="setup-sidebar">
+                            <div class="option-group">
+                                <div class="option-title">Features</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="opt1" checked>
+                                    <label for="opt1">Rich text formatting</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="opt2" checked>
+                                    <label for="opt2">AI summary</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="opt3">
+                                    <label for="opt3">Auto-generate Q's</label>
+                                </div>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="option-group">
+                                <div class="option-title">Sharing</div>
+                                <div class="option-item">
+                                    <input type="radio" name="share" id="share1" checked>
+                                    <label for="share1">Private</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="radio" name="share" id="share2">
+                                    <label for="share2">Class only</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOTES 2: FULL WIDTH, BOTTOM OPTIONS -->
+                <div class="mockup-view" id="notes-2">
+                    <div class="setup-layout bottom-options">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Note Title</label>
+                                    <input type="text" class="form-input" placeholder="Enter note title">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Content</label>
+                                    <textarea class="form-textarea" placeholder="Start typing or paste content..."></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <div></div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-secondary">Cancel</button>
+                                    <button class="btn btn-primary">Save</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setup-bottom">
+                            <div class="option-group">
+                                <div class="option-title">Formatting</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="fmt1" checked>
+                                    <label for="fmt1">Bold/Italic</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="fmt2">
+                                    <label for="fmt2">Code blocks</label>
+                                </div>
+                            </div>
+                            <div class="option-group">
+                                <div class="option-title">AI Features</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="ai1" checked>
+                                    <label for="ai1">Summary</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="ai2">
+                                    <label for="ai2">Questions</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FLASHCARDS 1: INPUT LEFT, OPTIONS RIGHT -->
+                <div class="mockup-view" id="flash-1">
+                    <div class="setup-layout right-sidebar">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Deck Name</label>
+                                    <input type="text" class="form-input" placeholder="e.g., Biology Chapter 3">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Add Cards (paste content)</label>
+                                    <textarea class="form-textarea" placeholder="Format: Question | Answer&#10;One card per line&#10;&#10;What is photosynthesis? | Light energy conversion&#10;Two stages? | Light reactions and Calvin cycle"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Or Upload File</label>
+                                    <div class="upload-box">
+                                        <div>📤</div>
+                                        <div class="upload-box-text">CSV, TXT, or Quizlet export</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <button class="btn btn-secondary">Cancel</button>
+                                <button class="btn btn-primary">Create Deck</button>
+                            </div>
+                        </div>
+                        <div class="setup-sidebar">
+                            <div class="option-group">
+                                <div class="option-title">Spaced Repetition</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="sr1" checked>
+                                    <label for="sr1">Auto-schedule</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="sr2">
+                                    <label for="sr2">Cram mode</label>
+                                </div>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="option-group">
+                                <div class="option-title">Card Types</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="ct1" checked>
+                                    <label for="ct1">Q & A</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="ct2">
+                                    <label for="ct2">Multiple choice</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="ct3">
+                                    <label for="ct3">Images</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FLASHCARDS 2: FULL WIDTH, BOTTOM OPTIONS -->
+                <div class="mockup-view" id="flash-2">
+                    <div class="setup-layout bottom-options">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Deck Name</label>
+                                    <input type="text" class="form-input" placeholder="Deck name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Cards (Q | A format)</label>
+                                    <textarea class="form-textarea" placeholder="Question | Answer&#10;Question | Answer"></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <div></div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-secondary">Cancel</button>
+                                    <button class="btn btn-primary">Create</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setup-bottom">
+                            <div class="option-group">
+                                <div class="option-title">Learning</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="lr1" checked>
+                                    <label for="lr1">Spaced rep</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="lr2">
+                                    <label for="lr2">Shuffle</label>
+                                </div>
+                            </div>
+                            <div class="option-group">
+                                <div class="option-title">Format</div>
+                                <div class="option-item">
+                                    <input type="radio" name="fmt" id="fmtr1" checked>
+                                    <label for="fmtr1">Text cards</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="radio" name="fmt" id="fmtr2">
+                                    <label for="fmtr2">With images</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUIZ 1: INPUT LEFT, OPTIONS RIGHT -->
+                <div class="mockup-view" id="quiz-1">
+                    <div class="setup-layout right-sidebar">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Quiz Title</label>
+                                    <input type="text" class="form-input" placeholder="e.g., Photosynthesis Quiz">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Questions (one per line)</label>
+                                    <textarea class="form-textarea" placeholder="Q: What is photosynthesis?|A: Light energy conversion|B: Dark reactions|C: Fermentation|D: Respiration|Correct: A"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Or Upload Questions</label>
+                                    <div class="upload-box">
+                                        <div>📋</div>
+                                        <div class="upload-box-text">CSV or TXT format</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <button class="btn btn-secondary">Cancel</button>
+                                <button class="btn btn-primary">Create Quiz</button>
+                            </div>
+                        </div>
+                        <div class="setup-sidebar">
+                            <div class="option-group">
+                                <div class="option-title">Quiz Settings</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="qs1">
+                                    <label for="qs1">Timed mode</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="qs2" checked>
+                                    <label for="qs2">Show explanations</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="qs3" checked>
+                                    <label for="qs3">Shuffle questions</label>
+                                </div>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="option-group">
+                                <div class="option-title">Time Limit</div>
+                                <select class="form-select">
+                                    <option>No time limit</option>
+                                    <option>30 seconds per Q</option>
+                                    <option>1 minute per Q</option>
+                                    <option>Total: 10 min</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUIZ 2: FULL WIDTH, BOTTOM OPTIONS -->
+                <div class="mockup-view" id="quiz-2">
+                    <div class="setup-layout bottom-options">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Quiz Title</label>
+                                    <input type="text" class="form-input" placeholder="Title">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Questions</label>
+                                    <textarea class="form-textarea" placeholder="Paste questions..."></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <div></div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-secondary">Cancel</button>
+                                    <button class="btn btn-primary">Create</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setup-bottom">
+                            <div class="option-group">
+                                <div class="option-title">Behavior</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="qb1">
+                                    <label for="qb1">Timed</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="qb2" checked>
+                                    <label for="qb2">Explanations</label>
+                                </div>
+                            </div>
+                            <div class="option-group">
+                                <div class="option-title">Display</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="qd1" checked>
+                                    <label for="qd1">Shuffle</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="qd2">
+                                    <label for="qd2">Show score</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MINDMAP 1: INPUT LEFT, OPTIONS RIGHT -->
+                <div class="mockup-view" id="mind-1">
+                    <div class="setup-layout right-sidebar">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Mindmap Title</label>
+                                    <input type="text" class="form-input" placeholder="Central concept">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Central Concept</label>
+                                    <input type="text" class="form-input" placeholder="Main topic">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Branches (one per line)</label>
+                                    <textarea class="form-textarea" placeholder="Branch 1&#10;Branch 2&#10;Branch 3&#10;..."></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <button class="btn btn-secondary">Cancel</button>
+                                <button class="btn btn-primary">Create</button>
+                            </div>
+                        </div>
+                        <div class="setup-sidebar">
+                            <div class="option-group">
+                                <div class="option-title">Layout</div>
+                                <div class="option-item">
+                                    <input type="radio" name="layout" id="lay1" checked>
+                                    <label for="lay1">Radial</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="radio" name="layout" id="lay2">
+                                    <label for="lay2">Outline</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="radio" name="layout" id="lay3">
+                                    <label for="lay3">Organic</label>
+                                </div>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="option-group">
+                                <div class="option-title">Colors</div>
+                                <div class="option-item">
+                                    <input type="radio" name="color" id="col1" checked>
+                                    <label for="col1">Multi-color</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="radio" name="color" id="col2">
+                                    <label for="col2">Monochrome</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MINDMAP 2: BOTTOM OPTIONS -->
+                <div class="mockup-view" id="mind-2">
+                    <div class="setup-layout bottom-options">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Central Topic</label>
+                                    <input type="text" class="form-input" placeholder="Main concept">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Branches</label>
+                                    <textarea class="form-textarea" placeholder="Branch&#10;Sub-branch&#10;..."></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <div></div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-secondary">Cancel</button>
+                                    <button class="btn btn-primary">Create</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setup-bottom">
+                            <div class="option-group">
+                                <div class="option-title">Style</div>
+                                <div class="option-item">
+                                    <input type="radio" name="style" id="st1" checked>
+                                    <label for="st1">Radial</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="radio" name="style" id="st2">
+                                    <label for="st2">Outline</label>
+                                </div>
+                            </div>
+                            <div class="option-group">
+                                <div class="option-title">Theme</div>
+                                <div class="option-item">
+                                    <input type="radio" name="theme" id="th1" checked>
+                                    <label for="th1">Color</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="radio" name="theme" id="th2">
+                                    <label for="th2">B&W</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONCEPT MAP 1: INPUT LEFT, OPTIONS RIGHT -->
+                <div class="mockup-view" id="concept-1">
+                    <div class="setup-layout right-sidebar">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Map Title</label>
+                                    <input type="text" class="form-input" placeholder="Concept title">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Concepts & Relationships</label>
+                                    <textarea class="form-textarea" placeholder="Concept A | causes | Concept B&#10;Concept B | leads to | Concept C&#10;..."></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <button class="btn btn-secondary">Cancel</button>
+                                <button class="btn btn-primary">Create Map</button>
+                            </div>
+                        </div>
+                        <div class="setup-sidebar">
+                            <div class="option-group">
+                                <div class="option-title">View Type</div>
+                                <div class="option-item">
+                                    <input type="radio" name="view" id="vw1" checked>
+                                    <label for="vw1">Node graph</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="radio" name="view" id="vw2">
+                                    <label for="vw2">Table</label>
+                                </div>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="option-group">
+                                <div class="option-title">Relationships</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="rel1" checked>
+                                    <label for="rel1">Show labels</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="rel2">
+                                    <label for="rel2">Bidirectional</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONCEPT MAP 2: BOTTOM OPTIONS -->
+                <div class="mockup-view" id="concept-2">
+                    <div class="setup-layout bottom-options">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Title</label>
+                                    <input type="text" class="form-input" placeholder="Map title">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Concepts (A | relation | B format)</label>
+                                    <textarea class="form-textarea" placeholder="..."></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <div></div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-secondary">Cancel</button>
+                                    <button class="btn btn-primary">Create</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setup-bottom">
+                            <div class="option-group">
+                                <div class="option-title">Layout</div>
+                                <div class="option-item">
+                                    <input type="radio" name="cplayout" id="cpl1" checked>
+                                    <label for="cpl1">Canvas</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="radio" name="cplayout" id="cpl2">
+                                    <label for="cpl2">Table</label>
+                                </div>
+                            </div>
+                            <div class="option-group">
+                                <div class="option-title">Display</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="cpd1" checked>
+                                    <label for="cpd1">Labels</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="cpd2">
+                                    <label for="cpd2">Hierarchy</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIMELINE 1: INPUT LEFT, OPTIONS RIGHT -->
+                <div class="mockup-view" id="time-1">
+                    <div class="setup-layout right-sidebar">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Timeline Title</label>
+                                    <input type="text" class="form-input" placeholder="e.g., History of Photosynthesis">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Events (Date | Event | Details)</label>
+                                    <textarea class="form-textarea" placeholder="1622 | Discovery | Van Helmont's experiment&#10;1776 | Light Role | Ingenhousz's discovery&#10;..."></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <button class="btn btn-secondary">Cancel</button>
+                                <button class="btn btn-primary">Create</button>
+                            </div>
+                        </div>
+                        <div class="setup-sidebar">
+                            <div class="option-group">
+                                <div class="option-title">Orientation</div>
+                                <div class="option-item">
+                                    <input type="radio" name="orient" id="or1" checked>
+                                    <label for="or1">Vertical</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="radio" name="orient" id="or2">
+                                    <label for="or2">Horizontal</label>
+                                </div>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="option-group">
+                                <div class="option-title">Timescale</div>
+                                <select class="form-select">
+                                    <option>Years</option>
+                                    <option>Decades</option>
+                                    <option>Centuries</option>
+                                    <option>Era (BC/AD)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIMELINE 2: BOTTOM OPTIONS -->
+                <div class="mockup-view" id="time-2">
+                    <div class="setup-layout bottom-options">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Timeline Title</label>
+                                    <input type="text" class="form-input" placeholder="Title">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Events</label>
+                                    <textarea class="form-textarea" placeholder="Date | Event | Description&#10;..."></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <div></div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-secondary">Cancel</button>
+                                    <button class="btn btn-primary">Create</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setup-bottom">
+                            <div class="option-group">
+                                <div class="option-title">Layout</div>
+                                <div class="option-item">
+                                    <input type="radio" name="tlayout" id="tl1" checked>
+                                    <label for="tl1">Vertical</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="radio" name="tlayout" id="tl2">
+                                    <label for="tl2">Horizontal</label>
+                                </div>
+                            </div>
+                            <div class="option-group">
+                                <div class="option-title">Scale</div>
+                                <div class="option-item">
+                                    <input type="radio" name="tscale" id="ts1" checked>
+                                    <label for="ts1">Years</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="radio" name="tscale" id="ts2">
+                                    <label for="ts2">Custom</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANNOTATE 1: INPUT LEFT, OPTIONS RIGHT -->
+                <div class="mockup-view" id="anno-1">
+                    <div class="setup-layout right-sidebar">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Upload PDF or Document</label>
+                                    <div class="upload-box">
+                                        <div>📄</div>
+                                        <div class="upload-box-text">Drag PDF, or click to browse</div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Or Paste Text</label>
+                                    <textarea class="form-textarea" placeholder="Paste article or text to annotate..."></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <button class="btn btn-secondary">Cancel</button>
+                                <button class="btn btn-primary">Start Annotating</button>
+                            </div>
+                        </div>
+                        <div class="setup-sidebar">
+                            <div class="option-group">
+                                <div class="option-title">Highlight Colors</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="hc1" checked>
+                                    <label for="hc1">Yellow</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="hc2" checked>
+                                    <label for="hc2">Pink</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="hc3" checked>
+                                    <label for="hc3">Blue</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="hc4">
+                                    <label for="hc4">Green</label>
+                                </div>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="option-group">
+                                <div class="option-title">Tools</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="tool1" checked>
+                                    <label for="tool1">Side notes</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="tool2">
+                                    <label for="tool2">AI summary</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANNOTATE 2: BOTTOM OPTIONS -->
+                <div class="mockup-view" id="anno-2">
+                    <div class="setup-layout bottom-options">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Upload File</label>
+                                    <div class="upload-box">
+                                        <div>📤</div>
+                                        <div class="upload-box-text">PDF, TXT, or webpage</div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Or Paste Text</label>
+                                    <textarea class="form-textarea" placeholder="Paste content..."></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <div></div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-secondary">Cancel</button>
+                                    <button class="btn btn-primary">Open</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setup-bottom">
+                            <div class="option-group">
+                                <div class="option-title">Colors</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="anc1" checked>
+                                    <label for="anc1">Yellow</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="anc2" checked>
+                                    <label for="anc2">Pink</label>
+                                </div>
+                            </div>
+                            <div class="option-group">
+                                <div class="option-title">Features</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="anf1" checked>
+                                    <label for="anf1">Notes</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="anf2">
+                                    <label for="anf2">Search</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUMMARY: INPUT LEFT, OPTIONS RIGHT -->
+                <div class="mockup-view" id="sum-1">
+                    <div class="setup-layout right-sidebar">
+                        <div class="setup-main">
+                            <div class="setup-input-area">
+                                <div class="form-group">
+                                    <label class="form-label">Summary Title</label>
+                                    <input type="text" class="form-input" placeholder="e.g., Study Guide: Chapter 3">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Content to Summarize</label>
+                                    <textarea class="form-textarea" placeholder="Paste notes, article, or lecture text..."></textarea>
+                                </div>
+                            </div>
+                            <div class="setup-footer">
+                                <button class="btn btn-secondary">Cancel</button>
+                                <button class="btn btn-primary">Generate Summary</button>
+                            </div>
+                        </div>
+                        <div class="setup-sidebar">
+                            <div class="option-group">
+                                <div class="option-title">AI Generation</div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="ai_1" checked>
+                                    <label for="ai_1">Auto-generate</label>
+                                </div>
+                                <div class="option-item">
+                                    <input type="checkbox" id="ai_2">
+                                    <label for="ai_2">Key points only</label>
+                                </div>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="option-group">
+                                <div class="option-title">Length</div>
+                                <select class="form-select">
+                                    <option>Brief (1-2 para)</option>
+                                    <option selected>Standard (3-5 para)</option>
+                                    <option>Detailed (full notes)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const links = document.querySelectorAll('.tool-link');
+        const views = document.querySelectorAll('.mockup-view');
+        const titleEl = document.getElementById('tool-title');
+        const descEl = document.getElementById('tool-desc');
+
+        const info = {
+            'notes-1': { title: 'Notes Setup 1', desc: 'Input on left, options sidebar right' },
+            'notes-2': { title: 'Notes Setup 2', desc: 'Full-width input, options at bottom' },
+            'flash-1': { title: 'Flashcards Setup 1', desc: 'Input left, options right sidebar' },
+            'flash-2': { title: 'Flashcards Setup 2', desc: 'Full-width, bottom options' },
+            'quiz-1': { title: 'Quiz Setup 1', desc: 'Input left, options right sidebar' },
+            'quiz-2': { title: 'Quiz Setup 2', desc: 'Full-width, bottom options' },
+            'mind-1': { title: 'Mindmap Setup 1', desc: 'Input left, options right sidebar' },
+            'mind-2': { title: 'Mindmap Setup 2', desc: 'Full-width, bottom options' },
+            'concept-1': { title: 'Concept Setup 1', desc: 'Input left, options right sidebar' },
+            'concept-2': { title: 'Concept Setup 2', desc: 'Full-width, bottom options' },
+            'time-1': { title: 'Timeline Setup 1', desc: 'Input left, options right sidebar' },
+            'time-2': { title: 'Timeline Setup 2', desc: 'Full-width, bottom options' },
+            'anno-1': { title: 'Annotate Setup 1', desc: 'Input left, options right sidebar' },
+            'anno-2': { title: 'Annotate Setup 2', desc: 'Full-width, bottom options' },
+            'sum-1': { title: 'Summary Setup', desc: 'Input left, options right sidebar' },
+        };
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tool = link.getAttribute('data-tool');
+
+                links.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                views.forEach(v => v.classList.remove('active'));
+                document.getElementById(tool).classList.add('active');
+
+                titleEl.textContent = info[tool].title;
+                descEl.textContent = info[tool].desc;
+
+                document.querySelector('.content').scrollTop = 0;
+            });
+        });
+    </script>
+</body>
+</html>

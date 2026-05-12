@@ -1,0 +1,2575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Tab Mockups – Cautie Learn Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: #f2f2f2;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 12px;
+        }
+
+        .nav-tabs button {
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #999;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -14px;
+        }
+
+        .nav-tabs button.active {
+            color: #7f8962;
+            border-bottom-color: #7f8962;
+        }
+
+        .nav-tabs button:hover {
+            color: #555;
+        }
+
+        .mockup-section {
+            display: none;
+        }
+
+        .mockup-section.active {
+            display: block;
+        }
+
+        .mockups-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .mockup-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mockup-header {
+            background: #7f8962;
+            color: white;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .mockup-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 500px;
+        }
+
+        /* ============ GROUP TAB ============ */
+
+        .grp-1 .mockup-content {
+            /* Member list with online status indicators */
+        }
+
+        .member-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .member-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #fafafa;
+            border-radius: 6px;
+            border-left: 3px solid transparent;
+        }
+
+        .member-item.online {
+            border-left-color: #7f8962;
+        }
+
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #7f8962;
+            position: relative;
+        }
+
+        .online-dot {
+            width: 12px;
+            height: 12px;
+            background: #7f8962;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid white;
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .member-status {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .member-stats {
+            display: flex;
+            gap: 8px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        /* GRP-2: Card grid layout */
+        .grp-2 .member-item {
+            flex-direction: column;
+            text-align: center;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-left: none;
+            padding: 16px;
+            gap: 8px;
+        }
+
+        .grp-2 .member-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .grp-2 .member-stats {
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* GRP-3: Expanded detail rows */
+        .grp-3 .member-item {
+            border: 1px solid #e0e0e0;
+            border-left: 3px solid #7f8962;
+            padding: 16px;
+            gap: 16px;
+        }
+
+        .member-detail-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .detail-col {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .detail-label {
+            font-size: 10px;
+            color: #999;
+            text-transform: uppercase;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* GRP-4: Compact inline layout */
+        .grp-4 .member-item {
+            display: grid;
+            grid-template-columns: 40px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px;
+            border-radius: 0;
+        }
+
+        .grp-4 .member-list {
+            gap: 0;
+        }
+
+        .grp-4 .member-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .grp-4 .member-stats {
+            gap: 16px;
+        }
+
+        /* GRP-5: Hierarchical with role badges */
+        .grp-5 .member-item {
+            border: 1px solid #e0e0e0;
+            border-left: 4px solid #7f8962;
+            padding: 16px;
+            gap: 12px;
+            display: grid;
+            grid-template-columns: 40px 1fr auto;
+            align-items: start;
+        }
+
+        .role-badge {
+            background: #f0f4eb;
+            color: #7f8962;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* ============ CHAT/SHARE TAB ============ */
+
+        .message-thread {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .message-item.own {
+            background: #f0f4eb;
+            flex-direction: row-reverse;
+        }
+
+        .message-item.other {
+            background: #fafafa;
+        }
+
+        .message-bubble {
+            flex: 1;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .attachment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .attachment {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            font-size: 12px;
+        }
+
+        .attachment-icon {
+            width: 28px;
+            height: 28px;
+            background: #f0f4eb;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        /* SHARE-2: Audience filter tabs */
+        .share-2 .audience-filter {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 8px;
+        }
+
+        .share-2 .audience-filter button {
+            background: none;
+            border: none;
+            font-size: 12px;
+            font-weight: 500;
+            color: #999;
+            cursor: pointer;
+            padding-bottom: 8px;
+            margin-bottom: -8px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .share-2 .audience-filter button.active {
+            color: #7f8962;
+            border-bottom-color: #7f8962;
+        }
+
+        /* SHARE-3: Media gallery */
+        .share-3 .media-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .media-item {
+            aspect-ratio: 1;
+            background: #e0e0e0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        /* SHARE-4: Thread with reactions */
+        .share-4 .message-item {
+            position: relative;
+        }
+
+        .reactions {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .reaction {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        /* SHARE-5: Rich message with context */
+        .share-5 .message-item {
+            display: grid;
+            grid-template-columns: 40px 1fr;
+            gap: 12px;
+        }
+
+        .message-context {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .message-author {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        /* ============ ATTENDANCE TAB ============ */
+
+        .attendance-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .attendance-day {
+            text-align: center;
+            padding: 8px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        .attendance-day-header {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .attendance-cell {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #e0e0e0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .attendance-present {
+            background: #7f8962;
+        }
+
+        .attendance-absent {
+            background: #d4534f;
+        }
+
+        .attendance-late {
+            background: #d4a574;
+        }
+
+        .attendance-excused {
+            background: #a8a8a8;
+        }
+
+        /* ATT-2: List view */
+        .att-2 .attendance-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 13px;
+        }
+
+        .att-2 .attendance-date {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .att-2 .attendance-status {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .att-2 .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .att-2 .badge-present {
+            background: #e8f0df;
+            color: #7f8962;
+        }
+
+        /* ATT-3: Weekly grid with homework column */
+        .att-3 .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .att-3 .attendance-table th {
+            background: #f5f5f5;
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .att-3 .attendance-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .att-3 .homework-cell {
+            font-size: 11px;
+            color: #999;
+        }
+
+        /* ATT-4: Timeline view */
+        .att-4 .timeline-item {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .att-4 .timeline-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #7f8962;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        .att-4 .timeline-content {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .att-4 .timeline-date {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .att-4 .timeline-note {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* ATT-5: Summary with stats */
+        .att-5 .attendance-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .att-5 .stat-card {
+            background: #fafafa;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            border-left: 3px solid #7f8962;
+        }
+
+        .att-5 .stat-label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .att-5 .stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        /* ============ GRADES TAB (TEACHER) ============ */
+
+        .grades-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .grade-set-item {
+            background: #fafafa;
+            border-radius: 6px;
+            padding: 12px;
+            border-left: 3px solid #7f8962;
+        }
+
+        .grade-set-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .grade-set-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .grade-count {
+            font-size: 11px;
+            background: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            color: #7f8962;
+        }
+
+        .grade-preview {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 12px;
+        }
+
+        /* GR-TEACH-2: Distribution chart view */
+        .gr-teach-2 .grade-set-item {
+            display: grid;
+            grid-template-columns: 1fr 150px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .gr-teach-2 .chart-bars {
+            display: flex;
+            gap: 4px;
+            height: 80px;
+            align-items: flex-end;
+        }
+
+        .gr-teach-2 .bar {
+            flex: 1;
+            background: #7f8962;
+            border-radius: 3px 3px 0 0;
+            position: relative;
+        }
+
+        .gr-teach-2 .bar-label {
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* GR-TEACH-3: Bulk grade action */
+        .gr-teach-3 .action-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: #f0f4eb;
+            border-radius: 4px;
+        }
+
+        .gr-teach-3 .action-bar button {
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .gr-teach-3 .action-bar button.primary {
+            background: #7f8962;
+            color: white;
+            border-color: #7f8962;
+        }
+
+        /* GR-TEACH-4: Expandable rows */
+        .gr-teach-4 .grade-details {
+            display: none;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+        }
+
+        .gr-teach-4 .grade-set-item.expanded .grade-details {
+            display: block;
+        }
+
+        .gr-teach-4 .student-grades {
+            display: grid;
+            grid-template-columns: 1fr 60px 60px;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .gr-teach-4 .student-grades > div {
+            padding: 6px;
+            background: white;
+            border-radius: 3px;
+        }
+
+        /* GR-TEACH-5: Filtering and sorting */
+        .gr-teach-5 .controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .gr-teach-5 .control-btn {
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .gr-teach-5 .control-btn.active {
+            background: #7f8962;
+            color: white;
+            border-color: #7f8962;
+        }
+
+        /* ============ GRADES TAB (STUDENT) ============ */
+
+        .student-grades-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .student-grades-table th {
+            background: #f5f5f5;
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 12px;
+        }
+
+        .student-grades-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .grade-value {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .grade-value.high {
+            color: #7f8962;
+        }
+
+        .grade-value.medium {
+            color: #d4a574;
+        }
+
+        .grade-value.low {
+            color: #d4534f;
+        }
+
+        /* GR-STU-2: Card layout */
+        .gr-stu-2 .grades-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .gr-stu-2 .grade-card {
+            background: #fafafa;
+            padding: 16px;
+            border-radius: 6px;
+            border-left: 3px solid #7f8962;
+        }
+
+        .gr-stu-2 .card-subject {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .gr-stu-2 .card-grade {
+            font-size: 24px;
+            font-weight: 700;
+            color: #7f8962;
+            margin-bottom: 4px;
+        }
+
+        .gr-stu-2 .card-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* GR-STU-3: Timeline */
+        .gr-stu-3 .grade-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .gr-stu-3 .grade-event {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        .gr-stu-3 .event-dot {
+            width: 10px;
+            height: 10px;
+            background: #7f8962;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 5px;
+        }
+
+        .gr-stu-3 .event-content {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .gr-stu-3 .event-date {
+            font-size: 11px;
+            color: #999;
+        }
+
+        /* GR-STU-4: With calculator */
+        .gr-stu-4 .calculator-section {
+            background: #f0f4eb;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        .gr-stu-4 .calc-title {
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .gr-stu-4 .calc-input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .gr-stu-4 .calc-input-row input {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .gr-stu-4 .calc-result {
+            padding: 8px;
+            background: white;
+            border-radius: 3px;
+            font-weight: 600;
+            color: #7f8962;
+        }
+
+        /* GR-STU-5: Class comparison */
+        .gr-stu-5 .class-comparison {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 16px;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        .gr-stu-5 .class-info {
+            font-size: 13px;
+        }
+
+        .gr-stu-5 .class-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .gr-stu-5 .class-avg {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .gr-stu-5 .mini-bar {
+            width: 80px;
+            height: 30px;
+            background: white;
+            border-radius: 3px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            position: relative;
+        }
+
+        .gr-stu-5 .bar-fill {
+            width: 100%;
+            background: #7f8962;
+            border-radius: 2px;
+        }
+
+        /* ============ ANALYTICS TAB ============ */
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .analytics-card {
+            background: #fafafa;
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .analytics-title {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .bar-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .bar-label {
+            width: 80px;
+            flex-shrink: 0;
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #7f8962;
+            border-radius: 3px;
+        }
+
+        .bar-value {
+            margin-left: 8px;
+            color: #666;
+            min-width: 30px;
+        }
+
+        /* ANALYTICS-2: Heatmap */
+        .analytics-2 .heatmap {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            font-size: 11px;
+        }
+
+        .analytics-2 .heatmap-day {
+            aspect-ratio: 1;
+            background: #e8f0df;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .analytics-2 .heatmap-day.hot {
+            background: #7f8962;
+            color: white;
+        }
+
+        /* ANALYTICS-3: Pie chart */
+        .analytics-3 .pie-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 16px;
+            height: 80px;
+        }
+
+        .analytics-3 .pie-legend {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .analytics-3 .legend-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .analytics-3 .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #7f8962;
+            flex-shrink: 0;
+        }
+
+        /* ANALYTICS-4: At-risk students */
+        .analytics-4 .risk-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .analytics-4 .risk-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid #d4534f;
+            font-size: 12px;
+        }
+
+        .analytics-4 .risk-name {
+            font-weight: 600;
+        }
+
+        .analytics-4 .risk-avg {
+            color: #d4534f;
+            font-weight: 600;
+        }
+
+        /* ANALYTICS-5: Performance by subject */
+        .analytics-5 .subject-row {
+            display: grid;
+            grid-template-columns: 1fr 40px;
+            gap: 12px;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 12px;
+        }
+
+        .analytics-5 .subject-name {
+            font-weight: 600;
+        }
+
+        .analytics-5 .subject-avg {
+            text-align: right;
+            font-weight: 700;
+            color: #7f8962;
+        }
+
+        /* ============ SCHEDULE TAB ============ */
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .schedule-day {
+            text-align: center;
+        }
+
+        .schedule-day-header {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .schedule-slots {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .schedule-slot {
+            background: #f0f4eb;
+            padding: 6px;
+            border-radius: 4px;
+            border-left: 3px solid #7f8962;
+            font-size: 11px;
+            color: #333;
+        }
+
+        .schedule-slot.empty {
+            background: #fafafa;
+            border-left-color: #ddd;
+        }
+
+        .slot-time {
+            font-weight: 600;
+            font-size: 10px;
+            color: #999;
+        }
+
+        .slot-subject {
+            font-size: 10px;
+            color: #666;
+        }
+
+        /* SCHED-2: Vertical timeline */
+        .sched-2 .schedule-timeline {
+            position: relative;
+            padding-left: 60px;
+        }
+
+        .sched-2 .timeline-hour {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .sched-2 .hour-label {
+            position: absolute;
+            left: 0;
+            font-size: 12px;
+            font-weight: 600;
+            color: #999;
+            width: 50px;
+        }
+
+        .sched-2 .hour-events {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sched-2 .hour-event {
+            background: #f0f4eb;
+            border-left: 3px solid #7f8962;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        /* SCHED-3: List view */
+        .sched-3 .schedule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sched-3 .schedule-item {
+            display: grid;
+            grid-template-columns: 60px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 12px;
+            background: #fafafa;
+            border-radius: 4px;
+            border-left: 3px solid #7f8962;
+            font-size: 13px;
+        }
+
+        .sched-3 .item-time {
+            font-weight: 600;
+            color: #7f8962;
+        }
+
+        .sched-3 .item-details {
+            flex: 1;
+        }
+
+        .sched-3 .item-subject {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .sched-3 .item-class {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .sched-3 .item-room {
+            text-align: right;
+            color: #999;
+            font-size: 12px;
+        }
+
+        /* SCHED-4: Stacked by period */
+        .sched-4 .schedule-section {
+            margin-bottom: 16px;
+        }
+
+        .sched-4 .section-header {
+            font-weight: 600;
+            font-size: 12px;
+            color: #7f8962;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .sched-4 .section-items {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sched-4 .compact-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: white;
+            border-radius: 3px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 12px;
+        }
+
+        /* SCHED-5: Card deck */
+        .sched-5 .schedule-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .sched-5 .schedule-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 16px;
+        }
+
+        .sched-5 .card-time {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .sched-5 .card-subject {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .sched-5 .card-details {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Class Tab Mockups</h1>
+            <p>5 design variations for each class tab. Choose preferred layouts for implementation.</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="group">Group</button>
+            <button class="nav-tab" data-tab="chat">Chat/Share</button>
+            <button class="nav-tab" data-tab="attendance">Attendance</button>
+            <button class="nav-tab" data-tab="grades-teacher">Grades (Teacher)</button>
+            <button class="nav-tab" data-tab="grades-student">Grades (Student)</button>
+            <button class="nav-tab" data-tab="analytics">Analytics</button>
+            <button class="nav-tab" data-tab="schedule">Schedule</button>
+        </div>
+
+        <!-- ============ GROUP TAB ============ -->
+        <div id="group" class="mockup-section active">
+            <div class="mockups-grid">
+                <!-- GRP-1: List with online status indicators -->
+                <div class="mockup-card grp-1">
+                    <div class="mockup-header">GRP-1: List with Online Status</div>
+                    <div class="mockup-content">
+                        <div class="member-list">
+                            <div class="member-item online">
+                                <div class="member-avatar">
+                                    M
+                                    <div class="online-dot"></div>
+                                </div>
+                                <div class="member-info">
+                                    <div class="member-name">Maarten</div>
+                                    <div class="member-status">Online now</div>
+                                </div>
+                                <div class="member-stats">
+                                    <div>12 posts</div>
+                                </div>
+                            </div>
+                            <div class="member-item online">
+                                <div class="member-avatar">
+                                    J
+                                    <div class="online-dot"></div>
+                                </div>
+                                <div class="member-info">
+                                    <div class="member-name">Julia</div>
+                                    <div class="member-status">Online 5 min ago</div>
+                                </div>
+                                <div class="member-stats">
+                                    <div>8 posts</div>
+                                </div>
+                            </div>
+                            <div class="member-item">
+                                <div class="member-avatar">
+                                    A
+                                </div>
+                                <div class="member-info">
+                                    <div class="member-name">Alex</div>
+                                    <div class="member-status">Last seen 2h ago</div>
+                                </div>
+                                <div class="member-stats">
+                                    <div>5 posts</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRP-2: Card grid layout -->
+                <div class="mockup-card grp-2">
+                    <div class="mockup-header">GRP-2: Card Grid Layout</div>
+                    <div class="mockup-content">
+                        <div class="member-list">
+                            <div class="member-item online">
+                                <div class="member-avatar">
+                                    M
+                                    <div class="online-dot"></div>
+                                </div>
+                                <div class="member-name">Maarten</div>
+                                <div class="member-stats">
+                                    <div>12 posts</div>
+                                    <div>Active today</div>
+                                </div>
+                            </div>
+                            <div class="member-item online">
+                                <div class="member-avatar">
+                                    J
+                                    <div class="online-dot"></div>
+                                </div>
+                                <div class="member-name">Julia</div>
+                                <div class="member-stats">
+                                    <div>8 posts</div>
+                                    <div>Active today</div>
+                                </div>
+                            </div>
+                            <div class="member-item">
+                                <div class="member-avatar">
+                                    A
+                                </div>
+                                <div class="member-name">Alex</div>
+                                <div class="member-stats">
+                                    <div>5 posts</div>
+                                    <div>Last 2h</div>
+                                </div>
+                            </div>
+                            <div class="member-item">
+                                <div class="member-avatar">
+                                    S
+                                </div>
+                                <div class="member-name">Sarah</div>
+                                <div class="member-stats">
+                                    <div>3 posts</div>
+                                    <div>Last 1d</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRP-3: Expanded detail rows -->
+                <div class="mockup-card grp-3">
+                    <div class="mockup-header">GRP-3: Expanded Detail Rows</div>
+                    <div class="mockup-content">
+                        <div class="member-list">
+                            <div class="member-item">
+                                <div class="member-avatar">M</div>
+                                <div class="member-info">
+                                    <div class="member-name">Maarten</div>
+                                </div>
+                                <div class="member-detail-cols">
+                                    <div class="detail-col">
+                                        <div class="detail-label">Posts</div>
+                                        <div class="detail-value">12</div>
+                                    </div>
+                                    <div class="detail-col">
+                                        <div class="detail-label">Participations</div>
+                                        <div class="detail-value">8</div>
+                                    </div>
+                                    <div class="detail-col">
+                                        <div class="detail-label">Status</div>
+                                        <div class="detail-value">Online</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="member-item">
+                                <div class="member-avatar">J</div>
+                                <div class="member-info">
+                                    <div class="member-name">Julia</div>
+                                </div>
+                                <div class="member-detail-cols">
+                                    <div class="detail-col">
+                                        <div class="detail-label">Posts</div>
+                                        <div class="detail-value">8</div>
+                                    </div>
+                                    <div class="detail-col">
+                                        <div class="detail-label">Participations</div>
+                                        <div class="detail-value">6</div>
+                                    </div>
+                                    <div class="detail-col">
+                                        <div class="detail-label">Status</div>
+                                        <div class="detail-value">Online</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRP-4: Compact inline layout -->
+                <div class="mockup-card grp-4">
+                    <div class="mockup-header">GRP-4: Compact Inline Layout</div>
+                    <div class="mockup-content">
+                        <div class="member-list">
+                            <div class="member-item">
+                                <div class="member-avatar">M</div>
+                                <div class="member-info">
+                                    <div>
+                                        <div class="member-name">Maarten</div>
+                                        <div class="member-status">Online now</div>
+                                    </div>
+                                    <div class="member-stats">
+                                        <div>12 posts</div>
+                                        <div>Active today</div>
+                                        <div>3 reactions</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="member-item">
+                                <div class="member-avatar">J</div>
+                                <div class="member-info">
+                                    <div>
+                                        <div class="member-name">Julia</div>
+                                        <div class="member-status">Online 5m ago</div>
+                                    </div>
+                                    <div class="member-stats">
+                                        <div>8 posts</div>
+                                        <div>Active today</div>
+                                        <div>2 reactions</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRP-5: Hierarchical with role badges -->
+                <div class="mockup-card grp-5">
+                    <div class="mockup-header">GRP-5: With Role Badges</div>
+                    <div class="mockup-content">
+                        <div class="member-list">
+                            <div class="member-item">
+                                <div class="member-avatar">T</div>
+                                <div class="member-info">
+                                    <div class="member-name">Teacher Name</div>
+                                    <div class="member-status">Last seen 1h ago</div>
+                                </div>
+                                <div class="role-badge">Teacher</div>
+                            </div>
+                            <div class="member-item">
+                                <div class="member-avatar">M</div>
+                                <div class="member-info">
+                                    <div class="member-name">Maarten</div>
+                                    <div class="member-status">Online now</div>
+                                </div>
+                                <div class="role-badge">Student</div>
+                            </div>
+                            <div class="member-item">
+                                <div class="member-avatar">J</div>
+                                <div class="member-info">
+                                    <div class="member-name">Julia</div>
+                                    <div class="member-status">Last seen 2h ago</div>
+                                </div>
+                                <div class="role-badge">Student</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ CHAT/SHARE TAB ============ -->
+        <div id="chat" class="mockup-section">
+            <div class="mockups-grid">
+                <!-- SHARE-1: Basic thread -->
+                <div class="mockup-card share-1">
+                    <div class="mockup-header">SHARE-1: Basic Message Thread</div>
+                    <div class="mockup-content">
+                        <div class="message-thread">
+                            <div class="message-item other">
+                                <div class="message-bubble">
+                                    <div class="member-name">Julia</div>
+                                    <div style="margin-top: 4px;">Did anyone understand the last exercise?</div>
+                                    <div class="message-time">2:30 PM</div>
+                                </div>
+                            </div>
+                            <div class="message-item own">
+                                <div class="message-bubble">
+                                    <div style="margin-top: 4px;">I think part 2 is confusing</div>
+                                    <div class="message-time">2:35 PM</div>
+                                </div>
+                            </div>
+                            <div class="message-item other">
+                                <div class="message-bubble">
+                                    <div class="member-name">Teacher</div>
+                                    <div style="margin-top: 4px;">Let me clarify that in the next class. Good observation!</div>
+                                    <div class="message-time">2:40 PM</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SHARE-2: With audience filter -->
+                <div class="mockup-card share-2">
+                    <div class="mockup-header">SHARE-2: With Audience Filter</div>
+                    <div class="mockup-content">
+                        <div class="audience-filter">
+                            <button class="active">All</button>
+                            <button>Group 1</button>
+                            <button>Group 2</button>
+                        </div>
+                        <div class="message-thread">
+                            <div class="message-item other">
+                                <div class="message-bubble">
+                                    <div class="member-name">Julia</div>
+                                    <div style="margin-top: 4px;">Who's available for study session?</div>
+                                    <div class="message-time">3:00 PM</div>
+                                </div>
+                            </div>
+                            <div class="message-item own">
+                                <div class="message-bubble">
+                                    <div style="margin-top: 4px;">I'm free after 5</div>
+                                    <div class="message-time">3:05 PM</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SHARE-3: With attachments -->
+                <div class="mockup-card share-3">
+                    <div class="mockup-header">SHARE-3: With Media & Files</div>
+                    <div class="mockup-content">
+                        <div class="message-thread">
+                            <div class="message-item other">
+                                <div class="message-bubble">
+                                    <div class="member-name">Teacher</div>
+                                    <div style="margin-top: 8px;">Here are the class materials:</div>
+                                    <div class="attachment-list">
+                                        <div class="attachment">
+                                            <div class="attachment-icon">📄</div>
+                                            <div>lesson-slides.pdf</div>
+                                        </div>
+                                        <div class="attachment">
+                                            <div class="attachment-icon">📊</div>
+                                            <div>exercise-data.xlsx</div>
+                                        </div>
+                                    </div>
+                                    <div class="message-time">2:00 PM</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 16px; font-size: 12px; font-weight: 600; color: #666;">Recent shared media:</div>
+                        <div class="media-grid">
+                            <div class="media-item">📷</div>
+                            <div class="media-item">📷</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SHARE-4: With reactions -->
+                <div class="mockup-card share-4">
+                    <div class="mockup-header">SHARE-4: With Reactions</div>
+                    <div class="mockup-content">
+                        <div class="message-thread">
+                            <div class="message-item other">
+                                <div class="message-bubble">
+                                    <div class="member-name">Teacher</div>
+                                    <div style="margin-top: 4px;">Great work on the assignment everyone! 🎉</div>
+                                    <div class="reactions">
+                                        <div class="reaction">👍 3</div>
+                                        <div class="reaction">❤️ 2</div>
+                                        <div class="reaction">🎉 5</div>
+                                    </div>
+                                    <div class="message-time">4:00 PM</div>
+                                </div>
+                            </div>
+                            <div class="message-item own">
+                                <div class="message-bubble">
+                                    <div style="margin-top: 4px;">Thanks for the feedback!</div>
+                                    <div class="message-time">4:02 PM</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SHARE-5: Rich message with context -->
+                <div class="mockup-card share-5">
+                    <div class="mockup-header">SHARE-5: Rich Context Messages</div>
+                    <div class="mockup-content">
+                        <div class="message-thread">
+                            <div class="message-item other">
+                                <div class="message-avatar" style="width: 32px; height: 32px;">T</div>
+                                <div class="message-bubble">
+                                    <div class="message-context">Replying to: Julia's question</div>
+                                    <div class="message-author">Teacher</div>
+                                    <div>The answer to your question about chapter 3 is that we'll cover it next week in more detail.</div>
+                                    <div class="message-time">3:30 PM</div>
+                                </div>
+                            </div>
+                            <div class="message-item own">
+                                <div class="message-bubble">
+                                    <div class="message-author">You</div>
+                                    <div>Thanks for clarifying!</div>
+                                    <div class="message-time">3:35 PM</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ ATTENDANCE TAB ============ -->
+        <div id="attendance" class="mockup-section">
+            <div class="mockups-grid">
+                <!-- ATT-1: Grid view for week -->
+                <div class="mockup-card att-1">
+                    <div class="mockup-header">ATT-1: Weekly Grid View</div>
+                    <div class="mockup-content">
+                        <div class="attendance-grid">
+                            <div class="attendance-day">
+                                <div class="attendance-day-header">Mon</div>
+                                <div class="attendance-cell attendance-present">P</div>
+                            </div>
+                            <div class="attendance-day">
+                                <div class="attendance-day-header">Tue</div>
+                                <div class="attendance-cell attendance-present">P</div>
+                            </div>
+                            <div class="attendance-day">
+                                <div class="attendance-day-header">Wed</div>
+                                <div class="attendance-cell attendance-late">L</div>
+                            </div>
+                            <div class="attendance-day">
+                                <div class="attendance-day-header">Thu</div>
+                                <div class="attendance-cell attendance-absent">A</div>
+                            </div>
+                            <div class="attendance-day">
+                                <div class="attendance-day-header">Fri</div>
+                                <div class="attendance-cell attendance-present">P</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 16px; font-size: 12px; color: #666;">
+                            <div style="margin-bottom: 4px;"><span style="color: #7f8962; font-weight: 600;">P</span> = Present</div>
+                            <div style="margin-bottom: 4px;"><span style="color: #d4534f; font-weight: 600;">A</span> = Absent</div>
+                            <div><span style="color: #d4a574; font-weight: 600;">L</span> = Late</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ATT-2: List view -->
+                <div class="mockup-card att-2">
+                    <div class="mockup-header">ATT-2: Daily List View</div>
+                    <div class="mockup-content">
+                        <div class="member-list">
+                            <div class="attendance-item">
+                                <div>
+                                    <div class="attendance-date">Monday, May 5</div>
+                                </div>
+                                <div class="attendance-status">
+                                    <span class="status-badge badge-present">Present</span>
+                                </div>
+                            </div>
+                            <div class="attendance-item">
+                                <div>
+                                    <div class="attendance-date">Tuesday, May 6</div>
+                                </div>
+                                <div class="attendance-status">
+                                    <span class="status-badge badge-present">Present</span>
+                                </div>
+                            </div>
+                            <div class="attendance-item">
+                                <div>
+                                    <div class="attendance-date">Wednesday, May 7</div>
+                                </div>
+                                <div class="attendance-status">
+                                    <span style="background: #f4e9d8; color: #d4a574; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">Late</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ATT-3: Weekly grid with homework -->
+                <div class="mockup-card att-3">
+                    <div class="mockup-header">ATT-3: Grid with Homework Column</div>
+                    <div class="mockup-content">
+                        <table class="attendance-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Homework</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Mon, May 5</td>
+                                    <td><span style="background: #e8f0df; color: #7f8962; padding: 2px 6px; border-radius: 3px;">Present</span></td>
+                                    <td class="homework-cell">Chapter 5 ex. 1-5</td>
+                                </tr>
+                                <tr>
+                                    <td>Tue, May 6</td>
+                                    <td><span style="background: #e8f0df; color: #7f8962; padding: 2px 6px; border-radius: 3px;">Present</span></td>
+                                    <td class="homework-cell">Essay due</td>
+                                </tr>
+                                <tr>
+                                    <td>Wed, May 7</td>
+                                    <td><span style="background: #f4e9d8; color: #d4a574; padding: 2px 6px; border-radius: 3px;">Late</span></td>
+                                    <td class="homework-cell">Quiz prep</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ATT-4: Timeline view -->
+                <div class="mockup-card att-4">
+                    <div class="mockup-header">ATT-4: Timeline View</div>
+                    <div class="mockup-content">
+                        <div style="margin-bottom: 16px;">
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-date">May 5 – Present</div>
+                                    <div class="timeline-note">On time for all classes</div>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-date">May 6 – Present</div>
+                                    <div class="timeline-note">Regular attendance</div>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot" style="background: #d4a574;"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-date">May 7 – Late</div>
+                                    <div class="timeline-note">Arrived 5 minutes late to Biology</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ATT-5: Summary stats -->
+                <div class="mockup-card att-5">
+                    <div class="mockup-header">ATT-5: Summary Statistics</div>
+                    <div class="mockup-content">
+                        <div class="attendance-stats">
+                            <div class="stat-card">
+                                <div class="stat-label">Present</div>
+                                <div class="stat-value">28</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Late</div>
+                                <div class="stat-value">3</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Absent</div>
+                                <div class="stat-value">1</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Rate</div>
+                                <div class="stat-value">90%</div>
+                            </div>
+                        </div>
+                        <div class="member-list" style="margin-top: 12px;">
+                            <div class="member-item online" style="display: grid; grid-template-columns: 40px 1fr; gap: 12px;">
+                                <div style="text-align: center; font-size: 12px;">📊</div>
+                                <div>
+                                    <div class="member-name">Trend</div>
+                                    <div class="member-status">Consistent attendance this month</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ GRADES TAB (TEACHER) ============ -->
+        <div id="grades-teacher" class="mockup-section">
+            <div class="mockups-grid">
+                <!-- GR-TEACH-1: List of grade sets -->
+                <div class="mockup-card gr-teach-1">
+                    <div class="mockup-header">GR-TEACH-1: Grade Sets List</div>
+                    <div class="mockup-content">
+                        <div class="grades-list">
+                            <div class="grade-set-item">
+                                <div class="grade-set-header">
+                                    <div>
+                                        <div class="grade-set-name">Quiz 1 – Chapter 5</div>
+                                        <div style="font-size: 11px; color: #999; margin-top: 2px;">Published 2 days ago</div>
+                                    </div>
+                                    <div class="grade-count">28 students</div>
+                                </div>
+                                <div class="grade-preview">
+                                    <span style="background: #e8f0df; color: #7f8962; padding: 2px 6px; border-radius: 3px;">Avg: 7.8</span>
+                                </div>
+                            </div>
+                            <div class="grade-set-item">
+                                <div class="grade-set-header">
+                                    <div>
+                                        <div class="grade-set-name">Homework 2</div>
+                                        <div style="font-size: 11px; color: #999; margin-top: 2px;">Published 4 days ago</div>
+                                    </div>
+                                    <div class="grade-count">27 students</div>
+                                </div>
+                                <div class="grade-preview">
+                                    <span style="background: #e8f0df; color: #7f8962; padding: 2px 6px; border-radius: 3px;">Avg: 8.2</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GR-TEACH-2: With distribution chart -->
+                <div class="mockup-card gr-teach-2">
+                    <div class="mockup-header">GR-TEACH-2: With Distribution Chart</div>
+                    <div class="mockup-content">
+                        <div class="grades-list">
+                            <div class="grade-set-item">
+                                <div>
+                                    <div class="grade-set-header">
+                                        <div class="grade-set-name">Quiz 1 – Chapter 5</div>
+                                    </div>
+                                </div>
+                                <div class="chart-bars">
+                                    <div class="bar" style="height: 60%;"><span class="bar-label">A</span></div>
+                                    <div class="bar" style="height: 80%;"><span class="bar-label">B</span></div>
+                                    <div class="bar" style="height: 70%;"><span class="bar-label">C</span></div>
+                                    <div class="bar" style="height: 30%;"><span class="bar-label">D</span></div>
+                                    <div class="bar" style="height: 20%;"><span class="bar-label">F</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GR-TEACH-3: Bulk grade action -->
+                <div class="mockup-card gr-teach-3">
+                    <div class="mockup-header">GR-TEACH-3: With Bulk Actions</div>
+                    <div class="mockup-content">
+                        <div class="action-bar">
+                            <button>Export</button>
+                            <button class="primary">Publish All</button>
+                        </div>
+                        <div class="grades-list">
+                            <div class="grade-set-item">
+                                <div class="grade-set-header">
+                                    <div>
+                                        <div class="grade-set-name">Midterm Exam</div>
+                                        <div style="font-size: 11px; color: #999; margin-top: 2px;">Draft – not published</div>
+                                    </div>
+                                    <div class="grade-count">28 students</div>
+                                </div>
+                            </div>
+                            <div class="grade-set-item">
+                                <div class="grade-set-header">
+                                    <div>
+                                        <div class="grade-set-name">Quiz 1</div>
+                                        <div style="font-size: 11px; color: #999; margin-top: 2px;">Published</div>
+                                    </div>
+                                    <div class="grade-count">28 students</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GR-TEACH-4: Expandable rows -->
+                <div class="mockup-card gr-teach-4">
+                    <div class="mockup-header">GR-TEACH-4: Expandable Details</div>
+                    <div class="mockup-content">
+                        <div class="grades-list">
+                            <div class="grade-set-item expanded">
+                                <div class="grade-set-header">
+                                    <div class="grade-set-name">Quiz 1 – Chapter 5</div>
+                                </div>
+                                <div class="grade-details">
+                                    <div style="font-size: 11px; color: #999; margin-bottom: 8px;">Student grades:</div>
+                                    <div class="student-grades">
+                                        <div>Maarten</div>
+                                        <div>8.5</div>
+                                        <div style="text-align: right; color: #999; font-size: 11px;">Good</div>
+                                    </div>
+                                    <div class="student-grades">
+                                        <div>Julia</div>
+                                        <div>7.2</div>
+                                        <div style="text-align: right; color: #999; font-size: 11px;">Fair</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GR-TEACH-5: With filtering -->
+                <div class="mockup-card gr-teach-5">
+                    <div class="mockup-header">GR-TEACH-5: With Sort/Filter</div>
+                    <div class="mockup-content">
+                        <div class="controls">
+                            <button class="control-btn active">All</button>
+                            <button class="control-btn">Draft</button>
+                            <button class="control-btn">Published</button>
+                        </div>
+                        <div class="grades-list">
+                            <div class="grade-set-item">
+                                <div class="grade-set-header">
+                                    <div>
+                                        <div class="grade-set-name">Homework 2</div>
+                                        <div style="font-size: 11px; color: #999; margin-top: 2px;">Published</div>
+                                    </div>
+                                    <div class="grade-count">27/28</div>
+                                </div>
+                            </div>
+                            <div class="grade-set-item">
+                                <div class="grade-set-header">
+                                    <div>
+                                        <div class="grade-set-name">Quiz 1</div>
+                                        <div style="font-size: 11px; color: #999; margin-top: 2px;">Published</div>
+                                    </div>
+                                    <div class="grade-count">28/28</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ GRADES TAB (STUDENT) ============ -->
+        <div id="grades-student" class="mockup-section">
+            <div class="mockups-grid">
+                <!-- GR-STU-1: Table layout -->
+                <div class="mockup-card gr-stu-1">
+                    <div class="mockup-header">GR-STU-1: Table View</div>
+                    <div class="mockup-content">
+                        <table class="student-grades-table">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Assignment</th>
+                                    <th>Grade</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Biology</td>
+                                    <td>Quiz 1 – Chapter 5</td>
+                                    <td><span class="grade-value high">8.5</span></td>
+                                    <td style="font-size: 12px; color: #999;">May 2</td>
+                                </tr>
+                                <tr>
+                                    <td>Mathematics</td>
+                                    <td>Homework 2</td>
+                                    <td><span class="grade-value high">8.2</span></td>
+                                    <td style="font-size: 12px; color: #999;">May 1</td>
+                                </tr>
+                                <tr>
+                                    <td>History</td>
+                                    <td>Essay</td>
+                                    <td><span class="grade-value medium">6.8</span></td>
+                                    <td style="font-size: 12px; color: #999;">Apr 28</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- GR-STU-2: Card layout -->
+                <div class="mockup-card gr-stu-2">
+                    <div class="mockup-header">GR-STU-2: Card Grid Layout</div>
+                    <div class="mockup-content">
+                        <div class="grades-cards">
+                            <div class="grade-card">
+                                <div class="card-subject">Biology</div>
+                                <div class="card-grade">8.5</div>
+                                <div class="card-name">Quiz 1 – Chapter 5</div>
+                            </div>
+                            <div class="grade-card">
+                                <div class="card-subject">Mathematics</div>
+                                <div class="card-grade">8.2</div>
+                                <div class="card-name">Homework 2</div>
+                            </div>
+                            <div class="grade-card">
+                                <div class="card-subject">History</div>
+                                <div class="card-grade">6.8</div>
+                                <div class="card-name">Essay</div>
+                            </div>
+                            <div class="grade-card">
+                                <div class="card-subject">English</div>
+                                <div class="card-grade">7.5</div>
+                                <div class="card-name">Reading Test</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GR-STU-3: Timeline -->
+                <div class="mockup-card gr-stu-3">
+                    <div class="mockup-header">GR-STU-3: Timeline View</div>
+                    <div class="mockup-content">
+                        <div class="grade-timeline">
+                            <div class="grade-event">
+                                <div class="event-dot"></div>
+                                <div class="event-content">
+                                    <div class="event-date">May 2</div>
+                                    <div style="font-weight: 600; margin: 2px 0;">Biology: Quiz 1</div>
+                                    <div style="font-size: 12px; color: #666;">Score: 8.5</div>
+                                </div>
+                            </div>
+                            <div class="grade-event">
+                                <div class="event-dot"></div>
+                                <div class="event-content">
+                                    <div class="event-date">May 1</div>
+                                    <div style="font-weight: 600; margin: 2px 0;">Math: Homework 2</div>
+                                    <div style="font-size: 12px; color: #666;">Score: 8.2</div>
+                                </div>
+                            </div>
+                            <div class="grade-event">
+                                <div class="event-dot"></div>
+                                <div class="event-content">
+                                    <div class="event-date">Apr 28</div>
+                                    <div style="font-weight: 600; margin: 2px 0;">History: Essay</div>
+                                    <div style="font-size: 12px; color: #666;">Score: 6.8</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GR-STU-4: With calculator -->
+                <div class="mockup-card gr-stu-4">
+                    <div class="mockup-header">GR-STU-4: With Grade Calculator</div>
+                    <div class="mockup-content">
+                        <div class="calculator-section">
+                            <div class="calc-title">What grade do I need?</div>
+                            <div class="calc-input-row">
+                                <label style="display: flex; align-items: center; gap: 4px; font-size: 11px;">Target avg</label>
+                                <input type="number" value="7.5" style="flex: 1;">
+                            </div>
+                            <div class="calc-input-row">
+                                <label style="display: flex; align-items: center; gap: 4px; font-size: 11px;">Current avg</label>
+                                <input type="number" value="7.8" style="flex: 1;">
+                            </div>
+                            <div class="calc-result">
+                                You need: 6.8 or higher
+                            </div>
+                        </div>
+                        <div class="grades-cards" style="grid-template-columns: 1fr;">
+                            <div class="grade-card">
+                                <div class="card-subject">Biology</div>
+                                <div class="card-grade">8.5</div>
+                                <div class="card-name">Latest Grade</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GR-STU-5: With class comparison -->
+                <div class="mockup-card gr-stu-5">
+                    <div class="mockup-header">GR-STU-5: Class Comparison</div>
+                    <div class="mockup-content">
+                        <div class="class-comparison">
+                            <div class="class-info">
+                                <div class="class-name">Biology</div>
+                                <div class="class-avg">Your avg: 7.9</div>
+                            </div>
+                            <div class="mini-bar">
+                                <div class="bar-fill" style="height: 79%; width: 60%;"></div>
+                            </div>
+                        </div>
+                        <div class="class-comparison">
+                            <div class="class-info">
+                                <div class="class-name">Mathematics</div>
+                                <div class="class-avg">Your avg: 8.1</div>
+                            </div>
+                            <div class="mini-bar">
+                                <div class="bar-fill" style="height: 81%; width: 60%;"></div>
+                            </div>
+                        </div>
+                        <div class="class-comparison">
+                            <div class="class-info">
+                                <div class="class-name">History</div>
+                                <div class="class-avg">Your avg: 7.2</div>
+                            </div>
+                            <div class="mini-bar">
+                                <div class="bar-fill" style="height: 72%; width: 60%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ ANALYTICS TAB ============ -->
+        <div id="analytics" class="mockup-section">
+            <div class="mockups-grid">
+                <!-- ANALYTICS-1: Performance bars -->
+                <div class="mockup-card analytics-1">
+                    <div class="mockup-header">ANALYTICS-1: Performance Bars</div>
+                    <div class="mockup-content">
+                        <div class="analytics-grid">
+                            <div class="analytics-card">
+                                <div class="analytics-title">Class Average by Assessment</div>
+                                <div class="bar-chart">
+                                    <div class="bar-row">
+                                        <div class="bar-label">Quiz 1</div>
+                                        <div class="bar-container">
+                                            <div class="bar-fill" style="width: 78%;"></div>
+                                        </div>
+                                        <div class="bar-value">7.8</div>
+                                    </div>
+                                    <div class="bar-row">
+                                        <div class="bar-label">Homework</div>
+                                        <div class="bar-container">
+                                            <div class="bar-fill" style="width: 82%;"></div>
+                                        </div>
+                                        <div class="bar-value">8.2</div>
+                                    </div>
+                                    <div class="bar-row">
+                                        <div class="bar-label">Essay</div>
+                                        <div class="bar-container">
+                                            <div class="bar-fill" style="width: 71%;"></div>
+                                        </div>
+                                        <div class="bar-value">7.1</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="analytics-card">
+                                <div class="analytics-title">Participation Rate</div>
+                                <div class="bar-chart">
+                                    <div class="bar-row">
+                                        <div class="bar-label">Group A</div>
+                                        <div class="bar-container">
+                                            <div class="bar-fill" style="width: 92%;"></div>
+                                        </div>
+                                        <div class="bar-value">92%</div>
+                                    </div>
+                                    <div class="bar-row">
+                                        <div class="bar-label">Group B</div>
+                                        <div class="bar-container">
+                                            <div class="bar-fill" style="width: 85%;"></div>
+                                        </div>
+                                        <div class="bar-value">85%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANALYTICS-2: Heatmap -->
+                <div class="mockup-card analytics-2">
+                    <div class="mockup-header">ANALYTICS-2: Activity Heatmap</div>
+                    <div class="mockup-content">
+                        <div class="analytics-card">
+                            <div class="analytics-title">Weekly Activity</div>
+                            <div class="heatmap">
+                                <div class="heatmap-day hot">12</div>
+                                <div class="heatmap-day hot">14</div>
+                                <div class="heatmap-day">8</div>
+                                <div class="heatmap-day hot">15</div>
+                                <div class="heatmap-day">7</div>
+                                <div class="heatmap-day">6</div>
+                                <div class="heatmap-day hot">11</div>
+                            </div>
+                            <div style="margin-top: 12px; font-size: 11px; color: #999;">Posts per day this week</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANALYTICS-3: Pie chart -->
+                <div class="mockup-card analytics-3">
+                    <div class="mockup-header">ANALYTICS-3: Grade Distribution</div>
+                    <div class="mockup-content">
+                        <div class="analytics-card">
+                            <div class="analytics-title">All Grades</div>
+                            <div class="pie-section" style="background: conic-gradient(#7f8962 0deg 90deg, #d4a574 90deg 180deg, #d4534f 180deg 270deg, #a8a8a8 270deg);">
+                            </div>
+                            <div class="pie-legend">
+                                <div class="legend-item">
+                                    <div class="legend-dot" style="background: #7f8962;"></div>
+                                    <div>A (8.5+): 40%</div>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-dot" style="background: #d4a574;"></div>
+                                    <div>B (7-8.4): 35%</div>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-dot" style="background: #d4534f;"></div>
+                                    <div>C (5.5-6.9): 20%</div>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-dot" style="background: #a8a8a8;"></div>
+                                    <div>D (&lt;5.5): 5%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANALYTICS-4: At-risk students -->
+                <div class="mockup-card analytics-4">
+                    <div class="mockup-header">ANALYTICS-4: At-Risk Students</div>
+                    <div class="mockup-content">
+                        <div class="analytics-card">
+                            <div class="analytics-title">Low Performers</div>
+                            <div class="risk-list">
+                                <div class="risk-item">
+                                    <div class="risk-name">Alex</div>
+                                    <div class="risk-avg">4.2</div>
+                                </div>
+                                <div class="risk-item">
+                                    <div class="risk-name">Sarah</div>
+                                    <div class="risk-avg">5.1</div>
+                                </div>
+                                <div class="risk-item">
+                                    <div class="risk-name">Tom</div>
+                                    <div class="risk-avg">5.3</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANALYTICS-5: Performance by subject -->
+                <div class="mockup-card analytics-5">
+                    <div class="mockup-header">ANALYTICS-5: By Subject</div>
+                    <div class="mockup-content">
+                        <div class="analytics-card">
+                            <div class="analytics-title">Average by Subject</div>
+                            <div>
+                                <div class="subject-row">
+                                    <div class="subject-name">Biology</div>
+                                    <div class="subject-avg">7.9</div>
+                                </div>
+                                <div class="subject-row">
+                                    <div class="subject-name">Mathematics</div>
+                                    <div class="subject-avg">8.1</div>
+                                </div>
+                                <div class="subject-row">
+                                    <div class="subject-name">History</div>
+                                    <div class="subject-avg">7.2</div>
+                                </div>
+                                <div class="subject-row">
+                                    <div class="subject-name">English</div>
+                                    <div class="subject-avg">7.5</div>
+                                </div>
+                                <div class="subject-row" style="border-bottom: none;">
+                                    <div class="subject-name">Chemistry</div>
+                                    <div class="subject-avg">6.8</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ SCHEDULE TAB ============ -->
+        <div id="schedule" class="mockup-section">
+            <div class="mockups-grid">
+                <!-- SCHED-1: Grid layout -->
+                <div class="mockup-card sched-1">
+                    <div class="mockup-header">SCHED-1: Weekly Grid</div>
+                    <div class="mockup-content">
+                        <div class="schedule-grid">
+                            <div class="schedule-day">
+                                <div class="schedule-day-header">Monday</div>
+                                <div class="schedule-slots">
+                                    <div class="schedule-slot">
+                                        <div class="slot-time">09:00</div>
+                                        <div class="slot-subject">Biology</div>
+                                    </div>
+                                    <div class="schedule-slot">
+                                        <div class="slot-time">11:00</div>
+                                        <div class="slot-subject">Maths</div>
+                                    </div>
+                                    <div class="schedule-slot empty">
+                                        <div class="slot-time">13:00</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="schedule-day">
+                                <div class="schedule-day-header">Tuesday</div>
+                                <div class="schedule-slots">
+                                    <div class="schedule-slot">
+                                        <div class="slot-time">09:00</div>
+                                        <div class="slot-subject">English</div>
+                                    </div>
+                                    <div class="schedule-slot empty">
+                                        <div class="slot-time">11:00</div>
+                                    </div>
+                                    <div class="schedule-slot">
+                                        <div class="slot-time">13:00</div>
+                                        <div class="slot-subject">History</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="schedule-day">
+                                <div class="schedule-day-header">Wednesday</div>
+                                <div class="schedule-slots">
+                                    <div class="schedule-slot">
+                                        <div class="slot-time">09:00</div>
+                                        <div class="slot-subject">Chemistry</div>
+                                    </div>
+                                    <div class="schedule-slot empty">
+                                        <div class="slot-time">11:00</div>
+                                    </div>
+                                    <div class="schedule-slot empty">
+                                        <div class="slot-time">13:00</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="schedule-day">
+                                <div class="schedule-day-header">Thursday</div>
+                                <div class="schedule-slots">
+                                    <div class="schedule-slot">
+                                        <div class="slot-time">09:00</div>
+                                        <div class="slot-subject">Maths</div>
+                                    </div>
+                                    <div class="schedule-slot">
+                                        <div class="slot-time">11:00</div>
+                                        <div class="slot-subject">Biology</div>
+                                    </div>
+                                    <div class="schedule-slot empty">
+                                        <div class="slot-time">13:00</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="schedule-day">
+                                <div class="schedule-day-header">Friday</div>
+                                <div class="schedule-slots">
+                                    <div class="schedule-slot">
+                                        <div class="slot-time">09:00</div>
+                                        <div class="slot-subject">English</div>
+                                    </div>
+                                    <div class="schedule-slot">
+                                        <div class="slot-time">11:00</div>
+                                        <div class="slot-subject">History</div>
+                                    </div>
+                                    <div class="schedule-slot empty">
+                                        <div class="slot-time">13:00</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCHED-2: Vertical timeline -->
+                <div class="mockup-card sched-2">
+                    <div class="mockup-header">SCHED-2: Vertical Timeline</div>
+                    <div class="mockup-content">
+                        <div class="schedule-timeline">
+                            <div class="timeline-hour">
+                                <div class="hour-label">09:00</div>
+                                <div class="hour-events">
+                                    <div class="hour-event">Biology · Room 102</div>
+                                </div>
+                            </div>
+                            <div class="timeline-hour">
+                                <div class="hour-label">10:00</div>
+                                <div class="hour-events">
+                                    <div style="color: #999; font-size: 11px;">Break</div>
+                                </div>
+                            </div>
+                            <div class="timeline-hour">
+                                <div class="hour-label">11:00</div>
+                                <div class="hour-events">
+                                    <div class="hour-event">Maths · Room 201</div>
+                                </div>
+                            </div>
+                            <div class="timeline-hour">
+                                <div class="hour-label">13:00</div>
+                                <div class="hour-events">
+                                    <div style="color: #999; font-size: 11px;">Lunch</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCHED-3: List view -->
+                <div class="mockup-card sched-3">
+                    <div class="mockup-header">SCHED-3: List View</div>
+                    <div class="mockup-content">
+                        <div class="schedule-list">
+                            <div class="schedule-item">
+                                <div class="item-time">09:00</div>
+                                <div class="item-details">
+                                    <div class="item-subject">Biology</div>
+                                    <div class="item-class">Class 3A</div>
+                                </div>
+                                <div class="item-room">102</div>
+                            </div>
+                            <div class="schedule-item">
+                                <div class="item-time">11:00</div>
+                                <div class="item-details">
+                                    <div class="item-subject">Maths</div>
+                                    <div class="item-class">Class 3A</div>
+                                </div>
+                                <div class="item-room">201</div>
+                            </div>
+                            <div class="schedule-item">
+                                <div class="item-time">13:00</div>
+                                <div class="item-details">
+                                    <div class="item-subject">History</div>
+                                    <div class="item-class">Class 3B</div>
+                                </div>
+                                <div class="item-room">105</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCHED-4: Stacked by period -->
+                <div class="mockup-card sched-4">
+                    <div class="mockup-header">SCHED-4: Grouped by Period</div>
+                    <div class="mockup-content">
+                        <div class="analytics-card">
+                            <div class="section-header">Morning (09:00 – 12:00)</div>
+                            <div class="section-items">
+                                <div class="compact-item">
+                                    <div><strong>09:00</strong> Biology</div>
+                                    <div style="font-size: 11px; color: #999;">102</div>
+                                </div>
+                                <div class="compact-item">
+                                    <div><strong>11:00</strong> Maths</div>
+                                    <div style="font-size: 11px; color: #999;">201</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="analytics-card" style="margin-top: 12px;">
+                            <div class="section-header">Afternoon (13:00 – 16:00)</div>
+                            <div class="section-items">
+                                <div class="compact-item">
+                                    <div><strong>13:00</strong> History</div>
+                                    <div style="font-size: 11px; color: #999;">105</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCHED-5: Card deck -->
+                <div class="mockup-card sched-5">
+                    <div class="mockup-header">SCHED-5: Card Deck</div>
+                    <div class="mockup-content">
+                        <div class="schedule-cards">
+                            <div class="schedule-card">
+                                <div class="card-time">09:00 – 10:00</div>
+                                <div class="card-subject">Biology</div>
+                                <div class="card-details">
+                                    Class 3A · Room 102<br>
+                                    <span style="color: #7f8962; font-weight: 600;">Quiz today</span>
+                                </div>
+                            </div>
+                            <div class="schedule-card">
+                                <div class="card-time">11:00 – 12:00</div>
+                                <div class="card-subject">Maths</div>
+                                <div class="card-details">
+                                    Class 3A · Room 201<br>
+                                    Regular lesson
+                                </div>
+                            </div>
+                            <div class="schedule-card">
+                                <div class="card-time">13:00 – 14:00</div>
+                                <div class="card-subject">History</div>
+                                <div class="card-details">
+                                    Class 3B · Room 105<br>
+                                    Homework due
+                                </div>
+                            </div>
+                            <div class="schedule-card">
+                                <div class="card-time">14:30 – 15:30</div>
+                                <div class="card-subject">English</div>
+                                <div class="card-details">
+                                    Class 2B · Room 304<br>
+                                    Presentation prep
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.nav-tab').forEach(button => {
+            button.addEventListener('click', function() {
+                const tabName = this.dataset.tab;
+
+                // Hide all sections
+                document.querySelectorAll('.mockup-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+
+                // Remove active from all buttons
+                document.querySelectorAll('.nav-tab').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+
+                // Show selected section and activate button
+                document.getElementById(tabName).classList.add('active');
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

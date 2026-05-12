@@ -194,7 +194,7 @@
     --card-foreground: 60 4% 9.8%;
     --popover: 0 0% 100%;
     --popover-foreground: 60 4% 9.8%;
-    --primary: 38 28% 42%;
+    --primary: 38 18% 50%;
     --primary-foreground: 0 0% 98%;
     --secondary: 50 16.7% 92.9%;
     --secondary-foreground: 60 3.4% 34.9%;
@@ -438,7 +438,7 @@
     --card-foreground: 60 4% 9.8%;
     --popover: 0 0% 100%;
     --popover-foreground: 60 4% 9.8%;
-    --primary: 38 28% 42%;
+    --primary: 38 18% 50%;
     --primary-foreground: 0 0% 98%;
     --secondary: 50 16.7% 92.9%;
     --secondary-foreground: 60 3.4% 34.9%;
@@ -735,8 +735,8 @@
     --type-micro: 11px;
     --type-page: 20px;
     --type-section: 17px;
-    --page-inline-padding: 8px;
-    --page-block-padding: 8px;
+    --page-inline-padding: 10px;
+    --page-block-padding: 10px;
   }
 
   .class-shell {
