@@ -156,12 +156,13 @@ export function AppSidebar() {
         { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
         { href: teacherSubjectsHref, label: dictionary.sidebar.subjects, icon: BookOpen },
         { href: teacherManageHref, label: t.manage, icon: School },
+        { href: '/teacher-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardList },
         { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: Calendar },
       ]
     : [
         { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
         { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
-        { href: '/grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardList },
+        { href: '/student-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardList },
         { href: '/classes', label: t.classes, icon: School },
         { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
       ];

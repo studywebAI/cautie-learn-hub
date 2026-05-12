@@ -19,10 +19,10 @@ const GroupTab = dynamic(
   () => import('@/components/class/group-tab').then((m) => m.GroupTab)
 );
 const AttendanceTab = dynamic(
-  () => import('@/components/class/attendance-tab').then((m) => m.AttendanceTab)
+  () => import('@/components/class/attendance-tab-redesigned').then((m) => m.AttendanceTabRedesigned)
 );
 const GradesTab = dynamic(
-  () => import('@/components/class/grades-tab').then((m) => m.GradesTab)
+  () => import('@/components/class/grades-tab-redesigned').then((m) => m.GradesTabRedesigned)
 );
 const LogsTab = dynamic(
   () => import('@/components/class/logs-tab').then((m) => m.LogsTab)
@@ -34,7 +34,10 @@ const ClassSettings = dynamic(
   () => import('@/components/dashboard/teacher/class-settings').then((m) => m.ClassSettings)
 );
 const ShareTab = dynamic(
-  () => import('@/components/class/share-tab').then((m) => m.ShareTab)
+  () => import('@/components/class/chat-share-tab-redesigned').then((m) => m.ChatShareTabRedesigned)
+);
+const ScheduleTab = dynamic(
+  () => import('@/components/class/schedule-tab-redesigned').then((m) => m.ScheduleTabRedesigned)
 );
 
 // Cache for tab data - persists across tab switches
@@ -170,6 +173,9 @@ export default function ClassDetailsPage() {
         case 'attendance':
           url = `/api/classes/${classId}/attendance`;
           break;
+        case 'schedule':
+          url = `/api/classes/${classId}/school-schedule`;
+          break;
         case 'analytics':
           url = `/api/classes/${classId}/analytics`;
           break;
@@ -264,8 +270,9 @@ export default function ClassDetailsPage() {
       await Promise.allSettled([
         loadTabData('group'),
         loadTabData('attendance'),
-        loadTabData('analytics'),
         loadTabData('grades'),
+        loadTabData('schedule'),
+        loadTabData('analytics'),
         loadTabData('logs'),
       ]);
     };
@@ -329,14 +336,14 @@ export default function ClassDetailsPage() {
         return isTeacher ? (
           <AttendanceTab
             classId={classId}
-            cachedData={cachedTabData['attendance']}
-            parentLoading={!!loadingTabs['attendance']}
           />
         ) : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'share':
-        return <ShareTab classId={classId} isTeacher={isTeacher} />;
+        return <ShareTab classId={classId} />;
       case 'grades':
         return isTeacher ? <GradesTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
+      case 'schedule':
+        return isTeacher ? <ScheduleTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'analytics':
         return isTeacher ? <ClassAnalyticsDashboard classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'logs':
