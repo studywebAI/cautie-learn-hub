@@ -543,7 +543,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                           variant="outline"
                           size="sm"
                           className="h-8 px-2 text-xs"
-                          onClick={() => router.replace(`/class/${classId}?tab=attendance&studentId=${affectedStudentId}&quick=timeline`)}
+                          onClick={() => router.replace(`/class/${classId}?tab=group`)}
                         >
                           {isDutch ? 'Open aanwezigheidskaart' : 'Open attendance'}
                           <ArrowUpRight className="ml-1 h-3.5 w-3.5" />

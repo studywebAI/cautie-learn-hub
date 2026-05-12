@@ -18,9 +18,6 @@ const InviteTab = dynamic(
 const GroupTab = dynamic(
   () => import('@/components/class/group-tab').then((m) => m.GroupTab)
 );
-const AttendanceTab = dynamic(
-  () => import('@/components/class/attendance-tab-redesigned').then((m) => m.AttendanceTabRedesigned)
-);
 const GradesTab = dynamic(
   () => import('@/components/class/grades-tab-redesigned').then((m) => m.GradesTabRedesigned)
 );
@@ -170,9 +167,6 @@ export default function ClassDetailsPage() {
         case 'group':
           url = `/api/classes/${classId}/group`;
           break;
-        case 'attendance':
-          url = `/api/classes/${classId}/attendance`;
-          break;
         case 'schedule':
           url = `/api/classes/${classId}/school-schedule`;
           break;
@@ -269,7 +263,6 @@ export default function ClassDetailsPage() {
     const warmTabs = async () => {
       await Promise.allSettled([
         loadTabData('group'),
-        loadTabData('attendance'),
         loadTabData('grades'),
         loadTabData('schedule'),
         loadTabData('analytics'),
@@ -332,12 +325,6 @@ export default function ClassDetailsPage() {
             parentLoading={!!loadingTabs['group']}
           />
         );
-      case 'attendance':
-        return isTeacher ? (
-          <AttendanceTab
-            classId={classId}
-          />
-        ) : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'share':
         return <ShareTab classId={classId} />;
       case 'grades':

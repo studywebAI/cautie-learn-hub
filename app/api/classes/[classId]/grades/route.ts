@@ -72,10 +72,27 @@ export async function GET(
 
       const fallbackResult = await filteredFallbackQuery
       if (fallbackResult.error) {
-        return NextResponse.json({ error: fallbackResult.error.message, details: 'Failed to query grade_sets table' }, { status: 500 })
+        // Third-level fallback: query grade_sets alone, without student_grades join
+        const minimalQuery = (supabase as any)
+          .from('grade_sets')
+          .select('id, class_id, subject_id, title, description, category, weight, created_at, status')
+          .eq('class_id', classId)
+          .order('created_at', { ascending: false })
+
+        const minimalResult = await (subjectId && subjectId !== 'all'
+          ? minimalQuery.eq('subject_id', subjectId)
+          : minimalQuery)
+
+        if (minimalResult.error) {
+          // grade_sets table doesn't exist yet — return empty gracefully
+          return NextResponse.json({ grade_sets: [] })
+        }
+        gradeSets = (minimalResult.data || []).map((gs: any) => ({ ...gs, student_grades: [] }))
+        error = null
+      } else {
+        gradeSets = fallbackResult.data || []
+        error = null
       }
-      gradeSets = fallbackResult.data || []
-      error = null
     }
 
     // Calculate stats for each grade set

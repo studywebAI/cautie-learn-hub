@@ -151,8 +151,20 @@ function TeacherGradesView({ classId, isDutch, dateLocale }: { classId: string; 
       }
       setStudentNames(nameMap);
 
-      if (gradesRes.status === 'rejected' || !gradesRes.value.ok) {
-        throw new Error(`Request failed`);
+      if (gradesRes.status === 'rejected') {
+        throw new Error('Network error — check your connection');
+      }
+      if (!gradesRes.value.ok) {
+        const status = gradesRes.value.status;
+        if (status === 403) {
+          // Not a teacher in this class — show empty state without error
+          setSets([]);
+          return;
+        }
+        // For other errors (500 etc) try to get error message
+        let msg = `Request failed (${status})`;
+        try { const j = await gradesRes.value.json(); msg = j.error || msg; } catch { /* ignore */ }
+        throw new Error(msg);
       }
       const data = await gradesRes.value.json();
 

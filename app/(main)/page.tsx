@@ -307,7 +307,7 @@ function TeacherSummaryDashboard() {
                         {[
                           { href: `/class/${resolvedClassId}?tab=group`, icon: Users, label: 'Class overview' },
                           { href: `/class/${resolvedClassId}?tab=grades`, icon: ClipboardList, label: 'Grades' },
-                          { href: `/class/${resolvedClassId}?tab=attendance`, icon: UserCheck, label: 'Attendance' },
+                          { href: `/class/${resolvedClassId}?tab=group`, icon: UserCheck, label: 'Attendance' },
                           { href: `/class/${resolvedClassId}?tab=analytics`, icon: BarChart2, label: 'Analytics' },
                           { href: `/agenda?classId=${resolvedClassId}`, icon: Calendar, label: 'Agenda' },
                           { href: `/class/${resolvedClassId}?tab=share`, icon: MessageSquare, label: 'Chat' },

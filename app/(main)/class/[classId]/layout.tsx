@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
-  UsersRound, Settings2, UserCheck, UserRoundPlus, ChartColumnIncreasing, ClipboardCheck, History, MessageSquare, CalendarDays
+  UsersRound, Settings2, UserRoundPlus, ChartColumnIncreasing, ClipboardCheck, History, MessageSquare, CalendarDays
 } from 'lucide-react';
 import Link from 'next/link';
 import { AppContext } from '@/contexts/app-context';
@@ -20,9 +20,8 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
 
   const tabDefinitions = {
     invite: { label: isDutch ? 'Uitnodigen' : 'Invite', icon: UserRoundPlus, href: '?tab=invite' },
-    group: { label: isDutch ? 'Groep' : 'Group', icon: UsersRound, href: '?tab=group' },
+    group: { label: isDutch ? 'Aanwezigheid' : 'Attendance', icon: UsersRound, href: '?tab=group' },
     share: { label: isDutch ? 'Berichten' : 'Messenger', icon: MessageSquare, href: '?tab=share' },
-    attendance: { label: isDutch ? 'Aanwezigheid' : 'Attendance', icon: UserCheck, href: '?tab=attendance' },
     grades: { label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardCheck, href: '?tab=grades' },
     analytics: { label: isDutch ? 'Analyse' : 'Analytics', icon: ChartColumnIncreasing, href: '?tab=analytics' },
     schedule: { label: isDutch ? 'Rooster' : 'Schedule', icon: CalendarDays, href: '?tab=schedule' },
@@ -89,17 +88,6 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
               );
             })}
           </nav>
-          <div className="mt-1 flex justify-end">
-            <button
-              type="button"
-              className="inline-flex h-9 items-center rounded-md surface-interactive px-3 text-[12px] text-foreground/85 hover:text-foreground"
-              onClick={() => {
-                window.dispatchEvent(new Event('cautie:open-class-dropdown'));
-              }}
-            >
-              {isDutch ? 'Selecteer andere klas' : 'Select different class'}
-            </button>
-          </div>
         </div>
       </div>
 

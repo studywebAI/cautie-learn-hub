@@ -34,10 +34,6 @@ function formatTime(iso: string): string {
   } catch { return ''; }
 }
 
-function getInitials(name: string) {
-  return name.split(' ').slice(0, 2).map(p => p[0]?.toUpperCase() || '').join('');
-}
-
 // Map share API row to our Message type
 function mapRow(row: any): Message {
   const text = String(row?.text || '');
@@ -158,7 +154,6 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
               : 'text-foreground/75 hover:bg-[hsl(var(--interactive-hover))]'
           )}
         >
-          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-[#e5eef8] text-[11px] font-bold text-[#3a7fc1]">A</span>
           {isDutch ? 'Iedereen' : 'All'}
         </button>
 
@@ -173,7 +168,6 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                 : 'text-foreground/75 hover:bg-[hsl(var(--interactive-hover))]'
             )}
           >
-            <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-[hsl(var(--accent-brand)/0.1)] text-[11px] font-bold text-[var(--accent-brand)]">T</span>
             {isDutch ? 'Docenten' : 'Teachers'}
           </button>
         )}
@@ -213,17 +207,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
             messages.map(msg => {
               const isOwn = msg.authorId === currentUserId;
               return (
-                <div key={msg.id} className={cn('group flex gap-2.5', isOwn && 'flex-row-reverse')}>
-                  {/* Avatar */}
-                  <div className={cn(
-                    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
-                    isOwn
-                      ? 'bg-[hsl(var(--accent-brand)/0.12)] text-[var(--accent-brand)] ring-2 ring-[var(--accent-brand)]'
-                      : 'bg-[#e5eef8] text-[#3a7fc1] ring-2 ring-[#5b9bd5]'
-                  )}>
-                    {getInitials(msg.authorName)}
-                  </div>
-
+                <div key={msg.id} className={cn('group flex', isOwn && 'flex-row-reverse')}>
                   {/* Bubble */}
                   <div className={cn('min-w-0 flex-1', isOwn && 'flex flex-col items-end')}>
                     <p className="mb-1 text-[11px] text-muted-foreground">

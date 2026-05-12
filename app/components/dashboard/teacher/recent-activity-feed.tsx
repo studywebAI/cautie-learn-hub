@@ -38,7 +38,7 @@ function FeedIcon({ category }: { category: FeedItem['category'] }) {
 
 function itemHref(item: FeedItem): string {
   const d = item.data || {};
-  if (d.class_id) return `/class/${d.class_id}?tab=${item.category === 'messages' ? 'share' : item.category === 'attendance' ? 'attendance' : 'grades'}`;
+  if (d.class_id) return `/class/${d.class_id}?tab=${item.category === 'messages' ? 'share' : item.category === 'attendance' ? 'group' : 'grades'}`;
   return '/';
 }
 

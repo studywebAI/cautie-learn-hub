@@ -573,7 +573,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
                           size="sm"
                           variant="outline"
                           className="h-7 px-2 text-xs"
-                          onClick={() => router.push(`/class/${classId}?tab=attendance&studentId=${row.studentId}`)}
+                          onClick={() => router.push(`/class/${classId}?tab=group`)}
                         >
                           Attendance
                         </Button>
@@ -656,7 +656,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
                       size="sm"
                       variant="outline"
                       className="h-7 px-2 text-xs"
-                      onClick={() => router.push(`/class/${classId}?tab=attendance&studentId=${row.studentId}`)}
+                      onClick={() => router.push(`/class/${classId}?tab=group`)}
                     >
                       Follow up
                     </Button>

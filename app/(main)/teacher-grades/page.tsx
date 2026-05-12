@@ -1,264 +1,281 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, Download, Filter, Settings } from 'lucide-react';
+import { useState, useEffect, useMemo, useContext } from 'react';
+import { Plus, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { AppContext, AppContextType } from '@/contexts/app-context';
+import { CautieLoader } from '@/components/ui/cautie-loader';
+import { format, parseISO } from 'date-fns';
 
 type GradeSet = {
   id: string;
   title: string;
+  classId: string;
   className: string;
   status: 'draft' | 'published';
   gradedCount: number;
   totalCount: number;
+  average: number | null;
   createdAt: string;
+  subject: string | null;
 };
 
+function fmtDate(iso: string) {
+  try { return format(parseISO(iso), 'd MMM yyyy'); } catch { return ''; }
+}
+
+function gradeColor(g: number | null) {
+  if (g === null) return 'text-muted-foreground';
+  if (g >= 7) return 'text-[var(--accent-brand)]';
+  if (g >= 5.5) return 'text-amber-600';
+  return 'text-destructive';
+}
+
 export default function TeacherGradesPage() {
-  const [gradeSets, setGradeSets] = useState<GradeSet[]>([
-    { id: '1', title: 'Quiz 1: Photosynthesis', className: 'Biology 3A', status: 'published', gradedCount: 28, totalCount: 30, createdAt: '2026-05-10' },
-    { id: '2', title: 'Test 1: Ecosystems', className: 'Biology 3A', status: 'draft', gradedCount: 15, totalCount: 30, createdAt: '2026-05-12' },
-    { id: '3', title: 'Assignment 2: Calculations', className: 'Math 2B', status: 'published', gradedCount: 25, totalCount: 25, createdAt: '2026-05-09' },
-  ]);
+  const { classes, language } = useContext(AppContext) as AppContextType;
+  const isDutch = language === 'nl';
 
-  const [view, setView] = useState<'overview' | 'manage'>('overview');
+  const [sets, setSets] = useState<GradeSet[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filterClass, setFilterClass] = useState<string>('all');
-  const [selectedSet, setSelectedSet] = useState<GradeSet | null>(null);
-  const [editMode, setEditMode] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'draft'>('all');
+  const [expanded, setExpanded] = useState<string | null>(null);
 
-  const classes = [...new Set(gradeSets.map(g => g.className))];
+  useEffect(() => {
+    void loadAllGradeSets();
+  }, [classes]);
 
-  const filtered = filterClass === 'all'
-    ? gradeSets
-    : gradeSets.filter(g => g.className === filterClass);
+  async function loadAllGradeSets() {
+    if (!classes?.length) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const results = await Promise.allSettled(
+        classes.map(async (cls: any) => {
+          const res = await fetch(`/api/classes/${cls.id}/grades`);
+          if (!res.ok) return [];
+          const data = await res.json();
+          return (data.grade_sets || []).map((gs: any) => ({
+            id: String(gs.id),
+            title: String(gs.title || gs.name || ''),
+            classId: String(cls.id),
+            className: String(cls.name || ''),
+            status: gs.status === 'published' ? 'published' : 'draft',
+            gradedCount: Number(gs.graded_count ?? (gs.student_grades?.filter((g: any) => g.grade_numeric !== null || g.grade_value).length ?? 0)),
+            totalCount: Number(gs.total_students ?? gs.student_grades?.length ?? 0),
+            average: gs.average ?? null,
+            createdAt: String(gs.created_at || gs.createdAt || ''),
+            subject: gs.subject?.title || null,
+          } as GradeSet));
+        })
+      );
+      const all: GradeSet[] = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+      all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setSets(all);
+    } catch { /* ignore */ }
+    finally { setLoading(false); }
+  }
+
+  const classOptions = useMemo(() => [...new Set(sets.map(s => s.classId))].map(id => ({
+    id,
+    name: sets.find(s => s.classId === id)?.className || id,
+  })), [sets]);
+
+  const filtered = useMemo(() => sets.filter(s =>
+    (filterClass === 'all' || s.classId === filterClass) &&
+    (filterStatus === 'all' || s.status === filterStatus)
+  ), [sets, filterClass, filterStatus]);
+
+  const publishedCount = sets.filter(s => s.status === 'published').length;
+  const draftCount = sets.filter(s => s.status === 'draft').length;
+
+  if (loading) {
+    return (
+      <div className="page-content flex min-h-[40vh] items-center justify-center">
+        <CautieLoader
+          label={isDutch ? 'Cijfers laden' : 'Loading grades'}
+          sublabel={isDutch ? 'Cijferlijsten ophalen' : 'Fetching grade sets'}
+          size="md"
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="page-content max-w-4xl mx-auto space-y-5">
+    <div className="page-content max-w-3xl mx-auto space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="page-title">Grading</h1>
-          <p className="page-subtitle mt-0.5">{gradeSets.length} grade sets</p>
+          <h1 className="page-title">{isDutch ? 'Cijfers' : 'Grades'}</h1>
+          <p className="page-subtitle">
+            {sets.length} {isDutch ? 'cijferlijsten' : 'grade sets'}
+            {publishedCount > 0 && <> · {publishedCount} {isDutch ? 'gepubliceerd' : 'published'}</>}
+            {draftCount > 0 && <> · {draftCount} {isDutch ? 'concept' : 'draft'}</>}
+          </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Grade Set
-        </Button>
       </div>
 
-      {selectedSet ? (
-        // Grade Set Detail View
-        <div className="space-y-4">
-          {/* Back Button */}
-          <button
-            onClick={() => {
-              setSelectedSet(null);
-              setEditMode(false);
-            }}
-            className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
-          >
-            ← Back to Grade Sets
-          </button>
-
-          {/* Set Header */}
-          <div className="rounded-lg border border-border p-4 bg-background">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-semibold">{selectedSet.title}</h2>
-                <p className="text-sm text-muted-foreground">{selectedSet.className}</p>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => setEditMode(!editMode)}>
-                  {editMode ? 'Done' : 'Edit Grades'}
-                </Button>
-                <Button size="sm" variant="outline">
-                  <Download className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Progress */}
-            <div>
-              <div className="flex justify-between text-xs mb-2">
-                <span className="text-muted-foreground">Graded</span>
-                <span className="font-medium">{selectedSet.gradedCount}/{selectedSet.totalCount}</span>
-              </div>
-              <div className="w-full h-2 bg-background border border-border rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[var(--accent-brand)]"
-                  style={{ width: `${(selectedSet.gradedCount / selectedSet.totalCount) * 100}%` }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* View Tabs */}
-          <div className="flex gap-1.5 border-b border-border">
-            {(['overview', 'manage'] as const).map(v => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  view === v
-                    ? 'border-[var(--accent-brand)] text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {v === 'overview' ? 'Overview' : 'Manage Grades'}
-              </button>
-            ))}
-          </div>
-
-          {/* Overview Tab */}
-          {view === 'overview' && (
-            <div className="space-y-4">
-              {/* Stats */}
-              <div className="grid grid-cols-4 gap-3">
-                <div className="p-3 rounded-lg border border-border bg-background">
-                  <p className="text-xs text-muted-foreground mb-1">Average</p>
-                  <p className="text-xl font-semibold">7.8</p>
-                </div>
-                <div className="p-3 rounded-lg border border-border bg-background">
-                  <p className="text-xs text-muted-foreground mb-1">Highest</p>
-                  <p className="text-xl font-semibold">9.8</p>
-                </div>
-                <div className="p-3 rounded-lg border border-border bg-background">
-                  <p className="text-xs text-muted-foreground mb-1">Lowest</p>
-                  <p className="text-xl font-semibold">4.2</p>
-                </div>
-                <div className="p-3 rounded-lg border border-border bg-background">
-                  <p className="text-xs text-muted-foreground mb-1">Pending</p>
-                  <p className="text-xl font-semibold">{selectedSet.totalCount - selectedSet.gradedCount}</p>
-                </div>
-              </div>
-
-              {/* Distribution */}
-              <div className="p-4 rounded-lg border border-border bg-background">
-                <p className="text-sm font-semibold mb-3">Grade Distribution</p>
-                <div className="space-y-2">
-                  {[
-                    { range: '8.5+', count: 8, color: 'bg-green-600' },
-                    { range: '7-8.4', count: 12, color: 'bg-[var(--accent-brand)]' },
-                    { range: '5.5-6.9', count: 6, color: 'bg-amber-600' },
-                    { range: '<5.5', count: 2, color: 'bg-red-600' },
-                  ].map(bucket => (
-                    <div key={bucket.range} className="flex items-center gap-2">
-                      <span className="text-xs w-12">{bucket.range}</span>
-                      <div className="flex-1 h-6 bg-background border border-border rounded overflow-hidden">
-                        <div
-                          className={bucket.color}
-                          style={{ width: `${(bucket.count / 28) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-xs w-4 text-right font-medium">{bucket.count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Manage Grades Tab */}
-          {view === 'manage' && (
-            <div className="space-y-3 max-h-[600px] overflow-y-auto">
-              {[
-                { name: 'Alex Johnson', grade: '8.5' },
-                { name: 'Sarah Smith', grade: '9.2' },
-                { name: 'Emma Davis', grade: '7.0' },
-                { name: 'John Brown', grade: '—' },
-              ].map(student => (
-                <div key={student.name} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-background hover:bg-[hsl(var(--interactive-hover))] transition-colors">
-                  <span className="text-sm font-medium">{student.name}</span>
-                  {editMode ? (
-                    <input
-                      type="text"
-                      defaultValue={student.grade}
-                      className="w-20 px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-brand)]"
-                      placeholder="Grade"
-                    />
-                  ) : (
-                    <span className="text-sm font-semibold text-right w-12">{student.grade}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+      {sets.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border p-10 text-center">
+          <p className="text-muted-foreground text-sm">
+            {isDutch ? 'Nog geen cijferlijsten. Maak er een aan in een klas.' : 'No grade sets yet. Create one inside a class.'}
+          </p>
         </div>
       ) : (
-        // Grade Sets List View
         <>
-          {/* Filter */}
-          {classes.length > 1 && (
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => setFilterClass('all')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                  filterClass === 'all'
-                    ? 'bg-[var(--accent-brand)] border-[var(--accent-brand)] text-white'
-                    : 'bg-transparent border-border text-muted-foreground hover:border-[var(--accent-brand)]'
-                }`}
-              >
-                All Classes
-              </button>
-              {classes.map(c => (
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Class filter */}
+            {classOptions.length > 1 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto">
                 <button
-                  key={c}
-                  onClick={() => setFilterClass(c)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                    filterClass === c
-                      ? 'bg-[var(--accent-brand)] border-[var(--accent-brand)] text-white'
-                      : 'bg-transparent border-border text-muted-foreground hover:border-[var(--accent-brand)]'
-                  }`}
+                  onClick={() => setFilterClass('all')}
+                  className={cn(
+                    'h-7 rounded-md border px-2.5 text-[11px] font-medium whitespace-nowrap transition-colors',
+                    filterClass === 'all'
+                      ? 'border-foreground/30 bg-foreground/8 text-foreground'
+                      : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
+                  )}
                 >
-                  {c}
+                  {isDutch ? 'Alle klassen' : 'All classes'}
+                </button>
+                {classOptions.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => setFilterClass(c.id)}
+                    className={cn(
+                      'h-7 rounded-md border px-2.5 text-[11px] font-medium whitespace-nowrap transition-colors',
+                      filterClass === c.id
+                        ? 'border-foreground/30 bg-foreground/8 text-foreground'
+                        : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
+                    )}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Status filter */}
+            <div className="ml-auto flex overflow-hidden rounded-md border border-border">
+              {(['all', 'published', 'draft'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFilterStatus(f)}
+                  className={cn(
+                    'px-2.5 py-1 text-[11px] transition-colors',
+                    f !== 'all' && 'border-l border-border',
+                    filterStatus === f
+                      ? 'bg-foreground/8 font-semibold text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {f === 'all' ? (isDutch ? 'Alles' : 'All') : f === 'published' ? (isDutch ? 'Gepubliceerd' : 'Published') : (isDutch ? 'Concept' : 'Draft')}
                 </button>
               ))}
             </div>
-          )}
+          </div>
 
-          {/* Grade Sets List */}
-          <div className="space-y-3">
-            {filtered.map(set => (
-              <div
-                key={set.id}
-                onClick={() => setSelectedSet(set)}
-                className="p-4 rounded-lg border border-border bg-background hover:bg-[hsl(var(--interactive-hover))] cursor-pointer transition-colors"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold">{set.title}</h3>
-                    <p className="text-xs text-muted-foreground">{set.className}</p>
-                  </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      set.status === 'published'
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
-                    }`}
+          {/* Grade sets */}
+          <div className="space-y-2">
+            {filtered.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                {isDutch ? 'Geen cijferlijsten gevonden.' : 'No grade sets found.'}
+              </p>
+            ) : filtered.map(gs => {
+              const isExpanded = expanded === gs.id;
+              const pct = gs.totalCount > 0 ? Math.round((gs.gradedCount / gs.totalCount) * 100) : 0;
+
+              return (
+                <div
+                  key={gs.id}
+                  className="overflow-hidden rounded-xl border border-border bg-white dark:bg-[hsl(var(--surface-1))]"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(isExpanded ? null : gs.id)}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]"
                   >
-                    {set.status === 'published' ? 'Published' : 'Draft'}
-                  </span>
-                </div>
+                    {/* Title + meta */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[13px] font-semibold truncate">{gs.title}</p>
+                        <span className={cn(
+                          'shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold',
+                          gs.status === 'published'
+                            ? 'bg-[hsl(var(--accent-brand)/0.12)] text-[var(--accent-brand)]'
+                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                        )}>
+                          {gs.status === 'published' ? (isDutch ? 'Gepubliceerd' : 'Published') : (isDutch ? 'Concept' : 'Draft')}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">
+                        {gs.className}
+                        {gs.subject && <> · {gs.subject}</>}
+                        {' · '}
+                        {fmtDate(gs.createdAt)}
+                      </p>
+                    </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-muted-foreground">Graded</span>
-                      <span className="font-medium">{set.gradedCount}/{set.totalCount}</span>
+                    {/* Progress */}
+                    <div className="hidden w-32 flex-shrink-0 sm:block">
+                      <div className="mb-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                        <span>{isDutch ? 'Beoordeeld' : 'Graded'}</span>
+                        <span className="font-medium text-foreground">{gs.gradedCount}/{gs.totalCount}</span>
+                      </div>
+                      <div className="h-1 w-full overflow-hidden rounded-full bg-[hsl(var(--surface-3))]">
+                        <div
+                          className="h-full rounded-full bg-muted-foreground/40 transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="w-full h-1.5 bg-background border border-border rounded overflow-hidden">
-                      <div
-                        className="h-full bg-[var(--accent-brand)]"
-                        style={{ width: `${(set.gradedCount / set.totalCount) * 100}%` }}
-                      />
+
+                    {/* Average */}
+                    <div className="w-10 shrink-0 text-right">
+                      <span className={cn('text-[15px] font-bold tabular-nums', gradeColor(gs.average))}>
+                        {gs.average !== null ? gs.average : '—'}
+                      </span>
                     </div>
-                  </div>
-                  <span className="text-xs text-muted-foreground ml-3 whitespace-nowrap">
-                    {new Date(set.createdAt).toLocaleDateString()}
-                  </span>
+
+                    {isExpanded
+                      ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    }
+                  </button>
+
+                  {/* Expanded: link to class grades tab */}
+                  {isExpanded && (
+                    <div className="border-t border-border bg-[hsl(var(--surface-2))] px-4 py-3">
+                      <div className="flex items-center gap-3 text-[12px] text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <span>{isDutch ? 'Beoordeeld' : 'Graded'}</span>
+                          <span className="font-semibold text-foreground">{gs.gradedCount}/{gs.totalCount}</span>
+                        </div>
+                        {gs.average !== null && (
+                          <div className="flex items-center gap-2">
+                            <span>{isDutch ? 'Gemiddelde' : 'Average'}</span>
+                            <span className={cn('font-semibold', gradeColor(gs.average))}>{gs.average}</span>
+                          </div>
+                        )}
+                        <a
+                          href={`/class/${gs.classId}?tab=grades`}
+                          className="ml-auto flex items-center gap-1 rounded-md border border-border bg-white px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-[hsl(var(--interactive-hover))] dark:bg-[hsl(var(--surface-1))]"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {isDutch ? 'Open in klas' : 'Open in class'}
+                          <ChevronRight className="h-3 w-3" />
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
