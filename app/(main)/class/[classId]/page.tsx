@@ -24,8 +24,8 @@ const GradesTab = dynamic(
 const LogsTab = dynamic(
   () => import('@/components/class/logs-tab').then((m) => m.LogsTab)
 );
-const ClassAnalyticsDashboard = dynamic(
-  () => import('@/components/dashboard/teacher/class-analytics-dashboard').then((m) => m.ClassAnalyticsDashboard)
+const AnalyticsTab = dynamic(
+  () => import('@/components/class/analytics-tab-redesigned').then((m) => m.AnalyticsTabRedesigned)
 );
 const ClassSettings = dynamic(
   () => import('@/components/dashboard/teacher/class-settings').then((m) => m.ClassSettings)
@@ -332,7 +332,7 @@ export default function ClassDetailsPage() {
       case 'schedule':
         return <ScheduleTab classId={classId} cachedData={cachedTabData['schedule']} parentLoading={!!loadingTabs['schedule']} />;
       case 'analytics':
-        return isTeacher ? <ClassAnalyticsDashboard classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
+        return isTeacher ? <AnalyticsTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'logs':
         return isTeacher ? <LogsTab classId={classId} cachedData={cachedTabData['logs']} parentLoading={!!loadingTabs['logs']} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'settings':
