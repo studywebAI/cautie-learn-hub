@@ -6,16 +6,23 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { AppContext, AppContextType, ClassInfo } from "@/contexts/app-context";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { School, Users, FileText, Activity, ChevronRight, ClipboardList, BarChart2, Calendar, BookOpen } from "lucide-react";
+import { School, Users, FileText, Activity, ChevronRight, ClipboardList, BarChart2, Calendar, BookOpen, MessageSquare, UserCheck } from "lucide-react";
 import { CautieLoader } from "@/components/ui/cautie-loader";
 import { Alerts } from "@/components/dashboard/alerts";
 import { MySubjects } from "@/components/dashboard/my-subjects";
-import { parseISO, isFuture, differenceInDays } from 'date-fns';
 import type { Alert, Subject } from '@/lib/types';
-import { TodaysAgenda } from "@/components/dashboard/todays-agenda";
 import { TodaysStudysetTasks } from "@/components/dashboard/todays-studyset-tasks";
 import { LearningPulse } from "@/components/dashboard/learning-pulse";
 import { NotificationCenter } from "@/components/notifications/notification-center";
+import { TodayPlanCard } from "@/components/dashboard/today-plan-card";
+import { GradesMiniCard } from "@/components/dashboard/grades-mini-card";
+import { RecentActivityFeed } from "@/components/dashboard/teacher/recent-activity-feed";
+import { AnnouncementsStrip } from "@/components/dashboard/announcements-strip";
+
+// Thin wrapper so we can reference it inside TeacherSummaryDashboard
+function RecentActivityFeedSection() {
+  return <RecentActivityFeed />;
+}
 
 const AnalyticsDashboard = lazy(() => import("@/components/dashboard/analytics-dashboard").then(module => ({ default: module.AnalyticsDashboard })));
 const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i;
@@ -32,6 +39,17 @@ function normalizeDisplayName(value: unknown): string {
 function isLikelyBotClient(): boolean {
   if (typeof window === 'undefined') return false;
   return BOT_UA_PATTERN.test(window.navigator.userAgent || '');
+}
+
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function getDayLabel(): string {
+  return new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 }
 
 function StudentDashboard() {
@@ -101,21 +119,53 @@ function StudentDashboard() {
     normalizeDisplayName((session as any)?.user?.email?.split('@')?.[0]) ||
     'Guest';
 
+  // Count tasks due today for subtitle
+  const todayTaskCount = (Array.isArray(assignments) ? assignments : [])
+    .filter(a => {
+      if (!a.due_date) return false;
+      try { const d = new Date(a.due_date); const now = new Date(); return d.toDateString() === now.toDateString(); } catch { return false; }
+    }).length +
+    (Array.isArray(personalTasks) ? personalTasks : [])
+    .filter(t => {
+      if (!t.due_date) return false;
+      try { const d = new Date(t.due_date); const now = new Date(); return d.toDateString() === now.toDateString(); } catch { return false; }
+    }).length;
+
   return (
-    <div className="page-content grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-        <div className="lg:col-span-3 mb-2 flex items-start justify-between gap-3">
-          <h1 className="page-title">Welcome, {welcomeName}</h1>
+    <div className="page-content grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
+        {/* Greeting header */}
+        <div className="lg:col-span-3 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="page-title">{getGreeting()}, {welcomeName}</h1>
+            <p className="page-subtitle mt-0.5">
+              {getDayLabel()}
+              {todayTaskCount > 0 && (
+                <> · <span className="text-[var(--accent-brand)]">{todayTaskCount} {todayTaskCount === 1 ? 'task' : 'tasks'} due today</span></>
+              )}
+            </p>
+          </div>
           <NotificationCenter />
         </div>
-        <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6">
+
+        {/* Main column */}
+        <div className="lg:col-span-2 flex flex-col gap-4 md:gap-5">
+            <AnnouncementsStrip />
+            <TodayPlanCard
+              assignments={assignments}
+              personalTasks={personalTasks}
+              classes={classes}
+              schoolSlots={schoolSlots}
+            />
             <TodaysStudysetTasks />
-            <TodaysAgenda assignments={assignments} personalTasks={personalTasks} classes={classes} />
             <Suspense fallback={<Card><CardHeader><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>}>
               <AnalyticsDashboard />
             </Suspense>
             <MySubjects subjects={subjects} />
         </div>
-        <div className="lg:col-span-1 flex flex-col gap-4 md:gap-6">
+
+        {/* Sidebar rail */}
+        <div className="lg:col-span-1 flex flex-col gap-4 md:gap-5">
+            <GradesMiniCard />
             <LearningPulse />
             <Alerts alerts={alerts} />
             <UpcomingDeadlines />
@@ -127,15 +177,13 @@ function StudentDashboard() {
 function TeacherSummaryDashboard() {
     const { classes, assignments, students, isLoading, session, refetchClasses, refetchAssignments } = useContext(AppContext) as AppContextType;
     const [displayName, setDisplayName] = useState<string>('');
+    const [unreadMessages, setUnreadMessages] = useState(0);
 
     useEffect(() => {
       if (typeof window === 'undefined') return;
       const saved = window.localStorage.getItem('studyweb-display-name') || '';
       const localName = normalizeDisplayName(saved);
-      if (localName) {
-        setDisplayName(localName);
-        return;
-      }
+      if (localName) { setDisplayName(localName); return; }
       const metaName = normalizeDisplayName(
         (session as any)?.user?.user_metadata?.display_name ||
         (session as any)?.user?.user_metadata?.full_name ||
@@ -148,14 +196,22 @@ function TeacherSummaryDashboard() {
       if (!session) return;
       void refetchClasses();
       void refetchAssignments();
-
-      const refresh = () => {
-        void refetchClasses();
-        void refetchAssignments();
-      };
+      const refresh = () => { void refetchClasses(); void refetchAssignments(); };
       window.addEventListener('focus', refresh);
       return () => window.removeEventListener('focus', refresh);
     }, [session, refetchClasses, refetchAssignments]);
+
+    // Fetch unread message count from notifications
+    useEffect(() => {
+      if (!session || isLikelyBotClient()) return;
+      fetch('/api/dashboard/teacher/activity?limit=50&type=messages')
+        .then(r => r.ok ? r.json() : { items: [] })
+        .then(d => {
+          const unread = (d?.items || []).filter((i: any) => !i.read).length;
+          setUnreadMessages(unread);
+        })
+        .catch(() => {});
+    }, [session]);
 
     if (isLoading || !classes) return <DashboardSkeleton />;
 
@@ -177,8 +233,12 @@ function TeacherSummaryDashboard() {
 
     return (
         <div className="page-content flex flex-col gap-5">
+            {/* Greeting */}
             <div className="flex items-start justify-between gap-3">
-              <h1 className="page-title">Welcome, {welcomeName}</h1>
+              <div>
+                <h1 className="page-title">{getGreeting()}, {welcomeName}</h1>
+                <p className="page-subtitle mt-0.5">{getDayLabel()} · {teacherClasses.length} {teacherClasses.length === 1 ? 'class' : 'classes'}</p>
+              </div>
               <NotificationCenter />
             </div>
 
@@ -205,13 +265,27 @@ function TeacherSummaryDashboard() {
                 </div>
                 <div className="text-2xl font-semibold">{activeAssignments}</div>
               </div>
-              <div className="rounded-xl surface-panel border border-border p-3.5">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground">Alerts</span>
-                  <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+              {/* Messages card */}
+              {resolvedClassId ? (
+                <Link href={`/class/${resolvedClassId}?tab=share`} className="rounded-xl surface-panel border border-border p-3.5 hover:bg-[hsl(var(--interactive-hover))] transition-colors">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-muted-foreground">Messages</span>
+                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-2xl font-semibold">{unreadMessages}</div>
+                    {unreadMessages > 0 && <span className="text-[10px] font-semibold text-[var(--accent-brand)]">unread</span>}
+                  </div>
+                </Link>
+              ) : (
+                <div className="rounded-xl surface-panel border border-border p-3.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-muted-foreground">Messages</span>
+                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="text-2xl font-semibold">{unreadMessages}</div>
                 </div>
-                <div className="text-2xl font-semibold">0</div>
-              </div>
+              )}
             </div>
 
             {teacherClasses.length === 0 ? (
@@ -221,54 +295,52 @@ function TeacherSummaryDashboard() {
               </div>
             ) : (
               <div className="grid gap-4 lg:grid-cols-3">
-                {/* Quick actions */}
-                <div className="rounded-xl surface-panel border border-border p-4 space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground mb-2.5">Quick actions</p>
+                {/* Left: Recent activity + quick links */}
+                <div className="lg:col-span-2 flex flex-col gap-4">
+                  <RecentActivityFeedSection />
+
+                  {/* Quick links to active class */}
                   {resolvedClassId && (
-                    <>
-                      <Link href={`/class/${resolvedClassId}?tab=group`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:surface-interactive transition-colors">
-                        <span className="flex items-center gap-2"><Users className="h-4 w-4 text-[var(--accent-brand)]" /> Class overview</span>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Link>
-                      <Link href={`/class/${resolvedClassId}?tab=grades`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:surface-interactive transition-colors">
-                        <span className="flex items-center gap-2"><ClipboardList className="h-4 w-4 text-[var(--accent-brand)]" /> Grades</span>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Link>
-                      <Link href={`/class/${resolvedClassId}?tab=analytics`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:surface-interactive transition-colors">
-                        <span className="flex items-center gap-2"><BarChart2 className="h-4 w-4 text-[var(--accent-brand)]" /> Analytics</span>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Link>
-                      <Link href={`/agenda?classId=${resolvedClassId}`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:surface-interactive transition-colors">
-                        <span className="flex items-center gap-2"><Calendar className="h-4 w-4 text-[var(--accent-brand)]" /> Agenda</span>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Link>
-                      <Link href={`/subjects?classId=${resolvedClassId}`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:surface-interactive transition-colors">
-                        <span className="flex items-center gap-2"><BookOpen className="h-4 w-4 text-[var(--accent-brand)]" /> Subjects</span>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Link>
-                    </>
+                    <div className="rounded-xl surface-panel border border-border p-4">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Quick access</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {[
+                          { href: `/class/${resolvedClassId}?tab=group`, icon: Users, label: 'Class overview' },
+                          { href: `/class/${resolvedClassId}?tab=grades`, icon: ClipboardList, label: 'Grades' },
+                          { href: `/class/${resolvedClassId}?tab=attendance`, icon: UserCheck, label: 'Attendance' },
+                          { href: `/class/${resolvedClassId}?tab=analytics`, icon: BarChart2, label: 'Analytics' },
+                          { href: `/agenda?classId=${resolvedClassId}`, icon: Calendar, label: 'Agenda' },
+                          { href: `/class/${resolvedClassId}?tab=share`, icon: MessageSquare, label: 'Chat' },
+                        ].map(({ href, icon: Icon, label }) => (
+                          <Link key={href} href={href} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-[hsl(var(--interactive-hover))] transition-colors">
+                            <Icon className="h-3.5 w-3.5 text-[var(--accent-brand)] shrink-0" />
+                            <span className="truncate">{label}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                {/* Classes list */}
-                <div className="lg:col-span-2 rounded-xl surface-panel border border-border p-4">
+                {/* Right: Classes list */}
+                <div className="rounded-xl surface-panel border border-border p-4 h-fit">
                   <p className="text-xs font-medium text-muted-foreground mb-2.5">Your classes</p>
-                  <div className="space-y-1.5">
-                    {teacherClasses.slice(0, 6).map((cls) => (
+                  <div className="space-y-1">
+                    {teacherClasses.slice(0, 8).map((cls) => (
                       <Link
                         key={cls.id}
                         href={`/class/${cls.id}?tab=group`}
-                        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:surface-interactive transition-colors"
+                        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-[hsl(var(--interactive-hover))] transition-colors"
                       >
                         <span className="flex items-center gap-2">
-                          <School className="h-4 w-4 text-[var(--accent-brand)] shrink-0" />
+                          <School className="h-3.5 w-3.5 text-[var(--accent-brand)] shrink-0" />
                           <span className="truncate">{cls.name}</span>
                         </span>
                         <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                       </Link>
                     ))}
-                    {teacherClasses.length > 6 && (
-                      <p className="text-xs text-muted-foreground px-3 pt-1">+{teacherClasses.length - 6} more classes</p>
+                    {teacherClasses.length > 8 && (
+                      <p className="text-xs text-muted-foreground px-3 pt-1">+{teacherClasses.length - 8} more</p>
                     )}
                   </div>
                 </div>

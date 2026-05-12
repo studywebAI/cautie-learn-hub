@@ -5,6 +5,7 @@ export const TEACHER_CLASS_TAB_IDS = [
   'attendance',
   'grades',
   'analytics',
+  'schedule',
   'logs',
   'settings',
 ] as const;

@@ -59,8 +59,8 @@
     --card-foreground: 0 0% 23.92%;
     --popover: 0 0% 98.6%;
     --popover-foreground: 0 0% 23.92%;
-    --primary: 0 0% 94.51%;
-    --primary-foreground: 0 0% 10.2%;
+    --primary: 75 17% 46%;
+    --primary-foreground: 0 0% 98%;
     --secondary: 0 0% 97.6%;
     --secondary-foreground: 0 0% 23.92%;
     --muted: 0 0% 95.6%;
@@ -114,8 +114,8 @@
     --accent-teal: #22c55e;
     --brand-coral: #d97757;
     --page-max-width: 1280px;
-    --page-inline-padding: 4px;
-    --page-block-padding: 4px;
+    --page-inline-padding: 16px;
+    --page-block-padding: 14px;
   }
 
   .dark {
@@ -125,8 +125,8 @@
     --card-foreground: 0 0% 78.43%;
     --popover: 0 0% 11.37%;
     --popover-foreground: 0 0% 78.43%;
-    --primary: 0 0% 22%;
-    --primary-foreground: 0 0% 94.12%;
+    --primary: 75 14% 56%;
+    --primary-foreground: 0 0% 98%;
     --secondary: 0 0% 18%;
     --secondary-foreground: 0 0% 94.12%;
     --muted: 0 0% 15%;
@@ -194,8 +194,8 @@
     --card-foreground: 60 4% 9.8%;
     --popover: 0 0% 100%;
     --popover-foreground: 60 4% 9.8%;
-    --primary: 38 14% 72%;
-    --primary-foreground: 30 20% 16%;
+    --primary: 38 28% 42%;
+    --primary-foreground: 0 0% 98%;
     --secondary: 50 16.7% 92.9%;
     --secondary-foreground: 60 3.4% 34.9%;
     --muted: 46.7 24.3% 92.7%;
@@ -223,8 +223,8 @@
     --focus-ring: 60 4% 9.8%;
     --sidebar-background: 50 16.7% 92.9%;
     --sidebar-foreground: 60 3.4% 34.9%;
-    --sidebar-primary: 38 14% 72%;
-    --sidebar-primary-foreground: 30 20% 16%;
+    --sidebar-primary: 38 28% 42%;
+    --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 0 0% 100%;
     --sidebar-accent-foreground: 60 3.4% 34.9%;
     --sidebar-active-foreground: 60 4% 9.8%;
@@ -240,8 +240,8 @@
     --card-foreground: 0 0% 23.92%;
     --popover: 0 0% 98.6%;
     --popover-foreground: 0 0% 23.92%;
-    --primary: 0 0% 94.51%;
-    --primary-foreground: 0 0% 10.2%;
+    --primary: 75 17% 46%;
+    --primary-foreground: 0 0% 98%;
     --secondary: 0 0% 97.6%;
     --secondary-foreground: 0 0% 23.92%;
     --muted: 0 0% 95.6%;
@@ -302,8 +302,8 @@
     --card-foreground: 0 0% 78.43%;
     --popover: 0 0% 11.37%;
     --popover-foreground: 0 0% 78.43%;
-    --primary: 0 0% 22%;
-    --primary-foreground: 0 0% 94.12%;
+    --primary: 75 14% 56%;
+    --primary-foreground: 0 0% 98%;
     --secondary: 0 0% 18%;
     --secondary-foreground: 0 0% 94.12%;
     --muted: 0 0% 15%;
@@ -438,8 +438,8 @@
     --card-foreground: 60 4% 9.8%;
     --popover: 0 0% 100%;
     --popover-foreground: 60 4% 9.8%;
-    --primary: 38 14% 72%;
-    --primary-foreground: 30 20% 16%;
+    --primary: 38 28% 42%;
+    --primary-foreground: 0 0% 98%;
     --secondary: 50 16.7% 92.9%;
     --secondary-foreground: 60 3.4% 34.9%;
     --muted: 46.7 24.3% 92.7%;
@@ -466,8 +466,8 @@
     --focus-ring: 38 20% 38%;
     --sidebar-background: 50 16.7% 92.9%;
     --sidebar-foreground: 60 3.4% 34.9%;
-    --sidebar-primary: 38 14% 72%;
-    --sidebar-primary-foreground: 30 20% 16%;
+    --sidebar-primary: 38 28% 42%;
+    --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 0 0% 100%;
     --sidebar-accent-foreground: 60 3.4% 34.9%;
     --sidebar-active-foreground: var(--sidebar-accent-foreground);
@@ -616,9 +616,9 @@
 
 @layer components {
   .app-main-shell {
-    --app-shell-space-top: 0.35rem;
-    --app-shell-space-left: 8px;
-    --app-shell-space-right: 8px;
+    --app-shell-space-top: 0.75rem;
+    --app-shell-space-left: 12px;
+    --app-shell-space-right: 12px;
     --app-shell-space-bottom: 0.2rem;
     padding-top: var(--app-shell-space-top);
     padding-left: var(--app-shell-space-left);
@@ -656,9 +656,9 @@
   }
   @media (min-width: 768px) {
     .app-main-shell {
-      --app-shell-space-top: 0.35rem;
-      --app-shell-space-left: 8px;
-      --app-shell-space-right: 8px;
+      --app-shell-space-top: 0.75rem;
+      --app-shell-space-left: 12px;
+      --app-shell-space-right: 12px;
       --app-shell-space-bottom: 0.2rem;
     }
   }
@@ -735,8 +735,8 @@
     --type-micro: 11px;
     --type-page: 20px;
     --type-section: 17px;
-    --page-inline-padding: 4px;
-    --page-block-padding: 4px;
+    --page-inline-padding: 8px;
+    --page-block-padding: 8px;
   }
 
   .class-shell {

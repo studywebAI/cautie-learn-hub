@@ -1096,6 +1096,70 @@ function EditGradesList({
 }
 
 // =============================================
+// GRADE DISTRIBUTION CHART
+// =============================================
+
+function GradeDistributionChart({ students }: { students: Array<{ grade_numeric?: number | null }> }) {
+  const nums = students
+    .map(s => typeof s.grade_numeric === 'number' ? s.grade_numeric : null)
+    .filter((g): g is number => g !== null);
+
+  if (nums.length < 3) return null;
+
+  const buckets = [
+    { label: 'D  (<5.5)',   key: 'd', min: 0,   max: 5.5, barColor: '#f8c4c4' },
+    { label: 'C  (5.5–6.9)', key: 'c', min: 5.5, max: 7,   barColor: '#f0d898' },
+    { label: 'B  (7–8.4)',  key: 'b', min: 7,   max: 8.5, barColor: '#b8e0b8' },
+    { label: 'A  (≥8.5)',   key: 'a', min: 8.5, max: 11,  barColor: '#7f8962' },
+  ];
+
+  const counts = buckets.map(b => ({
+    ...b,
+    count: nums.filter(n => n >= b.min && n < b.max).length,
+  }));
+
+  const maxCount = Math.max(...counts.map(b => b.count), 1);
+  const avg = nums.reduce((s, n) => s + n, 0) / nums.length;
+
+  return (
+    <div className="rounded-xl surface-panel border border-border p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-muted-foreground">Grade distribution</p>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">{nums.length} graded</span>
+          <span className="text-xs font-semibold text-[var(--accent-brand)]">avg {avg.toFixed(1)}</span>
+        </div>
+      </div>
+      <div className="flex items-end gap-3" style={{ height: '72px' }}>
+        {counts.map(b => {
+          const pct = b.count / maxCount;
+          const barH = Math.max(pct * 56, b.count > 0 ? 8 : 0);
+          return (
+            <div key={b.key} className="flex-1 flex flex-col items-center justify-end gap-1" style={{ height: '72px' }}>
+              {b.count > 0 && (
+                <span className="text-[10px] font-semibold text-muted-foreground">{b.count}</span>
+              )}
+              <div
+                className="w-full rounded-t-[3px]"
+                style={{ height: `${barH}px`, background: b.barColor }}
+              />
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex gap-3 flex-wrap">
+        {counts.map(b => (
+          <div key={b.key} className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-[3px]" style={{ background: b.barColor }} />
+            <span className="text-[10px] text-muted-foreground">{b.label} · <strong>{b.count}</strong></span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// =============================================
 // EDIT GRADES DETAIL (view/edit single grade set)
 // =============================================
 
@@ -1412,6 +1476,10 @@ function EditGradesDetail({
           Focused from Group tab. Highlighted student moved to top.
         </div>
       )}
+
+      {/* Grade distribution chart — shown when enough numeric grades are available */}
+      <GradeDistributionChart students={students} />
+
       <div className="flex items-center justify-end">
         <select
           value={selectedStudentId}

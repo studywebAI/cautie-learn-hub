@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
-  UsersRound, Settings2, UserCheck, UserRoundPlus, ChartColumnIncreasing, ClipboardCheck, History, MessageSquare
+  UsersRound, Settings2, UserCheck, UserRoundPlus, ChartColumnIncreasing, ClipboardCheck, History, MessageSquare, CalendarDays
 } from 'lucide-react';
 import Link from 'next/link';
 import { AppContext } from '@/contexts/app-context';
@@ -25,6 +25,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
     attendance: { label: isDutch ? 'Aanwezigheid' : 'Attendance', icon: UserCheck, href: '?tab=attendance' },
     grades: { label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardCheck, href: '?tab=grades' },
     analytics: { label: isDutch ? 'Analyse' : 'Analytics', icon: ChartColumnIncreasing, href: '?tab=analytics' },
+    schedule: { label: isDutch ? 'Rooster' : 'Schedule', icon: CalendarDays, href: '?tab=schedule' },
     logs: { label: isDutch ? 'Logs' : 'Logs', icon: History, href: '?tab=logs' },
     settings: { label: isDutch ? 'Instellingen' : 'Settings', icon: Settings2, href: '?tab=settings' },
   } as const;

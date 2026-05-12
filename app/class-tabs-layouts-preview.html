@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class Tabs Layouts & Tool Designs</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+      color: #2c3e50;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1a1a1a;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #7f8962;
+      color: #1a1a1a;
+    }
+
+    .designs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .design-card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      transition: box-shadow 0.2s;
+    }
+
+    .design-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .design-header {
+      background: #7f8962;
+      color: #fff;
+      padding: 12px 16px;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+    }
+
+    .design-preview {
+      padding: 16px;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 12px;
+      background: #fafafa;
+    }
+
+    .mock-header {
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .mock-row {
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mock-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #e0e0e0;
+    }
+
+    .mock-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: #7f8962;
+      color: #fff;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .mock-chart {
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      height: 120px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: #7f8962;
+      border-radius: 2px 2px 0 0;
+      opacity: 0.7;
+    }
+
+    .mock-timeline {
+      position: relative;
+      padding-left: 20px;
+    }
+
+    .mock-timeline::before {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #7f8962;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -8px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #7f8962;
+      border: 2px solid #fff;
+      margin-top: 2px;
+    }
+
+    .tool-layout {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .tool-name {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1a1a1a;
+    }
+
+    .layout-description {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .layout-sections {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 16px;
+    }
+
+    .layout-section {
+      background: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 12px;
+    }
+
+    .layout-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .section-note {
+      background: #fff9e6;
+      border-left: 3px solid #7f8962;
+      padding: 12px;
+      margin: 16px 0;
+      border-radius: 2px;
+      font-size: 12px;
+    }
+
+    .design-details {
+      padding: 12px 16px;
+      background: #f0f0f0;
+      font-size: 11px;
+      color: #666;
+      border-top: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Class Tabs & Tools: Layouts & Design Previews</h1>
+    <p class="subtitle">Comprehensive UI designs for teacher class tabs, student class tabs, and interactive tools (Mindmap, Timeline)</p>
+
+    <!-- TEACHER TABS SECTION -->
+    <div class="section">
+      <h2 class="section-title">Teacher Class Tabs (5 designs each)</h2>
+
+      <!-- GROUP TAB -->
+      <div style="margin-bottom: 32px;">
+        <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #444;">Group Tab Designs</h3>
+        <div class="designs-grid">
+          <!-- GRP-1: Compact list with status -->
+          <div class="design-card">
+            <div class="design-header">GRP-1: Compact Member List</div>
+            <div class="design-preview">
+              <div class="mock-header">Class Members (28)</div>
+              <div class="mock-row">
+                <div class="mock-avatar"></div>
+                <div style="flex: 1;">
+                  <div style="font-weight: 600;">Alex Johnson</div>
+                  <div style="color: #999; font-size: 11px;">Student</div>
+                </div>
+                <span style="color: #7f8962; font-weight: 600;">●</span>
+              </div>
+              <div class="mock-row">
+                <div class="mock-avatar"></div>
+                <div style="flex: 1;">
+                  <div style="font-weight: 600;">Sarah Smith</div>
+                  <div style="color: #999; font-size: 11px;">Student</div>
+                </div>
+                <span style="color: #ccc; font-weight: 600;">●</span>
+              </div>
+              <div style="text-align: center; padding: 8px; color: #999; font-size: 11px;">+26 more</div>
+            </div>
+            <div class="design-details">Green dot = online, Gray = offline. Sortable by name/role.</div>
+          </div>
+
+          <!-- GRP-2: Grid cards -->
+          <div class="design-card">
+            <div class="design-header">GRP-2: Student Cards Grid</div>
+            <div class="design-preview">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div style="padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 4px; text-align: center;">
+                  <div class="mock-avatar" style="margin: 0 auto 8px;"></div>
+                  <div style="font-weight: 600; font-size: 11px;">Alex J.</div>
+                  <div style="color: #999; font-size: 10px;">8/10 assignments</div>
+                </div>
+                <div style="padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 4px; text-align: center;">
+                  <div class="mock-avatar" style="margin: 0 auto 8px;"></div>
+                  <div style="font-weight: 600; font-size: 11px;">Sarah S.</div>
+                  <div style="color: #999; font-size: 10px;">10/10 assignments</div>
+                </div>
+              </div>
+            </div>
+            <div class="design-details">Per-student stats: assignments, last active, grades avg.</div>
+          </div>
+
+          <!-- GRP-3: Detailed table -->
+          <div class="design-card">
+            <div class="design-header">GRP-3: Detailed Stats Table</div>
+            <div class="design-preview">
+              <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #ddd;">
+                  <td style="padding: 8px; font-weight: 600;">Name</td>
+                  <td style="padding: 8px; font-weight: 600;">Avg</td>
+                  <td style="padding: 8px; font-weight: 600;">Done</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                  <td style="padding: 8px;">Alex J.</td>
+                  <td style="padding: 8px;">7.8</td>
+                  <td style="padding: 8px;">8/10</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                  <td style="padding: 8px;">Sarah S.</td>
+                  <td style="padding: 8px;">9.2</td>
+                  <td style="padding: 8px;">10/10</td>
+                </tr>
+              </table>
+            </div>
+            <div class="design-details">Sortable columns: name, average grade, submissions completed.</div>
+          </div>
+
+          <!-- GRP-4: Searchable with filters -->
+          <div class="design-card">
+            <div class="design-header">GRP-4: Search + Filters</div>
+            <div class="design-preview">
+              <div style="padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; color: #999;">🔍 Search members...</div>
+              <div style="display: flex; gap: 4px; margin-top: 8px;">
+                <span class="mock-badge" style="background: #7f8962;">All</span>
+                <span class="mock-badge" style="background: #ddd; color: #666;">Online</span>
+                <span class="mock-badge" style="background: #ddd; color: #666;">At Risk</span>
+              </div>
+              <div class="mock-row" style="margin-top: 8px;">
+                <div class="mock-avatar"></div>
+                <div style="flex: 1; font-size: 11px;"><strong>Alex</strong> • 7.8 avg</div>
+              </div>
+            </div>
+            <div class="design-details">Search + role/status filters. Real-time online status.</div>
+          </div>
+
+          <!-- GRP-5: Engagement heatmap -->
+          <div class="design-card">
+            <div class="design-header">GRP-5: Engagement Heatmap</div>
+            <div class="design-preview">
+              <div style="font-size: 11px; font-weight: 600; margin-bottom: 8px;">Last 7 Days Activity</div>
+              <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+                <div style="aspect-ratio: 1; background: #7f8962; border-radius: 2px; opacity: 0.3;"></div>
+                <div style="aspect-ratio: 1; background: #7f8962; border-radius: 2px; opacity: 0.6;"></div>
+                <div style="aspect-ratio: 1; background: #7f8962; border-radius: 2px; opacity: 1;"></div>
+                <div style="aspect-ratio: 1; background: #7f8962; border-radius: 2px; opacity: 0.8;"></div>
+                <div style="aspect-ratio: 1; background: #7f8962; border-radius: 2px; opacity: 0.2;"></div>
+                <div style="aspect-ratio: 1; background: #7f8962; border-radius: 2px; opacity: 0.7;"></div>
+                <div style="aspect-ratio: 1; background: #7f8962; border-radius: 2px; opacity: 0.9;"></div>
+              </div>
+              <div style="font-size: 10px; color: #999; margin-top: 8px;">
+                <div>■ Low activity  ■ High activity</div>
+              </div>
+            </div>
+            <div class="design-details">Color intensity = participation level. Quick engagement overview.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAT/SHARE TAB -->
+      <div style="margin-bottom: 32px;">
+        <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #444;">Chat/Share Tab Designs</h3>
+        <div class="designs-grid">
+          <!-- CHT-1: Simple message thread -->
+          <div class="design-card">
+            <div class="design-header">CHT-1: Simple Message Thread</div>
+            <div class="design-preview">
+              <div style="font-size: 10px; color: #999; text-align: center; padding: 8px;">Today, 2:30 PM</div>
+              <div style="padding: 8px; background: #f0f0f0; border-radius: 4px; margin-bottom: 8px;">
+                <div style="font-size: 11px; color: #666;"><strong>Teacher:</strong> Check the PDF link</div>
+              </div>
+              <div style="padding: 8px; background: #7f8962; color: #fff; border-radius: 4px; margin-left: 20px; font-size: 11px;">Got it! Thanks</div>
+              <div style="text-align: center; color: #999; font-size: 10px; margin-top: 8px;">Message input...</div>
+            </div>
+            <div class="design-details">Linear thread view with timestamps.</div>
+          </div>
+
+          <!-- CHT-2: With attachments -->
+          <div class="design-card">
+            <div class="design-header">CHT-2: Attachments Support</div>
+            <div class="design-preview">
+              <div style="padding: 12px; background: #f0f0f0; border-radius: 4px; border-left: 3px solid #7f8962;">
+                <div style="font-size: 11px; margin-bottom: 8px;"><strong>Teacher shared</strong></div>
+                <div style="background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 3px; font-size: 10px;">
+                  📄 Assignment_Brief.pdf
+                </div>
+              </div>
+              <div style="text-align: center; padding: 16px; font-size: 10px; color: #999;">
+                Drag files to attach
+              </div>
+            </div>
+            <div class="design-details">File uploads, previews, download tracking.</div>
+          </div>
+
+          <!-- CHT-3: Audience toggle -->
+          <div class="design-card">
+            <div class="design-header">CHT-3: Audience Filter</div>
+            <div class="design-preview">
+              <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <span class="mock-badge" style="background: #7f8962;">All Students</span>
+                <span class="mock-badge" style="background: #ddd; color: #666;">Teachers Only</span>
+                <span class="mock-badge" style="background: #ddd; color: #666;">Pinned</span>
+              </div>
+              <div style="padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px; font-size: 10px;">
+                📌 Important: Assignment due Friday
+              </div>
+              <div style="padding: 8px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; margin-top: 8px; font-size: 10px;">
+                💬 5 student questions
+              </div>
+            </div>
+            <div class="design-details">Filter messages by audience. Pin important.</div>
+          </div>
+
+          <!-- CHT-4: Threaded replies -->
+          <div class="design-card">
+            <div class="design-header">CHT-4: Threaded Replies</div>
+            <div class="design-preview">
+              <div style="padding: 10px; background: #f0f0f0; border-radius: 4px; border-left: 3px solid #7f8962; margin-bottom: 8px;">
+                <div style="font-size: 11px; font-weight: 600; margin-bottom: 4px;">Teacher</div>
+                <div style="font-size: 11px;">Any questions about the assignment?</div>
+                <div style="font-size: 9px; color: #999; margin-top: 4px;">↳ 3 replies</div>
+              </div>
+              <div style="margin-left: 16px; padding: 8px; background: #fff; border-left: 2px solid #ddd; font-size: 10px;">
+                👤 Alex: What's the deadline?
+              </div>
+            </div>
+            <div class="design-details">Hierarchical conversations. Collapse/expand threads.</div>
+          </div>
+
+          <!-- CHT-5: Reactions & search -->
+          <div class="design-card">
+            <div class="design-header">CHT-5: Reactions & Archive</div>
+            <div class="design-preview">
+              <div style="padding: 12px; background: #f0f0f0; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div style="font-size: 11px;">Important update posted</div>
+                  <div style="display: flex; gap: 4px; font-size: 10px;">
+                    👍 ❤️ 🎉
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top: 8px; padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px; font-size: 10px;">
+                🔍 Search conversations...
+              </div>
+            </div>
+            <div class="design-details">Emoji reactions. Full-text search with filters.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE TAB -->
+      <div style="margin-bottom: 32px;">
+        <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #444;">Attendance Tab Designs</h3>
+        <div class="designs-grid">
+          <!-- ATT-1: Weekly grid -->
+          <div class="design-card">
+            <div class="design-header">ATT-1: Weekly Grid</div>
+            <div class="design-preview">
+              <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                <tr style="background: #f0f0f0;">
+                  <td style="padding: 6px; font-weight: 600;">Name</td>
+                  <td style="padding: 6px; text-align: center; font-weight: 600;">Mon</td>
+                  <td style="padding: 6px; text-align: center; font-weight: 600;">Tue</td>
+                  <td style="padding: 6px; text-align: center; font-weight: 600;">Wed</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                  <td style="padding: 6px;">Alex</td>
+                  <td style="padding: 6px; text-align: center; color: #7f8962;">✓</td>
+                  <td style="padding: 6px; text-align: center; color: #7f8962;">✓</td>
+                  <td style="padding: 6px; text-align: center; color: #f00;">✗</td>
+                </tr>
+              </table>
+            </div>
+            <div class="design-details">Grid: ✓ Present, ✗ Absent, ⏱ Late. Export to CSV.</div>
+          </div>
+
+          <!-- ATT-2: List with notes -->
+          <div class="design-card">
+            <div class="design-header">ATT-2: List + Notes</div>
+            <div class="design-preview">
+              <div style="padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong style="font-size: 11px;">Alex Johnson</strong>
+                  <span style="color: #7f8962; font-weight: 600;">Present</span>
+                </div>
+                <div style="font-size: 10px; color: #999;">📝 Arrived 5min late</div>
+              </div>
+              <div style="padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong style="font-size: 11px;">Sarah Smith</strong>
+                  <span style="color: #f00;">Absent</span>
+                </div>
+              </div>
+            </div>
+            <div class="design-details">Quick mark + add notes. Bulk actions available.</div>
+          </div>
+
+          <!-- ATT-3: Period/slot view -->
+          <div class="design-card">
+            <div class="design-header">ATT-3: By Period</div>
+            <div class="design-preview">
+              <div style="margin-bottom: 12px;">
+                <div style="font-weight: 600; font-size: 11px; padding: 8px; background: #f0f0f0; border-radius: 3px; margin-bottom: 6px;">9:00 - Biology (28/30)</div>
+                <div style="font-size: 10px; color: #999;">Absent: 2 students</div>
+              </div>
+              <div style="margin-bottom: 12px;">
+                <div style="font-weight: 600; font-size: 11px; padding: 8px; background: #f0f0f0; border-radius: 3px; margin-bottom: 6px;">11:00 - Math (27/30)</div>
+                <div style="font-size: 10px; color: #999;">Absent: 2, Late: 1</div>
+              </div>
+            </div>
+            <div class="design-details">Group by class period. Summary stats per class.</div>
+          </div>
+
+          <!-- ATT-4: Quick actions -->
+          <div class="design-card">
+            <div class="design-header">ATT-4: Quick Mark</div>
+            <div class="design-preview">
+              <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <button style="flex: 1; padding: 8px; background: #7f8962; color: #fff; border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Mark All Present</button>
+                <button style="flex: 1; padding: 8px; background: #fff; color: #666; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; cursor: pointer;">Clear All</button>
+              </div>
+              <div style="padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px; font-size: 10px;">
+                📋 Copy from yesterday
+              </div>
+            </div>
+            <div class="design-details">Fast attendance marking. Template copy from prev. day.</div>
+          </div>
+
+          <!-- ATT-5: Analytics -->
+          <div class="design-card">
+            <div class="design-header">ATT-5: Attendance Report</div>
+            <div class="design-preview">
+              <div style="margin-bottom: 12px;">
+                <div style="font-size: 10px; color: #666; margin-bottom: 4px;">Overall Rate</div>
+                <div style="width: 100%; height: 12px; background: #ddd; border-radius: 6px; overflow: hidden;">
+                  <div style="width: 94%; height: 100%; background: #7f8962;"></div>
+                </div>
+                <div style="font-size: 10px; color: #999; margin-top: 2px;">94% present</div>
+              </div>
+              <div style="font-size: 11px; font-weight: 600; margin-bottom: 8px;">Students at Risk:</div>
+              <div style="font-size: 10px; color: #f00;">⚠️ 2 students < 80%</div>
+            </div>
+            <div class="design-details">Attendance trends. At-risk student alerts.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRADES TAB (TEACHER) -->
+      <div style="margin-bottom: 32px;">
+        <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #444;">Grades Tab (Teacher) Designs</h3>
+        <div class="designs-grid">
+          <!-- GRD-T1: Grade sets list -->
+          <div class="design-card">
+            <div class="design-header">GRD-T1: Grade Sets List</div>
+            <div class="design-preview">
+              <div style="padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 600; font-size: 12px;">Quiz 1: Photosynthesis</div>
+                    <div style="font-size: 10px; color: #999;">28/30 graded</div>
+                  </div>
+                  <span class="mock-badge" style="background: #7f8962;">Published</span>
+                </div>
+              </div>
+              <div style="padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 600; font-size: 12px;">Test 1: Ecosystems</div>
+                    <div style="font-size: 10px; color: #999;">15/30 graded</div>
+                  </div>
+                  <span class="mock-badge" style="background: #ffd700; color: #666;">Draft</span>
+                </div>
+              </div>
+            </div>
+            <div class="design-details">Quick overview of all grade sets. Publish/draft status.</div>
+          </div>
+
+          <!-- GRD-T2: Grade distribution -->
+          <div class="design-card">
+            <div class="design-header">GRD-T2: Distribution Chart</div>
+            <div class="design-preview">
+              <div style="font-size: 11px; font-weight: 600; margin-bottom: 8px;">Grade Distribution (Quiz 1)</div>
+              <div style="display: flex; gap: 8px; align-items: flex-end; height: 100px;">
+                <div style="flex: 1; background: #7f8962; border-radius: 2px 2px 0 0; opacity: 0.6;" title="D"></div>
+                <div style="flex: 1; background: #7f8962; border-radius: 2px 2px 0 0; opacity: 0.8;" title="C"></div>
+                <div style="flex: 1; background: #7f8962; border-radius: 2px 2px 0 0; opacity: 1;" title="B"></div>
+                <div style="flex: 1; background: #7f8962; border-radius: 2px 2px 0 0; opacity: 0.7;" title="A"></div>
+              </div>
+              <div style="display: flex; gap: 8px; font-size: 9px; margin-top: 8px;">
+                <span>D:2 |</span><span>C:3 |</span><span>B:5 |</span><span>A:4</span>
+              </div>
+            </div>
+            <div class="design-details">Grade buckets: A (8.5+), B (7-8.4), C (5.5-6.9), D (&lt;5.5).</div>
+          </div>
+
+          <!-- GRD-T3: Bulk grading -->
+          <div class="design-card">
+            <div class="design-header">GRD-T3: Bulk Grade Entry</div>
+            <div class="design-preview">
+              <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <input type="text" placeholder="Filter by student..." style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;">
+              </div>
+              <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #ddd;">
+                  <td style="padding: 6px;">Alex</td>
+                  <td style="padding: 6px;"><input type="text" style="width: 40px; padding: 4px; border: 1px solid #ddd;" value="8.5"></td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                  <td style="padding: 6px;">Sarah</td>
+                  <td style="padding: 6px;"><input type="text" style="width: 40px; padding: 4px; border: 1px solid #ddd;" value="9.2"></td>
+                </tr>
+              </table>
+            </div>
+            <div class="design-details">Inline editing. Keyboard navigation support.</div>
+          </div>
+
+          <!-- GRD-T4: Analytics detail -->
+          <div class="design-card">
+            <div class="design-header">GRD-T4: Class Analytics</div>
+            <div class="design-preview">
+              <div style="margin-bottom: 12px;">
+                <div style="font-size: 10px; color: #666; margin-bottom: 2px;">Class Average</div>
+                <div style="font-size: 16px; font-weight: 600; color: #7f8962;">7.8</div>
+              </div>
+              <div style="font-size: 10px; color: #666; margin-bottom: 4px;">Performance by Grade:</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 10px;">
+                <div>Highest: 9.8</div>
+                <div>Lowest: 4.2</div>
+                <div>Median: 7.9</div>
+                <div>Stdev: 1.3</div>
+              </div>
+            </div>
+            <div class="design-details">Statistical overview. Identify outliers & trends.</div>
+          </div>
+
+          <!-- GRD-T5: Grade history -->
+          <div class="design-card">
+            <div class="design-header">GRD-T5: Grade Timeline</div>
+            <div class="design-preview">
+              <div style="margin-bottom: 12px;">
+                <div style="font-size: 11px; font-weight: 600; margin-bottom: 6px;">Alex Johnson</div>
+                <div style="display: flex; gap: 4px;">
+                  <div style="padding: 6px 10px; background: #7f8962; color: #fff; border-radius: 3px; font-size: 10px; font-weight: 600;">8.5</div>
+                  <div style="padding: 6px 10px; background: #d8956c; color: #fff; border-radius: 3px; font-size: 10px; font-weight: 600;">7.2</div>
+                  <div style="padding: 6px 10px; background: #7f8962; color: #fff; border-radius: 3px; font-size: 10px; font-weight: 600;">8.9</div>
+                  <div style="padding: 6px 10px; background: #ccc; color: #666; border-radius: 3px; font-size: 10px; font-weight: 600;">—</div>
+                </div>
+              </div>
+              <div style="font-size: 10px; color: #999;">Trend: ↗ Improving</div>
+            </div>
+            <div class="design-details">Per-student grade history. Trend indicators.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCHEDULE TAB -->
+      <div style="margin-bottom: 32px;">
+        <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #444;">Schedule Tab Designs</h3>
+        <div class="designs-grid">
+          <!-- SCH-1: Week grid -->
+          <div class="design-card">
+            <div class="design-header">SCH-1: Weekly Grid</div>
+            <div class="design-preview">
+              <table style="width: 100%; font-size: 10px; border-collapse: collapse; border: 1px solid #ddd;">
+                <tr style="background: #f0f0f0;">
+                  <td style="padding: 6px; font-weight: 600; border-right: 1px solid #ddd;">Time</td>
+                  <td style="padding: 6px; font-weight: 600; border-right: 1px solid #ddd; text-align: center;">Mon</td>
+                  <td style="padding: 6px; font-weight: 600; border-right: 1px solid #ddd; text-align: center;">Tue</td>
+                  <td style="padding: 6px; font-weight: 600; text-align: center;">Wed</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                  <td style="padding: 6px; border-right: 1px solid #ddd; background: #f9f9f9;">09:00</td>
+                  <td style="padding: 6px; border-right: 1px solid #ddd; background: #f0f0f0; text-align: center; color: #666;">—</td>
+                  <td style="padding: 6px; border-right: 1px solid #ddd; background: #fff9e6; font-size: 9px; font-weight: 600;">Biology</td>
+                  <td style="padding: 6px; background: #fff9e6; font-size: 9px; font-weight: 600;">Biology</td>
+                </tr>
+              </table>
+            </div>
+            <div class="design-details">Day-by-day schedule grid. Click to add/edit slots.</div>
+          </div>
+
+          <!-- SCH-2: Timeline view -->
+          <div class="design-card">
+            <div class="design-header">SCH-2: Timeline View</div>
+            <div class="design-preview">
+              <div style="margin-bottom: 12px;">
+                <div style="font-size: 10px; color: #666; font-weight: 600;">Monday</div>
+                <div style="padding: 10px; background: #7f8962; color: #fff; border-radius: 4px; margin-top: 4px; font-size: 11px; font-weight: 600;">
+                  09:00 - Biology (3A)
+                </div>
+                <div style="padding: 10px; background: #7f8962; color: #fff; border-radius: 4px; margin-top: 4px; font-size: 11px; font-weight: 600;">
+                  11:00 - Chemistry (4B)
+                </div>
+              </div>
+            </div>
+            <div class="design-details">Vertical timeline. Compact time display.</div>
+          </div>
+
+          <!-- SCH-3: Add slot modal -->
+          <div class="design-card">
+            <div class="design-header">SCH-3: Add/Edit Slot</div>
+            <div class="design-preview">
+              <div style="padding: 12px; background: #f0f0f0; border-radius: 4px;">
+                <div style="margin-bottom: 8px;">
+                  <label style="font-size: 10px; font-weight: 600; color: #666;">Class</label>
+                  <select style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;">
+                    <option>Biology (3A)</option>
+                  </select>
+                </div>
+                <div style="margin-bottom: 8px;">
+                  <label style="font-size: 10px; font-weight: 600; color: #666;">Day</label>
+                  <select style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;">
+                    <option>Monday</option>
+                  </select>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <label style="font-size: 10px; font-weight: 600; color: #666;">Time</label>
+                  <input type="time" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;" value="09:00">
+                </div>
+                <div style="display: flex; gap: 6px;">
+                  <button style="flex: 1; padding: 6px; background: #7f8962; color: #fff; border: none; border-radius: 3px; font-size: 10px; font-weight: 600;">Save</button>
+                  <button style="flex: 1; padding: 6px; background: #ddd; border: none; border-radius: 3px; font-size: 10px;">Cancel</button>
+                </div>
+              </div>
+            </div>
+            <div class="design-details">Modal for schedule entry. Validation & conflict detection.</div>
+          </div>
+
+          <!-- SCH-4: Recurring pattern -->
+          <div class="design-card">
+            <div class="design-header">SCH-4: Recurring Slots</div>
+            <div class="design-preview">
+              <div style="padding: 10px; background: #f0f0f0; border-radius: 4px; margin-bottom: 8px;">
+                <div style="font-weight: 600; font-size: 11px; margin-bottom: 6px;">Biology (3A)</div>
+                <div style="font-size: 10px; color: #666;">
+                  <div>📅 Every Monday & Wednesday</div>
+                  <div>⏰ 09:00 - 10:30</div>
+                </div>
+              </div>
+              <div style="padding: 6px; background: #fff9e6; border-left: 3px solid #7f8962; font-size: 10px;">
+                ✓ 26 occurrences this term
+              </div>
+            </div>
+            <div class="design-details">Repeat rule setup. Auto-expand recurring slots.</div>
+          </div>
+
+          <!-- SCH-5: Teacher & conflicts -->
+          <div class="design-card">
+            <div class="design-header">SCH-5: Conflict Detection</div>
+            <div class="design-preview">
+              <div style="padding: 10px; background: #fff9e6; border-left: 3px solid #f00; margin-bottom: 8px;">
+                <div style="font-weight: 600; font-size: 11px; color: #f00;">⚠️ Conflict Detected</div>
+                <div style="font-size: 10px; color: #666; margin-top: 4px;">
+                  Monday 09:00-10:30: Biology (3A) + Chemistry (4B)
+                </div>
+              </div>
+              <div style="padding: 8px; background: #f0f0f0; border-radius: 3px; font-size: 10px;">
+                Suggested fixes available
+              </div>
+            </div>
+            <div class="design-details">Warn on double-booking. Suggest alternatives.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- STUDENT GRADES TAB SECTION -->
+    <div class="section">
+      <h2 class="section-title">Student Grades Tab (5 designs)</h2>
+      <div class="designs-grid">
+        <!-- GRD-S1: Simple list -->
+        <div class="design-card">
+          <div class="design-header">GRD-S1: Grade List</div>
+          <div class="design-preview">
+            <div style="padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-weight: 600; font-size: 12px;">Quiz 1: Photosynthesis</div>
+                  <div style="font-size: 10px; color: #999;">28 Nov 2024</div>
+                </div>
+                <div style="font-size: 18px; font-weight: 600; color: #7f8962;">8.5</div>
+              </div>
+            </div>
+          </div>
+          <div class="design-details">Per-grade view with dates. Sort by date/grade.</div>
+        </div>
+
+        <!-- GRD-S2: Trend chart -->
+        <div class="design-card">
+          <div class="design-header">GRD-S2: Grade Trend</div>
+          <div class="design-preview">
+            <div style="font-size: 11px; font-weight: 600; margin-bottom: 8px;">My Progress</div>
+            <div style="display: flex; gap: 8px; align-items: flex-end; height: 80px;">
+              <div style="flex: 1; background: #7f8962; border-radius: 2px 2px 0 0; opacity: 0.6;" title="7.2"></div>
+              <div style="flex: 1; background: #7f8962; border-radius: 2px 2px 0 0; opacity: 0.8;" title="7.9"></div>
+              <div style="flex: 1; background: #7f8962; border-radius: 2px 2px 0 0; opacity: 1;" title="8.5"></div>
+              <div style="flex: 1; background: #7f8962; border-radius: 2px 2px 0 0; opacity: 0.9;" title="8.2"></div>
+            </div>
+            <div style="font-size: 10px; color: #666; margin-top: 6px;">↗ Trend: Improving</div>
+          </div>
+          <div class="design-details">Personal grade progression over time.</div>
+        </div>
+
+        <!-- GRD-S3: "What grade do I need?" -->
+        <div class="design-card">
+          <div class="design-header">GRD-S3: Grade Calculator</div>
+          <div class="design-preview">
+            <div style="padding: 12px; background: #f0f0f0; border-radius: 4px;">
+              <div style="font-weight: 600; font-size: 11px; margin-bottom: 8px;">What grade do I need?</div>
+              <div style="margin-bottom: 8px;">
+                <label style="font-size: 10px; color: #666;">Target average</label>
+                <input type="text" value="7.5" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;">
+              </div>
+              <div style="padding: 8px; background: #fff; border-radius: 3px; font-size: 11px;">
+                <div style="color: #666; font-size: 10px;">Need on next test</div>
+                <div style="font-size: 18px; font-weight: 600; color: #7f8962;">7.8</div>
+              </div>
+            </div>
+          </div>
+          <div class="design-details">Quick calculator for target grades.</div>
+        </div>
+
+        <!-- GRD-S4: By class -->
+        <div class="design-card">
+          <div class="design-header">GRD-S4: By Class</div>
+          <div class="design-preview">
+            <div style="margin-bottom: 12px;">
+              <div style="font-weight: 600; font-size: 11px; padding: 8px; background: #f0f0f0; border-radius: 3px; margin-bottom: 6px;">
+                Biology
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 3px;">
+                <div style="font-size: 11px;">avg</div>
+                <div style="font-size: 14px; font-weight: 600; color: #7f8962;">8.1</div>
+              </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <div style="font-weight: 600; font-size: 11px; padding: 8px; background: #f0f0f0; border-radius: 3px; margin-bottom: 6px;">
+                Chemistry
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 3px;">
+                <div style="font-size: 11px;">avg</div>
+                <div style="font-size: 14px; font-weight: 600; color: #d8956c;">7.3</div>
+              </div>
+            </div>
+          </div>
+          <div class="design-details">Group grades by subject/class. Per-class averages.</div>
+        </div>
+
+        <!-- GRD-S5: Detailed stats -->
+        <div class="design-card">
+          <div class="design-header">GRD-S5: Statistics</div>
+          <div class="design-preview">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 10px;">
+              <div style="padding: 8px; background: #f0f0f0; border-radius: 3px;">
+                <div style="color: #666; font-size: 9px;">Highest</div>
+                <div style="font-size: 14px; font-weight: 600; color: #7f8962;">9.8</div>
+              </div>
+              <div style="padding: 8px; background: #f0f0f0; border-radius: 3px;">
+                <div style="color: #666; font-size: 9px;">Lowest</div>
+                <div style="font-size: 14px; font-weight: 600; color: #d8956c;">6.2</div>
+              </div>
+              <div style="padding: 8px; background: #f0f0f0; border-radius: 3px;">
+                <div style="color: #666; font-size: 9px;">Average</div>
+                <div style="font-size: 14px; font-weight: 600; color: #7f8962;">7.8</div>
+              </div>
+              <div style="padding: 8px; background: #f0f0f0; border-radius: 3px;">
+                <div style="color: #666; font-size: 9px;">Total</div>
+                <div style="font-size: 14px; font-weight: 600; color: #666;">14</div>
+              </div>
+            </div>
+          </div>
+          <div class="design-details">Summary stats: min/max/avg/count of grades.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE TOOLS SECTION -->
+    <div class="section">
+      <h2 class="section-title">Interactive Tools: Layout & Interaction Designs</h2>
+
+      <div class="section-note">
+        <strong>Setup:</strong> These tools provide visual/interactive ways for students to organize, map, and timeline information. Designs below show layout approach, toolbar placement, and interaction model.
+      </div>
+
+      <!-- MINDMAP TOOL -->
+      <div class="tool-layout">
+        <div class="tool-name">🧠 Mindmap Tool</div>
+
+        <div class="layout-description">
+          Interactive mind mapping with central node, radial child arrangement, drag-to-add, click-to-edit. Features: auto-position with no overlaps (force-directed layout), export as JSON, color coding by depth, smooth pan/zoom.
+        </div>
+
+        <div class="layout-sections">
+          <div class="layout-section">
+            <div class="layout-label">Toolbar (Top)</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <span class="mock-badge">+ Add</span>
+              <span class="mock-badge">✏️ Edit</span>
+              <span class="mock-badge">🗑️ Delete</span>
+              <span class="mock-badge">💾 Download</span>
+              <span class="mock-badge">⚙️ Settings</span>
+            </div>
+          </div>
+          <div class="layout-section">
+            <div class="layout-label">Canvas (Main Area)</div>
+            <div style="width: 100%; height: 200px; border: 1px solid #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #fafafa; font-size: 12px; color: #999;">
+              SVG Canvas: Central node in middle, children positioned radially, connected by lines
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px; background: #f9f9f9; border-left: 3px solid #7f8962; border-radius: 3px; font-size: 12px;">
+          <strong>Interaction Flow:</strong>
+          <ol style="margin-left: 16px; margin-top: 8px; line-height: 1.8;">
+            <li><strong>Create:</strong> Click canvas → "Create new mindmap" form appears (title input)</li>
+            <li><strong>Add child:</strong> Select node → "+ Add" button → text input → saves automatically</li>
+            <li><strong>Edit:</strong> Click node → inline edit mode or modal (for longer text)</li>
+            <li><strong>Delete:</strong> Select node → "Delete" button → confirm</li>
+            <li><strong>Pan/Zoom:</strong> Mouse wheel to zoom, drag canvas to pan</li>
+            <li><strong>Export:</strong> Download button → JSON file with full structure</li>
+            <li><strong>Settings:</strong> Toggle layout tightness, color scheme, labels on/off</li>
+          </ol>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px; background: #f0f0f0; border-radius: 3px; font-size: 12px;">
+          <strong>Technical Details:</strong>
+          <ul style="margin-left: 16px; margin-top: 8px; line-height: 1.8;">
+            <li><strong>Layout:</strong> Force-directed (d3-force) or hierarchical radial positioning to prevent node overlap</li>
+            <li><strong>Rendering:</strong> SVG with React for reactive updates</li>
+            <li><strong>Depth colors:</strong> Each level gets different color from palette</li>
+            <li><strong>No overlaps:</strong> Algorithm calculates optimal radius per depth to space nodes evenly</li>
+            <li><strong>Smooth transitions:</strong> CSS transitions on node position changes</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- TIMELINE TOOL -->
+      <div class="tool-layout">
+        <div class="tool-name">⏱️ Timeline Tool</div>
+
+        <div class="layout-description">
+          Linear timeline with events positioned by date, draggable to reorder, color-coded. Features: auto-sort by date, inline edit, add/delete events, smooth animations, emoji color codes, drag-to-reorder.
+        </div>
+
+        <div class="layout-sections">
+          <div class="layout-section">
+            <div class="layout-label">Controls (Top)</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <span class="mock-badge">+ Add Event</span>
+              <span class="mock-badge">📥 Import</span>
+              <span class="mock-badge">💾 Export</span>
+            </div>
+          </div>
+          <div class="layout-section">
+            <div class="layout-label">Timeline Display</div>
+            <div style="padding: 12px; background: #fafafa; border-radius: 4px; font-size: 11px;">
+              <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 2px; background: #7f8962;"></div>
+                <div style="flex: 1;">
+                  <div style="font-weight: 600; color: #1a1a1a;">Event title</div>
+                  <div style="font-size: 10px; color: #999;">Date & time</div>
+                  <div style="font-size: 10px; color: #666; margin-top: 4px;">Description...</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 12px;">
+                <div style="width: 2px; background: #d8956c;"></div>
+                <div style="flex: 1;">
+                  <div style="font-weight: 600; color: #1a1a1a;">Next event</div>
+                  <div style="font-size: 10px; color: #999;">Date & time</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px; background: #f9f9f9; border-left: 3px solid #7f8962; border-radius: 3px; font-size: 12px;">
+          <strong>Interaction Flow:</strong>
+          <ol style="margin-left: 16px; margin-top: 8px; line-height: 1.8;">
+            <li><strong>Add event:</strong> Click "+ Add Event" → form appears (title, date/time, description)</li>
+            <li><strong>Edit event:</strong> Double-click event card → inline edit form appears</li>
+            <li><strong>Delete:</strong> Hover → trash icon → confirm delete</li>
+            <li><strong>Reorder:</strong> Drag event by handle (grip icon) → visual feedback</li>
+            <li><strong>Color-code:</strong> Each event gets auto-assigned color from palette</li>
+            <li><strong>Auto-sort:</strong> Events always sort by date (earliest first)</li>
+            <li><strong>Export:</strong> Download as JSON with event metadata</li>
+          </ol>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px; background: #f0f0f0; border-radius: 3px; font-size: 12px;">
+          <strong>Technical Details:</strong>
+          <ul style="margin-left: 16px; margin-top: 8px; line-height: 1.8;">
+            <li><strong>Sorting:</strong> Automatic date-based ordering, user can drag to reorder within view</li>
+            <li><strong>Rendering:</strong> Vertical timeline with center line, events alternate left/right (or all on right)</li>
+            <li><strong>Drag behavior:</strong> React DnD or native drag API, smooth visual feedback</li>
+            <li><strong>Animations:</strong> Fade in/out on add/delete, slide transitions on reorder</li>
+            <li><strong>Color dots:</strong> Visual markers on timeline line, matching event color</li>
+            <li><strong>Dates:</strong> ISO format storage, localized display (en-GB by default)</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER NOTE -->
+    <div style="margin-top: 40px; padding: 20px; background: #fff9e6; border: 1px solid #ddd; border-radius: 8px; text-align: center; font-size: 12px; color: #666;">
+      <p style="margin-bottom: 8px;">
+        <strong>Design Selection Guide:</strong> Choose one design per tab (or multiple if you want to implement variants).
+      </p>
+      <p style="margin-bottom: 8px;">
+        <strong>Example implementations:</strong> GRP-4, CHT-2, ATT-3, GRD-T2, GRD-S3, SCH-1 or any combination.
+      </p>
+      <p style="margin-bottom: 8px;">
+        <strong>Tools:</strong> Mindmap = SVG canvas with radial node layout. Timeline = Vertical timeline with drag-to-reorder.
+      </p>
+      <p style="margin-bottom: 0;">
+        All designs use consistent color palette: #7f8962 (sage primary), #d8956c (tan), #6b9fbf (ocean), etc.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

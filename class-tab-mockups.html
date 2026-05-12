@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Class Tab Mockups — cautie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'IBM Plex Sans', -apple-system, sans-serif; background: #e8e8e8; color: #1a1a1a; font-size: 13px; line-height: 1.5; }
+
+.page { max-width: 1520px; margin: 0 auto; padding: 36px 24px 80px; }
+.section-head { margin: 56px 0 4px; font-size: 19px; font-weight: 700; color: #1a1a1a; }
+.section-sub  { font-size: 12px; color: #868686; margin-bottom: 20px; letter-spacing: .02em; }
+.grid         { display: grid; grid-template-columns: repeat(auto-fill, minmax(560px, 1fr)); gap: 18px; }
+.grid-wide    { display: grid; grid-template-columns: repeat(auto-fill, minmax(700px, 1fr)); gap: 18px; }
+
+/* mockup shell */
+.mockup       { border-radius: 12px; overflow: hidden; border: 1px solid #d8d8d8; background: #f2f2f2; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.mockup-bar   { background: #fafafa; border-bottom: 1px solid #e8e8e8; padding: 10px 14px; display: flex; align-items: center; gap: 8px; }
+.mockup-bar-title { font-size: 11px; font-weight: 600; color: #3d3d3d; }
+.mockup-tag   { font-size: 10px; color: #868686; background: #f0f0f0; border: 1px solid #e4e4e4; border-radius: 4px; padding: 1px 6px; }
+.mockup-body  { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+/* surfaces */
+.card      { background: #fff; border: 1px solid #e8e8e8; border-radius: 9px; padding: 12px 14px; }
+.card-sm   { background: #fafafa; border: 1px solid #efefef; border-radius: 7px; padding: 8px 11px; }
+.inset     { background: #f5f5f5; border-radius: 6px; padding: 8px 10px; }
+.surface-accent { background: #f4f5f0; border: 1px solid #dde0d0; border-radius: 7px; padding: 8px 11px; }
+
+/* accent */
+.accent        { color: #7f8962; }
+.accent-bg     { background: #7f8962; color: #fff; }
+.accent-dot    { width: 6px; height: 6px; border-radius: 50%; background: #7f8962; flex-shrink: 0; }
+.accent-border { border-left: 2px solid #7f8962; padding-left: 9px; }
+
+/* status badges */
+.badge       { display: inline-flex; align-items: center; font-size: 10px; font-weight: 500; border-radius: 5px; padding: 1px 7px; white-space: nowrap; }
+.badge-ok    { color: #2d6a2d; background: #f0f9f0; border: 1px solid #b8e0b8; }
+.badge-warn  { color: #a06020; background: #fdf5e6; border: 1px solid #f0d898; }
+.badge-alert { color: #991c1c; background: #fef2f2; border: 1px solid #f8c4c4; }
+.badge-info  { color: #1a4a7a; background: #eff6ff; border: 1px solid #bdd8f8; }
+.badge-muted { color: #868686; background: #f4f4f4; border: 1px solid #e4e4e4; }
+.badge-accent{ color: #4f5838; background: #f4f5f0; border: 1px solid #d0d5bb; }
+.live-dot    { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+
+/* typography */
+.label    { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #868686; }
+.micro    { font-size: 10px; color: #a0a0a0; }
+.muted    { color: #868686; }
+.bold     { font-weight: 600; }
+.sm       { font-size: 12px; }
+
+/* layout helpers */
+.row      { display: flex; align-items: center; gap: 6px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.col      { display: flex; flex-direction: column; gap: 4px; }
+.col-gap  { display: flex; flex-direction: column; gap: 8px; }
+.col-gap2 { display: flex; flex-direction: column; gap: 12px; }
+
+/* avatar */
+.av { width: 28px; height: 28px; border-radius: 50%; background: #e8e8e8; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #555; flex-shrink: 0; }
+.av-sm { width: 22px; height: 22px; border-radius: 50%; background: #e8e8e8; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: #555; flex-shrink: 0; }
+.av-accent { background: #f4f5f0; color: #7f8962; }
+
+/* attendance cells */
+.att-cell { width: 26px; height: 26px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; flex-shrink: 0; }
+.att-p  { background: #f0f9f0; color: #2d6a2d; }
+.att-a  { background: #fef2f2; color: #991c1c; }
+.att-l  { background: #fdf5e6; color: #a06020; }
+.att-e  { background: #eff6ff; color: #1a4a7a; }
+.att-h  { background: #f4f5f0; color: #7f8962; }
+
+/* grade display */
+.grade-num { font-size: 22px; font-weight: 700; color: #1a1a1a; line-height: 1; }
+.grade-high { color: #2d6a2d; }
+.grade-mid  { color: #a06020; }
+.grade-low  { color: #991c1c; }
+.grade-bar  { height: 4px; border-radius: 2px; background: #e8e8e8; }
+.grade-bar-fill { height: 100%; border-radius: 2px; background: #7f8962; }
+
+/* chart bars (CSS only) */
+.chart-row { display: flex; align-items: flex-end; gap: 5px; height: 60px; }
+.bar-col   { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+.bar       { width: 100%; border-radius: 3px 3px 0 0; }
+.bar-label { font-size: 9px; color: #868686; }
+
+/* message bubbles */
+.bubble-me    { align-self: flex-end; background: #f4f5f0; border: 1px solid #dde0d0; border-radius: 10px 10px 2px 10px; padding: 7px 11px; max-width: 72%; }
+.bubble-them  { align-self: flex-start; background: #fff; border: 1px solid #e8e8e8; border-radius: 10px 10px 10px 2px; padding: 7px 11px; max-width: 72%; }
+.bubble-teach { align-self: flex-start; background: #f4f5f0; border: 1px solid #dde0d0; border-radius: 10px 10px 10px 2px; padding: 7px 11px; max-width: 90%; }
+
+/* table */
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { font-size: 10px; font-weight: 600; color: #868686; text-align: left; padding: 5px 8px; border-bottom: 1px solid #efefef; }
+.tbl td { font-size: 12px; padding: 6px 8px; border-bottom: 1px solid #f5f5f5; }
+.tbl tr:last-child td { border-bottom: none; }
+
+/* filter chips */
+.chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.chip  { font-size: 11px; padding: 3px 10px; border-radius: 20px; border: 1px solid #e4e4e4; background: #fafafa; color: #555; cursor: pointer; }
+.chip-active { background: #7f8962; border-color: #7f8962; color: #fff; }
+
+/* week grid */
+.week-grid { display: grid; grid-template-columns: 52px repeat(5, 1fr); gap: 3px; font-size: 11px; }
+.wg-header { padding: 5px 4px; font-weight: 600; color: #868686; font-size: 10px; text-align: center; }
+.wg-time   { padding: 4px; color: #a0a0a0; font-size: 10px; text-align: right; }
+.wg-cell   { border-radius: 5px; padding: 5px 6px; min-height: 34px; }
+.wg-empty  { background: #f8f8f8; }
+.wg-class  { background: #f4f5f0; border: 1px solid #d0d5bb; color: #4f5838; }
+.wg-break  { background: #fafafa; border: 1px solid #efefef; color: #a0a0a0; text-align: center; }
+.wg-today  { background: #f0f9f0; border: 1px solid #b8e0b8; color: #2d6a2d; }
+
+/* progress ring helper */
+.ring-wrap { position: relative; width: 40px; height: 40px; flex-shrink: 0; }
+.ring-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+
+/* divider */
+hr { border: none; border-top: 1px solid #efefef; margin: 2px 0; }
+
+/* input mock */
+.input-mock { background: #f7f7f7; border: 1px solid #e8e8e8; border-radius: 7px; padding: 8px 12px; font-size: 12px; color: #555; width: 100%; }
+.input-mock.focused { border-color: #7f8962; background: #fff; }
+
+/* icon button */
+.icon-btn { width: 28px; height: 28px; border-radius: 6px; background: #f0f0f0; border: 1px solid #e4e4e4; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
+.icon-btn-accent { background: #7f8962; border-color: #7f8962; }
+.btn { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 5px 12px; border-radius: 6px; font-weight: 500; cursor: pointer; }
+.btn-primary { background: #7f8962; color: #fff; border: none; }
+.btn-secondary { background: #fafafa; border: 1px solid #e4e4e4; color: #555; }
+
+svg { flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div style="margin-bottom:8px">
+  <h1 style="font-size:22px;font-weight:700">Class Tab Mockups — cautie</h1>
+  <p style="color:#868686;font-size:13px;margin-top:4px">5 designs × 7 tabs — pick the best per tab, then I'll build them.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════ GROUP TAB -->
+<div class="section-head">Group Tab</div>
+<div class="section-sub">Class roster + per-student stats + online status</div>
+<div class="grid">
+
+  <!-- GRP-1: Roster list -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRP-1</span><span class="mockup-tag">Roster list</span></div>
+    <div class="mockup-body">
+      <div class="row-between">
+        <div class="row"><div class="label">3A · 22 students</div></div>
+        <div class="chips"><span class="chip chip-active">All</span><span class="chip">Online</span></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tbl">
+          <thead><tr><th>Student</th><th>Submitted</th><th>Avg</th><th>Last seen</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><div class="row"><div class="av av-accent">SM</div> Sara Müller</div></td><td>12/14</td><td class="accent bold">8.2</td><td class="muted">2 min</td><td><div class="live-dot"></div></td></tr>
+            <tr><td><div class="row"><div class="av">JD</div> Jan De Vries</div></td><td>11/14</td><td style="color:#a06020;font-weight:600">6.8</td><td class="muted">1 h</td><td></td></tr>
+            <tr><td><div class="row"><div class="av">LK</div> Lisa Körner</div></td><td>14/14</td><td class="accent bold">9.1</td><td class="muted">5 min</td><td><div class="live-dot"></div></td></tr>
+            <tr><td><div class="row"><div class="av">AB</div> Alex Bakker</div></td><td>8/14</td><td style="color:#991c1c;font-weight:600">5.4</td><td class="muted">2 d</td><td></td></tr>
+            <tr><td><div class="row"><div class="av">NK</div> Nina Kraft</div></td><td>13/14</td><td class="accent bold">7.9</td><td class="muted">10 min</td><td><div class="live-dot"></div></td></tr>
+          </tbody>
+        </table>
+        <div style="padding:8px 14px;border-top:1px solid #f5f5f5;"><span class="micro">+17 more students</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRP-2: Card grid -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRP-2</span><span class="mockup-tag">Card grid</span></div>
+    <div class="mockup-body">
+      <div class="row-between">
+        <span class="label">3A · Biology</span>
+        <span class="btn btn-secondary">+ Invite</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="card"><div class="row-between" style="margin-bottom:8px"><div class="row"><div class="av av-accent">SM</div><div><div class="bold sm">Sara M.</div><div class="micro">3A</div></div></div><div class="live-dot"></div></div><div style="display:flex;gap:12px"><div class="col"><span class="micro">Avg</span><span style="font-weight:700;font-size:15px;color:#7f8962">8.2</span></div><div class="col"><span class="micro">Done</span><span style="font-weight:700;font-size:15px">12/14</span></div></div></div>
+        <div class="card"><div class="row-between" style="margin-bottom:8px"><div class="row"><div class="av">LK</div><div><div class="bold sm">Lisa K.</div><div class="micro">3A</div></div></div><div class="live-dot"></div></div><div style="display:flex;gap:12px"><div class="col"><span class="micro">Avg</span><span style="font-weight:700;font-size:15px;color:#7f8962">9.1</span></div><div class="col"><span class="micro">Done</span><span style="font-weight:700;font-size:15px">14/14</span></div></div></div>
+        <div class="card"><div class="row-between" style="margin-bottom:8px"><div class="row"><div class="av">JD</div><div><div class="bold sm">Jan D.</div><div class="micro">3A</div></div></div></div><div style="display:flex;gap:12px"><div class="col"><span class="micro">Avg</span><span style="font-weight:700;font-size:15px;color:#a06020">6.8</span></div><div class="col"><span class="micro">Done</span><span style="font-weight:700;font-size:15px">11/14</span></div></div></div>
+        <div class="card" style="border:1px dashed #e0e0e0;background:#fafafa;display:flex;align-items:center;justify-content:center;min-height:72px"><span class="muted sm">+19 more</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRP-3: Split view -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRP-3</span><span class="mockup-tag">Split — list + detail</span></div>
+    <div class="mockup-body">
+      <div style="display:grid;grid-template-columns:160px 1fr;gap:10px">
+        <div class="col-gap">
+          <div class="inset row" style="border:1px solid #d0d5bb;background:#f4f5f0"><div class="av-sm av-accent">SM</div><div><div class="bold" style="font-size:11px">Sara M.</div><div class="live-dot" style="margin-top:2px"></div></div></div>
+          <div class="inset row" style="background:#fafafa"><div class="av-sm">LK</div><span style="font-size:11px">Lisa K.</span></div>
+          <div class="inset row" style="background:#fafafa"><div class="av-sm">JD</div><span style="font-size:11px">Jan D.</span></div>
+          <div class="inset row" style="background:#fafafa"><div class="av-sm">AB</div><span style="font-size:11px">Alex B.</span></div>
+        </div>
+        <div class="col-gap">
+          <div class="card">
+            <div class="row-between" style="margin-bottom:8px"><div class="row"><div class="av av-accent">SM</div><div><div class="bold">Sara Müller</div><div class="micro">3A · online 2 min ago</div></div></div><span class="badge badge-ok">Active</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+              <div class="card-sm col"><span class="micro">Avg grade</span><span style="font-weight:700;font-size:15px;color:#7f8962">8.2</span></div>
+              <div class="card-sm col"><span class="micro">Submitted</span><span style="font-weight:700;font-size:15px">12/14</span></div>
+              <div class="card-sm col"><span class="micro">Attendance</span><span style="font-weight:700;font-size:15px">94%</span></div>
+            </div>
+          </div>
+          <div class="card-sm col-gap">
+            <span class="label">Recent activity</span>
+            <div class="row"><div class="accent-dot"></div><span class="sm">Submitted Biology essay — 2h ago</span></div>
+            <div class="row"><div class="accent-dot"></div><span class="sm">Quiz 3.2 scored 8.0 — yesterday</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRP-4: Sortable table -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRP-4</span><span class="mockup-tag">Sortable table</span></div>
+    <div class="mockup-body">
+      <div class="row-between">
+        <div class="chips"><span class="chip chip-active">All</span><span class="chip">At risk</span><span class="chip">Outstanding</span></div>
+        <span class="input-mock" style="width:130px;font-size:11px;padding:4px 10px">Search student…</span>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tbl">
+          <thead><tr><th>Name</th><th>Attendance</th><th>Submitted</th><th>Avg ↓</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><div class="row"><div class="av-sm">LK</div>Lisa K.</div></td><td>100%</td><td>14/14</td><td class="accent bold">9.1</td><td><span class="badge badge-ok">On track</span></td></tr>
+            <tr><td><div class="row"><div class="av-sm">SM</div>Sara M.</div></td><td>94%</td><td>12/14</td><td class="accent bold">8.2</td><td><span class="badge badge-ok">On track</span></td></tr>
+            <tr><td><div class="row"><div class="av-sm">NK</div>Nina K.</div></td><td>88%</td><td>13/14</td><td style="font-weight:600;color:#a06020">7.1</td><td><span class="badge badge-warn">Watch</span></td></tr>
+            <tr><td><div class="row"><div class="av-sm">JD</div>Jan D.</div></td><td>80%</td><td>11/14</td><td style="font-weight:600;color:#a06020">6.8</td><td><span class="badge badge-warn">Watch</span></td></tr>
+            <tr><td><div class="row"><div class="av-sm">AB</div>Alex B.</div></td><td>72%</td><td>8/14</td><td style="font-weight:600;color:#991c1c">5.4</td><td><span class="badge badge-alert">At risk</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRP-5: Timeline activity -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRP-5</span><span class="mockup-tag">Timeline activity feed</span></div>
+    <div class="mockup-body">
+      <div class="row-between">
+        <span class="label">Class activity</span>
+        <div class="row"><div class="live-dot"></div><span class="micro">Live</span></div>
+      </div>
+      <div class="col-gap">
+        <div class="card row" style="gap:10px"><div class="av av-accent">SM</div><div class="col" style="gap:1px;flex:1"><div class="row-between"><span class="bold sm">Sara Müller</span><span class="micro">2 min</span></div><span class="sm muted">Submitted <span class="accent">Biology essay</span></span></div></div>
+        <div class="card row" style="gap:10px"><div class="av">JD</div><div class="col" style="gap:1px;flex:1"><div class="row-between"><span class="bold sm">Jan De Vries</span><span class="micro">18 min</span></div><span class="sm muted">Quiz 3.2 — scored <span style="font-weight:600;color:#a06020">6.5</span></span></div></div>
+        <div class="card row" style="gap:10px"><div class="av">NK</div><div class="col" style="gap:1px;flex:1"><div class="row-between"><span class="bold sm">Nina Kraft</span><span class="micro">1 h</span></div><span class="sm muted">Opened studyset <span class="accent">Ch. 4 flashcards</span></span></div></div>
+        <div class="card row" style="gap:10px"><div class="av">LK</div><div class="col" style="gap:1px;flex:1"><div class="row-between"><span class="bold sm">Lisa Körner</span><span class="micro">2 h</span></div><span class="sm muted">Sent a message in chat</span></div></div>
+        <div class="card row" style="gap:10px"><div class="av">AB</div><div class="col" style="gap:1px;flex:1"><div class="row-between"><span class="bold sm">Alex Bakker</span><span class="micro">1 d</span></div><span class="sm muted">Last seen — no recent activity</span></div><span class="badge badge-warn">Inactive</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════ CHAT TAB -->
+<div class="section-head">Chat / Share Tab</div>
+<div class="section-sub">Class messages, announcements, audience filters</div>
+<div class="grid">
+
+  <!-- CHT-1: Classic messenger -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">CHT-1</span><span class="mockup-tag">Classic messenger</span></div>
+    <div class="mockup-body">
+      <div class="row-between">
+        <div class="chips"><span class="chip chip-active">All</span><span class="chip">Announcements</span><span class="chip">Questions</span></div>
+        <span class="badge badge-muted">22 members</span>
+      </div>
+      <div class="card" style="height:200px;overflow:hidden;display:flex;flex-direction:column;gap:8px;padding:12px">
+        <div class="bubble-teach"><div class="row" style="margin-bottom:3px"><div class="av-sm av-accent">T</div><span style="font-size:10px;font-weight:600;color:#7f8962">Ms. de Boer</span><span class="micro" style="margin-left:4px">09:00</span></div><span class="sm">Reminder: Biology essay is due tomorrow. Submit via the assignments tab.</span></div>
+        <div class="bubble-them"><div class="row" style="margin-bottom:3px"><div class="av-sm">SM</div><span style="font-size:10px;font-weight:600">Sara M.</span><span class="micro" style="margin-left:4px">09:14</span></div><span class="sm">Should we include the introduction from ch.3?</span></div>
+        <div class="bubble-teach"><div class="row" style="margin-bottom:3px"><div class="av-sm av-accent">T</div><span style="font-size:10px;font-weight:600;color:#7f8962">Ms. de Boer</span><span class="micro" style="margin-left:4px">09:17</span></div><span class="sm">Yes, chapter 3 intro counts. Max 2 paragraphs.</span></div>
+      </div>
+      <div class="row" style="gap:8px"><div class="input-mock focused" style="flex:1">Write a message…</div><div class="icon-btn icon-btn-accent"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9z"/></svg></div></div>
+    </div>
+  </div>
+
+  <!-- CHT-2: Announcements + thread -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">CHT-2</span><span class="mockup-tag">Announcements + Q&A</span></div>
+    <div class="mockup-body">
+      <div class="surface-accent">
+        <div class="row-between"><div class="row"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7f8962" stroke-width="2"><path d="M19 4H5a2 2 0 0 0-2 2v14l4-4h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg><span class="bold sm accent">Announcement</span></div><span class="micro">Today 08:45</span></div>
+        <p class="sm" style="margin-top:4px">Essay deadline <strong>tomorrow 23:59</strong>. Feedback returned within 5 days. Use the template from Studyset 3.</p>
+      </div>
+      <div class="label" style="margin-top:2px">Student questions</div>
+      <div class="col-gap">
+        <div class="card"><div class="row" style="margin-bottom:4px"><div class="av-sm">SM</div><span class="bold sm">Sara M.</span><span class="micro" style="margin-left:auto">09:14</span></div><span class="sm">Should we include the ch.3 intro?</span><div class="row" style="margin-top:6px;gap:10px"><span class="micro accent">2 replies</span><span class="micro">View thread →</span></div></div>
+        <div class="card"><div class="row" style="margin-bottom:4px"><div class="av-sm">JD</div><span class="bold sm">Jan D.</span><span class="micro" style="margin-left:auto">10:02</span></div><span class="sm">Is APA or MLA format required?</span><div class="row" style="margin-top:6px"><span class="micro accent">1 reply</span></div></div>
+      </div>
+      <div class="row" style="gap:8px"><div class="input-mock" style="flex:1">Ask a question…</div><div class="icon-btn icon-btn-accent"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9z"/></svg></div></div>
+    </div>
+  </div>
+
+  <!-- CHT-3: Teacher-only vs all -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">CHT-3</span><span class="mockup-tag">Audience toggle</span></div>
+    <div class="mockup-body">
+      <div class="row-between">
+        <span class="label">Audience</span>
+        <div class="row" style="background:#f5f5f5;border-radius:8px;padding:2px;gap:2px">
+          <span style="padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08)">Class</span>
+          <span style="padding:3px 10px;border-radius:6px;font-size:11px;color:#868686">Teacher only</span>
+        </div>
+      </div>
+      <div class="card" style="height:160px;overflow:hidden;display:flex;flex-direction:column;gap:7px;padding:10px">
+        <div class="bubble-teach"><div class="row" style="margin-bottom:2px"><span style="font-size:10px;font-weight:600;color:#7f8962">Ms. de Boer</span><span class="micro" style="margin-left:6px">08:45</span></div><span class="sm">Reminder: essay due tomorrow!</span></div>
+        <div class="bubble-them"><div class="row" style="margin-bottom:2px"><span style="font-size:10px;font-weight:600">Sara M.</span><span class="micro" style="margin-left:6px">09:14</span></div><span class="sm">What page limit?</span></div>
+        <div class="bubble-teach"><div class="row" style="margin-bottom:2px"><span style="font-size:10px;font-weight:600;color:#7f8962">Ms. de Boer</span><span class="micro" style="margin-left:6px">09:20</span></div><span class="sm">3–5 pages, excluding references.</span></div>
+      </div>
+      <div class="surface-accent row" style="gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7f8962" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><span class="sm accent">Private messages visible only to you and the teacher</span></div>
+      <div class="row" style="gap:8px"><div class="input-mock" style="flex:1">Message teacher…</div><div class="icon-btn icon-btn-accent"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9z"/></svg></div></div>
+    </div>
+  </div>
+
+  <!-- CHT-4: Feed / card style -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">CHT-4</span><span class="mockup-tag">Feed style + reactions</span></div>
+    <div class="mockup-body">
+      <div class="chips"><span class="chip chip-active">All</span><span class="chip">Teacher</span><span class="chip">Students</span><span class="chip">Pinned</span></div>
+      <div class="col-gap">
+        <div class="card">
+          <div class="row" style="margin-bottom:6px"><div class="av av-accent">T</div><div><span class="bold sm">Ms. de Boer</span><span class="badge badge-accent" style="margin-left:6px">Teacher</span></div><span class="micro" style="margin-left:auto">08:45</span></div>
+          <p class="sm">Biology essay due tomorrow at 23:59. Use the studyset template. Good luck!</p>
+          <div class="row" style="margin-top:8px;gap:6px"><span style="font-size:10px;background:#f4f5f0;border:1px solid #d0d5bb;border-radius:12px;padding:2px 8px">👍 14</span><span style="font-size:10px;background:#f4f4f4;border:1px solid #e4e4e4;border-radius:12px;padding:2px 8px">💬 3 replies</span></div>
+        </div>
+        <div class="card">
+          <div class="row" style="margin-bottom:6px"><div class="av">SM</div><span class="bold sm">Sara M.</span><span class="micro" style="margin-left:auto">09:14</span></div>
+          <p class="sm">Does the ch.3 intro count toward the page limit?</p>
+          <div class="row" style="margin-top:8px;gap:6px"><span class="badge badge-ok">Answered</span><span class="micro accent">View reply</span></div>
+        </div>
+      </div>
+      <div class="row" style="gap:8px"><div class="input-mock" style="flex:1">Write something…</div><div class="icon-btn icon-btn-accent"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9z"/></svg></div></div>
+    </div>
+  </div>
+
+  <!-- CHT-5: Compact list -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">CHT-5</span><span class="mockup-tag">Compact message list</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="label">Messages</span><span class="badge badge-info">3 unread</span></div>
+      <div class="col-gap">
+        <div class="card row" style="gap:10px;border-left:3px solid #7f8962"><div class="av av-accent">T</div><div style="flex:1"><div class="row-between"><span class="bold sm">Ms. de Boer</span><span class="micro">08:45</span></div><span class="sm muted">Essay due tomorrow at 23:59…</span></div></div>
+        <div class="card row" style="gap:10px;border-left:3px solid #7f8962"><div class="av">SM</div><div style="flex:1"><div class="row-between"><span class="bold sm">Sara M.</span><span class="micro">09:14</span></div><span class="sm muted">Does ch.3 intro count?</span></div></div>
+        <div class="card row" style="gap:10px;border-left:3px solid #7f8962"><div class="av">NK</div><div style="flex:1"><div class="row-between"><span class="bold sm">Nina K.</span><span class="micro">10:02</span></div><span class="sm muted">APA or MLA format?</span></div></div>
+        <div class="card row" style="gap:10px"><div class="av">JD</div><div style="flex:1"><div class="row-between"><span class="bold sm">Jan D.</span><span class="micro">Yesterday</span></div><span class="sm muted">Thanks for the feedback!</span></div></div>
+        <div class="card row" style="gap:10px"><div class="av">LK</div><div style="flex:1"><div class="row-between"><span class="bold sm">Lisa K.</span><span class="micro">Yesterday</span></div><span class="sm muted">Can I submit early?</span></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════ ATTENDANCE TAB -->
+<div class="section-head">Attendance Tab</div>
+<div class="section-sub">Mark present / absent / late, homework status, weekly overview</div>
+<div class="grid-wide">
+
+  <!-- ATT-1: Weekly grid -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">ATT-1</span><span class="mockup-tag">Weekly grid</span></div>
+    <div class="mockup-body">
+      <div class="row-between">
+        <div class="chips"><span class="chip chip-active">Week 19</span><span class="chip">← Prev</span><span class="chip">Next →</span></div>
+        <span class="btn btn-primary">Mark today</span>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tbl">
+          <thead><tr><th>Student</th><th>Mon 12</th><th>Tue 13</th><th>Wed 14</th><th>Thu 15</th><th>Fri 16</th><th>HW</th></tr></thead>
+          <tbody>
+            <tr><td><div class="row"><div class="av-sm">SM</div>Sara M.</div></td><td><div class="att-cell att-p">P</div></td><td><div class="att-cell att-p">P</div></td><td><div class="att-cell att-p">P</div></td><td><div class="att-cell att-p">P</div></td><td><div class="att-cell att-h">–</div></td><td><span class="badge badge-ok">Done</span></td></tr>
+            <tr><td><div class="row"><div class="av-sm">JD</div>Jan D.</div></td><td><div class="att-cell att-p">P</div></td><td><div class="att-cell att-a">A</div></td><td><div class="att-cell att-p">P</div></td><td><div class="att-cell att-l">L</div></td><td><div class="att-cell att-h">–</div></td><td><span class="badge badge-warn">Missing</span></td></tr>
+            <tr><td><div class="row"><div class="av-sm">LK</div>Lisa K.</div></td><td><div class="att-cell att-p">P</div></td><td><div class="att-cell att-p">P</div></td><td><div class="att-cell att-p">P</div></td><td><div class="att-cell att-p">P</div></td><td><div class="att-cell att-h">–</div></td><td><span class="badge badge-ok">Done</span></td></tr>
+            <tr><td><div class="row"><div class="av-sm">AB</div>Alex B.</div></td><td><div class="att-cell att-a">A</div></td><td><div class="att-cell att-a">A</div></td><td><div class="att-cell att-l">L</div></td><td><div class="att-cell att-a">A</div></td><td><div class="att-cell att-h">–</div></td><td><span class="badge badge-alert">Missing</span></td></tr>
+          </tbody>
+        </table>
+        <div style="padding:8px 14px;border-top:1px solid #f5f5f5"><div class="row" style="gap:12px"><div class="row" style="gap:4px"><div class="att-cell att-p" style="width:18px;height:18px;font-size:9px">P</div><span class="micro">Present</span></div><div class="row" style="gap:4px"><div class="att-cell att-a" style="width:18px;height:18px;font-size:9px">A</div><span class="micro">Absent</span></div><div class="row" style="gap:4px"><div class="att-cell att-l" style="width:18px;height:18px;font-size:9px">L</div><span class="micro">Late</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATT-2: Daily quick-mark -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">ATT-2</span><span class="mockup-tag">Daily quick-mark</span></div>
+    <div class="mockup-body">
+      <div class="row-between">
+        <div class="col" style="gap:1px"><span class="bold">Tuesday, May 13</span><span class="micro muted">3A · 22 students · 0 marked</span></div>
+        <div class="chips"><span class="chip chip-active">Mark all present</span></div>
+      </div>
+      <div class="col-gap">
+        <div class="card row-between"><div class="row" style="gap:10px"><div class="av">SM</div><div><div class="bold sm">Sara Müller</div><div class="micro">Biology essay submitted</div></div></div><div class="row" style="gap:5px"><div class="att-cell att-p" style="cursor:pointer">P</div><div class="att-cell att-l" style="cursor:pointer;opacity:.4">L</div><div class="att-cell att-a" style="cursor:pointer;opacity:.4">A</div></div></div>
+        <div class="card row-between"><div class="row" style="gap:10px"><div class="av">JD</div><div><div class="bold sm">Jan De Vries</div><div class="micro muted">No recent activity</div></div></div><div class="row" style="gap:5px"><div class="att-cell att-p" style="cursor:pointer;opacity:.4">P</div><div class="att-cell att-l" style="cursor:pointer;opacity:.4">L</div><div class="att-cell att-a" style="cursor:pointer">A</div></div></div>
+        <div class="card row-between"><div class="row" style="gap:10px"><div class="av">LK</div><div><div class="bold sm">Lisa Körner</div><div class="micro">Submitted homework</div></div></div><div class="row" style="gap:5px"><div class="att-cell att-p" style="cursor:pointer">P</div><div class="att-cell att-l" style="cursor:pointer;opacity:.4">L</div><div class="att-cell att-a" style="cursor:pointer;opacity:.4">A</div></div></div>
+      </div>
+      <span class="btn btn-primary" style="align-self:flex-end">Save attendance</span>
+    </div>
+  </div>
+
+  <!-- ATT-3: Stats overview -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">ATT-3</span><span class="mockup-tag">Stats + at-risk</span></div>
+    <div class="mockup-body">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div class="card-sm col"><span class="micro">Class avg</span><span style="font-size:18px;font-weight:700;color:#7f8962">91%</span><span class="micro">attendance</span></div>
+        <div class="card-sm col"><span class="micro">Absences</span><span style="font-size:18px;font-weight:700;color:#991c1c">8</span><span class="micro">this week</span></div>
+        <div class="card-sm col"><span class="micro">At risk</span><span style="font-size:18px;font-weight:700;color:#a06020">3</span><span class="micro">students</span></div>
+      </div>
+      <span class="label" style="margin-top:4px">At-risk students (&lt;80%)</span>
+      <div class="col-gap">
+        <div class="card row-between"><div class="row"><div class="av">AB</div><div class="col" style="gap:1px"><span class="bold sm">Alex Bakker</span><div class="grade-bar" style="width:80px;margin-top:3px"><div class="grade-bar-fill" style="width:72%;background:#991c1c"></div></div></div></div><span class="badge badge-alert">72%</span></div>
+        <div class="card row-between"><div class="row"><div class="av">JD</div><div class="col" style="gap:1px"><span class="bold sm">Jan De Vries</span><div class="grade-bar" style="width:80px;margin-top:3px"><div class="grade-bar-fill" style="width:80%;background:#a06020"></div></div></div></div><span class="badge badge-warn">80%</span></div>
+        <div class="card row-between"><div class="row"><div class="av">PV</div><div class="col" style="gap:1px"><span class="bold sm">Pieter Van…</span><div class="grade-bar" style="width:80px;margin-top:3px"><div class="grade-bar-fill" style="width:78%;background:#a06020"></div></div></div></div><span class="badge badge-warn">78%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATT-4: Calendar view -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">ATT-4</span><span class="mockup-tag">Monthly calendar</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="bold">May 2026</span><div class="chips"><span class="chip">← Apr</span><span class="chip">Jun →</span></div></div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center">
+        <div class="micro muted">M</div><div class="micro muted">T</div><div class="micro muted">W</div><div class="micro muted">T</div><div class="micro muted">F</div><div class="micro muted">S</div><div class="micro muted">S</div>
+        <div></div><div></div><div></div><div style="padding:4px;font-size:11px;background:#f4f5f0;border-radius:5px;color:#4f5838">1</div><div style="padding:4px;font-size:11px;background:#f4f5f0;border-radius:5px;color:#4f5838">2</div><div style="padding:4px;font-size:11px;color:#c0c0c0">3</div><div style="padding:4px;font-size:11px;color:#c0c0c0">4</div>
+        <div style="padding:4px;font-size:11px;background:#f4f5f0;border-radius:5px;color:#4f5838">5</div><div style="padding:4px;font-size:11px;background:#f4f5f0;border-radius:5px;color:#4f5838">6</div><div style="padding:4px;font-size:11px;background:#f4f5f0;border-radius:5px;color:#4f5838">7</div><div style="padding:4px;font-size:11px;background:#fef2f2;border-radius:5px;color:#991c1c;font-weight:600">8 <span style="font-size:8px">2A</span></div><div style="padding:4px;font-size:11px;background:#f4f5f0;border-radius:5px;color:#4f5838">9</div><div style="padding:4px;font-size:11px;color:#c0c0c0">10</div><div style="padding:4px;font-size:11px;color:#c0c0c0">11</div>
+        <div style="padding:4px;font-size:11px;background:#fff3cd;border-radius:5px;color:#a06020;font-weight:600">12 <span style="font-size:8px">1L</span></div><div style="padding:4px;font-size:11px;background:#7f8962;border-radius:5px;color:#fff;font-weight:600">13</div><div style="padding:4px;font-size:11px;background:#f4f5f0;border-radius:5px;color:#4f5838">14</div><div style="padding:4px;font-size:11px;background:#f4f5f0;border-radius:5px;color:#4f5838">15</div><div style="padding:4px;font-size:11px;background:#f4f5f0;border-radius:5px;color:#4f5838">16</div>
+      </div>
+      <div class="row" style="gap:12px;margin-top:4px"><span style="font-size:10px;background:#fef2f2;border:1px solid #f8c4c4;border-radius:4px;padding:1px 6px;color:#991c1c">2A = 2 absent</span><span style="font-size:10px;background:#fdf5e6;border:1px solid #f0d898;border-radius:4px;padding:1px 6px;color:#a06020">1L = 1 late</span></div>
+    </div>
+  </div>
+
+  <!-- ATT-5: Student detail -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">ATT-5</span><span class="mockup-tag">Per-student detail</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><div class="row"><div class="av av-accent">AB</div><div><div class="bold">Alex Bakker</div><div class="micro muted">3A · Bio, Math, History</div></div></div><span class="badge badge-alert">At risk</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div class="card-sm col"><span class="micro">Attendance</span><span style="font-size:17px;font-weight:700;color:#991c1c">72%</span></div>
+        <div class="card-sm col"><span class="micro">Absences</span><span style="font-size:17px;font-weight:700">8</span></div>
+        <div class="card-sm col"><span class="micro">HW done</span><span style="font-size:17px;font-weight:700;color:#a06020">57%</span></div>
+      </div>
+      <span class="label">History</span>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tbl">
+          <thead><tr><th>Date</th><th>Status</th><th>HW</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td>Tue 13</td><td><div class="att-cell att-a" style="width:22px;height:22px;font-size:9px">A</div></td><td><span class="badge badge-alert">Missing</span></td><td class="muted">—</td></tr>
+            <tr><td>Mon 12</td><td><div class="att-cell att-a" style="width:22px;height:22px;font-size:9px">A</div></td><td><span class="badge badge-alert">Missing</span></td><td class="muted">Sick</td></tr>
+            <tr><td>Fri 9</td><td><div class="att-cell att-l" style="width:22px;height:22px;font-size:9px">L</div></td><td><span class="badge badge-ok">Done</span></td><td class="muted">15 min late</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════ GRADES TAB — TEACHER -->
+<div class="section-head">Grades Tab — Teacher</div>
+<div class="section-sub">Grade sets, distribution chart, bulk input, reports</div>
+<div class="grid-wide">
+
+  <!-- GRD-T1: Grade sets list -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRD-T1</span><span class="mockup-tag">Grade sets list</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="label">3A · 4 grade sets</span><span class="btn btn-primary">+ New grades</span></div>
+      <div class="col-gap">
+        <div class="card"><div class="row-between"><div class="col" style="gap:2px"><span class="bold">Biology Essay ch.4</span><span class="micro muted">Published · May 10 · Weight 2×</span></div><div class="col" style="align-items:flex-end;gap:3px"><span class="badge badge-ok">Published</span><span style="font-size:14px;font-weight:700;color:#7f8962">Avg 7.8</span></div></div><div style="margin-top:8px"><div class="grade-bar"><div class="grade-bar-fill" style="width:88%"></div></div><span class="micro muted" style="display:block;margin-top:3px">22/22 graded</span></div></div>
+        <div class="card"><div class="row-between"><div class="col" style="gap:2px"><span class="bold">Quiz 3.2 — Cell division</span><span class="micro muted">Published · May 6 · Weight 1×</span></div><div class="col" style="align-items:flex-end;gap:3px"><span class="badge badge-ok">Published</span><span style="font-size:14px;font-weight:700;color:#7f8962">Avg 6.9</span></div></div><div style="margin-top:8px"><div class="grade-bar"><div class="grade-bar-fill" style="width:100%"></div></div><span class="micro muted" style="display:block;margin-top:3px">22/22 graded</span></div></div>
+        <div class="card"><div class="row-between"><div class="col" style="gap:2px"><span class="bold">Midterm 3A</span><span class="micro muted">Draft · May 13 · Weight 3×</span></div><div class="col" style="align-items:flex-end;gap:3px"><span class="badge badge-warn">Draft</span><span style="font-size:14px;font-weight:700;color:#868686">14/22</span></div></div><div style="margin-top:8px"><div class="grade-bar"><div class="grade-bar-fill" style="width:63%;background:#f0d898"></div></div><span class="micro muted" style="display:block;margin-top:3px">14 of 22 entered</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRD-T2: Gradebook table + distribution -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRD-T2</span><span class="mockup-tag">Gradebook + distribution chart</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="label">Biology Essay ch.4</span><span class="badge badge-ok">Published</span></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tbl">
+          <thead><tr><th>Student</th><th>Grade</th><th>Feedback</th></tr></thead>
+          <tbody>
+            <tr><td><div class="row"><div class="av-sm">LK</div>Lisa K.</div></td><td style="font-weight:700;color:#2d6a2d">9.5</td><td class="muted sm">Excellent structure</td></tr>
+            <tr><td><div class="row"><div class="av-sm">SM</div>Sara M.</div></td><td style="font-weight:700;color:#7f8962">8.2</td><td class="muted sm">Good analysis</td></tr>
+            <tr><td><div class="row"><div class="av-sm">NK</div>Nina K.</div></td><td style="font-weight:700;color:#7f8962">7.6</td><td class="muted sm">Needs more depth</td></tr>
+            <tr><td><div class="row"><div class="av-sm">JD</div>Jan D.</div></td><td style="font-weight:700;color:#a06020">6.8</td><td class="muted sm">Sources missing</td></tr>
+            <tr><td><div class="row"><div class="av-sm">AB</div>Alex B.</div></td><td style="font-weight:700;color:#991c1c">4.5</td><td class="muted sm">Incomplete</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="row-between" style="margin-bottom:8px"><span class="label">Grade distribution</span><span class="micro muted">22 students</span></div>
+        <div class="chart-row">
+          <div class="bar-col"><div class="bar" style="height:12px;background:#f8c4c4"></div><span class="bar-label">D</span></div>
+          <div class="bar-col"><div class="bar" style="height:24px;background:#f0d898"></div><span class="bar-label">C</span></div>
+          <div class="bar-col"><div class="bar" style="height:44px;background:#b8e0b8"></div><span class="bar-label">B</span></div>
+          <div class="bar-col"><div class="bar" style="height:32px;background:#7f8962"></div><span class="bar-label">A</span></div>
+        </div>
+        <div class="row" style="gap:12px;margin-top:4px"><span class="micro">D &lt;5.5 · 2</span><span class="micro">C 5.5–6.9 · 5</span><span class="micro">B 7–8.4 · 11</span><span class="micro accent">A ≥8.5 · 4</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRD-T3: Inline bulk input -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRD-T3</span><span class="mockup-tag">Inline bulk input</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><div class="col" style="gap:1px"><span class="bold">Midterm 3A</span><span class="micro muted">Draft — enter grades below</span></div><span class="badge badge-warn">14/22</span></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tbl">
+          <thead><tr><th>Student</th><th style="width:100px">Grade (0–10)</th><th>Feedback</th></tr></thead>
+          <tbody>
+            <tr><td><div class="row"><div class="av-sm">SM</div>Sara M.</div></td><td><input style="width:80px;padding:4px 8px;border:1px solid #d0d5bb;border-radius:5px;background:#f9f9f7;font-size:12px" value="8.0" /></td><td><input class="input-mock" style="font-size:11px;padding:4px 8px" placeholder="Optional…" /></td></tr>
+            <tr><td><div class="row"><div class="av-sm">LK</div>Lisa K.</div></td><td><input style="width:80px;padding:4px 8px;border:1px solid #d0d5bb;border-radius:5px;background:#f9f9f7;font-size:12px" value="9.5" /></td><td><input class="input-mock" style="font-size:11px;padding:4px 8px" placeholder="Optional…" /></td></tr>
+            <tr style="background:#fffdf5"><td><div class="row"><div class="av-sm">AB</div>Alex B.</div></td><td><input style="width:80px;padding:4px 8px;border:1px solid #f0d898;border-radius:5px;background:#fffef8;font-size:12px" placeholder="—" /></td><td><input class="input-mock" style="font-size:11px;padding:4px 8px" placeholder="Optional…" /></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="row-between">
+        <span class="micro muted">8 students remaining</span>
+        <div class="row" style="gap:8px"><span class="btn btn-secondary">Save draft</span><span class="btn btn-primary">Publish</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRD-T4: Reports view -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRD-T4</span><span class="mockup-tag">Reports — class overview</span></div>
+    <div class="mockup-body">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div class="card-sm col"><span class="micro">Class avg</span><span style="font-size:18px;font-weight:700;color:#7f8962">7.4</span><span class="micro">all sets</span></div>
+        <div class="card-sm col"><span class="micro">Top student</span><span style="font-size:13px;font-weight:700">Lisa K.</span><span class="micro accent">avg 9.1</span></div>
+        <div class="card-sm col"><span class="micro">Needs help</span><span style="font-size:13px;font-weight:700">Alex B.</span><span style="font-size:10px;color:#991c1c">avg 5.0</span></div>
+      </div>
+      <span class="label">Trend — class average per set</span>
+      <div class="card" style="padding:10px 14px">
+        <div style="display:flex;align-items:flex-end;gap:8px;height:56px">
+          <div class="col" style="align-items:center;gap:3px;flex:1"><div style="width:100%;border-radius:3px 3px 0 0;background:#d0d5bb;height:30px"></div><span class="bar-label">Q3.1</span></div>
+          <div class="col" style="align-items:center;gap:3px;flex:1"><div style="width:100%;border-radius:3px 3px 0 0;background:#b8d0a0;height:36px"></div><span class="bar-label">Essay</span></div>
+          <div class="col" style="align-items:center;gap:3px;flex:1"><div style="width:100%;border-radius:3px 3px 0 0;background:#7f8962;height:42px"></div><span class="bar-label">Q3.2</span></div>
+          <div class="col" style="align-items:center;gap:3px;flex:1"><div style="width:100%;border-radius:3px 3px 0 0;background:#f0d898;height:28px;opacity:.5"></div><span class="bar-label">Mid</span></div>
+        </div>
+        <div class="row" style="gap:14px;margin-top:6px"><span class="micro muted">Q3.1 · 6.8</span><span class="micro muted">Essay · 7.2</span><span class="micro accent">Q3.2 · 7.8</span><span class="micro muted">Mid · draft</span></div>
+      </div>
+      <div class="card-sm"><span class="micro">2 drafts pending publication. <span class="accent">Publish now →</span></span></div>
+    </div>
+  </div>
+
+  <!-- GRD-T5: Presets & history -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRD-T5</span><span class="mockup-tag">Grade history log</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="label">Change history</span><div class="chips"><span class="chip chip-active">All</span><span class="chip">Published</span><span class="chip">Edited</span></div></div>
+      <div class="col-gap">
+        <div class="card row" style="gap:10px"><div class="av av-accent">T</div><div class="col" style="gap:1px;flex:1"><div class="row-between"><span class="bold sm">Published — Quiz 3.2</span><span class="micro">Today 10:14</span></div><span class="sm muted">22 grades published to students</span></div></div>
+        <div class="card row" style="gap:10px"><div class="av av-accent">T</div><div class="col" style="gap:1px;flex:1"><div class="row-between"><span class="bold sm">Edited — Essay ch.4</span><span class="micro">Yesterday</span></div><span class="sm muted">Grade for Alex B. changed: 4.0 → 4.5</span></div></div>
+        <div class="card row" style="gap:10px"><div class="av av-accent">T</div><div class="col" style="gap:1px;flex:1"><div class="row-between"><span class="bold sm">Created — Midterm 3A</span><span class="micro">May 12</span></div><span class="sm muted">Draft created · 0 grades entered</span></div></div>
+        <div class="card row" style="gap:10px"><div class="av av-accent">T</div><div class="col" style="gap:1px;flex:1"><div class="row-between"><span class="bold sm">Published — Essay ch.4</span><span class="micro">May 10</span></div><span class="sm muted">22 grades published</span></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════ GRADES TAB — STUDENT -->
+<div class="section-head">Grades Tab — Student view</div>
+<div class="section-sub">Students see their own grades, trend, and "what do I need" calculator</div>
+<div class="grid">
+
+  <!-- GRD-S1: List view -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRD-S1</span><span class="mockup-tag">Grade list</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><div class="col" style="gap:1px"><span class="bold">My grades</span><span class="micro muted">3 classes · 8 published</span></div><span style="font-size:18px;font-weight:700;color:#7f8962">Avg 7.6</span></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tbl">
+          <thead><tr><th>Assignment</th><th>Class</th><th>Grade</th><th>Date</th></tr></thead>
+          <tbody>
+            <tr><td class="bold sm">Quiz 3.2</td><td class="muted">Biology 3A</td><td style="font-weight:700;color:#7f8962">8.0</td><td class="muted">May 6</td></tr>
+            <tr><td class="bold sm">Essay ch.4</td><td class="muted">Biology 3A</td><td style="font-weight:700;color:#7f8962">7.8</td><td class="muted">May 10</td></tr>
+            <tr><td class="bold sm">Algebra test</td><td class="muted">Maths 2B</td><td style="font-weight:700;color:#2d6a2d">9.0</td><td class="muted">May 3</td></tr>
+            <tr><td class="bold sm">History essay</td><td class="muted">History 4A</td><td style="font-weight:700;color:#a06020">6.5</td><td class="muted">Apr 28</td></tr>
+            <tr><td class="bold sm">Bio midterm</td><td class="muted">Biology 3A</td><td style="font-weight:700;color:#a06020">6.0</td><td class="muted">Apr 20</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRD-S2: Grade cards -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRD-S2</span><span class="mockup-tag">Card grid with trend</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="bold">My grades</span><span class="badge badge-ok">Avg 7.6</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="card col" style="gap:4px"><span class="micro muted">Quiz 3.2 · Biology</span><span class="grade-num grade-high">8.0</span><div class="row" style="gap:4px;margin-top:2px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2d6a2d" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg><span style="font-size:10px;color:#2d6a2d">+0.2 vs last</span></div></div>
+        <div class="card col" style="gap:4px"><span class="micro muted">Essay ch.4 · Biology</span><span class="grade-num" style="color:#7f8962">7.8</span><div class="row" style="gap:4px;margin-top:2px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#7f8962" stroke-width="2.5"><path d="M5 12h14"/></svg><span style="font-size:10px;color:#7f8962">Stable</span></div></div>
+        <div class="card col" style="gap:4px"><span class="micro muted">Algebra test · Maths</span><span class="grade-num grade-high">9.0</span><div class="row" style="gap:4px;margin-top:2px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2d6a2d" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg><span style="font-size:10px;color:#2d6a2d">+0.5</span></div></div>
+        <div class="card col" style="gap:4px"><span class="micro muted">History essay</span><span class="grade-num grade-mid">6.5</span><div class="row" style="gap:4px;margin-top:2px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#991c1c" stroke-width="2.5"><path d="M18 9l-6 6-6-6"/></svg><span style="font-size:10px;color:#991c1c">−0.5</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRD-S3: Class grouped -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRD-S3</span><span class="mockup-tag">Grouped by class</span></div>
+    <div class="mockup-body">
+      <div class="col-gap2">
+        <div><div class="row-between card" style="margin-bottom:6px"><div class="row"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7f8962" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span class="bold sm">Biology 3A</span></div><span style="font-weight:700;color:#7f8962">Avg 7.3</span></div><div class="col-gap" style="padding-left:8px"><div class="row-between"><span class="sm">Quiz 3.2</span><div class="row" style="gap:8px"><span class="badge badge-ok">8.0</span><span class="micro">May 6</span></div></div><div class="row-between"><span class="sm">Essay ch.4</span><div class="row" style="gap:8px"><span class="badge badge-accent">7.8</span><span class="micro">May 10</span></div></div><div class="row-between"><span class="sm">Midterm</span><div class="row" style="gap:8px"><span class="badge badge-warn">6.0</span><span class="micro">Apr 20</span></div></div></div></div>
+        <div><div class="row-between card" style="margin-bottom:6px"><div class="row"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7f8962" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span class="bold sm">Maths 2B</span></div><span style="font-weight:700;color:#2d6a2d">Avg 9.0</span></div><div class="col-gap" style="padding-left:8px"><div class="row-between"><span class="sm">Algebra test</span><div class="row" style="gap:8px"><span class="badge badge-ok">9.0</span><span class="micro">May 3</span></div></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRD-S4: With calculator -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRD-S4</span><span class="mockup-tag">What grade do I need?</span></div>
+    <div class="mockup-body">
+      <div class="surface-accent">
+        <div class="row" style="margin-bottom:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7f8962" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h8M8 14h4"/></svg><span class="bold sm accent">What grade do I need?</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div class="col" style="gap:3px"><span class="micro">Class</span><div class="input-mock sm" style="padding:4px 8px">Biology 3A</div></div>
+          <div class="col" style="gap:3px"><span class="micro">Target average</span><div class="input-mock sm focused" style="padding:4px 8px">7.5</div></div>
+        </div>
+        <div class="card-sm row-between" style="background:#fff"><span class="sm">Next assignment (Midterm 3×):</span><span style="font-weight:700;font-size:15px;color:#7f8962">7.8</span></div>
+        <span class="micro muted" style="display:block;margin-top:4px">You need a 7.8 on the midterm to reach a 7.5 average.</span>
+      </div>
+      <span class="label">My recent grades</span>
+      <div class="col-gap">
+        <div class="row-between"><span class="sm">Quiz 3.2</span><span style="font-weight:600;color:#7f8962">8.0</span></div>
+        <div class="row-between"><span class="sm">Essay ch.4</span><span style="font-weight:600;color:#7f8962">7.8</span></div>
+        <div class="row-between"><span class="sm">Midterm (prev.)</span><span style="font-weight:600;color:#a06020">6.0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRD-S5: Timeline chart -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">GRD-S5</span><span class="mockup-tag">Grade trend over time</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="bold">Grade progress</span><div class="chips"><span class="chip chip-active">Biology</span><span class="chip">Maths</span><span class="chip">All</span></div></div>
+      <div class="card">
+        <div style="position:relative;height:70px;display:flex;align-items:flex-end;gap:8px;padding-bottom:14px">
+          <div style="position:absolute;bottom:14px;left:0;right:0;border-top:1px dashed #e0e0e0"></div>
+          <div class="col" style="align-items:center;flex:1"><div style="height:34px;width:100%;background:#d0d5bb;border-radius:3px 3px 0 0"></div><span class="bar-label">Mid</span></div>
+          <div class="col" style="align-items:center;flex:1"><div style="height:42px;width:100%;background:#b8c9a0;border-radius:3px 3px 0 0"></div><span class="bar-label">Essay</span></div>
+          <div class="col" style="align-items:center;flex:1"><div style="height:48px;width:100%;background:#7f8962;border-radius:3px 3px 0 0"></div><span class="bar-label">Q3.2</span></div>
+        </div>
+        <div class="row" style="gap:12px"><span class="micro muted">Midterm 6.0</span><span class="micro muted">Essay 7.8</span><span class="micro accent">Quiz 8.0 ↑</span></div>
+      </div>
+      <div class="surface-accent row-between"><span class="sm">Improving trend in Biology</span><span style="font-size:11px;color:#7f8962;font-weight:600">+2.0 over 3 tests</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════ ANALYTICS TAB -->
+<div class="section-head">Analytics Tab</div>
+<div class="section-sub">Class performance, per-student breakdown, subject heatmap</div>
+<div class="grid-wide">
+
+  <!-- ANL-1: Overview cards -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">ANL-1</span><span class="mockup-tag">Overview cards</span></div>
+    <div class="mockup-body">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="card-sm col"><span class="micro">Class avg</span><span style="font-size:18px;font-weight:700;color:#7f8962">7.4</span></div>
+        <div class="card-sm col"><span class="micro">Completion</span><span style="font-size:18px;font-weight:700;color:#7f8962">88%</span></div>
+        <div class="card-sm col"><span class="micro">At risk</span><span style="font-size:18px;font-weight:700;color:#991c1c">3</span></div>
+        <div class="card-sm col"><span class="micro">Top subject</span><span style="font-size:13px;font-weight:700">Maths</span></div>
+      </div>
+      <div class="row-between"><span class="label">Student rankings</span><span class="chips"><span class="chip chip-active">Avg ↓</span></span></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tbl">
+          <thead><tr><th>#</th><th>Student</th><th>Avg grade</th><th>Submitted</th><th>Trend</th></tr></thead>
+          <tbody>
+            <tr><td class="bold accent">1</td><td><div class="row"><div class="av-sm">LK</div>Lisa K.</div></td><td style="font-weight:700;color:#2d6a2d">9.1</td><td>14/14</td><td style="color:#2d6a2d">↑</td></tr>
+            <tr><td class="bold muted">2</td><td><div class="row"><div class="av-sm">SM</div>Sara M.</div></td><td style="font-weight:700;color:#7f8962">8.2</td><td>12/14</td><td style="color:#7f8962">→</td></tr>
+            <tr><td class="bold muted">3</td><td><div class="row"><div class="av-sm">NK</div>Nina K.</div></td><td style="font-weight:700;color:#a06020">7.1</td><td>13/14</td><td style="color:#a06020">↓</td></tr>
+            <tr><td class="bold muted">4</td><td><div class="row"><div class="av-sm">JD</div>Jan D.</div></td><td style="font-weight:700;color:#a06020">6.8</td><td>11/14</td><td style="color:#a06020">↓</td></tr>
+            <tr><td class="bold" style="color:#991c1c">5</td><td><div class="row"><div class="av-sm">AB</div>Alex B.</div></td><td style="font-weight:700;color:#991c1c">5.4</td><td>8/14</td><td style="color:#991c1c">↓</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANL-2: Grade trend chart -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">ANL-2</span><span class="mockup-tag">Class grade trend</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="label">Average grade per assessment</span><div class="chips"><span class="chip chip-active">All</span><span class="chip">Bio</span><span class="chip">Maths</span></div></div>
+      <div class="card">
+        <div style="display:flex;align-items:flex-end;gap:8px;height:70px;margin-bottom:8px">
+          <div class="col" style="align-items:center;flex:1"><div style="height:38px;width:100%;background:#c8d0b0;border-radius:3px 3px 0 0"></div><span class="bar-label">Q3.1 6.6</span></div>
+          <div class="col" style="align-items:center;flex:1"><div style="height:44px;width:100%;background:#b0c298;border-radius:3px 3px 0 0"></div><span class="bar-label">Essay 7.2</span></div>
+          <div class="col" style="align-items:center;flex:1"><div style="height:50px;width:100%;background:#7f8962;border-radius:3px 3px 0 0"></div><span class="bar-label">Q3.2 7.8</span></div>
+          <div class="col" style="align-items:center;flex:1"><div style="height:36px;width:100%;background:#e0e0e0;border-radius:3px 3px 0 0;border:1px dashed #c0c0c0"></div><span class="bar-label">Mid —</span></div>
+        </div>
+        <div class="surface-accent row"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7f8962" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg><span class="sm accent">Improving trend +1.2 over 3 assessments</span></div>
+      </div>
+      <div class="row-between"><span class="label">At-risk students (avg &lt; 6.0)</span><span class="badge badge-alert">3 students</span></div>
+      <div class="col-gap">
+        <div class="card row-between"><div class="row"><div class="av">AB</div><span class="bold sm">Alex Bakker</span></div><div class="col" style="align-items:flex-end"><span style="font-weight:700;color:#991c1c">5.4</span><span class="micro">avg</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANL-3: Per-student bars -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">ANL-3</span><span class="mockup-tag">Per-student bar chart</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="label">Individual averages — 3A</span><span class="badge badge-muted">Pass line: 5.5</span></div>
+      <div class="card" style="padding:12px">
+        <div class="col-gap">
+          <div class="row" style="gap:8px"><span class="micro muted" style="width:52px;text-align:right;flex-shrink:0">Lisa K.</span><div style="flex:1;background:#f0f9f0;border-radius:4px;overflow:hidden;height:18px"><div style="width:91%;height:100%;background:#2d6a2d;border-radius:4px;display:flex;align-items:center;padding-left:6px"><span style="font-size:10px;color:#fff;font-weight:600">9.1</span></div></div></div>
+          <div class="row" style="gap:8px"><span class="micro muted" style="width:52px;text-align:right;flex-shrink:0">Sara M.</span><div style="flex:1;background:#f4f5f0;border-radius:4px;overflow:hidden;height:18px"><div style="width:82%;height:100%;background:#7f8962;border-radius:4px;display:flex;align-items:center;padding-left:6px"><span style="font-size:10px;color:#fff;font-weight:600">8.2</span></div></div></div>
+          <div class="row" style="gap:8px"><span class="micro muted" style="width:52px;text-align:right;flex-shrink:0">Nina K.</span><div style="flex:1;background:#f4f5f0;border-radius:4px;overflow:hidden;height:18px"><div style="width:71%;height:100%;background:#a0a870;border-radius:4px;display:flex;align-items:center;padding-left:6px"><span style="font-size:10px;color:#fff;font-weight:600">7.1</span></div></div></div>
+          <div class="row" style="gap:8px"><span class="micro muted" style="width:52px;text-align:right;flex-shrink:0">Jan D.</span><div style="flex:1;background:#fdf5e6;border-radius:4px;overflow:hidden;height:18px"><div style="width:68%;height:100%;background:#a06020;border-radius:4px;display:flex;align-items:center;padding-left:6px"><span style="font-size:10px;color:#fff;font-weight:600">6.8</span></div></div></div>
+          <div class="row" style="gap:8px"><span class="micro muted" style="width:52px;text-align:right;flex-shrink:0">Alex B.</span><div style="flex:1;background:#fef2f2;border-radius:4px;overflow:hidden;height:18px"><div style="width:54%;height:100%;background:#991c1c;border-radius:4px;display:flex;align-items:center;padding-left:6px"><span style="font-size:10px;color:#fff;font-weight:600">5.4</span></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANL-4: Subject heatmap -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">ANL-4</span><span class="mockup-tag">Subject performance heatmap</span></div>
+    <div class="mockup-body">
+      <span class="label">Grade heatmap — students × subjects</span>
+      <div class="card" style="padding:10px;overflow:auto">
+        <table class="tbl" style="min-width:100%">
+          <thead><tr><th>Student</th><th>Biology</th><th>Maths</th><th>History</th><th>Avg</th></tr></thead>
+          <tbody>
+            <tr><td><div class="row"><div class="av-sm">LK</div>Lisa K.</div></td><td style="background:#d4edda;font-weight:600;color:#2d6a2d">9.5</td><td style="background:#d4edda;font-weight:600;color:#2d6a2d">9.0</td><td style="background:#d4edda;font-weight:600;color:#2d6a2d">8.8</td><td class="bold accent">9.1</td></tr>
+            <tr><td><div class="row"><div class="av-sm">SM</div>Sara M.</div></td><td style="background:#e8f5e9;font-weight:600;color:#7f8962">8.2</td><td style="background:#e8f5e9;font-weight:600;color:#7f8962">7.8</td><td style="background:#fff9c4;font-weight:600;color:#a06020">7.0</td><td class="bold accent">7.7</td></tr>
+            <tr><td><div class="row"><div class="av-sm">JD</div>Jan D.</div></td><td style="background:#fff9c4;font-weight:600;color:#a06020">6.8</td><td style="background:#fff9c4;font-weight:600;color:#a06020">7.2</td><td style="background:#fce4ec;font-weight:600;color:#991c1c">5.9</td><td style="font-weight:600;color:#a06020">6.6</td></tr>
+            <tr><td><div class="row"><div class="av-sm">AB</div>Alex B.</div></td><td style="background:#fce4ec;font-weight:600;color:#991c1c">4.5</td><td style="background:#fce4ec;font-weight:600;color:#991c1c">5.1</td><td style="background:#fce4ec;font-weight:600;color:#991c1c">5.8</td><td style="font-weight:600;color:#991c1c">5.1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANL-5: Full dashboard mini -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">ANL-5</span><span class="mockup-tag">Combined mini-dashboard</span></div>
+    <div class="mockup-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="card col-gap"><span class="label">Grade trend</span><div style="display:flex;align-items:flex-end;gap:5px;height:44px"><div style="flex:1;background:#c8d0b0;border-radius:2px 2px 0 0;height:26px"></div><div style="flex:1;background:#a8bc90;border-radius:2px 2px 0 0;height:34px"></div><div style="flex:1;background:#7f8962;border-radius:2px 2px 0 0;height:42px"></div></div><span class="micro accent">+1.2 improving</span></div>
+        <div class="card col-gap"><span class="label">Distribution</span><div style="display:flex;align-items:flex-end;gap:5px;height:44px"><div style="flex:1;background:#f8c4c4;border-radius:2px 2px 0 0;height:12px"></div><div style="flex:1;background:#f0d898;border-radius:2px 2px 0 0;height:24px"></div><div style="flex:1;background:#b8e0b8;border-radius:2px 2px 0 0;height:40px"></div><div style="flex:1;background:#7f8962;border-radius:2px 2px 0 0;height:28px"></div></div><span class="micro">D·C·B·A</span></div>
+        <div class="card col-gap"><span class="label">Completion</span><div style="display:flex;gap:4px;align-items:center"><div style="flex:1;height:8px;border-radius:4px;background:#e8e8e8;overflow:hidden"><div style="width:88%;height:100%;background:#7f8962;border-radius:4px"></div></div><span class="micro accent">88%</span></div><span class="micro muted">3 not submitted</span></div>
+        <div class="card col-gap"><span class="label">At risk</span><div class="col-gap"><div class="row"><div class="av-sm">AB</div><span style="font-size:11px;font-weight:600;color:#991c1c">Alex B. · 5.4</span></div><div class="row"><div class="av-sm">PV</div><span style="font-size:11px;color:#a06020">Pieter V. · 5.9</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════ SCHEDULE TAB -->
+<div class="section-head">Schedule / Rooster Tab</div>
+<div class="section-sub">Weekly timetable, period editor, conflict detection</div>
+<div class="grid-wide">
+
+  <!-- SCH-1: Week grid editor -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">SCH-1</span><span class="mockup-tag">Week grid editor</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="label">3A · Week schedule</span><span class="btn btn-primary">+ Add period</span></div>
+      <div class="card" style="padding:10px">
+        <div class="week-grid">
+          <div></div>
+          <div class="wg-header">Mon</div><div class="wg-header">Tue</div><div class="wg-header">Wed</div><div class="wg-header">Thu</div><div class="wg-header">Fri</div>
+          <div class="wg-time">08:00</div>
+          <div class="wg-cell wg-class">Biology<br><span style="font-size:9px;color:#868686">Ms. de Boer</span></div>
+          <div class="wg-cell wg-class">Biology<br><span style="font-size:9px;color:#868686">Ms. de Boer</span></div>
+          <div class="wg-cell wg-empty"></div>
+          <div class="wg-cell wg-class">Biology<br><span style="font-size:9px;color:#868686">Ms. de Boer</span></div>
+          <div class="wg-cell wg-empty"></div>
+          <div class="wg-time">10:00</div>
+          <div class="wg-cell wg-break">Break</div><div class="wg-cell wg-break">Break</div><div class="wg-cell wg-break">Break</div><div class="wg-cell wg-break">Break</div><div class="wg-cell wg-break">Break</div>
+          <div class="wg-time">11:00</div>
+          <div class="wg-cell wg-empty"></div>
+          <div class="wg-cell wg-today">Maths<br><span style="font-size:9px">Today</span></div>
+          <div class="wg-cell wg-class">Maths</div>
+          <div class="wg-cell wg-class">Maths</div>
+          <div class="wg-cell wg-class">Maths</div>
+          <div class="wg-time">13:00</div>
+          <div class="wg-cell wg-class">History</div>
+          <div class="wg-cell wg-empty"></div>
+          <div class="wg-cell wg-class">History</div>
+          <div class="wg-cell wg-empty"></div>
+          <div class="wg-cell wg-class">History</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCH-2: List editor -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">SCH-2</span><span class="mockup-tag">Period list editor</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="label">Monday schedule</span><div class="chips"><span class="chip chip-active">Mon</span><span class="chip">Tue</span><span class="chip">Wed</span><span class="chip">Thu</span><span class="chip">Fri</span></div></div>
+      <div class="col-gap">
+        <div class="card row-between"><div class="row" style="gap:10px"><div class="card-sm" style="padding:4px 8px;text-align:center"><div class="bold sm">08:00</div><div class="micro muted">09:30</div></div><div class="col" style="gap:2px"><span class="bold sm">Biology</span><span class="micro muted">Ms. de Boer · 3A</span></div></div><div class="row" style="gap:6px"><span class="badge badge-accent">1.5h</span><div class="icon-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div></div></div>
+        <div class="card row-between" style="border-color:#dde0d0;background:#fafcf8"><div class="row" style="gap:10px"><div class="card-sm" style="padding:4px 8px;text-align:center"><div class="bold sm">09:30</div><div class="micro muted">10:00</div></div><div class="col" style="gap:2px"><span class="bold sm">Break</span><span class="micro muted">30 min</span></div></div><span class="badge badge-muted">Break</span></div>
+        <div class="card row-between"><div class="row" style="gap:10px"><div class="card-sm" style="padding:4px 8px;text-align:center"><div class="bold sm">10:00</div><div class="micro muted">11:30</div></div><div class="col" style="gap:2px"><span class="bold sm">Maths</span><span class="micro muted">Mr. Jansen · 2B</span></div></div><div class="row" style="gap:6px"><span class="badge badge-accent">1.5h</span><div class="icon-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div></div></div>
+      </div>
+      <span class="btn btn-secondary" style="align-self:flex-start">+ Add period to Monday</span>
+    </div>
+  </div>
+
+  <!-- SCH-3: Add period form -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">SCH-3</span><span class="mockup-tag">Add/edit period form</span></div>
+    <div class="mockup-body">
+      <span class="bold">Add period — Wednesday</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="col" style="gap:4px"><span class="micro">Subject</span><div class="input-mock focused">Biology</div></div>
+        <div class="col" style="gap:4px"><span class="micro">Day</span><div class="input-mock">Wednesday</div></div>
+        <div class="col" style="gap:4px"><span class="micro">Start time</span><div class="input-mock">09:00</div></div>
+        <div class="col" style="gap:4px"><span class="micro">End time</span><div class="input-mock">10:30</div></div>
+      </div>
+      <div class="col" style="gap:4px"><span class="micro">Notes (optional)</span><div class="input-mock" style="height:44px"></div></div>
+      <div class="row" style="gap:8px"><div style="display:flex;align-items:center;gap:6px"><div style="width:16px;height:16px;border-radius:4px;background:#f4f5f0;border:1px solid #d0d5bb;display:flex;align-items:center;justify-content:center"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#7f8962" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><span class="sm">This is a break period</span></div></div>
+      <div class="surface-accent row"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7f8962" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><span class="sm accent">No conflict detected at 09:00–10:30</span></div>
+      <div class="row-between"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Save period</span></div>
+    </div>
+  </div>
+
+  <!-- SCH-4: Conflict detection -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">SCH-4</span><span class="mockup-tag">Conflict detection</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="label">3A · Schedule</span><span class="badge badge-alert">2 conflicts</span></div>
+      <div class="card" style="border-color:#f8c4c4;background:#fef8f8">
+        <div class="row-between" style="margin-bottom:6px"><div class="row"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#991c1c" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="bold sm" style="color:#991c1c">Time overlap — Tuesday</span></div></div>
+        <span class="sm muted">Biology (11:00–12:30) overlaps with History (11:00–12:00).</span>
+        <div class="row" style="margin-top:6px"><span class="sm accent" style="cursor:pointer">Fix conflict →</span></div>
+      </div>
+      <div class="card">
+        <div class="week-grid" style="grid-template-columns:52px repeat(5,1fr)">
+          <div></div><div class="wg-header">Mon</div><div class="wg-header">Tue</div><div class="wg-header">Wed</div><div class="wg-header">Thu</div><div class="wg-header">Fri</div>
+          <div class="wg-time">11:00</div>
+          <div class="wg-cell wg-empty"></div>
+          <div class="wg-cell" style="background:#fef2f2;border:1px solid #f8c4c4;border-radius:5px;padding:5px 6px;color:#991c1c;font-size:10px">Bio ⚠<br>+History</div>
+          <div class="wg-cell wg-class">Maths</div>
+          <div class="wg-cell wg-class">Bio</div>
+          <div class="wg-cell wg-empty"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCH-5: Student read-only view -->
+  <div class="mockup">
+    <div class="mockup-bar"><span class="mockup-bar-title">SCH-5</span><span class="mockup-tag">Student view — this week</span></div>
+    <div class="mockup-body">
+      <div class="row-between"><span class="bold">This week</span><span class="micro muted">May 12–16, 2026</span></div>
+      <div class="col-gap">
+        <div><div class="row" style="margin-bottom:6px"><div style="width:4px;height:4px;border-radius:50%;background:#7f8962"></div><span class="bold sm" style="margin-left:4px">Monday — 2 classes</span></div><div class="col-gap" style="padding-left:12px"><div class="card row-between"><div class="row"><div class="card-sm" style="padding:3px 8px;font-size:11px;font-weight:600;color:#7f8962;background:#f4f5f0;border:none">08:00</div><span class="sm">Biology · Ms. de Boer</span></div><span class="badge badge-accent">1.5h</span></div><div class="card row-between"><div class="row"><div class="card-sm" style="padding:3px 8px;font-size:11px;font-weight:600;color:#7f8962;background:#f4f5f0;border:none">11:00</div><span class="sm">History · Mr. Patel</span></div><span class="badge badge-accent">1h</span></div></div></div>
+        <div><div class="row" style="margin-bottom:6px"><div style="width:4px;height:4px;border-radius:50%;background:#7f8962"></div><span class="bold sm" style="margin-left:4px">Tuesday — 3 classes <span class="badge badge-info" style="margin-left:4px">Today</span></span></div><div class="col-gap" style="padding-left:12px"><div class="card row-between" style="border-color:#d0d5bb;background:#f4f5f0"><div class="row"><div class="card-sm" style="padding:3px 8px;font-size:11px;font-weight:600;color:#7f8962;background:#fff;border:none">09:00</div><span class="sm bold">Biology · Now</span></div><span class="badge badge-ok">In progress</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- footer -->
+<div style="margin-top:60px;padding-top:24px;border-top:1px solid #ddd;display:flex;justify-content:space-between;align-items:center">
+  <div>
+    <div style="font-weight:600;margin-bottom:2px">class-tab-mockups.html</div>
+    <div style="color:#868686;font-size:12px">7 tabs · 35 designs total · cautie learn-hub</div>
+  </div>
+  <div style="color:#868686;font-size:11px;text-align:right">Review each section, say which designs to build.<br>e.g. "GRP-4, CHT-1, ATT-1+ATT-2, GRD-T2, GRD-S4, ANL-1, SCH-1"</div>
+</div>
+
+</div>
+</body>
+</html>

@@ -30,6 +30,7 @@ import {
   Check,
   FolderOpen,
   Loader2,
+  ClipboardList,
 } from 'lucide-react';
 import { useDeviceTier } from '@/hooks/use-device-tier';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
@@ -160,6 +161,7 @@ export function AppSidebar() {
     : [
         { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
         { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
+        { href: '/grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardList },
         { href: '/classes', label: t.classes, icon: School },
         { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
       ];
