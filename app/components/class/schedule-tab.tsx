@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { CalendarClock, Clock3, CopyPlus, GripVertical, Pencil, Plus, Shuffle, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useMemo, useState, useContext } from 'react';
+import { Plus, Pencil, Trash2, CopyPlus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { AppContext, AppContextType } from '@/contexts/app-context';
+import { cn } from '@/lib/utils';
 
 type ScheduleSlot = {
   id: string;
@@ -28,12 +30,14 @@ type ScheduleTabProps = {
   parentLoading?: boolean;
 };
 
+type ViewMode = 'week' | 'day';
+
 const WEEK_DAYS = [
-  { value: 1, short: 'Mon', label: 'Monday' },
-  { value: 2, short: 'Tue', label: 'Tuesday' },
-  { value: 3, short: 'Wed', label: 'Wednesday' },
-  { value: 4, short: 'Thu', label: 'Thursday' },
-  { value: 5, short: 'Fri', label: 'Friday' },
+  { value: 1, short: 'Mon', label: 'Monday', shortNl: 'Ma', labelNl: 'Maandag' },
+  { value: 2, short: 'Tue', label: 'Tuesday', shortNl: 'Di', labelNl: 'Dinsdag' },
+  { value: 3, short: 'Wed', label: 'Wednesday', shortNl: 'Wo', labelNl: 'Woensdag' },
+  { value: 4, short: 'Thu', label: 'Thursday', shortNl: 'Do', labelNl: 'Donderdag' },
+  { value: 5, short: 'Fri', label: 'Friday', shortNl: 'Vr', labelNl: 'Vrijdag' },
 ];
 
 function parseMinutes(time: string) {
@@ -42,21 +46,39 @@ function parseMinutes(time: string) {
   return h * 60 + m;
 }
 
-function formatTime(time: string) {
-  const [h, m] = String(time || '').split(':').map((n) => Number(n));
-  if (Number.isNaN(h) || Number.isNaN(m)) return time;
-  const suffix = h >= 12 ? 'PM' : 'AM';
-  const h12 = h % 12 || 12;
-  return `${h12}:${String(m).padStart(2, '0')} ${suffix}`;
+function fmt24(time: string) {
+  // Return as-is if already HH:MM
+  const parts = String(time || '').split(':');
+  if (parts.length >= 2) {
+    const h = parts[0].padStart(2, '0');
+    const m = parts[1].padStart(2, '0');
+    return `${h}:${m}`;
+  }
+  return time;
 }
 
 export function ScheduleTab({ classId, cachedData = null, parentLoading = false }: ScheduleTabProps) {
   const { toast } = useToast();
+  const appContext = useContext(AppContext) as AppContextType | null;
+  const role = appContext?.role || 'student';
+  const language = appContext?.language || 'en';
+  const isDutch = language === 'nl';
+  const isTeacher = ['teacher', 'owner', 'admin', 'creator', 'ta'].includes(String(role));
+
   const [loading, setLoading] = useState(!cachedData && !parentLoading);
   const [saving, setSaving] = useState(false);
   const [enabled, setEnabled] = useState(Boolean(cachedData?.enabled));
   const [slots, setSlots] = useState<ScheduleSlot[]>(cachedData?.slots || []);
+
+  // View state
+  const [viewMode, setViewMode] = useState<ViewMode>('week');
+  const [editMode, setEditMode] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  // Drag state
   const [dragSlotId, setDragSlotId] = useState<string | null>(null);
+
+  // Edit dialog
   const [editingSlot, setEditingSlot] = useState<ScheduleSlot | null>(null);
   const [editDraft, setEditDraft] = useState({
     title: '',
@@ -64,7 +86,10 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
     end_time: '09:20',
     day_of_week: '1',
     period_index: '1',
+    notes: '',
   });
+
+  // Add form
   const [newSlot, setNewSlot] = useState({
     day_of_week: '1',
     period_index: '1',
@@ -73,6 +98,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
     end_time: '09:20',
   });
 
+  /* ── Load ── */
   const loadSchedule = async () => {
     setLoading(true);
     try {
@@ -82,7 +108,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
       setEnabled(data.enabled !== false);
       setSlots(data.slots || []);
     } catch (error: any) {
-      toast({ title: 'Could not load schedule', description: error?.message || 'Try again.', variant: 'destructive' });
+      toast({ title: isDutch ? 'Rooster laden mislukt' : 'Could not load schedule', description: error?.message || '', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -95,11 +121,10 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
   }, [cachedData, parentLoading, classId]);
 
   useEffect(() => {
-    if (!cachedData) {
-      void loadSchedule();
-    }
+    if (!cachedData) void loadSchedule();
   }, [classId, cachedData]);
 
+  /* ── Derived ── */
   const sortedSlots = useMemo(
     () =>
       [...slots].sort((a, b) => {
@@ -112,45 +137,52 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
 
   const slotByCell = useMemo(() => {
     const map = new Map<string, ScheduleSlot>();
-    for (const slot of sortedSlots) {
-      map.set(`${slot.day_of_week}-${slot.period_index}`, slot);
-    }
+    for (const slot of sortedSlots) map.set(`${slot.day_of_week}-${slot.period_index}`, slot);
     return map;
   }, [sortedSlots]);
 
-  const nowSummary = useMemo(() => {
-    const now = new Date();
-    const jsDay = now.getDay();
-    const dayOfWeek = jsDay === 0 ? 7 : jsDay;
-    const minutes = now.getHours() * 60 + now.getMinutes();
-    const todaySlots = sortedSlots.filter((slot) => slot.day_of_week === dayOfWeek);
-    const current = todaySlots.find((slot) => {
-      const start = parseMinutes(slot.start_time);
-      const end = parseMinutes(slot.end_time);
-      return !Number.isNaN(start) && !Number.isNaN(end) && minutes >= start && minutes < end;
-    }) || null;
-    const next =
-      todaySlots.find((slot) => {
-        const start = parseMinutes(slot.start_time);
-        return !Number.isNaN(start) && start > minutes;
-      }) || null;
-    return { current, next };
+  const periodRows = useMemo(() => {
+    const highest = Math.max(8, ...sortedSlots.map((s) => s.period_index));
+    return Array.from({ length: highest }, (_, i) => i + 1);
   }, [sortedSlots]);
 
+  // Today's slots for day view
+  const todayDayIndex = useMemo(() => {
+    const jsDay = new Date().getDay();
+    return jsDay === 0 ? 7 : jsDay;
+  }, []);
+
+  const todaySlots = useMemo(
+    () => sortedSlots.filter((s) => s.day_of_week === todayDayIndex),
+    [sortedSlots, todayDayIndex]
+  );
+
+  const nowMinutes = useMemo(() => {
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes();
+  }, []);
+
+  function isCurrentSlot(slot: ScheduleSlot) {
+    const start = parseMinutes(slot.start_time);
+    const end = parseMinutes(slot.end_time);
+    return !Number.isNaN(start) && !Number.isNaN(end) && nowMinutes >= start && nowMinutes < end;
+  }
+
+  /* ── CRUD ── */
   const createSlot = async () => {
     if (!newSlot.title.trim()) {
-      toast({ title: 'Title is required', variant: 'destructive' });
+      toast({ title: isDutch ? 'Titel vereist' : 'Title is required', variant: 'destructive' });
       return;
     }
     const start = parseMinutes(newSlot.start_time);
     const end = parseMinutes(newSlot.end_time);
     if (Number.isNaN(start) || Number.isNaN(end) || end <= start) {
-      toast({ title: 'End time must be after start time', variant: 'destructive' });
+      toast({ title: isDutch ? 'Eindtijd moet na begintijd zijn' : 'End time must be after start time', variant: 'destructive' });
       return;
     }
     setSaving(true);
     try {
-      const response = await fetch(`/api/classes/${classId}/school-schedule`, {
+      const res = await fetch(`/api/classes/${classId}/school-schedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -161,20 +193,21 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
           end_time: newSlot.end_time,
         }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to add slot');
-      setNewSlot((prev) => ({ ...prev, title: '' }));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to add slot');
+      setNewSlot(prev => ({ ...prev, title: '' }));
+      setShowAddForm(false);
       await loadSchedule();
-      toast({ title: 'Schedule slot added' });
+      toast({ title: isDutch ? 'Roosterblok toegevoegd' : 'Schedule slot added' });
     } catch (error: any) {
-      toast({ title: 'Could not add slot', description: error?.message || 'Try again.', variant: 'destructive' });
+      toast({ title: isDutch ? 'Toevoegen mislukt' : 'Could not add slot', description: error?.message || '', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
   };
 
   const moveSlot = async (slotId: string, dayOfWeek: number, periodIndex: number) => {
-    const slot = slots.find((entry) => entry.id === slotId);
+    const slot = slots.find((s) => s.id === slotId);
     if (!slot) return;
     if (slot.day_of_week === dayOfWeek && slot.period_index === periodIndex) return;
 
@@ -182,63 +215,41 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
     if (occupied && occupied.id !== slotId) {
       const sourceDay = slot.day_of_week;
       const sourcePeriod = slot.period_index;
-      setSlots((prev) =>
-        prev.map((entry) => {
-          if (entry.id === slotId) return { ...entry, day_of_week: dayOfWeek, period_index: periodIndex };
-          if (entry.id === occupied.id) return { ...entry, day_of_week: sourceDay, period_index: sourcePeriod };
-          return entry;
-        })
-      );
+      setSlots(prev => prev.map(s => {
+        if (s.id === slotId) return { ...s, day_of_week: dayOfWeek, period_index: periodIndex };
+        if (s.id === occupied.id) return { ...s, day_of_week: sourceDay, period_index: sourcePeriod };
+        return s;
+      }));
       try {
-        const [firstResponse, secondResponse] = await Promise.all([
+        const [r1, r2] = await Promise.all([
           fetch(`/api/classes/${classId}/school-schedule`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              slot_id: slotId,
-              day_of_week: dayOfWeek,
-              period_index: periodIndex,
-            }),
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slot_id: slotId, day_of_week: dayOfWeek, period_index: periodIndex }),
           }),
           fetch(`/api/classes/${classId}/school-schedule`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              slot_id: occupied.id,
-              day_of_week: sourceDay,
-              period_index: sourcePeriod,
-            }),
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slot_id: occupied.id, day_of_week: sourceDay, period_index: sourcePeriod }),
           }),
         ]);
-        const firstPayload = await firstResponse.json().catch(() => ({}));
-        const secondPayload = await secondResponse.json().catch(() => ({}));
-        if (!firstResponse.ok) throw new Error(firstPayload.error || 'Failed to swap source slot');
-        if (!secondResponse.ok) throw new Error(secondPayload.error || 'Failed to swap target slot');
+        if (!r1.ok || !r2.ok) throw new Error('Swap failed');
         await loadSchedule();
-        toast({ title: 'Slots swapped' });
       } catch (error: any) {
-        toast({ title: 'Could not swap slots', description: error?.message || 'Try again.', variant: 'destructive' });
+        toast({ title: 'Could not swap slots', variant: 'destructive' });
         await loadSchedule();
       }
       return;
     }
 
-    setSlots((prev) => prev.map((entry) => (entry.id === slotId ? { ...entry, day_of_week: dayOfWeek, period_index: periodIndex } : entry)));
+    setSlots(prev => prev.map(s => s.id === slotId ? { ...s, day_of_week: dayOfWeek, period_index: periodIndex } : s));
     try {
-      const response = await fetch(`/api/classes/${classId}/school-schedule`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          slot_id: slotId,
-          day_of_week: dayOfWeek,
-          period_index: periodIndex,
-        }),
+      const res = await fetch(`/api/classes/${classId}/school-schedule`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slot_id: slotId, day_of_week: dayOfWeek, period_index: periodIndex }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to move slot');
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
       await loadSchedule();
     } catch (error: any) {
-      toast({ title: 'Could not move slot', description: error?.message || 'Try again.', variant: 'destructive' });
+      toast({ title: 'Could not move slot', variant: 'destructive' });
       await loadSchedule();
     }
   };
@@ -251,27 +262,26 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
       end_time: slot.end_time,
       day_of_week: String(slot.day_of_week),
       period_index: String(slot.period_index),
+      notes: slot.notes || '',
     });
   };
 
   const saveEditSlot = async () => {
     if (!editingSlot) return;
     if (!editDraft.title.trim()) {
-      toast({ title: 'Title is required', variant: 'destructive' });
+      toast({ title: isDutch ? 'Titel vereist' : 'Title is required', variant: 'destructive' });
       return;
     }
     const start = parseMinutes(editDraft.start_time);
     const end = parseMinutes(editDraft.end_time);
     if (Number.isNaN(start) || Number.isNaN(end) || end <= start) {
-      toast({ title: 'End time must be after start time', variant: 'destructive' });
+      toast({ title: isDutch ? 'Eindtijd moet na begintijd zijn' : 'End time must be after start time', variant: 'destructive' });
       return;
     }
-
     setSaving(true);
     try {
-      const response = await fetch(`/api/classes/${classId}/school-schedule`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch(`/api/classes/${classId}/school-schedule`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slot_id: editingSlot.id,
           title: editDraft.title.trim(),
@@ -279,15 +289,16 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
           end_time: editDraft.end_time,
           day_of_week: Number(editDraft.day_of_week),
           period_index: Number(editDraft.period_index),
+          notes: editDraft.notes || null,
         }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to save slot');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save');
       await loadSchedule();
       setEditingSlot(null);
-      toast({ title: 'Slot updated' });
+      toast({ title: isDutch ? 'Blok bijgewerkt' : 'Slot updated' });
     } catch (error: any) {
-      toast({ title: 'Could not update slot', description: error?.message || 'Try again.', variant: 'destructive' });
+      toast({ title: isDutch ? 'Opslaan mislukt' : 'Could not update slot', description: error?.message || '', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -297,14 +308,13 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
     const targetDay = slot.day_of_week === 5 ? 1 : slot.day_of_week + 1;
     const targetKey = `${targetDay}-${slot.period_index}`;
     if (slotByCell.has(targetKey)) {
-      toast({ title: 'Next day period occupied', description: 'Pick another slot or move existing block first.', variant: 'destructive' });
+      toast({ title: isDutch ? 'Periode bezet' : 'Next day period occupied', variant: 'destructive' });
       return;
     }
     setSaving(true);
     try {
-      const response = await fetch(`/api/classes/${classId}/school-schedule`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch(`/api/classes/${classId}/school-schedule`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           day_of_week: targetDay,
           period_index: slot.period_index,
@@ -316,12 +326,12 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
           notes: slot.notes,
         }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to duplicate slot');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
       await loadSchedule();
-      toast({ title: 'Slot duplicated to next day' });
+      toast({ title: isDutch ? 'Blok gekopieerd naar volgende dag' : 'Slot duplicated to next day' });
     } catch (error: any) {
-      toast({ title: 'Could not duplicate slot', description: error?.message || 'Try again.', variant: 'destructive' });
+      toast({ title: 'Could not duplicate slot', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -330,283 +340,447 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
   const removeSlot = async (slotId: string) => {
     setSaving(true);
     try {
-      const response = await fetch(`/api/classes/${classId}/school-schedule?slotId=${encodeURIComponent(slotId)}`, {
-        method: 'DELETE',
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to remove slot');
+      const res = await fetch(`/api/classes/${classId}/school-schedule?slotId=${encodeURIComponent(slotId)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
       await loadSchedule();
-      toast({ title: 'Slot removed' });
+      toast({ title: isDutch ? 'Blok verwijderd' : 'Slot removed' });
     } catch (error: any) {
-      toast({ title: 'Could not remove slot', description: error?.message || 'Try again.', variant: 'destructive' });
+      toast({ title: 'Could not remove slot', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
   };
 
-  const periodRows = useMemo(() => {
-    const highest = Math.max(8, ...sortedSlots.map((slot) => slot.period_index));
-    return Array.from({ length: highest }, (_, idx) => idx + 1);
-  }, [sortedSlots]);
+  const todayLabel = useMemo(() => {
+    const day = WEEK_DAYS.find(d => d.value === todayDayIndex);
+    if (!day) return '';
+    const now = new Date();
+    const dateStr = now.toLocaleDateString(isDutch ? 'nl-NL' : 'en-GB', { day: 'numeric', month: 'long' });
+    return `${isDutch ? day.labelNl : day.label}, ${dateStr}`;
+  }, [todayDayIndex, isDutch]);
 
+  /* ── Loading state ── */
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+      <div className="flex h-48 items-center justify-center">
+        <div className="h-7 w-7 animate-spin rounded-full border-b-2 border-[#7f8962]" />
       </div>
     );
   }
 
   if (!enabled) {
     return (
-      <div className="class-panel-lg">
-        <h2>School Schedule</h2>
+      <div className="overflow-hidden rounded-[10px] border border-[#e4e4e4] bg-white p-8 text-center dark:border-border dark:bg-[hsl(var(--surface-1))]">
+        <p className="text-[13px] text-[#aaa]">
+          {isDutch ? 'Rooster is niet ingeschakeld voor deze klas.' : 'Schedule is not enabled for this class.'}
+        </p>
       </div>
     );
   }
 
+  /* ── Main render ── */
   return (
-    <div className="class-shell">
-      <section className="class-panel">
-          <h2 className="flex items-center gap-2 text-base">
-            <CalendarClock className="h-4 w-4" />
-            Live School Schedule
-          </h2>
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <div className="rounded-md surface-interactive p-3">
-            <p className="text-xs text-muted-foreground">Current class</p>
-            <p className="mt-1 text-sm font-medium">{nowSummary.current ? nowSummary.current.title : 'No class right now'}</p>
-            {nowSummary.current && (
-              <p className="text-xs text-muted-foreground">
-                P{nowSummary.current.period_index} - {formatTime(nowSummary.current.start_time)} - {formatTime(nowSummary.current.end_time)}
-              </p>
-            )}
-          </div>
-          <div className="rounded-md surface-interactive p-3">
-            <p className="text-xs text-muted-foreground">Next class</p>
-            <p className="mt-1 text-sm font-medium">{nowSummary.next ? nowSummary.next.title : 'No more classes today'}</p>
-            {nowSummary.next && (
-              <p className="text-xs text-muted-foreground">
-                P{nowSummary.next.period_index} - {formatTime(nowSummary.next.start_time)} - {formatTime(nowSummary.next.end_time)}
-              </p>
-            )}
-          </div>
+    <>
+      <div className="overflow-hidden rounded-[10px] border border-[#e4e4e4] bg-white dark:border-border dark:bg-[hsl(var(--surface-1))]">
+        {/* Topbar */}
+        <div className="flex items-center gap-1.5 border-b border-[#e4e4e4] bg-[#f7f7f7] px-4 py-2.5 text-[12px] text-[#888] dark:border-border dark:bg-[hsl(var(--surface-2))]">
+          <span className="font-semibold text-[#1a1a1a] dark:text-foreground">
+            {isDutch ? 'Rooster' : 'Schedule'}
+          </span>
+          <span>·</span>
+          <span>{isDutch ? `Week ${getISOWeek(new Date())}` : `Week ${getISOWeek(new Date())}`}</span>
         </div>
-      </section>
 
-      <section className="class-panel">
-          <h2 className="text-base">Weekly Timetable</h2>
-        <div className="mt-3 overflow-x-auto">
-          <div className="hidden min-w-[840px] space-y-2 md:block">
-            <div className="grid grid-cols-[80px_repeat(5,minmax(0,1fr))] gap-2">
-              <div />
-              {WEEK_DAYS.map((day) => (
-                <div key={day.value} className="rounded-lg surface-interactive px-3 py-2 text-sm font-medium">
-                  {day.short}
-                </div>
-              ))}
+        <div className="p-5">
+          {/* Controls row */}
+          <div className="mb-4 flex items-center justify-between">
+            {/* Week / Day toggle */}
+            <div className="flex overflow-hidden rounded-[6px] border border-[#e0e0e0] dark:border-border">
+              <button
+                type="button"
+                onClick={() => setViewMode('week')}
+                className={cn(
+                  'border-r border-[#e0e0e0] px-3 py-[5px] text-[12px] transition-colors dark:border-border',
+                  viewMode === 'week'
+                    ? 'bg-[#7f8962] text-white'
+                    : 'bg-white text-[#666] hover:bg-[#f5f5f5] dark:bg-[hsl(var(--surface-2))] dark:text-foreground/70'
+                )}
+              >
+                {isDutch ? 'Week' : 'Week'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('day')}
+                className={cn(
+                  'px-3 py-[5px] text-[12px] transition-colors',
+                  viewMode === 'day'
+                    ? 'bg-[#7f8962] text-white'
+                    : 'bg-white text-[#666] hover:bg-[#f5f5f5] dark:bg-[hsl(var(--surface-2))] dark:text-foreground/70'
+                )}
+              >
+                {isDutch ? 'Dag' : 'Day'}
+              </button>
             </div>
-            {periodRows.map((periodIndex) => (
-              <div key={periodIndex} className="grid grid-cols-[80px_repeat(5,minmax(0,1fr))] gap-2">
-                <div className="rounded-lg surface-interactive px-3 py-2 text-xs text-muted-foreground">P{periodIndex}</div>
-                {WEEK_DAYS.map((day) => {
-                  const slot = slotByCell.get(`${day.value}-${periodIndex}`) || null;
-                  return (
-                    <div
-                      key={`${day.value}-${periodIndex}`}
-                      className="min-h-[78px] rounded-lg surface-chip p-2"
-                      onDragOver={(event) => event.preventDefault()}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        if (!dragSlotId) return;
-                        void moveSlot(dragSlotId, day.value, periodIndex);
-                        setDragSlotId(null);
-                      }}
-                    >
-                      {slot ? (
-                        <div
-                          draggable
-                          onDragStart={() => setDragSlotId(slot.id)}
-                          onDragEnd={() => setDragSlotId(null)}
-                          className="h-full rounded-md surface-panel p-2"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="truncate text-xs font-semibold">{slot.title}</p>
-                              <p className="text-[11px] text-muted-foreground">
-                                {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                              <button
-                                type="button"
-                                onClick={() => openEditSlot(slot)}
-                                className="rounded p-1 text-muted-foreground hover:bg-[hsl(var(--interactive-hover))] hover:text-foreground"
-                                disabled={saving}
-                                aria-label="Edit slot"
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => void duplicateSlotToNextDay(slot)}
-                                className="rounded p-1 text-muted-foreground hover:bg-[hsl(var(--interactive-hover))] hover:text-foreground"
-                                disabled={saving}
-                                aria-label="Duplicate slot"
-                              >
-                                <CopyPlus className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => void removeSlot(slot.id)}
-                                className="rounded p-1 text-muted-foreground hover:bg-[hsl(var(--interactive-hover))] hover:text-foreground"
-                                disabled={saving}
-                                aria-label="Remove slot"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-[11px] text-muted-foreground">Drop here</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-          <div className="space-y-2 md:hidden">
-            {WEEK_DAYS.map((day) => {
-              const daySlots = sortedSlots.filter((slot) => slot.day_of_week === day.value);
-              return (
-                <div key={day.value} className="rounded-lg surface-chip p-2">
-                  <p className="mb-2 text-xs font-semibold text-muted-foreground">{day.label}</p>
-                  {daySlots.length === 0 ? null : (
-                    <div className="space-y-2">
-                      {daySlots.map((slot) => (
-                        <div key={slot.id} className="rounded-md surface-panel p-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <div>
-                              <p className="text-xs font-semibold">P{slot.period_index} - {slot.title}</p>
-                              <p className="text-[11px] text-muted-foreground">{formatTime(slot.start_time)} - {formatTime(slot.end_time)}</p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <button type="button" onClick={() => openEditSlot(slot)} className="rounded p-1 text-muted-foreground hover:bg-[hsl(var(--interactive-hover))] hover:text-foreground">
-                                <Pencil className="h-3.5 w-3.5" />
-                              </button>
-                              <button type="button" onClick={() => void duplicateSlotToNextDay(slot)} className="rounded p-1 text-muted-foreground hover:bg-[hsl(var(--interactive-hover))] hover:text-foreground">
-                                <Shuffle className="h-3.5 w-3.5" />
-                              </button>
-                              <button type="button" onClick={() => void removeSlot(slot.id)} className="rounded p-1 text-muted-foreground hover:bg-[hsl(var(--interactive-hover))] hover:text-foreground">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+
+            <div className="flex items-center gap-2">
+              {/* Edit mode toggle — teacher only */}
+              {isTeacher && (
+                <button
+                  type="button"
+                  onClick={() => { setEditMode(!editMode); setShowAddForm(false); }}
+                  className={cn(
+                    'rounded-[6px] border px-3 py-[5px] text-[12px] transition-colors',
+                    editMode
+                      ? 'border-[#c87d25] bg-[#fdf3e3] text-[#c87d25]'
+                      : 'border-[#ddd] bg-white text-[#555] hover:border-[#7f8962] hover:text-[#7f8962] dark:bg-[hsl(var(--surface-2))] dark:text-foreground/70 dark:border-border'
                   )}
+                >
+                  {editMode
+                    ? (isDutch ? 'Bewerken actief' : 'Edit mode on')
+                    : (isDutch ? 'Rooster bewerken' : 'Edit schedule')}
+                </button>
+              )}
+              {/* Add slot button — teacher only */}
+              {isTeacher && editMode && (
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(!showAddForm)}
+                  className="flex items-center gap-1.5 rounded-[6px] border border-[#7f8962] bg-[#7f8962] px-3 py-[5px] text-[12px] font-semibold text-white"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {isDutch ? 'Toevoegen' : 'Add slot'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Edit hint */}
+          {editMode && (
+            <div className="mb-3 rounded-[6px] bg-[#fdf3e3] px-3 py-2 text-[12px] text-[#c87d25]">
+              {isDutch
+                ? 'Klik op een blok om te bewerken. Sleep om van positie te wisselen.'
+                : 'Click any slot to edit. Drag to swap positions.'}
+            </div>
+          )}
+
+          {/* ── Add slot form ── */}
+          {showAddForm && isTeacher && (
+            <div className="mb-4 rounded-[8px] border border-[#e4e4e4] bg-[#fafafa] p-4 dark:border-border dark:bg-[hsl(var(--surface-2))]">
+              <p className="mb-3 text-[13px] font-semibold text-[#1a1a1a] dark:text-foreground">
+                {isDutch ? 'Nieuw roosterblok' : 'New schedule slot'}
+              </p>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+                <div className="space-y-1">
+                  <Label className="text-[11px]">{isDutch ? 'Dag' : 'Day'}</Label>
+                  <Select value={newSlot.day_of_week} onValueChange={v => setNewSlot(p => ({ ...p, day_of_week: v }))}>
+                    <SelectTrigger className="h-8 text-[12px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {WEEK_DAYS.map(d => (
+                        <SelectItem key={d.value} value={String(d.value)}>
+                          {isDutch ? d.labelNl : d.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+                <div className="space-y-1">
+                  <Label className="text-[11px]">{isDutch ? 'Periode' : 'Period'}</Label>
+                  <Input
+                    value={newSlot.period_index}
+                    onChange={e => setNewSlot(p => ({ ...p, period_index: e.target.value }))}
+                    className="h-8 text-[12px]"
+                    type="number" min="1" max="12"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px]">{isDutch ? 'Begin' : 'Start'}</Label>
+                  <Input
+                    value={newSlot.start_time}
+                    onChange={e => setNewSlot(p => ({ ...p, start_time: e.target.value }))}
+                    className="h-8 text-[12px]"
+                    placeholder="08:30"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px]">{isDutch ? 'Einde' : 'End'}</Label>
+                  <Input
+                    value={newSlot.end_time}
+                    onChange={e => setNewSlot(p => ({ ...p, end_time: e.target.value }))}
+                    className="h-8 text-[12px]"
+                    placeholder="09:20"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px]">{isDutch ? 'Vak / Titel' : 'Subject / Title'}</Label>
+                  <Input
+                    value={newSlot.title}
+                    onChange={e => setNewSlot(p => ({ ...p, title: e.target.value }))}
+                    className="h-8 text-[12px]"
+                    placeholder={isDutch ? 'Wiskunde' : 'Mathematics'}
+                    onKeyDown={e => { if (e.key === 'Enter') void createSlot(); }}
+                  />
+                </div>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void createSlot()}
+                  disabled={saving}
+                  className="rounded-[6px] bg-[#7f8962] px-4 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50"
+                >
+                  {saving ? '…' : (isDutch ? 'Opslaan' : 'Save')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="rounded-[6px] border border-[#ddd] bg-white px-4 py-1.5 text-[12px] text-[#555] dark:bg-[hsl(var(--surface-1))] dark:border-border"
+                >
+                  {isDutch ? 'Annuleren' : 'Cancel'}
+                </button>
+              </div>
+            </div>
+          )}
 
-      <section className="class-panel">
-          <h2 className="flex items-center gap-2 text-base">
-            <Plus className="h-4 w-4" />
-            Quick Add Slot
-          </h2>
-        <div className="mt-3 grid gap-3 md:grid-cols-5">
-          <div className="space-y-1">
-            <Label>Day</Label>
-            <Select value={newSlot.day_of_week} onValueChange={(value) => setNewSlot((prev) => ({ ...prev, day_of_week: value }))}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {WEEK_DAYS.map((day) => (
-                  <SelectItem key={day.value} value={String(day.value)}>
-                    {day.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label>Period</Label>
-            <Input value={newSlot.period_index} onChange={(event) => setNewSlot((prev) => ({ ...prev, period_index: event.target.value }))} />
-          </div>
-          <div className="space-y-1">
-            <Label>Start</Label>
-            <Input value={newSlot.start_time} onChange={(event) => setNewSlot((prev) => ({ ...prev, start_time: event.target.value }))} />
-          </div>
-          <div className="space-y-1">
-            <Label>End</Label>
-            <Input value={newSlot.end_time} onChange={(event) => setNewSlot((prev) => ({ ...prev, end_time: event.target.value }))} />
-          </div>
-          <div className="space-y-1">
-            <Label>Title</Label>
-            <Input value={newSlot.title} onChange={(event) => setNewSlot((prev) => ({ ...prev, title: event.target.value }))} placeholder="Mathematics" />
-          </div>
-          <div className="md:col-span-5">
-            <Button onClick={() => void createSlot()} disabled={saving} className="h-9">
-              <Clock3 className="mr-2 h-4 w-4" />
-              {saving ? 'Saving...' : 'Add Slot'}
-            </Button>
-          </div>
-        </div>
-      </section>
+          {/* ── WEEK VIEW ── */}
+          {viewMode === 'week' && (
+            <div className="overflow-x-auto">
+              <div className="min-w-[520px]">
+                <div className="grid gap-1" style={{ gridTemplateColumns: '44px repeat(5, 1fr)' }}>
+                  {/* Day headers */}
+                  <div />
+                  {WEEK_DAYS.map(day => (
+                    <div
+                      key={day.value}
+                      className={cn(
+                        'p-1 text-center text-[11px] font-bold uppercase tracking-[.4px]',
+                        day.value === todayDayIndex ? 'text-[#7f8962]' : 'text-[#aaa]'
+                      )}
+                    >
+                      {isDutch ? day.shortNl : day.short}
+                    </div>
+                  ))}
 
-      <Dialog open={Boolean(editingSlot)} onOpenChange={(open) => !open && setEditingSlot(null)}>
+                  {/* Period rows */}
+                  {periodRows.map(periodIndex => (
+                    <>
+                      {/* Time label */}
+                      <div key={`time-${periodIndex}`} className="pr-1.5 pt-1.5 text-right text-[10px] text-[#bbb]">
+                        P{periodIndex}
+                      </div>
+
+                      {WEEK_DAYS.map(day => {
+                        const slot = slotByCell.get(`${day.value}-${periodIndex}`) || null;
+                        return (
+                          <div
+                            key={`${day.value}-${periodIndex}`}
+                            className={cn(
+                              'min-h-[44px] rounded-[4px]',
+                              slot
+                                ? 'border-l-[3px] border-l-[#7f8962] bg-[#edf1e5] dark:bg-[hsl(var(--accent-brand)/0.12)]'
+                                : 'border-l-[3px] border-l-[#e4e4e4] bg-[#fafafa] dark:bg-[hsl(var(--surface-2))]',
+                              editMode && slot && 'cursor-pointer outline outline-2 outline-dashed outline-[#c87d25]',
+                            )}
+                            onDragOver={e => e.preventDefault()}
+                            onDrop={e => {
+                              e.preventDefault();
+                              if (!dragSlotId || !editMode) return;
+                              void moveSlot(dragSlotId, day.value, periodIndex);
+                              setDragSlotId(null);
+                            }}
+                            onClick={() => {
+                              if (editMode && slot) openEditSlot(slot);
+                            }}
+                          >
+                            {slot ? (
+                              <div
+                                draggable={editMode}
+                                onDragStart={() => editMode && setDragSlotId(slot.id)}
+                                onDragEnd={() => setDragSlotId(null)}
+                                className="flex h-full flex-col p-[5px_6px]"
+                              >
+                                <div className="text-[10px] font-semibold text-[#7f8962]">
+                                  {fmt24(slot.start_time)}–{fmt24(slot.end_time)}
+                                </div>
+                                <div className="mt-0.5 text-[11px] font-semibold text-[#1a1a1a] dark:text-foreground">
+                                  {slot.title}
+                                </div>
+                                {slot.notes && (
+                                  <div className="mt-0.5 text-[10px] text-[#aaa]">{slot.notes}</div>
+                                )}
+
+                                {/* Edit controls — only in edit mode, not via click (click opens dialog) */}
+                                {editMode && (
+                                  <div className="mt-auto flex gap-0.5 pt-1">
+                                    <button
+                                      type="button"
+                                      onClick={e => { e.stopPropagation(); void duplicateSlotToNextDay(slot); }}
+                                      className="rounded p-0.5 text-[#aaa] hover:text-[#7f8962]"
+                                      title={isDutch ? 'Kopieer naar volgende dag' : 'Duplicate to next day'}
+                                    >
+                                      <CopyPlus className="h-3 w-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={e => { e.stopPropagation(); void removeSlot(slot.id); }}
+                                      className="rounded p-0.5 text-[#aaa] hover:text-[#c94040]"
+                                      title={isDutch ? 'Verwijderen' : 'Remove'}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              // Empty cell
+                              editMode ? (
+                                <div
+                                  className="flex h-full min-h-[44px] cursor-pointer items-center justify-center text-[11px] text-[#ddd] hover:text-[#c87d25]"
+                                  onClick={() => {
+                                    setNewSlot(p => ({ ...p, day_of_week: String(day.value), period_index: String(periodIndex) }));
+                                    setShowAddForm(true);
+                                  }}
+                                >
+                                  +
+                                </div>
+                              ) : null
+                            )}
+                          </div>
+                        );
+                      })}
+                    </>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── DAY VIEW ── */}
+          {viewMode === 'day' && (
+            <div>
+              <p className="mb-2.5 text-[12px] font-semibold text-[#7f8962]">{todayLabel}</p>
+
+              {todaySlots.length === 0 ? (
+                <div className="rounded-[8px] border border-[#e4e4e4] bg-[#fafafa] p-6 text-center text-[13px] text-[#aaa] dark:border-border dark:bg-[hsl(var(--surface-2))]">
+                  {isDutch ? 'Geen lessen vandaag.' : 'No classes today.'}
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  {todaySlots.map(slot => {
+                    const isCurrent = isCurrentSlot(slot);
+                    return (
+                      <div
+                        key={slot.id}
+                        className={cn(
+                          'grid items-center gap-3 rounded-[6px] border-b border-[#f0f0f0] p-[11px_10px] last:border-b-0 dark:border-border',
+                          isCurrent ? 'bg-[#edf1e5] dark:bg-[hsl(var(--accent-brand)/0.1)]' : ''
+                        )}
+                        style={{ gridTemplateColumns: '60px 1fr 60px' }}
+                      >
+                        <div className="text-[12px] font-semibold text-[#7f8962]">
+                          {fmt24(slot.start_time)}
+                        </div>
+                        <div>
+                          <div className="text-[13px] font-semibold text-[#1a1a1a] dark:text-foreground">
+                            {slot.title}
+                          </div>
+                          {slot.notes && (
+                            <div className="mt-0.5 text-[11px] text-[#aaa]">{slot.notes}</div>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          {isCurrent && (
+                            <span className="rounded-full bg-[#edf1e5] px-2 py-0.5 text-[10px] font-semibold text-[#7f8962]">
+                              {isDutch ? 'Nu' : 'Now'}
+                            </span>
+                          )}
+                          {editMode && (
+                            <button
+                              type="button"
+                              onClick={() => openEditSlot(slot)}
+                              className="text-[11px] text-[#c87d25]"
+                            >
+                              {isDutch ? 'Bewerk' : 'Edit'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Edit slot dialog ── */}
+      <Dialog open={Boolean(editingSlot)} onOpenChange={open => !open && setEditingSlot(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Schedule Slot</DialogTitle>
-            <DialogDescription>Update day, period, title, and time range.</DialogDescription>
+            <DialogTitle>{isDutch ? 'Roosterblok bewerken' : 'Edit Schedule Slot'}</DialogTitle>
+            <DialogDescription>
+              {isDutch ? 'Pas dag, periode, titel en tijden aan.' : 'Update day, period, title, and time range.'}
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-1">
-              <Label>Day</Label>
-              <Select value={editDraft.day_of_week} onValueChange={(value) => setEditDraft((prev) => ({ ...prev, day_of_week: value }))}>
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
+              <Label>{isDutch ? 'Dag' : 'Day'}</Label>
+              <Select value={editDraft.day_of_week} onValueChange={v => setEditDraft(p => ({ ...p, day_of_week: v }))}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {WEEK_DAYS.map((day) => (
-                    <SelectItem key={day.value} value={String(day.value)}>{day.label}</SelectItem>
+                  {WEEK_DAYS.map(d => (
+                    <SelectItem key={d.value} value={String(d.value)}>
+                      {isDutch ? d.labelNl : d.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>Period</Label>
-              <Input value={editDraft.period_index} onChange={(event) => setEditDraft((prev) => ({ ...prev, period_index: event.target.value }))} />
+              <Label>{isDutch ? 'Periode' : 'Period'}</Label>
+              <Input value={editDraft.period_index} onChange={e => setEditDraft(p => ({ ...p, period_index: e.target.value }))} className="h-9" type="number" min="1" />
             </div>
             <div className="space-y-1">
-              <Label>Start</Label>
-              <Input value={editDraft.start_time} onChange={(event) => setEditDraft((prev) => ({ ...prev, start_time: event.target.value }))} />
+              <Label>{isDutch ? 'Begintijd' : 'Start time'}</Label>
+              <Input value={editDraft.start_time} onChange={e => setEditDraft(p => ({ ...p, start_time: e.target.value }))} className="h-9" placeholder="08:30" />
             </div>
             <div className="space-y-1">
-              <Label>End</Label>
-              <Input value={editDraft.end_time} onChange={(event) => setEditDraft((prev) => ({ ...prev, end_time: event.target.value }))} />
+              <Label>{isDutch ? 'Eindtijd' : 'End time'}</Label>
+              <Input value={editDraft.end_time} onChange={e => setEditDraft(p => ({ ...p, end_time: e.target.value }))} className="h-9" placeholder="09:20" />
             </div>
             <div className="space-y-1 md:col-span-2">
-              <Label>Title</Label>
-              <Input value={editDraft.title} onChange={(event) => setEditDraft((prev) => ({ ...prev, title: event.target.value }))} />
+              <Label>{isDutch ? 'Vak / Titel' : 'Subject / Title'}</Label>
+              <Input value={editDraft.title} onChange={e => setEditDraft(p => ({ ...p, title: e.target.value }))} className="h-9" />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <Label>{isDutch ? 'Notities (optioneel)' : 'Notes (optional)'}</Label>
+              <Input value={editDraft.notes} onChange={e => setEditDraft(p => ({ ...p, notes: e.target.value }))} className="h-9" placeholder={isDutch ? 'Lokaal 102' : 'Room 102'} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingSlot(null)}>Cancel</Button>
-            <Button onClick={() => void saveEditSlot()} disabled={saving}>{saving ? 'Saving...' : 'Save changes'}</Button>
+            <Button variant="outline" onClick={() => setEditingSlot(null)}>
+              {isDutch ? 'Annuleren' : 'Cancel'}
+            </Button>
+            <Button
+              onClick={() => void saveEditSlot()}
+              disabled={saving}
+              className="bg-[#7f8962] text-white hover:bg-[#6d7a54]"
+            >
+              {saving ? '…' : (isDutch ? 'Opslaan' : 'Save changes')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 
-
+/** ISO week number helper */
+function getISOWeek(date: Date): number {
+  const d = new Date(date.valueOf());
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.valueOf() - yearStart.valueOf()) / 86400000) + 1) / 7);
+}
