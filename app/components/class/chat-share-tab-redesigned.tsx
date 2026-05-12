@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useContext } from 'react';
-import { Paperclip, ImageIcon, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { CautieLoader } from '@/components/ui/cautie-loader';
@@ -242,9 +241,13 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
               messages.map(msg => {
                 const isOwn = msg.authorId === currentUserId;
                 return (
-                  <div key={msg.id} className="group flex gap-2.5">
-                    {/* No avatar — per design rules */}
-                    <div className="min-w-0 flex-1">
+                  <div key={msg.id} className={cn('group flex gap-2.5', isOwn ? 'flex-row-reverse justify-end' : 'flex-row justify-start')}>
+                    {/* Message bubble */}
+                    <div className={cn('min-w-0 max-w-xs rounded-[12px] px-3.5 py-2.5',
+                      isOwn
+                        ? 'bg-[#7f8962] text-white'
+                        : 'bg-[#f0f0f0] text-[#1a1a1a] dark:bg-[hsl(var(--surface-2))] dark:text-foreground'
+                    )}>
                       {/* Meta line */}
                       <div className="mb-[3px] text-[11px] text-[#bbb]">
                         <strong className="font-semibold text-[#444] dark:text-foreground/70">
@@ -332,38 +335,13 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                 className="w-full resize-none bg-[#fafafa] px-3 pt-2 text-[13px] text-[#1a1a1a] outline-none placeholder:text-[#aaa] dark:bg-[hsl(var(--surface-2))] dark:text-foreground"
               />
               {/* Toolbar */}
-              <div className="flex items-center gap-1 border-t border-[#ebebeb] bg-[#f7f7f7] px-2 py-[6px] dark:border-border dark:bg-[hsl(var(--surface-2))]">
-                <button
-                  type="button"
-                  title={isDutch ? 'Bestand toevoegen' : 'Attach file'}
-                  className="flex items-center gap-1 rounded-[4px] border border-[#e4e4e4] bg-white px-2 py-1 text-[11px] text-[#555] transition-colors hover:border-[#7f8962] hover:text-[#7f8962] dark:bg-[hsl(var(--surface-3))] dark:text-foreground/60"
-                >
-                  <Paperclip className="h-3 w-3" />
-                  {isDutch ? 'Bestand' : 'File'}
-                </button>
-                <button
-                  type="button"
-                  title={isDutch ? 'Afbeelding toevoegen' : 'Attach image'}
-                  className="flex items-center gap-1 rounded-[4px] border border-[#e4e4e4] bg-white px-2 py-1 text-[11px] text-[#555] transition-colors hover:border-[#7f8962] hover:text-[#7f8962] dark:bg-[hsl(var(--surface-3))] dark:text-foreground/60"
-                >
-                  <ImageIcon className="h-3 w-3" />
-                  {isDutch ? 'Afbeelding' : 'Image'}
-                </button>
-                <button
-                  type="button"
-                  title="Import from OneDrive / Google Drive"
-                  className="flex items-center gap-1 rounded-[4px] border border-[#e4e4e4] bg-white px-2 py-1 text-[11px] text-[#555] transition-colors hover:border-[#7f8962] hover:text-[#7f8962] dark:bg-[hsl(var(--surface-3))] dark:text-foreground/60"
-                >
-                  <Upload className="h-3 w-3" />
-                  Import
-                </button>
-                <span className="px-1 text-[11px] text-[#ccc]">OneDrive · Drive · Recents</span>
+              <div className="flex items-center justify-end gap-2 border-t border-[#ebebeb] bg-[#f7f7f7] px-3 py-2 dark:border-border dark:bg-[hsl(var(--surface-2))]">
                 {/* Send button */}
                 <button
                   type="button"
                   disabled={!text.trim() || sending}
                   onClick={() => void sendMessage()}
-                  className="ml-auto rounded-[4px] border border-[#7f8962] bg-[#7f8962] px-3 py-1 text-[12px] font-semibold text-white transition-opacity disabled:opacity-40"
+                  className="rounded-[6px] border border-[#7f8962] bg-[#7f8962] px-3 py-1.5 text-[12px] font-semibold text-white transition-opacity hover:bg-[#6f7851] disabled:opacity-50"
                 >
                   {sending ? '…' : (isDutch ? 'Stuur' : 'Send')}
                 </button>

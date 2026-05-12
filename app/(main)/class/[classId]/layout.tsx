@@ -63,7 +63,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex h-full flex-col gap-1.5">
-      <div className="px-2 pt-2">
+      <div className="px-4 pt-3">
         <div className="rounded-md surface-panel p-1.5">
           <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
             {visibleTabs.map((tab) => {
@@ -91,7 +91,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
         </div>
       </div>
 
-      <main className="flex-1 overflow-auto px-2 pb-2">
+      <main className="flex-1 overflow-auto px-4 pb-4">
         {children}
       </main>
     </div>

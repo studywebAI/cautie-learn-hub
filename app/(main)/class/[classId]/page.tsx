@@ -22,13 +22,15 @@ const GradesTab = dynamic(
   () => import('@/components/class/grades-tab-redesigned').then((m) => m.GradesTabRedesigned)
 );
 const LogsTab = dynamic(
-  () => import('@/components/class/logs-tab').then((m) => m.LogsTab)
+  () => import('@/components/class/logs-tab-redesigned').then((m) => m.LogsTabRedesigned),
+  { ssr: false }
 );
 const AnalyticsTab = dynamic(
   () => import('@/components/class/analytics-tab-redesigned').then((m) => m.AnalyticsTabRedesigned)
 );
 const ClassSettings = dynamic(
-  () => import('@/components/dashboard/teacher/class-settings').then((m) => m.ClassSettings)
+  () => import('@/components/dashboard/teacher/class-settings-redesigned').then((m) => m.ClassSettingsRedesigned),
+  { ssr: false }
 );
 const ShareTab = dynamic(
   () => import('@/components/class/chat-share-tab-redesigned').then((m) => m.ChatShareTabRedesigned)

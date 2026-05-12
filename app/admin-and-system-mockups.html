@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin & System Mockups - Settings, Logs, Studyset, Typography</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+      color: #1a1a1a;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .section {
+      margin-bottom: 40px;
+      page-break-inside: avoid;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 30px;
+      color: #1a1a1a;
+      border-bottom: 3px solid #7f8962;
+      padding-bottom: 15px;
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #333;
+      margin-top: 30px;
+    }
+    .mockup {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .mockup-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #888;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e4e4e4;
+    }
+
+    /* Settings mockup */
+    .settings-section {
+      border: 1px solid #e4e4e4;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .settings-header {
+      background: #f7f7f7;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e4e4e4;
+      font-weight: 600;
+      font-size: 13px;
+      color: #7f8962;
+    }
+    .settings-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .settings-item:last-child {
+      border-bottom: none;
+    }
+    .settings-label {
+      flex: 1;
+    }
+    .settings-label-main {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+    .settings-label-desc {
+      font-size: 11px;
+      color: #888;
+      margin-top: 4px;
+    }
+    .settings-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toggle {
+      width: 40px;
+      height: 22px;
+      background: #ddd;
+      border-radius: 11px;
+      position: relative;
+      cursor: pointer;
+    }
+    .toggle.on {
+      background: #7f8962;
+    }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: left 0.2s;
+    }
+    .toggle.on::after {
+      left: 20px;
+    }
+    select, input[type="text"], input[type="email"] {
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12px;
+      color: #555;
+      background: white;
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: #7f8962;
+      box-shadow: 0 0 0 2px rgba(127, 137, 98, 0.1);
+    }
+    .btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #7f8962;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #6f7851;
+    }
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #555;
+      border: 1px solid #ddd;
+    }
+    .btn-secondary:hover {
+      background: #e8e8e8;
+    }
+    .btn-danger {
+      background: #fee;
+      color: #d32f2f;
+      border: 1px solid #fcc;
+    }
+    .btn-danger:hover {
+      background: #fdd;
+    }
+
+    /* Logs mockup */
+    .logs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .logs-table th {
+      background: #f7f7f7;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #e4e4e4;
+    }
+    .logs-table td {
+      padding: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .logs-event-type {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    .logs-event-type.attendance {
+      color: #e8932e;
+    }
+    .logs-event-type.grade {
+      color: #7f8962;
+    }
+    .logs-event-type.message {
+      color: #4a90e2;
+    }
+    .logs-event-type.student {
+      color: #e65100;
+    }
+    .logs-user {
+      color: #555;
+      font-size: 11px;
+    }
+    .logs-time {
+      color: #999;
+      font-size: 11px;
+    }
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      color: #555;
+      transition: all 0.2s;
+    }
+    .filter-btn.active {
+      background: #7f8962;
+      color: white;
+      border-color: #7f8962;
+    }
+    .filter-btn:hover:not(.active) {
+      border-color: #bbb;
+    }
+
+    /* Studyset mockup */
+    .step-container {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .step-variant {
+      flex: 1;
+      min-width: 300px;
+    }
+    .step-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #7f8962;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12px;
+      color: #555;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #7f8962;
+      box-shadow: 0 0 0 2px rgba(127, 137, 98, 0.1);
+    }
+    .checkbox-group {
+      margin-bottom: 12px;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .checkbox {
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      background: white;
+      cursor: pointer;
+    }
+    .checkbox.checked {
+      background: #7f8962;
+      border-color: #7f8962;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .card-option {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 11px;
+    }
+    .card-option:hover {
+      border-color: #7f8962;
+      background: #fafafa;
+    }
+    .card-option.selected {
+      border-color: #7f8962;
+      background: #f9faf6;
+    }
+    .card-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    /* Typography mockup */
+    .typo-category {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #e4e4e4;
+    }
+    .typo-category-name {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .typo-variant {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .typo-variant:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .typo-sample {
+      margin-bottom: 8px;
+    }
+    .typo-specs {
+      font-size: 11px;
+      color: #999;
+      font-family: 'Courier New', monospace;
+    }
+
+    .color-swatch {
+      width: 100%;
+      height: 60px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      margin-top: 8px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .info-box {
+      background: #f9faf6;
+      border-left: 4px solid #7f8962;
+      padding: 12px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ========== PART 1: SETTINGS PAGE ========== -->
+    <div class="section">
+      <h1>SETTINGS PAGE REDESIGN</h1>
+
+      <div class="info-box">
+        <strong>Analysis:</strong> Current settings page only shows theme/color/layout. Proposed redesign organizes settings by purpose: Class Info (basic details), Access & Members (teacher list, settings), Content (enable/disable features), and Appearance (theme). Removes non-functional or confusing controls.
+      </div>
+
+      <!-- MOCKUP 1: Settings - Main View -->
+      <div class="mockup">
+        <div class="mockup-title">SETTINGS-1: Settings Page (Main View)</div>
+
+        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+          <!-- Left: Settings Navigation -->
+          <div style="flex: 0 0 200px;">
+            <div style="background: #f7f7f7; border-radius: 8px; overflow: hidden;">
+              <div style="padding: 0;">
+                <div style="padding: 12px 16px; background: #7f8962; color: white; font-size: 13px; font-weight: 600; cursor: pointer;">
+                  Klasinfo
+                </div>
+                <div style="padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
+                  Toegang
+                </div>
+                <div style="padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
+                  Functies
+                </div>
+                <div style="padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer;">
+                  Uiterlijk
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Klasinfo Section -->
+          <div style="flex: 1;">
+            <div style="padding-bottom: 16px; border-bottom: 2px solid #e4e4e4; margin-bottom: 20px;">
+              <h3 style="font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">Klasinformatie</h3>
+              <p style="font-size: 12px; color: #888;">Basisgegevens over uw klas</p>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Klasnaam</div>
+                  <div class="settings-label-desc">Hoe students uw klas zien</div>
+                </div>
+                <input type="text" value="3A Biologie" style="width: 200px;">
+              </div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Beschrijving</div>
+                  <div class="settings-label-desc">Optioneel: korte beschrijving</div>
+                </div>
+                <input type="text" value="Biologie - Groep 3A" style="width: 200px;">
+              </div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Deelcode student</div>
+                  <div class="settings-label-desc">Students gebruiken dit om in te schrijven</div>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <input type="text" value="ABC123" readonly style="width: 100px; background: #f5f5f5;">
+                  <button class="btn btn-secondary">Kopiëren</button>
+                </div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Deelcode docent</div>
+                  <div class="settings-label-desc">Andere docenten kunnen met dit code deelnemen</div>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <input type="text" value="TEACH789" readonly style="width: 100px; background: #f5f5f5;">
+                  <button class="btn btn-secondary">Kopiëren</button>
+                </div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Klas archiveren</div>
+                  <div class="settings-label-desc">Archived classes are read-only</div>
+                </div>
+                <button class="btn btn-danger">Archiveren</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MOCKUP 2: Settings - Access Tab -->
+      <div class="mockup">
+        <div class="mockup-title">SETTINGS-2: Access & Members</div>
+
+        <div style="display: flex; gap: 20px;">
+          <div style="flex: 0 0 200px;">
+            <div style="background: #f7f7f7; border-radius: 8px; overflow: hidden;">
+              <div style="padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
+                Klasinfo
+              </div>
+              <div style="padding: 12px 16px; background: #7f8962; color: white; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
+                Toegang
+              </div>
+              <div style="padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
+                Functies
+              </div>
+              <div style="padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer;">
+                Uiterlijk
+              </div>
+            </div>
+          </div>
+
+          <div style="flex: 1;">
+            <div style="padding-bottom: 16px; border-bottom: 2px solid #e4e4e4; margin-bottom: 20px;">
+              <h3 style="font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">Toegang & Leden</h3>
+              <p style="font-size: 12px; color: #888;">Beheer docenten en student access</p>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+              <h4 style="font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;">Docenten in deze klas</h4>
+              <table style="width: 100%; font-size: 12px;">
+                <tr style="border-bottom: 1px solid #f0f0f0;">
+                  <td style="padding: 10px 0; color: #555;">Jouw Naam (U)</td>
+                  <td style="text-align: right; color: #999;">Eigenaar</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f0f0f0;">
+                  <td style="padding: 10px 0; color: #555;">Dr. John Smith</td>
+                  <td style="text-align: right;">
+                    <select style="width: 100px;">
+                      <option>Docent</option>
+                      <option>Eigenaar</option>
+                    </select>
+                  </td>
+                </tr>
+              </table>
+              <button class="btn btn-primary" style="margin-top: 12px;">+ Docent toevoegen</button>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+              <h4 style="font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;">Student-instellingen</h4>
+              <div class="settings-section">
+                <div class="settings-item">
+                  <div class="settings-label">
+                    <div class="settings-label-main">Students kunnen elkaar zien</div>
+                    <div class="settings-label-desc">In groepslijsten en profielen</div>
+                  </div>
+                  <div class="toggle on"></div>
+                </div>
+                <div class="settings-item">
+                  <div class="settings-label">
+                    <div class="settings-label-main">Students kunnen messages sturen</div>
+                    <div class="settings-label-desc">In chat- en share-tabs</div>
+                  </div>
+                  <div class="toggle on"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MOCKUP 3: Settings - Features Tab -->
+      <div class="mockup">
+        <div class="mockup-title">SETTINGS-3: Features (Enable/Disable)</div>
+
+        <div style="display: flex; gap: 20px;">
+          <div style="flex: 0 0 200px;">
+            <div style="background: #f7f7f7; border-radius: 8px; overflow: hidden;">
+              <div style="padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
+                Klasinfo
+              </div>
+              <div style="padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
+                Toegang
+              </div>
+              <div style="padding: 12px 16px; background: #7f8962; color: white; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
+                Functies
+              </div>
+              <div style="padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer;">
+                Uiterlijk
+              </div>
+            </div>
+          </div>
+
+          <div style="flex: 1;">
+            <div style="padding-bottom: 16px; border-bottom: 2px solid #e4e4e4; margin-bottom: 20px;">
+              <h3 style="font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">Functies</h3>
+              <p style="font-size: 12px; color: #888;">Schakel tabs en functies in/uit</p>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-header">Tabs</div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Groepen</div>
+                  <div class="settings-label-desc">Student- en docentenlijsten</div>
+                </div>
+                <div class="toggle on"></div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Rooster</div>
+                  <div class="settings-label-desc">Klassenrooster en slotplanning</div>
+                </div>
+                <div class="toggle on"></div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Chat/Delen</div>
+                  <div class="settings-label-desc">Berichten en bestandsdeling</div>
+                </div>
+                <div class="toggle on"></div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Cijfers (Students)</div>
+                  <div class="settings-label-desc">Students zien hun eigen cijfers</div>
+                </div>
+                <div class="toggle on"></div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Analytics</div>
+                  <div class="settings-label-desc">Prestatieanalyse en trends</div>
+                </div>
+                <div class="toggle on"></div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Logs</div>
+                  <div class="settings-label-desc">Audit en activiteitenlogboek (docent)</div>
+                </div>
+                <div class="toggle on"></div>
+              </div>
+            </div>
+
+            <div class="settings-section" style="margin-top: 16px;">
+              <div class="settings-header">Functies</div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Aanwezigheid</div>
+                  <div class="settings-label-desc">Aanwezigheidsregistratie voor studenten</div>
+                </div>
+                <div class="toggle on"></div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Huiswerk</div>
+                  <div class="settings-label-desc">Toewijzing en tracking van huiswerk</div>
+                </div>
+                <div class="toggle on"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MOCKUP 4: Settings - Appearance Tab -->
+      <div class="mockup">
+        <div class="mockup-title">SETTINGS-4: Appearance</div>
+
+        <div style="display: flex; gap: 20px;">
+          <div style="flex: 0 0 200px;">
+            <div style="background: #f7f7f7; border-radius: 8px; overflow: hidden;">
+              <div style="padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
+                Klasinfo
+              </div>
+              <div style="padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
+                Toegang
+              </div>
+              <div style="padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
+                Functies
+              </div>
+              <div style="padding: 12px 16px; background: #7f8962; color: white; font-size: 13px; font-weight: 600; cursor: pointer;">
+                Uiterlijk
+              </div>
+            </div>
+          </div>
+
+          <div style="flex: 1;">
+            <div style="padding-bottom: 16px; border-bottom: 2px solid #e4e4e4; margin-bottom: 20px;">
+              <h3 style="font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">Uiterlijk</h3>
+              <p style="font-size: 12px; color: #888;">Aanpassingsopties voor het thema</p>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Thema</div>
+                </div>
+                <select>
+                  <option>Automatisch (OS-instelling)</option>
+                  <option>Licht</option>
+                  <option>Donker</option>
+                </select>
+              </div>
+              <div class="settings-item">
+                <div class="settings-label">
+                  <div class="settings-label-main">Kleurenschema</div>
+                </div>
+                <select>
+                  <option selected>Standaard (Sage Groen)</option>
+                  <option>Erfenis (Blauw)</option>
+                  <option>Zand (Warm tan)</option>
+                  <option>Oceaan (Blauw)</option>
+                  <option>Bos (Groen)</option>
+                  <option>Roos (Roze)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PART 2: LOGS TAB REDESIGN ========== -->
+    <div class="section">
+      <h1>LOGS TAB REDESIGN</h1>
+
+      <div class="info-box">
+        <strong>Analysis:</strong> Current logs tab has poor visual hierarchy, aggregation bugs (marking all students absent when one is), incorrect attribution (teachers marked as having homework), and dark colors making it hard to scan. Redesigned with light theme, proper filtering, activity-based color coding, and accurate data attribution.
+      </div>
+
+      <!-- MOCKUP 1: Logs - Main View -->
+      <div class="mockup">
+        <div class="mockup-title">LOGS-1: Activity Log (Full List)</div>
+
+        <div style="margin-bottom: 16px;">
+          <h3 style="font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;">Filter by type:</h3>
+          <div class="filter-bar">
+            <button class="filter-btn active">Alle</button>
+            <button class="filter-btn">Aanwezigheid</button>
+            <button class="filter-btn">Cijfers</button>
+            <button class="filter-btn">Berichten</button>
+            <button class="filter-btn">Students</button>
+            <button class="filter-btn">Instellingen</button>
+          </div>
+        </div>
+
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>Activiteit</th>
+              <th>Betrokken personen</th>
+              <th>Details</th>
+              <th>Tijd</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="logs-event-type attendance">Aanwezig</span></td>
+              <td><span class="logs-user">Sarah Chen, Muhammad Ali</span></td>
+              <td style="font-size: 11px; color: #666;">Gemarkeerd als aanwezig</td>
+              <td><span class="logs-time">Vandaag, 09:15</span></td>
+            </tr>
+            <tr>
+              <td><span class="logs-event-type attendance">Te laat</span></td>
+              <td><span class="logs-user">Emma Rodriguez</span></td>
+              <td style="font-size: 11px; color: #666;">Gemarkeerd als te laat · Opmerking: "Was aan het werk"</td>
+              <td><span class="logs-time">Vandaag, 08:55</span></td>
+            </tr>
+            <tr>
+              <td><span class="logs-event-type attendance">Afwezig</span></td>
+              <td><span class="logs-user">Lucas Park</span></td>
+              <td style="font-size: 11px; color: #666;">Gemarkeerd als afwezig</td>
+              <td><span class="logs-time">Vandaag, 08:30</span></td>
+            </tr>
+            <tr>
+              <td><span class="logs-event-type grade">Cijferlijst gepubliceerd</span></td>
+              <td><span class="logs-user">U (Teacher)</span></td>
+              <td style="font-size: 11px; color: #666;">"Toets Fotosynthese" · 24 cijfers gepubliceerd</td>
+              <td><span class="logs-time">Gisteren, 14:32</span></td>
+            </tr>
+            <tr>
+              <td><span class="logs-event-type grade">Cijfer gewijzigd</span></td>
+              <td><span class="logs-user">U (Teacher)</span></td>
+              <td style="font-size: 11px; color: #666;">Sarah Chen: 7.5 → 8.0 in "Huiswerk Evolutie"</td>
+              <td><span class="logs-time">Gisteren, 12:10</span></td>
+            </tr>
+            <tr>
+              <td><span class="logs-event-type message">Bericht verzonden</span></td>
+              <td><span class="logs-user">Emma Rodriguez</span></td>
+              <td style="font-size: 11px; color: #666;">In Chat/Share-tab</td>
+              <td><span class="logs-time">Gisteren, 11:45</span></td>
+            </tr>
+            <tr>
+              <td><span class="logs-event-type student">Student toegevoegd</span></td>
+              <td><span class="logs-user">U (Teacher)</span></td>
+              <td style="font-size: 11px; color: #666;">Marcus Johnson · Via code ABC123</td>
+              <td><span class="logs-time">2 dagen geleden, 09:20</span></td>
+            </tr>
+            <tr>
+              <td><span class="logs-event-type student">Student verwijderd</span></td>
+              <td><span class="logs-user">U (Teacher)</span></td>
+              <td style="font-size: 11px; color: #666;">Zhang Wei</td>
+              <td><span class="logs-time">3 dagen geleden, 14:05</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top: 16px; text-align: center;">
+          <button class="btn btn-secondary">Meer laden ↓</button>
+        </div>
+      </div>
+
+      <!-- MOCKUP 2: Logs - Attendance Detail -->
+      <div class="mockup">
+        <div class="mockup-title">LOGS-2: Attendance Report</div>
+
+        <div style="margin-bottom: 20px;">
+          <h3 style="font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;">Aanwezigheid - Vandaag (5 Mei 2025)</h3>
+          <p style="font-size: 12px; color: #888; margin-bottom: 16px;">Status per student · Gesorteerd naar afwezigen</p>
+
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Status</th>
+                <th>Opmerking (indien van toepassing)</th>
+                <th>Door</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Lucas Park</strong></td>
+                <td><span style="color: #d32f2f; font-weight: 600;">Afwezig</span></td>
+                <td style="font-size: 11px; color: #666;">Niet ingecheckt</td>
+                <td style="font-size: 11px; color: #888;">U</td>
+              </tr>
+              <tr>
+                <td><strong>Emma Rodriguez</strong></td>
+                <td><span style="color: #e8932e; font-weight: 600;">Te laat</span></td>
+                <td style="font-size: 11px; color: #666;">Was aan het werk</td>
+                <td style="font-size: 11px; color: #888;">U</td>
+              </tr>
+              <tr>
+                <td><strong>Sarah Chen</strong></td>
+                <td><span style="color: #7f8962; font-weight: 600;">Aanwezig</span></td>
+                <td style="font-size: 11px; color: #666;">—</td>
+                <td style="font-size: 11px; color: #888;">U</td>
+              </tr>
+              <tr>
+                <td><strong>Muhammad Ali</strong></td>
+                <td><span style="color: #7f8962; font-weight: 600;">Aanwezig</span></td>
+                <td style="font-size: 11px; color: #666;">—</td>
+                <td style="font-size: 11px; color: #888;">U</td>
+              </tr>
+              <tr>
+                <td><strong>Marcus Johnson</strong></td>
+                <td><span style="color: #7f8962; font-weight: 600;">Aanwezig</span></td>
+                <td style="font-size: 11px; color: #666;">—</td>
+                <td style="font-size: 11px; color: #888;">U</td>
+              </tr>
+              <tr>
+                <td><strong>Zhang Wei</strong></td>
+                <td><span style="color: #7f8962; font-weight: 600;">Aanwezig</span></td>
+                <td style="font-size: 11px; color: #666;">—</td>
+                <td style="font-size: 11px; color: #888;">U</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="margin-top: 16px; font-size: 11px; color: #888;">
+            Samenvatting: <strong style="color: #1a1a1a;">5 aanwezig</strong>, <strong style="color: #d32f2f;">1 afwezig</strong>, <strong style="color: #e8932e;">1 te laat</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- MOCKUP 3: Logs - Grades Detail -->
+      <div class="mockup">
+        <div class="mockup-title">LOGS-3: Grade Changes Audit</div>
+
+        <div style="margin-bottom: 20px;">
+          <h3 style="font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;">Cijferwijzigingen - "Toets Fotosynthese"</h3>
+          <p style="font-size: 12px; color: #888; margin-bottom: 16px;">Alle wijzigingen sinds publicatie</p>
+
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Original</th>
+                <th>Gewijzigd</th>
+                <th>Datum/Tijd</th>
+                <th>Door</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Sarah Chen</strong></td>
+                <td>7.5</td>
+                <td><strong>8.0</strong></td>
+                <td style="font-size: 11px; color: #888;">Gisteren, 12:10</td>
+                <td style="font-size: 11px; color: #888;">U</td>
+              </tr>
+              <tr>
+                <td><strong>Muhammad Ali</strong></td>
+                <td>6.0</td>
+                <td><strong>6.5</strong></td>
+                <td style="font-size: 11px; color: #888;">Gisteren, 10:30</td>
+                <td style="font-size: 11px; color: #888;">U</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="margin-top: 16px; padding: 12px; background: #f9faf6; border-left: 4px solid #7f8962; border-radius: 4px; font-size: 12px; color: #555;">
+            <strong>Status:</strong> Gepubliceerd op 8 Mei · 24 cijfers · Gemiddelde: 6.8
+          </div>
+        </div>
+      </div>
+
+      <!-- MOCKUP 4: Logs - Messages Activity -->
+      <div class="mockup">
+        <div class="mockup-title">LOGS-4: Chat Activity Timeline</div>
+
+        <div style="margin-bottom: 20px;">
+          <h3 style="font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;">Chat/Share Activiteit - Afgelopen 7 Dagen</h3>
+          <p style="font-size: 12px; color: #888; margin-bottom: 16px;">Timeline van berichten en interacties</p>
+
+          <div style="border-left: 2px solid #e4e4e4; padding-left: 16px;">
+            <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0;">
+              <div style="font-size: 12px; color: #1a1a1a; font-weight: 500;">
+                <span style="color: #7f8962; font-weight: 600;">08:30</span> — Emma Rodriguez stuurde bericht
+              </div>
+              <div style="font-size: 11px; color: #888; margin-top: 4px;">
+                "Hoe zit het met de huiswerkopdracht...?"
+              </div>
+            </div>
+            <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0;">
+              <div style="font-size: 12px; color: #1a1a1a; font-weight: 500;">
+                <span style="color: #7f8962; font-weight: 600;">08:45</span> — U (Teacher) reageerde
+              </div>
+              <div style="font-size: 11px; color: #888; margin-top: 4px;">
+                "Die is volgende week fällig. Zie je de gidsen?"
+              </div>
+            </div>
+            <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0;">
+              <div style="font-size: 12px; color: #1a1a1a; font-weight: 500;">
+                <span style="color: #7f8962; font-weight: 600;">Gisteren 14:22</span> — Sarah Chen stuurde bericht
+              </div>
+              <div style="font-size: 11px; color: #888; margin-top: 4px;">
+                "Bedankt voor je hulp bij hoofdstuk 4!"
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; font-size: 11px; color: #888;">
+            <strong>Samenvatting:</strong> 14 berichten in de afgelopen 7 dagen. 3 docenten, 24 students.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PART 3: STUDYSET AI STUDY PLANNER ========== -->
+    <div class="section">
+      <h1>STUDYSET - AI STUDENT STUDY PLANNER</h1>
+
+      <div class="info-box">
+        <strong>Concept:</strong> Students input their learning materials (notes, PDFs, class topics). AI analyzes content and generates a personalized study plan using flashcards, quizzes, guides, and analytics. Algorithm-driven adaptive learning with progress tracking.
+      </div>
+
+      <!-- STEP 1: Upload Learning Material -->
+      <h2>Step 1: Upload or Input Learning Material</h2>
+
+      <div class="step-container">
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">STUDYSET-1-A: Minimal Dialog</div>
+
+            <div style="padding: 20px; text-align: center;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 20px;">
+                Nieuw Studieset
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Naam</label>
+                <input class="form-input" type="text" placeholder="bijv. 'Hoofstuk 5: Fotosynthese'">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Beschrijving (optioneel)</label>
+                <input class="form-input" type="text" placeholder="Wat gaan students doen?">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Onderwerp</label>
+                <select class="form-input">
+                  <option>— Selecteer —</option>
+                  <option selected>Biologie</option>
+                  <option>Chemie</option>
+                </select>
+              </div>
+
+              <div style="display: flex; gap: 8px; margin-top: 24px;">
+                <button class="btn btn-secondary" style="flex: 1;">Annuleren</button>
+                <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">STUDYSET-1-B: Expanded with Help</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 20px;">
+                Nieuw Studieset
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Naam</label>
+                <input class="form-input" type="text" placeholder="bijv. 'Hoofstuk 5: Fotosynthese'">
+                <div style="font-size: 11px; color: #888; margin-top: 6px;">
+                  💡 Dit is wat students zien als tabblad. Maak het duidelijk en spannend.
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Beschrijving</label>
+                <textarea class="form-input" placeholder="Leer de stappen van fotosynthese..." style="height: 80px; resize: vertical;"></textarea>
+                <div style="font-size: 11px; color: #888; margin-top: 6px;">
+                  💡 Zichtbaar in de kaartweergave. Vertel students waarom dit belangrijk is.
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Onderwerp</label>
+                <select class="form-input">
+                  <option>— Selecteer —</option>
+                  <option selected>Biologie</option>
+                  <option>Chemie</option>
+                </select>
+                <div style="font-size: 11px; color: #888; margin-top: 6px;">
+                  💡 Gebruikt in cijfers en analytische rapporten.
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px; margin-top: 24px;">
+                <button class="btn btn-secondary" style="flex: 1;">Annuleren</button>
+                <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Choose Layout & Content Type -->
+      <h2>Step 2: Choose Layout & Add Content</h2>
+
+      <div class="step-container">
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">STUDYSET-2-A: Layout Selection</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
+                Inhoud toevoegen
+              </div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 20px;">
+                Stap 2 van 4: Kies hoe students dit gaan leren
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <label class="form-label" style="margin-bottom: 12px;">Layout stijl</label>
+                <div class="card-grid" style="grid-template-columns: 1fr 1fr;">
+                  <div class="card-option selected">
+                    <div class="card-icon">📝</div>
+                    <div style="font-weight: 500;">Flashcards</div>
+                    <div style="font-size: 10px; color: #888; margin-top: 4px;">Vraag-antwoord paren</div>
+                  </div>
+                  <div class="card-option">
+                    <div class="card-icon">✍️</div>
+                    <div style="font-weight: 500;">Zelftest</div>
+                    <div style="font-size: 10px; color: #888; margin-top: 4px;">Vragen met antwoorden</div>
+                  </div>
+                  <div class="card-option">
+                    <div class="card-icon">📚</div>
+                    <div style="font-weight: 500;">Gids</div>
+                    <div style="font-size: 10px; color: #888; margin-top: 4px;">Samenvattingstekst</div>
+                  </div>
+                  <div class="card-option">
+                    <div class="card-icon">🎥</div>
+                    <div style="font-weight: 500;">Gemengd</div>
+                    <div style="font-size: 10px; color: #888; margin-top: 4px;">Combinatie van alles</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <label class="form-label" style="margin-bottom: 12px;">Inhoudsbronnen</label>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  <button class="btn btn-secondary" style="width: 100%;">+ Handmatig toevoegen</button>
+                  <button class="btn btn-secondary" style="width: 100%;">+ Van bestand importeren</button>
+                  <button class="btn btn-secondary" style="width: 100%;">+ Van AI genereren</button>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px; margin-top: 24px;">
+                <button class="btn btn-secondary" style="flex: 1;">← Terug</button>
+                <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">STUDYSET-2-B: Content Added (Flashcards)</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 20px;">
+                Flashcards toevoegen
+              </div>
+
+              <div style="margin-bottom: 16px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; background: #fafafa;">
+                <div style="font-size: 11px; color: #888; font-weight: 500; margin-bottom: 8px;">FLASHCARD 1</div>
+                <div style="font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 10px;">
+                  Wat zijn de drie fasen van fotosynthese?
+                </div>
+                <div style="font-size: 12px; color: #666;">
+                  Licht reactie, Calvin-cyclus, Elektronentransportketens
+                </div>
+                <div style="text-align: right; margin-top: 10px;">
+                  <button style="font-size: 11px; color: #7f8962; background: none; border: none; cursor: pointer; text-decoration: underline;">
+                    Bewerken
+                  </button>
+                  <span style="color: #ddd;">|</span>
+                  <button style="font-size: 11px; color: #d32f2f; background: none; border: none; cursor: pointer; text-decoration: underline;">
+                    Verwijderen
+                  </button>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 16px; padding: 12px; border: 1px solid #e4e4e4; border-radius: 6px;">
+                <div style="font-size: 11px; color: #888; font-weight: 500; margin-bottom: 8px;">FLASHCARD 2</div>
+                <div style="font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 10px;">
+                  Beschrijf de lichtsynthese reactie
+                </div>
+                <div style="font-size: 12px; color: #666;">
+                  Water en licht worden omgezet in ...
+                </div>
+              </div>
+
+              <button class="btn btn-secondary" style="width: 100%; margin-bottom: 16px;">+ Voeg flashcard toe</button>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" style="flex: 1;">← Terug</button>
+                <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Set Learning Path & Options -->
+      <h2>Step 3: Set Learning Path & Options</h2>
+
+      <div class="step-container">
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">STUDYSET-3-A: Learning Flow Options</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
+                Leerpad instellen
+              </div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 20px;">
+                Stap 3 van 4: Hoe gaan students dit gebruiken?
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <label class="form-label" style="margin-bottom: 12px;">Leervolgordes</label>
+                <div class="checkbox-group">
+                  <div class="checkbox-item">
+                    <input type="checkbox" id="c1" style="width: 16px; height: 16px; cursor: pointer;">
+                    <label for="c1" style="cursor: pointer;">Opeenvolgend (volgende → alleen beschikbaar na vorige voltooid)</label>
+                  </div>
+                  <div class="checkbox-item">
+                    <input type="checkbox" id="c2" style="width: 16px; height: 16px; cursor: pointer;" checked>
+                    <label for="c2" style="cursor: pointer;">Vrij (students kunnen in willekeurige volgorde gaan)</label>
+                  </div>
+                  <div class="checkbox-item">
+                    <input type="checkbox" id="c3" style="width: 16px; height: 16px; cursor: pointer;">
+                    <label for="c3" style="cursor: pointer;">Gerandomiseerd (items in willekeurige volgorde tonen)</label>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <label class="form-label" style="margin-bottom: 12px;">Doelstellingen</label>
+                <div class="form-group">
+                  <input class="form-input" type="text" placeholder="bijv. '80% juist antwoorden'">
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="c4" style="width: 16px; height: 16px; cursor: pointer;" checked>
+                  <label for="c4" style="cursor: pointer;">Toon voortgang balk</label>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <label class="form-label" style="margin-bottom: 12px;">Feedback</label>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="c5" style="width: 16px; height: 16px; cursor: pointer;" checked>
+                  <label for="c5" style="cursor: pointer;">Toon antwoord direct na poging</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="c6" style="width: 16px; height: 16px; cursor: pointer;">
+                  <label for="c6" style="cursor: pointer;">Verberg antwoorden tot einde</label>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" style="flex: 1;">← Terug</button>
+                <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">STUDYSET-3-B: Advanced Options</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
+                Geavanceerde instellingen
+              </div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 20px;">
+                Optioneel: meer controle over student ervaring
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <label class="form-label" style="margin-bottom: 12px;">Beschikbaarheid</label>
+                <div class="form-group">
+                  <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px;">Beschikbaar tot (optioneel)</label>
+                  <input class="form-input" type="date">
+                </div>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <label class="form-label" style="margin-bottom: 12px;">Monitoring</label>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="c7" style="width: 16px; height: 16px; cursor: pointer;" checked>
+                  <label for="c7" style="cursor: pointer;">Track student voortgang & tijd besteed</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="c8" style="width: 16px; height: 16px; cursor: pointer;">
+                  <label for="c8" style="cursor: pointer;">Notify mij als students worstelen</label>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <label class="form-label" style="margin-bottom: 12px;">Grading</label>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="c9" style="width: 16px; height: 16px; cursor: pointer;">
+                  <label for="c9" style="cursor: pointer;">Automatisch cijferen op basis van prestatie</label>
+                </div>
+                <div style="margin-top: 8px; margin-left: 24px;">
+                  <label style="font-size: 12px; color: #666;">Minimaal percentage voor "pass":</label>
+                  <input class="form-input" type="number" min="0" max="100" value="75" style="width: 80px; margin-top: 4px;">
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" style="flex: 1;">← Terug</button>
+                <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: Review & Publish -->
+      <h2>Step 4: Review & Publish</h2>
+
+      <div class="step-container">
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">STUDYSET-4-A: Review Summary</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
+                Controleren & publiceren
+              </div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 20px;">
+                Stap 4 van 4: Alles klaar?
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <div style="background: #f9faf6; border-radius: 6px; padding: 16px;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <div>
+                      <div style="font-size: 13px; font-weight: 600; color: #1a1a1a;">Hoofdstuk 5: Fotosynthese</div>
+                      <div style="font-size: 11px; color: #888; margin-top: 4px;">Biologie</div>
+                    </div>
+                    <button class="btn btn-secondary" style="font-size: 11px;">✎ Bewerk</button>
+                  </div>
+                  <div style="font-size: 12px; color: #666; margin-bottom: 12px;">
+                    Leer de stappen van fotosynthese...
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 11px;">
+                    <div>
+                      <div style="color: #888;">Type</div>
+                      <div style="color: #1a1a1a; font-weight: 500;">Flashcards</div>
+                    </div>
+                    <div>
+                      <div style="color: #888;">Inhoud</div>
+                      <div style="color: #1a1a1a; font-weight: 500;">2 Flashcards</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <h4 style="font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;">Instellingen</h4>
+                <table style="width: 100%; font-size: 11px;">
+                  <tr style="border-bottom: 1px solid #f0f0f0;">
+                    <td style="padding: 6px 0; color: #888;">Volgordes</td>
+                    <td style="text-align: right; color: #1a1a1a;">Vrij</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #f0f0f0;">
+                    <td style="padding: 6px 0; color: #888;">Feedback</td>
+                    <td style="text-align: right; color: #1a1a1a;">Direct</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; color: #888;">Voortgang bijhouden</td>
+                    <td style="text-align: right; color: #1a1a1a;">Ja</td>
+                  </tr>
+                </table>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <div class="checkbox-item">
+                  <input type="checkbox" id="c10" style="width: 16px; height: 16px; cursor: pointer;" checked>
+                  <label for="c10" style="cursor: pointer;">Toewijzen aan mijn hele klas (3A Biologie)</label>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" style="flex: 1;">← Terug</button>
+                <button class="btn btn-primary" style="flex: 1;">✓ Publiceren</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">STUDYSET-4-B: Post-Publish (Success State)</div>
+
+            <div style="padding: 20px; text-align: center;">
+              <div style="font-size: 32px; margin-bottom: 16px;">✓</div>
+              <div style="font-size: 18px; font-weight: 600; color: #7f8962; margin-bottom: 8px;">
+                Studieset gepubliceerd!
+              </div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 24px;">
+                "Hoofdstuk 5: Fotosynthese" is nu live voor 24 students
+              </div>
+
+              <div style="background: #f9faf6; border-radius: 6px; padding: 16px; margin-bottom: 24px; text-align: left;">
+                <div style="font-size: 12px; font-weight: 500; color: #1a1a1a; margin-bottom: 12px;">Wat nu?</div>
+                <ul style="font-size: 12px; color: #666; padding-left: 20px; margin-bottom: 0;">
+                  <li>Students kunnen beginnen zodra zij het zien</li>
+                  <li>Volg hun voortgang in de Analytics tab</li>
+                  <li>Je kunt dit op elk moment bewerken of verwijderen</li>
+                </ul>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" style="flex: 1;">← Ga terug naar klas</button>
+                <button class="btn btn-primary" style="flex: 1;">Maak nog een</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PART 4: TYPOGRAPHY & SPACING SYSTEM ========== -->
+    <div class="section">
+      <h1>TYPOGRAPHY & SPACING SYSTEM</h1>
+
+      <div class="info-box">
+        <strong>Design System:</strong> This defines the complete typography hierarchy and spacing baseline to ensure consistency across the entire application. All font sizes, weights, and spacing should reference this system.
+      </div>
+
+      <!-- Typography Categories -->
+      <h2>Text Hierarchy & Font Families</h2>
+
+      <div class="typo-category">
+        <div class="typo-category-name">H1 - Page Titles (Extra Large)</div>
+
+        <div class="typo-variant">
+          <div class="typo-sample" style="font-size: 32px; font-weight: 600; line-height: 1.3; color: #1a1a1a;">
+            Voortgang Analytics
+          </div>
+          <div class="typo-specs">
+            Font: IBM Plex Sans · Size: 32px · Weight: 600 (semibold) · Color: #1a1a1a
+          </div>
+          <div style="font-size: 11px; color: #888; margin-top: 8px;">
+            Use for: Top-level page titles (Dashboard, Class, Grades)
+          </div>
+        </div>
+      </div>
+
+      <div class="typo-category">
+        <div class="typo-category-name">H2 - Section Titles (Large)</div>
+
+        <div class="typo-variant">
+          <div class="typo-sample" style="font-size: 20px; font-weight: 600; line-height: 1.35; color: #1a1a1a;">
+            Dagelijkse Planning
+          </div>
+          <div class="typo-specs">
+            Font: IBM Plex Sans · Size: 20px · Weight: 600 (semibold) · Color: #1a1a1a
+          </div>
+          <div style="font-size: 11px; color: #888; margin-top: 8px;">
+            Use for: Major section headings within pages (Today's Plan, Recent Activity)
+          </div>
+        </div>
+      </div>
+
+      <div class="typo-category">
+        <div class="typo-category-name">H3 - Subsection Headers (Medium)</div>
+
+        <div class="typo-variant">
+          <div class="typo-sample" style="font-size: 16px; font-weight: 600; line-height: 1.4; color: #333;">
+            Docenten in deze klas
+          </div>
+          <div class="typo-specs">
+            Font: IBM Plex Sans · Size: 16px · Weight: 600 (semibold) · Color: #333
+          </div>
+          <div style="font-size: 11px; color: #888; margin-top: 8px;">
+            Use for: Subsection titles, list group headers
+          </div>
+        </div>
+      </div>
+
+      <div class="typo-category">
+        <div class="typo-category-name">Body - Regular Text</div>
+
+        <div class="typo-variant">
+          <div class="typo-sample" style="font-size: 13px; font-weight: 400; line-height: 1.5; color: #555;">
+            Dit is standaard lichaamstekst voor normale inhoud. Wordt gebruikt voor paragrafen, beschrijvingen en alle doorlopende tekst.
+          </div>
+          <div class="typo-specs">
+            Font: IBM Plex Sans · Size: 13px · Weight: 400 (regular) · Color: #555 · Line-height: 1.5
+          </div>
+          <div style="font-size: 11px; color: #888; margin-top: 8px;">
+            Use for: Paragraphs, descriptions, default text content
+          </div>
+        </div>
+      </div>
+
+      <div class="typo-category">
+        <div class="typo-category-name">Label - Form & UI Labels</div>
+
+        <div class="typo-variant">
+          <div class="typo-sample" style="font-size: 12px; font-weight: 500; line-height: 1.4; color: #1a1a1a;">
+            Klasnaam
+          </div>
+          <div class="typo-specs">
+            Font: IBM Plex Sans · Size: 12px · Weight: 500 (medium) · Color: #1a1a1a
+          </div>
+          <div style="font-size: 11px; color: #888; margin-top: 8px;">
+            Use for: Form labels, button text, field labels
+          </div>
+        </div>
+      </div>
+
+      <div class="typo-category">
+        <div class="typo-category-name">Small - Secondary / Metadata</div>
+
+        <div class="typo-variant">
+          <div class="typo-sample" style="font-size: 11px; font-weight: 400; line-height: 1.4; color: #888;">
+            Hoe students uw klas zien
+          </div>
+          <div class="typo-specs">
+            Font: IBM Plex Sans · Size: 11px · Weight: 400 (regular) · Color: #888
+          </div>
+          <div style="font-size: 11px; color: #888; margin-top: 8px;">
+            Use for: Descriptions, helper text, secondary information
+          </div>
+        </div>
+      </div>
+
+      <div class="typo-category">
+        <div class="typo-category-name">Tiny - Table Headers / Captions</div>
+
+        <div class="typo-variant">
+          <div class="typo-sample" style="font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #888;">
+            Activiteit
+          </div>
+          <div class="typo-specs">
+            Font: IBM Plex Sans · Size: 10px · Weight: 700 (bold) · Letter-spacing: 0.5px · Text-transform: uppercase
+          </div>
+          <div style="font-size: 11px; color: #888; margin-top: 8px;">
+            Use for: Table column headers, uppercase labels, micro-UI text
+          </div>
+        </div>
+      </div>
+
+      <!-- Spacing System -->
+      <h2>Spacing Baseline (4px Grid)</h2>
+
+      <div class="mockup">
+        <div class="mockup-title">SPACING SYSTEM: Core Unit = 4px</div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+          <!-- Left column: spacing units -->
+          <div>
+            <h4 style="font-size: 12px; font-weight: 700; color: #7f8962; text-transform: uppercase; margin-bottom: 16px;">
+              Spacing Scale
+            </h4>
+
+            <table style="width: 100%; font-size: 11px;">
+              <tr style="border-bottom: 1px solid #f0f0f0;">
+                <td style="padding: 8px 0; color: #888;">xs</td>
+                <td style="text-align: right; color: #1a1a1a; font-weight: 600;">4px</td>
+                <td style="text-align: right; color: #888;">(1 unit)</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f0f0f0;">
+                <td style="padding: 8px 0; color: #888;">sm</td>
+                <td style="text-align: right; color: #1a1a1a; font-weight: 600;">8px</td>
+                <td style="text-align: right; color: #888;">(2 units)</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f0f0f0;">
+                <td style="padding: 8px 0; color: #888;">md</td>
+                <td style="text-align: right; color: #1a1a1a; font-weight: 600;">12px</td>
+                <td style="text-align: right; color: #888;">(3 units)</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f0f0f0;">
+                <td style="padding: 8px 0; color: #888;">lg</td>
+                <td style="text-align: right; color: #1a1a1a; font-weight: 600;">16px</td>
+                <td style="text-align: right; color: #888;">(4 units)</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f0f0f0;">
+                <td style="padding: 8px 0; color: #888;">xl</td>
+                <td style="text-align: right; color: #1a1a1a; font-weight: 600;">24px</td>
+                <td style="text-align: right; color: #888;">(6 units)</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #888;">2xl</td>
+                <td style="text-align: right; color: #1a1a1a; font-weight: 600;">32px</td>
+                <td style="text-align: right; color: #888;">(8 units)</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Right column: visual examples -->
+          <div>
+            <h4 style="font-size: 12px; font-weight: 700; color: #7f8962; text-transform: uppercase; margin-bottom: 16px;">
+              Application Examples
+            </h4>
+
+            <div style="margin-bottom: 16px;">
+              <div style="font-size: 11px; color: #888; font-weight: 600; margin-bottom: 4px;">xs / sm (4–8px)</div>
+              <div style="font-size: 10px; color: #666;">• Icon spacing inside buttons</div>
+              <div style="font-size: 10px; color: #666;">• Gap between inline labels</div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <div style="font-size: 11px; color: #888; font-weight: 600; margin-bottom: 4px;">md (12px)</div>
+              <div style="font-size: 10px; color: #666;">• Form field padding</div>
+              <div style="font-size: 10px; color: #666;">• List item spacing</div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <div style="font-size: 11px; color: #888; font-weight: 600; margin-bottom: 4px;">lg (16px)</div>
+              <div style="font-size: 10px; color: #666;">• Page padding (left/right)</div>
+              <div style="font-size: 10px; color: #666;">• Card internal padding</div>
+              <div style="font-size: 10px; color: #666;">• Section gap</div>
+            </div>
+
+            <div>
+              <div style="font-size: 11px; color: #888; font-weight: 600; margin-bottom: 4px;">xl / 2xl (24–32px)</div>
+              <div style="font-size: 10px; color: #666;">• Major section breaks</div>
+              <div style="font-size: 10px; color: #666;">• Bottom margin on headings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page Layout Grid -->
+      <div class="mockup">
+        <div class="mockup-title">PAGE LAYOUT: Sidebar + Content Grid</div>
+
+        <div style="display: flex; gap: 20px; align-items: flex-start;">
+          <div style="flex: 0 0 220px;">
+            <div style="background: #f0f0f0; border-radius: 6px; padding: 12px; text-align: center;">
+              <div style="font-size: 11px; color: #666; font-weight: 600; margin-bottom: 8px;">Sidebar</div>
+              <div style="background: white; padding: 16px; border-radius: 4px; min-height: 100px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 11px;">
+                240px wide (fixed)
+              </div>
+            </div>
+          </div>
+
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
+            <div style="background: white; border: 1px solid #e4e4e4; border-radius: 6px; padding: 16px;">
+              <div style="font-size: 11px; color: #888; font-weight: 600; margin-bottom: 12px;">← 16px padding (lg) →</div>
+              <div style="display: flex; gap: 16px;">
+                <div style="flex: 1; background: #f7f7f7; padding: 12px; border-radius: 4px; font-size: 11px; color: #999;">
+                  Main Content Area
+                </div>
+                <div style="flex: 0 0 200px; background: #f7f7f7; padding: 12px; border-radius: 4px; font-size: 11px; color: #999;">
+                  Optional Sidebar (300px max)
+                </div>
+              </div>
+            </div>
+
+            <div style="background: white; border: 1px solid #e4e4e4; border-radius: 6px; padding: 16px;">
+              <div style="font-size: 11px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;">Key Spacing Rules:</div>
+              <ul style="font-size: 11px; color: #666; margin: 0; padding-left: 16px;">
+                <li><strong>Page left/right:</strong> 16px minimum (–page-inline-padding: 16px)</li>
+                <li><strong>Between major sections:</strong> 24px+ (gap-y-6 in Tailwind)</li>
+                <li><strong>Between list items:</strong> 12px (gap-y-3)</li>
+                <li><strong>Card padding (internal):</strong> 16px (p-4)</li>
+                <li><strong>Headers aligned with content:</strong> Left edge at X+16px (not floating)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Color Palette & Button Styles -->
+      <h2>Color System & Components</h2>
+
+      <div class="mockup">
+        <div class="mockup-title">COLOR PALETTE: Semantic Colors</div>
+
+        <div class="grid-2">
+          <div>
+            <div style="font-size: 12px; font-weight: 600; color: #7f8962; margin-bottom: 12px;">PRIMARY (Action Buttons)</div>
+            <div class="color-swatch" style="background: #7f8962;"></div>
+            <div style="font-size: 11px; color: #888; margin-top: 8px;">
+              #7f8962 · hsl(75, 17%, 46%) · Sage Green
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size: 12px; font-weight: 600; color: #d32f2f; margin-bottom: 12px;">DESTRUCTIVE (Delete/Remove)</div>
+            <div class="color-swatch" style="background: #d32f2f;"></div>
+            <div style="font-size: 11px; color: #888; margin-top: 8px;">
+              #d32f2f · Deep Red
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;">TEXT (Primary)</div>
+            <div class="color-swatch" style="background: #1a1a1a;"></div>
+            <div style="font-size: 11px; color: #888; margin-top: 8px;">
+              #1a1a1a · Almost Black
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size: 12px; font-weight: 600; color: #888; margin-bottom: 12px;">TEXT (Secondary)</div>
+            <div class="color-swatch" style="background: #888;"></div>
+            <div style="font-size: 11px; color: #888; margin-top: 8px;">
+              #888 · Neutral Gray
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size: 12px; font-weight: 600; color: #999; margin-bottom: 12px;">BACKGROUND (Pages)</div>
+            <div class="color-swatch" style="background: #f2f2f2;"></div>
+            <div style="font-size: 11px; color: #888; margin-top: 8px;">
+              #f2f2f2 · Light Gray
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size: 12px; font-weight: 600; color: #999; margin-bottom: 12px;">SURFACE (Cards)</div>
+            <div class="color-swatch" style="background: #ffffff; border: 1px solid #e4e4e4;"></div>
+            <div style="font-size: 11px; color: #888; margin-top: 8px;">
+              #ffffff · White
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Button Component Specs -->
+      <div class="mockup">
+        <div class="mockup-title">BUTTON SPECIFICATIONS</div>
+
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <!-- Primary Button -->
+          <div style="border: 1px solid #e4e4e4; border-radius: 6px; padding: 16px;">
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #7f8962; font-weight: 700; margin-bottom: 12px;">
+              Primary Button
+            </div>
+            <button class="btn btn-primary" style="margin-bottom: 12px;">Volgende →</button>
+            <div style="font-size: 11px; color: #666;">
+              Background: #7f8962 · Foreground: white · Padding: 8px 14px · Border-radius: 6px
+            </div>
+          </div>
+
+          <!-- Secondary Button -->
+          <div style="border: 1px solid #e4e4e4; border-radius: 6px; padding: 16px;">
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; font-weight: 700; margin-bottom: 12px;">
+              Secondary Button
+            </div>
+            <button class="btn btn-secondary" style="margin-bottom: 12px;">Annuleren</button>
+            <div style="font-size: 11px; color: #666;">
+              Background: #f0f0f0 · Foreground: #555 · Border: 1px #ddd · Padding: 8px 14px
+            </div>
+          </div>
+
+          <!-- Danger Button -->
+          <div style="border: 1px solid #e4e4e4; border-radius: 6px; padding: 16px;">
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #d32f2f; font-weight: 700; margin-bottom: 12px;">
+              Danger Button
+            </div>
+            <button class="btn btn-danger" style="margin-bottom: 12px;">Verwijderen</button>
+            <div style="font-size: 11px; color: #666;">
+              Background: #fee · Foreground: #d32f2f · Border: 1px #fcc · Padding: 8px 14px
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PART 4: AI STUDY PLANNER FOR STUDENTS ========== -->
+    <div class="section">
+      <h1>AI STUDY PLANNER - Student Self-Directed Learning</h1>
+
+      <div class="info-box">
+        <strong>Concept:</strong> Students create personal study plans by uploading their own learning materials (notes, PDFs, textbook chapters, class topics). AI analyzes content and generates customized study resources: flashcards by topic, adaptive quizzes with difficulty scaling, study guides highlighting weak areas, and personalized timelines. System tracks progress, identifies struggle areas, and adapts content difficulty in real-time.
+      </div>
+
+      <!-- STEP 1: Upload Learning Materials -->
+      <h2>Step 1: Upload or Input Learning Materials</h2>
+
+      <div class="step-container">
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">AIPLANNER-1-A: Quick Upload Dialog</div>
+
+            <div style="padding: 20px; text-align: center;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 20px;">
+                Maak een studieset
+              </div>
+
+              <div style="text-align: center; margin-bottom: 24px;">
+                <div style="font-size: 14px; color: #7f8962; font-weight: 600; margin-bottom: 12px;">
+                  📚 Upload je leerstof
+                </div>
+                <p style="font-size: 12px; color: #888; margin-bottom: 16px;">
+                  Plak je aantekeningen, upload een PDF, of kies uit je klassesstof. AI genereert een studiePlan.
+                </p>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Studieset naam</label>
+                <input class="form-input" type="text" placeholder="bijv. 'Examen voorbereiding Biologie'">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Onderwerp</label>
+                <select class="form-input">
+                  <option>— Selecteer —</option>
+                  <option selected>Biologie</option>
+                  <option>Wiskunde</option>
+                  <option>Engels</option>
+                </select>
+              </div>
+
+              <div style="display: flex; gap: 8px; margin-top: 24px;">
+                <button class="btn btn-secondary" style="flex: 1;">Annuleren</button>
+                <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">AIPLANNER-1-B: Material Input Options</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
+                Voeg leerstof toe
+              </div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 20px;">
+                Stap 1 van 4: Hoe wil je je materiaal toevoegen?
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <label class="form-label" style="margin-bottom: 12px;">Materiaal bron</label>
+                <div class="card-grid" style="grid-template-columns: 1fr;">
+                  <div class="card-option selected">
+                    <div class="card-icon">📝</div>
+                    <div style="font-weight: 500;">Tekst plakken</div>
+                    <div style="font-size: 10px; color: #888; margin-top: 4px;">Plak je aantekeningen direct hier</div>
+                  </div>
+                  <div class="card-option">
+                    <div class="card-icon">📄</div>
+                    <div style="font-weight: 500;">PDF uploaden</div>
+                    <div style="font-size: 10px; color: #888; margin-top: 4px;">Boeken, handouts, slides</div>
+                  </div>
+                  <div class="card-option">
+                    <div class="card-icon">📚</div>
+                    <div style="font-weight: 500;">Klassstof selecteren</div>
+                    <div style="font-size: 10px; color: #888; margin-top: 4px;">Onderwerpen van je klasse</div>
+                  </div>
+                  <div class="card-option">
+                    <div class="card-icon">🌐</div>
+                    <div style="font-weight: 500;">Link delen</div>
+                    <div style="font-size: 10px; color: #888; margin-top: 4px;">Website of artikel URL</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 20px; padding: 12px; background: #f9faf6; border-radius: 6px; border-left: 4px solid #7f8962;">
+                <div style="font-size: 11px; color: #666;">
+                  💡 Hoe meer detail, hoe beter de AI plan kan genereren. Includeert de volledige noten of relevante hoofdstukken.
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" style="flex: 1;">← Terug</button>
+                <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">AIPLANNER-1-C: Paste Content Area</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
+                Plak je aantekeningen
+              </div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 20px;">
+                Stap 1 van 4: Kopieer alles wat je moet leren
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Leerstof inhoud</label>
+                <textarea class="form-input" placeholder="Plak je volledige aantekeningen, samenvatting of boektekst hier..." style="height: 200px; resize: vertical; font-family: 'Courier New', monospace;"></textarea>
+                <div style="font-size: 11px; color: #888; margin-top: 6px;">
+                  Minimaal 200 karakters. AI analyseert dit om belangrijke onderwerpen te identificeren.
+                </div>
+              </div>
+
+              <div style="margin-bottom: 20px; padding: 12px; background: #f5f5f5; border-radius: 6px;">
+                <div style="font-size: 11px; color: #666; font-weight: 500; margin-bottom: 8px;">
+                  ✓ Goed: Volledige samenvattingen, gestructureerde aantekeningen, tekstboekparagrafen
+                </div>
+                <div style="font-size: 11px; color: #666;">
+                  ✗ Niet optimaal: Losse woorden, zeer korte fragmenten
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" style="flex: 1;">← Terug</button>
+                <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: AI Analysis & Topic Extraction -->
+      <h2>Step 2: AI Analyzes Content</h2>
+
+      <div class="step-container">
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">AIPLANNER-2-A: Analysis In Progress</div>
+
+            <div style="padding: 40px; text-align: center;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
+                AI analyseert je materiaal
+              </div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 32px;">
+                Stap 2 van 4: Even wachten terwijl we belangrijke onderwerpen identificeren...
+              </div>
+
+              <div style="display: flex; justify-content: center; margin-bottom: 24px;">
+                <div style="width: 40px; height: 40px; border: 3px solid #ddd; border-top-color: #7f8962; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <div style="font-size: 12px; color: #666; margin-bottom: 8px;">📍 Stappen:</div>
+                <div style="font-size: 11px; color: #888; text-align: left; display: inline-block;">
+                  <div style="margin-bottom: 6px;">✓ Inhoud gescand</div>
+                  <div style="margin-bottom: 6px; color: #7f8962;">⟳ Onderwerpen herkennen...</div>
+                  <div style="color: #ccc;">○ Moeilijkheidsgraad bepalen</div>
+                  <div style="color: #ccc;">○ Plan genereren</div>
+                </div>
+              </div>
+
+              <div style="font-size: 10px; color: #999;">
+                Dit duurt meestal 30-60 seconden
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">AIPLANNER-2-B: Topics Identified</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
+                Onderwerpen gevonden
+              </div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 20px;">
+                AI heeft 7 kernthema's in je materiaal geïdentificeerd
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <div style="margin-bottom: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; background: #fafafa;">
+                  <div style="font-weight: 600; font-size: 12px; color: #1a1a1a; margin-bottom: 4px;">Fotosynthese</div>
+                  <div style="font-size: 11px; color: #888;">gevonden in: 3 secties · Moeilijkheid: Gemiddeld</div>
+                </div>
+                <div style="margin-bottom: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
+                  <div style="font-weight: 600; font-size: 12px; color: #1a1a1a; margin-bottom: 4px;">Celrespiratie</div>
+                  <div style="font-size: 11px; color: #888;">gevonden in: 2 secties · Moeilijkheid: Moeilijk</div>
+                </div>
+                <div style="margin-bottom: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
+                  <div style="font-weight: 600; font-size: 12px; color: #1a1a1a; margin-bottom: 4px;">ATP en Energie</div>
+                  <div style="font-size: 11px; color: #888;">gevonden in: 4 secties · Moeilijkheid: Gemiddeld</div>
+                </div>
+              </div>
+
+              <div style="padding: 12px; background: #f0f8f0; border-radius: 6px; border-left: 4px solid #7f8962; margin-bottom: 20px;">
+                <div style="font-size: 11px; color: #333;">
+                  ✓ Goed! De AI heeft alle belangrijke onderwerpen gevonden. Je kunt aanpassingen maken of doorgaan.
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" style="flex: 1;">Bewerk onderwerpen</button>
+                <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Study Plan Preview -->
+      <h2>Step 3: AI-Generated Study Plan</h2>
+
+      <div class="step-container">
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">AIPLANNER-3-A: Study Plan Overview</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
+                Jouw persoonlijke studieplan
+              </div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 20px;">
+                Stap 3 van 4: AI heeft een 7-daags plan gemaakt. Maak aanpassingen indien nodig.
+              </div>
+
+              <div style="margin-bottom: 16px; padding: 12px; background: #f9faf6; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <div style="font-weight: 600; font-size: 12px;">Totaal studietijd</div>
+                  <div style="font-weight: 600; font-size: 12px; color: #7f8962;">7 uur</div>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <div style="font-size: 11px; color: #888;">Aantal onderwerpen</div>
+                  <div style="font-size: 11px; color: #666;">7 onderwerpen</div>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <div style="font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;">
+                  📅 Weekplanning
+                </div>
+                <div style="margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                  <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">Dag 1 (Maandag)</div>
+                  <div style="font-size: 10px; color: #888; margin-top: 4px;">Fotosynthese - Flashcards · 45 min</div>
+                </div>
+                <div style="margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                  <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">Dag 2 (Dinsdag)</div>
+                  <div style="font-size: 10px; color: #888; margin-top: 4px;">Fotosynthese - Quiz · 30 min</div>
+                </div>
+                <div style="margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                  <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">Dag 3 (Woensdag)</div>
+                  <div style="font-size: 10px; color: #888; margin-top: 4px;">Celrespiratie - Flashcards · 1 uur</div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" style="flex: 1;">Aanpassen</button>
+                <button class="btn btn-primary" style="flex: 1;">Plan starten →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">AIPLANNER-3-B: Study Content Types</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
+                Studie inhoud
+              </div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 20px;">
+                Wat zul je gebruiken om te studeren?
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <div style="margin-bottom: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; background: #fafafa;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <div style="font-weight: 600; font-size: 12px; color: #1a1a1a;">📇 Flashcards</div>
+                      <div style="font-size: 10px; color: #888; margin-top: 2px;">47 kaarten gegenereerd</div>
+                    </div>
+                    <span style="font-size: 11px; background: #7f8962; color: white; padding: 4px 8px; border-radius: 4px;">✓</span>
+                  </div>
+                </div>
+                <div style="margin-bottom: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <div style="font-weight: 600; font-size: 12px; color: #1a1a1a;">❓ Quizzen</div>
+                      <div style="font-size: 10px; color: #888; margin-top: 2px;">28 vragen (makkelijk tot moeilijk)</div>
+                    </div>
+                    <span style="font-size: 11px; background: #7f8962; color: white; padding: 4px 8px; border-radius: 4px;">✓</span>
+                  </div>
+                </div>
+                <div style="margin-bottom: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <div style="font-weight: 600; font-size: 12px; color: #1a1a1a;">📚 Studiegids</div>
+                      <div style="font-size: 10px; color: #888; margin-top: 2px;">Kernconcepten samengevat</div>
+                    </div>
+                    <span style="font-size: 11px; background: #7f8962; color: white; padding: 4px 8px; border-radius: 4px;">✓</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" style="flex: 1;">Aanpassen</button>
+                <button class="btn btn-primary" style="flex: 1;">Plan starten →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: Study Session -->
+      <h2>Step 4: Active Study Session</h2>
+
+      <div class="step-container">
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">AIPLANNER-4-A: Flashcard Study Mode</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 12px; font-weight: 600; color: #7f8962; margin-bottom: 12px;">
+                FLASHCARDS · Fotosynthese
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <span style="font-size: 11px; color: #888;">Kaart 3 van 12</span>
+                  <div style="width: 100px; height: 4px; background: #ddd; border-radius: 2px; position: relative;">
+                    <div style="position: absolute; left: 0; top: 0; width: 25%; height: 100%; background: #7f8962; border-radius: 2px;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 24px; padding: 24px; border: 2px solid #e4e4e4; border-radius: 8px; background: white; text-align: center; min-height: 150px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <div style="font-size: 11px; color: #888; margin-bottom: 12px;">VRAAG</div>
+                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">
+                  Wat zijn de twee fases van fotosynthese?
+                </div>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 8px;">Antwoord tonen</button>
+              </div>
+
+              <div style="display: flex; gap: 6px; margin-bottom: 16px;">
+                <button class="btn btn-secondary" style="flex: 1; font-size: 11px;">← Vorige</button>
+                <button style="flex: 1; padding: 8px 14px; background: #fff4e6; border: 1px solid #ddd; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer;">Lastig 😤</button>
+                <button style="flex: 1; padding: 8px 14px; background: #e6f8e6; border: 1px solid #ddd; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer;">Goed 👍</button>
+                <button class="btn btn-secondary" style="flex: 1; font-size: 11px;">Volgende →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">AIPLANNER-4-B: Adaptive Quiz</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 12px; font-weight: 600; color: #7f8962; margin-bottom: 12px;">
+                QUIZ · Celrespiratie (Moeilijkheid: Adaptief)
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 11px; color: #888;">Vraag 5 van 10</span>
+                  <span style="font-size: 11px; color: #666;">Huidige score: 4/4 ✓</span>
+                </div>
+                <div style="width: 100%; height: 4px; background: #ddd; border-radius: 2px;">
+                  <div style="width: 50%; height: 100%; background: #7f8962; border-radius: 2px;"></div>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 20px; padding: 16px; border: 1px solid #e4e4e4; border-radius: 6px;">
+                <div style="font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;">
+                  Wat is de primaire functie van mitochondriën in celrespiratie?
+                </div>
+                <div style="space-y: 8px;">
+                  <div style="margin-bottom: 8px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                    <input type="radio" name="q5"> ATP produceren uit glucose
+                  </div>
+                  <div style="margin-bottom: 8px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: #e6f8e6; border-color: #7f8962;">
+                    <input type="radio" name="q5" checked> ATP produceren uit pyruvaat
+                  </div>
+                  <div style="margin-bottom: 8px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                    <input type="radio" name="q5"> Glucose afbreken in glucose-6-fosfaat
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" style="flex: 1;">← Vorige</button>
+                <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-variant">
+          <div class="mockup">
+            <div class="mockup-title">AIPLANNER-4-C: Progress & Analytics</div>
+
+            <div style="padding: 20px;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
+                Jouw voortgang
+              </div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 20px;">
+                Je leert goed! Hier's hoe je het doet.
+              </div>
+
+              <div style="margin-bottom: 16px;">
+                <div style="margin-bottom: 12px;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 600;">Fotosynthese</span>
+                    <span style="font-size: 11px; color: #7f8962; font-weight: 600;">92% ✓</span>
+                  </div>
+                  <div style="width: 100%; height: 6px; background: #ddd; border-radius: 3px;">
+                    <div style="width: 92%; height: 100%; background: #7f8962; border-radius: 3px;"></div>
+                  </div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 600;">Celrespiratie</span>
+                    <span style="font-size: 11px; color: #c87d25; font-weight: 600;">68%</span>
+                  </div>
+                  <div style="width: 100%; height: 6px; background: #ddd; border-radius: 3px;">
+                    <div style="width: 68%; height: 100%; background: #c87d25; border-radius: 3px;"></div>
+                  </div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 600;">ATP & Energie</span>
+                    <span style="font-size: 11px; color: #c94040; font-weight: 600;">45%</span>
+                  </div>
+                  <div style="width: 100%; height: 6px; background: #ddd; border-radius: 3px;">
+                    <div style="width: 45%; height: 100%; background: #c94040; border-radius: 3px;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 16px; padding: 12px; background: #fff4e6; border-radius: 6px; border-left: 4px solid #c87d25;">
+                <div style="font-size: 11px; color: #333;">
+                  💡 Je worstelt met Celrespiratie. De AI verhoogt dit onderwerp morgen in je plan.
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" style="flex: 1;">Bekijk details</button>
+                <button class="btn btn-primary" style="flex: 1;">Verder studeren</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding-top: 40px; border-top: 2px solid #e4e4e4; color: #888; font-size: 12px;">
+      <p>End of Mockups Document</p>
+      <p style="font-size: 10px; margin-top: 8px;">Generated for Cautie Learn Hub · Settings, Logs, Studyset & AI Study Planner System</p>
+    </div>
+
+  </div>
+</body>
+</html>
