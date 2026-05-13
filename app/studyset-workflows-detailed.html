@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StudySet Workflows - Complete Design Patterns</title>
+  <title>StudySet Workflows - 5 Complete Designs</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -12,1203 +12,671 @@
       padding: 40px 20px;
       color: #1a1a1a;
     }
-    .container {
-      max-width: 1600px;
-      margin: 0 auto;
-    }
-    .header {
-      margin-bottom: 40px;
-      border-bottom: 3px solid #7f8962;
-      padding-bottom: 20px;
-    }
-    h1 {
-      font-size: 32px;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-    .subtitle {
-      font-size: 14px;
-      color: #666;
-    }
-    .step-section {
-      margin-bottom: 60px;
-    }
-    .step-title {
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 30px;
-      color: #333;
-      border-left: 4px solid #7f8962;
-      padding-left: 15px;
-    }
-    .variants-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
-      gap: 20px;
-      margin-bottom: 40px;
-    }
-    .variant-card {
-      background: white;
-      border-radius: 10px;
-      padding: 24px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      border-top: 3px solid #7f8962;
-    }
-    .variant-title {
-      font-size: 13px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #888;
-      margin-bottom: 12px;
-    }
-    .variant-name {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1a1a1a;
-      margin-bottom: 4px;
-    }
-    .variant-desc {
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 20px;
-    }
-    .mockup-content {
-      background: #fafafa;
-      border: 1px solid #e4e4e4;
-      border-radius: 6px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-    .form-group {
-      margin-bottom: 14px;
-    }
-    .form-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 6px;
-    }
-    .form-input,
-    .form-textarea {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 12px;
-      font-family: inherit;
-    }
-    .form-textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
-    .upload-zone {
-      border: 2px dashed #7f8962;
-      border-radius: 8px;
-      padding: 24px;
-      text-align: center;
-      background: #f9faf6;
-      cursor: pointer;
-      margin-bottom: 12px;
-    }
-    .upload-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
-    }
-    .btn {
-      padding: 8px 14px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      background: white;
-      color: #333;
-      transition: all 0.2s;
-    }
-    .btn:hover {
-      background: #f5f5f5;
-    }
-    .btn-primary {
-      background: #7f8962;
-      color: white;
-      border-color: #7f8962;
-    }
-    .btn-primary:hover {
-      background: #6f7851;
-    }
-    .btn-group {
-      display: flex;
-      gap: 8px;
-      margin-top: 16px;
-    }
-    .btn-group .btn {
-      flex: 1;
-    }
-    .option-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .option-item {
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 12px;
-    }
-    .option-item:hover {
-      background: #f9f9f9;
-    }
-    .option-icon {
-      font-size: 18px;
-    }
-    .research-note {
-      padding: 12px;
-      background: #e8f5e9;
-      border-left: 3px solid #7f8962;
-      border-radius: 4px;
-      font-size: 11px;
-      color: #2e7d32;
-      margin-bottom: 12px;
-    }
-    .feature-tag {
-      display: inline-block;
-      padding: 3px 8px;
-      background: #f0f0f0;
-      border-radius: 3px;
-      font-size: 10px;
-      color: #666;
-      margin-right: 4px;
-    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .header { margin-bottom: 40px; border-bottom: 3px solid #7f8962; padding-bottom: 20px; }
+    h1 { font-size: 32px; font-weight: 600; margin-bottom: 10px; }
+    .subtitle { font-size: 14px; color: #666; }
+    .workflow-section { margin-bottom: 80px; border-top: 2px solid #7f8962; padding-top: 40px; }
+    .workflow-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; color: #333; }
+    .workflow-desc { font-size: 12px; color: #666; margin-bottom: 25px; }
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px; }
+    .step-card { background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-top: 3px solid #7f8962; }
+    .step-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 10px; }
+    .step-title { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 16px; }
+    .form-group { margin-bottom: 12px; }
+    .form-label { display: block; font-size: 11px; font-weight: 600; color: #333; margin-bottom: 5px; }
+    .form-input { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 11px; }
+    .form-textarea { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 11px; min-height: 60px; resize: vertical; font-family: inherit; }
+    .btn-group { display: flex; gap: 6px; margin-top: 12px; }
+    .btn { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; background: white; transition: all 0.2s; }
+    .btn:hover { background: #f5f5f5; border-color: #7f8962; }
+    .btn-primary { background: #7f8962; color: white; border-color: #7f8962; }
+    .btn-primary:hover { background: #6f7851; }
+    .checkbox-group { display: flex; flex-direction: column; gap: 6px; }
+    .checkbox-item { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+    .select-box { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 11px; }
+    .info-box { padding: 10px; background: #f0f5eb; border-radius: 4px; font-size: 10px; color: #5a6b3a; margin-bottom: 12px; }
+    .plan-box { padding: 12px; background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; margin-bottom: 8px; font-size: 11px; }
+    .plan-item { padding: 8px; background: white; border-left: 3px solid #7f8962; margin-bottom: 6px; }
+    .plan-day { font-weight: 600; color: #333; margin-bottom: 4px; }
+    .plan-task { font-size: 10px; color: #666; margin-left: 8px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>StudySet Complete Workflows</h1>
-      <p class="subtitle">5 Unique Design Patterns per Step · Research-Based · Production Ready</p>
+      <h1>StudySet - 5 Complete Workflow Designs</h1>
+      <p class="subtitle">Each workflow shows a different configuration with unique settings and AI-generated study plans</p>
     </div>
 
-    <!-- ========== STEP 1: NAME ========== -->
-    <div class="step-section">
-      <h2 class="step-title">STEP 1: Name & Basic Info</h2>
+    <!-- ========== WORKFLOW 1: Balanced Learner ========== -->
+    <div class="workflow-section">
+      <div class="workflow-title">Workflow 1: Balanced Learner</div>
+      <div class="workflow-desc">User learns evenly, all tools mixed, focuses on understanding main concepts first</div>
 
-      <div class="variants-grid">
-        <div class="variant-card">
-          <div class="variant-title">1A: MINIMAL</div>
-          <div class="variant-name">Quick Entry</div>
-          <div class="variant-desc">Fast, direct input. Inspiration: Notion Quick Add</div>
-          <div class="research-note">Pattern: Notion's quick database add - focus on speed</div>
-
-          <div class="mockup-content">
-            <div style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Nieuw StudySet</div>
-
-            <div class="form-group">
-              <label class="form-label">Naam *</label>
-              <input class="form-input" type="text" placeholder="bijv. 'Fotosynthese'">
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Beschrijving (optioneel)</label>
-              <input class="form-input" type="text" placeholder="Waarvoor?">
-            </div>
-
-            <div class="btn-group">
-              <button class="btn">Annuleren</button>
-              <button class="btn btn-primary">Volgende →</button>
-            </div>
+      <div class="steps-grid">
+        <!-- STEP 1 -->
+        <div class="step-card">
+          <div class="step-label">STEP 1: Create StudySet</div>
+          <div class="step-title">Name & Topic</div>
+          <div class="form-group">
+            <label class="form-label">StudySet Name *</label>
+            <input type="text" class="form-input" placeholder="e.g., 'Fotosynthesis'">
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========== STEP 2: UPLOAD ========== -->
-    <div class="step-section">
-      <h2 class="step-title">STEP 2: Upload Materiaal (5 Patterns)</h2>
-
-      <div class="variants-grid">
-        <!-- 2A: Drag-Drop Focus -->
-        <div class="variant-card">
-          <div class="variant-title">2A: DRAG-DROP DOMINANT</div>
-          <div class="variant-name">Notion/Google Drive Style</div>
-          <div class="variant-desc">Main focus: drag-drop, with secondary paste option</div>
-          <div class="research-note">Research: Notion, Google Drive, Dropbox</div>
-
-          <div class="mockup-content">
-            <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Upload je materiaal</div>
-            <div style="font-size: 11px; color: #888; margin-bottom: 16px;">Stap 2 van 5</div>
-
-            <div class="upload-zone">
-              <div class="upload-icon">📤</div>
-              <div style="font-weight: 600; margin-bottom: 4px;">Sleep bestand hier</div>
-              <div style="font-size: 11px; color: #666;">PDF, Word, Images, PowerPoint</div>
-            </div>
-
-            <div style="text-align: center; font-size: 11px; color: #999; margin: 16px 0;">— of —</div>
-
-            <textarea class="form-textarea" placeholder="Plak hier..."></textarea>
-
-            <div class="form-group" style="margin-top: 12px;">
-              <label style="display: flex; gap: 8px; align-items: center; cursor: pointer;">
-                <input type="checkbox" style="width: 14px; height: 14px;">
-                <span style="font-size: 12px;">En nog meer bestanden toevoegen</span>
-              </label>
-            </div>
-
-            <div class="btn-group">
-              <button class="btn">← Terug</button>
-              <button class="btn btn-primary">Volgende →</button>
-            </div>
+          <div class="form-group">
+            <label class="form-label">Description (optional)</label>
+            <input type="text" class="form-input" placeholder="What's this for?">
+          </div>
+          <div class="btn-group">
+            <button class="btn">Cancel</button>
+            <button class="btn btn-primary">Next →</button>
           </div>
         </div>
 
-        <!-- 2B: Voice & Camera -->
-        <div class="variant-card">
-          <div class="variant-title">2B: VOICE + CAMERA FIRST</div>
-          <div class="variant-name">ChatGPT/Mobile App Style</div>
-          <div class="variant-desc">Mobile-first: voice & camera prominent, file upload secondary</div>
-          <div class="research-note">Research: ChatGPT app, Voice Memos, Notion mobile</div>
-
-          <div class="mockup-content">
-            <div style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">Voeg materiaal toe</div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
-              <div style="padding: 16px; border: 2px solid #7f8962; border-radius: 8px; text-align: center; background: #f9faf6; cursor: pointer;">
-                <div style="font-size: 24px; margin-bottom: 6px;">🎙️</div>
-                <div style="font-size: 11px; font-weight: 500;">Voice Note</div>
-                <div style="font-size: 9px; color: #888;">Spreek op</div>
-              </div>
-              <div style="padding: 16px; border: 2px solid #7f8962; border-radius: 8px; text-align: center; background: #f9faf6; cursor: pointer;">
-                <div style="font-size: 24px; margin-bottom: 6px;">📷</div>
-                <div style="font-size: 11px; font-weight: 500;">Foto/Screenshot</div>
-                <div style="font-size: 9px; color: #888;">Camera or gallery</div>
-              </div>
+        <!-- STEP 2 -->
+        <div class="step-card">
+          <div class="step-label">STEP 2: Add Material</div>
+          <div class="step-title">Input Your Content</div>
+          <div style="margin-bottom: 10px;">
+            <div style="display: flex; gap: 4px; margin-bottom: 8px; font-size: 10px;">
+              <span style="color: #888;">[Use exact Quiz input buttons: File | Link | Voice | Image]</span>
             </div>
-
-            <div style="text-align: center; font-size: 11px; color: #999; margin: 12px 0;">— of —</div>
-
-            <div class="option-list">
-              <div class="option-item">
-                <span class="option-icon">📎</span>
-                <span>Bestand kiezen</span>
-              </div>
-              <div class="option-item">
-                <span class="option-icon">🔗</span>
-                <span>URL/Link plakken</span>
-              </div>
-            </div>
-
-            <div class="btn-group" style="margin-top: 16px;">
-              <button class="btn">← Terug</button>
-              <button class="btn btn-primary">Volgende →</button>
-            </div>
+          </div>
+          <textarea class="form-textarea" placeholder="Paste your study material here..."></textarea>
+          <div class="btn-group">
+            <button class="btn">← Back</button>
+            <button class="btn btn-primary">Next →</button>
           </div>
         </div>
 
-        <!-- 2C: URL Parser -->
-        <div class="variant-card">
-          <div class="variant-title">2C: URL + LINK PARSER</div>
-          <div class="variant-name">ReadWise/Hypothesis Style</div>
-          <div class="variant-desc">Smart URL parsing: articles, YouTube, PDF links directly</div>
-          <div class="research-note">Research: ReadWise, Hypothesis, Pocket, Instapaper</div>
+        <!-- STEP 3 -->
+        <div class="step-card">
+          <div class="step-label">STEP 3: Settings</div>
+          <div class="step-title">Customize Your Plan</div>
 
-          <div class="mockup-content">
-            <div style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">Voeg link toe</div>
+          <div class="form-group">
+            <label class="form-label">How much do you already know?</label>
+            <select class="select-box">
+              <option>Nothing - Start from basics</option>
+              <option>A little - Some background</option>
+              <option>Medium - Comfortable with basics</option>
+              <option>Advanced - Deep understanding</option>
+            </select>
+          </div>
 
-            <div class="form-group">
-              <label class="form-label">Artikel, Video, of PDF URL</label>
-              <input class="form-input" type="text" placeholder="https://...">
-              <div style="font-size: 10px; color: #888; margin-top: 4px;">Ondersteund: artikelen, YouTube, Medium, Substack, PDFs</div>
+          <div class="form-group">
+            <label class="form-label">What days can you study?</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item"><input type="checkbox" checked> Monday</label>
+              <label class="checkbox-item"><input type="checkbox" checked> Wednesday</label>
+              <label class="checkbox-item"><input type="checkbox" checked> Friday</label>
+              <label class="checkbox-item"><input type="checkbox"> Weekend</label>
             </div>
+          </div>
 
-            <div style="padding: 12px; background: #f5f5f5; border-radius: 6px; margin-bottom: 12px;">
-              <div style="font-size: 11px; color: #666;">💡 We trekken automatisch de titel en samenvatting</div>
-            </div>
+          <div class="form-group">
+            <label class="form-label">Tool mix preference:</label>
+            <select class="select-box">
+              <option>Balanced (all tools equally)</option>
+              <option>Quiz-heavy (more practice)</option>
+              <option>Visual (timelines, mindmaps)</option>
+              <option>Theory-first (notes, summaries)</option>
+            </select>
+          </div>
 
-            <div class="form-group">
-              <label class="form-label">Of zoek in archief</label>
-              <input class="form-input" type="text" placeholder="Zoek in je opgeslagen items...">
-            </div>
-
-            <div class="btn-group">
-              <button class="btn">← Terug</button>
-              <button class="btn btn-primary">Volgende →</button>
-            </div>
+          <div class="btn-group">
+            <button class="btn">← Back</button>
+            <button class="btn btn-primary">Generate Plan →</button>
           </div>
         </div>
 
-        <!-- 2D: Bulk Upload -->
-        <div class="variant-card">
-          <div class="variant-title">2D: BATCH IMPORT</div>
-          <div class="variant-name">Quizlet/Anki Style</div>
-          <div class="variant-desc">Multi-file upload with progress, supports zip + CSV formats</div>
-          <div class="research-note">Research: Quizlet import, Anki deck import, Memrise</div>
+        <!-- STEP 4 -->
+        <div class="step-card">
+          <div class="step-label">STEP 4: Your Study Plan</div>
+          <div class="step-title">AI-Generated Schedule</div>
+          <div class="info-box">Plan generated for 6 days, all tools mixed evenly</div>
 
-          <div class="mockup-content">
-            <div style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">Bulk import</div>
+          <div class="plan-box">
+            <div class="plan-day">📅 Monday (3 items)</div>
+            <div class="plan-task">→ Read: Photosynthesis intro (Notes)</div>
+            <div class="plan-task">→ Timeline: Light reactions flow</div>
+            <div class="plan-task">→ Quiz: Basic concepts (5 questions)</div>
+          </div>
 
-            <div class="upload-zone">
-              <div class="upload-icon">📦</div>
-              <div style="font-weight: 600; margin-bottom: 4px;">Meerdere bestanden</div>
-              <div style="font-size: 11px; color: #666;">ZIP, CSV, XLSX, PDF</div>
-            </div>
+          <div class="plan-box">
+            <div class="plan-day">📅 Wednesday (3 items)</div>
+            <div class="plan-task">→ Flashcards: Key terms</div>
+            <div class="plan-task">→ Quiz: Dark reactions (8 questions)</div>
+            <div class="plan-task">→ Mindmap: Full photosynthesis process</div>
+          </div>
 
-            <div style="padding: 10px; background: #e8f5e9; border-radius: 6px; margin-bottom: 12px;">
-              <div style="font-size: 11px; color: #2e7d32;">
-                ✓ Ondersteunde formats:<br>
-                • CSV (vragen, antwoorden)<br>
-                • ZIP (Anki decks)<br>
-                • XLSX (spreadsheet)
-              </div>
-            </div>
+          <div class="plan-box">
+            <div class="plan-day">📅 Friday (3 items)</div>
+            <div class="plan-task">→ Review: Complete summary (Notes)</div>
+            <div class="plan-task">→ Quiz: Mixed review (15 questions)</div>
+            <div class="plan-task">→ Flashcards: Weak areas drill</div>
+          </div>
 
-            <div style="margin-bottom: 12px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-              <div style="font-size: 10px; font-weight: 600; color: #888; margin-bottom: 6px;">GEÜPLOADE BESTANDEN (3)</div>
-              <div style="font-size: 11px; color: #666;">📄 Notes.pdf · 📊 Questions.csv · 📦 Deck.zip</div>
-            </div>
-
-            <div class="btn-group">
-              <button class="btn">← Terug</button>
-              <button class="btn btn-primary">Volgende →</button>
+          <div style="margin-top: 15px; padding: 12px; background: #e8f5e9; border-radius: 6px; border-left: 3px solid #7f8962;">
+            <div style="font-size: 11px; font-weight: 600; margin-bottom: 10px;">📌 In je Agenda:</div>
+            <div style="background: white; border-radius: 4px; overflow: hidden; font-size: 10px;">
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Mon 13</strong> • 3 taken</div>
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Wed 15</strong> • 3 taken</div>
+              <div style="padding: 8px; background: #f9f9f9;"><strong>Fri 17</strong> • 3 taken</div>
             </div>
           </div>
-        </div>
 
-        <!-- 2E: Screenshot OCR -->
-        <div class="variant-card">
-          <div class="variant-title">2E: SCREENSHOT + OCR</div>
-          <div class="variant-name">Phone App Style</div>
-          <div class="variant-desc">Capture and auto-extract text from photos/screenshots</div>
-          <div class="research-note">Research: Google Lens, Microsoft Lens, Evernote Scan</div>
-
-          <div class="mockup-content">
-            <div style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">Foto → Tekst</div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
-              <div style="padding: 14px; border: 1px solid #ddd; border-radius: 6px; text-align: center; background: #fafafa; cursor: pointer;">
-                <div style="font-size: 20px; margin-bottom: 6px;">📸</div>
-                <div style="font-size: 11px;">Camera</div>
-              </div>
-              <div style="padding: 14px; border: 1px solid #ddd; border-radius: 6px; text-align: center; background: #fafafa; cursor: pointer;">
-                <div style="font-size: 20px; margin-bottom: 6px;">🖼️</div>
-                <div style="font-size: 11px;">Galery</div>
-              </div>
-            </div>
-
-            <div style="padding: 16px; border: 2px solid #7f8962; border-radius: 8px; background: #f9faf6; text-align: center; cursor: pointer;">
-              <div style="font-size: 18px; margin-bottom: 6px;">✂️</div>
-              <div style="font-size: 12px; font-weight: 500;">Screenshot plakken</div>
-              <div style="font-size: 10px; color: #888;">Cmd+V (Mac) of Ctrl+V (Windows)</div>
-            </div>
-
-            <div style="padding: 10px; background: #fff3e0; border-radius: 6px; margin-top: 12px;">
-              <div style="font-size: 11px; color: #e65100;">
-                💡 AI leest automatisch tekst uit afbeeldingen
-              </div>
-            </div>
-
-            <div class="btn-group" style="margin-top: 16px;">
-              <button class="btn">← Terug</button>
-              <button class="btn btn-primary">Volgende →</button>
-            </div>
+          <div class="btn-group">
+            <button class="btn">← Edit Settings</button>
+            <button class="btn btn-primary">Add to Agenda →</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ========== STEP 3: AI GENERATION - BUTTON LAYOUT ========== -->
-    <div style="border-top: 3px solid #7f8962; padding: 30px 0; margin-top: 40px;">
-      <h2 style="text-align: center; font-size: 24px; margin-bottom: 15px; color: #222;">
-        STAP 3: Kies hoe AI je plan genereert
-      </h2>
-      <p style="text-align: center; font-size: 13px; color: #888; margin-bottom: 30px;">
-        5 unieke presentatie-stijlen - dezelfde button-layout als STAP 2
-      </p>
+    <!-- ========== WORKFLOW 2: Test Prep Master ========== -->
+    <div class="workflow-section">
+      <div class="workflow-title">Workflow 2: Test Prep Master</div>
+      <div class="workflow-desc">Heavy quiz focus, intensive practice, learn through doing</div>
 
-      <!-- 3A: Button Layout - Linear -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">3A: Linear Progress (Button)</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Quizlet, straightforward
-          </span>
-        </div>
-
-        <div style="background: #f9f9f9; padding: 40px 20px; border-radius: 6px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 13px; color: #666; margin-bottom: 25px;">Selecteer voorkeur:</p>
-
-          <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;">
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">⏱️</span>
-              <span style="font-weight: 500; font-size: 12px;">Linear<br>Progress</span>
-            </div>
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">🧠</span>
-              <span style="font-weight: 500; font-size: 12px;">Thinking<br>State</span>
-            </div>
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">🔄</span>
-              <span style="font-weight: 500; font-size: 12px;">Multi-Step<br>Wizard</span>
-            </div>
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">🌳</span>
-              <span style="font-weight: 500; font-size: 12px;">Tree<br>Visualization</span>
-            </div>
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">🎠</span>
-              <span style="font-weight: 500; font-size: 12px;">Carousel<br>Options</span>
-            </div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-label">STEP 1: Create StudySet</div>
+          <div class="step-title">Name & Topic</div>
+          <div class="form-group">
+            <label class="form-label">StudySet Name *</label>
+            <input type="text" class="form-input" placeholder="e.g., 'Biology Exam Ch5-7'">
           </div>
-
-          <div style="margin-top: 20px; padding: 12px; background: #e8f0dc; border-radius: 4px; font-size: 11px; color: #5a6b3a;">
-            Klik op een button om te zien hoe die generatie eruit ziet
+          <div class="form-group">
+            <label class="form-label">Description (optional)</label>
+            <input type="text" class="form-input" placeholder="Exam prep for midterm">
+          </div>
+          <div class="btn-group">
+            <button class="btn">Cancel</button>
+            <button class="btn btn-primary">Next →</button>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
-        </div>
-      </div>
-
-      <!-- 3B: Button Layout - Thinking -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">3B: Thinking State (Button)</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Claude, ChatGPT
-          </span>
-        </div>
-
-        <div style="background: #f9f9f9; padding: 40px 20px; border-radius: 6px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 13px; color: #666; margin-bottom: 25px;">AI-redeneerstijl:</p>
-
-          <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;">
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">⚡</span>
-              <span style="font-weight: 500; font-size: 12px;">Quick<br>Solve</span>
-            </div>
-            <div style="padding: 16px 24px; border: 2px solid #7f8962; border-radius: 6px; background: #e8f0dc; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">🧠</span>
-              <span style="font-weight: 500; font-size: 12px; color: #5a6b3a;">Deep<br>Think</span>
-            </div>
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">🔬</span>
-              <span style="font-weight: 500; font-size: 12px;">Analyze<br>Detail</span>
+        <div class="step-card">
+          <div class="step-label">STEP 2: Add Material</div>
+          <div class="step-title">Input Your Content</div>
+          <div style="margin-bottom: 10px;">
+            <div style="display: flex; gap: 4px; margin-bottom: 8px; font-size: 10px;">
+              <span style="color: #888;">[Use exact Quiz input buttons: File | Link | Voice | Image]</span>
             </div>
           </div>
-
-          <div style="margin-top: 20px; padding: 12px; background: #e8f0dc; border-radius: 4px; font-size: 11px; color: #5a6b3a;">
-            "Deep Think" laat je AI redeneringsstappen zien
+          <textarea class="form-textarea" placeholder="Paste exam questions, practice problems, textbook..."></textarea>
+          <div class="btn-group">
+            <button class="btn">← Back</button>
+            <button class="btn btn-primary">Next →</button>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
-        </div>
-      </div>
+        <div class="step-card">
+          <div class="step-label">STEP 3: Settings</div>
+          <div class="step-title">Customize Your Plan</div>
 
-      <!-- 3C: Button Layout - Multi-Step -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">3C: Multi-Step Wizard (Button)</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Notion, sequential
-          </span>
-        </div>
+          <div class="form-group">
+            <label class="form-label">How much do you already know?</label>
+            <select class="select-box">
+              <option>Nothing - Start from basics</option>
+              <option selected>A little - Some background</option>
+              <option>Medium - Comfortable with basics</option>
+              <option>Advanced - Deep understanding</option>
+            </select>
+          </div>
 
-        <div style="background: #f9f9f9; padding: 40px 20px; border-radius: 6px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 13px; color: #666; margin-bottom: 25px;">Generatie volgorde:</p>
-
-          <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;">
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">📚</span>
-              <span style="font-weight: 500; font-size: 12px;">Alles<br>Tegelijk</span>
-            </div>
-            <div style="padding: 16px 24px; border: 2px solid #7f8962; border-radius: 6px; background: #e8f0dc; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">1️⃣2️⃣3️⃣</span>
-              <span style="font-weight: 500; font-size: 12px; color: #5a6b3a;">Stap voor<br>Stap</span>
-            </div>
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">⚙️</span>
-              <span style="font-weight: 500; font-size: 12px;">Tools<br>Kies</span>
+          <div class="form-group">
+            <label class="form-label">What days can you study?</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item"><input type="checkbox" checked> Monday</label>
+              <label class="checkbox-item"><input type="checkbox" checked> Tuesday</label>
+              <label class="checkbox-item"><input type="checkbox" checked> Wednesday</label>
+              <label class="checkbox-item"><input type="checkbox" checked> Thursday</label>
+              <label class="checkbox-item"><input type="checkbox" checked> Friday</label>
+              <label class="checkbox-item"><input type="checkbox"> Weekend</label>
             </div>
           </div>
 
-          <div style="margin-top: 20px; padding: 12px; background: #e8f0dc; border-radius: 4px; font-size: 11px; color: #5a6b3a;">
-            Stap voor stap: flashcards → quiz → gids → timeline
+          <div class="form-group">
+            <label class="form-label">Question variety:</label>
+            <select class="select-box">
+              <option>Mixed (MC, short answer, essays)</option>
+              <option selected>Exam format matching</option>
+              <option>Pattern recognition</option>
+            </select>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn">← Back</button>
+            <button class="btn btn-primary">Generate Plan →</button>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
-        </div>
-      </div>
+        <div class="step-card">
+          <div class="step-label">STEP 4: Your Study Plan</div>
+          <div class="step-title">AI-Generated Schedule</div>
+          <div class="info-box">5 days, quiz-heavy (70%), intro → practice → deep drill</div>
 
-      <!-- 3D: Button Layout - Tree -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">3D: Tree Visualization (Button)</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Mindmap, hierarchical
-          </span>
-        </div>
+          <div class="plan-box">
+            <div class="plan-day">📅 Monday (4 items)</div>
+            <div class="plan-task">→ Quick notes: Overview</div>
+            <div class="plan-task">→ Quiz: Introduction (10 q)</div>
+            <div class="plan-task">→ Flashcards: Key definitions</div>
+            <div class="plan-task">→ Quiz: Easy practice (8 q)</div>
+          </div>
 
-        <div style="background: #f9f9f9; padding: 40px 20px; border-radius: 6px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 13px; color: #666; margin-bottom: 25px;">Visualisatie stijl:</p>
+          <div class="plan-box">
+            <div class="plan-day">📅 Tue-Thu (intensive)</div>
+            <div class="plan-task">→ Quiz: Medium difficulty (15 q each day)</div>
+            <div class="plan-task">→ Flashcards: Weak concept drill</div>
+            <div class="plan-task">→ Quiz variations: Different angles</div>
+          </div>
 
-          <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;">
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">🌳</span>
-              <span style="font-weight: 500; font-size: 12px;">Text<br>Tree</span>
-            </div>
-            <div style="padding: 16px 24px; border: 2px solid #7f8962; border-radius: 6px; background: #e8f0dc; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">📊</span>
-              <span style="font-weight: 500; font-size: 12px; color: #5a6b3a;">Mindmap<br>View</span>
-            </div>
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">📋</span>
-              <span style="font-weight: 500; font-size: 12px;">Outline<br>View</span>
+          <div class="plan-box">
+            <div class="plan-day">📅 Friday (review)</div>
+            <div class="plan-task">→ Quiz: Hardest questions (20 q)</div>
+            <div class="plan-task">→ Quiz: Full exam simulation</div>
+            <div class="plan-task">→ Review: Performance analysis</div>
+          </div>
+
+          <div style="margin-top: 15px; padding: 12px; background: #e8f5e9; border-radius: 6px; border-left: 3px solid #7f8962;">
+            <div style="font-size: 11px; font-weight: 600; margin-bottom: 10px;">📌 In je Agenda:</div>
+            <div style="background: white; border-radius: 4px; overflow: hidden; font-size: 10px;">
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Mon 13</strong> • 4 taken</div>
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Tue 14</strong> • 3 taken</div>
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Wed 15</strong> • 3 taken</div>
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Thu 16</strong> • 3 taken</div>
+              <div style="padding: 8px; background: #f9f9f9;"><strong>Fri 17</strong> • 3 taken</div>
             </div>
           </div>
 
-          <div style="margin-top: 20px; padding: 12px; background: #e8f0dc; border-radius: 4px; font-size: 11px; color: #5a6b3a;">
-            Zie je studyset als hiërarchische boom/netwerk
+          <div class="btn-group">
+            <button class="btn">← Edit Settings</button>
+            <button class="btn btn-primary">Add to Agenda →</button>
           </div>
-        </div>
-
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
-        </div>
-      </div>
-
-      <!-- 3E: Button Layout - Carousel -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">3E: Carousel Options (Button)</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Figma variants, ChatGPT drafts
-          </span>
-        </div>
-
-        <div style="background: #f9f9f9; padding: 40px 20px; border-radius: 6px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 13px; color: #666; margin-bottom: 25px;">AI genereert meerdere versies:</p>
-
-          <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;">
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">1️⃣</span>
-              <span style="font-weight: 500; font-size: 12px;">1 Versie<br>(Default)</span>
-            </div>
-            <div style="padding: 16px 24px; border: 1px solid #ddd; border-radius: 6px; background: white; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">3️⃣</span>
-              <span style="font-weight: 500; font-size: 12px;">3 Versies<br>Kiezen</span>
-            </div>
-            <div style="padding: 16px 24px; border: 2px solid #7f8962; border-radius: 6px; background: #e8f0dc; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">5️⃣</span>
-              <span style="font-weight: 500; font-size: 12px; color: #5a6b3a;">5 Versies<br>Alle</span>
-            </div>
-          </div>
-
-          <div style="margin-top: 20px; padding: 12px; background: #e8f0dc; border-radius: 4px; font-size: 11px; color: #5a6b3a;">
-            Meer opties = meer keuzen, maar langer genereren
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
         </div>
       </div>
     </div>
 
-    <!-- ========== STEP 4: AGENDA & PLANNING ========== -->
-    <div style="border-top: 3px solid #7f8962; padding: 30px 0; margin-top: 40px;">
-      <h2 style="text-align: center; font-size: 24px; margin-bottom: 30px; color: #222;">
-        STAP 4: Agenda & Planning
-      </h2>
+    <!-- ========== WORKFLOW 3: Visual Learner ========== -->
+    <div class="workflow-section">
+      <div class="workflow-title">Workflow 3: Visual Learner</div>
+      <div class="workflow-desc">Timelines, mindmaps, diagrams first, then reinforce with text</div>
 
-      <!-- 4A: Week Grid (Google Calendar style) -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">4A: Week Grid (Google Calendar)</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Research: Google Calendar, Fantastical, Apple Calendar
-          </span>
-        </div>
-
-        <div style="background: #f9f9f9; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-          <!-- Week header -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <button style="background: none; border: none; font-size: 18px; cursor: pointer;">← Vorige week</button>
-            <div style="text-align: center;">
-              <div style="font-weight: 600; font-size: 14px; color: #333;">Mei 13 - Mei 19, 2026</div>
-              <div style="font-size: 11px; color: #888;">Week 20</div>
-            </div>
-            <button style="background: none; border: none; font-size: 18px; cursor: pointer;">Volgende week →</button>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-label">STEP 1: Create StudySet</div>
+          <div class="step-title">Name & Topic</div>
+          <div class="form-group">
+            <label class="form-label">StudySet Name *</label>
+            <input type="text" class="form-input" placeholder="e.g., 'History Timeline 1848-1920'">
           </div>
-
-          <!-- Calendar grid -->
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
-            <thead>
-              <tr>
-                <th style="padding: 8px; text-align: center; font-size: 12px; color: #888; border-bottom: 2px solid #ddd;">MA</th>
-                <th style="padding: 8px; text-align: center; font-size: 12px; color: #888; border-bottom: 2px solid #ddd;">DI</th>
-                <th style="padding: 8px; text-align: center; font-size: 12px; color: #888; border-bottom: 2px solid #ddd;">WO</th>
-                <th style="padding: 8px; text-align: center; font-size: 12px; color: #888; border-bottom: 2px solid #ddd;">DO</th>
-                <th style="padding: 8px; text-align: center; font-size: 12px; color: #888; border-bottom: 2px solid #ddd;">VR</th>
-                <th style="padding: 8px; text-align: center; font-size: 12px; color: #888; border-bottom: 2px solid #ddd;">ZA</th>
-                <th style="padding: 8px; text-align: center; font-size: 12px; color: #888; border-bottom: 2px solid #ddd;">ZO</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style="height: 100px;">
-                <td style="padding: 8px; border: 1px solid #eee; background: #fafafa; vertical-align: top;">
-                  <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">13</div>
-                  <div style="background: #e8f0dc; padding: 4px 6px; margin-bottom: 2px; border-radius: 3px; font-size: 10px; color: #5a6b3a;">Biology</div>
-                </td>
-                <td style="padding: 8px; border: 1px solid #eee; background: white; vertical-align: top;">
-                  <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">14</div>
-                </td>
-                <td style="padding: 8px; border: 1px solid #eee; background: white; vertical-align: top;">
-                  <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">15</div>
-                  <div style="background: #d4e4f7; padding: 4px 6px; margin-bottom: 2px; border-radius: 3px; font-size: 10px; color: #2c5aa0;">Math Quiz</div>
-                </td>
-                <td style="padding: 8px; border: 1px solid #eee; background: white; vertical-align: top;">
-                  <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">16</div>
-                </td>
-                <td style="padding: 8px; border: 1px solid #eee; background: white; vertical-align: top;">
-                  <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">17</div>
-                  <div style="background: #fce4d4; padding: 4px 6px; margin-bottom: 2px; border-radius: 3px; font-size: 10px; color: #c84a1f;">History</div>
-                </td>
-                <td style="padding: 8px; border: 1px solid #eee; background: white; vertical-align: top;">
-                  <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">18</div>
-                </td>
-                <td style="padding: 8px; border: 1px solid #eee; background: #f5f5f5; vertical-align: top;">
-                  <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">19</div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div style="font-size: 11px; color: #888; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-            <strong>Key features:</strong> Week overview, color-coded subjects, quick click to add/edit, drag-drop to reschedule
+          <div class="form-group">
+            <label class="form-label">Description (optional)</label>
+            <input type="text" class="form-input" placeholder="">
+          </div>
+          <div class="btn-group">
+            <button class="btn">Cancel</button>
+            <button class="btn btn-primary">Next →</button>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
-        </div>
-      </div>
-
-      <!-- 4B: Day Slots (Todoist/Fantastical style) -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">4B: Day Slots (Time-based View)</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Research: Todoist, Fantastical, Microsoft To Do
-          </span>
-        </div>
-
-        <div style="background: #f9f9f9; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-          <!-- Day picker -->
-          <div style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px;">
-            <div style="background: white; padding: 8px 12px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px; white-space: nowrap;">
-              <div style="font-weight: 600;">Vandaag</div>
-              <div style="font-size: 10px; color: #888;">Mei 13</div>
-            </div>
-            <div style="background: white; padding: 8px 12px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px; white-space: nowrap; opacity: 0.6;">
-              <div style="font-weight: 600;">Morgen</div>
-              <div style="font-size: 10px; color: #888;">Mei 14</div>
-            </div>
-            <div style="background: white; padding: 8px 12px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px; white-space: nowrap; opacity: 0.5;">
-              <div style="font-weight: 600;">Volgende week</div>
-              <div style="font-size: 10px; color: #888;">Mei 20</div>
+        <div class="step-card">
+          <div class="step-label">STEP 2: Add Material</div>
+          <div class="step-title">Input Your Content</div>
+          <div style="margin-bottom: 10px;">
+            <div style="display: flex; gap: 4px; margin-bottom: 8px; font-size: 10px;">
+              <span style="color: #888;">[Use exact Quiz input buttons: File | Link | Voice | Image]</span>
             </div>
           </div>
-
-          <!-- Time slots -->
-          <div style="background: white; border-radius: 4px; overflow: hidden;">
-            <!-- Morning -->
-            <div style="padding: 12px; border-bottom: 1px solid #eee;">
-              <div style="font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px;">OCHTEND</div>
-              <div style="background: #e8f0dc; padding: 10px 12px; margin-bottom: 6px; border-radius: 4px; border-left: 3px solid #7f8962;">
-                <div style="font-weight: 600; font-size: 12px;">Biology Chapters 3-4</div>
-                <div style="font-size: 10px; color: #666;">1.5 uur • 08:00 - 09:30</div>
-              </div>
-            </div>
-
-            <!-- Afternoon -->
-            <div style="padding: 12px; border-bottom: 1px solid #eee;">
-              <div style="font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px;">MIDDAG</div>
-              <div style="background: #d4e4f7; padding: 10px 12px; margin-bottom: 6px; border-radius: 4px; border-left: 3px solid #2c5aa0;">
-                <div style="font-weight: 600; font-size: 12px;">Math Quiz Prep</div>
-                <div style="font-size: 10px; color: #666;">2 uur • 13:00 - 15:00</div>
-              </div>
-              <div style="background: #fce4d4; padding: 10px 12px; margin-bottom: 6px; border-radius: 4px; border-left: 3px solid #c84a1f;">
-                <div style="font-weight: 600; font-size: 12px;">History Essay</div>
-                <div style="font-size: 10px; color: #666;">1.5 uur • 16:00 - 17:30</div>
-              </div>
-            </div>
-
-            <!-- Evening -->
-            <div style="padding: 12px;">
-              <div style="font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px;">AVOND</div>
-              <div style="background: #f0f0f0; padding: 8px 12px; border-radius: 4px; text-align: center; font-size: 11px; color: #999;">
-                Geen taken gepland
-              </div>
-            </div>
-          </div>
-
-          <div style="font-size: 11px; color: #888; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-            <strong>Key features:</strong> Grouped by time of day, duration visible, drag to reschedule, "Add slot" button
+          <textarea class="form-textarea" placeholder="Timeline data, historical events, dates, descriptions..."></textarea>
+          <div class="btn-group">
+            <button class="btn">← Back</button>
+            <button class="btn btn-primary">Next →</button>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
-        </div>
-      </div>
+        <div class="step-card">
+          <div class="step-label">STEP 3: Settings</div>
+          <div class="step-title">Customize Your Plan</div>
 
-      <!-- 4C: Timeline / Linear (Gantt style) -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">4C: Timeline View (Gantt)</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Research: Notion, Monday.com, Asana, Gantt charts
-          </span>
-        </div>
+          <div class="form-group">
+            <label class="form-label">How much do you already know?</label>
+            <select class="select-box">
+              <option selected>Nothing - Start from basics</option>
+              <option>A little - Some background</option>
+              <option>Medium - Comfortable with basics</option>
+              <option>Advanced - Deep understanding</option>
+            </select>
+          </div>
 
-        <div style="background: #f9f9f9; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-          <div style="font-size: 12px; font-weight: 600; margin-bottom: 15px;">Timeline: Mei 13 - Mei 27</div>
-
-          <div style="overflow-x: auto; background: white; border-radius: 4px; padding: 12px;">
-            <!-- Timeline rows -->
-            <div style="margin-bottom: 15px; display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center;">
-              <div style="font-size: 12px; font-weight: 600;">Biology</div>
-              <div style="height: 24px; background: #eee; border-radius: 3px; position: relative;">
-                <div style="position: absolute; left: 0%; width: 20%; height: 100%; background: #7f8962; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; font-weight: 600;">Ch.3-4</div>
-              </div>
-            </div>
-
-            <div style="margin-bottom: 15px; display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center;">
-              <div style="font-size: 12px; font-weight: 600;">Math Quiz</div>
-              <div style="height: 24px; background: #eee; border-radius: 3px; position: relative;">
-                <div style="position: absolute; left: 30%; width: 25%; height: 100%; background: #2c5aa0; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; font-weight: 600;">Prep</div>
-              </div>
-            </div>
-
-            <div style="margin-bottom: 15px; display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center;">
-              <div style="font-size: 12px; font-weight: 600;">History</div>
-              <div style="height: 24px; background: #eee; border-radius: 3px; position: relative;">
-                <div style="position: absolute; left: 35%; width: 40%; height: 100%; background: #c84a1f; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; font-weight: 600;">Essay</div>
-              </div>
-            </div>
-
-            <div style="margin-bottom: 15px; display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center;">
-              <div style="font-size: 12px; font-weight: 600;">Spanish</div>
-              <div style="height: 24px; background: #eee; border-radius: 3px; position: relative;">
-                <div style="position: absolute; left: 65%; width: 30%; height: 100%; background: #a55a3a; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; font-weight: 600;">Vocab</div>
-              </div>
+          <div class="form-group">
+            <label class="form-label">What days can you study?</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item"><input type="checkbox" checked> Tuesday</label>
+              <label class="checkbox-item"><input type="checkbox" checked> Thursday</label>
+              <label class="checkbox-item"><input type="checkbox" checked> Saturday</label>
             </div>
           </div>
 
-          <div style="font-size: 11px; color: #888; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-            <strong>Key features:</strong> Visual timeline spread, see all subjects at once, drag blocks to reschedule, duration proportional to bar width
+          <div class="form-group">
+            <label class="form-label">Content organization:</label>
+            <select class="select-box">
+              <option selected>Chronological first</option>
+              <option>Thematic grouping</option>
+              <option>Cause-effect relationships</option>
+            </select>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn">← Back</button>
+            <button class="btn btn-primary">Generate Plan →</button>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
-        </div>
-      </div>
+        <div class="step-card">
+          <div class="step-label">STEP 4: Your Study Plan</div>
+          <div class="step-title">AI-Generated Schedule</div>
+          <div class="info-box">Timeline-heavy, visual-first approach with text reinforcement</div>
 
-      <!-- 4D: Heatmap (GitHub contribution style) -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">4D: Intensity Heatmap</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Research: GitHub contributions, Duolingo streak, Beeminder heatmaps
-          </span>
-        </div>
-
-        <div style="background: #f9f9f9; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-          <div style="font-size: 12px; font-weight: 600; margin-bottom: 15px;">Learning Intensity: Mei 2026</div>
-
-          <!-- Legend -->
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 11px;">
-            <span>Minder:</span>
-            <div style="width: 14px; height: 14px; background: #f0f0f0; border-radius: 2px;"></div>
-            <div style="width: 14px; height: 14px; background: #c8e6c9; border-radius: 2px;"></div>
-            <div style="width: 14px; height: 14px; background: #81c784; border-radius: 2px;"></div>
-            <div style="width: 14px; height: 14px; background: #4caf50; border-radius: 2px;"></div>
-            <div style="width: 14px; height: 14px; background: #2e7d32; border-radius: 2px;"></div>
-            <span>Meer</span>
+          <div class="plan-box">
+            <div class="plan-day">📅 Tuesday (3 items)</div>
+            <div class="plan-task">→ Timeline: 1848-1880 key events</div>
+            <div class="plan-task">→ Mindmap: Political movements</div>
+            <div class="plan-task">→ Notes: Detailed context reading</div>
           </div>
 
-          <!-- Heatmap grid -->
-          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 20px;">
-            <!-- Week 1 -->
-            <div style="width: 20px; height: 20px; background: #f0f0f0; border-radius: 2px;" title="Ma 5"></div>
-            <div style="width: 20px; height: 20px; background: #c8e6c9; border-radius: 2px;" title="Di 6"></div>
-            <div style="width: 20px; height: 20px; background: #81c784; border-radius: 2px;" title="Wo 7"></div>
-            <div style="width: 20px; height: 20px; background: #4caf50; border-radius: 2px;" title="Do 8"></div>
-            <div style="width: 20px; height: 20px; background: #2e7d32; border-radius: 2px;" title="Vr 9"></div>
-            <div style="width: 20px; height: 20px; background: #1b5e20; border-radius: 2px;" title="Za 10"></div>
-            <div style="width: 20px; height: 20px; background: #f0f0f0; border-radius: 2px;" title="Zo 11"></div>
-
-            <!-- Week 2 -->
-            <div style="width: 20px; height: 20px; background: #81c784; border-radius: 2px;" title="Ma 12"></div>
-            <div style="width: 20px; height: 20px; background: #4caf50; border-radius: 2px;" title="Di 13"></div>
-            <div style="width: 20px; height: 20px; background: #c8e6c9; border-radius: 2px;" title="Wo 14"></div>
-            <div style="width: 20px; height: 20px; background: #81c784; border-radius: 2px;" title="Do 15"></div>
-            <div style="width: 20px; height: 20px; background: #2e7d32; border-radius: 2px;" title="Vr 16"></div>
-            <div style="width: 20px; height: 20px; background: #4caf50; border-radius: 2px;" title="Za 17"></div>
-            <div style="width: 20px; height: 20px; background: #f0f0f0; border-radius: 2px;" title="Zo 18"></div>
-
-            <!-- Week 3 -->
-            <div style="width: 20px; height: 20px; background: #2e7d32; border-radius: 2px;" title="Ma 19"></div>
-            <div style="width: 20px; height: 20px; background: #4caf50; border-radius: 2px;" title="Di 20"></div>
-            <div style="width: 20px; height: 20px; background: #1b5e20; border-radius: 2px;" title="Wo 21"></div>
-            <div style="width: 20px; height: 20px; background: #2e7d32; border-radius: 2px;" title="Do 22"></div>
-            <div style="width: 20px; height: 20px; background: #c8e6c9; border-radius: 2px;" title="Vr 23"></div>
-            <div style="width: 20px; height: 20px; background: #81c784; border-radius: 2px;" title="Za 24"></div>
-            <div style="width: 20px; height: 20px; background: #f0f0f0; border-radius: 2px;" title="Zo 25"></div>
+          <div class="plan-box">
+            <div class="plan-day">📅 Thursday (3 items)</div>
+            <div class="plan-task">→ Timeline: 1880-1920 progression</div>
+            <div class="plan-task">→ Flashcards: Key figures & dates</div>
+            <div class="plan-task">→ Quiz: Timeline reconstruction (8 q)</div>
           </div>
 
-          <div style="font-size: 11px; color: #888; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-            <strong>Key features:</strong> Color intensity = learning volume, hover for details, visual streak motivation, easy to spot low-productivity days
+          <div class="plan-box">
+            <div class="plan-day">📅 Saturday (3 items)</div>
+            <div class="plan-task">→ Mindmap: Complete era synthesis</div>
+            <div class="plan-task">→ Quiz: Cause-effect relationships</div>
+            <div class="plan-task">→ Review: Visual summary creation</div>
           </div>
-        </div>
 
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+          <div style="margin-top: 15px; padding: 12px; background: #e8f5e9; border-radius: 6px; border-left: 3px solid #7f8962;">
+            <div style="font-size: 11px; font-weight: 600; margin-bottom: 10px;">📌 In je Agenda:</div>
+            <div style="background: white; border-radius: 4px; overflow: hidden; font-size: 10px;">
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Tue 14</strong> • 3 taken</div>
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Thu 16</strong> • 3 taken</div>
+              <div style="padding: 8px; background: #f9f9f9;"><strong>Sat 18</strong> • 3 taken</div>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn">← Edit Settings</button>
+            <button class="btn btn-primary">Add to Agenda →</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ========== STEP 5: REVIEW & PREFERENCES ========== -->
-    <div style="border-top: 3px solid #7f8962; padding: 30px 0; margin-top: 40px;">
-      <h2 style="text-align: center; font-size: 24px; margin-bottom: 30px; color: #222;">
-        STAP 5: Review & Instellingen
-      </h2>
+    <!-- ========== WORKFLOW 4: Deep Diver ========== -->
+    <div class="workflow-section">
+      <div class="workflow-title">Workflow 4: Deep Diver</div>
+      <div class="workflow-desc">Theory-heavy, comprehensive notes, then sophisticated connections</div>
 
-      <!-- 5A: Checklist Review -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">5A: Checklist Review</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Research: Todoist, Microsoft To Do, Apple Reminders
-          </span>
-        </div>
-
-        <div style="background: #f9f9f9; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-          <div style="font-size: 13px; font-weight: 600; margin-bottom: 20px;">Je StudySet is klaar! Controleer alles:</div>
-
-          <!-- Checklist items -->
-          <div style="background: white; border-radius: 4px; overflow: hidden;">
-            <div style="padding: 12px; border-bottom: 1px solid #eee; display: flex; gap: 10px; align-items: center;">
-              <input type="checkbox" checked style="cursor: pointer; width: 18px; height: 18px;">
-              <div>
-                <div style="font-weight: 600; font-size: 12px;">Materiaal geüpload</div>
-                <div style="font-size: 10px; color: #888;">5 documenten, 2 links, 1 afbeelding</div>
-              </div>
-            </div>
-            <div style="padding: 12px; border-bottom: 1px solid #eee; display: flex; gap: 10px; align-items: center;">
-              <input type="checkbox" checked style="cursor: pointer; width: 18px; height: 18px;">
-              <div>
-                <div style="font-weight: 600; font-size: 12px;">Agenda gemaakt</div>
-                <div style="font-size: 10px; color: #888;">6 taken verdeeld over 5 dagen</div>
-              </div>
-            </div>
-            <div style="padding: 12px; border-bottom: 1px solid #eee; display: flex; gap: 10px; align-items: center;">
-              <input type="checkbox" style="cursor: pointer; width: 18px; height: 18px;">
-              <div>
-                <div style="font-weight: 600; font-size: 12px;">Instellingen geconfigureerd</div>
-                <div style="font-size: 10px; color: #888;">Willekeurige volgorde, dagelijkse herinneringen</div>
-              </div>
-            </div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-label">STEP 1: Create StudySet</div>
+          <div class="step-title">Name & Topic</div>
+          <div class="form-group">
+            <label class="form-label">StudySet Name *</label>
+            <input type="text" class="form-input" placeholder="e.g., 'Philosophy: Epistemology'">
           </div>
-
-          <div style="background: #e8f0dc; padding: 12px; margin-top: 15px; border-radius: 4px; font-size: 12px; color: #5a6b3a;">
-            ✓ Je bent 67% klaar! Klik op de checkbox hierboven om alle stappen af te ronden.
+          <div class="form-group">
+            <label class="form-label">Description (optional)</label>
+            <input type="text" class="form-input" placeholder="Deep dive into knowledge theory">
           </div>
-
-          <div style="font-size: 11px; color: #888; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-            <strong>Key features:</strong> Visual progress tracking, checkbox feedback, summary counts, completion percentage
+          <div class="btn-group">
+            <button class="btn">Cancel</button>
+            <button class="btn btn-primary">Next →</button>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
+        <div class="step-card">
+          <div class="step-label">STEP 2: Add Material</div>
+          <div class="step-title">Input Your Content</div>
+          <div style="margin-bottom: 10px;">
+            <div style="display: flex; gap: 4px; margin-bottom: 8px; font-size: 10px;">
+              <span style="color: #888;">[Use exact Quiz input buttons: File | Link | Voice | Image]</span>
+            </div>
+          </div>
+          <textarea class="form-textarea" placeholder="Full textbook chapters, papers, detailed notes..."></textarea>
+          <div class="btn-group">
+            <button class="btn">← Back</button>
+            <button class="btn btn-primary">Next →</button>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-label">STEP 3: Settings</div>
+          <div class="step-title">Customize Your Plan</div>
+
+          <div class="form-group">
+            <label class="form-label">How much do you already know?</label>
+            <select class="select-box">
+              <option>Nothing - Start from basics</option>
+              <option>A little - Some background</option>
+              <option selected>Medium - Comfortable with basics</option>
+              <option>Advanced - Deep understanding</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">What days can you study?</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item"><input type="checkbox" checked> Monday</label>
+              <label class="checkbox-item"><input type="checkbox" checked> Wednesday</label>
+              <label class="checkbox-item"><input type="checkbox" checked> Friday</label>
+              <label class="checkbox-item"><input type="checkbox" checked> Saturday</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Connection depth:</label>
+            <select class="select-box">
+              <option>Foundational concepts only</option>
+              <option>Cross-topic relationships</option>
+              <option selected>Advanced synthesis (connect everything)</option>
+            </select>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn">← Back</button>
+            <button class="btn btn-primary">Generate Plan →</button>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-label">STEP 4: Your Study Plan</div>
+          <div class="step-title">AI-Generated Schedule</div>
+          <div class="info-box">Theory-first, detailed notes, advanced connections & synthesis</div>
+
+          <div class="plan-box">
+            <div class="plan-day">📅 Monday (2 items)</div>
+            <div class="plan-task">→ Comprehensive Notes: Part I foundations</div>
+            <div class="plan-task">→ Mindmap: Core concept relationships</div>
+          </div>
+
+          <div class="plan-box">
+            <div class="plan-day">📅 Wednesday (2 items)</div>
+            <div class="plan-task">→ Comprehensive Notes: Part II analysis</div>
+            <div class="plan-task">→ Mindmap: Broader connections</div>
+          </div>
+
+          <div class="plan-box">
+            <div class="plan-day">📅 Friday (3 items)</div>
+            <div class="plan-task">→ Comprehensive Notes: Synthesis essay</div>
+            <div class="plan-task">→ Quiz: Conceptual understanding (10 q)</div>
+            <div class="plan-task">→ Flashcards: Difficult nuances</div>
+          </div>
+
+          <div class="plan-box">
+            <div class="plan-day">📅 Saturday (2 items)</div>
+            <div class="plan-task">→ Mindmap: Ultimate synthesis</div>
+            <div class="plan-task">→ Quiz: Connections & implications (12 q)</div>
+          </div>
+
+          <div style="margin-top: 15px; padding: 12px; background: #e8f5e9; border-radius: 6px; border-left: 3px solid #7f8962;">
+            <div style="font-size: 11px; font-weight: 600; margin-bottom: 10px;">📌 In je Agenda:</div>
+            <div style="background: white; border-radius: 4px; overflow: hidden; font-size: 10px;">
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Mon 13</strong> • 2 taken</div>
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Wed 15</strong> • 2 taken</div>
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Fri 17</strong> • 3 taken</div>
+              <div style="padding: 8px; background: #f9f9f9;"><strong>Sat 18</strong> • 2 taken</div>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn">← Edit Settings</button>
+            <button class="btn btn-primary">Add to Agenda →</button>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- 5B: Card Summary -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">5B: Card Summary</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Research: Notion, Slack, Figma, Trello card design
-          </span>
-        </div>
+    <!-- ========== WORKFLOW 5: Quick Learner ========== -->
+    <div class="workflow-section">
+      <div class="workflow-title">Workflow 5: Quick Learner</div>
+      <div class="workflow-desc">Fast-paced, focused sessions, essential concepts only, high-frequency spaced review</div>
 
-        <div style="background: #f9f9f9; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-          <div style="font-size: 13px; font-weight: 600; margin-bottom: 20px;">Je StudySet samenvatting:</div>
-
-          <!-- Summary cards in grid -->
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-            <!-- Card 1 -->
-            <div style="background: white; border: 1px solid #ddd; border-radius: 6px; padding: 15px;">
-              <div style="font-size: 11px; color: #888; margin-bottom: 4px;">ONDERWERP</div>
-              <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">Advanced Biology</div>
-              <div style="font-size: 11px; color: #666;">3 hoofdstukken, 8 concepten</div>
-            </div>
-
-            <!-- Card 2 -->
-            <div style="background: white; border: 1px solid #ddd; border-radius: 6px; padding: 15px;">
-              <div style="font-size: 11px; color: #888; margin-bottom: 4px;">MATERIAAL</div>
-              <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">5 bestanden</div>
-              <div style="font-size: 11px; color: #666;">Totaal ~45 pagina's</div>
-            </div>
-
-            <!-- Card 3 -->
-            <div style="background: white; border: 1px solid #ddd; border-radius: 6px; padding: 15px;">
-              <div style="font-size: 11px; color: #888; margin-bottom: 4px;">SCHEMA</div>
-              <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">5 dagen</div>
-              <div style="font-size: 11px; color: #666;">Mei 19 - Mei 23</div>
-            </div>
-
-            <!-- Card 4 -->
-            <div style="background: white; border: 1px solid #ddd; border-radius: 6px; padding: 15px;">
-              <div style="font-size: 11px; color: #888; margin-bottom: 4px;">TOTALE TIJD</div>
-              <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">~12 uur</div>
-              <div style="font-size: 11px; color: #666;">Gemiddeld 2.4h per dag</div>
-            </div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-label">STEP 1: Create StudySet</div>
+          <div class="step-title">Name & Topic</div>
+          <div class="form-group">
+            <label class="form-label">StudySet Name *</label>
+            <input type="text" class="form-input" placeholder="e.g., 'Spanish: Travel Vocab'">
           </div>
-
-          <div style="font-size: 11px; color: #888; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-            <strong>Key features:</strong> At-a-glance summary, key metrics in cards, easy to scan, swipeable carousel variant
+          <div class="form-group">
+            <label class="form-label">Description (optional)</label>
+            <input type="text" class="form-input" placeholder="Quick vocabulary for trip">
+          </div>
+          <div class="btn-group">
+            <button class="btn">Cancel</button>
+            <button class="btn btn-primary">Next →</button>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
-        </div>
-      </div>
-
-      <!-- 5C: Settings Form -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">5C: Settings Form</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Research: Duolingo, Spotify, Apple Health settings
-          </span>
-        </div>
-
-        <div style="background: #f9f9f9; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-          <div style="font-size: 13px; font-weight: 600; margin-bottom: 20px;">Personaliseer je leerervaaring:</div>
-
-          <!-- Settings form -->
-          <div style="background: white; border-radius: 4px; padding: 20px;">
-            <!-- Setting 1 -->
-            <div style="margin-bottom: 18px;">
-              <label style="display: block; font-weight: 600; font-size: 12px; margin-bottom: 6px;">Voorkeursvolgorde</label>
-              <select style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
-                <option>Sequentieel (1e, 2e, 3e)</option>
-                <option>Willekeurig</option>
-                <option>Moeilijkheidsgraad</option>
-              </select>
-            </div>
-
-            <!-- Setting 2 -->
-            <div style="margin-bottom: 18px;">
-              <label style="display: block; font-weight: 600; font-size: 12px; margin-bottom: 6px;">Herinneringen</label>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" checked style="width: 18px; height: 18px;">
-                <label style="font-size: 12px; margin: 0;">Dagelijks om 19:00 uur</label>
-              </div>
-            </div>
-
-            <!-- Setting 3 -->
-            <div style="margin-bottom: 18px;">
-              <label style="display: block; font-weight: 600; font-size: 12px; margin-bottom: 6px;">Studiesessieduur</label>
-              <input type="range" min="15" max="120" value="45" style="width: 100%; height: 6px; border-radius: 3px; background: #ddd; outline: none;">
-              <div style="font-size: 10px; color: #888; margin-top: 4px;">45 minuten per sessie</div>
-            </div>
-
-            <!-- Setting 4 -->
-            <div style="margin-bottom: 0;">
-              <label style="display: block; font-weight: 600; font-size: 12px; margin-bottom: 6px;">Thema</label>
-              <div style="display: flex; gap: 8px;">
-                <button style="padding: 8px 12px; border: 2px solid #7f8962; background: white; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Licht</button>
-                <button style="padding: 8px 12px; border: 1px solid #ddd; background: #f0f0f0; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Donker</button>
-                <button style="padding: 8px 12px; border: 1px solid #ddd; background: #f0f0f0; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Auto</button>
-              </div>
+        <div class="step-card">
+          <div class="step-label">STEP 2: Add Material</div>
+          <div class="step-title">Input Your Content</div>
+          <div style="margin-bottom: 10px;">
+            <div style="display: flex; gap: 4px; margin-bottom: 8px; font-size: 10px;">
+              <span style="color: #888;">[Use exact Quiz input buttons: File | Link | Voice | Image]</span>
             </div>
           </div>
-
-          <div style="font-size: 11px; color: #888; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-            <strong>Key features:</strong> Form controls (dropdowns, toggles, sliders, buttons), visual settings, instant feedback
+          <textarea class="form-textarea" placeholder="Key vocabulary, essential concepts only..."></textarea>
+          <div class="btn-group">
+            <button class="btn">← Back</button>
+            <button class="btn btn-primary">Next →</button>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
-        </div>
-      </div>
+        <div class="step-card">
+          <div class="step-label">STEP 3: Settings</div>
+          <div class="step-title">Customize Your Plan</div>
 
-      <!-- 5D: Side-by-Side Comparison -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">5D: AI Suggestion Comparison</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Research: ChatGPT comparison UI, Google Bard drafts, GitHub copilot options
-          </span>
-        </div>
+          <div class="form-group">
+            <label class="form-label">How much do you already know?</label>
+            <select class="select-box">
+              <option>Nothing - Start from basics</option>
+              <option selected>A little - Some background</option>
+              <option>Medium - Comfortable with basics</option>
+              <option>Advanced - Deep understanding</option>
+            </select>
+          </div>
 
-        <div style="background: #f9f9f9; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-          <div style="font-size: 13px; font-weight: 600; margin-bottom: 15px;">De AI heeft 3 schema's voorgesteld. Welke spreekt je aan?</div>
-
-          <!-- Comparison cards -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-            <!-- Option 1 -->
-            <div style="border: 2px solid #ddd; border-radius: 6px; padding: 15px; background: white; cursor: pointer; transition: all 0.2s;">
-              <div style="font-weight: 600; font-size: 12px; margin-bottom: 10px;">Voorstel A</div>
-              <div style="background: #f0f0f0; padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 10px;">
-                <strong>Strategie:</strong> Snel en intens
-              </div>
-              <div style="font-size: 11px; color: #666; line-height: 1.4;">
-                • 3 uur/dag<br>
-                • Sequentieel<br>
-                • Ma-Wo focusuren
-              </div>
-            </div>
-
-            <!-- Option 2 - selected -->
-            <div style="border: 3px solid #7f8962; border-radius: 6px; padding: 15px; background: #e8f0dc; cursor: pointer;">
-              <div style="font-weight: 600; font-size: 12px; margin-bottom: 10px; color: #5a6b3a;">✓ Voorstel B</div>
-              <div style="background: #c8e6c9; padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 10px;">
-                <strong>Strategie:</strong> Gebalanceerd (aanbevolen)
-              </div>
-              <div style="font-size: 11px; color: #5a6b3a; line-height: 1.4;">
-                • 2h/dag<br>
-                • Willekeurig<br>
-                • Alle dagen evenwicht
-              </div>
-            </div>
-
-            <!-- Option 3 -->
-            <div style="border: 2px solid #ddd; border-radius: 6px; padding: 15px; background: white; cursor: pointer;">
-              <div style="font-weight: 600; font-size: 12px; margin-bottom: 10px;">Voorstel C</div>
-              <div style="background: #f0f0f0; padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 10px;">
-                <strong>Strategie:</strong> Flexibel & ontspannen
-              </div>
-              <div style="font-size: 11px; color: #666; line-height: 1.4;">
-                • 1.5h/dag<br>
-                • Moeilijkheidsgraad<br>
-                • Weekends vrij
-              </div>
+          <div class="form-group">
+            <label class="form-label">What days can you study?</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item"><input type="checkbox" checked> Weekdays</label>
+              <label class="checkbox-item"><input type="checkbox"> Weekends</label>
             </div>
           </div>
 
-          <div style="font-size: 11px; color: #888; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-            <strong>Key features:</strong> Multiple AI suggestions, visual comparison, selected state highlighting, quick scan descriptions
+          <div class="form-group">
+            <label class="form-label">Review frequency:</label>
+            <select class="select-box">
+              <option>Intensive spaced (short intervals)</option>
+              <option selected>Standard spaced (daily)</option>
+              <option>Relaxed (every other day)</option>
+            </select>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn">← Back</button>
+            <button class="btn btn-primary">Generate Plan →</button>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">Volgende →</button>
-        </div>
-      </div>
+        <div class="step-card">
+          <div class="step-label">STEP 4: Your Study Plan</div>
+          <div class="step-title">AI-Generated Schedule</div>
+          <div class="info-box">Intensive daily schedule, short focused sessions, high-frequency review</div>
 
-      <!-- 5E: Interactive Preview -->
-      <div style="background: white; padding: 30px; margin-bottom: 40px; border: 1px solid #ddd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0;">5E: Interactive Preview</h3>
-          <span style="background: #7f8962; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px;">
-            Research: Figma prototypes, Framer, Apple App Store preview
-          </span>
-        </div>
+          <div class="plan-box">
+            <div class="plan-day">📅 Monday-Friday (daily)</div>
+            <div class="plan-task">→ Flashcards: 20 terms morning (8 min)</div>
+            <div class="plan-task">→ Quiz: Quick drill (6 questions, 5 min)</div>
+            <div class="plan-task">→ Flashcards: 15 review terms evening (6 min)</div>
+          </div>
 
-        <div style="background: #f9f9f9; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-          <div style="font-size: 13px; font-weight: 600; margin-bottom: 15px;">Bekijk hoe je StudySet eruit ziet:</div>
+          <div class="plan-box">
+            <div class="plan-day">📅 Saturday</div>
+            <div class="plan-task">→ Flashcards: Full week review (all terms)</div>
+            <div class="plan-task">→ Quiz: Comprehensive (20 questions)</div>
+          </div>
 
-          <!-- Phone mockup frame -->
-          <div style="background: black; border-radius: 30px; padding: 12px; max-width: 300px; margin: 0 auto; aspect-ratio: 9/16;">
-            <div style="background: white; border-radius: 24px; padding: 20px; height: 100%; overflow-y: auto; font-size: 11px;">
-              <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Advanced Biology</div>
-                <div style="font-size: 10px; color: #888;">Mei 19 - Mei 23</div>
-              </div>
+          <div class="plan-box">
+            <div class="plan-day">📅 Sunday</div>
+            <div class="plan-task">→ Notes: Summary reading (3 min)</div>
+            <div class="plan-task">→ Flashcards: Weak areas (10 min)</div>
+          </div>
 
-              <!-- Day card -->
-              <div style="background: #e8f0dc; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
-                <div style="font-weight: 600; font-size: 11px; margin-bottom: 6px;">📅 Dinsdag 20 mei</div>
-                <div style="background: rgba(255,255,255,0.5); padding: 8px; border-radius: 4px; font-size: 10px; line-height: 1.3;">
-                  <div style="margin-bottom: 4px;">→ Read chapter 3 (30m)</div>
-                  <div style="margin-bottom: 4px;">→ Make summary (45m)</div>
-                  <div>→ Quiz practice (30m)</div>
-                </div>
-              </div>
-
-              <div style="background: white; border: 1px solid #ddd; padding: 10px; border-radius: 6px; margin-bottom: 10px; text-align: center; font-size: 11px; color: #7f8962; font-weight: 600; cursor: pointer;">
-                → Starten
-              </div>
-
-              <div style="font-size: 9px; color: #888; text-align: center;">
-                ✓ 1/5 dagen voltooid
-              </div>
+          <div style="margin-top: 15px; padding: 12px; background: #e8f5e9; border-radius: 6px; border-left: 3px solid #7f8962;">
+            <div style="font-size: 11px; font-weight: 600; margin-bottom: 10px;">📌 In je Agenda:</div>
+            <div style="background: white; border-radius: 4px; overflow: hidden; font-size: 10px;">
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Mon-Fri</strong> • 3 taken/dag</div>
+              <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>Saturday</strong> • 2 taken</div>
+              <div style="padding: 8px; background: #f9f9f9;"><strong>Sunday</strong> • 2 taken</div>
             </div>
           </div>
 
-          <div style="font-size: 11px; color: #888; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd; text-align: center;">
-            <strong>Key features:</strong> Phone mockup preview, interactive cards, day breakdown view, progress indicator
+          <div class="btn-group">
+            <button class="btn">← Edit Settings</button>
+            <button class="btn btn-primary">Add to Agenda →</button>
           </div>
-        </div>
-
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" style="flex: 1;">← Vorige</button>
-          <button class="btn btn-primary" style="flex: 1;">StudySet starten →</button>
         </div>
       </div>
     </div>
 
     <!-- Footer -->
-    <div style="border-top: 3px solid #7f8962; padding: 30px 20px; margin-top: 40px; background: #f5f5f5;">
-      <h2 style="text-align: center; font-size: 16px; margin-bottom: 20px; color: #333;">
-        Research & Tools Used
-      </h2>
+    <div style="border-top: 3px solid #7f8962; padding: 30px 20px; margin-top: 60px; background: #f5f5f5;">
+      <h2 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #333;">Design Notes</h2>
       <div style="max-width: 900px; margin: 0 auto; font-size: 11px; color: #666; line-height: 1.6;">
-        <p><strong>STEP 1 - Name & Info:</strong> Minimal form design inspired by Quizlet, Anki, Google Tasks</p>
-        <p><strong>STEP 2 - Upload Materials:</strong> Multi-channel input research from Notion, Google Drive, ChatGPT, ReadWise, Hypothesis, Google Lens, Quizlet batch import</p>
-        <p><strong>STEP 3 - AI Generation:</strong> Thinking state patterns from Claude, ChatGPT; carousel UI from Figma, MindMap from MindMeister; multi-step wizards from Stripe, Webflow</p>
-        <p><strong>STEP 4 - Agenda Planning:</strong> Calendar views researched from Google Calendar, Apple Calendar, Fantastical, Todoist, Notion, Monday.com, Asana, GitHub contributions heatmap, Duolingo streaks</p>
-        <p><strong>STEP 5 - Review & Settings:</strong> Checklist patterns from Todoist, Apple Reminders; card design from Notion, Slack, Figma, Trello; settings forms from Duolingo, Spotify, Apple Health; comparison UI from ChatGPT, Google Bard, GitHub Copilot; phone preview from Figma, Framer, Apple App Store</p>
-        <p style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-          <strong>Design System:</strong> IBM Plex Sans, #7f8962 sage green accent, light theme (#f2f2f2), accessibility-first form design, clear progress indicators, responsive grid layouts
+        <p><strong>Step 1:</strong> Simple name + description form</p>
+        <p><strong>Step 2:</strong> 1:1 Quiz input component - textarea + control buttons above (File, Link, Voice, Image)</p>
+        <p><strong>Step 3:</strong> Settings panel with essential options:
+          <ul style="margin: 6px 0 0 20px;">
+            <li>Knowledge level (baseline assessment)</li>
+            <li>Learning days (when user wants to study)</li>
+            <li>Tool/content preference (unique to each workflow)</li>
+            <li>Optional advanced settings (question variety, organization, review frequency, synthesis depth)</li>
+          </ul>
         </p>
-        <p style="margin: 10px 0 0 0; font-size: 10px; color: #999;">
-          Document created May 2026 • StudySet Workflow Mockups • 20 unique design patterns across 5 steps
-        </p>
+        <p><strong>Step 4:</strong> AI-generated study plan overview showing exactly what they'll do each day with which tools. Plan is added to their agenda.</p>
+        <p style="margin-top: 12px;"><strong>Each workflow demonstrates:</strong> Different knowledge levels, learning preferences, day selections, and resulting AI-generated plans with appropriate tool distribution and pacing</p>
       </div>
     </div>
-
   </div>
 </body>
 </html>
