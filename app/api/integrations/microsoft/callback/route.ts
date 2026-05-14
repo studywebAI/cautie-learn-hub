@@ -117,6 +117,7 @@ export async function GET(request: NextRequest) {
     clearOAuthCookies(response);
     return response;
   } catch (error: any) {
+    console.error('[microsoft-callback] callback_error', {
       requestId,
       message: String(error?.message || 'callback_failed'),
       code: String(error?.code || ''),

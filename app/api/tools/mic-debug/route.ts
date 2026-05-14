@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ ok: true });
   } catch (error: any) {
+    console.error('[mic-debug] error', {
       message: error?.message || 'unknown',
       ts: new Date().toISOString(),
     });

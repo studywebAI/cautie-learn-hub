@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
     }
 
     const tokenState = await getValidMicrosoftAccessToken(supabase, user.id).catch((error: any) => {
+      console.error('[microsoft-picker-config] token_error', {
         requestId,
         traceId,
         appId,

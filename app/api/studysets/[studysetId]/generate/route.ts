@@ -191,6 +191,7 @@ async function tryBuildCustomAIPlan(input: {
     if (days.length === 0) return null
     return days
   } catch (error) {
+    console.error('[normalize-plan-days] error', {
       message: (error as any)?.message || String(error),
     })
     return null

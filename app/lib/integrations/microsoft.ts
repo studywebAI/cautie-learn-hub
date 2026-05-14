@@ -216,6 +216,7 @@ export async function listMicrosoftFiles(input: {
       }
     }
   } catch (error: any) {
+    console.error('[list-microsoft-files] error', {
       kind: input.kind,
       query: input.query || '',
       source: source || null,

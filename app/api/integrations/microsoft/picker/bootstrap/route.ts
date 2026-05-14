@@ -151,6 +151,7 @@ export async function GET(request: NextRequest) {
       fallbackMode,
     });
   } catch (error: any) {
+    console.error('[microsoft-picker-bootstrap] init_error', {
       requestId,
       message: String(error?.message || 'unknown'),
       stack: error?.stack || null,

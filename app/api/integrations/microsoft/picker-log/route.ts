@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => null);
     const parsed = PayloadSchema.safeParse(body);
     if (!parsed.success) {
+      console.error('[microsoft-picker-log] validation_failed', {
         requestId,
         userId,
         issues: parsed.error.issues.map((issue) => issue.message),
