@@ -123,6 +123,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, requestId });
   } catch (error: any) {
+    console.error('[microsoft-picker-log] post_error', {
       requestId,
       message: String(error?.message || 'unknown'),
       code: String(error?.code || ''),

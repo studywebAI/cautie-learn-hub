@@ -98,6 +98,7 @@ export async function GET(request: NextRequest) {
 
         const subjectsResult = await subjectsQuery
         if (subjectsResult.error) {
+          console.error('[preload-navigation] subjects_query_error', {
             requestId,
             message: subjectsResult.error.message,
           })
@@ -141,6 +142,7 @@ export async function GET(request: NextRequest) {
             .in('id', subjectIds)
 
           if (subjectsResult.error) {
+            console.error('[preload-navigation] subjects_query_error', {
               requestId,
               message: subjectsResult.error.message,
             })

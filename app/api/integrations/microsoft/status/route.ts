@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     const message = String(error?.message || 'Failed to get status');
     const code = String(error?.code || '');
+    console.error('[microsoft-status] error', {
       requestId,
       message,
       code,

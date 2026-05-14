@@ -97,6 +97,7 @@ export async function GET(request: NextRequest) {
       tokenExpiresAt: tokenState?.connection?.expires_at || null,
     });
   } catch (error: any) {
+    console.error('[microsoft-picker-config] load_error', {
       requestId,
       traceId,
       appId,
