@@ -3,6 +3,8 @@
 import { useEffect, useState, useContext } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { BookOpen, Calendar, Zap, Trash2, ArrowRight } from 'lucide-react';
@@ -24,6 +26,10 @@ export default function StudySetsPage() {
   const { session, isLoading } = useContext(AppContext) as AppContextType;
   const [studysets, setStudysets] = useState<StudySet[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedStudysetId, setSelectedStudysetId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isLoading || !session) {
@@ -52,6 +58,48 @@ export default function StudySetsPage() {
     void fetchStudysets();
   }, [session, isLoading]);
 
+  const handleDeleteClick = (e: React.MouseEvent, studysetId: string) => {
+    e.preventDefault();
+    setSelectedStudysetId(studysetId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedStudysetId) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/studysets/${selectedStudysetId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setStudysets(studysets.filter(ss => ss.id !== selectedStudysetId));
+        toast({
+          title: 'Success',
+          description: 'StudySet deleted successfully',
+        });
+      } else {
+        const data = await res.json();
+        toast({
+          title: 'Error',
+          description: data.error || 'Failed to delete StudySet',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete StudySet',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+      setSelectedStudysetId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -76,58 +124,79 @@ export default function StudySetsPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {studysets.map(ss => (
-        <Card
-          key={ss.id}
-          className="hover:shadow-md transition-shadow cursor-pointer group"
-        >
-          <CardHeader>
-            <CardTitle className="line-clamp-2 group-hover:text-[var(--accent-brand)] transition-colors">
-              {ss.name}
-            </CardTitle>
-            {ss.subject && (
-              <CardDescription>{ss.subject}</CardDescription>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {ss.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {ss.description}
-              </p>
-            )}
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {studysets.map(ss => (
+          <Card
+            key={ss.id}
+            className="hover:shadow-md transition-shadow cursor-pointer group"
+          >
+            <CardHeader>
+              <CardTitle className="line-clamp-2 group-hover:text-[var(--accent-brand)] transition-colors">
+                {ss.name}
+              </CardTitle>
+              {ss.subject && (
+                <CardDescription>{ss.subject}</CardDescription>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {ss.description && (
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {ss.description}
+                </p>
+              )}
 
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Calendar className="h-3 w-3" />
-              {new Date(ss.created_at).toLocaleDateString()}
-            </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar className="h-3 w-3" />
+                {new Date(ss.created_at).toLocaleDateString()}
+              </div>
 
-            <div className="flex gap-2 pt-2">
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="flex-1"
-              >
-                <Link href={`/studyset/${ss.id}`}>
-                  Open
-                  <ArrowRight className="h-3 w-3 ml-1" />
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // TODO: Delete studyset
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+              <div className="flex gap-2 pt-2">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                >
+                  <Link href={`/studyset/${ss.id}`}>
+                    Open
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => handleDeleteClick(e, ss.id)}
+                  disabled={deleting}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete StudySet?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action is permanent. The StudySet and all its associated data will be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-2 justify-end">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

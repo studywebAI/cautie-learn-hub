@@ -30,9 +30,21 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/classes/${classId}/grades`);
-      if (!res.ok) throw new Error(`Error ${res.status}`);
-      const data = await res.json();
+      const [gradesRes, trendRes] = await Promise.all([
+        fetch(`/api/classes/${classId}/grades`),
+        fetch(`/api/classes/${classId}/analytics/trend?period=${period}`),
+      ]);
+
+      if (!gradesRes.ok) throw new Error(`Error ${gradesRes.status}`);
+      const data = await gradesRes.json();
+
+      // Get trend data if available
+      let trendData: { [key: string]: number } = {};
+      if (trendRes.ok) {
+        const trendInfo = await trendRes.json();
+        // For class-level analytics, we use the overall trend
+        trendData['_overall'] = trendInfo.trend ?? 0;
+      }
 
       // Calculate per-subject averages from grade sets
       const subjectMap = new Map<string, { sum: number; count: number }>();
@@ -51,7 +63,8 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
       const result: SubjectAnalytics[] = Array.from(subjectMap.entries()).map(([name, { sum, count }]) => ({
         name,
         avg: count > 0 ? Math.round((sum / count) * 10) / 10 : null,
-        trend: 0, // TODO: calculate trend from historical data
+        // Use trend from API if available, otherwise use overall trend, else 0
+        trend: trendData[name] ?? trendData['_overall'] ?? 0,
         count,
       }));
 
