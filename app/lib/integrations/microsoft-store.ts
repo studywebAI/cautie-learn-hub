@@ -178,6 +178,7 @@ export async function getMicrosoftAccessTokenForResource(
   const connection = base.connection;
   const refreshToken = connection?.refresh_token_encrypted ? decryptSecret(connection.refresh_token_encrypted) : '';
   if (!refreshToken) {
+    console.warn('[microsoft-token] no_refresh_token_for_resource', {
       userId,
       resource: targetResource,
       scope: connection?.scope || null,
@@ -207,6 +208,7 @@ export async function getMicrosoftAccessTokenForResource(
         tokenKind: 'resource' as const,
       };
     } catch (error: any) {
+      console.error('[microsoft-token] refresh_error', {
         userId,
         resource: targetResource,
         scopeRequested: scopeCandidate,
@@ -215,6 +217,7 @@ export async function getMicrosoftAccessTokenForResource(
     }
   }
 
+  console.info('[microsoft-token] base_token_returned', {
     userId,
     resource: targetResource,
     scopeRequested: candidates,

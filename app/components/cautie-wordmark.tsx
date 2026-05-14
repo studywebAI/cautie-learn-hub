@@ -149,6 +149,7 @@ export function CautieWordmark({
               }}
               onAnimationEnd={(event) => {
                 if (hasSignaledDone) return;
+                console.info('[cautie-wordmark] animation_completed', {
                   animationName: event.animationName,
                   elapsedTimeSeconds: event.elapsedTime,
                 });

@@ -203,6 +203,7 @@ async function writeAIErrorLog(
       return;
     }
     // Non-blocking; keep tool execution result path stable.
+    console.error('[tools-v2] ai_logging_error', {
       message: error.message,
       code: error.code,
     });
