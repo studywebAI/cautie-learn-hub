@@ -133,6 +133,7 @@ export async function GET(req: NextRequest) {
     })
     return NextResponse.json({ items })
   } catch (error) {
+    console.error('[studysets-agenda] error', {
       requestId,
       message: (error as any)?.message || 'Internal server error',
     })

@@ -53,6 +53,7 @@ export async function GET() {
       userId: user.id,
       force: false,
     }).catch((runError) => {
+      console.error('[studysets-replan] error', {
         message: (runError as any)?.message || String(runError),
       })
     })
@@ -61,6 +62,7 @@ export async function GET() {
       userId: user.id,
       force: false,
     }).catch((runError) => {
+      console.error('[studysets-sync] error', {
         message: (runError as any)?.message || String(runError),
       })
     })

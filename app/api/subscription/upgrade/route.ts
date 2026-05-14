@@ -9,8 +9,9 @@ export async function POST(request: NextRequest) {
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
+      console.error('[upgrade] auth_error', {
         message: authError?.message,
         status: authError?.status,
         name: authError?.name
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { code, tier, type } = await request.json();
+    console.info('[upgrade] request', {
       userId: user.id,
       code: code ? '***redacted***' : null,
       requested_tier: tier,
@@ -57,6 +59,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (updateError) {
+      console.error('[upgrade] update_error', {
         message: updateError.message,
         code: updateError.code,
         details: updateError.details,
@@ -65,12 +68,13 @@ export async function POST(request: NextRequest) {
         finalTier,
         finalType
       });
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Failed to update subscription',
-        details: updateError.message 
+        details: updateError.message
       }, { status: 500 });
     }
 
+    console.info('[upgrade] success', {
       userId: user.id,
       subscription_type: data?.subscription_type,
       subscription_tier: data?.subscription_tier
