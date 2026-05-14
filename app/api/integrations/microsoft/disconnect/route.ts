@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
     console.info('[microsoft-disconnect] success', { requestId, userId: user.id });
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    console.error('[microsoft-disconnect] failed', {
       requestId,
       message: String(error?.message || 'unknown'),
       code: String(error?.code || ''),

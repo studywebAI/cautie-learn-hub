@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items });
   } catch (error: any) {
+    console.error('[microsoft-files] failed', {
       requestId,
       message: String(error?.message || 'Failed to load files'),
       code: String(error?.code || ''),

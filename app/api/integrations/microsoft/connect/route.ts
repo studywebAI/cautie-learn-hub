@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
 
     // If already connected with a usable token and required scopes, skip OAuth roundtrip.
     const existingToken = await getValidMicrosoftAccessToken(supabase, user.id).catch((error: any) => {
+      console.error('[microsoft-connect] token_validation_failed', {
         requestId,
         traceId,
         userId: user.id,

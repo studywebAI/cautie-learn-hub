@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!code || !state || !expectedState || state !== expectedState) {
+    console.error('[microsoft-callback] invalid_state', {
       requestId,
       hasCode: Boolean(code),
       hasState: Boolean(state),
