@@ -6,23 +6,12 @@ import { SourceInput } from '@/components/tools/source-input';
 import { CheckCircle2, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-type WorkflowData = {
-  step: 1 | 2 | 3 | 4;
-  name: string;
-  description: string;
-  subject: string;
-  materials: Array<{ type: string; content: string }>;
-  agenda: Record<string, any>;
-  preferences: Record<string, any>;
-  studysetId?: string;
-};
-
 export function Step2Upload({
   data,
   setData,
 }: {
-  data: WorkflowData;
-  setData: (data: WorkflowData) => void;
+  data: any;
+  setData: (data: any) => void;
 }) {
   const [sourceText, setSourceText] = useState('');
 
@@ -43,7 +32,7 @@ export function Step2Upload({
   const removeMaterial = (index: number) => {
     setData({
       ...data,
-      materials: data.materials.filter((_, i) => i !== index),
+      materials: data.materials.filter((_: any, i: number) => i !== index),
     });
   };
 
@@ -73,7 +62,7 @@ export function Step2Upload({
           <div>
             <p className="text-sm font-medium mb-3">Added Materials ({data.materials.length})</p>
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {data.materials.map((material, idx) => (
+              {data.materials.map((material: any, idx: number) => (
                 <div
                   key={idx}
                   className="flex items-start justify-between p-3 rounded-lg border bg-muted/30 group hover:bg-muted/50 transition-colors"

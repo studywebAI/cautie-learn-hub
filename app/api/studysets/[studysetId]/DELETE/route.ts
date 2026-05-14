@@ -4,9 +4,10 @@ import { cookies } from 'next/headers';
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { studysetId: string } }
+  { params }: { params: Promise<{ studysetId: string }> }
 ) {
   try {
+    const { studysetId } = await params;
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
 
@@ -19,7 +20,7 @@ export async function DELETE(
     const { data: studyset, error: fetchError } = await (supabase as any)
       .from('studysets')
       .select('id, owner_id')
-      .eq('id', params.studysetId)
+      .eq('id', studysetId)
       .single();
 
     if (fetchError || !studyset) {
@@ -34,7 +35,7 @@ export async function DELETE(
     const { error: deleteError } = await (supabase as any)
       .from('studysets')
       .update({ status: 'archived' })
-      .eq('id', params.studysetId);
+      .eq('id', studysetId);
 
     if (deleteError) {
       return NextResponse.json({ error: 'Failed to delete studyset' }, { status: 500 });
@@ -42,7 +43,7 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      studysetId: params.studysetId,
+      studysetId,
       message: 'StudySet deleted successfully'
     });
   } catch (error) {

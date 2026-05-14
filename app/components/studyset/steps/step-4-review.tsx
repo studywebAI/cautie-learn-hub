@@ -6,35 +6,8 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-type WorkflowData = {
-  step: 1 | 2 | 3 | 4;
-  name: string;
-  description: string;
-  subject: string;
-  materials: Array<{ type: string; content: string }>;
-  agenda: Record<string, any>;
-  preferences: Record<string, any>;
-  studysetId?: string;
-  workflowType?: string;
-  settings?: Record<string, any>;
-  generatedPlan?: {
-    days: Array<{
-      date: string;
-      dayName: string;
-      tasks: Array<{ task: string; tool: string }>;
-    }>;
-  };
-};
-
-interface Step4ReviewProps {
-  data: WorkflowData;
-  setData: (data: WorkflowData) => void;
-  onSubmit: () => void;
-  isLoading?: boolean;
-}
-
 // Mock generated plan - will be replaced with AI-generated data later
-const generateMockPlan = (studyDays: string[]): WorkflowData['generatedPlan'] => {
+const generateMockPlan = (studyDays: string[]): any => {
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const taskExamples: Record<string, { tasks: string[]; tools: string[] }> = {
     monday: {
@@ -76,13 +49,26 @@ const generateMockPlan = (studyDays: string[]): WorkflowData['generatedPlan'] =>
   return { days };
 };
 
-export function Step4Review({ data, setData, onSubmit, isLoading }: Step4ReviewProps) {
+export function Step4Review({
+  data,
+  setData,
+  onSubmit,
+  isLoading,
+}: {
+  data: any;
+  setData: (data: any) => void;
+  onSubmit: () => void;
+  isLoading?: boolean;
+}) {
   const { toast } = useToast();
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [isAddingToAgenda, setIsAddingToAgenda] = useState(false);
 
   const studyDays = data.settings?.studyDays || [];
   const generatedPlan = data.generatedPlan || generateMockPlan(studyDays);
+
+  // Ensure generatedPlan is always defined
+  const plan = generatedPlan || { days: [] };
 
   const handleAddToAgenda = async () => {
     if (!data.studysetId) {
@@ -99,7 +85,7 @@ export function Step4Review({ data, setData, onSubmit, isLoading }: Step4ReviewP
       const response = await fetch(`/api/studysets/${data.studysetId}/agenda`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: generatedPlan }),
+        body: JSON.stringify({ plan }),
       });
 
       if (!response.ok) {
@@ -110,7 +96,7 @@ export function Step4Review({ data, setData, onSubmit, isLoading }: Step4ReviewP
 
       toast({
         title: 'Success',
-        description: `✓ Added ${generatedPlan.days.length} days to your agenda`,
+        description: `✓ Added ${plan.days.length} days to your agenda`,
       });
 
       // Update data and call onSubmit
@@ -143,7 +129,7 @@ export function Step4Review({ data, setData, onSubmit, isLoading }: Step4ReviewP
       <CardContent className="space-y-6">
         {/* Plan Overview */}
         <div className="space-y-2">
-          {generatedPlan.days.map((day) => (
+          {plan.days.map((day: any) => (
             <button
               key={day.date}
               onClick={() => setExpandedDay(expandedDay === day.date ? null : day.date)}
@@ -167,7 +153,7 @@ export function Step4Review({ data, setData, onSubmit, isLoading }: Step4ReviewP
               {/* Expanded Details */}
               {expandedDay === day.date && (
                 <div className="mt-2 ml-6 space-y-2 pb-4 border-l-2 border-muted pl-4">
-                  {day.tasks.map((item, idx) => (
+                  {day.tasks.map((item: any, idx: number) => (
                     <div key={idx} className="text-sm">
                       <div className="flex items-start gap-2">
                         <span className="text-lg mt-0.5">
@@ -196,7 +182,7 @@ export function Step4Review({ data, setData, onSubmit, isLoading }: Step4ReviewP
             📌 In je Agenda:
           </div>
           <div className="space-y-1 text-xs text-emerald-900 dark:text-emerald-200">
-            {generatedPlan.days.map((day) => (
+            {plan.days.map((day: any) => (
               <div key={day.date}>
                 <strong>{day.dayName}</strong> • {day.tasks.length} tasks
               </div>

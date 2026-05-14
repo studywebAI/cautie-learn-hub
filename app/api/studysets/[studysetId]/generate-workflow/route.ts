@@ -5,9 +5,10 @@ import { generateStudyMaterials } from '@/lib/claude-client';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { studysetId: string } }
+  { params }: { params: Promise<{ studysetId: string }> }
 ) {
   try {
+    const { studysetId } = await params;
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
 
@@ -22,7 +23,7 @@ export async function POST(
     const { data: studyset } = await (supabase as any)
       .from('studysets')
       .select('id, owner_id, name')
-      .eq('id', params.studysetId)
+      .eq('id', studysetId)
       .single();
 
     if (!studyset || studyset.owner_id !== user.id) {
@@ -65,12 +66,12 @@ export async function POST(
         ai_generation_style: option,
         generated_at: new Date().toISOString(),
       })
-      .eq('studyset_id', params.studysetId)
+      .eq('studyset_id', studysetId)
       .catch(() => {}); // Ignore if table doesn't exist
 
     return NextResponse.json({
       success: true,
-      studysetId: params.studysetId,
+      studysetId,
       generationStyle: option,
       flashcardsGenerated: generatedMaterials.flashcards.length,
       quizzesGenerated: generatedMaterials.quizzes.length,

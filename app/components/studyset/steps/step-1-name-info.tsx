@@ -5,24 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
-type WorkflowData = {
-  step: 1 | 2 | 3 | 4 | 5;
-  name: string;
-  description: string;
-  subject: string;
-  materials: Array<{ type: string; content: string }>;
-  aiGenOptions: string;
-  agenda: Record<string, any>;
-  preferences: Record<string, any>;
-  studysetId?: string;
-};
-
 export function Step1NameInfo({
   data,
   setData,
 }: {
-  data: WorkflowData;
-  setData: (data: WorkflowData) => void;
+  data: any;
+  setData: (data: any) => void;
 }) {
   return (
     <Card>

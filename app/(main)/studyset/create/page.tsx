@@ -20,6 +20,7 @@ type WorkflowData = {
   description: string;
   subject: string;
   materials: Array<{ type: string; content: string }>;
+  aiGenOptions?: string;
   agenda: Record<string, any>;
   preferences: Record<string, any>;
   studysetId?: string;
@@ -186,10 +187,10 @@ export default function StudysetCreatePage() {
   };
 
   const stepComponents = {
-    1: <Step1NameInfo data={data} setData={setData} />,
-    2: <Step2Upload data={data} setData={setData} />,
-    3: <Step3Settings data={data} setData={setData} />,
-    4: <Step4Review data={data} setData={setData} onSubmit={handleNext} />,
+    1: <Step1NameInfo data={data} setData={(newData) => setData(newData)} />,
+    2: <Step2Upload data={data} setData={(newData) => setData(newData)} />,
+    3: <Step3Settings data={data} setData={(newData) => setData(newData)} />,
+    4: <Step4Review data={data} setData={(newData) => setData(newData)} onSubmit={handleNext} />,
   };
 
   // Determine what to show

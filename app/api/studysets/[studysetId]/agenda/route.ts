@@ -4,9 +4,10 @@ import { cookies } from 'next/headers';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { studysetId: string } }
+  { params }: { params: Promise<{ studysetId: string }> }
 ) {
   try {
+    const { studysetId } = await params;
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
 
@@ -25,7 +26,7 @@ export async function POST(
       const { data: studyset } = await (supabase as any)
         .from('studysets')
         .select('owner_id')
-        .eq('id', params.studysetId)
+        .eq('id', studysetId)
         .single();
 
       if (!studyset || studyset.owner_id !== user.id) {
@@ -40,7 +41,7 @@ export async function POST(
           .from('calendar_events')
           .insert({
             user_id: user.id,
-            studyset_id: params.studysetId,
+            studyset_id: studysetId,
             title: `Study: ${day.dayName}`,
             description: `${day.tasks.length} tasks planned`,
             start_date: day.date,
@@ -67,7 +68,7 @@ export async function POST(
           agenda_event_ids: eventIds,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', params.studysetId);
+        .eq('id', studysetId);
 
       return NextResponse.json({
         success: true,
@@ -82,7 +83,7 @@ export async function POST(
     const { data: studyset } = await (supabase as any)
       .from('studysets')
       .select('owner_id')
-      .eq('id', params.studysetId)
+      .eq('id', studysetId)
       .single();
 
     if (!studyset || studyset.owner_id !== user.id) {
@@ -93,7 +94,7 @@ export async function POST(
     const { data: saved, error } = await (supabase as any)
       .from('studyset_agenda_settings')
       .upsert({
-        studyset_id: params.studysetId,
+        studyset_id: studysetId,
         layout_pattern: layoutPattern,
         start_date: startDate,
         minutes_per_day: minutesPerDay,

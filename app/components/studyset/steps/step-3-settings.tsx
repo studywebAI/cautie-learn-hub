@@ -6,28 +6,6 @@ import { Button } from '@/components/ui/button';
 
 type WorkflowType = 'balanced' | 'test_prep' | 'visual' | 'deep_diver' | 'quick_learner';
 
-type WorkflowData = {
-  step: 1 | 2 | 3 | 4;
-  name: string;
-  description: string;
-  subject: string;
-  materials: Array<{ type: string; content: string }>;
-  agenda: Record<string, any>;
-  preferences: Record<string, any>;
-  studysetId?: string;
-  workflowType?: WorkflowType;
-  settings?: {
-    knowledgeLevel: 'nothing' | 'some' | 'medium' | 'advanced';
-    studyDays: string[];
-    workflowSetting: string;
-  };
-};
-
-interface Step3SettingsProps {
-  data: WorkflowData;
-  setData: (data: WorkflowData) => void;
-}
-
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const workflowSettings: Record<WorkflowType, { label: string; options: string[] }> = {
@@ -53,7 +31,13 @@ const workflowSettings: Record<WorkflowType, { label: string; options: string[] 
   },
 };
 
-export function Step3Settings({ data, setData }: Step3SettingsProps) {
+export function Step3Settings({
+  data,
+  setData,
+}: {
+  data: any;
+  setData: (data: any) => void;
+}) {
   const workflowType = data.workflowType || 'balanced';
   const currentSettings = data.settings || {
     knowledgeLevel: 'nothing',
@@ -73,7 +57,7 @@ export function Step3Settings({ data, setData }: Step3SettingsProps) {
 
   const handleDayToggle = (day: string) => {
     const updatedDays = currentSettings.studyDays.includes(day)
-      ? currentSettings.studyDays.filter((d) => d !== day)
+      ? currentSettings.studyDays.filter((d: string) => d !== day)
       : [...currentSettings.studyDays, day];
 
     setData({
@@ -95,7 +79,7 @@ export function Step3Settings({ data, setData }: Step3SettingsProps) {
     });
   };
 
-  const workflowConfig = workflowSettings[workflowType];
+  const workflowConfig = workflowSettings[workflowType as WorkflowType];
 
   return (
     <Card>
@@ -143,21 +127,23 @@ export function Step3Settings({ data, setData }: Step3SettingsProps) {
         </div>
 
         {/* Workflow-Specific Setting */}
-        <div className="space-y-3">
-          <label className="block text-sm font-medium">{workflowConfig.label}</label>
-          <select
-            value={currentSettings.workflowSetting}
-            onChange={(e) => handleWorkflowSetting(e.target.value)}
-            className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background"
-          >
-            <option value="">Select an option</option>
-            {workflowConfig.options.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
+        {workflowConfig && (
+          <div className="space-y-3">
+            <label className="block text-sm font-medium">{workflowConfig.label}</label>
+            <select
+              value={currentSettings.workflowSetting}
+              onChange={(e) => handleWorkflowSetting(e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background"
+            >
+              <option value="">Select an option</option>
+              {workflowConfig.options.map((option: string) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Info Box */}
         <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4 border border-blue-200 dark:border-blue-800">

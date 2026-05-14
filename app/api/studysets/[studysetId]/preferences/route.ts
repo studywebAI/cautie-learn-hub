@@ -4,9 +4,10 @@ import { cookies } from 'next/headers';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { studysetId: string } }
+  { params }: { params: Promise<{ studysetId: string }> }
 ) {
   try {
+    const { studysetId } = await params;
     const cookieStore = cookies();
     const supabase = await createClient(cookieStore);
 
@@ -22,7 +23,7 @@ export async function POST(
     const { data: studyset } = await (supabase as any)
       .from('studysets')
       .select('owner_id')
-      .eq('id', params.studysetId)
+      .eq('id', studysetId)
       .single();
 
     if (!studyset || studyset.owner_id !== user.id) {
@@ -33,7 +34,7 @@ export async function POST(
     const { data: saved, error } = await (supabase as any)
       .from('studyset_user_preferences')
       .upsert({
-        studyset_id: params.studysetId,
+        studyset_id: studysetId,
         user_id: user.id,
         random_order: randomOrder ?? false,
         daily_reminders: reminders ?? true,
@@ -56,7 +57,7 @@ export async function POST(
         status: 'ready',
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.studysetId)
+      .eq('id', studysetId)
       .catch(() => {});
 
     return NextResponse.json({
