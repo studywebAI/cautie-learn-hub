@@ -27,6 +27,7 @@ export function proxy(request: NextRequest) {
   if (shouldLog) {
     const authHeader = request.headers.get('authorization') || '';
     const cookieHeader = request.headers.get('cookie') || '';
+    console.log({
       ts: new Date().toISOString(),
       correlationId: request.headers.get('x-debug-request-id') || '',
       debugPagePath: request.headers.get('x-debug-page-path') || '',

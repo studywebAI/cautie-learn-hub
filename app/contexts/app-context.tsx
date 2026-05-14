@@ -402,10 +402,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(`bootstrap preload failed (${res.status})`);
       }
       const payload = await res.json().catch(() => null);
+      console.info('[BOOTSTRAP_PRELOAD]', {
         durationMs: Date.now() - startedAt,
         classCount: payload?.classes?.length || 0,
       });
     } catch (error: any) {
+      console.error('[BOOTSTRAP_PRELOAD_ERROR]', {
         durationMs: Date.now() - startedAt,
         error: error?.message || String(error),
       });

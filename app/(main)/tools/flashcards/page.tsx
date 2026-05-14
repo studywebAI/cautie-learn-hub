@@ -256,6 +256,7 @@ function FlashcardsPageContent() {
           console.info('[STUDYSET_LAUNCH][FLASHCARDS] generation completed', { taskId, studysetId });
         }
       } catch (error: any) {
+        console.error('[STUDYSET_LAUNCH][FLASHCARDS] error', {
           taskId,
           studysetId,
           message: error?.message || String(error),

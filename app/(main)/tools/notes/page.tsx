@@ -822,6 +822,7 @@ function NotesPageContent() {
         }
         setTimeout(() => setShowLaunchScreen(false), 300);
       } catch (error: any) {
+        console.error('[STUDYSET_LAUNCH][NOTES] error', {
           taskId,
           studysetId,
           message: error?.message || String(error),
