@@ -54,7 +54,6 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('AI modification error:', error);
     return NextResponse.json(
       { error: 'Failed to modify content with AI' },
       { status: 500 }

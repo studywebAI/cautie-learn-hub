@@ -256,7 +256,6 @@ export async function POST(
       correct_percent: 0,
     })
   } catch (err) {
-    console.error('Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

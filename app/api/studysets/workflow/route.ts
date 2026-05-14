@@ -57,7 +57,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ id: studyset.id, ...studyset });
   } catch (error) {
-    console.error('POST /api/studysets/workflow error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

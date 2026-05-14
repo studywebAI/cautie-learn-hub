@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.warn('[microsoft-status] unauthorized', { requestId });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -52,7 +51,6 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     const message = String(error?.message || 'Failed to get status');
     const code = String(error?.code || '');
-    console.error('[microsoft-status] failed', {
       requestId,
       message,
       code,

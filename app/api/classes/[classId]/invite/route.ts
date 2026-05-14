@@ -128,13 +128,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           })
 
         if (notifError) {
-          console.error('Failed to create notification:', notifError)
           results.students.failed.push(email)
         } else {
           results.students.invited.push(email)
         }
       } catch (err) {
-        console.error('Error inviting student:', err)
         results.students.failed.push(email)
       }
     }
@@ -172,7 +170,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           .single()
 
         if (inviteCodeError || !insertedInviteCode) {
-          console.error('Failed to create one-time teacher code:', inviteCodeError)
           results.teachers.failed.push(email)
           continue
         }
@@ -198,7 +195,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           })
 
         if (notifError) {
-          console.error('Failed to create notification:', notifError)
           results.teachers.failed.push(email)
         } else {
           results.teachers.invited.push(email)
@@ -216,7 +212,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           })
         }
       } catch (err) {
-        console.error('Error inviting teacher:', err)
         results.teachers.failed.push(email)
       }
     }

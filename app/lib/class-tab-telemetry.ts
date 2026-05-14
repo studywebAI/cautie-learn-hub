@@ -59,13 +59,9 @@ export async function logClassTabEvent(input: ClassTabTelemetryInput): Promise<v
 
   const prefix = `[CLASS_TAB][${input.classId}][${input.tab}] ${input.event}`;
   if (payload.level === 'error') {
-    console.error(prefix, payload);
   } else if (payload.level === 'warn') {
-    console.warn(prefix, payload);
   } else if (payload.level === 'debug') {
-    console.debug(prefix, payload);
   } else {
-    console.log(prefix, payload);
   }
 
   if (!canSendToServer(input)) {

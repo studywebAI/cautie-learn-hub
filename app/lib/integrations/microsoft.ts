@@ -57,7 +57,6 @@ async function postToken(params: URLSearchParams) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = payload?.error_description || payload?.error || 'Microsoft token exchange failed';
-    console.error('[microsoft-oauth] token-failed', {
       status: response.status,
       message,
       error: payload?.error || null,
@@ -217,7 +216,6 @@ export async function listMicrosoftFiles(input: {
       }
     }
   } catch (error: any) {
-    console.error('[microsoft-graph] list-files-failed', {
       kind: input.kind,
       query: input.query || '',
       source: source || null,

@@ -451,7 +451,6 @@ export async function POST(
       normalized: normalizedAttemptsEnabled,
     })
   } catch (error) {
-    console.error('studyset task performance POST failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -85,7 +85,6 @@ function MaterialPageContent() {
       const response = await apiResponse.json();
       setResult(response);
     } catch (error) {
-      console.error('Error processing material:', error);
       toast({
         variant: 'destructive',
         title: 'Something went wrong',

@@ -107,7 +107,6 @@ export async function GET(
 
     return NextResponse.json({ events })
   } catch (error) {
-    console.error('Error loading grade history:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

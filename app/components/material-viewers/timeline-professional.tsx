@@ -68,7 +68,6 @@ export function ProfessionalTimelineRenderer({ data }: ProfessionalTimelineRende
 
       setEvents(mockEvents);
     } catch (error) {
-      console.error('Failed to fetch Wikipedia data:', error);
     } finally {
       setIsLoadingWikipedia(false);
     }

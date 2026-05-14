@@ -134,7 +134,6 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
         });
       }
     } catch (error) {
-      console.error('Failed to fetch attendance:', error);
       void logClassTabEvent({
         classId,
         tab: 'attendance',
@@ -376,7 +375,6 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
       });
     } catch (error) {
       rollbackStudent(action.studentId, previous);
-      console.error('Failed to update attendance:', error);
       void logClassTabEvent({
         classId,
         tab: 'attendance',
@@ -516,7 +514,6 @@ export function AttendanceTab({ classId, cachedData = null, parentLoading = fals
         meta: { student_id: selectedStudent.id },
       });
     } catch (error) {
-      console.error('Failed to save custom event:', error);
       void logClassTabEvent({
         classId,
         tab: 'attendance',

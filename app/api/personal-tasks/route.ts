@@ -24,7 +24,6 @@ export async function GET(request: Request) {
     .eq('user_id', user.id);
 
   if (error) {
-    console.error('Error fetching personal tasks:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -58,7 +57,6 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    console.error('Error creating personal task:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

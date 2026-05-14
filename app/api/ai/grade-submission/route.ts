@@ -125,7 +125,6 @@ export async function POST(request: Request) {
         .eq('id', submission_id)
 
       if (updateError) {
-        console.error('Error updating submission:', updateError)
         return NextResponse.json({ error: updateError.message }, { status: 500 })
       }
 
@@ -140,7 +139,6 @@ export async function POST(request: Request) {
           })
 
         if (metadataError) {
-          console.error('Error storing AI analysis:', metadataError)
         }
       }
 
@@ -151,7 +149,6 @@ export async function POST(request: Request) {
           NotificationTemplates.submissionGraded(gradingResult.grade)
         )
       } catch (notifyError) {
-        console.error('Error sending grade notification:', notifyError)
       }
     }
 
@@ -163,7 +160,6 @@ export async function POST(request: Request) {
           NotificationTemplates.aiGradingCompleted()
         )
       } catch (notifyError) {
-        console.error('Error sending AI completion notification:', notifyError)
       }
     }
 
@@ -175,7 +171,6 @@ export async function POST(request: Request) {
     })
 
   } catch (error) {
-    console.error('Error in AI grading:', error)
     return NextResponse.json({
       error: 'Failed to process grading',
       details: error instanceof Error ? error.message : 'Unknown error'

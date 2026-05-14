@@ -53,7 +53,6 @@ export async function GET() {
       userId: user.id,
       force: false,
     }).catch((runError) => {
-      console.warn('daily replan auto-run skipped', {
         message: (runError as any)?.message || String(runError),
       })
     })
@@ -62,7 +61,6 @@ export async function GET() {
       userId: user.id,
       force: false,
     }).catch((runError) => {
-      console.warn('daily adaptive sync auto-run skipped', {
         message: (runError as any)?.message || String(runError),
       })
     })
@@ -252,7 +250,6 @@ export async function GET() {
 
     return NextResponse.json({ studysets: enriched })
   } catch (error) {
-    console.error('studysets GET failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -316,7 +313,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, studyset })
   } catch (error) {
-    console.error('studysets POST failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

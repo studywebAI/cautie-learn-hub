@@ -52,7 +52,6 @@ export async function GET(req: NextRequest) {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
-      console.warn('[studysets-agenda] unauthorized', { requestId, message: userError?.message || null })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -95,7 +94,6 @@ export async function GET(req: NextRequest) {
       .order('day_number', { ascending: true })
 
     if (error) {
-      console.error('[studysets-agenda] query failed', { requestId, message: error.message, fromDate, toDate, userId: user.id })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -135,7 +133,6 @@ export async function GET(req: NextRequest) {
     })
     return NextResponse.json({ items })
   } catch (error) {
-    console.error('[studysets-agenda] exception', {
       requestId,
       message: (error as any)?.message || 'Internal server error',
     })

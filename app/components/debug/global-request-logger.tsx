@@ -45,10 +45,8 @@ function toUrl(input: RequestInfo | URL): string {
 function debugLog(label: string, payload?: Record<string, unknown>) {
   const now = new Date().toISOString();
   if (payload) {
-    console.log(`[request-debug] ${label}`, { ts: now, ...payload });
     return;
   }
-  console.log(`[request-debug] ${label}`, { ts: now });
 }
 
 function toAbsoluteUrl(url: string): string {

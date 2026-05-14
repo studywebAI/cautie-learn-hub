@@ -136,7 +136,6 @@ export async function POST(request: NextRequest) {
               .from('class_members')
               .insert({ class_id: newClass.id, user_id: user.id })
           } catch (err: any) {
-            console.warn('Failed to insert class_members for duplicated class', newClass.id, err?.message || err)
           }
 
           duplicatedClasses.push(newClass)
@@ -156,7 +155,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, affected: classIds.length })
 
   } catch (error) {
-    console.error('Bulk operation error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

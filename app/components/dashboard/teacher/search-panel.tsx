@@ -40,7 +40,6 @@ export function SearchPanel({ classId }: SearchPanelProps) {
           setResults(data.results || []);
         }
       } catch (error) {
-        console.error('Search failed:', error);
       } finally {
         setLoading(false);
       }

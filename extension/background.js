@@ -5,7 +5,6 @@
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     // First time installation
-    console.log('StudyWeb Capture Extension installed');
 
     // Set default settings
     chrome.storage.sync.set({

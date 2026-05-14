@@ -165,7 +165,6 @@ export async function PATCH(
       },
     })
   } catch (error) {
-    console.error('studyset task PATCH failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

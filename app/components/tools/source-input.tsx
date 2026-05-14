@@ -286,7 +286,6 @@ export function SourceInput({
       ts: new Date().toISOString(),
       ...details,
     };
-    console.log('[MIC_DEBUG][CLIENT]', payload);
 
     // Mirror client mic logs to server so they appear in Vercel logs too.
     try {

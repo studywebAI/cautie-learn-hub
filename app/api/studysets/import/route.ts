@@ -70,7 +70,6 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('studyset import GET failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -277,7 +276,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, studysetId: createdStudyset.id });
   } catch (error) {
-    console.error('studyset import POST failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

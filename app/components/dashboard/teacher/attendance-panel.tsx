@@ -42,7 +42,6 @@ export function AttendancePanel({ classId }: AttendancePanelProps) {
         setSessions(data.sessions || []);
       }
     } catch (error) {
-      console.error('Failed to fetch attendance:', error);
     } finally {
       setLoading(false);
     }
@@ -62,7 +61,6 @@ export function AttendancePanel({ classId }: AttendancePanelProps) {
         fetchSessions();
       }
     } catch (error) {
-      console.error('Failed to create session:', error);
       toast({ title: 'Failed to create session', variant: 'destructive' });
     } finally {
       setIsCreating(false);

@@ -199,7 +199,6 @@ function FlashcardsPageContent() {
       setCurrentView('study');
       setStudyCompleted(false);
     } catch (error) {
-      console.error('Error generating flashcards:', error);
       toast({
         variant: 'destructive',
         title: t.flashcards.generatingTitle,
@@ -257,7 +256,6 @@ function FlashcardsPageContent() {
           console.info('[STUDYSET_LAUNCH][FLASHCARDS] generation completed', { taskId, studysetId });
         }
       } catch (error: any) {
-        console.error('[STUDYSET_LAUNCH][FLASHCARDS] launch failed', {
           taskId,
           studysetId,
           message: error?.message || String(error),

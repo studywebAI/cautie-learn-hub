@@ -232,7 +232,6 @@ export function RecentsSidebar() {
           );
         }
       } catch (error) {
-        console.error('Failed to fetch recents:', error);
       } finally {
         setIsLoading(false);
       }
@@ -255,7 +254,6 @@ export function RecentsSidebar() {
           : [];
         setClasses(options);
       } catch (error) {
-        console.error('Failed to fetch classes for sharing:', error);
       }
     };
     fetchClasses();

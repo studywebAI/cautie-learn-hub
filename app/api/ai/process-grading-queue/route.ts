@@ -27,11 +27,9 @@ export async function POST() {
             break;
           }
         } else {
-          console.error(`Grading job ${i + 1} failed:`, response.status);
           break; // Stop if there's an error
         }
       } catch (error) {
-        console.error(`Error processing grading job ${i + 1}:`, error);
         break;
       }
     }
@@ -43,7 +41,6 @@ export async function POST() {
     });
 
   } catch (error) {
-    console.error('Grading queue processing error:', error);
     return NextResponse.json({
       error: 'Failed to process grading queue',
       success: false

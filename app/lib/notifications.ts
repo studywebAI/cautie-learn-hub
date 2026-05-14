@@ -25,7 +25,6 @@ export class NotificationService {
 
       return response.ok;
     } catch (error) {
-      console.error('Error creating notification:', error);
       return false;
     }
   }
@@ -50,7 +49,6 @@ export class NotificationService {
       }
       return null;
     } catch (error) {
-      console.error('Error fetching preferences:', error);
       return null;
     }
   }
@@ -87,7 +85,6 @@ export class NotificationService {
 
       await this.createBulkNotifications(userIds, notification);
     } catch (error) {
-      console.error('Error notifying class members:', error);
     }
   }
 }

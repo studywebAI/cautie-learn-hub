@@ -128,7 +128,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ grades })
   } catch (err) {
-    console.error('GET /api/student/grades error:', err)
     return NextResponse.json({ grades: [] })
   }
 }

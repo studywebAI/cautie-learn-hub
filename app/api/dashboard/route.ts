@@ -15,23 +15,14 @@ export async function GET(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      console.log('[DASHBOARD] GET - No user in auth.getUser() result')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const cached = dashboardResponseCache.get(user.id);
     if (cached && Date.now() - cached.updatedAt < DASHBOARD_CACHE_TTL_MS) {
-      console.log('[DASHBOARD] cache.hit', { userId: user.id, source });
       return NextResponse.json(cached.payload, { headers: { 'x-dashboard-cache': 'hit' } });
     }
 
-    console.log('[DASHBOARD] GET - Authenticated user details:', {
-      id: user.id,
-      email: user.email,
-      user_metadata: user.user_metadata,
-      created_at: user.created_at,
-      source,
-    });
 
     // Fetch profile first to determine subscription type/tier and get preferences
     // Use ONLY subscription_type - role column has been removed
@@ -42,17 +33,10 @@ export async function GET(request: Request) {
       .maybeSingle()
 
     if (profileError) {
-      console.error('[DASHBOARD] GET - Profile fetch error:', {
-        message: profileError.message,
-        code: profileError.code,
-        details: profileError.details,
-        hint: profileError.hint
-      });
     }
 
     // Create profile if it doesn't exist (defaults to free student)
     if (!profileData) {
-      console.log('[DASHBOARD] GET - Profile not found, creating new profile with defaults')
       const { error: insertError } = await supabase
         .from('profiles')
         .insert({
@@ -72,12 +56,6 @@ export async function GET(request: Request) {
         })
 
       if (insertError) {
-        console.error('[DASHBOARD] GET - Profile creation failed:', {
-          message: insertError.message,
-          code: insertError.code,
-          details: insertError.details,
-          hint: insertError.hint
-        })
       } else {
         const { data: newProfile } = await supabase
           .from('profiles')
@@ -94,12 +72,6 @@ export async function GET(request: Request) {
     const role = subscriptionType; // Keep for API response compatibility (alias)
     const isTeacher = subscriptionType === 'teacher';
     
-    console.log('[DASHBOARD] User subscription details:', {
-      subscriptionType,
-      subscriptionTier,
-      isTeacher,
-      classesCreated: profileData?.classes_created || 0
-    });
     
     // Get usage data for limits
     const quizUsage = profileData?.quiz_usage_today || 0;
@@ -184,7 +156,6 @@ export async function GET(request: Request) {
           .in('id', teacherClassIds);
 
         if (hierarchicalError) {
-          console.error('Error fetching hierarchical assignments for teacher:', hierarchicalError);
         } else {
           const hierarchical = (classesWithAssignments || []).flatMap((cls: any) =>
             (cls.subjects || []).flatMap((subject: any) =>
@@ -217,7 +188,6 @@ export async function GET(request: Request) {
           .order('scheduled_start_at', { ascending: true });
 
         if (directError) {
-          console.error('Error fetching direct assignments for teacher:', directError);
         } else {
           const processedDirect = (directAssignments || []).map((assignment: any) => ({
             ...assignment,
@@ -317,7 +287,6 @@ export async function GET(request: Request) {
           .in('id', classIds);
 
         if (hierarchicalError) {
-          console.error('Error fetching hierarchical assignments for student:', hierarchicalError);
         } else {
           const hierarchical = (classesWithAssignments || []).flatMap((cls: any) =>
             (cls.subjects || []).flatMap((subject: any) =>
@@ -351,7 +320,6 @@ export async function GET(request: Request) {
           .order('scheduled_start_at', { ascending: true });
 
         if (directError) {
-          console.error('Error fetching direct assignments for student:', directError);
         } else {
           const processedDirect = (directAssignments || []).map((assignment: any) => ({
             ...assignment,
@@ -401,7 +369,6 @@ export async function GET(request: Request) {
     }
 
   } catch (err) {
-    console.error('Dashboard API error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

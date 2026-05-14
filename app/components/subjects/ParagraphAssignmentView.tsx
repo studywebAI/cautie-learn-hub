@@ -114,7 +114,6 @@ export function ParagraphAssignmentView({
                 };
               }
             } catch (error) {
-              console.error(`Failed to fetch progress for assignment ${assignment.id}:`, error);
             }
 
             // Fallback: return assignment with no progress
@@ -141,7 +140,6 @@ export function ParagraphAssignmentView({
         }
 
       } catch (err) {
-        console.error('Error fetching paragraph data:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setIsLoading(false);

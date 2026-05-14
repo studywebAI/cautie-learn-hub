@@ -46,7 +46,6 @@ export function SubjectOverview({ classId, cachedSubjects }: SubjectOverviewProp
         setSubjects(data.subjects || []);
       }
     } catch (error) {
-      console.error('Failed to fetch subjects:', error);
     } finally {
       setLoading(false);
     }

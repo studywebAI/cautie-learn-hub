@@ -50,7 +50,6 @@ export function ChapterNavigation({
         const data = await response.json();
         setChapters(data.chapters || []);
       } catch (err) {
-        console.error('Error fetching chapters:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setIsLoading(false);

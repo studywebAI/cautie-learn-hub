@@ -240,7 +240,6 @@ export async function POST(
       effective_max_score: Number(effectiveAttempt?.max_score || 0),
     })
   } catch (error) {
-    console.error('Unexpected error in submit POST:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

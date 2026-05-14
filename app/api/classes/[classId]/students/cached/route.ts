@@ -87,7 +87,6 @@ export async function GET(
     return NextResponse.json(freshData);
     
   } catch (error) {
-    console.error('Cached students data error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch students data' },
       { status: 500 }

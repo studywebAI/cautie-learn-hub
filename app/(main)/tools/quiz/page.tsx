@@ -308,7 +308,6 @@ function QuizPageContent() {
       const detail = isQuota
         ? `Provider quota/billing error detected. ${msg}`
         : msg;
-      console.error('[quiz.generate] failed', {
         message: msg,
         code: error?.code || null,
         runId: error?.runId || null,

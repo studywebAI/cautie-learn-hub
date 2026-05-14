@@ -215,7 +215,6 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   } catch (error) {
-    console.error("Extract text error:", error);
     return NextResponse.json(
       { error: "Failed to extract text" },
       { status: 500 }

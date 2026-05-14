@@ -72,7 +72,6 @@ export function SidebarProfile() {
           }
         }
       } catch (e) {
-        console.error('Failed to fetch subscription:', e);
       }
     };
     if (userId) fetchSubscription();

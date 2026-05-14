@@ -171,7 +171,6 @@ export function GradesTab({ classId }: { classId: string }) {
         meta: { subject_count: incoming.length, default_view: preferences.default_subject_view },
       });
     } catch (error) {
-      console.error('Failed to load class subjects for grades filter:', error);
       setSelectedSubjectFilter('all');
       void logClassTabEvent({
         classId,
@@ -225,7 +224,6 @@ export function GradesTab({ classId }: { classId: string }) {
         });
       }
     } catch (error) {
-      console.error('Failed to load grade sets:', error);
       void logClassTabEvent({
         classId,
         tab: 'grades',
@@ -384,7 +382,6 @@ function GradesHistoryView({
         const data = await response.json();
         setEvents(data.events || []);
       } catch (error) {
-        console.error('Failed to load grade history:', error);
       } finally {
         setLoading(false);
       }
@@ -597,7 +594,6 @@ function NewGradesWizard({
         }
       }
     } catch (error) {
-      console.error('Failed to load subjects:', error);
     }
   };
 
@@ -615,7 +611,6 @@ function NewGradesWizard({
         setSelectedPresetId(incoming[0].id);
       }
     } catch (error) {
-      console.error('Failed to load grading presets:', error);
     }
   };
 
@@ -665,7 +660,6 @@ function NewGradesWizard({
           });
 
           if (!updateResponse.ok) {
-            console.error('Failed to update grades');
           }
         }
       }
@@ -983,12 +977,10 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
           onStudentsLoaded(studentGrades);
         } else {
           const errorText = await response.text();
-          console.error('[StudentGrader] Members API error:', response.status, errorText);
           
           setError('Could not load students. API error: ' + response.status);
         }
       } catch (err: any) {
-        console.error('[StudentGrader] Failed to load students:', err);
         setError('Failed to load students: ' + err.message);
       } finally {
         setLoading(false);
@@ -1207,7 +1199,6 @@ function EditGradesDetail({
       const data = await response.json();
       setPresets(data.presets || []);
     } catch (error) {
-      console.error('Failed to load grading presets:', error);
     }
   };
 
@@ -1230,7 +1221,6 @@ function EditGradesDetail({
         setSelectedPresetId(data.grade_set.grading_preset?.id || '');
       }
     } catch (error) {
-      console.error('Failed to load grade set:', error);
     } finally {
       setLoading(false);
     }

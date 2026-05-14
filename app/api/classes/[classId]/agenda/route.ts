@@ -67,7 +67,6 @@ export async function GET(
 
     return NextResponse.json({ items: filtered })
   } catch (error) {
-    console.error('class agenda GET failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -167,7 +166,6 @@ export async function POST(
 
     return NextResponse.json({ item: itemWithLinks || item }, { status: 201 })
   } catch (error) {
-    console.error('class agenda POST failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

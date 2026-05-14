@@ -134,7 +134,6 @@ export function QuizEditor({ quiz, sourceText, onStartQuiz, onBack, isAssignment
         }));
       }
     } catch (error) {
-      console.error("Failed to add question or suggest answers:", error);
       toast({
         variant: "destructive",
         title: "AI Suggestion Failed",

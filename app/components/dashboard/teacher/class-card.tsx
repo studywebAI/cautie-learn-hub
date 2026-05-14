@@ -68,7 +68,6 @@ export function ClassCard({
           setAverageProgress(Math.round(progress));
         }
       } catch (error) {
-        console.error('Failed to calculate progress:', error);
       } finally {
         setIsLoading(false);
       }

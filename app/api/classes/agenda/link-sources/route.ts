@@ -147,7 +147,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ items })
   } catch (error) {
-    console.error('agenda link-sources GET failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

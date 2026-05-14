@@ -133,7 +133,6 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
       }
       await fetchOpenAnswers();
     } catch (error) {
-      console.error('Failed to fetch submissions:', error);
     } finally {
       setLoading(false);
     }
@@ -194,7 +193,6 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
         toast({ title: 'Failed to save grade', description: data.error, variant: 'destructive' });
       }
     } catch (error) {
-      console.error('Failed to save grade:', error);
       toast({ title: 'Failed to save grade', variant: 'destructive' });
     } finally {
       setSaving(false);
@@ -237,7 +235,6 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
       setFeedback('');
       await fetchOpenAnswers();
     } catch (error) {
-      console.error('Failed bulk grading:', error);
       toast({ title: 'Bulk grading failed', variant: 'destructive' });
     } finally {
       setSaving(false);

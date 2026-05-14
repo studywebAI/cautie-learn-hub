@@ -101,7 +101,6 @@ export async function GET(
     return NextResponse.json(freshData);
     
   } catch (error) {
-    console.error('Cached class data error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch class data' },
       { status: 500 }

@@ -58,7 +58,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ classId: s
       viewerUserId: user.id,
     });
   } catch (error) {
-    console.error('[class-share-presence] GET failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -93,7 +92,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ cla
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('[class-share-presence] POST failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

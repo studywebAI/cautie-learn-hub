@@ -52,7 +52,6 @@ export async function POST(
       materials: savedMaterials,
     });
   } catch (error) {
-    console.error('POST /api/studysets/[studysetId]/materials error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

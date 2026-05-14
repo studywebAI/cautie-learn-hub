@@ -47,7 +47,6 @@ export async function POST(
 
     if (error && error.code !== 'PGRST116') {
       // PGRST116 is "single row expected" - may be OK if table doesn't exist
-      console.error('Preferences save error:', error);
     }
 
     // Mark studyset as completed/ready
@@ -66,7 +65,6 @@ export async function POST(
       message: 'StudySet created successfully!',
     });
   } catch (error) {
-    console.error('POST /api/studysets/[studysetId]/preferences error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

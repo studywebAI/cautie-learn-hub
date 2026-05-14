@@ -33,7 +33,6 @@ export async function POST(request: Request) {
   const { error } = await updateQuery
 
   if (error) {
-    console.error('Error marking notifications as read:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -58,7 +57,6 @@ export async function GET(request: Request) {
     .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
 
   if (error) {
-    console.error('Error getting unread count:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

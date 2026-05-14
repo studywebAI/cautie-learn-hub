@@ -309,7 +309,6 @@ export async function POST(
     }
 
     if (insertError) {
-      console.error('Error inserting student answer:', insertError)
       return NextResponse.json({ error: 'Failed to submit answer' }, { status: 500 })
     }
 
@@ -326,7 +325,6 @@ export async function POST(
         },
       });
     if (assignmentEventError) {
-      console.warn('Failed to insert assignment event after answer submit', assignmentEventError);
     }
 
     // Queue AI grading only when both block + assignment grading settings allow it.
@@ -343,7 +341,6 @@ export async function POST(
         })
 
       if (jobError) {
-        console.error('Error creating grading job:', jobError)
         // Don't fail the submission, just log
       }
     }
@@ -395,7 +392,6 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error('Unexpected error in block POST:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -519,7 +515,6 @@ export async function PUT(
     }
 
     if (updateError) {
-      console.error('Error updating block:', {
         message: (updateError as any)?.message,
         details: (updateError as any)?.details,
         hint: (updateError as any)?.hint,
@@ -530,7 +525,6 @@ export async function PUT(
 
     return NextResponse.json(updatedBlock)
   } catch (error) {
-    console.error('Unexpected error in block PUT:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -615,13 +609,11 @@ export async function DELETE(
       .eq('id', resolvedParams.blockId)
 
     if (deleteError) {
-      console.error('Error deleting block:', deleteError)
       return NextResponse.json({ error: 'Failed to delete block' }, { status: 500 })
     }
 
     return NextResponse.json({ message: 'Block deleted successfully' })
   } catch (error) {
-    console.error('Unexpected error in block DELETE:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

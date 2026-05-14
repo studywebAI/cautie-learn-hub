@@ -1069,7 +1069,6 @@ export function AssignmentEditor({
       setHasUnsavedChanges(false);
       if (onSave) onSave(blocksToPersist);
     } catch (error) {
-      console.error('Auto-save failed:', error);
       toast({ title: 'Save failed', description: 'Changes could not be saved to server.', variant: 'destructive' });
     } finally {
       isSavingRef.current = false;

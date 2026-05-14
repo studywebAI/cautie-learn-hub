@@ -54,7 +54,6 @@ export function TeacherList({ classId, currentUserId, isLoading, classOwnerId }:
                 setTeachers(teachersOnly);
             }
         } catch (error) {
-            console.error('Failed to fetch teachers:', error);
         } finally {
             setLoadingTeachers(false);
         }
@@ -76,7 +75,6 @@ export function TeacherList({ classId, currentUserId, isLoading, classOwnerId }:
                 toast({ title: 'Failed to remove teacher', description: data.error, variant: 'destructive' });
             }
         } catch (error) {
-            console.error('Failed to remove teacher:', error);
             toast({ title: 'Failed to remove teacher', variant: 'destructive' });
         }
     };
@@ -100,7 +98,6 @@ export function TeacherList({ classId, currentUserId, isLoading, classOwnerId }:
                 toast({ title: 'Failed to update name', description: data.error, variant: 'destructive' });
             }
         } catch (error) {
-            console.error('Failed to update name:', error);
             toast({ title: 'Failed to update name', variant: 'destructive' });
         }
     };

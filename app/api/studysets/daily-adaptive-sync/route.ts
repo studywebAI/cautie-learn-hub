@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
       ...result,
     })
   } catch (error) {
-    console.error('studyset daily adaptive sync POST failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

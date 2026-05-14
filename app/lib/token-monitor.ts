@@ -57,7 +57,6 @@ class TokenMonitor {
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[TokenMonitor] ${feature}: ${totalTokens} tokens ($${cost.toFixed(6)})`);
     }
   }
 

@@ -76,7 +76,6 @@ export function TeacherDashboard() {
         setArchivedClassesCount(archived.length);
       }
     } catch (error) {
-      console.error('Failed to fetch classes:', error);
     }
   };
 
@@ -99,7 +98,6 @@ export function TeacherDashboard() {
       await refetchClasses();
       return createdClass;
     } catch (error) {
-      console.error(error);
       toast({
         variant: 'destructive',
         title: 'Error',

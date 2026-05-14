@@ -33,7 +33,6 @@ async function requireTeacherAccess(supabase: Awaited<ReturnType<typeof createCl
 }
 
 function log(...args: any[]) {
-  console.log('[submission-grade]', ...args)
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ submissionId: string }> }) {

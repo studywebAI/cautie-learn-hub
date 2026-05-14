@@ -66,13 +66,11 @@ export async function PUT(
       .single();
 
     if (error) {
-      console.error('Error updating block:', error);
       return NextResponse.json({ error: 'Failed to update block' }, { status: 500 });
     }
 
     return NextResponse.json({ block: data });
   } catch (error) {
-    console.error('Block PUT error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -128,7 +126,6 @@ export async function DELETE(
       .eq('block_id', blockId);
 
     if (assignmentError) {
-      console.error('Error deleting embedded assignments:', assignmentError);
       return NextResponse.json({ error: 'Failed to delete embedded assignments' }, { status: 500 });
     }
 
@@ -140,13 +137,11 @@ export async function DELETE(
       .eq('chapter_id', chapterId);
 
     if (error) {
-      console.error('Error deleting block:', error);
       return NextResponse.json({ error: 'Failed to delete block' }, { status: 500 });
     }
 
     return NextResponse.json({ message: 'Block deleted successfully' });
   } catch (error) {
-    console.error('Block DELETE error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

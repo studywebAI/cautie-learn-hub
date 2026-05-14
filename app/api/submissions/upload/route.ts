@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error('Upload error:', uploadError);
       return NextResponse.json({ error: uploadError.message || 'Upload failed' }, { status: 500 });
     }
 
@@ -50,7 +49,6 @@ export async function POST(request: NextRequest) {
       name: file.name,
     });
   } catch (error) {
-    console.error('Upload error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

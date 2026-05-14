@@ -106,7 +106,6 @@ export async function POST(
       .single();
 
     if (error) {
-      console.error('Agenda save error:', error);
       return NextResponse.json(
         { error: error.message },
         { status: 500 }
@@ -118,7 +117,6 @@ export async function POST(
       agenda: saved,
     });
   } catch (error) {
-    console.error('POST /api/studysets/[studysetId]/agenda error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

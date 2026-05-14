@@ -74,7 +74,6 @@ export async function POST(request: Request) {
     })
 
   } catch (error) {
-    console.error('Extension capture error:', error)
     return NextResponse.json({
       error: 'Failed to save captured content',
       details: error instanceof Error ? error.message : 'Unknown error'

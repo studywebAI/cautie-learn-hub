@@ -161,7 +161,6 @@ export function StudentAssignmentView({
         if (blocksResponse.ok) {
           blocksData = await blocksResponse.json();
         } else {
-          console.warn('Blocks fetch returned non-OK status, using empty array');
         }
         const sortedBlocks = (Array.isArray(blocksData) ? blocksData : []).sort((a: Block, b: Block) => a.position - b.position);
         setBlocks(sortedBlocks);
@@ -194,7 +193,6 @@ export function StudentAssignmentView({
         }
 
       } catch (err) {
-        console.error('Error fetching assignment data:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setIsLoading(false);
@@ -252,7 +250,6 @@ export function StudentAssignmentView({
           }
         );
       } catch (err) {
-        console.error('Auto submit failed', err);
       }
     };
 
@@ -391,7 +388,6 @@ export function StudentAssignmentView({
 
       return { ok: true };
     } catch (err) {
-      console.error('Answer submit failed:', err);
       setStudentAnswers(previousAnswers);
       const restoredAnswered = Object.keys(previousAnswers).length;
       setCompletionPercent(blocks.length > 0 ? Math.round((restoredAnswered / blocks.length) * 100) : 0);

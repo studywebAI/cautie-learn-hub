@@ -8,7 +8,6 @@ import type { Database } from '@/lib/supabase/database.types'
 export const dynamic = 'force-dynamic'
 
 function logAnnouncements(...args: any[]) {
-  console.log('[CLASS_ANNOUNCEMENTS]', ...args)
 }
 
 function formatDbError(error: any) {

@@ -32,7 +32,6 @@ export async function GET(
     .order('created_at')
 
   if (error) {
-    console.error('Error fetching grading categories:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -73,7 +72,6 @@ export async function POST(
     .single()
 
   if (error) {
-    console.error('Error creating grading category:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

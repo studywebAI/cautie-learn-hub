@@ -100,7 +100,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ items: filtered })
   } catch (err) {
-    console.error('GET /api/dashboard/teacher/activity error:', err)
     return NextResponse.json({ items: [] })
   }
 }

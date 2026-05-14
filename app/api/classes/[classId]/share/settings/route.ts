@@ -30,7 +30,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ classId: s
 
     return NextResponse.json({ settings: { ...defaultSettings, ...((data?.changes as any) || {}) } });
   } catch (error) {
-    console.error('[class-share-settings] GET failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -69,7 +68,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ cl
     });
     return NextResponse.json({ settings: next });
   } catch (error) {
-    console.error('[class-share-settings] PATCH failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

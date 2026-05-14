@@ -95,13 +95,11 @@ export async function PUT(
       .single();
 
     if (error) {
-      console.error('Error updating block:', error);
       return NextResponse.json({ error: 'Failed to update block' }, { status: 500 });
     }
 
     return NextResponse.json({ block: updatedBlock });
   } catch (error) {
-    console.error('Blocks PUT error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -186,13 +184,11 @@ export async function DELETE(
       .eq('id', blockId);
 
     if (error) {
-      console.error('Error deleting block:', error);
       return NextResponse.json({ error: 'Failed to delete block' }, { status: 500 });
     }
 
     return NextResponse.json({ message: 'Block deleted successfully' });
   } catch (error) {
-    console.error('Blocks DELETE error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

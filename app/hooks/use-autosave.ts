@@ -37,7 +37,6 @@ export const useAutosave = () => {
         updated_at: new Date().toISOString(),
       }));
     } catch (error) {
-      console.error('Autosave error:', error);
     }
   }, [session?.user?.id]);
 
@@ -69,7 +68,6 @@ export const useAutosave = () => {
       const parsed = JSON.parse(stored);
       return parsed.data || null;
     } catch (error) {
-      console.error('Load autosave error:', error);
       return null;
     }
   }, [session?.user?.id]);

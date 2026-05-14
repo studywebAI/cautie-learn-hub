@@ -116,7 +116,6 @@ export async function GET(
 
     return NextResponse.json({ grades })
   } catch (err) {
-    console.error('[CLASS_GRADES_STUDENT]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

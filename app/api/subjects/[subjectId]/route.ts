@@ -5,7 +5,6 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 function logSubjectDetail(...args: any[]) {
-  console.log('[SUBJECT_DETAIL]', ...args)
 }
 
 async function getMemberClassIds(supabase: any, userId: string): Promise<string[]> {

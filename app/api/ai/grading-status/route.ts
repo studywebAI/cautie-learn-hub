@@ -22,7 +22,6 @@ export async function GET() {
       .order('created_at')
 
     if (queueError) {
-      console.error('Error fetching queue status:', queueError)
       return NextResponse.json({ error: 'Failed to fetch queue status' }, { status: 500 })
     }
 
@@ -79,7 +78,6 @@ export async function GET() {
     return NextResponse.json(response)
 
   } catch (error) {
-    console.error('Unexpected error in grading status:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

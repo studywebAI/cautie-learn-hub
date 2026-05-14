@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ events, status: 'synced' });
   } catch (error) {
-    console.error('Calendar sync error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -74,7 +73,6 @@ export async function POST(request: NextRequest) {
             .single();
 
           if (error) {
-            console.error('Event creation error:', error);
             continue;
           }
           results.push(data);
@@ -128,7 +126,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid action. Use: create_event, export_ical' }, { status: 400 });
     }
   } catch (error) {
-    console.error('Calendar error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

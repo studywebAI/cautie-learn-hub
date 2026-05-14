@@ -29,7 +29,6 @@ export function useOptimizedStudentAssignmentView(classId: string) {
       
       return await response.json();
     } catch (error) {
-      console.error('Error updating student:', error);
       throw error;
     }
   };
@@ -51,7 +50,6 @@ export function useOptimizedStudentAssignmentView(classId: string) {
       
       return await response.json();
     } catch (error) {
-      console.error('Error creating assignment:', error);
       throw error;
     }
   };
@@ -93,7 +91,6 @@ export function useOptimizedTeacherDashboard(userId: string) {
       
       return newClass;
     } catch (error) {
-      console.error('Error creating class:', error);
       throw error;
     }
   };
@@ -111,7 +108,6 @@ export function useOptimizedTeacherDashboard(userId: string) {
       // Invalidate cache after successful deletion
       await invalidateAfterMutation('delete', 'class', classId);
     } catch (error) {
-      console.error('Error deleting class:', error);
       throw error;
     }
   };
@@ -240,7 +236,6 @@ export async function batchClassOperations(
       await invalidateAfterMutation(operation.type, operation.entity, operation.classId);
       
     } catch (error) {
-      console.error(`Error in batch operation: ${operation.type} ${operation.entity}`, error);
       throw error;
     }
   }

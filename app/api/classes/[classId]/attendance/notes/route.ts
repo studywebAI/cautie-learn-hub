@@ -77,7 +77,6 @@ export async function POST(
 
     return NextResponse.json({ success: true, id: logEntry.id, createdAt: logEntry.created_at })
   } catch (err) {
-    console.error('[ATTENDANCE_NOTES] POST failed', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -142,7 +141,6 @@ export async function GET(
 
     return NextResponse.json({ notes })
   } catch (err) {
-    console.error('[ATTENDANCE_NOTES] GET failed', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

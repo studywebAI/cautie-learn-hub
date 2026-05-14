@@ -352,7 +352,6 @@ const generateQuizFlow = ai.defineFlow(
     outputSchema: QuizSchema,
   },
   async (input) => {
-    console.log(`[generateQuizFlow] Starting with sourceText length: ${input.sourceText.length}, questionCount: ${input.questionCount}`);
     const model = await getGoogleAIModel();
     const selectedChannels = pickWhitelistedChannelsForTopic(input.sourceText || '', 8);
     const allowedVideoUrls = new Set(selectedChannels.flatMap((channel) => channel.sampleVideos));
@@ -487,10 +486,8 @@ Image Context:
           .join('\n'),
       } as any);
       const normalized = normalizeQuizOutput(output, input, allowedVideoUrls, imageContext.results || []);
-      console.log(`[generateQuizFlow] Success: quiz title: ${normalized.title}`);
       return normalized;
     } catch (err) {
-      console.error(`[generateQuizFlow] Error: ${err}`);
       throw err;
     }
   }

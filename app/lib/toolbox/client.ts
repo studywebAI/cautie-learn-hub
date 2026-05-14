@@ -63,7 +63,6 @@ export async function runToolFlowV2(payload: RunToolFlowInput) {
     const error = new Error(enriched) as Error & { code?: string; runId?: string };
     if (code) error.code = code;
     if (runId) error.runId = runId;
-    console.error("[toolflow.client] run_error", {
       toolId: payload.toolId,
       flowName: payload.flowName,
       status: response.status,

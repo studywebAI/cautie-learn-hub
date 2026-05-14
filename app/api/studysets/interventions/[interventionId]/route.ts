@@ -52,7 +52,6 @@ export async function PATCH(
       status: nextStatus,
     })
   } catch (error) {
-    console.error('studyset intervention PATCH failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

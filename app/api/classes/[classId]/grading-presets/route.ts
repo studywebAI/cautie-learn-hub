@@ -34,7 +34,6 @@ export async function GET(
 
     return NextResponse.json({ presets: data || [] })
   } catch (error) {
-    console.error('Error loading grading presets:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -87,7 +86,6 @@ export async function POST(
 
     return NextResponse.json({ preset: data })
   } catch (error) {
-    console.error('Error creating grading preset:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -141,7 +139,6 @@ export async function PATCH(
 
     return NextResponse.json({ preset: data })
   } catch (error) {
-    console.error('Error updating grading preset:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

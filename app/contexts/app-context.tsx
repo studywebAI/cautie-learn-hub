@@ -328,11 +328,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       if (res.status === 401) {
         setClasses([]);
         setSubjects([]);
-        console.warn('[PRELOAD][NAV] unauthorized', { preloadRequestId, role, status: res.status });
         return;
       }
       const body = await res.text().catch(() => '');
-      console.error('[PRELOAD][NAV] failed', { preloadRequestId, role, status: res.status, body });
       throw new Error(`navigation preload failed (${res.status})`);
     }
     const data = await res.json().catch(() => ({}));
@@ -369,14 +367,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         const updatedAt = Date.now();
         setPreloadState('classes:list', { status: 'ready', updatedAt, error: null });
         setPreloadState('subjects:list', { status: 'ready', updatedAt, error: null });
-        console.log('[PRELOAD] Resource ready', { key: 'navigation_bundle', durationMs: updatedAt - startedAt });
       } catch (error: any) {
         setPreloadState(key, {
           status: 'error',
           updatedAt: Date.now(),
           error: error?.message || 'Unknown preload error',
         });
-        console.error('[PRELOAD] Resource failed', { key, error: error?.message || error });
       }
     })();
 
@@ -406,12 +402,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(`bootstrap preload failed (${res.status})`);
       }
       const payload = await res.json().catch(() => null);
-      console.log('[PRELOAD][TIER1] bootstrap bundle ready', {
         durationMs: Date.now() - startedAt,
         classCount: payload?.classes?.length || 0,
       });
     } catch (error: any) {
-      console.warn('[PRELOAD][TIER1] bootstrap bundle failed', {
         durationMs: Date.now() - startedAt,
         error: error?.message || String(error),
       });
@@ -558,7 +552,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setSession(newSession);
 
         if (!newSession) {
-          console.log('[PRELOAD][TIER0] ready (no session)', { durationMs: Date.now() - tier0StartedAt });
           setIsTier0Ready(true);
           return;
         }
@@ -569,7 +562,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           setPreloadState('classes:list', { status: 'ready', updatedAt: now, error: null });
           setPreloadState('subjects:list', { status: 'ready', updatedAt: now, error: null });
           void refreshRoleFromServer();
-          console.log('[PRELOAD][TIER0] using cached dashboard snapshot', { durationMs: Date.now() - tier0StartedAt });
           setIsTier0Ready(true);
           void (async () => {
             const freshDashboard = await fetchDashboardSnapshot(true, 'cache_revalidate');
@@ -590,11 +582,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         } else {
           await warmResources(['classes:list', 'subjects:list']);
         }
-        console.log('[PRELOAD][TIER0] ready', { durationMs: Date.now() - tier0StartedAt });
         setIsTier0Ready(true);
       } catch (e) {
-        console.error('Init error:', e);
-        console.log('[PRELOAD][TIER0] failed/partial', { durationMs: Date.now() - tier0StartedAt });
         setIsTier0Ready(true);
       } finally {
         setIsLoading(false);

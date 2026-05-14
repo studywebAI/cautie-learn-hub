@@ -64,7 +64,6 @@ export function FlashcardEditor({ cards, sourceText, onStartStudy, onBack, isAss
       const newCard = await response.json();
       setCurrentCards(prevCards => [...prevCards, newCard]);
     } catch (error) {
-      console.error("Failed to add flashcard:", error);
       toast({
         variant: 'destructive',
         title: 'Failed to Add Card',

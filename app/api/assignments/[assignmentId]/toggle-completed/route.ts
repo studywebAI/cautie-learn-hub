@@ -73,7 +73,6 @@ export async function POST(
       completed: newCompletedStatus 
     });
   } catch (error) {
-    console.error('Error toggling assignment completion:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

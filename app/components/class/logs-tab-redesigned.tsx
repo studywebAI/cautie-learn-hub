@@ -50,7 +50,6 @@ export function LogsTabRedesigned({ classId }: { classId: string }) {
       }));
       setLogs(mapped);
     } catch (e) {
-      console.error('Failed to load logs:', e);
       setLogs([]);
     } finally {
       setLoading(false);

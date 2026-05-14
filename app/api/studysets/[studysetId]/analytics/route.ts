@@ -118,7 +118,6 @@ export async function GET(
       })),
     })
   } catch (error) {
-    console.error('studyset analytics GET failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

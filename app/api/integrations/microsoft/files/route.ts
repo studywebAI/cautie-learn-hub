@@ -28,14 +28,12 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.warn('[microsoft-files] unauthorized', { requestId });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const kind = request.nextUrl.searchParams.get('kind');
     const appConfig = kind && isEnabledIntegrationAppId(kind) ? getIntegrationAppById(kind) : null;
     if (!appConfig || appConfig.provider !== 'microsoft') {
-      console.warn('[microsoft-files] invalid-kind', { requestId, kind });
       return NextResponse.json({ error: "Query param 'kind' must be a supported Microsoft app" }, { status: 400 });
     }
     const query = request.nextUrl.searchParams.get('q') || '';
@@ -66,7 +64,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items });
   } catch (error: any) {
-    console.error('[microsoft-files] failed', {
       requestId,
       message: String(error?.message || 'Failed to load files'),
       code: String(error?.code || ''),

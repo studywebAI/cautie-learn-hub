@@ -57,7 +57,6 @@ function LoginContent() {
       });
 
       if (error) {
-        console.error('OTP verification error:', error);
         let errorMessage = 'Invalid verification code';
         let errorType = 'error';
 
@@ -92,7 +91,6 @@ function LoginContent() {
         });
 
         if (error) {
-          console.error('Sign in error:', error);
           let errorMessage = 'Sign in failed';
           let errorType = 'error';
 
@@ -112,7 +110,6 @@ function LoginContent() {
           return;
         }
       } catch (err) {
-        console.error('Sign in exception:', err);
         router.push(`/login?message=${encodeURIComponent('Network error during sign in. Please try again.')}&email=${encodeURIComponent(email)}`);
         setIsLoading(false);
         return;
@@ -138,7 +135,6 @@ function LoginContent() {
       });
 
       if (error) {
-        console.error('Signup error:', error);
         if (error.message.includes('User already registered')) {
           router.push('/login?message=Account already exists. Please sign in instead.&type=info');
           setIsLoading(false);
@@ -159,7 +155,6 @@ function LoginContent() {
       router.push('/login?message=An unexpected error occurred. Please try again.&type=error');
       setIsLoading(false);
     } catch (err) {
-      console.error('Signup exception:', err);
       router.push(`/login?message=${encodeURIComponent('Network error during signup. Please try again.')}&type=error&email=${encodeURIComponent(email)}`);
       setIsLoading(false);
     }

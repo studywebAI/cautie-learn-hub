@@ -203,7 +203,6 @@ async function writeAIErrorLog(
       return;
     }
     // Non-blocking; keep tool execution result path stable.
-    console.error("[ai_error_logs] insert failed", {
       message: error.message,
       code: error.code,
     });
@@ -529,7 +528,6 @@ export async function POST(request: NextRequest) {
         code: errorCode,
         message: err?.message || "Run failed",
       });
-      console.error("[tools.v2.runs] run failed", {
         runId: createdRun.id,
         toolId: payload.toolId,
         flowName: payload.flowName,

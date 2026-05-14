@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
     if (error?.issues) {
       return NextResponse.json({ error: 'Invalid payload', details: error.issues }, { status: 400 });
     }
-    console.error('[microsoft-picker-token] failed', {
       requestId,
       message: String(error?.message || 'unknown'),
       stack: error?.stack || null,

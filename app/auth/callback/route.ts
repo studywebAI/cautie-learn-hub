@@ -61,7 +61,6 @@ export async function GET(request: NextRequest) {
     // Always redirect to dashboard after successful login
     return NextResponse.redirect(new URL('/', request.url))
   } catch (err) {
-    console.error('Authentication callback error:', err)
     return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent((err as Error).message)}`, request.url))
   }
 }

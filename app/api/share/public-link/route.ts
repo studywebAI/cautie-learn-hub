@@ -137,7 +137,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ token, url: `/shared/view?token=${encodeURIComponent(token)}` });
   } catch (error) {
-    console.error('[share-public-link] POST failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -176,7 +175,6 @@ export async function GET(request: NextRequest) {
       href: payload.href,
     });
   } catch (error) {
-    console.error('[share-public-link] GET failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

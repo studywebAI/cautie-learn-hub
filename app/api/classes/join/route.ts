@@ -11,7 +11,6 @@ import { logAuditEntry } from '@/lib/auth/class-permissions'
 export const dynamic = 'force-dynamic'
 
 function logJoin(...args: any[]) {
-  console.log('[CLASSES_JOIN]', ...args)
 }
 
 function sanitizeCode(input: string | null | undefined): string {
@@ -428,7 +427,6 @@ export async function POST(request: NextRequest) {
         class: { id: classData.id, name: classData.name, description: classData.description }
       }, { status: 200 });
     }
-    console.error('Error joining class:', insertError);
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 

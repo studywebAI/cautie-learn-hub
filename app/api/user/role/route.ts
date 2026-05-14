@@ -6,7 +6,6 @@ import { NextRequest, NextResponse } from 'next/server'
 // The old 'role' column has been consolidated into 'subscription_type'
 
 function logRole(...args: any[]) {
-  console.log('[USER_ROLE]', ...args)
 }
 
 export async function GET() {

@@ -139,7 +139,6 @@ export function LinkPickerDialog({ isOpen, onClose, onSelect, classId }: LinkPic
         setAssignments(assignmentLinks);
       }
     } catch (error) {
-      console.error('Failed to fetch data for link picker:', error);
     } finally {
       setIsLoading(false);
     }

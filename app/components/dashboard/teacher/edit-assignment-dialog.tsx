@@ -258,7 +258,6 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
           setChapters(data.chapters || []);
         }
       } catch (error) {
-        console.error('Failed to fetch chapters:', error);
       } finally {
         setIsLoadingChapters(false);
       }
@@ -281,7 +280,6 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
           setBlocks(data.blocks || []);
         }
       } catch (error) {
-        console.error('Failed to fetch blocks:', error);
       } finally {
         setIsLoadingBlocks(false);
       }

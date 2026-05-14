@@ -244,7 +244,6 @@ export async function POST(req: NextRequest) {
       launchpad_preview: launchpadPreview,
     })
   } catch (error) {
-    console.error('studyset optimize POST failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

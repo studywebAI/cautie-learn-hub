@@ -90,7 +90,6 @@ export async function GET(
       question_metrics: questionMetrics,
     })
   } catch (error) {
-    console.error('assignment analytics failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -47,7 +47,6 @@ export function AnnouncementManager({ classId, isTeacher }: AnnouncementManagerP
         throw new Error('Failed to fetch announcements');
       }
     } catch (error) {
-      console.error('Error fetching announcements:', error);
       toast({
         title: 'Error',
         description: 'Failed to load announcements.',
@@ -107,7 +106,6 @@ export function AnnouncementManager({ classId, isTeacher }: AnnouncementManagerP
         throw new Error(error.error || 'Failed to create announcement');
       }
     } catch (error) {
-      console.error('Error creating announcement:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to create announcement.',
@@ -143,7 +141,6 @@ export function AnnouncementManager({ classId, isTeacher }: AnnouncementManagerP
         throw new Error('Failed to delete announcement');
       }
     } catch (error) {
-      console.error('Error deleting announcement:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete announcement.',

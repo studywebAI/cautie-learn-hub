@@ -39,7 +39,6 @@ export async function GET(req: NextRequest) {
       .limit(10);
 
     if (error) {
-      console.error('Recents fetch error:', error);
       return NextResponse.json({ recents: [] }, { status: 200 });
     }
 
@@ -54,7 +53,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ recents });
   } catch (error) {
-    console.error('Recents route error:', error);
     return NextResponse.json({ recents: [] }, { status: 200 });
   }
 }
@@ -97,7 +95,6 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Artifact creation error:', error);
       return NextResponse.json({ error: 'Failed to save artifact' }, { status: 500 });
     }
 
@@ -109,7 +106,6 @@ export async function POST(req: NextRequest) {
       icon: getIconForType(data.type),
     });
   } catch (error) {
-    console.error('Recents POST error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -74,7 +74,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ items: filtered, classIds: allowedClassIds })
   } catch (error) {
-    console.error('teacher overlay agenda GET failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

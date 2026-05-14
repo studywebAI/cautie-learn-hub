@@ -132,7 +132,6 @@ export async function GET(
 
     return NextResponse.json({ grade_sets: enrichedGradeSets })
   } catch (error) {
-    console.error('Error fetching grade sets:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -273,7 +272,6 @@ export async function POST(
         .in('id', resolvedStudentIds)
       
       if (profilesError) {
-        console.error('[GRADES] POST - Error fetching students:', profilesError)
       }
       students = profilesData || []
     }
@@ -293,7 +291,6 @@ export async function POST(
         .insert(gradeEntries)
 
       if (gradesError) {
-        console.error('[GRADES] POST - Error creating student grades:', gradesError)
       }
     }
 
@@ -302,7 +299,6 @@ export async function POST(
       students_count: students?.length || 0
     })
   } catch (error) {
-    console.error('[GRADES] POST - Error creating grade set:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -90,7 +90,7 @@ export function HierarchicalLinkPicker({ isOpen, onClose, onSelect, classId }: H
         const data = await res.json();
         setSubjects(Array.isArray(data) ? data : (data.subjects || []));
       }
-    } catch (e) { console.error(e); } finally { setIsLoading(false); }
+    } catch (e) { /* error silently */ } finally { setIsLoading(false); }
   }, [classId]);
 
   const fetchChapters = useCallback(async (subjectId: string) => {
@@ -98,7 +98,7 @@ export function HierarchicalLinkPicker({ isOpen, onClose, onSelect, classId }: H
     try {
       const res = await fetch(`/api/subjects/${subjectId}/chapters`);
       if (res.ok) { const data = await res.json(); setChapters(Array.isArray(data) ? data : (data.chapters || [])); }
-    } catch (e) { console.error(e); } finally { setIsLoading(false); }
+    } catch (e) { /* error silently */ } finally { setIsLoading(false); }
   }, []);
 
   const fetchParagraphs = useCallback(async (chapterId: string, subjectId: string) => {
@@ -106,7 +106,7 @@ export function HierarchicalLinkPicker({ isOpen, onClose, onSelect, classId }: H
     try {
       const res = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs`);
       if (res.ok) { const data = await res.json(); setParagraphs(Array.isArray(data) ? data : (data.paragraphs || [])); }
-    } catch (e) { console.error(e); } finally { setIsLoading(false); }
+    } catch (e) { /* error silently */ } finally { setIsLoading(false); }
   }, []);
 
   const fetchAssignments = useCallback(async (paragraphId: string, subjectId: string, chapterId: string) => {
@@ -114,7 +114,7 @@ export function HierarchicalLinkPicker({ isOpen, onClose, onSelect, classId }: H
     try {
       const res = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments`);
       if (res.ok) { const data = await res.json(); setAssignments(Array.isArray(data) ? data : (data.assignments || [])); }
-    } catch (e) { console.error(e); } finally { setIsLoading(false); }
+    } catch (e) { /* error silently */ } finally { setIsLoading(false); }
   }, []);
 
   useEffect(() => { if (isOpen && currentLevel === 'subjects') fetchSubjects(); }, [isOpen, currentLevel, fetchSubjects]);

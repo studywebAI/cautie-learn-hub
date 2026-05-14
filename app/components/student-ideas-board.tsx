@@ -28,7 +28,6 @@ export function StudentIdeasBoard() {
           setIdeas(data.ideas || []);
         }
       } catch (err) {
-        console.error('Failed to fetch ideas:', err);
       } finally {
         setLoading(false);
       }
@@ -60,7 +59,6 @@ export function StudentIdeasBoard() {
         alert('Failed to submit idea');
       }
     } catch (err) {
-      console.error('Submit error:', err);
       alert('Error submitting idea');
     } finally {
       setSubmitting(false);

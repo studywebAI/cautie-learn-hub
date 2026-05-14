@@ -158,7 +158,6 @@ export function AssignmentList({ assignments, classId, isTeacher = true }: Assig
           setSubmissionStatuses(statusMap);
         }
       } catch (error) {
-        console.error('Failed to fetch submission statuses:', error);
       }
     }
   };
@@ -181,7 +180,6 @@ export function AssignmentList({ assignments, classId, isTeacher = true }: Assig
         setTotalStudents(Number(payload.totalStudents || 0));
       }
     } catch (error) {
-      console.error('Failed to fetch submission counts:', error);
     }
   };
 

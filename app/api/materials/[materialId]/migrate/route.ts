@@ -85,13 +85,11 @@ export async function POST(
       .select();
 
     if (error) {
-      console.error('Error migrating material to blocks:', error);
       return NextResponse.json({ error: 'Failed to migrate material' }, { status: 500 });
     }
 
     return NextResponse.json({ blocks: data, message: 'Material migrated to blocks successfully' });
   } catch (error) {
-    console.error('Material migrate error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

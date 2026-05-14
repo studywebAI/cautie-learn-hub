@@ -104,7 +104,6 @@ export async function getValidMicrosoftAccessToken(supabase: any, userId: string
 
   const refreshToken = connection.refresh_token_encrypted ? decryptSecret(connection.refresh_token_encrypted) : '';
   if (!refreshToken) {
-    console.warn('[microsoft-token] no-refresh-token-available', {
       userId,
       expiresAt: connection.expires_at,
     });
@@ -178,7 +177,6 @@ export async function getMicrosoftAccessTokenForResource(
   const connection = base.connection;
   const refreshToken = connection?.refresh_token_encrypted ? decryptSecret(connection.refresh_token_encrypted) : '';
   if (!refreshToken) {
-    console.warn('[microsoft-token] resource-token-fallback-no-refresh-token', {
       userId,
       resource: targetResource,
       scope: connection?.scope || null,
@@ -208,7 +206,6 @@ export async function getMicrosoftAccessTokenForResource(
         tokenKind: 'resource' as const,
       };
     } catch (error: any) {
-      console.warn('[microsoft-token] resource-token-attempt-failed', {
         userId,
         resource: targetResource,
         scopeRequested: scopeCandidate,
@@ -217,7 +214,6 @@ export async function getMicrosoftAccessTokenForResource(
     }
   }
 
-  console.warn('[microsoft-token] resource-token-fallback-failed', {
     userId,
     resource: targetResource,
     scopeRequested: candidates,

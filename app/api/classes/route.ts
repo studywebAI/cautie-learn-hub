@@ -10,7 +10,6 @@ import { logAuditEntry } from '@/lib/auth/class-permissions'
 export const dynamic = 'force-dynamic'
 
 function log(...args: any[]) {
-  console.log('[CLASSES]', ...args)
 }
 
 export async function GET(request: NextRequest) {
@@ -66,7 +65,6 @@ export async function GET(request: NextRequest) {
 
     // Create profile if doesn't exist
     if (!profile) {
-      console.log('[CLASSES_GET] Creating missing profile for user', user.id)
       await supabase.from('profiles').insert({
         id: user.id,
         subscription_type: 'student',
@@ -358,7 +356,6 @@ export async function POST(request: NextRequest) {
       default_subject: createdSubject,
     });
   } catch (err: any) {
-    console.error('[CLASSES_POST] Unexpected error:', err);
     return NextResponse.json({ 
       error: 'Internal server error',
       details: err?.message || 'Unknown error'

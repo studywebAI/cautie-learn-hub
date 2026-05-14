@@ -36,12 +36,10 @@ export async function GET(
       .eq('chapter_id', chapterId)
       .order('position', { ascending: true });
     if (blocksError) {
-      console.error('Error fetching blocks:', blocksError);
       return NextResponse.json({ error: 'Failed to fetch blocks' }, { status: 500 });
     }
     return NextResponse.json({ blocks: blocks || [] });
   } catch (error) {
-    console.error('Chapter blocks GET error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -117,12 +115,10 @@ export async function POST(
       .select()
       .single();
     if (error) {
-      console.error('Error adding block:', error);
       return NextResponse.json({ error: 'Failed to add block' }, { status: 500 });
     }
     return NextResponse.json({ block: data });
   } catch (error) {
-    console.error('Chapter blocks POST error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -110,7 +110,6 @@ export default function SubjectDetailPage() {
           }
         }
       } catch (error) {
-        console.error('Error fetching subject data:', error);
         const message = error instanceof Error ? error.message : 'Failed to load subject';
         setLoadError(message);
       } finally {

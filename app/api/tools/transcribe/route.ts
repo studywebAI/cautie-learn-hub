@@ -21,7 +21,6 @@ export async function POST(request: NextRequest) {
   const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const startedAt = Date.now();
   const log = (event: string, details?: Record<string, unknown>) => {
-    console.log('[MIC_DEBUG][SERVER]', {
       event,
       requestId,
       ts: new Date().toISOString(),

@@ -50,16 +50,13 @@ export async function POST(request: Request) {
       .single()
 
     if (error) {
-      console.error('Error logging activity:', error)
       return NextResponse.json({ error: 'Failed to log activity' }, { status: 500 })
     }
 
-    console.log(`Activity logged: ${activity_type} by ${user.id}, score: ${score}`)
 
     return NextResponse.json(activity)
 
   } catch (error) {
-    console.error('Unexpected error in activity POST:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -98,14 +95,12 @@ export async function GET(request: Request) {
     const { data, error } = await query
 
     if (error) {
-      console.error('Error fetching activities:', error)
       return NextResponse.json({ error: 'Failed to fetch activities' }, { status: 500 })
     }
 
     return NextResponse.json(data || [])
 
   } catch (error) {
-    console.error('Unexpected error in activity GET:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

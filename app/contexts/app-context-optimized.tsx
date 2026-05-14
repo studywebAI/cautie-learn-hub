@@ -85,12 +85,10 @@ const getFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
     if (typeof defaultValue === 'string') return item as T;
     const parsed = JSON.parse(item) as T;
     if (Array.isArray(defaultValue) && !Array.isArray(parsed)) {
-      console.warn(`Corrupted localStorage data for key "${key}", resetting to default`);
       return defaultValue;
     }
     return parsed;
   } catch (error) {
-    console.error(`Error reading from localStorage key "${key}":`, error);
     return defaultValue;
   }
 };
@@ -101,7 +99,6 @@ const saveToLocalStorage = <T,>(key: string, value: T) => {
     const itemToSave = typeof value === 'string' ? value : JSON.stringify(value);
     window.localStorage.setItem(key, itemToSave);
   } catch (error) {
-    console.error(`Error saving to localStorage key "${key}":`, error);
   }
 };
 
@@ -194,11 +191,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       (now - (dataCache.students?.timestamp || 0)) < CACHE_DURATION;
 
     if (!force && cacheValid) {
-      console.log('Using cached data');
       return;
     }
 
-    console.log('Fetching fresh data from server...');
 
     try {
       // Fetch all data in parallel
@@ -259,10 +254,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setDataLoaded(true);
-      console.log('Fresh data loaded successfully');
 
     } catch (error) {
-      console.error('Failed to fetch data:', error);
       // Keep cached data on error
     }
   }, [session, dataCache, updateCache]);
@@ -274,7 +267,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     if (wasGuest && isLoggedInNow) {
       // User just logged in - sync local data then fetch
-      console.log('User logged in, syncing data...');
       fetchData(true);
     } else if (session) {
       // Regular session - fetch data if needed
@@ -302,7 +294,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
         return savedClass;
       } catch (error) {
-        console.error('Error creating class:', error);
         return null;
       }
     } else {
@@ -342,10 +333,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
 
         // Refetch data for new role
-        console.log('Role changed, refetching data...');
         await fetchData(true);
       } catch (error) {
-        console.error('Error updating role:', error);
         setRoleState(getFromLocalStorage('studyweb-role', 'student'));
       }
     }

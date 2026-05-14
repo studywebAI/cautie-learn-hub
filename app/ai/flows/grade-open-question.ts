@@ -153,7 +153,6 @@ AI MOET exact dit teruggeven:
         score: validScore,
       };
     } catch (error) {
-      console.error('AI grading flow error:', error);
       // Fallback
       return {
         score: 0,

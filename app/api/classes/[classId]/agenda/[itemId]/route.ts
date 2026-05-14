@@ -48,7 +48,6 @@ export async function GET(
 
     return NextResponse.json({ item })
   } catch (error) {
-    console.error('agenda item GET failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -155,7 +154,6 @@ export async function PATCH(
     const { data: item } = await getItemForClass(supabase as any, classId, itemId)
     return NextResponse.json({ item })
   } catch (error) {
-    console.error('agenda item PATCH failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -200,7 +198,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('agenda item DELETE failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

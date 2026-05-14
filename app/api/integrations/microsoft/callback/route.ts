@@ -49,7 +49,6 @@ export async function GET(request: NextRequest) {
   });
 
   if (!user) {
-    console.warn('[microsoft-callback] unauthorized', { requestId });
     doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode('unauthorized'));
     const response = NextResponse.redirect(doneUrl);
     clearOAuthCookies(response);
@@ -57,7 +56,6 @@ export async function GET(request: NextRequest) {
   }
 
   if (oauthError) {
-    console.warn('[microsoft-callback] provider-error', { requestId, oauthError });
     doneUrl.searchParams.set('ms_error', sanitizeMicrosoftErrorCode(oauthError));
     if (oauthErrorCode) doneUrl.searchParams.set('ms_error_code', oauthErrorCode.slice(0, 80));
     const response = NextResponse.redirect(doneUrl);
@@ -66,7 +64,6 @@ export async function GET(request: NextRequest) {
   }
 
   if (!code || !state || !expectedState || state !== expectedState) {
-    console.warn('[microsoft-callback] invalid-state', {
       requestId,
       hasCode: Boolean(code),
       hasState: Boolean(state),
@@ -119,7 +116,6 @@ export async function GET(request: NextRequest) {
     clearOAuthCookies(response);
     return response;
   } catch (error: any) {
-    console.error('[microsoft-callback] failed', {
       requestId,
       message: String(error?.message || 'callback_failed'),
       code: String(error?.code || ''),

@@ -17,18 +17,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ clas
     const supabase = await createClient(cookieStore);
     const { classId } = await params;
 
-    console.log(`[DEBUG] API called with classId: ${classId}`);
-    console.log(`[DEBUG] Full URL: ${req.url}`);
-
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      console.log(`[DEBUG] Unauthorized: ${userError?.message || 'no user'}`);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    console.log(`[DEBUG] Authenticated user: ${user.id}`);
-    console.log(`[DEBUG] Supabase URL: ${process.env.NEXT_PUBLIC_SUPABASE_URL}`);
 
     // Strategy: Get subjects via BOTH direct class_id AND class_subjects join table
     // to support both linking methods that may exist in the database
@@ -55,23 +48,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ clas
     });
     
     const subjects = Array.from(subjectMap.values());
-    
-    console.log(`Found ${directSubjects.length} subjects via direct class_id`);
-    console.log(`Found ${joinSubjects.length} subjects via class_subjects join`);
-    console.log(`Total unique subjects: ${subjects.length}`);
-    
+
     // Enrich subjects with chapters, paragraphs, and assignments
     const enrichedSubjects = await Promise.all(subjects.map(async (subject: any) => {
-      console.log(`Processing subject ${subject.id}: ${subject.title}`);
-      
       // Fetch chapters
       const { data: chapters } = await supabase
         .from('chapters')
         .select('id, title, chapter_number')
         .eq('subject_id', subject.id)
         .order('chapter_number', { ascending: true });
-
-      console.log(`Subject ${subject.id} chapters:`, chapters?.length || 0);
 
       if (!chapters || chapters.length === 0) {
         return { ...subject, chapters: [] };
@@ -130,14 +115,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ clas
 
     const defaultSubject = subjectsWithOwner.find((subject: any) => subject.user_id === user.id) || null;
 
-    console.log('Returning enriched subjects:', JSON.stringify(subjectsWithOwner, null, 2));
     return NextResponse.json({
       subjects: subjectsWithOwner,
       currentUserId: user.id,
       defaultSubjectId: defaultSubject?.id || null,
     });
   } catch (error) {
-    console.error('Error fetching subjects:', error);
     return NextResponse.json({ error: 'Internal server error while fetching subjects' }, { status: 500 });
   }
 }
@@ -148,12 +131,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cla
     const supabase = await createClient(cookieStore);
     const { classId } = await params;
 
-    console.log(`[DEBUG] POST creating subject for classId: ${classId}`);
-
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      console.log(`[DEBUG] Unauthorized: ${userError?.message || 'no user'}`);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -165,7 +145,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cla
       .maybeSingle();
 
     if (classError || !classData) {
-      console.log(`[DEBUG] Class not found or error: ${classError?.message}`);
       return NextResponse.json({ error: 'Class not found or access denied' }, { status: 404 });
     }
 
@@ -191,7 +170,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cla
 
     // Teachers who are members can create subjects
     if (!isTeacher || !isMember) {
-      console.log(`[DEBUG] User ${user.id} not authorized for class ${classId}`);
       return NextResponse.json({ error: 'Forbidden: Only class teachers can create subjects' }, { status: 403 });
     }
 
@@ -224,7 +202,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cla
       .select();
 
     if (subjectError) {
-      console.error(`[DEBUG] Subject creation error:`, subjectError);
       return NextResponse.json({
         error: `Failed to create subject: ${subjectError.message}`
       }, { status: 500 });
@@ -238,15 +215,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cla
 
     const newSubject = subjectData[0];
 
-    console.log(`[DEBUG] Created subject ${newSubject.id} for class ${classId}`);
-
     // Also mirror link into class_subjects so student subject queries that rely on join table remain consistent.
     const { error: linkError } = await (supabase as any)
       .from('class_subjects')
       .insert([{ class_id: classId, subject_id: newSubject.id }]);
 
     if (linkError) {
-      console.error(`[DEBUG] Failed to mirror subject link into class_subjects:`, linkError);
       return NextResponse.json({
         error: `Subject created but linking failed: ${linkError.message}`
       }, { status: 500 });
@@ -254,7 +228,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cla
 
     return NextResponse.json(newSubject, { status: 201 });
   } catch (error) {
-    console.error('Error creating subject for class:', error);
     return NextResponse.json({ error: 'Internal server error while creating subject' }, { status: 500 });
   }
 }

@@ -45,28 +45,6 @@ CREATE TABLE public.announcements (
     expires_at timestamp with time zone
 );
 
--- Attendance Records
-CREATE TABLE public.attendance_records (
-    id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    session_id uuid NOT NULL REFERENCES attendance_sessions(id) ON DELETE CASCADE,
-    student_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    status text NOT NULL,
-    timestamp timestamp with time zone NOT NULL DEFAULT now(),
-    notes text
-);
-
--- Attendance Sessions
-CREATE TABLE public.attendance_sessions (
-    id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    class_id uuid NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
-    title text NOT NULL,
-    date date NOT NULL,
-    start_time time with time zone,
-    end_time time with time zone,
-    created_by uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    created_at timestamp with time zone NOT NULL DEFAULT now()
-);
-
 -- Class Assignments
 CREATE TABLE public.class_assignments (
     class_id uuid NOT NULL REFERENCES classes(id) ON DELETE CASCADE,

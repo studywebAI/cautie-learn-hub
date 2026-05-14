@@ -52,7 +52,6 @@ export async function GET(
 
     return NextResponse.json({ enabled: true, visible_to_students: prefs.school_schedule_visible_to_students, slots: slots || [] })
   } catch (error) {
-    console.error('school schedule GET failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -115,7 +114,6 @@ export async function POST(
 
     return NextResponse.json({ success: true, slot: inserted })
   } catch (error) {
-    console.error('school schedule POST failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -156,7 +154,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('school schedule DELETE failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -232,7 +229,6 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, slot: updated })
   } catch (error) {
-    console.error('school schedule PATCH failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

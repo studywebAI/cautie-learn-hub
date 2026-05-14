@@ -84,7 +84,6 @@ export async function GET(
     const { data: logs, error, count } = await query
 
     if (error) {
-      console.error('Error fetching audit logs:', error)
       return NextResponse.json({ error: 'Failed to fetch audit logs' }, { status: 500 })
     }
     const filteredByStudent = logs || []
@@ -160,7 +159,6 @@ export async function GET(
       },
     })
   } catch (error) {
-    console.error('Audit logs GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

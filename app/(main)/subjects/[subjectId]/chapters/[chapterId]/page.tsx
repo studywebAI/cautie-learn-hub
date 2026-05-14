@@ -48,7 +48,6 @@ export default function ChapterOverviewPage() {
         setParagraphs(Array.isArray(payload.paragraphs) ? payload.paragraphs : []);
         setAdjacentChapters(payload.adjacentChapters || {});
       } catch (error) {
-        console.error('Error fetching chapter data:', error);
       } finally {
         setIsLoading(false);
       }

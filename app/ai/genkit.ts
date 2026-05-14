@@ -19,11 +19,9 @@ const getGoogleAI = () => {
 
   const apiKey = keys[currentKeyIndex];
   if (apiKey) {
-    console.log(`✅ Using API key ${currentKeyIndex + 1} (length: ${apiKey.length}, starts with: ${apiKey.substring(0,4)}...)`);
     return googleAI({ apiKey });
   }
 
-  console.error(`❌ Fatal Error: GEMINI_API_KEY at index ${currentKeyIndex} not found.`);
   throw new Error("Missing GEMINI_API_KEY");
 };
 
@@ -75,7 +73,6 @@ const createVirtualAI = () => ({
           currentKeyIndex = keyIndex;
           return await fn(input);
         } catch (err: any) {
-          console.error(`[${name}] Error with key ${keyIndex + 1}: ${err.message}`);
           if (keyIndex === keyIndices.length - 1) {
             throw err;
           }

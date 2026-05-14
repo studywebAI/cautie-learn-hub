@@ -21,7 +21,6 @@ export class AppErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: unknown) {
-    console.error('[app-error-boundary] render failed', error);
   }
 
   private handleReload = () => {

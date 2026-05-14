@@ -77,7 +77,6 @@ export async function GET(
       .order('chapter_number', { ascending: true })
 
     if (chaptersError) {
-      console.error('Error fetching chapters:', chaptersError)
       return NextResponse.json({ error: chaptersError.message }, { status: 500 })
     }
 
@@ -112,7 +111,6 @@ export async function GET(
       chapters: chapterProgress
     })
   } catch (error) {
-    console.error('Unexpected error in progress GET:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -210,7 +208,6 @@ export async function POST(
       .single()
 
     if (upsertError) {
-      console.error('Error updating progress:', upsertError)
       return NextResponse.json({ error: upsertError.message }, { status: 500 })
     }
 
@@ -219,7 +216,6 @@ export async function POST(
       progress: progress
     })
   } catch (error) {
-    console.error('Unexpected error in progress POST:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

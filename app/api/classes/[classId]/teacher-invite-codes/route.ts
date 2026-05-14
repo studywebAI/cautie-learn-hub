@@ -87,7 +87,6 @@ export async function GET(
       recent_codes: codes,
     })
   } catch (error) {
-    console.error('teacher invite codes GET failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -152,7 +151,6 @@ export async function POST(
 
     return NextResponse.json({ success: true, code: insertedCode })
   } catch (error) {
-    console.error('teacher invite codes POST failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -198,7 +196,6 @@ export async function PATCH(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('teacher invite codes PATCH failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

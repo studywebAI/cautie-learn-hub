@@ -127,6 +127,5 @@ export async function logAuditEntry(
       })
   } catch (err) {
     // Audit logging should never block the main operation
-    console.error('Audit log failed (non-blocking):', err)
   }
 }

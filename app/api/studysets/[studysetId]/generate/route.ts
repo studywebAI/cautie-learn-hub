@@ -191,7 +191,6 @@ async function tryBuildCustomAIPlan(input: {
     if (days.length === 0) return null
     return days
   } catch (error) {
-    console.warn('studyset custom AI plan failed; using deterministic fallback', {
       message: (error as any)?.message || String(error),
     })
     return null
@@ -492,7 +491,6 @@ export async function POST(
 
     return NextResponse.json({ success: true, days: insertedDays.length, tasks: taskRows.length })
   } catch (error) {
-    console.error('studyset generate failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

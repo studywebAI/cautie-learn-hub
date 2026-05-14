@@ -237,7 +237,6 @@ function AgendaPageContent() {
           const response = await fetch(`/api/classes/${selectedClassId}/school-schedule`, { signal: controller.signal });
           if (!response.ok) {
             setScheduleSlots([]);
-            console.error('[AGENDA] schedule load failed', { agendaDebugId, status: response.status, scope: 'teacher' });
             return;
           }
           const data = await response.json();
@@ -255,7 +254,6 @@ function AgendaPageContent() {
           const response = await fetch('/api/school-schedule', { signal: controller.signal });
           if (!response.ok) {
             setScheduleSlots([]);
-            console.error('[AGENDA] schedule load failed', { agendaDebugId, status: response.status, scope: 'student' });
             return;
           }
           const data = await response.json();
@@ -273,7 +271,6 @@ function AgendaPageContent() {
       } catch (error: any) {
         if (error?.name === 'AbortError') return;
         setScheduleSlots([]);
-        console.error('[AGENDA] schedule load exception', { agendaDebugId, message: error?.message || String(error) });
       }
     };
 
@@ -297,7 +294,6 @@ function AgendaPageContent() {
         const response = await fetch(`/api/studysets/agenda?from=${from}&to=${to}`, { signal: controller.signal });
         if (!response.ok) {
           setStudysetAgendaItems([]);
-          console.error('[AGENDA] studyset agenda load failed', { agendaDebugId, status: response.status, from, to });
           return;
         }
         const data = await response.json();
@@ -311,7 +307,6 @@ function AgendaPageContent() {
       } catch (error: any) {
         if (error?.name === 'AbortError') return;
         setStudysetAgendaItems([]);
-        console.error('[AGENDA] studyset agenda load exception', { agendaDebugId, message: error?.message || String(error) });
       }
     };
 
@@ -346,7 +341,6 @@ function AgendaPageContent() {
       } catch (error: any) {
         if (error?.name === 'AbortError') return;
         setTeacherAgendaItems([]);
-        console.error('[AGENDA] teacher overlay load exception', { agendaDebugId, message: error?.message || String(error) });
       }
     };
 
@@ -379,7 +373,6 @@ function AgendaPageContent() {
       } catch (error: any) {
         if (error?.name === 'AbortError') return;
         setStudentAgendaItems([]);
-        console.error('[AGENDA] student feed load exception', { agendaDebugId, message: error?.message || String(error) });
       }
     };
 

@@ -57,7 +57,6 @@ export function ChapterContentViewer({
         const blocksData = await blocksResponse.json();
         setBlocks(blocksData.blocks || []);
       } catch (err) {
-        console.error('Error fetching chapter content:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setIsLoading(false);

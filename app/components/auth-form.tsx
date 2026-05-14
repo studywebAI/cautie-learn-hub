@@ -32,7 +32,6 @@ export function AuthForm({
       await (isSignUp ? signUp : signIn)(formData)
       // If 2FA is required, the server will redirect with appropriate message
     } catch (error) {
-      console.error('Authentication failed:', error)
     } finally {
       setIsLoading(false)
     }
@@ -48,7 +47,6 @@ export function AuthForm({
       formData.append('code', code)
       await signIn(formData)
     } catch (error) {
-      console.error('2FA verification failed:', error)
     } finally {
       setIsLoading(false)
     }

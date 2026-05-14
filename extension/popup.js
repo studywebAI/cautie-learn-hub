@@ -45,7 +45,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       showStatus('Page saved to StudyWeb!');
     } catch (error) {
-      console.error('Capture failed:', error);
       showStatus('Failed to save page', 'error');
     }
   });
@@ -82,7 +81,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       showStatus('Selection saved to StudyWeb!');
     } catch (error) {
-      console.error('Selection capture failed:', error);
       showStatus('No text selected or capture failed', 'error');
     }
   });
@@ -116,7 +114,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       showStatus('Added to StudyWeb agenda!');
     } catch (error) {
-      console.error('Agenda addition failed:', error);
       showStatus('Failed to add to agenda', 'error');
     }
   });

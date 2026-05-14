@@ -83,7 +83,6 @@ export function BlockEditor({
         setBlocks(data);
       }
     } catch (error) {
-      console.error('Error loading blocks:', error);
     }
   };
 
@@ -156,7 +155,6 @@ export function BlockEditor({
       // Reload blocks to get IDs and updated positions
       await loadBlocks();
     } catch (error) {
-      console.error('Error saving blocks:', error);
       toast({
         variant: 'destructive',
         title: 'Error',

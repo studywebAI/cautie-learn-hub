@@ -11,7 +11,6 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      console.log('[SUBSCRIPTION] POST - Auth failed', {
         message: authError?.message,
         status: authError?.status,
         name: authError?.name
@@ -20,7 +19,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { code, tier, type } = await request.json();
-    console.log('[SUBSCRIPTION] POST - Incoming upgrade request', {
       userId: user.id,
       code: code ? '***redacted***' : null,
       requested_tier: tier,
@@ -28,7 +26,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (!code || !tier || !type) {
-      console.log('[SUBSCRIPTION] POST - Missing fields', { hasCode: !!code, tier, type });
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -40,7 +37,6 @@ export async function POST(request: NextRequest) {
     // Also accept any premium/pro codes
     const codeLower = code.toLowerCase().trim();
     if (!validCodes[codeLower]) {
-      console.log('[SUBSCRIPTION] POST - Invalid code', { codeLower });
       return NextResponse.json({ error: 'Invalid code' }, { status: 400 });
     }
 
@@ -61,7 +57,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (updateError) {
-      console.error('[SUBSCRIPTION] POST - Subscription update error:', {
         message: updateError.message,
         code: updateError.code,
         details: updateError.details,
@@ -76,7 +71,6 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    console.log('[SUBSCRIPTION] POST - Subscription updated successfully:', {
       userId: user.id,
       subscription_type: data?.subscription_type,
       subscription_tier: data?.subscription_tier
@@ -90,7 +84,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Subscription upgrade error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -131,7 +124,6 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error('Get subscription error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

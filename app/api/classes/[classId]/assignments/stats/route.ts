@@ -78,7 +78,6 @@ export async function GET(
       })),
     })
   } catch (error) {
-    console.error('[assignment-stats] GET failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

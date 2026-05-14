@@ -116,7 +116,6 @@ export default function ClassDetailsPage() {
           setDirectClassInfo((payload?.class || payload) as ClassInfo);
         }
       } catch (error) {
-        console.error('Failed to fetch class info:', error);
       } finally {
         setIsResolvingClass(false);
       }
@@ -225,7 +224,6 @@ export default function ClassDetailsPage() {
         meta: { status: response.status },
       });
       } catch (error) {
-        console.error(`Failed to load ${tabName} data:`, error);
         void logClassTabEvent({
           classId,
           tab: tabName,

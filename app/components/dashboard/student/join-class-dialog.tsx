@@ -151,7 +151,6 @@ export function JoinClassDialog({ isOpen, setIsOpen, onClassJoined, initialCode 
         }
       }
     } catch (err) {
-      console.error("Camera access denied:", err);
       toast({
         variant: 'destructive',
         title: 'Camera Access Denied',

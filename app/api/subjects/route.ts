@@ -6,7 +6,6 @@ import { createSubjectSchema, updateSubjectSchema, deleteSubjectSchema } from '@
 import { validateBody } from '@/lib/validation/validate'
 
 function logSubjects(...args: any[]) {
-  console.log('[SUBJECTS]', ...args)
 }
 
 type SubjectCreateRequest = {
@@ -674,7 +673,6 @@ export async function PUT(request: NextRequest) {
       subject: transformedSubject
     })
   } catch (error) {
-    console.error('Error updating subject:', error)
     return NextResponse.json({
       error: 'Internal server error while updating subject'
     }, { status: 500 })
@@ -724,7 +722,6 @@ export async function DELETE(request: NextRequest) {
       message: 'Subject deleted successfully'
     })
   } catch (error) {
-    console.error('Error deleting subject:', error)
     return NextResponse.json({
       error: 'Internal server error while deleting subject'
     }, { status: 500 })

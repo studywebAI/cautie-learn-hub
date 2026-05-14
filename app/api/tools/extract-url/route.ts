@@ -278,7 +278,6 @@ export async function POST(req: NextRequest) {
     if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
       return NextResponse.json({ error: 'URL took too long to respond' }, { status: 504 });
     }
-    console.error('URL extraction error:', error);
     return NextResponse.json({ error: 'Failed to extract text from URL' }, { status: 500 });
   }
 }

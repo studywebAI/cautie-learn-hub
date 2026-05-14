@@ -73,7 +73,6 @@ export async function GET(
       .order('chapter_number', { ascending: true })
 
     if (error) {
-      console.error('Error fetching chapters:', error)
       return NextResponse.json({ error: 'Failed to fetch chapters' }, { status: 500 })
     }
 
@@ -85,7 +84,6 @@ export async function GET(
 
     return NextResponse.json({ chapters: chaptersWithParagraphs })
   } catch (err) {
-    console.error('Unexpected error in chapters GET:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -174,7 +172,6 @@ export async function POST(
       .rpc('get_next_chapter_number', { subject_id: subject_id })
 
     if (funcError) {
-      console.error('Error getting next chapter number:', funcError)
       // Fallback to 1 if function doesn't exist
       const fallbackNumber = 1
     }
@@ -190,13 +187,11 @@ export async function POST(
       .single()
 
     if (error) {
-      console.error('Error creating chapter:', error)
       return NextResponse.json({ error: 'Failed to create chapter' }, { status: 500 })
     }
 
     return NextResponse.json({ chapter })
   } catch (err) {
-    console.error('Unexpected error in chapters POST:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

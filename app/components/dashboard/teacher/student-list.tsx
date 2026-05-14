@@ -41,7 +41,6 @@ function StudentInviteDialog({ isOpen, setIsOpen, classInfo }: StudentInviteDial
                     }
                 })
                 .catch(error => {
-                    console.error('Failed to fetch join code:', error);
                 })
                 .finally(() => {
                     setIsLoadingCode(false);
@@ -129,7 +128,6 @@ function TeacherInviteDialog({ isOpen, setIsOpen, classInfo }: TeacherInviteDial
                     }
                 })
                 .catch(error => {
-                    console.error('Failed to fetch teacher join code:', error);
                 })
                 .finally(() => {
                     setIsLoadingCode(false);
@@ -243,7 +241,6 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
                 toast({ title: 'Failed to remove students', description: data.error, variant: 'destructive' });
             }
         } catch (error) {
-            console.error('Failed to remove students:', error);
             toast({ title: 'Failed to remove students', variant: 'destructive' });
         } finally {
             setIsRemoving(false);
@@ -270,7 +267,6 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
                 toast({ title: 'Failed to update name', description: data.error, variant: 'destructive' });
             }
         } catch (error) {
-            console.error('Failed to update name:', error);
             toast({ title: 'Failed to update name', variant: 'destructive' });
         }
     };

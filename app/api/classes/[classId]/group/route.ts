@@ -4,7 +4,6 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 function logGroup(...args: any[]) {
-  console.log('[CLASS_GROUP]', ...args)
 }
 
 function studentDisplayName(classAlias: string | null | undefined, displayNameValue: string | null | undefined, fullName: string | null | undefined) {

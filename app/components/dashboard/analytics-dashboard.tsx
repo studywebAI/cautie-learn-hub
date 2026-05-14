@@ -56,7 +56,6 @@ export const AnalyticsDashboard = React.memo(function AnalyticsDashboard() {
           setAnalytics(data);
         }
       } catch (error) {
-        console.error('Failed to fetch analytics:', error);
       } finally {
         setLoading(false);
       }

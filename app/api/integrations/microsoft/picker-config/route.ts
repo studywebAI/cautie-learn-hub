@@ -27,7 +27,6 @@ export async function GET(request: NextRequest) {
 
     const rateLimit = checkRateLimit(request, { key: 'ms-picker-config', limit: 60, windowMs: 60_000 });
     if (!rateLimit.ok) {
-      console.warn('[microsoft-picker-config] rate-limited', { requestId, traceId, appId });
       return rateLimit.response;
     }
 
@@ -39,18 +38,15 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.warn('[microsoft-picker-config] unauthorized', { requestId, traceId, appId });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const clientId = process.env.MICROSOFT_CLIENT_ID || '';
     if (!clientId) {
-      console.error('[microsoft-picker-config] missing client id', { requestId, traceId, appId, userId: user.id });
       return NextResponse.json({ error: 'Microsoft app credentials are missing on server.' }, { status: 500 });
     }
 
     const tokenState = await getValidMicrosoftAccessToken(supabase, user.id).catch((error: any) => {
-      console.error('[microsoft-picker-config] token-load-failed', {
         requestId,
         traceId,
         appId,
@@ -100,7 +96,6 @@ export async function GET(request: NextRequest) {
       tokenExpiresAt: tokenState?.connection?.expires_at || null,
     });
   } catch (error: any) {
-    console.error('[microsoft-picker-config] failed', {
       requestId,
       traceId,
       appId,

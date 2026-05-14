@@ -121,7 +121,6 @@ export async function PATCH(
         },
       });
     if (assignmentEventError) {
-      console.warn('[open-answers] failed to record assignment event', assignmentEventError);
     }
 
     if (answer.assignment_attempt_id) {
@@ -149,7 +148,6 @@ export async function PATCH(
         })
         .eq('id', answer.assignment_attempt_id);
       if (attemptUpdateError) {
-        console.warn('[open-answers] failed to update assignment attempt score', attemptUpdateError);
       }
     }
 
@@ -158,7 +156,6 @@ export async function PATCH(
       answer: updated,
     });
   } catch (error) {
-    console.error('[open-answers] grade failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -44,7 +44,6 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.warn('[microsoft-connect] unauthorized', { requestId, traceId });
       return NextResponse.redirect(new URL('/login?error=unauthorized', getOrigin(request)));
     }
 
@@ -54,7 +53,6 @@ export async function GET(request: NextRequest) {
 
     // If already connected with a usable token and required scopes, skip OAuth roundtrip.
     const existingToken = await getValidMicrosoftAccessToken(supabase, user.id).catch((error: any) => {
-      console.warn('[microsoft-connect] existing-token-check-failed', {
         requestId,
         traceId,
         userId: user.id,
@@ -133,7 +131,6 @@ export async function GET(request: NextRequest) {
     });
     return response;
   } catch (error: any) {
-    console.error('[microsoft-connect] failed', {
       requestId,
       traceId,
       message: String(error?.message || 'unknown'),

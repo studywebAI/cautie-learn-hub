@@ -44,7 +44,6 @@ export function StudentProgressPanel({ classId }: StudentProgressPanelProps) {
         setStudents(data.students || []);
       }
     } catch (error) {
-      console.error('Failed to fetch progress:', error);
     } finally {
       setLoading(false);
     }

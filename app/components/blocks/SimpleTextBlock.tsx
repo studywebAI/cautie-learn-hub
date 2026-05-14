@@ -45,9 +45,7 @@ export const SimpleTextBlock: React.FC<SimpleTextBlockProps> = ({
     setIsSaving(true);
     try {
       await onBlockUpdate(block.id, { content, style });
-      console.log('Text block auto-saved');
     } catch (error) {
-      console.error('Failed to save text block:', error);
     } finally {
       setIsSaving(false);
     }

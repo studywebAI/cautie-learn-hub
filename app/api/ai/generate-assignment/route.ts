@@ -64,7 +64,6 @@ export async function POST(request: Request) {
       .single()
 
     if (assignmentError) {
-      console.error('Error creating assignment:', assignmentError)
       return NextResponse.json({ error: assignmentError.message }, { status: 500 })
     }
 
@@ -87,7 +86,6 @@ export async function POST(request: Request) {
         .insert(materialsToCreate)
 
       if (materialsError) {
-        console.error('Error creating materials:', materialsError)
         // Don't fail the whole request for this
       }
     }
@@ -104,7 +102,6 @@ export async function POST(request: Request) {
           user.id
         )
       } catch (notifyError) {
-        console.error('Error sending notifications:', notifyError)
       }
     }
 
@@ -115,7 +112,6 @@ export async function POST(request: Request) {
         NotificationTemplates.aiContentGenerated('assignment')
       )
     } catch (notifyError) {
-      console.error('Error sending completion notification:', notifyError)
     }
 
     return NextResponse.json({
@@ -125,7 +121,6 @@ export async function POST(request: Request) {
     })
 
   } catch (error) {
-    console.error('Error generating assignment:', error)
     return NextResponse.json({
       error: 'Failed to generate assignment',
       details: error instanceof Error ? error.message : 'Unknown error'

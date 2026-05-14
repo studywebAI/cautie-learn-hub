@@ -91,7 +91,6 @@ export async function POST() {
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('AI grading failed:', errorText);
       throw new Error('AI grading failed');
     }
 
@@ -131,7 +130,6 @@ export async function POST() {
     })
 
   } catch (error) {
-    console.error('Grading process error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

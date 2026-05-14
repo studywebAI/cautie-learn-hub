@@ -50,7 +50,6 @@ export async function POST(request: Request) {
       })
 
     if (uploadError) {
-      console.error('Upload error:', uploadError)
       return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
     }
 
@@ -65,7 +64,6 @@ export async function POST(request: Request) {
     })
 
   } catch (error) {
-    console.error('Unexpected error in upload:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -37,13 +37,11 @@ export async function GET(req: NextRequest) {
       .limit(50);
 
     if (error) {
-      console.error('Ideas fetch error:', error);
       return NextResponse.json({ ideas: [] }, { status: 200 });
     }
 
     return NextResponse.json({ ideas: ideas || [] });
   } catch (error) {
-    console.error('Ideas GET error:', error);
     return NextResponse.json({ ideas: [] }, { status: 200 });
   }
 }
@@ -85,7 +83,6 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Idea submission error:', error);
       return NextResponse.json({ error: 'Failed to submit idea' }, { status: 500 });
     }
 
@@ -94,7 +91,6 @@ export async function POST(req: NextRequest) {
       idea: data,
     });
   } catch (error) {
-    console.error('Ideas POST error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

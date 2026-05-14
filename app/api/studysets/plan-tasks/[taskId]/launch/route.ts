@@ -249,7 +249,6 @@ export async function GET(
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
-      console.warn('[studyset-launch] unauthorized', { requestId, taskId, message: userError?.message || null })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -280,18 +279,15 @@ export async function GET(
       .maybeSingle()
 
     if (taskError) {
-      console.error('[studyset-launch] task query failed', { requestId, taskId, userId: user.id, message: taskError.message })
       return NextResponse.json({ error: taskError.message }, { status: 500 })
     }
     if (!taskRow) {
-      console.warn('[studyset-launch] task not found', { requestId, taskId, userId: user.id })
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
 
     const day = taskRow.studyset_plan_days
     const studyset = day?.studysets
     if (!day || !studyset) {
-      console.error('[studyset-launch] invalid task relation', { requestId, taskId, userId: user.id })
       return NextResponse.json({ error: 'Task relation invalid' }, { status: 500 })
     }
 
@@ -455,7 +451,6 @@ export async function GET(
     console.info('[studyset-launch] success', { requestId, taskId, tool: 'notes' })
     return NextResponse.json(response)
   } catch (error) {
-    console.error('[studyset-launch] exception', { requestId, message: (error as any)?.message || 'Internal server error' })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

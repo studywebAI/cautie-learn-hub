@@ -78,7 +78,6 @@ export async function POST(
       message: 'Content generation started. Check back shortly for results.',
     });
   } catch (error) {
-    console.error('POST /api/studysets/[studysetId]/generate-workflow error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

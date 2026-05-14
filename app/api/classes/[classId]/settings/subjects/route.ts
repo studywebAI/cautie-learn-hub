@@ -151,7 +151,6 @@ export async function GET(
       import_candidates: ownSubjectsFromOtherClasses || [],
     })
   } catch (error) {
-    console.error('subject settings GET failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -249,7 +248,6 @@ export async function PATCH(
 
     return NextResponse.json({ error: 'Unsupported action' }, { status: 400 })
   } catch (error) {
-    console.error('subject settings PATCH failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -411,7 +409,6 @@ export async function POST(
       subject_title: newSubject.title,
     })
   } catch (error) {
-    console.error('subject settings POST failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

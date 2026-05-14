@@ -66,13 +66,11 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching materials:', error);
       return NextResponse.json({ error: 'Failed to fetch materials' }, { status: 500 });
     }
 
     return NextResponse.json({ materials: data });
   } catch (error) {
-    console.error('Materials GET error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -107,13 +105,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Error saving material:', error);
       return NextResponse.json({ error: 'Failed to save material' }, { status: 500 });
     }
 
     return NextResponse.json({ material: data });
   } catch (error) {
-    console.error('Materials POST error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

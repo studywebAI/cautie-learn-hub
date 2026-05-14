@@ -86,7 +86,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => null);
     const parsed = PayloadSchema.safeParse(body);
     if (!parsed.success) {
-      console.warn('[microsoft-picker-client-log] invalid-payload', {
         requestId,
         userId,
         issues: parsed.error.issues.map((issue) => issue.message),
@@ -116,16 +115,13 @@ export async function POST(request: NextRequest) {
     };
 
     if (payload.level === 'error') {
-      console.error('[microsoft-picker-client-log] event', baseLog);
     } else if (payload.level === 'warn') {
-      console.warn('[microsoft-picker-client-log] event', baseLog);
     } else {
       console.info('[microsoft-picker-client-log] event', baseLog);
     }
 
     return NextResponse.json({ ok: true, requestId });
   } catch (error: any) {
-    console.error('[microsoft-picker-client-log] failed', {
       requestId,
       message: String(error?.message || 'unknown'),
       code: String(error?.code || ''),

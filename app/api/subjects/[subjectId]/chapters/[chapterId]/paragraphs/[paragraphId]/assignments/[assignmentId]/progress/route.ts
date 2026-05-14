@@ -9,7 +9,6 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string; assignmentId: string }> }
 ) {
-  console.log(`GET /api/subjects/[subjectId]/chapters/[chapterId]/paragraphs/[paragraphId]/assignments/[assignmentId]/progress - Called`);
   
   try {
     const cookieStore = cookies()
@@ -36,7 +35,6 @@ export async function GET(
       .single()
     
     if (assignmentError) {
-      console.log(`Assignment fetch error:`, assignmentError.message);
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
     }
     
@@ -59,7 +57,6 @@ export async function GET(
       .order('position', { ascending: true })
     
     if (blocksError) {
-      console.log(`Blocks fetch error:`, blocksError.message);
       return NextResponse.json({ error: 'Failed to fetch blocks' }, { status: 500 })
     }
     
@@ -113,7 +110,6 @@ export async function GET(
       is_completed: completionPercent === 100
     })
   } catch (err) {
-    console.error(`Unexpected error:`, err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -190,7 +190,6 @@ export function useCacheWarming(classIds: string[]) {
               await setCachedStudents(classId, studentsData);
             }
           } catch (error) {
-            console.warn(`Failed to warm cache for class ${classId}:`, error);
           }
         })
       );

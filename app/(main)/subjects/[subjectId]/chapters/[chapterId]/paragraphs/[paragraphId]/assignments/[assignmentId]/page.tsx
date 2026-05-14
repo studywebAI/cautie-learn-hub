@@ -115,7 +115,6 @@ export default function AssignmentDetailPage() {
           setBlocks(normalizedBlocks.sort((a: Block, b: Block) => a.position - b.position));
         }
       } catch (error) {
-        console.error('Error fetching assignment data:', error);
         setLoadError('Failed to load assignment.');
         toast({
           title: 'Error',

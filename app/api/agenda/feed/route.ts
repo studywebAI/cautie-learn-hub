@@ -66,7 +66,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ items: filtered })
   } catch (error) {
-    console.error('agenda feed GET failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

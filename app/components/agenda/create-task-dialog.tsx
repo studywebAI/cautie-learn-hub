@@ -73,7 +73,6 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
 
       resetAndClose();
     } catch (error) {
-      console.error('Task creation failed:', error);
       toast({
         variant: 'destructive',
         title: 'Error',

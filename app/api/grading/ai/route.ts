@@ -50,7 +50,6 @@ export async function POST(request: Request) {
       .eq('assignment_id', submission.assignment_id);
 
     if (blocksError) {
-      console.error('Error fetching blocks:', blocksError);
       return NextResponse.json({ error: 'Failed to fetch assignment blocks' }, { status: 500 });
     }
 
@@ -79,7 +78,6 @@ export async function POST(request: Request) {
         .single();
 
       if (answerError || !studentAnswer) {
-        console.log(`No answer found for block ${block.id} and student ${user.id}`);
         continue;
       }
 
@@ -109,7 +107,6 @@ export async function POST(request: Request) {
         .eq('id', studentAnswer.id);
 
       if (updateError) {
-        console.error(`Error updating student answer ${studentAnswer.id}:`, updateError);
       }
 
       gradingResults.push({
@@ -138,7 +135,6 @@ export async function POST(request: Request) {
       .eq('id', submissionId);
 
     if (submissionUpdateError) {
-      console.error(`Error updating submission ${submissionId}:`, submissionUpdateError);
     }
 
     return NextResponse.json({
@@ -150,7 +146,6 @@ export async function POST(request: Request) {
       percentage,
     });
   } catch (error) {
-    console.error('AI grading API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

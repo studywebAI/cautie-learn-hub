@@ -61,7 +61,6 @@ export async function GET(
 
     return NextResponse.json({ requests: rows || [] })
   } catch (error) {
-    console.error('teacher join requests GET failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -204,7 +203,6 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, status: nextStatus })
   } catch (error) {
-    console.error('teacher join requests PATCH failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -31,7 +31,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json(submissions || [])
   } catch (error) {
-    console.error('Error fetching submissions:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -72,7 +71,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(submission)
   } catch (error) {
-    console.error('Error creating submission:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

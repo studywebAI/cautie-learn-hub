@@ -50,7 +50,6 @@ export function CreateClassDialog({ isOpen, setIsOpen, onClassCreated }: CreateC
       }).then((url: string) => {
         setQrCodeDataURL(url);
       }).catch((error: any) => {
-        console.error('QR code generation failed:', error);
         // Fallback to showing text-only
         setQrCodeDataURL('');
       });

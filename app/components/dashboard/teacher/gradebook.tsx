@@ -82,7 +82,6 @@ export function Gradebook({ classId }: GradebookProps) {
       setGrades(gradesMap)
 
     } catch (error) {
-      console.error('Error loading gradebook data:', error)
     } finally {
       setLoading(false)
     }

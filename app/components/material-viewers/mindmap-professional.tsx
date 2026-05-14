@@ -62,7 +62,6 @@ export function ProfessionalMindmapRenderer({ data, title }: ProfessionalMindmap
         try {
           return JSON.parse(saved);
         } catch (e) {
-          console.error('Failed to load saved mindmap:', e);
         }
       }
     }

@@ -26,7 +26,7 @@ export function useSavedRun(runId: string | null) {
       .then(data => {
         if (data) setRun(data);
       })
-      .catch(console.error)
+      .catch(() => {/* error silently */})
       .finally(() => setIsLoading(false));
   }, [runId]);
 

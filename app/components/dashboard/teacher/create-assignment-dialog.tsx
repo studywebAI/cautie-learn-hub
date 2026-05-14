@@ -200,7 +200,6 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
           setChapters(data.chapters || []);
         }
       } catch (error) {
-        console.error('Failed to fetch chapters:', error);
       } finally {
         setIsLoadingChapters(false);
       }
@@ -225,7 +224,6 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
           setBlocks(data.blocks || []);
         }
       } catch (error) {
-        console.error('Failed to fetch blocks:', error);
       } finally {
         setIsLoadingBlocks(false);
       }

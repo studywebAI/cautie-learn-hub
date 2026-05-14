@@ -20,7 +20,6 @@ export class ChangeDetectionService {
 
       return data && data.length > 0;
     } catch (error) {
-      console.error('Change detection error for class:', error);
       return true; // Assume changed on error to be safe
     }
   }
@@ -36,7 +35,6 @@ export class ChangeDetectionService {
 
       return data && data.length > 0;
     } catch (error) {
-      console.error('Change detection error for grades:', error);
       return true; // Assume changed on error to be safe
     }
   }
@@ -52,7 +50,6 @@ export class ChangeDetectionService {
 
       return data && data.length > 0;
     } catch (error) {
-      console.error('Change detection error for attendance:', error);
       return true; // Assume changed on error to be safe
     }
   }
@@ -69,7 +66,6 @@ export class ChangeDetectionService {
 
       return data && data.length > 0;
     } catch (error) {
-      console.error('Change detection error for students:', error);
       return true; // Assume changed on error to be safe
     }
   }
@@ -85,7 +81,6 @@ export class ChangeDetectionService {
 
       return data && data.length > 0;
     } catch (error) {
-      console.error('Change detection error for assignments:', error);
       return true; // Assume changed on error to be safe
     }
   }
@@ -101,7 +96,6 @@ export class ChangeDetectionService {
 
       return data && data.length > 0;
     } catch (error) {
-      console.error('Change detection error for progress:', error);
       return true; // Assume changed on error to be safe
     }
   }

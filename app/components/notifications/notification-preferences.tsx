@@ -57,7 +57,6 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
         setPreferences(data);
       }
     } catch (error) {
-      console.error('Error fetching preferences:', error);
     } finally {
       setIsLoading(false);
     }

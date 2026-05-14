@@ -3,7 +3,6 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 function logPresence(...args: any[]) {
-  console.log('[USER_PRESENCE]', ...args)
 }
 
 export async function POST(request: Request) {

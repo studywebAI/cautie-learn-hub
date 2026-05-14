@@ -65,7 +65,6 @@ export async function DELETE(
     .eq('id', assignmentId);
 
   if (error) {
-    console.error('Error deleting assignment:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -190,7 +189,6 @@ export async function PATCH(
     .single();
 
   if (error) {
-    console.error('Error updating assignment:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -293,7 +291,6 @@ export async function PUT(
     .single();
 
   if (error) {
-    console.error('Error updating assignment:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

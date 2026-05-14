@@ -37,7 +37,6 @@ export async function GET(request: Request) {
   const { data: notifications, error } = await query
 
   if (error) {
-    console.error('Error fetching notifications:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -79,7 +78,6 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) {
-    console.error('Error creating notification:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

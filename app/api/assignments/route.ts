@@ -165,7 +165,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json(assignments)
   } catch (error) {
-    console.error('Error in assignments GET:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -311,7 +310,6 @@ export async function POST(request: NextRequest) {
       correct_percent: 0,
     })
   } catch (error) {
-    console.error('Error creating assignment:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

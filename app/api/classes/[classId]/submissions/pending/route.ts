@@ -45,7 +45,6 @@ export async function GET(
       .order('submitted_at', { ascending: false });
 
     if (error) {
-      console.error('Failed to fetch submissions:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -73,7 +72,6 @@ export async function GET(
 
     return NextResponse.json(formatted);
   } catch (error) {
-    console.error('Error in pending submissions:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

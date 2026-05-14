@@ -30,7 +30,6 @@ export async function POST(request: Request) {
         .single()
 
       if (updateError) {
-        console.error('Error ending session via POST:', updateError)
         return NextResponse.json({ error: 'Failed to end session' }, { status: 500 })
       }
 
@@ -83,14 +82,12 @@ export async function POST(request: Request) {
       .single()
 
     if (sessionError) {
-      console.error('Error creating session:', sessionError)
       return NextResponse.json({ error: 'Failed to start session' }, { status: 500 })
     }
 
     return NextResponse.json(session)
 
   } catch (error) {
-    console.error('Unexpected error in sessions POST:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -120,14 +117,12 @@ export async function PUT(request: Request) {
       .single()
 
     if (updateError) {
-      console.error('Error updating session:', updateError)
       return NextResponse.json({ error: 'Failed to stop session' }, { status: 500 })
     }
 
     return NextResponse.json(session)
 
   } catch (error) {
-    console.error('Unexpected error in sessions PUT:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

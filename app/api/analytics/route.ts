@@ -28,7 +28,6 @@ export async function GET(request: Request) {
     // Check cache first
     const cached = cache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-      console.log('Returning cached analytics for user:', userId);
       return NextResponse.json(cached.data);
     }
 
@@ -48,7 +47,6 @@ export async function GET(request: Request) {
       .order('started_at', { ascending: false });
 
     if (sessionError) {
-      console.error('Session logs error:', sessionError);
       return NextResponse.json({ error: sessionError.message }, { status: 500 });
     }
 
@@ -93,7 +91,6 @@ export async function GET(request: Request) {
       .eq('student_id', userId);
 
     if (progressError) {
-      console.error('Progress error:', progressError);
     }
 
     // Calculate average progress across all paragraphs
@@ -109,7 +106,6 @@ export async function GET(request: Request) {
       .eq('user_id', userId);
 
     if (submissionsError) {
-      console.error('Submissions error:', submissionsError);
     }
 
     const completedAssignments = submissions?.length || 0;
@@ -232,7 +228,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json(analytics);
   } catch (err) {
-    console.error('Unexpected error in analytics GET:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

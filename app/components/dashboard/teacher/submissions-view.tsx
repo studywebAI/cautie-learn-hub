@@ -79,7 +79,6 @@ export function SubmissionsView({ assignmentId }: SubmissionsViewProps) {
         });
       }
     } catch (error) {
-      console.error('Failed to fetch submissions:', error);
     } finally {
       setLoading(false);
     }
@@ -96,7 +95,6 @@ export function SubmissionsView({ assignmentId }: SubmissionsViewProps) {
         }));
       }
     } catch (error) {
-      console.error('Failed to fetch comments:', error);
     }
   };
 

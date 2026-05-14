@@ -93,7 +93,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(record)
 
   } catch (error) {
-    console.error('Error marking attendance:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

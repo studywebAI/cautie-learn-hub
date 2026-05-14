@@ -56,7 +56,6 @@ export async function GET(
 
     return NextResponse.json(submission)
   } catch (error) {
-    console.error('Unexpected error in submission GET:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -115,13 +114,11 @@ export async function PUT(
       .single()
 
     if (error) {
-      console.error('Error grading submission:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Unexpected error in submission PUT:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

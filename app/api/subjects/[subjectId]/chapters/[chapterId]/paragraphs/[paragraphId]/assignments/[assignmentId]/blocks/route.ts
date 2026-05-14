@@ -111,7 +111,6 @@ export async function GET(
       .order('position', { ascending: true });
 
     if (blocksError) {
-      console.error('Error fetching blocks:', blocksError);
       return NextResponse.json({ error: 'Failed to fetch blocks' }, { status: 500 });
     }
 
@@ -132,7 +131,6 @@ export async function GET(
     );
     return NextResponse.json(selected);
   } catch (error) {
-    console.error('Unexpected error in blocks GET:', error);
     return NextResponse.json({ error: 'Internal server error while loading blocks' }, { status: 500 });
   }
 }
@@ -215,13 +213,11 @@ export async function POST(
     }
 
     if (insertError) {
-      console.error('Error creating block:', insertError)
       return NextResponse.json({ error: 'Failed to create block' }, { status: 500 })
     }
 
     return NextResponse.json(newBlock)
   } catch (error) {
-    console.error('Unexpected error in blocks POST:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

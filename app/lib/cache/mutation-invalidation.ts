@@ -9,9 +9,7 @@ export function useMutationCacheInvalidation() {
   ) => {
     try {
       await handleCacheInvalidation(mutationType, entityType, classId);
-      console.log(`Cache invalidated for ${entityType} ${mutationType}`);
     } catch (error) {
-      console.warn('Failed to invalidate cache:', error);
     }
   };
 
@@ -30,7 +28,6 @@ export async function withCacheInvalidation<T>(
     await handleCacheInvalidation(mutationType, entityType, classId);
     return result;
   } catch (error) {
-    console.warn('Mutation failed, cache invalidation skipped:', error);
     throw error;
   }
 }

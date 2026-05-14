@@ -64,7 +64,6 @@ export function QuizDuel({ sourceText, onRestart }: QuizDuelProps) {
                 const data = await apiResponse.json();
                 setDuelData(data);
             } catch (error) {
-                console.error("Failed to generate duel data:", error);
                 toast({
                     variant: 'destructive',
                     title: 'Failed to Start Duel',

@@ -68,7 +68,6 @@ export const RichTextBlock: React.FC<RichTextBlockProps> = ({
         setAiSuggestions(newSuggestions);
       }
     } catch (error) {
-      console.error('Failed to generate AI suggestions:', error);
     } finally {
       setIsGeneratingSuggestions(false);
     }

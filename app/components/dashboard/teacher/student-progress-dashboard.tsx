@@ -60,7 +60,6 @@ export function StudentProgressDashboard({ classId }: ProgressDashboardProps) {
         setData(progressData);
       }
     } catch (error) {
-      console.error('Failed to fetch progress data:', error);
     }
     setIsLoading(false);
   };

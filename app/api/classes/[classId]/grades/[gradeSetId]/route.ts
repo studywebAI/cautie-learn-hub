@@ -60,7 +60,6 @@ export async function GET(
         .in('id', studentIds)
 
       if (profilesError) {
-        console.warn('[GRADES_GET_DETAIL] profiles lookup failed, falling back to unknown names/emails', profilesError.message)
       } else {
         profileById = new Map((profiles || []).map((p: any) => [p.id, p]))
       }
@@ -124,7 +123,6 @@ export async function GET(
       }
     })
   } catch (error) {
-    console.error('Error fetching grade set:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -368,7 +366,6 @@ export async function PUT(
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error) {
-    console.error('Error updating grade set:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -407,7 +404,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Grade set deleted successfully' })
   } catch (error) {
-    console.error('Error deleting grade set:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

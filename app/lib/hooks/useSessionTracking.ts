@@ -27,13 +27,10 @@ export function useSessionTracking(paragraphId: string | null, isStudent: boolea
       if (response.ok) {
         const session = await response.json()
         sessionIdRef.current = session.id
-        console.log('Session started:', session.id)
       } else {
-        console.error('Failed to start session:', response.status)
         isTrackingRef.current = false
       }
     } catch (error) {
-      console.error('Error starting session:', error)
       isTrackingRef.current = false
     }
   }, [paragraphId, isStudent])
@@ -61,10 +58,8 @@ export function useSessionTracking(paragraphId: string | null, isStudent: boolea
       })
 
       if (response.ok) {
-        console.log('Session ended:', sessionId)
       }
     } catch (error) {
-      console.error('Error ending session:', error)
     }
   }, [])
 

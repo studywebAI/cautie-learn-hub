@@ -76,7 +76,6 @@ export function CautieWordmark({
   useEffect(() => {
     if (!animated || !onAnimationDone) return;
 
-    console.log('[INTRO_WORDMARK] Animation scheduled', {
       writeDurationMs: WRITE_DURATION_MS,
       highlightDelayMs: HIGHLIGHT_DELAY_MS,
       highlightDurationMs: HIGHLIGHT_DURATION_MS,
@@ -88,7 +87,6 @@ export function CautieWordmark({
     if (!animated || !onAnimationDone || hasSignaledDone) return;
 
     const fallbackTimer = window.setTimeout(() => {
-      console.warn('[INTRO_WORDMARK] Fallback animation completion timer fired', { totalAnimationMs: TOTAL_ANIMATION_MS });
       setHasSignaledDone(true);
       onAnimationDone();
     }, TOTAL_ANIMATION_MS + 250);
@@ -150,7 +148,6 @@ export function CautieWordmark({
               }}
               onAnimationEnd={(event) => {
                 if (hasSignaledDone) return;
-                console.log('[INTRO_WORDMARK] Highlight animation ended', {
                   animationName: event.animationName,
                   elapsedTimeSeconds: event.elapsedTime,
                 });

@@ -40,7 +40,6 @@ export async function GET(
     if (blocksError) return NextResponse.json({ error: 'Failed to fetch blocks' }, { status: 500 });
     return NextResponse.json({ blocks });
   } catch (error) {
-    console.error('Blocks GET error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -92,7 +91,6 @@ export async function POST(
     if (error) return NextResponse.json({ error: 'Failed to create block' }, { status: 500 });
     return NextResponse.json({ block: data });
   } catch (error) {
-    console.error('Blocks POST error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

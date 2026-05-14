@@ -90,7 +90,6 @@ export async function GET(
 
     return NextResponse.json(members || [])
   } catch (error) {
-    console.error('[MEMBERS_GET] Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -164,7 +163,6 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, user_id: targetUserId, display_name: displayName })
   } catch (error) {
-    console.error('[MEMBERS_PATCH] Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -211,7 +209,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('[MEMBERS_DELETE] Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

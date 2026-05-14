@@ -62,7 +62,6 @@ export function InviteTab({ classId, joinCode, teacherJoinCode }: { classId: str
           setShowTeacherSection(draft.showTeacherSection);
         }
       } catch (e) {
-        console.error('Failed to load drafts:', e);
       }
     }
   }, [classId]);

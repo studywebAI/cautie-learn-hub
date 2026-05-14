@@ -104,7 +104,6 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
         window.localStorage.setItem(cacheKey, JSON.stringify(nextSubjects));
       }
     } catch (error) {
-      console.error('Error fetching subjects:', error);
       setSubjects((prev) => (prev.length === 0 ? [] : prev));
     } finally {
       setIsLoading(false);
@@ -143,7 +142,6 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
         window.localStorage.setItem(cacheKey, JSON.stringify(payload.subjects));
       }
     } catch (error) {
-      console.warn('Subjects sync failed; falling back to full fetch', error);
       await fetchSubjects();
     } finally {
       setIsLoading(false);

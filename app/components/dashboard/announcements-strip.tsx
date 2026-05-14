@@ -53,7 +53,6 @@ export function AnnouncementsStrip() {
           setAnnouncements(Array.isArray(data?.announcements) ? data.announcements : []);
         }
       } catch (err) {
-        console.error('Failed to fetch announcements:', err);
       } finally {
         setLoading(false);
       }

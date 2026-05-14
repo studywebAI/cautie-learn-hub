@@ -123,14 +123,12 @@ export async function POST(request: NextRequest) {
         .eq('id', update.id);
 
       if (error) {
-        console.error('Error updating block order:', error);
         return NextResponse.json({ error: 'Failed to reorder blocks' }, { status: 500 });
       }
     }
 
     return NextResponse.json({ message: 'Blocks reordered successfully' });
   } catch (error) {
-    console.error('Blocks reorder error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -61,7 +61,6 @@ export async function GET(
       .eq('paragraph_id', resolvedParams.paragraphId)
 
     if (progressError) {
-      console.error('Error fetching progress:', progressError)
       return NextResponse.json({ error: 'Failed to fetch progress' }, { status: 500 })
     }
 
@@ -99,7 +98,6 @@ export async function GET(
     return NextResponse.json(analytics)
 
   } catch (error) {
-    console.error('Unexpected error in progress GET:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

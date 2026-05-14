@@ -130,7 +130,6 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
       // For now, simulate fetching - this would be replaced with actual API call
       setBlocks([]);
     } catch (error) {
-      console.error('Failed to fetch blocks:', error);
     } finally {
       setLoading(false);
     }
@@ -159,7 +158,6 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
 
       return newBlock;
     } catch (error) {
-      console.error('Failed to create block:', error);
       return null;
     }
   };
@@ -171,7 +169,6 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
       ));
       return true;
     } catch (error) {
-      console.error('Failed to update block:', error);
       return false;
     }
   };
@@ -180,16 +177,13 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
     try {
       setBlocks(prev => prev.filter(block => block.id !== blockId));
     } catch (error) {
-      console.error('Failed to delete block:', error);
     }
   };
 
   const reorderBlocks = async (blockIds: string[]) => {
     try {
       // Simulate API call
-      console.log('Reordering blocks:', blockIds);
     } catch (error) {
-      console.error('Failed to reorder blocks:', error);
     }
   };
 

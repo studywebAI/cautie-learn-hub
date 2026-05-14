@@ -87,7 +87,6 @@ export async function GET() {
       permission_issues: permissionIssues,
     });
   } catch (error) {
-    console.error('studysets runtime health GET failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

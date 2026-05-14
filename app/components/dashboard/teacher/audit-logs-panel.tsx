@@ -39,7 +39,6 @@ export function AuditLogsPanel({ classId }: AuditLogsPanelProps) {
         setLogs(data.logs || []);
       }
     } catch (error) {
-      console.error('Failed to fetch audit logs:', error);
     } finally {
       setLoading(false);
     }

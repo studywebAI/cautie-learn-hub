@@ -42,7 +42,6 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
       setNotifications(data);
       setUnreadCount(data.filter((n: Notification) => !n.read).length);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +54,6 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
       const data = await response.json();
       setUnreadCount(data.count);
     } catch (error) {
-      console.error('Error fetching unread count:', error);
     }
   };
 

@@ -90,7 +90,6 @@ export function ClassSettingsRedesigned({
         setTeacherChatEnabled(settings.teacherChatEnabled !== false);
       }
     } catch (e) {
-      console.error('Failed to load settings:', e);
     } finally {
       setLoading(false);
     }
@@ -116,7 +115,6 @@ export function ClassSettingsRedesigned({
         }),
       });
     } catch (e) {
-      console.error('Failed to save chat settings:', e);
     } finally {
       setSaving(false);
     }

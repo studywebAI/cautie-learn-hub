@@ -96,7 +96,6 @@ export function StudysetCreatorRedesigned({
         onClose();
       }
     } catch (e) {
-      console.error('Failed to create studyset:', e);
     } finally {
       setCreating(false);
     }

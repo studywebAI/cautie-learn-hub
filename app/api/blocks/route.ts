@@ -43,7 +43,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json(blocks || [])
   } catch (error) {
-    console.error('Error fetching blocks:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -168,7 +167,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(block)
   } catch (error) {
-    console.error('Error creating block:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

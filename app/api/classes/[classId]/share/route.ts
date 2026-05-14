@@ -267,7 +267,6 @@ export async function GET(
 
     return NextResponse.json({ rows, viewerUserId: user.id });
   } catch (error) {
-    console.error('[class-share] GET failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -411,7 +410,6 @@ export async function POST(
       sourceMeta: payload.sourceMeta,
     });
   } catch (error) {
-    console.error('[class-share] POST failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

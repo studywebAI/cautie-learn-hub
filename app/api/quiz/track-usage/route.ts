@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
     })
 
     if (updateError) {
-      console.error('Error incrementing tool usage:', updateError)
       // Try direct update if RPC fails
       await supabase
         .from('profiles')
@@ -80,7 +79,6 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Tool usage tracking error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -123,7 +121,6 @@ export async function GET() {
     })
 
   } catch (error) {
-    console.error('Tool usage check error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

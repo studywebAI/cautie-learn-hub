@@ -77,7 +77,6 @@ export function ChapterEditor({
         const blocksData = await blocksResponse.json();
         setBlocks(blocksData.blocks || []);
       } catch (err) {
-        console.error('Error fetching chapter:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setIsLoading(false);
@@ -112,7 +111,6 @@ export function ChapterEditor({
       setNewChapterDescription('');
       onChapterUpdated?.();
     } catch (err) {
-      console.error('Error creating chapter:', err);
       toast({ title: 'Error', description: 'Failed to create chapter', variant: 'destructive' });
     } finally {
       setIsSaving(false);
@@ -140,7 +138,6 @@ export function ChapterEditor({
       setEditingChapter(false);
       onChapterUpdated?.();
     } catch (err) {
-      console.error('Error updating chapter:', err);
       toast({ title: 'Error', description: 'Failed to update chapter', variant: 'destructive' });
     } finally {
       setIsSaving(false);
@@ -170,7 +167,6 @@ export function ChapterEditor({
       const { block } = await response.json();
       setBlocks([...blocks, block]);
     } catch (err) {
-      console.error('Error adding block:', err);
       toast({ title: 'Error', description: 'Failed to add block', variant: 'destructive' });
     } finally {
       setIsSaving(false);
@@ -195,7 +191,6 @@ export function ChapterEditor({
 
       setBlocks(blocks.filter(block => block.id !== blockId));
     } catch (err) {
-      console.error('Error deleting block:', err);
       toast({ title: 'Error', description: 'Failed to delete block', variant: 'destructive' });
     }
   };

@@ -17,7 +17,6 @@ async function checkAndUpdateAssignments() {
     .or('scheduled_start_at.not.is.null,scheduled_end_at.not.is.null,scheduled_answer_release_at.not.is.null');
 
   if (assignmentsError) {
-    console.error('Error fetching scheduled assignments:', assignmentsError);
     return;
   }
 
@@ -46,11 +45,9 @@ async function checkAndUpdateAssignments() {
         .update(updates)
         .eq('id', assignment.id);
       
-      console.log(`Updated assignment ${assignment.id}:`, updates);
     }
   }
   } catch (error) {
-    console.error('Error checking assignments:', error);
   }
 }
 
@@ -66,7 +63,6 @@ export async function POST(request: Request) {
     await checkAndUpdateAssignments();
     return NextResponse.json({ success: true, message: 'Scheduler ran successfully' });
   } catch (error) {
-    console.error('Scheduler error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -77,7 +73,6 @@ export async function GET(request: Request) {
     await checkAndUpdateAssignments();
     return NextResponse.json({ success: true, message: 'Schedule check completed' });
   } catch (error) {
-    console.error('Schedule check error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

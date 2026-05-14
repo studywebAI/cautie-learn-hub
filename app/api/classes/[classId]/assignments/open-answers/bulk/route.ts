@@ -169,7 +169,6 @@ export async function PATCH(
           },
         });
       if (assignmentEventError) {
-        console.warn('[open-answers-bulk] failed to record assignment event', assignmentEventError);
       }
 
       if (answer.assignment_attempt_id) touchedAttemptIds.add(answer.assignment_attempt_id);
@@ -205,7 +204,6 @@ export async function PATCH(
         })
         .eq('id', attemptId);
       if (attemptUpdateError) {
-        console.warn('[open-answers-bulk] failed to update assignment attempt score', attemptUpdateError);
       }
     }
 
@@ -217,7 +215,6 @@ export async function PATCH(
       failed,
     });
   } catch (error) {
-    console.error('[open-answers-bulk] grading failed', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

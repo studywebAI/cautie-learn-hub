@@ -89,7 +89,6 @@ export async function PATCH(
 
     return NextResponse.json(updatedAnswer)
   } catch (error) {
-    console.error('Unexpected error in student answer PATCH:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

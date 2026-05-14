@@ -9,7 +9,6 @@ type StartupSplashProps = {
 };
 
 export function StartupSplash({ visible, onIntroAnimationDone }: StartupSplashProps) {
-  console.log('[INTRO_SPLASH] Render', {
     visible,
     logoEnabled: SHOW_CAUTIE_LOGO,
   });

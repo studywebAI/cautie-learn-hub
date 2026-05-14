@@ -207,7 +207,6 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
       setPosts((prev) => [...prev, data]);
       setStatusMessage({ type: 'success', text: 'Message sent.' });
     } catch (error: any) {
-      console.error('share send failed', error);
       setStatusMessage({ type: 'error', text: error?.message || 'Failed to send message.' });
     } finally {
       setIsSubmitting(false);

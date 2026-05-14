@@ -88,7 +88,6 @@ export async function GET(
     }
 
     if (error) {
-      console.log('Assignment fetch error:', error);
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
     }
 
@@ -158,7 +157,6 @@ export async function GET(
     });
 
   } catch (err) {
-    console.error('Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

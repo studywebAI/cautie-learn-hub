@@ -22,7 +22,6 @@ export async function GET(request: Request) {
     .maybeSingle()
 
   if (error) {
-    console.error('Error fetching notification preferences:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -84,7 +83,6 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Error updating notification preferences:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     result = data
@@ -100,7 +98,6 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Error creating notification preferences:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     result = data

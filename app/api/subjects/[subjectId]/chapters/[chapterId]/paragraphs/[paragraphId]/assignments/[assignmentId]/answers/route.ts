@@ -53,7 +53,6 @@ export async function GET(
       .order('submitted_at', { ascending: false })
 
     if (answersError) {
-      console.error('Error fetching answers:', answersError)
       return NextResponse.json({ error: answersError.message }, { status: 500 })
     }
 
@@ -67,7 +66,6 @@ export async function GET(
 
     return NextResponse.json(safeAnswers)
   } catch (error) {
-    console.error('Unexpected error in answers GET:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

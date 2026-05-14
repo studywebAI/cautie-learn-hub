@@ -211,14 +211,12 @@ export async function POST(
       .single();
 
     if (insertError) {
-      console.log('Paragraph creation error:', insertError.message);
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
     return NextResponse.json(paragraph);
 
   } catch (err) {
-    console.error('Paragraphs POST error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

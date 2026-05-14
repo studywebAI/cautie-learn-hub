@@ -396,7 +396,6 @@ export function FlashcardViewer({
         });
       }
     } catch (error) {
-      console.error('Failed to save flashcard session:', error);
     }
   }, [cards.length, queue.length, correctCards, mode, computeDeckHealth, computeTopicAnalytics, studysetId, taskId]);
 

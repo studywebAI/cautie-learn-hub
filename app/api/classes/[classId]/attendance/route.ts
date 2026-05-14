@@ -5,7 +5,6 @@ import { NextResponse } from 'next/server'
 import { getClassPermission, logAuditEntry } from '@/lib/auth/class-permissions'
 
 function logAttendance(...args: any[]) {
-  console.log('[CLASS_ATTENDANCE]', ...args)
 }
 
 const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
@@ -466,7 +465,6 @@ export async function POST(
 
     return NextResponse.json({ success: true, attendance })
   } catch (error) {
-    console.error('Error updating attendance:', error)
     return NextResponse.json({ error: 'Internal server error: ' + String(error) }, { status: 500 })
   }
 }

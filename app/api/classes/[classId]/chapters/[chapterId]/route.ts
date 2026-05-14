@@ -26,7 +26,6 @@ export async function GET(
     if (chapterError || !chapter) return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
     return NextResponse.json({ chapter });
   } catch (error) {
-    console.error('Chapter GET error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -70,7 +69,6 @@ export async function PUT(
 
     return NextResponse.json({ chapter: data });
   } catch (error) {
-    console.error('Chapter PUT error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -98,7 +96,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Chapter deleted successfully' });
   } catch (error) {
-    console.error('Chapter DELETE error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

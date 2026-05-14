@@ -43,7 +43,6 @@ export async function GET() {
     .order('created_at', { ascending: false })
 
   if (subjectsError) {
-    console.error('Error fetching collaborative subjects:', subjectsError)
     return NextResponse.json({ error: 'Failed to fetch subjects' }, { status: 500 })
   }
 
@@ -128,7 +127,6 @@ export async function POST(request: NextRequest) {
     .ilike('email', teacher_email)
 
   if (lookupError) {
-    console.error('Error looking up teacher:', lookupError)
     return NextResponse.json({ error: 'Failed to look up teacher' }, { status: 500 })
   }
 
@@ -180,7 +178,6 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (insertError) {
-    console.error('Error adding collaborator:', insertError)
     return NextResponse.json({ error: 'Failed to add collaborator' }, { status: 500 })
   }
 

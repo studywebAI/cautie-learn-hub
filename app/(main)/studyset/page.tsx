@@ -44,7 +44,6 @@ export default function StudySetsPage() {
           setStudysets(Array.isArray(data?.studysets) ? data.studysets : []);
         }
       } catch (e) {
-        console.error('Failed to fetch studysets:', e);
       } finally {
         setLoading(false);
       }

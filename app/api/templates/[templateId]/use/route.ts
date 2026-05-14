@@ -43,7 +43,6 @@ export async function POST(
     if (classError) return NextResponse.json({ error: classError.message }, { status: 500 })
     return NextResponse.json(newClass)
   } catch (error) {
-    console.error('Error using template:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

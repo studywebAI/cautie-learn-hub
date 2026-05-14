@@ -105,7 +105,6 @@ export async function POST(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('class telemetry POST failed', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

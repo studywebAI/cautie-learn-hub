@@ -47,7 +47,6 @@ export async function POST(
       .single();
 
     if (error) {
-      console.error('Settings save error:', error);
       return NextResponse.json(
         { error: error.message },
         { status: 500 }
@@ -59,7 +58,6 @@ export async function POST(
       id: saved.id,
     });
   } catch (error) {
-    console.error('POST /api/studysets/[studysetId]/settings error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

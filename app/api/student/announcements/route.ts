@@ -50,7 +50,6 @@ export async function GET(req: NextRequest) {
       .limit(limit);
 
     if (error) {
-      console.error('Announcements fetch error:', error);
       return NextResponse.json({ announcements: [] }, { status: 200 });
     }
 
@@ -58,7 +57,6 @@ export async function GET(req: NextRequest) {
       announcements: announcements || []
     });
   } catch (error) {
-    console.error('Announcements route error:', error);
     return NextResponse.json({ announcements: [] }, { status: 200 });
   }
 }

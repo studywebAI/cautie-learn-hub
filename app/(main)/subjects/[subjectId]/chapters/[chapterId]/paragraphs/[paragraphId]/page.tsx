@@ -227,7 +227,6 @@ export default function ParagraphDetailPage() {
         }));
         setAssignments(normalizedAssignments);
       } catch (error) {
-        console.error('Error fetching paragraph data:', error);
       } finally {
         setIsLoading(false);
       }
@@ -253,7 +252,6 @@ export default function ParagraphDetailPage() {
         throw new Error('Failed to update');
       }
     } catch (error) {
-      console.error('Update error:', error);
       toast({ title: t.error, description: t.failedUpdate, variant: 'destructive' });
     } finally {
       setIsUpdating(false);
