@@ -76,6 +76,7 @@ export function CautieWordmark({
   useEffect(() => {
     if (!animated || !onAnimationDone) return;
 
+    console.info('[cautie-wordmark] animation_config', {
       writeDurationMs: WRITE_DURATION_MS,
       highlightDelayMs: HIGHLIGHT_DELAY_MS,
       highlightDurationMs: HIGHLIGHT_DURATION_MS,

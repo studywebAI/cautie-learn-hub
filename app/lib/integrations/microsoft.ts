@@ -57,6 +57,7 @@ async function postToken(params: URLSearchParams) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = payload?.error_description || payload?.error || 'Microsoft token exchange failed';
+    console.error('[microsoft-oauth] token_exchange_failed', {
       status: response.status,
       message,
       error: payload?.error || null,

@@ -104,6 +104,7 @@ export async function getValidMicrosoftAccessToken(supabase: any, userId: string
 
   const refreshToken = connection.refresh_token_encrypted ? decryptSecret(connection.refresh_token_encrypted) : '';
   if (!refreshToken) {
+    console.warn('[microsoft-token] no_refresh_token', {
       userId,
       expiresAt: connection.expires_at,
     });

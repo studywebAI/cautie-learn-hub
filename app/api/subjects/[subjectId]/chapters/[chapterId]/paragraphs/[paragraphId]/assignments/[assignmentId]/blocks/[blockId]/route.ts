@@ -515,6 +515,7 @@ export async function PUT(
     }
 
     if (updateError) {
+      console.error('[blocks-update] update_error', {
         message: (updateError as any)?.message,
         details: (updateError as any)?.details,
         hint: (updateError as any)?.hint,

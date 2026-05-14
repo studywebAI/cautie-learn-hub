@@ -38,14 +38,16 @@ export async function POST(req: NextRequest) {
 
     // Check if we have a session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    
-      hasSession: !!session, 
-      sessionError: sessionError?.message || 'none' 
+
+    console.info('[logout] session_check', {
+      hasSession: !!session,
+      sessionError: sessionError?.message || 'none'
     });
 
     if (session) {
       const { error: signOutError } = await supabase.auth.signOut()
-        error: signOutError?.message || 'success' 
+      console.info('[logout] signed_out', {
+        error: signOutError?.message || 'success'
       });
     }
 

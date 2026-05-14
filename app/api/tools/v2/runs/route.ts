@@ -528,6 +528,7 @@ export async function POST(request: NextRequest) {
         code: errorCode,
         message: err?.message || "Run failed",
       });
+      console.error('[tools-v2-runs] execution_error', {
         runId: createdRun.id,
         toolId: payload.toolId,
         flowName: payload.flowName,
