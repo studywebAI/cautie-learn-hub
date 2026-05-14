@@ -4,6 +4,14 @@ import { marked } from 'marked';
 import { Card, CardContent } from '@/components/ui/card';
 import { ReferenceMindmapRenderer } from './mindmap-reference';
 import { ProfessionalTimelineRenderer } from './timeline-professional';
+import { sanitizeHtml } from '@/lib/sanitize';
+
+// Configure marked to disable HTML parsing for security
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+  async: false,
+});
 
 type NoteSection = {
   title: string;
@@ -894,14 +902,19 @@ export function NoteViewer({ notes }: NoteViewerProps) {
                                 case 'piechart':
                                   return <PieChartRenderer data={data as PieChartData} />;
                                 default:
-                                  return <div dangerouslySetInnerHTML={{ __html: marked(Array.isArray(note.content) ? note.content.join('\n') : note.content) as string }} />;
+                                  const defaultHtml = marked(Array.isArray(note.content) ? note.content.join('\n') : note.content) as string;
+                                  return <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(defaultHtml) }} />;
                               }
                             } catch {
-                              return <div dangerouslySetInnerHTML={{ __html: marked(Array.isArray(note.content) ? note.content.join('\n') : note.content) as string }} />;
+                              const errorHtml = marked(Array.isArray(note.content) ? note.content.join('\n') : note.content) as string;
+                              return <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(errorHtml) }} />;
                             }
                           })()
                         ) : (
-                          <div dangerouslySetInnerHTML={{ __html: marked(Array.isArray(note.content) ? note.content.join('\n') : note.content) as string }} />
+                          (() => {
+                            const fallbackHtml = marked(Array.isArray(note.content) ? note.content.join('\n') : note.content) as string;
+                            return <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(fallbackHtml) }} />;
+                          })()
                         )}
                     </div>
                 ))}

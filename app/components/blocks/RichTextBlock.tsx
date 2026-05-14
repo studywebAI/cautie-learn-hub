@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Lightbulb, Check, X, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { sanitizeHtml, sanitizeText } from '@/lib/sanitize';
 
 interface RichTextBlockProps extends BlockProps {
   block: BlockProps['block'] & { content: RichTextBlockContent };
@@ -97,7 +98,7 @@ export const RichTextBlock: React.FC<RichTextBlockProps> = ({
       <div className={cn('w-full p-4 border rounded-lg', className)}>
         <div
           className="prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: html || '<p>Click to edit rich text...</p>' }}
+          dangerouslySetInnerHTML={{ __html: html ? sanitizeHtml(html) : '<p>Click to edit rich text...</p>' }}
         />
         {aiSuggestions.length > 0 && (
           <div className="mt-4 space-y-2">

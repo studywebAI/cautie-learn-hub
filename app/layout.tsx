@@ -33,6 +33,9 @@ export const viewport: Viewport = {
   ],
 };
 
+// This bootstrap script is hardcoded and safe for inline scripts.
+// It contains no user-supplied data and is executed only once during page load.
+// It's necessary for theme application before React hydration to prevent FOUC.
 const themeBootstrapScript = `
 (() => {
   try {

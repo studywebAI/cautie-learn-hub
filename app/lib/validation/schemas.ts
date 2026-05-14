@@ -8,23 +8,48 @@ export const uuidSchema = z.string().uuid("ID must be a valid UUID");
 
 export const emailSchema = z.string().email("Invalid email format");
 
-export const nonEmptyStringSchema = z.string().min(1, "This field is required");
+// Enhanced string schemas with length limits to prevent XSS and DoS
+export const nonEmptyStringSchema = z.string()
+  .min(1, "This field is required")
+  .max(500, "Text must be less than 500 characters");
 
-export const optionalNonEmptyString = z.string().min(1).optional();
+export const optionalNonEmptyString = z.string()
+  .min(1, "Text must not be empty")
+  .max(500, "Text must be less than 500 characters")
+  .optional();
+
+export const titleSchema = z.string()
+  .min(1, "Title is required")
+  .max(500, "Title must be less than 500 characters");
+
+export const descriptionSchema = z.string()
+  .max(5000, "Description must be less than 5000 characters")
+  .optional()
+  .nullable();
+
+export const contentSchema = z.string()
+  .max(50000, "Content is too large")
+  .optional()
+  .nullable();
+
+export const htmlContentSchema = z.string()
+  .max(100000, "HTML content is too large")
+  .optional()
+  .nullable();
 
 // ============================================
 // CLASSES
 // ============================================
 
 export const createClassSchema = z.object({
-  name: nonEmptyStringSchema,
-  description: z.string().optional().nullable(),
-  subject_title: z.string().optional().nullable()
+  name: titleSchema,
+  description: descriptionSchema,
+  subject_title: z.string().max(500).optional().nullable()
 });
 
 export const updateClassSchema = z.object({
-  name: nonEmptyStringSchema.optional(),
-  description: z.string().optional().nullable()
+  name: titleSchema.optional(),
+  description: descriptionSchema
 });
 
 // ============================================
@@ -32,15 +57,15 @@ export const updateClassSchema = z.object({
 // ============================================
 
 export const createSubjectSchema = z.object({
-  title: nonEmptyStringSchema,
-  description: z.string().optional().nullable(),
+  title: titleSchema,
+  description: descriptionSchema,
   class_ids: z.array(uuidSchema).min(1, "At least one class must be selected")
 });
 
 export const updateSubjectSchema = z.object({
   id: uuidSchema,
-  title: nonEmptyStringSchema.optional(),
-  description: z.string().optional().nullable(),
+  title: titleSchema.optional(),
+  description: descriptionSchema,
   class_ids: z.array(uuidSchema).optional()
 });
 
@@ -53,15 +78,15 @@ export const deleteSubjectSchema = z.object({
 // ============================================
 
 export const createChapterSchema = z.object({
-  title: nonEmptyStringSchema,
-  description: z.string().optional().nullable(),
+  title: titleSchema,
+  description: descriptionSchema,
   chapter_number: z.number().int().positive("Chapter number must be positive"),
   subject_id: uuidSchema
 });
 
 export const updateChapterSchema = z.object({
-  title: nonEmptyStringSchema.optional(),
-  description: z.string().optional().nullable(),
+  title: titleSchema.optional(),
+  description: descriptionSchema,
   chapter_number: z.number().int().positive().optional()
 });
 
@@ -70,15 +95,15 @@ export const updateChapterSchema = z.object({
 // ============================================
 
 export const createParagraphSchema = z.object({
-  title: nonEmptyStringSchema,
-  content: z.any().optional(), // Rich content (JSON)
+  title: titleSchema,
+  content: contentSchema, // Rich content (JSON)
   // Optional for create flows where backend auto-assigns ordering
   paragraph_number: z.number().int().positive("Paragraph number must be positive").optional()
 });
 
 export const updateParagraphSchema = z.object({
-  title: nonEmptyStringSchema.optional(),
-  content: z.any().optional(),
+  title: titleSchema.optional(),
+  content: contentSchema,
   paragraph_number: z.number().int().positive().optional()
 });
 
@@ -87,7 +112,7 @@ export const updateParagraphSchema = z.object({
 // ============================================
 
 export const createAssignmentSchema = z.object({
-  title: nonEmptyStringSchema,
+  title: titleSchema,
   paragraph_id: uuidSchema.optional().nullable(),
   class_id: uuidSchema.optional().nullable(),
   assignment_index: z.number().int().nonnegative().default(0),
@@ -95,7 +120,7 @@ export const createAssignmentSchema = z.object({
   scheduled_start_at: z.string().datetime().optional().nullable(),
   scheduled_end_at: z.string().datetime().optional().nullable(),
   answers_enabled: z.boolean().default(false),
-  description: z.string().optional().nullable(),
+  description: descriptionSchema,
   linked_content: z.any().optional().nullable(),
   settings: z.record(z.any()).optional().nullable()
 });
@@ -145,9 +170,9 @@ export const gradeSubmissionSchema = z.object({
   rubricScores: z.array(z.object({
     rubric_item_id: uuidSchema,
     score: z.number(),
-    feedback: z.string().optional().nullable()
+    feedback: z.string().max(5000).optional().nullable()
   })).optional().nullable(),
-  feedback: z.string().optional().nullable()
+  feedback: z.string().max(5000).optional().nullable()
 });
 
 // ============================================
@@ -158,11 +183,11 @@ export const markAttendanceSchema = z.object({
   sessionId: uuidSchema,
   studentId: uuidSchema,
   status: z.enum(['present', 'absent', 'late', 'excused']),
-  notes: z.string().optional().nullable()
+  notes: z.string().max(1000).optional().nullable()
 });
 
 export const updateAssignmentSchema = z.object({
-  title: nonEmptyStringSchema.optional(),
+  title: titleSchema.optional(),
   paragraph_id: uuidSchema.optional().nullable(),
   class_id: uuidSchema.optional().nullable(),
   assignment_index: z.number().int().nonnegative().optional(),
@@ -170,7 +195,7 @@ export const updateAssignmentSchema = z.object({
   scheduled_start_at: z.string().datetime().optional().nullable(),
   scheduled_end_at: z.string().datetime().optional().nullable(),
   answers_enabled: z.boolean().optional(),
-  description: z.string().optional().nullable(),
+  description: descriptionSchema,
   settings: z.record(z.any()).optional().nullable()
 });
 
@@ -215,9 +240,9 @@ export const joinClassSchema = z.object({
 // ============================================
 
 export const createNotificationSchema = z.object({
-  type: z.string().min(1, "Notification type is required"),
-  title: nonEmptyStringSchema,
-  message: nonEmptyStringSchema,
+  type: z.string().min(1).max(100, "Notification type is too long"),
+  title: titleSchema,
+  message: contentSchema,
   data: z.record(z.any()).optional().default({}),
   user_id: uuidSchema.optional().nullable(),
   expires_at: z.string().datetime().optional().nullable()
@@ -247,17 +272,17 @@ export const notificationPreferencesSchema = z.object({
 // ============================================
 
 export const createPersonalTaskSchema = z.object({
-  title: nonEmptyStringSchema,
-  description: z.string().optional().nullable(),
+  title: titleSchema,
+  description: descriptionSchema,
   due_date: z.string().datetime().optional().nullable(),
-  subject: z.string().optional().nullable()
+  subject: z.string().max(500).optional().nullable()
 });
 
 export const updatePersonalTaskSchema = z.object({
-  title: nonEmptyStringSchema.optional(),
-  description: z.string().optional().nullable(),
+  title: titleSchema.optional(),
+  description: descriptionSchema,
   due_date: z.string().datetime().optional().nullable(),
-  subject: z.string().optional().nullable(),
+  subject: z.string().max(500).optional().nullable(),
   completed: z.boolean().optional()
 });
 
@@ -274,12 +299,12 @@ export const bulkClassesSchema = z.object({
 });
 
 export const createClassSubjectSchema = z.object({
-  title: nonEmptyStringSchema,
-  description: z.string().optional().nullable(),
-  class_label: z.string().optional().nullable(),
-  cover_type: z.string().optional().nullable(),
+  title: titleSchema,
+  description: descriptionSchema,
+  class_label: z.string().max(200).optional().nullable(),
+  cover_type: z.string().max(50).optional().nullable(),
   cover_image_url: z.string().url().optional().nullable(),
-  ai_icon_seed: z.string().optional().nullable()
+  ai_icon_seed: z.string().max(500).optional().nullable()
 });
 
 // ============================================
@@ -287,19 +312,19 @@ export const createClassSubjectSchema = z.object({
 // ============================================
 
 export const createMaterialSchema = z.object({
-  title: nonEmptyStringSchema,
-  description: z.string().optional().nullable(),
+  title: titleSchema,
+  description: descriptionSchema,
   type: z.enum(['file', 'link', 'text', 'video', 'audio']),
-  content: z.any().optional(),
+  content: contentSchema,
   class_id: uuidSchema.optional().nullable(),
   is_public: z.boolean().default(false)
 });
 
 export const updateMaterialSchema = z.object({
-  title: nonEmptyStringSchema.optional(),
-  description: z.string().optional().nullable(),
+  title: titleSchema.optional(),
+  description: descriptionSchema,
   type: z.enum(['file', 'link', 'text', 'video', 'audio']).optional(),
-  content: z.any().optional(),
+  content: contentSchema,
   is_public: z.boolean().optional()
 });
 
@@ -308,14 +333,14 @@ export const updateMaterialSchema = z.object({
 // ============================================
 
 export const createAnnouncementSchema = z.object({
-  title: nonEmptyStringSchema,
-  content: nonEmptyStringSchema,
+  title: titleSchema,
+  content: contentSchema,
   class_id: uuidSchema
 });
 
 export const updateAnnouncementSchema = z.object({
-  title: nonEmptyStringSchema.optional(),
-  content: nonEmptyStringSchema.optional()
+  title: titleSchema.optional(),
+  content: contentSchema
 });
 
 // ============================================

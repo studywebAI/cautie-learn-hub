@@ -76,25 +76,37 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
+  // CSS generation is safe because:
+  // 1. IDs are generated via React.useId() with sanitized format
+  // 2. Color values are controlled via config and should only contain valid CSS colors
+  // 3. Theme prefix is hardcoded string
+  // This pattern is safe for CSS but not for HTML
+  const cssContent = Object.entries(THEMES)
+    .map(
+      ([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
       itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
+    // Only allow valid CSS color formats (hex, rgb, hsl, named colors)
+    if (color && /^[#a-z0-9\-\(\)\s,%.]*$/i.test(color)) {
+      return `  --color-${key}: ${color};`
+    }
+    return null
   })
+  .filter(Boolean)
   .join("\n")}
 }
 `
-          )
-          .join("\n"),
+    )
+    .join("\n")
+
+  return (
+    <style
+      dangerouslySetInnerHTML={{
+        __html: cssContent,
       }}
     />
   )

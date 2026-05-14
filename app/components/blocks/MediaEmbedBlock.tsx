@@ -1,6 +1,7 @@
 'use client'
 
 import { Card } from '@/components/ui/card'
+import { sanitizeHtml, sanitizeEmbedUrl, generateSafeIframeHtml } from '@/lib/sanitize'
 
 interface MediaEmbedBlockProps {
   data: {
@@ -10,30 +11,78 @@ interface MediaEmbedBlockProps {
 }
 
 export function MediaEmbedBlock({ data }: MediaEmbedBlockProps) {
-  const getEmbedHtml = (url: string) => {
-    // Simple embed logic - in reality, you'd parse different providers
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      const videoId = url.split('v=')[1] || url.split('/').pop()
-      return `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`
+  // Extract video ID safely from YouTube/Vimeo URLs
+  const getYouTubeVideoId = (url: string): string | null => {
+    try {
+      const urlObj = new URL(url);
+      if (urlObj.hostname.includes('youtube.com')) {
+        return urlObj.searchParams.get('v');
+      }
+      if (urlObj.hostname.includes('youtu.be')) {
+        return urlObj.pathname.split('/')[1];
+      }
+    } catch {
+      return null;
     }
-    if (url.includes('vimeo.com')) {
-      const videoId = url.split('/').pop()
-      return `<iframe src="https://player.vimeo.com/video/${videoId}" width="560" height="315" frameborder="0" allowfullscreen></iframe>`
+    return null;
+  };
+
+  const getVimeoVideoId = (url: string): string | null => {
+    try {
+      const urlObj = new URL(url);
+      if (urlObj.hostname.includes('vimeo.com')) {
+        return urlObj.pathname.split('/').pop() || null;
+      }
+    } catch {
+      return null;
     }
-    // Default to iframe
-    return `<iframe src="${url}" width="560" height="315" frameborder="0"></iframe>`
-  }
+    return null;
+  };
+
+  const getEmbedHtml = (url: string): string => {
+    if (!url) return '';
+
+    // Try YouTube
+    const youtubeId = getYouTubeVideoId(url);
+    if (youtubeId) {
+      const embedUrl = `https://www.youtube.com/embed/${encodeURIComponent(youtubeId)}`;
+      return generateSafeIframeHtml(embedUrl);
+    }
+
+    // Try Vimeo
+    const vimeoId = getVimeoVideoId(url);
+    if (vimeoId) {
+      const embedUrl = `https://player.vimeo.com/video/${encodeURIComponent(vimeoId)}`;
+      return generateSafeIframeHtml(embedUrl);
+    }
+
+    // For other URLs, validate against whitelist
+    const sanitized = sanitizeEmbedUrl(url);
+    if (sanitized) {
+      return generateSafeIframeHtml(sanitized);
+    }
+
+    // Blocked unsafe URL
+    return '';
+  };
+
+  const embedHtml = getEmbedHtml(data.embed_url);
 
   return (
     <Card className="p-4">
       <div className="space-y-4">
         {data.description && (
-          <p className="text-sm text-gray-600">{data.description}</p>
+          <p className="text-sm text-gray-600">{sanitizeHtml(data.description)}</p>
         )}
-        <div
-          className="embed-container"
-          dangerouslySetInnerHTML={{ __html: getEmbedHtml(data.embed_url) }}
-        />
+        {embedHtml && (
+          <div
+            className="embed-container"
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(embedHtml) }}
+          />
+        )}
+        {!embedHtml && data.embed_url && (
+          <div className="text-sm text-red-600">Invalid or unsupported embed URL</div>
+        )}
       </div>
     </Card>
   )

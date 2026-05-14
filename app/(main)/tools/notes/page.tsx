@@ -37,6 +37,7 @@ import {
   type NoteSection,
 } from '@/lib/tools/notes-canonical-adapter';
 import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
+import { sanitizeEditorHtml as importedSanitizeEditorHtml } from '@/lib/sanitize';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -154,15 +155,8 @@ const BASE_AUTO_HIGHLIGHT_TARGETS: AutoHighlightTarget[] = [
 ];
 
 const sanitizeEditorHtml = (input: string) => {
-  if (!input) return '';
-  let html = String(input).trim();
-  html = html.replace(/<!doctype[^>]*>/gi, '');
-  html = html.replace(/<html[^>]*>/gi, '');
-  html = html.replace(/<\/html>/gi, '');
-  html = html.replace(/<head[\s\S]*?<\/head>/gi, '');
-  html = html.replace(/<body[^>]*>/gi, '');
-  html = html.replace(/<\/body>/gi, '');
-  return html.trim();
+  // Use the centralized, DOMPurify-based sanitization from lib/sanitize
+  return importedSanitizeEditorHtml(input);
 };
 
 function NotesPageContent() {

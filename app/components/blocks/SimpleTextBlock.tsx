@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 type SimpleTextBlockProps = {
   block: {
@@ -71,7 +72,7 @@ export const SimpleTextBlock: React.FC<SimpleTextBlockProps> = ({
             block.data.style === 'warning' ? 'bg-red-50 p-3 rounded border-l-4 border-red-400' :
             ''
           }`}
-          dangerouslySetInnerHTML={{ __html: block.data.content || 'No content' }}
+          dangerouslySetInnerHTML={{ __html: block.data.content ? sanitizeHtml(block.data.content) : 'No content' }}
         />
       </div>
     );
@@ -122,7 +123,7 @@ export const SimpleTextBlock: React.FC<SimpleTextBlockProps> = ({
             style === 'warning' ? 'bg-red-50 p-3 rounded border-l-4 border-red-400' :
             ''
           }`}
-          dangerouslySetInnerHTML={{ __html: content || 'Click Edit to add content' }}
+          dangerouslySetInnerHTML={{ __html: content ? sanitizeHtml(content) : 'Click Edit to add content' }}
         />
       )}
     </div>
