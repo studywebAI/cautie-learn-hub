@@ -266,8 +266,6 @@ export function AssignmentDetailsPanel({
     return event.item_type?.charAt(0).toUpperCase() + event.item_type?.slice(1) || 'Task';
   };
 
-  const accent = getAccentColor(event);
-
   return (
     <Card className="relative overflow-hidden rounded-xl border-0 surface-panel shadow-sm">
       <span className="absolute left-0 top-0 h-full w-1" style={{ backgroundColor: accent }} />
