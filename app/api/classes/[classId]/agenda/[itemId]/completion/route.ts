@@ -1,17 +1,16 @@
-'use server';
-
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { classId: string; itemId: string } }
 ) {
   try {
-    const supabase = createServerComponentClient({
-      cookies,
-    });
+    const cookieStore = cookies();
+    const supabase = await createClient(cookieStore);
 
     const {
       data: { user },
@@ -48,9 +47,8 @@ export async function POST(
   { params }: { params: { classId: string; itemId: string } }
 ) {
   try {
-    const supabase = createServerComponentClient({
-      cookies,
-    });
+    const cookieStore = cookies();
+    const supabase = await createClient(cookieStore);
 
     const {
       data: { user },
