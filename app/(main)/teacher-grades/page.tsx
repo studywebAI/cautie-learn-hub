@@ -120,10 +120,17 @@ export default function TeacherGradesPage() {
       </div>
 
       {sets.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-10 text-center">
-          <p className="text-muted-foreground text-sm">
-            {isDutch ? 'Nog geen cijferlijsten. Maak er een aan in een klas.' : 'No grade sets yet. Create one inside a class.'}
-          </p>
+        <div className="rounded-xl border border-dashed border-border p-10 text-center space-y-4">
+          <div>
+            <p className="text-muted-foreground text-sm mb-2">
+              {isDutch ? 'Nog geen cijferlijsten. Maak er een aan in een klas.' : 'No grade sets yet. Create one inside a class.'}
+            </p>
+            {classes && classes.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {isDutch ? 'Kies een klas in het menu en ga naar het tabblad "Cijfers".' : 'Select a class from the menu and go to the "Grades" tab.'}
+              </p>
+            )}
+          </div>
         </div>
       ) : (
         <>
