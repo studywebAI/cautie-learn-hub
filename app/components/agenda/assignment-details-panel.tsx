@@ -266,12 +266,14 @@ export function AssignmentDetailsPanel({
     return event.item_type?.charAt(0).toUpperCase() + event.item_type?.slice(1) || 'Task';
   };
 
+  const accent = getAccentColor(event);
+
   return (
     <Card className="relative overflow-hidden rounded-xl border-0 surface-panel shadow-sm">
       <span className="absolute left-0 top-0 h-full w-1" style={{ backgroundColor: accent }} />
 
       {/* Header with close button */}
-      <div className="sticky top-0 flex items-center justify-between border-b border-border bg-[hsl(var(--surface-1))] px-4 py-3">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border surface-panel px-4 py-3">
         <div />
         {!isEditing && isTeacher && (
           <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => setIsEditing(true)}>

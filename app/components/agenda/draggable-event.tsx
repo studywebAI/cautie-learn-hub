@@ -43,19 +43,25 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
 
     if (event.type === 'agenda_item') {
       if (event.visibility_state === 'hidden') {
-        return { accentColor: '#c56f6f' };
+        return { accentColor: '#EF4444' }; // Red for hidden
       }
+      // Use task_category for color-coding
+      if (event.task_category === 'homework') return { accentColor: '#FF9500' }; // Orange
+      if (event.task_category === 'small_test') return { accentColor: '#3B82F6' }; // Blue
+      if (event.task_category === 'big_test') return { accentColor: '#EF4444' }; // Red
+      if (event.task_category === 'other') return { accentColor: '#10B981' }; // Green
+      // Fallback to item_type based colors
       if (event.item_type === 'quiz') {
-        return { accentColor: '#c38843' };
+        return { accentColor: '#3B82F6' }; // Blue for quiz
       }
       if (event.item_type === 'studyset') {
         return { accentColor: '#5fa771' };
       }
       if (event.item_type === 'event') {
-        return { accentColor: '#4f86c0' };
+        return { accentColor: '#EF4444' }; // Red for event
       }
       if (event.item_type === 'other') {
-        return { accentColor: '#8f7bb0' };
+        return { accentColor: '#10B981' }; // Green for other
       }
       return { accentColor: '#4f86c0' };
     }
