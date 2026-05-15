@@ -333,31 +333,82 @@ export function GradesTab({ classId }: { classId: string }) {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-          <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('new')}>
-            <p>New Grades</p>
-            <p className="text-xs text-foreground/70">Create and assign grades</p>
-          </button>
-          <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('edit')}>
-            <p>Edit Grades</p>
-            <p className="text-xs text-foreground/70">{gradeSets.length} grade set{gradeSets.length !== 1 ? 's' : ''}</p>
-          </button>
-          <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('history')}>
-            <p>History</p>
-            <p className="text-xs text-foreground/70">Audit changes</p>
-          </button>
-          <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('reports')}>
-            <p>Reports</p>
-            <p className="text-xs text-foreground/70">Class insights</p>
-          </button>
-        </div>
-      )}
+        <>
+          <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+            <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('new')}>
+              <p className="font-medium">New Grades</p>
+              <p className="text-xs text-foreground/70">Create and assign grades</p>
+            </button>
+            <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('edit')}>
+              <p className="font-medium">Edit Grades</p>
+              <p className="text-xs text-foreground/70">{gradeSets.length} grade set{gradeSets.length !== 1 ? 's' : ''}</p>
+            </button>
+            <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('history')}>
+              <p className="font-medium">History</p>
+              <p className="text-xs text-foreground/70">Audit changes</p>
+            </button>
+            <button type="button" className="class-panel h-16 px-4 text-left transition-colors hover:surface-chip" onClick={() => setView('reports')}>
+              <p className="font-medium">Reports</p>
+              <p className="text-xs text-foreground/70">Class insights</p>
+            </button>
+          </div>
 
-      {gradeSets.length > 0 ? (
-        <div className="text-sm text-foreground/70">
-          {gradeSets.length} sets - {gradeSets.filter(g => g.status === 'published').length} published - {gradeSets.filter(g => g.status === 'draft').length} drafts
-        </div>
-      ) : null}
+          {/* Recent Grade Sets Overview */}
+          {gradeSets.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-medium">Recent Grade Sets</h2>
+                <span className="text-xs text-muted-foreground">
+                  {gradeSets.filter(g => g.status === 'published').length} published · {gradeSets.filter(g => g.status === 'draft').length} draft
+                </span>
+              </div>
+              <div className="space-y-2">
+                {gradeSets.slice(0, 5).map((gs) => (
+                  <div
+                    key={gs.id}
+                    className="class-panel p-3 cursor-pointer transition-colors hover:surface-interactive"
+                    onClick={() => {
+                      setSelectedGradeSetId(gs.id);
+                      setView('edit-detail');
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="truncate text-sm font-medium">{gs.title}</h3>
+                          <Badge variant={gs.status === 'published' ? 'default' : 'secondary'} className="whitespace-nowrap">
+                            {gs.status}
+                          </Badge>
+                        </div>
+                        <div className="mt-1 flex gap-2 text-xs text-muted-foreground">
+                          {gs.subject && <span>{gs.subject.title}</span>}
+                          <span>•</span>
+                          <span>{gs.graded_count}/{gs.total_students} graded</span>
+                          {gs.average !== null && (
+                            <>
+                              <span>•</span>
+                              <span>Avg: {gs.average.toFixed(2)}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="whitespace-nowrap">{gs.weight}x</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {gradeSets.length === 0 && (
+            <div className="class-panel py-8 text-center">
+              <ClipboardList className="mx-auto mb-3 h-10 w-10 text-muted-foreground opacity-50" />
+              <p className="text-sm text-muted-foreground mb-2">No grade sets yet</p>
+              <p className="text-xs text-muted-foreground">Click "New Grades" to create your first grade set</p>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -792,10 +843,10 @@ function NewGradesWizard({
   return (
     <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4">
       {/* Modal */}
-      <div className="bg-background rounded-lg border border-border shadow-lg max-w-md w-full">
+      <div className="bg-background rounded-lg border border-border shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border/70">
-          <h2 className="text-base font-400">New grade set</h2>
+        <div className="flex items-center justify-between p-4 border-b border-border/70 sticky top-0 bg-background">
+          <h2 className="text-base font-500">New Grade Set</h2>
           <Button variant="ghost" size="icon" onClick={onCancel} className="h-8 w-8">
             <X className="h-4 w-4" />
           </Button>
@@ -805,38 +856,54 @@ function NewGradesWizard({
         <div className="p-4 space-y-4">
           {/* Title Input */}
           <div className="space-y-2">
+            <Label className="text-sm font-medium">Title</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Name (e.g., Quiz Chapter 5)..."
+              placeholder="e.g., Quiz Chapter 5, Midterm Exam..."
               className="text-sm"
               autoFocus
             />
             {validationError && <p className="text-xs text-destructive">{validationError}</p>}
           </div>
 
-          {/* Subject Selection (Class Subjects) */}
+          {/* Weight Input */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Weight</Label>
+            <Input
+              type="number"
+              min="0.1"
+              max="10"
+              step="0.1"
+              value={weight}
+              onChange={(e) => setWeight(parseFloat(e.target.value) || 1)}
+              className="text-sm"
+            />
+            <p className="text-xs text-muted-foreground">How much this grade counts (e.g., 1x = normal, 2x = double weight)</p>
+          </div>
+
+          {/* Subject Selection */}
           {subjects.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Subject (optional)</Label>
+              <Label className="text-sm font-medium">Subject</Label>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedSubjectId('')}
-                  className={`px-3 py-1 rounded-md text-xs border transition-all ${
+                  className={`px-3 py-1.5 rounded-md text-xs border transition-all ${
                     selectedSubjectId === ''
                       ? 'bg-foreground text-background border-foreground'
                       : 'border-border/70 hover:border-foreground/50'
                   }`}
                 >
-                  All
+                  No Subject
                 </button>
                 {subjects.map((subj) => (
                   <button
                     key={subj.id}
                     type="button"
                     onClick={() => setSelectedSubjectId(subj.id)}
-                    className={`px-3 py-1 rounded-md text-xs border transition-all ${
+                    className={`px-3 py-1.5 rounded-md text-xs border transition-all ${
                       selectedSubjectId === subj.id
                         ? 'bg-foreground text-background border-foreground'
                         : 'border-border/70 hover:border-foreground/50'
@@ -848,10 +915,29 @@ function NewGradesWizard({
               </div>
             </div>
           )}
+
+          {/* Preset Selection */}
+          {presets.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Grading Scale</Label>
+              <select
+                value={selectedPresetId}
+                onChange={(e) => setSelectedPresetId(e.target.value)}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">Use default</option>
+                {presets.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.name} {preset.is_default ? '(default)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-4 border-t border-border/70">
+        <div className="flex gap-3 p-4 border-t border-border/70 sticky bottom-0 bg-background">
           <Button variant="outline" onClick={onCancel} className="flex-1">
             Cancel
           </Button>
