@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { X, ExternalLink, Pencil, Save, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -59,6 +60,8 @@ export function AssignmentDetailsPanel({
   const [type, setType] = useState<EditableType>('assignment');
   const [visible, setVisible] = useState(true);
   const [links, setLinks] = useState<AgendaLink[]>([]);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [isUpdatingCompletion, setIsUpdatingCompletion] = useState(false);
 
   useEffect(() => {
     if (!event) return;
@@ -67,8 +70,27 @@ export function AssignmentDetailsPanel({
     setType(((event.item_type as EditableType) || 'assignment') as EditableType);
     setVisible(event.visibility_state !== 'hidden');
     setLinks((event.links || []).map((link, idx) => ({ ...link, position: idx })));
+    setIsCompleted(event.completed || false);
     setIsEditing(false);
-  }, [event?.id]);
+
+    // Load completion status from API for agenda items
+    const loadCompletionStatus = async () => {
+      if (!event.class_id || event.type !== 'agenda_item' || !isStudent) return;
+      try {
+        const response = await fetch(
+          `/api/classes/${event.class_id}/agenda/${event.id}/completion`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setIsCompleted(data.completed || false);
+        }
+      } catch {
+        // Silently fail, use default value
+      }
+    };
+
+    void loadCompletionStatus();
+  }, [event?.id, isStudent]);
 
   const resourceLinks = useMemo(() => {
     if (!event) return [];
@@ -110,6 +132,42 @@ export function AssignmentDetailsPanel({
 
   const accent = getAccentColor(event);
   const subjectLine = `${event.subject || 'General'}${event.class_name ? ` | ${event.class_name}` : ''}`;
+
+  const toggleCompletion = async () => {
+    if (!event?.class_id || event.type !== 'agenda_item') return;
+
+    const newCompleted = !isCompleted;
+    setIsCompleted(newCompleted);
+    setIsUpdatingCompletion(true);
+
+    try {
+      const response = await fetch(`/api/classes/${event.class_id}/agenda/${event.id}/completion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: newCompleted }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.error || 'Failed to update completion status');
+      }
+
+      toast({
+        title: 'Updated',
+        description: newCompleted ? 'Task marked as complete' : 'Task marked as incomplete',
+      });
+      await onRefresh?.();
+    } catch (error: any) {
+      setIsCompleted(!newCompleted); // Revert on error
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to update completion status',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingCompletion(false);
+    }
+  };
 
   const saveChanges = async () => {
     if (!event.class_id || event.type !== 'agenda_item') {
@@ -191,74 +249,132 @@ export function AssignmentDetailsPanel({
     }
   };
 
+  const getCategoryColor = () => {
+    if (event.task_category === 'homework') return '#FF9500'; // Orange
+    if (event.task_category === 'small_test') return '#3B82F6'; // Blue
+    if (event.task_category === 'big_test') return '#EF4444'; // Red
+    if (event.task_category === 'other') return '#10B981'; // Green
+    return '#4f86c0'; // Default blue
+  };
+
+  const getCategoryLabel = () => {
+    if (event.custom_category_label) return event.custom_category_label;
+    if (event.task_category === 'homework') return 'Homework';
+    if (event.task_category === 'small_test') return 'Quiz/Test';
+    if (event.task_category === 'big_test') return 'Big Test/Exam';
+    if (event.task_category === 'other') return 'Other';
+    return event.item_type?.charAt(0).toUpperCase() + event.item_type?.slice(1) || 'Task';
+  };
+
   return (
-    <Card className="relative overflow-hidden rounded-xl border-0 surface-panel p-4 shadow-sm">
+    <Card className="relative overflow-hidden rounded-xl border-0 surface-panel shadow-sm">
       <span className="absolute left-0 top-0 h-full w-1" style={{ backgroundColor: accent }} />
 
-      <div className="mb-3 flex items-start justify-between gap-2 pl-2">
-        <div className="min-w-0">
-          <button
-            type="button"
-            className="truncate text-[11px] uppercase tracking-[0.03em] text-muted-foreground hover:text-foreground"
-            onClick={() => {
-              if (event.href) router.push(event.href);
-            }}
-          >
-            {subjectLine}
-          </button>
-          {isEditing ? (
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1 h-9" />
-          ) : (
-            <p className="mt-1 text-base text-foreground">{event.title}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {isTeacher && (
-            <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => setIsEditing((v) => !v)}>
-              <Pencil className="mr-1 h-3.5 w-3.5" />
-              Edit
-            </Button>
-          )}
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-            <X className="h-4 w-4" />
+      {/* Header with close button */}
+      <div className="sticky top-0 flex items-center justify-between border-b border-border bg-[hsl(var(--surface-1))] px-4 py-3">
+        <div />
+        {!isEditing && isTeacher && (
+          <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => setIsEditing(true)}>
+            <Pencil className="mr-1 h-3.5 w-3.5" />
+            Edit
           </Button>
-        </div>
+        )}
+        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
-      <div className="space-y-3 pl-2">
-        <p className="text-sm text-muted-foreground">{format(event.date, 'EEEE d MMMM yyyy')}</p>
+      {/* Content */}
+      <div className="space-y-4 p-4">
+        {/* Subject/Class line */}
+        <div className="text-xs uppercase tracking-[0.03em] text-muted-foreground">
+          {subjectLine}
+        </div>
 
+        {/* Title */}
         {isEditing ? (
-          <div className="space-y-2">
-            <Select value={type} onValueChange={(value) => setType(value as EditableType)}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="assignment">Homework</SelectItem>
-                <SelectItem value="quiz">Test</SelectItem>
-                <SelectItem value="event">Big Test</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="min-h-[88px]" />
-          </div>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="h-9 text-lg font-bold"
+            placeholder="Task title"
+          />
         ) : (
-          <p className="whitespace-pre-wrap text-sm text-muted-foreground">{event.description?.trim() || '-'}</p>
+          <h2 className="text-xl font-bold text-foreground">{event.title}</h2>
         )}
 
-        {event.href && (
-          <Button type="button" variant="secondary" className="h-9 w-full justify-between" onClick={() => router.push(event.href)}>
-            Open
-            <ExternalLink className="h-4 w-4" />
-          </Button>
+        {/* Info block */}
+        <div className="flex flex-wrap items-center gap-3 rounded-lg surface-interactive p-3">
+          {/* Category badge */}
+          <Badge
+            className="text-white"
+            style={{ backgroundColor: getCategoryColor() }}
+          >
+            {getCategoryLabel()}
+          </Badge>
+
+          {/* Date */}
+          <span className="text-sm text-foreground">
+            {format(event.date, 'EEE, MMM d')}
+          </span>
+
+          {/* Class name for teachers */}
+          {isTeacher && event.class_name && (
+            <>
+              <span className="text-muted-foreground">·</span>
+              <span className="text-sm text-foreground">{event.class_name}</span>
+            </>
+          )}
+        </div>
+
+        {/* Description */}
+        {isEditing ? (
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            className="min-h-[88px]"
+            placeholder="Description or instructions"
+          />
+        ) : (
+          <>
+            {event.description && (
+              <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                {event.description.trim()}
+              </p>
+            )}
+          </>
         )}
 
+        {/* Completion checkbox */}
+        {!isEditing && event.type === 'agenda_item' && (
+          <div className="flex items-center gap-3 rounded-lg surface-interactive p-3">
+            <Checkbox
+              checked={isCompleted}
+              onCheckedChange={toggleCompletion}
+              disabled={isUpdatingCompletion}
+              id="task-completion"
+            />
+            <label
+              htmlFor="task-completion"
+              className="flex-1 text-sm font-medium cursor-pointer"
+            >
+              {isCompleted ? 'Task completed' : 'Mark as complete'}
+            </label>
+          </div>
+        )}
+
+        {/* Resources */}
         {resourceLinks.length > 0 && (
-          <div className="space-y-1.5 pt-1">
-            <p className="text-xs uppercase tracking-[0.03em] text-muted-foreground">Resources</p>
+          <div className="space-y-2 pt-2">
+            <p className="text-xs uppercase tracking-[0.03em] text-muted-foreground">
+              Resources
+            </p>
             {resourceLinks.map((link, index) => (
-              <div key={`${link.link_type}-${link.link_ref_id || index}`} className="flex items-center gap-2 rounded-lg surface-chip px-2.5 py-2">
+              <div
+                key={`${link.link_type}-${link.link_ref_id || index}`}
+                className="flex items-center gap-2 rounded-lg surface-chip px-2.5 py-2"
+              >
                 <button
                   type="button"
                   className="min-w-0 flex-1 text-left"
@@ -268,7 +384,9 @@ export function AssignmentDetailsPanel({
                   }}
                 >
                   <p className="truncate text-sm">{link.label}</p>
-                  <p className="text-[11px] text-muted-foreground">{link.link_type.replace('_', ' ')}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {link.link_type.replace('_', ' ')}
+                  </p>
                 </button>
                 {isEditing && (
                   <Button
@@ -276,7 +394,13 @@ export function AssignmentDetailsPanel({
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7"
-                    onClick={() => setLinks((prev) => prev.filter((_, idx) => idx !== index).map((row, idx) => ({ ...row, position: idx })))}
+                    onClick={() =>
+                      setLinks((prev) =>
+                        prev
+                          .filter((_, idx) => idx !== index)
+                          .map((row, idx) => ({ ...row, position: idx }))
+                      )
+                    }
                   >
                     <X className="h-3.5 w-3.5" />
                   </Button>
@@ -286,25 +410,62 @@ export function AssignmentDetailsPanel({
           </div>
         )}
 
+        {/* Open button */}
+        {event.href && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-9 w-full justify-between"
+            onClick={() => router.push(event.href)}
+          >
+            Open
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+        )}
+
+        {/* Teacher controls */}
         {isTeacher && (
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <div className="flex items-center gap-2 rounded-md surface-interactive px-2.5 py-1.5">
-              <Switch checked={visible} onCheckedChange={toggleVisible} />
+          <div className="space-y-2 border-t border-border pt-4">
+            {/* Visibility toggle */}
+            <div className="flex items-center gap-3 rounded-md surface-interactive px-2.5 py-1.5">
+              <Switch
+                checked={visible}
+                onCheckedChange={toggleVisible}
+                disabled={isEditing}
+              />
               <span className="text-xs">Visible to students</span>
+              {!visible && !isEditing && (
+                <Badge variant="secondary" className="ml-auto text-xs">
+                  Hidden
+                </Badge>
+              )}
             </div>
+
+            {/* Edit mode controls */}
             {isEditing && (
-              <Button type="button" size="sm" className="h-8" disabled={isSaving} onClick={saveChanges}>
-                <Save className="mr-1 h-3.5 w-3.5" />
-                Save
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 flex-1"
+                  disabled={isSaving}
+                  onClick={saveChanges}
+                >
+                  <Save className="mr-1 h-3.5 w-3.5" />
+                  Save
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  className="h-8"
+                  disabled={isSaving}
+                  onClick={deleteItem}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             )}
-            {isEditing && (
-              <Button type="button" size="sm" variant="destructive" className="h-8" disabled={isSaving} onClick={deleteItem}>
-                <Trash2 className="mr-1 h-3.5 w-3.5" />
-                Delete
-              </Button>
-            )}
-            {!visible && <Badge variant="secondary">Hidden</Badge>}
           </div>
         )}
       </div>

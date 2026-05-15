@@ -183,6 +183,8 @@ export type CalendarEvent = {
   class_name?: string;
   subject_id?: string | null;
   item_type?: 'assignment' | 'quiz' | 'studyset' | 'event' | 'other';
+  task_category?: 'homework' | 'small_test' | 'big_test' | 'other';
+  custom_category_label?: string | null;
   visibility_state?: 'visible' | 'hidden' | 'scheduled';
   publish_at?: string | null;
   links?: Array<{
@@ -201,6 +203,7 @@ export type CalendarEvent = {
   status?: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   description?: string; // Teacher's instructions
   linked_path?: string; // Display path for linked content
+  completed?: boolean; // For student task completion
 };
 
 // Types for Analytics

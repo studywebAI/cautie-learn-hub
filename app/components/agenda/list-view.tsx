@@ -77,11 +77,17 @@ export function ListView({ events, onEventClick }: ListViewProps) {
 function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventClick?: (event: CalendarEvent) => void }) {
   const getEventAccent = () => {
     if (event.type === 'agenda_item') {
-      if (event.visibility_state === 'hidden') return '#c56f6f';
-      if (event.item_type === 'quiz') return '#c38843';
-      if (event.item_type === 'event') return '#c56f6f';
-      if (event.item_type === 'other') return '#8f7bb0';
-      return '#4f86c0';
+      if (event.visibility_state === 'hidden') return '#EF4444'; // Red for hidden
+      // Use task_category for color-coding
+      if (event.task_category === 'homework') return '#FF9500'; // Orange
+      if (event.task_category === 'small_test') return '#3B82F6'; // Blue
+      if (event.task_category === 'big_test') return '#EF4444'; // Red
+      if (event.task_category === 'other') return '#10B981'; // Green
+      // Fallback to item_type based colors if no task_category
+      if (event.item_type === 'quiz') return '#3B82F6'; // Blue for quiz
+      if (event.item_type === 'event') return '#EF4444'; // Red for event
+      if (event.item_type === 'other') return '#10B981'; // Green for other
+      return '#4f86c0'; // Default blue
     }
     if (event.type === 'assignment') return getAgendaVisualStyle(event as any).accentColor;
     return '#7e8d9d';
@@ -108,11 +114,10 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
   const href = buildHref();
 
   const content = (
-    <div className="flex items-center gap-3 rounded-md surface-panel px-3 py-2 transition-colors hover:surface-interactive">
-      <div
-        className="h-10 w-1 flex-shrink-0 rounded-full"
-        style={{ backgroundColor: getEventAccent() }}
-      />
+    <div
+      className="flex items-center gap-3 rounded-md surface-panel px-3 py-2 transition-colors hover:surface-interactive border-l-4"
+      style={{ borderLeftColor: getEventAccent() }}
+    >
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] text-foreground">{event.title}</p>

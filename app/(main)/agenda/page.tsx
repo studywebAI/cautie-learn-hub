@@ -64,6 +64,8 @@ type AgendaApiItem = {
   title: string;
   description?: string | null;
   item_type?: 'assignment' | 'quiz' | 'studyset' | 'event' | 'other';
+  task_category?: 'homework' | 'small_test' | 'big_test' | 'other' | null;
+  custom_category_label?: string | null;
   starts_at?: string | null;
   due_at?: string | null;
   visibility_state?: 'visible' | 'hidden' | 'scheduled';
@@ -118,6 +120,8 @@ function agendaApiItemToEvent(item: AgendaApiItem): CalendarEvent {
     date: parseISO(dateIso),
     type: 'agenda_item',
     item_type: item.item_type || 'assignment',
+    task_category: item.task_category || undefined,
+    custom_category_label: item.custom_category_label || undefined,
     visibility_state: item.visibility_state || 'visible',
     publish_at: item.publish_at || null,
     href: '/agenda',
