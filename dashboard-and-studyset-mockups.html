@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cautie - Dashboard & StudySet Mockups</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --accent-brand: #7f8962;
+            --bg-page: #f2f2f2;
+            --bg-surface: #fcfcfc;
+            --text-primary: #1a1a1a;
+            --text-secondary: #3d3d3d;
+            --text-tertiary: #868686;
+            --text-success: #22c55e;
+            --text-warning: #f59e0b;
+            --text-danger: #ef4444;
+            --border-subtle: #eee;
+            --border-default: #e8e8e8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'IBM Plex Sans', Roboto, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            padding: 24px;
+        }
+
+        .header {
+            max-width: 1600px;
+            margin: 0 auto 40px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+            margin-bottom: 8px;
+        }
+
+        .header-sub {
+            color: var(--text-tertiary);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-default);
+            background: var(--bg-surface);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 400;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: var(--accent-brand);
+            color: white;
+            border-color: var(--accent-brand);
+        }
+
+        .filter-btn:hover:not(.active) {
+            border-color: var(--accent-brand);
+            color: var(--text-primary);
+        }
+
+        .mockups-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(720px, 1fr));
+            gap: 28px;
+            margin-bottom: 60px;
+        }
+
+        .mockup {
+            background: white;
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            overflow: hidden;
+            display: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .mockup.visible {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .mockup-label {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fafafa;
+        }
+
+        .mockup-title {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--text-primary);
+        }
+
+        .mockup-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        .badge-student {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .badge-teacher {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .badge-studyset {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .mockup-content {
+            padding: 20px;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Dashboard-specific layouts */
+
+        /* Hero section */
+        .hero-banner {
+            background: linear-gradient(135deg, var(--accent-brand), #9aaf7b);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .hero-banner h2 {
+            font-size: 22px;
+            font-weight: 400;
+            margin-bottom: 4px;
+            letter-spacing: -0.01em;
+        }
+
+        .hero-banner p {
+            font-size: 13px;
+            opacity: 0.95;
+        }
+
+        /* Two-column grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Panel/card */
+        .panel {
+            background: #fafafa;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 14px;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .panel-content {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        /* List styles */
+        .list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .list-item {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .list-item-label {
+            color: var(--text-secondary);
+        }
+
+        .list-item-meta {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        /* Sidebar layout */
+        .layout-sidebar {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sidebar-item {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: #f5f5f5;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sidebar-item:hover {
+            background: #efefef;
+        }
+
+        .sidebar-item.active {
+            background: var(--accent-brand);
+            color: white;
+        }
+
+        /* Status indicators */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        .status-success {
+            background: #e8f5e9;
+            color: var(--text-success);
+        }
+
+        .status-warning {
+            background: #fff3e0;
+            color: var(--text-warning);
+        }
+
+        .status-danger {
+            background: #ffebee;
+            color: var(--text-danger);
+        }
+
+        .status-info {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        /* Chart placeholder */
+        .chart-placeholder {
+            background: linear-gradient(to right, #f5f5f5, #efefef);
+            height: 80px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-tertiary);
+            font-size: 12px;
+        }
+
+        /* StudySet specific */
+        .workflow-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .workflow-card {
+            padding: 12px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            background: #fafafa;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .workflow-card:hover {
+            border-color: var(--accent-brand);
+            background: #f5f7f3;
+        }
+
+        .workflow-card-title {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .workflow-card-desc {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        /* Step indicator */
+        .steps {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            justify-content: center;
+        }
+
+        .step {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--border-subtle);
+            border: 1px solid var(--border-default);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .step.active {
+            background: var(--accent-brand);
+            color: white;
+            border-color: var(--accent-brand);
+        }
+
+        .step.completed {
+            background: var(--text-success);
+            color: white;
+            border-color: var(--text-success);
+        }
+
+        /* Flex layouts */
+        .flex-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .flex-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Legend at bottom */
+        .legend {
+            max-width: 1600px;
+            margin: 60px auto 0;
+            padding: 24px;
+            background: white;
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .legend h2 {
+            font-size: 16px;
+            font-weight: 400;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .legend-cols {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .legend-item {
+            font-size: 13px;
+        }
+
+        .legend-item-title {
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .legend-item-desc {
+            color: var(--text-tertiary);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .mockups-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Cautie Dashboards & StudySets</h1>
+        <p class="header-sub">Integrated mockups matching site theme • White theme for clarity</p>
+
+        <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="student">Student Dashboards</button>
+            <button class="filter-btn" data-filter="teacher">Teacher Dashboards</button>
+            <button class="filter-btn" data-filter="studyset">StudySet Workflows</button>
+        </div>
+    </div>
+
+    <div class="mockups-container">
+
+        <!-- ========== STUDENT DASHBOARDS ========== -->
+
+        <!-- SD1: Clean Hero with Quick Stats -->
+        <div class="mockup student visible" data-type="student">
+            <div class="mockup-label">
+                <span class="mockup-title">SD1: Hero Overview</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div class="hero-banner">
+                    <h2>Welcome back, Alex</h2>
+                    <p>You're on track. Keep the momentum going!</p>
+                </div>
+
+                <div class="grid-3">
+                    <div class="panel">
+                        <div class="stat-value">73%</div>
+                        <div class="stat-label">Progress</div>
+                    </div>
+                    <div class="panel">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Days Streak</div>
+                    </div>
+                    <div class="panel">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Due Soon</div>
+                    </div>
+                </div>
+
+                <div class="panel" style="flex: 1;">
+                    <div class="panel-title">Next Assignment</div>
+                    <div class="list">
+                        <div class="list-item">
+                            <span class="list-item-label">Biology Essay</span>
+                            <span class="status-badge status-warning">Tomorrow</span>
+                        </div>
+                        <div class="list-item">
+                            <span class="list-item-label">Math Quiz</span>
+                            <span class="status-badge status-info">Friday</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SD2: Weekly Focus with Timeline -->
+        <div class="mockup student visible" data-type="student">
+            <div class="mockup-label">
+                <span class="mockup-title">SD2: Weekly Timeline</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div class="panel-title">This Week's Schedule</div>
+
+                <div class="flex-col" style="gap: 0;">
+                    <div class="list-item">
+                        <div>
+                            <div style="font-size: 12px; font-weight: 400; margin-bottom: 2px;">Monday</div>
+                            <div style="font-size: 12px; color: var(--text-tertiary);">Biology: Photosynthesis Quiz</div>
+                        </div>
+                        <span class="status-badge status-info">9 AM</span>
+                    </div>
+                    <div class="list-item">
+                        <div>
+                            <div style="font-size: 12px; font-weight: 400; margin-bottom: 2px;">Wednesday</div>
+                            <div style="font-size: 12px; color: var(--text-tertiary);">Essay Draft Submission</div>
+                        </div>
+                        <span class="status-badge status-warning">11:59 PM</span>
+                    </div>
+                    <div class="list-item">
+                        <div>
+                            <div style="font-size: 12px; font-weight: 400; margin-bottom: 2px;">Friday</div>
+                            <div style="font-size: 12px; color: var(--text-tertiary);">Math Exam Review Due</div>
+                        </div>
+                        <span class="status-badge status-info">2 PM</span>
+                    </div>
+                </div>
+
+                <div class="chart-placeholder" style="flex: 1;">📊 Weekly Progress Chart</div>
+            </div>
+        </div>
+
+        <!-- SD3: Sidebar with Courses & Stats -->
+        <div class="mockup student visible" data-type="student">
+            <div class="mockup-label">
+                <span class="mockup-title">SD3: Course Navigation</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div class="layout-sidebar">
+                    <div class="sidebar-nav">
+                        <div class="sidebar-item active">Biology 101</div>
+                        <div class="sidebar-item">Chemistry</div>
+                        <div class="sidebar-item">History</div>
+                        <div class="sidebar-item">English</div>
+                    </div>
+
+                    <div class="flex-col">
+                        <div class="panel">
+                            <div class="panel-title">Current Grade</div>
+                            <div class="stat-value" style="font-size: 28px;">A-</div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-title">Assignments</div>
+                            <div class="list">
+                                <div class="list-item">
+                                    <span>Completed</span>
+                                    <span class="stat-value" style="font-size: 16px;">8</span>
+                                </div>
+                                <div class="list-item">
+                                    <span>Pending</span>
+                                    <span style="color: var(--text-warning);">2</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-title">Recent Activity</div>
+                            <div style="font-size: 12px; color: var(--text-tertiary);">Quiz submitted ✓<br/>Grade: 92%<br/>2 hours ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SD4: Compact Card Stack -->
+        <div class="mockup student visible" data-type="student">
+            <div class="mockup-label">
+                <span class="mockup-title">SD4: Priority Stack</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div class="panel-title" style="margin-bottom: 12px;">Your Tasks</div>
+
+                <div class="flex-col">
+                    <div class="panel" style="border-left: 3px solid var(--text-danger);">
+                        <div class="panel-title">📝 Biology Essay</div>
+                        <div class="flex-row" style="justify-content: space-between; margin-top: 8px;">
+                            <span style="font-size: 12px; color: var(--text-tertiary);">High priority</span>
+                            <span class="status-badge status-danger">Due Tomorrow</span>
+                        </div>
+                    </div>
+
+                    <div class="panel" style="border-left: 3px solid var(--text-warning);">
+                        <div class="panel-title">📊 Math Practice Set</div>
+                        <div class="flex-row" style="justify-content: space-between; margin-top: 8px;">
+                            <span style="font-size: 12px; color: var(--text-tertiary);">Medium priority</span>
+                            <span class="status-badge status-warning">Friday</span>
+                        </div>
+                    </div>
+
+                    <div class="panel" style="border-left: 3px solid var(--text-success);">
+                        <div class="panel-title">📖 Reading Assignment</div>
+                        <div class="flex-row" style="justify-content: space-between; margin-top: 8px;">
+                            <span style="font-size: 12px; color: var(--text-tertiary);">Low priority</span>
+                            <span class="status-badge status-success">Next Week</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SD5: Resources & Study -->
+        <div class="mockup student visible" data-type="student">
+            <div class="mockup-label">
+                <span class="mockup-title">SD5: Study Hub</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div class="grid-2">
+                    <div class="panel">
+                        <div class="stat-value">14.5</div>
+                        <div class="stat-label">Study hours this week</div>
+                    </div>
+                    <div class="panel">
+                        <div class="stat-value">87%</div>
+                        <div class="stat-label">Average grade</div>
+                    </div>
+                </div>
+
+                <div class="panel" style="flex: 1;">
+                    <div class="panel-title">Quick Resources</div>
+                    <div class="list">
+                        <div class="list-item">
+                            <span>📗 Biology Textbook</span>
+                            <span style="color: var(--accent-brand);">→</span>
+                        </div>
+                        <div class="list-item">
+                            <span>🎥 Math Tutorials</span>
+                            <span style="color: var(--accent-brand);">→</span>
+                        </div>
+                        <div class="list-item">
+                            <span>📚 Study Groups</span>
+                            <span style="color: var(--accent-brand);">→</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button style="padding: 10px; background: var(--accent-brand); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;">Start Study Session</button>
+            </div>
+        </div>
+
+        <!-- SD6: Habits & Streaks -->
+        <div class="mockup student visible" data-type="student">
+            <div class="mockup-label">
+                <span class="mockup-title">SD6: Daily Habits</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div class="hero-banner" style="padding: 16px;">
+                    <h2 style="font-size: 18px;">🔥 12-Day Streak</h2>
+                    <p>Keep going! One more day for the weekly bonus.</p>
+                </div>
+
+                <div class="panel" style="flex: 1;">
+                    <div class="panel-title">Today's Checklist</div>
+                    <div class="list" style="margin-top: 8px;">
+                        <div class="list-item">
+                            <span>☑ Morning Study (30 min)</span>
+                        </div>
+                        <div class="list-item">
+                            <span>☐ Evening Review (20 min)</span>
+                        </div>
+                        <div class="list-item">
+                            <span>☐ Quiz Practice</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="panel">
+                        <div class="stat-value">5/7</div>
+                        <div class="stat-label">Week Complete</div>
+                    </div>
+                    <div class="panel">
+                        <div class="stat-value">Level 12</div>
+                        <div class="stat-label">XP Progress</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== TEACHER DASHBOARDS ========== -->
+
+        <!-- TD1: Class Overview with Stats -->
+        <div class="mockup teacher visible" data-type="teacher">
+            <div class="mockup-label">
+                <span class="mockup-title">TD1: Class Dashboard</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div class="hero-banner">
+                    <h2>Biology 101 - Period 3</h2>
+                    <p>28 students • Class avg: 87%</p>
+                </div>
+
+                <div class="grid-3">
+                    <div class="panel">
+                        <div class="stat-value">87%</div>
+                        <div class="stat-label">Class Average</div>
+                    </div>
+                    <div class="panel">
+                        <div class="stat-value">92%</div>
+                        <div class="stat-label">Submission Rate</div>
+                    </div>
+                    <div class="panel">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Pending Reviews</div>
+                    </div>
+                </div>
+
+                <div class="panel" style="flex: 1;">
+                    <div class="panel-title">⚠️ Attention Needed</div>
+                    <div class="list">
+                        <div class="list-item">
+                            <span>Sarah Chen</span>
+                            <span style="color: var(--text-danger); font-size: 12px;">Below Passing</span>
+                        </div>
+                        <div class="list-item">
+                            <span>Mike Johnson</span>
+                            <span style="color: var(--text-warning); font-size: 12px;">3 Late</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TD2: Grading Queue -->
+        <div class="mockup teacher visible" data-type="teacher">
+            <div class="mockup-label">
+                <span class="mockup-title">TD2: Grading Pipeline</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div class="panel-title" style="margin-bottom: 12px;">📝 Submissions to Grade</div>
+
+                <div class="flex-col">
+                    <div class="panel" style="border-left: 3px solid var(--text-danger);">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>
+                                <div style="font-size: 13px; font-weight: 400;">Biology Lab Report</div>
+                                <div style="font-size: 12px; color: var(--text-tertiary);">15 submissions</div>
+                            </div>
+                            <span style="color: var(--text-danger);">Due Today</span>
+                        </div>
+                    </div>
+
+                    <div class="panel" style="border-left: 3px solid var(--text-warning);">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>
+                                <div style="font-size: 13px; font-weight: 400;">Essay - Revision</div>
+                                <div style="font-size: 12px; color: var(--text-tertiary);">9 submissions</div>
+                            </div>
+                            <span style="color: var(--text-warning);">Tomorrow</span>
+                        </div>
+                    </div>
+
+                    <div class="panel" style="border-left: 3px solid #1976d2;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>
+                                <div style="font-size: 13px; font-weight: 400;">Quiz Responses</div>
+                                <div style="font-size: 12px; color: var(--text-tertiary);">28 auto-graded</div>
+                            </div>
+                            <span style="color: #1976d2;">✓ Complete</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TD3: Class Performance -->
+        <div class="mockup teacher visible" data-type="teacher">
+            <div class="mockup-label">
+                <span class="mockup-title">TD3: Performance Analytics</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div class="grid-2">
+                    <div class="panel">
+                        <div class="panel-title">Grade Distribution</div>
+                        <div class="chart-placeholder" style="height: 60px; margin-top: 8px;">📊</div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-title">Trend</div>
+                        <div style="margin-top: 8px;">
+                            <div style="font-size: 16px; color: var(--text-success);">↑ +2.3%</div>
+                            <div style="font-size: 11px; color: var(--text-tertiary);">vs. last week</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel" style="flex: 1;">
+                    <div class="panel-title">Top Performers</div>
+                    <div class="list">
+                        <div class="list-item">
+                            <span>Alex Thompson</span>
+                            <span style="font-weight: 400;">98%</span>
+                        </div>
+                        <div class="list-item">
+                            <span>Jordan Smith</span>
+                            <span style="font-weight: 400;">96%</span>
+                        </div>
+                        <div class="list-item">
+                            <span>Casey Brown</span>
+                            <span style="font-weight: 400;">94%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TD4: Attendance & Engagement -->
+        <div class="mockup teacher visible" data-type="teacher">
+            <div class="mockup-label">
+                <span class="mockup-title">TD4: Attendance & Engagement</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div class="grid-3">
+                    <div class="panel">
+                        <div class="stat-value">26</div>
+                        <div class="stat-label">Present</div>
+                    </div>
+                    <div class="panel">
+                        <div class="stat-value">1</div>
+                        <div class="stat-label">Absent</div>
+                    </div>
+                    <div class="panel">
+                        <div class="stat-value">1</div>
+                        <div class="stat-label">Late</div>
+                    </div>
+                </div>
+
+                <div class="panel" style="flex: 1;">
+                    <div class="panel-title">Participation</div>
+                    <div class="list">
+                        <div class="list-item">
+                            <span>High Contributors</span>
+                            <span style="font-weight: 400;">8</span>
+                        </div>
+                        <div class="list-item">
+                            <span>Active</span>
+                            <span style="font-weight: 400;">14</span>
+                        </div>
+                        <div class="list-item">
+                            <span>Quiet</span>
+                            <span style="font-weight: 400;">6</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TD5: Multi-Class Overview -->
+        <div class="mockup teacher visible" data-type="teacher">
+            <div class="mockup-label">
+                <span class="mockup-title">TD5: All Classes</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div class="panel-title" style="margin-bottom: 12px;">Your Classes</div>
+
+                <div class="flex-col">
+                    <div class="panel">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-weight: 400;">Biology 101 (Period 3)</span>
+                            <span style="font-weight: 400; color: var(--accent-brand);">87%</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-tertiary);">28 students • 3 pending</div>
+                    </div>
+
+                    <div class="panel">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-weight: 400;">Biology 201 (Period 5)</span>
+                            <span style="font-weight: 400; color: var(--accent-brand);">91%</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-tertiary);">24 students • 1 pending</div>
+                    </div>
+
+                    <div class="panel">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-weight: 400;">AP Biology (Period 7)</span>
+                            <span style="font-weight: 400; color: var(--accent-brand);">94%</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-tertiary);">18 students • all submitted</div>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-top: auto; background: linear-gradient(to right, #f5f5f5, #efefef);">
+                    <div style="text-align: center; padding: 8px;">
+                        <span style="font-weight: 400;">Average across classes: 90.7%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== STUDYSET WORKFLOWS ========== -->
+
+        <!-- SS1: Creation Step 1 -->
+        <div class="mockup studyset visible" data-type="studyset">
+            <div class="mockup-label">
+                <span class="mockup-title">SS1: Create - Basic Info</span>
+                <span class="mockup-badge badge-studyset">StudySet</span>
+            </div>
+            <div class="mockup-content">
+                <div class="steps">
+                    <div class="step active">1</div>
+                    <div class="step">2</div>
+                    <div class="step">3</div>
+                    <div class="step">4</div>
+                </div>
+
+                <div class="panel-title">What's Your Topic?</div>
+                <p style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px;">Give your study set a name and choose how you want to learn</p>
+
+                <div style="flex: 1;">
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 12px; font-weight: 400; margin-bottom: 6px;">Study Set Name *</label>
+                        <input type="text" placeholder="e.g., Advanced Biology - Photosynthesis" style="width: 100%; padding: 8px; border: 1px solid var(--border-default); border-radius: 6px; font-size: 13px;">
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 12px; font-weight: 400; margin-bottom: 6px;">Select Your Learning Style</label>
+                        <div class="workflow-cards">
+                            <div class="workflow-card" style="border-color: var(--accent-brand); background: #f5f7f3;">
+                                <div class="workflow-card-title">Balanced Learner</div>
+                                <div class="workflow-card-desc">All tools equally • Learn in logical order</div>
+                            </div>
+                            <div class="workflow-card">
+                                <div class="workflow-card-title">Test Prep Master</div>
+                                <div class="workflow-card-desc">70% quiz-focused • Intensive practice</div>
+                            </div>
+                            <div class="workflow-card">
+                                <div class="workflow-card-title">Visual Learner</div>
+                                <div class="workflow-card-desc">Timelines & mindmaps • Then text</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button style="padding: 10px; background: var(--accent-brand); color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-size: 13px;">Continue</button>
+            </div>
+        </div>
+
+        <!-- SS2: Creation Step 2 -->
+        <div class="mockup studyset visible" data-type="studyset">
+            <div class="mockup-label">
+                <span class="mockup-title">SS2: Upload - Materials</span>
+                <span class="mockup-badge badge-studyset">StudySet</span>
+            </div>
+            <div class="mockup-content">
+                <div class="steps">
+                    <div class="step completed">✓</div>
+                    <div class="step active">2</div>
+                    <div class="step">3</div>
+                    <div class="step">4</div>
+                </div>
+
+                <div class="panel-title">Upload Your Materials</div>
+                <p style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px;">Add text, files, links, or voice notes</p>
+
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                    <div class="panel" style="text-align: center; padding: 24px; background: #fafafa;">
+                        <div style="font-size: 28px; margin-bottom: 8px;">📄</div>
+                        <div style="font-size: 13px; font-weight: 400; margin-bottom: 4px;">Paste text or upload files</div>
+                        <div style="font-size: 12px; color: var(--text-tertiary);">Supports: text, PDF, images, audio</div>
+                    </div>
+
+                    <div class="panel-title">Added Materials (2)</div>
+                    <div class="list">
+                        <div class="list-item">
+                            <span style="font-size: 12px;">Chapter 1-3 notes.txt</span>
+                            <span style="color: var(--text-success);">✓</span>
+                        </div>
+                        <div class="list-item">
+                            <span style="font-size: 12px;">lecture-recording.mp3</span>
+                            <span style="color: var(--text-success);">✓</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button style="padding: 10px; background: white; border: 1px solid var(--border-default); border-radius: 6px; cursor: pointer; flex: 1; font-size: 13px;">Back</button>
+                    <button style="padding: 10px; background: var(--accent-brand); color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1; font-size: 13px;">Continue</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SS3: Creation Step 3 -->
+        <div class="mockup studyset visible" data-type="studyset">
+            <div class="mockup-label">
+                <span class="mockup-title">SS3: Customize - Settings</span>
+                <span class="mockup-badge badge-studyset">StudySet</span>
+            </div>
+            <div class="mockup-content">
+                <div class="steps">
+                    <div class="step completed">✓</div>
+                    <div class="step completed">✓</div>
+                    <div class="step active">3</div>
+                    <div class="step">4</div>
+                </div>
+
+                <div class="panel-title">Customize Your Plan</div>
+
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 400; margin-bottom: 6px;">Knowledge Level</label>
+                        <select style="width: 100%; padding: 8px; border: 1px solid var(--border-default); border-radius: 6px; font-size: 13px;">
+                            <option>Nothing - Start from basics</option>
+                            <option>Some background</option>
+                            <option selected>Comfortable with basics</option>
+                            <option>Advanced understanding</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 400; margin-bottom: 6px;">Study Days</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                            <label style="display: flex; gap: 6px; font-size: 12px; align-items: center;">
+                                <input type="checkbox" checked style="cursor: pointer;">
+                                <span>Monday</span>
+                            </label>
+                            <label style="display: flex; gap: 6px; font-size: 12px; align-items: center;">
+                                <input type="checkbox" style="cursor: pointer;">
+                                <span>Tuesday</span>
+                            </label>
+                            <label style="display: flex; gap: 6px; font-size: 12px; align-items: center;">
+                                <input type="checkbox" checked style="cursor: pointer;">
+                                <span>Wednesday</span>
+                            </label>
+                            <label style="display: flex; gap: 6px; font-size: 12px; align-items: center;">
+                                <input type="checkbox" style="cursor: pointer;">
+                                <span>Thursday</span>
+                            </label>
+                            <label style="display: flex; gap: 6px; font-size: 12px; align-items: center;">
+                                <input type="checkbox" checked style="cursor: pointer;">
+                                <span>Friday</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 400; margin-bottom: 6px;">Tool Mix Preference</label>
+                        <select style="width: 100%; padding: 8px; border: 1px solid var(--border-default); border-radius: 6px; font-size: 13px;">
+                            <option selected>Balanced (all tools equally)</option>
+                            <option>Quiz-heavy (more practice)</option>
+                            <option>Visual (timelines, mindmaps)</option>
+                            <option>Theory-first (notes, summaries)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button style="padding: 10px; background: white; border: 1px solid var(--border-default); border-radius: 6px; cursor: pointer; flex: 1; font-size: 13px;">Back</button>
+                    <button style="padding: 10px; background: var(--accent-brand); color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1; font-size: 13px;">Review Plan</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SS4: Creation Step 4 -->
+        <div class="mockup studyset visible" data-type="studyset">
+            <div class="mockup-label">
+                <span class="mockup-title">SS4: Review - Generated Plan</span>
+                <span class="mockup-badge badge-studyset">StudySet</span>
+            </div>
+            <div class="mockup-content">
+                <div class="steps">
+                    <div class="step completed">✓</div>
+                    <div class="step completed">✓</div>
+                    <div class="step completed">✓</div>
+                    <div class="step active">4</div>
+                </div>
+
+                <div class="panel-title">Your Study Plan</div>
+                <p style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px;">AI-generated schedule for your materials</p>
+
+                <div style="flex: 1;">
+                    <div class="list">
+                        <div class="list-item" style="border: none; padding: 8px; background: #fafafa; border-radius: 6px; margin-bottom: 6px;">
+                            <span style="font-size: 12px; font-weight: 400;">📅 Monday</span>
+                            <span style="font-size: 12px; color: var(--text-tertiary);">3 tasks</span>
+                        </div>
+                        <div class="list-item" style="border: none; padding: 8px; background: #fafafa; border-radius: 6px; margin-bottom: 6px; display: block; padding: 6px 8px;">
+                            <div style="font-size: 11px; color: var(--text-tertiary);">📝 Read: Chapter Intro</div>
+                            <div style="font-size: 11px; color: var(--text-tertiary);">📊 Timeline: Key Events</div>
+                            <div style="font-size: 11px; color: var(--text-tertiary);">❓ Quiz: 5 questions</div>
+                        </div>
+
+                        <div class="list-item" style="border: none; padding: 8px; background: #fafafa; border-radius: 6px; margin-bottom: 6px;">
+                            <span style="font-size: 12px; font-weight: 400;">📅 Wednesday</span>
+                            <span style="font-size: 12px; color: var(--text-tertiary);">3 tasks</span>
+                        </div>
+
+                        <div class="list-item" style="border: none; padding: 8px; background: #fafafa; border-radius: 6px;">
+                            <span style="font-size: 12px; font-weight: 400;">📅 Friday</span>
+                            <span style="font-size: 12px; color: var(--text-tertiary);">2 tasks</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button style="padding: 10px; background: white; border: 1px solid var(--border-default); border-radius: 6px; cursor: pointer; flex: 1; font-size: 13px;">Edit</button>
+                    <button style="padding: 10px; background: var(--accent-brand); color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1; font-size: 13px;">Add to Calendar</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+        <h2>Design Notes & Layout Patterns</h2>
+
+        <div class="legend-cols">
+            <div class="legend-item">
+                <div class="legend-item-title">Hero + Quick Stats</div>
+                <div class="legend-item-desc">Welcome banner at top with key metrics in 3-column grid. Good for overview dashboards where users need immediate context.</div>
+            </div>
+
+            <div class="legend-item">
+                <div class="legend-item-title">Timeline View</div>
+                <div class="legend-item-desc">Chronological list of events/deadlines with priority indicators. Ideal for showing upcoming work and due dates.</div>
+            </div>
+
+            <div class="legend-item">
+                <div class="legend-item-title">Sidebar Navigation</div>
+                <div class="legend-item-desc">Left sidebar for course/class selection with contextual stats on right. Helps manage multiple classes or subjects.</div>
+            </div>
+
+            <div class="legend-item">
+                <div class="legend-item-title">Priority Stack</div>
+                <div class="legend-item-desc">Colored left border indicating urgency. Stacked cards show task priority visually without overwhelming interface.</div>
+            </div>
+
+            <div class="legend-item">
+                <div class="legend-item-title">Analytics Grid</div>
+                <div class="legend-item-desc">Multi-column stat layout with charts. Good for performance data, trends, and comparative metrics across classes.</div>
+            </div>
+
+            <div class="legend-item">
+                <div class="legend-item-title">Grading Queue</div>
+                <div class="legend-item-desc">Left-aligned task list with status indicators. Prioritizes pending work for teachers to action items first.</div>
+            </div>
+
+            <div class="legend-item">
+                <div class="legend-item-title">Multi-Class Panel</div>
+                <div class="legend-item-desc">Stacked class cards with key metrics. Gives teachers overview of all their classes in one view.</div>
+            </div>
+
+            <div class="legend-item">
+                <div class="legend-item-title">StudySet Workflow</div>
+                <div class="legend-item-desc">Step indicator at top, form fields, material list. 4-step process: Name → Upload → Customize → Review.</div>
+            </div>
+
+            <div class="legend-item">
+                <div class="legend-item-title">Color Coding</div>
+                <div class="legend-item-desc">Red/danger for urgent • Orange/warning for soon • Green/success for complete • Blue/info for neutral. Status badges on all items.</div>
+            </div>
+
+            <div class="legend-item">
+                <div class="legend-item-title">Theme Match</div>
+                <div class="legend-item-desc">All layouts use site colors: Olive green (#7f8962) for primary, light grays for surfaces, proper typography hierarchy.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.dataset.filter;
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                document.querySelectorAll('.mockup').forEach(mockup => {
+                    if (filter === 'all') {
+                        mockup.classList.add('visible');
+                    } else {
+                        mockup.classList.toggle('visible', mockup.dataset.type === filter);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

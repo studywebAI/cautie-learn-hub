@@ -1,968 +1,936 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard Mockups — cautie</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'IBM Plex Sans', -apple-system, sans-serif;
-  background: #e8e8e8;
-  color: #1a1a1a;
-  font-size: 14px;
-  line-height: 1.5;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Layout Mockups - 20 Unique Designs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-/* ── layout ── */
-.page { max-width: 1440px; margin: 0 auto; padding: 40px 28px 80px; }
-.section-head { margin: 52px 0 6px; font-size: 20px; font-weight: 700; color: #1a1a1a; }
-.section-sub { font-size: 13px; color: #868686; margin-bottom: 24px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(600px, 1fr)); gap: 20px; }
-.label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #868686; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0f1419;
+            color: #e0e0e0;
+            padding: 20px;
+        }
 
-/* ── mockup shell ── */
-.mockup { border-radius: 14px; overflow: hidden; border: 1px solid #d8d8d8; background: #f2f2f2; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
-.mockup-bar { background: #fafafa; border-bottom: 1px solid #e8e8e8; padding: 11px 16px; display: flex; align-items: center; gap: 10px; }
-.mockup-bar-title { font-size: 12px; font-weight: 600; color: #3d3d3d; }
-.mockup-tag { font-size: 10px; color: #868686; background: #f0f0f0; border: 1px solid #e4e4e4; border-radius: 4px; padding: 1px 7px; }
-.mockup-body { padding: 18px; }
+        .header {
+            max-width: 1400px;
+            margin: 0 auto 40px;
+        }
 
-/* ── surfaces ── */
-.card  { background: #ffffff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px 16px; }
-.card-sm { background: #fafafa; border: 1px solid #efefef; border-radius: 8px; padding: 9px 12px; }
-.surface-subtle { background: #f7f7f7; border: 1px solid #eeeeee; border-radius: 8px; padding: 9px 12px; }
-.inset { background: #f5f5f5; border-radius: 7px; padding: 9px 11px; }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #6366f1, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-/* ── accent ── */
-.accent { color: #7f8962; }
-.accent-bg { background: #7f8962; }
-.accent-surface { background: #f4f5f0; border: 1px solid #dde0d0; border-radius: 8px; padding: 9px 12px; }
-.accent-dot { width: 7px; height: 7px; border-radius: 50%; background: #7f8962; flex-shrink: 0; }
+        p.subtitle {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
 
-/* ── status colours (subtle) ── */
-.s-warn  { color: #a06020; background: #fdf5e6; border: 1px solid #f0d898; border-radius: 6px; padding: 1px 7px; font-size: 11px; }
-.s-alert { color: #991c1c; background: #fef2f2; border: 1px solid #f8c4c4; border-radius: 6px; padding: 1px 7px; font-size: 11px; }
-.s-ok    { color: #2d6a2d; background: #f0f9f0; border: 1px solid #b8e0b8; border-radius: 6px; padding: 1px 7px; font-size: 11px; }
-.s-info  { color: #1a4a7a; background: #eff6ff; border: 1px solid #bdd8f8; border-radius: 6px; padding: 1px 7px; font-size: 11px; }
-.s-muted { color: #868686; background: #f4f4f4; border: 1px solid #e4e4e4; border-radius: 6px; padding: 1px 7px; font-size: 11px; }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
 
-/* ── type ── */
-.t-page  { font-size: 17px; font-weight: 700; color: #1a1a1a; }
-.t-head  { font-size: 13px; font-weight: 600; color: #1a1a1a; }
-.t-body  { font-size: 13px; color: #3d3d3d; }
-.t-muted { font-size: 12px; color: #868686; }
-.t-micro { font-size: 11px; color: #a0a0a0; }
-.t-num   { font-size: 24px; font-weight: 700; color: #1a1a1a; line-height: 1; }
-.t-num-sm{ font-size: 18px; font-weight: 700; color: #1a1a1a; line-height: 1; }
+        .filter-btn {
+            padding: 10px 20px;
+            border: 1px solid #444;
+            background: #1a1f2e;
+            color: #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
 
-/* ── layout helpers ── */
-.row  { display: flex; align-items: center; gap: 8px; }
-.col  { display: flex; flex-direction: column; }
-.gap4  { gap: 4px; }
-.gap6  { gap: 6px; }
-.gap8  { gap: 8px; }
-.gap10 { gap: 10px; }
-.gap12 { gap: 12px; }
-.gap14 { gap: 14px; }
-.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-.g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
-.spacer { flex: 1; }
-.mt4  { margin-top: 4px; }
-.mt6  { margin-top: 6px; }
-.mt8  { margin-top: 8px; }
-.mt10 { margin-top: 10px; }
-.mt12 { margin-top: 12px; }
-.mb8  { margin-bottom: 8px; }
-.mb10 { margin-bottom: 10px; }
-.mb12 { margin-bottom: 12px; }
-.mb14 { margin-bottom: 14px; }
+        .filter-btn.active {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: white;
+        }
 
-/* ── progress bar ── */
-.bar { height: 4px; border-radius: 2px; background: #eeeeee; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 2px; background: #7f8962; }
-.bar-warn { background: #d4943a; }
-.bar-alert { background: #d44a4a; }
-.bar-tall { height: 6px; border-radius: 3px; }
+        .filter-btn:hover:not(.active) {
+            border-color: #6366f1;
+        }
 
-/* ── spark ── */
-.spark { display: flex; align-items: flex-end; gap: 2px; height: 28px; }
-.sb { width: 7px; border-radius: 2px; background: #dde0d0; }
-.sb-hi { background: #7f8962; }
+        .mockups-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(680px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
 
-/* ── streak ── */
-.dots { display: flex; gap: 3px; }
-.dot  { width: 7px; height: 7px; border-radius: 50%; background: #e4e4e4; }
-.dot-on  { background: #7f8962; }
-.dot-today { background: #7f8962; box-shadow: 0 0 0 2px #7f896230; }
+        .mockup-card {
+            background: #1a1f2e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
+        }
 
-/* ── timeline ── */
-.tl { display: flex; flex-direction: column; gap: 0; }
-.tl-row { display: flex; gap: 10px; }
-.tl-aside { display: flex; flex-direction: column; align-items: center; gap: 0; }
-.tl-node  { width: 7px; height: 7px; border-radius: 50%; background: #7f8962; flex-shrink: 0; margin-top: 3px; }
-.tl-node-muted { background: #d4d4d4; }
-.tl-line  { width: 1px; background: #e4e4e4; flex: 1; margin: 2px 3px; }
-.tl-content { padding-bottom: 10px; flex: 1; }
+        .mockup-card.visible {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
 
-/* ── avatar ── */
-.ava { width: 26px; height: 26px; border-radius: 50%; background: #e8e8e8; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: #868686; flex-shrink: 0; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-/* ── divider ── */
-hr { border: none; border-top: 1px solid #eeeeee; margin: 10px 0; }
+        .mockup-card.student {
+            border-left: 4px solid #3b82f6;
+        }
 
-/* ── message bubble ── */
-.msg { background: #f7f7f7; border: 1px solid #eeeeee; border-radius: 8px; padding: 8px 10px; }
-.msg-own { background: #f4f5f0; border-color: #dde0d0; }
+        .mockup-card.teacher {
+            border-left: 4px solid #f59e0b;
+        }
 
-/* ── link-row (agenda item style) ── */
-.agenda-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f0f0f0; }
-.agenda-row:last-child { border-bottom: none; }
-.agenda-time { font-size: 11px; color: #a0a0a0; width: 38px; flex-shrink: 0; }
-.agenda-dot  { width: 8px; height: 26px; border-radius: 3px; flex-shrink: 0; }
+        .mockup-header {
+            padding: 15px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-/* ── hint ── */
-.hint { background: #f9faf6; border: 1px solid #e4e8d8; border-radius: 8px; padding: 9px 12px; }
-.hint-warn { background: #fdfaf4; border-color: #f0dfa8; }
+        .mockup-title {
+            font-weight: 600;
+            font-size: 14px;
+        }
 
-/* ── action row ── */
-.action-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #ffffff; border: 1px solid #e8e8e8; border-radius: 9px; cursor: pointer; }
-.action-row:hover { background: #f7f7f7; }
-.action-icon { width: 32px; height: 32px; border-radius: 7px; background: #f4f5f0; border: 1px solid #dde0d0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .mockup-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
 
-/* ── top badge row ── */
-.badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-</style>
+        .badge-student {
+            background: #1e3a8a;
+            color: #60a5fa;
+        }
+
+        .badge-teacher {
+            background: #78350f;
+            color: #f59e0b;
+        }
+
+        .mockup-content {
+            padding: 20px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Box Styles */
+        .box {
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 12px;
+        }
+
+        .box-stats {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(99,102,241,0.1));
+            border-color: rgba(99,102,241,0.3);
+        }
+
+        .box-deadline {
+            background: linear-gradient(135deg, rgba(220,38,38,0.1), rgba(239,68,68,0.1));
+            border-color: rgba(239,68,68,0.3);
+        }
+
+        .box-task {
+            background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(74,222,128,0.1));
+            border-color: rgba(74,222,128,0.3);
+        }
+
+        .box-activity {
+            background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(196,181,253,0.1));
+            border-color: rgba(196,181,253,0.3);
+        }
+
+        .box-time {
+            background: linear-gradient(135deg, rgba(249,115,22,0.1), rgba(251,146,60,0.1));
+            border-color: rgba(251,146,60,0.3);
+        }
+
+        .box-chart {
+            background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(34,211,238,0.1));
+            border-color: rgba(34,211,238,0.3);
+        }
+
+        .box-people {
+            background: linear-gradient(135deg, rgba(236,72,153,0.1), rgba(244,114,182,0.1));
+            border-color: rgba(244,114,182,0.3);
+        }
+
+        .box-list {
+            background: linear-gradient(135deg, rgba(107,114,128,0.1), rgba(156,163,175,0.1));
+            border-color: rgba(156,163,175,0.3);
+        }
+
+        /* Layout Utilities */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .flex-row { display: flex; gap: 12px; }
+        .sidebar { display: flex; gap: 12px; }
+        .sidebar .sidebar-nav { flex: 0 0 120px; }
+        .sidebar .sidebar-content { flex: 1; }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #6366f1, #a78bfa);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .hero p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        /* Mini Stats */
+        .mini-stat {
+            text-align: center;
+            padding: 8px;
+        }
+
+        .mini-stat .value {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .mini-stat .label {
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        /* List Item */
+        .list-item {
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Component Legend */
+        .legend {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+            background: #1a1f2e;
+            border: 1px solid #333;
+            border-radius: 12px;
+        }
+
+        .legend h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #6366f1, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .legend-item {
+            padding: 15px;
+            background: #0f1419;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+
+        .legend-item .name {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .legend-item .examples {
+            font-size: 11px;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .legend-item .examples strong {
+            color: #e0e0e0;
+            display: block;
+            margin-bottom: 3px;
+        }
+    </style>
 </head>
 <body>
-<div class="page">
+    <div class="header">
+        <h1>Dashboard Mockup Library</h1>
+        <p class="subtitle">20 unique layouts with different patterns, color schemes, and component arrangements</p>
 
-<div style="padding-bottom:6px">
-  <div style="font-size:24px;font-weight:700">Dashboard mockups</div>
-  <div style="font-size:13px;color:#868686;margin-top:3px">Actual theme — IBM Plex Sans, sage accent, light surfaces. No emojis. Tell me numbers you like.</div>
-</div>
-
-<!-- ═══════════ STUDENT ═══════════ -->
-<div class="section-head">Student</div>
-<div class="section-sub">Logged in as student — 3 classes, Bio test in 2 days</div>
-<div class="grid">
-
-<!-- ─── S1: Breeze / Daily digest ─── -->
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-bar-title">S1 — Daily digest</div>
-    <div class="mockup-tag">calm · task-first · hints</div>
-  </div>
-  <div class="mockup-body">
-    <!-- welcome -->
-    <div class="row mb12">
-      <div>
-        <div class="t-page">Good morning, Maarten</div>
-        <div class="t-muted mt4">Monday · 3 tasks need your attention today</div>
-      </div>
-      <div class="spacer"></div>
-      <div class="col gap4" style="align-items:flex-end">
-        <div class="dots">
-          <div class="dot dot-on"></div><div class="dot dot-on"></div><div class="dot dot-on"></div>
-          <div class="dot dot-on"></div><div class="dot dot-today"></div>
-          <div class="dot"></div><div class="dot"></div>
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All (20)</button>
+            <button class="filter-btn" data-filter="student">Student (10)</button>
+            <button class="filter-btn" data-filter="teacher">Teacher (10)</button>
         </div>
-        <div class="t-micro" style="text-align:right">5-day study streak</div>
-      </div>
     </div>
 
-    <!-- today block links to agenda -->
-    <div class="card mb10">
-      <div class="row mb10">
-        <div class="t-head">Today's plan</div>
-        <div class="spacer"></div>
-        <div style="font-size:11px;color:#7f8962;cursor:pointer;font-weight:500">Open agenda →</div>
-      </div>
-      <div class="tl">
-        <div class="tl-row">
-          <div class="tl-aside"><div class="tl-node"></div><div class="tl-line"></div></div>
-          <div class="tl-content">
-            <div class="row"><div class="t-body" style="flex:1">Biology ch.4 — read + flashcards</div><span class="s-alert" style="font-size:10px">due today</span></div>
-            <div class="t-muted">Studyset task · ~25 min</div>
-          </div>
-        </div>
-        <div class="tl-row">
-          <div class="tl-aside"><div class="tl-node"></div><div class="tl-line"></div></div>
-          <div class="tl-content">
-            <div class="row"><div class="t-body" style="flex:1">Maths — Algebra II lesson</div><span class="s-muted" style="font-size:10px">11:00</span></div>
-            <div class="t-muted">School schedule</div>
-          </div>
-        </div>
-        <div class="tl-row">
-          <div class="tl-aside"><div class="tl-node tl-node-muted"></div></div>
-          <div class="tl-content" style="padding-bottom:0">
-            <div class="row"><div class="t-body" style="flex:1;color:#a0a0a0">Submit essay draft</div><span class="s-warn" style="font-size:10px">tomorrow</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div class="mockups-grid">
+        <!-- STUDENT MOCKUPS -->
 
-    <div class="g2">
-      <!-- hints -->
-      <div class="col gap6">
-        <div class="hint">
-          <div class="t-head mb4">Heads up</div>
-          <div class="t-muted">Biology test in 2 days. Your last flashcard score was 68% — review the weak cards first.</div>
-        </div>
-        <div class="hint">
-          <div class="t-muted">History is at 40% progress. Open studyset to catch up before next week.</div>
-        </div>
-      </div>
-      <!-- upcoming -->
-      <div class="card">
-        <div class="t-head mb10">Upcoming</div>
-        <div class="col gap6">
-          <div class="surface-subtle row"><div class="col gap4" style="flex:1"><div class="t-body">Biology test</div><div class="t-muted">in 2 days</div></div><span class="s-alert" style="font-size:10px">!!</span></div>
-          <div class="surface-subtle row"><div class="col gap4" style="flex:1"><div class="t-body">History essay</div><div class="t-muted">in 5 days</div></div><span class="s-warn" style="font-size:10px">!</span></div>
-          <div class="surface-subtle row"><div class="col gap4" style="flex:1"><div class="t-body">Presentation</div><div class="t-muted">in 8 days</div></div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── S2: Analytics + progress ─── -->
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-bar-title">S2 — Progress overview</div>
-    <div class="mockup-tag">analytics · subject bars · grade stats</div>
-  </div>
-  <div class="mockup-body">
-    <div class="row mb14">
-      <div>
-        <div class="t-page">Maarten</div>
-        <div class="t-muted mt4">Week 3 of 10 — keep going</div>
-      </div>
-      <div class="spacer"></div>
-      <span class="s-ok">On track</span>
-    </div>
-
-    <div class="g4 mb12">
-      <div class="card" style="text-align:center;padding:10px 6px"><div class="t-num-sm">87%</div><div class="t-micro mt4">avg grade</div></div>
-      <div class="card" style="text-align:center;padding:10px 6px"><div class="t-num-sm">5</div><div class="t-micro mt4">day streak</div></div>
-      <div class="card" style="text-align:center;padding:10px 6px"><div class="t-num-sm">12</div><div class="t-micro mt4">tasks done</div></div>
-      <div class="card" style="text-align:center;padding:10px 6px"><div class="t-num-sm">3</div><div class="t-micro mt4">due today</div></div>
-    </div>
-
-    <div class="card mb10">
-      <div class="row mb10"><div class="t-head">Subject progress</div><div class="spacer"></div><div style="font-size:11px;color:#7f8962;cursor:pointer;font-weight:500">See all →</div></div>
-      <div class="col gap10">
-        <div>
-          <div class="row mb4"><div class="t-body" style="flex:1">Biology</div><div class="accent" style="font-size:12px;font-weight:500">72%</div></div>
-          <div class="bar bar-tall"><div class="bar-fill" style="width:72%"></div></div>
-        </div>
-        <div>
-          <div class="row mb4"><div class="t-body" style="flex:1">Mathematics</div><div class="accent" style="font-size:12px;font-weight:500">88%</div></div>
-          <div class="bar bar-tall"><div class="bar-fill" style="width:88%"></div></div>
-        </div>
-        <div>
-          <div class="row mb4"><div class="t-body" style="flex:1">History</div><div style="font-size:12px;font-weight:500;color:#a06020">40%</div></div>
-          <div class="bar bar-tall"><div class="bar-fill bar-warn" style="width:40%"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="g2">
-      <div class="hint hint-warn"><div class="t-head mb4">History lagging</div><div class="t-muted">40% — you need 3 more studyset sessions to stay on track. Start now.</div></div>
-      <div class="card">
-        <div class="t-head mb8">Today</div>
-        <div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer;margin-bottom:8px">Open agenda →</div>
-        <div class="col gap5">
-          <div class="row"><div class="accent-dot"></div><div class="t-muted">Biology ch.4 flashcards</div></div>
-          <div class="row"><div class="accent-dot"></div><div class="t-muted">Maths lesson 11:00</div></div>
-          <div class="row"><div style="width:7px;height:7px;border-radius:50%;background:#e4e4e4;flex-shrink:0"></div><div class="t-muted" style="color:#c0c0c0">Essay draft</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── S3: Chat + today + subjects ─── -->
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-bar-title">S3 — Full dashboard</div>
-    <div class="mockup-tag">messages · agenda · subjects</div>
-  </div>
-  <div class="mockup-body">
-    <div class="row mb12">
-      <div class="t-page">Maarten</div>
-      <div class="spacer"></div>
-      <div class="badge-row" style="margin-bottom:0">
-        <span class="s-alert">2 urgent</span>
-        <span class="s-info">1 new message</span>
-      </div>
-    </div>
-
-    <div class="g2 mb10">
-      <!-- today -->
-      <div class="card">
-        <div class="row mb8"><div class="t-head">Today</div><div class="spacer"></div><div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer">Agenda →</div></div>
-        <div class="agenda-row">
-          <div class="agenda-time">09:00</div>
-          <div class="agenda-dot" style="background:#7f8962"></div>
-          <div class="col gap4" style="flex:1"><div class="t-body">Biology quiz</div><div class="t-muted">3A</div></div>
-        </div>
-        <div class="agenda-row">
-          <div class="agenda-time">11:00</div>
-          <div class="agenda-dot" style="background:#5a8ab0"></div>
-          <div class="col gap4" style="flex:1"><div class="t-body">Maths lesson</div><div class="t-muted">2B</div></div>
-        </div>
-        <div class="agenda-row">
-          <div class="agenda-time">14:30</div>
-          <div class="agenda-dot" style="background:#b08a5a"></div>
-          <div class="col gap4" style="flex:1"><div class="t-body">History review</div><div class="t-muted">4A</div></div>
-        </div>
-      </div>
-      <!-- messages -->
-      <div class="card">
-        <div class="row mb8"><div class="t-head">Messages</div><div class="spacer"></div><div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer">Open chat →</div></div>
-        <div class="col gap6">
-          <div class="msg-own msg">
-            <div class="row mb4"><div class="t-micro">3A Biology</div><div class="spacer"></div><div class="t-micro">09:14</div></div>
-            <div class="t-body">Test is moved to Wednesday, prepare ch.4 + ch.5</div>
-          </div>
-          <div class="msg">
-            <div class="row mb4"><div class="t-micro">2B Maths — Mr. Jacobs</div><div class="spacer"></div><div class="t-micro">yesterday</div></div>
-            <div class="t-body" style="color:#a0a0a0">Homework due Friday...</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="g3 mb10">
-      <div class="accent-surface">
-        <div class="t-micro mb4" style="color:#7f8962;font-weight:600">BIOLOGY</div>
-        <div class="t-body mb6">Ch.4 Cells</div>
-        <div class="bar"><div class="bar-fill" style="width:60%"></div></div>
-        <div class="t-micro mt4">60% done</div>
-      </div>
-      <div class="surface-subtle">
-        <div class="t-micro mb4" style="font-weight:600">MATHS</div>
-        <div class="t-body mb6">Algebra II</div>
-        <div class="bar"><div class="bar-fill" style="width:85%"></div></div>
-        <div class="t-micro mt4">85% done</div>
-      </div>
-      <div style="background:#fdfaf4;border:1px solid #f0dfa8;border-radius:8px;padding:9px 12px">
-        <div class="t-micro mb4" style="color:#a06020;font-weight:600">HISTORY</div>
-        <div class="t-body mb6">WW2</div>
-        <div class="bar"><div class="bar-fill bar-warn" style="width:40%"></div></div>
-        <div class="t-micro mt4" style="color:#a06020">Needs work</div>
-      </div>
-    </div>
-
-    <div class="hint"><div class="t-muted">Biology test in 2 days. Last flashcard score 68% — focus on mitosis and cell division before the test.</div></div>
-  </div>
-</div>
-
-<!-- ─── S4: Minimal / Prioritised ─── -->
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-bar-title">S4 — Prioritised</div>
-    <div class="mockup-tag">action items · streak · no clutter</div>
-  </div>
-  <div class="mockup-body">
-    <div class="row mb14">
-      <div>
-        <div class="t-page">Monday, May 11</div>
-        <div class="t-muted mt4">3 things need your attention</div>
-      </div>
-      <div class="spacer"></div>
-      <div style="text-align:right">
-        <div class="t-num" style="color:#7f8962">5</div>
-        <div class="t-micro">day streak</div>
-      </div>
-    </div>
-
-    <div class="col gap8 mb14">
-      <div class="action-row">
-        <div class="action-icon">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7f8962" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-        </div>
-        <div class="col gap4" style="flex:1">
-          <div class="t-body">Biology ch.4 flashcards</div>
-          <div class="t-muted">Studyset · 25 min · test in 2 days</div>
-        </div>
-        <span class="s-alert">urgent</span>
-      </div>
-      <div class="action-row">
-        <div class="action-icon">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5a8ab0" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        </div>
-        <div class="col gap4" style="flex:1">
-          <div class="t-body">Maths lesson — 11:00</div>
-          <div class="t-muted">School · Algebra II</div>
-        </div>
-        <div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer">Agenda →</div>
-      </div>
-      <div class="action-row" style="opacity:.7">
-        <div class="action-icon">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#868686" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        </div>
-        <div class="col gap4" style="flex:1">
-          <div class="t-body" style="color:#a0a0a0">Submit essay draft</div>
-          <div class="t-muted">Due tomorrow</div>
-        </div>
-        <span class="s-warn">tomorrow</span>
-      </div>
-    </div>
-
-    <div class="g2">
-      <div class="card">
-        <div class="t-head mb8">Messages</div>
-        <div class="col gap6">
-          <div class="msg-own msg">
-            <div class="t-micro mb4">3A Biology · 09:14</div>
-            <div class="t-body">Test moved to Wednesday — prepare ch.4 + ch.5</div>
-          </div>
-        </div>
-        <div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer;margin-top:8px">Open chat →</div>
-      </div>
-      <div class="card">
-        <div class="t-head mb8">Upcoming</div>
-        <div class="col gap6">
-          <div class="row"><span class="s-alert">2d</span><div class="t-body" style="flex:1">Biology test</div></div>
-          <div class="row"><span class="s-warn">5d</span><div class="t-body" style="flex:1">History essay</div></div>
-          <div class="row"><span class="s-muted">8d</span><div class="t-body" style="flex:1;color:#a0a0a0">Presentation</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── S5: Study pulse / activity ─── -->
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-bar-title">S5 — Learning pulse</div>
-    <div class="mockup-tag">weekly activity · grade projection · hints</div>
-  </div>
-  <div class="mockup-body">
-    <div class="row mb14">
-      <div class="t-page">Maarten</div>
-      <div class="spacer"></div>
-      <span class="s-ok">Week 3 — on track</span>
-    </div>
-
-    <div class="g2 mb10">
-      <div class="card">
-        <div class="t-muted mb6">Study activity this week</div>
-        <div class="spark mb6">
-          <div class="sb" style="height:35%"></div>
-          <div class="sb sb-hi" style="height:70%"></div>
-          <div class="sb sb-hi" style="height:100%"></div>
-          <div class="sb" style="height:50%"></div>
-          <div class="sb sb-hi" style="height:85%"></div>
-          <div class="sb" style="height:15%"></div>
-          <div class="sb" style="height:5%"></div>
-        </div>
-        <div class="row">
-          <div class="t-micro">Mon</div><div class="spacer"></div><div class="t-micro">Sun</div>
-        </div>
-        <hr>
-        <div class="row mt6">
-          <div class="t-muted" style="flex:1">Overall progress</div>
-          <div class="accent" style="font-weight:600;font-size:12px">68%</div>
-        </div>
-        <div class="bar bar-tall mt4"><div class="bar-fill" style="width:68%"></div></div>
-      </div>
-      <div class="card">
-        <div class="t-muted mb8">Grade projection</div>
-        <div class="t-num" style="color:#7f8962">87%</div>
-        <div class="t-micro mt4">current average</div>
-        <hr>
-        <div class="t-muted mt6" style="font-size:11px">Score 80+ on Biology test → avg stays above 85%</div>
-        <div class="t-muted mt4" style="font-size:11px">Score below 65 → drops to 79%</div>
-      </div>
-    </div>
-
-    <div class="card mb10">
-      <div class="row mb8"><div class="t-head">Today's plan</div><div class="spacer"></div><div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer">Full agenda →</div></div>
-      <div class="agenda-row">
-        <div class="agenda-time">09:00</div>
-        <div class="agenda-dot" style="background:#7f8962"></div>
-        <div class="t-body" style="flex:1">Biology quiz — 3A</div>
-        <span class="s-alert">now</span>
-      </div>
-      <div class="agenda-row">
-        <div class="agenda-time">11:00</div>
-        <div class="agenda-dot" style="background:#5a8ab0"></div>
-        <div class="t-body" style="flex:1">Maths lesson</div>
-      </div>
-      <div class="agenda-row">
-        <div class="agenda-time">Studyset</div>
-        <div class="agenda-dot" style="background:#b08a5a"></div>
-        <div class="t-body" style="flex:1">Biology ch.4 flashcards</div>
-        <span class="s-warn">25 min</span>
-      </div>
-    </div>
-
-    <div class="hint"><div class="t-muted">You're strongest on Maths (88%). History needs 3 more sessions this week to stay on pace. Biology test priority: mitosis, cell division.</div></div>
-  </div>
-</div>
-
-</div><!-- /student grid -->
-
-
-<!-- ═══════════ TEACHER ═══════════ -->
-<div class="section-head">Teacher</div>
-<div class="section-sub">Logged in as teacher — 3 classes, 8 to grade, 2 alerts</div>
-<div class="grid">
-
-<!-- ─── T1: Command centre ─── -->
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-bar-title">T1 — Command centre</div>
-    <div class="mockup-tag">grading queue · class health · alerts</div>
-  </div>
-  <div class="mockup-body">
-    <div class="row mb14">
-      <div>
-        <div class="t-page">Good morning, Mr. Jacobs</div>
-        <div class="t-muted mt4">Monday · 3 classes · 8 to grade</div>
-      </div>
-      <div class="spacer"></div>
-      <div class="col gap4" style="align-items:flex-end">
-        <span class="s-alert">2 alerts</span>
-        <span class="s-warn">8 to grade</span>
-      </div>
-    </div>
-
-    <div class="g4 mb12">
-      <div class="card" style="padding:10px;text-align:center"><div class="t-num-sm">3</div><div class="t-micro mt4">classes</div></div>
-      <div class="card" style="padding:10px;text-align:center"><div class="t-num-sm">67</div><div class="t-micro mt4">students</div></div>
-      <div class="card" style="padding:10px;text-align:center;border-color:#f0dfa8;background:#fdfaf4"><div class="t-num-sm" style="color:#a06020">8</div><div class="t-micro mt4">to grade</div></div>
-      <div class="card" style="padding:10px;text-align:center;border-color:#f8c4c4;background:#fef2f2"><div class="t-num-sm" style="color:#991c1c">2</div><div class="t-micro mt4">alerts</div></div>
-    </div>
-
-    <div class="g2">
-      <div class="card">
-        <div class="t-head mb10">Grading queue</div>
-        <div class="col gap6">
-          <div class="card-sm row">
-            <div class="col gap4" style="flex:1"><div class="t-body">Essay — 3A</div><div class="t-muted">14 submissions</div></div>
-            <span class="s-alert">urgent</span>
-          </div>
-          <div class="card-sm row">
-            <div class="col gap4" style="flex:1"><div class="t-body">Quiz — 2B</div><div class="t-muted">22 submissions</div></div>
-            <span class="s-warn">today</span>
-          </div>
-          <div class="card-sm row">
-            <div class="col gap4" style="flex:1"><div class="t-body">Open answers — 4A</div><div class="t-muted">18 pending</div></div>
-            <span class="s-muted">pending</span>
-          </div>
-        </div>
-        <div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer;margin-top:10px">Grade all →</div>
-      </div>
-      <div class="card">
-        <div class="t-head mb10">Class health</div>
-        <div class="col gap10">
-          <div>
-            <div class="row mb4"><div class="t-body" style="flex:1">3A Biology</div><div class="accent" style="font-size:12px;font-weight:500">84%</div></div>
-            <div class="bar bar-tall"><div class="bar-fill" style="width:84%"></div></div>
-          </div>
-          <div>
-            <div class="row mb4"><div class="t-body" style="flex:1">2B Maths</div><div class="accent" style="font-size:12px;font-weight:500">71%</div></div>
-            <div class="bar bar-tall"><div class="bar-fill" style="width:71%"></div></div>
-          </div>
-          <div>
-            <div class="row mb4"><div class="t-body" style="flex:1">4A History</div><div style="font-size:12px;font-weight:500;color:#a06020">52%</div></div>
-            <div class="bar bar-tall"><div class="bar-fill bar-warn" style="width:52%"></div></div>
-          </div>
-        </div>
-        <hr>
-        <div class="hint hint-warn mt6"><div class="t-muted">4A History dropped 8% this week. 2 at-risk students need follow-up.</div></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── T2: Per-class + activity + messages ─── -->
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-bar-title">T2 — Class feed</div>
-    <div class="mockup-tag">class cards · recent activity · messages</div>
-  </div>
-  <div class="mockup-body">
-    <div class="row mb12">
-      <div class="t-page">Mr. Jacobs</div>
-      <div class="spacer"></div>
-      <div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer">Switch class →</div>
-    </div>
-
-    <!-- class cards -->
-    <div class="col gap6 mb12">
-      <div class="card row" style="border-color:#dde0d0;background:#f9faf6;padding:10px 14px">
-        <div class="col gap4" style="flex:1">
-          <div class="row"><div class="t-head">3A — Biology</div><span class="s-ok" style="font-size:10px">all good</span></div>
-          <div class="t-muted">23 students · avg 84% · attendance done</div>
-        </div>
-        <div class="col gap4" style="text-align:right">
-          <div class="t-num-sm" style="color:#7f8962">2</div>
-          <div class="t-micro">to grade</div>
-        </div>
-      </div>
-      <div class="card row" style="padding:10px 14px">
-        <div class="col gap4" style="flex:1">
-          <div class="row"><div class="t-head">2B — Maths</div><span class="s-warn" style="font-size:10px">4 pending</span></div>
-          <div class="t-muted">19 students · avg 71%</div>
-        </div>
-        <div class="col gap4" style="text-align:right">
-          <div class="t-num-sm" style="color:#a06020">4</div>
-          <div class="t-micro">to grade</div>
-        </div>
-      </div>
-      <div class="card row" style="border-color:#f8c4c4;background:#fef9f9;padding:10px 14px">
-        <div class="col gap4" style="flex:1">
-          <div class="row"><div class="t-head">4A — History</div><span class="s-alert" style="font-size:10px">needs attention</span></div>
-          <div class="t-muted">25 students · avg 52% · dropped 8%</div>
-        </div>
-        <div class="col gap4" style="text-align:right">
-          <div class="t-num-sm" style="color:#991c1c">8</div>
-          <div class="t-micro">to grade</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="g2">
-      <!-- recent activity -->
-      <div class="card">
-        <div class="t-head mb8">Recent activity</div>
-        <div class="col gap6">
-          <div class="row" style="align-items:flex-start;gap:8px">
-            <div class="t-micro" style="width:36px;flex-shrink:0;padding-top:2px">2m</div>
-            <div class="t-muted" style="flex:1">Sara M. submitted Biology essay</div>
-          </div>
-          <div class="row" style="align-items:flex-start;gap:8px">
-            <div class="t-micro" style="width:36px;flex-shrink:0;padding-top:2px">1h</div>
-            <div class="t-muted" style="flex:1">3A attendance marked — 2 absent</div>
-          </div>
-          <div class="row" style="align-items:flex-start;gap:8px">
-            <div class="t-micro" style="width:36px;flex-shrink:0;padding-top:2px">3h</div>
-            <div class="t-muted" style="flex:1">2B quiz result: avg 78%</div>
-          </div>
-          <div class="row" style="align-items:flex-start;gap:8px">
-            <div class="t-micro" style="width:36px;flex-shrink:0;padding-top:2px">1d</div>
-            <div class="t-muted" style="flex:1">Jan D. missed 3rd lesson in a row</div>
-          </div>
-        </div>
-      </div>
-      <!-- messages -->
-      <div class="card">
-        <div class="row mb8"><div class="t-head">Messages</div><div class="spacer"></div><div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer">Open →</div></div>
-        <div class="col gap6">
-          <div class="msg-own msg">
-            <div class="t-micro mb4">3A · Teacher chat · 10:30</div>
-            <div class="t-body">Test moved to Wednesday, prepare ch.4+5</div>
-          </div>
-          <div class="msg">
-            <div class="t-micro mb4">2B · Sara M. · yesterday</div>
-            <div class="t-body" style="color:#a0a0a0">Can I get extra time on...</div>
-          </div>
-          <div class="surface-subtle" style="text-align:center">
-            <div class="t-micro" style="color:#7f8962">1 unread in 4A</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── T3: At-risk + analytics ─── -->
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-bar-title">T3 — Analytics</div>
-    <div class="mockup-tag">engagement · at-risk · submission rate</div>
-  </div>
-  <div class="mockup-body">
-    <div class="row mb12">
-      <div class="t-page">Mr. Jacobs</div>
-      <div class="spacer"></div>
-      <span class="s-ok">Week 3</span>
-    </div>
-
-    <div class="g3 mb12">
-      <div class="card" style="text-align:center;padding:10px 6px"><div class="t-num-sm">84%</div><div class="t-micro mt4">avg attendance</div></div>
-      <div class="card" style="text-align:center;padding:10px 6px"><div class="t-num-sm">76%</div><div class="t-micro mt4">submission rate</div></div>
-      <div class="card" style="text-align:center;padding:10px 6px;border-color:#f8c4c4;background:#fef2f2"><div class="t-num-sm" style="color:#991c1c">4</div><div class="t-micro mt4">at-risk</div></div>
-    </div>
-
-    <div class="g2 mb10">
-      <div class="card">
-        <div class="t-muted mb8">Engagement this week</div>
-        <div class="spark mb4">
-          <div class="sb" style="height:50%"></div>
-          <div class="sb sb-hi" style="height:70%"></div>
-          <div class="sb sb-hi" style="height:90%"></div>
-          <div class="sb" style="height:55%"></div>
-          <div class="sb sb-hi" style="height:80%"></div>
-          <div class="sb" style="height:30%"></div>
-          <div class="sb" style="height:20%;background:#d4943a"></div>
-        </div>
-        <div class="row"><div class="t-micro">Mon</div><div class="spacer"></div><div class="t-micro" style="color:#a06020">Sun low</div></div>
-        <hr>
-        <div class="t-muted mt4" style="font-size:11px">Missing: 6 students — Biology essay not submitted yet</div>
-      </div>
-      <div class="card">
-        <div class="t-head mb8">At-risk students</div>
-        <div class="col gap6">
-          <div class="card-sm row" style="border-color:#f8c4c4;background:#fef9f9">
-            <div class="ava">JD</div>
-            <div class="col gap4" style="flex:1">
-              <div class="t-body">Jan de Vries</div>
-              <div class="t-muted">3 absences · 42% avg</div>
+        <!-- S1: Clean Grid with Hero -->
+        <div class="mockup-card student visible" data-type="student">
+            <div class="mockup-header">
+                <span class="mockup-title">S1: Clean Grid Layout</span>
+                <span class="mockup-badge badge-student">Student</span>
             </div>
-            <span class="s-alert">!!</span>
-          </div>
-          <div class="card-sm row" style="border-color:#f0dfa8;background:#fdfaf4">
-            <div class="ava">SM</div>
-            <div class="col gap4" style="flex:1">
-              <div class="t-body">Sara Meijer</div>
-              <div class="t-muted">grade dropped 15%</div>
+            <div class="mockup-content">
+                <div class="hero">
+                    <h2>Welcome Back</h2>
+                    <p>You have 3 assignments due this week</p>
+                </div>
+                <div class="grid-2">
+                    <div class="box box-stats">
+                        <strong>📊 Current Progress</strong>
+                        <div style="margin-top: 8px;">73% Complete</div>
+                    </div>
+                    <div class="box box-deadline">
+                        <strong>📌 Next Deadline</strong>
+                        <div style="margin-top: 8px;">Tomorrow, 5 PM</div>
+                    </div>
+                </div>
+                <div class="box box-task">
+                    <strong>📝 Active Tasks</strong>
+                    <div class="list-item">Biology Essay <span>2 days left</span></div>
+                    <div class="list-item">Math Practice <span>In Progress</span></div>
+                </div>
             </div>
-            <span class="s-warn">!</span>
-          </div>
         </div>
-        <div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer;margin-top:8px">See all 4 →</div>
-      </div>
+
+        <!-- S2: Minimal Sidebar -->
+        <div class="mockup-card student visible" data-type="student">
+            <div class="mockup-header">
+                <span class="mockup-title">S2: Sidebar Navigation</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                    <div class="sidebar-nav" style="border-right: 2px solid #444; padding-right: 12px;">
+                        <div style="font-size: 11px; color: #888; margin-bottom: 8px;">Today</div>
+                        <div style="font-size: 12px; margin-bottom: 8px;">📚 Courses</div>
+                        <div style="font-size: 12px; margin-bottom: 8px;">✅ Tasks</div>
+                        <div style="font-size: 12px;">📊 Progress</div>
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="box box-activity" style="margin-bottom: 12px;">
+                            <strong>🎯 Study Streak</strong>
+                            <div style="margin-top: 8px; font-size: 18px; font-weight: bold;">12 days</div>
+                        </div>
+                        <div class="box box-time">
+                            <strong>⏱️ Study Hours This Week</strong>
+                            <div style="margin-top: 8px;">14.5 hours</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S3: Timeline/Sequential -->
+        <div class="mockup-card student visible" data-type="student">
+            <div class="mockup-header">
+                <span class="mockup-title">S3: Weekly Timeline</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div style="margin-bottom: 8px; font-size: 13px; font-weight: 600;">This Week's Schedule</div>
+                <div class="list-item" style="flex-direction: column; padding: 8px; gap: 4px;">
+                    <div style="display: flex; justify-content: space-between;"><span>Mon: Biology Quiz</span> <span style="color: #888;">9:00 AM</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Wed: Essay Draft</span> <span style="color: #888;">11:59 PM</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Fri: Math Exam</span> <span style="color: #888;">2:00 PM</span></div>
+                </div>
+                <div class="box box-chart" style="margin-top: 12px;">
+                    <strong>📈 Weekly Completion</strong>
+                    <div style="margin-top: 8px; height: 30px; background: rgba(99,102,241,0.2); border-radius: 4px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S4: Gamified/XP Focus -->
+        <div class="mockup-card student visible" data-type="student">
+            <div class="mockup-header">
+                <span class="mockup-title">S4: Gamification Hub</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div class="hero" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                    <h2>Level 12</h2>
+                    <p>5,420 XP to Level 13</p>
+                </div>
+                <div class="grid-3">
+                    <div class="box box-activity">
+                        <div class="mini-stat">
+                            <div class="value">🏆</div>
+                            <div class="label">Badges: 8</div>
+                        </div>
+                    </div>
+                    <div class="box box-activity">
+                        <div class="mini-stat">
+                            <div class="value">🔥</div>
+                            <div class="label">Streak: 12</div>
+                        </div>
+                    </div>
+                    <div class="box box-activity">
+                        <div class="mini-stat">
+                            <div class="value">⭐</div>
+                            <div class="label">Rank: Top 15%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S5: Habits Tracker -->
+        <div class="mockup-card student visible" data-type="student">
+            <div class="mockup-header">
+                <span class="mockup-title">S5: Daily Habits</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">Today's Check-in</div>
+                <div class="box box-task">
+                    <div class="list-item" style="flex-direction: column; padding: 6px; gap: 6px;">
+                        <div style="display: flex; gap: 8px;"><input type="checkbox"> Daily Review</div>
+                        <div style="display: flex; gap: 8px;"><input type="checkbox" checked> Morning Study</div>
+                        <div style="display: flex; gap: 8px;"><input type="checkbox"> Evening Practice</div>
+                    </div>
+                </div>
+                <div class="box box-stats" style="margin-top: 12px;">
+                    <strong>📈 This Week</strong>
+                    <div style="margin-top: 8px; font-size: 14px;">5/7 days complete</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S6: Resources & Links -->
+        <div class="mockup-card student visible" data-type="student">
+            <div class="mockup-header">
+                <span class="mockup-title">S6: Resources Hub</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">Quick Access</div>
+                <div class="box box-list">
+                    <div class="list-item" style="flex-direction: column;"><span>📗 Biology Textbook</span></div>
+                    <div class="list-item" style="flex-direction: column;"><span>🎥 Math Tutorial Videos</span></div>
+                    <div class="list-item" style="flex-direction: column;"><span>📄 Essay Templates</span></div>
+                </div>
+                <div class="hero" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">
+                    <h2 style="font-size: 16px;">Study Rooms</h2>
+                    <p>Join live sessions with peers</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- S7: Digest/Summary -->
+        <div class="mockup-card student visible" data-type="student">
+            <div class="mockup-header">
+                <span class="mockup-title">S7: Weekly Digest</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">Week of May 14</div>
+                <div class="box box-stats">
+                    <strong>✅ Completed</strong>
+                    <div style="margin-top: 8px;">4 assignments, 12.3 hrs studied</div>
+                </div>
+                <div class="box box-deadline">
+                    <strong>⏳ Coming Up</strong>
+                    <div style="margin-top: 8px;">5 assignments, 3 quizzes</div>
+                </div>
+                <div class="box box-activity">
+                    <strong>📊 Performance</strong>
+                    <div style="margin-top: 8px;">Average: 87% (+4% from last week)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S8: Zen Mode / Minimal -->
+        <div class="mockup-card student visible" data-type="student">
+            <div class="mockup-header">
+                <span class="mockup-title">S8: Focus Mode</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div class="hero" style="background: linear-gradient(135deg, #06b6d4, #0891b2); min-height: 180px; justify-content: center; align-items: center; text-align: center;">
+                    <div>
+                        <div style="font-size: 48px; margin-bottom: 8px;">📚</div>
+                        <h2 style="font-size: 18px;">Currently Studying</h2>
+                        <p>Biology: Photosynthesis</p>
+                    </div>
+                </div>
+                <div class="box box-time">
+                    <strong>⏱️ Today's Session</strong>
+                    <div style="margin-top: 8px; font-size: 24px; font-weight: bold;">45 min</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S9: Compact Card List -->
+        <div class="mockup-card student visible" data-type="student">
+            <div class="mockup-header">
+                <span class="mockup-title">S9: Card Stack</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div class="box box-task" style="border-top: 3px solid #f59e0b;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><strong>Biology Essay</strong> <span>High</span></div>
+                    <div style="font-size: 11px; color: #888;">Due: Tomorrow, 5 PM</div>
+                </div>
+                <div class="box box-task" style="border-top: 3px solid #ef4444;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><strong>Math Quiz</strong> <span>Medium</span></div>
+                    <div style="font-size: 11px; color: #888;">Due: Friday, 3 PM</div>
+                </div>
+                <div class="box box-task" style="border-top: 3px solid #10b981;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><strong>History Project</strong> <span>Low</span></div>
+                    <div style="font-size: 11px; color: #888;">Due: Next Week</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S10: Performance & Goals -->
+        <div class="mockup-card student visible" data-type="student">
+            <div class="mockup-header">
+                <span class="mockup-title">S10: Goals Dashboard</span>
+                <span class="mockup-badge badge-student">Student</span>
+            </div>
+            <div class="mockup-content">
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">Your Goals</div>
+                <div class="box box-stats">
+                    <strong>🎯 Get A in Biology</strong>
+                    <div style="margin-top: 8px; height: 6px; background: #333; border-radius: 3px; overflow: hidden;">
+                        <div style="width: 72%; height: 100%; background: #22c55e;"></div>
+                    </div>
+                    <div style="font-size: 11px; margin-top: 4px; color: #888;">72% progress</div>
+                </div>
+                <div class="box box-activity" style="margin-top: 12px;">
+                    <strong>Upcoming Milestones</strong>
+                    <div class="list-item">Midterm Exam</div>
+                    <div class="list-item">Project Submission</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEACHER MOCKUPS -->
+
+        <!-- T1: Sidebar Overview -->
+        <div class="mockup-card teacher visible" data-type="teacher">
+            <div class="mockup-header">
+                <span class="mockup-title">T1: Sidebar Overview</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div style="display: flex; gap: 12px;">
+                    <div style="flex: 0 0 100px; border-right: 2px solid #444; padding-right: 12px;">
+                        <div style="font-size: 11px; color: #888; margin-bottom: 12px;">CLASSES</div>
+                        <div style="font-size: 12px; margin-bottom: 6px;">📚 Biology 101</div>
+                        <div style="font-size: 12px; margin-bottom: 6px;">📚 Biology 201</div>
+                        <div style="font-size: 12px;">📚 AP Bio</div>
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="box box-stats">
+                            <strong>👥 Class Size</strong>
+                            <div style="margin-top: 8px; font-size: 18px; font-weight: bold;">28 students</div>
+                        </div>
+                        <div class="box box-task" style="margin-top: 12px;">
+                            <strong>📝 Pending Grades</strong>
+                            <div style="margin-top: 8px;">15 submissions to review</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- T2: Performance Matrix -->
+        <div class="mockup-card teacher visible" data-type="teacher">
+            <div class="mockup-header">
+                <span class="mockup-title">T2: Performance Grid</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">Class Performance</div>
+                <div class="grid-3">
+                    <div class="box box-stats">
+                        <div class="mini-stat">
+                            <div class="value">87%</div>
+                            <div class="label">Class Avg</div>
+                        </div>
+                    </div>
+                    <div class="box box-stats">
+                        <div class="mini-stat">
+                            <div class="value">92%</div>
+                            <div class="label">Highest</div>
+                        </div>
+                    </div>
+                    <div class="box box-stats">
+                        <div class="mini-stat">
+                            <div class="value">71%</div>
+                            <div class="label">Lowest</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="box box-chart" style="margin-top: 12px;">
+                    <strong>📊 Trend</strong>
+                    <div style="margin-top: 8px; height: 30px; background: rgba(6,182,212,0.2); border-radius: 4px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- T3: Student Roster -->
+        <div class="mockup-card teacher visible" data-type="teacher">
+            <div class="mockup-header">
+                <span class="mockup-title">T3: Attendance Roster</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">Today's Attendance</div>
+                <div class="box box-people">
+                    <div class="list-item" style="flex-direction: column;"><span>✅ 26 Present</span></div>
+                    <div class="list-item" style="flex-direction: column;"><span>⚠️ 1 Absent</span></div>
+                    <div class="list-item" style="flex-direction: column;"><span>📞 1 Late</span></div>
+                </div>
+                <div class="box box-list" style="margin-top: 12px;">
+                    <strong>📋 Student List</strong>
+                    <div class="list-item">Alex Johnson</div>
+                    <div class="list-item">Sarah Smith</div>
+                    <div class="list-item">+ 26 more</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- T4: Alerts & Notifications -->
+        <div class="mockup-card teacher visible" data-type="teacher">
+            <div class="mockup-header">
+                <span class="mockup-title">T4: Alerts Hub</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div class="box box-deadline" style="border-left: 3px solid #ef4444;">
+                    <strong>🚨 Urgent</strong>
+                    <div style="margin-top: 8px; font-size: 12px;">3 students below passing grade</div>
+                </div>
+                <div class="box box-task" style="border-left: 3px solid #f59e0b; margin-top: 12px;">
+                    <strong>⚠️ Due Today</strong>
+                    <div style="margin-top: 8px; font-size: 12px;">15 essays pending review</div>
+                </div>
+                <div class="box box-activity" style="border-left: 3px solid #10b981; margin-top: 12px;">
+                    <strong>ℹ️ Info</strong>
+                    <div style="margin-top: 8px; font-size: 12px;">5 new discussion posts</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- T5: Stats Heavy -->
+        <div class="mockup-card teacher visible" data-type="teacher">
+            <div class="mockup-header">
+                <span class="mockup-title">T5: Analytics Hub</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">This Week's Stats</div>
+                <div class="grid-2">
+                    <div class="box box-stats">
+                        <div class="mini-stat">
+                            <div class="value">89</div>
+                            <div class="label">Avg Assignment</div>
+                        </div>
+                    </div>
+                    <div class="box box-stats">
+                        <div class="mini-stat">
+                            <div class="value">92%</div>
+                            <div class="label">Submission Rate</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="box box-chart" style="margin-top: 12px;">
+                    <strong>📈 Grade Distribution</strong>
+                    <div style="margin-top: 8px; display: flex; gap: 4px; height: 20px;">
+                        <div style="flex: 1; background: rgba(34,197,94,0.5); border-radius: 2px;"></div>
+                        <div style="flex: 1; background: rgba(59,130,246,0.5); border-radius: 2px;"></div>
+                        <div style="flex: 1; background: rgba(249,115,22,0.5); border-radius: 2px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- T6: Dual Focus (Grading + Class) -->
+        <div class="mockup-card teacher visible" data-type="teacher">
+            <div class="mockup-header">
+                <span class="mockup-title">T6: Dual Focus</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div class="grid-2">
+                    <div>
+                        <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px;">📝 Grading Queue</div>
+                        <div class="box box-task">
+                            <div class="list-item">Essay #1</div>
+                            <div class="list-item">Lab Report</div>
+                            <div class="list-item">Quiz Review</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px;">👥 Class Health</div>
+                        <div class="box box-people">
+                            <div class="list-item">Engagement: 8.2/10</div>
+                            <div class="list-item">Participation: 6 active</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- T7: Grading Queue -->
+        <div class="mockup-card teacher visible" data-type="teacher">
+            <div class="mockup-header">
+                <span class="mockup-title">T7: Submission Queue</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">Pending Review</div>
+                <div class="box box-deadline" style="border-left: 3px solid #ef4444;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Biology Lab Report</span>
+                        <span>15 submissions</span>
+                    </div>
+                </div>
+                <div class="box box-task" style="border-left: 3px solid #f59e0b; margin-top: 12px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Essay - Due Friday</span>
+                        <span>9 submissions</span>
+                    </div>
+                </div>
+                <div class="box box-activity" style="border-left: 3px solid #3b82f6; margin-top: 12px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Discussion Posts</span>
+                        <span>In Progress</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- T8: Wellness / Engagement -->
+        <div class="mockup-card teacher visible" data-type="teacher">
+            <div class="mockup-header">
+                <span class="mockup-title">T8: Student Wellness</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div class="hero" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                    <h2>Class Engagement</h2>
+                    <p>Very Active This Week</p>
+                </div>
+                <div class="box box-people">
+                    <strong>🎯 Participation Breakdown</strong>
+                    <div class="list-item">High Contributors: 8</div>
+                    <div class="list-item">Active: 14</div>
+                    <div class="list-item">Needs Attention: 6</div>
+                </div>
+                <div class="box box-activity" style="margin-top: 12px;">
+                    <strong>⚠️ At Risk</strong>
+                    <div style="margin-top: 8px; font-size: 12px;">Sarah Chen - Missing 3 assignments</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- T9: Advanced Analytics -->
+        <div class="mockup-card teacher visible" data-type="teacher">
+            <div class="mockup-header">
+                <span class="mockup-title">T9: Advanced Metrics</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">Learning Analytics</div>
+                <div class="box box-chart">
+                    <strong>📊 Progress Over Time</strong>
+                    <div style="margin-top: 8px; height: 50px; background: rgba(6,182,212,0.2); border-radius: 4px;"></div>
+                </div>
+                <div class="grid-2" style="margin-top: 12px;">
+                    <div class="box box-stats">
+                        <strong>Improvement Rate</strong>
+                        <div style="margin-top: 6px; font-size: 16px;">+3.2%</div>
+                    </div>
+                    <div class="box box-stats">
+                        <strong>Concept Mastery</strong>
+                        <div style="margin-top: 6px; font-size: 16px;">78%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- T10: Multi-Class Comparison -->
+        <div class="mockup-card teacher visible" data-type="teacher">
+            <div class="mockup-header">
+                <span class="mockup-title">T10: Multi-Class View</span>
+                <span class="mockup-badge badge-teacher">Teacher</span>
+            </div>
+            <div class="mockup-content">
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">Your Classes</div>
+                <div class="box box-stats">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span>Biology 101</span>
+                        <span>87% avg</span>
+                    </div>
+                </div>
+                <div class="box box-stats" style="margin-top: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span>Biology 201</span>
+                        <span>91% avg</span>
+                    </div>
+                </div>
+                <div class="box box-stats" style="margin-top: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span>AP Biology</span>
+                        <span>94% avg</span>
+                    </div>
+                </div>
+                <div class="box box-chart" style="margin-top: 12px;">
+                    <strong>Total: 90.7% Avg Across Classes</strong>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="card">
-      <div class="row mb8"><div class="t-head">Recent activity</div><div class="spacer"></div><div class="t-micro">live</div></div>
-      <div class="col gap6">
-        <div class="row gap8"><div class="t-micro" style="width:28px">2m</div><div class="t-muted" style="flex:1">Sara M. submitted Biology essay</div><span class="s-info" style="font-size:10px">3A</span></div>
-        <div class="row gap8"><div class="t-micro" style="width:28px">1h</div><div class="t-muted" style="flex:1">Attendance 3A — 2 absent (Jan D., Lisa K.)</div><span class="s-muted" style="font-size:10px">done</span></div>
-        <div class="row gap8"><div class="t-micro" style="width:28px">3h</div><div class="t-muted" style="flex:1">2B quiz results in — avg 78%</div><span class="s-ok" style="font-size:10px">2B</span></div>
-      </div>
-    </div>
-  </div>
-</div>
+    <!-- COMPONENT LEGEND -->
+    <div class="legend">
+        <h2>Component Legend - What Can Go In Each Box?</h2>
+        <p style="color: #888; margin-bottom: 20px; font-size: 13px;">Select from these component types when customizing your dashboard. Each category shows examples of what data/information can be displayed.</p>
 
-<!-- ─── T4: Quick actions + messages ─── -->
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-bar-title">T4 — Quick actions</div>
-    <div class="mockup-tag">action grid · messages · attendance</div>
-  </div>
-  <div class="mockup-body">
-    <div class="row mb12">
-      <div>
-        <div class="t-page">Mr. Jacobs</div>
-        <div class="t-muted mt4">3 classes · Monday</div>
-      </div>
-      <div class="spacer"></div>
-      <div class="col gap4" style="align-items:flex-end">
-        <span class="s-alert">8 to grade</span>
-        <span class="s-warn">3A attendance open</span>
-      </div>
-    </div>
+        <div class="legend-grid">
+            <div class="legend-item">
+                <div class="name">📊 Statistics</div>
+                <div class="examples">
+                    <strong>Numeric values & metrics</strong>
+                    Class average, completion rate, student count, grade distribution, performance trends, totals, percentages
+                </div>
+            </div>
 
-    <div class="g3 mb12">
-      <div class="action-row" style="flex-direction:column;align-items:flex-start;gap:6px">
-        <div class="action-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7f8962" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <div class="legend-item">
+                <div class="name">📌 Deadlines & Time</div>
+                <div class="examples">
+                    <strong>Time-based information</strong>
+                    Due dates, upcoming events, countdown timers, session durations, study time logged, time spent per task
+                </div>
+            </div>
+
+            <div class="legend-item">
+                <div class="name">✅ Tasks & Actions</div>
+                <div class="examples">
+                    <strong>To-do items & activities</strong>
+                    Assignment list, checklist items, priority levels, submission status, action items, pending reviews
+                </div>
+            </div>
+
+            <div class="legend-item">
+                <div class="name">👥 People Data</div>
+                <div class="examples">
+                    <strong>Student/user information</strong>
+                    Student roster, attendance records, contributor lists, user profiles, collaboration groups, at-risk students
+                </div>
+            </div>
+
+            <div class="legend-item">
+                <div class="name">📚 Learning & Resources</div>
+                <div class="examples">
+                    <strong>Educational materials</strong>
+                    Textbook links, video tutorials, study guides, resource lists, course materials, recommended reading
+                </div>
+            </div>
+
+            <div class="legend-item">
+                <div class="name">🎮 Gamification</div>
+                <div class="examples">
+                    <strong>Engagement & motivation</strong>
+                    XP points, badges earned, level progression, streak counters, achievements, leaderboard rankings, rewards
+                </div>
+            </div>
+
+            <div class="legend-item">
+                <div class="name">📈 Analytics & Charts</div>
+                <div class="examples">
+                    <strong>Data visualization</strong>
+                    Progress charts, performance graphs, trend lines, distribution histograms, heat maps, comparison charts
+                </div>
+            </div>
+
+            <div class="legend-item">
+                <div class="name">💬 Communication</div>
+                <div class="examples">
+                    <strong>Messaging & alerts</strong>
+                    Notification counts, alert messages, discussion summaries, feedback snippets, recent announcements, reminders
+                </div>
+            </div>
         </div>
-        <div class="t-body">Grade queue</div>
-        <div class="t-micro">8 pending</div>
-      </div>
-      <div class="action-row" style="flex-direction:column;align-items:flex-start;gap:6px">
-        <div class="action-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a8ab0" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <div class="t-body">Attendance</div>
-        <div class="t-micro" style="color:#a06020">3A open</div>
-      </div>
-      <div class="action-row" style="flex-direction:column;align-items:flex-start;gap:6px">
-        <div class="action-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#868686" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        </div>
-        <div class="t-body">Analytics</div>
-        <div class="t-micro">3 classes</div>
-      </div>
-      <div class="action-row" style="flex-direction:column;align-items:flex-start;gap:6px">
-        <div class="action-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#868686" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        </div>
-        <div class="t-body">Agenda</div>
-        <div class="t-micro">2 events today</div>
-      </div>
-      <div class="action-row" style="flex-direction:column;align-items:flex-start;gap:6px">
-        <div class="action-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#868686" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </div>
-        <div class="t-body">Messages</div>
-        <div class="t-micro" style="color:#7f8962">1 unread</div>
-      </div>
-      <div class="action-row" style="flex-direction:column;align-items:flex-start;gap:6px">
-        <div class="action-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#868686" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        </div>
-        <div class="t-body">Subjects</div>
-        <div class="t-micro">5 subjects</div>
-      </div>
     </div>
 
-    <div class="g2">
-      <div class="card">
-        <div class="row mb8"><div class="t-head">Messages</div><div class="spacer"></div><div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer">All chats →</div></div>
-        <div class="col gap6">
-          <div class="msg-own msg">
-            <div class="t-micro mb4">3A · Teacher chat · 10:30</div>
-            <div class="t-body">Test moved to Wednesday</div>
-          </div>
-          <div class="msg" style="border-color:#f8c4c4">
-            <div class="t-micro mb4">4A · all · 5 min ago</div>
-            <div class="t-body">Mr. Jacobs when is homework due?</div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="t-head mb8">Recent activity</div>
-        <div class="col gap6">
-          <div class="row gap8"><div class="t-micro" style="width:28px;flex-shrink:0">2m</div><div class="t-muted" style="flex:1">Sara M. — Biology essay</div></div>
-          <div class="row gap8"><div class="t-micro" style="width:28px;flex-shrink:0">1h</div><div class="t-muted" style="flex:1">3A — 2 absent today</div></div>
-          <div class="row gap8"><div class="t-micro" style="width:28px;flex-shrink:0">3h</div><div class="t-muted" style="flex:1">2B quiz avg 78%</div></div>
-          <div class="row gap8"><div class="t-micro" style="width:28px;flex-shrink:0">1d</div><div class="t-muted" style="flex:1">Jan D. — 3rd absence</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+    <script>
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const mockupCards = document.querySelectorAll('.mockup-card');
 
-<!-- ─── T5: Calm digest ─── -->
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-bar-title">T5 — Calm digest</div>
-    <div class="mockup-tag">3 action items · no noise · class list</div>
-  </div>
-  <div class="mockup-body">
-    <div class="mb14">
-      <div class="t-page">Good morning, Mr. Jacobs</div>
-      <div class="t-muted mt4">Monday, May 11 — here's what needs you today</div>
-    </div>
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const filter = button.dataset.filter;
 
-    <div class="col gap8 mb14">
-      <div class="action-row">
-        <div class="action-icon" style="background:#fef2f2;border-color:#f8c4c4">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#991c1c" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        </div>
-        <div class="col gap4" style="flex:1">
-          <div class="t-body">8 submissions to grade</div>
-          <div class="t-muted">3A essay · 2B quiz · 4A homework</div>
-        </div>
-        <div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer">Grade →</div>
-      </div>
-      <div class="action-row" style="border-color:#f0dfa8;background:#fdfaf4">
-        <div class="action-icon" style="background:#fef9ef;border-color:#f0dfa8">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a06020" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        </div>
-        <div class="col gap4" style="flex:1">
-          <div class="t-body">4A History needs attention</div>
-          <div class="t-muted">Avg 52% · dropped 8% · 2 at-risk students</div>
-        </div>
-        <div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer">View →</div>
-      </div>
-      <div class="action-row">
-        <div class="action-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a8ab0" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        </div>
-        <div class="col gap4" style="flex:1">
-          <div class="t-body">3A attendance not marked</div>
-          <div class="t-muted">2B and 4A already done</div>
-        </div>
-        <div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer">Mark →</div>
-      </div>
-      <div class="action-row">
-        <div class="action-icon" style="background:#f4f5f0;border-color:#dde0d0">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7f8962" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </div>
-        <div class="col gap4" style="flex:1">
-          <div class="t-body">1 unread message</div>
-          <div class="t-muted">4A all chat · 5 min ago</div>
-        </div>
-        <div style="font-size:11px;color:#7f8962;font-weight:500;cursor:pointer">Reply →</div>
-      </div>
-    </div>
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
 
-    <hr>
-    <div class="t-muted mb8 mt10">Your classes</div>
-    <div class="col gap6">
-      <div class="row gap8"><div style="width:7px;height:7px;border-radius:50%;background:#7f8962;flex-shrink:0"></div><div class="t-body" style="flex:1">3A — Biology</div><div class="t-muted">23 · avg 84%</div></div>
-      <div class="row gap8"><div style="width:7px;height:7px;border-radius:50%;background:#d4943a;flex-shrink:0"></div><div class="t-body" style="flex:1">2B — Maths</div><div class="t-muted">19 · avg 71%</div></div>
-      <div class="row gap8"><div style="width:7px;height:7px;border-radius:50%;background:#d44a4a;flex-shrink:0"></div><div class="t-body" style="flex:1">4A — History</div><div class="t-muted">25 · avg 52%</div></div>
-    </div>
-  </div>
-</div>
-
-</div><!-- /teacher grid -->
-
-
-<!-- ═══════════ NEW IDEAS ═══════════ -->
-<div class="section-head">New feature ideas</div>
-<div class="section-sub">Things that don't exist yet — from codebase gaps + what teachers/students actually ask for</div>
-
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px">
-
-  <div class="card">
-    <div class="t-head mb6">Missing submissions tracker</div>
-    <div class="t-muted mb6">Teacher widget: "6 students haven't submitted the Biology essay." One click sends a reminder message to those students via class chat. Biggest Reddit complaint from teachers — always having to manually check who's missing.</div>
-    <span class="s-warn">quick win</span>
-  </div>
-
-  <div class="card">
-    <div class="t-head mb6">Grade projection calculator</div>
-    <div class="t-muted mb6">Student widget: "Your current avg is 87%. Score 80+ on the Biology test and you stay above 85%. Score below 65 and you drop to 79%." Very popular on r/highschool. Takes existing grade data and does the math forward.</div>
-    <span class="s-info">medium lift</span>
-  </div>
-
-  <div class="card">
-    <div class="t-head mb6">Quick attendance from dashboard</div>
-    <div class="t-muted mb6">Teacher action item: mark attendance for today's class directly from the dashboard without navigating to the class tab. An inline "mark 3A attendance" row with present/absent counts. Saves 3+ clicks daily.</div>
-    <span class="s-ok">quick win</span>
-  </div>
-
-  <div class="card">
-    <div class="t-head mb6">Catch-up mode</div>
-    <div class="t-muted mb6">Student: when you're behind on a studyset, instead of showing all tasks, show "minimum viable plan — do these 3 things this week to catch up." Based on due dates and progress. Reddit students love this kind of scaffolding.</div>
-    <span class="s-info">medium lift</span>
-  </div>
-
-  <div class="card">
-    <div class="t-head mb6">Weekly digest notification</div>
-    <div class="t-muted mb6">Monday morning: students get a card summarising last week (tasks completed, grades received, attendance) and what's coming this week. Teachers get class summary (avg grade, who's falling behind, what to grade). In-app first, optional email later.</div>
-    <span class="s-warn">medium lift</span>
-  </div>
-
-  <div class="card">
-    <div class="t-head mb6">Study timer (Pomodoro)</div>
-    <div class="t-muted mb6">Floating timer on the student dashboard. Start a 25-min focus session tied to a subject. At the end it marks progress on the studyset and logs study time to the analytics. Most requested feature on every study-app Reddit thread.</div>
-    <span class="s-info">medium lift</span>
-  </div>
-
-  <div class="card">
-    <div class="t-head mb6">Announcement banner</div>
-    <div class="t-muted mb6">Teacher posts a short announcement to a class (test moved, no homework etc.) that shows as a pinned card at the top of the student dashboard for that class. Not buried in chat. The announcementManager component already exists — just needs surfacing on the dashboard.</div>
-    <span class="s-ok">quick win</span>
-  </div>
-
-  <div class="card">
-    <div class="t-head mb6">Grade distribution chart</div>
-    <div class="t-muted mb6">Teacher: after grading a quiz/essay, a small bar chart shows how grades spread across the class (how many A/B/C/fail). Teachers on Reddit say this is the first thing they want to see after marking. Already has analytics infrastructure.</div>
-    <span class="s-ok">quick win</span>
-  </div>
-
-</div>
-
-<div style="margin-top:40px;padding:18px;background:#fff;border:1px solid #e4e4e4;border-radius:10px;font-size:12px;color:#868686;line-height:1.8">
-  <span style="color:#3d3d3d;font-weight:600">How to use:</span> Tell me which numbered designs you like — e.g. "student: S3 layout, T2 tone" or "mix S1 today-block with S5 grade projection." I can also build any of the new feature ideas. Which ones are interesting?
-</div>
-
-</div>
+                // Filter cards
+                mockupCards.forEach(card => {
+                    if (filter === 'all') {
+                        card.classList.add('visible');
+                    } else {
+                        card.classList.toggle('visible', card.dataset.type === filter);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

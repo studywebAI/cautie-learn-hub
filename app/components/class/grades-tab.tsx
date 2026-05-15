@@ -790,152 +790,87 @@ function NewGradesWizard({
   };
 
   return (
-    <div className="class-shell">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={onCancel}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-xl">New Grades</h1>
-        </div>
-      </div>
-
-      <div className="class-panel-lg space-y-4">
-        <div className="space-y-2">
-          <Label className="text-base">Title</Label>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} className="text-base border border-border/70" />
+    <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4">
+      {/* Modal */}
+      <div className="bg-background rounded-lg border border-border shadow-lg max-w-md w-full">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border/70">
+          <h2 className="text-base font-400">New grade set</h2>
+          <Button variant="ghost" size="icon" onClick={onCancel} className="h-8 w-8">
+            <X className="h-4 w-4" />
+          </Button>
         </div>
 
-        <div className="space-y-2">
-          <Label className="text-base">Weight</Label>
-          <div className="flex gap-3 items-center">
-            {[1, 2, 3].map((w) => (
-              <Button key={w} variant={weight === w ? 'default' : 'outline'} onClick={() => setWeight(w)} className="w-16">
-                {w}x
-              </Button>
-            ))}
-            <Input
-              type="number"
-              value={weight}
-              onChange={(e) => setWeight(parseFloat(e.target.value) || 1)}
-              className="w-20 border border-border/70"
-              min={0.5}
-              max={10}
-              step={0.5}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-base">Grading Preset (Optional)</Label>
-          <select value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-            <option value="">No preset (free input)</option>
-            {presets.map((preset) => (
-              <option key={preset.id} value={preset.id}>
-                {preset.name} ({preset.kind})
-              </option>
-            ))}
-          </select>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-            <Input value={newPresetName} onChange={(e) => setNewPresetName(e.target.value)} placeholder="Preset name" />
-            <select
-              value={newPresetKind}
-              onChange={(e) => setNewPresetKind(e.target.value as 'freeform' | 'numeric_range' | 'letter_scale')}
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="freeform">Freeform</option>
-              <option value="numeric_range">Numeric Range</option>
-              <option value="letter_scale">Letter Scale</option>
-            </select>
-            <Button type="button" variant="outline" onClick={createPreset}>Save current options</Button>
-          </div>
-          {newPresetKind === 'letter_scale' && (
-            <Input value={newPresetValues} onChange={(e) => setNewPresetValues(e.target.value)} placeholder="A,B,C,D,F" />
-          )}
-          <div className="rounded-md border border-border/60 p-2">
-            <p className="mb-2 text-xs text-muted-foreground">Preset code</p>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto_auto]">
-              <Input
-                value={presetCodeInput}
-                onChange={(e) => setPresetCodeInput(e.target.value)}
-                placeholder="Paste preset code..."
-                className="border-sidebar-border bg-sidebar-accent/40"
-              />
-              <Button type="button" variant="outline" onClick={importPresetFromCode}>
-                Import code
-              </Button>
-              <Button type="button" variant="outline" onClick={copySelectedPresetCode} disabled={!selectedPresetId}>
-                Copy preset code
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {subjects.length > 0 && (
+        {/* Body */}
+        <div className="p-4 space-y-4">
+          {/* Title Input */}
           <div className="space-y-2">
-            <Label className="text-base">
-              Subject
-            </Label>
-            <select value={selectedSubjectId} onChange={(e) => setSelectedSubjectId(e.target.value)} className="w-full p-2 border rounded-md">
-              <option value="">All subjects</option>
-              {subjects.map((subj) => (
-                <option key={subj.id} value={subj.id}>{subj.title}</option>
-              ))}
-            </select>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Name (e.g., Quiz Chapter 5)..."
+              className="text-sm"
+              autoFocus
+            />
+            {validationError && <p className="text-xs text-destructive">{validationError}</p>}
           </div>
-        )}
 
-        <div className="space-y-2">
-          <Label className="text-base">Students</Label>
-          {validationError && <p className="text-sm text-foreground/80">{validationError}</p>}
-          <div className="grid grid-cols-1 gap-3 px-3 text-xs text-muted-foreground md:grid-cols-12">
-            <div className="md:col-span-8">Student</div>
-            <div className="md:col-span-4 text-center">Grade</div>
-          </div>
-          <div className="max-h-96 overflow-auto rounded-lg border border-border/70 divide-y divide-border/70">
-            {students.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
-                <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />
-                <p>Loading students...</p>
+          {/* Subject Selection (Class Subjects) */}
+          {subjects.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Subject (optional)</Label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSubjectId('')}
+                  className={`px-3 py-1 rounded-md text-xs border transition-all ${
+                    selectedSubjectId === ''
+                      ? 'bg-foreground text-background border-foreground'
+                      : 'border-border/70 hover:border-foreground/50'
+                  }`}
+                >
+                  All
+                </button>
+                {subjects.map((subj) => (
+                  <button
+                    key={subj.id}
+                    type="button"
+                    onClick={() => setSelectedSubjectId(subj.id)}
+                    className={`px-3 py-1 rounded-md text-xs border transition-all ${
+                      selectedSubjectId === subj.id
+                        ? 'bg-foreground text-background border-foreground'
+                        : 'border-border/70 hover:border-foreground/50'
+                    }`}
+                  >
+                    {subj.title}
+                  </button>
+                ))}
               </div>
-            ) : (
-              students.map((student) => (
-                <div key={student.student_id} className="grid grid-cols-1 gap-3 p-3 items-center md:grid-cols-12">
-                  <div className="min-w-0 md:col-span-8">
-                    <p className="truncate">{student.student.full_name || student.student.email || 'Unknown Student'}</p>
-                    <p className="truncate text-xs text-muted-foreground">{student.student.email || 'No email available'}</p>
-                  </div>
-                  <Input
-                    value={student.grade_value ?? ''}
-                    onChange={(e) => updateStudentGrade(student.student_id, e.target.value)}
-                    className="md:col-span-4 text-center"
-                  />
-                </div>
-              ))
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        <div className="flex justify-between border-t border-border/70 pt-3">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
+        {/* Footer */}
+        <div className="flex gap-3 p-4 border-t border-border/70">
+          <Button variant="outline" onClick={onCancel} className="flex-1">
+            Cancel
+          </Button>
           <Button
             onClick={async () => {
               if (!title.trim()) {
-                toast({ title: 'Please enter a title', variant: 'destructive' });
+                setValidationError('Please enter a title');
                 return;
               }
               await createGradeSet();
             }}
             disabled={loading}
+            className="flex-1"
           >
-            {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-            Create Grade Set
+            {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
+            Create
           </Button>
         </div>
       </div>
-
-      {students.length === 0 && !loading && <StudentGrader classId={classId} onStudentsLoaded={setStudents} />}
     </div>
   );
 }
