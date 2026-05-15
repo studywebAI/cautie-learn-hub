@@ -736,6 +736,7 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
     { id: 'profile', label: 'Class Profile' },
     { id: 'invite', label: 'Invite Access' },
     { id: 'defaults', label: 'Teaching Defaults' },
+    { id: 'schedule', label: 'School Schedule' },
     { id: 'requests', label: 'Teacher Requests' },
     { id: 'activity', label: 'Invite Activity' },
     { id: 'subjects', label: 'Subject Management' },
@@ -778,7 +779,6 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <Input
               value={classTitle}
               onChange={(e) => setClassTitle(e.target.value)}
-              placeholder="Class name"
               disabled={loadingClassConfig || savingProfile}
             />
           </div>
@@ -787,7 +787,6 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <Input
               value={classDescription}
               onChange={(e) => setClassDescription(e.target.value)}
-              placeholder="Class description"
               disabled={loadingClassConfig || savingProfile}
             />
           </div>
@@ -958,9 +957,26 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               Open Full Schedule Board
             </Button>
           </div>
-          
         </div>
         <div className="space-y-4">
+          <div className="rounded-md surface-interactive p-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Enable school schedule</p>
+              <p className="text-xs text-muted-foreground">Show daily schedule to students and teachers.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {preferences.school_schedule_enabled ? 'On' : 'Off'}
+              </span>
+              <Switch
+                className={preferenceSwitchClassName}
+                checked={preferences.school_schedule_enabled || false}
+                onCheckedChange={(checked) =>
+                  setPreferences((prev) => ({ ...prev, school_schedule_enabled: Boolean(checked) }))
+                }
+              />
+            </div>
+          </div>
           <div className="rounded-md surface-interactive p-3 text-sm text-foreground/85">
             Slot preview: {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][Math.max(0, Number(newScheduleSlot.day_of_week) - 1)]}
             {' - '}P{newScheduleSlot.period_index || '?'}{' - '}
@@ -1004,7 +1020,6 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <Input
                 value={newScheduleSlot.title}
                 onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, title: e.target.value }))}
-                placeholder="Period 1 - Math"
               />
             </div>
           </div>
@@ -1092,7 +1107,6 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
             <Input
               value={newScheduleSlot.notes}
               onChange={(e) => setNewScheduleSlot((prev) => ({ ...prev, notes: e.target.value }))}
-              placeholder="Extra info for this slot"
             />
           </div>
 
@@ -1352,8 +1366,8 @@ export function ClassSettings({ classId, className, onArchive, isArchived = fals
               <Input
                 value={importTitle}
                 onChange={(e) => setImportTitle(e.target.value)}
-                placeholder="Leave empty to keep original title"
               />
+              <p className="text-xs text-muted-foreground">Leave empty to keep original title.</p>
             </div>
           )}
 
