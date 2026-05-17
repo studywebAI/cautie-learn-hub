@@ -1672,22 +1672,22 @@ function NotesPageContent() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex items-center justify-center px-5 py-10 overflow-y-auto">
-          <div className="bg-background rounded-xl border border-border p-10 w-full max-w-2xl shadow-sm">
+        <div className="flex-1 flex items-center justify-center px-4 py-8 overflow-y-auto">
+          <div className="bg-background rounded-lg border border-border p-6 w-full max-w-2xl shadow-xs">
 
             {/* Header */}
-            <div className="mb-7">
-              <h2 className="text-2xl font-bold mb-2 text-foreground">{state1Title}</h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-1.5 text-foreground">{state1Title}</h2>
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 {state1Description}
               </p>
             </div>
 
             {/* Upload Buttons */}
-            <div className="flex gap-2 flex-wrap mb-6">
+            <div className="flex gap-2 flex-wrap mb-5">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-3.5 py-2 border border-border rounded-lg bg-background text-muted-foreground text-xs font-medium hover:bg-accent/5 hover:border-accent/30 hover:text-foreground transition-all"
+                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-background text-foreground text-xs font-medium hover:bg-accent/10 hover:border-accent/50 transition-all"
               >
                 <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload
               </button>
@@ -1700,25 +1700,25 @@ function NotesPageContent() {
               />
               <button
                 onClick={() => toast({ variant: 'default', title: 'Photo capture coming soon', description: 'This feature will be available soon.' })}
-                className="flex items-center gap-2 px-3.5 py-2 border border-border rounded-lg bg-background text-muted-foreground text-xs font-medium hover:bg-accent/5 hover:border-accent/30 hover:text-foreground transition-all"
+                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-background text-foreground text-xs font-medium hover:bg-accent/10 hover:border-accent/50 transition-all"
               >
                 <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Photo
               </button>
               <button
                 onClick={() => toast({ variant: 'default', title: 'Voice recording coming soon', description: 'This feature will be available soon.' })}
-                className="flex items-center gap-2 px-3.5 py-2 border border-border rounded-lg bg-background text-muted-foreground text-xs font-medium hover:bg-accent/5 hover:border-accent/30 hover:text-foreground transition-all"
+                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-background text-foreground text-xs font-medium hover:bg-accent/10 hover:border-accent/50 transition-all"
               >
                 <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>Mic
               </button>
               <button
                 onClick={() => toast({ variant: 'default', title: 'Import coming soon', description: 'This feature will be available soon.' })}
-                className="flex items-center gap-2 px-3.5 py-2 border border-border rounded-lg bg-background text-muted-foreground text-xs font-medium hover:bg-accent/5 hover:border-accent/30 hover:text-foreground transition-all"
+                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-background text-foreground text-xs font-medium hover:bg-accent/10 hover:border-accent/50 transition-all"
               >
                 <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 13v6"/><path d="M9 16h6"/></svg>Import from
               </button>
               <button
                 onClick={() => setState1ShowLinkDialog(true)}
-                className="flex items-center gap-2 px-3.5 py-2 border border-border rounded-lg bg-background text-muted-foreground text-xs font-medium hover:bg-accent/5 hover:border-accent/30 hover:text-foreground transition-all"
+                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-background text-foreground text-xs font-medium hover:bg-accent/10 hover:border-accent/50 transition-all"
               >
                 <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Link
               </button>
